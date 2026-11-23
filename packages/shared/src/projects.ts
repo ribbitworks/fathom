@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
-import { featureSchema } from "./features.ts";
+import { featureLengths, featureSchema } from "./features.ts";
 import { listSchema, meaningSchema } from "./lists.ts";
 import { addressProblem, linkLengths, webAddress } from "./links.ts";
 import { fieldSchema } from "./people.ts";
@@ -21,6 +21,8 @@ export const projectLengths = {
   name: recordNameLength,
   externalId: 40,
   removalReason: 200,
+  // A customer's description is as long as a feature's, written the same way.
+  customerDescription: featureLengths.description,
 } as const;
 
 // How drafts and decisions name each kind of record, in the server and the browser alike.
@@ -112,6 +114,8 @@ export const sameDates = (first: ProjectDates, second: ProjectDates) =>
 export const customerSchema = z.object({
   ...recordShape,
   name: z.string(),
+  description: z.string().nullable(),
+  note: z.string().nullable(),
 });
 
 export type Customer = z.infer<typeof customerSchema>;
@@ -226,7 +230,12 @@ const removalReason = z
   .default(null)
   .transform((value) => (value === "" ? null : value));
 
-export const customerRequestSchema = z.object({ name: recordName });
+// The note is checked by the server.
+export const customerRequestSchema = z.object({
+  name: recordName,
+  description: optionalText(projectLengths.customerDescription),
+  note: z.string().nullable().default(null),
+});
 
 export type CustomerRequest = z.infer<typeof customerRequestSchema>;
 

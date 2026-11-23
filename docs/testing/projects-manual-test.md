@@ -11,7 +11,7 @@ last_updated: "2026-11-24"
 
 ## Scope
 
-Verifies the Projects page: its four tabs and their tables as a Team Member sees them, moving across a new milestone row by keyboard, changing a proposal in its side panel, and the features projects and proposals need. [Drafts of Projects, Proposals, Customers and Milestones](project-drafts-manual-test.md) verifies adding a customer, a proposal and a project with milestones, and approving, changing and removing them.
+Verifies the Projects page: its four tabs and their tables as a Team Member sees them, moving across a new milestone row by keyboard, changing a proposal in its side panel, the features projects and proposals need, and a customer's description and notes. [Drafts of Projects, Proposals, Customers and Milestones](project-drafts-manual-test.md) verifies adding a customer, a proposal and a project with milestones, and approving, changing and removing them.
 
 ## Test Environment
 
@@ -58,7 +58,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `E116` Select the **Customers** tab.
-  - **Expected:** A table with **Name**.
+  - **Expected:** A table with **Name**, **Description** and **Notes**.
   - **Notes:**
 
 - [ ] `A16F` Select the **Milestones** tab.
@@ -285,4 +285,25 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - 'Usage Alerts' has no dot before it.
     - The row is tinted faint yellow.
     - Under it, a light green Live row's **Features** cell names 'Usage Alerts' alone.
+  - **Notes:**
+
+### PROJ-13: A Customer's Description and Notes
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-12.
+
+**Preconditions:** Signed in with this account. **Projects** page open, **Customers** tab chosen.
+
+- [ ] `8158` Select the ⋯ at the end of the row of 'Bluefin Harbour Authority', then **Show details**.
+  - **Expected:**
+    - The details are headed **Details**, with **Name** and **Description**, then **Notes**, last.
+    - **Description** reads "Port operator running two container terminals and a ferry quay."
+    - **Notes** shows the note folded, fading out, with **Show more** under it.
+  - **Notes:**
+
+- [ ] `DF74` Select **Show more**.
+  - **Expected:** The whole note opens in a panel of its own under the details, with "Quarterly review" in bold and a bulleted list.
+  - **Notes:**
+
+- [ ] `71FC` Select the ⋯ at the end of the row of 'Kestrel Mining Cooperative', then **Show details**.
+  - **Expected:** **Description** and **Notes** each read "None", dimmed.
   - **Notes:**

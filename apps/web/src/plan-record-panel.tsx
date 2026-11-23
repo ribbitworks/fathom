@@ -25,6 +25,7 @@ import {
   type PlanChange,
 } from "./plan-table.tsx";
 import {
+  customerColumnGroups,
   customerTable,
   milestoneColumns,
   projectColumns,
@@ -43,7 +44,7 @@ import {
 import { ScopeHistory } from "./scope-history.tsx";
 import { RecordPanel } from "./record-details.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
-import type { Column } from "./record-table.ts";
+import type { Column, ColumnGroup } from "./record-table.ts";
 import type { NoteOpening } from "./note-editing.tsx";
 import { isMilestoneField, MilestoneField } from "./milestone-field.tsx";
 import { noOthers } from "./new-plan-record-panel.tsx";
@@ -64,8 +65,21 @@ export const panelTitleId = "project-record-panel-title";
 
 const milestoneFields = milestoneColumns([]).filter(isMilestoneField);
 
+// The headed groups each kind's details show its columns in, or none for one shown in one list.
+const columnGroupsOf: Record<
+  PlanRecordKind,
+  readonly ColumnGroup[] | undefined
+> = {
+  customer: customerColumnGroups,
+  project: undefined,
+  proposal: undefined,
+  milestone: undefined,
+  feature: featureColumnGroups,
+};
+
 // A milestone's name, date, and whether it is a delivery to customers, added to a project or
 // changed, saved as a draft.
+
 export function MilestoneForm({
   project,
   milestone,
@@ -317,7 +331,9 @@ export function recordPanel({
           onChange={(change) => {
             onChange(type, shown, change);
           }}
-          sections={type === "feature" ? featureColumnGroups : undefined}
+          // The kind is always one of the fixed kinds.
+          // eslint-disable-next-line security/detect-object-injection
+          sections={columnGroupsOf[type]}
           notes={notes}
         />
         {extra}

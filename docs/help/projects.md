@@ -6,7 +6,7 @@
 
 - **Projects:** a project is work delivered to one or more customers. A project with no customers is an internal project.
 - **Proposals:** a proposal is work offered or requested that may become a project, such as a bid or a customer's request.
-- **Customers:** a customer is whoever a project's work is for.
+- **Customers:** a customer is whoever a project's work is for. Each can have a short **Description** and **Notes**, which hold formatting, as a feature's do.
 - **Milestones:** the dated points in a project, such as a delivery to the customer.
 - **Features:** a project or proposal names the features it needs. Features are planned on the [Features](features.md) page.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A hollow dot marks a change you haven't published yet.
@@ -35,6 +35,8 @@ You're done when the new row shows with a hollow dot.
 You can also right-click the row and select **Show details**. The details open beside the table.
 
 Each customer, proposal and feature named there is a link to its own details. Milestones have no details of their own.
+
+A customer's details show its **Name** and **Description** under **Details**, then its **Notes**, last. Select **Show more** under a long note to read all of it in a panel of its own.
 
 The record's key is under its name, small and grey. Select it to copy a link to the record, or the key itself. See [Keys and links](keys-and-links.md) for more.
 

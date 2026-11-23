@@ -281,6 +281,8 @@ export async function planOut(
       id,
       keyNumber: recordKeyNumber(state, "customer", id),
       name: String(shownVersion(state, "customer", id)?.name),
+      description: text(shownVersion(state, "customer", id)?.description),
+      note: text(shownVersion(state, "customer", id)?.note),
       ...recordExtras(state, makers, "customer", id),
     })),
     projects: inOrder(state, "project").map((id) =>

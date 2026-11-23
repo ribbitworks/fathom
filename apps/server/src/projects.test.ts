@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for customers, projects with their milestones, and proposals, against a PostgreSQL server of
-// their own: who may read and change them, the values each must keep unique, the records they link
-// to, projects' dates from their milestones, proposals' statuses from their built-in list, and their
-// drafts, approved with the drafts they use, removed together where they belong together, and named
-// in the change history and among unpublished changes.
+// their own: who may change them, what they keep and link to, and their drafts.
 
 import {
   features,
@@ -14,6 +11,7 @@ import {
   people,
   projects,
 } from "@fathom/db";
+import { noteLength } from "@fathom/shared";
 import type {
   ChangeHistory,
   Permission,
@@ -255,6 +253,40 @@ describe("customers", () => {
     await approve([{ type: "customer", id: customer.id }]);
     const live = byName((await readPlan()).customers, renamed);
     expect(live.draft).toBeUndefined();
+  });
+
+  it("keep a description and a note as given", async () => {
+    const name = unique("Fictional Described Customer");
+    const { customers } = await added("customers", {
+      name,
+      description: "Island ferry line",
+      note: "**Pilot** at the north quay first.",
+    });
+
+    const customer = byName(customers, name);
+    expect([customer.description, customer.note]).toEqual([
+      "Island ferry line",
+      "**Pilot** at the north quay first.",
+    ]);
+  });
+
+  it("keep a blank note as none", async () => {
+    const customer = await addCustomer();
+
+    await send("PUT", `/api/customers/${customer.id}`, {
+      name: customer.name,
+      note: " ",
+    });
+
+    expect(byName((await readPlan()).customers, customer.name).note).toBeNull();
+  });
+
+  it("refuses a customer's note a note may not hold", async () => {
+    const response = await send("POST", "/api/customers", {
+      name: unique("Fictional Customer"),
+      note: "a".repeat(noteLength + 1),
+    });
+    expect(response.statusCode).toBe(400);
   });
 
   it("refuses a name taken, ignoring letter case", async () => {

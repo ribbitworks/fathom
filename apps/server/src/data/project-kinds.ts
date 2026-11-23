@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, features, proposals, projects, and milestones, as kinds of the plan's records, in the
-// order approving adds them, so each comes after the records it links to. A project and its
-// milestones are removed together: the draft removing a project uses the drafts removing its
-// milestones, and each of those uses the project's, so they are approved, rejected, and discarded
-// together. Each project has a general feature, which takes people assigned to the project itself:
-// it follows the project's approval rather than having a draft, and nobody chooses anything in it,
-// so the project's own history covers it. Part of the data access layer; records.ts applies the
-// rules every kind shares.
+// Customers, features, proposals, projects, and milestones as kinds of the plan's records, in the
+// order approving adds them, each after the records it links to; records.ts applies their rules.
 
 import {
   customers,
@@ -53,7 +47,7 @@ export const milestonesOf = (state: RecordsState, projectId: string) =>
 export const customerKind: RecordKind = {
   type: "customer",
   table: customers,
-  fields: ["name"],
+  fields: ["name", "description", "note"],
   links: {},
   unique: [
     { field: "name", message: "There is already a customer with that name" },
@@ -105,6 +99,9 @@ export const proposalKind: RecordKind = {
       : undefined,
 };
 
+// A project and its milestones are removed together: the draft removing a project uses the drafts
+// removing its milestones, and each of those uses the project's. Its general feature, taking people
+// assigned to the project itself, follows the project's approval rather than having a draft.
 export const projectKind: RecordKind = {
   type: "project",
   table: projects,

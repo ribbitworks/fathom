@@ -27,6 +27,7 @@ export const noteLength = 10_000;
 const noteFields = new Map<string, readonly string[]>([
   ["release", ["note"]],
   ["feature", ["note"]],
+  ["customer", ["note"]],
 ]);
 
 export const isNoteField = (recordType: string, field: string): boolean =>

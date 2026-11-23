@@ -308,6 +308,12 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   barFilters?: readonly BarFilter<Rec>[];
 }
 
+// A headed group of a record's columns, by key, as its details show them.
+export interface ColumnGroup {
+  title: string;
+  keys: readonly string[];
+}
+
 export interface RowTotals<Rec> {
   label: string;
   overall: string;

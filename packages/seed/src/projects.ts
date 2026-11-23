@@ -23,16 +23,53 @@ import { fictionalId } from "@fathom/fixtures";
 import { firstOffered } from "@fathom/server/data";
 import { addDays } from "@fathom/shared";
 import { and, asc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
-import { recorded, type SeededChange } from "./recorded.ts";
+import { filledIn, recorded, type SeededChange } from "./recorded.ts";
 
-// Each record has a key of its own, which its identifier is made from.
-export const seededCustomers = [
-  { key: "harbour", name: "Bluefin Harbour Authority" },
-  { key: "clinics", name: "Cedar Valley Clinics" },
-  { key: "transit", name: "Marlow City Transit" },
+// Each record has a key of its own, which its identifier is made from. One customer has neither a
+// description nor a note, and one a note long enough to fold.
+export const seededCustomers: readonly {
+  key: "harbour" | "clinics" | "transit" | "mining" | "air";
+  name: string;
+  description?: string;
+  note?: string;
+}[] = [
+  {
+    key: "harbour",
+    name: "Bluefin Harbour Authority",
+    description:
+      "Port operator running two container terminals and a ferry quay.",
+    note: [
+      "**Quarterly review** in March, at the harbour office.",
+      "Wants the crane work live before the summer peak; a slip past May costs them the season.",
+      "- Prefers releases on Tuesdays, never in a month's last week",
+      "- Their IT team tests on a copy for two weeks first",
+      "- Asked twice about offline sync for the yard tablets",
+      "Billing contact changed in October.",
+      "Renewal talks start once the first handover is signed.",
+      "Site visits need a day's notice at the gate.",
+      "Their operations lead joins the monthly call; their finance lead joins each quarter.",
+      "Crane downtime is planned for the first Sunday of each month.",
+      "They keep a test terminal open for demonstrations.",
+    ].join("\n\n"),
+  },
+  {
+    key: "clinics",
+    name: "Cedar Valley Clinics",
+    description: "Group of six rural clinics sharing one booking system.",
+    note: "Pilot at the north clinic first, then the other five.",
+  },
+  {
+    key: "transit",
+    name: "Marlow City Transit",
+    description: "City bus and tram operator with displays at every stop.",
+  },
   { key: "mining", name: "Kestrel Mining Cooperative" },
-  { key: "air", name: "Orchid Regional Air" },
-] as const;
+  {
+    key: "air",
+    name: "Orchid Regional Air",
+    description: "Regional airline flying twelve island routes.",
+  },
+];
 
 type CustomerKey = (typeof seededCustomers)[number]["key"];
 
@@ -312,10 +349,15 @@ export async function seedProjects(
     const made: SeededChange[] = [];
     // Features removed from proposals, recorded after the proposals were added, as an edit is.
     const removals: ChangeRecord[] = [];
-    for (const { key, name } of seededCustomers) {
+    for (const { key, name, description, note } of seededCustomers) {
       const id = customerId(key);
-      await transaction.insert(customers).values({ id, name });
-      made.push(...recorded("customer", id, "created", { name }));
+      const fields = {
+        name,
+        description: description ?? null,
+        note: note ?? null,
+      };
+      await transaction.insert(customers).values({ id, ...fields });
+      made.push(...recorded("customer", id, "created", filledIn(fields)));
     }
     for (const proposal of seededProposals) {
       const id = proposalId(proposal.key);

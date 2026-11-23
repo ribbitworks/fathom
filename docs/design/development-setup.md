@@ -316,7 +316,7 @@ See [Releases](#releases) for the steps.
   - A Kind column on Features, with New, Improvement and Fix.
   - Twelve planned hires, two of them filled.
   - Eight feature teams: Payments core, Search, Platform reliability, Mobile apps, Field tools, Data pipeline, Identity and Integrations.
-  - Five customers, five projects with milestones, and proposals in every status.
+  - Five customers, most with a description and some with notes, one long enough to fold, one with neither; five projects with milestones; and proposals in every status.
   - Three schedules, Platform, Patches and Field Apps, each with releases, and features targeting their cycles.
   - Allocations to features, with people over-allocated, under-allocated and not allocated.
   - Drafts by each persona, some approved, some rejected and some left unpublished.

@@ -119,15 +119,26 @@ export type PlanRecordRequest =
 
 export type PlanKind = PlanRecordRequest["type"];
 
+const customerRecord = (request: CustomerRequest) => ({
+  name: request.name,
+  description: request.description,
+  note: keptNote(request.note),
+});
+
 export async function addCustomer(
   database: Database,
   maker: Actor,
   request: CustomerRequest,
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, (transaction, state) =>
-    saveRecordDraft(transaction, maker, state, "customer", randomUUID(), {
-      name: request.name,
-    }),
+    saveRecordDraft(
+      transaction,
+      maker,
+      state,
+      "customer",
+      randomUUID(),
+      customerRecord(request),
+    ),
   );
 }
 
@@ -140,7 +151,7 @@ export async function changeCustomer(
   return changingPlan(database, maker, (transaction, state) =>
     saveRecordDraft(transaction, maker, state, "customer", id, {
       ...changeableRecord(state, "customer", id),
-      name: request.name,
+      ...customerRecord(request),
     }),
   );
 }
