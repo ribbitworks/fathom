@@ -3,9 +3,9 @@
 // Adding a record from a picker of the plan's records, in a New form stacked under the picker's
 // panel, and linking it to the record the picker was for.
 
-import type { Project, ProjectPlan, Proposal } from "@fathom/shared";
+import type { Feature, Project, ProjectPlan, Proposal } from "@fathom/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { newRecordQuestion } from "./discard-question.tsx";
 import { pendingId } from "./grid-drafts.ts";
 import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
@@ -13,24 +13,72 @@ import type { FormValues } from "./new-record-panel.tsx";
 import type { NoteOpening } from "./note-editing.tsx";
 import { type PlanChange, wordsOf } from "./plan-table.tsx";
 import {
+  operationsOf,
   type PlanRecord,
   type PlanRecordKind,
   projectPlanQuery,
+  type TableChoices,
 } from "./projects.ts";
-import { customerTable } from "./project-grids.tsx";
+import {
+  customerTable,
+  projectTable,
+  proposalTable,
+} from "./project-grids.tsx";
 import type { Column, RecordActions, RecordTable } from "./record-table.ts";
 import type { SidePanel } from "./side-panel.tsx";
 import type { View } from "./table-view.ts";
 
-// The records whose Customers picker may add a customer.
-type CustomerHolder = "project" | "proposal";
+// The kinds of record a picker may add.
+type LinkedKind = "customer" | "project" | "proposal";
 
-const customerHolders: ReadonlySet<PlanRecordKind> = new Set<CustomerHolder>([
-  "project",
-  "proposal",
-]);
+const tabOf = {
+  customer: "customers",
+  project: "projects",
+  proposal: "proposals",
+} as const satisfies Record<LinkedKind, string>;
 
-const one = wordsOf("customers").one;
+// How a record added from a picker is linked: after it is added, as a draft of the record the
+// picker was for, or within its own draft, which names that record.
+type LinkedBy = "after" | "within";
+
+// A picker that may add a record: its column's key, the kind it adds, what the form opens with, given
+// what was typed and the record the picker is for, and how the new record is linked.
+interface AddingPicker {
+  key: string;
+  kind: LinkedKind;
+  opening: (typed: string, id: string) => FormValues;
+  linkedBy: LinkedBy;
+}
+
+const customersPicker: AddingPicker = {
+  key: "customerIds",
+  kind: "customer",
+  opening: (typed) => ({ name: typed }),
+  linkedBy: "after",
+};
+
+// A project or proposal added from a feature opens naming the feature.
+const featureNamer = (
+  key: string,
+  kind: "project" | "proposal",
+): AddingPicker => ({
+  key,
+  kind,
+  opening: (typed, id) => ({ name: typed, featureIds: [id] }),
+  linkedBy: "within",
+});
+
+const pickersOf: Readonly<Record<PlanRecordKind, readonly AddingPicker[]>> = {
+  project: [customersPicker],
+  proposal: [customersPicker],
+  feature: [
+    customersPicker,
+    featureNamer("projectIds", "project"),
+    featureNamer("proposalIds", "proposal"),
+  ],
+  customer: [],
+  milestone: [],
+};
 
 export type Adds = NonNullable<Column<never, PlanChange>["adds"]>;
 
@@ -60,29 +108,25 @@ export const addingTo = <Rec extends PlanRecord, Request>(
       };
 
 interface Linking {
-  typed: string;
+  kind: LinkedKind;
+  linkedBy: LinkedBy;
   values: FormValues;
+  // What the form opened with, which leaving it unchanged discards without asking.
+  opened: FormValues;
   saving: boolean;
   // The record the picker was for, by its kind and identifier.
-  type: CustomerHolder;
+  type: PlanRecordKind;
   id: string;
   back: () => void;
 }
 
-const opening = (typed: string): FormValues => ({ name: typed });
+const oneOf = (kind: LinkedKind): string =>
+  // The kind is always one of the fixed kinds.
+  // eslint-disable-next-line security/detect-object-injection
+  wordsOf(tabOf[kind]).one;
 
-// Whether anything differs from the name the form opened with, so leaving it asks first.
-const changed = ({ typed, values }: Linking) =>
-  JSON.stringify(values) !== JSON.stringify(opening(typed));
-
-// A new customer's form leaves out the read-only columns that its projects, proposals and features
-// fill, so it needs none of them.
-const noLinks = {
-  projects: [],
-  proposals: [],
-  features: [],
-  drafted: { projects: [], proposals: [], features: [] },
-};
+// A record that holds customers: a project, a proposal or a feature.
+type CustomerHolder = Project | Proposal | Feature;
 
 export function useAddFromPanel({
   canAdd,
@@ -99,13 +143,19 @@ export function useAddFromPanel({
   // Each New starts its form afresh.
   const [forms, setForms] = useState(0);
 
-  const addsCustomer = (type: CustomerHolder): Adds => ({
-    one,
+  const addsOf = (
+    { kind, opening, linkedBy }: AddingPicker,
+    type: PlanRecordKind,
+  ): Adds => ({
+    one: oneOf(kind),
     onNew: (id, typed, back) => {
+      const opened = opening(typed, id);
       setForms((count) => count + 1);
       setLinking({
-        typed,
-        values: opening(typed),
+        kind,
+        linkedBy,
+        values: opened,
+        opened,
         saving: false,
         type,
         id,
@@ -117,8 +167,10 @@ export function useAddFromPanel({
   // The New options of a kind of record's pickers, by their columns' keys, for a role that may add.
   const addsFor = (type: PlanRecordKind): AddsByKey =>
     new Map(
-      canAdd && customerHolders.has(type)
-        ? [["customerIds", addsCustomer(type as CustomerHolder)]]
+      canAdd
+        ? // The type is always one of the fixed kinds.
+          // eslint-disable-next-line security/detect-object-injection
+          pickersOf[type].map((picker) => [picker.key, addsOf(picker, type)])
         : [],
     );
 
@@ -127,17 +179,18 @@ export function useAddFromPanel({
   };
 
   const question =
-    linking !== undefined && changed(linking)
-      ? newRecordQuestion(one)
+    linking !== undefined &&
+    JSON.stringify(linking.values) !== JSON.stringify(linking.opened)
+      ? newRecordQuestion(oneOf(linking.kind))
       : undefined;
 
-  // Links the customers added to the record the picker was for, as a draft of it, as the plan holds
-  // it with what was saved since the form opened, unless someone has removed it since.
-  const link = (current: Linking, added: readonly string[]) => {
+  // Links customers added to the record the picker was for, as a draft of it, as the plan holds it
+  // with what was saved since the form opened, unless someone has removed it since.
+  const linkCustomers = (current: Linking, added: readonly string[]) => {
     // The plan is loaded while its page shows.
     const plan = client.getQueryData(projectPlanQuery.queryKey) as ProjectPlan;
-    const holders: readonly (Project | Proposal)[] =
-      current.type === "project" ? plan.projects : plan.proposals;
+    // Only records that hold customers have a Customers picker.
+    const holders = operationsOf(current.type).all(plan) as CustomerHolder[];
     for (const record of holders.filter(({ id }) => id === current.id)) {
       actionsFor(current.type).update(record, {
         customerIds: [...record.customerIds, ...added],
@@ -145,15 +198,24 @@ export function useAddFromPanel({
     }
   };
 
+  const linkOf: Readonly<
+    Record<LinkedBy, (current: Linking, added: readonly string[]) => void>
+  > = {
+    after: linkCustomers,
+    within: () => undefined,
+  };
+
   // The form, stacked under the panel the picker is in, or beside the table when it was a cell's.
   const panel = ({
     plan,
+    choices,
     narrow,
     notes,
     units,
     ask,
   }: {
     plan: ProjectPlan;
+    choices: TableChoices;
     narrow: boolean;
     notes: NoteOpening;
     units: View["units"];
@@ -164,19 +226,19 @@ export function useAddFromPanel({
   }): SidePanel | undefined => {
     if (linking === undefined) return undefined;
     const current = linking;
+    const one = oneOf(current.kind);
     const panelId = "linked-record-panel";
-    const actions = actionsFor("customer");
-    return {
-      key: "linked",
-      id: panelId,
-      name: `new ${one}`,
-      fits: true,
-      node: (
+    function form<Rec extends PlanRecord, Request>(
+      table: RecordTable<Rec, PlanChange, Request>,
+      records: readonly Rec[],
+    ) {
+      const actions = actionsFor<Rec, Request>(current.kind);
+      return (
         <NewPlanRecordPanel
           key={forms}
           title={`New ${one}`}
-          table={customerTable(noLinks, { seesFeatures: false })}
-          records={plan.customers}
+          table={table}
+          records={records}
           values={current.values}
           saving={current.saving}
           narrow={narrow}
@@ -184,7 +246,7 @@ export function useAddFromPanel({
           notes={notes}
           units={units}
           onValue={(key, value) => {
-            // The form shows only while a customer is being added.
+            // The form shows only while a record is being added.
             setLinking((shown) => {
               const now = shown as Linking;
               return { ...now, values: { ...now.values, [key]: value } };
@@ -195,7 +257,7 @@ export function useAddFromPanel({
             actions.add(
               [{ id: pendingId(), request }],
               (added) => {
-                link(current, added);
+                linkOf[current.linkedBy](current, added);
                 setLinking(undefined);
                 current.back();
               },
@@ -212,7 +274,20 @@ export function useAddFromPanel({
             });
           }}
         />
-      ),
+      );
+    }
+    const formOf: Readonly<Record<LinkedKind, () => ReactNode>> = {
+      customer: () =>
+        form(customerTable(choices, { seesFeatures: false }), plan.customers),
+      project: () => form(projectTable(choices), plan.projects),
+      proposal: () => form(proposalTable(choices), plan.proposals),
+    };
+    return {
+      key: "linked",
+      id: panelId,
+      name: `new ${one}`,
+      fits: true,
+      node: formOf[current.kind](),
     };
   };
 
