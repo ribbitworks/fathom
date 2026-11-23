@@ -3,8 +3,7 @@
 // The plan's records: their kinds and the rules across them, reading them with their drafts, and
 // showing each draft. Part of the data access layer.
 
-import { fields } from "@fathom/db";
-import type { Database } from "@fathom/db";
+import { fields, type Reader } from "@fathom/db";
 import type { Permission, RecordDraft, RecordType } from "@fathom/shared";
 import { draftKeyKinds, noteProblem, recordTypeSchema } from "@fathom/shared";
 import { eq } from "drizzle-orm";
@@ -40,8 +39,6 @@ import {
   versionOf,
 } from "./record-state.ts";
 import { readValues, recordedValues, valueFieldsIn } from "./values.ts";
-
-type Reader = Pick<Database, "select">;
 
 // Every kind, in the order approving adds and changes them, so a record comes after the records it
 // links to; removals go the other way.

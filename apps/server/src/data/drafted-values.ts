@@ -8,6 +8,7 @@ import {
   inChunks,
   people,
   plannedHires,
+  type Reader,
   unpublishedDrafts,
 } from "@fathom/db";
 import {
@@ -21,7 +22,6 @@ import {
 } from "drizzle-orm";
 import { isLink } from "@fathom/shared";
 import { isNote, isNumber } from "./column-types.ts";
-import type { Reader } from "./draft-records.ts";
 
 // The IDs asked for that another row of the ID column already has, ignoring letter case: a person's
 // Employee ID or a planned hire's requisition, live or as a draft makes it, published or not. A live

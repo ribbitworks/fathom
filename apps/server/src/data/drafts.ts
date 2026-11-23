@@ -3,7 +3,13 @@
 // Draft rows: reading, holding and writing the changes waiting for approval, and each user's
 // unpublished changes to them. Part of the data access layer.
 
-import { drafts, inChunks, unpublishedDrafts, users } from "@fathom/db";
+import {
+  drafts,
+  inChunks,
+  type Reader,
+  unpublishedDrafts,
+  users,
+} from "@fathom/db";
 import type { DraftKind } from "@fathom/shared";
 import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { ConflictError } from "../errors.ts";
@@ -16,7 +22,6 @@ import {
   noDraft,
   wantsNoDraft,
   draftBetween,
-  type Reader,
   type Recorded,
   type Viewer,
   type Draft,
