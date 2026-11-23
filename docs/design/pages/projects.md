@@ -31,6 +31,7 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 ## Record Details
 
 - **Milestones:** have no panel of their own; a project's panel lists them, with Add milestone.
+- **A new milestone's project:** the Milestones table's empty row's Project picker offers New project, which fills the row with the project once added, as [Adding from a picker](../../standards/ui-conventions/entering-and-saving.md#choices) sets out. A saved milestone's project can't change.
 - **A project's dates:** come from its milestones, so they have no pencil.
 - **Linked records:** customers and proposals open in their own tab's panel; features open on [Features](features.md).
 - **A customer:** Name, Description and Notes under Details, then Projects, Proposals and Features under Commitments, drawn as a feature's details draw its customers and commitments: links one to a line, ID first, None when empty. Features shows only to those who see features. The owner chose this on 2026-11-24 over a customer-only layout with each project's next delivery and features nested under it, which an earlier mockup showed.

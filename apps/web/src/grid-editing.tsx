@@ -47,6 +47,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     | "shownAt"
     | "putBack"
     | "save"
+    | "fillNewRow"
     | "emptyNewRow"
     | "kindKept"
     | "followingKind"
@@ -81,6 +82,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     shownAt,
     putBack,
     save,
+    fillNewRow,
     emptyNewRow,
     kindKept,
     followingKind,
@@ -346,14 +348,31 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       : undefined;
   };
 
-  // A new row isn't a record to link to yet.
+  // A saved record's picker links what it adds to the record; a new row's fills the row, where its
+  // column says so.
   const addingAt = (cell: Cell, column: Column<Rec, Change>) => {
-    const { record } = at(cell).row;
-    return record === undefined
-      ? undefined
-      : addingFor(column.adds, record.id, () => {
-          focusRecordCell(record.id, column.key);
-        });
+    const { row } = at(cell);
+    const { adds } = column;
+    if (row.newRow) {
+      const { key } = row.newRow;
+      return adds?.fillsNewRow === true
+        ? addingFor(
+            adds,
+            {
+              fill: (ids) => {
+                fillNewRow(key, column, [...ids]);
+              },
+            },
+            () => {
+              focusSoon(cellId(cell.row, cell.column));
+            },
+          )
+        : undefined;
+    }
+    const { record } = row;
+    return addingFor(adds, { id: record.id }, () => {
+      focusRecordCell(record.id, column.key);
+    });
   };
 
   const editor = (

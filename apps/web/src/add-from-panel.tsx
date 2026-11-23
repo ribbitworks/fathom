@@ -24,7 +24,12 @@ import {
   projectTable,
   proposalTable,
 } from "./project-grids.tsx";
-import type { Column, RecordActions, RecordTable } from "./record-table.ts";
+import type {
+  AddedTo,
+  Column,
+  RecordActions,
+  RecordTable,
+} from "./record-table.ts";
 import type { SidePanel } from "./side-panel.tsx";
 import type { View } from "./table-view.ts";
 
@@ -38,22 +43,28 @@ const tabOf = {
 } as const satisfies Record<LinkedKind, string>;
 
 // How a record added from a picker is linked: after it is added, as a draft of the record the
-// picker was for, or within its own draft, which names that record.
-type LinkedBy = "after" | "within";
+// picker was for; within its own draft, which names that record; or by filling the new row the
+// picker was in.
+type LinkedBy = "after" | "within" | "fill";
 
 // A picker that may add a record: its column's key, the kind it adds, what the form opens with, given
-// what was typed and the record the picker is for, and how the new record is linked.
+// what was typed and what the picker is for, and how the new record is linked.
 interface AddingPicker {
   key: string;
   kind: LinkedKind;
-  opening: (typed: string, id: string) => FormValues;
+  opening: (typed: string, to: AddedTo) => FormValues;
   linkedBy: LinkedBy;
 }
+
+const named = (typed: string): FormValues => ({ name: typed });
+
+// The saved record a picker is for, where only a saved record's picker adds.
+const savedOf = (to: AddedTo): string => (to as { id: string }).id;
 
 const customersPicker: AddingPicker = {
   key: "customerIds",
   kind: "customer",
-  opening: (typed) => ({ name: typed }),
+  opening: named,
   linkedBy: "after",
 };
 
@@ -64,7 +75,7 @@ const featureNamer = (
 ): AddingPicker => ({
   key,
   kind,
-  opening: (typed, id) => ({ name: typed, featureIds: [id] }),
+  opening: (typed, to) => ({ name: typed, featureIds: [savedOf(to)] }),
   linkedBy: "within",
 });
 
@@ -77,7 +88,10 @@ const pickersOf: Readonly<Record<PlanRecordKind, readonly AddingPicker[]>> = {
     featureNamer("proposalIds", "proposal"),
   ],
   customer: [],
-  milestone: [],
+  // A saved milestone's project can't change, so only its new row adds one.
+  milestone: [
+    { key: "projectId", kind: "project", opening: named, linkedBy: "fill" },
+  ],
 };
 
 export type Adds = NonNullable<Column<never, PlanChange>["adds"]>;
@@ -114,9 +128,9 @@ interface Linking {
   // What the form opened with, which leaving it unchanged discards without asking.
   opened: FormValues;
   saving: boolean;
-  // The record the picker was for, by its kind and identifier.
+  // The kind of record the picker was for, and the record or new row it was in.
   type: PlanRecordKind;
-  id: string;
+  to: AddedTo;
   back: () => void;
 }
 
@@ -148,8 +162,9 @@ export function useAddFromPanel({
     type: PlanRecordKind,
   ): Adds => ({
     one: oneOf(kind),
-    onNew: (id, typed, back) => {
-      const opened = opening(typed, id);
+    fillsNewRow: linkedBy === "fill",
+    onNew: (to, typed, back) => {
+      const opened = opening(typed, to);
       setForms((count) => count + 1);
       setLinking({
         kind,
@@ -158,7 +173,7 @@ export function useAddFromPanel({
         opened,
         saving: false,
         type,
-        id,
+        to,
         back,
       });
     },
@@ -191,7 +206,8 @@ export function useAddFromPanel({
     const plan = client.getQueryData(projectPlanQuery.queryKey) as ProjectPlan;
     // Only records that hold customers have a Customers picker.
     const holders = operationsOf(current.type).all(plan) as CustomerHolder[];
-    for (const record of holders.filter(({ id }) => id === current.id)) {
+    const id = savedOf(current.to);
+    for (const record of holders.filter((holder) => holder.id === id)) {
       actionsFor(current.type).update(record, {
         customerIds: [...record.customerIds, ...added],
       });
@@ -203,6 +219,10 @@ export function useAddFromPanel({
   > = {
     after: linkCustomers,
     within: () => undefined,
+    // Only a new row's picker fills it.
+    fill: (current, added) => {
+      (current.to as Extract<AddedTo, { fill: unknown }>).fill(added);
+    },
   };
 
   // The form, stacked under the panel the picker is in, or beside the table when it was a cell's.

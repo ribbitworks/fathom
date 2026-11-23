@@ -35,7 +35,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
 
 ## Terms
 
@@ -431,3 +431,39 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - The **Projects** tab is chosen.
     - The side panel shows the details of 'Depot Operations'.
   - **Notes:**
+
+### PROJ-14: The Product Manager Adds a Project From a New Milestone's Row
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-13.
+
+**Preconditions:** Signed in with this account. **Projects** page open, **Milestones** tab chosen.
+
+- [ ] `0D6B` Select the **Name** cell of the empty row at the end of the table.
+  - **Expected:** The cell is outlined.
+  - **Notes:**
+
+- [ ] `E3A1` Type `Survey done` and press Tab.
+  - **Expected:** The **Project** cell opens for typing, with a list of projects under it.
+  - **Notes:**
+
+- [ ] `74E2` Type `Testing Harbour`.
+  - **Expected:**
+    - The list reads "No matches".
+    - The last item, under a line, reads "New project “Testing Harbour”", in blue.
+  - **Notes:**
+
+- [ ] `C5A9` Press Enter.
+  - **Expected:**
+    - The side panel opens, headed **New project**.
+    - Its **Name** shows `Testing Harbour`.
+  - **Notes:**
+
+- [ ] `92F0` Select **Add**.
+  - **Expected:**
+    - The **New project** panel is gone.
+    - The row's **Name** reads `Survey done`.
+    - The row's **Project** reads `Testing Harbour`.
+    - The **Project** cell is outlined.
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.

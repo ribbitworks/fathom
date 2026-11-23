@@ -231,7 +231,7 @@ describe("adding a record from a picker", () => {
     ).toEqual([]);
   });
 
-  it("offers no New in the empty row, which isn't a record to link to yet", async () => {
+  it("offers no New customer in a proposal's empty row, whose customers can change once saved", async () => {
     await openPage("/projects?tab=proposals", plan());
     await userEvent.click(
       document.getElementById("cell-new-0-customerIds") as HTMLElement,
@@ -505,5 +505,59 @@ describe("adding a record from a feature's picker", () => {
     expect(
       within(sidePanel()).queryByRole("button", { name: "Change Customers" }),
     ).toBeNull();
+  });
+});
+
+describe("adding a project from a new milestone's row", () => {
+  const surveyed = plan({
+    projects: [project(), project({ id: newId, name: "Harbour Survey" })],
+  });
+  const newCell = (key: string) =>
+    document.getElementById(`cell-new-0-${key}`) as HTMLElement;
+
+  it("adds the project and fills the row with it, keeping what was typed in the row", async () => {
+    // Given the Milestones tab, with a name typed in the empty row
+    const { fetch, held } = await openPage("/projects?tab=milestones", plan(), {
+      "POST /api/projects": saved(() => surveyed),
+    });
+    await userEvent.click(newCell("name"));
+    await userEvent.keyboard("Survey done{Enter}");
+
+    // When New project is chosen in its Project picker, a date is typed in the row, and the project
+    // is added
+    await userEvent.click(newCell("projectId"));
+    await userEvent.keyboard("Harbour Survey");
+    await userEvent.click(
+      await screen.findByRole("option", {
+        name: "New project “Harbour Survey”",
+      }),
+    );
+    const form = newForm() as HTMLElement;
+    expect(
+      within(form).getByRole("heading", { name: "New project" }),
+    ).toBeTruthy();
+    await userEvent.click(newCell("date"));
+    await userEvent.keyboard("20300501{Enter}");
+    held.plan = surveyed;
+    await userEvent.click(within(form).getByRole("button", { name: "Add" }));
+
+    // Then the project is sent, and the row keeps its name and date, its Project now the new one
+    await waitFor(() => {
+      expect(newForm()).toBeNull();
+    });
+    expect([
+      sent(fetch, "POST /api/projects"),
+      newCell("name").textContent,
+      newCell("date").textContent,
+      newCell("projectId").textContent,
+    ]).toEqual([
+      [expect.objectContaining({ name: "Harbour Survey" })],
+      expect.stringMatching(/^Survey done/u),
+      expect.stringMatching(/2030/u),
+      "FP-1 Harbour Survey",
+    ]);
+    await waitFor(() => {
+      expect(document.activeElement).toBe(newCell("projectId"));
+    });
   });
 });
