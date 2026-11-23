@@ -127,6 +127,32 @@ describe("adding a record from a picker", () => {
     });
   });
 
+  it("names the form's values apart from the details' values it is stacked under", async () => {
+    await typeInCustomers("Harbour");
+    await userEvent.keyboard("{Enter}");
+    const ids = [...document.querySelectorAll("[id*='-value-']")].map(
+      ({ id }) => id,
+    );
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        "new-record-value-name-label",
+        "record-value-customerIds-label",
+      ]),
+    );
+    expect(ids).toHaveLength(new Set(ids).size);
+  });
+
+  it("puts focus on the form's own field when Add is refused under the details", async () => {
+    await typeInCustomers("Harbour");
+    await userEvent.keyboard("{Enter}");
+    const form = newForm() as HTMLElement;
+    await userEvent.clear(within(form).getByRole("textbox", { name: "Name" }));
+    await userEvent.click(within(form).getByRole("button", { name: "Add" }));
+    await waitFor(() => {
+      expect(document.activeElement?.id).toBe("new-record-value-name-editor");
+    });
+  });
+
   it("asks before discarding a form changed from what was typed", async () => {
     await typeInCustomers("Harbour");
     await userEvent.keyboard("{Enter}");

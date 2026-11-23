@@ -19,6 +19,8 @@ import {
   editorId,
   type RecordEditingContext,
   type SaveChange,
+  scopeOf,
+  type ValueScope,
 } from "./record-editing.tsx";
 import type { Column, GridRecord } from "./record-table.ts";
 import type { SidePanel } from "./side-panel.tsx";
@@ -42,6 +44,8 @@ interface Writing {
   finish: (edited: CellValue) => string | undefined;
   address: string | undefined;
   inAddress: boolean;
+  // Whose values the note's row belongs to, for its button to take focus back.
+  scope: ValueScope;
 }
 
 type Opening<Rec extends GridRecord, Change> = NoteContext<Rec, Change> & {
@@ -87,6 +91,7 @@ export function useNoteEditing(detailsTitleId: string) {
     kept: string | undefined,
   ) => {
     setWriting({
+      scope: scopeOf(context),
       recordId: context.id,
       name: context.name,
       column,
@@ -182,7 +187,7 @@ export function useNoteEditing(detailsTitleId: string) {
       if (writing.address !== undefined && writing.address === address.note) {
         address.onNote(undefined, false);
       }
-      focusSoon(stillShown ? changeId(column) : detailsTitleId);
+      focusSoon(stillShown ? changeId(column, writing.scope) : detailsTitleId);
     };
     const id = editorId(column);
     return {

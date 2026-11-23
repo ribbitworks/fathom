@@ -357,6 +357,7 @@ export function Row({
   }, [asked]);
   const onClick = opensOnClick(start);
   const checkbox = editing !== undefined && editing.onStart === undefined;
+  const scope = editing?.scope;
   return (
     <div
       className={[
@@ -366,7 +367,7 @@ export function Row({
       data-field={editing?.open === true || undefined}
       onClick={onClick}
     >
-      <dt id={labelId(column)} className={classes.label}>
+      <dt id={labelId(column, scope)} className={classes.label}>
         {column.label}
       </dt>
       <dd className={classes.value}>
@@ -415,14 +416,14 @@ export function Row({
                   (cellKinds[column.kind].inPanel === true ? (
                     // A value opened in its own panel, such as a note, is read there first.
                     <OpenBesideButton
-                      id={changeId(column)}
+                      id={changeId(column, scope)}
                       className={classes.change}
                       label={`Open ${column.label}`}
                       onOpen={start}
                     />
                   ) : (
                     <ActionIcon
-                      id={changeId(column)}
+                      id={changeId(column, scope)}
                       {...changeButton(column.label)}
                       onClick={start}
                     />
@@ -433,7 +434,7 @@ export function Row({
           </Group>
         )}
         {editing?.problem !== undefined && (
-          <Text id={problemId(column)} c="red" size="sm" mt={4}>
+          <Text id={problemId(column, scope)} c="red" size="sm" mt={4}>
             {editing.problem}
           </Text>
         )}

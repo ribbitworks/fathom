@@ -36,6 +36,7 @@ function renderRow(onStart: () => void, action?: ReactNode) {
           column={column}
           value="FX-1"
           editing={{
+            scope: "record",
             open: false,
             editor: null,
             onStart,
