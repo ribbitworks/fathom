@@ -127,15 +127,6 @@ export interface FeatureNamer {
   id: string;
 }
 
-// The records among those given that name a feature.
-export const namersOf = (
-  records: readonly { id: string; featureIds: readonly string[] }[],
-  featureId: string,
-): string[] =>
-  records
-    .filter(({ featureIds }) => featureIds.includes(featureId))
-    .map(({ id }) => id);
-
 // A change to a feature split into the projects and proposals that name it, and its own fields.
 export function namersIn(change: CellChange & Record<string, unknown>): {
   namers: Partial<FeatureProjectsRequest>;

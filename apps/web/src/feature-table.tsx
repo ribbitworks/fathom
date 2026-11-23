@@ -37,7 +37,6 @@ import {
   cycleChoiceId,
   type ReleaseGroup,
   type FeatureFields,
-  namersOf,
   type TableChoices,
   targetOf,
 } from "./projects.ts";
@@ -50,9 +49,7 @@ import {
   merged,
   nameColumn,
   newKind,
-  NamersCell,
-  namingParts,
-  pickedColumn,
+  namersColumn,
   type PlanChange,
   planTable,
   savedKind,
@@ -63,27 +60,16 @@ import type { ColumnUnit } from "./table-view.ts";
 import { formatMonth } from "./day-formats.ts";
 import { type RowGroup, rankOfNone } from "./row-groups.ts";
 
-// A column of the projects or proposals that name a feature, which those records hold, so a change
-// to it is a draft of each record added or taken away, marked on its part of the cell. It is set on a
-// feature once it is added.
-function namersColumn(
+// A column of the projects or proposals that name a feature. It is set on a feature once it is added.
+function featureNamersColumn(
   key: "projectIds" | "proposalIds",
   label: string,
   records: readonly (Project | Proposal)[],
-  // The same records with their drafts, whatever the view, to mark them.
   drafted: readonly (Project | Proposal)[],
   editable: boolean,
 ): Column<Feature, PlanChange> {
-  const cell = (asLive: boolean) => (feature: Feature) => (
-    <NamersCell parts={namingParts(drafted, feature.id)} asLive={asLive} />
-  );
   return {
-    ...pickedColumn<Feature>(key, label, records, (feature) =>
-      namersOf(records, feature.id),
-    ),
-    content: cell(false),
-    liveContent: cell(true),
-    marksParts: true,
+    ...namersColumn<Feature>(key, label, records, drafted, "featureIds"),
     readOnlyOn: (kind) => !editable || kind === newKind,
   };
 }
@@ -307,14 +293,14 @@ export function featureColumns(
     }),
     field<Feature>("neededBy", planColumnNames.neededBy, "month"),
     customersColumn<Feature>(choices.customers),
-    namersColumn(
+    featureNamersColumn(
       "projectIds",
       planColumnNames.projectIds,
       choices.projects,
       choices.drafted.projects,
       editsNamers,
     ),
-    namersColumn(
+    featureNamersColumn(
       "proposalIds",
       planColumnNames.proposalIds,
       choices.proposals,
