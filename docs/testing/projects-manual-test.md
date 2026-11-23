@@ -317,6 +317,57 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 - [ ] `71FC` Select the ⋯ at the end of the row of 'Kestrel Mining Cooperative', then **Show details**.
   - **Expected:** **Description** and **Notes** each read "None", dimmed.
+
+### PROJ-13: The Product Manager Adds a Customer From a Proposal's Customers
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-12.
+
+**Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
+
+- [ ] `7A2C` Point at 'Fleet Tracking Bid' and select the details button at the right of its **Name** cell.
+  - **Expected:** The side panel opens, headed 'Fleet Tracking Bid'.
+  - **Notes:**
+
+- [ ] `B3E1` Select the change button in the **Customers** row.
+  - **Expected:**
+    - A list of customers opens, with a search box.
+    - The last item, under a line, reads "New customer", in blue.
+  - **Notes:**
+
+- [ ] `4D97` Type `Testing Ferries`.
+  - **Expected:**
+    - The list reads "No matches".
+    - The last item reads "New customer “Testing Ferries”".
+  - **Notes:**
+
+- [ ] `E05A` Press Enter.
+  - **Expected:**
+    - A second panel, headed **New customer**, opens under the details of 'Fleet Tracking Bid'.
+    - Its **Name** shows `Testing Ferries`.
+    - A **Maximize** button is before its close button.
+    - **Cancel** and **Add** are at its foot.
+  - **Notes:**
+
+- [ ] `91CF` Select **Maximize** on the **New customer** panel.
+  - **Expected:**
+    - The **New customer** panel takes the side panel's whole height.
+    - The details of 'Fleet Tracking Bid' are folded away.
+    - The button now reads **Restore**.
+  - **Notes:**
+
+- [ ] `2F6B` Select **Restore**.
+  - **Expected:** Both panels show again, one above the other.
+  - **Notes:**
+
+- [ ] `C8D4` Select **Add**.
+  - **Expected:**
+    - The **New customer** panel is gone.
+    - The **Customers** row names `Testing Ferries`, with a hollow yellow dot before it.
+    - The change button in the **Customers** row has focus.
+  - **Notes:**
+
+- [ ] `5E73` Select the **Customers** tab.
+  - **Expected:** The table has a row for `Testing Ferries`, with a hollow yellow dot in its slot.
   - **Notes:**
 
 ### PROJ-14: What a Customer Gets and Asks For

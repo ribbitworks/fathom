@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What each kind of cell in a table of records holds and how it behaves, so a new kind of column is
-// added in one place: text, such as a name; a date; a number; choices from a list; a web link; a
-// note; and a checkbox. Each kind says how a record's value is read, live or as drafted, what
-// clears it, how it reads in words, what a pasted cell gives, the change that saves it, how wide its column is, and
-// whether its column is worth breaking down by. A kind with an editor, cell, or menu item of its
-// own names it; the rest are edited as text and shown in words.
+// Each kind of cell in a table of records, such as text, a date, choices or a note: how its value
+// is read, shown, pasted, saved and edited.
 
 import {
   type ChangeValue,
@@ -31,7 +27,7 @@ import {
   webAddress,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
-import { ChoicePicker, type Finish } from "./choice-picker.tsx";
+import { type Adding, ChoicePicker, type Finish } from "./choice-picker.tsx";
 import { FlagCell } from "./flag-field.tsx";
 import { LinkCell, LinkEditor, LinkMenuItem } from "./link-field.tsx";
 import {
@@ -115,6 +111,8 @@ export interface EditorProps {
   onWriting?: (writing: boolean) => void;
   // For an editor in the side panel: whether the value now differs from the one it opened with.
   onChanged?: (changed: boolean) => void;
+  // For a picker of records that may add one: its New option.
+  adding?: Adding | undefined;
   onDone: (value: CellValue, how: Finish) => void;
   onCancel: () => void;
 }
@@ -382,6 +380,7 @@ const choice: CellKind = {
     typed,
     invalid,
     describedBy,
+    adding,
     onDone,
     onCancel,
   }) => (
@@ -395,6 +394,7 @@ const choice: CellKind = {
       multiple={column.multiple}
       initial={chosen(value)}
       typed={typed}
+      adding={adding}
       onDone={onDone}
       onCancel={onCancel}
     />

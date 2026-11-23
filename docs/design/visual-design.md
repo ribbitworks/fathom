@@ -211,7 +211,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **One tooltip for a whole table:** `TableTips` in `table-tips.tsx`, showing the tip of whatever carries `tipAttribute` under the pointer or in the cell with keyboard focus, such as a feature team's whole name or an estimate's hours.
 - **Resizing by an edge:** `ResizeEdge` in `resize-edge.tsx`, for side panels and table columns, with a table's column widths in `useColumnWidths` in `column-widths.ts`.
 - **A text field with an × to empty it:** `ClearableInput` in `clearable-input.tsx`.
-- **Choosing from a list:** `ChoicePicker` in `choice-picker.tsx`.
+- **Choosing from a list:** `ChoicePicker` in `choice-picker.tsx`, with its New option given by a column's `adds`, and the plan's New form it opens, stacked under the picker's panel, from `useAddFromPanel` in `add-from-panel.tsx`.
 - **A group of choices in a menu, the chosen one ticked:** `MenuChoices` in `app-menu.tsx`.
 - **A menu beside the pointer:** `MenuAtPoint` in `app-menu.tsx`, for a right-click on a table's row or a card, and a card's menu opened from its keys or its ⋯.
 - **A column in units:** a column's `units` in `record-table.ts`, resolved into the unit and decimal places the view names by `inViewUnits` in `grid-columns.tsx`, with `useChosenUnits` in `record-editing.tsx` for a form or panel's own choice, and an estimate's cell in `EffortCell` in `effort-cell.tsx`.

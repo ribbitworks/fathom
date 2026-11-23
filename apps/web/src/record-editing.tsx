@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Changing the values of a record in a details panel, or of one being added there, as its table's
-// cells do: which value's editor is open, and what is wrong with the value last given. Each value is
-// saved and checked as its cell saves and checks it, and a note opens in a panel of its own.
+// cells do.
 
 import type { Typing } from "@fathom/shared";
 import { Checkbox, Group, NativeSelect, Text } from "@mantine/core";
@@ -14,7 +13,12 @@ import { focusSoon, selectSoon } from "./focus.ts";
 import { readOnlyFor } from "./grid-columns.tsx";
 import { valueChange } from "./grid-saving.ts";
 import { noteOpenFor } from "./note-address.ts";
-import type { Column, GridRecord, RecordTable } from "./record-table.ts";
+import {
+  addingFor,
+  type Column,
+  type GridRecord,
+  type RecordTable,
+} from "./record-table.ts";
 import classes from "./record-details.module.css";
 import {
   type CellValue,
@@ -391,6 +395,14 @@ export function useRecordEditing<
     }
   };
 
+  // A form's pickers never add.
+  const addingIn = (context: Context, column: Column<Rec, Change>) =>
+    context.adding === true
+      ? undefined
+      : addingFor(column.adds, context.id, () => {
+          focusSoon(changeId(column));
+        });
+
   // How each of the record's values may be changed, if at all.
   const editingOf =
     (context: Context) =>
@@ -481,6 +493,7 @@ export function useRecordEditing<
               describedBy={wrong === undefined ? undefined : problemId(column)}
               problem={wrong}
               readOnly={false}
+              adding={addingIn(context, column)}
               onDone={(edited, how) => {
                 finish(context, column, edited, how, save);
               }}

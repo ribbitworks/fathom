@@ -27,6 +27,18 @@ To add one quickly, type in the empty row at the end of the table.
 
 You're done when the new row shows with a hollow dot.
 
+### Add a Customer While Choosing a Record's Customers
+
+1. Open a project's or proposal's details.
+1. Select the pencil beside **Customers**.
+1. Type the new customer's name.
+1. Select **New customer** with the name, last in the list. When no customer matches what you typed, Enter does the same.
+1. In the **New customer** form that opens under the details, with the name filled in, select **Add**.
+
+You can start from the record's **Customers** cell in the table too: select it, press Enter and type the name. The form then opens beside the table.
+
+Fathom adds the customer and links it to the record, each as a draft of its own. You're done when the record's **Customers** names the new customer with a hollow dot.
+
 ### See a Record's Details
 
 1. Point at the record's row.

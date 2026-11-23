@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
+/* The options of every drop-down list, through the theme, and a picker's options set apart. */
+
 /* What every drop-down list shares through the theme: the option the keyboard is on, which Enter
    would pick, is grey, as one pointed at is, rather than filled with the accent, so it never looks
    like a choice already made. In light mode both are a step darker than Mantine's hover, which is
@@ -23,4 +25,14 @@
   border-bottom: 1px solid var(--mantine-color-default-border);
   border-radius: 0;
   margin-bottom: calc(var(--mantine-spacing-xs) / 2);
+}
+
+/* A picker's New option, set apart by a line, in the accent colour of an action, pointed at or not. */
+.adding,
+.adding:hover,
+.adding[data-combobox-selected] {
+  border-top: 1px solid var(--mantine-color-default-border);
+  border-radius: 0;
+  margin-top: calc(var(--mantine-spacing-xs) / 2);
+  color: var(--mantine-color-anchor);
 }
