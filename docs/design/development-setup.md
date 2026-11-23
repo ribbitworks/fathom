@@ -228,7 +228,7 @@ The copy gets new names, and so a new, empty database.
 | `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests). `--skip` and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it. Without a connection to the internet it stops before starting, naming `--offline`, which leaves out the Renovate settings and the scans that need the internet, once `pnpm offline:prepare` has run, as [Working Offline](#working-offline) describes |
 | `pnpm check:push` | The tests a change can affect and the linters, side by side, before a push: `pnpm test:changed`, ESLint, the formatting check, type checking and the Markdown and shell linters. It lists each one's result and time, and names any that failed. `--skip` and `--offline` work as for `pnpm check` |
 | `pnpm test` | Every test: the script tests, then every package's |
-| `pnpm test:changed` | The tests a change can affect; with `--uncommitted`, only the work not yet committed |
+| `pnpm test:changed` | The tests a change can affect, failing when a changed source file, or a package running every test, falls short of its coverage, as on GitHub; with `--uncommitted`, only the work not yet committed |
 | `pnpm test:scripts` | The script tests alone |
 | `pnpm test:packages` | Every package's tests; with `--filter` and a package, such as `--filter @fathom/web`, only those packages, as pnpm chooses them |
 | `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, the application and database can't reach the internet, and the application image holds none of the tests or the files only they use |
