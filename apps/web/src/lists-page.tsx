@@ -69,6 +69,7 @@ import {
   listKindSchema,
   listsQuery,
   liveLists,
+  unchangeableLists,
   listRefusal,
   moveChoice,
   resubmitListDraft,
@@ -176,6 +177,7 @@ export function ListsPage({
   const open = lists.find((list) => list.id === listId);
   // Each list with every draft, as marks are worked out before any are taken back or left out.
   const drafted = new Map(all.map((list) => [list.id, list]));
+  const unchangeable = unchangeableLists(all, permissions);
 
   const openList = (list: List) => {
     void navigate({
@@ -507,7 +509,7 @@ export function ListsPage({
   // Every draft waiting among the lists shown, which Approvers approve or reject all at once, with
   // the drafts that approving them uses, or that use them.
   const waiting = canApprove
-    ? draftsWaitingIn(shownLists)
+    ? draftsWaitingIn(shownLists.filter(({ id }) => !unchangeable.has(id)))
     : { selection: noDrafts(), total: 0 };
   const decideAll = (asking: "approve" | "reject") => {
     setDecision(
@@ -515,6 +517,8 @@ export function ListsPage({
     );
     setDeciding(true);
   };
+
+  const openWhy = open === undefined ? undefined : unchangeable.get(open.id);
 
   let content: ReactNode;
   if (query.isPending) {
@@ -568,7 +572,11 @@ export function ListsPage({
               {waiting.total > 0 && (
                 <DecideAllItems
                   total={waiting.total}
-                  everywhere={draftsWaitingIn(all).total}
+                  everywhere={
+                    draftsWaitingIn(
+                      all.filter(({ id }) => !unchangeable.has(id)),
+                    ).total
+                  }
                   onDecide={decideAll}
                 />
               )}
@@ -631,8 +639,11 @@ export function ListsPage({
                         <ListPanel
                           key={open.id}
                           list={open}
-                          canEdit={canEdit}
-                          canApprove={canApprove}
+                          canEdit={canEdit && openWhy === undefined}
+                          canApprove={canApprove && openWhy === undefined}
+                          unchangeable={
+                            mayEdit || mayApprove ? openWhy : undefined
+                          }
                           showLive={besideLive(show)}
                           drafted={originalOf(drafted, open)}
                           waits={(selection) =>

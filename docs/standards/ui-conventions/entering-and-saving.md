@@ -87,6 +87,9 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 - **Controls turned off:** A control for a change the server would refuse is turned off, with a line saying why wherever the reason isn't plain to see. One the reader might expect is turned off with its reason, not hidden; a control is hidden only when the role can never use it, or, as New is under Live only, where nothing it made would show.
   - **Drawn by:** each page.
   - **Example:** in a list with meanings, such as Feature statuses, Retire and Remove are greyed out on the only choice that means Possible, with a line saying why.
+- **A record the role can't change:** Where a role may change records of a kind but not one record, such as a list of a class it can't see, the record's panel is read only, with one dimmed line saying why, rather than each control turned off.
+  - **Drawn by:** `ListPanel`'s `unchangeable` in `apps/web/src/list-panel.tsx`, from `unchangeableLists` in `apps/web/src/lists.ts`.
+  - **Example:** none in the seed data; a role with Edit Configuration but not Personal data, opening Work patterns on the Lists page.
 - **Menu buttons:** A menu of actions on one thing opens from a ⋯ named "Actions for" the thing, such as Actions for Fictional Major. A ⋯ that opens something else is named for what it opens, such as Unpublished changes. On the Features Board, a card's ⋯ shows only while the card is pointed at or has focus. It isn't a Tab stop, since Shift+F10 on the card opens the same menu. The Org chart's cards have none: their menu opens from a right-click, Shift+F10 or the menu key.
   - **Drawn by:** `MoreButton`, named through `actionsFor`, in `apps/web/src/row-controls.tsx`, and a card's through `CardMenu` in `apps/web/src/card-menu.tsx`.
   - **Example:** on Lists, the ⋯ beside each list.

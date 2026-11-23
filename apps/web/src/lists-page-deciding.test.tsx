@@ -30,6 +30,7 @@ import {
   chooseInListMenu,
   sent,
   openDraftMenu,
+  noPeople,
 } from "./test-lists-page.tsx";
 
 afterEach(() => {
@@ -40,6 +41,7 @@ describe("drafts on the Lists page", () => {
   it("gives an Approver who may not edit lists what to decide, in a list's and a choice's menus", async () => {
     serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": draftedAnswer,
     });
     renderApp("/lists/l5");
@@ -70,6 +72,7 @@ describe("drafts on the Lists page", () => {
   it("offers no approval of drafts this account changed, from a choice's menu or the Draft menu", async () => {
     const fetch = serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -138,6 +141,7 @@ describe("drafts on the Lists page", () => {
   it("disables approving a choice added to a list whose own addition was rejected", async () => {
     const fetch = serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -167,6 +171,7 @@ describe("drafts on the Lists page", () => {
   it("disables approving a new order that places a choice whose addition was rejected, and says none can be approved when all shown wait", async () => {
     serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -235,6 +240,7 @@ describe("drafts on the Lists page", () => {
   it("skips, when approving all shown, a new order that waits on a rejected choice", async () => {
     const fetch = serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -301,6 +307,7 @@ describe("drafts on the Lists page", () => {
   it("still waits, with drafts applied, for the rejected choice a new order places, and skips it when approving all", async () => {
     const fetch = serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -382,6 +389,7 @@ describe("drafts on the Lists page", () => {
   it("skips, when approving all, a choice added to a list whose addition was rejected", async () => {
     const fetch = serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -431,6 +439,7 @@ describe("drafts on the Lists page", () => {
   it("says how many waiting drafts a search hides, and decides only those shown", async () => {
     serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -457,6 +466,7 @@ describe("drafts on the Lists page", () => {
     const [platform] = added.choices;
     serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -490,6 +500,7 @@ describe("drafts on the Lists page", () => {
     const [platform] = added.choices;
     serverAnswers({
       "GET /api/session": approver,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [

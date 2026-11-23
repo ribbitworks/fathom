@@ -40,6 +40,7 @@ import {
   chooseInListMenu,
   sent,
   openDraftMenu,
+  noPeople,
 } from "./test-lists-page.tsx";
 
 afterEach(() => {
@@ -83,6 +84,7 @@ describe("drafts on the Lists page", () => {
   it("approves a choice with the list it was added to, naming the list first", async () => {
     const fetch = serverAnswers({
       "GET /api/session": approver,
+      "GET /api/people": noPeople,
       "GET /api/lists": draftedAnswer,
       "POST /api/drafts/approval": savedAs(),
     });
@@ -220,6 +222,7 @@ describe("drafts on the Lists page", () => {
   it("holds a list's own draft and its new order of choices in its menu, and asks before rejecting the order", async () => {
     serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -327,6 +330,7 @@ describe("drafts on the Lists page", () => {
   it("names the drafts a rejection or approval includes, from the list's and a choice's menu", async () => {
     serverAnswers({
       "GET /api/session": approver,
+      "GET /api/people": noPeople,
       "GET /api/lists": draftedAnswer,
     });
     const history = renderApp("/lists/l5");
@@ -375,6 +379,7 @@ describe("drafts on the Lists page", () => {
   it("approves or rejects every draft waiting among the lists from the Draft menu", async () => {
     serverAnswers({
       "GET /api/session": approver,
+      "GET /api/people": noPeople,
       "GET /api/lists": draftedAnswer,
     });
     renderApp("/lists");
@@ -412,6 +417,7 @@ describe("drafts on the Lists page", () => {
     };
     serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -449,6 +455,7 @@ describe("drafts on the Lists page", () => {
     const [platform] = added.choices;
     serverAnswers({
       "GET /api/session": approverOnly,
+      "GET /api/people": noPeople,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -648,6 +655,7 @@ describe("unpublished and held changes on the Lists page", () => {
   const open = async (lists: object[]) => {
     serverAnswers({
       "GET /api/session": approver,
+      "GET /api/people": noPeople,
       "GET /api/lists": () => Response.json({ lists }),
     });
     renderApp("/lists/l1");

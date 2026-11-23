@@ -301,6 +301,12 @@ export const seesEmployment = (access: ClassAccess): boolean =>
 
 export const needsClassify = "Changing a class needs Classify data";
 
+// Why a role can't act on data of a class it doesn't see.
+const unseenClass = (dataClass: Tier) =>
+  // The class is always one of the fixed classes listed above.
+  // eslint-disable-next-line security/detect-object-injection
+  `This role can't see ${classNames[dataClass]} data`;
+
 // Why a role may not move data from one class to another, or undefined when it may: moving needs
 // Classify data and sight of both classes, so nobody moves data they cannot see, or out of sight.
 export function whyNoMove(
@@ -312,10 +318,22 @@ export function whyNoMove(
   const unseen = [from, to].find(
     (dataClass) => !seesClass(permissions, dataClass),
   );
-  if (unseen === undefined) return undefined;
-  // The class is always one of the fixed classes listed above.
-  // eslint-disable-next-line security/detect-object-injection
-  return `This role can't see ${classNames[unseen]} data`;
+  return unseen === undefined ? undefined : unseenClass(unseen);
+}
+
+// Why a role may not change a list of a class, or decide its drafts, or undefined when it may: a
+// General list's values are people's details, so need sight of people, and any other class's need
+// sight of that class.
+export function whyNoListChange(
+  permissions: readonly Permission[],
+  dataClass: Tier,
+): string | undefined {
+  if (dataClass === "general") {
+    return permissions.includes("people:view")
+      ? undefined
+      : "This role can't see people's details";
+  }
+  return seesClass(permissions, dataClass) ? undefined : unseenClass(dataClass);
 }
 
 const employment = ["startDate", "endDate"] as const;

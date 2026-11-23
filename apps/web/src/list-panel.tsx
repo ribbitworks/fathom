@@ -59,10 +59,13 @@ export function ListPanel({
   onClose,
   onEditList,
   onMoveClass,
+  unchangeable,
 }: {
   list: List;
   canEdit: boolean;
   canApprove: boolean;
+  // Why the role, which changes or decides lists, may not change this one or decide its drafts.
+  unchangeable?: string | undefined;
   // Whether a choice a draft changes or moves shows its live row too.
   showLive?: boolean;
   // The list with every draft, whatever the view, which the marks are worked out from, so the Draft
@@ -381,6 +384,11 @@ export function ListPanel({
             </div>
           )}
         </div>
+        {unchangeable !== undefined && (
+          <Text fz="xs" c="dimmed" className={classes.builtInNote}>
+            {`${unchangeable}, so it can't change this list.`}
+          </Text>
+        )}
         {list.builtIn && (
           <Text fz="xs" c="dimmed" className={classes.builtInNote}>
             {builtInNote(list.builtIn, mayEdit)}

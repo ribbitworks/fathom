@@ -4,7 +4,7 @@ category: "Design"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Fathom: Administration Pages
@@ -74,6 +74,7 @@ The Administration pages hold accounts, roles, settings, lists and data classes.
 - **Lists with meanings:** In a [list with meanings](../../product/domain.md#people-terms), each choice shows its meaning, chosen from a menu.
   - The only choice with a given meaning, and the last choice offered in Positions, can't be retired or removed.
 - **Feature sizes:** Each choice ends with its weight, typed as a Number column's value is.
+- **A list of a class the role can't see:** For a role that changes or decides lists, the panel is read only, with one dimmed line under the choices saying why, such as This role can't see Personal data, so it can't change this list. The Draft menu's approving and rejecting every draft waiting leave its drafts out.
 
 ## Data Classes
 

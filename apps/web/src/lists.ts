@@ -15,8 +15,10 @@ import {
   type ListRequest,
   listSchema,
   listsSchema,
+  type Permission,
   savedSchema,
   type Tier,
+  whyNoListChange,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
@@ -279,6 +281,27 @@ function withDraftsUndone(
 // Every list as it is live, without drafts.
 export const liveLists = (lists: readonly List[]): List[] =>
   withDraftsUndone(lists, () => true);
+
+// Why the role may not change each list or decide its drafts, by list, for those it may not: the
+// list's class, live or as drafted, decides, as the server does.
+export function unchangeableLists(
+  lists: readonly List[],
+  permissions: readonly Permission[],
+): Map<string, string> {
+  const live = new Map(liveLists(lists).map((list) => [list.id, list]));
+  return new Map(
+    lists.flatMap((list) => {
+      const why = [list, live.get(list.id)]
+        .flatMap((version) =>
+          version === undefined
+            ? []
+            : [whyNoListChange(permissions, version.visibility)],
+        )
+        .find((reason) => reason !== undefined);
+      return why === undefined ? [] : [[list.id, why] as const];
+    }),
+  );
+}
 
 // The lists as their drafts will make them once approved, as Drafts applied shows them: rejected
 // drafts are taken back, since they are not on their way to being approved, and the lists and

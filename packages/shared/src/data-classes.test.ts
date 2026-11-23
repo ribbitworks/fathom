@@ -28,6 +28,7 @@ import {
   shownIn,
   viewsOfRole,
   whyMissing,
+  whyNoListChange,
   whyNoMove,
 } from "./data-classes.ts";
 
@@ -286,6 +287,28 @@ describe("why a role may not move data", () => {
     ["the class data enters", "general", "confidential"],
   ] as const)("needs sight of %s", (_, from, to) => {
     expect(whyNoMove(classifier, from, to)).toBe(
+      "This role can't see Confidential data",
+    );
+  });
+});
+
+describe("why a role may not change a list", () => {
+  it("allows a General list to a role that sees people", () => {
+    expect(whyNoListChange(["people:view"], "general")).toBeUndefined();
+  });
+
+  it("needs sight of people for a General list, whose values are people's details", () => {
+    expect(whyNoListChange(["personal:view"], "general")).toBe(
+      "This role can't see people's details",
+    );
+  });
+
+  it("allows a list of a class beyond General to a role that sees that class", () => {
+    expect(whyNoListChange(["personal:view"], "personal")).toBeUndefined();
+  });
+
+  it("needs sight of a class beyond General", () => {
+    expect(whyNoListChange(personal, "confidential")).toBe(
       "This role can't see Confidential data",
     );
   });
