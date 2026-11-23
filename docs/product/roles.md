@@ -1,6 +1,6 @@
 # Fathom: Roles
 
-**Last updated:** 2026-11-20
+**Last updated:** 2026-11-23
 
 What each role can see, change and approve. A role is a set of permissions kept in Fathom, not fixed in its code, so a new feature adds permissions rather than roles. Fathom starts with one role for each persona. Roles can be edited, and copied to make new ones, within the [safeguards](#safeguards-for-administrators). The [Administration Pages](../design/pages/administration.md#roles) describe the Roles page.
 
@@ -71,9 +71,9 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 The classes, and each built-in detail's default class, are set out in the [Domain Model](../design/domain-model.md#data-classes).
 
 - **Apart from pages:** A role views a class on every page it reaches, without needing People, such as employment dates on the Allocations grid.
-- **Pages that need a class:** A role without a page's classes doesn't get the page, mode or grouping, as [A page without its data](../standards/ui-conventions/drafts-and-values.md#access) sets out, and the Roles page lists what each role misses and why.
-  - **Personal:** Allocations, Feature assignments, and People and the Org chart on other dates need it, so Team Members, Product Managers and Feature Leads don't get them. Product Managers see only Capacity's Settings mode.
-  - **Confidential too:** the Org chart's reporting view on future dates, and grouping Feature assignments or Capacity's People by manager.
+- **Pages that need a class:** A role without a page's classes doesn't get the page, tab or grouping, as [A page without its data](../standards/ui-conventions/drafts-and-values.md#access) sets out, and the Roles page lists what each role misses and why.
+  - **Personal:** Capacity's Feature teams and Allocations, and People and the Org chart on other dates need it, so Team Members, Product Managers and Feature Leads don't get them. Product Managers see only Capacity's Settings tab.
+  - **Confidential too:** the Org chart's reporting view on future dates, and grouping Capacity's Feature teams or Allocations by manager.
   - **General versions:** Demand, the Plan, and On track or Late will have a General version for roles without Personal data, such as Product Managers and Team Members. It shows totals, with no names and no Personal details. Not built yet ([#209](https://github.com/ribbitworks/fathom/issues/209), [#204](https://github.com/ribbitworks/fathom/issues/204)).
 - **Classify data:** Moves built-in details, lists and columns between classes, the hiring plan included. It is one permission across every class, and a move needs View on both the class left and the class entered.
 - **Lists and columns:** Making a list or column, or changing its name or description, needs Edit Configuration and sight of its class: View People for General (General values are people's details), View Personal details for Personal, and View Confidential data for Confidential. New lists and columns start General; giving one another class needs Classify data.

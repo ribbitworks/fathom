@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Executive Workflows
@@ -47,7 +47,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The **Overview** page is open.
     - The **Plan** section shows **Overview**, **Projects**, **Features** and **Releases**.
-    - The **People** section shows **People**, **Org chart**, **Feature assignments** and **Capacity**.
+    - The **People** section shows **People**, **Org chart** and **Capacity**.
     - The **Administration** section shows **Accounts**, **Roles**, **Settings** and **Lists**.
     - The **History** section shows **Drafts**, **Change history** and **Access history**.
     - The menu shows the **Help** section.

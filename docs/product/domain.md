@@ -4,7 +4,7 @@ category: "Domain"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/design/domain-model.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Fathom: Domain Concepts
@@ -28,7 +28,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Release:** A named delivery that includes one or more cycles, and ships the features that target them.
 - **Schedule:** A repeating set of cycles with its own cycle length, such as major releases or patches, with releases only where it ships them, since not everything is released.
 - **Roadmap:** Intent: the features wanted and roughly when, before anything is costed, shown on the Features page's Board. A feature starts on the Roadmap, as a Possible feature, joins the Plan once it is staffed, and stays on the Roadmap.
-- **Plan:** What is staffed: the features with their estimates, allocations, months, and capacity, shown in the Capacity page's Work mode, not built yet. Written with a capital P, apart from the plan Approve Plan approves. Neither the Roadmap nor the Plan holds tasks, sprints, story points, or workflow columns.
+- **Plan:** What is staffed: the features with their estimates, allocations, months, and capacity, shown in the Capacity page's Work tab, not built yet. Written with a capital P, apart from the plan Approve Plan approves. Neither the Roadmap nor the Plan holds tasks, sprints, story points, or workflow columns.
 - **Late:** Said of a feature forecast to finish after the end of its Needed by month, or, with no Needed by, after the end of its target cycle. A feature with neither is never Late. Not built yet.
 - **Estimate:** A rough size of the effort a feature needs, not its cost, such as a rough order of magnitude (ROM) or a SWAG, given in a unit of effort such as hours or person-months.
 - **Effort:** Work at full efficiency: a person-day of effort is the hours a working day converts to, not a day on the calendar. Duration, which takes in loading and time off, is apart.

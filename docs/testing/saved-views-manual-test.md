@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Saved Views
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its schedules in the timeline; that a view on Features is shared by its table and Board, and kept to Features; that a view keeps People grouped by two levels; and that a view on Feature assignments keeps its grouping, and is kept to its page; that a view on the Org chart keeps the team shown alone and the levels shown; and that Accounts are on the shared table with saved views.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its schedules in the timeline; that a view on Features is shared by its table and Board, and kept to Features; that a view keeps People grouped by two levels; and that a view on Capacity's Feature teams tab keeps its grouping, and is kept to its tab; that a view on the Org chart keeps the team shown alone and the levels shown; and that Accounts are on the shared table with saved views.
 
 ## Test Environment
 
@@ -902,11 +902,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The rows show as one list.
   - **Notes:**
 
-### VIEW-15: A View on Feature Assignments Is Shared and Kept to Its Page
+### VIEW-15: A View on Capacity's Feature Teams Is Shared and Kept to Its Tab
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, in the main window, the account VIEW-14 ended with.
 
-**Preconditions:** In the main window, this account is signed in on **Feature assignments**, with no view applied. In the second window, Engineering Director, `engineering.director@fathom.test` is signed in on **Feature assignments**, with no view applied.
+**Preconditions:** In the main window, this account is signed in on the **Capacity** page's **Feature teams** tab, with no view applied. In the second window, Engineering Director, `engineering.director@fathom.test` is signed in on the **Capacity** page's **Feature teams** tab, with no view applied.
 
 - [ ] `D9F9` In the main window, select **Group by**, then **Feature team**.
   - **Expected:**
@@ -945,9 +945,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The Views menu's button says `Fictional by feature team`, with no dot.
   - **Notes:**
 
-- [ ] `B448` Select the **Capacity** page in the left-hand menu.
+- [ ] `B448` Select the **Allocations** tab.
   - **Expected:**
-    - **People** is chosen in the switch after the **Capacity** heading.
+    - **Allocations** is chosen in the **Capacity** page's tabs.
     - No Views menu shows above the table.
   - **Notes:**
 

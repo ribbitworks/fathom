@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Editing Roles
@@ -111,7 +111,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `3DFA` Read the summary.
   - **Expected:**
-    - **Sees:** **Overview**, **Projects**, **Features**, **Releases**, **People**, **Org chart**, **Org chart on other dates**, **Org chart on future dates**, **Feature assignments**, **Feature assignments grouped by manager**, **Capacity**, **Allocations grouped by manager**, **Allocations**, **Lists**, **Drafts** and **Change history**.
+    - **Sees:** **Overview**, **Projects**, **Features**, **Releases**, **People**, **People on other dates**, **People on future dates**, **Org chart**, **Org chart on other dates**, **Org chart on future dates**, **Capacity**, **Feature teams**, **Feature teams grouped by manager**, **Allocations grouped by manager**, **Allocations**, **Lists**, **Drafts** and **Change history**.
     - **Doesn't see:** **Accounts**, **Roles**, **Settings**, **Data classes** and **Access history**.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
     - **Cannot** includes "Cannot change allocations.", "Cannot change feature teams.", "Cannot reclassify data." and "Cannot approve their own drafted changes."
@@ -150,8 +150,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `D477` Untick **View** on the **People** row.
   - **Expected:**
     - **Approve** on **People**, **View** and **Approve** on **Feature teams** and **Hiring plan**, **View** on **Personal** and **Confidential**, and **Classify data** are unticked and greyed.
-    - Under **Sees**, **People**, **Org chart**, **Org chart on other dates**, **Org chart on future dates**, **Feature assignments**, **Feature assignments grouped by manager**, **Allocations grouped by manager** and **Allocations** are struck through in red.
-    - Under **Doesn't see**, **People**, **Org chart** and **Feature assignments** are in bold teal.
+    - Under **Sees**, **People**, **People on other dates**, **People on future dates**, **Org chart**, **Org chart on other dates**, **Org chart on future dates**, **Feature teams**, **Feature teams grouped by manager**, **Allocations grouped by manager** and **Allocations** are struck through in red.
+    - Under **Doesn't see**, **People** and **Org chart** are in bold teal.
     - Under **Doesn't see**, these lines are in bold teal:
       - one starting "Allocations: needs View Feature teams, View People"
       - one starting "Allocations grouped by manager: needs View Feature teams, View People"
@@ -162,7 +162,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:**
     - **Approve** on **People**, **View** on **Feature teams**, **Hiring plan**, **Personal** and **Confidential** can be ticked again, and are unticked.
     - **People** and **Org chart** under **Sees** are in plain text again.
-    - **Org chart on other dates**, **Org chart on future dates**, **Feature assignments**, **Feature assignments grouped by manager**, **Allocations grouped by manager** and **Allocations** under **Sees** are still struck through in red.
+    - **People on other dates**, **People on future dates**, **Org chart on other dates**, **Org chart on future dates**, **Feature teams**, **Feature teams grouped by manager**, **Allocations grouped by manager** and **Allocations** under **Sees** are still struck through in red.
   - **Notes:**
 
 - [ ] `7C42` Select **Reset**.
@@ -174,7 +174,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `9DA9` Untick **View** on the **Confidential** row.
   - **Expected:**
-    - Under **Sees**, **Org chart on future dates**, **Feature assignments grouped by manager** and **Allocations grouped by manager** are struck through in red.
+    - Under **Sees**, **People on future dates**, **Org chart on future dates**, **Feature teams grouped by manager** and **Allocations grouped by manager** are struck through in red.
     - Under **Doesn't see**, "Hiring plan: needs Confidential" and "Approving drafts of planned hires: needs Confidential" are in bold teal.
     - Under **Can**, the line starting "Sees the hiring plan" is struck through in red.
     - Under **Cannot**, "Planned hires appear only as placeholders." is in bold teal.

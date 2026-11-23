@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/capacity-feature-teams*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "apps/server/src/data/feature-team-held-changes.ts", "apps/server/src/data/feature-team-month-cells.ts", "apps/server/src/data/feature-team-undo.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Capacity's Feature Teams
@@ -56,7 +56,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `428B` Look at the month headings without scrolling.
   - **Expected:**
-    - The current month is the first month beside the **Person** column.
+    - The current month is the second month beside the **Person** column, after last month.
     - Its heading is underlined in red.
   - **Notes:**
 
@@ -254,7 +254,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 - [ ] `8352` Look at the **People** section of the left-hand menu.
   - **Expected:**
     - It shows **People** and **Org chart**.
-    - There is no **Capacity** and no **Feature assignments**.
+    - There is no **Capacity**.
   - **Notes:**
 
 ### FA-13: The Table Works From the Keyboard
@@ -585,7 +585,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 - [ ] `C3E8` Select **›**.
   - **Expected:**
-    - The next quarter's first month is the first month beside the **Person** column.
+    - The next quarter's first month is the second month beside the **Person** column, after the month before it.
     - That quarter is filled in blue, and the one before is not.
   - **Notes:**
 
@@ -594,7 +594,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Notes:**
 
 - [ ] `91D4` Select **Today**.
-  - **Expected:** The current month is the first month beside the **Person** column.
+  - **Expected:** The current month is the second month beside the **Person** column, after last month.
   - **Notes:**
 
 - [ ] `D461` Press Shift+Tab until a quarter in the strip has a blue outline.
@@ -606,5 +606,5 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Notes:**
 
 - [ ] `7E31` Press Enter.
-  - **Expected:** That quarter's first month is the first month beside the **Person** column.
+  - **Expected:** That quarter's first month is the second month beside the **Person** column, after the month before it.
   - **Notes:**

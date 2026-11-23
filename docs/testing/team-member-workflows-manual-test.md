@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-team-member.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Team Member Workflows
@@ -93,7 +93,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The **Plan** section shows **Overview**, **Projects**, **Features** and **Releases**.
     - The **People** section shows **People** and **Org chart**.
-    - There is no **Feature assignments** and no **Capacity**.
+    - There is no **Capacity**.
     - The **History** section shows **Drafts** and **Change history**.
     - The menu shows the **Help** section.
   - **Notes:**

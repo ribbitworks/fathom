@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-reviewing-the-plan-manual-test.md", "docs/help/working-as-a-feature-lead.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Acceptance, Staffing the Work
@@ -35,7 +35,7 @@ This test uses [Change a Generated Password](../manual-test-basics.md#change-a-g
 
 ## Terms
 
-[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button, the teams switch, the Feature teams button, the team panel, the team list, the Group by menu and the mode switch. This test adds:
+[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button, the teams switch, the Feature teams button, the team panel, the team list, the Group by menu and the tabs. This test adds:
 
 - **Next month:** the month after the current one.
 
@@ -147,14 +147,16 @@ Run the test cases in order, in about 30 minutes, straight after [Reviewing the 
 
 **Preconditions:** STAFF-04 done.
 
-- [ ] `EDA6` Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:** The page is headed **Feature assignments**, with a row for each person and a column for each month.
+- [ ] `EDA6` Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab.
+  - **Expected:**
+    - The page is headed **Capacity**, with **Feature teams** chosen in its tabs.
+    - There is a row for each person and a column for each month.
   - **Notes:**
 
 - [ ] `6A2A` Type `Freya` in the search box.
   - **Expected:**
     - Only the row of `Freya Holt` is listed.
-    - No cell in her row holds a label.
+    - No cell in her row names a team.
   - **Notes:**
 
 - [ ] `F4E9` Select her cell for next month, and press Enter.
@@ -164,8 +166,8 @@ Run the test cases in order, in about 30 minutes, straight after [Reviewing the 
 - [ ] `A184` Type `Tide`, and press Tab.
   - **Expected:**
     - The team list closes.
-    - From next month on, each cell holds a `Tide team` label with a hollow yellow dot before it.
-    - The current month's cell holds no label.
+    - From next month on, each cell names `Tide team` after a hollow yellow dot.
+    - The current month's cell names no team.
   - **Notes:**
 
 ### STAFF-06: A Team's Lead Is Changed
@@ -223,8 +225,10 @@ Run the test cases in order, in about 30 minutes, straight after [Reviewing the 
   - **Expected:** **Staffed** reads "No" for `Fictional Tide Tables` and `Fictional Gauge Alerts`, and is empty for `Fictional Lamp Schedule`.
   - **Notes:**
 
-- [ ] `66A8` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The mode switch has **People** chosen.
+- [ ] `66A8` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
+  - **Expected:**
+    - **Allocations** is chosen in the page's tabs.
+    - There is a row for each person and a column for each month.
   - **Notes:**
 
 - [ ] `E6C3` Select **Feature team** in the Group by menu.
@@ -234,7 +238,7 @@ Run the test cases in order, in about 30 minutes, straight after [Reviewing the 
   - **Notes:**
 
 - [ ] `8B4A` Type `Cleo` in the search box, and read the current month's cell of her row under `Tide team`.
-  - **Expected:** The cell's only line reads "Under" and "0%".
+  - **Expected:** The cell's only line reads "Not allocated", in bold red.
   - **Notes:**
 
 ### STAFF-09: The People Are Counted by Site

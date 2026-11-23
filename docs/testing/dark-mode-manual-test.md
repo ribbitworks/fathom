@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Dark Mode
@@ -439,25 +439,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The panel closes, and nothing is changed.
   - **Notes:**
 
-### DARK-05: Feature Assignments
+### DARK-05: Capacity's Feature Teams
 
 **Account:** Superuser, `superuser@fathom.test`, the same as DARK-04.
 
-**Preconditions:** **Dark** chosen in the Appearance menu. **Feature assignments** page open from the left-hand menu.
+**Preconditions:** **Dark** chosen in the Appearance menu. **Capacity** page open from the left-hand menu, with the **Feature teams** tab chosen.
 
 - [ ] `B608` Select **Manager** in the Group by menu.
   - **Expected:** **Group by: Manager** shows.
   - **Notes:**
 
 - [ ] `7B1E` Look at the table.
-  - **Expected:** The labels, headings, group names and shaded cells are easy to read.
+  - **Expected:** The team names, headings, group names and shaded cells are easy to read.
   - **Notes:**
 
 - [ ] `F473` Type `Priscille Adam` in the search box.
   - **Expected:**
     - Her row's tint is easy to make out.
-    - In the current month's column, the dot before her struck-through 'Mobile apps' label is easy to see.
-    - Every label is easy to read.
+    - In the current month's column, the dot before her struck-through 'Mobile apps' is easy to see.
+    - Every team name is easy to read.
   - **Notes:**
 
 - [ ] `AC5E` Clear the search box.
@@ -784,17 +784,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Every value in the panel is easy to read.
   - **Notes:**
 
-- [ ] `D1A7` Select the **Capacity** page in the left-hand menu.
+- [ ] `D1A7` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:**
-    - The mode switch reads **People** and **Settings**, with **People** chosen.
-    - The switch, the column headings and the names are easy to read.
+    - The tabs read **Feature teams**, **Allocations** and **Settings**, with **Allocations** chosen.
+    - The tabs, the column headings and the names are easy to read.
   - **Notes:**
 
 - [ ] `D5E4` Look at the current month's column.
   - **Expected:** In the current month's column, these are easy to read and to tell apart:
-    - the feature names
+    - the feature names, and the colour squares before them
     - the percentages
-    - the red, bold "Over" lines and the grey "Under" lines
+    - the red, bold "Over" and "Under" lines, and the figures at their right, such as "+25%" and "−50%"
   - **Notes:**
 
 - [ ] `8CC8` Choose **Feature team** in the Group by menu.
@@ -805,7 +805,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The total rows, headed **Total, PM**, and the **Organization, PM** row at the foot are easy to read and to tell apart from the rows above them.
   - **Notes:**
 
-- [ ] `04E5` Select **Settings** in the mode switch.
+- [ ] `04E5` Select the **Settings** tab.
   - **Expected:**
     - The headings and values are easy to read.
     - The labels are dimmed beside their values.
@@ -817,8 +817,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `A65D` Replace the value with `4`, and press Enter.
   - **Expected:**
-    - The hollow yellow mark before "4" is easy to see.
-    - Under it, the green mark before "8" and the "8" are easy to see.
+    - The hollow yellow dot before "4" is easy to see.
+    - Under it, the green dot before "8" and the "8" are easy to see.
   - **Notes:**
 
 - [ ] `4F75` Select the **⋯** button at the right of the **Hours a day** row.
