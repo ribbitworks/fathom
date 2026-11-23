@@ -209,6 +209,35 @@ describe("what a draft changes, in words", () => {
     ]);
   });
 
+  it("names a customer's changed description and notes", () => {
+    expect(
+      planDraftFields(
+        "customer",
+        {
+          id: "c",
+          keyNumber: 1,
+          name: "Fictional",
+          description: "After",
+          note: "**Pilot** first",
+          draft: recordDraft({
+            changed: ["description", "note"],
+            live: { description: "Before", note: null },
+          }),
+        },
+        choices(),
+      ),
+    ).toEqual([
+      {
+        key: "description",
+        field: { field: "Description", oldValue: "Before", newValue: "After" },
+      },
+      {
+        key: "note",
+        field: { field: "Notes", oldValue: "", newValue: "Pilot first" },
+      },
+    ]);
+  });
+
   const given = choices({
     people: [{ id: "o1", label: "Owner One", description: "", retired: false }],
     statuses: [{ id: "s1", label: "Open", description: "", retired: false }],
