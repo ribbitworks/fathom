@@ -31,18 +31,36 @@ import { typeIn } from "./type-in.ts";
 
 type Keyed = Pick<Column<never>, "key">;
 
-const idOf = (column: Keyed, part: string) =>
-  `record-value-${column.key}-${part}`;
-export const labelId = (column: Keyed) => idOf(column, "label");
-export const changeId = (column: Keyed) => idOf(column, "change");
-export const problemId = (column: Keyed) => idOf(column, "problem");
-export const editorId = (column: Keyed) => idOf(column, "editor");
-const wordsId = (column: Keyed) => idOf(column, "words");
+// Whose values an element belongs to: a record's details, or a form adding one, kept apart, since a
+// form can stack under a record's details.
+export type ValueScope = "record" | "new-record";
+
+export const scopeOf = (context: {
+  adding?: boolean | undefined;
+}): ValueScope => (context.adding === true ? "new-record" : "record");
+
+const idOf = (column: Keyed, part: string, scope: ValueScope) =>
+  `${scope}-value-${column.key}-${part}`;
+export const labelId = (column: Keyed, scope: ValueScope = "record") =>
+  idOf(column, "label", scope);
+export const changeId = (column: Keyed, scope: ValueScope = "record") =>
+  idOf(column, "change", scope);
+export const problemId = (column: Keyed, scope: ValueScope = "record") =>
+  idOf(column, "problem", scope);
+export const editorId = (column: Keyed, scope: ValueScope = "record") =>
+  idOf(column, "editor", scope);
+const wordsId = (column: Keyed, scope: ValueScope) =>
+  idOf(column, "words", scope);
 
 // Puts focus on a value being entered: one typed into is a field always open, and any other value,
 // such as a flag's checkbox or a choice's button, is reached by its change control.
-export const focusValue = (column: Keyed & Pick<Column<never>, "kind">) => {
-  focusSoon(typedInto(column) ? editorId(column) : changeId(column));
+export const focusValue = (
+  column: Keyed & Pick<Column<never>, "kind">,
+  scope: ValueScope,
+) => {
+  focusSoon(
+    typedInto(column) ? editorId(column, scope) : changeId(column, scope),
+  );
 };
 
 // Puts focus on a form's field as the form opens, or opens as another, since the form's title can't
@@ -52,7 +70,7 @@ export function useFocusOnOpen(
   opening?: unknown,
 ) {
   const focusIt = useEffectEvent(() => {
-    if (column !== undefined) focusValue(column);
+    if (column !== undefined) focusValue(column, "new-record");
   });
   useEffect(() => {
     focusIt();
@@ -246,6 +264,8 @@ export function useChosenUnits(
 // changes it in one step; and what is wrong with the value last given. A note the address asks for
 // is named by that address, and opened once its row is drawn.
 export interface Editing {
+  // Whose values the row's elements are named for.
+  scope: ValueScope;
   open: boolean;
   editor: ReactNode;
   onStart?: (() => void) | undefined;
@@ -361,11 +381,11 @@ export function useRecordEditing<
     return true;
   };
 
-  const stop = (id: string, column: Column<Rec, Change>) => {
+  const stop = (id: string, column: Column<Rec, Change>, scope: ValueScope) => {
     setOpen(undefined);
     setProblem(id, column.key);
     setRefused(withProblem(id, column.key));
-    focusSoon(changeId(column));
+    focusSoon(changeId(column, scope));
   };
 
   // A refused value keeps its editor open, naming why, unless the editor was left, which puts the
@@ -379,7 +399,7 @@ export function useRecordEditing<
   ) => {
     const alwaysOpen = context.adding === true && !hasEditor(column);
     if (saved(context, column, value, save)) {
-      if (!alwaysOpen) stop(context.id, column);
+      if (!alwaysOpen) stop(context.id, column, scopeOf(context));
     } else if (how === "leave" && !alwaysOpen) {
       setOpen(undefined);
       setProblem(context.id, column.key);
@@ -408,6 +428,7 @@ export function useRecordEditing<
     (context: Context) =>
     (column: Column<Rec, Change>): Editing | undefined => {
       const { id, save } = context;
+      const scope = scopeOf(context);
       const kind = cellKinds[column.kind];
       const readOnly = save === undefined || readOnlyFor(column, context.kind);
       // A note opens in its own panel to be read, by everyone who sees it, and there changed by those
@@ -415,6 +436,7 @@ export function useRecordEditing<
       if (kind.inPanel === true) {
         if (notes === undefined) return undefined;
         return {
+          scope,
           askedBy:
             noteOpenFor(notes.asking, id) === column.key
               ? notes.asking
@@ -443,18 +465,21 @@ export function useRecordEditing<
       if (toggled !== undefined) {
         // Named by the row's label and the word beside the box, as both are seen.
         return {
+          scope,
           open: false,
           editor: (
             <Group gap={8} wrap="nowrap">
               <Checkbox
-                id={changeId(column)}
-                aria-labelledby={`${labelId(column)} ${wordsId(column)}`}
+                id={changeId(column, scope)}
+                aria-labelledby={`${labelId(column, scope)} ${wordsId(column, scope)}`}
                 checked={(value as readonly string[]).length > 0}
                 onChange={() => {
                   saved(context, column, toggled(value), save);
                 }}
               />
-              <Text id={wordsId(column)}>{kind.inWords(column, value)}</Text>
+              <Text id={wordsId(column, scope)}>
+                {kind.inWords(column, value)}
+              </Text>
             </Group>
           ),
           problem: wrong,
@@ -468,6 +493,7 @@ export function useRecordEditing<
       const ownField = kind.Editor === undefined;
       const Editor = kind.Editor ?? TextEditor;
       return {
+        scope,
         open: isOpen,
         editor: isOpen && (
           <div className={ownField ? undefined : classes.cellEditor}>
@@ -485,12 +511,14 @@ export function useRecordEditing<
                       }),
                   }
                 : {})}
-              id={editorId(column)}
+              id={editorId(column, scope)}
               column={column}
               value={value}
               typed=""
               invalid={wrong !== undefined}
-              describedBy={wrong === undefined ? undefined : problemId(column)}
+              describedBy={
+                wrong === undefined ? undefined : problemId(column, scope)
+              }
               problem={wrong}
               readOnly={false}
               adding={addingIn(context, column)}
@@ -498,7 +526,7 @@ export function useRecordEditing<
                 finish(context, column, edited, how, save);
               }}
               onCancel={() => {
-                stop(id, column);
+                stop(id, column, scope);
               }}
             />
           </div>
@@ -506,7 +534,7 @@ export function useRecordEditing<
         onStart: () => {
           setProblem(id, column.key);
           setOpen({ id, key: column.key });
-          selectSoon(editorId(column));
+          selectSoon(editorId(column, scope));
         },
         problem: ownField ? undefined : wrong,
       };
@@ -532,8 +560,12 @@ export function useRecordEditing<
       found.map(({ column, message }) => ({ key: column, message })),
     );
     const keys = new Set(found.map(({ column }) => column));
-    // Every problem is in one of the columns shown.
-    focusValue(shown.find(({ key }) => keys.has(key)) as Column<Rec, Change>);
+    // Every problem is in one of the columns shown. Only a form adding a
+    // record names what was entered.
+    focusValue(
+      shown.find(({ key }) => keys.has(key)) as Column<Rec, Change>,
+      "new-record",
+    );
   };
 
   // What Add finds with the values being entered: each one refused, under its row, in place of
