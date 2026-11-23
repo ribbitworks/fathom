@@ -665,7 +665,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - The table lists only rows with that feature in some month, whichever months are in view.
     - A pill after the buttons reads "Feature:" and the feature's name.
-    - A row's cells show all of its features, not only the one ticked.
+    - A row's cells list only that feature, with Over, Under or the total counting every feature.
   - **Notes:**
 
 - [ ] `F73E` Untick the feature noted in step `9315`.

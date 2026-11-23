@@ -19,7 +19,7 @@ import {
 } from "@fathom/shared";
 import { VisuallyHidden } from "@mantine/core";
 import { queryOptions } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { type ReactNode, useMemo } from "react";
 import { getJson } from "./api.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import { noDrafts } from "./drafts.ts";
@@ -39,7 +39,7 @@ import { formatMonth } from "./day-formats.ts";
 import { groupedRowId, rankOfNone } from "./row-groups.ts";
 import type { DraftLike } from "./draft-marks.ts";
 import { type DraftedLabel, TeamLabels } from "./team-labels.tsx";
-import type { TableColumn } from "./table-view.ts";
+import type { TableColumn, View } from "./table-view.ts";
 
 type MonthTeam = TeamMonths["teams"][number];
 type TeamDraft = NonNullable<TeamMonths["drafts"]>[number];
@@ -172,6 +172,35 @@ const madeNameOf = ({ madeName }: MonthRow) => madeName ?? "";
 // The key of the filter by the choices in any month, in the address and in views.
 export const anyMonthKey = "any-month";
 
+// The choices the view keeps the grid to in any month, while any are chosen, the same set until
+// they change, so the table isn't drawn again for nothing. Not empty keeps every row with any, so
+// with it nothing is left out of a cell.
+export function useChosenInAnyMonth(
+  filters: View["filters"],
+): ReadonlySet<string> | undefined {
+  // The key is the grid's own filter's.
+  // eslint-disable-next-line security/detect-object-injection
+  const filter = filters[anyMonthKey];
+  const chosen =
+    filter?.notEmpty === true || (filter?.any ?? []).length === 0
+      ? undefined
+      : filter?.any;
+  const key = chosen === undefined ? undefined : JSON.stringify(chosen);
+  return useMemo(
+    () =>
+      key === undefined ? undefined : new Set(JSON.parse(key) as string[]),
+    [key],
+  );
+}
+
+// What a cell shows while the grid is kept to some choices: only those chosen.
+export const onlyChosen = <Item,>(
+  items: readonly Item[],
+  idOf: (item: Item) => string,
+  chosen: ReadonlySet<string> | undefined,
+): readonly Item[] =>
+  chosen === undefined ? items : items.filter((item) => chosen.has(idOf(item)));
+
 // The table of the monthly grid: a row's name, frozen on the left, then a column for each month,
 // whose cells show what the content gives, shaded outside someone's employment.
 
@@ -274,6 +303,8 @@ export function teamMonthsTable(
   edits: TeamMonthEdits,
   // The managers to group by, for roles that may group by manager.
   managers: readonly { id: string; name: string }[] | undefined,
+  // The teams the grid is kept to, which alone its cells show.
+  chosen?: ReadonlySet<string>,
 ): Table {
   return monthGridTable<PersonMonths>({
     months: data.months,
@@ -281,7 +312,13 @@ export function teamMonthsTable(
     label: "Feature teams by month",
     choices: data.teams,
     content: (person, month) => (
-      <TeamLabels teams={labelsShown(person.teamsIn.get(month) ?? [], show)} />
+      <TeamLabels
+        teams={onlyChosen(
+          labelsShown(person.teamsIn.get(month) ?? [], show),
+          ({ id }) => id,
+          chosen,
+        )}
+      />
     ),
     readOnly: (month) => !editableMonth(month, edits),
     groupings: monthGroupings(managers, data),

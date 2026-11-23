@@ -524,6 +524,7 @@ describe("a month's cell", () => {
     allocated: readonly Allocation[],
     month = "2027-03",
     show: "both" | "drafts" = "both",
+    chosen?: ReadonlySet<string>,
   ) =>
     render(
       <MantineProvider theme={testTheme}>
@@ -536,6 +537,7 @@ describe("a month's cell", () => {
             currentMonth="2027-03"
             allocatable={month !== "2027-02"}
             show={show}
+            chosen={chosen}
           />
         </div>
       </MantineProvider>,
@@ -580,6 +582,24 @@ describe("a month's cell", () => {
       "Over+25%, Total 125%",
       "Total 125%",
     ]);
+  });
+
+  it("lists only the features the grid is kept to, marked by every feature's total", () => {
+    cell(
+      [
+        allocation({ months: { "2027-03": 75 } }),
+        allocation({
+          id: "a-2",
+          featureId: "f-billing",
+          months: { "2027-03": 50 },
+        }),
+      ],
+      "2027-03",
+      "both",
+      new Set(["f-checkout"]),
+    );
+
+    expect(lineTexts()).toEqual(["Checkout75%", "Over+25%, Total 125%"]);
   });
 
   it("marks a month under a whole month, even with one feature", () => {

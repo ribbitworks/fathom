@@ -21,6 +21,7 @@ import {
   gridMonthsAround,
   readOnlyMonthActions,
   teamMonthsQuery,
+  useChosenInAnyMonth,
 } from "./team-months.tsx";
 
 export function CapacityAllocations({
@@ -57,6 +58,7 @@ export function CapacityAllocations({
         : { teamMonths, allocations, chart },
     [teamMonths, allocations, chart],
   );
+  const chosen = useChosenInAnyMonth(view.filters);
   const table = useMemo(
     () =>
       sources === undefined
@@ -69,8 +71,9 @@ export function CapacityAllocations({
               : undefined,
             currentMonth,
             show: view.show,
+            chosen,
           }),
-    [sources, byManager, currentMonth, view.show],
+    [sources, byManager, currentMonth, view.show, chosen],
   );
   const grouping = activeGrouping(view, table?.groupings)?.key;
   const records = useMemo(

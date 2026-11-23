@@ -623,7 +623,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Expected:**
     - The table lists only rows with **Mobile apps** in some month, whichever months are in view.
     - A pill after the buttons reads "Feature team: Mobile apps".
-    - The rows' cells still show their other teams too.
+    - The rows' cells show **Mobile apps** alone, without their other teams.
   - **Notes:**
 
 - [ ] `700D` Press Esc.

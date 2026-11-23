@@ -42,6 +42,7 @@ import type { DraftLike } from "./draft-marks.ts";
 import { tipAttribute } from "./table-tips.tsx";
 import {
   monthGridTable,
+  onlyChosen,
   monthGroupings,
   type MonthRow,
   personDraft,
@@ -113,12 +114,15 @@ export function AllocationLines({
   currentMonth,
   allocatable,
   show,
+  chosen,
 }: {
   lines: readonly AllocationLine[];
   month: string;
   currentMonth: string;
   allocatable: boolean;
   show: Show;
+  // The features the grid is kept to, which alone are listed; the total still counts every one.
+  chosen?: ReadonlySet<string> | undefined;
 }) {
   const total = monthTotal(lines, show);
   const mark = loadMark({ total, month, currentMonth, allocatable });
@@ -127,7 +131,7 @@ export function AllocationLines({
   const marked = mark === undefined ? undefined : marks[mark];
   return (
     <div className={styles.lines}>
-      {lines.map(
+      {onlyChosen(lines, ({ featureId }) => featureId, chosen).map(
         ({
           featureId,
           name,
@@ -426,6 +430,7 @@ export function allocationMonthsTable({
   managers,
   currentMonth,
   show,
+  chosen,
 }: {
   teamMonths: TeamMonths;
   features: readonly AllocatedFeature[];
@@ -433,6 +438,8 @@ export function allocationMonthsTable({
   managers: readonly { id: string; name: string }[] | undefined;
   currentMonth: string;
   show: Show;
+  // The features the grid is kept to, which alone its cells list.
+  chosen?: ReadonlySet<string> | undefined;
 }): RecordTable<AllocationRow, CellChange, CellChange> {
   return {
     ...monthGridTable<AllocationRow>({
@@ -449,6 +456,7 @@ export function allocationMonthsTable({
             currentMonth={currentMonth}
             allocatable={allocatableIn(row, month)}
             show={show}
+            chosen={chosen}
           />
         ),
       readOnly: () => true,

@@ -17,6 +17,7 @@ import {
   teamMonthRecords,
   teamMonthsQuery,
   teamMonthsTable,
+  useChosenInAnyMonth,
   useTeamMonthActions,
 } from "./team-months.tsx";
 
@@ -54,6 +55,7 @@ export function CapacityFeatureTeams({
   const { data } = query;
   const chart = chartRead.data;
   const loaded = data !== undefined && (!seesHires || chart !== undefined);
+  const chosen = useChosenInAnyMonth(view.filters);
   const table = useMemo(
     () =>
       !loaded
@@ -63,8 +65,9 @@ export function CapacityFeatureTeams({
             view.show,
             { today: now, changesDates },
             byManager ? monthManagers(data, chart) : undefined,
+            chosen,
           ),
-    [loaded, data, chart, view.show, now, changesDates, byManager],
+    [loaded, data, chart, view.show, now, changesDates, byManager, chosen],
   );
   const grouping = activeGrouping(view, table?.groupings)?.key;
   const records = useMemo(

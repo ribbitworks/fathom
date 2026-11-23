@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for feature teams month by month as a table of records: the months shown around today, what
-// the table answers for whole records, its filter across every month, which months can be changed,
-// what a cell's change asks for and shows at once, and a person's months as drafts change them.
+// the table answers for whole records, its filter across every month and what cells show under it,
+// which months can be changed, what a cell's change asks for and shows at once, and a person's
+// months as drafts change them.
 
 import type { TeamMonths } from "@fathom/shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook } from "@testing-library/react";
+import { MantineProvider } from "@mantine/core";
+import { render, renderHook, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -18,11 +20,13 @@ import {
   type PersonMonths,
   personDraft,
   teamMonthRecords,
+  onlyChosen,
   teamMonthsTable,
+  useChosenInAnyMonth,
   useTeamMonthActions,
   withMonthChange,
 } from "./team-months.tsx";
-import { serverAnswers } from "./test-support.tsx";
+import { serverAnswers, testTheme } from "./test-support.tsx";
 
 const edits = { today: "2027-03-10", changesDates: false };
 
@@ -490,5 +494,75 @@ describe("the months shown at once while a change saves", () => {
       teams: { "2027-05": [] },
       by: ["t-web"],
     });
+  });
+});
+
+describe("the choices a grid is kept to", () => {
+  const chosenFrom = (filter: object | undefined) =>
+    renderHook(
+      ({ given }) =>
+        useChosenInAnyMonth(given === undefined ? {} : { "any-month": given }),
+      { initialProps: { given: filter } },
+    );
+
+  it("are those chosen, the same set while they stay the same", () => {
+    const { result, rerender } = chosenFrom({ any: ["t-mobile"] });
+    const first = result.current;
+
+    rerender({ given: { any: ["t-mobile"] } });
+
+    expect(first).toEqual(new Set(["t-mobile"]));
+    expect(result.current).toBe(first);
+  });
+
+  it.each([
+    ["no filter", undefined],
+    ["No feature alone", { empty: true }],
+    ["an empty list", { any: [] }],
+    [
+      "Not empty, which keeps every row with any",
+      { any: ["t-mobile"], notEmpty: true },
+    ],
+  ])("are none with %s, leaving every cell whole", (_, filter) => {
+    expect(chosenFrom(filter).result.current).toBeUndefined();
+  });
+
+  it("leave a cell only what is chosen, or all of it with none", () => {
+    const teams = [{ id: "t-mobile" }, { id: "t-search" }];
+
+    expect([
+      onlyChosen(teams, ({ id }) => id, new Set(["t-search"])),
+      onlyChosen(teams, ({ id }) => id, undefined),
+    ]).toEqual([[{ id: "t-search" }], teams]);
+  });
+
+  it("show a month's chosen teams alone in Feature teams' cells", () => {
+    // Given Avery on Mobile and Search in March, the grid kept to Search
+    const mobile = { id: "t-mobile", name: "Mobile", colour: null };
+    const search = { id: "t-search", name: "Search", colour: null };
+    const table = teamMonthsTable(
+      { months: ["2027-03"], teams: [mobile, search], people: [], drafts: [] },
+      "both",
+      edits,
+      [],
+      new Set([search.id]),
+    );
+    const [, march] = table.columnsFor([], [], [], []);
+    const avery = {
+      teamsIn: new Map([["2027-03", [mobile, search]]]),
+    } as unknown as PersonMonths;
+
+    // When its cell is drawn
+    render(
+      <MantineProvider theme={testTheme}>
+        {march?.content?.(avery)}
+      </MantineProvider>,
+    );
+
+    // Then it names Search alone
+    expect([screen.queryByText("Mobile"), screen.getByText("Search")]).toEqual([
+      null,
+      expect.anything(),
+    ]);
   });
 });
