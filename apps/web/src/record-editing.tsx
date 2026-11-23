@@ -419,7 +419,7 @@ export function useRecordEditing<
   const addingIn = (context: Context, column: Column<Rec, Change>) =>
     context.adding === true
       ? undefined
-      : addingFor(column.adds, context.id, () => {
+      : addingFor(column.adds, { id: context.id }, () => {
           focusSoon(changeId(column));
         });
 

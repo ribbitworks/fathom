@@ -103,6 +103,8 @@ You're done when the milestone shows in the project's details.
 
 To change a milestone there, select **Edit…** in its **⋯** menu. To remove it, select **Remove milestone** in the same menu.
 
+You can also type a new milestone in the empty row at the end of the **Milestones** tab. If its project isn't there yet, type the project's name in the row's **Project** list and select **New project** with the name. Add the project in the form that opens, and the row's **Project** then names it.
+
 ### Go From a Project to Its Milestones or Features
 
 - To see a project's milestones, select **Show on Milestones** in the project's **⋯** menu, or **Show milestones** beside the **Milestones** heading in its details. **Milestones** opens, showing only that project's.

@@ -181,11 +181,12 @@ export interface Column<
   // Facts about a record, such as Built in, in boxes after its value and before its draft's box.
   facts?: (record: Rec) => ReactNode;
   // For a column naming other records, for a role that may add one: the kind it adds, such as
-  // customer, and what opens its form for a saved record, by its identifier, named by what was typed,
-  // with what puts focus back where the picker was once the form closes.
+  // customer, whether its new row's picker offers it too, filling the row, and what opens its form,
+  // named by what was typed, with what puts focus back where the picker was once the form closes.
   adds?: {
     one: string;
-    onNew: (id: string, typed: string, back: () => void) => void;
+    fillsNewRow?: boolean;
+    onNew: (to: AddedTo, typed: string, back: () => void) => void;
   };
   // A warning about a record's value, its dot before the value and its words after it.
   status?: (record: Rec) => { words: string; spoken?: string } | undefined;
@@ -485,11 +486,16 @@ export const readOnlyTableParts = {
   },
 };
 
-// A picker's New option for a saved record, by its identifier, with what puts focus back where the
-// picker was, for a column that offers one.
+// What a record added from a picker goes to: the saved record the picker was for, by its identifier,
+// or the new row it fills.
+export type AddedTo =
+  { id: string } | { fill: (ids: readonly string[]) => void };
+
+// A picker's New option, for a column that offers one, with what puts focus back where the picker
+// was.
 export const addingFor = (
   adds: Column<never>["adds"],
-  id: string,
+  to: AddedTo,
   back: () => void,
 ): Adding | undefined =>
   adds === undefined
@@ -497,6 +503,6 @@ export const addingFor = (
     : {
         one: adds.one,
         onNew: (typed) => {
-          adds.onNew(id, typed, back);
+          adds.onNew(to, typed, back);
         },
       };

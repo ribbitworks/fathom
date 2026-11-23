@@ -314,6 +314,40 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
     return saveTo(row, column, value);
   };
 
+  // A new row with a value put in a column, of the kind its values then make it, naming what is still
+  // wrong with it.
+  const withValue = (
+    newRow: NewRow,
+    column: Column<Rec, Change>,
+    value: CellValue,
+  ): NewRow => {
+    const made = followingKind({
+      key: newRow.key,
+      ...kindKept(newRow),
+      values: { ...newRow.values, [column.key]: value },
+    });
+    const soFar = wrongSoFar(
+      made.values,
+      rowKey({ newRow }),
+      made.kind ?? defaultKind,
+    );
+    return { ...made, ...(soFar ? { soFar } : {}) };
+  };
+
+  // Puts a value in a new row's cell, from its editor or from outside it, such as a record just added
+  // from its picker, keeping what was entered in the row since.
+  const fillNewRow = (
+    key: number,
+    column: Column<Rec, Change>,
+    value: CellValue,
+  ) => {
+    setNewRows((current) =>
+      current.map((newRow) =>
+        newRow.key === key ? withValue(newRow, column, value) : newRow,
+      ),
+    );
+  };
+
   const saveTo = (
     row: Row<Rec>,
     column: Column<Rec, Change>,
@@ -321,19 +355,7 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
   ): boolean => {
     const key = rowKey(row);
     if (row.newRow) {
-      const made = followingKind({
-        key: row.newRow.key,
-        ...kindKept(row.newRow),
-        values: { ...row.newRow.values, [column.key]: value },
-      });
-      const soFar = wrongSoFar(made.values, key, made.kind ?? defaultKind);
-      setNewRows((current) =>
-        current.map((newRow) =>
-          newRow.key === row.newRow.key
-            ? { ...made, ...(soFar ? { soFar } : {}) }
-            : newRow,
-        ),
-      );
+      fillNewRow(row.newRow.key, column, value);
       setProblem(undefined);
       return true;
     }
@@ -519,6 +541,7 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
     putBack,
     save,
     saveTo,
+    fillNewRow,
     emptyNewRow,
     kindKept,
     followingKind,
