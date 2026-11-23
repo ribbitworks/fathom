@@ -46,6 +46,8 @@ import { focusSoon } from "./focus.ts";
 import {
   activeGrouping,
   activeThenBy,
+  type BarFilter,
+  filtersBesideColumns,
   groupedFirstBy,
   ungrouped,
   withGroupsReversed,
@@ -1280,6 +1282,7 @@ export function ViewBar({
   nests = false,
   laysOutColumns = true,
   withDrafts = true,
+  barFilters = [],
 }: {
   // What the rows are, one and several, such as "person" and "people".
   one: string;
@@ -1310,8 +1313,10 @@ export function ViewBar({
   pageParts?: PageParts | undefined;
   // False for a table whose records never have drafts.
   withDrafts?: boolean;
+  // Filters across the whole table, each with its button after the search field.
+  barFilters?: readonly BarFilter<never>[] | undefined;
 }) {
-  const filterOnly = [draftFilter];
+  const filterOnly = filtersBesideColumns(draftFilter, barFilters);
   const columns = [...everyColumn, ...filterOnly];
   const filters = columns.flatMap((column) => {
     const filter = view.filters[column.key];
@@ -1327,6 +1332,14 @@ export function ViewBar({
         }}
         onLeave={onLeave}
       />
+      {barFilters.map((filter) => (
+        <BarFilterButton
+          key={filter.column.key}
+          {...filter}
+          view={view}
+          onView={onView}
+        />
+      ))}
       {withDrafts && (
         <DraftMenu
           show={view.show}
@@ -1424,8 +1437,7 @@ export function ViewBar({
   );
 }
 
-// A filter the table's headers do not offer, opened from its button in the bar above the table,
-// which focus goes back to when it closes. The marks beside a column's name: which way it is
+// The marks beside a column's name: which way it is
 // sorted, its level when sorted by several, and whether it is filtered. Screen readers hear these
 // from the header's name, as headerState gives it.
 export function HeaderMarks({
@@ -1569,6 +1581,55 @@ export function ColumnViewItems({
         </>
       )}
     </>
+  );
+}
+
+// A filter across the whole table, opened from its button in the bar above it, which is marked
+// while it filters, and which focus goes back to when it closes.
+function BarFilterButton({
+  button,
+  column,
+  view,
+  onView,
+}: {
+  button: string;
+  column: AnyColumn;
+  view: View;
+  onView: ChangeView;
+}) {
+  const [opened, setOpened] = useState(false);
+  const target = useRef<HTMLButtonElement>(null);
+  const marked = isActive(view.filters[column.key]);
+  return (
+    <FilterPopover
+      column={column}
+      view={view}
+      onView={onView}
+      opened={opened}
+      onClose={() => {
+        setOpened(false);
+        target.current?.focus();
+      }}
+    >
+      <Button
+        ref={target}
+        variant="default"
+        leftSection={<Icon name="filter" />}
+        aria-label={`${button}${marked ? ", filtered" : ""}`}
+        aria-haspopup="dialog"
+        aria-expanded={opened}
+        onClick={() => {
+          setOpened((open) => !open);
+        }}
+      >
+        {button}
+        {marked && (
+          <span aria-hidden="true" className={classes.changedMark}>
+            •
+          </span>
+        )}
+      </Button>
+    </FilterPopover>
   );
 }
 

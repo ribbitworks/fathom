@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for Capacity's Feature teams tab against a simulated server: its teams by month, drafts,
-// grouping, planned hires' rows and saved views.
+// grouping, its filter across every month, planned hires' rows and saved views.
 
 import { type TeamMonths } from "@fathom/shared";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
@@ -323,6 +323,37 @@ describe("Capacity's Feature teams", () => {
     expect(
       screen.getByRole("button", { name: "Group by: Manager" }),
     ).toBeDefined();
+  });
+
+  it("keeps the people on a feature team chosen from the Feature teams button, in any month", async () => {
+    // Given the grid, with Avery alone on Mobile apps
+    await openPage();
+
+    // When Mobile apps is chosen from the Feature teams button
+    await userEvent.click(
+      screen.getByRole("button", { name: "Feature teams" }),
+    );
+    const filter = await screen.findByRole("dialog", {
+      name: "Filter Feature team",
+    });
+    await userEvent.click(
+      within(filter).getByRole("checkbox", { name: mobile.name }),
+    );
+
+    // Then Avery alone shows, the pill names the filter, and the button is marked
+    await waitFor(() => {
+      expect(screen.queryByText("Casey Fictional")).toBeNull();
+    });
+    expect(rowOf("Avery Fictional")).toBeDefined();
+    expect(screen.getByText(`Feature team: ${mobile.name}`)).toBeDefined();
+
+    // And Esc closes the filter, back on its button, marked as filtering
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Feature teams, filtered" }),
+      );
+    });
   });
 
   it("marks the months outside someone's employment", async () => {

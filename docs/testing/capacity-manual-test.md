@@ -11,7 +11,7 @@ last_updated: "2026-11-23"
 
 ## Scope
 
-Verifies the Capacity page's tabs. Settings holds the planning settings: how it reads for someone who may only see it, drafting a change and undoing it, a value refused, adding and removing months of ramp-up, the change in the change history, and approving a draft and seeing the Effort column on Features follow it once approved. Allocations is the table of allocations by month: switching between the tabs, its over- and under-allocated months, planned hires, the capacity totals of each group and of everyone, rows for someone who changed team or manager, the page left out of the menu for a role that sees no tab, and the count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to, and the rows kept to those over or under from the Views menu. Feature teams has its own [Capacity's Feature Teams](capacity-feature-teams-manual-test.md) test. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies the Capacity page's tabs. Settings holds the planning settings: how it reads for someone who may only see it, drafting a change and undoing it, a value refused, adding and removing months of ramp-up, the change in the change history, and approving a draft and seeing the Effort column on Features follow it once approved. Allocations is the table of allocations by month: switching between the tabs, its over- and under-allocated months, planned hires, the capacity totals of each group and of everyone, rows for someone who changed team or manager, the page left out of the menu for a role that sees no tab, and the count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to, the rows kept to those over or under from the Views menu, and the rows kept to those on a feature in any month. Feature teams has its own [Capacity's Feature Teams](capacity-feature-teams-manual-test.md) test. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 
@@ -683,4 +683,37 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `7A62` Select **Under**.
   - **Expected:** Neither is ticked, and every row is listed again.
+  - **Notes:**
+
+### CAP-18: Allocations Kept to a Feature in Any Month
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-17.
+
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] `CDAC` Select **Features**, the button after the search box.
+  - **Expected:** A list opens under the button: a box to narrow it, then each feature someone is allocated to, with a tick box, then **No feature** and **Not empty**.
+  - **Notes:**
+
+- [ ] `9315` Tick the first feature in the list, and note its name.
+  - **Expected:**
+    - The table lists only rows with that feature in some month, whichever months are in view.
+    - A pill after the buttons reads "Feature:" and the feature's name.
+    - A row's cells show all of its features, not only the one ticked.
+  - **Notes:**
+
+- [ ] `F73E` Untick the feature noted in step `9315`.
+  - **Expected:** The table lists every row again, and the pill is gone.
+  - **Notes:**
+
+- [ ] `3CE0` Tick **No feature**.
+  - **Expected:** The table lists only rows with no feature in any month, each reading "Not allocated" from the current month on, apart from shaded months.
+  - **Notes:**
+
+- [ ] `5293` Press Esc.
+  - **Expected:** The list closes.
+  - **Notes:**
+
+- [ ] `AED6` Select the **×** on the "Feature: No feature" pill.
+  - **Expected:** The table lists every row again.
   - **Notes:**
