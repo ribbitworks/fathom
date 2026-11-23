@@ -16,7 +16,7 @@ What the views move is coarse, as the [Domain Model](../design/domain-model.md#p
 - **No dependency lines:** Dependencies between features are not recorded, and Fathom plans features, never tasks.
 - **Every change is a draft:** Moves are drafts, private until published, as [ADR 0007](0007-draft-rows.md) and [ADR 0008](0008-unpublished-drafts.md) set out, shown with the marks every other table uses.
 
-The board and timeline below were later revised, keeping the choice of libraries: the board became the Features Board, the Roadmap, whose columns are one stream's cycles and whose rows follow Group by, and the timeline became one shared timeline, taken out of the Releases timeline, for the Plan, the project timeline and Releases, each day the same width, as [Visual Design](../design/visual-design.md#components) and [UI Conventions](../standards/ui-conventions/dates-timelines-and-boards.md#timelines) set out.
+The board and timeline below were later revised, keeping the choice of libraries: the board became the Features Board, the Roadmap, whose columns are months or one stream's cycles and whose rows follow Group by, and the timeline became one shared timeline, taken out of the Releases timeline, for the Plan, the project timeline and Releases, each day the same width, as [Visual Design](../design/visual-design.md#components) and [UI Conventions](../standards/ui-conventions/dates-timelines-and-boards.md#timelines) set out.
 
 Every choice must meet ADR 0004's rules: completely open source with no paid edition, bundled and working offline, no code built from strings, React 19, and actively maintained. The candidates below were compared from GitHub and npm on 2026-11-03, without test pages; sizes are minified and compressed, from bundlephobia.
 

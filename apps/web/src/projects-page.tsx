@@ -14,11 +14,8 @@ import { cardPartSchema, type PlanMode } from "@fathom/shared";
 import { Loader, Modal, Stack } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { effortConversionsQuery } from "./effort.ts";
-import {
-  type BoardPlace,
-  focusCard,
-  FeatureBoard,
-} from "./feature-board-view.tsx";
+import { type BoardPlace, FeatureBoard } from "./feature-board-view.tsx";
+import { focusCard } from "./feature-card.tsx";
 import { boardParts } from "./feature-board.ts";
 import { today } from "./today.ts";
 import { TableTips } from "./table-tips.tsx";

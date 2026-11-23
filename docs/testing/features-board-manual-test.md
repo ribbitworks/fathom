@@ -11,7 +11,7 @@ last_updated: "2026-11-23"
 
 ## Scope
 
-Verifies the Board on the Features page: switching between the table and the board, the columns of one schedule's cycles and Later, the cards and the Card menu, the strip and the Schedule menu, rows from the Group by menu, with a card in each row of a feature under several values, and how search, drafts, a feature's details and the keyboard work on the board. The table itself is verified in [Features](features-manual-test.md).
+Verifies the Board on the Features page: switching between the table and the board, the columns of months and No date or of one schedule's cycles and Later, the cards and the Card menu, the strip and the Columns menu, rows from the Group by menu, with a card in each row of a feature under several values, and how search, drafts, a feature's details and the keyboard work on the board. The table itself is verified in [Features](features-manual-test.md).
 
 ## Test Environment
 
@@ -34,15 +34,15 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 - **Table and Board switch:** the two-part switch reading **Table** and **Board** just after the **Features** heading, on the same line.
 - **Board:** the panel of columns and cards shown once **Board** is chosen.
-- **Column heading:** the top of each column of the board, naming its cycle, or **Later**.
+- **Column heading:** the top of each column of the board, naming its month or cycle, or **No date** or **Later**.
 - **Card:** the box for one feature on the board.
-- **Strip:** the row of cycle names above the board, after the **Schedule** and **Card** buttons, between a **‹** button and the **›** and **Today** buttons.
+- **Strip:** the row of month or cycle names above the board, after the **Columns** and **Card** buttons, between a **‹** button and the **›** and **Today** buttons.
 
 ## Test Cases
 
 Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
-### BOARD-01: The Board Shows One Schedule's Cycles
+### BOARD-01: The Board Shows Months, Then One Schedule's Cycles
 
 **Account:** Product Manager, `product.manager@fathom.test`; the first test case.
 
@@ -57,8 +57,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `D5B7` Select **Board** in the Table and Board switch.
   - **Expected:**
     - The bar above the board holds the search box, **Draft**, **Metrics** and **Group by**.
-    - Under it, one row starts with the buttons **Schedule: Platform** and **Card**, then the strip.
-    - The board's columns run from left to right, the last headed "Later".
+    - Under it, one row starts with the buttons **Columns: Months** and **Card**, then the strip.
+    - The board's columns are months, from left to right, the first headed this month, such as "Nov 2026", and the last "No date".
+    - A red line runs along the top of this month's heading.
+  - **Notes:**
+
+- [ ] `5D2A` Select **Columns: Months**, then **Platform cycles**.
+  - **Expected:**
+    - The button reads **Columns: Platform cycles**.
+    - The board's columns are Platform's cycles, from left to right, the last headed "Later".
   - **Notes:**
 
 - [ ] `F45E` Read the first column heading.
@@ -195,7 +202,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu closes.
   - **Notes:**
 
-### BOARD-03: The Strip and the Schedule Menu Choose the Columns
+### BOARD-03: The Strip and the Columns Menu Choose the Columns
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-02 ended with.
 
@@ -231,32 +238,32 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No cycle in the strip is filled with blue.
   - **Notes:**
 
-- [ ] `8C55` Select **Schedule: Platform**.
+- [ ] `8C55` Select **Columns: Platform cycles**.
   - **Expected:**
-    - A menu headed "Schedule" lists, from the top, **Platform**, **Patches** and **Field Apps**.
-    - **Platform** is ticked.
-    - **Patches** has a yellow dot before it and a yellow **Retired** box after it.
+    - A menu headed "Columns" lists, from the top, **Months**, **Platform cycles**, **Patches cycles** and **Field Apps cycles**.
+    - **Platform cycles** is ticked.
+    - **Patches cycles** has a yellow dot before it and a yellow **Retired** box after it.
   - **Notes:**
 
-- [ ] `A0DA` Select **Patches**.
+- [ ] `A0DA` Select **Patches cycles**.
   - **Expected:**
-    - The button reads **Schedule: Patches**.
+    - The button reads **Columns: Patches cycles**.
     - The columns are Patches' cycles from the current one, named such as "Cycle P26.13", each four weeks long.
     - The first two columns are each headed with the same patch release, such as "Patch Dec", in a red box, after a red dot in a ring.
     - No column other than "Later" holds a card.
     - "Later" holds 'Partner Portal', 'Voice Notes' and 'Shift Handover Notes'.
   - **Notes:**
 
-- [ ] `C87D` Select **Schedule: Patches**, then **Field Apps**.
+- [ ] `C87D` Select **Columns: Patches cycles**, then **Field Apps cycles**.
   - **Expected:**
-    - The button reads **Schedule: Field Apps**.
+    - The button reads **Columns: Field Apps cycles**.
     - The columns are Field Apps' cycles, named such as "Cycle FA26.2", each six months long.
     - The current cycle's column, with the red line along its heading's top, is headed "Lantern 2" in an indigo box.
     - The column after it has no release at its top.
     - That column holds the card 'Work Order Sync', with no "Not staffed".
   - **Notes:**
 
-**Afterwards:** Select **Schedule: Field Apps**, then **Platform**.
+**Afterwards:** Select **Columns: Field Apps cycles**, then **Platform cycles**.
 
 ### BOARD-04: Group By Puts the Cards in Rows
 
@@ -423,7 +430,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `C5FB` Select **Board** in the Table and Board switch.
   - **Expected:**
-    - The board shows Platform's cycles from the current one.
+    - The board shows months from this month.
     - 'Scheduler API' shows "Not staffed" in red words.
   - **Notes:**
 
@@ -470,3 +477,29 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 **Afterwards:** Select **Group by: Cycle, then Status**, then **Clear grouping**.
+
+### BOARD-09: Months Step by Month
+
+**Account:** Product Manager, `product.manager@fathom.test`, changed from BOARD-08.
+
+**Preconditions:** Signed in with this account. **Features** page open, showing Platform's board.
+
+- [ ] `9B41` Select **Columns: Platform cycles**, then **Months**.
+  - **Expected:**
+    - The button reads **Columns: Months**.
+    - The first column is headed this month, with a red line along its heading's top.
+    - The strip names months, this month underlined in red.
+  - **Notes:**
+
+- [ ] `E7C3` Select **›** in the strip.
+  - **Expected:**
+    - The first column is headed next month.
+    - In the strip, next month is filled with blue.
+    - The last column is still "No date".
+  - **Notes:**
+
+- [ ] `2A6F` Select **Today**.
+  - **Expected:**
+    - The first column is headed this month again.
+    - No month in the strip is filled with blue.
+  - **Notes:**

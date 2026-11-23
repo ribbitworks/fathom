@@ -47,11 +47,12 @@ Features lists the plan's features in one table, with a board as a second way of
 
 - **What it is:** the [Roadmap](../../product/domain.md#planning-terms), drawn as [Boards](../../standards/ui-conventions/dates-timelines-and-boards.md#boards) sets out.
 - **Read only:** nothing on the board can be changed.
-- **One view:** table and board share the page's controls and view. A saved view keeps the Board's schedule and card choices, but not which shows or the cycle the Board starts from.
-- **Columns:** one schedule's cycles, chosen in a Schedule menu, as many as fit, then Later with every uncycled feature.
-  - A header shows its release in the release's colour, then the cycle; the current cycle has a red top line.
+- **One view:** table and board share the page's controls and view. A saved view keeps the Board's columns and card choices, but not which shows or the month or cycle the Board starts from.
+- **Columns:** chosen in a Columns menu: Months, the default, then each schedule's cycles.
+  - **Months:** one column a month, from this month, as many as fit, then No date. The strip runs a year ahead at the least, or to the latest month a feature is needed by. A feature needed by an earlier month is in this month's column. A header names the month; this month's has a red top line.
+  - **A schedule's cycles:** as many as fit, then Later with every uncycled feature. A header shows its release in the release's colour, then the cycle and its days; the current cycle has a red top line.
   - Columns show no size totals.
-- **Strip:** the Schedule and Card buttons start the [timeline strip](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines), stepping by cycle.
+- **Strip:** the Columns and Card buttons start the [timeline strip](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines), stepping by month or by cycle.
 - **Cards:** name, key, status and priority, [Size and Risk marks](../../standards/ui-conventions/drafts-and-values.md#values), Needed by, and Not staffed, but no customers.
   - The Card menu chooses which show.
 - **Rows:** Group by offers the table's choices except Cycle, starting at None, with no Then by.
@@ -61,7 +62,5 @@ Features lists the plan's features in one table, with a board as a second way of
 
 - **Moving cards:** dragging or Alt and arrows drafts a new cycle or row value; Live only stays read only.
   - Refused for multi-value or derived columns, and for features with allocations, Done or Cancelled.
-- **Months as columns:** the Board's default, so it is useful before any cycles are planned: the months features are needed by, from the current month, then No date.
-  - A Columns menu chooses one schedule's cycles instead.
-  - Moving a card to another month changes its Needed by.
+- **Moving a card to another month:** changes its Needed by.
 - **On track or Late:** on staffed cards, with forecasting.

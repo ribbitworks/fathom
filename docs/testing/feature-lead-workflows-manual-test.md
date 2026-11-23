@@ -360,8 +360,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `494C` Select **Board** in the switch after the **Features** heading.
   - **Expected:**
-    - The board shows, with the button **Schedule: Platform**.
-    - Its columns are 'Platform' cycles, then **Later**.
+    - The board shows, with the button **Columns: Months**.
+    - Its columns are months from this month, then **No date**.
   - **Notes:**
 
 - [ ] `DC97` Select **Card**, then **Risk**.

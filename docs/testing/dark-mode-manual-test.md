@@ -546,11 +546,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `D381` Select **Board** beside the **Features** heading.
   - **Expected:**
-    - The column headings, their release boxes and the cards are easy to read.
-    - The current cycle's red line along its heading, and the strip's red underline, are clear against the dark page.
-    - The **Later** column's shade is clear, and its cards stand out from it.
+    - The column headings and the cards are easy to read.
+    - This month's red line along its heading, and the strip's red underline, are clear against the dark page.
+    - The **No date** column's shade is clear, and its cards stand out from it.
     - The blocks after **Size**, from dark to light, and the bars after **Risk**, green to red, are clear.
     - The red "Not staffed" on 'Scheduler API' is easy to read.
+  - **Notes:**
+
+- [ ] `6B2D` Select **Columns: Months**, then **Platform cycles**.
+  - **Expected:** The column headings' release boxes are easy to read.
   - **Notes:**
 
 - [ ] `C673` Point at the card of 'Offline Sync'.
