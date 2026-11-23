@@ -27,6 +27,7 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 - **Milestones:** have no panel of their own; a project's panel lists them, with Add milestone.
 - **A project's dates:** come from its milestones, so they have no pencil.
 - **Linked records:** customers and proposals open in their own tab's panel; features open on [Features](features.md).
+- **A customer:** Name and Description under Details, then Notes last, under a heading of their own, as the Customers tab's columns run: Name, Description, then Notes.
 
 ### Scope History
 
@@ -37,7 +38,7 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 
 ## Planned
 
-- **Customers:** each customer has a Description and Notes, Notes its table's last column ([#54](https://github.com/ribbitworks/fathom/issues/54)).
+- **Customers:** the projects, proposals and features naming each customer, in its table before Notes and in its details ([#54](https://github.com/ribbitworks/fathom/issues/54)).
 - **Projects timeline:** each project on the [shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines), from first to last milestone.
   - Milestones are diamonds, hollow while to come; the last is red when its work ends later or isn't staffed.
   - Its features and [activities](https://github.com/ribbitworks/fathom/issues/207) show under it, as in Capacity's Work.

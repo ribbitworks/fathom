@@ -730,12 +730,16 @@ describe("the Drafts page", () => {
               id: "c0000000-0000-4000-8000-000000000001",
               keyNumber: 1,
               name: "Fictional Customer",
+              description: null,
+              note: null,
               draft: recordDraft({ action: "created" }),
             },
             {
               id: "c0000000-0000-4000-8000-000000000002",
               keyNumber: 2,
               name: "Settled",
+              description: null,
+              note: null,
             },
           ],
           proposals: [

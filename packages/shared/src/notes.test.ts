@@ -237,11 +237,14 @@ describe("a note's colours", () => {
 });
 
 describe("the fields that hold a note", () => {
-  it("are a release's note, and no other field", () => {
+  it("are a release's, a feature's and a customer's note, and no other field", () => {
     expect([
       isNoteField("release", "note"),
+      isNoteField("feature", "note"),
+      isNoteField("customer", "note"),
+      isNoteField("customer", "description"),
       isNoteField("release", "name"),
       isNoteField("release-stream", "note"),
-    ]).toEqual([true, false, false]);
+    ]).toEqual([true, true, true, false, false, false]);
   });
 });

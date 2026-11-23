@@ -1,20 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafts of the fictional plan and feature teams, made through the server's data access layer as
-// the personas who make and judge them would. The Product Manager drafts, on the Platform release
-// stream, a release added after the last, the release ending this quarter renamed and given another
-// colour, and the release to come moved one cycle later, and, on Patches, another colour for the
-// release under way; renames a project, adds a milestone to another and renames and moves one of its
-// milestones, gives the open proposal a Proposal ID, adds a customer, and renames a third project;
-// changes a planned feature's estimate and description and adds a feature; and publishes them. The
-// Engineering Operations Manager drafts retiring Patches, renaming the second feature team, and
-// adding someone to the fourth and taking someone else off it, and publishes them. The Engineering
-// Director rejects the Patches release's colour and the third project's new name with a reason.
-// Then come changes left unpublished, which hold their records: the second Engineering Operations
-// Manager's new names for Platform and the third feature team, and the Project Manager's new
-// estimate for a possible feature in Later. Each group is made once since its records were last
-// added. Removing the seed data discards these drafts first, unpublished ones included. A
-// development-only package, never included in the runtime image.
+// Drafts of the fictional plan and feature teams, made through the data access layer as the
+// personas who make, judge and leave them unpublished would.
 
 import { changes, type Database, drafts } from "@fathom/db";
 import {
@@ -315,7 +302,7 @@ async function draftProjects(
   });
   await data.projects.add(editor, {
     type: "customer",
-    request: { name: addedCustomer },
+    request: { name: addedCustomer, description: null, note: null },
   });
   const refused = byId(plan.projects, projectId(transitDisplays.key));
   await data.projects.change(editor, refused.id, {

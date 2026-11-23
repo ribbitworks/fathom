@@ -55,7 +55,12 @@ import {
   savedKind,
   wordsOf,
 } from "./plan-table.tsx";
-import type { Column, RecordTable, RowGrouping } from "./record-table.ts";
+import type {
+  Column,
+  ColumnGroup,
+  RecordTable,
+  RowGrouping,
+} from "./record-table.ts";
 import type { ColumnUnit } from "./table-view.ts";
 import { formatMonth } from "./day-formats.ts";
 import { type RowGroup, rankOfNone } from "./row-groups.ts";
@@ -229,10 +234,7 @@ function staffedColumn(
 
 // A feature's built-in columns in the headed groups its details show them in, in order: the order
 // the table starts its columns in too, so the two read alike.
-export const featureColumnGroups: readonly {
-  title: string;
-  keys: readonly string[];
-}[] = [
+export const featureColumnGroups: readonly ColumnGroup[] = [
   { title: "Details", keys: ["name", "statusId", "description", "note"] },
   {
     title: "Customers and commitments",

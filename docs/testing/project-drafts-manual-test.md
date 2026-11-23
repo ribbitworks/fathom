@@ -57,7 +57,7 @@ To run the test again after finishing it, start from Reset the Database, since t
 - [ ] `7F45` Select **New customer** at the top right.
   - **Expected:**
     - The side panel opens, headed **New customer**.
-    - It has a **Name** box.
+    - It has a **Name** box, a **Description** box and **Notes**.
     - **Cancel** and **Add** are at its foot.
   - **Notes:**
 

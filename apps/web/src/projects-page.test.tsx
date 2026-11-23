@@ -185,7 +185,7 @@ describe("adding a record in the side panel", () => {
       expect(document.activeElement?.id).toBe("project-record-panel-title");
     });
     expect(sent(fetch, "POST /api/customers")).toEqual([
-      { name: "Added Customer" },
+      { name: "Added Customer", description: "", note: null },
     ]);
   });
 

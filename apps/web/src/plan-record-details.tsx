@@ -13,11 +13,7 @@ import type {
 import { Button, Group, Menu, Stack, Text } from "@mantine/core";
 import { Icon } from "./icons.tsx";
 import details from "./record-details.module.css";
-import {
-  addedColumnsTitle,
-  featureColumnGroups,
-  releaseColumnKey,
-} from "./feature-table.tsx";
+import { addedColumnsTitle, releaseColumnKey } from "./feature-table.tsx";
 import {
   livePlanRecords,
   NamerName,
@@ -45,7 +41,7 @@ import {
 } from "./record-details.tsx";
 import { inViewUnits } from "./grid-columns.tsx";
 import { heldBack } from "./grid-drafts.ts";
-import type { Column } from "./record-table.ts";
+import type { Column, ColumnGroup } from "./record-table.ts";
 import {
   type Editing,
   useChosenUnits,
@@ -149,7 +145,7 @@ export function PlanRecordDetails({
   onChange: (change: PlanChange) => void;
   // The parts its details are shown in, any column none names in a last part of its own; or one
   // list of its columns, in the table's order.
-  sections?: typeof featureColumnGroups | undefined;
+  sections?: readonly ColumnGroup[] | undefined;
   // Opens a note, which the page holds, since a note is written in a panel of its own.
   notes: NoteOpening;
 }) {

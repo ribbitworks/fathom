@@ -245,6 +245,8 @@ export async function removeMilestone(
 // What changing a record sends: the whole record, as the server takes it.
 export const customerRequest = (customer: Customer): CustomerRequest => ({
   name: customer.name,
+  description: customer.description,
+  note: customer.note,
 });
 
 export const projectRequest = (project: Project): ProjectRequest => ({
@@ -472,7 +474,7 @@ const planRecordOperations: Readonly<
   Record<PlanRecordKind, PlanRecordOperations>
 > = {
   customer: {
-    blank: { name: "" },
+    blank: { name: "", description: null, note: null },
     all: (plan) => plan.customers,
     withAll: (plan, records) => ({
       ...plan,
@@ -504,6 +506,7 @@ const planRecordOperations: Readonly<
       customerIds: [],
       statusId: "",
       featureIds: [],
+      removalReasons: {},
     },
     all: (plan) => plan.proposals,
     withAll: (plan, records) => ({

@@ -72,11 +72,24 @@ describe("a project's dates", () => {
 });
 
 describe("requests", () => {
-  it("name a customer", () => {
+  it("name a customer, with no description or note unless given", () => {
     expect(customerRequestSchema.parse({ name: " Fictional " })).toEqual({
       name: "Fictional",
+      description: null,
+      note: null,
     });
     expect(customerRequestSchema.safeParse({ name: " " }).success).toBe(false);
+  });
+
+  it("trim a customer's description, taking an empty one as none, and refuse one too long", () => {
+    const described = (description: string) =>
+      customerRequestSchema.safeParse({ name: "Fictional", description });
+
+    expect([
+      described(" Ferries ").data?.description,
+      described("  ").data?.description,
+      described("a".repeat(projectLengths.customerDescription + 1)).success,
+    ]).toEqual(["Ferries", null, false]);
   });
 
   it("give a project no ID when it is empty, and its picks each once, in order", () => {

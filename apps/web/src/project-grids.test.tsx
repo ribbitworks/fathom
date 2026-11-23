@@ -169,6 +169,8 @@ describe("the records a draft uses", () => {
           id: "c",
           keyNumber: 1,
           name: "Fictional Customer",
+          description: null,
+          note: null,
           draft: recordDraft({ action: "created" }),
         },
       ],
@@ -193,6 +195,8 @@ describe("what a draft changes, in words", () => {
           id: "c",
           keyNumber: 1,
           name: "After",
+          description: null,
+          note: null,
           draft: recordDraft({ changed: ["name"], live: { name: "Before" } }),
         },
         choices(),
@@ -247,6 +251,7 @@ describe("what a draft changes, in words", () => {
           ownerId: "o1",
           customerIds: [],
           proposalIds: [],
+          featureIds: [],
           milestones: [],
           dates: { first: null, last: null, nextDelivery: null },
           draft: draft(["ownerId"], { ownerId: "gone" }),
@@ -274,6 +279,8 @@ describe("what a draft changes, in words", () => {
           ownerId: null,
           customerIds: [],
           statusId: "s1",
+          featureIds: [],
+          removalReasons: {},
           draft: draft(["link"], { link: "https://example.test/old" }),
         },
         given,
@@ -298,6 +305,8 @@ describe("what a draft changes, in words", () => {
           id: "c1",
           keyNumber: 1,
           name: "New",
+          description: null,
+          note: null,
           draft: draft(["name"], { name: "Old" }),
         },
         given,
@@ -326,7 +335,13 @@ describe("what a draft changes, in words", () => {
   });
 
   it("says nothing for a record without a draft, or one added", () => {
-    const customer = { id: "c1", keyNumber: 1, name: "One" };
+    const customer = {
+      id: "c1",
+      keyNumber: 1,
+      name: "One",
+      description: null,
+      note: null,
+    };
     expect(planDraftFields("customer", customer, given)).toEqual([]);
     expect(
       planDraftFields(

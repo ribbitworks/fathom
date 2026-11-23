@@ -80,11 +80,15 @@ export const customers = [
     id: "c0000000-0000-4000-8000-000000000001",
     keyNumber: 1,
     name: "Fictional Harbour",
+    description: null,
+    note: null,
   },
   {
     id: "c0000000-0000-4000-8000-000000000002",
     keyNumber: 2,
     name: "Fictional Quay",
+    description: null,
+    note: null,
   },
 ];
 

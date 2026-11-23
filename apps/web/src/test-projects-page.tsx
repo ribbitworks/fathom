@@ -74,10 +74,14 @@ export const proposal = (more: Partial<Plan["proposals"][number]> = {}) => ({
   ...more,
 });
 
-export const customer = (more: Partial<Plan["customers"][number]> = {}) => ({
+export const customer = (
+  more: Partial<Plan["customers"][number]> = {},
+): Plan["customers"][number] => ({
   id: customerId,
   keyNumber: 1,
   name: "Fictional Customer",
+  description: null,
+  note: null,
   ...more,
 });
 

@@ -45,7 +45,19 @@ import {
   wordsOf,
 } from "./plan-table.tsx";
 import { RecordGrid } from "./record-grid.tsx";
-import type { Column, RecordGridProps, RecordTable } from "./record-table.ts";
+import type {
+  Column,
+  ColumnGroup,
+  RecordGridProps,
+  RecordTable,
+} from "./record-table.ts";
+
+// A customer's columns in the headed groups its details show them in, Notes last, as the table
+// ends with them.
+export const customerColumnGroups: readonly ColumnGroup[] = [
+  { title: "Details", keys: ["name", "description"] },
+  { title: "Notes", keys: ["note"] },
+];
 
 export function customerTable(
   onOpen?: (customer: Customer) => void,
@@ -53,7 +65,13 @@ export function customerTable(
   return planTable<Customer, CustomerRequest>({
     type: "customer",
     ...wordsOf("customers"),
-    columns: () => [nameColumn()],
+    columns: () => [
+      nameColumn(),
+      field<Customer>("description", planColumnNames.description, "text", {
+        maxLength: projectLengths.customerDescription,
+      }),
+      field<Customer>("note", planColumnNames.note, "note"),
+    ],
     request: (changes) => merged(changes) as CustomerRequest,
     showDetails: onOpen,
   });

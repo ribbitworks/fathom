@@ -415,6 +415,13 @@ describe("changing a record in its panel", () => {
       "Name",
       "name",
     ],
+    [
+      `/projects?tab=customers&open=${customerId}`,
+      /Fictional Customer/,
+      `PUT /api/customers/${customerId}`,
+      "Description",
+      "description",
+    ],
   ])(
     "saves a value changed from its pencil at %s",
     async (address, name, request, label, key) => {
@@ -585,7 +592,7 @@ describe("changing a record from its row", () => {
     await typeInto(`cell-${customerId}-name`, "A");
     await waitFor(() => {
       expect(sent(fetch, `PUT /api/customers/${customerId}`)).toEqual([
-        { name: "A" },
+        { name: "A", description: null, note: null },
       ]);
     });
     await userEvent.click(screen.getByRole("tab", { name: "Projects" }));
@@ -803,5 +810,42 @@ describe("exporting a plan table", () => {
     // Reading the file as text takes off its byte order mark.
     expect(lines[0]).toMatch(/^Draft,Change,Name,/u);
     expect(lines.some((line) => line.includes("Fictional Project"))).toBe(true);
+  });
+});
+
+describe("a customer's description and notes", () => {
+  const described = plan({
+    customers: [
+      customer({
+        description: "Island ferry line",
+        note: "**Pilot** at the north quay first.",
+      }),
+    ],
+  });
+
+  it("shows them in the table, Notes last", async () => {
+    await openPage("/projects?tab=customers", described);
+
+    const grid = await screen.findByRole("grid", { name: "Customers" });
+    expect(
+      within(grid)
+        .getAllByRole("columnheader")
+        .map(({ textContent }) => textContent)
+        .filter((text) => text !== "" && text !== "Actions"),
+    ).toEqual(["Name", "Description", "Notes"]);
+    expect(within(grid).getByText("Island ferry line")).toBeDefined();
+  });
+
+  it("groups them in a customer's details, the description under Details and Notes last", async () => {
+    await openPage(`/projects?tab=customers&open=${customerId}`, described);
+    await screen.findByRole("heading", { name: /Fictional Customer/u });
+
+    expect(
+      within(sidePanel())
+        .getAllByRole("heading", { level: 3 })
+        .map(({ textContent }) => textContent),
+    ).toEqual(["Details", "Notes"]);
+    expect(within(sidePanel()).getByText("Island ferry line")).toBeDefined();
+    expect(within(sidePanel()).getByText("Pilot")).toBeDefined();
   });
 });

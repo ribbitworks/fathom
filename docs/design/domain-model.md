@@ -152,7 +152,7 @@ Percentages are whole.
 
 ### Customers and Products
 
-- **Customer:** a row of the built-in Customers table, with a name, required and unique, picked directly by projects, proposals, and features. A Description and Notes are not built yet ([#54](https://github.com/ribbitworks/fathom/issues/54)).
+- **Customer:** a row of the built-in Customers table, with a name, required and unique, picked directly by projects, proposals, and features. Optionally a description, plain text up to 200 characters, and a note, formatted as a feature's is ([Notes](visual-design.md#components)).
 - **Product:** a built-in table with a name, required and unique. Features are part of products through a column users add. Not built yet.
 
 ## Release Entities

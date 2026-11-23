@@ -110,14 +110,19 @@ export const releases = fathomSchema.table(
 );
 
 // Customers, whom projects and proposals are for. A customer's name is unique, ignoring letter case.
+// Its description and note are null rather than empty.
 export const customers = fathomSchema.table(
   "customers",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
+    description: text("description"),
+    note: text("note"),
   },
   (table) => [
     uniqueIndex("customers_name_index").on(sql`lower(${table.name})`),
+    check("customers_description_not_empty", sql`${table.description} <> ''`),
+    check("customers_note_not_empty", sql`${table.note} <> ''`),
   ],
 );
 
