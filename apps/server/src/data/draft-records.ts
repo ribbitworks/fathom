@@ -3,20 +3,13 @@
 // A draft and the record it makes: the fields it changes, how sensitive it is, and the changes it
 // records when its rejection is cleared. Part of the data access layer.
 
-import {
-  type Database,
-  drafts,
-  fieldOfValue,
-  unpublishedDrafts,
-} from "@fathom/db";
+import { drafts, fieldOfValue, unpublishedDrafts } from "@fathom/db";
 import { type DraftKind, type Tier } from "@fathom/shared";
 import { mostSensitive } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import { type Change, stableJson } from "./changes.ts";
 import { typeOf } from "./column-types.ts";
 import type { ColumnInfo } from "./values.ts";
-
-export type Reader = Pick<Database, "select">;
 
 // A record as the change history records it, such as a person's details and each column's choices,
 // left out when none are chosen.
