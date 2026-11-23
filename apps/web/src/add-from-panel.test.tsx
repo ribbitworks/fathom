@@ -11,6 +11,8 @@ import {
   newId,
   openPage,
   plan,
+  project,
+  projectId,
   proposal,
   proposalId,
   saved,
@@ -90,6 +92,38 @@ describe("adding a record from a picker", () => {
       expect(document.activeElement?.getAttribute("aria-label")).toBe(
         "Change Customers",
       );
+    });
+  });
+
+  it("adds a customer from a project's Customers and links it to the project", async () => {
+    const onProject = plan({
+      customers: [customer(), added],
+      projects: [project({ customerIds: [customerId, newId] })],
+    });
+    const { fetch, held } = await openPage(
+      `/projects?open=${projectId}`,
+      plan(),
+      {
+        "POST /api/customers": saved(() => withAdded),
+        [`PUT /api/projects/${projectId}`]: saved(() => onProject),
+      },
+    );
+    await screen.findByRole("heading", { name: /Fictional Project/ });
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", { name: "Change Customers" }),
+    );
+    await userEvent.type(
+      within(sidePanel()).getByRole("textbox", { name: "Customers" }),
+      "Harbour Ferries{Enter}",
+    );
+    held.plan = withAdded;
+    await userEvent.click(
+      within(newForm() as HTMLElement).getByRole("button", { name: "Add" }),
+    );
+    await waitFor(() => {
+      expect(sent(fetch, `PUT /api/projects/${projectId}`)).toEqual([
+        expect.objectContaining({ customerIds: [customerId, newId] }),
+      ]);
     });
   });
 
