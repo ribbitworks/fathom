@@ -88,6 +88,7 @@ export {
   viewsOfRole,
   allocationsGridPermissions,
   whyMissing,
+  whyNoListChange,
   whyNoMove,
 } from "./data-classes.ts";
 export {

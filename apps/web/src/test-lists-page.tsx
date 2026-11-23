@@ -8,12 +8,16 @@ import { userEvent } from "@testing-library/user-event";
 import { expect } from "vitest";
 import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
 
+// Sight of people and of every class, which changing a list of each class needs.
+const everyClass = ["people:view", "personal:view", "confidential:view"];
+
 export const viewer = () =>
   Response.json({
     ...fictionalUser,
     permissions: ["configuration:view", "plan:view", "features:view"],
   });
 
+// An editor who sees people and every class, as every role that edits lists does.
 export const editor = () =>
   Response.json({
     ...fictionalUser,
@@ -22,6 +26,7 @@ export const editor = () =>
       "configuration:view",
       "plan:view",
       "features:view",
+      ...everyClass,
     ],
   });
 
@@ -116,6 +121,11 @@ export const refused = (status: number) => () =>
 
 export type Answers = Parameters<typeof serverAnswers>[0];
 
+// No people, which an Approver who sees people reads before deciding, since a list's drafts may be
+// used by people's.
+export const noPeople = () =>
+  Response.json({ people: [], fields: [], order: [] });
+
 export async function openPanel(answers: Answers = {}, path = "/lists/l1") {
   const fetch = serverAnswers({
     "GET /api/session": editor,
@@ -187,6 +197,7 @@ export const approverOnly = () =>
       "configuration:approve",
       "plan:view",
       "features:view",
+      ...everyClass,
     ],
   });
 
@@ -203,6 +214,7 @@ export const approver = () =>
       "configuration:approve",
       "plan:view",
       "features:view",
+      ...everyClass,
     ],
   });
 export const waiting = {

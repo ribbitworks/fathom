@@ -27,6 +27,9 @@ import {
   panel,
   focusRow,
   startsWith,
+  added,
+  noPeople,
+  openDraftMenu,
 } from "./test-lists-page.tsx";
 
 afterEach(() => {
@@ -714,5 +717,68 @@ describe("searching lists", () => {
           .map((link) => link.textContent),
       ).toEqual(shown);
     });
+  });
+});
+
+describe("a list of a class the role can't see", () => {
+  // Changes lists and sees people, but neither Personal nor Confidential data.
+  const peopleOnly =
+    (extra: readonly string[] = []) =>
+    () =>
+      Response.json({
+        ...fictionalUser,
+        permissions: [
+          "configuration:edit",
+          "configuration:view",
+          "people:view",
+          ...extra,
+        ],
+      });
+  const unseenLine =
+    "This role can't see Personal data, so it can't change this list.";
+
+  it("is read only, saying why", async () => {
+    serverAnswers({
+      "GET /api/session": peopleOnly(),
+      "GET /api/lists": () => Response.json({ lists: [skills] }),
+    });
+    renderApp("/lists/l2");
+    expect(await screen.findByText(unseenLine)).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Edit list" })).toBeNull();
+    expect(screen.queryByLabelText("New choice name")).toBeNull();
+  });
+
+  it("says why under Live only too", async () => {
+    serverAnswers({
+      "GET /api/session": peopleOnly(),
+      "GET /api/lists": () => Response.json({ lists: [skills] }),
+    });
+    renderApp("/lists/l2?show=live");
+    expect(await screen.findByText(unseenLine)).toBeDefined();
+  });
+
+  it("says nothing to a role that only sees lists", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": () => Response.json({ lists: [skills] }),
+    });
+    renderApp("/lists/l2");
+    await screen.findByRole("heading", { name: "Skills", level: 2 });
+    expect(screen.queryByText(unseenLine)).toBeNull();
+  });
+
+  it("is left out of deciding every draft waiting", async () => {
+    serverAnswers({
+      "GET /api/session": peopleOnly(["configuration:approve"]),
+      "GET /api/people": noPeople,
+      "GET /api/lists": () =>
+        Response.json({ lists: [added, { ...skills, draft: { ...removal } }] }),
+    });
+    renderApp("/lists");
+    const menu = await openDraftMenu();
+    expect(
+      within(menu).getByRole("menuitem", { name: "Approve 2 drafts…" }),
+    ).toBeDefined();
+    expect(within(menu).queryByText(/ of /u)).toBeNull();
   });
 });
