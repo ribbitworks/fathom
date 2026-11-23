@@ -54,7 +54,7 @@ RUN if ls node_modules/.pnpm | grep -E '^(esbuild|@esbuild|drizzle-kit|vite|vite
     echo "error: development tools were installed as runtime packages" >&2; exit 1; \
   fi
 
-FROM gcr.io/distroless/nodejs24-debian13:nonroot@sha256:cb606325b7ec4af55462cb0b424a53b452a5b4a894ffe841fcf1048d216fb9f8
+FROM gcr.io/distroless/nodejs24-debian13:nonroot@sha256:39b0407357c9fadf1a9708d22088f02de21f0e1e8a688474eea2d8701e7d5693
 WORKDIR /app
 COPY --from=server /app/package.json ./
 COPY --from=server /app/node_modules node_modules

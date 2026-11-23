@@ -20,7 +20,7 @@
   "prBodyNotes": [
     "- Released at least seven days ago, unless it fixes a security vulnerability, or is a PostgreSQL minor release or image digest, which arrive at once."
   ],
-  "prBodyTemplate": "{{{table}}}{{{notes}}}{{{changelogs}}}",
+  "prBodyTemplate": "{{{table}}}{{{notes}}}{{{changelogs}}}{{{controls}}}",
   "vulnerabilityAlerts": {
     "labels": ["area: dependencies", "P1"],
     "minimumReleaseAge": null,
