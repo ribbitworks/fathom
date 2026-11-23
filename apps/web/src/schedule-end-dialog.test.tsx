@@ -162,6 +162,22 @@ describe("the dialog ending a schedule", () => {
     expect(bodiesOf(fetch)).toEqual([]);
   });
 
+  it("names no release to one whose role isn't known yet", async () => {
+    const fetch = serverAnswers({});
+    const releasing = fictionalStream({
+      releases: [fictionalRelease({ lastCycle: "2027-07-01" })],
+    });
+    show((handlers) => <EndsDialog stream={releasing} {...handlers} />, {
+      signedIn: false,
+    });
+    await userEvent.type(box("Schedule ends"), "20270501");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect([
+      screen.getByText("Work is planned on cycles after that day"),
+      bodiesOf(fetch),
+    ]).toEqual([expect.anything(), []]);
+  });
+
   it("lets the day come before a release drafted to be removed", async () => {
     serverAnswers({ [`PUT ${streamPath}/ends-on`]: savedStream });
     const releasing = fictionalStream({
