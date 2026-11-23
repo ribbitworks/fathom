@@ -22,6 +22,19 @@ import {
   teamsList as teams,
 } from "./test-support.tsx";
 
+describe("drafts of lists alone", () => {
+  it("are decided with no columns or people given, as on the Lists page before people load", () => {
+    const decision = decisionFor(
+      "approve",
+      { ...noDrafts(), lists: [teams.id] },
+      draftKinds,
+      lists,
+    );
+    expect(decision.named).toEqual(["the list Teams"]);
+    expect(decision.othersApprove).toBeUndefined();
+  });
+});
+
 describe("drafts the approver changed", () => {
   const person = (id: string, needsOtherApprover?: true): Person => ({
     id,
