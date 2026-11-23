@@ -254,6 +254,8 @@ export interface RecordLinkItem {
   id: string;
   name: ReactNode;
   onShow: () => void;
+  // Marks drawn around the link, such as its record's draft.
+  around?: ((link: ReactNode) => ReactNode) | undefined;
 }
 
 // Links to records, one to a line, as a details panel lists several records.
@@ -264,11 +266,12 @@ export function RecordLinkList({
 }) {
   return (
     <Stack gap={0} align="flex-start">
-      {links.map(({ id, name, onShow }) => (
-        <span key={id}>
-          <RecordLink name={name} onShow={onShow} />
-        </span>
-      ))}
+      {links.map(({ id, name, onShow, around }) => {
+        const link = <RecordLink name={name} onShow={onShow} />;
+        return (
+          <span key={id}>{around === undefined ? link : around(link)}</span>
+        );
+      })}
     </Stack>
   );
 }

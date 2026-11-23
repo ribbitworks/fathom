@@ -13,6 +13,7 @@ import {
   projectLengths,
   type Proposal,
   type RecordKeyOf,
+  type Show,
 } from "@fathom/shared";
 import { Menu, Text } from "@mantine/core";
 import { Fragment, type ReactNode } from "react";
@@ -44,6 +45,7 @@ import {
 import type {
   Column,
   GridRecord,
+  NamingPart,
   RecordTable,
   RowGrouping,
 } from "./record-table.ts";
@@ -355,14 +357,6 @@ export function namesCell(records: readonly Identified[]) {
   };
 }
 
-// A project or proposal naming a record, as drafted or as live, with what its draft does to the
-// record's link, if anything.
-export interface NamingPart {
-  record: Project | Proposal;
-  part: DraftedPart | undefined;
-  live: boolean;
-}
-
 // A link field by which a project or proposal names other records: features or customers.
 export type NamingLink = "featureIds" | "customerIds";
 
@@ -373,7 +367,7 @@ export function namingParts(
   records: readonly (Project | Proposal)[],
   link: NamingLink,
   id: string,
-): NamingPart[] {
+): (NamingPart & { record: Project | Proposal })[] {
   return records.flatMap((record) => {
     // The link is one of two fixed field names, on the record as drafted and as live.
     // eslint-disable-next-line security/detect-object-injection
@@ -389,8 +383,45 @@ export function namingParts(
   });
 }
 
-// The projects or proposals naming a record, each marked with its own draft: as drafted, or as they
-// are live, under Live only or in a Live row, where those a draft adds don't show yet.
+// The records naming one that a Draft view lists: as they are live under Live only; as drafted
+// once drafts are applied, which leaves out an addition that was rejected; or all of them beside live.
+export const partsShown = (
+  parts: readonly NamingPart[],
+  show: Show,
+): NamingPart[] =>
+  parts.filter(({ record, part, live }) => {
+    if (show === "live") return live;
+    return (
+      show !== "drafts" ||
+      part !== "added" ||
+      record.draft?.state !== "rejected"
+    );
+  });
+
+// A record naming another, marked with its own draft where that adds or takes away the link, as it
+// is drafted, or as it is live.
+export function NamerName({
+  part,
+  live,
+  children,
+}: {
+  part: NamingPart;
+  live: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <DraftedPartItem
+      draft={part.part === undefined ? undefined : part.record.draft}
+      part={part.part}
+      live={live}
+    >
+      {children}
+    </DraftedPartItem>
+  );
+}
+
+// The projects or proposals naming a record, each marked with its own draft, as the Draft view lists
+// them, or as they are live in a Live row.
 export function NamersCell({
   parts,
   asLive,
@@ -399,21 +430,15 @@ export function NamersCell({
   asLive: boolean;
 }) {
   const show = useDraftView();
-  const live = asLive || show === "live";
-  const entries = parts
-    .filter((one) => !live || one.live)
-    .map(({ record, part }) => ({
-      record,
-      name: (
-        <DraftedPartItem
-          draft={part === undefined ? undefined : record.draft}
-          part={part}
-          live={live}
-        >
-          <RecordName record={record} />
-        </DraftedPartItem>
-      ),
-    }));
+  const viewed = asLive ? "live" : show;
+  const entries = partsShown(parts, viewed).map((part) => ({
+    record: part.record,
+    name: (
+      <NamerName part={part} live={viewed === "live"}>
+        <RecordName record={part.record} />
+      </NamerName>
+    ),
+  }));
   return entries.length === 0 ? null : <RecordNames entries={entries} />;
 }
 
@@ -484,6 +509,7 @@ export function namersColumn<Rec extends PlanRecord>(
     content: cell(false),
     liveContent: cell(true),
     marksParts: true,
+    parts: (id) => namingParts(drafted, link, id),
   };
 }
 

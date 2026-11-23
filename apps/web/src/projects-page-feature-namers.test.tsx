@@ -193,6 +193,86 @@ describe("the Features page", () => {
       ).toEqual([true, false]);
     });
 
+    const addedTo = (state: "waiting" | "rejected" = "waiting") =>
+      recordDraft({
+        action: "changed",
+        state,
+        changed: ["featureIds"],
+        live: { featureIds: [] },
+      });
+    // Opens a feature's details, its one project given, in a Draft view.
+    const openDetails = async (more: object, view = "") => {
+      await openPage(
+        `/features?open=${first.id}${view}`,
+        featurePlan({ canEdit: true, projects: [project(more)] }),
+        answers,
+        planEditor,
+      );
+      await screen.findByRole("heading", { name: /Fictional First/ });
+    };
+    const projectLink = () =>
+      within(sidePanel()).queryByRole("button", { name: /Fictional Project/ });
+
+    it("marks a project a draft adds in a feature's details", async () => {
+      await openDetails({
+        featureIds: [first.id],
+        draft: addedTo(),
+      });
+      expect(within(sidePanel()).getByText(", added")).toBeTruthy();
+    });
+
+    it("strikes through a project a draft takes away in a feature's details", async () => {
+      await openDetails({ featureIds: [], draft: takenAway() });
+      expect(projectLink()?.closest('[class*="struck"]')).not.toBeNull();
+    });
+
+    it("strikes through a waiting removal in a feature's details with drafts applied", async () => {
+      await openDetails({ featureIds: [], draft: takenAway() }, "&show=drafts");
+      expect(projectLink()?.closest('[class*="struck"]')).not.toBeNull();
+    });
+
+    it("leaves out a rejected addition in a feature's details with drafts applied", async () => {
+      await openDetails(
+        { featureIds: [first.id], draft: addedTo("rejected") },
+        "&show=drafts",
+      );
+      expect(projectLink()).toBeNull();
+    });
+
+    it("leaves out a rejected addition in the cell with drafts applied", async () => {
+      await openPage(
+        "/features?show=drafts",
+        featurePlan({
+          canEdit: true,
+          projects: [
+            project({ featureIds: [first.id], draft: addedTo("rejected") }),
+          ],
+        }),
+        answers,
+        planEditor,
+      );
+      expect(cell(first, "projectIds")?.textContent).toBe("");
+    });
+
+    it("gives a waiting removal Live's dot in a feature's details under Live only", async () => {
+      await openDetails({ featureIds: [], draft: takenAway() }, "&show=live");
+      expect(
+        projectLink()
+          ?.closest("span")
+          ?.parentElement?.querySelector(
+            '[data-tip="Live. Its removal is waiting for approval."]',
+          ),
+      ).not.toBeNull();
+    });
+
+    it("leaves out a project a draft adds in a feature's details under Live only", async () => {
+      await openDetails(
+        { featureIds: [first.id], draft: addedTo() },
+        "&show=live",
+      );
+      expect(projectLink()).toBeNull();
+    });
+
     it("leaves unmarked a project whose draft changes something else", async () => {
       await openPage(
         "/features",

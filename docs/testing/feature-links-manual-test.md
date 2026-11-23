@@ -156,6 +156,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Bulk Import' has no dot before its name.
   - **Notes:**
 
+- [ ] `7B3E` Point at 'Bulk Import' and select the details button at the right of its **Name** cell.
+  - **Expected:** In the side panel, the **Projects** row names 'Internal Tools', with a hollow yellow dot before it.
+  - **Notes:**
+
 - [ ] `59FB` Select the **Projects** page in the left-hand menu.
   - **Expected:** In the row 'Internal Tools':
     - Its **Features** cell names 'Bulk Import' and 'Usage Alerts'.
