@@ -71,6 +71,12 @@ describe("deciding drafts of lists by their classes", () => {
     }).toThrow(ForbiddenError);
   });
 
+  it("checks no list for a choice Fathom no longer has", () => {
+    expect(() => {
+      requireSeesLists(generalOnly, state, asking({ choices: ["gone"] }));
+    }).not.toThrow();
+  });
+
   it("lets a role that sees Personal data decide them", () => {
     expect(() => {
       requireSeesLists(
