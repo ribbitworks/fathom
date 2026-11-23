@@ -355,27 +355,33 @@ export function namesCell(records: readonly Identified[]) {
   };
 }
 
-// A project or proposal naming a feature, as drafted or as live, with what its draft does to the
-// feature, if anything.
+// A project or proposal naming a record, as drafted or as live, with what its draft does to the
+// record's link, if anything.
 export interface NamingPart {
   record: Project | Proposal;
   part: DraftedPart | undefined;
   live: boolean;
 }
 
-// The projects or proposals naming a feature, as drafted and as live: one a draft adds it to, or
-// that is only drafted to be added, adds it; one a draft takes it from, or removes, takes it away.
+// A link field by which a project or proposal names other records: features or customers.
+export type NamingLink = "featureIds" | "customerIds";
+
+// The projects or proposals naming a record through a link field, as drafted and as live: one a
+// draft adds it to, or that is only drafted to be added, adds it; one a draft takes it from, or
+// removes, takes it away.
 export function namingParts(
   records: readonly (Project | Proposal)[],
-  featureId: string,
+  link: NamingLink,
+  id: string,
 ): NamingPart[] {
   return records.flatMap((record) => {
-    const drafted =
-      record.draft?.action !== "deleted" &&
-      record.featureIds.includes(featureId);
-    const live = (livePlanRecords([record]).at(0)?.featureIds ?? []).includes(
-      featureId,
-    );
+    // The link is one of two fixed field names, on the record as drafted and as live.
+    // eslint-disable-next-line security/detect-object-injection
+    const named = record[link];
+    // eslint-disable-next-line security/detect-object-injection
+    const liveNamed = livePlanRecords([record]).at(0)?.[link] ?? [];
+    const drafted = record.draft?.action !== "deleted" && named.includes(id);
+    const live = liveNamed.includes(id);
     if (!drafted && !live) return [];
     const part: DraftedPart | undefined =
       drafted === live ? undefined : drafted ? "added" : "removed";
@@ -383,8 +389,8 @@ export function namingParts(
   });
 }
 
-// The projects or proposals naming a feature, each marked with its own draft: as drafted, or as
-// they are live, under Live only or in a Live row, where those a draft adds don't show yet.
+// The projects or proposals naming a record, each marked with its own draft: as drafted, or as they
+// are live, under Live only or in a Live row, where those a draft adds don't show yet.
 export function NamersCell({
   parts,
   asLive,
@@ -452,6 +458,34 @@ export const pickedColumn = <Rec extends PlanRecord>(
   namedBy?: (record: Rec) => string[],
 ): Column<Rec, PlanChange> =>
   recordsColumn<Rec, PlanChange>(key, label, records, { namedBy });
+
+// A column of the projects or proposals naming a row's record through a link field, such as those
+// needing a feature, as the records given show them, each marked with its own draft, so a change to
+// it is a draft of each record added or taken away.
+export function namersColumn<Rec extends PlanRecord>(
+  key: string,
+  label: string,
+  records: readonly (Project | Proposal)[],
+  // The same records with their drafts, whatever the view, to mark them.
+  drafted: readonly (Project | Proposal)[],
+  link: NamingLink,
+): Column<Rec, PlanChange> {
+  const cell = (asLive: boolean) => (record: Rec) => (
+    <NamersCell parts={namingParts(drafted, link, record.id)} asLive={asLive} />
+  );
+  return {
+    ...pickedColumn<Rec>(key, label, records, (record) =>
+      records
+        // The link is always one of the fixed link fields.
+        // eslint-disable-next-line security/detect-object-injection
+        .filter((namer) => namer[link].includes(record.id))
+        .map(({ id }) => id),
+    ),
+    content: cell(false),
+    liveContent: cell(true),
+    marksParts: true,
+  };
+}
 
 // The first status offered, of a meaning when one is named, as a value in a cell.
 export function firstStatus(
