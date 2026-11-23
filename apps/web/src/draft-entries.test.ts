@@ -41,6 +41,7 @@ describe("the drafts a role sees", () => {
       seesTeams: false,
       seesProjects: false,
       seesSettings: false,
+      permissions: [],
     });
   });
 
@@ -87,6 +88,8 @@ describe("the drafts to decide now", () => {
   const decides = {
     choosable: ({ key }: Entry) => key !== "not-ours",
     waits: ({ key }: Entry) => key === "waits",
+    unseen: ({ key }: Entry) =>
+      key === "unseen" ? "This role can't see Personal data" : undefined,
   };
 
   it("keeps a waiting, published draft of a kind the role decides", () => {
@@ -97,6 +100,7 @@ describe("the drafts to decide now", () => {
 
   it.each([
     ["of a kind the role doesn't decide", entry("not-ours")],
+    ["of a list whose class the role can't see", entry("unseen")],
     ["waiting on a rejected draft", entry("waits")],
     ["rejected", entry("rejected", { state: "rejected" })],
     ["not published", entry("unpublished", { unpublished: true })],

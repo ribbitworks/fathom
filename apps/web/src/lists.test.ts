@@ -9,6 +9,8 @@ import {
   builtInFirst,
   draftedLists,
   retiredLive,
+  unchangeableLists,
+  unseenInDrafts,
   withRetiring,
 } from "./lists.ts";
 
@@ -131,5 +133,75 @@ describe("the order of lists", () => {
       "Department",
       "Equipment",
     ]);
+  });
+});
+
+describe("the lists a role may not change, by their class", () => {
+  const list = (id: string, visibility: string, more: object = {}): List =>
+    ({
+      id,
+      keyNumber: 1,
+      name: id,
+      description: "",
+      visibility,
+      retired: false,
+      choices: [choice(`${id}-choice`)],
+      ...more,
+    }) as List;
+  const lists = [
+    list("general", "general"),
+    list("personal", "personal"),
+    // General live, drafted to Confidential.
+    list("becoming", "confidential", {
+      draft: {
+        ...waiting,
+        action: "changed",
+        changed: ["visibility"],
+        live: { visibility: "general" },
+      },
+    }),
+  ];
+  const unseen = (permissions: Parameters<typeof unchangeableLists>[1]) => {
+    const unchangeable = unchangeableLists(lists, permissions);
+    return (asked: {
+      lists?: string[];
+      choices?: string[];
+      orders?: string[];
+    }) =>
+      unseenInDrafts(
+        { lists: [], choices: [], orders: [], ...asked },
+        lists,
+        unchangeable,
+      );
+  };
+
+  it("leaves a General list to a role that sees people", () => {
+    expect(unseen(["people:view"])({ lists: ["general"] })).toBeUndefined();
+  });
+
+  it("closes a General list to a role that doesn't see people", () => {
+    expect(unseen([])({ lists: ["general"] })).toBe(
+      "This role can't see people's details",
+    );
+  });
+
+  it.each([
+    ["a list", { lists: ["personal"] }],
+    ["a choice", { choices: ["personal-choice"] }],
+    ["an order", { orders: ["personal"] }],
+  ])("closes %s of a class the role can't see", (_case, asked) => {
+    expect(unseen(["people:view"])(asked)).toBe(
+      "This role can't see Personal data",
+    );
+  });
+
+  it("closes a list drafted to a class the role can't see", () => {
+    expect(
+      unseen(["people:view", "personal:view"])({ lists: ["becoming"] }),
+    ).toBe("This role can't see Confidential data");
+  });
+
+  it("finds no list for a choice it doesn't have", () => {
+    expect(unseen(["people:view"])({ choices: ["gone"] })).toBeUndefined();
   });
 });

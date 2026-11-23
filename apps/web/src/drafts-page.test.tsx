@@ -261,6 +261,13 @@ describe("the Drafts page", () => {
     };
     const { fetch } = await openDrafts(
       {
+        // Lockers is Confidential, so deciding its drafts needs sight of Confidential data.
+        "GET /api/session": session([
+          "configuration:approve",
+          "people:view",
+          "personal:view",
+          "confidential:view",
+        ]),
         "GET /api/people": peopleWith([]),
         "GET /api/release-streams": noStreams,
         "GET /api/lists": () =>
@@ -578,7 +585,7 @@ describe("the Drafts page", () => {
     expect(await showOn("Previous site", "People")).toBe("/go/column/1");
   });
 
-  it("opens for Approvers who see lists but not people, with only the drafts of lists", async () => {
+  it("opens for Approvers who see lists but not people, with only the drafts of lists, for another approver to decide", async () => {
     const fetch = serverAnswers({
       "GET /api/session": session([
         "plan:approve",
@@ -617,11 +624,13 @@ describe("the Drafts page", () => {
           ],
         }),
     });
-    renderApp("/drafts");
+    // A list's values are people's details, so deciding its drafts needs sight of people.
+    renderApp("/drafts?tab=all");
     expect(await entries()).toEqual([
-      "Sites, Draft | Changed | Waiting | Name from Old Sites to Sites | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
-      "Harbour in Sites, Draft | Changed | Waiting | Name from Old Harbour to Harbour | Choice | Configuration | Fictional Editor | Oct 30, 2026 | ",
+      "Sites, DraftNeeds another approver | Changed | Waiting | Name from Old Sites to Sites | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
+      "Harbour in Sites, DraftNeeds another approver | Changed | Waiting | Name from Old Harbour to Harbour | Choice | Configuration | Fictional Editor | Oct 30, 2026 | ",
     ]);
+    expect(screen.getByRole("tab", { name: /^To decide\s*0$/u })).toBeDefined();
     expect(fetch.mock.calls.some(([url]) => url.endsWith("/api/people"))).toBe(
       false,
     );

@@ -60,7 +60,10 @@ function whyNot(
     decides,
     approves,
     waits,
-  }: Record<"decides" | "approves" | "waits", boolean>,
+    unseen,
+  }: Record<"decides" | "approves" | "waits", boolean> & {
+    unseen: string | undefined;
+  },
 ): string | undefined {
   const { entry } = row;
   if (decides) return undefined;
@@ -70,6 +73,9 @@ function whyNot(
     return `Back with ${entry.who} to change and resubmit.`;
   }
   if (!approves) return `This role doesn't approve ${areaWords(entry.kind)}.`;
+  if (unseen !== undefined) {
+    return `${unseen}, so another approver must decide this draft.`;
+  }
   return waits ? waitingWords : undefined;
 }
 
@@ -81,6 +87,7 @@ export function DraftPanel({
   actions,
   approves,
   waits,
+  unseen,
   narrow,
   recordLink,
   onClose,
@@ -98,6 +105,8 @@ export function DraftPanel({
   approves: boolean;
   // Whether it waits for a rejected draft it depends on to be resubmitted.
   waits: boolean;
+  // Why another approver must decide it, for a draft of a list whose class this role can't see.
+  unseen: string | undefined;
   narrow: boolean;
   // The link to its record on its own page, for a role that opens that page.
   recordLink: ReactNode;
@@ -113,6 +122,7 @@ export function DraftPanel({
     decides: actions !== undefined,
     approves,
     waits,
+    unseen,
   });
   return (
     <SidePanelFrame

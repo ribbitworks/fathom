@@ -42,6 +42,7 @@ function show({
   actions,
   approves = true,
   waits = false,
+  unseen,
   tab = "all",
   linked,
   recordLink,
@@ -52,12 +53,14 @@ function show({
   actions?: DraftActions;
   approves?: boolean;
   waits?: boolean;
+  unseen?: string;
   tab?: DraftsTab;
   recordLink?: ReactNode;
 }) {
   const rows = draftRows([one], {
     waits: () => waits,
     choosable: () => approves,
+    unseen: () => unseen,
   });
   const [row] = rows;
   if (row === undefined) throw new Error("No row");
@@ -71,6 +74,7 @@ function show({
         actions={actions}
         approves={approves}
         waits={waits}
+        unseen={unseen}
         narrow={false}
         recordLink={recordLink}
         onClose={vi.fn()}
@@ -229,6 +233,11 @@ describe("a draft's details", () => {
       "waiting on a rejected draft",
       { waits: true },
       "Waiting for a rejected draft to be resubmitted",
+    ],
+    [
+      "of a list whose class this role can't see",
+      { unseen: "This role can't see Personal data" },
+      "This role can't see Personal data, so another approver must decide this draft.",
     ],
   ] as const)("says why a draft %s can't be decided", (_case, given, why) => {
     show(given);
