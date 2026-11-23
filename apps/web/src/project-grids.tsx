@@ -59,19 +59,21 @@ export const customerColumnGroups: readonly ColumnGroup[] = [
   { title: "Notes", keys: ["note"] },
 ];
 
+const customerColumns = (): Column<Customer, PlanChange>[] => [
+  nameColumn(),
+  field<Customer>("description", planColumnNames.description, "text", {
+    maxLength: projectLengths.customerDescription,
+  }),
+  field<Customer>("note", planColumnNames.note, "note"),
+];
+
 export function customerTable(
   onOpen?: (customer: Customer) => void,
 ): RecordTable<Customer, PlanChange, CustomerRequest> {
   return planTable<Customer, CustomerRequest>({
     type: "customer",
     ...wordsOf("customers"),
-    columns: () => [
-      nameColumn(),
-      field<Customer>("description", planColumnNames.description, "text", {
-        maxLength: projectLengths.customerDescription,
-      }),
-      field<Customer>("note", planColumnNames.note, "note"),
-    ],
+    columns: customerColumns,
     request: (changes) => merged(changes) as CustomerRequest,
     showDetails: onOpen,
   });
@@ -283,7 +285,7 @@ const draftColumns: Readonly<
     (choices: TableChoices) => readonly Column<never, PlanChange>[]
   >
 > = {
-  customer: () => [nameColumn<Customer>()],
+  customer: customerColumns,
   project: projectColumns,
   proposal: proposalColumns,
   milestone: (choices) => milestoneColumns(choices.projects),
