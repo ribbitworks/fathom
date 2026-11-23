@@ -2,8 +2,8 @@
 
 // Tests for the Capacity page's Allocations tab and the page's tabs: each person's and planned hire's
 // features with their percentages, grouping, the tabs a role sees and the tab in the address, the
-// old addresses of Allocations, what it shows when it cannot load, its cells read only, and its saved
-// views.
+// old addresses of Allocations, what it shows when it cannot load, its cells read only, the rows it
+// keeps to those over or under, and its saved views.
 
 import {
   type Allocations,
@@ -265,6 +265,88 @@ describe("Capacity's Allocations", () => {
 });
 
 const tab = (name: string) => screen.getByRole("tab", { name });
+
+describe("Allocations kept to those over or under", () => {
+  // Avery is over in April, on Checkout and Billing, and not allocated in March and from May; Casey
+  // is under in March; Blair, and the planned hire from April, have a whole month throughout.
+  const avery = (featureId: string, at: number) => ({
+    id: `a-avery-${String(at)}`,
+    personId: "p-avery",
+    plannedHireId: null,
+    featureId,
+    months: { "2027-04": 75, "2027-05": null },
+  });
+  const loads = () =>
+    Response.json({
+      allocations: [
+        ...allocations.allocations,
+        avery("f-checkout", 0),
+        avery("f-billing", 1),
+        {
+          id: "a-blair",
+          personId: "p-blair",
+          plannedHireId: null,
+          featureId: "f-checkout",
+          months: { "2027-03": 100 },
+        },
+      ],
+      features: [
+        ...allocations.features,
+        {
+          id: "f-billing",
+          name: "Billing",
+          meaning: "in-progress",
+          colour: null,
+        },
+      ],
+    });
+
+  it("keeps only the row over in a month from the current one on once Over is chosen, keeping it in the address", async () => {
+    // Given Allocations, with Avery alone over
+    const history = openAllocations("", { allocationsAnswer: loads });
+    await grid();
+
+    // When Over is chosen in the Views menu
+    await userEvent.click(screen.getByRole("button", { name: "Views" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Over (1)" }),
+    );
+
+    // Then Avery alone shows, without the person under or the planned hire, and the address keeps
+    // the choice
+    await waitFor(() => {
+      expect(screen.queryByText("Casey Fictional")).toBeNull();
+    });
+    expect(screen.queryByText("Payments tester")).toBeNull();
+    expect(rowOf("Avery Fictional")).toBeDefined();
+    expect(address(history)).toContain("over=shown");
+  });
+
+  it("opens on the rows under or not allocated, as the address keeps them, leaving out a whole month", async () => {
+    openAllocations("?under=shown", { allocationsAnswer: loads });
+    await grid();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views, changed" }),
+    );
+    expect(
+      await screen.findByRole("menuitem", { name: "Under (2), chosen" }),
+    ).toBeDefined();
+    expect(rowOf("Casey Fictional")).toBeDefined();
+    expect(
+      screen.queryByText("Blair Fictional", { selector: "td *" }),
+    ).toBeNull();
+  });
+
+  it("keeps every row on Feature teams, which has no such choices", async () => {
+    openAllocations("?mode=feature-teams&over=shown", {
+      allocationsAnswer: loads,
+    });
+
+    await screen.findByRole("grid", { name: "Feature teams by month" });
+    expect(await screen.findByText("Casey Fictional")).toBeDefined();
+  });
+});
 
 describe("the tabs of the Capacity page", () => {
   it("opens on Feature teams for a role that sees every tab", async () => {

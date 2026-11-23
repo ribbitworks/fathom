@@ -68,10 +68,12 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Checkbox columns:** A checkbox column is never empty, so it offers none.
   - **Drawn by:** `FilterForm` and `describeFilter` in `apps/web/src/table-controls.tsx`, with the match in `apps/web/src/table-rows.ts` and the filter's `notEmpty` in `packages/shared/src/views.ts`.
   - **Example:** On People, tick Not empty in the Onboarding column's filter.
-- **What the Views menu holds:** Besides the sort, saved views and Clear view, the Views menu may hold a choice of which records the table shows beyond its filters, such as Show retired. A page's modes and switches stay where they are.
-  - **The choice:** It is a ticked item, first in the menu, kept in the address and saved with the view. Its words say how many records it adds, such as Show retired (1).
-  - **Drawn by:** Each page's declared choices, a `ViewChoice` from `apps/web/src/table-controls.tsx` given as `RecordGrid`'s `viewChoices` in `apps/web/src/record-table.ts`, shown by `ViewsMenu` as a `MenuToggle` from `apps/web/src/app-menu.tsx`, and named in Save view's Includes by `viewParts`.
-  - **Example:** Show retired (1) in the Views menu on Releases, once Patches' retirement is approved.
+- **What the Views menu holds:** Besides the sort, saved views and Clear view, the Views menu may hold choices of which records the table shows beyond its filters. A page's modes and switches stay where they are.
+  - **The choice:** It is a ticked item, first in the menu, kept in the address and saved with the view, and is offered while it would change the rows or while it is on.
+  - **Adding records:** A choice that shows records otherwise left out, such as Show retired, says how many it adds, such as Show retired (1). Save view's Includes names it Show.
+  - **Keeping only some:** A choice that keeps only the records matching it, such as Over, says how many it keeps, such as Over (4). With two on, the table keeps the records matching either. Save view's Includes names it Only.
+  - **Drawn by:** `hiddenUnlessShown` and `keptByChoices` in `apps/web/src/view-choices.ts`, each giving a `ViewChoice` from `apps/web/src/table-controls.tsx` as `RecordGrid`'s `viewChoices` in `apps/web/src/record-table.ts`, shown by `ViewsMenu` as a `MenuToggle` from `apps/web/src/app-menu.tsx`, and named in Save view's Includes by `viewParts`.
+  - **Example:** Show retired (1) in the Views menu on Releases, once Patches' retirement is approved; Over and Under on Capacity's Allocations.
 - **Saved views on every page:** Every page with saved views gets them from one hook, so no page has its own. The hook reads the table's views; saves, renames, updates, shares and deletes them; and draws the Save view and Rename view dialogs.
   - **What a view keeps:** The search, filters, sort, groupings, metrics and column choices.
   - **Its name:** Unique, ignoring letter case, among the table's shared views and among each user's personal views on it.

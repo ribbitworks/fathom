@@ -107,6 +107,46 @@ export function allocatableIn(row: AllocationRow, month: string): boolean {
   return holdsMonth(row, month) && !row.outside.has(month);
 }
 
+// A month's total, and its mark as its cell shows it, from the current month on.
+function monthMark({
+  lines,
+  month,
+  currentMonth,
+  allocatable,
+  show,
+}: {
+  lines: readonly AllocationLine[];
+  month: string;
+  currentMonth: string;
+  allocatable: boolean;
+  show: Show;
+}): { total: number; mark: LoadMark | undefined } {
+  const total = monthTotal(lines, show);
+  return { total, mark: loadMark({ total, month, currentMonth, allocatable }) };
+}
+
+// The marks a row's cells show in the months given, from the current month on.
+export function marksFrom(
+  row: AllocationRow,
+  months: readonly string[],
+  currentMonth: string,
+  show: Show,
+): ReadonlySet<LoadMark> {
+  return new Set(
+    months.flatMap((month) => {
+      if (!holdsMonth(row, month)) return [];
+      const { mark } = monthMark({
+        lines: row.allocated.get(month) ?? [],
+        month,
+        currentMonth,
+        allocatable: allocatableIn(row, month),
+        show,
+      });
+      return mark === undefined ? [] : [mark];
+    }),
+  );
+}
+
 export function AllocationLines({
   lines,
   month,
@@ -120,8 +160,13 @@ export function AllocationLines({
   allocatable: boolean;
   show: Show;
 }) {
-  const total = monthTotal(lines, show);
-  const mark = loadMark({ total, month, currentMonth, allocatable });
+  const { total, mark } = monthMark({
+    lines,
+    month,
+    currentMonth,
+    allocatable,
+    show,
+  });
   // The key is one of the union's own.
   // eslint-disable-next-line security/detect-object-injection
   const marked = mark === undefined ? undefined : marks[mark];

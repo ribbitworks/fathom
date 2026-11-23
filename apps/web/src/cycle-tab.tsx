@@ -31,8 +31,6 @@ import { listingFeatures } from "./release-features.tsx";
 import {
   draftActions,
   type FeaturesAt,
-  hiddenUnlessShown,
-  namedChoice,
   drawnAs,
   markOpener,
   type PlannedFeatures,
@@ -44,6 +42,7 @@ import { laterCyclesFrom } from "./schedules.ts";
 import { recordMark } from "./draft-marks.ts";
 import type { ChangeView, SavedViews } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
+import { hiddenUnlessShown, namedChoice } from "./view-choices.ts";
 
 const panelId = "cycle-panel";
 const panelTitleId = "cycle-panel-title";

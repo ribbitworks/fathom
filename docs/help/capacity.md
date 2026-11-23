@@ -54,6 +54,7 @@ You're done when the rows show under the headings you chose.
 
 - To find people by name, type in the search box. You can also type a team's or a feature's name, such as `Payments core` or `Checkout`, to find everyone on it in any month.
 - To filter one month by team or feature, open that month's column menu, select **Filter…**, and pick the teams or features.
+- To see only who is over or under, on **Allocations**, select **Views**, then **Over** or **Under**. They keep the rows **Over**, or **Under** or **Not allocated**, in the current month or any later month in the table. Choose both to see either. Select one again to turn it off.
 
 ### Keep a View of the Table
 

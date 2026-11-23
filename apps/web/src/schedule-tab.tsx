@@ -23,10 +23,9 @@ import {
   inShownOrder,
 } from "./releases.ts";
 import { ReleasesTabTable } from "./releases-tab-table.tsx";
+import { hiddenUnlessShown, type ShowingChoice } from "./view-choices.ts";
 import {
-  hiddenUnlessShown,
   ownDraftActions,
-  type ShowingChoice,
   type FeaturesAt,
   type PlannedFeatures,
   markOpener,

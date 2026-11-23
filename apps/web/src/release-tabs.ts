@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // What the Releases page's tabs share apart from drawing: each row's Schedule column and the rows
-// grouped by it, the features targeting a row's cycles and its Features column, a Views choice
-// showing the records a tab otherwise leaves out, such as shipped releases, a record's rows for its
-// details, and a row's menu discarding or resubmitting the draft it shows.
+// grouped by it, the features targeting a row's cycles and its Features column, a record's rows for
+// its details, and a row's menu discarding or resubmitting the draft it shows.
 
 import {
   type Feature,
   type RecordRef,
   type ReleaseStream,
   type Show,
-  shownChoiceSchema,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import { byChoice } from "./choice-grouping.ts";
@@ -22,8 +20,6 @@ import { choice } from "./lists.ts";
 import { fieldColumn } from "./grid-columns.tsx";
 import type { Column, GridRecord, RowGrouping } from "./record-table.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
-import type { ViewChoice } from "./table-controls.tsx";
-import { type View, withChoice } from "./table-view.ts";
 
 // Each row's schedule, a choice of every schedule, by its ID in the row's schedule field, which
 // every row has, read only, as on the Releases and Cycles tabs.
@@ -175,51 +171,6 @@ export const ownDraftActions = (
   type: RecordRef["type"],
   run: (work: () => Promise<unknown>, done: string) => void,
 ) => draftActions((row: { id: string }) => ({ type, id: row.id }), run);
-
-// What a view's choice holds while it shows the records it names.
-const shownValue = shownChoiceSchema.value;
-
-// How a view keeps a choice that shows records otherwise left out: whether it is on, and the view
-// with it turned on or off.
-export interface ShowingChoice {
-  on: (view: View) => boolean;
-  turned: (view: View, on: boolean) => View;
-}
-
-// A choice kept among the view's page choices under its name, such as shipped releases.
-export const namedChoice = (name: string): ShowingChoice => ({
-  on: (view) =>
-    new Map(Object.entries(view.choices ?? {})).get(name) === shownValue,
-  turned: (view, on) => withChoice(view, name, on ? shownValue : undefined),
-});
-
-// The rows a tab shows, leaving out those it hides, such as shipped releases, unless the view's
-// choice shows them, and the Views menu's item for it, offered while there are any or while it is
-// on, which the Save view dialog names Show and the records it adds.
-export function hiddenUnlessShown<Row>({
-  rows,
-  hidden,
-  choice: { on, turned },
-  label,
-  records,
-  view,
-}: {
-  rows: readonly Row[];
-  hidden: (row: Row) => boolean;
-  choice: ShowingChoice;
-  label: string;
-  records: string;
-  view: View;
-}): { rows: Row[]; choices: ViewChoice[] } {
-  const count = rows.filter(hidden).length;
-  return {
-    rows: on(view) ? [...rows] : rows.filter((row) => !hidden(row)),
-    choices:
-      count > 0 || on(view)
-        ? [{ label, count, on, turned, part: { name: "Show", value: records } }]
-        : [],
-  };
-}
 
 // A record's rows for its details, by its ID, if its rows hold it: as the Draft view shows it, with
 // its draft whatever the view, which its marks are worked out from, and as it is live, or, while it

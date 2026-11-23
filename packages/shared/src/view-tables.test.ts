@@ -121,7 +121,30 @@ describe("Cycles' choices", () => {
   });
 });
 
+describe("Allocations' choices", () => {
+  const fits = (choices: object) =>
+    viewChoiceSchemas.capacity.safeParse(choices).success;
+
+  it("accepts the rows over kept, those under, both, or nothing chosen", () => {
+    expect([
+      fits({ over: "shown" }),
+      fits({ under: "shown" }),
+      fits({ over: "shown", under: "shown" }),
+      fits({}),
+    ]).toEqual([true, true, true, true]);
+  });
+
+  it.each([
+    ["the rows over set any other way", { over: "hidden" }],
+    ["the rows under set any other way", { under: "hidden" }],
+    ["past cycles, which only Cycles keeps", { past: "shown" }],
+  ])("refuses %s", (_, choices) => {
+    expect(fits(choices)).toBe(false);
+  });
+});
+
 const keepsChoices = new Set([
+  "capacity",
   "features",
   "releases",
   "cycles",

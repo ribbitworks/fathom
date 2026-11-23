@@ -23,7 +23,7 @@ import { peopleAndHires } from "./people-rows.ts";
 import { type TableScroll, useTableScroll } from "./grid-layout.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import type { RecordActions, RecordTable } from "./record-table.ts";
-import type { SavedViews } from "./table-controls.tsx";
+import type { SavedViews, ViewChoice } from "./table-controls.tsx";
 import { formatMonth } from "./day-formats.ts";
 import type { View } from "./table-view.ts";
 import { TableTips } from "./table-tips.tsx";
@@ -65,6 +65,7 @@ export function MonthGrid<Rec extends MonthRow>({
   view,
   onView,
   views,
+  viewChoices,
 }: {
   // What could not be loaded, such as "the allocations".
   what: string;
@@ -80,6 +81,8 @@ export function MonthGrid<Rec extends MonthRow>({
   onView: (view: View, replace?: boolean) => void;
   // The grid's saved views, and the dialogs that name and delete them.
   views: { saved: SavedViews; dialogs: ReactNode };
+  // Choices of which rows the grid shows, first in the Views menu.
+  viewChoices?: readonly ViewChoice[];
 }) {
   // The month the count is for, which only the count listens for, so scrolling never redraws the
   // table; the current month, where the grid opens, until the strip says otherwise.
@@ -130,6 +133,7 @@ export function MonthGrid<Rec extends MonthRow>({
         view={view}
         onView={onView}
         saved={views.saved}
+        viewChoices={viewChoices}
         opensAtColumn={scrollTargetFor(monthOf(now), range.from)}
         withDrafts
         columnBorders

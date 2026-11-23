@@ -531,6 +531,7 @@ export {
   type PlanMode,
   planModeSchema,
   sharesViews,
+  allocationsViewChoices,
   cyclesViewChoices,
   type DraftsTab,
   draftsTabSchema,

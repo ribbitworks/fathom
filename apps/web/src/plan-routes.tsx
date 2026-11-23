@@ -25,6 +25,7 @@ import {
   capacityModeOfTable,
   capacityModeSchema,
   capacityModes,
+  capacityTabChoices,
   capacityTables,
   shownCapacityMode,
 } from "./capacity.ts";
@@ -186,6 +187,8 @@ export const releasesRoute = createRoute({
 // The Capacity page's address: its tab, and its grid's view.
 const capacitySearch = viewSearchSchema.extend({
   mode: capacityModeSchema.optional().catch(undefined),
+  over: shownChoiceSchema.optional().catch(undefined),
+  under: shownChoiceSchema.optional().catch(undefined),
 });
 
 export const capacityRoute = createRoute({
@@ -209,9 +212,14 @@ export const capacityRoute = createRoute({
     }
     openOnLastView(
       match,
-      // The tab is always one of the grid tabs here.
-      // eslint-disable-next-line security/detect-object-injection
-      shownOn(capacityTables[mode], match.search),
+      shownOn(
+        // The tab is always one of the grid tabs here.
+        // eslint-disable-next-line security/detect-object-injection
+        capacityTables[mode],
+        match.search,
+        // eslint-disable-next-line security/detect-object-injection
+        capacityTabChoices[mode],
+      ),
       (address, table) => ({ ...address, mode: capacityModeOfTable(table) }),
     );
   },
@@ -239,9 +247,15 @@ export const capacityRoute = createRoute({
           // eslint-disable-next-line security/detect-object-injection
           sharesViews(capacityTables[mode], permissions)
         }
-        {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, ...kept }, replace });
-        })}
+        {...viewProps(
+          search,
+          (next, replace) => {
+            void navigate({ search: { ...next, ...kept }, replace });
+          },
+          // The tab is always one of the fixed tabs.
+          // eslint-disable-next-line security/detect-object-injection
+          capacityTabChoices[mode],
+        )}
         canEditSettings={permissions.includes("configuration:edit")}
         approves={approvableKinds(permissions)}
       />

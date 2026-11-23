@@ -4,24 +4,45 @@
 // read only, the features someone is allocated to that month, as approved, and as drafted for those
 // who see drafts, with each group's capacity and the whole organization's.
 
-import { monthOf } from "@fathom/shared";
+import { type LoadMark, monthOf } from "@fathom/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   allocationMonthRecords,
   allocationMonthsTable,
   allocationsQuery,
+  type AllocationRow,
+  marksFrom,
 } from "./allocation-months.tsx";
 import { MonthGrid, type MonthGridProps } from "./month-grid.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import { orgChartQuery } from "./org-chart.ts";
 import { monthManagers } from "./planned-hire-months.ts";
-import { activeGrouping } from "./table-view.ts";
+import { activeGrouping, emptyView } from "./table-view.ts";
+import { keptByChoices, namedChoice } from "./view-choices.ts";
 import {
   gridMonthsAround,
   readOnlyMonthActions,
   teamMonthsQuery,
 } from "./team-months.tsx";
+
+const overChoice = namedChoice("over");
+const underChoice = namedChoice("under");
+
+// Over and Under, each keeping the rows whose cells show it from the current month on.
+const loadChoices = (
+  marks: ReadonlyMap<AllocationRow, ReadonlySet<LoadMark>>,
+) =>
+  (
+    [
+      [overChoice, "Over", "over"],
+      [underChoice, "Under", "under"],
+    ] as const
+  ).map(([choice, label, mark]) => ({
+    choice,
+    label,
+    matches: (row: AllocationRow) => marks.get(row)?.has(mark) === true,
+  }));
 
 export function CapacityAllocations({
   byManager,
@@ -80,12 +101,36 @@ export function CapacityAllocations({
         : allocationMonthRecords({ ...sources, grouping, show: view.show }),
     [sources, grouping, view.show],
   );
+  // Each row's marks, worked out once for both choices and kept while the view changes otherwise.
+  const marks = useMemo(
+    () =>
+      new Map(
+        records.map((row) => [
+          row,
+          marksFrom(row, teamMonths?.months ?? [], currentMonth, view.show),
+        ]),
+      ),
+    [records, teamMonths, currentMonth, view.show],
+  );
+  const overOn = overChoice.on(view);
+  const underOn = underChoice.on(view);
+  const kept = useMemo(
+    () =>
+      keptByChoices({
+        rows: records,
+        choices: loadChoices(marks),
+        // The view as far as the choices read it, so the rows stay the same while the rest changes.
+        view: overChoice.turned(underChoice.turned(emptyView, underOn), overOn),
+      }),
+    [records, marks, overOn, underOn],
+  );
   return (
     <MonthGrid
       what="the allocations"
       reads={[monthsRead, allocationsRead, chartRead]}
       table={table}
-      records={records}
+      records={kept.rows}
+      viewChoices={kept.choices}
       actions={readOnlyMonthActions}
       canEdit={false}
       now={now}
