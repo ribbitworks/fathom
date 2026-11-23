@@ -236,9 +236,10 @@ describe("changing a record from its row", () => {
     });
   });
 
-  it("removes a record, and a milestone by its project", async () => {
+  it("removes a record nothing names, and a milestone by its project", async () => {
     const start = plan({
-      projects: [project({ milestones: [milestone()] })],
+      projects: [project({ customerIds: [], milestones: [milestone()] })],
+      proposals: [proposal({ customerIds: [] })],
     });
     const { fetch } = await openPage("/projects?tab=customers", start, {
       [`DELETE /api/customers/${customerId}`]: deleted,
@@ -451,7 +452,14 @@ describe("a customer's description and notes", () => {
         .getAllByRole("columnheader")
         .map(({ textContent }) => textContent)
         .filter((text) => text !== "" && text !== "Actions"),
-    ).toEqual(["Name", "Description", "Notes"]);
+    ).toEqual([
+      "Name",
+      "Description",
+      "Projects",
+      "Proposals",
+      "Features",
+      "Notes",
+    ]);
     expect(within(grid).getByText("Island ferry line")).toBeDefined();
   });
 

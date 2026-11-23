@@ -4,6 +4,7 @@
 // projects, proposals, customers and milestones, and the Features page, as a table or a board.
 
 import type {
+  Customer,
   DraftKind,
   Feature,
   Milestone,
@@ -13,6 +14,7 @@ import type {
 import { cardPartSchema, type PlanMode } from "@fathom/shared";
 import { Loader, Modal, Stack } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
+import { customerFilter } from "./customer-filter.ts";
 import { effortConversionsQuery } from "./effort.ts";
 import { type BoardPlace, FeatureBoard } from "./feature-board-view.tsx";
 import { focusCard } from "./feature-card.tsx";
@@ -135,6 +137,8 @@ export function ProjectsPage({
   onOpen,
   onMilestonesOf,
   onFeaturesOf,
+  onCustomerFeatures,
+  seesFeatures = true,
   onReleaseStream,
   board,
   linkedColumn,
@@ -161,6 +165,10 @@ export function ProjectsPage({
   onMilestonesOf?: (project: Project) => void;
   // Shows Features with only those a project or proposal names.
   onFeaturesOf?: (namer: FeatureNamer) => void;
+  // Shows Features with every feature a customer gets or asks for.
+  onCustomerFeatures?: (customer: Customer) => void;
+  // Whether the reader sees features, without which Customers has no Features column.
+  seesFeatures?: boolean;
   // Shows a release stream on Releases, with its releases and cycles.
   onReleaseStream?: (streamId: string) => void;
   // How Features shows its features, as a table or a board, and where the board is.
@@ -316,6 +324,15 @@ export function ProjectsPage({
       projects: asShown(plan.projects),
       proposals: asShown(plan.proposals),
     };
+    // The records a customer's features are worked out from, as the view shows them. Every
+    // customer follows those shown, so the pill still names one the Draft menu leaves out.
+    const customerLinks = {
+      customers: [...asShown(plan.customers), ...plan.customers],
+      projects: choices.projects,
+      proposals: choices.proposals,
+      features: asShown(plan.features),
+      drafted: choices.drafted,
+    };
     const nodes = planNodes(plan);
     const openRecord = (record: { id: string }) => {
       leave(() => {
@@ -333,6 +350,11 @@ export function ProjectsPage({
           onFeaturesOf?.({ type, id: record.id });
         });
       };
+    const showCustomerFeatures = (customer: Customer) => {
+      leave(() => {
+        onCustomerFeatures?.(customer);
+      });
+    };
     const panel = recordPanel({
       tab,
       plan,
@@ -516,6 +538,7 @@ export function ProjectsPage({
                 lists={lists}
                 canEditColumns={canEditColumns}
                 pageParts={(shown) => boardParts(shown, streams, offeredParts)}
+                pageFilter={customerFilter(view, customerLinks)}
                 body={
                   onBoard && board !== undefined
                     ? (shown) => (
@@ -548,7 +571,15 @@ export function ProjectsPage({
         );
       },
       customers: () =>
-        gridOf("customer", customerTable(openRecord), plan.customers),
+        gridOf(
+          "customer",
+          customerTable(customerLinks, {
+            seesFeatures,
+            onOpen: openRecord,
+            onFeatures: seesFeatures ? showCustomerFeatures : undefined,
+          }),
+          plan.customers,
+        ),
       proposals: () =>
         gridOf(
           "proposal",

@@ -127,6 +127,16 @@ The board shows only the first grouping. **Then by** comes back when you switch 
 
 You're done when the rows show under the headings you chose.
 
+### See a Customer's Features
+
+1. Select **Projects** in the sidebar, then the **Customers** tab.
+1. Open the customer's **⋯** menu.
+1. Select **Show all its features**.
+
+**Features** opens with a filter above the table named for the customer, such as **For Bluefin Harbour Authority**. It shows the features that name the customer, and those its projects need or its proposals propose. A filter on a column, such as **Status**, narrows them further. To see every feature again, select the **×** on the customer's filter.
+
+You're done when the table shows the customer's features.
+
 ### See Features as a Board
 
 The board starts with months side by side, from a year back to a year ahead at the least. Each feature has a card in the month it's needed by, even a month that has passed.

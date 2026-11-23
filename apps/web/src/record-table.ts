@@ -24,6 +24,7 @@ import type { RowTicks } from "./row-ticks.tsx";
 import type { SidePanel } from "./side-panel.tsx";
 import type { DraftedPart } from "./status-mark.tsx";
 import type { DraftLike } from "./draft-marks.ts";
+import type { PageFilter } from "./filter-pills.tsx";
 import type {
   ChangeView,
   PageParts,
@@ -220,6 +221,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   newRowLabel: (kind: string) => string;
   // What removing a record is called in its menu, such as "Remove person".
   removeLabel: (record: Rec) => string;
+  // Why a record can't be removed now, such as another record naming it, said in a line under its
+  // menu's Remove, which is turned off; none while it can be.
+  removeTurnedOff?: (record: Rec) => string | undefined;
   nameOf: (record: Rec) => string;
   // The key of the column naming each record, whose cell holds the row's controls.
   nameColumn: string;
@@ -394,6 +398,8 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   count?: ((records: readonly Rec[]) => ReactNode) | undefined;
   // How Save view names the page's own choices kept outside the Views menu, such as Features' Board.
   pageParts?: PageParts | undefined;
+  // A filter of the page's own, kept among its choices, while it is in use.
+  pageFilter?: PageFilter<Rec> | undefined;
   // What the page shows under the bar above the table, such as a timeline, as tall as it needs,
   // given the records the table shows.
   above?: ((shown: readonly Rec[]) => ReactNode) | undefined;

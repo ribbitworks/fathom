@@ -359,3 +359,101 @@ export const featureNamerKeys = {
   project: "projectIds",
   proposal: "proposalIds",
 } as const satisfies Record<string, keyof FeatureProjectsRequest>;
+
+// The records among those given that name one record through one of their link columns, each a
+// list of identifiers, such as the projects naming a customer through their Customers, in the order
+// given. The records are taken as given, so drafts link and unlink as the records given show them.
+export const namedBy = <
+  Link extends string,
+  Rec extends Readonly<Record<Link, readonly string[]>>,
+>(
+  records: readonly Rec[],
+  link: Link,
+  id: string,
+): Rec[] =>
+  records.filter((record) =>
+    // The link is always one of the record's own fields.
+    // eslint-disable-next-line security/detect-object-injection
+    record[link].includes(id),
+  );
+
+// A project or proposal, as it names customers and features.
+interface CustomerNamer {
+  customerIds: readonly string[];
+  featureIds: readonly string[];
+}
+
+// A feature, as it names customers itself.
+interface CustomerFeature {
+  id: string;
+  customerIds: readonly string[];
+}
+
+// What links customers to the rest of the plan.
+export interface CustomerLinks<
+  Project extends CustomerNamer = CustomerNamer,
+  Proposal extends CustomerNamer = CustomerNamer,
+  Feature extends CustomerFeature = CustomerFeature,
+> {
+  projects: readonly Project[];
+  proposals: readonly Proposal[];
+  features: readonly Feature[];
+}
+
+// The records naming a customer: its projects, its proposals and the features naming it directly.
+export const customerNamers = <
+  Project extends CustomerNamer,
+  Proposal extends CustomerNamer,
+  Feature extends CustomerFeature,
+>(
+  { projects, proposals, features }: CustomerLinks<Project, Proposal, Feature>,
+  customerId: string,
+) => ({
+  projects: namedBy(projects, "customerIds", customerId),
+  proposals: namedBy(proposals, "customerIds", customerId),
+  features: namedBy(features, "customerIds", customerId),
+});
+
+// Every feature a customer is getting or asking for, in the order given: those naming it, those its
+// projects need and those its proposals propose, each once.
+export function customerFeatures<Feature extends CustomerFeature>(
+  links: CustomerLinks<CustomerNamer, CustomerNamer, Feature>,
+  customerId: string,
+): Feature[] {
+  const { projects, proposals, features } = customerNamers(links, customerId);
+  const ids = new Set([
+    ...features.map(({ id }) => id),
+    ...[...projects, ...proposals].flatMap(({ featureIds }) => featureIds),
+  ]);
+  return links.features.filter(({ id }) => ids.has(id));
+}
+
+// A record as its draft may remove it.
+interface MaybeRemoved {
+  draft?: { action: string } | undefined;
+}
+
+const notRemoved = <Rec extends MaybeRemoved>(records: readonly Rec[]) =>
+  records.filter(({ draft }) => draft?.action !== "deleted");
+
+// The record that keeps a customer from being removed, if any, as the server refuses its removal:
+// the first of its projects, then of its proposals, then of the features naming it directly.
+// Records drafted to be removed name it no more.
+export function customerKeptBy<
+  Project extends CustomerNamer & MaybeRemoved,
+  Proposal extends CustomerNamer & MaybeRemoved,
+  Feature extends CustomerFeature & MaybeRemoved,
+>(
+  { projects, proposals, features }: CustomerLinks<Project, Proposal, Feature>,
+  customerId: string,
+): Project | Proposal | Feature | undefined {
+  const namers = customerNamers(
+    {
+      projects: notRemoved(projects),
+      proposals: notRemoved(proposals),
+      features: notRemoved(features),
+    },
+    customerId,
+  );
+  return [...namers.projects, ...namers.proposals, ...namers.features].at(0);
+}

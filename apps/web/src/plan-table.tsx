@@ -217,6 +217,7 @@ export function planTable<Rec extends PlanRecord, Request>({
   request,
   menuItems,
   showDetails,
+  removeTurnedOff,
   kinds,
   groupings,
   nameOf = (record) => (record as { name: string }).name,
@@ -229,6 +230,7 @@ export function planTable<Rec extends PlanRecord, Request>({
   request: (changes: PlanChange[]) => Request;
   menuItems?: (record: Rec) => ReactNode;
   showDetails?: ((record: Rec) => void) | undefined;
+  removeTurnedOff?: (record: Rec) => string | undefined;
   kinds?: readonly string[];
   groupings?: readonly RowGrouping<Rec>[];
   nameOf?: (record: Rec) => string;
@@ -255,6 +257,7 @@ export function planTable<Rec extends PlanRecord, Request>({
     drafts: drafts(type),
     ...(menuItems === undefined ? {} : { menuItems }),
     ...(showDetails === undefined ? {} : { showDetails }),
+    ...(removeTurnedOff === undefined ? {} : { removeTurnedOff }),
     // The kind is always one of the plan's kinds.
     // eslint-disable-next-line security/detect-object-injection
     keyOf: planKeyOf[type],
@@ -541,6 +544,9 @@ function listedColumn<Rec extends PlanRecord>(
   };
 }
 
+const idsOf = (records: readonly { id: string }[]) =>
+  records.map(({ id }) => id);
+
 // A column of the projects or proposals naming a row's record through a link field, such as those
 // needing a feature, as the records given show them, each marked with its own draft, so a change to
 // it is a draft of each record added or taken away.
@@ -570,6 +576,19 @@ export function namersColumn<Rec extends PlanRecord>(
     parts: (record) => namingParts(drafted, link, record.id),
   };
 }
+
+// A column of records worked out from others, such as the features a customer gets, which is never
+// changed itself.
+export const workedOutColumn = <Rec extends PlanRecord>(
+  key: string,
+  label: string,
+  records: readonly Identified[],
+  recordsOf: (record: Rec) => readonly { id: string }[],
+): Column<Rec, PlanChange> =>
+  recordsColumn<Rec, PlanChange>(key, label, records, {
+    namedBy: (record) => idsOf(recordsOf(record)),
+    readOnly: true,
+  });
 
 // The first status offered, of a meaning when one is named, as a value in a cell.
 export function firstStatus(

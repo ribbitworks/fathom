@@ -18,6 +18,7 @@ Verifies the Projects page:
 - Changing a proposal in its side panel.
 - The features projects and proposals need.
 - A customer's description and notes.
+- The projects, proposals and features each customer's row lists.
 
 [Drafts of Projects, Proposals, Customers and Milestones](project-drafts-manual-test.md) verifies adding a customer, a proposal and a project with milestones, and approving, changing and removing them.
 
@@ -68,7 +69,7 @@ To run the test again, run Restore the Seed Data first.
   - **Notes:**
 
 - [ ] `E116` Select the **Customers** tab.
-  - **Expected:** A table with **Name**, **Description** and **Notes**.
+  - **Expected:** A table with **Name**, **Description**, **Projects**, **Proposals**, **Features** and **Notes**.
   - **Notes:**
 
 - [ ] `A16F` Select the **Milestones** tab.
@@ -316,4 +317,45 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 - [ ] `71FC` Select the ⋯ at the end of the row of 'Kestrel Mining Cooperative', then **Show details**.
   - **Expected:** **Description** and **Notes** each read "None", dimmed.
+  - **Notes:**
+
+### PROJ-14: What a Customer Gets and Asks For
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-13.
+
+**Preconditions:** Signed in with this account. Run after PROJ-13. **Projects** page open, **Customers** tab chosen.
+
+- [ ] `7587` Look at the row of 'Kestrel Mining Cooperative'.
+  - **Expected:**
+    - **Projects** reads 'P-2017 Depot Operations', with 'P-2017' dimmed.
+    - **Proposals** reads 'Ore Sorting Study'.
+    - **Features** starts 'Barcode Scanning, Partner Portal', cut short where the column is too narrow for the rest.
+  - **Notes:**
+
+- [ ] `EB7D` Point at the **Features** cell of 'Kestrel Mining Cooperative'.
+  - **Expected:** A tip lists these four, each on a line of its own:
+    - 'Barcode Scanning'
+    - 'Partner Portal'
+    - 'Parts Lookup'
+    - 'Work Order Sync'
+  - **Notes:**
+
+- [ ] `B074` Select the ⋯ at the end of the row of 'Kestrel Mining Cooperative'.
+  - **Expected:**
+    - The menu offers **Show all its features**.
+    - **Remove customer** is greyed out.
+    - Under it, a line reads "P-2017 Depot Operations names this customer."
+  - **Notes:**
+
+- [ ] `22DB` Select **Show all its features**.
+  - **Expected:**
+    - The **Features** page opens.
+    - Above the table, after **Views**, a pill reads "For Kestrel Mining Cooperative", with an × at its end.
+    - The table shows only 'Barcode Scanning', 'Partner Portal', 'Parts Lookup' and 'Work Order Sync'.
+  - **Notes:**
+
+- [ ] `5004` Select the × on the pill "For Kestrel Mining Cooperative".
+  - **Expected:**
+    - The pill is gone.
+    - The table shows every feature again.
   - **Notes:**

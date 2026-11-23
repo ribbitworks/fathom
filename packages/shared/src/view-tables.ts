@@ -102,6 +102,8 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
           "Repeated part",
         )
         .optional(),
+      // The customer whose features alone show, by its identifier.
+      customer: z.uuid().optional(),
     })
     .refine(
       ({ stream, schedule }) => stream === undefined || schedule === undefined,

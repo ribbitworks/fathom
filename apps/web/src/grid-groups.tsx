@@ -157,10 +157,18 @@ export function NamedWithOthers({
 export function useShownRows<Rec extends GridRecord, Change, Request>(
   grid: Pick<
     ModelGrid<Rec, Change, Request>,
-    "table" | "body" | "ticks" | "allColumns" | "view" | "records"
+    | "table"
+    | "body"
+    | "ticks"
+    | "allColumns"
+    | "view"
+    | "records"
+    | "pageFilter"
   >,
 ) {
-  const { table, body, ticks, allColumns, view, records } = grid;
+  const { table, body, ticks, allColumns, view, records, pageFilter } = grid;
+  const keptByPage = (shown: readonly Rec[]) =>
+    pageFilter === undefined ? shown : shown.filter(pageFilter.keeps);
   // The records this user has added since the page opened, which stay shown whatever the view.
   const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
   // The identifier each record added since the page opened was shown under before it was saved, by
@@ -211,7 +219,7 @@ export function useShownRows<Rec extends GridRecord, Change, Request>(
       rowsInOrder(
         rows,
         applyView(
-          recordsOf(rows),
+          keptByPage(recordsOf(rows)),
           allColumns,
           view,
           filtersBesideColumns(draftColumn, table.barFilters),

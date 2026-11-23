@@ -10,7 +10,6 @@ import {
   Group,
   Input,
   Menu,
-  Pill,
   Popover,
   ScrollArea,
   Stack,
@@ -40,6 +39,7 @@ import {
 } from "react";
 import { DayInput } from "./day-input.tsx";
 import { drafts as draftCount } from "./decision-dialog.tsx";
+import { FilterPill, type ShownPageFilter } from "./filter-pills.tsx";
 import { Icon } from "./icons.tsx";
 import { metricsButtonId, metricsPanelId, metricsTitleId } from "./metrics.ts";
 import { focusSoon } from "./focus.ts";
@@ -59,7 +59,7 @@ import {
   type Kind,
   emptyView,
   knownView,
-  narrows,
+  narrowsWith,
   hiddenColumnsOf,
   shownColumnsOf,
   withHidden,
@@ -184,10 +184,12 @@ export function viewParts(
     groupings = [],
     choices = [],
     pageParts = noPageParts,
+    pageFilter,
   }: {
     groupings?: readonly GroupingChoice[];
     choices?: readonly ViewChoice[];
     pageParts?: PageParts;
+    pageFilter?: ShownPageFilter | undefined;
   } = {},
 ): ViewPart[] {
   const labelOf = (key: string) =>
@@ -223,7 +225,10 @@ export function viewParts(
     ...(view.search.trim() === ""
       ? []
       : [{ name: "Search", value: `“${view.search.trim()}”` }]),
-    ...filters.map((value) => ({ name: "Filter", value })),
+    ...[
+      ...(pageFilter === undefined ? [] : [pageFilter.words]),
+      ...filters,
+    ].map((value) => ({ name: "Filter", value })),
     ...(sort.length === 0 ? [] : [{ name: "Sort", value: sort.join(", ") }]),
     ...(view.show === "both"
       ? []
@@ -651,6 +656,7 @@ export function ViewsMenu({
   onClear,
   choices = [],
   pageParts = noPageParts,
+  pageFilter,
   groupings = [],
   laysOutColumns = true,
 }: {
@@ -663,6 +669,8 @@ export function ViewsMenu({
   onClear: () => void;
   choices?: readonly ViewChoice[];
   pageParts?: PageParts;
+  // A filter of the page's own in use, which Save view names with the column filters.
+  pageFilter?: ShownPageFilter | undefined;
   groupings?: readonly GroupingChoice[];
   // False above rows drawn their own way, such as a board's, which lay out no columns, so the sort,
   // units and frozen, moved, hidden and widened columns the view keeps for its table aren't offered
@@ -898,6 +906,7 @@ export function ViewsMenu({
                   groupings,
                   choices,
                   pageParts,
+                  pageFilter,
                 }),
               );
             }}
@@ -1283,6 +1292,7 @@ export function ViewBar({
   laysOutColumns = true,
   withDrafts = true,
   barFilters = [],
+  pageFilter,
 }: {
   // What the rows are, one and several, such as "person" and "people".
   one: string;
@@ -1315,9 +1325,11 @@ export function ViewBar({
   withDrafts?: boolean;
   // Filters across the whole table, each with its button after the search field.
   barFilters?: readonly BarFilter<never>[] | undefined;
+  pageFilter?: ShownPageFilter | undefined;
 }) {
   const filterOnly = filtersBesideColumns(draftFilter, barFilters);
   const columns = [...everyColumn, ...filterOnly];
+  const narrowed = narrowsWith(view, pageFilter);
   const filters = columns.flatMap((column) => {
     const filter = view.filters[column.key];
     return filter && isActive(filter) ? [{ column, filter }] : [];
@@ -1389,25 +1401,29 @@ export function ViewBar({
         laysOutColumns={laysOutColumns}
         {...(choices === undefined ? {} : { choices })}
         {...(pageParts === undefined ? {} : { pageParts })}
+        pageFilter={pageFilter}
         {...(groupings === undefined ? {} : { groupings })}
       />
-      {filters.map(({ column, filter }) => (
-        <Pill
-          key={column.key}
-          size="md"
-          withRemoveButton
-          removeButtonProps={{
-            // Mantine hides the button from the keyboard, but filters are removed from it too.
-            "aria-hidden": false,
-            tabIndex: 0,
-            "aria-label": `Remove filter on ${column.label}`,
+      {pageFilter !== undefined && (
+        <FilterPill
+          removeLabel={`Remove filter: ${pageFilter.words}`}
+          onRemove={() => {
+            onView(pageFilter.off(view));
           }}
+        >
+          {pageFilter.words}
+        </FilterPill>
+      )}
+      {filters.map(({ column, filter }) => (
+        <FilterPill
+          key={column.key}
+          removeLabel={`Remove filter on ${column.label}`}
           onRemove={() => {
             onView(withFilter(view, column.key, undefined));
           }}
         >
           {describeFilter(column, filter)}
-        </Pill>
+        </FilterPill>
       ))}
       {/* Always there, so screen readers announce the count as it changes. */}
       <Text
@@ -1417,11 +1433,11 @@ export function ViewBar({
         c="dimmed"
         className={classes.figures}
       >
-        {narrows(view)
+        {narrowed
           ? `${count(shown)} of ${count(total)}`
           : (counted ?? `${count(total)} ${total === 1 ? one : noun}`)}
       </Text>
-      {(narrows(view) || setsApart(view)) && (
+      {(narrowed || setsApart(view)) && (
         <Button
           size="compact-sm"
           variant="default"

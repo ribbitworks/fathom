@@ -16,6 +16,10 @@ Features lists the plan's features in one table, with a board as a second way of
 ## Layout
 
 - **Heading:** Table | Board beside the title, kept in the address; at the right, New column for those who edit features and see people, then New feature.
+- **A customer's features:** a page filter, kept in the view and the address as `customer`, showing the features the customer gets or asks for: those naming it, needed by one of its projects or proposed by one of its proposals, as the Customers tab's Features column lists them.
+  - Its pill names it, such as For Bluefin Harbour Authority, before the column filters' pills, which narrow it further. Its × takes it away, as Clear all does.
+  - Save view names it under Filter. A customer the reader isn't sent is left out, and the page shows every feature.
+  - A customer's Show all its features, on Projects' Customers tab, opens it.
 - **The table:** edited like People's, as [People](people.md) sets out.
 - **Details:** grouped under Details (Name to Notes), Customers and commitments (Customers, Projects, Proposals), Planning (Priority to Staffed), then Columns, the added ones.
   - The table starts its columns in the details' order, so the two read alike.
