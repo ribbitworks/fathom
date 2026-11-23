@@ -4,11 +4,24 @@
 // runs none, a package's source runs the tests importing it in that package and those depending on
 // it, any other change in a package runs every test of those packages, a Help page runs the web
 // app's tests importing the Help pages, the web app's stylesheets alone run its tests and the
-// linters, and any other change runs every test, all without coverage; any tests run in the check's
-// turn, and none waits for it.
+// linters, and any other change runs every test; the coverage of each changed source file is
+// checked, a test standing for the file beside it; any tests run in the check's turn, and none waits
+// for it.
 
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   readWorkspace,
   runTests,
@@ -31,7 +44,9 @@ const workspace = new Map(
   }),
 );
 
-const allExist = () => true;
+// Every file exists, as either kind of TypeScript in the web app, and as plain TypeScript elsewhere.
+const allExist = (path) =>
+  path.startsWith("apps/web/") || !path.endsWith(".tsx");
 const choose = (paths, exists = allExist) =>
   testsFor(paths, { workspace, exists });
 
@@ -47,7 +62,7 @@ describe("choosing the tests a change can affect", () => {
     assert.deepEqual(choose([]), { kind: "none" });
   });
 
-  it("runs the tests importing a package's source, in it and in every package depending on it", () => {
+  it("runs the tests importing a package's source, in it and in every package depending on it, checking the changed source's coverage", () => {
     assert.deepEqual(
       choose([
         "packages/shared/src/views.ts",
@@ -66,8 +81,10 @@ describe("choosing the tests a change can affect", () => {
         ],
         files: [
           "apps/server/src/people.test.ts",
+          "apps/server/src/people.ts",
           "packages/shared/src/views.ts",
         ],
+        covered: ["apps/server/src/people.ts", "packages/shared/src/views.ts"],
       },
     );
   });
@@ -78,6 +95,7 @@ describe("choosing the tests a change can affect", () => {
       whole: [],
       related: ["apps/web"],
       files: ["apps/web/src/app.tsx"],
+      covered: ["apps/web/src/app.tsx"],
     });
   });
 
@@ -89,6 +107,7 @@ describe("choosing the tests a change can affect", () => {
         whole: [],
         related: ["apps/web"],
         files: ["apps/web/src/help-pages.ts"],
+        covered: [],
       },
     );
   });
@@ -104,6 +123,7 @@ describe("choosing the tests a change can affect", () => {
         whole: [],
         related: ["apps/web"],
         files: ["apps/web/src/help-pages.ts"],
+        covered: [],
       },
     );
   });
@@ -122,6 +142,7 @@ describe("choosing the tests a change can affect", () => {
           whole: ["apps/server", "packages/seed"],
           related: ["apps/web"],
           files: ["apps/web/src/app.tsx"],
+          covered: ["apps/web/src/app.tsx"],
         },
         path,
       );
@@ -136,6 +157,7 @@ describe("choosing the tests a change can affect", () => {
         whole: ["apps/server", "packages/seed"],
         related: ["apps/web", "packages/shared"],
         files: ["packages/shared/src/views.ts"],
+        covered: ["packages/shared/src/views.ts"],
       },
     );
   });
@@ -151,6 +173,7 @@ describe("choosing the tests a change can affect", () => {
         whole: [],
         related: ["apps/server", "packages/seed"],
         files: ["apps/server/src/people.ts"],
+        covered: ["apps/server/src/people.ts"],
       },
     );
     assert.deepEqual(
@@ -160,6 +183,7 @@ describe("choosing the tests a change can affect", () => {
         whole: [],
         related: [],
         files: [],
+        covered: [],
       },
     );
   });
@@ -170,6 +194,7 @@ describe("choosing the tests a change can affect", () => {
       whole: ["apps/server", "packages/seed"],
       related: [],
       files: [],
+      covered: [],
     });
   });
 
@@ -192,6 +217,7 @@ describe("choosing the tests a change can affect", () => {
         whole: ["apps/web"],
         related: [],
         files: ["apps/web/src/app.tsx"],
+        covered: ["apps/web/src/app.tsx"],
       },
     );
   });
@@ -217,10 +243,45 @@ describe("choosing the tests a change can affect", () => {
           ],
           related: [],
           files: [],
+          covered: ["apps/web/src/app.tsx"],
         },
         path,
       );
     }
+  });
+
+  it("checks the coverage of the source beside a changed or removed test, running every test importing it", () => {
+    assert.deepEqual(
+      choose(
+        ["apps/web/src/grid.test.tsx", "apps/server/src/people.test.ts"],
+        (path) =>
+          path !== "apps/server/src/people.test.ts" &&
+          path !== "apps/web/src/grid.ts" &&
+          allExist(path),
+      ),
+      {
+        kind: "packages",
+        whole: [],
+        related: ["apps/server", "apps/web", "packages/seed"],
+        files: [
+          "apps/server/src/people.ts",
+          "apps/web/src/grid.test.tsx",
+          "apps/web/src/grid.tsx",
+        ],
+        covered: ["apps/server/src/people.ts", "apps/web/src/grid.tsx"],
+      },
+    );
+  });
+
+  it("checks the coverage of no file outside a package's source, nor in a package without tests", () => {
+    assert.deepEqual(
+      choose([
+        "apps/server/scripts/tool.ts",
+        "packages/test-utils/src/users.ts",
+        "apps/server/src/fixture.json",
+      ]).covered,
+      [],
+    );
   });
 });
 
@@ -292,6 +353,7 @@ describe("the command's arguments", () => {
       whole: [],
       related: ["apps/web"],
       files: ["apps/web/src/app.tsx"],
+      covered: ["apps/web/src/app.tsx"],
     });
     assert.deepEqual(calls, [{ uncommitted: false }]);
   });
@@ -347,7 +409,7 @@ describe("running the tests chosen", () => {
     assert.deepEqual(steps, []);
   });
 
-  it("runs the script tests, every test of some packages and the importing tests of others in the check's turn, without coverage", async (context) => {
+  it("runs the script tests, every test of some packages and the importing tests of others in the check's turn, measuring all the coverage of those running every test", async (context) => {
     context.mock.method(console, "log", () => undefined);
     const { steps, ...options } = recorder({ packagesPass: true });
     assert.equal(
@@ -357,6 +419,7 @@ describe("running the tests chosen", () => {
           whole: ["apps/server", "packages/seed"],
           related: ["apps/web", "packages/shared"],
           files: ["packages/shared/src/views.ts", "apps/web/src/app.tsx"],
+          covered: [],
         },
         options,
       ),
@@ -365,9 +428,41 @@ describe("running the tests chosen", () => {
     assert.deepEqual(steps, [
       "turn",
       "pnpm test:scripts 1",
-      "packages --filter ./apps/server --filter ./packages/seed --parallel --no-bail exec vitest run 1",
+      "packages --filter ./apps/server --filter ./packages/seed --parallel --no-bail exec vitest run --coverage --coverage.reporter=text --coverage.skipFull 1",
       "packages --filter ./apps/web --filter ./packages/shared --parallel --no-bail exec vitest related --run --passWithNoTests /fictional/fathom/packages/shared/src/views.ts /fictional/fathom/apps/web/src/app.tsx 1",
     ]);
+  });
+
+  it("checks the coverage of each package's changed source in a run of its own, and all of a package running every test", async (context) => {
+    context.mock.method(console, "log", () => undefined);
+    const { steps, ...options } = recorder({ packagesPass: true });
+    const tests = {
+      kind: "packages",
+      whole: ["apps/server", "packages/seed"],
+      related: ["apps/web", "packages/shared"],
+      files: ["apps/web/src/app.tsx", "packages/shared/src/views.ts"],
+      covered: [
+        "apps/server/src/people.ts",
+        "apps/web/src/app.tsx",
+        "apps/web/src/grid.tsx",
+      ],
+    };
+    assert.equal(await runTests(tests, options), true);
+    const related =
+      "/fictional/fathom/apps/web/src/app.tsx /fictional/fathom/packages/shared/src/views.ts";
+    assert.deepEqual(steps, [
+      "turn",
+      "pnpm test:scripts 1",
+      "packages --filter ./apps/server --filter ./packages/seed --parallel --no-bail exec vitest run --coverage --coverage.reporter=text --coverage.skipFull 1",
+      `packages --filter ./apps/web --parallel --no-bail exec vitest related --run --passWithNoTests --coverage --coverage.reporter=text --coverage.skipFull --coverage.include=src/app.tsx --coverage.include=src/grid.tsx ${related} 1`,
+      `packages --filter ./packages/shared --parallel --no-bail exec vitest related --run --passWithNoTests ${related} 1`,
+    ]);
+    const failingCoverage = {
+      ...options,
+      runPackages: async (args) =>
+        !args.includes("--coverage.include=src/app.tsx"),
+    };
+    assert.equal(await runTests(tests, failingCoverage), false);
   });
 
   it("runs only the script tests when no package has tests to run", async (context) => {
@@ -375,7 +470,7 @@ describe("running the tests chosen", () => {
     const { steps, ...options } = recorder();
     assert.equal(
       await runTests(
-        { kind: "packages", whole: [], related: [], files: [] },
+        { kind: "packages", whole: [], related: [], files: [], covered: [] },
         options,
       ),
       true,
@@ -397,6 +492,7 @@ describe("running the tests chosen", () => {
             whole: ["apps/server"],
             related: ["apps/web"],
             files: ["apps/web/src/app.tsx"],
+            covered: [],
           },
           options,
         ),
@@ -419,6 +515,7 @@ describe("running the tests chosen", () => {
           whole: [],
           related: ["apps/web"],
           files: ["apps/web/src/app.tsx"],
+          covered: [],
         },
         options,
       ),
@@ -464,6 +561,7 @@ describe("running the tests chosen", () => {
           whole: ["apps/server", "apps/web"],
           related: [],
           files: [],
+          covered: [],
         },
         options,
       ),
@@ -472,11 +570,102 @@ describe("running the tests chosen", () => {
     assert.deepEqual(steps, [
       "turn",
       "pnpm test:scripts 1",
-      "packages --filter ./apps/server --filter ./apps/web --parallel --no-bail exec vitest run 1",
+      "packages --filter ./apps/server --filter ./apps/web --parallel --no-bail exec vitest run --coverage --coverage.reporter=text --coverage.skipFull 1",
     ]);
     assert.equal(
       said.mock.calls[0]?.arguments[0],
       "==> Files outside the packages changed, so every test runs",
     );
+  });
+});
+
+describe("checking a changed file's coverage with Vitest", () => {
+  const vitest = fileURLToPath(
+    new URL("../packages/shared/node_modules/.bin/vitest", import.meta.url),
+  );
+  const thresholds = {
+    branches: 100,
+    functions: 100,
+    lines: 100,
+    statements: 100,
+  };
+  const settings = `export default ${JSON.stringify({
+    test: {
+      include: ["src/**/*.test.ts"],
+      coverage: {
+        provider: "v8",
+        include: ["src/**/*.ts"],
+        exclude: ["src/**/*.test.ts"],
+        thresholds,
+      },
+    },
+  })};\n`;
+  const source =
+    'export const sign = (x: number) => (x > 0 ? "up" : "down");\n';
+  const caseFor = (value, expected) =>
+    `it("${expected}", () => { expect(sign(${String(value)})).toBe("${expected}"); });\n`;
+
+  // Runs the tests chosen for a change to src/sign.ts in a package of its own, with these cases in
+  // its test, beside a file no test reaches that the change leaves alone, and gives back whether
+  // they passed and what Vitest said.
+  async function checkChange(cases) {
+    assert.ok(existsSync(vitest), `${vitest} is missing; run pnpm install`);
+    const root = realpathSync(mkdtempSync(join(tmpdir(), "fathom-coverage-")));
+    const folder = join(root, "fixture");
+    let said = "";
+    try {
+      mkdirSync(join(folder, "src"), { recursive: true });
+      writeFileSync(join(folder, "vitest.config.mjs"), settings);
+      writeFileSync(join(folder, "src", "sign.ts"), source);
+      writeFileSync(
+        join(folder, "src", "sign.test.ts"),
+        `import { expect, it } from "vitest";\nimport { sign } from "./sign";\n${cases.join("")}`,
+      );
+      writeFileSync(join(folder, "src", "untouched.ts"), source);
+      const passed = await runTests(
+        {
+          kind: "packages",
+          whole: [],
+          related: ["fixture"],
+          files: ["fixture/src/sign.ts"],
+          covered: ["fixture/src/sign.ts"],
+        },
+        {
+          root,
+          inTurn: (work) => work(process.env),
+          run: async () => true,
+          runPackages: async (args) => {
+            const ran = spawnSync(
+              vitest,
+              args.slice(args.indexOf("vitest") + 1),
+              { cwd: folder, encoding: "utf8" },
+            );
+            said = `${ran.stdout}${ran.stderr}`;
+            return ran.status === 0;
+          },
+        },
+      );
+      return { passed, said };
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+
+  it("fails a changed file with a branch its passing tests never reach", async (context) => {
+    context.mock.method(console, "log", () => undefined);
+    const { passed, said } = await checkChange([caseFor(1, "up")]);
+    assert.equal(passed, false);
+    assert.match(said, /1 passed/);
+    assert.match(said, /Coverage for branches \(50%\) does not meet/);
+  });
+
+  it("passes a changed file its tests fully cover, beside one no test reaches", async (context) => {
+    context.mock.method(console, "log", () => undefined);
+    const { passed, said } = await checkChange([
+      caseFor(1, "up"),
+      caseFor(0, "down"),
+    ]);
+    assert.equal(passed, true, said);
+    assert.doesNotMatch(said, /untouched/);
   });
 });
