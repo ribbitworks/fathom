@@ -49,7 +49,12 @@ import {
 } from "./drafts.ts";
 import { decisionFor } from "./draft-decisions.ts";
 import { featureTeamsQuery, teamPersonNamer } from "./feature-teams.ts";
-import { listsQuery, liveLists } from "./lists.ts";
+import {
+  listsQuery,
+  liveLists,
+  unchangeableLists,
+  unseenInDrafts,
+} from "./lists.ts";
 import { makerNames } from "./names.ts";
 import { orgChartQuery } from "./org-chart.ts";
 import { type PeopleData, peopleQuery } from "./people.ts";
@@ -556,6 +561,8 @@ export interface DraftsSeen {
   seesProjects: boolean;
   // Whether the reader sees configuration, so the planning settings.
   seesSettings: boolean;
+  // The role's permissions, which decide the lists whose drafts it may decide, by their classes.
+  permissions: readonly Permission[];
 }
 
 export const draftsSeen = (permissions: readonly Permission[]): DraftsSeen => ({
@@ -573,6 +580,7 @@ export const draftsSeen = (permissions: readonly Permission[]): DraftsSeen => ({
     permissions.includes("people:view"),
   seesProjects: permissions.includes("plan:view"),
   seesSettings: permissions.includes("configuration:view"),
+  permissions,
 });
 
 // What deciding drafts checks them against: the lists, and the columns, people and plan's records
@@ -595,6 +603,8 @@ export type DraftEntries =
       choosable: (one: Entry) => boolean;
       // Whether the reader may decide a draft now, as toDecide keeps it.
       decidesNow: (one: Entry) => boolean;
+      // Why another approver must decide a draft of a list whose class the reader's role can't see.
+      unseen: (one: Entry) => string | undefined;
       // The other drafts deciding a published draft takes with it, whatever the reader's role
       // decides: those approved with it while it waits, or those waiting on it once rejected.
       related: (one: Entry) => NamedDraft[];
@@ -611,6 +621,7 @@ export function useDraftEntries({
   seesTeams,
   seesProjects,
   seesSettings,
+  permissions,
 }: Omit<DraftsSeen, "makesDrafts">): DraftEntries {
   const people = useQuery({ ...peopleQuery, enabled: seesPeople });
   const lists = useQuery({ ...listsQuery, enabled: seesLists });
@@ -692,11 +703,15 @@ export function useDraftEntries({
       featureTeams: teamsData?.teams,
     },
   };
+  const unchangeable = unchangeableLists(listsData, permissions);
+  const unseen = ({ selects }: Entry) =>
+    unseenInDrafts(selects, listsData, unchangeable);
   const reading = {
     waits: ({ state, selects }: Entry) =>
       state === "waiting" &&
       waitsForRejected(selects, drafted.lists, drafted.columns),
     choosable: ({ selects }: Entry) => mayDecide(approves, selects),
+    unseen,
   };
   return {
     state: "loaded",
@@ -761,18 +776,19 @@ export function namedDrafts(
   ];
 }
 
-// The drafts the reader may choose to decide now: of a kind their role decides, not waiting on a
-// rejected draft, and decidable as any record's draft is.
+// The drafts the reader may choose to decide now: of a kind their role decides, of lists whose
+// class it sees, not waiting on a rejected draft, and decidable as any record's draft is.
 export const toDecide = (
   entries: readonly Entry[],
   loaded: Pick<
     Extract<DraftEntries, { state: "loaded" }>,
-    "waits" | "choosable"
+    "waits" | "choosable" | "unseen"
   >,
 ): Entry[] =>
   entries.filter(
     (one) =>
       loaded.choosable(one) &&
+      loaded.unseen(one) === undefined &&
       !loaded.waits(one) &&
       decidable({
         draft: { state: one.state, unpublished: one.unpublished },

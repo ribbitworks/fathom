@@ -49,6 +49,8 @@ const entry = (key: string, more: Partial<Entry> = {}): Entry => ({
 const reading = {
   waits: ({ key }: Entry) => key === "waits",
   choosable: ({ key }: Entry) => key !== "not-ours",
+  unseen: ({ key }: Entry) =>
+    key === "unseen" ? "This role can't see Personal data" : undefined,
 };
 
 describe("a draft's row", () => {
@@ -107,11 +109,16 @@ describe("a draft's row", () => {
 
   it("says why a draft the role decides can't be decided yet", () => {
     const rows = draftRows(
-      [entry("waits"), entry("p5", { needsOtherApprover: true })],
+      [
+        entry("waits"),
+        entry("p5", { needsOtherApprover: true }),
+        entry("unseen"),
+      ],
       reading,
     );
     expect(rows.map(({ facts }) => facts)).toEqual([
       [waitsOnRejected],
+      [needsAnotherApprover],
       [needsAnotherApprover],
     ]);
   });

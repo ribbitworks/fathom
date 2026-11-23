@@ -66,6 +66,7 @@ export function DraftsPage({
   seesTeams = false,
   seesProjects = seesPlan,
   seesSettings = false,
+  permissions = [],
   view,
   onView,
   applied,
@@ -96,6 +97,7 @@ export function DraftsPage({
     seesTeams,
     seesProjects,
     seesSettings,
+    permissions,
   });
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
   const [decision, setDecision] = useState<Decision>();
@@ -240,6 +242,7 @@ export function DraftsPage({
                   }
                   waits={entries.waits(openRow.entry)}
                   approves={mayDecide(approves, openRow.entry.selects)}
+                  unseen={entries.unseen(openRow.entry)}
                   actions={
                     decidable(openRow)
                       ? {

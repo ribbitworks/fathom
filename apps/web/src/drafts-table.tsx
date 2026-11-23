@@ -110,7 +110,13 @@ const stateOf = (one: Entry) =>
 // A row for each draft, the facts that hold it shown only to those who could otherwise decide it.
 export function draftRows(
   entries: readonly Entry[],
-  { waits, choosable }: Record<"waits" | "choosable", (one: Entry) => boolean>,
+  {
+    waits,
+    choosable,
+    unseen,
+  }: Record<"waits" | "choosable", (one: Entry) => boolean> & {
+    unseen: (one: Entry) => string | undefined;
+  },
 ): DraftRow[] {
   return entries.map((one) => ({
     id: one.key,
@@ -143,7 +149,9 @@ export function draftRows(
       one.state === "waiting" && !one.unpublished && choosable(one)
         ? [
             ...(waits(one) ? [waitsOnRejected] : []),
-            ...(one.needsOtherApprover ? [needsAnotherApprover] : []),
+            ...(one.needsOtherApprover || unseen(one) !== undefined
+              ? [needsAnotherApprover]
+              : []),
           ]
         : [],
   }));

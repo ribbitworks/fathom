@@ -85,7 +85,7 @@ You're done when the changes leave **Not published**. The records are back as th
 
 - **A dot** before a record's name marks its draft: yellow while it waits, hollow while it's your own unpublished change, and red in a ring once rejected. The rows have no other draft marks. See [Drafts](drafts.md#marks).
 - **Waits on a rejected draft**, in a grey box after the name, means the draft depends on one that was rejected. It can't be decided until that one is resubmitted.
-- **Needs another approver**, in a grey box after the name, marks a draft you changed yourself. Someone else must approve it, though you can still reject it. A role with **Approve own drafts**, such as the Engineering Director, can approve its own.
+- **Needs another approver**, in a grey box after the name, marks a draft you changed yourself. Someone else must approve it, though you can still reject it. A role with **Approve own drafts**, such as the Engineering Director, can approve its own. It also marks a draft of a list, or of a list's choices or their order, when your role can't see the list's class, such as a Personal list. Its details say why, and someone who sees that class must decide it.
 - **A greyed-out tick box** on **Not published** is on a change linked to one your search or filter hides.
 - **Another approver needed** opens when you can't decide any of the drafts involved: your role doesn't decide their area, or you changed them yourself. When you approve, that's the drafts you ticked and those they depend on. When you reject, it's the drafts you ticked and those that use them. Nothing is approved or rejected. If you can approve some of the drafts, you approve those, and the dialog names the ones left for someone else.
 

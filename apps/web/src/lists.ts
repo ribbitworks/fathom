@@ -23,6 +23,7 @@ import {
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
+import { choicesOf, type DraftSelection } from "./drafts.ts";
 
 // Why a list can't go to a class beyond the role's own reasons: a column on Features draws on it,
 // and columns there stay General.
@@ -281,6 +282,25 @@ function withDraftsUndone(
 // Every list as it is live, without drafts.
 export const liveLists = (lists: readonly List[]): List[] =>
   withDraftsUndone(lists, () => true);
+
+// Why another approver must decide some drafts: one of them is of a list, a choice or a list's
+// order whose list the role may not change, as unchangeableLists gives, or undefined when none is.
+export function unseenInDrafts(
+  selection: Pick<DraftSelection, "lists" | "choices" | "orders">,
+  lists: readonly List[],
+  unchangeable: ReadonlyMap<string, string>,
+): string | undefined {
+  const listOfChoice = new Map(
+    choicesOf(lists).map(({ list, choice }) => [choice.id, list.id] as const),
+  );
+  return [
+    ...selection.lists,
+    ...selection.choices.flatMap((id) => listOfChoice.get(id) ?? []),
+    ...selection.orders,
+  ]
+    .map((id) => unchangeable.get(id))
+    .find((why) => why !== undefined);
+}
 
 // Why the role may not change each list or decide its drafts, by list, for those it may not: the
 // list's class, live or as drafted, decides, as the server does.
