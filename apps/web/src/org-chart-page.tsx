@@ -1152,7 +1152,6 @@ export function OrgChartPage({
     <DateControl
       day={day}
       laterDays={featureView || futureDates}
-      changes={changesOnDay}
       onDay={(next) => {
         setCreating(false);
         go({ ...search, day: next }, false);

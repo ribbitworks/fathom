@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Engineering Manager Workflows
@@ -225,7 +225,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `9A41` Select the left arrow once.
   - **Expected:**
     - The **Date** box shows the first day of last month.
-    - The text below the row ends "Nothing can be changed on this date."
     - There is no **Draft** button above the chart.
   - **Notes:**
 

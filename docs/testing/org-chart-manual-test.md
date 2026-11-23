@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/server/src/data/org-chart.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/org-chart.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Org Chart
@@ -573,7 +573,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `76C4` In the date row, select the left arrow once.
   - **Expected:**
     - The **Date** box shows the first day of last month.
-    - Below the row, text reads "Showing" with that date, then "Changes take effect from this date."
     - **Draft** stays just right of the finder.
     - **Teams** is gone.
   - **Notes:**
@@ -618,7 +617,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `FFA8` Select the left arrow twice.
   - **Expected:**
-    - The text below the row ends "Changes take effect from this date."
     - The card for 'Candice Swift' is under 'Lorenza Thiel'.
     - That card is untinted.
     - That card has no dot.

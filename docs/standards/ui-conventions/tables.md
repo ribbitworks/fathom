@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Tables, Addresses and Search
@@ -80,8 +80,8 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
 
 ## Staying Put
 
-- **Nothing moves while it's being changed:** A row keeps its place and its group while it is edited, until the view next changes, so a sorted or filtered table doesn't jump. Until then, records the user adds stay at the end, matching or not. Records others add appear at the end only if they match. No column's width follows what is typed. A line that comes and goes keeps its space while empty.
-  - **Drawn by:** `useShownRows` in `apps/web/src/grid-groups.tsx`, and `apps/web/src/date-control.tsx` for the line under the date row.
+- **Nothing moves while it's being changed:** A row keeps its place and its group while it is edited, until the view next changes, so a sorted or filtered table doesn't jump. Until then, records the user adds stay at the end, matching or not. Records others add appear at the end only if they match. No column's width follows what is typed.
+  - **Drawn by:** `useShownRows` in `apps/web/src/grid-groups.tsx`.
   - **Example:** on Features, change Report Builder's Target cycle: it stays under its heading until the page is reloaded.
 
 ## The Address

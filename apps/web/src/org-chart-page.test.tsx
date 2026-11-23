@@ -2287,11 +2287,7 @@ describe("feature teams on the org chart", () => {
         signedInAs: seesDetails,
         answers: { ...teamsOnDay, ...chartOnDay },
       });
-      expect(
-        await screen.findByText(
-          "Showing Mar 1, 2025. Nothing can be changed on this date.",
-        ),
-      ).toBeDefined();
+      await screen.findByRole("link", { name: "Sasha Fictional" });
       expect(urls(fetch)).toContain(`/api/org-chart?on=${onDay}`);
       expect(urls(fetch)).toContain(`/api/feature-teams?on=${onDay}`);
       expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
@@ -2313,13 +2309,10 @@ describe("feature teams on the org chart", () => {
         },
       });
       expect(
-        await screen.findByText(
-          "Showing Mar 1, 2099. Changes take effect from this date.",
-        ),
+        await screen.findByRole("button", { name: /^Draft/ }),
       ).toBeDefined();
       // People are drawn as today, since later reporting lines need Confidential data.
       expect(urls(fetch)).not.toContain(`/api/org-chart?on=${later}`);
-      expect(screen.getByRole("button", { name: /^Draft/ })).toBeDefined();
       const panel = await openTeamPanel("Fictional Lighthouse");
       expect(
         within(panel).queryByRole("button", { name: "Change Name" }),
@@ -2355,7 +2348,7 @@ describe("feature teams on the org chart", () => {
         answers: { ...teamsOnDay, ...chartOnDay },
       });
       expect(
-        await screen.findByText(/Changes take effect from this date\.$/),
+        await screen.findByRole("button", { name: /^Draft/ }),
       ).toBeDefined();
       const panel = await openTeamPanel("Fictional Lighthouse");
       expect(
@@ -2370,7 +2363,6 @@ describe("feature teams on the org chart", () => {
       });
       await screen.findByRole("link", { name: "Sasha Fictional" });
       expect(screen.queryByRole("button", { name: "Today" })).toBeNull();
-      expect(screen.queryByText(/^Showing/)).toBeNull();
       expect(urls(fetch).join(" ")).not.toContain("?on=");
     });
 
@@ -2400,11 +2392,7 @@ describe("feature teams on the org chart", () => {
         signedInAs: seesDetails,
         answers: chartOnDay,
       });
-      expect(
-        await screen.findByText(
-          "Showing Mar 1, 2025. Nothing can be changed on this date.",
-        ),
-      ).toBeDefined();
+      await screen.findByRole("link", { name: "Sasha Fictional" });
       expect(urls(fetch)).toContain(`/api/org-chart?on=${onDay}`);
       expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
     });
@@ -2450,11 +2438,8 @@ describe("feature teams on the org chart", () => {
         answers: chartOnDay,
       });
       expect(
-        await screen.findByText(
-          "Showing Mar 1, 2025. Changes take effect from this date.",
-        ),
+        await screen.findByRole("button", { name: /^Draft/ }),
       ).toBeDefined();
-      expect(screen.getByRole("button", { name: /^Draft/ })).toBeDefined();
       expect(screen.queryByRole("button", { name: "Teams" })).toBeNull();
       expect(
         screen.queryByRole("button", { name: "Rename Fictional team" }),
@@ -2475,11 +2460,8 @@ describe("feature teams on the org chart", () => {
         ]),
         answers: { [`GET /api/org-chart?on=${later}`]: chartAnswer },
       });
-      expect(
-        await screen.findByText(
-          "Showing Mar 1, 2099. Nothing can be changed on this date.",
-        ),
-      ).toBeDefined();
+      await screen.findByRole("link", { name: "Sasha Fictional" });
+      expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
     });
 
     it("offers no date on reporting teams to those who do not", async () => {

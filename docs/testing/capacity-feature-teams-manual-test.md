@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/capacity-feature-teams*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "apps/server/src/data/feature-team-held-changes.ts", "apps/server/src/data/feature-team-month-cells.ts", "apps/server/src/data/feature-team-undo.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Capacity's Feature Teams
@@ -298,7 +298,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 - [ ] `8E7F` Select the left arrow, left of the timeline above the chart, once.
   - **Expected:**
     - The **Date** box shows the first day of last month.
-    - The text below the timeline ends "Changes take effect from this date."
+    - The **Draft** button is above the chart.
   - **Notes:**
 
 - [ ] `6B75` Select the Feature teams button, then 'Payments core'. Note the first name in the **Members** row that is not the one in **Feature lead**: the leaver.

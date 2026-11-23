@@ -4,7 +4,7 @@ category: "Design"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/people.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Fathom: People Page
@@ -30,7 +30,6 @@ The date row sits above the table here and above the [Org chart](org-chart.md), 
 
 - **Parts, in order:** a Date box, a back arrow, a timeline of 24 months either side of today, a forward arrow, and Today.
 - **Range:** Without Confidential data, People and Reporting teams stop at today. Feature teams reach future dates with Personal details alone.
-- **The line under the row:** On another date, it says whether changes take effect from that day. It keeps its place on today, as [Staying Put](../../standards/ui-conventions/tables.md#staying-put) sets out.
 - **Feature teams on future dates:** Draw people as they are today.
 - **On another date:** Only managers can change on People and Reporting teams, and members and leads on Feature teams.
   - Where nothing can change, it is read only: the chart has no Draft menu and shows teams or reporting lines as approved.

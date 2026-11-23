@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-workforce-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Workforce Administrator Workflows
@@ -305,7 +305,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `F376` Select the left arrow once.
   - **Expected:**
     - The **Date** box shows the first day of last month.
-    - Below the row, text reads "Showing" with that day, then "Changes take effect from this date."
+    - The **Draft** button is above the chart.
   - **Notes:**
 
 - [ ] `AD56` Select the Feature teams button, then 'Search and discovery'.

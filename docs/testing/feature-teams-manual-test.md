@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/web/src/people-grid.tsx", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "apps/server/src/data/feature-team-rules.ts", "apps/server/src/data/feature-team-held-changes.ts", "apps/server/src/data/feature-team-sight.ts", "apps/server/src/data/feature-team-reads.ts", "apps/server/src/data/feature-team-records.ts", "apps/server/src/data/feature-team-decisions.ts", "apps/server/src/data/feature-team-undo.ts", "apps/server/src/data/feature-team-removals.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/org-chart.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Feature Teams
@@ -472,7 +472,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `CE78` Select the left arrow once.
   - **Expected:**
     - The **Date** box shows the first day of last month.
-    - Below the row, text reads "Showing" with that date, then "Changes take effect from this date."
     - The chart redraws without the page going blank.
     - The **Draft** button is still above the chart.
   - **Notes:**
@@ -505,16 +504,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `00C2` Type a date in the middle of a month in the **Date** box, as digits alone, such as `20250315`.
-  - **Expected:**
-    - Below the row, text reads "Showing Mar 15, 2025. Changes take effect from this date."
-    - The timeline's handle is at March 2025.
+  - **Expected:** The timeline's handle is at March 2025.
   - **Notes:**
 
 - [ ] `3AC6` Choose **Reporting teams** in the teams switch.
   - **Expected:**
     - The **Date** box still shows the date typed.
     - The chart shows managers and their reports.
-    - The text below the row still ends "Changes take effect from this date."
   - **Notes:**
 
 - [ ] `D028` Select **Today**.
@@ -547,7 +543,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `8A8C` Select the right arrow once.
   - **Expected:**
     - The **Date** box shows the first day of next month.
-    - The text below the row ends "Changes take effect from this date."
+    - The **Draft** button is above the chart.
   - **Notes:**
 
 - [ ] `10CE` Select the Feature teams button, then 'Payments core'.
@@ -616,9 +612,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch; it shows today.
 
 - [ ] `D54C` Select the left arrow once.
-  - **Expected:**
-    - The text below the row ends "Nothing can be changed on this date."
-    - There is no **Draft** button above the chart.
+  - **Expected:** There is no **Draft** button above the chart.
   - **Notes:**
 
 - [ ] `C6E3` Select the Feature teams button, then 'Payments core'.
@@ -627,7 +621,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `1C45` Select the right arrow twice.
   - **Expected:**
-    - The text below the row ends "Changes take effect from this date."
     - The **Draft** button is above the chart.
     - In the team panel, **Feature lead** and **Members** have change buttons.
     - In the team panel, **Name** and **Colour** have none.

@@ -4639,7 +4639,9 @@ describe("adding from New", () => {
     await answerQuestion("Discard the new person?", "Keep adding");
     // Then the form stays, on today
     expect(field("Name").value).toBe("Casey Fictional");
-    expect(screen.queryByText(/^Showing/)).toBeNull();
+    const todayButton = () =>
+      screen.getByRole<HTMLButtonElement>("button", { name: "Today" });
+    expect(todayButton().disabled).toBe(true);
     // When the month is chosen again, and adding discarded
     await userEvent.click(earlier);
     await answerQuestion("Discard the new person?", "Discard");
@@ -4647,7 +4649,9 @@ describe("adding from New", () => {
     await waitFor(() => {
       expect(screen.queryByRole("region", { name: "New person" })).toBeNull();
     });
-    expect(await screen.findByText(/^Showing/)).toBeDefined();
+    await waitFor(() => {
+      expect(todayButton().disabled).toBe(false);
+    });
   });
 
   it("asks before discarding a person being added, keeping them until Discard", async () => {
@@ -4974,14 +4978,11 @@ describe("on another date", () => {
 
   it("lists People as on that date, read only, for those who may not change it then", async () => {
     const { fetch } = await openOn(reader);
-    expect(
-      await screen.findByText(
-        "Showing Mar 1, 2025. Nothing can be changed on this date.",
-      ),
-    ).toBeDefined();
-    expect(fetch.mock.calls.map(([url]) => url)).toContain(
-      `/api/people?on=${onDay}`,
-    );
+    await waitFor(() => {
+      expect(fetch.mock.calls.map(([url]) => url)).toContain(
+        `/api/people?on=${onDay}`,
+      );
+    });
     focusCell("p2", "managerId");
     await userEvent.keyboard("{Enter}");
     expect(screen.queryByRole("listbox")).toBeNull();
@@ -4990,13 +4991,8 @@ describe("on another date", () => {
 
   it("changes only managers from an earlier date, dated from it", async () => {
     const { fetch } = await openOn(editor);
-    expect(
-      await screen.findByText(
-        "Showing Mar 1, 2025. Changes take effect from this date.",
-      ),
-    ).toBeDefined();
+    expect(await screen.findByRole("button", { name: /^Draft/ })).toBeDefined();
     expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
-    expect(screen.getByRole("button", { name: /^Draft/ })).toBeDefined();
     expect(cell("p2", "preferredName").getAttribute("aria-readonly")).toBe(
       "true",
     );
@@ -5051,7 +5047,6 @@ describe("on another date", () => {
   it("offers no date to those who may not see other dates", async () => {
     await openOn(viewer, "/people");
     expect(screen.queryByRole("button", { name: "Today" })).toBeNull();
-    expect(screen.queryByText(/^Showing/)).toBeNull();
   });
 });
 

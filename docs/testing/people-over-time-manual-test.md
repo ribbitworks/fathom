@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/people-page.tsx", "apps/web/src/people-grid.tsx", "apps/web/src/person-panel.tsx", "apps/web/src/date-control.tsx", "apps/server/src/data/people.ts", "apps/server/src/data/people-reads.ts", "apps/server/src/data/people-table-reads.ts", "apps/server/src/data/person-fields.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/org-chart-manual-test.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: People Over Time
@@ -62,7 +62,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `E0A4` In the date row, select the left arrow once.
   - **Expected:**
     - The **Date** box shows the first day of last month, such as `2026-10-01`.
-    - Under the row, text reads "Showing" with that date, then "Nothing can be changed on this date."
     - No **New person** button is at the top right.
     - The table shows without a loading spinner taking its place.
   - **Notes:**
@@ -90,9 +89,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **People** page open, showing the first day of last month.
 
 - [ ] `F799` Select **Today** in the date row.
-  - **Expected:**
-    - The **Date** box shows today's date.
-    - The line under the date row is gone.
+  - **Expected:** The **Date** box shows today's date.
   - **Notes:**
 
 - [ ] `3B6E` Type `선예빈` in the search box.
@@ -162,7 +159,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `44FA` In the date row, select the left arrow once.
   - **Expected:**
-    - Under the row, text reads "Showing" with the first day of last month, then "Changes take effect from this date."
+    - The **Date** box shows the first day of last month.
     - No **New person** or **New column** button is at the top right.
   - **Notes:**
 

@@ -540,7 +540,6 @@ export function PeoplePage({
     <DateControl
       day={day}
       laterDays={dates.laterDays}
-      changes={changesFrom !== undefined}
       onDay={(next) => {
         leave(() => {
           dates.onDay(next);

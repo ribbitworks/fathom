@@ -97,13 +97,13 @@ The chart can show another day, in the past or the future.
 1. In the date row under **Find a person or team**, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
 1. To come back to today, select **Today**.
 
-On any date but today, a line under the date row says what you can do:
+On any date but today, a change you make starts on the day shown:
 
-- **Changes take effect from this date.** A change you make starts on the day shown.
-  - In **Feature teams**, you can change a team's members or lead, or add a team.
-  - In **Reporting teams**, you can change someone's manager on an earlier day, if your role changes Personal details.
-  - You can change a team's name or colour, or remove a team, only on today's chart.
-- **Nothing can be changed on this date.** The chart shows the teams as they're approved.
+- In **Feature teams**, you can change a team's members or lead, or add a team.
+- In **Reporting teams**, you can change someone's manager on an earlier day, if your role changes Personal details.
+- You can change a team's name or colour, or remove a team, only on today's chart.
+
+Where nothing can be changed on the day shown, the chart has no **Draft** menu and shows the teams as they're approved.
 
 You're done when the chart shows the day you chose.
 
