@@ -19,13 +19,14 @@ As a Project Manager, you see projects through to delivery: their milestones, th
 
 ## See Who Works on What
 
-1. Select the **Feature assignments** page to see who is on which feature team each month. See [Capacity](capacity.md#move-through-the-months).
-1. Select the **Capacity** page, and choose **Allocations**, to see what each person works on. See [Capacity](capacity.md#in-allocations).
+1. Select the **Capacity** page.
+1. Choose **Feature teams** to see who is on which feature team each month. See [Capacity](capacity.md#move-through-the-months).
+1. Choose **Allocations** to see what each person works on. See [Capacity](capacity.md#in-allocations).
 1. To see each team's people together, group by **Feature team**. See [Capacity](capacity.md#group-the-rows).
 
 ## Keep a View
 
-A view is how you've set up a table, such as its search and filters. You can save one on each **Projects** tab, such as **Milestones**, and on **Feature assignments** and **Capacity**'s **People**, to come back to. Only you see it. See [Saved views](saved-views.md#save-a-view).
+A view is how you've set up a table, such as its search and filters. You can save one on each **Projects** tab, such as **Milestones**, and on **Capacity**'s **Feature teams** and **Allocations**, to come back to. Only you see it. See [Saved views](saved-views.md#save-a-view).
 
 ## Approve Others' Drafts
 

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Capacity
@@ -106,8 +106,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `08BD` Replace the value with `4`, and press Enter.
   - **Expected:**
-    - **Hours a day** reads "4" after a hollow yellow mark.
-    - Under it, "8" follows a green mark.
+    - **Hours a day** reads "4" after a hollow yellow dot.
+    - Under it, "8" follows a green dot.
     - The change button of **Hours a day** has focus.
     - No notification shows.
     - The Publish button reads **Publish 1 change**.
@@ -126,7 +126,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `318F` Replace the value with `4`, and press Enter.
-  - **Expected:** **Hours a day** reads "4" after a hollow yellow mark.
+  - **Expected:** **Hours a day** reads "4" after a hollow yellow dot.
   - **Notes:**
 
 - [ ] `E18C` Run Publish.
@@ -170,7 +170,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - Under **Ramp-up for new starters**, the rows read, from the top:
       - **Month 1**: "50%"
       - **Month 2**: "75%"
-      - **Month 3**: "100%" after a hollow yellow mark, with "No month 3" under it after a green mark
+      - **Month 3**: "100%" after a hollow yellow dot, with "No month 3" under it after a green dot
       - **From month 4**: "100%"
     - The change button of **Month 3** has focus.
     - **Month 3** has an × button after its change button.
@@ -183,7 +183,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `3F77` Replace the value with `90`, and press Enter.
-  - **Expected:** **Month 3** reads "90%" after a hollow yellow mark.
+  - **Expected:** **Month 3** reads "90%" after a hollow yellow dot.
   - **Notes:**
 
 - [ ] `2E12` Select the × button of **Month 3**.
@@ -202,7 +202,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - Under **Ramp-up for new starters**, the rows read, from the top:
       - **Month 1**: "50%"
       - **Month 2**: "75%"
-      - **Month 3**: "90%" after a hollow yellow mark
+      - **Month 3**: "90%" after a hollow yellow dot
       - **From month 4**: "100%"
   - **Notes:**
 
@@ -231,7 +231,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Allocations** is chosen in the tabs.
     - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by**.
     - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
-    - The current month is the first month beside the **Person** column, and its heading is underlined in red.
+    - The current month is the second month beside the **Person** column, after last month, and its heading is underlined in red.
   - **Notes:**
 
 - [ ] `F7F1` Select the **Settings** tab.
@@ -568,7 +568,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `DA6A` Replace the value with `4`, and press Enter.
-  - **Expected:** **Hours a day** reads "4" after a hollow yellow mark.
+  - **Expected:** **Hours a day** reads "4" after a hollow yellow dot.
   - **Notes:**
 
 - [ ] `6AB7` Run Publish.
@@ -592,14 +592,14 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `B2C3` Select the **Settings** tab.
   - **Expected:**
-    - **Hours a day** reads "4" after a yellow mark.
-    - Under it, "8" follows a green mark.
+    - **Hours a day** reads "4" after a yellow dot.
+    - Under it, "8" follows a green dot.
   - **Notes:**
 
 - [ ] `7CF7` Select the row menu of **Hours a day**.
   - **Expected:**
     - A menu headed **Planning settings** opens.
-    - Under the heading, a yellow mark and "Draft: changed".
+    - Under the heading, a yellow dot and "Draft: changed".
     - Under that, "Hours a day from 8 to 4, by Engineering Operations Manager".
     - Then **Approve…**, **Reject…** and **Discard draft**.
     - No other row has a row menu.

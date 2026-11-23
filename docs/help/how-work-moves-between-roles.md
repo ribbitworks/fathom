@@ -47,7 +47,8 @@ An approved draft goes live straight away. A rejected draft goes back to the per
 
 An Engineering Manager puts people on the feature team that builds it.
 
-1. Select the **Feature assignments** page.
+1. Select the **Capacity** page.
+1. Choose **Feature teams**.
 1. Select a person's cell in the month they start on the team, this month or later.
 1. Press Enter. The team list opens.
 1. Type part of the team's name, and press Tab.
@@ -56,4 +57,4 @@ An Engineering Manager puts people on the feature team that builds it.
 
 A Project Manager or the Engineering Director then approves the team's changes on the **Drafts** page, the same way as above. See [Capacity](capacity.md#put-someone-on-a-feature-team-from-a-month) for more.
 
-You're done when the feature shows on **Features** with its cycle and team, and its team's members show on **Feature assignments**, with no dots.
+You're done when the feature shows on **Features** with its cycle and team, and its team's members show on **Capacity**'s **Feature teams**, with no dots.

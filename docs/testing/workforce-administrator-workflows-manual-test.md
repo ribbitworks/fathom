@@ -372,14 +372,14 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - A notice begins "Approved".
   - **Notes:**
 
-### WORKFORCE-07: Feature Assignments Show the Earlier Join
+### WORKFORCE-07: Capacity's Feature Teams Show the Earlier Join
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from WORKFORCE-06.
 
 **Preconditions:** WORKFORCE-06 done. Signed in with this account.
 
-- [ ] `8D15` Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:** The page is headed **Feature assignments**.
+- [ ] `8D15` Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab.
+  - **Expected:** The page is headed **Capacity**, with **Feature teams** chosen in its tabs.
   - **Notes:**
 
 - [ ] `D898` Select **Feature team** in the Group by menu.
@@ -393,7 +393,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `B755` Type `Candice`.
   - **Expected:**
     - Only 'Candice Swift' is listed, under the 'Search and discovery' group.
-    - Her current month's cell holds a 'Search and discovery' label.
+    - Her current month's cell names 'Search and discovery'.
   - **Notes:**
 
 - [ ] `9B41` Press Esc.
@@ -403,8 +403,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `9F00` Scroll the table one month to the left.
   - **Expected:**
     - The **Person** column stays in place.
-    - Last month's cell for 'Candice Swift' holds a 'Search and discovery' label too.
-    - The month before it holds no label.
+    - Last month's cell for 'Candice Swift' names 'Search and discovery' too.
+    - The month before it names no team.
   - **Notes:**
 
 ### WORKFORCE-08: A Planning Setting Is Changed and Approved
@@ -414,10 +414,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 **Preconditions:** None beyond WORKFORCE-07.
 
 - [ ] `17DE` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The mode switch has **People** chosen.
+  - **Expected:** The page is headed **Capacity**, with **Feature teams** chosen in its tabs.
   - **Notes:**
 
-- [ ] `D402` Select **Settings** in the mode switch.
+- [ ] `D402` Select the **Settings** tab.
   - **Expected:** Under **Working time**, **Hours a day** reads "8".
   - **Notes:**
 
@@ -427,8 +427,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `71EA` Replace the value with `4`, and press Enter.
   - **Expected:**
-    - **Hours a day** reads "4" after a hollow yellow mark.
-    - Under it, "8" follows a green mark.
+    - **Hours a day** reads "4" after a hollow yellow dot.
+    - Under it, "8" follows a green dot.
   - **Notes:**
 
 - [ ] `F41C` Run Publish.
@@ -440,17 +440,17 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `6AC7` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The mode switch has **People** chosen.
+  - **Expected:** The page is headed **Capacity**, with the tabs **Feature teams**, **Allocations** and **Settings**.
   - **Notes:**
 
-- [ ] `BE47` Select **Settings** in the mode switch.
-  - **Expected:** **Hours a day** reads "4" after a yellow mark.
+- [ ] `BE47` Select the **Settings** tab.
+  - **Expected:** **Hours a day** reads "4" after a yellow dot.
   - **Notes:**
 
 - [ ] `B555` Select the **⋯** button at the right of the **Hours a day** row.
   - **Expected:**
     - A menu headed **Planning settings** opens.
-    - Under the heading, a yellow mark and "Draft: changed".
+    - Under the heading, a yellow dot and "Draft: changed".
     - Under that, "Hours a day from 8 to 4, by Engineering Operations Manager".
     - Then **Approve…**, **Reject…** and **Discard draft**.
   - **Notes:**

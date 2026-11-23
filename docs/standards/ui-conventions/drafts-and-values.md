@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Drafts, Values and Access
@@ -105,10 +105,10 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 
 - **A page without its data:** A page or view whose data a role can't see or read is never shown cut down, blurred, rounded or replaced.
   - **A page:** one that would show nothing isn't in the menu, and its address says there's no such page.
-  - **A mode:** one the role can't see isn't in the page's switch.
+  - **A tab:** one the role can't see isn't among the page's tabs.
   - **A view or grouping:** one the role can't see is left out with nothing said, as a column is.
   - **Following the classes:** what a page needs follows its data's classes, so moving a detail's class opens or closes pages with no code change. The Roles page keeps its lines saying what each view needs.
-  - **Drawn by:** each page's needs in `pageNeeds`, and Capacity's modes' in `capacityModeNeeds`, with `opensWith` and `reaches`, in `packages/shared/src/page-access.ts`. The sidebar's items in `apps/web/src/layout.tsx`, the routes in `apps/web/src/router.tsx`, `apps/web/src/signed-in-route.tsx` and `apps/web/src/plan-routes.tsx`, and `capacityModes` in `apps/web/src/capacity.ts` all read it. The Roles page's lines come from `viewsOfRole` in `packages/shared/src/data-classes.ts`.
+  - **Drawn by:** each page's needs in `pageNeeds`, and Capacity's tabs' in `capacityModeNeeds`, with `opensWith` and `reaches`, in `packages/shared/src/page-access.ts`. The sidebar's items in `apps/web/src/layout.tsx`, the routes in `apps/web/src/router.tsx`, `apps/web/src/signed-in-route.tsx` and `apps/web/src/plan-routes.tsx`, and `capacityModes` in `apps/web/src/capacity.ts` all read it. The Roles page's lines come from `viewsOfRole` in `packages/shared/src/data-classes.ts`.
   - **Example:** the Team Member, whose menu has no Capacity, and the Product Manager, who sees Capacity's Settings alone.
 - **Columns a role can't see:** A column a role can't see isn't shown, and nothing says it's missing.
   - **Drawn by:** a column's `dataClass` in `apps/web/src/table-view.ts`, read by `useGridModel` in `apps/web/src/grid-model.tsx`.

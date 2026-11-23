@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-project-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Project Manager Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as a Project Manager](../help/working-as-a-project-manager.md) on the seed data: keeping a project on track with a new milestone, its scope history and its features, approved by a Product Manager; seeing who works on what in Feature assignments and Capacity; approving and rejecting others' drafts; and keeping a view of one project's milestones.
+Verifies the workflows of [Working as a Project Manager](../help/working-as-a-project-manager.md) on the seed data: keeping a project on track with a new milestone, its scope history and its features, approved by a Product Manager; seeing who works on what in Capacity's Feature teams and Allocations tabs; approving and rejecting others' drafts; and keeping a view of one project's milestones.
 
 ## Test Environment
 
@@ -30,7 +30,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button, the Group by menu, the details button, the side panel, the mode switch and seeded dates. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button, the Group by menu, the details button, the side panel, tabs and seeded dates. This test adds:
 
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20300315`.
 
@@ -132,24 +132,24 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account.
 
-- [ ] `369C` Select the **Feature assignments** page in the left-hand menu.
+- [ ] `369C` Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab.
   - **Expected:**
-    - The page is headed **Feature assignments**.
+    - The page is headed **Capacity**, with **Feature teams** chosen in its tabs.
     - **Group by** is above the table, naming no grouping.
     - The table has a **Person** column on the left.
-    - The table has a column for each month, and the current month is the first beside the **Person** column.
+    - The table has a column for each month; the current month is the second beside the **Person** column, after last month.
   - **Notes:**
 
 - [ ] `E06A` Select **Feature team** in the Group by menu.
   - **Expected:**
     - The rows are grouped under the feature teams in order of name, then **No feature team**.
-    - Each label names a feature team, in a box tinted with the team's colour, or grey for a team with none.
+    - Each team's name, in the headings and the cells, follows a small square in its colour; a team with no colour has no square.
   - **Notes:**
 
-- [ ] `1D47` Select the **Capacity** page in the left-hand menu.
+- [ ] `1D47` Select the **Allocations** tab.
   - **Expected:**
-    - The mode switch has **People** chosen.
-    - The current month is the first month beside the **Person** column.
+    - **Allocations** is chosen in the **Capacity** page's tabs.
+    - The current month is the second month beside the **Person** column, after last month.
   - **Notes:**
 
 - [ ] `5181` Select **Feature team** in the Group by menu.
@@ -161,22 +161,21 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `7E22` Search for `Alvena Sanford`, and read her cell in the current month's column.
   - **Expected:**
     - The cell lists 'Barcode Scanning' with "10%" and 'Signature Capture' with "90%", each on a line of its own.
-    - Under them, a last line reads "Total", with "100%" at the right.
-    - A thin line above it sets it off.
+    - There is no line under them.
   - **Notes:**
 
 - [ ] `FBBB` Clear the search box, and type `Blaise Gislason`. Read his cell in the current month's column.
   - **Expected:**
     - The cell lists 'Depot Operations' with "25%" and 'Transit Displays' with "100%".
-    - Its last line reads "Over", with "125%" at the right.
-    - "Over" and its percentage are red and bold.
+    - Its last line reads "Over", with "+25%" at the right.
+    - "Over" and "+25%" are red and bold.
   - **Notes:**
 
 - [ ] `4A9E` Clear the search box, and type `Anahi Bins`. Read her cell in the current month's column.
   - **Expected:**
     - The cell lists 'Depot Operations' with "50%".
-    - Its last line reads "Under", with "50%" at the right.
-    - "Under" and its percentage are grey.
+    - Its last line reads "Under", with "−50%" at the right.
+    - "Under" and "−50%" are red and bold.
   - **Notes:**
 
 ### PROJECT-03: Others' Drafts Are Approved and Rejected

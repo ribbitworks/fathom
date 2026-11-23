@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Feature Lead Workflows
@@ -253,7 +253,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `3F53` Press Esc, and look at the **People** section of the left-hand menu.
   - **Expected:**
     - It shows **People** and **Org chart**.
-    - There is no **Feature assignments** and no **Capacity**.
+    - There is no **Capacity**.
     - There is no **New schedule** at the top right of the page.
   - **Notes:**
 
@@ -262,7 +262,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The menu closes.
     - The page stays on the **Schedules** tab of **Releases** with 'Platform' open, without the browser reloading.
     - **New schedule** shows at the top right of the page.
-    - The **People** section of the left-hand menu now shows **Feature assignments** and **Capacity**.
+    - The **People** section of the left-hand menu now shows **Capacity**.
   - **Notes:**
 
 ### LEAD-07: The Change History Names the Role a Change Was Made As
@@ -310,7 +310,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `04D0` Choose **Feature Lead** in the role menu.
-  - **Expected:** The **People** section of the left-hand menu shows no **Feature assignments** and no **Capacity**.
+  - **Expected:** The **People** section of the left-hand menu shows no **Capacity**.
   - **Notes:**
 
 ### LEAD-08: A Feature Lead Keeps Views of One Schedule and the Board

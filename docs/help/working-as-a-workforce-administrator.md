@@ -34,7 +34,7 @@ A planned hire goes through three rounds, each published and approved before the
 
 ## Keep the Feature Teams Current
 
-1. On **Feature assignments**, move people between teams from the month they move. See [Capacity](capacity.md#put-someone-on-a-feature-team-from-a-month).
+1. On **Capacity**, in **Feature teams**, move people between teams from the month they move. See [Capacity](capacity.md#put-someone-on-a-feature-team-from-a-month).
 1. To add, rename or remove a team, use the **Org chart**. See [Org chart](org-chart.md#change-a-feature-team).
 1. Select **Publish** in the top bar.
 

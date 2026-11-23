@@ -43,12 +43,12 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`; the first test case. Step `EF8B` signs in as another account.
 
-**Preconditions:** Reset the Database run. Signed in with this account. Select the **Feature assignments** page in the left-hand menu, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** Reset the Database run. Signed in with this account. Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `3DCD` Type `Candice` in the search box.
   - **Expected:**
     - Only the row of 'Candice Swift' is listed.
-    - No cell in her row holds a label.
+    - No cell in her row names a team.
   - **Notes:**
 
 - [ ] `5E92` Select her cell two months after the current month, and press Enter.
@@ -58,8 +58,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `03CF` Type `Payments`, and press Tab.
   - **Expected:**
     - The team list closes.
-    - From the cell selected on, each cell holds a 'Payments core' label with a hollow yellow dot before it.
-    - The cells before the one selected hold no label.
+    - From the cell selected on, each cell names 'Payments core' after a hollow yellow dot.
+    - The cells before the one selected name no team.
     - The row is faintly yellow.
     - A light green Live row is under it.
   - **Notes:**
@@ -118,8 +118,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account.
 
-- [ ] `825A` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The mode switch has **People** chosen.
+- [ ] `825A` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
+  - **Expected:** **Allocations** is chosen in the **Capacity** page's tabs.
   - **Notes:**
 
 - [ ] `CB7D` Select **Feature team** in the Group by menu.
@@ -129,19 +129,19 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `FAE8` Search for `Blaise Gislason`, and read his cell in the current month's column.
   - **Expected:**
     - The cell lists 'Depot Operations' at "25%" and 'Transit Displays' at "100%".
-    - The last line reads "Over" and "125%", in red and bold.
+    - The last line reads "Over" and "+25%", in red and bold.
   - **Notes:**
 
 - [ ] `6AC8` Clear the search box, and type `Jeremiah Bogisich`. Read his cell in the current month's column.
   - **Expected:**
     - The cell lists 'Depot Operations' at "50%".
-    - The last line reads "Under" and "50%", in grey.
+    - The last line reads "Under" and "−50%", in red and bold.
   - **Notes:**
 
 - [ ] `7165` Clear the search box, and type `Carmine Labadie`. Read his cell in the current month's column.
   - **Expected:**
     - The cell lists no feature.
-    - Its only line reads "Under" and "0%", in grey.
+    - Its only line reads "Not allocated", in red and bold, with no percentage.
   - **Notes:**
 
 ### MANAGER-03: A Feature Is Estimated

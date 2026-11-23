@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-team-accounts-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Acceptance, Setting Up Fathom
@@ -220,7 +220,7 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
 
 **Preconditions:** SETUP-05 done.
 
-- [ ] `6FE1` Select the **Capacity** page in the left-hand menu, then **Settings** in the mode switch.
+- [ ] `6FE1` Select the **Capacity** page in the left-hand menu, then the **Settings** tab.
   - **Expected:** Under **Working time**, the rows read, from the top:
     - **Hours a day**: "8"
     - **Working days a week**: "5"
@@ -233,8 +233,8 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
 
 - [ ] `6B27` Replace the value with `7`, and press Enter.
   - **Expected:**
-    - **Hours a day** reads "7" after a hollow yellow mark.
-    - Under it, "8" follows a green mark.
+    - **Hours a day** reads "7" after a hollow yellow dot.
+    - Under it, "8" follows a green dot.
   - **Notes:**
 
 ### SETUP-07: The First Round Is Published
