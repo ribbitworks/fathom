@@ -1198,7 +1198,7 @@ describe("views of every table", () => {
     const maker = await test.signedIn([
       ...assignmentsReader,
       "confidential:view",
-      "configuration:edit",
+      "feature-teams:edit",
     ]);
     const viewer = await test.signedIn(assignmentsReader);
     const definition = { grouping: "feature-team", thenBy: "manager" };
@@ -1244,7 +1244,7 @@ describe("views of every table", () => {
     const maker = await test.signedIn([
       ...assignmentsReader,
       "confidential:view",
-      "configuration:edit",
+      "feature-teams:edit",
     ]);
     const viewer = await test.signedIn(assignmentsReader);
     const { view } = (
@@ -1275,10 +1275,7 @@ describe("views of every table", () => {
 
   it("send each reader only the hidden columns they can see, keeping the others when that reader updates them", async () => {
     const maker = await test.signedIn("workforce-administrator");
-    const sharer = await test.signedIn([
-      ...generalReader,
-      "configuration:edit",
-    ]);
+    const sharer = await test.signedIn([...generalReader, "people:edit"]);
     const { view } = (
       await share(maker.cookie, unique("Hiding"), {
         hidden: ["endDate", "employeeId"],
@@ -1300,10 +1297,7 @@ describe("views of every table", () => {
 
   it("send each reader only the columns shown that they can see, keeping the others when that reader updates them", async () => {
     const maker = await test.signedIn("workforce-administrator");
-    const sharer = await test.signedIn([
-      ...generalReader,
-      "configuration:edit",
-    ]);
+    const sharer = await test.signedIn([...generalReader, "people:edit"]);
     const { view } = (
       await share(maker.cookie, unique("Showing"), {
         shown: ["endDate", "employeeId"],
@@ -1496,28 +1490,61 @@ describe("every starting role on every view table", () => {
     "workforce-administrator",
     "executive",
   ];
+  // Who shares each table's views: those who edit its records, as the Roles page sets out.
   const configurers: readonly Role[] = [
     "engineering-director",
     "workforce-administrator",
   ];
-  // Who opens each table's page, and who of them shares its views, as the Roles page sets out.
+  const peopleEditors = configurers;
+  const featureEditors: readonly Role[] = [
+    "product-manager",
+    "feature-lead",
+    "project-manager",
+    "engineering-manager",
+    "engineering-director",
+  ];
+  const planEditors: readonly Role[] = [
+    "product-manager",
+    "project-manager",
+    "engineering-manager",
+    "engineering-director",
+  ];
+  // Schedules are edited with Edit Plan or Edit Configuration.
+  const scheduleEditors: readonly Role[] = [
+    ...planEditors,
+    "workforce-administrator",
+  ];
+  // The Feature Lead edits feature teams but doesn't open Capacity.
+  const teamEditors: readonly Role[] = [
+    "engineering-manager",
+    "engineering-director",
+    "workforce-administrator",
+  ];
+  const allocationEditors: readonly Role[] = [
+    "engineering-manager",
+    "engineering-director",
+  ];
+  // Who opens each table's page, and who of them shares its views.
   const expected: Record<
     ViewTable,
     { opens: readonly Role[]; shares: readonly Role[] }
   > = {
-    people: { opens: everyoneButAdministrator, shares: configurers },
-    features: { opens: everyoneButAdministrator, shares: configurers },
-    projects: { opens: everyoneButAdministrator, shares: configurers },
-    proposals: { opens: everyoneButAdministrator, shares: configurers },
-    customers: { opens: everyoneButAdministrator, shares: configurers },
-    milestones: { opens: everyoneButAdministrator, shares: configurers },
-    releases: { opens: everyoneButAdministrator, shares: configurers },
-    cycles: { opens: everyoneButAdministrator, shares: configurers },
-    "release-streams": { opens: everyoneButAdministrator, shares: configurers },
+    people: { opens: everyoneButAdministrator, shares: peopleEditors },
+    features: { opens: everyoneButAdministrator, shares: featureEditors },
+    projects: { opens: everyoneButAdministrator, shares: planEditors },
+    proposals: { opens: everyoneButAdministrator, shares: planEditors },
+    customers: { opens: everyoneButAdministrator, shares: planEditors },
+    milestones: { opens: everyoneButAdministrator, shares: planEditors },
+    releases: { opens: everyoneButAdministrator, shares: featureEditors },
+    cycles: { opens: everyoneButAdministrator, shares: scheduleEditors },
+    "release-streams": {
+      opens: everyoneButAdministrator,
+      shares: scheduleEditors,
+    },
     lists: { opens: seesConfiguration, shares: configurers },
-    "feature-assignments": { opens: seesAssignments, shares: configurers },
-    capacity: { opens: seesAssignments, shares: configurers },
-    "org-chart": { opens: everyoneButAdministrator, shares: configurers },
+    "feature-assignments": { opens: seesAssignments, shares: teamEditors },
+    capacity: { opens: seesAssignments, shares: allocationEditors },
+    "org-chart": { opens: everyoneButAdministrator, shares: peopleEditors },
     drafts: { opens: everyoneButAdministrator, shares: configurers },
     accounts: {
       opens: ["engineering-director", "executive", "administrator"],
@@ -1569,6 +1596,20 @@ describe("every starting role on every view table", () => {
         (await views.change(cookie, view.id, { scope: "shared" })).statusCode,
       ).toBe(sharing ? 200 : 403);
       expect((await views.remove(cookie, view.id)).statusCode).toBe(200);
+
+      // And someone else's shared view is renamed or deleted only by those who share the table's
+      // views; every table has someone who does.
+      const other = await test.signedIn(tableSharers[0] as Role);
+      const { view: theirs } = (
+        await views.save(other.cookie, unique("Theirs"), {}, "shared")
+      ).json<Saved>();
+      expect(
+        (await views.change(cookie, theirs.id, { name: unique("Renamed") }))
+          .statusCode,
+      ).toBe(sharing ? 200 : 403);
+      expect((await views.remove(cookie, theirs.id)).statusCode).toBe(
+        sharing ? 200 : 403,
+      );
     },
   );
 });

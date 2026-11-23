@@ -621,7 +621,7 @@ describe("the change history", () => {
 
   it("shows a view's changes on a table besides People to those who open its page, and a personal view's to its maker alone", async () => {
     // Given a shared and a personal view on Features
-    const maker = await test.signedIn(["features:view", "configuration:edit"]);
+    const maker = await test.signedIn(["features:view", "features:edit"]);
     const featuresReader = await test.signedIn(["features:view"]);
     const peopleReader = await test.signedIn(["people:view"]);
     const views = "/api/views/features";
@@ -646,7 +646,7 @@ describe("the change history", () => {
   });
 
   it("shows a deleted view's changes only to those who open its table's page", async () => {
-    const maker = await test.signedIn(["features:view", "configuration:edit"]);
+    const maker = await test.signedIn(["features:view", "features:edit"]);
     const featuresReader = await test.signedIn(["features:view"]);
     const peopleReader = await test.signedIn(["people:view"]);
     const views = "/api/views/features";
@@ -666,7 +666,7 @@ describe("the change history", () => {
 
   it("shows a view's changes to nobody once its table is one Fathom doesn't know", async () => {
     // Given a view kept on a table that is no longer known
-    const maker = await test.signedIn(["features:view", "configuration:edit"]);
+    const maker = await test.signedIn(["features:view", "features:edit"]);
     const { view, changeSetId } = (
       await test.request(maker.cookie, "POST", "/api/views/features", {
         name: "On a table gone",
@@ -692,7 +692,7 @@ describe("the change history", () => {
       "feature-teams:view",
       "personal:view",
       "confidential:view",
-      "configuration:edit",
+      "feature-teams:edit",
     ]);
     const reader = await test.signedIn(["feature-teams:view", "personal:view"]);
     const { changeSetId } = (
@@ -712,7 +712,7 @@ describe("the change history", () => {
   });
 
   it("lets a view's change be undone only by someone who still opens its table's page", async () => {
-    const maker = await test.signedIn(["features:view", "configuration:edit"]);
+    const maker = await test.signedIn(["features:view", "features:edit"]);
     const { changeSetId } = (
       await test.request(maker.cookie, "POST", "/api/views/features", {
         name: "Undone on Features",
@@ -720,12 +720,12 @@ describe("the change history", () => {
         definition: {},
       })
     ).json<{ changeSetId: string }>();
-    await test.holdOnly(maker.id, ["people:view", "configuration:edit"]);
+    await test.holdOnly(maker.id, ["people:view"]);
     expect(
       (await test.request(maker.cookie, "POST", `/api/undo/${changeSetId}`, {}))
         .statusCode,
     ).toBe(403);
-    await test.holdOnly(maker.id, ["features:view", "configuration:edit"]);
+    await test.holdOnly(maker.id, ["features:view", "features:edit"]);
     expect(
       (await test.request(maker.cookie, "POST", `/api/undo/${changeSetId}`, {}))
         .statusCode,

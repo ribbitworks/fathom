@@ -6,6 +6,7 @@
 
 import { z } from "zod";
 import type { Permission } from "./access.ts";
+import { recordEditors } from "./drafts.ts";
 import type { ViewChoices } from "./views.ts";
 
 export const viewTableSchema = z.enum([
@@ -118,24 +119,25 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
   drafts: z.strictObject({ tab: draftsTabSchema.optional() }),
 };
 
-// The permission that shares a table's views, and changes or deletes others' shared ones. Nobody who
-// opens Accounts may change planning configuration.
-const viewSharers: Record<ViewTable, Permission> = {
-  people: "configuration:edit",
-  features: "configuration:edit",
-  projects: "configuration:edit",
-  proposals: "configuration:edit",
-  customers: "configuration:edit",
-  milestones: "configuration:edit",
-  releases: "configuration:edit",
-  cycles: "configuration:edit",
-  "release-streams": "configuration:edit",
-  lists: "configuration:edit",
-  "feature-assignments": "configuration:edit",
-  capacity: "configuration:edit",
-  "org-chart": "configuration:edit",
-  accounts: "administration:edit",
-  drafts: "configuration:edit",
+// What shares a table's views, and changes or deletes others' shared ones, any one sufficing: what
+// edits the table's records, so the plan's tables follow its record editors. Lists are
+// configuration's; Drafts, which holds every area's drafts, takes Edit Configuration.
+const viewSharers: Record<ViewTable, readonly Permission[]> = {
+  people: ["people:edit"],
+  features: recordEditors.feature,
+  projects: recordEditors.project,
+  proposals: recordEditors.proposal,
+  customers: recordEditors.customer,
+  milestones: recordEditors.milestone,
+  releases: recordEditors.release,
+  cycles: recordEditors["cycle-pattern"],
+  "release-streams": recordEditors["release-stream"],
+  lists: ["configuration:edit"],
+  "feature-assignments": ["feature-teams:edit"],
+  capacity: recordEditors.allocation,
+  "org-chart": ["people:edit"],
+  accounts: ["administration:edit"],
+  drafts: ["configuration:edit"],
 };
 
 export const sharesViews = (
@@ -144,4 +146,4 @@ export const sharesViews = (
 ): boolean =>
   // The table is always one of the fixed tables.
   // eslint-disable-next-line security/detect-object-injection
-  permissions.includes(viewSharers[table]);
+  viewSharers[table].some((sharer) => permissions.includes(sharer));

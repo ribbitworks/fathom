@@ -190,6 +190,21 @@ export type ApprovePermission = Exclude<
   "drafts:approve-own"
 >;
 
+// Who may change each kind of the plan's records, any one of the permissions sufficing. Schedules
+// and their cycles are part of the plan, and planning configuration too.
+export const recordEditors: Record<RecordType, readonly Permission[]> = {
+  "release-stream": ["plan:edit", "configuration:edit"],
+  "cycle-pattern": ["plan:edit", "configuration:edit"],
+  release: ["features:edit"],
+  feature: ["features:edit"],
+  customer: ["plan:edit"],
+  proposal: ["plan:edit"],
+  project: ["plan:edit"],
+  milestone: ["plan:edit"],
+  allocation: ["allocations:edit"],
+  "planning-settings": ["configuration:edit"],
+};
+
 // The permissions that approve or reject each kind's drafts, any one of them sufficing: that of the
 // area it belongs to, and, for schedules and their cycles, which are part of both the plan and
 // planning configuration, either's. Every kind must be listed, which the compiler checks.

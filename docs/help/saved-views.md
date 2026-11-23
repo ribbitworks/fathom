@@ -32,7 +32,10 @@ The **Views** menu shows once there's a view to save or apply, a hidden column t
   - On **Capacity**, a view grouped by **Manager** is seen only by roles that see Confidential data.
 - **Where a page opens:** when you open a page from the left-hand menu, it shows the view you last left it on, in any browser you sign in to. That includes its tab, the view you applied, and on **Features** the table or the board. It still opens on today's date, with no details open.
 - **Links to a view:** a link that shows a view opens that view instead, and the page then keeps it. To have the page open on the table's own view again, select **Clear view**.
-- **Who can share:** you can share a view you saved yourself, if your role changes configuration, or, on **Accounts**, if it manages accounts. Only a view's maker, or a role that can share views on the page, can change, rename or delete a shared view.
+- **Who can share:** you can share a view you saved yourself on a table whose records your role changes, such as **Features** if it edits features, or **People** and the **Org chart** if it edits people.
+  - On a page with tabs, each tab is its own table: on **Capacity**, sharing **Allocations** takes changing allocations, and **Feature teams** changing feature teams.
+  - To share on **Lists** or **Drafts**, your role must change configuration; on **Accounts**, it must manage accounts.
+  - Only a view's maker, or a role that can share views on the page, can change, rename or delete a shared view.
 
 ## Main Tasks
 

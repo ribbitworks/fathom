@@ -7,8 +7,8 @@ import {
   columnTableOf,
   type DraftKind,
   editsColumnsOf,
-  type Permission,
   type RecordType,
+  recordEditors,
   seesView,
 } from "@fathom/shared";
 import { type Actor, holdsAnyPermission, requireView } from "../access.ts";
@@ -18,21 +18,6 @@ import { editsHires } from "./hire-checks.ts";
 import type { Recorded } from "./draft-records.ts";
 import { isRecordType, kindOf } from "./records.ts";
 import { readsKind } from "./record-state.ts";
-
-// Who may change each kind of the plan's records, any one of the permissions sufficing. Schedules
-// and their cycles are part of the plan, and planning configuration too.
-const recordEditors: Record<RecordType, readonly Permission[]> = {
-  "release-stream": ["plan:edit", "configuration:edit"],
-  "cycle-pattern": ["plan:edit", "configuration:edit"],
-  release: ["features:edit"],
-  feature: ["features:edit"],
-  customer: ["plan:edit"],
-  proposal: ["plan:edit"],
-  project: ["plan:edit"],
-  milestone: ["plan:edit"],
-  allocation: ["allocations:edit"],
-  "planning-settings": ["configuration:edit"],
-};
 
 // The kinds of the plan's records whose changes show classified data, which their editor must see.
 const recordViews: Partial<Record<RecordType, ClassifiedView>> = {
