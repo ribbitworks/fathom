@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for adding a customer from a picker on the Projects page, against a simulated server.
+// Tests for adding a record from a picker on the Projects and Features pages, against a simulated
+// server.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  choices,
   customer,
   customerId,
+  featurePlan,
+  first,
   newId,
+  open,
   openPage,
   plan,
   project,
@@ -18,6 +23,7 @@ import {
   saved,
   sent,
   sidePanel,
+  statusId,
 } from "./test-projects-page.tsx";
 import { recordCell } from "./test-support.tsx";
 
@@ -377,5 +383,131 @@ describe("a value refused in the new record's form", () => {
       document.activeElement,
       screen.getAllByText(reason).every((shown) => form.contains(shown)),
     ]).toEqual(["Marlow City Transit", "true", nameIn(form), true]);
+  });
+});
+
+describe("adding a record from a feature's picker", () => {
+  const atFirst = `/features?open=${first.id}`;
+  const start = featurePlan({ canEdit: true });
+
+  async function newFrom(label: string, typed: string, answers = {}) {
+    const opened = await open(start, answers, atFirst);
+    await screen.findByRole("heading", { name: /Fictional First/ });
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", { name: `Change ${label}` }),
+    );
+    await userEvent.type(
+      within(sidePanel()).getByRole("textbox", { name: label }),
+      `${typed}{Enter}`,
+    );
+    return opened;
+  }
+
+  it.each([
+    [
+      "Projects",
+      "project",
+      "/api/projects",
+      { projects: [project(), project({ id: newId, name: "Harbour Survey" })] },
+    ],
+    [
+      "Proposals",
+      "proposal",
+      "/api/proposals",
+      {
+        proposals: [
+          proposal(),
+          proposal({ id: newId, name: "Harbour Survey" }),
+        ],
+      },
+    ],
+  ])(
+    "adds a new record from %s, naming the feature, with nothing else to link",
+    async (label, one, path, added) => {
+      const after = featurePlan({ canEdit: true, ...added });
+      const { fetch, held } = await newFrom(label, "Harbour Survey", {
+        [`POST ${path}`]: saved(() => after),
+        // A new proposal starts in the first status offered.
+        "GET /api/projects/choices": async () =>
+          Response.json({
+            ...((await choices().json()) as object),
+            statuses: [{ id: statusId, name: "Open", retired: false }],
+          }),
+      });
+      const form = newForm() as HTMLElement;
+      expect(
+        within(form).getByRole("heading", { name: `New ${one}` }),
+      ).toBeTruthy();
+      held.plan = after;
+      await userEvent.click(within(form).getByRole("button", { name: "Add" }));
+      await waitFor(() => {
+        expect(sent(fetch, `POST ${path}`)).toEqual([
+          expect.objectContaining({
+            name: "Harbour Survey",
+            featureIds: [first.id],
+          }),
+        ]);
+      });
+      await waitFor(() => {
+        expect(newForm()).toBeNull();
+      });
+      expect(sent(fetch, `PUT /api/features/${first.id}`)).toEqual([]);
+    },
+  );
+
+  it("adds a customer and links it to the feature", async () => {
+    const after = featurePlan({
+      canEdit: true,
+      customers: [customer(), added],
+    });
+    const { fetch, held } = await newFrom("Customers", "Harbour Ferries", {
+      "POST /api/customers": saved(() => after),
+      [`PUT /api/features/${first.id}`]: saved(() => after),
+    });
+    held.plan = after;
+    await userEvent.click(
+      within(newForm() as HTMLElement).getByRole("button", { name: "Add" }),
+    );
+    await waitFor(() => {
+      expect(sent(fetch, `PUT /api/features/${first.id}`)).toEqual([
+        expect.objectContaining({ customerIds: [newId] }),
+      ]);
+    });
+  });
+
+  it("asks before discarding a new project changed from how it opened", async () => {
+    await newFrom("Projects", "Harbour Survey");
+    const form = newForm() as HTMLElement;
+    await userEvent.type(
+      within(form).getByRole("textbox", { name: "Project ID" }),
+      "HS-1",
+    );
+    await userEvent.click(within(form).getByRole("button", { name: "Cancel" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Discard the new project?" }),
+    ).toBeTruthy();
+  });
+
+  it("closes a new project left as it opened, naming the feature, without asking", async () => {
+    await newFrom("Projects", "Harbour Survey");
+    await userEvent.click(
+      within(newForm() as HTMLElement).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(newForm()).toBeNull();
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("offers no New to a role that changes features but not the plan", async () => {
+    await open(featurePlan(), {}, atFirst);
+    await screen.findByRole("heading", { name: /Fictional First/ });
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", { name: "Change Customers" }),
+    );
+    expect(
+      await screen.findByRole("option", { name: "Fictional Customer" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("option", { name: /^New customer/ })).toBeNull();
   });
 });

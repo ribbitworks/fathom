@@ -445,6 +445,7 @@ export function ProjectsPage({
       if (form === undefined) {
         const adding = linked.panel({
           plan,
+          choices,
           narrow,
           notes,
           units: view.units,
@@ -535,12 +536,15 @@ export function ProjectsPage({
     const filteredTo = view.filters.projectId?.any?.at(0);
     const grids: Readonly<Record<PlanTab, () => ReactElement>> = {
       features: () => {
-        const table = featureTable(choices, {
-          onOpen: openRecord,
-          editsCommitments: plan.canEdit,
-          editsFeatureTeams,
-          board: onBoard,
-        });
+        const table = addingTo(
+          featureTable(choices, {
+            onOpen: openRecord,
+            editsCommitments: plan.canEdit,
+            editsFeatureTeams,
+            board: onBoard,
+          }),
+          addsFor("feature"),
+        );
         const offeredParts = cardPartSchema.options;
         const actions: RecordActions<Feature, PlanChange, FeatureFields> = {
           ...actionsFor<Feature, FeatureFields>("feature"),

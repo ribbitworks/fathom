@@ -43,6 +43,20 @@ The details group the values under **Details**, **Customers and commitments**, *
 
 You're done when the changed value shows a hollow dot.
 
+### Add a Customer, Project or Proposal From a Feature
+
+1. Open the feature's details.
+1. Select the pencil beside **Customers**, **Projects** or **Proposals**.
+1. Type the new record's name.
+1. Select **New customer**, **New project** or **New proposal** with the name, last in the list. When nothing matches what you typed, Enter does the same.
+1. In the form that opens under the details, with the name filled in, select **Add**. A new project or proposal already names the feature.
+
+You can start from the feature's cell in the table too: select it, press Enter and type the name. The form then opens beside the table.
+
+**New** shows only if your role can change the plan, not only features.
+
+You're done when the feature names the new record. A new customer has a hollow dot before it. A new project or proposal has no dot there, since its own draft is what names the feature.
+
 ### Plan When a Feature Ships
 
 Choose a cycle in the feature's **Target cycle**.

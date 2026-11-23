@@ -902,3 +902,41 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 - [ ] `7E3B` Choose **Projects** under **Break down by**.
   - **Expected:** Under the panel's table, a note says a feature in several projects counts in each, and is easy to read.
   - **Notes:**
+
+### FEAT-31: The Product Manager Adds a Project From a Feature's Projects
+
+**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-30.
+
+**Preconditions:** Select the **Features** page in the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
+
+- [ ] `3B7E` Point at 'Offline Sync' and select the details button at the right of its **Name** cell.
+  - **Expected:** The side panel opens, headed 'Offline Sync'.
+  - **Notes:**
+
+- [ ] `8C21` Select the change button in the **Projects** row.
+  - **Expected:**
+    - A list of projects opens, with a search box.
+    - The last item, under a line, reads "New project", in blue.
+  - **Notes:**
+
+- [ ] `D45A` Type `Testing Survey`.
+  - **Expected:**
+    - The list reads "No matches".
+    - The last item reads "New project “Testing Survey”".
+  - **Notes:**
+
+- [ ] `6E09` Press Enter.
+  - **Expected:**
+    - A second panel, headed **New project**, opens under the details of 'Offline Sync'.
+    - Its **Name** shows `Testing Survey`.
+    - Its **Features** names 'Offline Sync'.
+  - **Notes:**
+
+- [ ] `A1F3` Select **Add**.
+  - **Expected:**
+    - The **New project** panel is gone.
+    - The **Projects** row of 'Offline Sync' names `Testing Survey`.
+    - The change button in the **Projects** row has focus.
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
