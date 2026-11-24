@@ -774,7 +774,7 @@ describe("the table", () => {
     expect(monthColumns.map(({ key }) => key)).toEqual(months);
   });
 
-  it("filters across the whole grid by the features in the months a row holds, from a Features button", () => {
+  it("filters across the whole grid by what a row is allocated to in its months, from an Allocations button", () => {
     // Given Casey on Checkout in March, under Search, and on Billing in April, under none
     const grouped = rowsOf(
       [
@@ -793,12 +793,12 @@ describe("the table", () => {
         grouped.find((row) => row.group?.id === group) as AllocationRow,
       );
 
-    // Then each row has only its own months' features, and none reads as no feature
+    // Then each row has only its own months' allocations, and none reads as not allocated
     expect([
       filter?.button,
       filter?.column.key,
       filter?.column.emptyLabel,
-    ]).toEqual(["Features", anyMonthKey, "No feature"]);
+    ]).toEqual(["Allocations", anyMonthKey, "Not allocated"]);
     expect(inAnyMonth(search.id)).toEqual(["f-checkout"]);
     expect(inAnyMonth(undefined)).toEqual(["f-billing"]);
     expect(filter?.column.value(casey(rowsOf([])))).toEqual([]);

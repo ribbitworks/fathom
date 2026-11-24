@@ -485,7 +485,11 @@ export function allocationMonthsTable({
       currentMonth,
       label: "Allocations by month",
       choices: features,
-      filter: { button: "Features", label: "Feature", none: "No feature" },
+      filter: {
+        button: "Allocations",
+        label: "Allocated to",
+        none: "Not allocated",
+      },
       content: (row, month) =>
         holdsMonth(row, month) && (
           <AllocationLines
