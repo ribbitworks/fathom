@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The fictional organization's workload: allocations giving most current people who manage no one
-// work this month, as an organization's would, added on top of the seeded allocations without
-// changing them. Most work full time on one feature, some split their time, some are over- or
-// under-allocated, a few are not allocated at all, a few managers give a little time to a project,
-// some did earlier work on a feature now done, someone leaving soon is still allocated after
-// leaving, and someone not started yet is allocated from before they start. A development-only
-// package, never included in the runtime image.
+// work this month, on top of the seeded allocations. A development-only package, never included in
+// the runtime image.
 
 import {
   type FictionalOrganization,
@@ -20,20 +16,34 @@ import {
   type AllocationMonths,
   monthOf,
 } from "@fathom/shared";
+import { activityId } from "./activities.ts";
 import { featureId } from "./projects.ts";
 
-// What people work on: a seeded feature, or a seeded project's general feature, by key.
-export type WorkItem = { feature: string } | { project: string };
+// What people work on: a seeded feature, by key, or a seeded activity, by its project's key and its
+// own.
+export type WorkItem =
+  { feature: string } | { activity: { project: string; key: string } };
+
+// The feature or activity a piece of work names, the other left empty.
+export const workIds = (
+  item: WorkItem,
+): { featureId: string | null; activityId: string | null } =>
+  "feature" in item
+    ? { featureId: featureId(item.feature), activityId: null }
+    : {
+        featureId: null,
+        activityId: activityId(item.activity.project, item.activity.key),
+      };
 
 // Work under way this month, which the workload spreads people across.
 export const currentWork: readonly WorkItem[] = [
   { feature: "offline-sync" },
   { feature: "usage-alerts" },
-  { project: "crane-control" },
-  { project: "clinic-booking" },
-  { project: "transit-displays" },
-  { project: "internal-tools" },
-  { project: "depot-operations" },
+  { activity: { project: "crane-control", key: "general" } },
+  { activity: { project: "clinic-booking", key: "general" } },
+  { activity: { project: "transit-displays", key: "warranty-support" } },
+  { activity: { project: "internal-tools", key: "general" } },
+  { activity: { project: "depot-operations", key: "depot-rollout" } },
   { feature: "signature-capture" },
   { feature: "parts-lookup" },
   { feature: "barcode-scanning" },
@@ -72,29 +82,23 @@ const freeEvery = 30;
 // One in this many people's last piece of work ends some months on, so not all of it runs on.
 const endingEvery = 5;
 
-// How many managers give a little time to a project's general feature, and how much.
+// How many managers give a little time to a piece of work, and how much.
 const managerShares = [10, 25, 25] as const;
 
 // An allocation of the workload, by a key of its own, which the allocations seed makes its ID from.
 export interface WorkloadAllocation {
   key: string;
   personId: string;
-  featureId: string;
+  featureId: string | null;
+  activityId: string | null;
   months: AllocationMonths;
 }
 
 export interface Workload {
-  // A seeded project's general feature, by project key, since those have no fixed ID.
-  generalFeatureIds: ReadonlyMap<string, string>;
   // Those the seeded allocations already allocate, each as one of their cases, which the workload
   // leaves as they are.
   seededPeople: ReadonlySet<string | null>;
 }
-
-const itemFeatureId = (item: WorkItem, { generalFeatureIds }: Workload) =>
-  "feature" in item
-    ? featureId(item.feature)
-    : String(generalFeatureIds.get(item.project));
 
 // Whether a person is still employed on a day, or will be once they start.
 const stillEmployed = (person: FictionalPerson, day: string) =>
@@ -163,7 +167,7 @@ const months = (
   ...(stop === undefined ? {} : { [stop]: null }),
 });
 
-// The workload's allocations, the general features given.
+// The workload's allocations.
 export function workloadRows(
   organization: FictionalOrganization,
   workload: Workload,
@@ -180,7 +184,7 @@ export function workloadRows(
   ): WorkloadAllocation => ({
     key,
     personId: person.id,
-    featureId: itemFeatureId(item, workload),
+    ...workIds(item),
     months: allocated,
   });
   const ofWorking = working.flatMap((person, place) => {

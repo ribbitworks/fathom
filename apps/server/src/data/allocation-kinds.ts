@@ -4,6 +4,7 @@
 // kind.
 
 import { allocations } from "@fathom/db";
+import { isNotNull } from "drizzle-orm";
 import {
   type AllocationMonths,
   capitalized,
@@ -19,7 +20,6 @@ import {
   type Touched,
   versionOf,
 } from "./record-state.ts";
-import { projectKind } from "./project-kinds.ts";
 import { featureKind } from "./release-kinds.ts";
 
 export const allocationFields = [
@@ -29,17 +29,15 @@ export const allocationFields = [
   "months",
 ] as const;
 
+// Every field an allocation's row holds, which removing it records, its activity included, though
+// allocations to activities aren't yet drafted.
+export const allocationRowFields = [...allocationFields, "activityId"] as const;
+
 // The allocations to a feature, as their drafts make them, those drafted to be removed left out.
 export const allocationsTo = (state: State, featureId: string): string[] =>
   shownIds(state, "allocation").filter(
     (id) => versionOf(state, "allocation", id)?.featureId === featureId,
   );
-
-// A project's general features: the one it has once approved, which only ever exists live.
-const generalFeaturesOf = (state: State, projectId: string): string[] =>
-  [...state.feature.rows]
-    .filter(([, row]) => row.generalForProjectId === projectId)
-    .map(([id]) => id);
 
 // An allocation's months, as the percentage that takes effect from each, such as "50% from 2027-01",
 // and "0% from 2027-07" where it stops.
@@ -48,12 +46,14 @@ const monthsInWords = (months: AllocationMonths): string[] =>
     .sort(([first], [second]) => first.localeCompare(second))
     .map(([month, percentage]) => `${String(percentage ?? 0)}% from ${month}`);
 
-// Named by its feature, as the Drafts page and refusals name records, a general feature by its
-// project, and, in the change history, by who it puts on which feature, such as "Alex Kim on
-// Offline Sync", seen there only by roles that get Allocations.
+// Named by its feature, as the Drafts page and refusals name records, and, in the change history,
+// by who it puts on which feature, such as "Alex Kim on Offline Sync", seen there only by roles that
+// get Allocations.
 export const allocationKind: RecordKind = {
   type: "allocation",
   table: allocations,
+  // Activities aren't yet kinds of their own, so their allocations stay out of the plan's rules.
+  rowsWhere: isNotNull(allocations.featureId),
   fields: allocationFields,
   links: { featureId: "feature" },
   readWith: ["allocations:view"],
@@ -79,45 +79,20 @@ export const allocationKind: RecordKind = {
     )}`,
 };
 
-// A project's general feature, as the project it is for, when that project is drafted to be removed.
-function removedProjectOf(state: State, featureId: string): string | undefined {
-  const projectId = state.feature.rows.get(featureId)?.generalForProjectId;
-  return typeof projectId === "string" &&
-    versionOf(state, "project", projectId) === undefined
-    ? projectId
-    : undefined;
-}
-
-// A feature or project removed while it, or its general feature, still has allocations, or an
-// allocation to the general feature of a project drafted to be removed, which, having no draft of
-// its own, is not caught as a link to a removed record. The count is left out, since it can include
-// people the editor does not see. Records are named only to a role that reads their kind.
+// A feature removed while it still has allocations. The count is left out, since it can include
+// people the editor does not see. The feature is named only to a role that reads features.
 export function allocationProblem(
   state: State,
   touched: readonly Touched[],
   permissions: readonly Permission[],
 ): string | undefined {
-  const named = (kind: RecordKind, id: string) =>
-    subjectFor(kind, state, id, permissions);
-  for (const { type, id } of touched) {
-    if (type === "allocation") {
-      const featureId = versionOf(state, type, id)?.featureId;
-      const projectId =
-        typeof featureId === "string"
-          ? removedProjectOf(state, featureId)
-          : undefined;
-      if (projectId === undefined) continue;
-      return `This links to ${named(projectKind, projectId)}, which is drafted to be removed; discard that draft first`;
-    }
-    if (type !== "feature" && type !== "project") continue;
-    if (versionOf(state, type, id) !== undefined) continue;
-    const allocated = (
-      type === "project" ? generalFeaturesOf(state, id) : [id]
-    ).some((featureId) => allocationsTo(state, featureId).length > 0);
-    if (!allocated) continue;
-    return type === "project"
-      ? `${capitalized(named(projectKind, id))} has allocations, so it can't be removed. Allocations are time spent, so the project stays.`
-      : `${capitalized(named(featureKind, id))} has allocations, so it can't be removed. Allocations are time spent, so cancel the feature instead.`;
-  }
-  return undefined;
+  const removed = touched.find(
+    ({ type, id }) =>
+      type === "feature" &&
+      versionOf(state, type, id) === undefined &&
+      allocationsTo(state, id).length > 0,
+  );
+  return removed === undefined
+    ? undefined
+    : `${capitalized(subjectFor(featureKind, state, removed.id, permissions))} has allocations, so it can't be removed. Allocations are time spent, so cancel the feature instead.`;
 }

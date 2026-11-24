@@ -159,23 +159,8 @@ export const releaseKind: RecordKind = {
   },
 };
 
-// Whether a feature is a project's general feature, which exists only live, made and removed as
-// its project is approved, and stays off every roadmap.
-const generalForProject = (state: RecordsState, id: string): unknown =>
-  stateOf(state, "feature").rows.get(id)?.generalForProjectId;
-
-export const isGeneralFeature = (state: RecordsState, id: string): boolean =>
-  typeof generalForProject(state, id) === "string";
-
-// A feature's name as shown, a project's general feature taking its project's.
-export function featureCalled(state: RecordsState, id: string): string {
-  const project = generalForProject(state, id);
-  return String(
-    typeof project === "string"
-      ? shownVersion(state, "project", project)?.name
-      : shownVersion(state, "feature", id)?.name,
-  );
-}
+export const featureCalled = (state: RecordsState, id: string): string =>
+  String(shownVersion(state, "feature", id)?.name);
 
 export const projectSubject = (state: RecordsState, id: string): string =>
   projectSubjects.project(String(shownVersion(state, "project", id)?.name));
@@ -207,7 +192,6 @@ export const featureKind: RecordKind = {
     sizeId: "choice",
     riskId: "choice",
   },
-  keptByFathom: (state, id) => isGeneralFeature(state, id),
   addedColumns: { owner: "feature", table: "features" },
   changedTogether: ["targetStreamId", "targetCycle"],
   unique: [
@@ -215,10 +199,7 @@ export const featureKind: RecordKind = {
   ],
   readWith: ["features:view"],
   unseenSubject: "a feature",
-  subject: (state, id) =>
-    (isGeneralFeature(state, id)
-      ? projectSubjects.project
-      : projectSubjects.feature)(featureCalled(state, id)),
+  subject: (state, id) => projectSubjects.feature(featureCalled(state, id)),
   // A feature drafted onto another cycle, or onto one only the stream's drafted patterns make, uses
   // those patterns' drafts, as a release does.
   alsoUses: (state, id) => {

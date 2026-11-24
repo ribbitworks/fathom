@@ -1,28 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Customers, features, proposals, projects, and milestones, as kinds of the plan's records, in the
-// order approving adds them, so each comes after the records it links to. A project and its
-// milestones are removed together: the draft removing a project uses the drafts removing its
-// milestones, and each of those uses the project's, so they are approved, rejected, and discarded
-// together. Each project has a general feature, which takes people assigned to the project itself:
-// it follows the project's approval rather than having a draft, and nobody chooses anything in it,
-// so the project's own history covers it. Part of the data access layer; records.ts applies the
-// rules every kind shares.
+// order approving adds them. Part of the data access layer.
 
-import {
-  customers,
-  features,
-  milestones,
-  projects,
-  proposals,
-} from "@fathom/db";
+import { customers, milestones, projects, proposals } from "@fathom/db";
 import {
   projectSubjects,
   type RecordRef,
   removalReasonsIn,
 } from "@fathom/shared";
-import { eq } from "drizzle-orm";
-import { firstOfferedOrRefused } from "./built-in-lists.ts";
 import { featureKind, projectSubject } from "./release-kinds.ts";
 import {
   type RecordKind,
@@ -132,22 +118,8 @@ export const projectKind: RecordKind = {
   readWith: ["plan:view"],
   unseenSubject: "a project",
   subject: projectSubject,
-  onAdded: async (transaction, id) => {
-    const statusId = await firstOfferedOrRefused(
-      transaction,
-      "feature-statuses",
-      "in-progress",
-      "No feature status means In progress. Add one to the list first.",
-    );
-    await transaction
-      .insert(features)
-      .values({ statusId, generalForProjectId: id });
-  },
-  onRemoving: async (transaction, id) => {
-    await transaction
-      .delete(features)
-      .where(eq(features.generalForProjectId, id));
-  },
+  // A project and its milestones are removed together, each removal using the other's draft, so
+  // they are approved, rejected, and discarded together.
   alsoUses: (state, id): RecordRef[] =>
     removedByDraft(state, "project", id)
       ? milestonesOf(state, id)

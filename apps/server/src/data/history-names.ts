@@ -7,7 +7,6 @@ import {
   changes,
   changeSets,
   type Database,
-  features,
   fieldOfValue,
   inChunks,
   listItems,
@@ -389,8 +388,8 @@ export async function partsOf(
 }
 
 // Names each record named by its parts, as its kind puts their names together, each part named as
-// the history names it: a person or feature by its latest name, a planned hire as nameHires does,
-// and a project's general feature, which has no name of its own, by its project's.
+// the history names it: a person or feature by its latest name, and a planned hire as nameHires
+// does.
 export async function nameByParts(
   database: Database,
   actor: Actor,
@@ -406,17 +405,6 @@ export async function nameByParts(
     ].filter((id) => !facts.names.has(id));
   await readFacts(database, actor, named(), facts);
   await nameHires(database, actor, named(), facts);
-  const generals = new Map<string, string>();
-  for (const chunk of inChunks(named())) {
-    for (const { id, projectId } of await database
-      .select({ id: features.id, projectId: features.generalForProjectId })
-      .from(features)
-      .where(inArray(features.id, chunk))) {
-      // Only a general feature goes unnamed by the history.
-      generals.set(id, String(projectId));
-    }
-  }
-  await readFacts(database, actor, [...generals.values()], facts);
   for (const row of rows) {
     const naming = planKindOf.get(row.recordType)?.historyName;
     const recorded = parts.get(row.recordId);
@@ -425,7 +413,7 @@ export async function nameByParts(
       Object.fromEntries(
         Object.entries(recorded).map(([field, partId]) => [
           field,
-          facts.names.get(generals.get(partId) ?? partId),
+          facts.names.get(partId),
         ]),
       ),
     );

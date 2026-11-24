@@ -38,7 +38,6 @@ import {
   valuesOf,
 } from "./person-fields.ts";
 import { milestonesOf } from "./project-kinds.ts";
-import { isGeneralFeature } from "./release-kinds.ts";
 import {
   fieldOfValue,
   inListOrder,
@@ -103,16 +102,6 @@ async function checkOwner(
   }
 }
 
-// Refuses a project's general feature, which is off the roadmap, as a feature a record names.
-function checkRoadmapFeatures(
-  state: RecordsState,
-  featureIds: readonly string[],
-): void {
-  if (featureIds.some((id) => isGeneralFeature(state, id))) {
-    throw new BadRequestError("Choose features from Features");
-  }
-}
-
 // A customer, project, proposal, or feature, as a request adds or changes it.
 export type PlanRecordRequest =
   | { type: "customer"; request: CustomerRequest }
@@ -164,7 +153,6 @@ export async function addProject(
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
     await checkOwner(transaction, request.ownerId);
-    checkRoadmapFeatures(state, request.featureIds);
     return saveRecordDraft(
       transaction,
       maker,
@@ -185,7 +173,6 @@ export async function changeProject(
   return changingPlan(database, maker, async (transaction, state) => {
     changeableRecord(state, "project", id);
     await checkOwner(transaction, request.ownerId);
-    checkRoadmapFeatures(state, request.featureIds);
     return saveRecordDraft(
       transaction,
       maker,
@@ -242,7 +229,6 @@ async function proposalRecord(
   current?: Recorded,
 ) {
   await checkOwner(transaction, request.ownerId);
-  checkRoadmapFeatures(state, request.featureIds);
   return {
     name: request.name,
     externalId: request.externalId,
@@ -457,10 +443,7 @@ export async function changeFeatureProjects(
   request: FeatureProjectsRequest,
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
-    if (
-      shownVersion(state, "feature", featureId) === undefined ||
-      isGeneralFeature(state, featureId)
-    ) {
+    if (shownVersion(state, "feature", featureId) === undefined) {
       throw new NotFoundError("There is no such feature");
     }
     const wanted = Object.entries(featureNamerKeys).flatMap(([kind, key]) => {

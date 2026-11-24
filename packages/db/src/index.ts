@@ -25,6 +25,7 @@ export { runMigrations } from "./migrate.ts";
 export {
   accessHistory,
   accounts,
+  activities,
   allocations,
   appInfo,
   changes,

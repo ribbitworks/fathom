@@ -11,6 +11,7 @@ import {
   type RecordRef,
   type RecordType,
 } from "@fathom/shared";
+import type { SQL } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { Transaction } from "./changes.ts";
 import {
@@ -27,6 +28,8 @@ export interface RecordKind {
   type: RecordType;
   // The table the live records are kept in, with a column for each field and an id.
   table: PgTable;
+  // The table's rows that are the kind's, for a kind that keeps only some of them.
+  rowsWhere?: SQL;
   // The record's fields, as the change history records them, in the order they are shown.
   fields: readonly string[];
   // The fields that link to other records, by the kind of record each links to. A field links to
@@ -60,8 +63,6 @@ export interface RecordKind {
   // Values a record added is given beside its fields, such as its place at the end of an order,
   // from the kind's rows, including those added before it in the same approval.
   added?: (rows: ReadonlyMap<string, Recorded>) => Recorded;
-  // Whether Fathom keeps the record itself, so nobody can change or remove it through a draft.
-  keptByFathom?: (state: RecordsState, id: string) => boolean;
   // How the change history names a record with no name of its own: from the records its addition
   // named in these fields, each as the history names it, such as an allocation by who it puts on
   // which feature.

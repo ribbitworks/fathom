@@ -6,14 +6,7 @@
 // drafts, approved with the drafts they use, removed together where they belong together, and named
 // in the change history and among unpublished changes.
 
-import {
-  features,
-  listItems,
-  lists,
-  milestones,
-  people,
-  projects,
-} from "@fathom/db";
+import { listItems, lists, milestones, people, projects } from "@fathom/db";
 import type {
   ChangeHistory,
   Permission,
@@ -827,24 +820,6 @@ describe("the features projects and proposals name", () => {
     });
   });
 
-  it("refuse a project's general feature, which is off the roadmap", async () => {
-    const project = await addProject();
-    await approve([{ type: "project", id: project.id }]);
-    const [general] = await test.connection
-      .select({ id: features.id })
-      .from(features)
-      .where(eq(features.generalForProjectId, project.id));
-    const generalId = String(general?.id);
-    for (const path of ["projects", "proposals"]) {
-      const response = await send("POST", `/api/${path}`, {
-        name: unique("Fictional Record"),
-        featureIds: [generalId],
-      });
-      expect(response.statusCode).toBe(400);
-      expect(errorOf(response)).toBe("Choose features from Features");
-    }
-  });
-
   it("refuse a feature that does not exist", async () => {
     const response = await send("POST", "/api/proposals", {
       name: unique("Fictional Proposal"),
@@ -936,20 +911,13 @@ describe("a feature's projects and proposals", () => {
     expect(byName(plan.projects, kept.name).featureIds).toEqual([feature.id]);
   });
 
-  it("refuse a feature that does not exist, or a project's general feature", async () => {
+  it("refuse a feature that does not exist", async () => {
     const project = await addProject();
-    await approve([{ type: "project", id: project.id }]);
-    const [general] = await test.connection
-      .select({ id: features.id })
-      .from(features)
-      .where(eq(features.generalForProjectId, project.id));
-    for (const featureId of [missing, String(general?.id)]) {
-      const response = await changeNamers(featureId, {
-        projectIds: [project.id],
-      });
-      expect(response.statusCode).toBe(404);
-      expect(errorOf(response)).toBe("There is no such feature");
-    }
+    const response = await changeNamers(missing, {
+      projectIds: [project.id],
+    });
+    expect(response.statusCode).toBe(404);
+    expect(errorOf(response)).toBe("There is no such feature");
   });
 
   it("leave a project drafted to be removed as it is, and refuse adding the feature to one", async () => {

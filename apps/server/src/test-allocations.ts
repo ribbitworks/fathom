@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Shared setup for the allocation integration tests: a test app with the accounts they act as, and
-// helpers that add people, planned hires and features, and change, read and decide allocations
+// helpers that add people, planned hires, features and allocations to activities, and change, read and decide allocations
 // through the routes.
 
 import {
+  activities,
+  allocations,
   features,
   people,
   plannedHires,
@@ -154,25 +156,29 @@ export async function addFeature(
   return id;
 }
 
-export async function addGeneralFeature(): Promise<{
-  projectId: string;
-  featureId: string;
+// A person allocated to a project's activity, added directly, since activities aren't drafted yet.
+export async function activityAllocation(): Promise<{
+  personId: string;
+  id: string;
+  activityId: string;
 }> {
+  const personId = await addPerson();
   const projectId = randomUUID();
-  const featureId = randomUUID();
-  const name = unique("Fictional Project");
-  await named("project", projectId, "name", name);
-  await test.connection.insert(projects).values({ id: projectId, name });
-  await test.connection.insert(features).values({
-    id: featureId,
-    statusId: await builtInChoice(
-      test.connection,
-      "feature-statuses",
-      "in-progress",
-    ),
-    generalForProjectId: projectId,
+  await test.connection
+    .insert(projects)
+    .values({ id: projectId, name: unique("Fictional Project") });
+  const [activity] = await test.connection
+    .insert(activities)
+    .values({ projectId, name: "Fictional Activity" })
+    .returning({ id: activities.id });
+  const id = randomUUID();
+  await test.connection.insert(allocations).values({
+    id,
+    personId,
+    activityId: activity?.id,
+    months: { [month(0)]: 50 },
   });
-  return { projectId, featureId };
+  return { personId, id, activityId: String(activity?.id) };
 }
 
 type Change = {

@@ -449,6 +449,13 @@
       "when": 1795446718406,
       "tag": "0063_feature_team_descriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1795513416735,
+      "tag": "0064_activities",
+      "breakpoints": true
     }
   ]
 }

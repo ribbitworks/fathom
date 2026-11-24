@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the fictional customers, proposals, and projects, against a PostgreSQL server of their
-// own: seeding them once, recorded as made by Fathom itself, with proposals in every status and
-// milestones on both sides of the seed day, and removing only what nothing added by hand uses.
+// Tests for the fictional customers, proposals, and projects with their milestones and activities,
+// against a PostgreSQL server of their own.
 
 import {
+  activities,
   changes,
   changeSets,
   createDatabase,
@@ -21,9 +21,10 @@ import {
   features,
 } from "@fathom/db";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
-import { eq, isNotNull, isNull } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { activityId, seededActivities } from "./activities.ts";
 import { seededFeatures } from "./features.ts";
 import {
   customerId,
@@ -64,6 +65,7 @@ beforeAll(async () => {
 afterEach(async () => {
   await connection.delete(drafts);
   await connection.delete(milestones);
+  await connection.delete(activities);
   await connection.delete(features);
   await connection.delete(projects);
   await connection.delete(proposals);
@@ -87,7 +89,13 @@ describe("seeding projects", () => {
       .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
       .where(isNull(changeSets.madeBy));
     expect(new Set(made.map(({ recordType }) => recordType))).toEqual(
-      new Set(["customer", "proposal", "project", "milestone"]),
+      new Set([
+        "customer",
+        "proposal",
+        "project",
+        "milestone",
+        "project-activity",
+      ]),
     );
     expect(await connection.select().from(customers)).toHaveLength(
       seededCustomers.length,
@@ -168,9 +176,16 @@ describe("removing projects", () => {
       action: "created",
       fields: { projectId: projectId(String(project?.key)) },
     });
+    await connection.insert(drafts).values({
+      recordType: "project-activity",
+      recordId: randomUUID(),
+      action: "created",
+      fields: { projectId: projectId(String(project?.key)) },
+    });
     expect(await unseedProjects(connection)).toEqual([]);
     expect(await connection.select().from(customers)).toEqual([]);
     expect(await connection.select().from(milestones)).toEqual([]);
+    expect(await connection.select().from(activities)).toEqual([]);
     expect(await connection.select().from(drafts)).toEqual([]);
   });
 
@@ -191,7 +206,7 @@ describe("removing projects", () => {
     });
     const kept = await unseedProjects(connection);
     expect(kept).toEqual([
-      "The project Crane Control, which has milestones added by hand",
+      "The project Crane Control, which has milestones or activities added by hand",
       "The proposal Harbour Cranes Upgrade, which a project kept uses",
       "The customer Bluefin Harbour Authority, which a project, proposal, or feature kept uses",
       "The customer Kestrel Mining Cooperative, which a project, proposal, or feature kept uses",
@@ -253,22 +268,34 @@ describe("removing projects", () => {
     expect(await connection.select().from(drafts)).toEqual([]);
   });
 
-  it("adds a general feature in progress for every project", async () => {
+  it("keeps a project with an activity added by hand", async () => {
     await seed();
-    const kept = await connection.select().from(projects);
-    const general = await connection
-      .select({
-        project: features.generalForProjectId,
-        meaning: listItems.meaning,
-      })
-      .from(features)
-      .innerJoin(listItems, eq(listItems.id, features.statusId))
-      .where(isNotNull(features.generalForProjectId));
-    expect(general.map(({ project }) => project).sort()).toEqual(
-      kept.map(({ id }) => id).sort(),
+    await connection.insert(activities).values({
+      projectId: projectId("depot-operations"),
+      name: "Fictional Hand Activity",
+    });
+    expect(await unseedProjects(connection)).toContain(
+      "The project Depot Operations, which has milestones or activities added by hand",
     );
-    expect(new Set(general.map(({ meaning }) => meaning))).toEqual(
-      new Set(["in-progress"]),
+  });
+
+  it("adds each project's activities, and only theirs", async () => {
+    await seed();
+    const added = await connection
+      .select({
+        id: activities.id,
+        projectId: activities.projectId,
+        name: activities.name,
+      })
+      .from(activities);
+    expect(added.sort((one, other) => one.id.localeCompare(other.id))).toEqual(
+      seededActivities
+        .map(({ project, key, name }) => ({
+          id: activityId(project, key),
+          projectId: projectId(project),
+          name,
+        }))
+        .sort((one, other) => one.id.localeCompare(other.id)),
     );
   });
 

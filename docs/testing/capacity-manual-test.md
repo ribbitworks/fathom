@@ -267,7 +267,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box, no filters, and neither **Over** nor **Under** ticked in the **Views** menu.
 
-- [ ] `CBFE` In the current month's column, find a cell whose last line reads "Over", such as that of 'Blaise Gislason', and one whose last line reads "Under", such as that of 'Anahi Bins'.
+- [ ] `CBFE` In the current month's column, find a cell whose last line reads "Over", such as that of 'Silje Holm-Schrøder', and one whose last line reads "Under", such as that of 'Lorenza Thiel'.
   - **Expected:**
     - "Over" is red and bold, with how far over a whole month at the right, such as "+25%".
     - "Under" is red and bold, with how far under a whole month at the right, such as "−50%".

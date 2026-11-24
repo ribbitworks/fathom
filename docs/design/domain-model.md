@@ -23,7 +23,8 @@ The diagram shows the core relationships only, and each schedule has its own cyc
 ```mermaid
 erDiagram
     PROJECT }o--o{ FEATURE : needs
-    PROJECT ||--|| FEATURE : "general feature"
+    PROJECT ||--o{ ACTIVITY : has
+    RELEASE ||--o{ ACTIVITY : has
     PROJECT |o--o{ MILESTONE : has
     FEATURE |o--o{ MILESTONE : has
     PROJECT }o--o{ CUSTOMER : "driven by"
@@ -45,6 +46,7 @@ erDiagram
     PERSON ||--o{ REPORTING_LINE : "reports through"
     PERSON ||--o{ REPORTING_LINE : manages
     FEATURE ||--o{ ALLOCATION : receives
+    ACTIVITY ||--o{ ALLOCATION : receives
     PERSON |o--o{ ALLOCATION : "is allocated"
     PLANNED_HIRE |o--o{ ALLOCATION : "is allocated"
     PLANNED_HIRE }o--o| PERSON : "reports to"
@@ -69,14 +71,15 @@ A feature needs none of these links: one with no project or proposal is an idea 
 
 - **Fields:** a name, required and unique ignoring letter case. Optionally a Project ID, unique ignoring letter case when entered, an owner, who is a person, customers, and the proposals it links to.
 - **Dates:** from its milestones, never entered: its first and last milestone and its next customer delivery.
-- **Scope:** the features it needs, held in the project's draft whichever side they are edited from. Linking a feature is enough to show the project funds it, since people are allocated to features, never to projects.
-- **General feature:** each project has one, which takes allocations made to the project directly, so every allocation is to a feature.
-  - **Shown:** it shows its project's name and follows a rename. It has no draft of its own, and is on no roadmap.
-  - **Status:** it has the first status meaning In progress, so its time counts toward over-allocation.
-  - **Added and removed:** approving the project adds it, and approving the project's removal removes it. The change history records its project and leaves it out.
-- **Removing:** removes its milestones in the same draft, and is refused while its general feature has allocations.
+- **Scope:** the features it needs, held in the project's draft whichever side they are edited from. Linking a feature is enough to show the project funds it. Time spent on the project that isn't a feature goes to one of its [activities](#activity), since people are allocated to features and activities, never to projects.
+- **Removing:** removes its milestones in the same draft. A project with activities can't be removed yet ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
 
-**Proposal:** Generalize the general feature into project activities, features linked to exactly one project for work that isn't a product feature, as [issue #207](https://github.com/ribbitworks/fathom/issues/207) sets out.
+### Activity
+
+- **What it is:** work a project or a release needs that isn't a product feature, such as data migration or release testing. It belongs to exactly one project or one release and ends with it. Nothing makes one: an activity named General is an ordinary one a team adds.
+- **Fields:** a name, required and unique within its project or release, ignoring letter case. Optionally a description, a note, an estimate, kept in hours as a feature's is, and a colour from the palette.
+- **Never a feature:** it is on no roadmap, has no status, feature team, cycle or proposal, and is never shown on Features.
+- **Built so far:** activities are kept, and the [fictional data](development-setup.md#fictional-data) has some, with allocations. Capacity doesn't show or count allocations to activities yet; their drafts, pages and allocating to them follow in [issue #207](https://github.com/ribbitworks/fathom/issues/207).
 
 ### Proposal
 
@@ -90,7 +93,6 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Fields:** a name, required and unique ignoring letter case, and a status, required.
   - **Optional:** a description, plain text up to 200 characters, its Needed by month, customers likely to want it, a note, a target cycle, an estimate, a size, a priority, a risk, a feature team, and the projects and proposals that name it.
   - **Added columns:** its values in the columns added to Features are part of its draft. Kind, product, initiative, theme and complexity are columns users add.
-- **General feature:** a project's general feature is the one exception to unique names, since it shows its project's.
 - **Status:** a choice of the built-in feature statuses, a list with meanings. Fathom acts on the meaning, while each organization names and divides its statuses its own way.
   - **Possible:** a new feature starts in the first status meaning Possible. A possible feature is the same record a planned one is, so it is planned, staffed and released without being copied.
   - **What counts:** possible features count toward the forecast but not toward over-allocation, and Done or Cancelled ones raise no warnings.
@@ -111,7 +113,7 @@ A feature needs none of these links: one with no project or proposal is an idea 
 
 ### Allocation
 
-- **What it is:** one person or planned hire on one feature, never both, at a percentage of their month: 10%, 25%, 50%, 75%, 90% or 100%, starting at 100%. Each has at most one allocation to a feature.
+- **What it is:** one person or planned hire on one feature or one activity, never both of either, at a percentage of their month: 10%, 25%, 50%, 75%, 90% or 100%, starting at 100%. Each has at most one allocation to a feature or activity.
 - **Records:** one for each month it changes: the percentage from that month, or none when it stops, each in force until the next, as reporting lines are kept. It may run with no end.
   - **A range:** such as 50% from January to June, saves a record for January and one stopping it in July.
   - **One month within a range:** changing it saves up to two records, so the months around it keep their percentage.
@@ -120,7 +122,7 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Employment dates:** a person cannot be allocated before their start month or after their end month, nor a planned hire before its first month that can be allocated. Past months can be allocated, as corrections.
   - **A date moving later:** allocations left outside employment are kept rather than removed, so whoever allocates decides. They count in neither capacity nor demand.
 - **Capacity:** a full month for everyone, including the months a person starts and ends in, and none before the start month or after the end month. A planned hire has none before its first month that can be allocated.
-- **Removing:** removing a person or planned hire removes their allocations in the same draft, refused while any of those allocations has a draft. A feature with allocations, or a project whose general feature has any, is never removed.
+- **Removing:** removing a person or planned hire removes their allocations in the same draft, refused while any of those allocations has a draft. A feature or activity with allocations is never removed.
 - **Planned hires:** a planned hire with allocations cannot be filled yet, and a filled one is not allocated.
 
 **Proposal:** When variable capacity is added after v1, give each person a monthly capacity, defaulting to a full month, so existing data needs no change, and mark it wherever the person appears, to discourage it.

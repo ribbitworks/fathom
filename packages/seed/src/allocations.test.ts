@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the fictional allocations, against a PostgreSQL server of their own: adding none until
-// the people, planned hire, and projects they name are there. Adding and removing them with the rest
-// of the seed data is tested with the seed command.
+// Tests for the fictional allocations, against a PostgreSQL server of their own. Adding and removing
+// them with the rest of the seed data is tested with the seed command.
 
 import { createDatabase, createPool, type Database } from "@fathom/db";
 import { fictionalOrganization } from "@fathom/fixtures";
@@ -15,6 +14,7 @@ import {
   seededAllocationRows,
   unseedAllocations,
 } from "./allocations.ts";
+import { activityId } from "./activities.ts";
 import { seededFeatures } from "./features.ts";
 import { featureId } from "./projects.ts";
 
@@ -36,7 +36,7 @@ afterAll(async () => {
 const organization = fictionalOrganization({ size: 20 });
 
 describe("seeding allocations", () => {
-  it("adds none before the people, planned hires, and projects they name are there", async () => {
+  it("adds none before the people, planned hires, and activities they name are there", async () => {
     expect(await seedAllocations(connection, organization)).toBe(false);
   });
 
@@ -59,12 +59,12 @@ describe("seeding allocations", () => {
         ({ name }) => name !== "Mobile developer",
       ),
     };
-    expect(
-      seededAllocationRows(without, "general").map(({ id }) => id),
-    ).not.toContain(allocationId("hire-alone"));
-    expect(
-      seededAllocationRows(organization, "general").map(({ id }) => id),
-    ).toContain(allocationId("hire-alone"));
+    expect(seededAllocationRows(without).map(({ id }) => id)).not.toContain(
+      allocationId("hire-alone"),
+    );
+    expect(seededAllocationRows(organization).map(({ id }) => id)).toContain(
+      allocationId("hire-alone"),
+    );
   });
 
   it("removes nothing, and records nothing, when there are none", async () => {
@@ -75,11 +75,10 @@ describe("seeding allocations", () => {
 });
 
 describe("the seeded allocations", () => {
-  const general = "00000000-0000-4000-8000-0000000a1100";
-  const rows = seededAllocationRows(organization, general);
+  const general = activityId("crane-control", "general");
+  const rows = seededAllocationRows(organization);
   const current = monthOf(organization.referenceDate);
-  const meaningOf = new Map<string, string>([
-    [general, "in-progress"],
+  const meaningOf = new Map<string | null, string>([
     ...seededFeatures.map(({ key, status }): [string, string] => [
       featureId(key),
       status,
@@ -88,8 +87,8 @@ describe("the seeded allocations", () => {
   const people = [...new Set(rows.flatMap(({ personId }) => personId ?? []))];
   const onPerson = (personId: string) =>
     rows.filter((row) => row.personId === personId);
-  // What a person is allocated in a month, counting every feature but Possible ones, and how many
-  // features they are on.
+  // What a person is allocated in a month, counting every feature but Possible ones and every
+  // activity, and how many features and activities they are on.
   const monthOfPerson = (personId: string, month: string) => {
     const inForce = onPerson(personId).flatMap((row) => {
       const percentage = percentageIn(row.months, month);
@@ -139,7 +138,7 @@ describe("the seeded allocations", () => {
     ).toBe(true);
   });
 
-  it("allocate a done feature only in months past, a cancelled one in months to come, and a general feature", () => {
+  it("allocate a done feature only in months past, a cancelled one in months to come, and an activity", () => {
     const of = (meaning: string) =>
       rows.filter(({ featureId: id }) => meaningOf.get(id) === meaning);
     for (const row of of("done")) {
@@ -150,12 +149,12 @@ describe("the seeded allocations", () => {
         (row) => percentageIn(row.months, addToMonth(current, 1)) !== null,
       ),
     ).toBe(true);
-    expect(rows.some(({ featureId: id }) => id === general)).toBe(true);
+    expect(rows.some(({ activityId: id }) => id === general)).toBe(true);
   });
 
   it("are none for an organization with no feature teams", () => {
-    expect(
-      seededAllocationRows({ ...organization, featureTeams: [] }, general),
-    ).toEqual([]);
+    expect(seededAllocationRows({ ...organization, featureTeams: [] })).toEqual(
+      [],
+    );
   });
 });

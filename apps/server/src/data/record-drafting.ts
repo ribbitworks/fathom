@@ -81,18 +81,15 @@ export type RecordRefusal =
 
 export type RecordToChange = { record: Recorded } | { refusal: RecordRefusal };
 
-// A record to change as its draft makes it, or why it can't be: one that does not exist, or that
-// Fathom keeps, is missing; one someone else holds is theirs until they publish or discard it; and
+// A record to change as its draft makes it, or why it can't be: one that does not exist is
+// missing; one someone else holds is theirs until they publish or discard it; and
 // one its draft removes can't be changed until the draft is discarded.
 export function recordToChange(
   state: RecordsState,
   type: RecordType,
   id: string,
 ): RecordToChange {
-  if (
-    !recordExists(state, type, id) ||
-    kindOf(type).keptByFathom?.(state, id) === true
-  ) {
+  if (!recordExists(state, type, id)) {
     return { refusal: { reason: "missing" } };
   }
   const holder = holderOf(state, type, id);
