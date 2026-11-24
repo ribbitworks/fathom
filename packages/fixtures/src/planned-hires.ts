@@ -129,6 +129,10 @@ const openings: readonly {
   },
 ];
 
+// The seed data's drafts change the first seven people, so hires name only people after them, with
+// a margin of three; fewer than firstUnnamed, which also leaves out the people the seed's tests name.
+const firstUndrafted = 10;
+
 export function hiresFor(
   people: readonly FictionalPerson[],
   reportingLines: readonly FictionalLine[],
@@ -141,8 +145,7 @@ export function hiresFor(
     person.endDate === null &&
     person.startDate !== null &&
     person.startDate <= referenceDate;
-  // The seed data's drafts change the first few people, so hires name only those after them.
-  const named = people.slice(10);
+  const named = people.slice(firstUndrafted);
   const managers = named.filter(
     (person) => person.isManager && current(person),
   );

@@ -23,6 +23,14 @@ const teamNames = [
 // The colours the first named teams are given, from the palette; the rest have none.
 const teamColours = ["teal", "grape", "orange", "indigo", "yellow", "pink"];
 
+// Well past the seeds the organization's own generators take, for people, the names chosen and each
+// name source.
+const reportingSeedOffset = 50;
+
+const reportsKeptByDeparted = 3;
+
+const namedTeamEvery = 2;
+
 // Who reports to whom: the earliest current manager at the top, with no manager; other managers
 // under someone who started before them, so there are no loops; and everyone else under a manager.
 // Each line starts when both have started, so the manager is employed that day, and a new
@@ -36,7 +44,7 @@ export function reporting(
   seed: number,
   referenceDate: string,
 ): { reportingLines: FictionalLine[]; teams: FictionalTeam[] } {
-  const faker = new Faker({ locale: [base], seed: seed + 50 });
+  const faker = new Faker({ locale: [base], seed: seed + reportingSeedOffset });
   const started = (person: FictionalPerson) =>
     String(person.startDate) <= referenceDate;
   const managers = people
@@ -74,7 +82,7 @@ export function reporting(
       departed !== undefined &&
       !isManager &&
       person.endDate === null &&
-      keptByDeparted < 3 &&
+      keptByDeparted < reportsKeptByDeparted &&
       fromFor(person, departed) !== undefined;
     let manager = stays ? departed : undefined;
     if (manager === undefined && candidates.length > 0) {
@@ -88,7 +96,7 @@ export function reporting(
       fromDate: String(fromFor(person, manager)),
     });
   }
-  const named = managers.filter((_, index) => index % 2 === 0);
+  const named = managers.filter((_, index) => index % namedTeamEvery === 0);
   const teams = teamNames.slice(0, named.length).map((name, index) => ({
     managerId: String(named.at(index)?.id),
     name: `${name} team`,
