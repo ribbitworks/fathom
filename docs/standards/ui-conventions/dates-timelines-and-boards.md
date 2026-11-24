@@ -46,6 +46,7 @@ Every view with time across it (the Releases timeline, the Plan and the project 
 - **The shared timeline:** One component draws every view with time across it. Zoom, axis and scrolling work the same on every timeline.
   - **What it draws:** The axis, which stays in view while the rows scroll; the zoom, kept in the browser for each view; today's line; the scrolling; the strip; and schedules' cycles and releases, as a layer a view may show, first.
   - **What each view gives it:** Each view gives it its rows and their days, and the timeline covers the whole months holding them and the layer's cycles.
+  - **Row labels:** Each row's label, including a name that opens its record, is drawn at the size of the table's text, set once in the shared timeline's styles.
   - **Zoom:** All, Year, 6 months, Quarter, Month, Week and Days show the whole timeline, three years, two years, a year, six months, six weeks or two weeks across the view, never narrower than the view. The zoom starts at Year and is kept for next time.
     - **− and +:** − and + show half as much again, or a third less, from two weeks to the whole timeline.
   - **Axis:** Two rows of dates, each period named above the next smaller one: years over half years, half years over quarters, quarters over months, months over weeks (each named by its Monday), or months over days. A name too long for its period is shortened, such as to Jan or Q1, or left out.

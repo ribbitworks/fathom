@@ -1191,6 +1191,12 @@ th.liveColumn {
   font-size: var(--mantine-font-size-sm);
 }
 
+/* A row's name that opens its record is drawn at the label's size, the table's text size, not at a
+   button's own larger size. */
+.timelineLabel button {
+  font-size: inherit;
+}
+
 /* A label stays on one line, its marks after its name. */
 .timelineLabelLine {
   white-space: nowrap;
