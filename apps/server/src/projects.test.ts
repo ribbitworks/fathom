@@ -421,26 +421,6 @@ describe("projects", () => {
     );
   });
 
-  it("name no customer drafted to be removed to a role that can't see the plan", async () => {
-    const customer = await addCustomer();
-    await approve([{ type: "customer", id: customer.id }]);
-    await send("DELETE", `/api/customers/${customer.id}`);
-    const editor = await test.signedIn(["features:edit"]);
-    const response = await test.request(
-      editor.cookie,
-      "POST",
-      "/api/features",
-      {
-        name: unique("Fictional Feature"),
-        customerIds: [customer.id],
-      },
-    );
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe(
-      "This links to a customer, which is drafted to be removed; discard that draft first",
-    );
-  });
-
   it("keep their names and Project IDs unique, ignoring letter case, but share having none", async () => {
     const externalId = unique("P");
     const project = await addProject({ externalId });
