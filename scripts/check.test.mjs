@@ -64,6 +64,20 @@ function copy({ prepared }) {
     ].join("\n"),
   );
   writeFileSync(
+    join(root, "scripts", "changed-paths.mjs"),
+    [
+      "export function changedPaths() {",
+      '  if (process.env.CHANGED === "fail") throw new Error("git failed");',
+      '  return (process.env.CHANGED ?? "").split("\\n").filter((path) => path !== "");',
+      "}",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(root, "scripts", "documentation-only.mjs"),
+    'export const isDocumentationOnly = (paths) => paths.every((path) => path.endsWith(".md"));\n',
+  );
+  writeFileSync(
     join(root, "scripts", "offline.mjs"),
     'process.exit(process.env.ONLINE === "0" ? 1 : 0);\n',
   );
@@ -104,6 +118,7 @@ function run(
       FAILING: failing,
       ONLINE: online ? "1" : "0",
       FATHOM_CHECK_SLOT: "1",
+      CHANGED: "apps/web/src/app.tsx\nscripts/lib.sh",
       ...(ci === undefined ? {} : { CI: ci }),
       ...environment,
     },
@@ -237,6 +252,114 @@ describe("scripts/check.sh", () => {
     assert.ok(result.stdout.includes("ran test:changed"), result.stdout);
     for (const job of jobs.filter((one) => !beforePush.includes(one)))
       assert.ok(!result.stdout.includes(`| ${job} |`), result.stdout);
+  });
+
+  it("runs only Markdown before a push of documentation alone, without a turn", () => {
+    const result = run(["--before-push"], {
+      environment: { ...withoutTurn, CHANGED: "docs/design/architecture.md" },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(
+      result.stdout.includes(
+        "Only documentation changed, so only Markdown runs",
+      ),
+      result.stdout,
+    );
+    assert.ok(result.stdout.includes("| Markdown | Pass |"), result.stdout);
+    for (const job of beforePush.filter((one) => one !== "Markdown"))
+      assert.ok(!result.stdout.includes(`| ${job} |`), result.stdout);
+    assert.ok(!result.stdout.includes("turn:"), result.stdout);
+  });
+
+  it("checks documentation alone offline before it is prepared, but not where CI is set", () => {
+    const offline = run(["--before-push", "--offline"], {
+      prepared: false,
+      environment: { ...withoutTurn, CHANGED: "docs/a.md" },
+    });
+    assert.equal(offline.status, 0, offline.stderr);
+    assert.ok(offline.stdout.includes("| Markdown | Pass |"), offline.stdout);
+    const inCi = run(["--before-push", "--offline"], {
+      ci: "true",
+      environment: { ...withoutTurn, CHANGED: "docs/a.md" },
+    });
+    assert.equal(inCi.status, 1);
+    assert.ok(inCi.stderr.includes("--offline"), inCi.stderr);
+  });
+
+  it("leaves out Shell scripts before a push that changes no shell script, saying so once", () => {
+    const result = run(["--before-push"], {
+      environment: {
+        ...withoutTurn,
+        TURN_RUNS: "1",
+        CHANGED: "apps/web/src/app.tsx\ndocs/a.md",
+      },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    for (const job of beforePush.filter((one) => one !== "Shell scripts"))
+      assert.ok(result.stdout.includes(`| ${job} | Pass |`), result.stdout);
+    assert.ok(!result.stdout.includes("| Shell scripts |"), result.stdout);
+    const note = "No shell script changed, so Shell scripts doesn't run";
+    assert.equal(result.stdout.split(note).length - 1, 1, result.stdout);
+  });
+
+  it("runs every job before a push when the changes can't be listed, saying so once", () => {
+    const result = run(["--before-push"], {
+      environment: { ...withoutTurn, TURN_RUNS: "1", CHANGED: "fail" },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const note = "The changes couldn't be listed, so every job runs";
+    assert.equal(result.stdout.split(note).length - 1, 1, result.stdout);
+    assert.ok(result.stdout.includes("git failed"), result.stdout);
+    for (const job of beforePush)
+      assert.ok(result.stdout.includes(`| ${job} | Pass |`), result.stdout);
+  });
+
+  it("refuses when the only job documentation alone needs is skipped", () => {
+    const result = run(["--before-push", "--skip", "Markdown"], {
+      environment: { CHANGED: "docs/a.md" },
+    });
+    assert.equal(result.status, 1);
+    assert.ok(
+      result.stderr.includes(
+        "Every job this change needs is skipped, so there is nothing to check",
+      ),
+      result.stderr,
+    );
+  });
+
+  it("refuses when only Shell scripts is left and no shell script changed", () => {
+    const result = run(
+      [
+        "--before-push",
+        ...[
+          "Changed tests",
+          "ESLint",
+          "Formatting",
+          "Types",
+          "Markdown",
+        ].flatMap((job) => ["--skip", job]),
+      ],
+      { environment: { CHANGED: "apps/web/src/app.tsx" } },
+    );
+    assert.equal(result.status, 1);
+    assert.ok(
+      result.stderr.includes(
+        "Every job this change needs is skipped, so there is nothing to check",
+      ),
+      result.stderr,
+    );
+  });
+
+  it("runs every job of the full check in its turn, whatever changed", () => {
+    const waiting = run([], {
+      environment: { ...withoutTurn, CHANGED: "docs/a.md" },
+    });
+    assert.equal(waiting.status, 0, waiting.stderr);
+    assert.ok(waiting.stdout.startsWith("turn: "), waiting.stdout);
+    const result = run([], { environment: { CHANGED: "docs/a.md" } });
+    assert.equal(result.status, 0, result.stderr);
+    for (const job of jobs)
+      assert.ok(result.stdout.includes(`| ${job} | Pass |`), result.stdout);
   });
 
   it("skips a job before a push, whichever option comes first", () => {

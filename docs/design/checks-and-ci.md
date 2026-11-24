@@ -4,7 +4,7 @@ category: "Guide"
 audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/workflows/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Checks and CI
@@ -63,24 +63,21 @@ While working, run `pnpm check:push`, as [Development Setup](development-setup.m
 
 ```mermaid
 flowchart TD
-    LocalDocs{"Documentation alone?"}
-    LocalDocs -- Yes --> LintMd["pnpm lint:md"]
-    LocalDocs -- No --> CheckPush["pnpm check:push, as The Local Check draws"]
+    CheckPush["pnpm check:push, as The Local Check draws"]
     CheckPush --> AffectsContainers{"Does it change the containers?"}
     AffectsContainers -- Yes --> TestContainers["pnpm test:containers"]
     AffectsContainers -- No --> LocalPassed{"Did everything pass?"}
     TestContainers --> LocalPassed
-    LintMd --> LocalPassed
     LocalPassed -- No --> Fix["A round of fixes"]
     Fix --> SecurityInputs{"Did the round change dependencies, the lockfile, a container file or the scans' settings?"}
     SecurityInputs -- Yes --> Security["pnpm security, as The Security Report draws"]
     Security --> SecurityPassed{"Did it pass?"}
     SecurityPassed -- No --> Fix
-    SecurityInputs -- No --> LocalDocs
-    SecurityPassed -- Yes --> LocalDocs
+    SecurityInputs -- No --> CheckPush
+    SecurityPassed -- Yes --> CheckPush
     LocalPassed -- Yes --> Rebased{"Rebased onto the latest origin/main?"}
     Rebased -- No --> Rebase["git fetch origin, then rebase onto origin/main"]
-    Rebase --> LocalDocs
+    Rebase --> CheckPush
     Rebased -- Yes --> Push["git push, then gh pr create for a new pull request"]
 ```
 
@@ -137,7 +134,7 @@ A branch checked offline still needs the Check workflow's full check to pass on 
 
 ## Sharing the Machine
 
-A check runs many linters, type checks, scans and tests side by side, and can use every core of the computer. Several copies of the repository on one computer, each running a check, would slow each other until tests time out. So checks take turns, two at a time, share the cores, and stop a step that hangs.
+A check runs many linters, type checks, scans and tests side by side, and can use every core of the computer. Several copies of the repository on one computer, each running a check, would slow each other until tests time out. So checks take turns, two at a time, share the cores, and stop a step that hangs. A check of documentation alone before a push is quick, so it takes no turn.
 
 A turn is held as a slot file, and a check waiting for one leaves a ticket, so copies take their turns in the order they asked.
 
@@ -188,24 +185,21 @@ Other documents own what the charts only name:
 
 ```mermaid
 flowchart TD
-    Change["A change on its branch"] --> LocalDocs{"Documentation alone?"}
-    LocalDocs -- Yes --> LintMd["pnpm lint:md"]
-    LocalDocs -- No --> CheckPush["pnpm check:push, as The Local Check draws"]
+    Change["A change on its branch"] --> CheckPush["pnpm check:push, as The Local Check draws"]
     CheckPush --> AffectsContainers{"Does it change the containers?"}
     AffectsContainers -- Yes --> TestContainers["pnpm test:containers"]
     AffectsContainers -- No --> LocalPassed{"Did everything pass?"}
     TestContainers --> LocalPassed
-    LintMd --> LocalPassed
     LocalPassed -- No --> Fix["A round of fixes"]
     Fix --> SecurityInputs{"Did the round change dependencies, the lockfile, a container file or the scans' settings?"}
     SecurityInputs -- Yes --> Security["pnpm security, as The Security Report draws"]
     Security --> SecurityPassed{"Did it pass?"}
     SecurityPassed -- No --> Fix
-    SecurityInputs -- No --> LocalDocs
-    SecurityPassed -- Yes --> LocalDocs
+    SecurityInputs -- No --> CheckPush
+    SecurityPassed -- Yes --> CheckPush
     LocalPassed -- Yes --> Rebased{"Rebased onto the latest origin/main?"}
     Rebased -- No --> Rebase["git fetch origin, then rebase onto origin/main"]
-    Rebase --> LocalDocs
+    Rebase --> CheckPush
     Rebased -- Yes --> Push["git push, then gh pr create for a new pull request"]
     Push --> CheckWorkflow["The Check workflow on the pull request, as The Check Workflow draws, with CodeQL beside it"]
     CheckWorkflow --> Required{"Did Full check and Container tests pass?"}
@@ -226,7 +220,7 @@ flowchart TD
 
 ### The Local Check
 
-`pnpm check` and `pnpm check:push` run `scripts/check.sh`. It checks its arguments, its readiness to work offline and the connection first, so a mistake fails at once. Then it waits for a turn through `scripts/check-turn.mjs`, as [Sharing the Machine](#sharing-the-machine) explains, and runs the jobs.
+`pnpm check` and `pnpm check:push` run `scripts/check.sh`. It checks its arguments, its readiness to work offline and the connection first, so a mistake fails at once. Before a push, it runs only the jobs the change needs. Then, unless the change is documentation alone, it waits for a turn through `scripts/check-turn.mjs`, as [Sharing the Machine](#sharing-the-machine) explains, and runs the jobs.
 
 ```mermaid
 flowchart TD
@@ -236,10 +230,22 @@ flowchart TD
     BeforePush --> Skip{"Are the arguments known, and does each --skip name a job, leaving at least one?"}
     FullCheck --> Skip
     Skip -- No --> SkipFailed["Fails, giving the usage or naming the jobs left"]
-    Skip -- Yes --> Offline{"--offline?"}
+    Skip -- Yes --> Scope{"--before-push, and could the changes since origin/main be listed?"}
+    Scope -- No --> Offline{"--offline?"}
+    Scope -- Yes --> DocsOnly{"Documentation alone?"}
+    DocsOnly -- Yes --> DocsJobs["Only Markdown, without a turn"]
+    DocsOnly -- No --> ShellChanged{"Did any shell script change?"}
+    ShellChanged -- No --> NoShell["Shell scripts is left out"]
+    ShellChanged -- Yes --> Offline
+    NoShell --> AnyNeeded{"Is any job the change needs left, after --skip?"}
+    DocsJobs --> AnyNeeded
+    AnyNeeded -- No --> NoneNeeded["Fails: every job this change needs is skipped"]
+    AnyNeeded -- Yes --> Offline
     Offline -- Yes --> OfflineInCi{"Is CI set?"}
     OfflineInCi -- Yes --> OfflineRefused["Fails: --offline can't be used where CI is set"]
-    OfflineInCi -- No --> Prepared{"Has pnpm offline:prepare finished in this copy?"}
+    OfflineInCi -- No --> DocsOffline{"Documentation alone before a push?"}
+    DocsOffline -- Yes --> Holds
+    DocsOffline -- No --> Prepared{"Has pnpm offline:prepare finished in this copy?"}
     Prepared -- No --> NotPrepared["Fails: not ready to work offline"]
     Prepared -- Yes --> OfflineJobs["Security report runs pnpm security --offline, and Renovate settings is left out"]
     OfflineJobs --> AnyLeft{"Is any job left?"}
@@ -249,7 +255,7 @@ flowchart TD
     NeedsInternet -- Yes --> Connected{"Can this computer reach the internet?"}
     Connected -- No --> NoConnection["Fails, naming --offline"]
     Connected -- Yes --> Holds
-    AnyLeft -- Yes --> Holds{"Started by a check that already holds a turn?"}
+    AnyLeft -- Yes --> Holds{"Started by a check that already holds a turn, or documentation alone before a push?"}
     Holds -- Yes --> Run
     Holds -- No --> Ticket["check-turn.mjs leaves a ticket in the checks' slot folder, then runs check.sh again in its turn"]
     Ticket --> Free{"Is a slot free for this ticket, in the order the copies asked?"}

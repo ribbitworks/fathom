@@ -141,8 +141,9 @@ Complete these steps, in order, for every change:
      [A Screen Change's Pull Request](#a-screen-changes-pull-request).
 1. **Tests:** run the project's targeted tests, for the code the change
    touches, and its linters, and fix all failures. A change to documentation
-   only may skip this and the next step, apart from the Markdown linter, unless
-   the project's standards say its documents are built into the product.
+   only may skip this and the next step, apart from the project's checks of
+   documents, unless the project's standards say its documents are built into
+   the product.
 1. **Warnings:** resolve every build warning and runtime warning the run
    reports, including ones that predate the change.
 1. **Code review:** have a separate agent, acting as a senior staff engineer,

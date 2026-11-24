@@ -148,7 +148,7 @@ Run tests only through Fathom's own commands, never the underlying tools directl
 ### The Commands
 
 - **`pnpm check`:** the full suite, side by side, then each one's result and time. It runs ESLint, the Prettier formatting check, type checking, and Markdown, shell and licence linting. It also runs Renovate's validation of `renovate.json` when it has changed, the script tests, the unit, integration, access control and security tests, and the build-time security scans.
-- **`pnpm check:push`:** the tests a change can affect, with every linter but the licence and Renovate checks, side by side.
+- **`pnpm check:push`:** the tests and linters a change can affect, side by side, as [Checks and CI § The Local Check](../design/checks-and-ci.md#the-local-check) sets out.
 - **`pnpm test:changed`:** the tests a change can affect, committed or not, as [Checks and CI](../design/checks-and-ci.md#what-a-change-runs) sets out. With `--uncommitted`, it counts only the work not yet committed, for small rounds of fixes after a commit on a long branch.
 - **`pnpm test:containers`:** the container tests. UI tests get their own command once they are added.
 
