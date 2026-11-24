@@ -124,11 +124,13 @@ function effortColumn(
       unit,
       least: 0,
       most: largestIn(largestEstimateHours, effortUnit, converting),
-      // Hours add up, shown in the unit the column is, rounded up as its cells are.
+      // Hours add up, shown in the unit the column is, rounded up as its cells are. A feature's
+      // effort is what its rows are most often added up by.
       sum: {
         amount: (feature) => feature.estimateHours,
         shown: (hours) =>
           decimalUpTo(roundedUpTo(amountOf(hours), places), places),
+        atFirst: true,
       },
       value: (feature) => inUnit(feature.estimateHours),
       live: (draft) => inUnit((draft.live as Partial<Feature>).estimateHours),
@@ -462,8 +464,6 @@ export function featureTable(
     ...wordsOf("features"),
     kinds: [newKind, savedKind],
     columns: (shown) => featureColumns(choices, { shown, ...edits }),
-    // A feature's effort is what its rows are most often added up by.
-    sumAtFirst: "estimateHours",
     groupings: [
       ...(board ? [] : [byCycle(choices.cycles)]),
       byTarget("release", "Release", choices.releaseOfCycle),

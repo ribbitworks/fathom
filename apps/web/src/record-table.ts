@@ -225,8 +225,6 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // For a table of several kinds of record, what its records are called together, and how many of
   // each some records are, which Metrics counts.
   counted?: { noun: string; counted: (records: readonly Rec[]) => string };
-  // The key of the number column Metrics adds up until a view chooses another or none.
-  sumAtFirst?: string;
   // The kinds of record the table holds, the first of which a new row adds unless asked for
   // another, and each record's kind; a table of one kind leaves them out.
   kinds?: readonly string[];

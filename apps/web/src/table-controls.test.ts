@@ -30,11 +30,24 @@ const column = (more: object) => ({
 });
 
 describe("viewParts", () => {
-  it("names no sum while the metrics add nothing up", () => {
+  it("names no sum while the metrics add up the table's own", () => {
     const effort = column({});
     expect(
       viewParts({ ...emptyView, breakdown: ["effort"] }, [effort]),
     ).toEqual([{ name: "Metrics", value: "Effort" }]);
+  });
+
+  it("names Nothing when the metrics add nothing up, with or without a breakdown", () => {
+    const effort = column({});
+    expect(viewParts({ ...emptyView, sum: "" }, [effort])).toEqual([
+      { name: "Sum of", value: "Nothing" },
+    ]);
+    expect(
+      viewParts({ ...emptyView, breakdown: ["effort"], sum: "" }, [effort]),
+    ).toEqual([
+      { name: "Metrics", value: "Effort" },
+      { name: "Sum of", value: "Nothing" },
+    ]);
   });
 
   it("names each part of a view, in order", () => {

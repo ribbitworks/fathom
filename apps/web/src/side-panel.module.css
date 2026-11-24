@@ -39,6 +39,12 @@
   padding-left: var(--mantine-spacing-md);
 }
 
+/* What a panel holds never widens the page, even a table wider than the panel, which scrolls within
+   it. While sliding, the layout clips instead, so the panel's shadow shows. */
+.layout > .panelPlace:not(.sliding) {
+  overflow-x: clip;
+}
+
 .panelPlace > :not(.resizer) {
   flex: none;
   width: calc(var(--side-panel-shown) - var(--mantine-spacing-md));
