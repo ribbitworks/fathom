@@ -121,6 +121,7 @@ function RolesChoice({
 }) {
   const picked = useWatch({ control: form.control, name: "roleIds" });
   const { errors } = form.formState;
+  const firstChoosable = roles.find(({ id }) => refused?.has(id) !== true)?.id;
   return (
     <Stack gap="md">
       <Controller
@@ -144,11 +145,7 @@ function RolesChoice({
                 <Checkbox
                   key={role.id}
                   // A refused Save focuses the field's ref: the first role that can be chosen.
-                  ref={
-                    role === roles.find(({ id }) => refused?.has(id) !== true)
-                      ? field.ref
-                      : undefined
-                  }
+                  ref={role.id === firstChoosable ? field.ref : undefined}
                   value={role.id}
                   label={role.name}
                   description={role.description}

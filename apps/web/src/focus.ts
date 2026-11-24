@@ -69,6 +69,6 @@ export function selectSoon(id: string): void {
 // rather than being left on the button that saves.
 export function focusRefusedSoon(form: HTMLElement): void {
   focusFoundSoon(
-    () => [...form.querySelectorAll<HTMLElement>('[aria-invalid="true"]')][0],
+    () => form.querySelector<HTMLElement>('[aria-invalid="true"]') ?? undefined,
   );
 }
