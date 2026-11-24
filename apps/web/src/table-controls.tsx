@@ -236,9 +236,9 @@ export function viewParts(
     ...(breakdown.length === 0
       ? []
       : [{ name: "Metrics", value: breakdown.join(" by ") }]),
-    ...(breakdown.length === 0
+    ...(view.sum === undefined
       ? []
-      : labelOf(view.sum ?? "").map((value) => ({ name: "Sum of", value }))),
+      : [{ name: "Sum of", value: labelOf(view.sum).at(0) ?? "Nothing" }]),
     ...(grouping === undefined ? [] : [{ name: "Group by", value: grouping }]),
     ...(first === undefined || view.groupsReversed !== true
       ? []

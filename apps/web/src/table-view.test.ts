@@ -17,6 +17,8 @@ import {
   fieldLabel,
   knownView,
   sameView,
+  sumAtFirst,
+  chosenSum,
   savedFor,
   searchFor,
   setsApart,
@@ -589,21 +591,44 @@ describe("showing retired records", () => {
 });
 
 describe("the column Metrics adds up", () => {
-  it("is kept in the address, and by a saved view only with the metrics' breakdown", () => {
+  it("is kept in the address, and by a saved view with or without the metrics' breakdown", () => {
     const summing = viewFrom({ breakdown: ["level"], sum: "start" });
     expect(summing.sum).toBe("start");
     expect(searchFor(summing).sum).toBe("start");
     expect(savedFor(summing)).toEqual({ breakdown: ["level"], sum: "start" });
-    expect(savedFor({ ...summing, breakdown: [] }).sum).toBeUndefined();
+    expect(savedFor({ ...summing, breakdown: [] })).toEqual({ sum: "start" });
     expect(savedFor(viewFrom({ breakdown: ["level"] })).sum).toBeUndefined();
   });
 
+  it("counts Nothing as a change from the table's own, with no breakdown", () => {
+    expect(sameView({ ...emptyView, sum: "" }, emptyView)).toBe(false);
+  });
+
   it("is kept when the table has it and it adds up, or as nothing, and dropped otherwise", () => {
-    const adding = [...columns, { key: "hours", sum: { amount: () => null } }];
-    expect(knownView(view({ sum: "hours" }), adding).sum).toBe("hours");
+    const adding = [
+      ...columns,
+      { key: "hours", sum: { amount: () => null, atFirst: true as const } },
+      { key: "cost", sum: { amount: () => null } },
+    ];
+    expect(knownView(view({ sum: "cost" }), adding).sum).toBe("cost");
     expect(knownView(view({ sum: "" }), adding).sum).toBe("");
     expect(knownView(view({ sum: "start" }), adding).sum).toBeUndefined();
     expect(knownView(view({ sum: "gone" }), adding).sum).toBeUndefined();
+  });
+
+  it("is dropped when it is the one the table adds up at first, so it is no change", () => {
+    const counting = [...columns, { key: "cost", sum: { amount: () => null } }];
+    const adding = [
+      ...counting,
+      { key: "hours", sum: { amount: () => null, atFirst: true as const } },
+    ];
+    expect(knownView(view({ sum: "hours" }), adding).sum).toBeUndefined();
+    expect(knownView(view({ sum: "" }), counting).sum).toBeUndefined();
+    expect(sumAtFirst(adding)).toBe("hours");
+    expect(sumAtFirst(counting)).toBe("");
+    expect(chosenSum("hours", adding)).toBeUndefined();
+    expect(chosenSum("", adding)).toBe("");
+    expect(chosenSum("", counting)).toBeUndefined();
   });
 });
 

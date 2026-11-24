@@ -13,6 +13,7 @@ import { draftColumn, waitingDrafts } from "./grid-drafts.ts";
 import { TableScrolling } from "./grid-layout.ts";
 import { countedRecords } from "./live-records.ts";
 import { MetricsPanel } from "./metrics-panel.tsx";
+import { chosenSum, sumAtFirst } from "./table-view.ts";
 import { metricsButtonId, metricsPanelId } from "./metrics.ts";
 import type { Column, GridRecord } from "./record-table.ts";
 import type { SidePanel } from "./side-panel.tsx";
@@ -157,9 +158,9 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
         onView({ ...view, breakdown });
       }}
       summable={allColumns.filter((column) => column.sum !== undefined)}
-      sum={view.sum ?? table.sumAtFirst ?? ""}
+      sum={view.sum ?? sumAtFirst(allColumns)}
       onSum={(sum) => {
-        onView({ ...view, sum });
+        onView({ ...view, sum: chosenSum(sum, allColumns) });
       }}
       onClose={() => {
         onView({ ...view, breakdown: undefined });

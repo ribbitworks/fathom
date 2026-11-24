@@ -79,11 +79,13 @@ export interface TableColumn<Row> {
   unit?: ColumnUnit | undefined;
   places?: number | undefined;
   // For number columns whose amounts add up, such as Effort: a row's amount, in what totals are kept
-  // in, and, where that isn't what the cells show, a total or an average as they would show it.
+  // in, and, where that isn't what the cells show, a total or an average as they would show it; and
+  // whether Metrics adds it up until a view chooses another or none, as Features does Effort.
   sum?:
     | {
         amount: (row: Row) => number | null;
         shown?: (amount: number) => string;
+        atFirst?: true;
       }
     | undefined;
   // For text columns: what an empty cell shows in grey in its place, such as a name made from other
@@ -413,13 +415,14 @@ function canonical(value: unknown): unknown {
   );
 }
 
-// The view as a saved view keeps it: as the address holds it, without the metrics while they break
-// down by nothing, since an empty Metrics panel is nothing to save.
+// The view as a saved view keeps it: as the address holds it, without the breakdown while it breaks
+// down by nothing, since an empty Metrics panel is nothing to save. A column chosen to add up, or
+// Nothing, is kept, since it differs from the table's own.
 export function savedFor(view: View): ViewDefinition {
-  const { breakdown, sum, ...rest } = searchFor(view);
+  const { breakdown, ...rest } = searchFor(view);
   return breakdown === undefined || breakdown.length === 0
     ? rest
-    : { ...rest, breakdown, ...(sum === undefined ? {} : { sum }) };
+    : { ...rest, breakdown };
 }
 
 // Whether two views show the same rows in the same order, with the same metrics, which is whether
@@ -530,15 +533,31 @@ export function narrows(view: View): boolean {
   );
 }
 
+type Summable = readonly {
+  key: string;
+  sum?: { amount: unknown; atFirst?: true } | undefined;
+}[];
+
+// The column Metrics adds up until a view chooses another or none, or "" for none.
+export const sumAtFirst = (columns: Summable): string =>
+  columns.find(({ sum }) => sum?.atFirst === true)?.key ?? "";
+
+// The sum a view keeps for the column chosen to add up: none when it is the table's own, so
+// choosing it is no change.
+export const chosenSum = (
+  key: string,
+  columns: Summable,
+): string | undefined => (key === sumAtFirst(columns) ? undefined : key);
+
 // The view with only the filters, sorts, and breakdown on columns the table has, and the filters it
 // offers that are not columns, leaving out those on columns the user may not see, such as in a link
 // from someone who may, and with its groupings, frozen columns, retired records and the page's
 // choices, and the hidden columns, widths, units, and decimal places of the columns the table has.
 // The breakdown keeps only the columns the metrics offer, when given, and the sum only a column the
-// table has that adds up.
+// table has that adds up, other than the one it adds up at first.
 export function knownView(
   view: View,
-  columns: readonly { key: string; sum?: unknown }[],
+  columns: Summable,
   filterOnly: readonly { key: string }[] = [],
   countable: readonly { key: string }[] = columns,
 ): View {
@@ -563,6 +582,7 @@ export function knownView(
           ),
         }),
     ...(view.sum === undefined ||
+    chosenSum(view.sum, columns) === undefined ||
     (view.sum !== "" &&
       !columns.some(({ key, sum }) => key === view.sum && sum !== undefined))
       ? {}

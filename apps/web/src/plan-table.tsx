@@ -220,7 +220,6 @@ export function planTable<Rec extends PlanRecord, Request>({
   removeTurnedOff,
   kinds,
   groupings,
-  sumAtFirst,
   nameOf = (record) => (record as { name: string }).name,
 }: {
   type: PlanRecordKind;
@@ -234,7 +233,6 @@ export function planTable<Rec extends PlanRecord, Request>({
   removeTurnedOff?: (record: Rec) => string | undefined;
   kinds?: readonly string[];
   groupings?: readonly RowGrouping<Rec>[];
-  sumAtFirst?: string;
   nameOf?: (record: Rec) => string;
 }): RecordTable<Rec, PlanChange, Request> {
   return {
@@ -246,7 +244,6 @@ export function planTable<Rec extends PlanRecord, Request>({
     exported: type === "feature" ? { recordedAs: "features" } : {},
     ...(kinds === undefined ? {} : { kinds, kindOf: () => savedKind }),
     ...(groupings === undefined ? {} : { groupings }),
-    ...(sumAtFirst === undefined ? {} : { sumAtFirst }),
     newRowLabel: () => `New ${one}`,
     removeLabel: () => `Remove ${one}`,
     nameOf,
