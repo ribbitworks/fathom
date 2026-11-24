@@ -22,7 +22,12 @@ import {
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
-import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "../errors.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import { type Recorded, tidy } from "./draft-records.ts";
@@ -393,21 +398,42 @@ async function featureRecord(
   };
 }
 
+export const customersNeedPlan =
+  "Only a role that edits the plan can change which customers a feature is for, as with its projects and proposals";
+
+// Refuses a change to which customers a feature is for, its order aside, to a role that doesn't edit
+// the plan: a feature's customers are the plan's call, as its projects and proposals are.
+export function refuseCustomersChange(
+  actor: Actor,
+  before: Recorded | undefined,
+  after: Recorded,
+): void {
+  if (actor.permissions.includes("plan:edit")) return;
+  const had = new Set(linkedIds(before, "customerIds"));
+  const wanted = new Set(linkedIds(after, "customerIds"));
+  if (had.size === wanted.size && [...wanted].every((id) => had.has(id))) {
+    return;
+  }
+  throw new ForbiddenError(customersNeedPlan);
+}
+
 export async function addFeature(
   database: Database,
   maker: Actor,
   request: FeatureRequest,
 ): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, async (transaction, state) =>
-    saveRecordDraft(
+  return changingPlan(database, maker, async (transaction, state) => {
+    const record = await featureRecord(transaction, request);
+    refuseCustomersChange(maker, undefined, record);
+    return saveRecordDraft(
       transaction,
       maker,
       state,
       "feature",
       randomUUID(),
-      await featureRecord(transaction, request),
-    ),
-  );
+      record,
+    );
+  });
 }
 
 export async function changeFeature(
@@ -418,14 +444,9 @@ export async function changeFeature(
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
     const feature = changeableRecord(state, "feature", id);
-    return saveRecordDraft(
-      transaction,
-      maker,
-      state,
-      "feature",
-      id,
-      await featureRecord(transaction, request, feature),
-    );
+    const record = await featureRecord(transaction, request, feature);
+    refuseCustomersChange(maker, feature, record);
+    return saveRecordDraft(transaction, maker, state, "feature", id, record);
   });
 }
 

@@ -1,6 +1,6 @@
 # Fathom: Roles
 
-**Last updated:** 2026-11-23
+**Last updated:** 2026-11-24
 
 What each role can see, change and approve. A role is a set of permissions kept in Fathom, not fixed in its code, so a new feature adds permissions rather than roles. Fathom starts with one role for each persona. Roles can be edited, and copied to make new ones, within the [safeguards](#safeguards-for-administrators). The [Administration Pages](../design/pages/administration.md#roles) describe the Roles page.
 
@@ -39,6 +39,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 - **Edit includes View:** A role that may edit an area or class also views it, so nobody changes what they can't see.
 - **Drafts and history:** A role sees the drafts and the change history of the data it sees. A project's or proposal's scope history comes with seeing the plan.
 - **Plan and features:** Those who see the plan see the names of approved feature teams, to give features to them, without their members or leads. Everyone who sees the plan or features reads the planning settings' hours a day and working days, as the conversions between units of effort.
+- **A feature's customers and commitments:** Which customers a feature is for, and which projects and proposals name it, are changed with Edit Plan, not Edit Features and releases, since they are the plan's call. So the Feature Lead sees them and doesn't change them.
 - **Choices:** Everyone who sees data drawn from a list sees the list's choices, without needing the Lists page.
 - **Team colours:** Edit People sets each reporting team's colour, and Edit Feature teams sets each feature team's.
 - **Exports:** Exporting needs no permission of its own: whoever opens a page exports what its table shows, so Product Managers export Features, and the [Plan](domain.md#planning-terms) once it is built.

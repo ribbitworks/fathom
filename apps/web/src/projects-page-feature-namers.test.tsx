@@ -362,11 +362,28 @@ describe("the Features page", () => {
       expect(sentTo(fetch)).not.toContain(`PUT /api/features/${second.id}`);
     });
 
-    it("keeps them read only for those who edit features but not the plan", async () => {
-      await open({ ...named(), canEdit: false });
-      expect(cell(first, "projectIds")?.getAttribute("aria-readonly")).toBe(
-        "true",
+    it.each(["customerIds", "projectIds", "proposalIds"])(
+      "keeps %s read only for those who edit features but not the plan",
+      async (key) => {
+        await open({ ...named(), canEdit: false });
+        expect(cell(first, key)?.getAttribute("aria-readonly")).toBe("true");
+      },
+    );
+
+    it("lets those who edit the plan change a feature's customers", async () => {
+      await openNamed();
+      expect(cell(first, "customerIds")?.hasAttribute("aria-readonly")).toBe(
+        false,
       );
+    });
+
+    it("leaves Customers out of New feature for those who edit features but not the plan", async () => {
+      await open({ ...named(), canEdit: false });
+      await userEvent.click(
+        await screen.findByRole("button", { name: "New feature" }),
+      );
+      await screen.findByRole("heading", { name: "New feature" });
+      expect(within(sidePanel()).queryByText("Customers")).toBeNull();
     });
 
     it("leaves them out of New feature", async () => {
