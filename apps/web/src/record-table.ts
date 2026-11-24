@@ -147,7 +147,8 @@ export interface Column<
   readOnly?: boolean;
   // The key of the column whose drafts change this one's values, when another's do.
   changesWith?: string;
-  // Set false for a column not worth breaking down by, such as one with a choice for each record.
+  // Set to depart from the kind's rule: false for a column not worth breaking down by, such as one
+  // with a choice for each record; true for text that names a few values shared by many records.
   breaksDown?: boolean;
   // What a record's cell shows in place of its value in words, such as labels in a team's colours,
   // after its colour's square where it has one, in its Live row too, given the record as it is live.
@@ -225,6 +226,8 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // For a table of several kinds of record, what its records are called together, and how many of
   // each some records are, which Metrics counts.
   counted?: { noun: string; counted: (records: readonly Rec[]) => string };
+  // The key of the number column Metrics adds up until a view chooses another or none.
+  sumAtFirst?: string;
   // The kinds of record the table holds, the first of which a new row adds unless asked for
   // another, and each record's kind; a table of one kind leaves them out.
   kinds?: readonly string[];

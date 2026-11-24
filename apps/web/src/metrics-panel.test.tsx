@@ -46,6 +46,17 @@ const role: Field = {
   required: false,
   onPlannedHires: true,
 };
+const hours: Field = {
+  id: "f3",
+  keyNumber: 1,
+  name: "Hours",
+  type: "number" as const,
+  listId: null,
+  visibility: "general",
+  multiple: false,
+  required: false,
+  onPlannedHires: true,
+};
 const choice = (id: string, label: string) => ({
   id,
   label,
@@ -196,6 +207,74 @@ describe("the Metrics panel", () => {
     expect(figures("P4")).toEqual(["2", share(2, 4)]);
     expect(figures("P3")).toEqual(["1", share(1, 4)]);
     expect(figures("Empty")).toEqual(["1", share(1, 4)]);
+  });
+
+  describe("adding a number column up", () => {
+    const counted = [
+      { ...person("a", ["p4"], ["test"]), numbers: { f3: 10 } },
+      { ...person("b", ["p4"], ["dev"]), numbers: { f3: 6 } },
+      person("c", ["p3"], ["test"]),
+      { ...person("d", [], ["test"]), numbers: { f3: 2 } },
+    ];
+    const summing = (start: View) => (
+      <Table people={counted} fields={[level, role, hours]} start={start} />
+    );
+
+    it("offers the number columns, and adds nothing up at first where the table names none", () => {
+      render(summing({ ...emptyView, breakdown: ["f1"] }));
+      expect(
+        within(panel()).getByLabelText<HTMLInputElement>("Sum of").value,
+      ).toBe("Nothing");
+      expect(figures("P4")).toEqual(["2", share(2, 4)]);
+    });
+
+    it("gives each group its total, the average of those with an amount, and how many have none, then the whole", async () => {
+      render(summing({ ...emptyView, breakdown: ["f1"] }));
+      await chooseIn(panel(), "Sum of", "Hours");
+      expect(
+        within(panel()).getByRole("columnheader", { name: "Hours" }),
+      ).toBeTruthy();
+      expect(figures("P4")).toEqual(["2", share(2, 4), "16", "8", ""]);
+      expect(figures("P3")).toEqual(["1", share(1, 4), "–", "–", "1"]);
+      expect(figures("Empty")).toEqual(["1", share(1, 4), "2", "2", ""]);
+      const all = within(panel()).getByRole("rowheader", { name: /^All / });
+      expect(
+        within(all.closest("tr") as HTMLElement)
+          .getAllByRole("cell")
+          .map((cell) => cell.textContent),
+      ).toEqual(["4", share(4, 4), "18", "6", "1"]);
+    });
+
+    it("shows the totals in the crossed table, as counts or shares do", async () => {
+      const user = userEvent.setup();
+      render(summing({ ...emptyView, breakdown: ["f1", "f2"], sum: "f3" }));
+      await user.click(within(panel()).getByRole("radio", { name: "Hours" }));
+      expect(figures("P4")).toEqual(["10", "6", "16"]);
+      expect(figures("P3")).toEqual(["–", "–", "–"]);
+    });
+
+    it("adds nothing up once Nothing is chosen", async () => {
+      render(summing({ ...emptyView, breakdown: ["f1"], sum: "f3" }));
+      await chooseIn(panel(), "Sum of", "Nothing");
+      expect(
+        within(panel()).queryByRole("columnheader", { name: "Hours" }),
+      ).toBeNull();
+    });
+
+    it("says totals as well as shares can add up to more than the whole", () => {
+      render(
+        <Table
+          people={counted}
+          fields={[level, { ...role, multiple: true }, hours]}
+          start={{ ...emptyView, breakdown: ["f2"], sum: "f3" }}
+        />,
+      );
+      expect(
+        within(panel()).getByText(
+          /so shares and totals can add up to more than the whole/,
+        ),
+      ).toBeTruthy();
+    });
   });
 
   it("opens a column's list on Enter, and picks from it with the arrow keys and Enter", async () => {

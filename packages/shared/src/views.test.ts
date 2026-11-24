@@ -352,16 +352,21 @@ describe("viewGroupings", () => {
 });
 
 describe("viewColumnKeys", () => {
-  it("names each column a view filters, sorts, breaks down, or groups by once", () => {
+  it("names each column a view filters, sorts, breaks down, adds up, or groups by once", () => {
     expect(
       viewColumnKeys({
         filters: { site: {}, draft: {} },
         sort: ["-level", "site"],
         breakdown: ["team", "level"],
+        sum: "hours",
         grouping: "manager",
         thenBy: "office",
       }),
-    ).toEqual(["site", "draft", "level", "team", "manager", "office"]);
+    ).toEqual(["site", "draft", "level", "team", "hours", "manager", "office"]);
     expect(viewColumnKeys({})).toEqual([]);
+  });
+
+  it("names no column for a view adding nothing up", () => {
+    expect(viewColumnKeys({ breakdown: ["team"], sum: "" })).toEqual(["team"]);
   });
 });

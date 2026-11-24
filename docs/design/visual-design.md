@@ -99,7 +99,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
   - **Tooltip:** Gives the hours, then rounded up where the amount was, such as 1 hour, rounded up.
   - **Largest:** 999,999 hours, refused above that in whatever unit it is typed.
   - **In a panel:** A menu of units sits beside the field, starting on the table's unit without changing it, and units are spelt out, such as 2.5 person-days (20 hours). A table's cell is typed in the unit it shows. Either way the estimate is saved in hours, which a draft's details and the change history give.
-  - **Metrics:** Features isn't broken down by Effort, which would count only whether features have an estimate.
+  - **Metrics:** Features isn't broken down by Effort, which would count only whether features have an estimate; Metrics adds it up instead.
 - **Notes:** A Note column's cell shows the note's words without formatting, on one line, cut short, and so do drafts and the change history. Typing in it does nothing.
   - **Format:** GitHub-flavoured Markdown, so a note exports as it is: paragraphs, headings three levels deep (a deeper one becomes the third), line breaks, bold, italic, strikethrough, inline code, bullet, numbered and checkbox lists, and links.
   - **Lists:** A list's items all have checkboxes or none, a numbered list has none and counts from 1, lists hold no headings, and lists may hold one another.
@@ -130,7 +130,9 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
   - **Default:** The first column is frozen; any other choice shows in the Views menu.
 - **Metrics:** A Metrics button after the Draft menu, or after the search field on a table without drafts, opens the Metrics panel. Metrics in a column's menu opens it broken down by that column.
   - **Count:** The rows counted, such as "35 people", or "35 people with drafts, 34 live".
-  - **Break down by:** One column gives a row for each choice, with its count and share; a column without choices gives Populated and Empty. A second, and by, crosses them in a table with All, as Count or Share. A share of a narrower group comes from filtering first.
+  - **Break down by:** One column gives a row for each choice, or each month in date order, with its count and share, then a row for all the rows; another column gives Populated and Empty. A second, and by, crosses them in a table with All, as Count or Share. A share of a narrower group comes from filtering first.
+  - **Columns offered:** Choices, months and check boxes always; dates and numbers unless required; text, notes and web links never, as names and descriptions are one per record. A table may offer one of these anyway, such as a release's Colour.
+  - **Sum of:** Offers the table's number columns, such as Effort and added number columns, with Nothing first. It opens on Effort on Features and on Nothing elsewhere. Each group then shows its total, the average of the rows with a value, and None, how many have none; Effort adds hours and shows them in the column's unit, rounded up. With and by, the switch gains the column, such as Effort (PD).
   - **Drafts:** Draft figures leave out rows drafted to be removed. A figure whose live figure differs has it under it, small and dimmed, after a green dot.
   - **View:** Part of the view once a column is chosen.
 - **Ordering:** As [Entering Data](../standards/ui-conventions/entering-and-saving.md#entering-data) sets out for moving items.

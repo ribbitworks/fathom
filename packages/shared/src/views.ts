@@ -62,6 +62,9 @@ export type Filter = z.infer<typeof filterSchema>;
 
 const sortLevel = z.string().regex(/^-?[\w-]{1,64}$/);
 const columnKey = z.string().regex(/^[\w-]{1,64}$/);
+// The number column the metrics add up, or nothing, written as empty, where a table adds one up at
+// first.
+const summed = z.union([columnKey, z.literal("")]);
 // More than any table has columns, as only a hand-made address reaches.
 const columnsLimit = 100;
 // More than any page has choices, as only a hand-made address reaches; an address keeps as many as
@@ -124,7 +127,7 @@ export type Show = z.infer<typeof showSchema>;
 
 // The view: the search, each column's filter by key, the sort as keys, each with a leading "-" when
 // descending, the keys of the columns the rows are broken down by, which is set, even when empty,
-// while the metrics show, and how many columns, from the first, stay in view while the table
+// while the metrics show, the number column they add up, and how many columns, from the first, stay in view while the table
 // scrolls sideways, when not the table's own default, the keys of the columns in the order the view
 // puts them, when moved from the table's own order, the width set for each column, in pixels, by
 // key, for those not left to fit what they hold, and the unit and decimal places each column that
@@ -162,6 +165,7 @@ export const viewDefinitionSchema = z.object({
         .slice(0, levelsLimit),
     ),
   breakdown: looseColumnKeys(breakdownLimit),
+  sum: summed.optional().catch(undefined),
   grouping: columnKey.optional().catch(undefined),
   thenBy: columnKey.optional().catch(undefined),
   groupsReversed: z.literal(true).optional().catch(undefined),
@@ -183,6 +187,8 @@ export interface ViewDefinition {
   filters?: Record<string, Filter> | undefined;
   sort?: string[] | undefined;
   breakdown?: string[] | undefined;
+  // The key of the number column the metrics add up, or empty for none, when not the table's own.
+  sum?: string | undefined;
   grouping?: string | undefined;
   // The grouping of the rows under each of the first grouping's headings.
   thenBy?: string | undefined;
@@ -213,6 +219,7 @@ export const strictDefinitionSchema = z.object({
     .optional(),
   sort: z.array(sortLevel).max(levelsLimit).optional(),
   breakdown: columnKeys(breakdownLimit).optional(),
+  sum: summed.optional(),
   grouping: columnKey.optional(),
   thenBy: columnKey.optional(),
   groupsReversed: z.literal(true).optional(),
@@ -278,14 +285,17 @@ export const viewGroupings = (definition: ViewDefinition): string[] =>
     (key): key is string => key !== undefined,
   );
 
-// The keys of the columns a view filters, sorts, breaks down, or groups by, and of any filter that
-// is not a column.
+// The keys of the columns a view filters, sorts, breaks down, adds up, or groups by, and of any
+// filter that is not a column.
 export function viewColumnKeys(definition: ViewDefinition): string[] {
   return [
     ...new Set([
       ...Object.keys(definition.filters ?? {}),
       ...(definition.sort ?? []).map((level) => level.replace(/^-/, "")),
       ...(definition.breakdown ?? []),
+      ...(definition.sum === undefined || definition.sum === ""
+        ? []
+        : [definition.sum]),
       ...viewGroupings(definition),
     ]),
   ];

@@ -588,6 +588,23 @@ describe("showing retired records", () => {
   });
 });
 
+describe("the column Metrics adds up", () => {
+  it("is kept in the address, and by a saved view only with the metrics' breakdown", () => {
+    const summing = viewFrom({ breakdown: ["level"], sum: "start" });
+    expect(summing.sum).toBe("start");
+    expect(searchFor(summing).sum).toBe("start");
+    expect(savedFor(summing)).toEqual({ breakdown: ["level"], sum: "start" });
+    expect(savedFor({ ...summing, breakdown: [] }).sum).toBeUndefined();
+    expect(savedFor(viewFrom({ breakdown: ["level"] })).sum).toBeUndefined();
+  });
+
+  it("is kept when the table has it, or as nothing, and dropped otherwise", () => {
+    expect(knownView(view({ sum: "start" }), columns).sum).toBe("start");
+    expect(knownView(view({ sum: "" }), columns).sum).toBe("");
+    expect(knownView(view({ sum: "gone" }), columns).sum).toBeUndefined();
+  });
+});
+
 describe("columns the user may not see", () => {
   it("are left out of the view", () => {
     expect(

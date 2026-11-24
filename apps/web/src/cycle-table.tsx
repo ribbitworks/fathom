@@ -466,7 +466,10 @@ const dayColumn = (key: "startsOn" | "endsOn", label: string) => ({
 });
 
 // How long a cycle lasts, which only its details show.
-export const durationColumn = column("duration", "Duration", "text");
+export const durationColumn = {
+  ...column("duration", "Duration", "text"),
+  breaksDown: true,
+};
 
 const releaseColourOf = ({ releaseColour }: CycleRow) =>
   releaseColour === "" ? null : releaseColour;

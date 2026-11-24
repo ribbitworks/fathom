@@ -145,9 +145,11 @@ export interface CellKind {
   width: (column: AnyColumn, longestText: number) => number;
   // Whether the column's longest text sets its width.
   measured: boolean;
-  // Whether a required column is still worth breaking down by: required text, such as names, is
-  // always filled in, so is not.
-  breaksDownWhenRequired: boolean;
+  // Whether the metrics break rows down by a column of the kind, unless the table says otherwise:
+  // always, by choices or months; never, for free text and what is one per record, such as names,
+  // notes and web links; or only while not required, for those split into Populated and Empty,
+  // since a required one is always filled in.
+  breaksDown: "always" | "never" | "unless required";
   Editor?: (props: EditorProps) => ReactNode;
   // For a kind edited in one step, such as a checkbox: the value editing gives, in place of an
   // editor.
@@ -184,7 +186,7 @@ const text: CellKind = {
   change: (key, value) => ({ [key]: asText(value).trim() }),
   width: (_column, longestText) => longestText,
   measured: true,
-  breaksDownWhenRequired: false,
+  breaksDown: "never",
 };
 
 const twelveMonths = Array.from(
@@ -199,6 +201,7 @@ function calendarKind({
   inWords,
   example,
   samples,
+  breaksDown,
 }: {
   layOut: (typed: string) => string;
   isWhole: (typed: string) => boolean;
@@ -206,6 +209,7 @@ function calendarKind({
   example: string;
   // Values among which the longest in words is found.
   samples: readonly string[];
+  breaksDown: CellKind["breaksDown"];
 }): CellKind {
   const longest = Math.max(...samples.map((sample) => inWords(sample).length));
   return {
@@ -225,7 +229,7 @@ function calendarKind({
     },
     width: () => longest,
     measured: false,
-    breaksDownWhenRequired: false,
+    breaksDown,
     asTyped: typedInPlace(layOut),
     pasted: (_column, content) => ({ value: layOut(content) }),
   };
@@ -238,6 +242,7 @@ const date = calendarKind({
   inWords: formatDay,
   example: "a date such as 2026-10-31",
   samples: twelveMonths.map((month) => `${month}-28`),
+  breaksDown: "unless required",
 });
 
 const month = calendarKind({
@@ -246,12 +251,14 @@ const month = calendarKind({
   inWords: formatMonth,
   example: "a month such as 2027-03",
   samples: twelveMonths,
+  // By each month, as a deadline's rows are wanted.
+  breaksDown: "always",
 });
 
 const typedOf = (value: CellValue) => typedNumber(asText(value));
 
 // A number as the reader's language writes it, rounded up to the column's decimal places, if any.
-const numberShown = (column: Choices, held: number) =>
+export const numberShown = (column: Pick<Choices, "places">, held: number) =>
   column.places === undefined
     ? decimal(held)
     : decimalUpTo(held, column.places);
@@ -273,6 +280,7 @@ const numberInWords = (column: Choices, held: number) =>
 
 const number: CellKind = {
   ...text,
+  breaksDown: "unless required",
   read: (source, key) => {
     // The key is a column's own.
     // eslint-disable-next-line security/detect-object-injection
@@ -372,7 +380,7 @@ const choice: CellKind = {
       0,
     ),
   measured: false,
-  breaksDownWhenRequired: true,
+  breaksDown: "always",
   Editor: ({
     id,
     column,
@@ -434,7 +442,7 @@ const link: CellKind = {
   change: (key, value) => ({ links: { [key]: linkOf(value) } }),
   width: (_column, longestText) => longestText,
   measured: true,
-  breaksDownWhenRequired: false,
+  breaksDown: "never",
   Editor: ({
     id,
     column,
@@ -487,7 +495,7 @@ const note: CellKind = {
   }),
   width: () => noteCellChars,
   measured: false,
-  breaksDownWhenRequired: false,
+  breaksDown: "never",
   inPanel: true,
   Editor: ({
     id,
@@ -542,7 +550,7 @@ const flag: CellKind = {
   },
   change: (key, value) => ({ [key]: chosen(value).length > 0 }),
   width: () => 3,
-  breaksDownWhenRequired: true,
+  breaksDown: "always",
   toggled: toggledFlag,
   Cell: ({ value }) => <FlagCell checked={chosen(value).length > 0} />,
 };
