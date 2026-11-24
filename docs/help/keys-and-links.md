@@ -4,7 +4,8 @@ Most records in Fathom have a key. You can copy a link to a record and send it t
 
 ## What to Know First
 
-- **Key:** a record's short name in Fathom. It's the word for its kind, a hyphen and a number, after a **#**, such as **#FEATURE-123**. Features, projects, proposals, customers, milestones, releases, schedules, people, planned hires, feature teams, lists, columns, accounts and roles have keys. Cycles don't, since they're named after their schedule.
+- **Key:** a record's short name in Fathom. It's the word for its kind, a hyphen and a number, after a **#**, such as **#FEATURE-123**.
+- **What has a key:** features, projects, proposals, customers, milestones, releases, schedules, people, planned hires, feature teams, lists, columns, accounts and roles have keys. Cycles don't, since they're named after their schedule.
 - **A key stays the same:** renaming, retiring or removing a record doesn't change its key, and no other record ever gets it. It's Fathom's own, apart from your organization's IDs, such as a Project ID or an Employee ID.
 - **Link:** a link opens the page that shows the record, with its details open. It opens only for someone whose role sees that page and that record. Anyone else sees "Nothing found for" and the key, so a link never shows that a record exists.
 
@@ -12,7 +13,11 @@ Most records in Fathom have a key. You can copy a link to a record and send it t
 
 ### See a Record's Key
 
-In a record's details, the key is under the record's name, small and grey. A draft's details on the **Drafts** page show its record's key the same way, and put each other draft's key before its name. On the Features Board, each card shows its key under its name. To hide the keys on the Board, select **Card** and untick **Key**. A record that isn't saved yet has no key.
+In a record's details, the key is under the record's name, small and grey. A draft's details on the **Drafts** page show its record's key the same way, and put each other draft's key before its name.
+
+On the Features Board, each card shows its key under its name. To hide the keys on the Board, select **Card** and untick **Key**.
+
+A record that isn't saved yet has no key.
 
 The tables on **People**, **Features**, **Projects**, **Accounts**, **Drafts**, and the **Releases** and **Schedules** tabs of **Releases** have a **Key** column, hidden at first. On **Drafts**, it shows the key of the record each draft changes. A draft of Capacity's planning settings has no key. To show it:
 
@@ -41,7 +46,13 @@ You're done when a notification says "Link copied." or "Key copied."
 1. Paste the link into your browser's address bar.
 1. Press Enter.
 
-If you're signed out, Fathom asks you to sign in first, then opens the record. A release opens on the **Releases** tab, and a schedule on the **Schedules** tab. A role's link opens its dialog on **Roles**, and a column's link opens the column's menu on its table. Your browser's Back button takes you back to where you were.
+If you're signed out, Fathom asks you to sign in first, then opens the record. Your browser's Back button takes you back to where you were.
+
+Some records open in a particular place:
+
+- A release opens on the **Releases** tab, and a schedule on the **Schedules** tab.
+- A role's link opens its dialog on **Roles**.
+- A column's link opens the column's menu on its table.
 
 If the record was removed, and your change history shows its removal, the page says so, with a link to **Show the change history**.
 

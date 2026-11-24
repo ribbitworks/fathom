@@ -4,7 +4,8 @@ As a Feature Lead, you lead a feature team: a group that works on features toget
 
 ## What to Know First
 
-- **Drafts:** your changes are drafts. Nobody else sees them until you select **Publish** in the top bar. A Product Manager, a Project Manager or the Engineering Director approves changes to features. A Project Manager or the Engineering Director approves changes to the team.
+- **Drafts:** your changes are drafts. Nobody else sees them until you select **Publish** in the top bar.
+- **Approvers:** a Product Manager, a Project Manager or the Engineering Director approves changes to features. A Project Manager or the Engineering Director approves changes to the team.
 - **Two roles:** if your account holds another role too, you act as one at a time. Choose which from your account menu; it changes what you can do straight away. The change history names the role each change was made as.
 - **Estimates:** an estimate is how much work a feature needs, in a unit such as person-days. It goes in the feature's **Effort**.
 
@@ -20,7 +21,9 @@ On **Features**, select **Group by**, and choose **Cycle** or **Release**. See [
 
 ## Keep a View
 
-A view is how you've set up a table, such as its search and grouping. You can save one on the pages you open, such as **Features**, the board included, **Releases** or the **Org chart**, to come back to. Only you see it. See [Saved views](saved-views.md#save-a-view).
+A view is how you've set up a table, such as its search and grouping. You can save one on the pages you open, such as **Features**, the board included, **Releases** or the **Org chart**, to come back to.
+
+Only you see it. See [Saved views](saved-views.md#save-a-view).
 
 ## Shape the Feature Team
 
@@ -31,6 +34,6 @@ A view is how you've set up a table, such as its search and grouping. You can sa
 ## Find Someone on the Org Chart
 
 1. On the **Org chart**, type their name in **Find a person or team**.
-1. Choose them. The chart centres their card. See [Org chart](org-chart.md#find-a-person-or-team).
+1. Choose them, and the chart centres their card. See [Org chart](org-chart.md#find-a-person-or-team).
 
 You're done when your team's features show their status and estimates, and your team has the members it should, with each change approved.

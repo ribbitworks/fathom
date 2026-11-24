@@ -8,11 +8,14 @@
 - **Cycle:** a planning period, such as a quarter. A schedule makes its cycles from how long each lasts, such as 3 months, and names them by its **Name pattern**, such as `{YY}.{N}` for 27.1, 27.2 and on. Fathom lays cycles out two years ahead of today, so you can plan that far.
 - **Release:** what ships the features that target its cycles. It covers one cycle, or several in a row, of one schedule.
 - **Ships on:** the day a release ships. It's the end of its last cycle, unless another day was set.
-- **Schedule ends:** a schedule's last day, or **No end date** if it keeps going. No cycle starts after that day, and the cycle holding it ends on it. Once that day has passed, the schedule shows **Ended** after its name. It stays on the page until you retire it.
+- **Schedule ends:** a schedule's last day, or **No end date** if it keeps going. No cycle starts after that day, and the cycle holding it ends on it.
+  - Once that day has passed, the schedule shows **Ended** after its name. It stays on the page until you retire it.
 - **Tabs:** the page has three tabs beside its heading: **Releases**, where it opens, **Cycles** and **Schedules**. Each tab has its own table, with a timeline of what the table lists above it. A search, a filter or a saved view narrows both.
 - **Panel:** a record's details open in a panel beside the timeline and the table. To close it, select the **×** at its top right, or press Esc.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A dot before a name marks its draft.
-- **Who changes what:** if your role can change **Features and releases**, you make and change releases, and someone whose role approves features and releases approves them. If your role can change **Plan** or **Configuration**, you add schedules and change their cycles, and someone whose role approves the plan or configuration approves them. Others see the page without these buttons and pencils.
+- **Who changes what:** if your role can change **Features and releases**, you make and change releases, and someone whose role approves features and releases approves them.
+  - If your role can change **Plan** or **Configuration**, you add schedules and change their cycles, and someone whose role approves the plan or configuration approves them.
+  - Others see the page without these buttons and pencils.
 
 Above each timeline are the search field, the **Draft** menu, the **Metrics** button, and the **Group by** and **Views** menus.
 
@@ -21,10 +24,15 @@ See [Drafts](drafts.md) for more.
 ## The Three Tabs
 
 - **Releases** lists each release with its schedule, the day it ships, its cycles, the features that target them, and **Shipped** once its day has passed. Shipped releases are left out until you choose **Show shipped** in the **Views** menu. The timeline shows each release across its cycles.
-- **Cycles** lists each cycle with its schedule, its first and last days, the release that covers it, and its features. The cycle holding today reads **Current**. Past cycles, and cycles that start after next quarter, are left out until you choose **Show past cycles** or **Show later cycles** in the **Views** menu. The timeline names each cycle, with the current one in bold.
+- **Cycles** lists each cycle with its schedule, its first and last days, the release that covers it, and its features. The cycle holding today reads **Current**. The timeline names each cycle, with the current one in bold.
+  - Past cycles, and cycles that start after next quarter, are left out until you choose **Show past cycles** or **Show later cycles** in the **Views** menu.
 - **Schedules** lists each schedule with its current cycle and that cycle's first and last days, the features targeting it, the next release to ship and its day, how long its cycles last now, and its **Schedule ends** day. The timeline shows each schedule's cycles, and where it ends.
 
-Each tab starts as one list. To group **Releases** or **Cycles** by schedule, choose **Group by**, then **Schedule**. To group **Schedules** by **Current**, **Ended** and **Retired**, choose **Group by**, then **Status**. To turn the headings round, choose the second order after the groupings, such as **Reverse list order**.
+Each tab starts as one list. To put the rows under headings:
+
+- To group **Releases** or **Cycles** by schedule, choose **Group by**, then **Schedule**.
+- To group **Schedules** by **Current**, **Ended** and **Retired**, choose **Group by**, then **Status**.
+- To turn the headings round, choose the second order after the groupings, such as **Reverse list order**.
 
 ## Main Tasks
 
@@ -95,7 +103,9 @@ A release can have one note, with formatting such as bold and lists, for anythin
 1. Write the note.
 1. Select **Save**.
 
-To read or change a note, open the release, then select the button at the right of its **Note** row. The note stays open when you reload the page, and a link to the page opens it for anyone who can see it. To give the note the whole height, select **Maximize**, the button with four corners at its top right. Select **Restore**, in the same place, to bring the details back.
+To read or change a note, open the release, then select the button at the right of its **Note** row. The note stays open when you reload the page, and a link to the page opens it for anyone who can see it.
+
+To give the note the whole height, select **Maximize**, the button with four corners at its top right. Select **Restore**, in the same place, to bring the details back.
 
 You're done when the release's **Note** row shows the start of your note.
 
@@ -171,7 +181,9 @@ You're done when the panel's heading shows the new name, with a dot before it.
 
 ### Retire or Restore a Schedule
 
-A retired schedule takes no new releases, and its cycles take no new features. Features already on them keep their place. Once its retirement is approved, it leaves the table and the timeline. While a schedule is retired, or drafted to be, its panel has no pencils: the only change you can make is to restore it. While any schedule is retired, the **Views** menu offers **Show retired**, which a saved view keeps.
+A retired schedule takes no new releases, and its cycles take no new features. Features already on them keep their place. Once its retirement is approved, it leaves the table and the timeline.
+
+While a schedule is retired, or drafted to be, its panel has no pencils: the only change you can make is to restore it. While any schedule is retired, the **Views** menu offers **Show retired**, which a saved view keeps.
 
 1. To restore a retired schedule, first open the **Views** menu, and choose **Show retired**.
 1. Select the **⋯** at the end of the schedule's row.
@@ -183,14 +195,22 @@ You're done when the schedule's row shows your draft: a **Retired** or **Restore
 
 Each row's **⋯** menu offers **Discard draft** for your own draft, and **Resubmit** once its draft is rejected. On **Cycles**, a cycle's menu names the change behind it, such as a change to its schedule's cycles, and acts on that change.
 
-Two drafts can change a cycle at once: a change to its schedule's cycles, and a draft of its release, such as a new name. Its menu then names both drafts, and who made each. The dot before its **Release** belongs to the release's draft. So the Release can show a draft waiting while the row's own dot shows the other change was rejected. **Discard draft** and **Resubmit** act only on the change to the schedule's cycles. **Approve draft…** and **Reject draft…** decide each of the two drafts that your role approves and that you can decide now. When that's only the release's draft, they name the release, such as **Approve Harbor 2's draft…**.
+Two drafts can change a cycle at once: a change to its schedule's cycles, and a draft of its release, such as a new name. Its menu then names both drafts, and who made each.
+
+The dot before its **Release** belongs to the release's draft. So the Release can show a draft waiting while the row's own dot shows the other change was rejected.
+
+In the cycle's menu:
+
+- **Discard draft** and **Resubmit** act only on the change to the schedule's cycles.
+- **Approve draft…** and **Reject draft…** decide each of the two drafts that your role approves and that you can decide now. When that's only the release's draft, they name the release, such as **Approve Harbor 2's draft…**.
 
 You're done when the row's dot is gone, or shows the draft waiting again.
 
 ### Use the Timeline
 
 - To zoom, choose a zoom from **All** to **Days**, or use **−** and **+**.
-- To scroll to a quarter, select it in the strip above the timeline. To move a quarter at a time, use **‹** and **›**. The quarters in view are tinted, and the current one is underlined. The quarter you chose stays filled blue until you scroll somewhere else.
+- To scroll to a quarter, select it in the strip above the timeline. To move a quarter at a time, use **‹** and **›**.
+- The quarters in view are tinted, and the current one is underlined. The quarter you chose stays filled blue until you scroll somewhere else.
 - From the keyboard, press Tab to reach the strip's quarters, and the arrow keys to move between them. Press Enter or Space to choose the quarter you're on.
 - To go back to today, select **Today**, at the end of the strip. A red line marks today.
 - To see a cycle's or release's name and dates, point at it.

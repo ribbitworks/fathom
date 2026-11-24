@@ -11,7 +11,9 @@ The **Accounts** page lists everyone who can sign in to Fathom. You find it unde
 
 See [Access history](access-history.md) for more.
 
-The table shows each account's **Name**, **Email address**, **Roles**, **Status** and the day it was **Created**. It's read only. To see an account's details, point at its row and select the details button at the right of its **Name**. They open in a panel beside the table, with the buttons for changing the account under them.
+The table shows each account's **Name**, **Email address**, **Roles**, **Status** and the day it was **Created**. It's read only.
+
+To see an account's details, point at its row and select the details button at the right of its **Name**. They open in a panel beside the table, with the buttons for changing the account under them.
 
 ## Make an Account
 

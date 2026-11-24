@@ -4,7 +4,8 @@ Work in Fathom passes from one role to the next. One person drafts a change, ano
 
 ## What to Know First
 
-- **Drafts:** most changes in Fathom start as drafts. Nobody else sees a draft until its maker selects **Publish** in the top bar. It goes live once someone whose role approves that kind of change approves it. A yellow dot marks a draft waiting for approval.
+- **Drafts:** most changes in Fathom start as drafts. Nobody else sees a draft until its maker selects **Publish** in the top bar.
+- **Approval:** a draft goes live once someone whose role approves that kind of change approves it. A yellow dot marks a draft waiting for approval.
 - **Features:** a feature is a body of work that one feature team delivers. It targets a cycle, a planning period such as a quarter.
 - **Feature teams:** a feature team is a group that works on features together, whoever its members report to.
 

@@ -47,6 +47,8 @@ As a Product Manager, you shape the plan. That's the projects customers need, th
 
 On the **Drafts** page, under **History**, approve or reject the drafts under **To decide**: those of projects, proposals, features, releases and schedules. See [Drafts page](drafts-page.md#approve-drafts).
 
-To approve every waiting draft a table shows, such as on **Features**, select **Approve** in its **Draft** menu. It names the count, such as **Approve 4 drafts…**. Drafts you changed yourself stay waiting for another approver. See [Drafts](drafts.md#what-the-draft-menu-shows).
+To approve every waiting draft a table shows, such as on **Features**, select **Approve** in its **Draft** menu. It names the count, such as **Approve 4 drafts…**.
+
+Drafts you changed yourself stay waiting for another approver. See [Drafts](drafts.md#what-the-draft-menu-shows).
 
 You're done when your features, projects and releases show what's planned, each change approved.

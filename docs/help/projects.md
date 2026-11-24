@@ -9,7 +9,8 @@
 - **Customers:** a customer is whoever a project's work is for.
 - **Milestones:** the dated points in a project, such as a delivery to the customer.
 - **Features:** a project or proposal names the features it needs. Features are planned on the [Features](features.md) page.
-- **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves the plan approves it on the **Drafts** page. A hollow dot marks a change you haven't published yet.
+- **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A hollow dot marks a change you haven't published yet.
+- **Approval:** a draft goes live once someone whose role approves the plan approves it on the **Drafts** page.
 
 See [Drafts](drafts.md) for more.
 
@@ -31,7 +32,9 @@ You're done when the new row shows with a hollow dot.
 1. Point at the record's row.
 1. Select the details button: the small box at the right of its **Name** cell.
 
-You can also right-click the row and select **Show details**. The details open beside the table. Each customer, proposal and feature named there is a link to its own details. Milestones have no details of their own.
+You can also right-click the row and select **Show details**. The details open beside the table.
+
+Each customer, proposal and feature named there is a link to its own details. Milestones have no details of their own.
 
 The record's key is under its name, small and grey. Select it to copy a link to the record, or the key itself. See [Keys and links](keys-and-links.md) for more.
 
@@ -69,7 +72,9 @@ You're done when the reason shows on the removal's row.
 
 ### See How a Project's or Proposal's Scope Changed
 
-Open its details. **Scope history**, at the end, lists each feature added or removed, newest first. Each row has the day the change was drafted, and the reason for a removal, if there is one. A change still waiting for approval has a yellow dot before it.
+Open its details. **Scope history**, at the end, lists each feature added or removed, newest first.
+
+Each row has the day the change was drafted, and the reason for a removal, if there is one. A change still waiting for approval has a yellow dot before it.
 
 ### Add a Milestone to a Project
 
