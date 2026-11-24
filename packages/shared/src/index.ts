@@ -237,6 +237,7 @@ export {
   approvedAreaNames,
   approvePermissions,
   approvesKind,
+  takenAlongRefusal,
   type Asking,
   draftsChangedBy,
   type DraftKind,

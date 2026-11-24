@@ -35,16 +35,13 @@ import {
   checkedNotes,
   checkedNumbers,
   checkedValues,
+  choicesAskedFor,
   valuesOf,
 } from "./person-fields.ts";
+import { columnsWithAdded } from "./added-columns.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import { isGeneralFeature } from "./release-kinds.ts";
-import {
-  fieldOfValue,
-  inListOrder,
-  readColumns,
-  valueField,
-} from "./values.ts";
+import { fieldOfValue, valueField } from "./values.ts";
 import {
   addedOnly,
   linkedIds,
@@ -300,18 +297,17 @@ export async function changeProposal(
   });
 }
 
-// A feature's values in the columns added to Features: those a request names replace those it has,
-// each checked against its column, and every required column must then hold one.
+// A feature's values in the columns added to Features, live or drafted to be added as the editor sees
+// them: those a request names replace those it has, each checked against its column, and every
+// required column must then hold one.
 async function featureValues(
   transaction: Transaction,
+  editor: string,
   request: FeatureRequest,
   current: Recorded | undefined,
 ): Promise<Recorded> {
-  const columns = await readColumns(transaction, true, "features");
-  const known = await inListOrder(
-    transaction,
-    Object.values(request.values).flat(),
-  );
+  const columns = await columnsWithAdded(transaction, editor, true, "features");
+  const known = await choicesAskedFor(transaction, editor, [request]);
   const had = current === undefined ? undefined : valuesOf(current);
   const chosen = checkedValues(columns, known, request.values, had);
   const kept = Object.fromEntries(
@@ -352,11 +348,12 @@ async function optionalChoice(
 
 async function featureRecord(
   transaction: Transaction,
+  editor: string,
   request: FeatureRequest,
   current?: Recorded,
 ) {
   await checkTeamForFeature(transaction, request.featureTeamId);
-  const added = await featureValues(transaction, request, current);
+  const added = await featureValues(transaction, editor, request, current);
   return {
     ...added,
     name: request.name,
@@ -401,7 +398,7 @@ export async function addFeature(
   request: FeatureRequest,
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
-    const record = await featureRecord(transaction, request);
+    const record = await featureRecord(transaction, maker.user.id, request);
     refuseCustomersChange(maker, undefined, record);
     return saveRecordDraft(
       transaction,
@@ -422,7 +419,12 @@ export async function changeFeature(
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
     const feature = changeableRecord(state, "feature", id);
-    const record = await featureRecord(transaction, request, feature);
+    const record = await featureRecord(
+      transaction,
+      maker.user.id,
+      request,
+      feature,
+    );
     refuseCustomersChange(maker, feature, record);
     return saveRecordDraft(transaction, maker, state, "feature", id, record);
   });

@@ -383,7 +383,11 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
   - **Notes:**
 
 - [ ] `2C67` Double-click the `Fictional Score` cell of any row.
-  - **Expected:** The cell does not open for editing while the column is a draft.
+  - **Expected:** The cell opens for editing.
+  - **Notes:**
+
+- [ ] `A7D2` Press Escape.
+  - **Expected:** The cell closes, still empty.
   - **Notes:**
 
 - [ ] `F38D` Open the `Fictional Score` column menu.

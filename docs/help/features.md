@@ -95,7 +95,9 @@ You can add your own columns to Features if your role edits features and sees pe
 1. If you chose **Choice from a list**, choose a list. Only lists whose class is **General** are offered, since everyone who sees features sees these columns.
 1. Select **Add column**.
 
-You're done when the new column shows in the table, with a hollow dot until you publish it. Its cells can be filled once someone whose role approves configuration approves it.
+You're done when the new column shows in the table, with a hollow dot until you publish it.
+
+You can fill the new column's cells straight away, before it's approved. Approving a feature you've filled it for approves the column too. So whoever approves that feature needs a role that approves both features and configuration, such as the Project Manager's.
 
 ### Count Features
 

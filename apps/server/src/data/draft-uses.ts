@@ -4,8 +4,13 @@
 // Part of the data access layer.
 
 import { fieldOfValue } from "@fathom/db";
-import type { DraftsRequest } from "@fathom/shared";
-import { ConflictError } from "../errors.ts";
+import {
+  type DraftsRequest,
+  type RecordRef,
+  takenAlongRefusal,
+} from "@fathom/shared";
+import type { Actor } from "../access.ts";
+import { ConflictError, ForbiddenError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import {
   type ColumnsState,
@@ -17,6 +22,9 @@ import type { Draft } from "./draft-records.ts";
 import { readPersonDrafts } from "./drafts.ts";
 import { readHireDrafts } from "./hire-reads.ts";
 import { addedChoices } from "./lists.ts";
+import { withUsedRecords } from "./record-decisions.ts";
+import { type RecordsState, refKey, stateOf } from "./record-state.ts";
+import { readRecordsState, recordKinds } from "./records.ts";
 
 // The published drafts of columns, by column, as they make each column: removals left out.
 function draftedColumns(state: ColumnsState) {
@@ -33,8 +41,8 @@ const addedChoice = (state: ColumnsState, id: string) =>
   !state.lists.choices.has(id) &&
   state.lists.choiceDrafts.get(id)?.action === "created";
 
-// The columns and choices only drafted to be added that a person's or planned hire's draft gives
-// them.
+// The columns and choices only drafted to be added that a draft of a person, planned hire, or record
+// of a kind with added columns, such as a feature, gives it.
 export function usedByRecord(state: ColumnsState, draft: Draft) {
   const columns: string[] = [];
   const choices: string[] = [];
@@ -49,19 +57,38 @@ export function usedByRecord(state: ColumnsState, draft: Draft) {
   return { columns, choices };
 }
 
-// The drafts asked for, with the columns and choices only drafted to be added that the people and
-// planned hires asked for are given, and the lists only drafted to be added that those columns and
-// the columns asked for draw on.
+// The drafts of the plan's records whose kinds hold values in added columns, such as features, of
+// the records kept, by record.
+const valueHolders = (
+  records: RecordsState,
+  kept: (ref: RecordRef) => boolean,
+): [string, Draft][] =>
+  recordKinds
+    .filter((kind) => kind.addedColumns !== undefined)
+    .flatMap((kind) =>
+      [...stateOf(records, kind.type).drafts].filter(([id]) =>
+        kept({ type: kind.type, id }),
+      ),
+    );
+
+// The drafts asked for, with the columns and choices only drafted to be added that the people,
+// planned hires, and the plan's records approved with them are given, and the lists only drafted to
+// be added that those columns and the columns asked for draw on.
 export async function withUsedAcross(
   transaction: Transaction,
   asked: DraftsRequest,
 ): Promise<DraftsRequest> {
   const state = await readColumnsState(transaction);
+  const records = await readRecordsState(transaction);
+  const approved = new Set(withUsedRecords(records, asked.records).map(refKey));
   const columns = new Set(asked.columns);
   const choices = new Set(asked.choices);
   for (const draft of [
     ...(await readPersonDrafts(transaction, asked.people)).values(),
     ...(await readHireDrafts(transaction, asked.plannedHires)).values(),
+    ...valueHolders(records, (ref) => approved.has(refKey(ref))).map(
+      ([, draft]) => draft,
+    ),
   ]) {
     const used = usedByRecord(state, draft);
     for (const id of used.columns) columns.add(id);
@@ -81,13 +108,37 @@ export async function withUsedAcross(
   };
 }
 
+// Refuses approving drafts that take along a column only drafted to be added whose area the
+// approver's role does not approve, naming the column, since approving one approves both.
+export async function refuseColumnsBeyondRole(
+  transaction: Transaction,
+  actor: Actor,
+  chosen: DraftsRequest,
+  asked: DraftsRequest,
+): Promise<void> {
+  const taken = asked.columns.filter((id) => !chosen.columns.includes(id));
+  if (taken.length === 0) return;
+  for (const { id, field } of draftedColumns(
+    await readColumnsState(transaction),
+  )) {
+    const refusal = taken.includes(id)
+      ? takenAlongRefusal(
+          actor.permissions,
+          "field",
+          `the new column ${String(field.name)}`,
+        )
+      : undefined;
+    if (refusal !== undefined) throw new ForbiddenError(refusal);
+  }
+}
+
 const usedTogether =
   "Other drafts depend on these drafts. Reject them together, or wait until those drafts no longer depend on these.";
 
 // Refuses rejecting drafts that others not rejected with them use: a list only drafted to be added
 // that a column's draft draws on, and a column or choice only drafted to be added, or a list only
-// drafted to be added with such choices or columns, that a person's or planned hire's draft gives
-// someone.
+// drafted to be added with such choices or columns, that a draft of a person, planned hire, or
+// feature gives it.
 export async function refuseUsedAcross(
   transaction: Transaction,
   asked: DraftsRequest,
@@ -111,6 +162,10 @@ export async function refuseUsedAcross(
     ),
     ...[...(await readHireDrafts(transaction))].filter(
       ([id]) => !asked.plannedHires.includes(id),
+    ),
+    ...valueHolders(
+      await readRecordsState(transaction),
+      (ref) => !asked.records.some((one) => refKey(one) === refKey(ref)),
     ),
   ];
   for (const [, draft] of others) {

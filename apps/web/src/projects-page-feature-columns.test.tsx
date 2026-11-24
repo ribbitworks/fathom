@@ -409,6 +409,36 @@ describe("the Features page", () => {
       });
     });
 
+    it("saves a value typed in a cell of a column only drafted to be added", async () => {
+      const score = {
+        ...size,
+        id: "10000000-0000-4000-8000-0000000000c3",
+        keyNumber: 1,
+        name: "Fictional Drafted Score",
+        type: "number" as const,
+        listId: null,
+        visibility: "general" as const,
+        draft: { ...recordDraft({ action: "created" }), live: {} },
+      };
+      const start = withColumns({
+        features: [later],
+        featureColumns: columnsOf([score]),
+      });
+      const path = `PUT /api/features/${later.id}`;
+      const { fetch } = await openWith(
+        start,
+        { [path]: saved(() => start) },
+        featureEditor,
+      );
+      await userEvent.dblClick(recordCell(later.id, score.id) as HTMLElement);
+      await userEvent.keyboard("7{Enter}");
+      await waitFor(() => {
+        expect(sent(fetch, path)).toMatchObject([
+          { numbers: { [score.id]: 7 } },
+        ]);
+      });
+    });
+
     it("sends only the added column's value a change gives", async () => {
       const path = `PUT /api/features/${later.id}`;
       const { fetch } = await open(withColumns(), {

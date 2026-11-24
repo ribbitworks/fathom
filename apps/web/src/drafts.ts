@@ -17,6 +17,7 @@ import { sendJsonFor } from "./api.ts";
 import { rowName } from "./people-rows.ts";
 import {
   type RecordNode,
+  recordKey,
   recordNames,
   recordsJoined,
   recordsWithout,
@@ -121,9 +122,17 @@ const addedField = (fields: readonly Field[], id: string) =>
 const addedList = (lists: readonly List[], id: string) =>
   lists.find((list) => list.id === id)?.draft?.action === "created";
 
-// The columns, and choices, only drafted to be added that a person's draft gives them.
-function usedByPerson(
-  person: Person,
+// A draft of a record that holds values in added columns: a person's, or a feature's.
+interface ValueHolder {
+  values?: Readonly<Record<string, readonly string[]>> | undefined;
+  draft?:
+    | { changed: readonly string[]; unpublished?: boolean | undefined }
+    | undefined;
+}
+
+// The columns, and choices, only drafted to be added that a person's or feature's draft gives it.
+function usedByHolder(
+  holder: ValueHolder,
   lists: readonly List[],
   fields: readonly Field[],
 ): { columns: string[]; choices: string[] } {
@@ -132,8 +141,8 @@ function usedByPerson(
       .filter(({ choice }) => choice.draft?.action === "created")
       .map(({ choice }) => choice.id),
   );
-  const changed = person.draft?.changed ?? [];
-  const values = Object.entries(person.values).filter(([id]) =>
+  const changed = holder.draft?.changed ?? [];
+  const values = Object.entries(holder.values ?? {}).filter(([id]) =>
     changed.includes(id),
   );
   return {
@@ -145,19 +154,27 @@ function usedByPerson(
 }
 
 // The other drafts approving the selection approves too: the columns and choices only drafted to be
-// added that people are given, the choices an order places that are only drafted to be added, and
-// the lists only drafted to be added that any of those choices are added to or columns draw on.
+// added that people and features are given, the choices an order places that are only drafted to be
+// added, the lists only drafted to be added that any of those choices are added to or columns draw
+// on, and the plan's records the records chosen use.
 export function usedDrafts(
   selection: DraftSelection,
   lists: readonly List[],
   columns?: Columns,
 ): DraftSelection {
   const fields = columns?.fields ?? [];
+  const nodes = columns?.records ?? [];
+  const records = usedRecords(selection.records, nodes);
+  const approved = new Set([...selection.records, ...records].map(recordKey));
   const choices = new Set<string>();
   const fieldIds = new Set<string>();
-  for (const person of columns?.people ?? []) {
-    if (!selection.people.includes(person.id)) continue;
-    const used = usedByPerson(person, lists, fields);
+  for (const holder of [
+    ...(columns?.people ?? []).filter(({ id }) =>
+      selection.people.includes(id),
+    ),
+    ...nodes.filter(({ ref }) => approved.has(recordKey(ref))),
+  ]) {
+    const used = usedByHolder(holder, lists, fields);
     for (const id of used.columns) fieldIds.add(id);
     for (const id of used.choices) choices.add(id);
   }
@@ -191,7 +208,7 @@ export function usedDrafts(
     lists: [...listIds].filter((id) => !selection.lists.includes(id)),
     choices: [...choices].filter((id) => !selection.choices.includes(id)),
     columns: [...fieldIds].filter((id) => !selection.columns.includes(id)),
-    records: usedRecords(selection.records, columns?.records ?? []),
+    records,
   };
 }
 
@@ -267,7 +284,8 @@ export const without = (
 
 // The drafts that use any in the selection, which must be rejected with them: the choices added to,
 // the order of, and the columns drawing on, a list only drafted to be added; the orders that place
-// such a choice, or column; and the people given any of them.
+// such a choice, or column; the people and features given any of them; and the plan's records that
+// use those records.
 export function usingDrafts(
   selection: DraftSelection,
   lists: readonly List[],
@@ -307,29 +325,44 @@ export function usingDrafts(
     choices: new Set([...selection.choices, ...choices]),
     columns: new Set([...selection.columns, ...fieldIds]),
   };
+  // Only published drafts are decided, so only they must be rejected together.
+  const published = ({ draft }: ValueHolder) =>
+    draft !== undefined && draft.unpublished !== true;
+  const usesRejected = (holder: ValueHolder) => {
+    const used = usedByHolder(holder, lists, fields);
+    return (
+      used.columns.some((id) => rejecting.columns.has(id)) ||
+      used.choices.some((id) => rejecting.choices.has(id))
+    );
+  };
   const people = (columns?.people ?? [])
-    // Only published drafts are decided, so only they must be rejected together.
     .filter(
-      ({ id, draft }) =>
-        draft !== undefined &&
-        draft.unpublished !== true &&
-        !selection.people.includes(id),
+      (person) =>
+        published(person) &&
+        !selection.people.includes(person.id) &&
+        usesRejected(person),
     )
-    .filter((person) => {
-      const used = usedByPerson(person, lists, fields);
-      return (
-        used.columns.some((id) => rejecting.columns.has(id)) ||
-        used.choices.some((id) => rejecting.choices.has(id))
-      );
-    })
     .map(({ id }) => id);
+  const nodes = columns?.records ?? [];
+  const chosen = new Set(selection.records.map(recordKey));
+  const holders = nodes
+    .filter(
+      (node) =>
+        published(node) &&
+        !chosen.has(recordKey(node.ref)) &&
+        usesRejected(node),
+    )
+    .map(({ ref }) => ref);
   return {
     ...noDrafts(),
     people,
     choices: [...choices].filter((id) => !selection.choices.includes(id)),
     orders: [...orders].filter((id) => !selection.orders.includes(id)),
     columns: [...fieldIds],
-    records: usingRecords(selection.records, columns?.records ?? []),
+    records: recordsJoined(
+      holders,
+      usingRecords(recordsJoined(selection.records, holders), nodes),
+    ),
   };
 }
 

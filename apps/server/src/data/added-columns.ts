@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The columns and choices drafted to be added that a person's draft may use before they are
-// approved. Part of the data access layer.
+// The columns and choices drafted to be added that a draft of a person, planned hire or feature may
+// use before they are approved. Part of the data access layer.
 
 import { fields, type Reader } from "@fathom/db";
+import type { ColumnTable } from "@fathom/shared";
 import { inArray } from "drizzle-orm";
 import { mostSensitive } from "../access.ts";
 import type { Draft, Viewer } from "./draft-records.ts";
@@ -20,14 +21,11 @@ import {
 
 const added = (drafts: ReadonlyMap<string, Draft>, live: ReadonlySet<string>) =>
   [...drafts].filter(
-    ([id, draft]) =>
-      draft.action === "created" &&
-      !live.has(id) &&
-      draft.fields.tableName !== "features",
+    ([id, draft]) => draft.action === "created" && !live.has(id),
   );
 
-// The People table's live columns, then those drafted to be added that the viewer sees, as their
-// drafts make them, each with its values' tier as its type sets it: the most sensitive of the
+// A table's live columns, People's by default, then those drafted to be added to it that the viewer
+// sees, as their drafts make them, each with its values' tier as its type sets it: the most sensitive of the
 // column as the viewer drafted it, with its lists as the viewer sees them and as published, and of
 // the column as published, with its lists as published, so the viewer's own unpublished changes
 // never make values less sensitive. An added column is required only once approved, which checks
@@ -36,10 +34,13 @@ export async function columnsWithAdded(
   reader: Reader,
   viewer: Viewer,
   lock = false,
+  table: ColumnTable = "people",
 ): Promise<PeopleColumns> {
-  const live = await readColumns(reader, lock);
+  const live = await readColumns(reader, lock, table);
   const fieldDrafts = await readDrafts(reader, "field", undefined, viewer);
-  const columns = added(fieldDrafts, new Set(live.map(({ id }) => id)));
+  const columns = added(fieldDrafts, new Set(live.map(({ id }) => id))).filter(
+    ([, draft]) => draft.fields.tableName === table,
+  );
   if (columns.length === 0) return live;
   const lists = await readState(reader, viewer);
   const published = await readState(reader);

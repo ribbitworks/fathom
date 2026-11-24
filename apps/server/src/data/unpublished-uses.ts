@@ -19,7 +19,7 @@ import type { Draft } from "./draft-records.ts";
 import type { Fill } from "./fills.ts";
 import { withUsed } from "./list-approvals.ts";
 import type { ListsState } from "./lists.ts";
-import { type RecordsState, usesOf } from "./record-state.ts";
+import { type RecordsState, stateOf, usesOf } from "./record-state.ts";
 import { isRecordType, kindOf } from "./records.ts";
 
 interface Change {
@@ -97,12 +97,22 @@ const usesByKindOf = new Map<string, (own: OwnDrafts, id: string) => string[]>(
   Object.entries(usesByKind),
 );
 
-// The drafts one change uses, by key, whoever made them; none for a kind Fathom no longer has.
+// The drafts one change uses, by key, whoever made them; none for a kind Fathom no longer has. A
+// record of a kind with added columns, such as a feature, also uses those it is given values in.
 function usedBy(own: OwnDrafts, { recordType, recordId }: Change): string[] {
   if (isRecordType(recordType)) {
-    return usesOf(kindOf(recordType), own.records, recordId).map(
-      ({ type, id }) => draftKey(type, id),
-    );
+    const kind = kindOf(recordType);
+    return [
+      ...usesOf(kind, own.records, recordId).map(({ type, id }) =>
+        draftKey(type, id),
+      ),
+      ...(kind.addedColumns === undefined
+        ? []
+        : givenValues((mine) => stateOf(mine.records, recordType).drafts)(
+            own,
+            recordId,
+          )),
+    ];
   }
   return usesByKindOf.get(recordType)?.(own, recordId) ?? [];
 }
