@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/code-review.md", "docs/standards/testing.md", "docs/standards/documentation.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Agent Workflow
@@ -134,6 +134,11 @@ Complete these steps, in order, for every change:
    the code review, and iterate until the owner approves the UX. A build to run
    the app for this is allowed. A change with no screen changes skips this
    step.
+   - **First, prove it:** drive the screens' basic paths as
+     [Testing Standards § Proving a Screen](testing.md#proving-a-screen) sets
+     out. Never call a screen ready without having seen it work.
+   - **What the owner gets:** the list in
+     [A Screen Change's Pull Request](#a-screen-changes-pull-request).
 1. **Tests:** run the project's targeted tests, for the code the change
    touches, and its linters, and fix all failures. A change to documentation
    only may skip this and the next step, apart from the Markdown linter, unless
@@ -163,8 +168,10 @@ Complete these steps, in order, for every change:
 1. **Commit and push:** commit, following the branch and commit rules, then
    push when [Pushing and Pull Requests](#pushing-and-pull-requests) says to.
 1. **Open the pull request and report:** open the pull request, ready for
-   review rather than as a draft, report it to the owner with its link, and
-   stop.
+   review rather than as a draft, with
+   [A Screen Change's Pull Request](#a-screen-changes-pull-request) in its
+   description when it changes a screen. Report it to the owner with its link,
+   and stop.
 
 At any step, stop and ask the owner about a decision the owner should weigh
 in on, such as what users see or can do, a product rule, scope beyond the task,
@@ -205,6 +212,28 @@ feedback:
 - Open the pull request with `gh pr create`, ready for review, following the
   commit message rules for its title and description.
 
+### A Screen Change's Pull Request
+
+The owner checks screens as the product's manager, not as a tester. A pull
+request that changes a screen gives the owner these, in order, each brief:
+
+1. **Try it:** 3 to 6 numbered steps through the feature's use cases, like a
+   short manual test. Each says who to sign in as, where to go, what to do,
+   what to see, and what to judge, such as the wording, the layout or the
+   flow. No edge cases.
+1. **Full manual tests:** the manual test cases the change adds or changes, by
+   file and ID, such as `docs/testing/projects-manual-test.md` PROJ-12, for
+   when the owner wants to run them in full.
+1. **Decisions to confirm:** one line for each choice under the pull request's
+   Decisions heading that changes what users see or can do, which the
+   Decisions heading gives in full.
+1. **Already proved:** the basic and edge paths driven and tested, such as
+   empty fields, duplicates, refusals, focus and permissions, one line each
+   with the test that proves it, so the owner needn't repeat them.
+
+The agent's own screen check, and any check before the owner's, follow Try it
+and Already proved.
+
 ### Branches and Commits
 
 - For a new task, create a new branch from the latest `origin/main` in the
@@ -224,6 +253,8 @@ feedback:
 
 - **Approval first:** get the owner's approval before making code changes,
   then create the task's branch and tell the owner its name.
+- **Screens unseen:** since the agent can't run the app, it reports a screen
+  change as not yet seen working, with the paths the owner should drive.
 - **No builds or tests:** **Must Not** run the project's build, test or run
   commands, or any other build tool. The owner builds and runs tests. Read-only
   diagnostics that the project's standards allow, such as listing devices or

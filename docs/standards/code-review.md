@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/core-principles.md", "docs/standards/testing.md", "docs/standards/documentation.md", "docs/standards/markdown-style-guidelines.md", "docs/standards/typescript.md", "docs/standards/shell.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Code Review Standards
@@ -140,6 +140,7 @@ Files that cannot hold comments, or that tools generate and that are never edite
 
 Tests are reviewed against [testing.md](testing.md) and [typescript.md](typescript.md#tests).
 
+- **UI tests:** a change to a form's behaviour without a UI test that fails on the old code is a finding, as [Testing Standards § UI Tests](testing.md#ui-tests) sets out. Until a UI test runner exists, the pull request lists the paths driven and the UI tests to add instead.
 - **Coverage exclusions:** each `/* v8 ignore */` comment a change adds is checked against [Testing Standards § Coverage Enforcement](testing.md#coverage-enforcement): it must say why, and be one of the cases listed there. Anything else is a finding.
 - **Testing pyramid:** a new integration test that only re-checks a variation of a rule is a finding: the variation belongs in the rule's unit tests, as [Testing Standards § The Testing Pyramid](testing.md#the-testing-pyramid) sets out. So is a rule tested only through the database in an area the change moves to unit tests, and an integration test removed without the pull request naming what now covers it.
 - **Manual tests:** when the change affects what a manual test in `docs/testing/` covers, or the seed data it relies on, the test is updated in the same change and still follows [Testing Standards § Manual Tests](testing.md#manual-tests): its test cases still test the feature's behaviour, not this change, and every count, name and label they expect still matches the seed and the screens. A change that adds a feature a person must check by hand, before a stage is complete, adds or extends a manual test. The review also checks that a manual test re-checks nothing that automated tests prove, covers what only a person can judge, and stays short enough to run in about 30 minutes.
@@ -149,7 +150,7 @@ Tests are reviewed against [testing.md](testing.md) and [typescript.md](typescri
 When the change affects the user interface:
 
 - Interactive controls have accessibility labels and are reachable by keyboard or assistive technology.
-- The changed screens were checked in a browser before the change was committed.
+- **Behaviour proved:** the changed screens were checked in a browser before the change was committed. The reviewer runs the change's UI tests, and confirms each claim the pull request makes about the screens, such as a path driven or a refusal shown, against a test or by trying it. A claim without proof is a finding.
 - The change follows [UI Conventions](ui-conventions.md), [Visual Design](../design/visual-design.md), and the page's design in `docs/design/pages/`.
 - Read aloud every sentence the change adds or rewords that people see, the server's refusals and the manual tests' expected text included, and flag any that a person would not say, as [UI Conventions § Principles](ui-conventions.md#principles) sets out under "Words people say".
 
