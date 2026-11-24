@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Tables, Addresses and Search
@@ -36,7 +36,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Drawn by:** `columnHeaders` in `apps/web/src/column-header.tsx`.
   - **Example:** On Features, select Move left in the Priority column's menu.
 - **Hiding columns:** Anyone who sees a table can hide any column, required ones included, except the column naming each record. A new table is drawn by the shared table, so its columns hide too.
-  - **The menus:** Hide column is in the column's menu, with Freeze up to this column and the width items. The table's Views menu shows the column again; a board's leaves out what only changes the table, as [Menus above a board](dates-timelines-and-boards.md#boards) sets out.
+  - **The menus:** Hide column is in the column's menu, with Freeze up to this column, the width items, and Move left and Move right. The table's Views menu shows the column again; a board's leaves out what only changes the table, as [Menus above a board](dates-timelines-and-boards.md#boards) sets out.
   - **What stays:** A hidden column keeps its filter, its place in the sort and its place in the order. Its filter's pill stays, so nothing narrows the rows unseen. Metrics still offer it.
   - **Frozen columns:** Hiding a frozen column leaves one fewer frozen.
   - **What leaves it out:** An export, and so the question before exporting Personal or Confidential data. The empty row skips it, but still names a required one it needs, such as Site needed. A new record's form shows every column.

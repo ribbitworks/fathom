@@ -289,9 +289,12 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
           <AppMenu.Dropdown>
             <MenuTitle>{column.label}</MenuTitle>
             {field !== undefined && (
-              <CopyLinkItem
-                record={{ kind: "column", keyNumber: field.keyNumber }}
-              />
+              <>
+                <CopyLinkItem
+                  record={{ kind: "column", keyNumber: field.keyNumber }}
+                />
+                <Menu.Divider />
+              </>
             )}
             {field?.heldBy !== undefined && !liveOnly && (
               <HeldNote by={field.heldBy} />
@@ -411,40 +414,6 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
                 Reset width
               </Menu.Item>
             )}
-            {column.key !== table.nameColumn && (
-              <Menu.Item
-                onClick={() => {
-                  onView(withHidden(view, allColumns, [column.key], true));
-                  focusBeside(index);
-                }}
-              >
-                Hide column
-              </Menu.Item>
-            )}
-            <Menu.Divider />
-            {changesColumn && field && field.draft?.action !== "deleted" && (
-              <Menu.Item
-                onClick={() => {
-                  actions.editColumn(field);
-                }}
-              >
-                Edit column…
-              </Menu.Item>
-            )}
-            {changesColumn &&
-              field &&
-              field.draft?.action !== "deleted" &&
-              actions.removeColumn && (
-                <Menu.Item
-                  color="red"
-                  onClick={() => {
-                    actions.removeColumn?.(field);
-                    focusBeside(index);
-                  }}
-                >
-                  Remove column
-                </Menu.Item>
-              )}
             <Menu.Item
               rightSection={<kbd>{shortcuts.left}</kbd>}
               onClick={() => {
@@ -461,6 +430,39 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
             >
               Move right
             </Menu.Item>
+            {column.key !== table.nameColumn && (
+              <Menu.Item
+                onClick={() => {
+                  onView(withHidden(view, allColumns, [column.key], true));
+                  focusBeside(index);
+                }}
+              >
+                Hide column
+              </Menu.Item>
+            )}
+            {changesColumn && field && field.draft?.action !== "deleted" && (
+              <>
+                <Menu.Divider />
+                <Menu.Item
+                  onClick={() => {
+                    actions.editColumn(field);
+                  }}
+                >
+                  Edit column…
+                </Menu.Item>
+                {actions.removeColumn && (
+                  <Menu.Item
+                    color="red"
+                    onClick={() => {
+                      actions.removeColumn?.(field);
+                      focusBeside(index);
+                    }}
+                  >
+                    Remove column
+                  </Menu.Item>
+                )}
+              </>
+            )}
             {field &&
               actions.moveColumnClass &&
               (changesColumn || field.draft?.action !== "created") &&

@@ -388,7 +388,7 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 - [ ] `F38D` Open the `Fictional Score` column menu.
   - **Expected:**
-    - The menu offers **Edit column…**, **Remove column**, **Move left** and **Move right**.
+    - The menu offers **Move left**, **Move right**, **Edit column…** and **Remove column**.
   - **Notes:**
 
 - [ ] `5FEE` Select **Edit column…**.
