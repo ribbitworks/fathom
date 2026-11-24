@@ -63,7 +63,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 - **Drafts:** A row is marked by the draft behind it, such as a change to its schedule's cycles.
   - **Two drafts:** Where that change and a draft of the cycle's own release both change a cycle that stays in that release, the menu names both drafts and credits the Release to the release's draft, whose dot, in its own state, marks the Release.
   - **Deciding both:** Approve and Reject decide both for a role that approves both, while the release's draft is waiting, published, held by nobody and needs no other Approver; otherwise they decide the change behind the row alone.
-  - **Discard and Resubmit:** Act on the change behind the row alone.
+  - **Publish draft…, Discard and Resubmit:** Act on the change behind the row alone, from its row or its details.
 - **Duration:** Its pencil works as on a schedule's [cycles](#schedule-cycles).
 
 ## Schedules Tab

@@ -34,6 +34,7 @@ import { liveLists } from "./lists.ts";
 import { liveFields, recordsAsShown, shownSchema } from "./live-records.ts";
 import classes from "./pages.module.css";
 import { CopyLinkItem } from "./record-key.tsx";
+import { type MenuPlace, menuPlace } from "./menu-offer.ts";
 import type {
   Column,
   DraftOf,
@@ -268,6 +269,17 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     mayDecide(approves, table.drafts([record.id]));
   const decidableRow = (record: Rec) =>
     table.decidable?.(record) ?? decidable(record);
+  // The drafts that make a record's own draft, as approving or publishing it names them: on a table
+  // whose rows stand for their parts' drafts too, the record's own alone.
+  const ownSelectionOf = (record: Rec): DraftSelection => {
+    const drafts = table.drafts([record.id]);
+    return table.ownDraft === undefined
+      ? drafts
+      : {
+          ...noDrafts(),
+          records: drafts.records.filter(({ id }) => id === record.id),
+        };
+  };
   // The draft a record's menu discards, resubmits, approves or rejects, the drafts approving or
   // rejecting it decides, none on a row standing only for its parts' drafts, and whether it can be
   // decided now. On a table whose rows stand for their parts' drafts too, that is the record's own
@@ -282,22 +294,14 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     if (table.ownDraft === undefined) {
       return {
         draft: record.draft,
-        selection: table.drafts([record.id]),
+        selection: ownSelectionOf(record),
         decidable: decidableRow(record),
       };
     }
     const draft = table.ownDraft(record);
     return {
       draft,
-      selection:
-        draft === undefined
-          ? undefined
-          : {
-              ...noDrafts(),
-              records: table
-                .drafts([record.id])
-                .records.filter(({ id }) => id === record.id),
-            },
+      selection: draft === undefined ? undefined : ownSelectionOf(record),
       decidable: decidable({ draft, heldBy: record.heldBy }),
     };
   };
@@ -404,19 +408,22 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     editsDraftOf(record) &&
     record.heldBy === undefined &&
     ownDraftOf(record) !== undefined;
-  // What a record's menu offers of the table's own: its details, then whatever else the table offers.
-  const ownItemsOf = (record: Rec): ReactNode[] =>
+  // What a record's menu offers of the table's own: its details, from its row, then whatever else
+  // the table offers.
+  const ownItemsOf = (record: Rec, place: MenuPlace = "row"): ReactNode[] =>
     [
-      table.showDetails !== undefined && !isPending(record) && (
-        <Menu.Item
-          key="details"
-          onClick={() => {
-            table.showDetails?.(record);
-          }}
-        >
-          Show details
-        </Menu.Item>
-      ),
+      menuPlace(place).showsDetails &&
+        table.showDetails !== undefined &&
+        !isPending(record) && (
+          <Menu.Item
+            key="details"
+            onClick={() => {
+              table.showDetails?.(record);
+            }}
+          >
+            Show details
+          </Menu.Item>
+        ),
       table.keyOf !== undefined && (
         <CopyLinkItem key="copy-link" record={table.keyOf(record)} />
       ),
@@ -450,6 +457,7 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     approvesRecord,
     decidableRow,
     ownDraftOf,
+    ownSelectionOf,
     approvesInMenu,
     decidedInMenu,
     fieldsLive,

@@ -191,9 +191,9 @@ While a schedule is retired, or drafted to be, its panel has no pencils: the onl
 
 You're done when the schedule's row shows your draft: a **Retired** or **Restored** box.
 
-### Discard or Resubmit a Draft
+### Publish, Discard or Resubmit a Draft
 
-Each row's **⋯** menu offers **Discard draft** for your own draft, and **Resubmit** once its draft is rejected. On **Cycles**, a cycle's menu names the change behind it, such as a change to its schedule's cycles, and acts on that change.
+Each row's **⋯** menu, and the **⋯** at the top of its details, offers **Publish draft…** for your own change you haven't published, **Discard draft** for your own draft, and **Resubmit** once its draft is rejected. See [Drafts](drafts.md#publish-or-discard-one-change). On **Cycles**, a cycle's menu names the change behind it, such as a change to its schedule's cycles, and acts on that change.
 
 Two drafts can change a cycle at once: a change to its schedule's cycles, and a draft of its release, such as a new name. Its menu then names both drafts, and who made each.
 
@@ -201,7 +201,7 @@ The dot before its **Release** belongs to the release's draft. So the Release ca
 
 In the cycle's menu:
 
-- **Discard draft** and **Resubmit** act only on the change to the schedule's cycles.
+- **Publish draft…**, **Discard draft** and **Resubmit** act only on the change to the schedule's cycles.
 - **Approve draft…** and **Reject draft…** decide each of the two drafts that your role approves and that you can decide now. When that's only the release's draft, they name the release, such as **Approve Harbor 2's draft…**.
 
 You're done when the row's dot is gone, or shows the draft waiting again.

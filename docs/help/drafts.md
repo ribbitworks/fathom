@@ -9,7 +9,8 @@ A draft goes through these stages:
 - **Saved:** nobody else sees your change yet. **Publish** in the top bar says how many changes are waiting, such as **Publish 3 changes**. Select it to publish them all.
   - Changes you made under another role that your current role can't make stay unpublished. Switch roles to publish them.
   - The menu beside **Publish** lists your changes, and **Discard all…** throws them all away, after asking you first.
-  - To publish or discard only some of them, use the **Not published** tab of the [Drafts page](drafts-page.md#publish-some-of-your-changes).
+  - To publish or discard one record's change, use the record's [**⋯** menu](drafts.md#publish-or-discard-one-change).
+  - To publish or discard several, use the **Not published** tab of the [Drafts page](drafts-page.md#publish-some-of-your-changes).
 - **Published:** the draft waits for an approver, someone whose role approves that kind of change. If someone else changes it, only they see their changes until they publish them.
 - **Approved:** the change goes live. Any new list, column or choice it depends on is approved with it. Approving can't be undone.
 - **Rejected:** the draft goes back to whoever made it. They can change it, resubmit it, or discard it.
@@ -17,6 +18,22 @@ A draft goes through these stages:
 - **Discarded:** the draft is removed, and the record stays as it was. You can't discard a new list, column or choice while other drafts depend on it. Discard or change those drafts first.
 
 Approvers approve and reject drafts on the [Drafts page](drafts-page.md), under **To decide**, as well as where the records are.
+
+## Publish or Discard One Change
+
+Each record's **⋯** menu acts on its draft. The menu opens from the **⋯** at the end of the record's row, or from the **⋯** at the top of its details, just before the **×**. Both offer the same, except that only the row's offers **Show details**. A person's details beside the Org chart have no **⋯**.
+
+To publish your change to one record:
+
+1. Open the record's **⋯** menu.
+1. Select **Publish draft…**. A change that goes alone is published at once.
+1. If other changes must go with it, such as a new choice it uses, Fathom names them and asks first. Select **Publish** to publish them all.
+
+To throw your change away instead, select **Discard draft** in the same menu. The record goes back to how it was.
+
+The menu also offers **Resubmit** once your draft is rejected, and **Approve draft…** and **Reject draft…** if your role approves the draft.
+
+You're done when the record's hollow dot turns yellow, once published, or is gone, once discarded.
 
 ## Marks
 

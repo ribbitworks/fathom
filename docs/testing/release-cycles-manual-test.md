@@ -38,7 +38,8 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 - **Cycles table:** the table on the **Cycles** tab, under the timeline, with a row for each cycle. Its columns are **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Features**. Cycles that have ended, and those starting after next quarter, show only once **Show past cycles** or **Show later cycles** is chosen in the **Views** menu.
 - **A cycle's details:** the side panel for the selected cycle, headed with its schedule's name, a colon and the cycle's name, such as "Platform: 27.1". Its **Details** rows are the table's columns, then **Duration**.
 - **Duration pencil:** the change button at the right of the **Duration** row of a cycle's details. It opens a menu of **This cycle only…** and **This and later cycles…**.
-- **A cycle's ⋯ menu:** the ⋯ menu of a cycle's row, which names the draft that changes the cycle, if any, or both drafts where a new length and a draft of the cycle's release both change it.
+- **A cycle's ⋯ menu:** the ⋯ menu of a cycle's row, which names the draft that changes the cycle, if any, or both drafts where a new length and a draft of the cycle's release both change it. The **⋯** at the top of the cycle's side panel opens the same menu.
+  - It offers **Publish draft…** for the account's own unpublished draft.
   - It offers **Discard draft** and **Resubmit** to those who change schedules.
   - It offers **Approve draft…** and **Reject draft…** to an account whose role approves its drafts, naming the release's draft, such as **Approve Harbor 3's draft…**, where they decide that draft alone.
 - **Schedules tab:** the tab with a row for each schedule, whose ⋯ menu decides and discards a schedule's drafts.

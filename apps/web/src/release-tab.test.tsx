@@ -1038,6 +1038,114 @@ describe("a release's row menu", () => {
   });
 });
 
+describe("a release's draft from its details and its row", () => {
+  const releasesEditor = () =>
+    Response.json({
+      ...fictionalUser,
+      permissions: ["plan:view", "features:view", "features:edit"],
+    });
+  const itemsIn = (menu: HTMLElement) =>
+    within(menu)
+      .getAllByRole("menuitem")
+      .map(({ textContent }) => textContent);
+
+  it("discards the release's draft from the ⋯ in its details", async () => {
+    // Given a release with a draft, its details open beside the table
+    const { fetch } = await openRelease(
+      inStream(fictionalRelease({ draft: recordDraft() })),
+      {
+        can: editsReleases,
+        answers: {
+          "GET /api/session": releasesEditor,
+          [`DELETE /api/records/release/${release.id}/draft`]: savedAs,
+        },
+      },
+    );
+
+    // When Discard draft is chosen in the ⋯ at the top of its details
+    await userEvent.click(
+      within(releasePanel()).getByRole("button", {
+        name: "Actions for Fictional One",
+      }),
+    );
+    expect(itemsIn(await screen.findByRole("menu"))).toEqual([
+      "Copy link",
+      "Add note…",
+      "Discard draft",
+      "Remove release",
+    ]);
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "Discard draft" }),
+    );
+
+    // Then the draft is discarded, as from its row
+    expect(await screen.findByText("Discarded the draft.")).toBeDefined();
+    expect(changesSent(fetch, "DELETE").map(([url]) => url)).toEqual([
+      `/api/records/release/${release.id}/draft`,
+    ]);
+  });
+
+  it("publishes the release's unpublished draft from its row, asking first since its schedule's change goes with it", async () => {
+    // Given the user's own change to a release, which uses their change to its schedule
+    const { fetch } = await openPage(
+      inStream(fictionalRelease({ draft: recordDraft({ unpublished: true }) })),
+      {
+        can: editsReleases,
+        answers: {
+          "GET /api/session": releasesEditor,
+          "GET /api/unpublished": () =>
+            Response.json({
+              changes: [
+                {
+                  subject: "the release Fictional One",
+                  action: "changed",
+                  key: `release ${release.id}`,
+                  linked: [`release-stream ${streamId}`],
+                },
+                {
+                  subject: "the schedule Fictional Majors",
+                  action: "changed",
+                  key: `release-stream ${streamId}`,
+                  linked: [],
+                },
+              ],
+            }),
+          "POST /api/unpublished/publish": () =>
+            Response.json({ total: 2, left: 0 }),
+        },
+      },
+    );
+
+    // When Publish draft… is chosen in its row's menu
+    await chooseRowAction("Fictional One", "Publish draft…");
+
+    // Then the question names the release's change, then the schedule's, and publishing sends the
+    // release's draft
+    const dialog = await screen.findByRole("dialog", {
+      name: "Publish 2 changes?",
+    });
+    expect(
+      within(dialog)
+        .getAllByRole("listitem")
+        .map(({ textContent }) => textContent),
+    ).toEqual([
+      "Changed the release Fictional One",
+      "Changed the schedule Fictional Majors",
+    ]);
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Publish" }),
+    );
+    expect(await screen.findByText("Published 2 changes.")).toBeDefined();
+    expect(
+      (
+        bodyOf(fetch, "POST", "/api/unpublished/publish") as {
+          drafts: { records: unknown[] };
+        }[]
+      ).map(({ drafts }) => drafts.records),
+    ).toEqual([[{ type: "release", id: release.id }]]);
+  });
+});
+
 describe("making a release", () => {
   const added = fictionalRelease({
     id: "30000000-0000-4000-8000-000000000003",

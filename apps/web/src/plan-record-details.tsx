@@ -54,6 +54,8 @@ import {
 import type { NoteContext, NoteOpening } from "./note-editing.tsx";
 import { noOthers } from "./new-plan-record-panel.tsx";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
+import { noDrafts } from "./drafts.ts";
+import { usePublishDraft } from "./publish-draft.tsx";
 import { RecordMenu } from "./record-menu.tsx";
 import {
   besideLive,
@@ -325,6 +327,7 @@ export function ProjectExtras({
   showMilestones: (project: Project) => void;
 }) {
   const editable = canEdit && project.draft?.action !== "deleted";
+  const publishDraft = usePublishDraft();
   const milestones =
     show === "live" ? livePlanRecords(project.milestones) : project.milestones;
   return (
@@ -416,6 +419,11 @@ export function ProjectExtras({
                   discard: () => {
                     menu.discard(milestone);
                   },
+                  publish:
+                    publishDraft &&
+                    ((ref) => {
+                      publishDraft({ ...noDrafts(), records: [ref] });
+                    }),
                 }}
               >
                 {canEdit &&

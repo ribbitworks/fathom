@@ -58,7 +58,7 @@ const newOrder = "the new order for ";
 
 // A change in words, as a record's menu puts its draft: what was done, in semibold, then to what. A
 // change without an action is a new order.
-function changeWords({
+export function changeWords({
   subject,
   action,
   discarded,

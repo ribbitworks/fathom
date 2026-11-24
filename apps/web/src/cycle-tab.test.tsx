@@ -930,6 +930,81 @@ describe("a cycle's drafts", () => {
     },
   );
 
+  describe("published as the change behind the cycle", () => {
+    const schedulesEditor = () =>
+      Response.json({
+        ...fictionalUser,
+        permissions: ["plan:view", "features:view", "configuration:edit"],
+      });
+    // The user's own new pattern for Fictional Majors from 27.2, which goes with no other change.
+    const unpublished = shortened({
+      patterns: [
+        fictionalPattern(),
+        fictionalPattern({
+          id: patternId,
+          startsOn: "2027-04-01",
+          length: 2,
+          draft: recordDraft({ action: "created", unpublished: true }),
+        }),
+      ],
+    });
+    const answers = {
+      "GET /api/session": schedulesEditor,
+      "GET /api/unpublished": () =>
+        Response.json({
+          changes: [
+            {
+              subject: "the cycles of Fictional Majors from 27.2",
+              action: "created",
+              key: `cycle-pattern ${patternId}`,
+              linked: [],
+            },
+          ],
+        }),
+      "POST /api/unpublished/publish": () =>
+        Response.json({ total: 1, left: 0 }),
+    };
+    const publishedRecords = (fetch: ReturnType<typeof serverAnswers>) =>
+      (
+        bodyOf(fetch, "POST", "/api/unpublished/publish") as {
+          drafts: { records: unknown[] };
+        }[]
+      ).map(({ drafts }) => drafts.records);
+
+    it("from its row's menu", async () => {
+      const { fetch } = await openPage([unpublished], {
+        can: editsStreams,
+        answers,
+      });
+
+      await chooseRowAction("Fictional Majors: 27.3", "Publish draft…");
+
+      expect(await screen.findByText("Published 1 change.")).toBeDefined();
+      expect(publishedRecords(fetch)).toEqual([
+        [{ type: "cycle-pattern", id: patternId }],
+      ]);
+    });
+
+    it("from the ⋯ in its details", async () => {
+      const { fetch } = await openCycle([unpublished], {
+        can: editsStreams,
+        answers,
+      });
+      await userEvent.click(
+        within(cyclePanel()).getByRole("button", { name: /^Actions for / }),
+      );
+
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: "Publish draft…" }),
+      );
+
+      expect(await screen.findByText("Published 1 change.")).toBeDefined();
+      expect(publishedRecords(fetch)).toEqual([
+        [{ type: "cycle-pattern", id: patternId }],
+      ]);
+    });
+  });
+
   it("are resubmitted from the row's menu once rejected", async () => {
     const rejected = shortened({
       patterns: [

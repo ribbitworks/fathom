@@ -277,6 +277,38 @@ export const draftKeysOf = (asked: DraftsAsked): string[] => {
   ];
 };
 
+// A user's unpublished changes given, by key, with every change they use, those use, and so on,
+// from what each change uses, by key: those publishing them takes along.
+export function withNeeded(
+  uses: ReadonlyMap<string, readonly string[]>,
+  given: readonly string[],
+): Set<string> {
+  const found = new Set(given);
+  const queue = [...given];
+  for (let next = queue.pop(); next !== undefined; next = queue.pop()) {
+    for (const used of uses.get(next) ?? []) {
+      if (!found.has(used)) {
+        found.add(used);
+        queue.push(used);
+      }
+    }
+  }
+  return found;
+}
+
+// The changes given, with every change that uses them, those that use those, and so on: those
+// discarding them takes along.
+export function withUsers(
+  uses: ReadonlyMap<string, readonly string[]>,
+  given: readonly string[],
+): Set<string> {
+  const usedBy = new Map<string, string[]>();
+  for (const [user, used] of uses) {
+    for (const one of used) usedBy.set(one, [...(usedBy.get(one) ?? []), user]);
+  }
+  return withNeeded(usedBy, given);
+}
+
 // The drafts asked for of the kinds a test keeps.
 export function draftsWhere(
   asked: DraftsRequest,

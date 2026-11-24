@@ -17,6 +17,7 @@ Verifies:
 - That a record someone else is changing is held.
 - That publishing and Discard all… in the top bar work.
 - That publishing leaves the changes the role in use can't make.
+- That one record's change is published from its row's menu and discarded from the menu in its details.
 
 [Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages, and [Drafts Page](drafts-page-manual-test.md) publishing and discarding chosen changes on the Drafts page.
 
@@ -228,6 +229,68 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - A notice reads "Published 1 change."
     - The **Publish** button is gone from the top bar.
+  - **Notes:**
+
+**Afterwards:** Run Restore the Seed Data.
+
+### DRAFT-21: Publishing One Change From Its Row
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-20.
+
+**Preconditions:** DRAFT-20's Afterwards done. Signed in with this account. **People** page open.
+
+- [ ] `3D15` Clear the search box above the table, and type `Mariana Metz` in it.
+  - **Expected:** A hollow yellow dot before her new **Site**.
+  - **Notes:**
+
+- [ ] `5B9B` Select the **⋯** button at the end of her row.
+  - **Expected:** The menu's items are, in order:
+    - **Show details**
+    - **Copy link**
+    - **Publish draft…**
+    - **Discard draft**
+    - **Remove person**
+  - **Notes:**
+
+- [ ] `A85B` Select **Publish draft…**.
+  - **Expected:**
+    - No dialog opens.
+    - A notice reads "Published 1 change.", with no **Undo**.
+    - A solid yellow dot before her new **Site**.
+    - The top bar shows **Publish 2 changes**.
+  - **Notes:**
+
+**Afterwards:** Run Restore the Seed Data.
+
+### DRAFT-22: Discarding a Change From a Record's Details
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-21.
+
+**Preconditions:** DRAFT-21's Afterwards done. Signed in with this account. **People** page open.
+
+- [ ] `05E2` Clear the search box above the table, and type `Mariana Metz` in it.
+  - **Expected:** A hollow yellow dot before her new **Site**.
+  - **Notes:**
+
+- [ ] `10DC` Select the details button in her row.
+  - **Expected:**
+    - A side panel opens, headed 'Mariana Metz'.
+    - A **⋯** button is just before the **×** at its top right.
+  - **Notes:**
+
+- [ ] `830B` Select that **⋯** button.
+  - **Expected:** The menu's items are, in order:
+    - **Copy link**
+    - **Publish draft…**
+    - **Discard draft**
+    - **Remove person**
+  - **Notes:**
+
+- [ ] `53E2` Select **Discard draft**.
+  - **Expected:**
+    - The side panel stays open.
+    - Her **Site** has no dot before it, in the table and in the side panel.
+    - The top bar shows **Publish 2 changes**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

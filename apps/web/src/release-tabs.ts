@@ -152,8 +152,8 @@ export const featuresColumn = <
   };
 };
 
-// A row's menu's discarding and resubmitting of the draft it shows, given the record each draft is
-// of, as decisions name it.
+// A row's menu's discarding, resubmitting and publishing of the draft it shows, given the record
+// each draft is of, as decisions name it.
 export const draftActions = <Row, Draft>(
   refOf: (row: Row, draft: Draft) => RecordRef,
   run: (work: () => Promise<unknown>, done: string) => void,
@@ -164,6 +164,7 @@ export const draftActions = <Row, Draft>(
   resubmit: (row: Row, draft: Draft) => {
     run(() => resubmitRecordDraft(refOf(row, draft)), "Resubmitted the draft.");
   },
+  draftRef: refOf,
 });
 
 // A row's menu's discarding and resubmitting of the record's own draft, never its parts'.
