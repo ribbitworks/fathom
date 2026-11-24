@@ -264,9 +264,9 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
   - **Changing:** its type is fixed once it is added. It can be made required only once every record has a value, and single-choice only once none has several. Its list cannot change while it has values.
 - **Column order:** A table's own order of its columns, built-in and custom alike, which every view starts from. A view may hold an order of its own.
 - **Saved view:** A table's view saved under a name, with the table it belongs to, one of a fixed set, the user who saved it, and whether it is personal to them or shared.
-  - **What it holds:** the table's search, filters, sort, what its Draft menu shows, the columns its metrics break down by, its grouping, the columns it hides, and its page's own choices, such as the schedule the Features Board shows.
+  - **What it holds:** the table's search, filters, sort, what its Draft menu shows, the columns its metrics break down by and the one they add up, its grouping, the columns it hides, and its page's own choices, such as the schedule the Features Board shows.
   - **Name:** unique, ignoring letter case, among the table's shared views and among each user's personal views on it.
-  - **Sensitivity:** that of the most sensitive column it filters, sorts, breaks down, or groups by, and of the data its grouping needs. A People view may also filter on drafts, which is General, since each user is sent only the drafts they may see.
+  - **Sensitivity:** that of the most sensitive column it filters, sorts, breaks down, adds up, or groups by, and of the data its grouping needs. A People view may also filter on drafts, which is General, since each user is sent only the drafts they may see.
 - **Last view:** The view an account last showed on a page with a Views menu, one for each account and page.
   - **What it holds:** the table shown, which on Projects and Releases is its tab, the view as a saved view holds it, the saved view it started from, if any, and the page's mode, such as Features' Board.
   - **The account's own setting:** never a draft, with no change history, and removed only if the account is. Deleting the saved view it started from keeps the rest of it.

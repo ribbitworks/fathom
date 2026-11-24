@@ -428,7 +428,6 @@ export function columnsFor(
       ...(featureTeams === undefined ? [] : [featureTeams]),
       onPeopleOnly({
         ...builtIn("teamName", "text", false, personLengths.teamName),
-        breaksDown: false,
       }),
       // A column's type is the kind of its cells. Planned hires have the columns offered on them,
       // where nothing is required.

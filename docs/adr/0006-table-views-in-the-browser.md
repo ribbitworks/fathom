@@ -3,7 +3,7 @@
 - **ADR:** 0006
 - **Status:** Accepted
 - **Date:** 2026-10-31
-- **Revised:** 2026-11-02, for the metrics' breakdown, kept in the view; 2026-11-14, for saved views of every table, read apart from its rows; 2026-11-19, to note that TanStack Table is not adopted yet, and to say data classes, as Fathom does, rather than tiers
+- **Revised:** 2026-11-02, for the metrics' breakdown, kept in the view; 2026-11-14, for saved views of every table, read apart from its rows; 2026-11-19, to note that TanStack Table is not adopted yet, and to say data classes, as Fathom does, rather than tiers; 2026-11-24, for the column the metrics add up, kept in the view
 
 ## Context
 
@@ -21,7 +21,7 @@ Each table's read already sends every row the user may see, leaving out every va
 - **Column kinds:** Each kind of column, such as text, date, or a choice from a list, says once how its values are searched, sorted, and filtered, and has one filter form and one description of its filter.
   - **A new table:** A table only lists its columns and how to read each one, so a new table needs no other work.
   - **A new kind:** A new kind adds those parts, which TypeScript requires it to.
-- **The view in the address:** A table's search, filters, sort, and the columns its metrics break down by are kept in the page address, so they survive reloading, Back undoes them, and a view can be shared as a link.
+- **The view in the address:** A table's search, filters, sort, the columns its metrics break down by and the one they add up are kept in the page address, so they survive reloading, Back undoes them, and a view can be shared as a link.
   - **Columns the user does not have:** Filters, sorts, and breakdowns on columns the user does not have, such as in a link from someone who may see more, are ignored.
 - **Saved views on the server:** A saved view is kept on the server in the same form as the address, for one of the tables that keep views.
   - **Read apart:** It is read apart from the table's rows, so a change to the views never reloads the rows.

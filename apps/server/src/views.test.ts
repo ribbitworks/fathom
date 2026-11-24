@@ -446,6 +446,51 @@ describe("saved views", () => {
     ).toBe(400);
   });
 
+  it("keep the column their metrics add up, or nothing, and are kept from readers who may not see it", async () => {
+    const sharer = await test.signedIn("workforce-administrator");
+    const viewer = await test.signedIn(generalReader);
+    const adding = { breakdown: ["employeeId"], sum: "employeeId" };
+    const mine = (
+      await save(viewer.cookie, unique("Adding"), adding)
+    ).json<Saved>().view;
+    expect(mine.definition).toEqual(adding);
+    expect(
+      (await viewsOf(viewer.cookie)).find(({ id }) => id === mine.id)
+        ?.definition,
+    ).toEqual(adding);
+    const nothing = { breakdown: ["employeeId"], sum: "" };
+    expect(
+      (await save(viewer.cookie, unique("Nothing"), nothing)).json<Saved>().view
+        .definition,
+    ).toEqual(nothing);
+
+    expect(
+      (
+        await save(viewer.cookie, unique("Unknown"), {
+          breakdown: ["employeeId"],
+          sum: "nothing",
+        })
+      ).statusCode,
+    ).toBe(400);
+    expect(
+      (
+        await save(viewer.cookie, unique("Unseen"), {
+          breakdown: ["employeeId"],
+          sum: "endDate",
+        })
+      ).json(),
+    ).toEqual({ error: "Choose only columns this role can see" });
+    const { view } = (
+      await share(sharer.cookie, unique("Adding ends"), {
+        breakdown: ["employeeId"],
+        sum: "endDate",
+      })
+    ).json<Saved>();
+    expect(
+      (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
+    ).toBe(false);
+  });
+
   it("may filter on drafts, which every reader may see, since each is sent only the drafts they may see", async () => {
     const viewer = await test.signedIn(generalReader);
     const maker = await test.signedIn("workforce-administrator");

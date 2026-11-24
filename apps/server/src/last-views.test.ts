@@ -163,7 +163,7 @@ describe("the last view of a page", () => {
   });
 
   it("leaves out what the reader's role can no longer see", async () => {
-    // Given a view filtered, sorted and grouped on Personal columns
+    // Given a view filtered, sorted, grouped, broken down and added up on Personal columns
     const reader: Permission[] = [...generalReader, "personal:view"];
     const { id, cookie } = await test.signedIn(reader);
     await remember(cookie, "people", {
@@ -179,6 +179,8 @@ describe("the last view of a page", () => {
         thenBy: "positionId",
         groupsReversed: true,
         hidden: ["startDate", "employeeId"],
+        breakdown: ["endDate", "employeeId"],
+        sum: "endDate",
       },
     });
 
@@ -193,6 +195,7 @@ describe("the last view of a page", () => {
         filters: { draft: { any: ["waiting"] } },
         sort: ["preferredName"],
         hidden: ["employeeId"],
+        breakdown: ["employeeId"],
       },
     });
   });

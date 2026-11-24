@@ -60,7 +60,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **View:** What a table shows:
   - **Records and metrics:** its search, filters, sort, grouping, which version of each record it shows, its metrics, and any of the page's own choices of which records show, such as Show retired.
   - **Columns:** which of its first columns are frozen, staying in view while the rest scroll sideways, the order of its columns, which are hidden, the widths set for them, and the units and decimal places they are shown in.
-- **Metrics:** Counts of a table's rows shown, broken down by the values of one column, or of two crossed, each with its share of those rows.
+- **Metrics:** Counts of a table's rows shown, broken down by the values of one column, or of two crossed, each with its share of those rows, and, for a number column such as Effort, each group's total and average.
 - **Draft row:** A row to be added, changed, or removed, waiting for an Approver to approve it, which makes it live, or reject it, which marks it Rejected, with a reason, until it is changed or discarded.
 - **Live:** Approved, and so part of the plan everyone works from.
 - **Approver:** Anyone whose role lets them approve drafts of that data. Not a role of its own.

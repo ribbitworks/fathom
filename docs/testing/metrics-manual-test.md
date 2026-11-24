@@ -102,6 +102,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - "SDET 32 (20%)"
       - "Engineering Manager 17 (10.6%)"
       - "Architect 0 (0%)"
+      - "All people and planned hires 160 (100%)", set apart under the rest
     - No row shows a green dot and a second figure.
   - **Notes:**
 

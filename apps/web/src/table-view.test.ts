@@ -598,10 +598,12 @@ describe("the column Metrics adds up", () => {
     expect(savedFor(viewFrom({ breakdown: ["level"] })).sum).toBeUndefined();
   });
 
-  it("is kept when the table has it, or as nothing, and dropped otherwise", () => {
-    expect(knownView(view({ sum: "start" }), columns).sum).toBe("start");
-    expect(knownView(view({ sum: "" }), columns).sum).toBe("");
-    expect(knownView(view({ sum: "gone" }), columns).sum).toBeUndefined();
+  it("is kept when the table has it and it adds up, or as nothing, and dropped otherwise", () => {
+    const adding = [...columns, { key: "hours", sum: { amount: () => null } }];
+    expect(knownView(view({ sum: "hours" }), adding).sum).toBe("hours");
+    expect(knownView(view({ sum: "" }), adding).sum).toBe("");
+    expect(knownView(view({ sum: "start" }), adding).sum).toBeUndefined();
+    expect(knownView(view({ sum: "gone" }), adding).sum).toBeUndefined();
   });
 });
 

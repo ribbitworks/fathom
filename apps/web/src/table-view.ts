@@ -535,10 +535,10 @@ export function narrows(view: View): boolean {
 // from someone who may, and with its groupings, frozen columns, retired records and the page's
 // choices, and the hidden columns, widths, units, and decimal places of the columns the table has.
 // The breakdown keeps only the columns the metrics offer, when given, and the sum only a column the
-// table has.
+// table has that adds up.
 export function knownView(
   view: View,
-  columns: readonly { key: string }[],
+  columns: readonly { key: string; sum?: unknown }[],
   filterOnly: readonly { key: string }[] = [],
   countable: readonly { key: string }[] = columns,
 ): View {
@@ -562,7 +562,9 @@ export function knownView(
             (key) => known.has(key) && counted.has(key),
           ),
         }),
-    ...(view.sum === undefined || (view.sum !== "" && !known.has(view.sum))
+    ...(view.sum === undefined ||
+    (view.sum !== "" &&
+      !columns.some(({ key, sum }) => key === view.sum && sum !== undefined))
       ? {}
       : { sum: view.sum }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),

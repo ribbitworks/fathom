@@ -253,6 +253,55 @@ describe("the Metrics panel", () => {
       expect(figures("P3")).toEqual(["–", "–", "–"]);
     });
 
+    it("gives each total as drafted, with the live total under it where it differs", () => {
+      const drafted = {
+        ...person("e", ["p4"], ["test"], {
+          state: "waiting",
+          madeBy: null,
+          madeAt: null,
+          action: "changed",
+          changed: ["f3"],
+          live: { values: {}, links: {}, numbers: { f3: 1 } },
+        }),
+        numbers: { f3: 5 },
+      };
+      render(
+        <Table
+          people={[...counted, drafted]}
+          fields={[level, role, hours]}
+          start={{ ...emptyView, breakdown: ["f1"], sum: "f3" }}
+        />,
+      );
+      expect(figures("P4")[2]).toBe("2117, live");
+    });
+
+    it("goes back to counts in the crossed table once Nothing is added up", async () => {
+      const user = userEvent.setup();
+      render(summing({ ...emptyView, breakdown: ["f1", "f2"], sum: "f3" }));
+      await user.click(within(panel()).getByRole("radio", { name: "Hours" }));
+      await chooseIn(panel(), "Sum of", "Nothing");
+      expect(
+        within(panel()).queryByRole("radio", { name: "Hours" }),
+      ).toBeNull();
+      expect(figures("P4")).toEqual(["1", "1", "2"]);
+    });
+
+    it("keeps adding up when Clear all clears the search", async () => {
+      const user = userEvent.setup();
+      render(
+        summing({
+          ...emptyView,
+          search: "Fictional",
+          breakdown: ["f1"],
+          sum: "f3",
+        }),
+      );
+      await user.click(screen.getByRole("button", { name: "Clear all" }));
+      expect(
+        within(panel()).getByLabelText<HTMLInputElement>("Sum of").value,
+      ).toBe("Hours");
+    });
+
     it("adds nothing up once Nothing is chosen", async () => {
       render(summing({ ...emptyView, breakdown: ["f1"], sum: "f3" }));
       await chooseIn(panel(), "Sum of", "Nothing");

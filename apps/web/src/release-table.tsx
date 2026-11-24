@@ -309,11 +309,7 @@ export const releaseDetailColumns = (
       ? { ...each, ...column("name", "Release", "text") }
       : each,
   ),
-  {
-    ...column("colour", "Colour", "text"),
-    colour: releaseColour,
-    breaksDown: true,
-  },
+  { ...column("colour", "Colour", "text"), colour: releaseColour },
 ];
 
 // Written in a panel of its own beside the details.
