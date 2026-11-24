@@ -79,7 +79,7 @@ Each fact lives in the one document that owns it. The documents marked as summar
 - A change updates every document it makes untrue, incomplete or out of date, not only the documents it edits: the README's quick start and links, setup steps and commands, the repository layout, architecture, decisions, use cases, Help pages, roadmap and issues.
 - Deferred or partial features stay marked as such; never document unshipped behaviour as done.
 - Known problems, deferred work and accepted review findings are filed as GitHub issues, not kept in a document.
-  - Each is filed through the issue forms, only with the owner's explicit approval, and with the labels [Issues](issues.md) sets out.
+  - Each is filed through the issue forms, with the labels [Issues](issues.md) sets out.
   - Any document that needs one links to it.
   - A pull request that fixes one says `Fixes #n` in its description, never in commit messages or code comments.
 

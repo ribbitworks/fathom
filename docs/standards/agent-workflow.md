@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/code-review.md", "docs/standards/testing.md", "docs/standards/documentation.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Agent Workflow
@@ -67,7 +67,12 @@ or "the project's targeted tests", use the ones it names.
   the owner. Then run `git branch -D <type>/<task>`; rebase merges rewrite the
   commits, so `git branch -d` refuses.
 - **Tests and builds:** run only through the project's own commands, never the
-  underlying tools directly.
+  underlying tools directly. If a category of tests can't run, stop and tell
+  the owner; never report the tests as passing. Report a flaky test to the
+  owner rather than rerunning it until it passes.
+- **Issues:** propose each issue, with its title, labels and body, to the
+  owner, and file only those the owner approves. Name one not approved in the
+  pull request or the report instead.
 - **Versions and tags:** release tags follow semantic versioning,
   `vMAJOR.MINOR.PATCH`. A change that breaks something that uses the release
   bumps MAJOR; a new feature or option, even a small one, bumps MINOR and
@@ -117,8 +122,8 @@ Complete these steps, in order, for every change:
    step.
 1. **Tests:** run the project's targeted tests, for the code the change
    touches, and its linters, and fix all failures. A change to documentation
-   only may skip this and the next step, unless the project's standards say its
-   documents are built into the product.
+   only may skip this and the next step, apart from the Markdown linter, unless
+   the project's standards say its documents are built into the product.
 1. **Warnings:** resolve every build warning and runtime warning the run
    reports, including ones that predate the change.
 1. **Code review:** have a separate agent, acting as a senior staff engineer,

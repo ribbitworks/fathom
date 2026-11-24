@@ -422,7 +422,7 @@ Under **Settings** → **Rules** → **Rulesets**:
   - Changes reach it only through a pull request, merged by rebasing, so each commit lands as written, as the [Agent Workflow](../standards/agent-workflow.md#rules-for-both-modes) sets out. No approving review is required, since the maintainer merges.
   - **Full check** and **Container tests**, from GitHub Actions, must pass.
   - It can't be deleted or force-pushed.
-  - A pull request's branch needn't be up to date with it before merging, since the code is rebased onto `main` before it's pushed, as the [Testing Standards](../standards/testing.md#running-tests) set out.
+  - A pull request's branch needn't be up to date with it before merging, since the code is rebased onto `main` before it's pushed, as the [Testing Standards](../standards/testing.md#before-a-pull-request) set out.
 - **release tags:** on `refs/tags/v*`. Only the Repository admin role may create, move or delete a release tag, since a published release runs its workflow from its tag.
 
 ### Pull Requests
