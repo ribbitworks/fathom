@@ -45,6 +45,7 @@ import {
   linksOf,
   notesOf,
   numbersOf,
+  seesPersonField,
 } from "./person-fields.ts";
 import { currentOn, readLive } from "./people-reads.ts";
 
@@ -190,6 +191,8 @@ async function readPeopleIn(
     seesSensitivity(actor, column.tier),
   );
   const tierOf = personTier(allColumns);
+  const seesDraftField = seesPersonField(actor, allColumns);
+  const approvesPeople = actor.permissions.includes("people:approve");
   const shownFields = new Set<string>([
     "preferredName",
     "employeeId",
@@ -362,10 +365,13 @@ async function readPeopleIn(
       )
         ? { reason: draft.reason }
         : {};
+    const unseen =
+      approvesPeople && !draftFields(before, draft).every(seesDraftField);
     return {
       action: draft.action,
       changed: fields.map((field) => fieldOfValue(field) ?? field),
       live: liveValues,
+      ...(unseen ? { holdsUnseen: true as const } : {}),
       state: draft.state,
       ...reason,
       ...(draft.unpublished === true ? { unpublished: true } : {}),

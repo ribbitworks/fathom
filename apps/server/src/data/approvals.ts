@@ -31,7 +31,6 @@ import {
   type Actor,
   requireAnyPermission,
   requirePermission,
-  seesSensitivity,
 } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
@@ -58,6 +57,7 @@ import {
   personChanges,
   personTier,
   recordSensitiveChanges,
+  seesPersonField,
 } from "./person-fields.ts";
 import {
   approveColumnDrafts,
@@ -86,7 +86,7 @@ import {
 } from "./list-approvals.ts";
 import { approveRecordDrafts, rejectRecordDrafts } from "./record-decisions.ts";
 import { kindOf, refuseRemovingNamed } from "./records.ts";
-import { inListOrder, readColumns, valueField, valueRows } from "./values.ts";
+import { inListOrder, readColumns, valueRows } from "./values.ts";
 import { readToday } from "./settings.ts";
 import { recordHiringChanges } from "./hire-fields.ts";
 import {
@@ -121,11 +121,7 @@ async function seenAsked(
     lock: true,
     asOf: today,
   });
-  const tierOf = personTier(columns);
-  const shown = new Set(columns.map(({ id }) => valueField(id)));
-  const seen = (field: string) =>
-    (fieldOfValue(field) === null || shown.has(field)) &&
-    seesSensitivity(actor, tierOf(field));
+  const seen = seesPersonField(actor, columns);
   // Those who do not see start and end dates see only people current today, as the live dates say.
   const listed = (id: string, draft: Draft) =>
     seesEmployment(actor) || currentOn(live.get(id) ?? draft.fields, today);
