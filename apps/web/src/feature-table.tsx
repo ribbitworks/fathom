@@ -33,13 +33,12 @@ import { EffortCell } from "./effort-cell.tsx";
 import { effortColumnUnits, hoursWords, unitLabel } from "./effort.ts";
 import { decimalUpTo } from "./numbers.ts";
 import { choice } from "./lists.ts";
+import { type FeatureFields, type TableChoices } from "./projects.ts";
 import {
   cycleChoiceId,
   type ReleaseGroup,
-  type FeatureFields,
-  type TableChoices,
   targetOf,
-} from "./projects.ts";
+} from "./feature-cycles.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import { inOrder } from "./grid-columns.tsx";
 import {

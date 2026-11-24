@@ -14,7 +14,7 @@ import { UnstyledButton } from "@mantine/core";
 import { type ReactNode, useCallback, useMemo } from "react";
 import { ColouredName, colouredNameChars } from "./colour-swatch.tsx";
 import { isCurrent } from "./feature-board.ts";
-import { cycleChoiceId } from "./projects.ts";
+import { cycleChoiceId } from "./feature-cycles.ts";
 import classes from "./pages.module.css";
 import {
   draftsById,

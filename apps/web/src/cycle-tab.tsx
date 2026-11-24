@@ -17,7 +17,7 @@ import {
   durationColumn,
 } from "./cycle-table.tsx";
 import type { DraftSelection } from "./drafts.ts";
-import { cycleChoiceId } from "./projects.ts";
+import { cycleChoiceId } from "./feature-cycles.ts";
 import {
   ColumnRows,
   RecordLink,

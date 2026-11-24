@@ -50,7 +50,7 @@ import {
   type ShowIn,
 } from "./release-tabs.ts";
 import { releaseColumnKey } from "./feature-table.tsx";
-import { cycleChoiceId, releaseGroupKey } from "./projects.ts";
+import { cycleChoiceId, releaseGroupKey } from "./feature-cycles.ts";
 import type { SidePanel } from "./side-panel.tsx";
 import type { ChangeView, SavedViews } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";

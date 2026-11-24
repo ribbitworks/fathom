@@ -16,7 +16,7 @@ import type { ReactNode } from "react";
 import { differingKeys, type DraftSelection, noDrafts } from "./drafts.ts";
 import { choice } from "./lists.ts";
 import { draftFieldsOf } from "./plan-table.tsx";
-import { cycleChoiceId, cycleChoices, cycleNames } from "./projects.ts";
+import { cycleChoiceId, cycleChoices, cycleNames } from "./feature-cycles.ts";
 import {
   choicesNamed,
   fieldColumn,

@@ -27,7 +27,7 @@ import {
 import { isCurrent } from "./feature-board.ts";
 import { choice } from "./lists.ts";
 import { draftFieldsOf } from "./plan-table.tsx";
-import { cycleChoiceId } from "./projects.ts";
+import { cycleChoiceId } from "./feature-cycles.ts";
 import {
   choicesNamed,
   fieldColumn,

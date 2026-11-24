@@ -32,11 +32,8 @@ import {
   projectDateColumn,
   projectDateColumns,
 } from "./project-grids.tsx";
-import {
-  type PlanRecord,
-  type PlanTab,
-  streamOfReleaseGroup,
-} from "./projects.ts";
+import { type PlanRecord, type PlanTab } from "./projects.ts";
+import { streamOfReleaseGroup } from "./feature-cycles.ts";
 import {
   inUnitsWords,
   RecordLinkList,

@@ -12,7 +12,7 @@ import {
 } from "./feature-table.tsx";
 import { livePlanRecords } from "./plan-table.tsx";
 import { planDraftFields } from "./project-grids.tsx";
-import { cycleChoices, releaseOfCycle } from "./projects.ts";
+import { cycleChoices, releaseOfCycle } from "./feature-cycles.ts";
 import {
   choices,
   cycleChoice,

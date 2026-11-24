@@ -17,7 +17,7 @@ import {
 } from "@fathom/shared";
 import { formatMonth } from "./day-formats.ts";
 import { monthQuarters, quarterPeriod, quarterSteps } from "./month-strip.ts";
-import { cycleChoiceId } from "./projects.ts";
+import { cycleChoiceId } from "./feature-cycles.ts";
 import type { ViewPart } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
 import { daysBetween, includesCycle, keptReleases } from "./releases.ts";

@@ -22,7 +22,7 @@ import {
 } from "./drafts.ts";
 import { retiredLive } from "./lists.ts";
 import { draftFieldsOf } from "./plan-table.tsx";
-import { cycleChoiceId } from "./projects.ts";
+import { cycleChoiceId } from "./feature-cycles.ts";
 import { featuresColumn, type PlannedFeatures } from "./release-tabs.ts";
 import { fieldColumn, withLiveCopies, wordsColumn } from "./grid-columns.tsx";
 import {
