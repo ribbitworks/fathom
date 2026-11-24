@@ -86,7 +86,7 @@ Coverage numbers support review; they do not replace judgment about whether the 
 
 ### Coverage Enforcement
 
-The coverage tool is configured so the test command fails below the 100% threshold [Coverage](#coverage) requires for the code it covers. `pnpm test:changed`, and so `pnpm check:push`, holds each changed source file to that threshold on its own, so a gap fails locally before GitHub's check finds it, as [Running Tests](#running-tests) describes.
+The coverage tool is configured so the test command fails below the 100% threshold [Coverage](#coverage) requires for the code it covers. `pnpm test:changed`, and so `pnpm check:push`, holds each changed source file to that threshold on its own, so a gap fails locally before GitHub's check finds it, as [Coverage of a Change](#coverage-of-a-change) describes.
 
 Whole files that only start a program or serve the tests, such as the server's `main.ts`, are left out in the coverage settings, with a comment saying why. Other code may be left untested only with a `/* v8 ignore */` comment that says why, and only in two cases:
 
@@ -111,7 +111,9 @@ Logic, validation, access checks and data handling are never excluded. The code 
 
 ## Web App Tests
 
-- **Checking that nothing opened:** Mantine shows a menu, popover or dialog a frame after it opens, so checking straight after an action that none opened proves nothing: the check usually passes even when one opens, and fails now and then. Before checking that one is absent, a test **Must** wait for something the action does show, or check that the control that opens it is absent, when that control is shown exactly when the menu or dialog can open in any way, such as from a key.
+- **Checking that nothing opened:** Mantine shows a menu, popover or dialog a frame after it opens. So a check that none opened, straight after an action, proves nothing: it usually passes even when one opens, and fails now and then. Before checking that one is absent, a test **Must** do one of these:
+  - Wait for something the action does show.
+  - Check that the control that opens it is absent, when that control is shown exactly when the menu or dialog can open in any way, such as from a key.
 
 ## Test Data
 
@@ -126,29 +128,82 @@ UI tests are not required on every change. A new user flow lists a short UI test
 
 ## Running Tests
 
-Run tests only through Fathom's own commands, never the underlying tools directly.
+Run tests only through Fathom's own commands, never the underlying tools directly. If any category of tests can't run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
 
-`pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell and licence linting, Renovate's validation of `renovate.json` when it has changed, the script tests, the unit, integration, access control and security tests, and the build-time security scans, side by side, then lists each one's result and time. `pnpm test:changed` runs the tests a change can affect, committed or not: the script tests, then, for a source file in a package's `src` folder, only the tests that import it, directly or through other files, in that package and every package that depends on it. Any other change in a package, such as its settings, stylesheets or migrations, runs every test of that package and of every package that depends on it. A change outside the packages, other than to documentation, runs every test, a change to the web app's stylesheets alone runs only the web app's tests, ESLint and the formatting check, a change to a Help page in `docs/help/` runs the web app's tests that import the Help pages, since they are built into it, and a change to other documentation alone runs none. Tests that reach code other than by importing it, such as building the web app, run in `pnpm check`. `pnpm test:changed --uncommitted` counts only the work not yet committed, for small rounds of fixes after a commit on a long branch. Both run in two copies of the repository at a time on one computer, in the order they asked, a copy that starts alone having every core and one that starts beside another half of them, a copy that has to wait saying so, as [Development Setup](../design/development-setup.md#how-the-checks-run) describes. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
+### The Commands
 
-`pnpm test:changed` also fails where GitHub's check would on coverage, without running every test. A package whose every test runs has all its coverage measured, as settings, dependencies and files outside the source can change any file's coverage. Otherwise it measures only the coverage of the source files the change touches in each package's `src` folder, other than those the package's coverage settings leave out, against the package's threshold. A changed or removed test counts as a change to the source file of the same name beside it, whose importing tests then run too, which for a widely imported file can be most of a package's tests. Measuring coverage adds about a quarter to the time of the tests it measures. It cannot tell which source a test of another name covers, nor see code a test reaches other than by importing it, so `pnpm check` and GitHub's check still enforce coverage in full.
+- **`pnpm check`:** the full suite, side by side, then each one's result and time. It runs ESLint, the Prettier formatting check, type checking, and Markdown, shell and licence linting. It also runs Renovate's validation of `renovate.json` when it has changed, the script tests, the unit, integration, access control and security tests, and the build-time security scans.
+- **`pnpm check:push`:** the tests a change can affect, with every linter but the licence and Renovate checks, side by side.
+- **`pnpm test:changed`:** the tests a change can affect, committed or not, as [What a Change Runs](#what-a-change-runs) sets out. With `--uncommitted`, it counts only the work not yet committed, for small rounds of fixes after a commit on a long branch.
+- **`pnpm test:containers`:** the container tests. UI tests get their own command once they are added.
+- **Taking turns:** the checks run in two copies of the repository at a time on one computer, in the order they asked. A copy that starts alone has every core, and one that starts beside another has half. A copy that has to wait says so, as [Development Setup](../design/development-setup.md#how-the-checks-run) describes.
 
-While working, run `pnpm check:push`, the tests a change can affect and every linter but the licence and Renovate checks, side by side, as [Development Setup](../design/development-setup.md#checks-and-tests) describes, or any one of its parts on its own for a quick answer. The workflow's test step, which [agent-workflow.md](agent-workflow.md#autonomous-mode) repeats after each round of fixes, runs:
+### What a Change Runs
 
-- **Before the code review:** the checks run while working. The full `pnpm check` waits for the last step.
-- **After each round of fixes,** whether from a review, UI feedback or owner feedback: `pnpm check:push`. `pnpm security` runs too, but only if the round changed dependencies, the lockfile, a container file or the security scans' settings.
-- **On the pull request:** the Check workflow on GitHub runs the full `pnpm check` on every push to a pull request and to `main`, its package tests on runners of their own, as [The Check Workflow](#the-check-workflow) draws. A pull request of documentation alone (Markdown files, and files under `docs/` other than Help pages, which are built into Fathom) leaves out the package tests, the server's merged coverage and the container tests; every push to `main` runs them. The check's security report runs on every pull request, documentation alone included, and scans the container images whenever anything they're built from has changed, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out. Once the review's findings are fixed and the checks after the last round of fixes pass, the code is rebased onto `main`, `pnpm check:push` runs on the rebased code, and it's pushed, without waiting for the owner's approval, as the [Agent Workflow](agent-workflow.md#workflow) sets out. The pull request's green check is the [Agent Workflow](agent-workflow.md#workflow)'s full suite step, for a pull request's commit, or for an [issue batch](issues.md#issue-batches) once for the whole branch, and the owner merges only on green: **Full check** and **Container tests** must pass, as [Development Setup](../design/development-setup.md#rulesets) sets out. Follow the run with `gh pr checks --watch`, and read a failure or warning with `gh run view --log` (or `--log-failed`); every warning it reports is fixed, as locally. Running the full `pnpm check` locally is optional, for when the workflow can't run.
+`pnpm test:changed` runs the script tests, then the package tests below, unless the change is to documentation other than Help pages, or to the web app's stylesheets alone. [The Changed Tests](#the-changed-tests) draws each choice.
 
-Without the internet, `pnpm check:push --offline` runs once `pnpm offline:prepare` has run while connected, as [Development Setup](../design/development-setup.md#working-offline) describes. A branch checked offline still needs the Check workflow's full check to pass on its pull request.
+| A change to | Runs |
+| --- | --- |
+| A source file in a package's `src` folder | The tests that import it, directly or through other files, in that package and every package that depends on it |
+| A test, changed or removed | As a change to the source file of the same name beside it, whose importing tests then run too; for a widely imported file, that can be most of a package's tests |
+| Anything else in a package, such as its settings, stylesheets or migrations | Every test of that package and of every package that depends on it |
+| The web app's stylesheets alone | The web app's tests, ESLint and the formatting check |
+| A Help page in `docs/help/` | The web app's tests that import the Help pages, since they're built into it |
+| Anything outside the packages, other than documentation | Every test |
+| Other documentation alone | Nothing |
 
-A change that affects the containers runs `pnpm test:containers` with the test step before the code review, and again only if a later fix changes the containers. A change to documentation only may skip the test step, as [agent-workflow.md](agent-workflow.md#autonomous-mode) allows, except a change to a Help page, which is built into Fathom.
+Tests that reach code other than by importing it, such as building the web app, run in `pnpm check`.
+
+### Coverage of a Change
+
+`pnpm test:changed` fails where GitHub's check would on coverage, without running every test:
+
+- **A package whose every test runs** has all its coverage measured, since settings, dependencies and files outside the source can change any file's coverage.
+- **Any other package** has only the source files the change touches in its `src` folder measured, against its threshold, apart from those its coverage settings leave out.
+- **A changed or removed test** counts as a change to the source file of the same name beside it, so that file's coverage is measured.
+- **The cost:** measuring coverage adds about a quarter to the time of the tests it measures.
+- **The limits:** it can't tell which source a test of another name covers, nor see code a test reaches other than by importing it. So `pnpm check` and GitHub's check still enforce coverage in full.
+
+### The Test Step
+
+While working, run `pnpm check:push`, as [Development Setup](../design/development-setup.md#checks-and-tests) describes, or any one of its parts on its own for a quick answer. The workflow's test step, which [agent-workflow.md](agent-workflow.md#autonomous-mode) repeats after each round of fixes, and the steps after it:
+
+1. **Before the code review:** the checks run while working, with `pnpm test:containers` when the change affects the containers. The full `pnpm check` waits for the last step.
+1. **After each round of fixes,** whether from a review, UI feedback or owner feedback: `pnpm check:push`.
+   - `pnpm security` too, if the round changed dependencies, the lockfile, a container file or the security scans' settings.
+   - `pnpm test:containers` again, if the round changed the containers.
+1. **Before the push:** once the review's findings are fixed and those checks pass, the code is rebased onto `main` and `pnpm check:push` runs on the rebased code. It's then pushed without waiting for the owner's approval, as the [Agent Workflow](agent-workflow.md#workflow) sets out.
+1. **On the pull request:** the Check workflow, as [The Check on GitHub](#the-check-on-github) sets out.
+
+A change to documentation alone may skip the test step, as [agent-workflow.md](agent-workflow.md#autonomous-mode) allows, except a change to a Help page, which is built into Fathom.
+
+### The Check on GitHub
+
+- **Every push** to a pull request or to `main` runs the full `pnpm check`, its package tests on runners of their own, as [The Check Workflow](#the-check-workflow) draws.
+- **Documentation alone** means Markdown files, and files under `docs/` other than Help pages, which are built into Fathom. A pull request of documentation alone leaves out the package tests, the server's merged coverage and the container tests; every push to `main` runs them.
+- **The security report** runs on every pull request, documentation alone included. It scans the container images whenever anything they're built from has changed, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out.
+- **The full suite step:** the pull request's green check is the [Agent Workflow](agent-workflow.md#workflow)'s full suite step, for a pull request's commit, or once for the whole branch of an [issue batch](issues.md#issue-batches).
+- **Merging:** the owner merges only on green. **Full check** and **Container tests** must pass, as [Development Setup](../design/development-setup.md#rulesets) sets out.
+- **Failures:** follow the run with `gh pr checks --watch`, and read a failure or warning with `gh run view --log` (or `--log-failed`). Every warning it reports is fixed, as locally.
+- **Locally:** running the full `pnpm check` is optional, for when the workflow can't run.
+
+### Offline
+
+`pnpm check:push --offline` runs once `pnpm offline:prepare` has run while connected, as [Development Setup](../design/development-setup.md#working-offline) describes. A branch checked offline still needs the Check workflow's full check to pass on its pull request.
 
 ## From a Change to a Merge
 
-The charts below draw every step the checks take, from a change on its branch to its merge and the runs on `main` after it, as the scripts and workflows run them. Diamonds are decisions, and each failure is an end of its own. The people's steps, such as the screen check and the review, are in [How Fathom Is Built](../how-fathom-is-built.md#how-a-change-is-made); the slots, cores and time limit are set out in [Development Setup § How the Checks Run](../design/development-setup.md#how-the-checks-run), and the rules on `main` in [Development Setup § Rulesets](../design/development-setup.md#rulesets).
+The charts below draw every step the checks take, from a change on its branch to its merge and the runs on `main` after it, as the scripts and workflows run them. Diamonds are decisions, and each failure is an end of its own.
+
+Other documents own what the charts only name:
+
+- **The people's steps,** such as the screen check and the review: [How Fathom Is Built](../how-fathom-is-built.md#how-a-change-is-made)
+- **The slots, cores and time limit:** [Development Setup § How the Checks Run](../design/development-setup.md#how-the-checks-run)
+- **The rules on `main`:** [Development Setup § Rulesets](../design/development-setup.md#rulesets)
 
 ### The Whole Path
 
-"Documentation alone" means Markdown files, and files under `docs/` other than the Help pages in `docs/help/`, which are built into Fathom. No Git hook runs anything: each check runs when its command is run.
+"Documentation alone" is as [The Check on GitHub](#the-check-on-github) defines it. No Git hook runs anything: each check runs when its command is run.
 
 ```mermaid
 flowchart TD
@@ -243,7 +298,7 @@ flowchart TD
 
 ### The Changed Tests
 
-`pnpm test:changed`, run by `pnpm check:push` or on its own, chooses the tests in `scripts/test-changed.mjs`, and checks the coverage of what the change touches, as [Running Tests](#running-tests) sets out.
+`pnpm test:changed`, run by `pnpm check:push` or on its own, chooses the tests in `scripts/test-changed.mjs`, and checks the coverage of what the change touches, as [Coverage of a Change](#coverage-of-a-change) sets out.
 
 ```mermaid
 flowchart TD
@@ -282,7 +337,6 @@ flowchart TD
 ```
 
 - **A Help page** stands for `apps/web/src/help-pages.ts`, which gathers them, and a removed file runs nothing of its own, since whatever imported it changed too.
-- **A changed or removed test** stands for the source file of the same name beside it, whose importing tests then run, and whose coverage is measured.
 
 ### The Security Report
 
@@ -358,16 +412,31 @@ A problem a test finds that the change does not fix, whether a failing manual te
 
 ## Manual Tests
 
-A manual test is a test specification a test engineer, including one new to Fathom, runs by hand in a browser. Each is kept in `docs/testing/`, named `<feature>-manual-test.md`, such as [Drafts](../testing/drafts-manual-test.md), or `<role>-workflows-manual-test.md` for a role's workflow test, apart from the acceptance tests, kept in `docs/testing/acceptance/` as the last rule below sets out, and has these sections:
+A manual test is a test specification a test engineer, including one new to Fathom, runs by hand in a browser. Each is kept in `docs/testing/`, named in one of two ways:
+
+- `<feature>-manual-test.md` for a feature, such as [Drafts](../testing/drafts-manual-test.md)
+- `<role>-workflows-manual-test.md` for a role's workflow test
+
+The acceptance tests are kept in `docs/testing/acceptance/` instead, as the last rule below sets out. Each manual test has these sections:
 
 - **Scope:** one or two sentences on what the test verifies.
 - **Test Environment:** what must be running and set up, linking to [Manual Test Basics](../testing/manual-test-basics.md#test-environment) for what every test needs, and adding only what this test needs besides.
 - **Test Accounts:** each account the test uses, named by its role in Fathom, with its email address, and its name as Fathom shows it where that differs from the role. [Manual Test Basics](../testing/manual-test-basics.md#test-accounts) says where the accounts come from, links to the roles they hold, and where their password comes from.
-- **Common Procedures:** the procedures the test cases refer to: those [Manual Test Basics](../testing/manual-test-basics.md#common-procedures) holds, such as starting Fathom and restoring or resetting the data, by link, and any of this test's own, each with the exact commands, which terminal runs them, how to confirm they worked, and what each deletes. A procedure is named for what it does, such as Restore the Seed Data, and steps refer to it by that name, never by a code such as R1 or P1. Signing in and out are not procedures: steps just say which account to sign in as.
-- **Terms:** where on screen any menu or control the steps name is found, when its label alone does not say, linking to [Manual Test Basics](../testing/manual-test-basics.md#terms) for the terms every test uses and adding only this test's own. Steps name a page as the left-hand menu shows it, such as "Select the **Drafts** page in the left-hand menu", never by its position or the item next to it, since the menu's order changes as pages are added. A step that leaves a page and comes back says again what to choose there, such as the grouping, since a page opened from the menu opens on the view it last showed, which an earlier step may have changed.
-- **Test Cases:** each with an ID, such as `DRAFT-01`, a title saying what it verifies, an **Account:** line naming the account it starts with, its preconditions (the page and view, and any procedure to run first), its steps, and any procedure to run afterwards. Each step is an unticked checkbox with the step's ID and one action, followed by an **Expected:** line and an empty **Notes:** line for the tester. Steps are never laid out as tables.
+- **Common Procedures:** the procedures the test cases refer to.
+  - Those [Manual Test Basics](../testing/manual-test-basics.md#common-procedures) holds, such as starting Fathom and restoring or resetting the data, by link.
+  - Any of this test's own, each with the exact commands, which terminal runs them, how to confirm they worked, and what each deletes.
+  - A procedure is named for what it does, such as Restore the Seed Data. Steps refer to it by that name, never by a code such as R1 or P1.
+  - Signing in and out are not procedures: steps just say which account to sign in as.
+- **Terms:** where on screen any menu or control the steps name is found, when its label alone does not say. Link to [Manual Test Basics](../testing/manual-test-basics.md#terms) for the terms every test uses, and add only this test's own.
+  - Steps name a page as the left-hand menu shows it, such as "Select the **Drafts** page in the left-hand menu". Never name it by its position or the item next to it, since the menu's order changes as pages are added.
+  - A step that leaves a page and comes back says again what to choose there, such as the grouping, since a page opened from the menu opens on the view it last showed. An earlier step may have changed that view.
+- **Test Cases:** each with these, in order:
+  - An ID, such as `DRAFT-01`, and a title saying what it verifies.
+  - An **Account:** line naming the account it starts with.
+  - Its preconditions: the page and view, and any procedure to run first.
+  - Its steps, then any procedure to run afterwards.
 
-A step in this form:
+Each step is an unticked checkbox with the step's ID and one action, followed by an **Expected:** line and an empty **Notes:** line for the tester. Steps are never laid out as tables. A step in this form:
 
 ```markdown
 - [ ] `7C2E` Select **Approve**.
@@ -379,16 +448,22 @@ A step in this form:
 
 Rules:
 
-- **Must** give each step an ID of 4 upper-case hexadecimal characters in backticks, such as `A3F9`, chosen at random when the step is written and unique within its file. An ID is never reused or changed; a removed step's ID goes with it. Steps are never numbered, and a step is referred to by its test case and ID, such as REL-11 `7C2E`.
+- **Must** give each step an ID of 4 upper-case hexadecimal characters in backticks, such as `A3F9`, chosen at random when the step is written and unique within its file.
+  - An ID is never reused or changed; a removed step's ID goes with it.
+  - Steps are never numbered. A step is referred to by its test case and ID, such as REL-11 `7C2E`.
 - **Must** mark text this way in manual tests and [Manual Test Basics](../testing/manual-test-basics.md), with no italics or underlines.
   - **Bold** for what to select or read on screen: buttons, menus, pages, fields and columns.
   - `Backticks` for what to type, exact values, and step IDs.
   - "Double quotes" for exact text on screen to check, such as a notification or a refusal.
   - 'Single quotes' for seed data, such as people, teams, schedules and releases.
   - **Bold** labels for **Account:**, **Preconditions:**, **Expected:**, **Notes:** and **Afterwards:**.
-- **Must** give every action and expected result precisely enough for a junior test engineer to run and judge without knowing Fathom: what to select, where, and the exact text shown, marked as the rule above sets out. Every fact a step relies on, such as a URL or a supported browser, comes from the document that owns it, never from assumption.
+- **Must** give every action and expected result precisely enough for a junior test engineer to run and judge without knowing Fathom: what to select, where, and the exact text shown, marked as the rule above sets out.
+  - Every fact a step relies on, such as a URL or a supported browser, comes from the document that owns it, never from assumption.
 - **Must** keep each test case to one behaviour, and make its preconditions enough to start it.
-- **Must** give each step one action: one interaction with one control, such as choosing in a list by opening it, typing and pressing Enter, or a path through menus to one place, when only its end result is checked. These also count as one action each: switching to another account (signing out and in), clearing a box and typing in it, choosing in a cell's list (selecting the cell, pressing Enter, choosing and pressing Enter), and pressing and holding. Anything whose result is checked on its way is a step of its own. Writing down a value seen, such as a name to use later, is not an action.
+- **Must** give each step one action: one interaction with one control, such as choosing in a list by opening it, typing and pressing Enter, or a path through menus to one place, when only its end result is checked.
+  - These also count as one action each: switching to another account (signing out and in), clearing a box and typing in it, choosing in a cell's list (selecting the cell, pressing Enter, choosing and pressing Enter), and pressing and holding.
+  - Anything whose result is checked on its way is a step of its own.
+  - Writing down a value seen, such as a name to use later, is not an action.
 - **Must** name, in every test case's **Account:** line, the account by its role and email address, and say whether it is the account the previous test case ended with or a change from it, such as "Feature Lead, `feature.lead@fathom.test`, changed from HIRE-06". A step that signs in as another account says so, naming the account the same way.
 - **Must** say exactly where to act and what to look for: which row when a record shows a draft row and a live row, which heading a button sits beside, what to type in a search box to find an entry on a long page, and each column of a table to check, in order.
 - **Must** put an **Expected:** result that names more than one thing to check in nested bullets under it, one thing per line, such as each row or column to read in order, each control's state, and each message, never in one long sentence or paragraph. A single short fact may stay on the **Expected:** line.
@@ -405,7 +480,10 @@ Rules:
 - **Must Not** check the address bar's web address, the browser's storage or other internals: how Fathom keeps a view in its web address is proved by automated tests. A step may still use the address bar as a field outside Fathom, such as to paste into.
 - **Must** cover what only a person can judge: how screens look and read, journeys across pages, accounts and browsers, keyboard and focus, and what tests stub out, such as the clipboard.
 - **Must Not** check dark or light mode in a feature's manual test. The [Dark Mode](../testing/dark-mode-manual-test.md) manual test checks every page, with its main panels, dialogs and menus, in dark mode in one pass, and a new page, panel or dialog adds its check there in the same change.
-- **Must** keep a feature's manual test short enough to run in about 30 minutes, and each workflow test and acceptance test too. Each starting role has a workflow test, `docs/testing/<role>-workflows-manual-test.md`, that follows the workflows of its role tutorial in [Help](../help/index.md) on the seed data, so running it checks the page still holds. The acceptance tests, in `docs/testing/acceptance/`, use none of the seed data. [Installing Fathom](../testing/acceptance/acceptance-installing-fathom-manual-test.md) runs first, and every later acceptance test runs on the installation it makes, straight after the one before, using only what the run has made, with no development accounts. [Acceptance Tests](../testing/acceptance/README.md) gives the order of a whole run, what each test starts from and how long each takes, and is updated in the same change as an acceptance test's cases, time or starting point.
+- **Must** keep a feature's manual test short enough to run in about 30 minutes, and each workflow test and acceptance test too.
+  - **Workflow tests:** each starting role has one, `docs/testing/<role>-workflows-manual-test.md`. It follows the workflows of its role tutorial in [Help](../help/index.md) on the seed data, so running it checks the page still holds.
+  - **Acceptance tests:** kept in `docs/testing/acceptance/`, they use none of the seed data. [Installing Fathom](../testing/acceptance/acceptance-installing-fathom-manual-test.md) runs first. Every later one runs on the installation it makes, straight after the one before, using only what the run has made, with no development accounts.
+  - **Their order:** [Acceptance Tests](../testing/acceptance/README.md) gives the order of a whole run, what each test starts from and how long each takes. It's updated in the same change as an acceptance test's cases, time or starting point.
 
 ## Checklist
 

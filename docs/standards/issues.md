@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/agent-workflow.md", "docs/standards/code-review.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Issues
@@ -52,7 +52,7 @@ Known problems and deferred work are kept in [GitHub Issues](https://github.com/
 A task that is a set of issues in one area is a batch, worked in Autonomous mode only. A batch is an exception to the [Autonomous workflow](agent-workflow.md#autonomous-mode), which reviews each change before it is committed:
 
 - **One branch per area:** Such as `fix/releases-issues`, holding one area only and under about 1,500 added lines.
-- **Each issue:** Fixed, checked with `pnpm check:push`, as [Testing Standards](testing.md#running-tests) sets out for the checks while working, and committed on its own.
+- **Each issue:** Fixed, checked with `pnpm check:push`, as [Testing Standards](testing.md#the-test-step) sets out for the checks while working, and committed on its own.
 - **Once, for the whole branch:**
   1. The maintainer's screen check, if any screen changed, and the maintainer's approval or run of any manual test the batch adds or significantly changes
   1. One separate-agent review of the whole branch, since its commits had no review of their own, as the [Agent Workflow](agent-workflow.md#pushing-and-pull-requests) sets out for a commit that skipped review

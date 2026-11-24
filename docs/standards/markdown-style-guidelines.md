@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.md"]
 dependencies: ["docs/standards/documentation.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Markdown Style Guidelines
@@ -95,6 +95,6 @@ Line length is not enforced.
 - **Single blank lines:** exactly one blank line between sections.
 - **File ending:** files end with exactly one newline.
 - **Bullet lists:** use `-`, not `*`.
-- **List indentation:** nested items use consistent indentation, typically two
-  spaces.
+- **List indentation:** nested items use consistent indentation: two spaces
+  under a `-` item, and three under a `1.` item, so they line up with its text.
 - **Links:** URLs are written as `[text](url)`, never bare.
