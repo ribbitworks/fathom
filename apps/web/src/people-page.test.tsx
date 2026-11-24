@@ -2081,7 +2081,13 @@ describe("searching, sorting, and filtering", () => {
     const dialog = await screen.findByRole("dialog");
     await userEvent.keyboard("{Meta>}f{/Meta}");
     expect(dialog.contains(document.activeElement)).toBe(true);
+    // The test's browser types Cmd+F's "f" into the dialog's field, so leaving asks first.
     await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      within(
+        await screen.findByRole("dialog", { name: "Discard the new column?" }),
+      ).getByRole("button", { name: "Discard" }),
+    );
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });

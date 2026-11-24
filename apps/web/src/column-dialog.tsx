@@ -28,7 +28,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
 import { addingLabel } from "./choice-picker.tsx";
@@ -62,6 +62,7 @@ export function ColumnDialog({
   onDelete,
   onCancel,
   onBusy,
+  onChanged,
   permissions,
 }: {
   table: ColumnTable;
@@ -77,6 +78,8 @@ export function ColumnDialog({
   onDelete?: ((field: Field) => void) | undefined;
   onCancel: () => void;
   onBusy: (busy: boolean) => void;
+  // Told whether anything shown differs from how the dialog opened, so leaving it may ask first.
+  onChanged: (changed: boolean) => void;
 }) {
   const [name, setName] = useState(field?.name ?? "");
   const [type, setType] = useState<FieldType>(field?.type ?? "choice");
@@ -86,6 +89,8 @@ export function ColumnDialog({
   const [listId, setListId] = useState<string | null>(field?.listId ?? null);
   const [listName, setListName] = useState("");
   const [choices, setChoices] = useState<NewChoice[]>([]);
+  // A choice being typed, not yet taken, which leaving the dialog would lose too.
+  const [typingChoice, setTypingChoice] = useState("");
   // The list name last sent, so a refusal of it as taken no longer applies once the name changes.
   const [sentListName, setSentListName] = useState("");
   const [multiple, setMultiple] = useState(field?.multiple ?? false);
@@ -102,6 +107,23 @@ export function ColumnDialog({
   );
   const [tried, setTried] = useState(false);
   const queryClient = useQueryClient();
+  const shown = JSON.stringify({
+    name,
+    type,
+    visibility,
+    listId,
+    multiple,
+    required,
+    onPlannedHires,
+    listName,
+    choices,
+    typingChoice,
+  });
+  const [opened] = useState(shown);
+  const changed = shown !== opened;
+  useEffect(() => {
+    onChanged(changed);
+  }, [changed, onChanged]);
   // The name last sent, so a refusal of it as taken no longer applies once the name changes.
   const [sentName, setSentName] = useState("");
   const saving = useMutation({
@@ -313,6 +335,7 @@ export function ColumnDialog({
                   choices={choices}
                   needed={tried ? choicesProblem : undefined}
                   onChoices={setChoices}
+                  onTyping={setTypingChoice}
                 />
               </>
             )}

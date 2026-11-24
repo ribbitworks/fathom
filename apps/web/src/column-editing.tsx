@@ -16,6 +16,11 @@ import type {
 import { Modal } from "@mantine/core";
 import { useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
+import {
+  changesQuestion,
+  newRecordQuestion,
+  useDiscardQuestion,
+} from "./discard-question.tsx";
 import { moveColumnClass } from "./data-classes.ts";
 import { useDialogState } from "./dialog-actions.tsx";
 import { MoveClassModal, showMoved } from "./move-class-dialog.tsx";
@@ -118,6 +123,19 @@ export function ColumnModal<Data>({
 }) {
   const [busy, setBusy] = useState(false);
   const { dialog, opened, close } = state;
+  // Leaving the dialog with anything changed asks first.
+  const [changed, setChanged] = useState(false);
+  const question = useDiscardQuestion();
+  const asked =
+    dialog?.kind === "new"
+      ? newRecordQuestion("column")
+      : changesQuestion("column");
+  const leave = () => {
+    question.ask(changed ? asked : undefined, () => {
+      setChanged(false);
+      close();
+    });
+  };
   // The dialog saved the column itself, so the page shows it at once, then reloads once no other
   // change is saving.
   const saved = (field: Field, changeSetId: string | null) => {
@@ -178,8 +196,18 @@ export function ColumnModal<Data>({
       />
       <Modal
         opened={opened && moving === undefined}
-        onClose={close}
-        closeOnEscape={!busy}
+        onClose={leave}
+        // Esc is handled here, so the question it may open doesn't take the same Esc as its own.
+        closeOnEscape={false}
+        onKeyDown={(event) => {
+          // Esc in an open drop-down list closes the list alone.
+          const inOpenList =
+            event.target instanceof HTMLElement &&
+            event.target.getAttribute("aria-expanded") === "true";
+          if (event.key !== "Escape" || busy || inOpenList) return;
+          event.stopPropagation();
+          leave();
+        }}
         closeOnClickOutside={!busy}
         withCloseButton={!busy}
         title={dialog?.kind === "new" ? "New column" : "Edit column"}
@@ -192,12 +220,14 @@ export function ColumnModal<Data>({
             lists={lists}
             onSaved={saved}
             onDelete={remove}
-            onCancel={close}
+            onCancel={leave}
             onBusy={setBusy}
+            onChanged={setChanged}
             permissions={permissions}
           />
         )}
       </Modal>
+      {question.dialog}
     </>
   );
 }
