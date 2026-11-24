@@ -3,7 +3,7 @@ title: "Manual Test: Activities"
 category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
-dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/pages/activities.md"]
+dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/pages/activities.md", "docs/design/pages/capacity.md"]
 last_updated: "2026-11-25"
 ---
 
@@ -11,7 +11,7 @@ last_updated: "2026-11-25"
 
 ## Scope
 
-Verifies the Activities page: how its table and an activity's details look and read, adding an activity to a project, moving one to a release in its cell, following an activity's release and project to their pages, grouping by project, and a reader who may not change activities.
+Verifies the Activities page: how its table and an activity's details look and read, adding an activity to a project, moving one to a release in its cell, following an activity's release and project to their pages, grouping by project, and a reader who may not change activities. It then verifies that Capacity shows the time people are allocated to activities.
 
 ## Test Environment
 
@@ -22,6 +22,7 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Product Manager:** `product.manager@fathom.test`
+- **Engineering Manager:** `engineering.manager@fathom.test`
 - **Team Member:** `team.member@fathom.test`
 
 ## Common Procedures
@@ -169,3 +170,30 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 **Afterwards:** Discard the Unpublished Changes.
+
+### ACT-07: Capacity Shows Time on Activities
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ACT-06
+
+**Preconditions:** Signed in with this account.
+
+- [ ] `795E` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
+  - **Expected:** The **Allocations** tab is chosen.
+  - **Notes:**
+- [ ] `F941` Type `Depot rollout` in the search box.
+  - **Expected:** Each row left has a line reading "Depot rollout" in at least one month, with its percentage at the right, such as "50%".
+  - **Notes:**
+- [ ] `919D` Point at "Depot rollout" in a cell.
+  - **Expected:** After a moment, a tooltip reads "Depot rollout (Depot Operations)".
+  - **Notes:**
+- [ ] `8B4C` Clear the search box.
+  - **Expected:** The rows are back, with nothing in the search box.
+  - **Notes:**
+- [ ] `A526` Select the **Allocations** button after the search box.
+  - **Expected:** Beside the features, the list offers each activity with its project, such as 'Depot rollout (Depot Operations)', 'General (Crane Control)' and 'General (Internal Tools)', each its own choice.
+  - **Notes:**
+- [ ] `65FB` Tick 'Depot rollout (Depot Operations)'.
+  - **Expected:**
+    - A pill reads "Allocated to: Depot rollout (Depot Operations)".
+    - Each row left has a "Depot rollout" line in at least one month.
+  - **Notes:**

@@ -5,8 +5,8 @@ As an Engineering Manager, you staff the work: what the features will take, and 
 ## What to Know First
 
 - **Feature teams:** a feature team is a group that works on features together, whoever its members report to.
-- **Allocations:** an allocation is the share of someone's month planned for one feature, such as 50%. **Capacity** shows them, read only.
-- **Staffed:** a planned or in-progress feature is staffed once someone is allocated to it.
+- **Allocations:** an allocation is the share of someone's month planned for one feature or activity, such as 50%. **Capacity** shows them, read only.
+- **Staffed:** a planned or in-progress feature or activity is staffed once someone is allocated to it.
 - **Drafts:** your changes are drafts. Nobody else sees them until you select **Publish** in the top bar. A Project Manager or the Engineering Director approves your changes to teams.
 
 ## Estimate the Features

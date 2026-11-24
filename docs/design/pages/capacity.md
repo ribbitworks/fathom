@@ -43,8 +43,8 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 - **Filter across the grid:** a button after the search box, Feature teams on Feature teams and Allocations on Allocations, opens a filter of the choices its months' filters offer: every feature team, or everything someone is allocated to, as [Filtering across a table](../../standards/ui-conventions/tables.md#tables) sets out.
   - It keeps the rows with a chosen one in any month of the grid, or, with No feature team or Not allocated, those with none in any month. On Allocations, a row under a group counts only that group's months, as its cells do.
   - It reads every month of the grid, not only those in view, so scrolling never changes the rows.
-  - The cells still show every team or feature of their month, since a filter chooses rows, not what a cell holds.
-  - The view and the address keep it as the filter `any-month`, with a pill such as Feature team: Payments core, or Allocated to: Offline Sync.
+  - The cells still show every team, feature or activity of their month, since a filter chooses rows, not what a cell holds.
+  - The view and the address keep it as the filter `any-month`, with a pill such as Feature team: Payments core, or Allocated to: Offline Sync. Allocations offers an activity by its name and its project or release, such as General (Crane Control).
 
 ## Feature Teams
 
@@ -59,11 +59,11 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 
 - **Read only:** allocating from the grid is planned, below.
 - **Rows:** someone under several managers or feature teams in the months shown has a row under each, holding only that group's months and blank in the rest. Under No feature team, a row holds the months they were employed on none.
-- **A month's cell:** each feature, after its feature team's colour square, with its percentage at the right.
+- **A month's cell:** each feature or activity, after its feature team's colour square, with its percentage at the right. An activity's tooltip names its project or release, such as General (Crane Control), since activities of different projects and releases can share a name.
   - From the current month on, a month off a whole month has a last line, in red and bold, over a faint rule: Over or Under, with how far off at the right, such as +25% or −90%, and the month's total in its tooltip, such as Total 125%. A month with nothing allocated shows Not allocated alone instead.
   - A whole month, and every past month, has no last line.
   - These are a status, not a [warning](../../standards/ui-conventions/drafts-and-values.md#values).
-- **Over:** more than 100%, counting every feature but Possible ones. Done and Cancelled features count, since allocations are time spent, so future allocations to a cancelled feature show Over until cleared.
+- **Over:** more than 100%, counting every feature and activity but Possible ones. Done and Cancelled ones count, since allocations are time spent, so future allocations to a cancelled feature or activity show Over until cleared.
 - **Under:** less than 100% in a month the person or planned hire can be allocated in.
 - **Over and Under choices:** Over and Under at the top of the Views menu keep only the rows Over, or Under or Not allocated, in the current month or any later month in the grid, and either while both are on.
   - Each shows how many rows it keeps, and is offered while a row matches it or while it is on.
@@ -99,6 +99,6 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 - **Schedule picker on the grid tabs:** after the search, kept in the address and saved views; the first schedule by default, with no lines while there are none.
   - Each cycle's end is a thin upright line labelled with its name.
   - Each release is a line on its Ships on day.
-- **Allocating:** from a cell or a row's menu, by picking a feature, a percentage, a from month and an optional to month ([issue #206](https://github.com/ribbitworks/fathom/issues/206)).
+- **Allocating:** from a cell or a row's menu, by picking a feature or an activity, a percentage, a from month and an optional to month ([issue #206](https://github.com/ribbitworks/fathom/issues/206)).
 - **Allocation warnings:** an allocation left outside someone's employment by a date change shows its warning.
   - A Warnings filter shows only the rows that have any.

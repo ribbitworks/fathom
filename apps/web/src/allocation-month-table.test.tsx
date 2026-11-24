@@ -8,16 +8,19 @@ import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
+  allocatedWork,
   AllocationLines,
   allocationMonthRecords,
   allocationMonthsTable,
   type AllocationRow,
+  unseenActivityChoice,
   unseenFeatureChoice,
 } from "./allocation-months.tsx";
 
 import { anyMonthKey, featureTeamGrouping } from "./team-months.tsx";
 import { testTheme } from "./test-support.tsx";
 import {
+  activities,
   months,
   search,
   teamMonths,
@@ -107,14 +110,34 @@ describe("a month's cell", () => {
     ]).toEqual([["Not allocated"], null]);
   });
 
+  it("names an activity as a feature, its project in its tip, and counts its time", () => {
+    // Given Casey on the activity General of Crane Control for half of March
+    cell([
+      allocation({
+        featureId: null,
+        activityId: "a-general",
+        months: { "2027-03": 50 },
+      }),
+    ]);
+
+    // Then its line reads as a feature's, with no swatch, and the month is half allocated
+    const line = screen.getByText("General").closest("[data-tip]");
+    expect([
+      line?.getAttribute("data-tip"),
+      line?.querySelector("[data-colour]"),
+    ]).toEqual(["General (Crane Control)", null]);
+    expect(lineTexts()).toEqual(["General50%", "Under\u221250%, Total 50%"]);
+  });
+
   it("names each feature after its team's colour", () => {
     render(
       <MantineProvider theme={testTheme}>
         <AllocationLines
           lines={[
             {
-              featureId: "f-checkout",
+              workId: "f-checkout",
               name: "Checkout",
+              tip: "Checkout",
               meaning: "in-progress",
               colour: "teal",
               percentage: 100,
@@ -183,19 +206,20 @@ describe("the table", () => {
   const rows = rowsOf([allocation()]);
   const table = allocationMonthsTable({
     teamMonths,
-    features,
+    works: allocatedWork({ allocations: [], features, activities }),
     managers: [{ id: "p-blair", name: "Blair Fictional" }],
     currentMonth: "2027-03",
     show: "both",
   });
 
-  it("is read only, offering the allocated features to filter a month by", () => {
+  it("is read only, offering the allocated features and activities to filter a month by", () => {
     const columns = table.columnsFor([], [], [], rows);
     const [name, ...monthColumns] = columns;
 
     expect(monthColumns[0]?.choices.map(({ label }) => label)).toEqual([
       "Billing",
       "Checkout",
+      "General (Crane Control)",
       "Maybe later",
     ]);
     expect(table.label).toBe("Allocations by month");
@@ -222,6 +246,7 @@ describe("the table", () => {
           allocation({ id: "a-2", featureId: "f-hidden-2" }),
         ],
         features: unseen,
+        activities: [],
       },
       chart: noHires,
       grouping: undefined,
@@ -229,7 +254,11 @@ describe("the table", () => {
     }).find(({ personId }) => personId === "p-casey");
     const march = allocationMonthsTable({
       teamMonths,
-      features: unseen,
+      works: allocatedWork({
+        allocations: [],
+        features: unseen,
+        activities: [],
+      }),
       managers: undefined,
       currentMonth: "2027-03",
       show: "both",
@@ -249,6 +278,58 @@ describe("the table", () => {
       },
     };
     expect(march?.live(draftOfMarch as never)).toEqual([unseenFeatureChoice]);
+  });
+
+  it("offers the activities the reader can't read as one choice of their own", () => {
+    const hidden = (id: string) => ({
+      id,
+      name: "An activity",
+      meaning: "in-progress" as const,
+      colour: null,
+      unseen: true as const,
+    });
+    const unseen = [hidden("a-hidden-1"), hidden("a-hidden-2")];
+    const row = allocationMonthRecords({
+      teamMonths,
+      allocations: {
+        allocations: [
+          allocation({ featureId: null, activityId: "a-hidden-1" }),
+          allocation({ id: "a-2", featureId: null, activityId: "a-hidden-2" }),
+        ],
+        features: [],
+        activities: unseen,
+      },
+      chart: noHires,
+      grouping: undefined,
+      show: "both",
+    }).find(({ personId }) => personId === "p-casey") as AllocationRow;
+    const march = allocationMonthsTable({
+      teamMonths,
+      works: allocatedWork({
+        allocations: [],
+        features: [],
+        activities: unseen,
+      }),
+      managers: undefined,
+      currentMonth: "2027-03",
+      show: "both",
+    })
+      .columnsFor([], [], [], [])
+      .find(({ key }) => key === "2027-03");
+
+    expect(march?.choices.map(({ id, label }) => [id, label])).toEqual([
+      [unseenActivityChoice, "An activity"],
+    ]);
+    expect(march?.value(row)).toEqual([unseenActivityChoice]);
+  });
+
+  it("filters a row by the activities it is allocated to, as by features", () => {
+    const [filter] = table.barFilters ?? [];
+    const onGeneral = casey(
+      rowsOf([allocation({ featureId: null, activityId: "a-general" })]),
+    );
+
+    expect(filter?.column.value(onGeneral)).toEqual(["a-general"]);
   });
 
   it("filters across the whole grid by what a row is allocated to in its months, from an Allocations button", () => {

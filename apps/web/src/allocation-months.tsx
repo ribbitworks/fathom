@@ -53,14 +53,46 @@ export const allocationsQuery = queryOptions({
   queryFn: () => getJson("/api/allocations", allocationsSchema),
 });
 
+// A feature or activity as allocation lines name it, counted alike. An activity's tip names its
+// project or release, which tells apart activities of one name.
+export interface AllocatedWork extends AllocatedFeature {
+  tip: string;
+  // The filter's choice it is: its own, or, for work the reader can't read, one for all of its kind.
+  choice: string;
+}
+
+// The one choice for every feature, or every activity, the reader can't read, never a record's own
+// identifier, so a filter kept in an address or a view means the same whichever such records there
+// are.
+export const unseenFeatureChoice = "unseen-feature";
+export const unseenActivityChoice = "unseen-activity";
+
+// Everything the allocations name: their features, then their activities.
+export const allocatedWork = ({
+  features,
+  activities,
+}: Allocations): AllocatedWork[] => [
+  ...features.map((feature) => ({
+    ...feature,
+    tip: feature.name,
+    choice: feature.unseen === true ? unseenFeatureChoice : feature.id,
+  })),
+  ...activities.map(({ owner, ...activity }) => ({
+    ...activity,
+    tip: owner === undefined ? activity.name : `${activity.name} (${owner})`,
+    choice: activity.unseen === true ? unseenActivityChoice : activity.id,
+  })),
+];
+
 export interface AllocationLine {
-  featureId: string;
+  workId: string;
   name: string;
+  tip: string;
   meaning: Meaning | null;
   colour: PaletteColour | null;
-  // The percentage shown: as drafted, or, for a feature a draft takes off, as approved.
+  // The percentage shown: as drafted, or, for work a draft takes off, as approved.
   percentage: number;
-  // The percentage as approved; null for a feature a draft adds.
+  // The percentage as approved; null for work a draft adds.
   live: number | null;
   drafted?: DraftedPart;
   draft?: DraftLike;
@@ -174,8 +206,9 @@ export function AllocationLines({
     <div className={styles.lines}>
       {lines.map(
         ({
-          featureId,
+          workId,
           name,
+          tip,
           colour,
           percentage,
           drafted,
@@ -183,12 +216,12 @@ export function AllocationLines({
           shownLive,
         }) => (
           <div
-            key={featureId}
+            key={workId}
             className={[
               styles.line,
               drafted === "removed" && shownLive !== true ? pages.struck : "",
             ].join(" ")}
-            {...{ [tipAttribute]: name }}
+            {...{ [tipAttribute]: tip }}
           >
             <span className={styles.name}>
               <DraftedPartItem draft={draft} part={drafted} live={shownLive}>
@@ -221,26 +254,27 @@ export function AllocationLines({
   );
 }
 
-function featureOf(
-  features: ReadonlyMap<string, AllocatedFeature>,
-  { featureId }: Allocation,
-): Pick<AllocationLine, "featureId" | "name" | "meaning" | "colour"> {
-  // The server lists every feature an allocation names.
-  const { name, meaning, colour } = features.get(featureId) as AllocatedFeature;
-  return { featureId, name, meaning, colour };
+function workOf(
+  works: ReadonlyMap<string, AllocatedWork>,
+  { featureId, activityId }: Allocation,
+): Pick<AllocationLine, "workId" | "name" | "tip" | "meaning" | "colour"> {
+  // Every allocation names a feature or an activity, which the server lists.
+  const workId = String(featureId ?? activityId);
+  const { name, tip, meaning, colour } = works.get(workId) as AllocatedWork;
+  return { workId, name, tip, meaning, colour };
 }
 
-// A month's allocations as approved, each feature by name.
+// A month's allocations as approved, each feature or activity by name.
 function liveLines(
   allocations: readonly Allocation[],
-  features: ReadonlyMap<string, AllocatedFeature>,
+  works: ReadonlyMap<string, AllocatedWork>,
   month: string,
 ): AllocationLine[] {
   return allocations.flatMap((allocation): AllocationLine[] => {
     const percentage = percentageIn(allocation.months, month);
     return percentage === null
       ? []
-      : [{ ...featureOf(features, allocation), percentage, live: percentage }];
+      : [{ ...workOf(works, allocation), percentage, live: percentage }];
   });
 }
 
@@ -253,10 +287,10 @@ const draftedPercentage = ({ draft }: Drafted, month: string) =>
   draft.action === "deleted" ? null : percentageIn(draft.months, month);
 
 // A month's allocations as drafts make them, with the features they add, take off, or change
-// marked. With drafts applied, a feature a draft takes off is gone, rather than struck through.
+// marked. With drafts applied, work a draft takes off is gone, rather than struck through.
 function draftedLines(
   allocations: readonly Drafted[],
-  features: ReadonlyMap<string, AllocatedFeature>,
+  works: ReadonlyMap<string, AllocatedWork>,
   month: string,
   show: Show,
 ): AllocationLine[] {
@@ -264,16 +298,16 @@ function draftedLines(
     const live = percentageIn(allocation.months, month);
     const { draft } = allocation;
     const drafted = draftedPercentage(allocation, month);
-    const feature = featureOf(features, allocation);
+    const work = workOf(works, allocation);
     if (drafted === null) {
       return live === null || show === "drafts"
         ? []
-        : [{ ...feature, percentage: live, live, drafted: "removed", draft }];
+        : [{ ...work, percentage: live, live, drafted: "removed", draft }];
     }
-    if (drafted === live) return [{ ...feature, percentage: drafted, live }];
+    if (drafted === live) return [{ ...work, percentage: drafted, live }];
     return [
       {
-        ...feature,
+        ...work,
         percentage: drafted,
         live,
         drafted: live === null ? "added" : "changed",
@@ -283,10 +317,10 @@ function draftedLines(
   });
 }
 
-const featureIdsOf = (lines: readonly AllocationLine[]) =>
+const workIdsOf = (lines: readonly AllocationLine[]) =>
   lines
     .filter(({ drafted }) => drafted !== "removed")
-    .map(({ featureId }) => featureId);
+    .map(({ workId }) => workId);
 
 // Each month's lines by name, leaving out the months with none.
 const linesByMonth = (
@@ -306,18 +340,18 @@ const linesByMonth = (
 function withAllocations(
   base: BaseRow,
   allocations: readonly Allocation[],
-  features: ReadonlyMap<string, AllocatedFeature>,
+  works: ReadonlyMap<string, AllocatedWork>,
   allMonths: readonly string[],
   show: Show,
 ): AllocationRow {
   const months = allMonths.filter((month) => holdsMonth(base, month));
   const liveIn = linesByMonth(months, (month) =>
-    liveLines(allocations, features, month),
+    liveLines(allocations, works, month),
   );
   const live: AllocationRow = {
     ...base,
     values: Object.fromEntries(
-      [...liveIn].map(([month, lines]) => [month, featureIdsOf(lines)]),
+      [...liveIn].map(([month, lines]) => [month, workIdsOf(lines)]),
     ),
     allocated: liveIn,
   };
@@ -336,13 +370,13 @@ function withAllocations(
   );
   if (changed.length === 0) return live;
   const draftedIn = linesByMonth(months, (month) => [
-    ...draftedLines(withDraftShown, features, month, show),
-    ...liveLines(withoutDraftShown, features, month),
+    ...draftedLines(withDraftShown, works, month, show),
+    ...liveLines(withoutDraftShown, works, month),
   ]);
   return {
     ...live,
     values: Object.fromEntries(
-      [...draftedIn].map(([month, lines]) => [month, featureIdsOf(lines)]),
+      [...draftedIn].map(([month, lines]) => [month, workIdsOf(lines)]),
     ),
     allocated: draftedIn,
     draft: {
@@ -367,18 +401,17 @@ function withLiveMarks(
     allocated: new Map(
       [...live.allocated].map(([month, lines]): [string, AllocationLine[]] => {
         const changed = new Map(
-          (draftedIn.get(month) ?? []).flatMap(
-            ({ featureId, drafted, draft }) =>
-              (drafted === "removed" || drafted === "changed") &&
-              draft !== undefined
-                ? [[featureId, { drafted, draft }] as const]
-                : [],
+          (draftedIn.get(month) ?? []).flatMap(({ workId, drafted, draft }) =>
+            (drafted === "removed" || drafted === "changed") &&
+            draft !== undefined
+              ? [[workId, { drafted, draft }] as const]
+              : [],
           ),
         );
         return [
           month,
           lines.map((line) => {
-            const change = changed.get(line.featureId);
+            const change = changed.get(line.workId);
             return change === undefined
               ? line
               : { ...line, ...change, shownLive: true };
@@ -422,8 +455,8 @@ export function allocationMonthRecords({
   grouping: string | undefined;
   show: Show;
 }): AllocationRow[] {
-  const features = new Map(
-    allocations.features.map((feature) => [feature.id, feature]),
+  const works = new Map(
+    allocatedWork(allocations).map((work) => [work.id, work]),
   );
   const { ofPeople, ofHires } = byAssignee(allocations.allocations);
   const managersOf = new Map(
@@ -455,7 +488,7 @@ export function allocationMonthRecords({
     withAllocations(
       base,
       of.get(base.personId) ?? [],
-      features,
+      works,
       teamMonths.months,
       show,
     );
@@ -465,35 +498,31 @@ export function allocationMonthRecords({
   ];
 }
 
-// The one choice for every feature the reader can't read, never a feature's own identifier, so a
-// filter kept in an address or a view means the same whichever such features there are.
-export const unseenFeatureChoice = "unseen-feature";
-
 export function allocationMonthsTable({
   teamMonths,
-  features,
+  works,
   managers,
   currentMonth,
   show,
 }: {
   teamMonths: TeamMonths;
-  features: readonly AllocatedFeature[];
+  works: readonly AllocatedWork[];
   // The managers to group by, for roles that may group by manager.
   managers: readonly { id: string; name: string }[] | undefined;
   currentMonth: string;
   show: Show;
 }): RecordTable<AllocationRow, CellChange, CellChange> {
-  // Features the reader can't read are one choice to them, since they can't tell them apart.
-  const unseenIds = new Set(
-    features.flatMap(({ id, unseen }) => (unseen === true ? [id] : [])),
-  );
+  const choiceOf = new Map(works.map(({ id, choice }) => [id, choice]));
   return {
     ...monthGridTable<AllocationRow>({
       months: teamMonths.months,
       currentMonth,
       label: "Allocations by month",
-      choices: features,
-      choiceOf: (id) => (unseenIds.has(id) ? unseenFeatureChoice : id),
+      // Offered by their tips, as activities may share a name; work the reader can't read is one
+      // choice of its kind, since they can't tell it apart.
+      choices: works.map(({ id, tip }) => ({ id, name: tip })),
+      // Every value a month holds names work the allocations list.
+      choiceOf: (id) => choiceOf.get(id) as string,
       filter: {
         button: "Allocations",
         label: "Allocated to",

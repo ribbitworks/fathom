@@ -26,8 +26,8 @@ Fathom in one picture: what's planned, when it ships, and who works on it. Each 
 ![How Fathom's records fit together](../help/diagrams/how-fathom-fits-together.svg)
 
 - **Plan:** projects and proposals are for customers. A project is committed work, and a proposal is work offered to a customer that may or may not be won. Both name the features they need, and a feature ships in a cycle of a release.
-- **People:** people are on feature teams, which deliver features, and are allocated to features month by month.
-- **Activities:** work that isn't a feature, such as release testing, each in one release or one project, done by a feature team. The drawing leaves out that people are allocated to an activity, which comes with allocating to activities.
+- **People:** people are on feature teams, which deliver features, and are allocated to features and activities month by month.
+- **Activities:** work that isn't a feature, such as release testing, each in one release or one project, done by a feature team.
 
 A feature needs none of these links: one with no project or proposal is an idea not yet committed to anything.
 
@@ -48,8 +48,8 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Never a feature:** it has no target cycle, customers, projects, proposals or milestones, since its project or release says when it happens, and it is never shown on Features, the Board or the roadmap.
 - **Drafts and access:** every change is a draft, made with Edit Features and releases and approved with Approve Features, and activities are seen with View Features, whether an activity belongs to a release or a project.
 - **Moving:** an activity moves to another release or project as a draft, clearing the one it had; the server refuses one that names neither or both.
-- **Removing:** an activity someone is allocated to can't be removed, and a project or release with activities can't be removed yet ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
-- **Built so far:** activities are kept, drafted and shown on the [Activities page](pages/activities.md), and the [fictional data](development-setup.md#fictional-data) has some, with allocations. Capacity doesn't show or count allocations to activities yet; releases' and projects' lists of them, and allocating to them, follow in [issue #207](https://github.com/ribbitworks/fathom/issues/207).
+- **Removing:** an activity someone is allocated to can't be removed, as a feature can't, and a project or release with activities can't be removed yet ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
+- **Built so far:** activities are kept, drafted and shown on the [Activities page](pages/activities.md) and in their project's and release's details, and Capacity shows and counts allocations to them beside features'; the [fictional data](development-setup.md#fictional-data) has some, with allocations. Picking an activity when allocating comes with allocating from the grid ([issue #206](https://github.com/ribbitworks/fathom/issues/206)).
 
 ### Proposal
 
@@ -83,12 +83,12 @@ A feature needs none of these links: one with no project or proposal is an idea 
 
 ### Allocation
 
-- **What it is:** one person or planned hire on one feature, never both, at a percentage of their month: 10%, 25%, 50%, 75%, 90% or 100%, starting at 100%. Each has at most one allocation to a feature.
+- **What it is:** one person or one planned hire, never both, on one feature or one activity, never both, at a percentage of their month: 10%, 25%, 50%, 75%, 90% or 100%, starting at 100%. Each has at most one allocation to a feature or activity.
 - **Months:** one allocation holds its months: the percentage from each month it changes, or none when it stops, each in force until the next, as reporting lines are kept. It may run with no end.
   - **A range:** such as 50% from January to June, holds 50% from January and none from July.
   - **One month within a range:** changing it adds up to two months, so the months around it keep their percentage.
 - **One draft:** every change to an allocation, of any of its months, is one draft, approved or rejected whole, so an Approver never approves a range's start without its stop. A change that leaves no months drafts its removal, and allocating again changes that draft.
-- **Drafted features:** a feature only drafted to be added cannot be allocated until it is approved, so an allocation's draft never waits on a draft of the plan.
+- **Drafted features and activities:** a feature or activity only drafted to be added cannot be allocated until it is approved, so an allocation's draft never waits on a draft of the plan.
 - **Employment dates:** a person cannot be allocated before their start month or after their end month, nor a planned hire before its first month that can be allocated. Past months can be allocated, as corrections.
   - **A date moving later:** allocations left outside employment are kept rather than removed, so whoever allocates decides. They count in neither capacity nor demand.
 - **Capacity:** a full month for everyone, including the months a person starts and ends in, and none before the start month or after the end month. A planned hire has none before its first month that can be allocated.

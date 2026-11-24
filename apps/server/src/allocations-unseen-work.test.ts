@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests that allocations name the feature they put someone on only to a role that reads features,
-// against a PostgreSQL server of their own: in the allocations read, the user's unpublished changes,
-// the change history and an approval's refusal. Any other role is told only that it is a feature.
+// Tests that allocations name the feature or activity they put someone on only to a role that reads
+// its kind, against a PostgreSQL server of their own: in the allocations read, the user's unpublished
+// changes, the change history and an approval's refusal. Any other role is told only its kind.
 
-import { featureTeams, features, people } from "@fathom/db";
+import { activities, featureTeams, features, people } from "@fathom/db";
 import type { ChangeHistory } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { errorOf, unique } from "./test-app.ts";
 import {
   type Account,
+  addActivity,
   addFeature,
   addPerson,
   change,
@@ -156,6 +157,129 @@ describe("allocations to a feature a role can't read", () => {
     expect(refused.statusCode).toBe(409);
     expect(errorOf(refused)).toContain(
       `The draft of ${await personName(personId)} on a feature runs past`,
+    );
+  });
+});
+
+describe("allocations to an activity a role can't read", () => {
+  async function onActivity(): Promise<{
+    personId: string;
+    activityId: string;
+  }> {
+    const personId = await addPerson();
+    const { activityId } = await addActivity();
+    await changed({ personId, activityId, percentage: 50, from: month(1) });
+    return { personId, activityId };
+  }
+
+  it("name the activity, and its project, only to a role that reads activities, with no team's colour", async () => {
+    const [team] = await test.connection
+      .insert(featureTeams)
+      .values({ name: unique("Fictional Team"), colour: "teal" })
+      .returning({ id: featureTeams.id });
+    const { activityId } = await onActivity();
+    await test.connection
+      .update(activities)
+      .set({ featureTeamId: team?.id })
+      .where(eq(activities.id, activityId));
+    const without = await test.signedIn([
+      ...allocationReader,
+      "feature-teams:view",
+    ]);
+
+    expect(
+      (await read(without)).activities.find(({ id }) => id === activityId),
+    ).toEqual({
+      id: activityId,
+      name: "An activity",
+      meaning: "in-progress",
+      colour: null,
+      unseen: true,
+    });
+  });
+
+  it("refuse one to an activity drafted to be removed, naming it only to a role that reads activities", async () => {
+    const { activityId } = await addActivity();
+    const remover = await test.signedIn(["features:view", "features:edit"]);
+    const removing = await test.request(
+      remover.cookie,
+      "DELETE",
+      `/api/activities/${activityId}`,
+    );
+    expect(removing.statusCode, removing.body).toBe(200);
+    const request = {
+      personId: await addPerson(),
+      activityId,
+      percentage: 50 as const,
+      from: month(1),
+    };
+
+    const unseen = await change(
+      request,
+      await test.signedIn([...allocationEditor]),
+    );
+    expect(unseen.statusCode).toBe(409);
+    expect(errorOf(unseen)).toBe(
+      "This links to an activity, which is drafted to be removed; discard that draft first",
+    );
+    const seen = await change(
+      request,
+      await test.signedIn([...allocationEditor, "features:view"]),
+    );
+    expect(errorOf(seen)).toContain("the activity Fictional Activity");
+  });
+
+  it("name the activity in the user's unpublished changes only to a role that reads activities", async () => {
+    const editor = await test.signedIn([...allocationEditor]);
+    const personId = await addPerson();
+    const { activityId } = await addActivity();
+    const response = await change(
+      { personId, activityId, percentage: 50, from: month(1) },
+      editor,
+      false,
+    );
+    expect(response.statusCode, response.body).toBe(200);
+
+    const listed = await test.request(editor.cookie, "GET", "/api/unpublished");
+    expect(
+      listed
+        .json<{ changes: { subject: string }[] }>()
+        .changes.map(({ subject }) => subject),
+    ).toEqual(["an allocation to an activity"]);
+    await test.request(editor.cookie, "POST", "/api/unpublished/discard");
+  });
+
+  it("name the activity in the change history only to a role that reads activities", async () => {
+    const { personId } = await onActivity();
+    const names = await historyNames(
+      await test.signedIn([...allocationReader]),
+    );
+
+    const person = await personName(personId);
+    expect(names).toContain(`${person} on an activity`);
+    expect(names).not.toContain(`${person} on Fictional Activity`);
+  });
+
+  it("name the activity in a refused approval only to a role that reads activities", async () => {
+    const { personId, activityId } = await onActivity();
+    const id = String(
+      (await read()).allocations.find(
+        (one) => one.personId === personId && one.activityId === activityId,
+      )?.id,
+    );
+    await test.connection
+      .update(people)
+      .set({ endDate: dayIn(0) })
+      .where(eq(people.id, personId));
+    const approver = await test.signedIn([
+      ...allocationReader,
+      "allocations:approve",
+    ]);
+
+    const refused = await decide(approver, "approval", [id]);
+    expect(refused.statusCode).toBe(409);
+    expect(errorOf(refused)).toContain(
+      `The draft of ${await personName(personId)} on an activity runs past`,
     );
   });
 });

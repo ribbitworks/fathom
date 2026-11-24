@@ -4,7 +4,6 @@
 // kind.
 
 import { allocations } from "@fathom/db";
-import { isNotNull } from "drizzle-orm";
 import {
   type AllocationMonths,
   capitalized,
@@ -20,24 +19,36 @@ import {
   type Touched,
   versionOf,
 } from "./record-state.ts";
+import { activityKind } from "./activity-kinds.ts";
 import { featureKind } from "./release-kinds.ts";
 
 export const allocationFields = [
   "personId",
   "plannedHireId",
   "featureId",
+  "activityId",
   "months",
 ] as const;
 
-// Every field an allocation's row holds, which removing it records, its activity included, though
-// allocations to activities aren't yet drafted.
-export const allocationRowFields = [...allocationFields, "activityId"] as const;
+// The kind of the feature or activity an allocation, or a change to one, is to, with its identifier.
+export const workOf = (allocation: {
+  featureId?: unknown;
+  activityId?: unknown;
+}): { kind: RecordKind; id: string } =>
+  typeof allocation.featureId === "string"
+    ? { kind: featureKind, id: allocation.featureId }
+    : { kind: activityKind, id: String(allocation.activityId) };
 
-// The allocations to a feature, as their drafts make them, those drafted to be removed left out.
-export const allocationsTo = (state: State, featureId: string): string[] =>
-  shownIds(state, "allocation").filter(
-    (id) => versionOf(state, "allocation", id)?.featureId === featureId,
-  );
+// The allocations to a feature or an activity, as their drafts make them, those drafted to be
+// removed left out.
+const allocationsTo = (state: State, work: ReturnType<typeof workOf>) =>
+  shownIds(state, "allocation").filter((id) => {
+    // Every allocation listed is shown, live or as its draft makes it.
+    const { kind, id: workId } = workOf(
+      shownVersion(state, "allocation", id) as Recorded,
+    );
+    return kind === work.kind && workId === work.id;
+  });
 
 // An allocation's months, as the percentage that takes effect from each, such as "50% from 2027-01",
 // and "0% from 2027-07" where it stops.
@@ -46,62 +57,58 @@ const monthsInWords = (months: AllocationMonths): string[] =>
     .sort(([first], [second]) => first.localeCompare(second))
     .map(([month, percentage]) => `${String(percentage ?? 0)}% from ${month}`);
 
-// Named by its feature, as the Drafts page and refusals name records, and, in the change history,
-// by who it puts on which feature, such as "Alex Kim on Offline Sync", seen there only by roles that
-// get Allocations.
+// Named by its feature or activity, as the Drafts page and refusals name records, and, in the
+// change history, by who it puts on which, such as "Alex Kim on Offline Sync", seen there only by
+// roles that get Allocations.
 export const allocationKind: RecordKind = {
   type: "allocation",
   table: allocations,
-  // Nothing drafts allocations to activities yet, so they stay out of the plan's rules.
-  rowsWhere: isNotNull(allocations.featureId),
   fields: allocationFields,
-  links: { featureId: "feature" },
+  links: { featureId: "feature", activityId: "activity" },
   readWith: ["allocations:view"],
   view: "allocations",
   unseenSubject: "an allocation",
   historyName: {
-    fields: ["personId", "plannedHireId", "featureId"],
-    name: ({ personId, plannedHireId, featureId }) => {
+    fields: ["personId", "plannedHireId", "featureId", "activityId"],
+    name: ({ personId, plannedHireId, featureId, activityId }) => {
       const assignee = personId ?? plannedHireId;
-      return assignee === undefined || featureId === undefined
+      const work = featureId ?? activityId;
+      return assignee === undefined || work === undefined
         ? undefined
-        : `${assignee} on ${featureId}`;
+        : `${assignee} on ${work}`;
     },
   },
   // Only a change shows its fields, and a change to an allocation always holds its months.
   valueInWords: (field, value) =>
     field === "months" ? monthsInWords(value as AllocationMonths) : undefined,
-  subject: (state, id, access) =>
-    `an allocation to ${subjectFor(
-      featureKind,
-      state,
-      // A record named is always shown, live or as its draft makes it.
-      String((shownVersion(state, "allocation", id) as Recorded).featureId),
-      access,
-    )}`,
+  subject: (state, id, access) => {
+    // A record named is always shown, live or as its draft makes it.
+    const work = workOf(shownVersion(state, "allocation", id) as Recorded);
+    return `an allocation to ${subjectFor(work.kind, state, work.id, access)}`;
+  },
 };
 
-// A feature removed while it still has allocations. The count is left out, since it can include
-// people the editor does not see. The feature is named only to a role that reads features.
+// A feature or activity removed while it still has allocations. The count is left out, since it can
+// include people the editor does not see. The work is named only to a role that reads its kind.
 export function allocationProblem(
   state: State,
   touched: readonly Touched[],
   access: ClassAccess,
 ): string | undefined {
-  const removed = touched.find(
-    ({ type, id }) =>
-      type === "feature" &&
+  const kinds = [featureKind, activityKind];
+  for (const { type, id } of touched) {
+    const kind = kinds.find((one) => one.type === type);
+    if (
+      kind !== undefined &&
       versionOf(state, type, id) === undefined &&
-      allocationsTo(state, id).length > 0,
-  );
-  return removed === undefined
-    ? undefined
-    : allocatedRefusal(
-        subjectFor(featureKind, state, removed.id, access),
-        "feature",
-      );
+      allocationsTo(state, { kind, id }).length > 0
+    ) {
+      return allocatedRefusal(subjectFor(kind, state, id, access), type);
+    }
+  }
+  return undefined;
 }
 
 // Why work with allocations can't be removed, naming it and the kind of work it is.
-export const allocatedRefusal = (subject: string, kind: string): string =>
+const allocatedRefusal = (subject: string, kind: string): string =>
   `${capitalized(subject)} has allocations, so it can't be removed. Allocations are time spent, so cancel the ${kind} instead.`;

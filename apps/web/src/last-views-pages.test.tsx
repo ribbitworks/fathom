@@ -254,7 +254,7 @@ describe("Capacity opening on the view it last showed", () => {
   const capacity: Answers = {
     [monthsUrl]: () => Response.json(fictionalTeamMonths),
     "GET /api/allocations": () =>
-      Response.json({ allocations: [], features: [] }),
+      Response.json({ allocations: [], features: [], activities: [] }),
     "GET /api/org-chart": () => Response.json({ people: [], drafted: [] }),
   };
   // Allocations last showed a search, kept to those under.

@@ -4,7 +4,7 @@
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="9 19 1127 252" width="1127" height="252" role="img" aria-labelledby="how-fathom-fits-together-title" aria-describedby="how-fathom-fits-together-desc" class="help-diagram">
   <title id="how-fathom-fits-together-title">How Fathom's records fit together</title>
-  <desc id="how-fathom-fits-together-desc">Plan: a feature is needed by a project, or proposed in a proposal, a project or a proposal is for a customer, and an activity is in a project or a release. Ship: a feature ships in a cycle, and a cycle is in a release. People: a person is on a feature team, a feature team delivers features and does activities, and a person is allocated to features.</desc>
+  <desc id="how-fathom-fits-together-desc">Plan: a feature is needed by a project, or proposed in a proposal, a project or a proposal is for a customer, and an activity is in a project or a release. Ship: a feature ships in a cycle, and a cycle is in a release. People: a person is on a feature team, a feature team delivers features and does activities, and a person is allocated to features and activities.</desc>
   <style>
     .help-diagram { font-family: "IBM Plex Sans", system-ui, sans-serif; }
     .help-diagram .group { fill: none; stroke: #dee2e6; }
@@ -49,6 +49,7 @@
     <line class="line" x1="815" y1="150" x2="755" y2="150" marker-end="url(#how-fathom-fits-together-arrow)"/>
     <line class="line" x1="395" y1="80" x2="815" y2="135" marker-end="url(#how-fathom-fits-together-arrow)"/>
     <line class="line" x1="1070" y1="90" x2="1070" y2="205" marker-end="url(#how-fathom-fits-together-arrow)"/>
+    <path class="line" d="M35,85 H22 V252 H335 V235" marker-end="url(#how-fathom-fits-together-arrow)"/>
   </g>
 
   <g text-anchor="middle" dominant-baseline="central">
@@ -64,6 +65,7 @@
     <text class="label" x="785" y="150">for</text>
     <text class="label" x="655" y="107">proposed in</text>
     <text class="label" x="1070" y="147">in</text>
+    <text class="label" x="215" y="252">allocated to</text>
   </g>
 
   <g text-anchor="middle" dominant-baseline="central">

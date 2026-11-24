@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Allocations: one person or planned hire on one feature, as a share of a month from each month it
-// changes.
+// Allocations: one person or planned hire on one feature or activity, as a share of a month from
+// each month it changes.
 
 import { z } from "zod";
 import { addToMonth } from "./cycles.ts";
@@ -33,7 +33,8 @@ export const allocationChangeSchema = z
   .object({
     personId: z.uuid().optional(),
     plannedHireId: z.uuid().optional(),
-    featureId: z.uuid(),
+    featureId: z.uuid().optional(),
+    activityId: z.uuid().optional(),
     percentage: z.literal(allocationPercentages).nullable(),
     from: monthSchema,
     to: monthSchema.optional(),
@@ -42,6 +43,11 @@ export const allocationChangeSchema = z
     ({ personId, plannedHireId }) =>
       (personId === undefined) !== (plannedHireId === undefined),
     "Choose a person or a planned hire",
+  )
+  .refine(
+    ({ featureId, activityId }) =>
+      (featureId === undefined) !== (activityId === undefined),
+    "Choose a feature or an activity",
   )
   .refine(
     ({ from, to }) => to === undefined || from <= to,
@@ -131,7 +137,8 @@ export function changedSpans(
 }
 
 // A month's allocations added up. Possible features may never be worked on, so their allocations
-// take up no time; done and cancelled ones still do, since their allocations are time spent.
+// take up no time; done and cancelled ones still do, since their allocations are time spent. An
+// activity counts as a feature does.
 export function allocatedTotal(
   allocations: readonly { percentage: number; meaning: Meaning | null }[],
 ): number {
@@ -203,6 +210,15 @@ export const allocatedFeatureSchema = z.object({
 
 export type AllocatedFeature = z.infer<typeof allocatedFeatureSchema>;
 
+// An activity as allocations name it, as a feature is, with its project's or release's name, which
+// tells apart activities of the same name.
+export const allocatedActivitySchema = allocatedFeatureSchema.extend({
+  // None for an activity the reader can't read.
+  owner: z.string().optional(),
+});
+
+export type AllocatedActivity = z.infer<typeof allocatedActivitySchema>;
+
 export const allocationDraftSchema = z.object({
   action: draftActionSchema,
   months: allocationMonthsSchema,
@@ -217,7 +233,9 @@ export const allocationSchema = z.object({
   id: z.string(),
   personId: z.string().nullable(),
   plannedHireId: z.string().nullable(),
-  featureId: z.string(),
+  // One of the two is set.
+  featureId: z.string().nullable(),
+  activityId: z.string().nullable(),
   months: allocationMonthsSchema,
   draft: allocationDraftSchema.optional(),
   heldBy: heldBySchema,
@@ -225,10 +243,11 @@ export const allocationSchema = z.object({
 
 export type Allocation = z.infer<typeof allocationSchema>;
 
-// The allocations the reader sees, and the features they name.
+// The allocations the reader sees, and the features and activities they name.
 export const allocationsSchema = z.object({
   allocations: z.array(allocationSchema),
   features: z.array(allocatedFeatureSchema),
+  activities: z.array(allocatedActivitySchema),
 });
 
 export type Allocations = z.infer<typeof allocationsSchema>;

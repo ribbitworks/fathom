@@ -13,7 +13,6 @@ import {
   type RecordType,
   seesView,
 } from "@fathom/shared";
-import type { SQL } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { Transaction } from "./changes.ts";
 import {
@@ -30,8 +29,6 @@ export interface RecordKind {
   type: RecordType;
   // The table the live records are kept in, with a column for each field and an id.
   table: PgTable;
-  // The table's rows that are the kind's, for a kind that keeps only some of them.
-  rowsWhere?: SQL;
   // The record's fields, as the change history records them, in the order they are shown.
   fields: readonly string[];
   // The fields that link to other records, by the kind of record each links to. A field links to

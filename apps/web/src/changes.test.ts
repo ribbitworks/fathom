@@ -180,6 +180,15 @@ describe("the plan's fields in the change history", () => {
     ]);
   });
 
+  it("names what an allocation is to: a feature or an activity", () => {
+    const named = (field: string) =>
+      describeValue(field, "Fictional Work")?.at(0);
+    expect([named("featureId"), named("activityId")]).toEqual([
+      { strong: "Feature" },
+      { strong: "Activity" },
+    ]);
+  });
+
   it("names a project's and a proposal's own ID as its column does", () => {
     const named = (kind?: string) =>
       describeField(

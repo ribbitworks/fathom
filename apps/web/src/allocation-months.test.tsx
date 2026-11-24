@@ -19,21 +19,22 @@ import {
   monthTotal,
 } from "./allocation-months.tsx";
 import { monthManagers } from "./planned-hire-months.ts";
-import { featureTeamGrouping } from "./team-months.tsx";
-import { testTheme } from "./test-support.tsx";
 import {
-  months,
-  search,
-  teamMonths,
-  features,
+  activities,
   allocation,
-  draft,
   card,
+  casey,
+  draft,
+  features,
+  linesIn,
+  months,
   noHires,
   rowsOf,
-  casey,
-  linesIn,
+  search,
+  teamMonths,
 } from "./test-allocation-months.ts";
+import { featureTeamGrouping } from "./team-months.tsx";
+import { testTheme } from "./test-support.tsx";
 
 describe("a person's allocations", () => {
   it("lists each month's features by name, with the percentage in force", () => {
@@ -91,7 +92,7 @@ describe("a person's allocations", () => {
     const byManager = (data: TeamMonths) =>
       allocationMonthRecords({
         teamMonths: data,
-        allocations: { allocations: [allocation()], features },
+        allocations: { allocations: [allocation()], features, activities },
         chart: noHires,
         grouping: "manager",
         show: "both",
@@ -412,8 +413,9 @@ describe("a capacity total", () => {
 
 describe("monthTotal", () => {
   const line = (fields: Partial<AllocationLine>): AllocationLine => ({
-    featureId: "f-checkout",
+    workId: "f-checkout",
     name: "Checkout",
+    tip: "Checkout",
     meaning: "in-progress",
     colour: null,
     percentage: 50,

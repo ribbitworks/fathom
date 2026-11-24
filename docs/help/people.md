@@ -108,7 +108,7 @@ You're done when the timeline shows the person's days.
 
 When you hire someone for a planned job, you fill the planned hire with them. **Fill** shows once the hire's **State** is approved, such as **Approved to hire**, and the hire has no rejected draft. It doesn't show while a draft that adds the hire, or changes its manager, is still waiting.
 
-Fathom doesn't move a planned hire's allocations to the person. An allocation is the time planned for someone on a feature. So if the hire has any, remove them first.
+Fathom doesn't move a planned hire's allocations to the person. An allocation is the time planned for someone on a feature or activity. So if the hire has any, remove them first.
 
 1. In the planned hire's **Name** cell, select **Fill**.
 1. Choose **New person** to add someone new, or **Existing person** to move someone who's already here.

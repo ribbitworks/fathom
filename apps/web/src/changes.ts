@@ -113,6 +113,7 @@ const fieldNames = new Map([
   ["personId", "Person"],
   ["plannedHireId", "Planned hire"],
   ["featureId", "Feature"],
+  ["activityId", "Activity"],
   ["months", "Months"],
 ]);
 

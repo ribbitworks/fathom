@@ -4,6 +4,7 @@
 // allocations and their drafts, the org chart's cards, and the rows they make.
 
 import type {
+  AllocatedActivity,
   Allocation,
   AllocationDraft,
   Allocations,
@@ -41,11 +42,22 @@ export const features: Allocations["features"] = [
   { id: "f-maybe", name: "Maybe later", meaning: "possible", colour: null },
 ];
 
+export const activities: AllocatedActivity[] = [
+  {
+    id: "a-general",
+    name: "General",
+    owner: "Crane Control",
+    meaning: "in-progress",
+    colour: null,
+  },
+];
+
 export const allocation = (fields: Partial<Allocation> = {}): Allocation => ({
   id: "a-1",
   personId: "p-casey",
   plannedHireId: null,
   featureId: "f-checkout",
+  activityId: null,
   months: { "2027-03": 50 },
   ...fields,
 });
@@ -89,7 +101,7 @@ export const rowsOf = (
 ) =>
   allocationMonthRecords({
     teamMonths,
-    allocations: { allocations: [...allocated], features },
+    allocations: { allocations: [...allocated], features, activities },
     chart,
     grouping,
     show,

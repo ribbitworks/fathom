@@ -21,6 +21,7 @@ import {
 const personId = "6f1c2a52-6d55-4a40-9b0e-3b8b0a1e2c11";
 const plannedHireId = "9a3e5c71-2b14-4f0d-8e6a-5d2c7b1f4e22";
 const featureId = "2d8b4f93-7c26-4e1a-9f3b-1e6d8a2c5b33";
+const activityId = "4b7e1d26-8a35-4c9f-b2e1-7f3a6c8d9e44";
 
 describe("percentageIn", () => {
   const months = { "2026-11": 50, "2027-03": 100, "2027-06": null };
@@ -171,8 +172,20 @@ describe("allocationChangeSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts an activity in place of a feature", () => {
+    expect(
+      allocationChangeSchema.safeParse({
+        ...change,
+        featureId: undefined,
+        activityId,
+      }).success,
+    ).toBe(true);
+  });
+
   it.each([
     ["both a person and a planned hire", { ...change, plannedHireId }],
+    ["both a feature and an activity", { ...change, activityId }],
+    ["neither a feature nor an activity", { ...change, featureId: undefined }],
     ["neither a person nor a planned hire", { ...change, personId: undefined }],
     ["a percentage not offered", { ...change, percentage: 35 }],
     ["a last month before the first", { ...change, to: "2026-12" }],

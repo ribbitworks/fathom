@@ -9,7 +9,7 @@
 ## What to Know First
 
 - **Feature teams:** a feature team is a group that works on features together, whoever its members report to. Being on a team doesn't say what someone works on. That's in **Allocations**.
-- **Allocations:** an allocation is the share of someone's month planned for one feature, such as 50%.
+- **Allocations:** an allocation is the share of someone's month planned for one feature, or one activity of a project or release, such as 50%. An activity is work that isn't a feature, such as data migration.
 - **Planned hires:** a planned hire is a job you plan to fill. It has a row like a person's, so the work planned for it shows too.
 - **Person-months:** a person-month is one person's work for a month. The settings decide how many hours and days that is.
 - **Who sees which tab:** your role decides which tabs you see. If it sees only one, that tab shows alone, with no tabs above it.
@@ -54,13 +54,13 @@ You're done when the rows show under the headings you chose.
 
 ### Find People
 
-- To find people by name, type in the search box. You can also type a team's or a feature's name, such as `Payments core` or `Checkout`, to find everyone on it in any month.
-- To filter one month by team or feature, open that month's column menu, select **Filter…**, and pick the teams or features.
+- To find people by name, type in the search box. You can also type a team's, a feature's or an activity's name, such as `Payments core`, `Checkout` or `Data migration`, to find everyone on it in any month.
+- To filter one month by team, feature or activity, open that month's column menu, select **Filter…**, and pick them.
 - To see only who is over or under, on **Allocations**, select **Views**, then **Over** or **Under**. They keep the rows **Over**, or **Under** or **Not allocated**, in the current month or any later month in the table.
 - To see who is either over or under, choose both. To turn one off, select it again.
-- To see only who is on some teams or features in any month, select the button after the search box, and pick them. The button is **Feature teams** on the **Feature teams** tab, and **Allocations** on **Allocations**.
+- To see only who is on some teams, features or activities in any month, select the button after the search box, and pick them. The button is **Feature teams** on the **Feature teams** tab, and **Allocations** on **Allocations**.
 - To see who has none in any month, pick **No feature team** or **Not allocated** there.
-- With teams or features picked, the months you scroll to don't change the rows. To clear what you picked, select the **×** on its pill.
+- With teams, features or activities picked, the months you scroll to don't change the rows. To clear what you picked, select the **×** on its pill.
 
 ### Keep a View of the Table
 
@@ -149,10 +149,10 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 
 ### In Allocations
 
-- **A line in a cell** names a feature, after a small square in its feature team's colour, and the share of the month it takes, such as **50%**. Point at the name to see all of it.
+- **A line in a cell** names a feature or an activity, after a small square in its feature team's colour, and the share of the month it takes, such as **50%**. Point at the name to see all of it, with an activity's project or release, such as **General (Crane Control)**.
 - **Over**, in red, ends a month whose allocations add up to more than 100%, with how much more at the right, such as **+25%**. **Under**, in red, ends one under 100%, with how much less, such as **−90%**.
 - **Not allocated**, in red, ends a month with nothing allocated. A month at exactly 100% has no last line.
-- **Over**, **Under** and **Not allocated** show from the current month on, and features whose status means Possible don't count. Point at **Over** or **Under** to see the month's total.
+- **Over**, **Under** and **Not allocated** show from the current month on, and features and activities whose status means Possible don't count. Point at **Over** or **Under** to see the month's total.
 - **Planned hires** have rows of their own, under their manager and under **No feature team**. One with no name shows its position and ID in grey, such as **SDET, TBD-5**. Months before one is expected are shaded.
 - **Total, person-months**, in bold, ends each group, and **Organization, person-months** stays at the foot of the table.
 - **A total**, such as **7.5 of 9**, is the person-months allocated that month, out of those available. The share is under it.
