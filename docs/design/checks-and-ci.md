@@ -130,7 +130,7 @@ flowchart TD
     NeedsInternet -- Yes --> Connected{"Can this computer reach the internet?"}
     Connected -- No --> NoConnection["Fails, naming --offline"]
     Connected -- Yes --> Run
-    AnyLeft -- Yes --> Run["Runs the jobs side by side, the longest first"]
+    AnyLeft -- Yes --> Run["Runs the jobs side by side"]
 ```
 
 A branch checked offline still needs the Check workflow's full check to pass on its pull request.
@@ -147,11 +147,11 @@ flowchart TD
     Free -- No --> Wait["Waiting to run a check, naming the slots' holders; it looks again each second"]
     Wait --> Free
     Free -- Yes --> OnGitHub{"Is CI true, as on GitHub, or FATHOM_CHECK_SHARES already set?"}
-    OnGitHub -- Yes --> WholeComputer["Its environment is kept: on GitHub, every job runs at once"]
+    OnGitHub -- Yes --> WholeComputer["Its environment is kept: on GitHub, the whole computer, with FATHOM_CHECK_SHARES unset"]
     OnGitHub -- No --> Alone{"Did any other copy hold or wait for a turn as this one took its own?"}
     Alone -- Yes --> HalfComputer["Half the computer: FATHOM_CHECK_SHARES is 2"]
     Alone -- No --> EveryCore["Every core, kept while it runs, even once another copy starts: FATHOM_CHECK_SHARES is 1"]
-    Run["Runs the jobs side by side, the longest first"] --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
+    Run["Runs the jobs side by side"] --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
     Limit -- No --> Stopped["The job's process group is stopped, its output shown, and it counts as Stopped"]
     Limit -- Yes --> Results["Each job's output, then a table of each one's result and seconds"]
     Stopped --> Results
@@ -163,7 +163,7 @@ This chart is part of [The Local Check](#the-local-check), which also draws the 
 - **Waiting:** copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the processes and folders that hold the turns, and how many copies asked first.
 - **A check started by a check,** such as `pnpm test:changed` within `pnpm check:push`, uses the turn its check holds.
 - **Cores:** a copy that starts alone has every core, and keeps them while it runs. One that starts beside another takes half. On GitHub, where `CI` is `true`, a check has the whole computer.
-  - `FATHOM_CHECK_SHARES` carries the share: 1 alone, 2 beside another. A check runs no more jobs side by side than the cores divided by it, or all at once when it isn't set, as on GitHub.
+  - `FATHOM_CHECK_SHARES` carries the share: 1 alone, 2 beside another, and unset on GitHub. A check runs all its jobs side by side, whatever its share.
   - Package tests get the same share of the workers: all of them alone, and half beside another.
 - **Workers:** each package's tests use a share of the check's cores, leaving two free for the development servers. `VITEST_MAX_WORKERS` sets the number instead.
 - **Test databases:** no more than 8 test database servers start at once on one computer.
@@ -256,13 +256,13 @@ flowchart TD
     Free -- No --> Wait["Waiting to run a check, naming the slots' holders; it looks again each second"]
     Wait --> Free
     Free -- Yes --> OnGitHub{"Is CI true, as on GitHub, or FATHOM_CHECK_SHARES already set?"}
-    OnGitHub -- Yes --> WholeComputer["Its environment is kept: on GitHub, every job runs at once"]
+    OnGitHub -- Yes --> WholeComputer["Its environment is kept: on GitHub, the whole computer, with FATHOM_CHECK_SHARES unset"]
     OnGitHub -- No --> Alone{"Did any other copy hold or wait for a turn as this one took its own?"}
     Alone -- Yes --> HalfComputer["Half the computer: FATHOM_CHECK_SHARES is 2"]
     Alone -- No --> EveryCore["Every core, kept while it runs, even once another copy starts: FATHOM_CHECK_SHARES is 1"]
     WholeComputer --> Run
     HalfComputer --> Run
-    EveryCore --> Run["Runs the jobs side by side, the longest first"]
+    EveryCore --> Run["Runs the jobs side by side"]
     Run --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
     Limit -- No --> Stopped["The job's process group is stopped, its output shown, and it counts as Stopped"]
     Limit -- Yes --> Results["Each job's output, then a table of each one's result and seconds"]

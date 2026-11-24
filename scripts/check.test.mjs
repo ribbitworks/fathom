@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of the check's jobs: choosing them, checking them before waiting for a turn, how many run side
-// by side, stopping one that hangs, and naming each job that failed.
+// Tests of the check's jobs: choosing them, checking them before waiting for a turn, running them
+// side by side, stopping one that hangs, and naming each job that failed.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -277,13 +277,12 @@ describe("scripts/check.sh", () => {
     );
   });
 
-  it("stops a job that runs past the time limit, naming it, and runs the rest in its place", () => {
-    // Given one job side by side, and the first job hanging
+  it("stops a job that runs past the time limit, naming it, while the rest still run", () => {
+    // Given the first job hanging
     const result = run(["--before-push"], {
       environment: {
         HANGING: "test:changed",
         FATHOM_CHECK_JOB_SECONDS: "3",
-        FATHOM_CHECK_SHARES: "1000",
       },
     });
 
@@ -296,6 +295,11 @@ describe("scripts/check.sh", () => {
     for (const job of beforePush.filter((one) => one !== "Changed tests"))
       assert.ok(result.stdout.includes(`| ${job} | Pass |`), result.stdout);
     assert.ok(
+      result.stdout.indexOf("==> ESLint: Pass") <
+        result.stdout.indexOf("==> Changed tests: Stopped"),
+      result.stdout,
+    );
+    assert.ok(
       result.stdout.includes(
         "==> Changed tests ran past the 3s limit, so it was stopped; its output up to then follows\nstarted test:changed",
       ),
@@ -307,27 +311,18 @@ describe("scripts/check.sh", () => {
     );
   });
 
-  it("runs every job side by side when no other check shares the computer", () => {
-    const result = check("--before-push");
-    assert.equal(result.status, 0, result.stderr);
-    assert.ok(
-      result.stdout.includes("Running 6 jobs, up to 6 side by side"),
-      result.stdout,
-    );
-    assert.ok(!result.stderr.includes("setpgid"), result.stderr);
-  });
-
-  it("runs only its share of the cores side by side, and every job in the end", () => {
+  it("runs every job side by side, whatever share of the cores the check has", () => {
     const result = run(["--before-push"], {
       environment: { FATHOM_CHECK_SHARES: "1000" },
     });
     assert.equal(result.status, 0, result.stderr);
     assert.ok(
-      result.stdout.includes("Running 6 jobs, up to 1 side by side"),
+      result.stdout.includes("Running 6 jobs side by side"),
       result.stdout,
     );
     for (const job of beforePush)
       assert.ok(result.stdout.includes(`| ${job} | Pass |`), result.stdout);
+    assert.ok(!result.stderr.includes("setpgid"), result.stderr);
   });
 
   it("stops before starting any job without a connection, naming --offline", () => {
