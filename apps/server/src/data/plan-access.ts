@@ -10,7 +10,9 @@ import type {
   Field,
   FieldRequest,
   FeatureProjectsRequest,
+  ActivityDuplicateRequest,
   ActivityRequest,
+  Duplicated,
   MilestoneRequest,
   PlanChoices,
   ProjectPlan,
@@ -44,7 +46,9 @@ import {
   seenRecords,
   seenStreams,
 } from "./page-reads.ts";
+import { activityPlace, activityTypes } from "@fathom/shared";
 import { columnEditor } from "./column-state.ts";
+import { duplicateActivity, duplicateFeature } from "./duplicates.ts";
 
 export interface ReleasePlace {
   streamId: string;
@@ -213,6 +217,13 @@ export interface ProjectAccess {
     projectId: string,
     id: string,
   ): Promise<ChangeSetId>;
+  duplicateFeature(actor: Actor, id: string): Promise<Duplicated>;
+  // By those who edit activities where the copy goes and read the original's kind.
+  duplicateActivity(
+    actor: Actor,
+    id: string,
+    into: ActivityDuplicateRequest,
+  ): Promise<Duplicated>;
 }
 
 export interface AllocationAccess {
@@ -494,6 +505,15 @@ export function createProjectAccess(database: Database): ProjectAccess {
           id,
           request,
         ),
+      ),
+    duplicateFeature: async (actor, id) =>
+      duplicateFeature(database, recordEditor(actor, "feature"), id),
+    duplicateActivity: async (actor, id, into) =>
+      duplicateActivity(
+        database,
+        recordEditor(actor, activityTypes[activityPlace(into).owner]),
+        id,
+        into,
       ),
     removeActivity: async (actor, projectId, id) =>
       projectData.removeBelonging(

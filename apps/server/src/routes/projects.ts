@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The routes for customers, projects with their milestones and activities, proposals, and features,
-// each change answering with the change set it was saved in. The data access layer checks the
-// actor's permissions.
+// and duplicating a feature or an activity, each answering with the change set it was saved in.
+// The data access layer checks the actor's permissions.
 
 import {
+  activityDuplicateRequestSchema,
   activityRequestSchema,
   changeSetIdSchema,
   customerRequestSchema,
+  duplicatedSchema,
   featureProjectsRequestSchema,
   featureRequestSchema,
   fieldRequestSchema,
@@ -264,6 +266,42 @@ export function projectRoutes(
           request.params.id,
         ),
       }),
+    );
+
+    app.post(
+      "/api/features/:id/duplicate",
+      {
+        schema: {
+          params: idParams,
+          response: { [created]: duplicatedSchema },
+        },
+      },
+      async (request, reply) =>
+        reply
+          .status(created)
+          .send(
+            await projects.duplicateFeature(request.actor, request.params.id),
+          ),
+    );
+    app.post(
+      "/api/activities/:id/duplicate",
+      {
+        schema: {
+          params: idParams,
+          body: activityDuplicateRequestSchema,
+          response: { [created]: duplicatedSchema },
+        },
+      },
+      async (request, reply) =>
+        reply
+          .status(created)
+          .send(
+            await projects.duplicateActivity(
+              request.actor,
+              request.params.id,
+              request.body,
+            ),
+          ),
     );
 
     app.post(

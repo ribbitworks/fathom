@@ -965,6 +965,25 @@ const routes: Route[] = [
   },
   {
     method: "POST",
+    pattern: "/api/features/:id/duplicate",
+    needs: allOf("features:edit"),
+  },
+  {
+    method: "POST",
+    pattern: "/api/activities/:id/duplicate",
+    variant: "into a project",
+    needs: allOf("plan:edit"),
+    body: () => ({ projectId: randomUUID() }),
+  },
+  {
+    method: "POST",
+    pattern: "/api/activities/:id/duplicate",
+    variant: "into a release",
+    needs: allOf("features:edit"),
+    body: () => ({ releaseId: randomUUID() }),
+  },
+  {
+    method: "POST",
     pattern: "/api/release-streams/:streamId/releases/:releaseId/activities",
     needs: allOf("features:edit"),
     body: () => ({ name: "Fictional Activity" }),

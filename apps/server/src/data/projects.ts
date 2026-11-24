@@ -203,7 +203,7 @@ const startingStatus: Readonly<
 
 // The status a record is given: the one asked for, if it is offered or the record already has it,
 // or, for a record added without one, the first status it can start in.
-async function statusFor(
+export async function statusFor(
   transaction: Transaction,
   list: StatusList,
   asked: string | undefined,
@@ -335,7 +335,7 @@ async function optionalChoice(
   return asked;
 }
 
-async function featureRecord(
+export async function featureRecord(
   transaction: Transaction,
   request: FeatureRequest,
   current?: Recorded,

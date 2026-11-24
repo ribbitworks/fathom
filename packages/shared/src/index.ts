@@ -471,6 +471,17 @@ export {
   isActivityType,
 } from "./activities.ts";
 export {
+  type ActivityDuplicateRequest,
+  activityDuplicateRequestSchema,
+  activityPlace,
+  copiedFields,
+  copyName,
+  copyOf,
+  type Duplicated,
+  type DuplicatedKind,
+  duplicatedSchema,
+} from "./duplicates.ts";
+export {
   type OrgChart,
   type OrgChartDraft,
   orgChartDraftSchema,

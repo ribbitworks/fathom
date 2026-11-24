@@ -81,6 +81,7 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Never a feature:** it is on no roadmap, has no status, feature team, cycle or proposal, and is never shown on Features.
 - **Drafts:** added, changed and removed as drafts, as a milestone is. A project's activities are drafts of the plan, changed with Edit Plan and approved with Approve Plan; a release's are drafts of features and releases, changed with Edit Features and releases and approved with Approve Features, as [Roles](../product/roles.md) sets out. An activity of a project or release only drafted to be added uses that draft, so approving it approves its owner too.
 - **Removing:** refused while it has allocations, as a feature is.
+- **Duplicating:** a copy is drafted into the project or release chosen, keeping its description, note and estimate, with no allocations. It is named as a feature's copy is, its name checked only against the activities of that project or release. Choosing it on screen follows in [issue #275](https://github.com/ribbitworks/fathom/issues/275).
 - **Keys:** each has a key, such as #ACTIVITY-14, whose link opens its details under its project's, or its release's details on Releases.
 - **Built so far:** a project's activities, on [Projects](pages/projects.md#record-details). A release's activities are drafted through the server and read with their release, with links that open their release on Releases. Showing a release's activities on Releases, choosing an activity's colour, and allocating to activities follow in [issue #207](https://github.com/ribbitworks/fathom/issues/207); until then, Capacity doesn't show or count allocations to activities.
 
@@ -107,6 +108,7 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Not staffed:** a feature whose status means Planned or In progress and has no allocations. A planned hire's allocation staffs a feature as a person's does. Whether a feature has allocations is a fact about the feature, not about anyone allocated, so [Roles](../product/roles.md#who-sees-which-people) shows it to everyone who sees features.
 - **Size, Priority and Risk:** each optional, and each a choice of a [built-in list](#built-in-lists). Size has no unit and is never converted to effort. Priority is how much the feature matters to the organization, not within a cycle, and is kept apart from status, so a Long shot can be Critical.
 - **Removing:** refused while a project or proposal names it, as for any record another links to, and while it has allocations, since allocations are time spent; it is cancelled instead.
+- **Duplicating:** a copy is drafted to be added, named as the original with " (copy)" after it, or " (copy 2)" and on where that is taken. It keeps what describes the work: its description, note, priority, size, risk, Needed by, estimate, feature team and added columns' values. It starts in a new feature's status, with no target cycle, customers, projects or proposals, and no allocations. Choosing it on screen follows in [issue #275](https://github.com/ribbitworks/fathom/issues/275).
 
 ### Milestone
 
