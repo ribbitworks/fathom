@@ -14,6 +14,7 @@
 #   reseed   unseed, then seed
 #   seed-accounts  add only the account for each persona, with no fictional data, sharing the
 #            password it prints
+# Set FATHOM_DEV_SHOW_PASSWORD=false to print where the password is kept instead of the password.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -60,7 +61,11 @@ run_seed() {
     FATHOM_DB_PASSWORD_FILE="$PWD/.dev/secrets/fathom_app_password" \
     node packages/seed/src/seed.ts "$1"
   if [ "$1" = seed ] || [ "$1" = accounts ]; then
-    info "Sign in as any development account, listed in docs/design/development-setup.md, with the password $(cat "$password_file")"
+    if [ "${FATHOM_DEV_SHOW_PASSWORD:-true}" = false ]; then
+      info "The development accounts are ready; their password is in $(dev_account_password_file)"
+    else
+      info "Sign in as any development account, listed in docs/design/development-setup.md, with the password $(cat "$password_file")"
+    fi
   fi
 }
 

@@ -15,7 +15,7 @@ main() {
   curl --silent --max-time 10 --cacert "$ca_file" --output /dev/null "$url/" ||
     fail "Fathom isn't answering at $url; start it with 'pnpm dev', then try again"
   password_file="$PWD/$(dev_account_password_file)"
-  bash scripts/dev-db.sh reseed
+  FATHOM_DEV_SHOW_PASSWORD=false bash scripts/dev-db.sh reseed
   # Each run signs its accounts in afresh; their sessions are kept where only this account can read.
   rm -rf .tmp/ui-accounts
   (umask 077 && mkdir -p .tmp/ui-accounts)
