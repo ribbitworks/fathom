@@ -38,34 +38,39 @@ or "the project's targeted tests", use the ones it names.
 
 - **Checkouts:** work only in a checkout the owner names for the task, such as
   one of several clones of the repository. If the owner has not named one, ask.
-  Never switch branches, pull, stash or edit files in any other checkout, even
-  one that looks clean: the owner may be working in it. Read-only commands
-  there (`git log`, `git status`, searching) are fine.
+  - **Other checkouts:** never switch branches, pull, stash or edit files in
+    any other checkout, even one that looks clean: the owner may be working in
+    it. Read-only commands there (`git log`, `git status`, searching) are fine.
 - **Starting a task:** once the owner has chosen a mode and, in Restrictive
   mode, approved the change, check that `git status` in the named checkout and
   its submodules shows no uncommitted or untracked work. If it does, stop and
-  tell the owner. Otherwise create the task's branch from the latest
-  `origin/main` and tell the owner its name:
+  tell the owner.
+  - **Creating the branch:** otherwise create the task's branch from the
+    latest `origin/main` and tell the owner its name:
 
-  ```bash
-  git fetch origin
-  git switch --no-track -c <type>/<task> origin/main
-  git submodule update --init --recursive
-  ```
+    ```bash
+    git fetch origin
+    git switch --no-track -c <type>/<task> origin/main
+    git submodule update --init --recursive
+    ```
 
-  Then run the project's setup command. The submodule update and the setup
-  do not count as a build. Follow-up work on the same task stays on that
-  branch; to resume it, make the same check, run `git switch <type>/<task>`,
-  and update the submodules again. Push with
-  `git push -u origin <type>/<task>`. Never commit a change to a submodule
-  pointer unless the task is to bump it.
+  - **Setup:** then run the project's setup command. The submodule update and
+    the setup do not count as a build.
+  - **Resuming:** follow-up work on the same task stays on that branch. To
+    resume it, make the same check, run `git switch <type>/<task>`, and update
+    the submodules again.
+  - **Pushing:** push with `git push -u origin <type>/<task>`.
+  - **Submodule pointers:** never commit a change to a submodule pointer
+    unless the task is to bump it.
 - **Branch cleanup:** when the owner asks, or at the start of the next task
   once its branch is created, delete the local branches of merged pull
-  requests. Confirm the merge and that the local branch holds nothing the pull
-  request lacks: `git rev-parse <type>/<task>` must match `headRefOid` from
-  `gh pr view <number> --json state,headRefOid`. If it does not, stop and tell
-  the owner. Then run `git branch -D <type>/<task>`; rebase merges rewrite the
-  commits, so `git branch -d` refuses.
+  requests.
+  - **Checking first:** confirm the merge and that the local branch holds
+    nothing the pull request lacks: `git rev-parse <type>/<task>` must match
+    `headRefOid` from `gh pr view <number> --json state,headRefOid`. If it does
+    not, stop and tell the owner.
+  - **Deleting:** then run `git branch -D <type>/<task>`; rebase merges rewrite
+    the commits, so `git branch -d` refuses.
 - **Tests and builds:** run only through the project's own commands, never the
   underlying tools directly. If a category of tests can't run, stop and tell
   the owner; never report the tests as passing. Report a flaky test to the
@@ -74,14 +79,17 @@ or "the project's targeted tests", use the ones it names.
   owner, and file only those the owner approves. Name one not approved in the
   pull request or the report instead.
 - **Versions and tags:** release tags follow semantic versioning,
-  `vMAJOR.MINOR.PATCH`. A change that breaks something that uses the release
-  bumps MAJOR; a new feature or option, even a small one, bumps MINOR and
-  resets PATCH; a release with no new feature or breaking change (fixes,
-  documentation, refactors, tests, chores) bumps PATCH. Before 1.0.0, a
-  breaking change bumps MINOR instead, as semantic versioning allows for
-  initial development. Decide the bump from the commits since the last tag,
-  not from the size of the change. Only the owner tags a release, or an agent
-  the owner asks to.
+  `vMAJOR.MINOR.PATCH`. Only the owner tags a release, or an agent the owner
+  asks to.
+  - **MAJOR:** a change that breaks something that uses the release bumps
+    MAJOR. Before 1.0.0, a breaking change bumps MINOR instead, as semantic
+    versioning allows for initial development.
+  - **MINOR:** a new feature or option, even a small one, bumps MINOR and
+    resets PATCH.
+  - **PATCH:** a release with no new feature or breaking change (fixes,
+    documentation, refactors, tests, chores) bumps PATCH.
+  - **Choosing the bump:** decide the bump from the commits since the last
+    tag, not from the size of the change.
 - **Code reviews:** follow [code-review.md](code-review.md). A review only
   writes its review file; it **Must Not** stage or commit.
   - **Scope:** in Restrictive mode, ask the owner which scope to review. In
@@ -117,13 +125,15 @@ or "the project's targeted tests", use the ones it names.
   - Merge pull requests by rebasing onto `main`, never by squashing or with a
     merge commit, so each commit lands as written. Each commit therefore
     follows the commit message rules on its own.
-- **Data:** **Must Not** commit real personal, health, financial or company
-  data, such as exports, account numbers, measurements or names. Sample files,
-  fixtures and test data **Must** be fictional and not derived from real data,
-  even anonymized. **Must Not** put real data into prompts (including to
-  subagents), issues, pull requests, commit messages, screenshots or logs. If
-  you are given or find real data, do not use or copy it; stop and tell the
-  owner.
+- **Data:**
+  - **Commits:** **Must Not** commit real personal, health, financial or
+    company data, such as exports, account numbers, measurements or names.
+  - **Sample and test data:** sample files, fixtures and test data **Must** be
+    fictional and not derived from real data, even anonymized.
+  - **Everywhere else:** **Must Not** put real data into prompts (including to
+    subagents), issues, pull requests, commit messages, screenshots or logs.
+  - **Real data found:** if you are given or find real data, do not use or
+    copy it; stop and tell the owner.
 
 ## Autonomous Mode
 
@@ -157,17 +167,22 @@ Complete these steps, in order, for every change:
 1. **Full suite:** once the findings are fixed, run the full suite except UI
    tests with the project's test command, on the code to be committed, and fix
    all failures and warnings. A change to documentation only may skip this
-   step too. Where the project's continuous integration runs the full suite on
-   every pull request, as its standards say, that run is this step instead: the
-   commit and push come first, failures and warnings are fixed as later
-   commits, and the owner merges only once it passes.
+   step too.
+   - **Run by continuous integration:** where the project's continuous
+     integration runs the full suite on every pull request, as its standards
+     say, that run is this step instead.
+   - **Order in that case:** the commit and push come first, failures and
+     warnings are fixed as later commits, and the owner merges only once it
+     passes.
 1. **Manual test check:** when the change adds a manual test, or changes one
    significantly, such as by adding or removing test cases or changing
-   expected results, stop until the owner approves the test or runs it. A
-   small edit to a manual test, such as its wording or a renamed control, needs
-   no stop. Any other change goes straight to the commit, without asking. A
-   review finding left unfixed stops for the owner as Review findings sets
-   out.
+   expected results, stop until the owner approves the test or runs it.
+   - **Small edits:** a small edit to a manual test, such as its wording or a
+     renamed control, needs no stop.
+   - **Other changes:** any other change goes straight to the commit, without
+     asking.
+   - **Unfixed findings:** a review finding left unfixed stops for the owner as
+     Review findings sets out.
 1. **Commit and push:** commit, following the branch and commit rules, then
    push when [Pushing and Pull Requests](#pushing-and-pull-requests) says to.
 1. **Open the pull request and report:** open the pull request, ready for
@@ -176,12 +191,17 @@ Complete these steps, in order, for every change:
    description when it changes a screen. Report it to the owner with its link,
    and stop.
 
-At any step, stop and ask the owner about a decision the owner should weigh
-in on, such as what users see or can do, a product rule, scope beyond the task,
-or something hard to undo, and about anything the standards say needs the
-owner's decision. The agent makes everyday choices itself and records each one
-in the pull request's description under a Decisions heading: the question, what
-it chose, what it rejected, and why.
+At any step, stop and ask the owner:
+
+- **Owner decisions:** about a decision the owner should weigh in on, such as
+  what users see or can do, a product rule, scope beyond the task, or
+  something hard to undo.
+- **Decisions the standards reserve:** about anything the standards say needs
+  the owner's decision.
+
+The agent makes everyday choices itself and records each one in the pull
+request's description under a Decisions heading: the question, what it chose,
+what it rejected, and why.
 
 When changes come out of findings, the full suite, UI feedback or owner
 feedback:
@@ -207,10 +227,12 @@ feedback:
   - **Every commit reviewed:** a branch of two or more commits has an
     interaction review, a short review of only where the commits meet, such as
     shared code two of them change, a feature one builds on another, or a
-    document more than one edits. It names the earlier review files and does
-    not review each commit again. A branch with a single commit, or whose later
-    commits only fix review findings or the owner's UI feedback, needs no
-    review.
+    document more than one edits.
+    - **What it covers:** it names the earlier review files and does not
+      review each commit again.
+    - **No interaction review needed:** a branch with a single commit, or
+      whose later commits only fix review findings or the owner's UI
+      feedback, needs no review.
 - Push with `git push -u origin <type>/<task>`.
 - Open the pull request with `gh pr create`, ready for review, following the
   commit message rules for its title and description.
