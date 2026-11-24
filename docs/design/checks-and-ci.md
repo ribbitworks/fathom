@@ -93,7 +93,7 @@ This chart is part of [The Whole Path](#the-whole-path); [The Check Workflow](#t
 ```mermaid
 flowchart TD
     Push["git push, then gh pr create for a new pull request"] --> CheckWorkflow["The Check workflow on the pull request, as The Check Workflow draws, with CodeQL beside it"]
-    CheckWorkflow --> Required{"Did Full check and Container tests pass?"}
+    CheckWorkflow --> Required{"Did Full check pass?"}
     Required -- No --> Fix["A round of fixes"]
     Required -- Yes --> Merge["The maintainer merges by rebasing; the branch need not be up to date with main"]
     Merge --> MainRun["The Check workflow on the push to main, running every job"]
@@ -204,7 +204,7 @@ flowchart TD
     Rebase --> CheckPush
     Rebased -- Yes --> Push["git push, then gh pr create for a new pull request"]
     Push --> CheckWorkflow["The Check workflow on the pull request, as The Check Workflow draws, with CodeQL beside it"]
-    CheckWorkflow --> Required{"Did Full check and Container tests pass?"}
+    CheckWorkflow --> Required{"Did Full check pass?"}
     Required -- No --> Fix
     Required -- Yes --> Merge["The maintainer merges by rebasing; the branch need not be up to date with main"]
     Merge --> MainRun["The Check workflow on the push to main, running every job"]
@@ -356,7 +356,7 @@ flowchart TD
 
 ### The Check Workflow
 
-`.github/workflows/check.yml` runs on each pull request's pushes and on every push to `main`. **Full check** and **Container tests** are the checks a merge needs; the rest feed Full check. CodeQL's code scanning runs beside it, its results shown but never blocking a merge.
+`.github/workflows/check.yml` runs on each pull request's pushes and on every push to `main`. **Full check** is the one check a merge needs; every other job feeds it. CodeQL's code scanning runs beside it, its results shown but never blocking a merge.
 
 ```mermaid
 flowchart TD
@@ -374,14 +374,11 @@ flowchart TD
     PartsPassed -- Yes --> Coverage{"Server coverage: are all 3 of the server's reports there?"}
     Coverage -- No --> MissingReports["Server coverage fails, naming the reports missing"]
     Coverage -- Yes --> MergeCoverage["pnpm --filter @fathom/server test:merge checks the merged coverage"]
-    DocsOnly -- No --> Skipped["Package tests and Server coverage are skipped"]
+    DocsOnly -- No --> Skipped["Package tests, Server coverage and Container tests are skipped"]
     CoverageSkipped --> Full
-    Decide --> ContainersJob{"Container tests: did the decision succeed?"}
-    ContainersJob -- No --> ContainersFailed["Container tests fails"]
-    ContainersJob -- Yes --> ContainersDocs{"Documentation alone?"}
-    ContainersDocs -- Yes --> ContainersPassed["Container tests passes, running nothing"]
-    ContainersDocs -- No --> TestContainers["pnpm test:containers builds the images and tests them"]
-    Check --> Full{"Full check: did the decision and Check without package tests pass, and did Package tests and Server coverage pass, or, for documentation alone, skip?"}
+    DocsOnly -- Yes --> TestContainers["Container tests: pnpm test:containers builds the images and tests them"]
+    TestContainers --> Full
+    Check --> Full{"Full check: did the decision and Check without package tests pass, and did Package tests, Server coverage and Container tests pass, or, for documentation alone, skip?"}
     MergeCoverage --> Full
     MissingReports --> Full
     Skipped --> Full
