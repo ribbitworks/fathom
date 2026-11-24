@@ -29,7 +29,9 @@ Features lists the plan's features in one table, with a board as a second way of
 - **Staffed:** read only; for Planned or In progress features, Yes when any allocation gives them a month, a planned hire's included. It is empty for other statuses, so Not staffed is a plain filter.
 - **Customers:** changed only by those who change the plan, who alone see it in New feature; the server refuses others' changes and their discarding of such a change.
 - **Projects and Proposals:** changed only by those who change the plan; New feature doesn't offer them.
-  - A change drafts the project or proposal, so the feature's row isn't marked. In the cell and in the feature's details, a project or proposal a draft adds has the draft's dot, and one it takes away has the dot and is struck through, as [A part a draft adds or removes](../../standards/ui-conventions/drafts-and-values.md#drafts) sets out. Those drafts are decided on Projects, where they are drafts of the project or proposal, or with the Draft menu's Approve; the cell has no menu of its own, as no table's cell does.
+  - A change drafts the project or proposal, so the feature's row isn't marked.
+  - In the cell and in the feature's details, a project or proposal a draft adds has the draft's dot, and one it takes away has the dot and is struck through, as [A part a draft adds or removes](../../standards/ui-conventions/drafts-and-values.md#drafts) sets out.
+  - Those drafts are decided on Projects, where they are drafts of the project or proposal, or with the Draft menu's Approve; the cell has no menu of its own, as no table's cell does.
 - **Added columns:** General lists only, with no planned hires or other class; a drafted one can't be filled until approved.
   - Remove column shows only to those who may also change features.
 
@@ -50,7 +52,9 @@ Features lists the plan's features in one table, with a board as a second way of
 - **Read only:** nothing on the board can be changed.
 - **One view:** table and board share the page's controls and view. A saved view keeps the Board's columns and card choices, but not which shows or the month or cycle the Board starts from.
 - **Columns:** chosen in a Columns menu: Months, the default, then each schedule's cycles.
-  - **Months:** one column a month, as many as fit, then No date. The months run from 12 months back to the latest month any feature is needed by, a year ahead at the least. A feature sits in the month it is needed by, including a month that has passed; one needed before the first month is not on the board. A header names the month; this month's is underlined in red.
+  - **Months:** one column a month, as many as fit, then No date. The months run from 12 months back to the latest month any feature is needed by, a year ahead at the least.
+    - **Placing features:** a feature sits in the month it is needed by, including a month that has passed; one needed before the first month is not on the board.
+    - **Headers:** a header names the month; this month's is underlined in red.
   - **A schedule's cycles:** as many as fit, then Later with every uncycled feature. A header shows its release in the release's colour, then the cycle and its days; the current cycle's header is underlined in red.
   - Columns show no size totals.
 - **Strip:** the Columns and Card buttons start the [timeline strip](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines). By months it names quarters, such as Q1 2027, and ‹ and › step a quarter; by a schedule's cycles it names each cycle, and ‹ and › step a cycle.

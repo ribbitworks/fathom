@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/releases.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Fathom: Releases Page
@@ -51,7 +51,9 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 
 - **Pencils:** Release, Ships on, Cycles and Colour, for those who change releases, as [Releases](../../product/roles.md#releases) in Roles sets out.
 - **No pencils:** On a release in a retired schedule, drafted to be removed, or held by another's unpublished changes.
-- **Note:** Each release has one built-in note, and schedules have none. It opens in a panel beside the details, from the Note row's open button, or from **Add note…** in the row's menu while empty. Those who see releases read it, and those who change releases write it. An open note is kept in the address as [Kept in the address](../../standards/ui-conventions/tables.md#the-address) sets out.
+- **Note:** Each release has one built-in note, and schedules have none. Those who see releases read it, and those who change releases write it.
+  - **Opening:** The note opens in a panel beside the details, from the Note row's open button, or from **Add note…** in the row's menu while empty.
+  - **Kept open:** An open note is kept in the address as [Kept in the address](../../standards/ui-conventions/tables.md#the-address) sets out.
 
 ## Cycles Tab
 

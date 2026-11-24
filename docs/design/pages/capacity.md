@@ -28,7 +28,8 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 
 - **Shared table:** grouped one level deep, since each row is made for its group.
 - **Rows:** one per person and planned hire, frozen on the left, in one list at first; Group by offers None, Manager and Feature team.
-  - Planned hires are read only, named by their position and ID in grey when they have no name, and their months before the one they're expected in are shaded. They sit under their manager by Manager, and under No feature team by Feature team. Planned hires have no feature teams yet ([issue #395](https://github.com/ribbitworks/fathom/issues/395)), so their cells on Feature teams are blank.
+  - Planned hires are read only, named by their position and ID in grey when they have no name, and their months before the one they're expected in are shaded.
+  - Planned hires sit under their manager by Manager, and under No feature team by Feature team. They have no feature teams yet ([issue #395](https://github.com/ribbitworks/fathom/issues/395)), so their cells on Feature teams are blank.
   - A role that doesn't see People has no planned hires' rows.
 - **Months:** whole quarters, from the quarter holding the month a year back to the quarter holding the month eleven months ahead; months outside employment are shaded.
   - A thin line between columns, and the current month's heading underlined in today's red, as [Month grids](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out.
@@ -39,7 +40,8 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
   - That month's heading is filled in the accent colour, as the strip's chosen quarter is.
   - **‹** and **›** step a quarter from that month.
 - **Drafts:** marks as [Month grids](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out, carried by each team's or feature's line.
-- **Filter across the grid:** a button after the search box, Feature teams on Feature teams and Allocations on Allocations, opens a filter of the choices its months' filters offer: every feature team, or everything someone is allocated to, as [Filtering across a table](../../standards/ui-conventions/tables.md#tables) sets out. It keeps the rows with a chosen one in any month of the grid, or, with No feature team or Not allocated, those with none in any month. On Allocations, a row under a group counts only that group's months, as its cells do.
+- **Filter across the grid:** a button after the search box, Feature teams on Feature teams and Allocations on Allocations, opens a filter of the choices its months' filters offer: every feature team, or everything someone is allocated to, as [Filtering across a table](../../standards/ui-conventions/tables.md#tables) sets out.
+  - It keeps the rows with a chosen one in any month of the grid, or, with No feature team or Not allocated, those with none in any month. On Allocations, a row under a group counts only that group's months, as its cells do.
   - It reads every month of the grid, not only those in view, so scrolling never changes the rows.
   - The cells still show every team or feature of their month, since a filter chooses rows, not what a cell holds.
   - The view and the address keep it as the filter `any-month`, with a pill such as Feature team: Payments core, or Allocated to: Offline Sync.
@@ -58,11 +60,13 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 - **Read only:** allocating from the grid is planned, below.
 - **Rows:** someone under several managers or feature teams in the months shown has a row under each, holding only that group's months and blank in the rest. Under No feature team, a row holds the months they were employed on none.
 - **A month's cell:** each feature, after its feature team's colour square, with its percentage at the right.
-  - From the current month on, a month off a whole month has a last line, in red and bold, over a faint rule: Over or Under, with how far off at the right, such as +25% or −90%, and the month's total in its tooltip, such as Total 125%; or Not allocated alone for a month with nothing allocated. A whole month, and every past month, has no last line.
+  - From the current month on, a month off a whole month has a last line, in red and bold, over a faint rule: Over or Under, with how far off at the right, such as +25% or −90%, and the month's total in its tooltip, such as Total 125%. A month with nothing allocated shows Not allocated alone instead.
+  - A whole month, and every past month, has no last line.
   - These are a status, not a [warning](../../standards/ui-conventions/drafts-and-values.md#values).
 - **Over:** more than 100%, counting every feature but Possible ones. Done and Cancelled features count, since allocations are time spent, so future allocations to a cancelled feature show Over until cleared.
 - **Under:** less than 100% in a month the person or planned hire can be allocated in.
-- **Over and Under choices:** Over and Under at the top of the Views menu keep only the rows Over, or Under or Not allocated, in the current month or any later month in the grid, and either while both are on. Each shows how many rows it keeps, and is offered while a row matches it or while it is on.
+- **Over and Under choices:** Over and Under at the top of the Views menu keep only the rows Over, or Under or Not allocated, in the current month or any later month in the grid, and either while both are on.
+  - Each shows how many rows it keeps, and is offered while a row matches it or while it is on.
   - They don't depend on the months in view, so scrolling never changes the rows.
   - The view and the address keep them, as `over` and `under`.
 - **Capacity:** as the [Domain Model](../domain-model.md#allocation) sets out.
