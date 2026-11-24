@@ -131,7 +131,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Lists** page open from the left-hand menu.
 
-- [ ] `46AA` Select 'Sites', and write down the key under its name.
+- [ ] `46AA` Select the details button of 'Sites', and write down the key under its name.
   - **Expected:** Under the list's name, in grey, **#LIST-** and a number.
   - **Notes:**
 

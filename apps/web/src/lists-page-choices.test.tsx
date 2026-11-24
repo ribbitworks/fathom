@@ -36,6 +36,7 @@ import {
   undone,
   startsWith,
   undoLast,
+  openList,
 } from "./test-lists-page.tsx";
 
 afterEach(() => {
@@ -49,15 +50,16 @@ describe("the side panel", () => {
       "GET /api/lists": listsAnswer,
     });
     const history = renderApp("/lists");
-    await userEvent.click(await screen.findByText("Offices and labs."));
+    await openList("Locations");
     expect(
       await screen.findByRole("heading", { name: "Locations", level: 2 }),
     ).toBeDefined();
     expect(history.location.pathname).toBe("/lists/l1");
-    await userEvent.click(screen.getByText("Rust", { selector: "span" }));
+    await openList("Skills");
     expect(
       await screen.findByRole("heading", { name: "Skills", level: 2 }),
     ).toBeDefined();
+    expect(history.location.pathname).toBe("/lists/l2");
   });
 
   it.each([
@@ -98,7 +100,9 @@ describe("the side panel", () => {
     expect(screen.getByText("Head office.")).toBeDefined();
     expect(screen.queryByLabelText("New choice name")).toBeNull();
     expect(screen.queryByRole("button", { name: "Edit list…" })).toBeNull();
-    expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
+    expect(
+      within(panel()).queryByRole("button", { name: /^Actions for/ }),
+    ).toBeNull();
     await userEvent.click(row("c1"));
     expect(screen.queryByLabelText("name")).toBeNull();
     history.push("/lists/l3");

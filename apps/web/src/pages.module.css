@@ -69,48 +69,12 @@
   color: var(--mantine-color-error);
 }
 
-/* The Lists page's table of lists: one grid whose rows share its columns, using the full width. */
-.listTable {
-  display: grid;
-  grid-template-columns: minmax(7rem, max-content) minmax(8rem, 1fr) minmax(
-      12rem,
-      1.7fr
-    );
-  column-gap: 24px;
-}
-
-.listHead,
-.listRow,
-.listGroup {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: subgrid;
-  align-items: center;
-  padding: 0 16px;
-}
-
-.listHead {
-  min-height: 36px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--mantine-color-dimmed);
-}
-
-.listRow {
-  min-height: 40px;
-  border-top: 1px solid var(--mantine-color-default-border);
-  cursor: pointer;
-}
-
-.listRow:hover {
-  background: var(--mantine-color-default-hover);
-}
-
-/* Every selected row, in tables, on the Lists page and in list panels: the hover grey with the
+/* Every selected row, in tables and in list panels: the hover grey with the
    accent's bar at its left edge, never the accent's fill, since a row's fill says its draft's state.
    A draft's tint, set later in this file, stays under the bar. */
 .selectedRow {
   --selected-bar-colour: var(--mantine-primary-color-filled);
+  --selected-tint: var(--mantine-color-default-hover);
 
   background: var(--mantine-color-default-hover);
   box-shadow: inset var(--fathom-selected-bar-width) 0 0
@@ -122,44 +86,8 @@
   --selected-bar-colour: var(--mantine-color-sea-4);
 }
 
-.listRowRetired .listCell,
-.listRowRetired .listLink {
-  color: var(--mantine-color-dimmed);
-}
-
-.listCell,
-.listCellDim,
-.listCellName {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 14px;
-}
-
-.listCellDim,
 .listCount {
   color: var(--mantine-color-dimmed);
-}
-
-.listLink {
-  color: inherit;
-  font-weight: 500;
-}
-
-.listGroup {
-  padding-top: 14px;
-  padding-bottom: 6px;
-  border-top: 1px solid var(--mantine-color-default-border);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--mantine-color-dimmed);
-}
-
-.listFoot {
-  grid-column: 1 / -1;
-  padding: 8px 12px;
-  border-top: 1px solid var(--mantine-color-default-border);
 }
 
 /* Holds a record's panel in its place beside the table. */
@@ -748,17 +676,6 @@ th[data-centred] .recordHeadButton {
   background: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
 }
 
-/* A list's live row, under its draft row in the Lists table, as a person's is on the People table. */
-.listLiveRow {
-  background: var(--mantine-color-green-0);
-  color: var(--mantine-color-dimmed);
-  cursor: default;
-}
-
-:global([data-mantine-color-scheme="dark"]) .listLiveRow {
-  background: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
-}
-
 .struck {
   text-decoration: line-through;
 }
@@ -1047,7 +964,17 @@ th.liveColumn {
       var(--column-tint, transparent)
     ),
     linear-gradient(var(--row-tint, transparent), var(--row-tint, transparent)),
+    linear-gradient(
+      var(--selected-tint, transparent),
+      var(--selected-tint, transparent)
+    ),
     var(--mantine-color-body);
+}
+
+/* A frozen cell covers its row, so a selected row's first cell draws the row's bar again. */
+.recordTable .selectedRow td.frozen:first-child {
+  box-shadow: inset var(--fathom-selected-bar-width) 0 0
+    var(--selected-bar-colour);
 }
 
 /* The frozen columns' edge: a line, with a shadow over the columns scrolled under them, kept within

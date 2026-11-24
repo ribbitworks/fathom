@@ -28,7 +28,8 @@ You're done when the list shows in the table, with a hollow dot until you publis
 
 ### Add Choices
 
-1. Select the list's name. Its choices open in a panel beside the table.
+1. Point at the list's row.
+1. Select the details button: the small box at the right of its **Name** cell. Its choices open in a panel beside the table.
 1. In the empty row at the end, which starts with **+**, type the choice's **Name**.
 1. Type a **Description**, if it helps.
 1. Press Enter.
@@ -67,18 +68,20 @@ You're done when the choice shows a **Retired** box, or is struck through.
 
 ### Change, Retire or Remove a List
 
-To change a list's name or description:
+To rename a list:
 
-1. In the list's panel, select **Edit list…**.
-1. Change the name or the description.
-1. Select **Save**.
+1. Double-click its name in the table, or select it and press Enter.
+1. Type the new name.
+1. Press Enter to keep it, or Esc to leave the name as it was.
+
+To change its description, select **Edit list…** in the list's panel, change the description, and select **Save**.
 
 To retire or remove a list:
 
-1. In the list's panel, select **Edit list…**.
-1. At the foot of the dialog, select **Retire list** or **Remove list**.
+1. Open the list's **⋯** menu. It shows when you point at the list's row.
+1. Select **Retire** or **Remove list**.
 
-Fathom refuses to retire or remove a list while a column uses it. A retired list's dialog has **Restore list** in the same place, to bring it back.
+You can also select **Retire list** or **Remove list** at the foot of the **Edit list** dialog. Fathom refuses to retire or remove a list while a column uses it. **Used by** names the approved columns that use it; a column that's still a draft counts too. To bring a retired list back, select **Show retired** in the **Views** menu, then **Restore** in the list's menu.
 
 You're done when the list shows your change: a hollow dot, a **Retired** box, or its name struck through.
 
@@ -100,12 +103,18 @@ See [Data classes](data-classes.md) for more.
 
 ### Find a List
 
-- Type in **Search lists**.
-- To see only some lists, choose **All**, **Built in** or **Custom** in the switch beside it. With **All**, the built-in lists come first, then your own.
+- Type in **Search lists**. It finds a list by anything its row shows, such as its name, its choices or a column that uses it.
+- To see only some lists, choose **All**, **Built in** or **Custom** beside the page's title. With **All**, the built-in lists come first, then your own.
+- To narrow the table further, use **Filter**. For example, filter **Used by** to **Empty** to find the lists no column uses, or **Choices** to **Empty** for those with no choices yet.
+- To see retired lists, select **Show retired** in the **Views** menu.
+- To come back to the same lists later, save the view from the **Views** menu.
+
+See [Saved views](saved-views.md) for more.
 
 ## Marks and Terms
 
 - **Built in** marks a list Fathom needs.
+- **Used by** names each column that picks from a list, by its page and name, such as **People: Site**. Point at a cell cut short to see them all.
 - **A meaning**, such as **Proposed** or **Open**, ends each choice in a list with meanings. Choose the meaning when you add or change the choice.
 - **A weight**, such as **2**, ends each choice in **Feature sizes**. It's how many of size S the size counts as.
 - **Needed for** and a meaning, under a choice's greyed-out **Retire** and **Remove**, means it's the last choice with that meaning, so it has to stay.

@@ -233,7 +233,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
-- [ ] `04AC` Select **Feature statuses**.
+- [ ] `04AC` Select the details button of **Feature statuses**.
   - **Expected:**
     - The panel opens with **Feature statuses** at the top.
     - A grey **Built in** box is after it.
@@ -262,7 +262,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Lists** page opens.
   - **Notes:**
 
-- [ ] `34EE` Select **Feature statuses**.
+- [ ] `34EE` Select the details button of **Feature statuses**.
   - **Expected:** The panel opens with **Feature statuses** at the top.
   - **Notes:**
 

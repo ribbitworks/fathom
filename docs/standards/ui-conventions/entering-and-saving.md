@@ -43,7 +43,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Clicking away and pasting:** Clicking or tabbing away saves an item too, and pasting several lines adds one item per line.
   - **A record's parts:** A record's parts, such as a project's milestones, are added from the record's details, or from their own table's New form, which asks which record they belong to.
   - **Drawn by:** `apps/web/src/grid-editing.tsx` and `apps/web/src/grid-saving.ts` for tables, and `useChoiceEditing` in `apps/web/src/choice-editing.ts` and `useChoiceEntry` in `apps/web/src/choice-entry.ts` for a list's choices.
-  - **Example:** On the Lists page, select Sites and type a new choice in its empty row.
+  - **Example:** On the Lists page, select the details button of Sites and type a new choice in its empty row.
 - **Like a spreadsheet:** Tables where many records are entered work like a spreadsheet. Pasting rows copied from a spreadsheet into an empty row adds one record per row.
   - **Moving:** Arrow keys, Home, End and Tab move between cells, and Ctrl+Home and Ctrl+End go to the first and last.
   - **Editing:** Enter, F2 or typing edits a cell. Enter saves and moves down, Tab saves and moves across, Esc cancels, and Delete clears.

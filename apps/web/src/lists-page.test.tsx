@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fictionalUser,
   greeting,
+  recordCell,
   renderApp,
   serverAnswers,
   signedIn,
@@ -30,6 +31,11 @@ import {
   added,
   noPeople,
   openDraftMenu,
+  listsGrid,
+  shownLists,
+  openList,
+  cellText,
+  chooseInViews,
 } from "./test-lists-page.tsx";
 
 afterEach(() => {
@@ -45,7 +51,7 @@ describe("who sees the Lists page", () => {
     });
     renderApp("/");
     await userEvent.click(await screen.findByRole("link", { name: "Lists" }));
-    expect(await screen.findByRole("table", { name: "Lists" })).toBeDefined();
+    expect(await listsGrid()).toBeDefined();
     expect(screen.queryByRole("button", { name: "New list" })).toBeNull();
   });
 
@@ -66,7 +72,7 @@ describe("who sees the Lists page", () => {
       "GET /api/lists": listsAnswer,
     });
     renderApp("/lists");
-    expect(await screen.findByRole("table", { name: "Lists" })).toBeDefined();
+    expect(await listsGrid()).toBeDefined();
     expect(fetch.mock.calls.some(([url]) => url.endsWith("/api/people"))).toBe(
       false,
     );
@@ -152,32 +158,29 @@ describe("the table of lists", () => {
         }),
     });
     const history = renderApp("/lists");
-    const table = await screen.findByRole("table", { name: "Lists" });
-    const names = () =>
-      within(table)
-        .getAllByRole("link")
-        .map((link) => link.textContent);
+    await listsGrid();
     const which = screen.getByRole("radiogroup", { name: "Which lists" });
-    expect(names()).toEqual(["Positions", "Skills"]);
+    expect(shownLists()).toEqual(["Positions", "Skills"]);
     await userEvent.click(
       within(which).getByRole("radio", { name: "Built in" }),
     );
     await waitFor(() => {
-      expect(names()).toEqual(["Positions"]);
+      expect(shownLists()).toEqual(["Positions"]);
     });
-    expect(screen.getByRole("status").textContent).toBe("1 of 2");
+    expect(screen.getByRole("status").textContent).toBe("1 list");
     expect(history.location.search).toContain("kind=built-in");
     await userEvent.click(within(which).getByRole("radio", { name: "Custom" }));
     await waitFor(() => {
-      expect(names()).toEqual(["Skills"]);
+      expect(shownLists()).toEqual(["Skills"]);
     });
-    await userEvent.click(screen.getByRole("link", { name: "Skills" }));
+    await openList("Skills");
     await waitFor(() => {
-      expect(history.location.search).toContain("kind=custom");
+      expect(history.location.pathname).toBe("/lists/l2");
     });
+    expect(history.location.search).toContain("kind=custom");
     await userEvent.click(within(which).getByRole("radio", { name: "All" }));
     await waitFor(() => {
-      expect(names()).toEqual(["Positions", "Skills"]);
+      expect(shownLists()).toEqual(["Positions", "Skills"]);
     });
     expect(history.location.search).not.toContain("kind=");
   });
@@ -189,7 +192,7 @@ describe("the table of lists", () => {
     });
     renderApp("/lists?kind=built-in");
     const search = await screen.findByRole("textbox", { name: "Search lists" });
-    expect(screen.getByText("No matching lists")).toBeTruthy();
+    expect(screen.getByText("No lists")).toBeTruthy();
     search.focus();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(search);
@@ -223,7 +226,7 @@ describe("the table of lists", () => {
         Response.json({ lists: [builtInPositions, skills] }),
     });
     const history = renderApp("/lists?kind=custom");
-    await screen.findByRole("table", { name: "Lists" });
+    await listsGrid();
     await userEvent.type(
       screen.getByRole("textbox", { name: "Search lists" }),
       "s",
@@ -250,7 +253,9 @@ describe("the table of lists", () => {
         "checked",
         true,
       );
-      expect(screen.getByRole("status").textContent).toBe("2 lists");
+      await waitFor(() => {
+        expect(screen.getByRole("status").textContent).toBe("2 lists");
+      });
     },
   );
 
@@ -372,15 +377,23 @@ describe("the table of lists", () => {
       "GET /api/lists": listsAnswer,
     });
     renderApp("/lists");
-    const table = await screen.findByRole("table", { name: "Lists" });
-    const rows = within(table)
-      .getAllByRole("row")
-      .slice(1)
-      .map((tableRow) => tableRow.textContent);
-    expect(rows).toEqual([
-      "LocationsOffices and labs.(3) Kestrel Bay, Northmere, Corran Quay",
-      "Skills, Personal(1) Rust",
-      "Empty List",
+    await listsGrid();
+    expect(shownLists()).toEqual(["Locations", "Skills", "Empty List"]);
+    expect(
+      ["l1", "l2", "l3"].map((id) =>
+        ["name", "visibility", "description", "choices"].map((column) =>
+          cellText(id, column),
+        ),
+      ),
+    ).toEqual([
+      [
+        "Locations",
+        "General",
+        "Offices and labs.",
+        "(3) Kestrel Bay, Northmere, Corran Quay",
+      ],
+      ["Skills, Personal", "Personal", "", "(1) Rust"],
+      ["Empty List", "General", "", ""],
     ]);
   });
 
@@ -442,45 +455,46 @@ describe("the table of lists", () => {
           ],
         }),
     });
-    const rows = async () =>
-      within(await screen.findByRole("table", { name: "Lists" }))
-        .getAllByRole("row")
-        .slice(1)
-        .map((tableRow) =>
-          [...tableRow.children].map((cell) => cell.textContent),
-        );
+    const rows = async () => {
+      await listsGrid();
+      return ["l1", "l2", "l3"].map((id) =>
+        ["name", "description", "choices"].map((column) =>
+          cellText(id, column),
+        ),
+      );
+    };
     const history = renderApp("/lists");
     expect(await rows()).toEqual([
       [
         "Locations",
         "Offices and labs.",
-        "(4) Fenwick, Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered",
+        "(4) Fenwick, Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered, draft, live Kestrel Bay, Northmere, Corran Quay",
       ],
       [
         "Skills, Personal",
-        "What people know., Rejected, changed from no description: Not yet",
-        "(1) Rust, Rejected",
+        "What people know., Rejected, changed from no description: Not yet, draft, live empty",
+        "(1) Rust, Rejected, draft, live Go",
       ],
       [
         "Empty List",
-        "Kept empty., Rejected, changed from no description: Not yet",
-        "(0) Spare, Draft",
+        "Kept empty., Rejected, changed from no description: Not yet, draft, live empty",
+        "(0) Spare, Draft, draft, live Spare",
       ],
     ]);
     act(() => {
       history.push("/lists?show=drafts");
     });
     await waitFor(async () => {
-      expect((await rows())[1]?.[1]).toBe("No description");
+      expect((await rows())[1]?.[1]).toBe("");
     });
     expect(await rows()).toEqual([
       [
         "Locations",
         "Offices and labs.",
-        "(3) Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered",
+        "(3) Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered, draft, live Kestrel Bay, Northmere, Corran Quay",
       ],
-      ["Skills, Personal", "No description", "(1) Go"],
-      ["Empty List", "No description", ", Draft"],
+      ["Skills, Personal", "", "(1) Go"],
+      ["Empty List", "", ", Draft, draft, live Spare"],
     ]);
   });
 
@@ -500,11 +514,10 @@ describe("the table of lists", () => {
         }),
     });
     renderApp("/lists");
-    const table = await screen.findByRole("table", { name: "Lists" });
-    const [drafted] = within(table).getAllByRole("row").slice(1);
-    const choices = within(drafted as HTMLElement).getAllByRole("cell")[2];
+    await listsGrid();
+    const choices = recordCell("l1", "choices");
     expect(choices?.textContent).toBe(
-      "(2) Kestrel Bay, Northmere, Corran Quay, Draft",
+      "(2) Kestrel Bay, Northmere, Corran Quay, Draft, draft, live Kestrel Bay, Northmere, Corran Quay",
     );
     expect(
       within(choices as HTMLElement).getByText("Northmere").className,
@@ -537,22 +550,22 @@ describe("the table of lists", () => {
           ],
         }),
     });
-    const names = async () =>
-      within(await screen.findByRole("table", { name: "Lists" }))
-        .getAllByRole("row")
-        .slice(1)
-        .map((tableRow) => tableRow.firstElementChild?.textContent);
+    const names = async () => {
+      await listsGrid();
+      return shownLists().map((name) =>
+        cellText(name === "Locations" ? "l1" : "l4", "name"),
+      );
+    };
     const history = renderApp("/lists");
     expect(await names()).toEqual(["LocationsRetired, Draft: retired"]);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Show retired (1)" }),
-    );
-    expect(await names()).toEqual([
-      "LocationsRetired, Draft: retired",
-      "Retired",
-      "Regions, ConfidentialRestored, Draft: restored",
-    ]);
-    await userEvent.click(screen.getByRole("link", { name: "Locations" }));
+    await chooseInViews("Show retired (1)");
+    await waitFor(async () => {
+      expect(await names()).toEqual([
+        "LocationsRetired, Draft: retired",
+        "Regions, ConfidentialRetiredRestored, Draft: restored",
+      ]);
+    });
+    await openList("Locations");
     const opened = await screen.findByRole("region", { name: /./ });
     expect(within(opened).getAllByText(/Draft: retired/)).toHaveLength(2);
     expect(
@@ -561,13 +574,12 @@ describe("the table of lists", () => {
       ).length,
     ).toBeGreaterThan(0);
     act(() => {
-      history.push("/lists?show=drafts");
+      history.push("/lists?show=drafts&retired=true");
     });
     await waitFor(async () => {
       expect(await names()).toEqual([
-        "Regions, ConfidentialRestored, Draft: restored",
-        "Retired",
         "LocationsRetired, Draft: retired",
+        "Regions, ConfidentialRetiredRestored, Draft: restored",
       ]);
     });
   });
@@ -577,23 +589,28 @@ describe("the table of lists", () => {
       "GET /api/session": viewer,
       "GET /api/lists": listsAnswer,
     });
-    renderApp("/lists");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Show retired (1)" }),
-    );
-    expect(screen.getByText("Regions")).toBeDefined();
-    expect(screen.getByText("Retired")).toBeDefined();
-    await userEvent.click(screen.getByRole("button", { name: "Hide retired" }));
-    expect(screen.queryByText("Regions")).toBeNull();
+    const history = renderApp("/lists");
+    await listsGrid();
+    expect(shownLists()).not.toContain("Regions");
+    await chooseInViews("Show retired (1)");
+    await waitFor(() => {
+      expect(shownLists()).toContain("Regions");
+    });
+    expect(cellText("l4", "name")).toContain("Retired");
+    expect(history.location.search).toContain("retired=true");
+    await chooseInViews("Show retired (1), chosen");
+    await waitFor(() => {
+      expect(shownLists()).not.toContain("Regions");
+    });
   });
 
-  it("says when there are no lists yet", async () => {
+  it("says when there are no lists", async () => {
     serverAnswers({
       "GET /api/session": viewer,
       "GET /api/lists": () => Response.json({ lists: [] }),
     });
     renderApp("/lists");
-    expect(await screen.findByText("No lists yet")).toBeDefined();
+    expect(await screen.findByText("No lists")).toBeDefined();
   });
 
   it("shows a loading indicator until the lists arrive", async () => {
@@ -628,7 +645,7 @@ describe("the table of lists", () => {
       "GET /api/lists": listsAnswer,
     });
     renderApp("/lists/unknown");
-    await screen.findByRole("table", { name: "Lists" });
+    await listsGrid();
     expect(screen.queryByRole("region")).toBeNull();
   });
 });
@@ -640,7 +657,7 @@ describe("what the Lists page shows", () => {
       "GET /api/lists": listsAnswer,
     });
     const history = renderApp("/lists?show=drafts");
-    await userEvent.click(await screen.findByRole("link", { name: "Skills" }));
+    await openList("Skills");
     await screen.findByRole("heading", { name: "Skills", level: 2 });
     expect(history.location.search).toContain("show=drafts");
     await userEvent.click(
@@ -654,25 +671,21 @@ describe("what the Lists page shows", () => {
 });
 
 describe("searching lists", () => {
-  it("finds lists by every word in their names, descriptions, or choices, kept in the address", async () => {
+  it("finds lists by every word in their names, descriptions, or choices' names, kept in the address", async () => {
     serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": listsAnswer,
     });
     const history = renderApp("/lists");
-    const table = await screen.findByRole("table", { name: "Lists" });
+    const table = await listsGrid();
     await userEvent.type(
       screen.getByRole("textbox", { name: "Search lists" }),
-      "head kestrel",
+      "offices kestrel",
     );
     await waitFor(() => {
-      expect(
-        within(table)
-          .getAllByRole("link")
-          .map((link) => link.textContent),
-      ).toEqual(["Locations"]);
+      expect(shownLists()).toEqual(["Locations"]);
     });
-    expect(screen.getByRole("status").textContent).toBe("1 of 4");
+    expect(screen.getByRole("status").textContent).toBe("1 of 3");
     expect(history.location.search).toContain("search=");
     await userEvent.clear(
       screen.getByRole("textbox", { name: "Search lists" }),
@@ -685,8 +698,8 @@ describe("searching lists", () => {
     // Esc clears the search, then goes back to the table, at its first list.
     await userEvent.keyboard("{Escape}{Escape}");
     await waitFor(() => {
-      expect(document.activeElement?.textContent).toBe(
-        within(table).getAllByRole("link")[0]?.textContent,
+      expect(recordCell("l1", "name")?.contains(document.activeElement)).toBe(
+        true,
       );
     });
   });
@@ -705,17 +718,13 @@ describe("searching lists", () => {
         }),
     });
     renderApp("/lists");
-    const table = await screen.findByRole("table", { name: "Lists" });
+    await listsGrid();
     await userEvent.type(
       screen.getByRole("textbox", { name: "Search lists" }),
       typed,
     );
     await waitFor(() => {
-      expect(
-        within(table)
-          .queryAllByRole("link")
-          .map((link) => link.textContent),
-      ).toEqual(shown);
+      expect(shownLists()).toEqual(shown);
     });
   });
 });

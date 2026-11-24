@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for lists as their drafts will make them, and for drafts that retire or restore a list or
-// choice: where it is live, and the mark that says which.
+// choice: where it is live, and the mark that says which; and what a list's row says and offers.
 
 import type { List } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   builtInFirst,
   draftedLists,
+  listActions,
+  listFacts,
   retiredLive,
   unchangeableLists,
   unseenInDrafts,
@@ -104,6 +106,59 @@ describe("drafts that retire or restore", () => {
     expect(withRetiring(retired).retiring).toBe(true);
     expect(withRetiring(restored).retiring).toBe(false);
     expect(withRetiring(renamed)).toBe(renamed.draft);
+  });
+});
+
+describe("what a list's row says about it", () => {
+  it.each([
+    ["an organization's own list", {}, []],
+    ["a list Fathom builds in", { builtIn: "positions" }, ["Built in"]],
+    ["a retired list", { retired: true }, ["Retired"]],
+    [
+      "a retired list Fathom builds in",
+      { builtIn: "positions", retired: true },
+      ["Built in", "Retired"],
+    ],
+    [
+      "a list drafted to be retired",
+      { retired: true, draft: retiring(true) },
+      [],
+    ],
+    [
+      "a retired list drafted to be restored",
+      { retired: false, draft: retiring(false) },
+      ["Retired"],
+    ],
+  ] as const)("says what %s is", (_name, given, facts) => {
+    expect(listFacts({ builtIn: null, retired: false, ...given })).toEqual(
+      facts,
+    );
+  });
+});
+
+describe("what a list's row offers", () => {
+  const added = {
+    ...waiting,
+    action: "created" as const,
+    changed: [],
+    live: {},
+  };
+  const removed = {
+    ...waiting,
+    action: "deleted" as const,
+    changed: [],
+    live: {},
+  };
+  it.each([
+    ["a live list", {}, ["retire", "remove"]],
+    ["a retired list", { retired: true }, ["restore", "remove"]],
+    ["a list only drafted to be added", { draft: added }, ["remove"]],
+    ["a list Fathom builds in", { builtIn: "positions" }, []],
+    ["a list drafted to be removed", { draft: removed }, []],
+  ] as const)("offers what may be done to %s", (_name, given, actions) => {
+    expect(listActions({ builtIn: null, retired: false, ...given })).toEqual(
+      actions,
+    );
   });
 });
 

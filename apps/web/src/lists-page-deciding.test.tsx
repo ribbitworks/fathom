@@ -31,6 +31,7 @@ import {
   sent,
   openDraftMenu,
   noPeople,
+  listsGrid,
 } from "./test-lists-page.tsx";
 
 afterEach(() => {
@@ -624,7 +625,7 @@ describe("drafts on the Lists page", () => {
       "GET /api/lists": draftedAnswer,
     });
     const history = renderApp("/lists?show=live");
-    const table = await screen.findByRole("table", { name: "Lists" });
+    const table = await listsGrid();
     expect(within(table).queryByText("Teams")).toBeNull();
     expect(screen.queryByRole("button", { name: "New list" })).toBeNull();
     const choose = async (name: string) => {

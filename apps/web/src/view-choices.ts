@@ -17,6 +17,12 @@ export interface ShowingChoice {
   turned: (view: View, on: boolean) => View;
 }
 
+// Show retired, which the view keeps as its own, as every table with retired records does.
+export const retiredChoice: ShowingChoice = {
+  on: (view) => view.retired === true,
+  turned: (view, on) => ({ ...view, retired: on ? true : undefined }),
+};
+
 // A choice kept among the view's page choices under its name, such as shipped releases or Over.
 export const namedChoice = (name: string): ShowingChoice => ({
   on: (view) =>

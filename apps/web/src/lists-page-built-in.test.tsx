@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
   fictionalUser,
+  recordCell,
   renderApp,
   serverAnswers,
   undoWithKeys,
@@ -32,6 +33,7 @@ import {
   entryName,
   undone,
   startsWith,
+  rowMenu,
 } from "./test-lists-page.tsx";
 
 afterEach(() => {
@@ -73,13 +75,10 @@ describe("built-in lists and lists with meanings", () => {
 
   it("marks a built-in list and its class, and offers neither retiring nor deleting it", async () => {
     await openStates();
-    const table = screen.getByRole("table", { name: "Lists" });
-    const stateRow = within(table)
-      .getByRole("link", { name: "Hiring states" })
-      .closest("[role='row']") as HTMLElement;
-    expect(within(stateRow).getByText("Built in")).toBeTruthy();
-    expect(within(stateRow).getByText(", Confidential")).toBeTruthy();
-    expect(stateRow.querySelector("[class*='classSymbol'] svg")).not.toBeNull();
+    const name = recordCell("l5", "name") as HTMLElement;
+    expect(within(name).getByText("Built in")).toBeTruthy();
+    expect(name.querySelector("[class*='classSymbol'] svg")).not.toBeNull();
+    expect(recordCell("l5", "visibility")?.textContent).toBe("Confidential");
     expect(within(panel()).getByText("Built in")).toBeTruthy();
     expect(within(panel()).getByText(", Confidential")).toBeTruthy();
     // Without Classify data, an approved list's class is neither changed nor moved.
@@ -98,6 +97,19 @@ describe("built-in lists and lists with meanings", () => {
       null,
     );
     expect(within(dialog).queryByRole("radio")).toBe(null);
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Cancel" }),
+    );
+    const menu = await rowMenu("Hiring states");
+    expect(
+      within(menu).getByRole("menuitem", { name: "Show details" }),
+    ).toBeTruthy();
+    expect(
+      within(menu).queryByRole("menuitem", { name: startsWith("Retire") }),
+    ).toBe(null);
+    expect(
+      within(menu).queryByRole("menuitem", { name: startsWith("Remove") }),
+    ).toBe(null);
   });
 
   it("changes an approved list's class at once, from its panel", async () => {

@@ -105,6 +105,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     PanelGrid<Rec, Change, Request>,
     | "table"
     | "ticks"
+    | "selected"
     | "liveColumn"
     | "allColumns"
     | "columns"
@@ -156,6 +157,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
   const {
     table,
     ticks,
+    selected,
     liveColumn,
     allColumns,
     columns,
@@ -297,6 +299,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
         draft.action === "deleted" ? classes.recordRemovedRow : "",
       ].join(" ");
     }
+    const isSelected = record !== undefined && record.id === selected;
     const runEnded = runEnds.get(key);
     return [
       ...(headings.get(key) ?? []).map((heading) => (
@@ -322,7 +325,10 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
       )),
       <Table.Tr
         key={key}
-        className={rowClass}
+        className={
+          isSelected ? [rowClass, classes.selectedRow].join(" ") : rowClass
+        }
+        aria-current={isSelected || undefined}
         // A menu opened by a right-click hangs from no control in the row, so the row
         // says it has one open, keeping its controls shown and others' hidden.
         data-menu-open={menuFor?.key === key || undefined}
@@ -365,6 +371,12 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
             draftChanges(cellDraft, column) &&
             !(column.parts !== undefined && cellDraft?.action === "changed");
           const mark = row.record && !editingHere && column.mark?.(row.record);
+          const facts =
+            row.record && !editingHere && column.facts?.(row.record);
+          const recordClass =
+            row.record && !editingHere
+              ? column.recordClass?.(row.record)
+              : undefined;
           const namedMark = column.key === table.nameColumn ? mark : undefined;
           const frozenAt = frozenCell(columnIndex);
           const value = shownAt(row, column);
@@ -467,6 +479,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                 after={namedMark}
               >
                 <DraftedItem
+                  facts={facts}
                   slot={columnIndex === 0 && !editingHere}
                   draft={
                     columnIndex === 0 && !editingHere
@@ -493,6 +506,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                   }
                 >
                   <DraftedItem
+                    dataClass={recordClass}
                     draft={
                       editingHere
                         ? undefined

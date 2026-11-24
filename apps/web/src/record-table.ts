@@ -172,6 +172,10 @@ export interface Column<
   change: (value: CellValue) => Change;
   // Shown after a record's value, such as a button that opens it.
   mark?: (record: Rec) => ReactNode;
+  // The class of a record, such as a list's, marked before its value and read aloud after it.
+  recordClass?: (record: Rec) => Tier;
+  // Facts about a record, such as Built in, in boxes after its value and before its draft's box.
+  facts?: (record: Rec) => ReactNode;
   // A warning about a record's value, its dot before the value and its words after it.
   status?: (record: Rec) => { words: string; spoken?: string } | undefined;
   // For a table with several kinds of record: whether a kind has the column, which is otherwise
@@ -267,9 +271,10 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // For a row whose draft is another record's, such as a change of the cycles a cycle's row shows:
   // what that draft is, which its menu says before what it changes.
   draftSubject?: (record: Rec) => string;
-  // For a table whose rows' menus decide another record's draft too. Approve sends those of the
-  // drafts the menu decides that need no other approver. Each item names whose draft it decides
-  // where the record's own is not among them.
+  // For a table whose rows' menus decide another record's draft too, such as a row standing for its
+  // parts' drafts that decides them all. Approve sends those of the drafts the menu decides that
+  // need no other approver. Each item names whose draft it decides where the record's own is not
+  // among them.
   menuDecides?: (record: Rec) => {
     approved: DraftSelection;
     approvedOf?: string | undefined;
@@ -407,6 +412,8 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   body?: ((shown: ShownRows<Rec>) => ReactNode) | undefined;
   // Ticks for choosing rows to act on together, with the bar above the table that acts on them.
   ticks?: RowTicks<Rec> | undefined;
+  // The record whose details are open beside the table, whose row is marked as selected.
+  selected?: string | undefined;
 }
 
 // The rows a view shows, for a page that draws them its own way: in the view's order, each with its

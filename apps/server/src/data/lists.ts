@@ -28,6 +28,8 @@ import type {
 import {
   featuresListGeneral,
   featureBuiltInLists,
+  builtInListUses,
+  listUses,
   builtInListSchema,
   draftKey,
   type Kept,
@@ -36,6 +38,8 @@ import {
   meaningName,
   meaningSchema,
   meaningsOf,
+  opensWith,
+  pageNeeds,
   weighs,
   eitherOf,
   type Tier,
@@ -63,6 +67,7 @@ import {
   type Saved,
   type Transaction,
 } from "./changes.ts";
+import { type AddedUse, addedColumnsByList } from "./list-uses.ts";
 import {
   addDrafts,
   deleteDrafts,
@@ -92,7 +97,6 @@ import {
   otherApprover,
 } from "./draft-makers.ts";
 import { draftsUse } from "./drafted-values.ts";
-import { builtInColumns } from "./built-in-lists.ts";
 import {
   classifyDraft,
   recordMove,
@@ -467,8 +471,12 @@ export async function refuseIfUsed(
     .where(eq(lists.id, id));
   const live = [
     ...builtIn.flatMap(({ key }) => {
-      const name = key === null ? undefined : builtInColumns.get(key);
-      return name === undefined ? [] : [{ id: key, name }];
+      const known = builtInKey(key);
+      return known === null
+        ? []
+        : // The key is always one of the built-in lists.
+          // eslint-disable-next-line security/detect-object-injection
+          [{ id: known, name: builtInListUses[known].column }];
     }),
     ...(await transaction
       .select({ id: fields.id, name: fields.name })
@@ -912,6 +920,8 @@ export function listsOut(
   state: ListsState,
   makers: Makers,
   onFeatures: ReadonlySet<string>,
+  // The columns added to tables that use each list, by the list, for a reader who opens Lists.
+  added: ReadonlyMap<string, readonly AddedUse[]> | undefined,
 ): List[] {
   const ids = [
     ...state.lists.keys(),
@@ -953,6 +963,14 @@ export function listsOut(
         retired: list.retired === true,
         builtIn: builtInKey(state.builtIn.get(id)),
         ...(onFeatures.has(id) ? { onFeatures: true } : {}),
+        ...(added === undefined
+          ? {}
+          : {
+              usedBy: listUses(
+                builtInKey(state.builtIn.get(id)),
+                added.get(id) ?? [],
+              ),
+            }),
         choices: draftedOrder(state, id).map((choiceId) =>
           choiceOut(state, makers, choiceId),
         ),
@@ -1023,6 +1041,10 @@ export async function readLists(
   );
 }
 
+// The columns that use each list are configuration, so only a reader who opens Lists is sent them.
+const usesFor = async (reader: Reader, viewer: Actor) =>
+  opensWith(pageNeeds.lists, viewer) ? addedColumnsByList(reader) : undefined;
+
 export async function readListsWithin(
   transaction: Transaction,
   viewer: Actor,
@@ -1032,6 +1054,7 @@ export async function readListsWithin(
     state,
     await readMakers(transaction, state, viewer),
     await featureListIds(transaction),
+    await usesFor(transaction, viewer),
   );
 }
 
@@ -1047,6 +1070,7 @@ async function listNow(
     state,
     await readMakers(transaction, state, editor),
     await featureListIds(transaction),
+    await usesFor(transaction, editor),
   ).find((other) => other.id === id) as List;
 }
 

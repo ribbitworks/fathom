@@ -1,5 +1,5 @@
 ---
-title: "Manual Test: Built-in Lists and Lists with Meanings"
+title: "Manual Test: The Lists Table, Built-in Lists and Lists with Meanings"
 category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
@@ -7,7 +7,7 @@ dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", 
 last_updated: "2026-11-25"
 ---
 
-# Manual Test: Built-in Lists and Lists with Meanings
+# Manual Test: The Lists Table, Built-in Lists and Lists with Meanings
 
 ## Scope
 
@@ -18,6 +18,8 @@ Verifies the Lists page's built-in lists, **Positions**, **Hiring states**, **Pr
 - Each hiring state's meaning, and giving new choices a meaning.
 - The rules that keep a choice offered for every meaning, when drafting and when approving.
 - Each size's weight.
+
+It also verifies the table of lists: the columns that use each list, filtering and saving a view, renaming a list in its row, and a row's menu for those who change lists and those who only read them.
 
 ## Test Environment
 
@@ -30,6 +32,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Engineering Director:** `engineering.director@fathom.test`
 - **Feature Lead:** `feature.lead@fathom.test`
+- **Product Manager:** `product.manager@fathom.test`
 
 ## Common Procedures
 
@@ -39,7 +42,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Publish button and the ⋯ menu. This test adds:
 
-- **Panel:** the area that opens beside the table of lists when a list's name is selected, showing the list's choices.
+- **Panel:** the side panel that opens beside the table of lists from a list's details button, showing the list's choices.
 - **Empty row:** the last row of the panel's choices, starting with a **+**, where new choices are typed.
 - **Meaning menu:** the drop-down at the end of a choice's row while it is being edited, and at the end of the empty row.
 - **Weight box:** the box at the end of a **Feature sizes** choice's row while it is being edited, and at the end of the empty row.
@@ -61,14 +64,14 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - No other list has a **Built in** box.
   - **Notes:**
 
-- [ ] `2C8A` Select **Positions**.
+- [ ] `2C8A` Select the details button of **Positions**.
   - **Expected:**
     - The panel opens with **Positions** at the top.
     - A grey **Built in** box is after it.
     - Under the choices, in grey, a line reads "Every person and planned hire has one of these positions."
   - **Notes:**
 
-- [ ] `4E5E` Select **Hiring states**.
+- [ ] `4E5E` Select the details button of **Hiring states**.
   - **Expected:**
     - The panel opens with **Hiring states** at the top.
     - A grey **Built in** box is after it.
@@ -232,10 +235,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** LIST-07 done, so the database is as Reset the Database leaves it. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
 
-- [ ] `DB05` In the switch beside **Search lists**, select **Built in**.
+- [ ] `DB05` In the switch beside the page's title, select **Built in**.
   - **Expected:**
     - The table shows only **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**.
-    - The count reads "7 of 18".
+    - The count reads "7 lists".
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.
@@ -246,7 +249,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** LIST-08 done, so the database is as Reset the Database leaves it. Signed in with this account. **Lists** page open from the left-hand menu.
 
-- [ ] `4A00` Select **Feature sizes**.
+- [ ] `4A00` Select the details button of **Feature sizes**.
   - **Expected:** The choices' rows end, in order:
     - **XS** with `0.5`
     - **S** with `1`
@@ -279,6 +282,97 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - It has a hollow yellow dot in its slot
     - It ends with `6`
     - The empty row is empty again
+  - **Notes:**
+
+**Afterwards:** Run Reset the Database.
+
+### LIST-10: The Table Shows Which Columns Use Each List
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as LIST-09.
+
+**Preconditions:** LIST-09 done, so the database is as Reset the Database leaves it. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
+
+- [ ] `79D3` Read the **Used by** cells of **Positions**, **Feature sizes** and **Sites**.
+  - **Expected:**
+    - **Positions** reads "People: Position"
+    - **Feature sizes** reads "Features: Size"
+    - **Sites** names "People: Site"
+  - **Notes:**
+
+- [ ] `CA8F` Open the **Used by** column's filter, tick **Empty**, and close the filter.
+  - **Expected:**
+    - A pill reads "Used by: Empty"
+    - **Languages** shows, and **Sites** and **Positions** don't
+  - **Notes:**
+
+- [ ] `5427` Select **Save view…** in the **Views** menu.
+  - **Expected:** The **Save view** dialog opens.
+  - **Notes:**
+
+- [ ] `2FBA` Type `Fictional unused lists` and select **Save view**.
+  - **Expected:** The **Views** menu's button names **Fictional unused lists**.
+  - **Notes:**
+
+- [ ] `25ED` Select **Clear view** in the **Views** menu.
+  - **Expected:** Every list shows again, with no pill.
+  - **Notes:**
+
+### LIST-11: A List Is Renamed in Its Row
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as LIST-10. Step `F2E2` signs in as another account.
+
+**Preconditions:** LIST-10 done. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
+
+- [ ] `270A` Double-click the name **Levels**, replace it with `Fictional pay levels`, and press Enter.
+  - **Expected:**
+    - The row's name reads **Fictional pay levels**, after a hollow yellow dot
+    - A light green Live row under it reads **Levels**
+  - **Notes:**
+
+- [ ] `78D2` Double-click the name **Fictional pay levels**, replace it with `Sites`, and press Enter.
+  - **Expected:**
+    - The name stays open for editing
+    - A red line reads "Another list already has that name"
+  - **Notes:**
+
+- [ ] `72F4` Press Esc.
+  - **Expected:** The name reads **Fictional pay levels** again.
+  - **Notes:**
+
+- [ ] `BA5B` Open the ⋯ menu of **Positions**.
+  - **Expected:** It offers **Show details** and **Copy link**, with no **Retire** or **Remove list**.
+  - **Notes:**
+
+- [ ] `D878` Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] `2ED1` Open the ⋯ menu of **Sites**.
+  - **Expected:** It offers **Show details**, **Copy link**, **Retire** and **Remove list**, the last in red.
+  - **Notes:**
+
+- [ ] `E6FB` Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] `F2E2` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
+  - **Expected:** Fathom opens.
+  - **Notes:**
+
+- [ ] `330E` Select the **Lists** page in the left-hand menu.
+  - **Expected:** There is no **New list** button.
+  - **Notes:**
+
+- [ ] `2E68` Open the ⋯ menu of **Sites**.
+  - **Expected:** It offers only **Show details** and **Copy link**.
+  - **Notes:**
+
+- [ ] `40AE` Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] `866E` Double-click the name **Sites**.
+  - **Expected:** The name isn't opened for editing.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

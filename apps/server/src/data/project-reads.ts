@@ -95,6 +95,13 @@ const seesListDrafts = ({ permissions }: Actor) =>
   permissions.includes("configuration:view") ||
   permissions.includes("people:view");
 
+// Which columns use a list is for Lists alone.
+function withoutUses(list: List): List {
+  const plain = { ...list };
+  delete plain.usedBy;
+  return plain;
+}
+
 function withoutDrafts(list: List): List {
   const plain: List = {
     ...list,
@@ -132,7 +139,9 @@ async function featureColumnsOut(
     order,
     lists: (await readListsWithin(transaction, viewer))
       .filter((list) => drawnOn.has(list.id) && list.visibility === "general")
-      .map((list) => (seesListDrafts(viewer) ? list : withoutDrafts(list))),
+      .map((list) =>
+        withoutUses(seesListDrafts(viewer) ? list : withoutDrafts(list)),
+      ),
   };
 }
 
