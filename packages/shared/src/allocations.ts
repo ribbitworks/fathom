@@ -189,8 +189,8 @@ export const summedCapacity = (capacities: readonly Capacity[]): Capacity =>
     noCapacity,
   );
 
-// A feature as allocations name it: a project's general feature by its project's name, and the
-// meaning of its status, which decides whether it counts toward over-allocation.
+// A feature as allocations name it, with the meaning of its status, which decides whether it counts
+// toward over-allocation.
 export const allocatedFeatureSchema = z.object({
   id: z.string(),
   name: z.string(),

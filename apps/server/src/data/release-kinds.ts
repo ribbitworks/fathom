@@ -163,46 +163,25 @@ export const releaseKind: RecordKind = {
   },
 };
 
-// Whether a feature is a project's general feature, which exists only live, made and removed as
-// its project is approved, and stays off every roadmap.
-const generalForProject = (state: RecordsState, id: string): unknown =>
-  stateOf(state, "feature").rows.get(id)?.generalForProjectId;
-
-export const isGeneralFeature = (state: RecordsState, id: string): boolean =>
-  typeof generalForProject(state, id) === "string";
-
-// Who reads projects, and what anyone else is told one is. Kept beside projectSubject, since a
-// project's general feature is named by its project.
+// Who reads projects, and what anyone else is told one is.
 export const projectReaders: readonly Permission[] = ["plan:view"];
 export const unseenProject = "a project";
 
 export const readsProjects = (permissions: readonly Permission[]) =>
   holdsAny(permissions, projectReaders);
 
-// A feature's name as a role is told it, or only its kind, for one the role can't read: a feature
-// to a role that doesn't read features, and a general feature's project to one that doesn't read
-// projects.
-export function featureNaming(
+// A feature's name as a role is told it, or only its kind to a role that doesn't read features.
+export const featureNaming = (
   state: RecordsState,
   id: string,
   access: ClassAccess,
-): { name: string } | { unseen: string } {
-  if (!readsKind(featureKind, access))
-    return { unseen: featureKind.unseenSubject };
-  return isGeneralFeature(state, id) && !readsProjects(access.permissions)
-    ? { unseen: unseenProject }
-    : { name: featureCalled(state, id) };
-}
+): { name: string } | { unseen: string } =>
+  readsKind(featureKind, access)
+    ? { name: featureCalled(state, id) }
+    : { unseen: featureKind.unseenSubject };
 
-// A feature's name as shown, a project's general feature taking its project's.
-export function featureCalled(state: RecordsState, id: string): string {
-  const project = generalForProject(state, id);
-  return String(
-    typeof project === "string"
-      ? shownVersion(state, "project", project)?.name
-      : shownVersion(state, "feature", id)?.name,
-  );
-}
+export const featureCalled = (state: RecordsState, id: string): string =>
+  String(shownVersion(state, "feature", id)?.name);
 
 export const projectSubject = (state: RecordsState, id: string): string =>
   projectSubjects.project(String(shownVersion(state, "project", id)?.name));
@@ -234,7 +213,6 @@ export const featureKind: RecordKind = {
     sizeId: "choice",
     riskId: "choice",
   },
-  keptByFathom: (state, id) => isGeneralFeature(state, id),
   addedColumns: { owner: "feature", table: "features" },
   changedTogether: ["targetStreamId", "targetCycle"],
   unique: [{ field: "name", message: "Another feature has that name" }],
@@ -242,12 +220,9 @@ export const featureKind: RecordKind = {
   unseenSubject: "a feature",
   subject: (state, id, access) => {
     const naming = featureNaming(state, id, access);
-    if (!("name" in naming)) return naming.unseen;
-    return (
-      isGeneralFeature(state, id)
-        ? projectSubjects.project
-        : projectSubjects.feature
-    )(naming.name);
+    return "name" in naming
+      ? projectSubjects.feature(naming.name)
+      : naming.unseen;
   },
   // A feature drafted onto another cycle, or onto one only the stream's drafted patterns make, uses
   // those patterns' drafts, as a release does.

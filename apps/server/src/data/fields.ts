@@ -12,16 +12,7 @@ import {
   plannedHires,
 } from "@fathom/db";
 import type { FieldRequest } from "@fathom/shared";
-import {
-  and,
-  asc,
-  count,
-  countDistinct,
-  eq,
-  gt,
-  isNotNull,
-  isNull,
-} from "drizzle-orm";
+import { and, asc, count, countDistinct, eq, gt, isNull } from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftedValues } from "./drafted-values.ts";
@@ -144,11 +135,7 @@ export async function checkValuesFit(
     const onFeatures = field.tableName === "features";
     const everyone = await totalOf(
       onFeatures
-        ? transaction
-            .select({ total: count() })
-            .from(features)
-            // A project's general feature has no name, and is never shown with these columns.
-            .where(isNotNull(features.name))
+        ? transaction.select({ total: count() }).from(features)
         : transaction.select({ total: count() }).from(people),
     );
     const filled = await totalOf(

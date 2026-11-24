@@ -6,7 +6,7 @@ import { z } from "zod";
 import type { DraftKind } from "./drafts.ts";
 
 // Each kind is its word in lower case, as a link names it. The migration that numbers records names
-// the same kinds.
+// the same kinds, and numbers activities too, which links don't name yet.
 export const recordKeyKinds = [
   "feature",
   "project",
@@ -29,7 +29,7 @@ export const recordKeyKindSchema = z.enum(recordKeyKinds);
 export type RecordKeyKind = z.infer<typeof recordKeyKindSchema>;
 
 // The kind each kind of draft numbers, or null for those without keys, such as a list's choices.
-// The migration's record_key_kind function names the same.
+// The migration's record_key_kind function names the same, and numbers activities' drafts too.
 export const draftKeyKinds: Record<DraftKind, RecordKeyKind | null> = {
   person: "person",
   "planned-hire": "hire",

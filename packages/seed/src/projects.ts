@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The fictional organization's customers, proposals, and projects with their milestones, and
-// removing them. A development-only package, never in the runtime image.
+// The fictional organization's customers, proposals, and projects with their milestones and
+// activities, and removing them. A development-only package, never in the runtime image.
 
 import {
+  activities,
   type ChangeRecord,
   customers,
   type Database,
@@ -20,9 +21,13 @@ import {
   recordChanges,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
-import { firstOffered } from "@fathom/server/data";
 import { addDays } from "@fathom/shared";
 import { and, asc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
+import {
+  activityId,
+  seededActivities,
+  seededActivityIds,
+} from "./activities.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
 
 // Each record has a key of its own, which its identifier is made from. One customer has neither a
@@ -339,13 +344,6 @@ export async function seedProjects(
     if (present !== undefined) return false;
     const status = await readStatuses(transaction);
     const owner = await readOwners(transaction, managerIds);
-    const inProgress = String(
-      await firstOffered(transaction, "feature-statuses", "in-progress"),
-    );
-    const addGeneralFeature = (generalForProjectId: string) =>
-      transaction
-        .insert(features)
-        .values({ statusId: inProgress, generalForProjectId });
     const made: SeededChange[] = [];
     // Features removed from proposals, recorded after the proposals were added, as an edit is.
     const removals: ChangeRecord[] = [];
@@ -418,7 +416,6 @@ export async function seedProjects(
         featureIds: featureIds(project.features),
       };
       await transaction.insert(projects).values({ id, ...row });
-      await addGeneralFeature(id);
       made.push(...recorded("project", id, "created", row));
       for (const milestone of project.milestones) {
         const recordId = milestoneId(project.key, milestone.key);
@@ -433,6 +430,28 @@ export async function seedProjects(
           .values({ id: recordId, ...values });
         made.push(...recorded("milestone", recordId, "created", values));
       }
+      for (const activity of seededActivities.filter(
+        (each) => each.project === project.key,
+      )) {
+        const recordId = activityId(project.key, activity.key);
+        const values = {
+          projectId: id,
+          name: activity.name,
+          description: activity.description,
+          estimateHours: activity.estimateHours,
+        };
+        await transaction
+          .insert(activities)
+          .values({ id: recordId, ...values });
+        made.push(
+          ...recorded(
+            "project-activity",
+            recordId,
+            "created",
+            filledIn(values),
+          ),
+        );
+      }
     }
     await recordChanges(transaction, null, made);
     await recordChanges(transaction, null, removals);
@@ -440,9 +459,10 @@ export async function seedProjects(
   });
 }
 
-// Removes the customers, proposals, projects, and milestones seeding added, each with every draft
-// of it or linking to it, and returns those it kept because something added by hand uses them: a project with
-// milestones added by hand, and the proposals and customers records kept use.
+// Removes the customers, proposals, projects, milestones, and activities seeding added, each with
+// every draft of it or linking to it, and returns those it kept because something added by hand uses
+// them: a project with milestones or activities added by hand, and the proposals and customers
+// records kept use.
 export async function unseedProjects(database: Database): Promise<string[]> {
   return database.transaction(async (transaction) => {
     const seededMilestoneIds = seededProjects.flatMap((project) =>
@@ -452,6 +472,10 @@ export async function unseedProjects(database: Database): Promise<string[]> {
       .select({ projectId: milestones.projectId })
       .from(milestones)
       .where(notInArray(milestones.id, seededMilestoneIds));
+    const handActivities = await transaction
+      .select({ projectId: activities.projectId })
+      .from(activities)
+      .where(notInArray(activities.id, seededActivityIds()));
     const kept: string[] = [];
     const keep = <Row extends { id: string; name: string }>(
       rows: readonly Row[],
@@ -474,11 +498,12 @@ export async function unseedProjects(database: Database): Promise<string[]> {
           ),
         ),
       new Set(
-        handMilestones
-          .map((milestone) => milestone.projectId)
+        [...handMilestones, ...handActivities]
+          .map((record) => record.projectId)
           .filter((id) => id !== null),
       ),
-      (name) => `The project ${name}, which has milestones added by hand`,
+      (name) =>
+        `The project ${name}, which has milestones or activities added by hand`,
     );
     const projectIds = removingProjects.map(({ id }) => id);
     const otherProjects = await transaction
@@ -532,8 +557,13 @@ export async function unseedProjects(database: Database): Promise<string[]> {
       .select()
       .from(milestones)
       .where(inArray(milestones.projectId, projectIds));
+    const activityRows = await transaction
+      .select()
+      .from(activities)
+      .where(inArray(activities.projectId, projectIds));
     const recordIds = [
       ...milestoneRows.map(({ id }) => id),
+      ...activityRows.map(({ id }) => id),
       ...projectIds,
       ...proposalIds,
       ...customerIdsRemoved,
@@ -550,7 +580,7 @@ export async function unseedProjects(database: Database): Promise<string[]> {
           or(
             inArray(table.recordId, recordIds),
             and(
-              eq(table.recordType, "milestone"),
+              inArray(table.recordType, ["milestone", "project-activity"]),
               inArray(sql`${table.fields}->>'projectId'`, projectIds),
             ),
             linking === undefined
@@ -565,6 +595,7 @@ export async function unseedProjects(database: Database): Promise<string[]> {
     const made: SeededChange[] = [];
     for (const [type, rows] of [
       ["milestone", milestoneRows],
+      ["project-activity", activityRows],
       ["project", removingProjects],
       ["proposal", removingProposals],
       ["customer", removingCustomers],
@@ -577,8 +608,8 @@ export async function unseedProjects(database: Database): Promise<string[]> {
       .delete(milestones)
       .where(inArray(milestones.projectId, projectIds));
     await transaction
-      .delete(features)
-      .where(inArray(features.generalForProjectId, projectIds));
+      .delete(activities)
+      .where(inArray(activities.projectId, projectIds));
     await transaction.delete(projects).where(inArray(projects.id, projectIds));
     await transaction
       .delete(proposals)

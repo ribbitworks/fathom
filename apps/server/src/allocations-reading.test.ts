@@ -3,7 +3,7 @@
 // Integration tests for reading allocations, against a PostgreSQL server of their own: each
 // allocation as each reader may see it, and a feature's staffing on the plan.
 
-import { accessHistory, featureTeams, features, projects } from "@fathom/db";
+import { accessHistory, featureTeams, features } from "@fathom/db";
 import { type ProjectPlan } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -19,7 +19,7 @@ import {
   dayIn,
   addPerson,
   addFeature,
-  addGeneralFeature,
+  activityAllocation,
   change,
   changed,
   read,
@@ -34,34 +34,28 @@ beforeAll(startAllocationTests);
 afterAll(closeAllocationTests);
 
 describe("reading", () => {
-  it("names each feature allocated, a general feature by its project, with its status's meaning", async () => {
+  it("names each feature allocated, with its status's meaning", async () => {
     const personId = await addPerson();
     const possible = await addFeature("possible");
-    const general = await addGeneralFeature();
     await changed({
       personId,
       featureId: possible,
       percentage: 25,
       from: month(0),
     });
-    await changed({
-      personId,
-      featureId: general.featureId,
-      percentage: 50,
-      from: month(0),
-    });
     const { features: named } = await read(viewer);
     expect(named.find(({ id }) => id === possible)?.meaning).toBe("possible");
-    const [project] = await test.connection
-      .select({ name: projects.name })
-      .from(projects)
-      .where(eq(projects.id, general.projectId));
-    expect(named.find(({ id }) => id === general.featureId)).toEqual({
-      id: general.featureId,
-      name: project?.name,
-      meaning: "in-progress",
-      colour: null,
-    });
+  });
+
+  it("leaves out allocations to activities, beside a feature's", async () => {
+    const { personId, id } = await activityAllocation();
+    const featureId = await addFeature();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    const allocated = (await read()).allocations.filter(
+      (one) => one.personId === personId,
+    );
+    expect(allocated.map((one) => one.featureId)).toEqual([featureId]);
+    expect(allocated.some((one) => one.id === id)).toBe(false);
   });
 
   // A feature of a teal team, and one of no team, each allocated.

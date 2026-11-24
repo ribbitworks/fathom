@@ -316,9 +316,9 @@ See [Releases](#releases) for the steps.
   - A Kind column on Features, with New, Improvement and Fix.
   - Twelve planned hires, two of them filled.
   - Eight feature teams: Payments core, Search, Platform reliability, Mobile apps, Field tools, Data pipeline, Identity and Integrations.
-  - Five customers, most with a description and some with notes, one long enough to fold, one with neither; five projects with milestones; and proposals in every status.
+  - Five customers, most with a description and some with notes, one long enough to fold, one with neither; five projects with milestones and activities, some named General; and proposals in every status.
   - Three schedules, Platform, Patches and Field Apps, each with releases, and features targeting their cycles.
-  - Allocations to features, with people over-allocated, under-allocated and not allocated.
+  - Allocations to features and to projects' activities, with people over-allocated, under-allocated and not allocated.
   - Drafts by each persona, some approved, some rejected and some left unpublished.
 - **New seed data:** A database seeded before the seed data changed keeps its old data. `pnpm db:reseed` or `pnpm dev:reset` brings in the new.
 - **Removing it:** `pnpm db:unseed` removes the seed's records and every draft of them, keeps what was added by hand, unless it only changes a seed record, deactivates the accounts and forgets the view each last showed on each page. It keeps a seed record that something added by hand still uses, and says so.

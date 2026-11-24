@@ -133,15 +133,15 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The group ends with a row in bold headed **Total, PM**.
   - **Notes:**
 
-- [ ] `FAE8` Search for `Blaise Gislason`, and read his cell in the current month's column.
+- [ ] `FAE8` Search for `Silje Holm-Schrøder`, and read the cell in the current month's column.
   - **Expected:**
-    - The cell lists 'Depot Operations' at "25%" and 'Transit Displays' at "100%".
+    - The cell lists 'Offline Sync' at "75%" and 'Usage Alerts' at "50%".
     - The last line reads "Over" and "+25%", in red and bold.
   - **Notes:**
 
-- [ ] `6AC8` Clear the search box, and type `Jeremiah Bogisich`. Read his cell in the current month's column.
+- [ ] `6AC8` Clear the search box, and type `Lorenza Thiel`. Read the cell in the current month's column.
   - **Expected:**
-    - The cell lists 'Depot Operations' at "50%".
+    - The cell lists 'Mobile Approvals' at "50%".
     - The last line reads "Under" and "−50%", in red and bold.
   - **Notes:**
 

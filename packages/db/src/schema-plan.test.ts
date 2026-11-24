@@ -1,18 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests of the plan against a real PostgreSQL server: release streams, their patterns and releases,
-// and features with their targets, estimates and milestones.
+// features with their targets, estimates and milestones, and activities.
 
+import { randomUUID } from "node:crypto";
 import type { Client } from "pg";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { databaseCodes } from "./errors.ts";
-import { errorCodeOf, firstId, withClient } from "./test-clients.ts";
+import {
+  addPosition,
+  aPosition,
+  errorCodeOf,
+  firstId,
+  withClient,
+} from "./test-clients.ts";
 
 let database: TestDatabase;
 
 beforeAll(async () => {
   database = await startTestDatabase();
+  await withClient(database.app, addPosition);
 });
 
 afterAll(async () => {
@@ -161,15 +169,14 @@ describe("release streams", () => {
 describe("features", () => {
   const { uniqueViolation, checkViolation, restrictViolation } = databaseCodes;
   const prefix = "Fictional Feature Test";
+  const notNullViolation = "23502";
   const anyFeatureStatus =
     "(SELECT i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'feature-statuses' LIMIT 1)";
 
   afterEach(async () => {
     await withClient(database.app, async (client) => {
       await client.query(`DELETE FROM milestones WHERE name LIKE '${prefix}%'`);
-      await client.query(
-        `DELETE FROM features WHERE name LIKE '${prefix}%' OR general_for_project_id IN (SELECT id FROM projects WHERE name LIKE '${prefix}%')`,
-      );
+      await client.query(`DELETE FROM features WHERE name LIKE '${prefix}%'`);
       await client.query(`DELETE FROM projects WHERE name LIKE '${prefix}%'`);
       await client.query(`DELETE FROM proposals WHERE name LIKE '${prefix}%'`);
       await client.query(
@@ -209,16 +216,6 @@ describe("features", () => {
       client,
       `INSERT INTO features (status_id, name) VALUES (${anyFeatureStatus}, $1) RETURNING id`,
       [`${prefix} One`],
-    );
-
-  const addGeneralFeature = (
-    client: Client,
-    projectId: string,
-    name: string | null = null,
-  ) =>
-    client.query(
-      `INSERT INTO features (status_id, name, general_for_project_id) VALUES (${anyFeatureStatus}, $1, $2)`,
-      [name, projectId],
     );
 
   const addTarget = (
@@ -261,7 +258,7 @@ describe("features", () => {
     await withClient(database.app, async (client) => {
       await addFeature(client);
       const added = await client.query(
-        `SELECT needed_by, customer_ids, note, target_stream_id, target_cycle, estimate_hours, feature_team_id, description, general_for_project_id FROM features WHERE name = '${prefix} One'`,
+        `SELECT needed_by, customer_ids, note, target_stream_id, target_cycle, estimate_hours, feature_team_id, description FROM features WHERE name = '${prefix} One'`,
       );
       expect(added.rows).toEqual([
         {
@@ -273,7 +270,6 @@ describe("features", () => {
           estimate_hours: null,
           feature_team_id: null,
           description: null,
-          general_for_project_id: null,
         },
       ]);
     });
@@ -288,44 +284,11 @@ describe("features", () => {
     });
   });
 
-  it("lets several projects' general features go without a name", async () => {
+  it("refuses a feature with no name", async () => {
     await withClient(database.app, async (client) => {
-      await addGeneralFeature(client, await addProject(client));
-      await addGeneralFeature(
-        client,
-        await addProject(client, `${prefix} Project Two`),
+      expect(await errorCodeOf(addFeature(client, null))).toBe(
+        notNullViolation,
       );
-      const general = await client.query(
-        `SELECT name FROM features WHERE general_for_project_id IN (SELECT id FROM projects WHERE name LIKE '${prefix}%')`,
-      );
-      expect(general.rows).toEqual([{ name: null }, { name: null }]);
-    });
-  });
-
-  it("gives a project at most one general feature", async () => {
-    await withClient(database.app, async (client) => {
-      const projectId = await addProject(client);
-      await addGeneralFeature(client, projectId);
-      expect(await errorCodeOf(addGeneralFeature(client, projectId))).toBe(
-        uniqueViolation,
-      );
-    });
-  });
-
-  it("refuses a general feature with a name of its own", async () => {
-    await withClient(database.app, async (client) => {
-      const projectId = await addProject(client);
-      expect(
-        await errorCodeOf(
-          addGeneralFeature(client, projectId, `${prefix} Named General`),
-        ),
-      ).toBe(checkViolation);
-    });
-  });
-
-  it("refuses a feature with no name that is no project's general feature", async () => {
-    await withClient(database.app, async (client) => {
-      expect(await errorCodeOf(addFeature(client, null))).toBe(checkViolation);
     });
   });
 
@@ -478,16 +441,6 @@ describe("features", () => {
     });
   });
 
-  it("keeps a project with a general feature from being deleted", async () => {
-    await withClient(database.app, async (client) => {
-      const projectId = await addProject(client);
-      await addGeneralFeature(client, projectId);
-      expect(await errorCodeOf(removeRow(client, "projects", projectId))).toBe(
-        restrictViolation,
-      );
-    });
-  });
-
   it("lets a milestone belong to a project", async () => {
     await withClient(database.app, async (client) => {
       await addMilestone(client, await addProject(client), null);
@@ -541,6 +494,283 @@ describe("features", () => {
         `SELECT feature_ids FROM projects WHERE name = '${prefix} Project' UNION ALL SELECT feature_ids FROM proposals WHERE name = '${prefix} Proposal'`,
       );
       expect(linked.rows).toEqual([{ feature_ids: [] }, { feature_ids: [] }]);
+    });
+  });
+});
+
+describe("activities", () => {
+  const { uniqueViolation, checkViolation, restrictViolation } = databaseCodes;
+  const prefix = "Fictional Activity Test";
+  const anyFeatureStatus =
+    "(SELECT i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'feature-statuses' LIMIT 1)";
+
+  afterEach(async () => {
+    await withClient(database.app, async (client) => {
+      await client.query(
+        `DELETE FROM allocations WHERE person_id IN (SELECT id FROM people WHERE preferred_name LIKE '${prefix}%')`,
+      );
+      await client.query(
+        `DELETE FROM allocations WHERE planned_hire_id IN (SELECT id FROM planned_hires WHERE requisition LIKE '${prefix}%')`,
+      );
+      await client.query(
+        `DELETE FROM people WHERE preferred_name LIKE '${prefix}%'`,
+      );
+      await client.query(
+        `DELETE FROM planned_hires WHERE requisition LIKE '${prefix}%'`,
+      );
+      await client.query(`DELETE FROM activities WHERE name LIKE '${prefix}%'`);
+      await client.query(`DELETE FROM features WHERE name LIKE '${prefix}%'`);
+      await client.query(`DELETE FROM projects WHERE name LIKE '${prefix}%'`);
+      await client.query(`DELETE FROM releases WHERE name LIKE '${prefix}%'`);
+      await client.query(
+        `DELETE FROM release_streams WHERE name LIKE '${prefix}%'`,
+      );
+    });
+  });
+
+  const addProject = (client: Client, name = `${prefix} Project`) =>
+    firstId(client, "INSERT INTO projects (name) VALUES ($1) RETURNING id", [
+      name,
+    ]);
+
+  const addRelease = async (client: Client) => {
+    const [stream] = await addStreams(client, `${prefix} Stream`);
+    return firstId(
+      client,
+      "INSERT INTO releases (stream_id, name, first_cycle, last_cycle) VALUES ($1, $2, '2027-01-04', '2027-01-04') RETURNING id",
+      [stream, `${prefix} Release`],
+    );
+  };
+
+  const addActivity = (
+    client: Client,
+    owner: { projectId?: string | null; releaseId?: string | null },
+    values: Readonly<Record<string, unknown>> = {},
+  ) =>
+    firstId(
+      client,
+      "INSERT INTO activities (project_id, release_id, name, description, note, estimate_hours) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+      [
+        owner.projectId ?? null,
+        owner.releaseId ?? null,
+        values.name ?? `${prefix} One`,
+        values.description ?? null,
+        values.note ?? null,
+        values.estimateHours ?? null,
+      ],
+    );
+
+  const addPerson = (client: Client) =>
+    firstId(
+      client,
+      `INSERT INTO people (preferred_name, employee_id, position_id) VALUES ($1, $2, ${aPosition}) RETURNING id`,
+      [`${prefix} Person`, `${prefix}-1`],
+    );
+
+  const addFeature = (client: Client) =>
+    firstId(
+      client,
+      `INSERT INTO features (status_id, name) VALUES (${anyFeatureStatus}, $1) RETURNING id`,
+      [`${prefix} Feature`],
+    );
+
+  const allocate = (
+    client: Client,
+    personId: string,
+    work: { featureId?: string | null; activityId?: string | null },
+  ) =>
+    client.query(
+      "INSERT INTO allocations (person_id, feature_id, activity_id, months) VALUES ($1, $2, $3, '{}')",
+      [personId, work.featureId ?? null, work.activityId ?? null],
+    );
+
+  it("lets an activity belong to a project or to a release", async () => {
+    await withClient(database.app, async (client) => {
+      await addActivity(client, { projectId: await addProject(client) });
+      await addActivity(client, { releaseId: await addRelease(client) });
+      const added = await client.query(
+        `SELECT count(*)::int AS count FROM activities WHERE name LIKE '${prefix}%'`,
+      );
+      expect(added.rows).toEqual([{ count: 2 }]);
+    });
+  });
+
+  it("refuses an activity of both a project and a release, or of neither", async () => {
+    await withClient(database.app, async (client) => {
+      const projectId = await addProject(client);
+      const releaseId = await addRelease(client);
+      expect(
+        await errorCodeOf(addActivity(client, { projectId, releaseId })),
+      ).toBe(checkViolation);
+      expect(await errorCodeOf(addActivity(client, {}))).toBe(checkViolation);
+    });
+  });
+
+  it("keeps an activity's name unique within its project, ignoring letter case", async () => {
+    await withClient(database.app, async (client) => {
+      const projectId = await addProject(client);
+      await addActivity(client, { projectId });
+      expect(
+        await errorCodeOf(
+          addActivity(client, { projectId }, { name: `${prefix} ONE` }),
+        ),
+      ).toBe(uniqueViolation);
+    });
+  });
+
+  it("keeps an activity's name unique within its release, ignoring letter case", async () => {
+    await withClient(database.app, async (client) => {
+      const releaseId = await addRelease(client);
+      await addActivity(client, { releaseId });
+      expect(
+        await errorCodeOf(
+          addActivity(client, { releaseId }, { name: `${prefix} one` }),
+        ),
+      ).toBe(uniqueViolation);
+    });
+  });
+
+  it("lets another project or a release have an activity of the same name", async () => {
+    await withClient(database.app, async (client) => {
+      await addActivity(client, { projectId: await addProject(client) });
+      await addActivity(client, {
+        projectId: await addProject(client, `${prefix} Project Two`),
+      });
+      await addActivity(client, { releaseId: await addRelease(client) });
+      const added = await client.query(
+        `SELECT count(*)::int AS count FROM activities WHERE name = '${prefix} One'`,
+      );
+      expect(added.rows).toEqual([{ count: 3 }]);
+    });
+  });
+
+  it.each([
+    ["an empty note", { note: "" }],
+    ["an empty description", { description: "" }],
+    ["a negative estimate", { estimateHours: "-1" }],
+    ["an estimate that is not a number", { estimateHours: "NaN" }],
+  ])("refuses %s", async (_case, values) => {
+    await withClient(database.app, async (client) => {
+      const projectId = await addProject(client);
+      expect(
+        await errorCodeOf(addActivity(client, { projectId }, values)),
+      ).toBe(checkViolation);
+    });
+  });
+
+  it("gives each activity a key of its own kind", async () => {
+    await withClient(database.app, async (client) => {
+      const id = await addActivity(client, {
+        projectId: await addProject(client),
+      });
+      const keys = await client.query(
+        "SELECT kind FROM record_keys WHERE record_id = $1",
+        [id],
+      );
+      expect(keys.rows).toEqual([{ kind: "activity" }]);
+    });
+  });
+
+  it.each(["project-activity", "release-activity"])(
+    "numbers a %s drafted to be added as an activity",
+    async (recordType) => {
+      await withClient(database.app, async (client) => {
+        const id = randomUUID();
+        await client.query(
+          "INSERT INTO drafts (record_type, record_id, action) VALUES ($1, $2, 'created')",
+          [recordType, id],
+        );
+        const keys = await client.query(
+          "SELECT kind FROM record_keys WHERE record_id = $1",
+          [id],
+        );
+        await client.query("DELETE FROM drafts WHERE record_id = $1", [id]);
+        expect(keys.rows).toEqual([{ kind: "activity" }]);
+      });
+    },
+  );
+
+  it("keeps a project or release with activities from being deleted", async () => {
+    await withClient(database.app, async (client) => {
+      const projectId = await addProject(client);
+      const releaseId = await addRelease(client);
+      await addActivity(client, { projectId });
+      await addActivity(client, { releaseId });
+      expect(
+        await errorCodeOf(
+          client.query("DELETE FROM projects WHERE id = $1", [projectId]),
+        ),
+      ).toBe(restrictViolation);
+      expect(
+        await errorCodeOf(
+          client.query("DELETE FROM releases WHERE id = $1", [releaseId]),
+        ),
+      ).toBe(restrictViolation);
+    });
+  });
+
+  it("allocates someone to an activity, once", async () => {
+    await withClient(database.app, async (client) => {
+      const personId = await addPerson(client);
+      const activityId = await addActivity(client, {
+        projectId: await addProject(client),
+      });
+      await allocate(client, personId, { activityId });
+      expect(
+        await errorCodeOf(allocate(client, personId, { activityId })),
+      ).toBe(uniqueViolation);
+    });
+  });
+
+  it("allocates a planned hire to an activity, once", async () => {
+    await withClient(database.app, async (client) => {
+      const hireId = await firstId(
+        client,
+        `INSERT INTO planned_hires (requisition, position_id, state_id) VALUES ($1, ${aPosition}, (SELECT i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'hiring-states' AND i.meaning = 'open')) RETURNING id`,
+        [`${prefix} REQ`],
+      );
+      const activityId = await addActivity(client, {
+        projectId: await addProject(client),
+      });
+      const allocateHire = () =>
+        client.query(
+          "INSERT INTO allocations (planned_hire_id, activity_id, months) VALUES ($1, $2, '{}')",
+          [hireId, activityId],
+        );
+      await allocateHire();
+      expect(await errorCodeOf(allocateHire())).toBe(uniqueViolation);
+    });
+  });
+
+  it("refuses an allocation to both a feature and an activity, or to neither", async () => {
+    await withClient(database.app, async (client) => {
+      const personId = await addPerson(client);
+      const featureId = await addFeature(client);
+      const activityId = await addActivity(client, {
+        projectId: await addProject(client),
+      });
+      expect(
+        await errorCodeOf(
+          allocate(client, personId, { featureId, activityId }),
+        ),
+      ).toBe(checkViolation);
+      expect(await errorCodeOf(allocate(client, personId, {}))).toBe(
+        checkViolation,
+      );
+    });
+  });
+
+  it("keeps an activity with allocations from being deleted", async () => {
+    await withClient(database.app, async (client) => {
+      const activityId = await addActivity(client, {
+        projectId: await addProject(client),
+      });
+      await allocate(client, await addPerson(client), { activityId });
+      expect(
+        await errorCodeOf(
+          client.query("DELETE FROM activities WHERE id = $1", [activityId]),
+        ),
+      ).toBe(restrictViolation);
     });
   });
 });

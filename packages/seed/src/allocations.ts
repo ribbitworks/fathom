@@ -1,30 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The fictional organization's allocations, added live and placed relative to the seed day's month,
-// each recorded in the change history as made by Fathom itself: members of the first two feature
-// teams on their teams' features, with someone over-allocated, someone under-allocated, someone with
-// three assignments in a month, one of them Possible, past work on a done feature, a cancelled
-// feature allocated in months still to come, a project's general feature, a planned hire, and a
-// planned hire alone on a feature in Field Apps' next cycle; then the organization's wider workload
-// on top of them. Removing them removes every allocation, and every draft of one, that names a
-// seeded person, planned hire, or feature, so those can go. A development-only package, never
-// included in the runtime image.
+// The fictional organization's allocations: one for each case a month can show, then the wider
+// workload on top of them, and removing them. A development-only package, never included in the
+// runtime image.
 
 import {
+  activities,
   allocations,
   type Database,
   drafts,
-  features,
   privateChanges,
   recordChanges,
 } from "@fathom/db";
 import { fictionalId, type FictionalOrganization } from "@fathom/fixtures";
 import { addToMonth, type AllocationMonths, monthOf } from "@fathom/shared";
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, count, eq, inArray, or, sql } from "drizzle-orm";
+import { seededActivityIds } from "./activities.ts";
 import { seededFeatures } from "./features.ts";
-import { featureId, projectId, seededProjects } from "./projects.ts";
+import { featureId } from "./projects.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
-import { workloadRows } from "./workload.ts";
+import { type WorkItem, workIds, workloadRows } from "./workload.ts";
 
 // Who is allocated: a member of a seeded feature team, by the team's place and the member's place
 // on it, the organization's first open planned hire with a target date, or a planned hire by name.
@@ -33,13 +28,11 @@ type Assignee =
 
 // Each month is counted from the seed day's, or a planned hire's from the month it is expected,
 // before it when negative; null stops the allocation.
-export const seededAllocations: readonly {
+export const seededAllocations: readonly ({
   key: string;
   assignee: Assignee;
-  // A seeded feature, or null for the first seeded project's general feature.
-  feature: string | null;
   months: Readonly<Record<number, number | null>>;
-}[] = [
+} & WorkItem)[] = [
   {
     key: "lead-offline",
     assignee: { team: 0, member: 0 },
@@ -121,7 +114,7 @@ export const seededAllocations: readonly {
   {
     key: "general",
     assignee: { team: 1, member: 3 },
-    feature: null,
+    activity: { project: "crane-control", key: "general" },
     months: { [-2]: 100, 4: null },
   },
   {
@@ -172,15 +165,15 @@ export interface SeededAllocation {
   id: string;
   personId: string | null;
   plannedHireId: string | null;
-  featureId: string;
+  featureId: string | null;
+  activityId: string | null;
   months: AllocationMonths;
 }
 
-// The allocations as seeding adds them, the general feature given, or none when the organization
-// has no feature team or open planned hire with a target date to allocate.
+// The allocations as seeding adds them, or none when the organization has no feature team or open
+// planned hire with a target date to allocate.
 export function seededAllocationRows(
   organization: FictionalOrganization,
-  generalFeatureId: string,
 ): SeededAllocation[] {
   const hire = allocatedHire(organization);
   if (hire === undefined || membersOf(organization, 0).length === 0) return [];
@@ -204,7 +197,7 @@ export function seededAllocationRows(
           from: monthOf(planned.targetDate),
         };
   };
-  return seededAllocations.flatMap(({ key, assignee, feature, months }) => {
+  return seededAllocations.flatMap(({ key, assignee, months, ...work }) => {
     const to = assigned(assignee);
     if (to === undefined) return [];
     const { from, ...who } = to;
@@ -212,15 +205,15 @@ export function seededAllocationRows(
       {
         id: allocationId(key),
         ...who,
-        featureId: feature === null ? generalFeatureId : featureId(feature),
+        ...workIds(work),
         months: monthsFrom(months, from),
       },
     ];
   });
 }
 
-// Adds the allocations, once, if the seeded projects are there, which are seeded after the people,
-// planned hires, and features. Returns whether it added them.
+// Adds the allocations, once, if the seeded projects' activities are there, which are seeded after
+// the people, planned hires, and features. Returns whether it added them.
 export async function seedAllocations(
   database: Database,
   organization: FictionalOrganization,
@@ -230,29 +223,15 @@ export async function seedAllocations(
       .select({ id: allocations.id })
       .from(allocations)
       .where(inArray(allocations.id, seededIds()));
-    const generals = await transaction
-      .select({ id: features.id, projectId: features.generalForProjectId })
-      .from(features)
-      .where(
-        inArray(
-          features.generalForProjectId,
-          seededProjects.map(({ key }) => projectId(key)),
-        ),
-      );
-    const generalFeatureIds = new Map(
-      seededProjects.flatMap(({ key }) => {
-        const general = generals.find(
-          (feature) => feature.projectId === projectId(key),
-        );
-        return general === undefined ? [] : [[key, general.id] as const];
-      }),
-    );
-    const general = generalFeatureIds.get(String(seededProjects[0]?.key));
-    const seeded = seededAllocationRows(organization, String(general));
+    const activityIds = seededActivityIds();
+    const [{ activitiesPresent } = { activitiesPresent: 0 }] = await transaction
+      .select({ activitiesPresent: count() })
+      .from(activities)
+      .where(inArray(activities.id, activityIds));
+    const seeded = seededAllocationRows(organization);
     if (
       present !== undefined ||
-      general === undefined ||
-      generalFeatureIds.size < seededProjects.length ||
+      activitiesPresent < activityIds.length ||
       seeded.length === 0
     ) {
       return false;
@@ -260,7 +239,6 @@ export async function seedAllocations(
     const rows = [
       ...seeded,
       ...workloadRows(organization, {
-        generalFeatureIds,
         seededPeople: new Set(seeded.map(({ personId }) => personId)),
       }).map(({ key, ...row }) => ({
         id: allocationId(`workload:${key}`),
@@ -279,26 +257,14 @@ export async function seedAllocations(
 }
 
 // Removes every allocation, and every draft of one, that is seeded or names a seeded person,
-// planned hire, or feature, including the seeded projects' general features, recording what was
-// removed.
+// planned hire, feature, or activity, recording what was removed.
 export async function unseedAllocations(
   database: Database,
   organization: FictionalOrganization,
 ): Promise<void> {
   await database.transaction(async (transaction) => {
-    const generals = await transaction
-      .select({ id: features.id })
-      .from(features)
-      .where(
-        inArray(
-          features.generalForProjectId,
-          seededProjects.map(({ key }) => projectId(key)),
-        ),
-      );
-    const featureIds = [
-      ...seededFeatures.map(({ key }) => featureId(key)),
-      ...generals.map(({ id }) => id),
-    ];
+    const featureIds = seededFeatures.map(({ key }) => featureId(key));
+    const activityIds = seededActivityIds();
     const personIds = organization.people.map(({ id }) => id);
     const hireIds = organization.hires.map(({ id }) => id);
     const removed = await transaction
@@ -307,6 +273,7 @@ export async function unseedAllocations(
         or(
           inArray(allocations.id, seededIds()),
           inArray(allocations.featureId, featureIds),
+          inArray(allocations.activityId, activityIds),
           inArray(allocations.personId, personIds),
           inArray(allocations.plannedHireId, hireIds),
         ),
@@ -322,6 +289,7 @@ export async function unseedAllocations(
             or(
               inArray(table.recordId, ids),
               inArray(sql`${table.fields}->>'featureId'`, featureIds),
+              inArray(sql`${table.fields}->>'activityId'`, activityIds),
               inArray(sql`${table.fields}->>'personId'`, personIds),
               inArray(sql`${table.fields}->>'plannedHireId'`, hireIds),
             ),

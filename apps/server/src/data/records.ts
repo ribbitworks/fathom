@@ -222,6 +222,7 @@ export async function readRecordsState(
     const rows = (await reader
       .select()
       .from(kind.table)
+      .where(kind.rowsWhere)
       .orderBy(idOf(kind.table))) as unknown as Recorded[];
     const added = await addedValues(reader, kind, rows);
     entries.push([

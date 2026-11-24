@@ -29,7 +29,6 @@ import { and, asc, desc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
 import { type Actor, seesSensitivity } from "../access.ts";
 import { builtInTier } from "./values.ts";
 import { type RecordKind, readsKind } from "./record-state.ts";
-import { readsProjects, unseenProject } from "./release-kinds.ts";
 import { recordKinds } from "./records.ts";
 import type { StoredChange } from "./changes.ts";
 
@@ -411,8 +410,8 @@ export async function partsOf(
 }
 
 // Names each record named by its parts, as its kind puts their names together, each part named as
-// the history names it: a person or feature by its latest name, a planned hire as nameHires does,
-// and a project's general feature, which has no name of its own, by its project's.
+// the history names it: a person or feature by its latest name, and a planned hire as nameHires
+// does.
 export async function nameByParts(
   database: Database,
   actor: Actor,
@@ -428,27 +427,12 @@ export async function nameByParts(
     ].filter((id) => !facts.names.has(id));
   await readFacts(database, actor, named(), facts);
   await nameHires(database, actor, named(), facts);
-  const generals = new Map<string, string>();
-  for (const chunk of inChunks(named())) {
-    for (const { id, projectId } of await database
-      .select({ id: features.id, projectId: features.generalForProjectId })
-      .from(features)
-      .where(inArray(features.id, chunk))) {
-      // Only a general feature goes unnamed by the history.
-      generals.set(id, String(projectId));
-    }
-  }
-  await readFacts(database, actor, [...generals.values()], facts);
-  // A part of a kind the actor doesn't read is named by its kind alone, and a general feature by its
-  // project only to one who reads projects.
+  // A part of a kind the actor doesn't read is named by its kind alone.
   const partNamed = (linkedType: string | undefined, partId: string) => {
     const linked = planKindOf.get(linkedType ?? "");
-    if (linked !== undefined && !readsKind(linked, actor))
-      return linked.unseenSubject;
-    const project = generals.get(partId);
-    if (project !== undefined && !readsProjects(actor.permissions))
-      return unseenProject;
-    return facts.names.get(project ?? partId);
+    return linked !== undefined && !readsKind(linked, actor)
+      ? linked.unseenSubject
+      : facts.names.get(partId);
   };
   for (const row of rows) {
     const kind = planKindOf.get(row.recordType);

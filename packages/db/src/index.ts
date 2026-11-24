@@ -26,6 +26,7 @@ export { privateSetOf } from "./private-sets.ts";
 export {
   accessHistory,
   accounts,
+  activities,
   allocations,
   appInfo,
   changes,

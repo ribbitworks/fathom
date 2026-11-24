@@ -175,16 +175,16 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - There is no line under them.
   - **Notes:**
 
-- [ ] `FBBB` Clear the search box, and type `Blaise Gislason`. Read his cell in the current month's column.
+- [ ] `FBBB` Clear the search box, and type `Silje Holm-Schrøder`. Read the cell in the current month's column.
   - **Expected:**
-    - The cell lists 'Depot Operations' with "25%" and 'Transit Displays' with "100%".
+    - The cell lists 'Offline Sync' with "75%" and 'Usage Alerts' with "50%".
     - Its last line reads "Over", with "+25%" at the right.
     - "Over" and "+25%" are red and bold.
   - **Notes:**
 
-- [ ] `4A9E` Clear the search box, and type `Anahi Bins`. Read her cell in the current month's column.
+- [ ] `4A9E` Clear the search box, and type `Lorenza Thiel`. Read the cell in the current month's column.
   - **Expected:**
-    - The cell lists 'Depot Operations' with "50%".
+    - The cell lists 'Mobile Approvals' with "50%".
     - Its last line reads "Under", with "−50%" at the right.
     - "Under" and "−50%" are red and bold.
   - **Notes:**

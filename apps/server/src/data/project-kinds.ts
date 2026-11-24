@@ -3,20 +3,12 @@
 // Customers, features, proposals, projects, and milestones as kinds of the plan's records, in the
 // order approving adds them, each after the records it links to; records.ts applies their rules.
 
-import {
-  customers,
-  features,
-  milestones,
-  projects,
-  proposals,
-} from "@fathom/db";
+import { customers, milestones, projects, proposals } from "@fathom/db";
 import {
   projectSubjects,
   type RecordRef,
   removalReasonsIn,
 } from "@fathom/shared";
-import { eq } from "drizzle-orm";
-import { firstOfferedOrRefused } from "./built-in-lists.ts";
 import {
   featureKind,
   projectReaders,
@@ -107,8 +99,7 @@ export const proposalKind: RecordKind = {
 };
 
 // A project and its milestones are removed together: the draft removing a project uses the drafts
-// removing its milestones, and each of those uses the project's. Its general feature, taking people
-// assigned to the project itself, follows the project's approval rather than having a draft.
+// removing its milestones, and each of those uses the project's.
 export const projectKind: RecordKind = {
   type: "project",
   table: projects,
@@ -136,22 +127,6 @@ export const projectKind: RecordKind = {
   readWith: projectReaders,
   unseenSubject: unseenProject,
   subject: projectSubject,
-  onAdded: async (transaction, id) => {
-    const statusId = await firstOfferedOrRefused(
-      transaction,
-      "feature-statuses",
-      "in-progress",
-      "No feature status means In progress. Add one to the list first.",
-    );
-    await transaction
-      .insert(features)
-      .values({ statusId, generalForProjectId: id });
-  },
-  onRemoving: async (transaction, id) => {
-    await transaction
-      .delete(features)
-      .where(eq(features.generalForProjectId, id));
-  },
   alsoUses: (state, id): RecordRef[] =>
     removedByDraft(state, "project", id)
       ? milestonesOf(state, id)
