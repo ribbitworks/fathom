@@ -13,6 +13,7 @@ test("refuses a new project whose Name was emptied, naming why under it and savi
 }) => {
   // Given the Product Manager on Projects, with the New project panel open
   await page.goto("/projects");
+  await page.getByRole("tab", { name: "Projects" }).click();
   const count = page.getByRole("status").filter({ hasText: /projects?$/ });
   const before = await count.innerText();
   expect(before).toMatch(/^\d+ projects?$/);
@@ -40,6 +41,7 @@ test("refuses a new project whose Name was emptied, naming why under it and savi
   // And nothing was sent to be saved, and the projects are as they were once the page is loaded again
   expect(changes).toEqual([]);
   await page.reload();
+  await page.getByRole("tab", { name: "Projects" }).click();
   await expect(count).toHaveText(before);
 });
 
@@ -47,6 +49,7 @@ test("opens the New project panel with the cursor in Name, ready to type into", 
   page,
 }) => {
   await page.goto("/projects");
+  await page.getByRole("tab", { name: "Projects" }).click();
   await page.getByRole("button", { name: "New project" }).click();
   const panel = page.getByRole("region", { name: "New project" });
   const name = panel.getByRole("textbox", { name: "Name" });
