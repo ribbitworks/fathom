@@ -603,6 +603,36 @@ describe("a feature's customers", () => {
     expect((await shown(feature.id)).customerIds).toEqual([]);
   });
 
+  it("rejected are resubmitted only while their maker edits the plan", async () => {
+    // Given a planner's change of a feature's customers, rejected
+    const maker = await test.signedIn("product-manager");
+    const feature = await liveFeature();
+    const customer = await liveCustomer();
+    await put(
+      feature.id,
+      { name: feature.name, customerIds: [customer] },
+      maker.cookie,
+    );
+    await test.request(approver.cookie, "POST", "/api/drafts/rejection", {
+      records: [{ type: "feature", id: feature.id }],
+      reason: "Fictional reason",
+    });
+    const resubmit = () =>
+      test.request(
+        maker.cookie,
+        "DELETE",
+        `/api/records/feature/${feature.id}/draft/rejection`,
+      );
+
+    // When its maker edits features but no longer the plan, then once they do again
+    await test.holdOnly(maker.id, ["plan:view", "features:edit"]);
+    const refused = await resubmit();
+    expect(refused.statusCode).toBe(403);
+    expect(errorOf(refused)).toBe(customersNeedPlan);
+    await test.holdOnly(maker.id, ["plan:edit", "features:edit"]);
+    expect((await resubmit()).statusCode).toBe(200);
+  });
+
   it("are changed by the Product Manager", async () => {
     const feature = await liveFeature();
     const customer = await liveCustomer();
