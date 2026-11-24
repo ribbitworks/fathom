@@ -17,7 +17,6 @@ import {
   allOf,
 } from "@fathom/shared";
 import { Button, Group, SegmentedControl, Stack, Text } from "@mantine/core";
-import { useEffect, useEffectEvent } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { notShown } from "./draft-details.tsx";
 import { choice } from "./lists.ts";
@@ -46,7 +45,7 @@ import type { NoteOpening } from "./note-editing.tsx";
 import { type EditingContext, usePersonEditing } from "./person-editing.tsx";
 import classes from "./record-details.module.css";
 import { RecordLink, Row } from "./record-details.tsx";
-import { focusValue } from "./record-editing.tsx";
+import { useFocusOnOpen } from "./record-editing.tsx";
 import { cellColumn, columnsOn, onRow } from "./grid-columns.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { CellValue } from "./table-view.ts";
@@ -301,13 +300,7 @@ export function HireFillForm({
     },
   };
   const editing = editingOf(context);
-  const focusFirst = useEffectEvent(() => {
-    // A form always has a first field: Name, or Person.
-    focusValue(fields[0] as Column);
-  });
-  useEffect(() => {
-    focusFirst();
-  }, [isNew]);
+  useFocusOnOpen(fields[0], isNew);
 
   const fill = () => {
     if (unfinished(formId)) return;

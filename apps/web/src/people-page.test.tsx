@@ -4495,11 +4495,11 @@ describe("adding from New", () => {
     expect(screen.queryByRole("region", { name: "New person" })).toBeNull();
   });
 
-  it("puts focus on its title when it opens", async () => {
+  it("puts the cursor in Name when it opens, ready to type into", async () => {
     await openNew();
     await waitFor(() => {
       expect(document.activeElement).toBe(
-        screen.getByRole("heading", { name: "New person" }),
+        screen.getByRole("textbox", { name: "Name" }),
       );
     });
   });

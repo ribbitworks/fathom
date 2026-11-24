@@ -172,6 +172,7 @@ export function NewPersonPanel({
       values={values}
       others={others}
       unfinished={unfinished(newRecordId)}
+      shown={shownColumns}
       withRefused={(found) => withRefused(newRecordId, shownColumns, found)}
       onRefused={(found) => {
         refuseEntered(newRecordId, found, shownColumns);

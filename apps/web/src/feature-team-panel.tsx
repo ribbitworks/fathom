@@ -270,6 +270,7 @@ function NewFeatureTeamPanel({
       values={entered}
       others={noOthers}
       unfinished={unfinished(newRecordId)}
+      shown={shownColumns}
       withRefused={(found) => withRefused(newRecordId, shownColumns, found)}
       onRefused={(found) => {
         refuseEntered(newRecordId, found, shownColumns);

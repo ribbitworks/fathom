@@ -114,6 +114,7 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
       values={shown}
       others={noOthers}
       unfinished={unfinished(newRecordId)}
+      shown={[...details, ...addedColumns]}
       withRefused={(found) => withRefused(newRecordId, columns, found)}
       onRefused={(found) => {
         refuseEntered(newRecordId, found, [...details, ...addedColumns]);

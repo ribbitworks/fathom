@@ -9,7 +9,7 @@
 import type { FeatureTeam, OrgChartPerson, Show } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -182,6 +182,15 @@ describe("a new feature team", () => {
       name: "Fictional Beacon",
       leadId: "m1",
       members: ["m1", "m2"],
+    });
+  });
+
+  it("opens with the cursor in Name, ready to type into", async () => {
+    openPanel({ shown: null });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("textbox", { name: "Name" }),
+      );
     });
   });
 

@@ -5,7 +5,7 @@
 
 import { addressProblem } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -261,5 +261,60 @@ describe("adding", () => {
       screen.getByRole("button", { name: "Close New thing" }),
     );
     expect(onCancel).not.toHaveBeenCalled();
+  });
+});
+
+describe("opening the form", () => {
+  it("puts the cursor in its first field typed into, after a choice shown before it", async () => {
+    renderPanel({
+      given: table([column("owner", "choice"), column("title", "text")]),
+      onAdd: vi.fn(),
+    });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("textbox", { name: "title" }),
+      );
+    });
+  });
+
+  it("opens a form with no fields to type into, leaving focus where it was", async () => {
+    renderPanel({ given: table([]), onAdd: vi.fn() });
+    expect(await screen.findByRole("button", { name: "Add" })).toBeDefined();
+  });
+
+  it("closes on Esc from the field just opened, with nothing typed for Esc to undo", async () => {
+    const onCancel = vi.fn();
+    renderPanel({
+      given: table([column("title", "text")]),
+      onAdd: vi.fn(),
+      onCancel,
+    });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("textbox", { name: "title" }),
+      );
+    });
+    await userEvent.keyboard("{Escape}");
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+
+  it("keeps what was typed on a first Esc, and closes on the next", async () => {
+    const onCancel = vi.fn();
+    renderPanel({
+      given: table([column("title", "text")]),
+      onAdd: vi.fn(),
+      onCancel,
+    });
+    const title = screen.getByRole<HTMLInputElement>("textbox", {
+      name: "title",
+    });
+    await userEvent.type(title, "Fictional Beacon");
+    await userEvent.keyboard("{Escape}");
+    expect([title.value, onCancel.mock.calls.length]).toEqual([
+      "Fictional Beacon",
+      0,
+    ]);
+    await userEvent.keyboard("{Escape}");
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 });
