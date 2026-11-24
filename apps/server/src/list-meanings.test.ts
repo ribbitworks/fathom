@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for lists with meanings, against a PostgreSQL server of their own: the hiring states'
-// choices each carry a meaning, given when a choice is added and kept or changed when it is edited,
-// other lists' choices carry none, and drafting, discarding, undoing, publishing, and approving never
-// leave a meaning with no choice offered for it, nor Positions with none at all.
+// Tests for lists with meanings, against a PostgreSQL server of their own: the meanings the
+// hiring states' choices carry, and drafting, discarding, undoing, publishing and approving never
+// leaving a meaning with no choice offered for it, nor Positions with none at all.
 
 import { listItems, lists, people, plannedHires } from "@fathom/db";
 import type { Choice, List } from "@fathom/shared";
@@ -11,6 +10,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Person } from "@fathom/shared";
 import {
+  errorOf,
   generalReader,
   type Method,
   startTestApp,
@@ -55,9 +55,6 @@ const send = (
   who = editor,
   options?: { publish?: boolean },
 ) => test.request(who.cookie, method, url, body, options);
-
-const refusal = (response: Awaited<ReturnType<typeof send>>) =>
-  response.json<{ error: string }>().error;
 
 async function readList(id: string): Promise<List> {
   const response = await send("GET", "/api/lists");
@@ -129,7 +126,7 @@ describe("a list with meanings", () => {
       choices: [{ label: unique("Fictional Interviewing") }],
     });
     expect(without.statusCode).toBe(400);
-    expect(refusal(without)).toBe(
+    expect(errorOf(without)).toBe(
       "Choose what the choice means: Proposed, Open, Hired, or Left",
     );
     const unknown = await send("POST", `/api/lists/${states.id}/choices`, {
@@ -144,7 +141,7 @@ describe("a list with meanings", () => {
       choices: [{ label: "Senior", meaning: "open" }],
     });
     expect(meant.statusCode).toBe(400);
-    expect(refusal(meant)).toBe("Only a built-in list's choices have meanings");
+    expect(errorOf(meant)).toBe("Only a built-in list's choices have meanings");
     const { choices } = await addStates([
       { label: unique("Fictional Interviewing"), meaning: "open" },
       { label: unique("Fictional Budgeted"), meaning: "proposed" },
@@ -216,7 +213,7 @@ describe("a list with meanings", () => {
     expect(hire.statusCode).toBe(201);
     const hired = await send("PUT", choiceUrl(id), { label, meaning: "hired" });
     expect(hired.statusCode).toBe(409);
-    expect(refusal(hired)).toBe(
+    expect(errorOf(hired)).toBe(
       "Planned hires are in this state, so it can't mean Hired. Move them to another state first.",
     );
     const [hireId = ""] = hire.json<{ ids: string[] }>().ids;
@@ -266,16 +263,16 @@ describe("a list with meanings", () => {
     const message = "Hiring states needs a choice that means Proposed.";
     const retired = await retire(proposed);
     expect(retired.statusCode).toBe(409);
-    expect(refusal(retired)).toBe(message);
+    expect(errorOf(retired)).toBe(message);
     const removed = await send("DELETE", choiceUrl(proposed));
     expect(removed.statusCode).toBe(409);
-    expect(refusal(removed)).toBe(message);
+    expect(errorOf(removed)).toBe(message);
     const remeant = await send("PUT", choiceUrl(proposed), {
       label: "Request to hire",
       meaning: "open",
     });
     expect(remeant.statusCode).toBe(409);
-    expect(refusal(remeant)).toBe(message);
+    expect(errorOf(remeant)).toBe(message);
     // Retiring a choice offered for a meaning that has others is allowed.
     const {
       choices: [another],
@@ -328,7 +325,7 @@ describe("a list with meanings", () => {
     expect((await publish(other)).statusCode).toBe(200);
     const refused = await publish(editor);
     expect(refused.statusCode).toBe(409);
-    expect(refusal(refused)).toBe(
+    expect(errorOf(refused)).toBe(
       `The change to the choice ${label} in Hiring states no longer fits the data as it is now; change or discard it, then publish again`,
     );
     await send(
@@ -356,12 +353,12 @@ describe("a list with meanings", () => {
     // The retirement relies on the choice drafted to be added, so that draft stays.
     const discarded = await discard(id);
     expect(discarded.statusCode).toBe(409);
-    expect(refusal(discarded)).toBe(
+    expect(errorOf(discarded)).toBe(
       "Hiring states needs a choice that means Proposed.",
     );
     const alone = await approve({ choices: [proposed] });
     expect(alone.statusCode).toBe(409);
-    expect(refusal(alone)).toBe(
+    expect(errorOf(alone)).toBe(
       "This would leave Hiring states with no choice that means Proposed.",
     );
     expect(await liveMeaning(proposed)).toEqual({
@@ -388,7 +385,7 @@ describe("a list with meanings", () => {
     expect((await retire(open)).statusCode).toBe(200);
     const undone = await send("POST", `/api/undo/${changeSetId}`);
     expect(undone.statusCode).toBe(409);
-    expect(refusal(undone)).toBe(
+    expect(errorOf(undone)).toBe(
       "Hiring states needs a choice that means Open.",
     );
     await discard(open);
@@ -431,7 +428,7 @@ describe("a list with meanings", () => {
     expect((await publish(editor)).statusCode).toBe(200);
     const refused = await publish(other);
     expect(refused.statusCode).toBe(409);
-    expect(refusal(refused)).toBe(
+    expect(errorOf(refused)).toBe(
       `The change to the choice ${label} in Hiring states no longer fits the data as it is now; change or discard it, then publish again`,
     );
     await send(
@@ -467,10 +464,10 @@ describe("a list with meanings", () => {
       const url = `/api/lists/${listId}/choices/${String(last)}`;
       const retired = await send("PUT", `${url}/retired`, { retired: true });
       expect(retired.statusCode).toBe(409);
-      expect(refusal(retired)).toBe("Positions needs a choice.");
+      expect(errorOf(retired)).toBe("Positions needs a choice.");
       const removed = await send("DELETE", url);
       expect(removed.statusCode).toBe(409);
-      expect(refusal(removed)).toBe("Positions needs a choice.");
+      expect(errorOf(removed)).toBe("Positions needs a choice.");
     } finally {
       await setRetired(others, false);
     }
@@ -500,7 +497,7 @@ describe("a list with meanings", () => {
       await setRetired([String(second)], true);
       const approval = await approve({ choices: [last] });
       expect(approval.statusCode).toBe(409);
-      expect(refusal(approval)).toBe(
+      expect(errorOf(approval)).toBe(
         "This would leave Positions with no choices.",
       );
     } finally {
@@ -593,17 +590,17 @@ describe("people's states", () => {
       });
     const early = await add({ stateId: left });
     expect(early.statusCode).toBe(400);
-    expect(refusal(early)).toBe(
+    expect(errorOf(early)).toBe(
       "A Left state is for someone whose end date has passed",
     );
     const late = await add({ endDate: "2021-01-01", stateId: hired });
     expect(late.statusCode).toBe(400);
-    expect(refusal(late)).toBe(
+    expect(errorOf(late)).toBe(
       "This person has left, so choose a state meaning Left",
     );
     const hiring = await add({ stateId: open });
     expect(hiring.statusCode).toBe(400);
-    expect(refusal(hiring)).toBe("That state is for planned hires");
+    expect(errorOf(hiring)).toBe("That state is for planned hires");
   });
 
   it("keeps planned hires out of Left, and refuses a state meaning Left while a hire is in it", async () => {
@@ -627,7 +624,7 @@ describe("people's states", () => {
       meaning: "left",
     });
     expect(leaving.statusCode).toBe(409);
-    expect(refusal(leaving)).toBe(
+    expect(errorOf(leaving)).toBe(
       "Planned hires are in this state, so it can't mean Left. Move them to another state first.",
     );
     await send("POST", "/api/unpublished/discard");
@@ -719,7 +716,7 @@ describe("people's states", () => {
     const leaver = await addPerson({ endDate: "2021-01-01", stateId: kept });
     const live = await send("DELETE", choiceUrl(kept));
     expect(live.statusCode).toBe(409);
-    expect(refusal(live)).toBe(
+    expect(errorOf(live)).toBe(
       "This choice cannot be removed while it is in use; retire it instead",
     );
     const drafting = await addLeftState();

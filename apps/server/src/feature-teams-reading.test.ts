@@ -8,9 +8,15 @@ import { type FeatureTeams, type Person } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { personalReader, testPosition } from "./test-app.ts";
 import {
+  errorOf,
+  ok,
+  personalReader,
+  testPosition,
+  unique,
   type User,
+} from "./test-app.ts";
+import {
   test,
   editor,
   approver,
@@ -19,10 +25,7 @@ import {
   chartOnly,
   startFeatureTeamTests,
   closeFeatureTeamTests,
-  unique,
   send,
-  ok,
-  refusal,
   approved,
   reject,
   person,
@@ -264,7 +267,7 @@ describe("teams on a chosen day", () => {
       "/api/feature-teams?on=2025-03-01",
     );
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe("Other dates need Personal access.");
+    expect(errorOf(response)).toBe("Other dates need Personal access.");
   });
 
   it("shows no lead on a day its lead, since removed from People, led the team", async () => {

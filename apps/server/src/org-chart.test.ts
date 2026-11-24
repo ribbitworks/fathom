@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Integration tests for the org chart, against a migrated PostgreSQL server: who appears, under
-// whom, with which details, as the lines approved for today have it, with drafts of managers,
-// positions and team names beside, as each reader may see them; managers whose end date has passed;
-// and what each role may read.
+// whom and with which details, with drafts beside, as each reader may see them; managers whose end
+// date has passed; and what each role may read.
 
 import { accessHistory, lists } from "@fathom/db";
 import {
@@ -14,11 +13,15 @@ import {
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
-import { generalReader, otherTestPosition, testPosition } from "./test-app.ts";
+import {
+  generalReader,
+  otherTestPosition,
+  testPosition,
+  unique,
+} from "./test-app.ts";
 import {
   test,
   cookie,
-  unique,
   approved,
   person,
   changed,

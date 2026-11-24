@@ -16,19 +16,16 @@ import type {
 import { and, eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
+  errorOf,
   generalReader,
-  type Method,
   otherTestPosition,
+  sender,
   startTestApp,
   type TestApp,
   testPosition,
   unique,
+  type User,
 } from "./test-app.ts";
-
-interface User {
-  id: string;
-  cookie: string;
-}
 
 let test: TestApp;
 let editor: User;
@@ -49,11 +46,7 @@ afterEach(async () => {
   await setVisibility("hiring-states", "general");
 });
 
-const send = (who: User, method: Method, url: string, body?: object) =>
-  test.request(who.cookie, method, url, body);
-
-const refusal = (response: Awaited<ReturnType<typeof send>>) =>
-  response.json<{ error: string }>().error;
+const send = sender(() => test);
 
 async function setVisibility(key: string, visibility: string) {
   await test.connection
@@ -221,7 +214,7 @@ describe("the Position column", () => {
     await setVisibility("positions", "confidential");
     const response = await add();
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "Every person needs a position, and this role can't see positions",
     );
   });
@@ -238,7 +231,7 @@ describe("the Position column", () => {
     await setVisibility("positions", "personal");
     const response = await save();
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose only columns this role can see");
+    expect(errorOf(response)).toBe("Choose only columns this role can see");
   });
 
   it("shows a placeholder's position only to those who see the Positions list's tier", async () => {
@@ -265,7 +258,7 @@ describe("the State column", () => {
     await setVisibility("hiring-states", "personal");
     const response = await save();
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose only columns this role can see");
+    expect(errorOf(response)).toBe("Choose only columns this role can see");
   });
 
   it("shows a placeholder's state to those who see the Hiring states list's tier", async () => {
@@ -423,7 +416,7 @@ describe("changes to positions and states", () => {
     await setVisibility("hiring-states", "personal");
     const unseenState = await add();
     expect(unseenState.statusCode).toBe(403);
-    expect(refusal(unseenState)).toBe(
+    expect(errorOf(unseenState)).toBe(
       "Every planned hire needs a state, and this role can't see hiring states",
     );
     await setVisibility("hiring-states", "general");
@@ -435,7 +428,7 @@ describe("changes to positions and states", () => {
     ).toBe(200);
     await setVisibility("positions", "personal");
     const unseenPosition = await add();
-    expect(refusal(unseenPosition)).toBe(
+    expect(errorOf(unseenPosition)).toBe(
       "Every planned hire needs a position, and this role can't see positions",
     );
     const moved = await send(hireEditor, "PATCH", `/api/planned-hires/${id}`, {
@@ -485,7 +478,7 @@ describe("changes to positions and states", () => {
       plannedHires: [id],
     });
     expect(refused.statusCode).toBe(403);
-    expect(refusal(refused)).toBe(
+    expect(errorOf(refused)).toBe(
       "One of these drafts holds details this role can't see, so an Approver who sees them must decide it",
     );
     const approved = await send(approver, "POST", "/api/drafts/approval", {

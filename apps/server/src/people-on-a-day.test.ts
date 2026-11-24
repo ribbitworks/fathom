@@ -9,10 +9,12 @@ import { type Permission, type Person } from "@fathom/shared";
 import { and, eq, ne } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
+  approvedPerson,
   personalReader,
   startTestApp,
   type TestApp,
   testPosition,
+  unique,
 } from "./test-app.ts";
 
 // The server takes today's date from the clock, so the tests fix it, to give the same days on every
@@ -33,14 +35,6 @@ afterAll(async () => {
   vi.useRealTimers();
 });
 
-let count = 0;
-
-// A name or Employee ID no other test uses, so tests sharing the database do not collide.
-function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-}
-
 async function approved(kind: "people" | "plannedHires", ids: string[]) {
   const approver = await test.signedIn("engineering-director");
   const response = await test.request(
@@ -54,24 +48,11 @@ async function approved(kind: "people" | "plannedHires", ids: string[]) {
 
 // A fictional person, approved so they are live, who started in 2020 and is marked as a manager
 // unless told otherwise.
-async function person(details: object = {}): Promise<string> {
-  const response = await test.request(cookie, "POST", "/api/people", {
-    people: [
-      {
-        preferredName: unique("Fictional Person"),
-        employeeId: unique("PD"),
-        positionId: testPosition,
-        startDate: "2020-01-01",
-        isManager: true,
-        ...details,
-      },
-    ],
+const person = (details: object = {}) =>
+  approvedPerson(test, cookie, (id) => approved("people", [id]), {
+    isManager: true,
+    ...details,
   });
-  expect(response.statusCode, response.body).toBe(201);
-  const id = String(response.json<{ ids: string[] }>().ids[0]);
-  await approved("people", [id]);
-  return id;
-}
 
 async function changed(id: string, body: object) {
   const response = await test.request(

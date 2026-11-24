@@ -15,25 +15,24 @@ import {
   startingRoles,
 } from "@fathom/shared";
 import { and, asc, eq } from "drizzle-orm";
-import { expect, vi } from "vitest";
+import { vi } from "vitest";
 import { readToday } from "./data/settings.ts";
 import {
+  approvedPerson,
   generalApprover,
   generalReader,
+  ok,
+  sender,
   startTestApp,
   type TestApp,
-  testPosition,
+  unique,
+  type User,
 } from "./test-app.ts";
 
 // The server takes today's date from the clock, so the tests fix it, to give the same days on every
 // run, however long the run takes.
 vi.useFakeTimers({ toFake: ["Date"] });
 vi.setSystemTime(new Date("2026-06-15T12:00:00.000Z"));
-
-export interface User {
-  id: string;
-  cookie: string;
-}
 
 export let test: TestApp;
 // A Workforce Administrator, who edits feature teams and people, and sees Personal details.
@@ -72,31 +71,7 @@ export async function closeFeatureTeamTests(): Promise<void> {
   vi.useRealTimers();
 }
 
-let count = 0;
-
-// A name or ID no other test uses, so tests sharing the database do not collide.
-export function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-}
-
-type Response = Awaited<ReturnType<TestApp["request"]>>;
-
-export const send = (
-  who: User,
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
-  url: string,
-  payload?: object,
-  options?: { publish?: boolean },
-) => test.request(who.cookie, method, url, payload, options);
-
-export async function ok<T>(response: Response, status = 200): Promise<T> {
-  expect(response.statusCode, response.body).toBe(status);
-  return Promise.resolve(response.json<T>());
-}
-
-export const refusal = (response: Response) =>
-  response.json<{ error: string }>().error;
+export const send = sender(() => test);
 
 export const approve = (id: string, who = approver) =>
   send(who, "POST", "/api/drafts/approval", { featureTeams: [id] });
@@ -112,27 +87,17 @@ export const reject = (
 ) => send(who, "POST", "/api/drafts/rejection", { featureTeams: [id], reason });
 
 // A fictional person, approved so they are live, started in 2020 unless told otherwise.
-export async function person(details: object = {}): Promise<string> {
-  const { ids } = await ok<{ ids: string[] }>(
-    await send(editor, "POST", "/api/people", {
-      people: [
-        {
-          preferredName: unique("Fictional Person"),
-          employeeId: unique("FP"),
-          positionId: testPosition,
-          startDate: "2020-01-01",
-          ...details,
-        },
-      ],
-    }),
-    201,
+export const person = (details: object = {}) =>
+  approvedPerson(
+    test,
+    editor.cookie,
+    async (id) => {
+      await ok(
+        await send(approver, "POST", "/api/drafts/approval", { people: [id] }),
+      );
+    },
+    details,
   );
-  const id = String(ids[0]);
-  await ok(
-    await send(approver, "POST", "/api/drafts/approval", { people: [id] }),
-  );
-  return id;
-}
 
 // Changes someone's details, approved, such as giving them an end date so they have left once it
 // passes.

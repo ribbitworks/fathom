@@ -7,13 +7,12 @@
 import { accessHistory, fields, lists, users } from "@fathom/db";
 import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { unique } from "./test-app.ts";
+import { errorOf, unique } from "./test-app.ts";
 import {
   test,
   classifier,
   seesBoth,
   move,
-  refusal,
   latestMove,
   clearDataClasses,
   startDataClassTests,
@@ -123,7 +122,7 @@ describe("a list's class", () => {
       `/api/undo/${changeSetId}`,
     );
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "A change of class can't be undone; change it back instead",
     );
   });
@@ -151,7 +150,7 @@ describe("a list's class", () => {
       mover.cookie,
     );
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe("This role can't see Confidential data");
+    expect(errorOf(response)).toBe("This role can't see Confidential data");
   });
 
   it("is not changed in a draft once the list is approved", async () => {
@@ -166,7 +165,7 @@ describe("a list's class", () => {
       },
     );
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toMatch(
+    expect(errorOf(response)).toMatch(
       /is already approved, so its class changes at once, not in a draft$/,
     );
   });
@@ -450,7 +449,7 @@ describe("a column's class", () => {
     const id = await liveColumn("choice", await liveList());
     const response = await move(`/api/columns/${id}/class`, "personal");
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This column takes its list's class, so change the list's class instead",
     );
   });
@@ -502,7 +501,7 @@ describe("a column's class", () => {
     await test.approveLists();
     const response = await move(`/api/columns/${id}/class`, "personal");
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "Everyone who sees the plan sees columns on Features, so they stay General",
     );
   });
@@ -526,7 +525,7 @@ describe("a column's class", () => {
     await test.approveLists();
     const refused = await change("general");
     expect(refused.statusCode).toBe(400);
-    expect(refusal(refused)).toBe(
+    expect(errorOf(refused)).toBe(
       `${name} is already approved, so its class changes at once, not in a draft`,
     );
   });
@@ -658,7 +657,7 @@ describe("a column's class", () => {
     const id = created.json<{ field: { id: string } }>().field.id;
     const response = await move(`/api/columns/${id}/class`, "personal");
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This column takes its list's class, so change the list's class instead",
     );
   });

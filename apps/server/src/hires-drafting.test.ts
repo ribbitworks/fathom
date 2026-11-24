@@ -15,7 +15,13 @@ import { type Hire } from "@fathom/shared";
 import { and, count as total, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { otherTestPosition, testPosition } from "./test-app.ts";
+import {
+  errorOf,
+  ok,
+  otherTestPosition,
+  testPosition,
+  unique,
+} from "./test-app.ts";
 import {
   test,
   editor,
@@ -25,9 +31,7 @@ import {
   hired,
   recruiting,
   retiredPosition,
-  unique,
   send,
-  ok,
   approve,
   approved,
   person,
@@ -38,7 +42,6 @@ import {
   hireSeen,
   change,
   changed,
-  refusal,
   liveRow,
   startHireTests,
   closeHireTests,
@@ -78,7 +81,7 @@ describe("the Hired state", () => {
       .where(eq(listItems.id, stateId));
     const refused = await approve({ plannedHires: [id] });
     expect(refused.statusCode).toBe(409);
-    expect(refusal(refused)).toBe(
+    expect(errorOf(refused)).toBe(
       "That state is for people. A planned hire is hired when someone fills it.",
     );
     await ok(await send(editor, "DELETE", `/api/planned-hires/${id}`));
@@ -114,11 +117,11 @@ describe("the Hired state", () => {
       hireRequest({ stateId: hired }),
     );
     expect(added.statusCode).toBe(400);
-    expect(refusal(added)).toBe(refused);
+    expect(errorOf(added)).toBe(refused);
     const id = await liveHire();
     const moved = await change(id, { stateId: hired });
     expect(moved.statusCode).toBe(400);
-    expect(refusal(moved)).toBe(refused);
+    expect(errorOf(moved)).toBe(refused);
   });
 });
 
@@ -258,7 +261,7 @@ describe("adding a hire", () => {
         hireRequest({ requisition: taken }),
       );
       expect(response.statusCode).toBe(409);
-      expect(refusal(response)).toBe("Someone already has that ID");
+      expect(errorOf(response)).toBe("Someone already has that ID");
     }
     const clash = await send(editor, "POST", "/api/people", {
       people: [
@@ -300,7 +303,7 @@ describe("adding a hire", () => {
       hireRequest({ managerId: randomUUID() }),
     );
     expect(unknown.statusCode).toBe(400);
-    expect(refusal(unknown)).toBe("Choose a manager from People");
+    expect(errorOf(unknown)).toBe("Choose a manager from People");
     const leaving = await person();
     await ok(await send(editor, "DELETE", `/api/people/${leaving}`));
     const removed = await send(
@@ -506,14 +509,14 @@ describe("the built-in lists", () => {
     const states = await builtIn("hiring-states");
     const removed = await send(who, "DELETE", `/api/lists/${positions.id}`);
     expect(removed.statusCode).toBe(409);
-    expect(refusal(removed)).toBe(
+    expect(errorOf(removed)).toBe(
       "This list cannot be deleted while a column draws on it: Position",
     );
     const retired = await send(who, "PUT", `/api/lists/${states.id}/retired`, {
       retired: true,
     });
     expect(retired.statusCode).toBe(409);
-    expect(refusal(retired)).toBe(
+    expect(errorOf(retired)).toBe(
       "This list cannot be retired while a column draws on it: State",
     );
   });
@@ -551,7 +554,7 @@ describe("the built-in lists", () => {
         hireRequest(),
       );
       expect(response.statusCode).toBe(409);
-      expect(refusal(response)).toBe(
+      expect(errorOf(response)).toBe(
         "No state means Proposed. Choose one for the hire.",
       );
     } finally {

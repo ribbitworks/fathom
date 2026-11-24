@@ -7,18 +7,17 @@
 import { listItems, lists, plannedHires } from "@fathom/db";
 import { type Hire, type Hires } from "@fathom/shared";
 import { eq } from "drizzle-orm";
-import { expect, vi } from "vitest";
+import { vi } from "vitest";
 import {
+  approvedPerson,
   generalReader,
+  ok,
+  sender,
   startTestApp,
   type TestApp,
   testPosition,
+  type User,
 } from "./test-app.ts";
-
-export interface User {
-  id: string;
-  cookie: string;
-}
 
 // The server takes today's date from the clock, so the tests fix it, to give the same days on every
 // run.
@@ -84,29 +83,7 @@ export async function closeHireTests(): Promise<void> {
   vi.useRealTimers();
 }
 
-let count = 0;
-
-// A name or ID no other test uses, so tests sharing the database do not collide.
-export function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-}
-
-export const send = (
-  who: User,
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
-  url: string,
-  payload?: object,
-  options?: { publish?: boolean },
-) => test.request(who.cookie, method, url, payload, options);
-
-export async function ok<T>(
-  response: Awaited<ReturnType<typeof send>>,
-  status = 200,
-): Promise<T> {
-  expect(response.statusCode, response.body).toBe(status);
-  return Promise.resolve(response.json<T>());
-}
+export const send = sender(() => test);
 
 export async function approve(ids: {
   people?: string[];
@@ -123,26 +100,11 @@ export async function approved(ids: {
 }
 
 // A fictional person, approved so they are live and marked as a manager unless told otherwise.
-export async function person(details: object = {}): Promise<string> {
-  const { ids } = await ok<{ ids: string[] }>(
-    await send(editor, "POST", "/api/people", {
-      people: [
-        {
-          preferredName: unique("Fictional Person"),
-          employeeId: unique("HP"),
-          positionId: testPosition,
-          startDate: "2020-01-01",
-          isManager: true,
-          ...details,
-        },
-      ],
-    }),
-    201,
-  );
-  const id = String(ids[0]);
-  await approved({ people: [id] });
-  return id;
-}
+export const person = (details: object = {}) =>
+  approvedPerson(test, editor.cookie, (id) => approved({ people: [id] }), {
+    isManager: true,
+    ...details,
+  });
 
 // The request adding a hire with a temporary ID, the test position, and a target date unless told
 // otherwise.
@@ -189,9 +151,6 @@ export async function changed(
   return (await ok<{ changeSetId: string | null }>(await change(id, body)))
     .changeSetId;
 }
-
-export const refusal = (response: Awaited<ReturnType<typeof send>>) =>
-  response.json<{ error: string }>().error;
 
 export async function liveRow(id: string) {
   const [row] = await test.connection

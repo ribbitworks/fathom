@@ -38,9 +38,6 @@ export const move = (
   cookie: string = classifier.cookie,
 ) => test.request(cookie, "PUT", url, { dataClass });
 
-export const refusal = (response: Awaited<ReturnType<typeof move>>) =>
-  response.json<{ error: string }>().error;
-
 export async function sessionClasses(cookie: string): Promise<DataClasses> {
   return (await test.request(cookie, "GET", "/api/session")).json<{
     settings: { dataClasses: DataClasses };

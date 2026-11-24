@@ -8,16 +8,13 @@ import { type Person } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { testPosition } from "./test-app.ts";
+import { errorOf, ok, testPosition, unique, type User } from "./test-app.ts";
 import {
-  type User,
   test,
   editor,
   planner,
   open,
-  unique,
   send,
-  ok,
   approve,
   approved,
   person,
@@ -27,7 +24,6 @@ import {
   hireSeen,
   change,
   changed,
-  refusal,
   liveRow,
   startHireTests,
   closeHireTests,
@@ -45,7 +41,7 @@ describe("the people hires name", () => {
       send(editor, "DELETE", `/api/people/${id}`, undefined, options);
     const response = await remove(live);
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "A planned hire names this person; change the hire first",
     );
 
@@ -129,7 +125,7 @@ describe("a hire's manager", () => {
       send(editor, "PATCH", `/api/people/${manager}`, { isManager: false });
     const refused = await unmark();
     expect(refused.statusCode).toBe(409);
-    expect(refusal(refused)).toBe("Reassign direct reports first");
+    expect(errorOf(refused)).toBe("Reassign direct reports first");
     await changed(id, { managerId: other });
     expect((await unmark()).statusCode).toBe(409);
     await approved({ plannedHires: [id] });
@@ -147,7 +143,7 @@ describe("a hire's manager", () => {
       .where(eq(people.id, manager));
     const response = await approve({ plannedHires: [id] });
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "Fictional Unmarked is not a manager yet: check Manager? on their row and have it approved first",
     );
   });
@@ -162,7 +158,7 @@ describe("a hire's manager", () => {
     await draftHire({ managerId: manager });
     const undone = await send(editor, "POST", `/api/undo/${changeSetId}`);
     expect(undone.statusCode).toBe(409);
-    expect(refusal(undone)).toBe("Reassign direct reports first");
+    expect(errorOf(undone)).toBe("Reassign direct reports first");
   });
 
   it("is needed by a manager an undo puts back on a hire not yet filled", async () => {
@@ -182,7 +178,7 @@ describe("a hire's manager", () => {
       `/api/undo/${String(changeSetId)}`,
     );
     expect(undone.statusCode).toBe(409);
-    expect(refusal(undone)).toBe(
+    expect(errorOf(undone)).toBe(
       "Fictional First Manager is not a manager yet: check Manager? on their row and have it approved first",
     );
   });
@@ -216,7 +212,7 @@ describe("a hire's manager", () => {
     });
     const response = await approve({ people: [manager] });
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "A planned hire names this person; change the hire first",
     );
     await test.connection.delete(drafts).where(eq(drafts.recordId, manager));
@@ -278,13 +274,13 @@ describe("a planned manager", () => {
       hireRequest({ managerId: unmarked }),
     );
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       `${name} is not a manager yet: check Manager? on their row and have it approved first`,
     );
     const nameless = await liveHire();
     const id = await liveHire();
     const refused = await change(id, { managerId: nameless });
-    expect(refusal(refused)).toMatch(
+    expect(errorOf(refused)).toMatch(
       /^Fictional Engineer, TBD-\d+ is not a manager yet/,
     );
   });
@@ -329,10 +325,10 @@ describe("a planned manager", () => {
   it("cannot report to itself, or to a planned hire that reports to it", async () => {
     const top = await liveHire({ isManager: true });
     const below = await liveHire({ isManager: true, managerId: top });
-    expect(refusal(await change(top, { managerId: top }))).toBe(
+    expect(errorOf(await change(top, { managerId: top }))).toBe(
       "A planned hire can't report to itself",
     );
-    expect(refusal(await change(top, { managerId: below }))).toBe(loop);
+    expect(errorOf(await change(top, { managerId: below }))).toBe(loop);
   });
 
   it("is refused on approval when drafts made apart would make a loop", async () => {
@@ -358,7 +354,7 @@ describe("a planned manager", () => {
     await ok(await send(other, "POST", "/api/unpublished/publish"));
     const response = await approve({ plannedHires: [first, second] });
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toMatch(
+    expect(errorOf(response)).toMatch(
       /^Fictional Engineer, TBD-\d+ would end up reporting to itself$/,
     );
   });
@@ -368,10 +364,10 @@ describe("a planned manager", () => {
     await liveHire({ managerId: manager });
     const refused = await change(manager, { isManager: false });
     expect(refused.statusCode).toBe(409);
-    expect(refusal(refused)).toBe(stillReporting);
+    expect(errorOf(refused)).toBe(stillReporting);
     const drafting = await liveHire({ isManager: true });
     await draftHire({ managerId: drafting });
-    expect(refusal(await change(drafting, { isManager: false }))).toBe(
+    expect(errorOf(await change(drafting, { isManager: false }))).toBe(
       stillReporting,
     );
   });
@@ -395,7 +391,7 @@ describe("a planned manager", () => {
     expect(report).toEqual(expect.any(String));
     const response = await approve({ plannedHires: [manager] });
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(stillReporting);
+    expect(errorOf(response)).toBe(stillReporting);
   });
 
   it("cannot be removed while planned hires report to it", async () => {
@@ -407,7 +403,7 @@ describe("a planned manager", () => {
       `/api/planned-hires/${manager}`,
     );
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe("Reassign direct reports first");
+    expect(errorOf(response)).toBe("Reassign direct reports first");
   });
 
   it("keeps its mark when undoing a change would clear it while a hire reports to it", async () => {
@@ -426,7 +422,7 @@ describe("a planned manager", () => {
     const cleared = await changed(top, { managerId: null });
     await changed(below, { managerId: top });
     const looping = await send(editor, "POST", `/api/undo/${String(cleared)}`);
-    expect(refusal(looping)).toBe(loop);
+    expect(errorOf(looping)).toBe(loop);
     const manager = await liveHire({ isManager: true });
     const id = await liveHire();
     await changed(id, { managerId: manager });
@@ -435,6 +431,6 @@ describe("a planned manager", () => {
     await approved({ plannedHires: [manager] });
     const unmarked = await send(editor, "POST", `/api/undo/${String(unnamed)}`);
     expect(unmarked.statusCode).toBe(409);
-    expect(refusal(unmarked)).toMatch(/^TBD-\d+ is not a manager yet/);
+    expect(errorOf(unmarked)).toMatch(/^TBD-\d+ is not a manager yet/);
   });
 });

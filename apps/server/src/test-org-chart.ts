@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Shared setup for the org chart integration tests: a test app with a fixed clock, and helpers that
-// add and change people and read the chart, live, drafted or on a chosen day, through the routes.
+// Shared setup for the org chart and reporting line integration tests: a test app with a fixed
+// clock, and helpers that add and change people, approve their managers, and read people and the
+// chart, live, drafted or on a chosen day, through the routes.
 
-import { type OrgChartPerson } from "@fathom/shared";
+import { type OrgChartPerson, type Person } from "@fathom/shared";
 import { expect, vi } from "vitest";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
+import {
+  approvedPerson,
+  startTestApp,
+  type TestApp,
+  unique,
+} from "./test-app.ts";
 
 // The server takes today's date from the clock, so the tests fix it, to give the same days on every
 // run.
@@ -14,10 +20,11 @@ vi.setSystemTime(new Date("2026-06-15T12:00:00.000Z"));
 
 export let test: TestApp;
 export let cookie = "";
+export let editorId = "";
 
 export async function startOrgChartTests(): Promise<void> {
   test = await startTestApp();
-  ({ cookie } = await test.signedIn("workforce-administrator"));
+  ({ cookie, id: editorId } = await test.signedIn("workforce-administrator"));
 }
 
 export async function closeOrgChartTests(): Promise<void> {
@@ -25,54 +32,62 @@ export async function closeOrgChartTests(): Promise<void> {
   vi.useRealTimers();
 }
 
-let count = 0;
+export const day = (offset: number) => {
+  const moment = new Date();
+  moment.setUTCDate(moment.getUTCDate() + offset);
+  return moment.toISOString().slice(0, 10);
+};
+export const today = day(0);
 
-// A name or Employee ID no other test uses, so tests sharing the database do not collide.
-export function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
+export async function approve(ids: readonly string[]) {
+  const approver = await test.signedIn("engineering-director");
+  return test.request(approver.cookie, "POST", "/api/drafts/approval", {
+    people: ids,
+  });
 }
 
 export async function approved(ids: readonly string[]) {
-  const approver = await test.signedIn("engineering-director");
-  const response = await test.request(
-    approver.cookie,
-    "POST",
-    "/api/drafts/approval",
-    { people: ids },
-  );
+  const response = await approve(ids);
   expect(response.statusCode, response.body).toBe(200);
 }
 
 // A fictional person, approved so they are live, who started in 2020 and is marked as a manager
-// unless told otherwise.
-export async function person(details: object = {}): Promise<string> {
-  const response = await test.request(cookie, "POST", "/api/people", {
-    people: [
-      {
-        preferredName: unique("Fictional Person"),
-        employeeId: unique("OC"),
-        positionId: testPosition,
-        startDate: "2020-01-01",
-        isManager: true,
-        ...details,
-      },
-    ],
+// unless told otherwise, with an Employee ID starting OC, which the chart's tests look for.
+export const person = (details: object = {}) =>
+  approvedPerson(test, cookie, (id) => approved([id]), {
+    employeeId: unique("OC"),
+    isManager: true,
+    ...details,
   });
-  expect(response.statusCode, response.body).toBe(201);
-  const id = String(response.json<{ ids: string[] }>().ids[0]);
-  await approved([id]);
-  return id;
+
+export async function change(id: string, body: object, as = cookie) {
+  return test.request(as, "PATCH", `/api/people/${id}`, body);
 }
 
 export async function changed(id: string, body: object) {
-  const response = await test.request(
-    cookie,
-    "PATCH",
-    `/api/people/${id}`,
-    body,
-  );
+  const response = await change(id, body);
   expect(response.statusCode, response.body).toBe(200);
+}
+
+// Drafts and approves a new manager for the person.
+export async function reportsTo(
+  id: string,
+  managerId: string | null,
+  from?: string,
+) {
+  await changed(id, { managerId, ...(from ? { managerFrom: from } : {}) });
+  await approved([id]);
+}
+
+export async function readPerson(
+  id: string,
+  as = cookie,
+): Promise<Person | undefined> {
+  const response = await test.request(as, "GET", "/api/people");
+  expect(response.statusCode).toBe(200);
+  return response
+    .json<{ people: Person[] }>()
+    .people.find((one) => one.id === id);
 }
 
 // The approved chart, or, when asked, the chart as drafts make it, by person.

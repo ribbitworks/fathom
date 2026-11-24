@@ -7,13 +7,16 @@
 import { listItems, lists, people, plannedHires } from "@fathom/db";
 import { type Hire, type Person } from "@fathom/shared";
 import { eq } from "drizzle-orm";
-import { expect } from "vitest";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
-
-export interface User {
-  id: string;
-  cookie: string;
-}
+import {
+  approvedPerson,
+  ok,
+  sender,
+  startTestApp,
+  type TestApp,
+  testPosition,
+  unique,
+  type User,
+} from "./test-app.ts";
 
 export let test: TestApp;
 // A Workforce Administrator, who changes people and the hiring plan.
@@ -42,35 +45,10 @@ export async function closeFillTests(): Promise<void> {
   await test.close();
 }
 
-export let count = 0;
-
-// A name or ID no other test uses, so tests sharing the database do not collide.
-export function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-}
-
-export const send = (
-  who: User,
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
-  url: string,
-  payload?: object,
-  options?: { publish?: boolean },
-) => test.request(who.cookie, method, url, payload, options);
-
-export async function ok<T>(
-  response: Awaited<ReturnType<typeof send>>,
-  status = 200,
-): Promise<T> {
-  expect(response.statusCode, response.body).toBe(status);
-  return Promise.resolve(response.json<T>());
-}
+export const send = sender(() => test);
 
 export const partOfFill =
   "This is part of filling a planned hire; discard the fill to change it";
-
-export const refusal = (response: Awaited<ReturnType<typeof send>>) =>
-  response.json<{ error: string }>().error;
 
 type Records = { people?: string[]; plannedHires?: string[] };
 
@@ -89,26 +67,11 @@ export const reject = (ids: Records) =>
 
 // A fictional person, approved so they are live, started in 2020 and marked as a manager unless
 // told otherwise.
-export async function person(details: object = {}): Promise<string> {
-  const { ids } = await ok<{ ids: string[] }>(
-    await send(editor, "POST", "/api/people", {
-      people: [
-        {
-          preferredName: unique("Fictional Person"),
-          employeeId: unique("FP"),
-          positionId: testPosition,
-          startDate: "2020-01-01",
-          isManager: true,
-          ...details,
-        },
-      ],
-    }),
-    201,
-  );
-  const id = String(ids[0]);
-  await approved({ people: [id] });
-  return id;
-}
+export const person = (details: object = {}) =>
+  approvedPerson(test, editor.cookie, (id) => approved({ people: [id] }), {
+    isManager: true,
+    ...details,
+  });
 
 // A live planned hire, approved to hire, with a target date, unless told otherwise.
 export async function hire(details: object = {}): Promise<string> {

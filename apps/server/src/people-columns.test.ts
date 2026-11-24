@@ -8,10 +8,9 @@ import { type Field } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { hiresHave, peopleHave } from "./data/fields.ts";
-import { generalReader, type Method } from "./test-app.ts";
+import { generalReader, type Method, unique } from "./test-app.ts";
 import {
   test,
-  unique,
   editor,
   send,
   listWith,

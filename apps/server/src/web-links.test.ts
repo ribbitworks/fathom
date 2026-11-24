@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for web link columns on the People table, against a migrated PostgreSQL server: adding and
-// changing them, with a visibility of their own; the links people are given, checked and kept as
-// Fathom keeps them; drafting, approving, and undoing them; how the change history shows them; and
-// who sees them.
+// changing them, the links people are given, drafting, approving and undoing them, how the change
+// history shows them, and who sees them.
 
 import { fields, fieldValues, recordChanges, valueField } from "@fathom/db";
 import {
@@ -16,11 +15,12 @@ import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
 import {
-  type Method,
+  sender,
   startTestApp,
   type TestApp,
   testPosition,
   missingRecord,
+  unique,
 } from "./test-app.ts";
 
 let test: TestApp;
@@ -33,14 +33,6 @@ afterAll(async () => {
   await test.close();
 });
 
-let count = 0;
-
-// A name or Employee ID no other test uses, so tests sharing the database do not collide.
-function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-}
-
 const proposal = {
   address: "https://proposals.example.test/P-1",
   text: "P-1 proposal",
@@ -50,14 +42,7 @@ async function editor() {
   return test.signedIn("workforce-administrator");
 }
 
-async function send(
-  cookie: string,
-  method: Method,
-  url: string,
-  payload?: object,
-) {
-  return test.request(cookie, method, url, payload);
-}
+const send = sender(() => test);
 
 // A web link column, approved so it is live.
 async function linkColumn(

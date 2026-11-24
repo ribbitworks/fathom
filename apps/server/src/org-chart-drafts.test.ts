@@ -17,10 +17,12 @@ import {
   vi,
 } from "vitest";
 import {
+  approvedPerson,
   generalReader,
   startTestApp,
   type TestApp,
   testPosition,
+  unique,
 } from "./test-app.ts";
 
 // The server takes today's date from the clock, so the tests fix it, to give the same days on every
@@ -49,37 +51,19 @@ afterAll(async () => {
   vi.useRealTimers();
 });
 
-let count = 0;
-
-function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-}
-
 async function decided(path: string, body: object) {
   const response = await test.request(approver, "POST", path, body);
   expect(response.statusCode, response.body).toBe(200);
 }
 
 // A fictional person, approved so they are live, who started in 2020 and is marked as a manager.
-async function person(details: object = {}): Promise<string> {
-  const response = await test.request(cookie, "POST", "/api/people", {
-    people: [
-      {
-        preferredName: unique("Fictional Person"),
-        employeeId: unique("OD"),
-        positionId: testPosition,
-        startDate: "2020-01-01",
-        isManager: true,
-        ...details,
-      },
-    ],
-  });
-  expect(response.statusCode, response.body).toBe(201);
-  const id = String(response.json<{ ids: string[] }>().ids[0]);
-  await decided("/api/drafts/approval", { people: [id] });
-  return id;
-}
+const person = (details: object = {}) =>
+  approvedPerson(
+    test,
+    cookie,
+    (id) => decided("/api/drafts/approval", { people: [id] }),
+    { isManager: true, ...details },
+  );
 
 async function changed(id: string, body: object, publish = true) {
   const response = await test.request(

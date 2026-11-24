@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for number columns on the People table, against a migrated PostgreSQL server: adding them,
-// with a visibility of their own; the numbers people and planned hires are given, refused unless
-// Fathom can keep them, with 0 a value like any other; drafting, approving, and removing them; how
-// the change history shows them; and who sees them.
+// the numbers people and planned hires are given and refused, drafting, approving and removing
+// them, how the change history shows them, and who sees them.
 
 import { fieldValues } from "@fathom/db";
 import { type ChangeHistory, type Field, type Person } from "@fathom/shared";
@@ -12,10 +11,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
 import {
   generalReader,
-  type Method,
+  sender,
   startTestApp,
   type TestApp,
   testPosition,
+  unique,
 } from "./test-app.ts";
 
 let test: TestApp;
@@ -28,17 +28,9 @@ afterAll(async () => {
   await test.close();
 });
 
-let made = 0;
-
-function unique(prefix: string): string {
-  made += 1;
-  return `${prefix} ${String(made)}`;
-}
-
 const editor = () => test.signedIn("workforce-administrator");
 
-const send = (cookie: string, method: Method, url: string, payload?: object) =>
-  test.request(cookie, method, url, payload);
+const send = sender(() => test);
 
 async function numberColumn(
   cookie: string,

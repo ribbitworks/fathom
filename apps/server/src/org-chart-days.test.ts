@@ -7,11 +7,15 @@ import { accessHistory, dataClasses } from "@fathom/db";
 import { type Permission } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { generalReader, personalReader, testPosition } from "./test-app.ts";
+import {
+  generalReader,
+  personalReader,
+  testPosition,
+  unique,
+} from "./test-app.ts";
 import {
   test,
   cookie,
-  unique,
   approved,
   person,
   changed,

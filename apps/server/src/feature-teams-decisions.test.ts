@@ -5,6 +5,7 @@
 
 import { type Unpublished } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { errorOf, ok, unique } from "./test-app.ts";
 import {
   test,
   editor,
@@ -15,10 +16,7 @@ import {
   today,
   startFeatureTeamTests,
   closeFeatureTeamTests,
-  unique,
   send,
-  ok,
-  refusal,
   approve,
   approved,
   reject,
@@ -70,7 +68,7 @@ describe("discarding and resubmitting a team's draft", () => {
     const id = await liveTeam();
     const response = await discard(id);
     expect(response.statusCode).toBe(404);
-    expect(refusal(response)).toBe("This feature team has no draft");
+    expect(errorOf(response)).toBe("This feature team has no draft");
   });
 
   it("resubmits a rejected draft", async () => {
@@ -89,7 +87,7 @@ describe("discarding and resubmitting a team's draft", () => {
     const { id } = await drafted();
     const response = await resubmit(id);
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe("Only a rejected draft can be resubmitted");
+    expect(errorOf(response)).toBe("Only a rejected draft can be resubmitted");
   });
 
   it("is resent by a proposer when the draft renames a live team", async () => {
@@ -197,7 +195,7 @@ describe("approving a team's draft", () => {
     const response = await approve(id, approverWithoutPersonal);
 
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "One of these drafts holds details this role can't see, so an Approver who sees them must decide it",
     );
     expect(await liveRow(id)).toBeUndefined();
@@ -211,7 +209,7 @@ describe("approving a team's draft", () => {
 
     const response = await approve(adding, approverWithoutPersonal);
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "One of these drafts holds details this role can't see, so an Approver who sees them must decide it",
     );
     expect((await reject(adding, approverWithoutPersonal)).statusCode).toBe(
@@ -265,7 +263,7 @@ describe("approving a team's draft", () => {
     const id = await liveTeam();
     const response = await approve(id);
     expect(response.statusCode).toBe(404);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "One of these feature teams has no draft; refresh to see the latest",
     );
   });
