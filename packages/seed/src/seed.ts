@@ -178,12 +178,10 @@ export async function seed(
   organization: FictionalOrganization,
 ): Promise<boolean> {
   return database.transaction(async (transaction) => {
-    const [first] = organization.lists;
-    const present = await transaction
-      .select({ id: lists.id })
-      .from(lists)
-      .where(eq(lists.id, String(first?.id)));
-    if (present.length > 0) return false;
+    // Removing the seed data always removes its feature teams, but keeps what people added by hand
+    // still use, such as a project's owner with their lists and columns. So the feature teams say
+    // whether the seed is there, and the seed adds whatever is missing, leaving the rest.
+    if (await seeded(transaction, organization)) return false;
     const made: SeededChange[] = [];
     for (const list of organization.lists) {
       const row = {
@@ -193,16 +191,27 @@ export async function seed(
         visibility: list.visibility,
         retired: false,
       };
-      await transaction.insert(lists).values(row);
-      const { id, ...listFields } = row;
-      made.push(...recorded("list", id, "created", listFields));
+      const newList = await transaction
+        .insert(lists)
+        .values(row)
+        .onConflictDoNothing({ target: lists.id })
+        .returning({ id: lists.id });
+      if (newList.length > 0) {
+        const { id, ...listFields } = row;
+        made.push(...recorded("list", id, "created", listFields));
+      }
       for (const [index, choice] of list.choices.entries()) {
-        await transaction.insert(listItems).values({
-          id: choice.id,
-          listId: list.id,
-          label: choice.label,
-          position: index + 1,
-        });
+        const item = await transaction
+          .insert(listItems)
+          .values({
+            id: choice.id,
+            listId: list.id,
+            label: choice.label,
+            position: index + 1,
+          })
+          .onConflictDoNothing({ target: listItems.id })
+          .returning({ id: listItems.id });
+        if (item.length === 0) continue;
         made.push(
           ...recorded("list-item", choice.id, "created", {
             listId: list.id,
@@ -221,12 +230,17 @@ export async function seed(
       .from(listItems)
       .where(eq(listItems.listId, positionsId));
     for (const [index, choice] of organization.positions.entries()) {
-      await transaction.insert(listItems).values({
-        id: choice.id,
-        listId: positionsId,
-        label: choice.label,
-        position: Number(last?.position) + index + 1,
-      });
+      const item = await transaction
+        .insert(listItems)
+        .values({
+          id: choice.id,
+          listId: positionsId,
+          label: choice.label,
+          position: Number(last?.position) + index + 1,
+        })
+        .onConflictDoNothing({ target: listItems.id })
+        .returning({ id: listItems.id });
+      if (item.length === 0) continue;
       made.push(
         ...recorded("list-item", choice.id, "created", {
           listId: positionsId,
@@ -243,7 +257,12 @@ export async function seed(
         required: false,
         onPlannedHires: true,
       };
-      await transaction.insert(fields).values(row);
+      const field = await transaction
+        .insert(fields)
+        .values(row)
+        .onConflictDoNothing({ target: fields.id })
+        .returning({ id: fields.id });
+      if (field.length === 0) continue;
       const { id, ...settings } = row;
       made.push(...recorded("field", id, "created", settings));
     }
@@ -276,9 +295,16 @@ export async function seed(
       organization.teams.map(({ managerId, name }) => [managerId, name]),
     );
     const tiers = valueTiers(organization);
+    const newPeople = new Set<string>();
     for (const person of organization.people) {
       const { values, notes, ...row } = person;
-      await transaction.insert(people).values(row);
+      const inserted = await transaction
+        .insert(people)
+        .values(row)
+        .onConflictDoNothing({ target: people.id })
+        .returning({ id: people.id });
+      if (inserted.length === 0) continue;
+      newPeople.add(person.id);
       const chosen = Object.entries(values).flatMap(([fieldId, choiceIds]) =>
         choiceIds.map((choiceId) => ({
           fieldId,
@@ -307,17 +333,36 @@ export async function seed(
         ),
       );
     }
-    for (const chunk of inChunks(organization.reportingLines)) {
+    // A person kept keeps their own reporting lines, which have no fixed ID to match.
+    const newLines = organization.reportingLines.filter(({ personId }) =>
+      newPeople.has(personId),
+    );
+    for (const chunk of inChunks(newLines)) {
       await transaction.insert(reportingLines).values(chunk);
     }
     for (const chunk of inChunks(organization.teams)) {
-      await transaction.insert(teams).values(chunk);
+      await transaction
+        .insert(teams)
+        .values(chunk)
+        .onConflictDoNothing({ target: teams.managerId });
     }
     made.push(...(await addFeatureTeams(transaction, organization)));
     // Made by Fathom itself.
     await recordChanges(transaction, null, made);
     return true;
   });
+}
+
+// Whether the seed data is there: its first feature team, which removing it always removes.
+async function seeded(
+  transaction: Pick<Database, "select">,
+  organization: FictionalOrganization,
+): Promise<boolean> {
+  const found = await transaction
+    .select({ id: featureTeams.id })
+    .from(featureTeams)
+    .where(eq(featureTeams.id, String(organization.featureTeams[0]?.id)));
+  return found.length > 0;
 }
 
 // Adds the fictional feature teams, with every record of their members joining and leaving, and
@@ -329,7 +374,13 @@ async function addFeatureTeams(
   const made: SeededChange[] = [];
   for (const team of organization.featureTeams) {
     const { memberships, leadId, formerLead, ...row } = team;
-    await transaction.insert(featureTeams).values(row);
+    // A team left in place, such as when only another was removed by hand, keeps its own records.
+    const inserted = await transaction
+      .insert(featureTeams)
+      .values(row)
+      .onConflictDoNothing({ target: featureTeams.id })
+      .returning({ id: featureTeams.id });
+    if (inserted.length === 0) continue;
     await transaction
       .insert(featureTeamMemberships)
       .values(memberships.map((one) => ({ teamId: team.id, ...one })));
@@ -767,7 +818,7 @@ export async function seedCommand(
       const added = await seed(database, organization);
       console.log(
         added
-          ? `Added ${String(organization.people.length)} fictional people, with their lists and columns`
+          ? "Added the fictional people, with their lists, columns and feature teams, that were missing"
           : "The fictional data is already in the database",
       );
       if (await seedHires(database, organization)) {
