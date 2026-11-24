@@ -52,6 +52,7 @@ Each fact lives in the one document that owns it. The documents marked as summar
 | [Visual Design](../design/visual-design.md) | The layout, type, colour and components every screen shares, and the shared building blocks |
 | [Page designs](../design/pages/) | Each page's purpose, layout and the decisions a builder needs, one document per page |
 | [Development Setup](../design/development-setup.md) | The repository layout, local development, the fictional data and development accounts, releases, and the repository's settings on GitHub |
+| [Checks and CI](../design/checks-and-ci.md) | What each change runs, before its pull request and on GitHub, and the charts of every step from a change to its merge |
 | [Architecture decision records](../adr/) | Technical decisions |
 | [Standards](./) | How Fathom is built and reviewed, with [UI Conventions](ui-conventions.md) for the principles and conventions every screen shares, each with the shared piece that draws it and an example, split into parts in `docs/standards/ui-conventions/`, and [Issues](issues.md) for filing and labelling issues |
 | [GitHub Issues](https://github.com/ribbitworks/fathom/issues) | Known problems and deferred work, and, in the pinned [Roadmap](https://github.com/ribbitworks/fathom/issues/398) issue, the order in which Fathom's goals are delivered |
@@ -106,7 +107,7 @@ last_updated: "2026-11-20"
 
 - `title`: the document's name.
 - `category`: one of `Standards`, `Architecture`, `Domain`, `Guide`, `How-To`, `Design`, `Index`.
-- `audience`: `"AI Coding Assistant"`.
+- `audience`: who the document is written for, such as `"Contributors"` or `"AI Coding Assistant"`.
 - `applies_to`: the files or modules the document governs.
 - `dependencies`: related documents to read with it; omit or leave empty when there are none.
 - `last_updated`: `YYYY-MM-DD`.
