@@ -110,6 +110,9 @@ describe("the dialog ending a schedule", () => {
       expect.anything(),
       [],
     ]);
+    await waitFor(() => {
+      expect(document.activeElement).toBe(box("Schedule ends"));
+    });
   });
 
   it("refuses a day before the schedule's first cycle starts", async () => {

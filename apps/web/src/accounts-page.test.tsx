@@ -386,6 +386,11 @@ describe("the list of accounts", () => {
     ).toBe(false);
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(await within(dialog).findByText("Choose a role.")).toBeDefined();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        within(dialog).getAllByRole("checkbox")[0],
+      );
+    });
     expect(fetch).not.toHaveBeenCalledWith(
       "/api/accounts/10000000-0000-4000-8000-000000000002",
       expect.anything(),

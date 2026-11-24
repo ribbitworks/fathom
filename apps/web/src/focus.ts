@@ -68,8 +68,7 @@ export function selectSoon(id: string): void {
 // Focuses the first field a refused save marked, once drawn, so the person can put it right
 // rather than being left on the button that saves.
 export function focusRefusedSoon(form: HTMLElement): void {
-  soon(
+  focusFoundSoon(
     () => [...form.querySelectorAll<HTMLElement>('[aria-invalid="true"]')][0],
-    focus,
   );
 }

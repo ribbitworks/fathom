@@ -78,6 +78,8 @@ export function ListDialog({
     list?.visibility ?? "general",
   );
   const [tried, setTried] = useState(false);
+  // The name last sent, so a refusal of it as taken no longer applies once the name changes.
+  const [sentName, setSentName] = useState("");
   const saving = useMutation({
     mutationFn: (request: ListRequest) =>
       list === undefined ? createList(request) : updateList(list.id, request),
@@ -95,7 +97,9 @@ export function ListDialog({
     (other) => other.id !== list?.id && sameName(other.name, name),
   );
   const refusedAsTaken =
-    saving.error instanceof ApiError && saving.error.status === conflict;
+    saving.error instanceof ApiError &&
+    saving.error.status === conflict &&
+    sameName(sentName, name);
   const problem = nameProblem(
     name,
     listLengths.name,
@@ -117,6 +121,7 @@ export function ListDialog({
           focusRefusedSoon(form);
           return;
         }
+        setSentName(name);
         saving.mutate(
           {
             name: name.trim(),
