@@ -55,7 +55,7 @@ seconds=()
 
 main() {
   local index started skip offline=""
-  local -a starts=() skips=()
+  local -a starts=() skips=() arguments=("$@")
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --before-push)
@@ -79,6 +79,10 @@ main() {
     work_offline
   elif needs_connection; then
     require_connection
+  fi
+  # The arguments and the connection are checked before waiting for a turn, so a mistake fails at once.
+  if ! in_turn; then
+    exec node scripts/check-turn.mjs bash scripts/check.sh ${arguments[@]+"${arguments[@]}"}
   fi
   mkdir -p .tmp && chmod 700 .tmp
   logs="$(mktemp -d "$PWD/.tmp/check.XXXXXX")"
@@ -243,11 +247,18 @@ work_offline() {
   done
   [ "${#kept[@]}" -gt 0 ] || fail "Every job left needs the internet, so there is nothing to check offline"
   jobs=("${kept[@]}")
+  # Said once, in the check's turn, rather than again before waiting for it.
+  in_turn || return 0
   [ -z "$left_out" ] || info "Working offline, so these are left out: $left_out"
   for job in "${jobs[@]}"; do
     [ "${job%%|*}" != "Security report" ] || info "The security report names each scan it skips offline"
   done
   info "The Check workflow runs everything on the pull request"
+}
+
+# Whether this run already holds a check's turn, as one started by check-turn.mjs does.
+in_turn() {
+  [ "${FATHOM_CHECK_SLOT:-}" = "1" ]
 }
 
 job_names() {
