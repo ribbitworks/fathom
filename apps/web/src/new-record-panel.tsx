@@ -7,10 +7,10 @@
 // before discarding it.
 
 import { Button, Group } from "@mantine/core";
-import { type ReactNode, useEffect } from "react";
+import type { ReactNode } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
-import { focusSoon } from "./focus.ts";
 import { DetailSections } from "./record-details.tsx";
+import { firstTypedInto, useFocusOnOpen } from "./record-editing.tsx";
 import { columnsOn, onRow, readOnlyFor } from "./grid-columns.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { Column, GridRecord, RecordTable } from "./record-table.ts";
@@ -60,6 +60,7 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
   saving,
   table,
   columns,
+  shown,
   kind,
   values,
   others,
@@ -76,6 +77,8 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
   saving: boolean;
   table: Pick<RecordTable<Rec, Change, Request>, "recordProblem" | "request">;
   columns: readonly Column<Rec, Change>[];
+  // The fields in the order the form shows them, the first typed into taking the cursor as it opens.
+  shown: readonly Column<Rec, Change>[];
   kind: string;
   values: FormValues;
   others: () => Record<string, CellValue>[];
@@ -89,9 +92,7 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
   onCancel: () => void;
   children: ReactNode;
 }) {
-  useEffect(() => {
-    focusSoon(titleId);
-  }, []);
+  useFocusOnOpen(firstTypedInto(shown));
   const add = () => {
     if (unfinished) return;
     const found = withRefused(

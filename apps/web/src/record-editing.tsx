@@ -5,7 +5,7 @@
 // saved and checked as its cell saves and checks it, and a note opens in a panel of its own.
 
 import { Checkbox, Group, NativeSelect, Text } from "@mantine/core";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useEffectEvent, useState } from "react";
 import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
@@ -43,6 +43,20 @@ export const focusValue = (column: Keyed & Pick<Column<never>, "kind">) => {
   );
 };
 
+// Puts focus on a form's field as the form opens, or opens as another, since the form's title can't
+// be changed.
+export function useFocusOnOpen(
+  column: (Keyed & Pick<Column<never>, "kind">) | undefined,
+  opening?: unknown,
+) {
+  const focusIt = useEffectEvent(() => {
+    if (column !== undefined) focusValue(column);
+  });
+  useEffect(() => {
+    focusIt();
+  }, [opening]);
+}
+
 // Saves a change to the record, with the column and value it puts there.
 export type SaveChange<Rec extends GridRecord, Change> = (
   change: Change,
@@ -74,7 +88,8 @@ export function ValueField({
   maxLength?: number | undefined;
   onText: (text: string) => void;
   onEnter: () => void;
-  onCancel: () => void;
+  // What Esc does; with nothing, Esc is left to the panel, which closes.
+  onCancel?: (() => void) | undefined;
   onLeave?: (() => void) | undefined;
 }) {
   return (
@@ -95,7 +110,7 @@ export function ValueField({
         onText(event.currentTarget.value);
       }}
       onKeyDown={(event) => {
-        if (event.key === "Escape") {
+        if (event.key === "Escape" && onCancel !== undefined) {
           event.preventDefault();
           onCancel();
         } else if (event.key === "Enter") {
@@ -120,7 +135,11 @@ function TextEditor({
   onUnit,
   onDone,
   onCancel,
+  alwaysOpen = false,
 }: EditorProps & {
+  // A New form's field, open from the start, with no earlier value for Esc to put back, so Esc
+  // closes the form instead.
+  alwaysOpen?: boolean;
   hint?: string | undefined;
   asTyped?: ((text: string) => string) | undefined;
   // In a form or panel, for a column that offers units: the units, and how to enter it in one.
@@ -153,7 +172,9 @@ function TextEditor({
       onEnter={() => {
         onDone(given(text), "enter");
       }}
-      onCancel={onCancel}
+      // In a New form, with nothing typed to keep, Esc goes to the form, which closes; with something
+      // typed, Esc first keeps it in the form, so closing it asks before discarding it.
+      onCancel={alwaysOpen ? (text === opened ? undefined : leave) : onCancel}
       // With a menu of units beside it, the field is left only once neither has focus.
       onLeave={choosesUnit ? undefined : leave}
     />
@@ -171,7 +192,7 @@ function TextEditor({
       }}
       onKeyDown={(event) => {
         // The field handles its own keys; Esc in the menu of units cancels as it does.
-        if (event.key === "Escape" && !event.defaultPrevented) {
+        if (event.key === "Escape" && !event.defaultPrevented && !alwaysOpen) {
           event.preventDefault();
           onCancel();
         }
@@ -441,6 +462,7 @@ export function useRecordEditing<
             <Editor
               {...(ownField
                 ? {
+                    alwaysOpen: context.adding === true,
                     hint: context.hint?.(column),
                     asTyped: kind.asTyped,
                     units: column.units?.offered,
@@ -537,3 +559,8 @@ export function useRecordEditing<
 // Whether a column's values are changed with an editor of their kind's own, rather than as text.
 const hasEditor = (column: Pick<Column<never>, "kind">) =>
   cellKinds[column.kind].Editor !== undefined;
+
+// The first of a form's fields typed into, such as Name, or else its first.
+export const firstTypedInto = <Field extends Pick<Column<never>, "kind">>(
+  fields: readonly Field[],
+): Field | undefined => fields.find((field) => !hasEditor(field)) ?? fields[0];
