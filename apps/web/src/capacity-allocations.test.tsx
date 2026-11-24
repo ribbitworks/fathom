@@ -3,7 +3,8 @@
 // Tests for the Capacity page's Allocations tab and the page's tabs: each person's and planned hire's
 // features with their percentages, grouping, the tabs a role sees and the tab in the address, the
 // old addresses of Allocations, what it shows when it cannot load, its cells read only, the rows it
-// keeps to those over or under, its filter by feature in any month, and its saved views.
+// keeps to those over or under, its filter by what someone is allocated to in any month, and its saved
+// views.
 
 import {
   type Allocations,
@@ -349,16 +350,16 @@ describe("Allocations kept to those over or under", () => {
   });
 });
 
-describe("Allocations kept to a feature", () => {
-  it("keeps the rows on a feature chosen from the Features button, in any month, keeping it in the address", async () => {
+describe("Allocations kept to what someone is allocated to", () => {
+  it("keeps the rows on a feature chosen from the Allocations button, in any month, keeping it in the address", async () => {
     // Given Allocations, with Casey and the planned hire on Checkout
     const history = openAllocations();
     await grid();
 
-    // When Checkout is chosen from the Features button
-    await userEvent.click(screen.getByRole("button", { name: "Features" }));
+    // When Checkout is chosen from the Allocations button
+    await userEvent.click(screen.getByRole("button", { name: "Allocations" }));
     const filter = await screen.findByRole("dialog", {
-      name: "Filter Feature",
+      name: "Filter Allocated to",
     });
     await userEvent.click(
       within(filter).getByRole("checkbox", { name: "Checkout" }),
@@ -370,7 +371,7 @@ describe("Allocations kept to a feature", () => {
     });
     expect(rowOf("Casey Fictional")).toBeDefined();
     expect(rowOf("Payments tester")).toBeDefined();
-    expect(screen.getByText("Feature: Checkout")).toBeDefined();
+    expect(screen.getByText("Allocated to: Checkout")).toBeDefined();
     expect(address(history)).toContain(anyMonthKey);
 
     // And Save view names the filter among what the view includes
@@ -381,7 +382,7 @@ describe("Allocations kept to a feature", () => {
       await screen.findByRole("menuitem", { name: "Save view…" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Save view" });
-    expect(within(dialog).getByText("Feature: Checkout")).toBeDefined();
+    expect(within(dialog).getByText("Allocated to: Checkout")).toBeDefined();
   });
 
   it("applies a saved view keeping a feature, reading as unchanged", async () => {

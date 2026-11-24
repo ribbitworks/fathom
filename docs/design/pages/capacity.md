@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/capacity.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Fathom: Capacity Page
@@ -39,10 +39,10 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
   - That month's heading is filled in the accent colour, as the strip's chosen quarter is.
   - **‹** and **›** step a quarter from that month.
 - **Drafts:** marks as [Month grids](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out, carried by each team's or feature's line.
-- **Filter across the grid:** a button after the search box, Feature teams on Feature teams and Features on Allocations, opens a filter of the choices its months' filters offer: every feature team, or every feature someone is allocated to, as [Filtering across a table](../../standards/ui-conventions/tables.md#tables) sets out. It keeps the rows with a chosen one in any month of the grid, or, with No feature team or No feature, those with none in any month. On Allocations, a row under a group counts only that group's months, as its cells do.
+- **Filter across the grid:** a button after the search box, Feature teams on Feature teams and Allocations on Allocations, opens a filter of the choices its months' filters offer: every feature team, or everything someone is allocated to, as [Filtering across a table](../../standards/ui-conventions/tables.md#tables) sets out. It keeps the rows with a chosen one in any month of the grid, or, with No feature team or Not allocated, those with none in any month. On Allocations, a row under a group counts only that group's months, as its cells do.
   - It reads every month of the grid, not only those in view, so scrolling never changes the rows.
   - The cells still show every team or feature of their month, since a filter chooses rows, not what a cell holds.
-  - The view and the address keep it as the filter `any-month`, with a pill such as Feature: Offline Sync.
+  - The view and the address keep it as the filter `any-month`, with a pill such as Feature team: Payments core, or Allocated to: Offline Sync.
 
 ## Feature Teams
 
