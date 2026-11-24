@@ -277,6 +277,25 @@ describe("opening the form", () => {
     });
   });
 
+  it("passes over a flag before its first field typed into", async () => {
+    renderPanel({
+      given: table([column("tick", "flag"), column("title", "text")]),
+      onAdd: vi.fn(),
+    });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("textbox", { name: "title" }),
+      );
+    });
+  });
+
+  it("puts focus on the checkbox of a flag when it has nothing to type into", async () => {
+    renderPanel({ given: table([column("tick", "flag")]), onAdd: vi.fn() });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByRole("checkbox"));
+    });
+  });
+
   it("opens a form with no fields to type into, leaving focus where it was", async () => {
     renderPanel({ given: table([]), onAdd: vi.fn() });
     expect(await screen.findByRole("button", { name: "Add" })).toBeDefined();
