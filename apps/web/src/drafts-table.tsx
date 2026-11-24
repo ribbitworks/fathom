@@ -199,7 +199,6 @@ export function draftColumns(
     {
       ...column("changes", "What changes", "text"),
       content: ({ entry }) => <PhraseList phrases={entry.details} light />,
-      breaksDown: false,
     },
     column(
       "type",
@@ -229,7 +228,7 @@ export function draftColumns(
       required: false,
       breaksDown: false,
     },
-    { ...column("reason", "Reason", "text"), breaksDown: false },
+    column("reason", "Reason", "text"),
   ];
 }
 

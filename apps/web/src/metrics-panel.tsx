@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Metrics panel beside a table: how many of the rows the view shows fall in each group of a
-// column, or of two columns crossed, what share of those rows each is, and, with a number column
-// added up, each group's total, average and how many have none. Only the columns the table has are
-// offered, which are those the user may see. With drafts shown beside live, each
-// figure counts the rows as their drafts show them, with the live figure beside it where it
-// differs. Esc, from anywhere in the panel, or its close button closes it.
+// The Metrics panel beside a table: its rows counted, shared out and added up by one column's
+// groups or two crossed.
 
 import { SegmentedControl, Select, Table, Text } from "@mantine/core";
 import { useState } from "react";
 import { MarkedItem } from "./status-mark.tsx";
 import classes from "./metrics.module.css";
 import { numberShown } from "./cell-kinds.tsx";
+import { exportHeading } from "./exports.ts";
 import {
   type Counts,
   countRows,
@@ -47,9 +44,9 @@ function Figure({ now, live }: { now: string; live: string | undefined }) {
 
 type Measure = "count" | "share" | "sum";
 
-// What a column added up is called in the panel: its name, and its unit's code, such as Effort (PD).
-const addedLabel = ({ label, unit }: TableColumn<never>) =>
-  unit === undefined ? label : `${label} (${unit.code})`;
+// What a column added up is called in the panel, as in an export: its name, and its unit's code,
+// such as Effort (PD).
+const addedLabel = exportHeading;
 
 // A total or an average as the column shows its numbers.
 const amountShown = (column: TableColumn<never>, amount: number) =>
@@ -159,6 +156,23 @@ export function MetricsPanel<Row>({
     );
   };
   const allLabel = `All ${kinds?.noun ?? noun}`;
+  const measures: readonly (Measure | "average" | "none")[] =
+    added === undefined
+      ? ["count", "share"]
+      : ["count", "share", "sum", "average", "none"];
+  // A group's row of figures, or the whole's, under its name.
+  const figuresRow = (group: string | undefined, label: string) => (
+    <>
+      <Table.Th scope="row" className={classes.groupName}>
+        {label}
+      </Table.Th>
+      {measures.map((measured) => (
+        <Table.Td key={measured} className={classes.number}>
+          {figure([group], measured)}
+        </Table.Td>
+      ))}
+    </>
+  );
 
   const [first, second] = by;
   const picker = (
@@ -194,46 +208,36 @@ export function MetricsPanel<Row>({
   } else if (second === undefined) {
     body = (
       <>
-        <Table className={classes.figures} tabularNums>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>{first.label}</Table.Th>
-              <Table.Th className={classes.number}>{capitalNoun}</Table.Th>
-              <Table.Th className={classes.number}>Share</Table.Th>
-              {added !== undefined && (
-                <>
-                  <Table.Th className={classes.number}>
-                    {addedLabel(added)}
-                  </Table.Th>
-                  <Table.Th className={classes.number}>Average</Table.Th>
-                  <Table.Th className={classes.number}>None</Table.Th>
-                </>
-              )}
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {[...groupsAt(first, 0), undefined].map((group) => (
-              <Table.Tr key={group?.id ?? "all"}>
-                <Table.Th scope="row" className={classes.groupName}>
-                  {group?.label ?? allLabel}
-                </Table.Th>
-                {(
-                  [
-                    "count",
-                    "share",
-                    ...(added === undefined
-                      ? []
-                      : (["sum", "average", "none"] as const)),
-                  ] as const
-                ).map((measured) => (
-                  <Table.Td key={measured} className={classes.number}>
-                    {figure([group?.id], measured)}
-                  </Table.Td>
-                ))}
+        <div className={classes.wide}>
+          <Table className={classes.figures} tabularNums>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>{first.label}</Table.Th>
+                <Table.Th className={classes.number}>{capitalNoun}</Table.Th>
+                <Table.Th className={classes.number}>Share</Table.Th>
+                {added !== undefined && (
+                  <>
+                    <Table.Th className={classes.number}>
+                      {addedLabel(added)}
+                    </Table.Th>
+                    <Table.Th className={classes.number}>Average</Table.Th>
+                    <Table.Th className={classes.number}>None</Table.Th>
+                  </>
+                )}
               </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
+            </Table.Thead>
+            <Table.Tbody>
+              {groupsAt(first, 0).map((group) => (
+                <Table.Tr key={group.id}>
+                  {figuresRow(group.id, group.label)}
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+            <Table.Tfoot>
+              <Table.Tr>{figuresRow(undefined, allLabel)}</Table.Tr>
+            </Table.Tfoot>
+          </Table>
+        </div>
         {first.multiple && (
           <Text fz="xs" c="dimmed" mt="xs">
             A {one} may hold several choices of {first.label}, so shares
@@ -264,7 +268,7 @@ export function MetricsPanel<Row>({
               : [{ value: "sum", label: addedLabel(added) }]),
           ]}
         />
-        <div className={classes.crossed}>
+        <div className={classes.wide}>
           <Table className={classes.figures} tabularNums>
             <Table.Thead>
               <Table.Tr>

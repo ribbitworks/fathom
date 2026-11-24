@@ -100,7 +100,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Personal:** Only its maker sees and changes it, and only they see its changes in the change history. A view the maker's role can no longer use is sent by name and what it's missing, never its filters. It shows dimmed under My views, with a line saying so, and offers only Rename… and Delete…, neither undone.
   - **Shared:** Sharing shows others only the changes made after it. Stopping sharing hides them all again; only the maker may stop sharing, and only while they may still share.
     - **Changing it:** Only the maker, or someone who may share views on the table, updates, renames or deletes one.
-    - **Kept from a reader:** A shared view is kept from a reader when it filters, sorts, breaks down or groups by a column they can't see, at either level, or groups by data they can't see.
+    - **Kept from a reader:** A shared view is kept from a reader when it filters, sorts, breaks down, adds up or groups by a column they can't see, at either level, or groups by data they can't see.
   - **Pages not opened:** A role that doesn't open a table's page is sent none of its views. The views are kept, and come back with the page.
   - **The menu:** While a view is applied, Save as new view… sits beside Update view, and Stop sharing current view makes a shared view personal again. The menu names the view the address started from, marked once the view has changed. With none applied, it is marked once the view differs from the table's default.
   - **One view, two forms:** Features' table and Board share one view, which keeps the Board's columns and card parts, but not which form shows.

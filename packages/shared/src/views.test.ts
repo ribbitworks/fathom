@@ -153,6 +153,16 @@ describe("viewDefinitionSchema", () => {
     ).toEqual({ filters: undefined, sort: undefined, breakdown: undefined });
   });
 
+  it("keeps the column added up, or nothing, and drops a sum that is not a column's key", () => {
+    expect(viewDefinitionSchema.parse({ sum: "estimateHours" })).toEqual({
+      sum: "estimateHours",
+    });
+    expect(viewDefinitionSchema.parse({ sum: "" })).toEqual({ sum: "" });
+    expect(viewDefinitionSchema.parse({ sum: "bad key!" })).toEqual({
+      sum: undefined,
+    });
+  });
+
   it("keeps at most 100 filters and 10 sort levels", () => {
     const filters = Object.fromEntries(
       Array.from({ length: 101 }, (_, index) => [`c${String(index)}`, {}]),
@@ -325,6 +335,12 @@ describe("savedViewRequestSchema", () => {
   it("refuses a number of frozen columns that is not whole or is negative", () => {
     expect(request({ frozen: 1.5 }).success).toBe(false);
     expect(request({ frozen: -1 }).success).toBe(false);
+  });
+
+  it("takes a column added up, or nothing, and refuses a sum that is not a column's key", () => {
+    expect(request({ sum: "estimateHours" }).success).toBe(true);
+    expect(request({ sum: "" }).success).toBe(true);
+    expect(request({ sum: "bad key!" }).success).toBe(false);
   });
 
   it("refuses too many filters and a column broken down twice", () => {

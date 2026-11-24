@@ -147,8 +147,7 @@ export interface Column<
   readOnly?: boolean;
   // The key of the column whose drafts change this one's values, when another's do.
   changesWith?: string;
-  // Set to depart from the kind's rule: false for a column not worth breaking down by, such as one
-  // with a choice for each record; true for text that names a few values shared by many records.
+  // Set to depart from the kind's rule, such as false for a column with a choice for each record.
   breaksDown?: boolean;
   // What a record's cell shows in place of its value in words, such as labels in a team's colours,
   // after its colour's square where it has one, in its Live row too, given the record as it is live.

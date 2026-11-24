@@ -10,9 +10,17 @@
   margin-bottom: var(--mantine-spacing-md);
 }
 
-/* Two columns crossed may be wider than the panel, and scroll sideways. */
-.crossed {
+/* A table of figures, a column's added up or two columns crossed, may be wider than the panel, and
+   scrolls sideways. */
+.wide {
   overflow-x: auto;
+}
+
+/* The whole, under the groups, as the crossed table's All column is beside them. */
+.figures tfoot th,
+.figures tfoot td {
+  border-top: 1px solid var(--fathom-row-line);
+  font-weight: 600;
 }
 
 .figures th,

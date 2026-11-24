@@ -22,6 +22,7 @@ import { and, eq, or } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { BadRequestError } from "../errors.ts";
 import {
+  keptSum,
   opensTable,
   readTable,
   requireOpens,
@@ -35,7 +36,7 @@ import {
 const otherPage = "Choose a table of this page";
 const unknownMode = "Choose a mode this page has";
 
-// A view with only the filters, sorts, breakdowns and groupings on what the actor may see.
+// A view with only the filters, sorts, breakdowns, sum and groupings on what the actor may see.
 function seenParts(
   actor: Actor,
   table: Table,
@@ -55,6 +56,7 @@ function seenParts(
     filters: filters.length === 0 ? undefined : Object.fromEntries(filters),
     sort: definition.sort?.filter((level) => seen(level.replace(/^-/, ""))),
     breakdown: definition.breakdown?.filter(seen),
+    sum: keptSum(definition.sum, seen),
     grouping,
     thenBy: grouping === undefined ? undefined : grouped(definition.thenBy),
     groupsReversed:

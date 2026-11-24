@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Metrics over a table's rows: how many rows fall in each of a column's groups, its choices, its
-// months, or for other columns whether a value is filled in, what share of the rows that is, and,
-// with a number column added up, the total of their amounts, for one column or two crossed. They are
-// counted in the browser, over the rows the view shows and from the columns the user may see, as
-// ADR 0006 sets out, so they reveal nothing the table does not.
+// Metrics over a table's rows: counts, shares and sums by one column's groups or two crossed.
 
 import { formatMonth } from "./day-formats.ts";
 import type { CellValue, TableColumn } from "./table-view.ts";
@@ -100,7 +96,8 @@ export function countRows<Row>(
     rows: rows.length,
     of: (groups) => counted.get(keyOf(groups)) ?? 0,
     summed: (groups) => sums.get(keyOf(groups)) ?? noneSummed,
-    seen: (index) => seen.at(index) ?? new Set(),
+    // The index is always one of the columns'.
+    seen: (index) => seen.at(index) as ReadonlySet<string>,
   };
 }
 

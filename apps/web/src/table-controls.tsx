@@ -236,6 +236,9 @@ export function viewParts(
     ...(breakdown.length === 0
       ? []
       : [{ name: "Metrics", value: breakdown.join(" by ") }]),
+    ...(breakdown.length === 0
+      ? []
+      : labelOf(view.sum ?? "").map((value) => ({ name: "Sum of", value }))),
     ...(grouping === undefined ? [] : [{ name: "Group by", value: grouping }]),
     ...(first === undefined || view.groupsReversed !== true
       ? []
@@ -1442,8 +1445,12 @@ export function ViewBar({
           size="compact-sm"
           variant="default"
           onClick={() => {
-            // The metrics stay, counting every row.
-            onView({ ...emptyView, breakdown: view.breakdown });
+            // The metrics stay, counting every row and adding up what they did.
+            onView({
+              ...emptyView,
+              breakdown: view.breakdown,
+              ...(view.sum === undefined ? {} : { sum: view.sum }),
+            });
           }}
         >
           Clear all

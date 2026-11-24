@@ -217,7 +217,14 @@ function widthsSeen(
   );
 }
 
-// The view as a reader is sent it: without filters, sorts, breakdowns, and groupings on columns
+// A view's column added up, kept while it is nothing or a column that passes the test given.
+export const keptSum = (
+  sum: string | undefined,
+  kept: (key: string) => boolean,
+): string | undefined =>
+  sum === undefined || sum === "" || kept(sum) ? sum : undefined;
+
+// The view as a reader is sent it: without filters, sorts, breakdowns, sums, and groupings on columns
 // deleted since it was saved, nor the order, hidden or shown columns, or widths of columns the
 // reader may not see. None of those reveals a value, so a view keeps them for columns others may
 // not see, and for any the table no longer has. Every reader is sent the unit and decimal places
@@ -244,6 +251,7 @@ export function sentTo(
     filters: filters.length === 0 ? undefined : Object.fromEntries(filters),
     sort: sort.length === 0 ? undefined : sort,
     breakdown: definition.breakdown?.filter(known),
+    sum: keptSum(definition.sum, known),
     grouping,
     thenBy: grouped(definition.thenBy),
     groupsReversed:
@@ -322,6 +330,7 @@ export function requireSeen(
     filters.some((key) => unknown(key) && key !== draftFilterKey) ||
     sort.some(unknown) ||
     (definition.breakdown ?? []).some(unknown) ||
+    keptSum(definition.sum, (key) => !unknown(key)) !== definition.sum ||
     viewGroupings(definition).some((grouping) => !groups(table, grouping)) ||
     !sees(actor, table, definition)
   ) {

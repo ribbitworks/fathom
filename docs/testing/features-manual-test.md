@@ -872,20 +872,27 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 **Preconditions:** Select the **Features** page in the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
-- [ ] `EEB5` Select **Metrics**, then **Status** under **Break down by**.
+- [ ] `EEB5` Select **Metrics**.
+  - **Expected:** The **Metrics** panel opens, and **Sum of** reads **Effort**.
+  - **Notes:**
+
+- [ ] `D7C2` Choose **Status** under **Break down by**.
   - **Expected:**
-    - **Sum of** reads **Effort**.
     - The panel's table has the columns **Status**, **Features**, **Share**, **Effort (h)**, **Average** and **None**.
     - Its last row, **All features**, counts every feature in the table.
     - Each figure is easy to read and lines up under its column's name.
   - **Notes:**
 
-- [ ] `65D1` Open the column menu of **Effort** in the table and select **Person-days (8 hours)**.
+- [ ] `65D1` Open the column menu of **Effort** in the table.
+  - **Expected:** The menu lists the units Effort can be shown in.
+  - **Notes:**
+
+- [ ] `3A0E` Select **Person-days (8 hours)**.
   - **Expected:** The panel's column reads **Effort (PD)**, and its totals and averages are in person-days.
   - **Notes:**
 
 - [ ] `9D82` Choose **Needed by** under **Break down by**.
-  - **Expected:** A row for each month features are needed by, earliest first, with the empty value last.
+  - **Expected:** A row for each month features are needed by, earliest first, then **Empty**.
   - **Notes:**
 
 - [ ] `BE37` Choose **Nothing** under **Sum of**.
