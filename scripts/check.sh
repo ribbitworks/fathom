@@ -9,9 +9,9 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh
 source scripts/lib.sh
 
-# Each job is its name and its command, the longest first, so a check that can't run them all side
-# by side starts those first. ESLint runs without its cache in both checks: its type-aware rules can
-# fail in a file that has not changed when another file's types change, which the cache cannot see.
+# Each job is its name and its command. ESLint runs without its cache in both checks: its type-aware
+# rules can fail in a file that has not changed when another file's types change, which the cache
+# cannot see.
 linters=(
   "ESLint|pnpm lint --no-cache"
   "Formatting|pnpm format:check"
@@ -91,17 +91,14 @@ main() {
   trap 'exit 143' TERM
 
   started="$(date +%s)"
-  local at_once next=0 running=0 remaining="${#jobs[@]}" status stopped
-  at_once="$(jobs_at_once)"
-  info "Running ${#jobs[@]} jobs, up to $at_once side by side; each one's output follows when it ends"
+  local remaining="${#jobs[@]}" status stopped
+  info "Running ${#jobs[@]} jobs side by side; each one's output follows when it ends"
+  for index in "${!jobs[@]}"; do
+    start_job "$index"
+    starts[index]="$(date +%s)"
+  done
 
   while [ "$remaining" -gt 0 ]; do
-    while [ "$next" -lt "${#jobs[@]}" ] && [ "$running" -lt "$at_once" ]; do
-      start_job "$next"
-      starts[next]="$(date +%s)"
-      next=$((next + 1))
-      running=$((running + 1))
-    done
     for index in "${!jobs[@]}"; do
       [ -n "${pids[index]:-}" ] || continue
       stopped=""
@@ -135,7 +132,6 @@ main() {
         results[index]="Fail"
       fi
       remaining=$((remaining - 1))
-      running=$((running - 1))
       printf '\n==> %s: %s in %ss (%s)\n' "$(job_name "$index")" "${results[index]}" "${seconds[index]}" \
         "$(job_command "$index")"
       [ -z "$stopped" ] ||
@@ -178,18 +174,6 @@ stop_group() {
   done
   kill -KILL -- "-$pid" 2>/dev/null || true
   wait "$pid" 2>/dev/null || true
-}
-
-# How many jobs run side by side: all of them, or as many as the check's share of the cores while
-# it shares the computer with other checks, counted as the package tests count them.
-jobs_at_once() {
-  local shares="${FATHOM_CHECK_SHARES:-}" cores
-  if ! [[ "$shares" =~ ^[1-9][0-9]*$ ]]; then
-    printf '%s\n' "${#jobs[@]}"
-    return
-  fi
-  cores="$(node --print 'require("node:os").availableParallelism()')"
-  if [ "$((cores / shares))" -gt 0 ]; then printf '%s\n' "$((cores / shares))"; else printf '1\n'; fi
 }
 
 # Shows at once that a running job waits for another copy of the repository, such as for its turn to
