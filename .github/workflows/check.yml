@@ -1,22 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# Runs the full check, 'pnpm check', on every pull request, every group in the merge queue and every
-# push to the default branch, leaving out the package tests, the server's coverage and the container
-# tests for documentation alone.
+# Runs the full check, 'pnpm check', on every pull request and every group in the merge queue.
 
 name: Check
 
 on:
   pull_request:
   merge_group:
-  push:
-    branches: [main]
 
 permissions: {}
 
 concurrency:
   group: check-${{ github.event.pull_request.number || github.ref }}
-  # Every push to the default branch is checked; only a pull request's older runs are cancelled.
+  # Only a pull request's older runs are cancelled; a merge group's run always finishes.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -45,7 +41,7 @@ jobs:
         id: decide
         env:
           BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
-        # Every push to the default branch runs everything, and so does a change that can't be told.
+        # A change that can't be told runs everything.
         run: |
           only=false
           if [ -n "$BASE" ]; then

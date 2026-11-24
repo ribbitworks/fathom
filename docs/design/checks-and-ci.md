@@ -104,13 +104,9 @@ flowchart TD
     GroupRun --> GroupPassed{"Did Full check pass?"}
     GroupPassed -- No --> Fix
     GroupPassed -- Yes --> Merge["It lands on main by rebasing, as the group's run checked it"]
-    Merge --> MainRun["The Check workflow on the push to main, running every job"]
-    MainRun --> MainPassed{"Did it pass?"}
-    MainPassed -- No --> MainFailed["main fails its check, which a new pull request fixes"]
-    MainPassed -- Yes --> MainChecked["main is checked"]
 ```
 
-- **Every push** to a pull request or to `main`, and every group in the merge queue, runs the full `pnpm check`, its package tests on runners of their own.
+- **Every push** to a pull request, and every group in the merge queue, runs the full `pnpm check`, its package tests on runners of their own.
 - **Documentation alone** means Markdown files, and files under `docs/` other than Help pages, which are built into Fathom. On a pull request or in the merge queue, it leaves out the package tests, the server's merged coverage and the container tests.
 - **The security report** runs on every pull request, documentation alone included. It scans the container images whenever anything they're built from has changed, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out.
 - **The full suite:** the green check on a pull request's latest push is the full suite's run, once for the whole branch of an [issue batch](../standards/issues.md#issue-batches) too.
@@ -184,7 +180,7 @@ This chart is part of [The Local Check](#the-local-check), which also draws the 
 
 ## From a Change to a Merge
 
-The whole picture: the charts below draw every step the checks take, from a change on its branch to its merge and the runs on `main` after it, as the scripts and workflows run them. Diamonds are decisions, and each failure is an end of its own.
+The whole picture: the charts below draw every step the checks take, from a change on its branch to its merge, and the daily scan of `main`, as the scripts and workflows run them. Diamonds are decisions, and each failure is an end of its own.
 
 Other documents own what the charts only name:
 
@@ -224,18 +220,14 @@ flowchart TD
     GroupRun --> GroupPassed{"Did Full check pass?"}
     GroupPassed -- No --> Fix
     GroupPassed -- Yes --> Merge["It lands on main by rebasing, as the group's run checked it"]
-    Merge --> MainRun["The Check workflow on the push to main, running every job"]
-    MainRun --> MainPassed{"Did it pass?"}
-    MainPassed -- No --> MainFailed["main fails its check, which a new pull request fixes"]
-    MainPassed -- Yes --> MainChecked["main is checked"]
     Daily["Every day at 05:17 UTC"] --> ScanImages["Scan images daily: pnpm scan:images on main's images and the newest release's"]
 ```
 
 - **A new push to a pull request** starts a new run of the Check workflow, which cancels the pull request's older run. A run cancelled before it ends fails Full check rather than passing unchecked.
 - **A rebase** onto `main` changes the code, so the local check runs again before the push, and the push runs the Check workflow again.
-- **A merge** goes through the merge queue, which runs the Check workflow on the pull request rebased onto `main`, after those ahead of it, so a branch needn't be up to date. The push to `main` then runs it once more on the same commit.
+- **A merge** goes through the merge queue, which runs the Check workflow on the pull request rebased onto `main`, after those ahead of it, so a branch needn't be up to date, and `main` needs no run of its own.
 - **A failed group** takes its pull request out of the queue. Those behind it are rebuilt without it and checked again.
-- **On `main`,** every job runs, but nothing has changed since `origin/main`, so the Renovate settings aren't validated and the security report doesn't build or scan the images; the daily image scan covers `main`'s images.
+- **The dependency cache:** `main` has no Check run of its own, so the Dependency cache workflow fills its pnpm cache each time the lockfile changes there, for pull requests and merge queue groups to restore.
 - **Releases** start from `main` and build and scan their own images, as [Development Setup § Releases](development-setup.md#releases) sets out.
 
 ### The Local Check
@@ -376,7 +368,7 @@ flowchart TD
 
 ### The Check Workflow
 
-`.github/workflows/check.yml` runs on each pull request's pushes, each group in the merge queue, and every push to `main`. **Full check** is the one check a merge needs; every other job feeds it. CodeQL's code scanning runs beside it, its results shown but never blocking a merge.
+`.github/workflows/check.yml` runs on each pull request's pushes and each group in the merge queue. **Full check** is the one check a merge needs; every other job feeds it. CodeQL's code scanning runs beside it, its results shown but never blocking a merge.
 
 ```mermaid
 flowchart TD
@@ -384,10 +376,9 @@ flowchart TD
     Fork -- Yes --> Approval["Waits for the maintainer's approval to run"]
     Fork -- No --> Starts
     Approval --> Starts
-    Event -- "A group in the merge queue" --> Starts
-    Event -- "A push to main" --> Starts["The run starts its first jobs side by side"]
+    Event -- "A group in the merge queue" --> Starts["The run starts its first jobs side by side"]
     Starts --> Check["Check without package tests: pnpm check --skip Package tests, every job at once"]
-    Starts --> Decide["Decide what the change needs: documentation-only.mjs; a push to main, or a change that can't be told, isn't documentation alone"]
+    Starts --> Decide["Decide what the change needs: documentation-only.mjs; a change that can't be told isn't documentation alone"]
     Decide --> DocsOnly{"Did the decision succeed, with more than documentation?"}
     DocsOnly -- Yes --> Packages["Package tests on five runners: web; server 1 of 3, 2 of 3 and 3 of 3, each keeping its coverage report; and the rest"]
     Packages --> PartsPassed{"Did every Package tests runner pass?"}

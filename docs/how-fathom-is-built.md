@@ -10,7 +10,7 @@ AI agents write most of Fathom's code and documents, under a human's direction a
   - **Run by the maintainer:** The maintainer has run them all, and runs them again as features change.
 - **Every screen seen by a person:** The maintainer looks at every screen change before it is tested or reviewed.
 - **Every change reviewed, every merge approved:** A separate agent reviews each change against written standards, and the maintainer approves every merge, after checking every screen change and every new or significantly changed manual test.
-- **Security checked on every pull request:** Dependency, source code and secret scans run with the tests on every push to a pull request and to `main`, and the container images are scanned again whenever what they're built from changes.
+- **Security checked on every pull request:** Dependency, source code and secret scans run with the tests on every push to a pull request and every group in the merge queue, and the container images are scanned again whenever what they're built from changes.
   - **Failing findings:** The scans fail on a fix that is overdue or any other critical or high finding.
   - **CodeQL:** CodeQL also scans the code on GitHub for each pull request.
 
@@ -64,9 +64,9 @@ flowchart TD
    - Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as the [Agent Workflow](standards/agent-workflow.md#rules-for-both-modes) sets out.
    - Every finding is fixed, or the maintainer agrees in writing to leave it.
 1. **Manual tests:** The maintainer approves or runs a new manual test, or a significant change to one, before it is committed. Every other change is committed, pushed and opened as a pull request once it passes its review.
-1. **The full check:** GitHub runs `pnpm check` on every push to a pull request and to `main`, and on each group in the merge queue: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans.
+1. **The full check:** GitHub runs `pnpm check` on every push to a pull request and on each group in the merge queue: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans.
    - A change to documentation alone leaves out the unit, integration, access control and security tests, and the container tests.
-   - Every other change, and every push to `main`, runs them.
+   - Every other change runs them.
 1. **Merge:** Nothing is merged until the full check, the container tests included, passes on the code `main` will hold, which the merge queue and a rule on `main` enforce, and never without the maintainer's word.
 
 Duplicated code isn't allowed: a new component, helper or rule first looks for one that already does the job, and the review searches for one too. Only the maintainer can approve an exception.

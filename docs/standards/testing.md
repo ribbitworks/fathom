@@ -28,7 +28,7 @@ How Fathom's changes are tested. Every change that adds or changes behaviour inc
 | Integration | The API and data access working together against a real database of the same kind as production | Every change |
 | Access control | Every role's access to every protected operation and every level of protected data, allowed and denied | Every change |
 | Security | Input handling, sessions, request forgery protection, rate limiting, audit records, and log contents | Every change |
-| Container | Behaviour that needs the built containers, such as network isolation | On every pull request but documentation alone, and every push to `main`; locally, every change that affects the containers, and before a stage is complete |
+| Container | Behaviour that needs the built containers, such as network isolation | On every pull request and merge queue group but documentation alone; locally, every change that affects the containers, and before a stage is complete |
 | UI | Key user journeys in a real browser | Every change to a form's behaviour, before its pull request, as [UI Tests](#ui-tests) sets out; otherwise when the maintainer asks, and passing before a stage is complete |
 | Manual | What a person sees and does in a feature, by hand in a real browser, as [Manual Tests](#manual-tests) describes | Before a stage that changes the feature is complete, and when the maintainer asks |
 
