@@ -41,6 +41,7 @@ import {
 } from "./record-state.ts";
 import { fieldOfValue, valueFieldsIn, writeValues } from "./values.ts";
 import { editsKind } from "./draft-editors.ts";
+import { refuseCustomersChange } from "./feature-customers.ts";
 import {
   gone,
   idOf,
@@ -139,6 +140,17 @@ export async function discardRecordDraft(
     ];
     const refusal = cyclesDiscardRefusal(discarded, maker);
     if (refusal !== undefined) throw new ForbiddenError(refusal);
+    for (const ref of discarded.filter(
+      ({ type: kind }) => kind === "feature",
+    )) {
+      // Discarding a change puts the live customers back, as much a change of them as drafting
+      // one; discarding a feature's addition or removal chooses no customers.
+      const live = stateOf(state, "feature").live.get(ref.id);
+      const drafted = versionOf(state, "feature", ref.id);
+      if (live !== undefined && drafted !== undefined) {
+        refuseCustomersChange(maker, drafted, live);
+      }
+    }
     const keys = new Set(discarded.map(refKey));
     const added = discarded.filter((ref) => addedOnly(state, ref.type, ref.id));
     const addedKeys = new Set(added.map(refKey));
@@ -226,6 +238,13 @@ export async function resubmitRecordDraft(
     if (draft === undefined) throw new NotFoundError(noDraft);
     if (draft.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
+    }
+    if (type === "feature") {
+      refuseCustomersChange(
+        maker,
+        stateOf(state, type).live.get(id),
+        versionOf(state, type, id),
+      );
     }
     await setRejection(transaction, type, [id], {
       state: "waiting",

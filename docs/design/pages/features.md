@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/features.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Fathom: Features Page
@@ -27,6 +27,7 @@ Features lists the plan's features in one table, with a board as a second way of
 - **Release:** read only, following from the target cycle; Later is its empty value. In the details, it links to the release's schedule on [Releases](releases.md).
 - **Feature team:** a Planned or In progress feature with none shows No team, as a [warning on a value](../../standards/ui-conventions/drafts-and-values.md#values).
 - **Staffed:** read only; for Planned or In progress features, Yes when any allocation gives them a month, a planned hire's included. It is empty for other statuses, so Not staffed is a plain filter.
+- **Customers:** changed only by those who change the plan, who alone see it in New feature; the server refuses others' changes and their discarding of such a change.
 - **Projects and Proposals:** changed only by those who change the plan; New feature doesn't offer them.
   - A change drafts the project or proposal, so the feature's row isn't marked. In the cell and in the feature's details, a project or proposal a draft adds has the draft's dot, and one it takes away has the dot and is struck through, as [A part a draft adds or removes](../../standards/ui-conventions/drafts-and-values.md#drafts) sets out. Those drafts are decided on Projects, where they are drafts of the project or proposal, or with the Draft menu's Approve; the cell has no menu of its own, as no table's cell does.
 - **Added columns:** General lists only, with no planned hires or other class; a drafted one can't be filled until approved.

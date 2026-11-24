@@ -377,6 +377,27 @@ describe("the Features page", () => {
       );
     });
 
+    it.each([
+      ["those who edit the plan", true],
+      ["those who edit features but not the plan", false],
+    ] as const)(
+      "offers a pencil on a feature's Customers in its details to %s",
+      async (_who, edits) => {
+        await openPage(
+          `/features?open=${first.id}`,
+          { ...named(), canEdit: edits },
+          answers,
+          edits ? planEditor : featureEditor,
+        );
+        await screen.findByRole("heading", { name: first.name });
+        expect(
+          within(sidePanel()).queryByRole("button", {
+            name: "Change Customers",
+          }) !== null,
+        ).toBe(edits);
+      },
+    );
+
     it("leaves Customers out of New feature for those who edit features but not the plan", async () => {
       await open({ ...named(), canEdit: false });
       await userEvent.click(
