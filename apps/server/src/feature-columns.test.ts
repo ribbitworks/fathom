@@ -786,6 +786,68 @@ describe("changing a column features hold values in", () => {
     expect(errorOf(response)).toContain("cannot take only one yet");
   });
 
+  it("refuses taking one choice approved with a feature's draft giving several", async () => {
+    // Given a column drafted to take one choice, and a feature drafted with both its choices
+    const { field, choices } = await liveColumn({ multiple: true });
+    const changed = await test.request(
+      editor.cookie,
+      "PUT",
+      `/api/features/columns/${field.id}`,
+      { name: field.name, listId: field.listId, multiple: false },
+    );
+    expect(changed.statusCode, changed.body).toBe(200);
+    const feature = await draftFeature({ values: { [field.id]: choices } });
+
+    // When both are approved together
+    const response = await test.request(
+      columnApprover.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { records: [{ type: "feature", id: feature.id }], columns: [field.id] },
+    );
+
+    // Then the column is refused, and the feature holds no values
+    expect(response.statusCode, response.body).toBe(409);
+    expect(errorOf(response)).toContain("cannot take only one yet");
+    expect(
+      await test.connection
+        .select()
+        .from(fieldValues)
+        .where(eq(fieldValues.featureId, feature.id)),
+    ).toEqual([]);
+  });
+
+  it("removes a column approved with a feature's draft giving a value in it", async () => {
+    // Given a column drafted to be removed, and a feature drafted with a value in it
+    const { field, choices } = await liveColumn();
+    const feature = await draftFeature({
+      values: { [field.id]: [choices.at(0)] },
+    });
+    await test.connection.insert(drafts).values({
+      recordType: "field",
+      recordId: field.id,
+      action: "deleted",
+      fields: {},
+    });
+
+    // When both are approved together
+    const response = await test.request(
+      columnApprover.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { records: [{ type: "feature", id: feature.id }], columns: [field.id] },
+    );
+
+    // Then the column is gone, with the feature's value
+    expect(response.statusCode, response.body).toBe(200);
+    expect(
+      await test.connection
+        .select()
+        .from(fieldValues)
+        .where(eq(fieldValues.featureId, feature.id)),
+    ).toEqual([]);
+  });
+
   it("removes a feature's values with the column once approved", async () => {
     const { field, choices } = await liveColumn();
     const feature = await liveFeature({
