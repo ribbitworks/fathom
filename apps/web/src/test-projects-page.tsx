@@ -253,6 +253,7 @@ export const answers = {
   "GET /api/effort-conversions": () => Response.json(startingEffortConversions),
 };
 export const featureEditor = ["plan:view", "features:view", "features:edit"];
+export const planEditor = [...featureEditor, "plan:edit"];
 export const open = (
   start = featurePlan(),
   more: typeof answers | object = {},
