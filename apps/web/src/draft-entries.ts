@@ -40,6 +40,7 @@ import { type DraftPlace, placeKey } from "./draft-places.ts";
 import {
   type Columns,
   decidable,
+  unseenPeople,
   draftNames,
   type DraftSelection,
   mayDecide,
@@ -156,9 +157,6 @@ function entry(
     place,
   };
 }
-
-// Why another approver must decide a person's draft holding details the role can't see.
-const unseenDetails = "This role can't see all of this draft's details";
 
 const listFieldNames = ["name", "description", "visibility", "retired"];
 
@@ -708,16 +706,9 @@ export function useDraftEntries({
     },
   };
   const unchangeable = unchangeableLists(listsData, permissions);
-  const holdingUnseen = new Set(
-    peopleData.people.flatMap(({ id, draft }) =>
-      draft?.holdsUnseen === true ? [id] : [],
-    ),
-  );
   const unseen = ({ selects }: Entry) =>
     unseenInDrafts(selects, listsData, unchangeable) ??
-    (selects.people.some((id) => holdingUnseen.has(id))
-      ? unseenDetails
-      : undefined);
+    unseenPeople(selects, peopleData.people);
   const reading = {
     waits: ({ state, selects }: Entry) =>
       state === "waiting" &&

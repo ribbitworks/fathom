@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { decisionFor } from "./draft-decisions.ts";
 import {
   creditedBy,
+  decidable,
   differingKeys,
   draftNames,
   draftSentAgain,
@@ -20,6 +21,8 @@ import {
   noDrafts,
   rejectedAmong,
   usedDrafts,
+  unseenDetails,
+  unseenPeople,
   usingDrafts,
   without,
 } from "./drafts.ts";
@@ -444,5 +447,24 @@ describe("the user's own changes that go together", () => {
     ]);
     expect(groups.get("person p")).toBe(groups.get("list l"));
     expect(groups.get("field f")).toEqual(["field f"]);
+  });
+});
+
+describe("a person's draft holding details the role can't see", () => {
+  const waiting = { state: "waiting" };
+  it("can't be decided, as the server would refuse it", () => {
+    expect(decidable({ draft: waiting })).toBe(true);
+    expect(decidable({ draft: { ...waiting, holdsUnseen: true } })).toBe(false);
+  });
+
+  it("is why another approver must decide any drafts holding it", () => {
+    const people = [
+      { id: "p1", draft: { holdsUnseen: true as const } },
+      { id: "p2", draft: {} },
+      { id: "p3" },
+    ];
+    expect(unseenPeople({ people: ["p2", "p1"] }, people)).toBe(unseenDetails);
+    expect(unseenPeople({ people: ["p2", "p3"] }, people)).toBeUndefined();
+    expect(unseenPeople({ people: [] }, people)).toBeUndefined();
   });
 });

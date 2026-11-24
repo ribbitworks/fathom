@@ -170,7 +170,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
       - **Switching:** Switching tabs keeps the rest of the view, unticks every row and closes any details.
     - **Columns:** Record, Change, State, What changes, Type, Area, Made by, Drafted, Reason and Key.
       - **Record:** The record's name, with what it belongs to where its name alone may not say, such as Harbourside in Sites, and a project's or proposal's ID first, after the draft's dot, any lock, and the grey boxes.
-      - **Record's grey boxes:** Waits on a rejected draft and Needs another approver, shown only to a role that could otherwise decide it. Needs another approver also marks a draft of a list, a list's choice or its order whose class the role can't see, which stays off To decide, its details saying why.
+      - **Record's grey boxes:** Waits on a rejected draft and Needs another approver, shown only to a role that could otherwise decide it. Needs another approver also marks a draft of a list, a list's choice or its order whose class the role can't see, and a person's draft holding details the role can't see, each of which stays off To decide, its details saying why.
       - **Change:** Added, Changed, Removed or Reordered.
       - **State:** Waiting, Rejected or Not published, shown from the start so it can be filtered by.
       - **What changes:** In the lighter form of [A change in words](../standards/ui-conventions/pages-and-panels.md#history).

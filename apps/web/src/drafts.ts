@@ -451,14 +451,42 @@ export const creditedBy = (
   );
 
 // Whether an Approver may decide a record's draft now: it waits, is published, and nobody has
-// unpublished changes to it, so nobody approves a version that is about to change.
+// unpublished changes to it, so nobody approves a version that is about to change; and it holds
+// nothing the Approver's role can't see.
 export const decidable = (record: {
-  draft?: { state: string; unpublished?: boolean | undefined } | undefined;
+  draft?:
+    | {
+        state: string;
+        unpublished?: boolean | undefined;
+        holdsUnseen?: true | undefined;
+      }
+    | undefined;
   heldBy?: string | undefined;
 }): boolean =>
   record.draft?.state === "waiting" &&
   record.draft.unpublished !== true &&
+  record.draft.holdsUnseen !== true &&
   record.heldBy === undefined;
+
+// Why another approver must decide a person's draft holding details the role can't see.
+export const unseenDetails = "This role can't see all of this draft's details";
+
+// Why another approver must decide some drafts, if any of them is of a person holding details the
+// role can't see, as the people read marks them.
+export function unseenPeople(
+  selection: Pick<DraftSelection, "people">,
+  people: readonly {
+    id: string;
+    draft?: { holdsUnseen?: true | undefined } | undefined;
+  }[],
+): string | undefined {
+  const asked = new Set(selection.people);
+  return people.some(
+    ({ id, draft }) => asked.has(id) && draft?.holdsUnseen === true,
+  )
+    ? unseenDetails
+    : undefined;
+}
 
 // A record being added has no key until the server numbers it; no key has this number.
 export const unsavedKeyNumber = 0;
