@@ -23,7 +23,7 @@ import { createAuth } from "./data/auth.ts";
 import { readGreeting } from "./data/greeting.ts";
 import { createDataAccess, type DataAccess } from "./data/index.ts";
 import { actorFor, rolesGranting } from "./access.ts";
-import { ForbiddenError } from "./errors.ts";
+import { ConflictError, ForbiddenError } from "./errors.ts";
 import { roleSchema } from "@fathom/shared";
 
 type Pool = ReturnType<typeof createPool>;
@@ -155,6 +155,30 @@ describe("greeting", () => {
     });
     expect(response.statusCode).toBe(403);
     expect(response.json()).toEqual({ error: "Forbidden" });
+  });
+
+  it("names the field a refusal is about, such as a name another record has", async () => {
+    const realData = createDataAccess(createDatabase(poolFor()));
+    const app = await appFor({
+      data: {
+        ...realData,
+        readGreeting: () =>
+          Promise.reject(
+            new ConflictError(
+              "There is already a customer with that name",
+              "name",
+            ),
+          ),
+      },
+    });
+    const response = await app.inject({
+      url: "/api/greeting",
+      headers: { cookie: await signedIn(app) },
+    });
+    expect([response.statusCode, response.json()]).toEqual([
+      409,
+      { error: "There is already a customer with that name", field: "name" },
+    ]);
   });
 
   it.each(["40P01", "40001"])(

@@ -81,6 +81,7 @@ describe("adding people", () => {
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
       error: "Someone already has that ID",
+      field: "employeeId",
     });
     expect(
       (await readPeople(cookie)).people.some(

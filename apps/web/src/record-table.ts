@@ -3,6 +3,7 @@
 // What a page gives the shared table: its records and their drafts, its columns, what it does
 // with them, and the props the table takes.
 
+import type { Refusal } from "./api.ts";
 import type { Adding } from "./choice-picker.tsx";
 import type {
   Asking,
@@ -65,11 +66,13 @@ export type DraftOf<Rec extends GridRecord> = NonNullable<Rec["draft"]>;
 
 export interface RecordActions<Rec extends GridRecord, Change, Request> {
   // Adds records, all saved together, showing each at once under the identifier given until saved,
-  // then gives their own identifiers; if they cannot be saved, gives back what was entered.
+  // then gives their own identifiers; if they cannot be saved, gives back what was entered, and the
+  // server's refusal of a value to name under its field, where it can, in place of a notification.
   add: (
     records: { id: string; request: Request }[],
     onAdded: (ids: string[]) => void,
     onFailed: () => void,
+    onRefused?: (refusal: Refusal) => boolean,
   ) => void;
   update: (record: Rec, change: Change) => void;
   // Asks to approve or reject the drafts chosen, of records or columns.

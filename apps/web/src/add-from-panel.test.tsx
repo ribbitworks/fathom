@@ -288,3 +288,68 @@ describe("adding a record from a picker", () => {
     ).toBeTruthy();
   });
 });
+
+// What a field's description and error under it say, as screen readers read them with it.
+const saidUnder = (field: HTMLElement) =>
+  (field.getAttribute("aria-describedby") ?? "")
+    .split(" ")
+    .map((id) => document.getElementById(id)?.textContent ?? "")
+    .join(" ");
+
+describe("a value refused in the new record's form", () => {
+  const nameIn = (form: HTMLElement) =>
+    within(form).getByRole<HTMLInputElement>("textbox", { name: "Name" });
+
+  it("keeps focus in Name when its × empties it", async () => {
+    await typeInCustomers("Zeta Depot");
+    await userEvent.keyboard("{Enter}");
+    const form = newForm() as HTMLElement;
+    await userEvent.click(
+      within(form).getByRole("button", { name: "Clear Name" }),
+    );
+    expect([nameIn(form).value, document.activeElement]).toEqual([
+      "",
+      nameIn(form),
+    ]);
+  });
+
+  it("refuses an emptied Name on Add, keeping it empty with the reason under it, and adds nothing", async () => {
+    const { fetch } = await typeInCustomers("Zeta Depot");
+    await userEvent.keyboard("{Enter}");
+    const form = newForm() as HTMLElement;
+    await userEvent.click(
+      within(form).getByRole("button", { name: "Clear Name" }),
+    );
+    await userEvent.click(within(form).getByRole("button", { name: "Add" }));
+    await waitFor(() => {
+      expect(document.activeElement).toBe(nameIn(form));
+    });
+    expect([
+      nameIn(form).value,
+      nameIn(form).getAttribute("aria-invalid"),
+      saidUnder(nameIn(form)),
+      newForm(),
+      sent(fetch, "POST /api/customers"),
+    ]).toEqual(["", "true", expect.stringContaining("Name needed"), form, []]);
+  });
+
+  it("names a refusal from the server under Name, with focus in it, not in a notification", async () => {
+    const reason = "There is already a customer with that name";
+    await typeInCustomers("Marlow City Transit", atProposal, {
+      "POST /api/customers": () =>
+        Response.json({ error: reason, field: "name" }, { status: 409 }),
+    });
+    await userEvent.keyboard("{Enter}");
+    const form = newForm() as HTMLElement;
+    await userEvent.click(within(form).getByRole("button", { name: "Add" }));
+    await waitFor(() => {
+      expect(saidUnder(nameIn(form))).toContain(reason);
+    });
+    expect([
+      nameIn(form).value,
+      nameIn(form).getAttribute("aria-invalid"),
+      document.activeElement,
+      screen.getAllByText(reason).every((shown) => form.contains(shown)),
+    ]).toEqual(["Marlow City Transit", "true", nameIn(form), true]);
+  });
+});

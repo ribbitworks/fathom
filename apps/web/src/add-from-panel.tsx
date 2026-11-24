@@ -180,7 +180,7 @@ export function useAddFromPanel({
               return { ...now, values: { ...now.values, [key]: value } };
             });
           }}
-          onAdd={(request) => {
+          onAdd={(request, refused) => {
             setLinking({ ...current, saving: true });
             actions.add(
               [{ id: pendingId(), request }],
@@ -192,6 +192,7 @@ export function useAddFromPanel({
               () => {
                 setLinking({ ...current, saving: false });
               },
+              refused,
             );
           }}
           onCancel={() => {

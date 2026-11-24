@@ -4,6 +4,7 @@
 // removing members, removing it, discarding or resending its draft, and its colour. Each change
 // saves as a draft, which can be undone.
 
+import type { Refusal } from "./api.ts";
 import type { FeatureTeams } from "@fathom/shared";
 import type { FeatureTeamActions } from "./feature-team-panel.tsx";
 import {
@@ -29,21 +30,30 @@ export function useFeatureTeamActions(
       "Someone else has removed this feature team. The teams have been refreshed.",
     blocked,
   });
-  const saveTeam = (save: () => Promise<string | null>, failure: string) => {
+  const saveTeam = (
+    save: () => Promise<string | null>,
+    failure: string,
+    onRefused?: (refusal: Refusal) => boolean,
+  ) => {
     saving({
       next: (data) => data,
       save,
       failure,
+      onRefused,
       onSaved: undoable,
     });
   };
   return {
-    create: (request) => {
-      saveTeam(async () => {
-        const { id, changeSetId } = await createFeatureTeam(request);
-        openTeam(id);
-        return changeSetId;
-      }, `Fathom could not add ${request.name}.`);
+    create: (request, refused) => {
+      saveTeam(
+        async () => {
+          const { id, changeSetId } = await createFeatureTeam(request);
+          openTeam(id);
+          return changeSetId;
+        },
+        `Fathom could not add ${request.name}.`,
+        refused,
+      );
     },
     rename: (team, name) => {
       saveTeam(

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A text field that shows an × to empty it while it holds any text, as Fathom's text fields do.
-// Pressing the × keeps focus in the field, so a field that saves when left is not left by it.
 
 import { Input, TextInput, type TextInputProps } from "@mantine/core";
+import { useRef } from "react";
 
 export function ClearableInput({
   value,
@@ -16,9 +16,11 @@ export function ClearableInput({
   // What the × is called, such as "Clear the name".
   clearLabel: string;
 }) {
+  const field = useRef<HTMLInputElement>(null);
   return (
     <TextInput
       {...props}
+      ref={field}
       value={value}
       rightSection={
         value === "" ? null : (
@@ -27,7 +29,12 @@ export function ClearableInput({
             onMouseDown={(event) => {
               event.preventDefault();
             }}
-            onClick={onClear}
+            onClick={() => {
+              onClear();
+              // Focus goes to the field even from elsewhere, such as a form's title, so leaving it
+              // checks the emptied value as any other edit is checked.
+              field.current?.focus();
+            }}
           />
         )
       }

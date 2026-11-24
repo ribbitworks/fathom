@@ -5,6 +5,7 @@
 // another kind's keeps the values both kinds have and clears the rest, naming them. Each value is
 // checked as a new row's cell checks it.
 
+import type { Refusal } from "./api.ts";
 import { allOf, hireCalled, type List, type Person } from "@fathom/shared";
 import { Text } from "@mantine/core";
 import { type Column } from "./people-grid.tsx";
@@ -78,7 +79,7 @@ export function NewPersonPanel({
   allColumns: readonly Column[];
   narrow: boolean;
   notes: NoteOpening;
-  onAdd: (request: RowRequest) => void;
+  onAdd: (request: RowRequest, refused: (refusal: Refusal) => boolean) => void;
   onCancel: () => void;
 }) {
   const { editingOf, refuseEntered, withRefused, unfinished } =

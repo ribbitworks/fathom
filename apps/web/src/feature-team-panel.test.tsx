@@ -174,11 +174,31 @@ describe("a new feature team", () => {
     await userEvent.keyboard("{Enter}");
     await pick("Feature lead", /^Avery Fictional/);
     await userEvent.click(screen.getByRole("button", { name: "Add" }));
-    expect(asked.create).toHaveBeenCalledWith({
-      name: "Fictional Beacon",
-      leadId: "m1",
-      members: ["m1", "m2"],
+    expect(asked.create).toHaveBeenCalledWith(
+      { name: "Fictional Beacon", leadId: "m1", members: ["m1", "m2"] },
+      expect.any(Function),
+    );
+  });
+
+  it("names the server's refusal under Name, with focus in it", async () => {
+    const reason = "There is already a feature team with that name";
+    const { asked } = openPanel({ shown: null });
+    vi.mocked(asked.create).mockImplementation(
+      (
+        _request,
+        refused: (refusal: { reason: string; field: string }) => boolean,
+      ) => {
+        refused({ reason, field: "name" });
+      },
+    );
+    const name = screen.getByRole("textbox", { name: "Name" });
+    await userEvent.type(name, "Fictional Beacon");
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(await screen.findByText(reason)).toBeDefined();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(name);
     });
+    expect(name.getAttribute("aria-invalid")).toBe("true");
   });
 
   it("opens with the cursor in Name, ready to type into", async () => {
@@ -204,12 +224,15 @@ describe("a new feature team", () => {
       "Fictional Beacon",
     );
     await userEvent.click(screen.getByRole("button", { name: "Add" }));
-    expect(asked.create).toHaveBeenCalledWith({
-      name: "Fictional Beacon",
-      leadId: null,
-      members: [],
-      from: "2027-05-01",
-    });
+    expect(asked.create).toHaveBeenCalledWith(
+      {
+        name: "Fictional Beacon",
+        leadId: null,
+        members: [],
+        from: "2027-05-01",
+      },
+      expect.any(Function),
+    );
   });
 
   it("closes on Cancel", async () => {

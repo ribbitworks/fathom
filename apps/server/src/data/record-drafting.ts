@@ -158,7 +158,8 @@ function misfitOf(
 ): RequestError | undefined {
   if (wanted !== undefined) {
     const taken = takenValue(kind, state, wanted, id);
-    if (taken !== undefined) return new ConflictError(taken);
+    if (taken !== undefined)
+      return new ConflictError(taken.message, taken.field);
     for (const [name, type] of Object.entries(kind.links)) {
       for (const target of linkedIds(wanted, name)) {
         if (!recordExists(state, type, target)) {

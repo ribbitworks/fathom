@@ -8,7 +8,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { changeMade, notifySuccess, notifyUndoable } from "./notices.tsx";
+import { ApiError } from "./api.ts";
+import {
+  changeMade,
+  notifyFailure,
+  notifySuccess,
+  notifyUndoable,
+} from "./notices.tsx";
 import { isUndo, useSaving } from "./saving.ts";
 
 // Semgrep can't parse typeof import() as a type argument.
@@ -16,6 +22,7 @@ type Notices = typeof import("./notices.tsx");
 
 vi.mock("./notices.tsx", async (actual) => ({
   ...(await actual<Notices>()),
+  notifyFailure: vi.fn(),
   notifySuccess: vi.fn(),
   notifyUndoable: vi.fn(),
 }));
@@ -67,6 +74,64 @@ describe("saving a change", () => {
       expect(notifySuccess).toHaveBeenCalledWith("Removed the one.");
     });
     expect(notifyUndoable).not.toHaveBeenCalled();
+  });
+});
+
+describe("a change the server refuses", () => {
+  // Saves a change the server answers with the error given, its refusal shown in place when the
+  // page says it could be.
+  async function refusedWith(error: Error, shownInPlace = true) {
+    const onRefused = vi.fn(() => shownInPlace);
+    const onFailed = vi.fn();
+    const { result } = renderHook(
+      () =>
+        useSaving({ queryKey, removed: "Removed elsewhere.", blocked: false }),
+      { wrapper: wrapperFor(new QueryClient()) },
+    );
+    vi.mocked(notifyFailure).mockClear();
+    act(() => {
+      result.current.save({
+        next: (data) => data,
+        save: () => Promise.reject(error),
+        failure: "Could not save.",
+        onFailed,
+        onRefused,
+      });
+    });
+    await waitFor(() => {
+      expect(onFailed).toHaveBeenCalledOnce();
+    });
+    return onRefused;
+  }
+  const taken = "There is already a customer with that name";
+
+  it.each([400, 409])(
+    "names a refused value (%i) under its field, with no notification",
+    async (status) => {
+      const onRefused = await refusedWith(
+        new ApiError(status, taken, undefined, "name"),
+      );
+      expect(onRefused).toHaveBeenCalledWith({ reason: taken, field: "name" });
+      expect(notifyFailure).not.toHaveBeenCalled();
+    },
+  );
+
+  it("names a refusal in a notification when its field isn't shown", async () => {
+    await refusedWith(new ApiError(409, taken, undefined, "name"), false);
+    expect(notifyFailure).toHaveBeenCalledWith(taken);
+  });
+
+  it.each([
+    ["a refusal about no field", new ApiError(409, "Try again.")],
+    [
+      "a refusal with no reason",
+      new ApiError(400, undefined, undefined, "name"),
+    ],
+    ["a server error", new ApiError(500)],
+  ])("names %s in a notification", async (_, error) => {
+    const onRefused = await refusedWith(error);
+    expect(onRefused).not.toHaveBeenCalled();
+    expect(notifyFailure).toHaveBeenCalledOnce();
   });
 });
 

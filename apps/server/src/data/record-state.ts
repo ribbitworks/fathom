@@ -257,8 +257,8 @@ const uniqueKey = (unique: UniqueValue, record: Recorded) => {
   };
 };
 
-// Why the record cannot have its unique values: the message of the first another record has, live
-// or in a draft, published or not, or undefined when none is taken. A live record's value stays
+// Why the record cannot have its unique values: the first another record has, live or in a draft,
+// published or not, with its message, or undefined when none is taken. A live record's value stays
 // taken until a draft that changes it is approved, and an unpublished draft's until it is
 // discarded.
 export function takenValue(
@@ -266,7 +266,7 @@ export function takenValue(
   state: RecordsState,
   record: Recorded,
   except: string,
-): string | undefined {
+): UniqueValue | undefined {
   const versions = everyVersion(state, kind.type);
   return (kind.unique ?? []).find((unique) => {
     const wanted = uniqueKey(unique, record);
@@ -276,7 +276,7 @@ export function takenValue(
       const key = uniqueKey(unique, version);
       return key.value === wanted.value && key.within === wanted.within;
     });
-  })?.message;
+  });
 }
 
 export const valueTaken = (
