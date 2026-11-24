@@ -548,7 +548,8 @@ describe("a feature's customers", () => {
     expect(changed.statusCode).toBe(403);
     expect(errorOf(changed)).toBe(customersNeedPlan);
     const after = await shown(feature.id);
-    expect(after.customerIds).toEqual([first, second]);
+    // A feature keeps its customers sorted, as any set of records picked.
+    expect(after.customerIds).toEqual([first, second].sort());
     expect(after.draft).toBeUndefined();
   });
 
