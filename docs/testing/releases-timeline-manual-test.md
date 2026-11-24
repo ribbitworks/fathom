@@ -425,14 +425,20 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
   - **Notes:**
 
 - [ ] `07CD` Select ‹ six times.
-  - **Expected:** The tinted quarters move left along the strip and stay in sight.
+  - **Expected:**
+    - The tinted quarters move left along the strip.
+    - The tinted quarters stay in sight.
   - **Notes:**
 
 - [ ] `F00C` Select **Today**.
   - **Expected:** The tinted quarters are back in the middle of the strip.
   - **Notes:**
 
-- [ ] `2F4C` Press Tab until a quarter in the strip has focus, then press End.
+- [ ] `2F4C` Press Tab until a quarter in the strip has focus.
+  - **Expected:** A quarter in the strip has a focus ring.
+  - **Notes:**
+
+- [ ] `9E21` Press End.
   - **Expected:**
     - The strip scrolls to its end.
     - The last quarter has a focus ring.
