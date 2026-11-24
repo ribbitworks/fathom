@@ -24,6 +24,7 @@ import type {
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { customersNeedPlan } from "./data/feature-customers.ts";
 import {
   builtInChoice,
   errorOf,
@@ -521,9 +522,6 @@ describe("a feature's customers", () => {
     return id;
   }
 
-  const customersNeedPlan =
-    "Only a role that edits the plan can change which customers a feature is for, as with its projects and proposals";
-
   it("are given only by a role that edits the plan, so a new feature with them is refused to the Feature Lead", async () => {
     const name = unique("Fictional Feature");
     const response = await post(
@@ -554,7 +552,7 @@ describe("a feature's customers", () => {
     expect(after.draft).toBeUndefined();
   });
 
-  it("are kept, in any order, when the Feature Lead changes the rest of a feature", async () => {
+  it("are kept when the Feature Lead changes the rest of a feature", async () => {
     const [first, second] = [await liveCustomer(), await liveCustomer()];
     const feature = await liveFeature({ customerIds: [first, second] });
 
@@ -565,6 +563,44 @@ describe("a feature's customers", () => {
     );
 
     expect(renamed.statusCode, renamed.body).toBe(200);
+    expect((await shown(feature.id)).customerIds).toEqual(
+      [first, second].sort(),
+    );
+  });
+
+  it("are kept as a planner's draft gives them when the Feature Lead renames the feature", async () => {
+    const feature = await liveFeature();
+    const customer = await liveCustomer();
+    await put(feature.id, { name: feature.name, customerIds: [customer] });
+
+    const renamed = await put(
+      feature.id,
+      { name: unique("Fictional Renamed"), customerIds: [customer] },
+      featureLead.cookie,
+    );
+
+    expect(renamed.statusCode, renamed.body).toBe(200);
+    expect((await shown(feature.id)).customerIds).toEqual([customer]);
+  });
+
+  it("drafted by a planner are discarded only by a role that edits the plan", async () => {
+    const feature = await liveFeature();
+    const customer = await liveCustomer();
+    await put(feature.id, { name: feature.name, customerIds: [customer] });
+    const discard = (cookie: string) =>
+      test.request(
+        cookie,
+        "DELETE",
+        `/api/records/feature/${feature.id}/draft`,
+      );
+
+    const refused = await discard(featureLead.cookie);
+    expect(refused.statusCode).toBe(403);
+    expect(errorOf(refused)).toBe(customersNeedPlan);
+    expect((await shown(feature.id)).customerIds).toEqual([customer]);
+
+    expect((await discard(planner.cookie)).statusCode).toBe(200);
+    expect((await shown(feature.id)).customerIds).toEqual([]);
   });
 
   it("are changed by the Product Manager", async () => {

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Drafting changes to customers, projects with their milestones, proposals and features. Part of
-// the data access layer; the caller checks the actor's permissions.
+// the data access layer; the caller checks the actor may change the kind, and a feature's customers
+// are checked here, since they take more than changing features.
 
 import { type Database, people } from "@fathom/db";
 import {
@@ -22,15 +23,11 @@ import {
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
-import {
-  BadRequestError,
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-} from "../errors.ts";
+import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import { type Recorded, tidy } from "./draft-records.ts";
+import { refuseCustomersChange } from "./feature-customers.ts";
 import { checkTeamForFeature } from "./feature-team-removals.ts";
 import { typeOf } from "./column-types.ts";
 import {
@@ -396,25 +393,6 @@ async function featureRecord(
     description: request.description,
     note: keptNote(request.note),
   };
-}
-
-export const customersNeedPlan =
-  "Only a role that edits the plan can change which customers a feature is for, as with its projects and proposals";
-
-// Refuses a change to which customers a feature is for, its order aside, to a role that doesn't edit
-// the plan: a feature's customers are the plan's call, as its projects and proposals are.
-export function refuseCustomersChange(
-  actor: Actor,
-  before: Recorded | undefined,
-  after: Recorded,
-): void {
-  if (actor.permissions.includes("plan:edit")) return;
-  const had = new Set(linkedIds(before, "customerIds"));
-  const wanted = new Set(linkedIds(after, "customerIds"));
-  if (had.size === wanted.size && [...wanted].every((id) => had.has(id))) {
-    return;
-  }
-  throw new ForbiddenError(customersNeedPlan);
 }
 
 export async function addFeature(
