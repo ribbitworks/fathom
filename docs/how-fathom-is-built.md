@@ -102,6 +102,7 @@ Automated tests run at every level:
 - **Access control tests:** every API route is tested signed out, with every permission but those it needs, and with only those it needs. A new route fails the tests until it is listed. The [Testing Standards](standards/testing.md#access-control-tests) set out the rest.
 - **Security tests** for injection, sessions, request forgery, rate limiting, the access history, and personal values kept out of logs.
 - **Container tests** that check, from inside the application and database containers, that they can't reach the internet. These run with `pnpm test:containers`.
+- **UI tests** in a real browser, with Playwright, for every change to a form's behaviour, such as its refusals and what it saves. These run with `pnpm test:ui`.
 - **Script tests** for the automation scripts.
 
 ### Coverage

@@ -4,6 +4,6 @@
     "rootDir": ".",
     "outDir": "build"
   },
-  "include": ["vite.config.ts"],
-  "references": [{ "path": "./src" }]
+  "include": ["vite.config.ts", "playwright.config.ts"],
+  "references": [{ "path": "./src" }, { "path": "./e2e" }]
 }

@@ -29,7 +29,7 @@ How Fathom's changes are tested. Every change that adds or changes behaviour inc
 | Access control | Every role's access to every protected operation and every level of protected data, allowed and denied | Every change |
 | Security | Input handling, sessions, request forgery protection, rate limiting, audit records, and log contents | Every change |
 | Container | Behaviour that needs the built containers, such as network isolation | On every pull request but documentation alone, and every push to `main`; locally, every change that affects the containers, and before a stage is complete |
-| UI | Key user journeys in a real browser | Every change to a form's behaviour, before its pull request, as [UI Tests](#ui-tests) sets out, or by hand until a runner exists; otherwise when the maintainer asks, and passing before a stage is complete |
+| UI | Key user journeys in a real browser | Every change to a form's behaviour, before its pull request, as [UI Tests](#ui-tests) sets out; otherwise when the maintainer asks, and passing before a stage is complete |
 | Manual | What a person sees and does in a feature, by hand in a real browser, as [Manual Tests](#manual-tests) describes | Before a stage that changes the feature is complete, and when the maintainer asks |
 
 Every new or changed API operation has integration tests, as well as unit tests for its rules.
@@ -125,7 +125,7 @@ Logic, validation, access checks and data handling are never excluded. The code 
 ## UI Tests
 
 - **A form's behaviour:** a change to how a form behaves, such as its refusals, where focus goes or what it saves, **Must** have a UI test in a real browser that fails on the code before the change and passes after it.
-- **Not set up yet:** Fathom has no UI test runner until [issue #232](https://github.com/ribbitworks/fathom/issues/232) adds one. Until then, such a change lists in its pull request the paths it drove by hand, as [Proving a Screen](#proving-a-screen) sets out, and the UI tests to add.
+- **Running them:** `pnpm test:ui` runs them against the copy's development server, as [ADR 0013](../adr/0013-ui-tests.md) sets out. They live in `apps/web/e2e/`.
 - **Other changes:** UI tests aren't required. A new user flow lists a short UI test roadmap, happy path first, then the main variations, in the pull request or feature document.
 - **Accessibility identifiers:** interactive elements carry them.
 
@@ -137,7 +137,7 @@ A screen change is never called ready until its author has seen it work. Before 
 - **A duplicate,** where a value must be unique: refused the same way.
 - **Each refusal** the change adds or changes: its reason under its field, focus where it should be, and nothing saved.
 
-The pull request lists each path driven, and the test that proves it, or, until a UI test runner exists, the UI test to add.
+The pull request lists each path driven, and the test that proves it.
 
 ## Running Tests
 
@@ -150,7 +150,8 @@ Run tests only through Fathom's own commands, never the underlying tools directl
 - **`pnpm check`:** the full suite, side by side, then each one's result and time. It runs ESLint, the Prettier formatting check, type checking, and Markdown, shell and licence linting. It also runs Renovate's validation of `renovate.json` when it has changed, the script tests, the unit, integration, access control and security tests, and the build-time security scans.
 - **`pnpm check:push`:** the tests and linters a change can affect, side by side, as [Checks and CI § The Local Check](../design/checks-and-ci.md#the-local-check) sets out.
 - **`pnpm test:changed`:** the tests a change can affect, committed or not, as [Checks and CI](../design/checks-and-ci.md#what-a-change-runs) sets out. With `--uncommitted`, it counts only the work not yet committed, for small rounds of fixes after a commit on a long branch.
-- **`pnpm test:containers`:** the container tests. UI tests get their own command once they are added.
+- **`pnpm test:containers`:** the container tests.
+- **`pnpm test:ui`:** the UI tests, in a real browser, against the copy's development server, after reseeding its fictional data. Start the server with `pnpm dev` first.
 
 ## Problems Found
 
@@ -240,4 +241,4 @@ Rules:
 - [ ] Names describe the behaviour under test.
 - [ ] New UI flows list their UI test roadmap.
 - [ ] A change to a form's behaviour has a UI test that fails without it.
-- [ ] A screen change lists the paths driven, each with the test that proves it, or the UI test to add while no runner exists.
+- [ ] A screen change lists the paths driven, each with the test that proves it.

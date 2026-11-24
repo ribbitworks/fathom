@@ -68,8 +68,11 @@ flowchart TD
     CheckPush["pnpm check:push, as The Local Check draws"]
     CheckPush --> AffectsContainers{"Does it change the containers?"}
     AffectsContainers -- Yes --> TestContainers["pnpm test:containers"]
-    AffectsContainers -- No --> LocalPassed{"Did everything pass?"}
-    TestContainers --> LocalPassed
+    AffectsContainers -- No --> FormChange{"Does it change a form's behaviour?"}
+    TestContainers --> FormChange
+    FormChange -- Yes --> TestUi["pnpm test:ui, with pnpm dev running"]
+    FormChange -- No --> LocalPassed{"Did everything pass?"}
+    TestUi --> LocalPassed
     LocalPassed -- No --> Fix["A round of fixes"]
     Fix --> SecurityInputs{"Did the round change dependencies, the lockfile, a container file or the scans' settings?"}
     SecurityInputs -- Yes --> Security["pnpm security, as The Security Report draws"]
@@ -84,6 +87,7 @@ flowchart TD
 ```
 
 - **When:** these checks run before the code review, and again after each round of fixes, from a review or from the maintainer's feedback.
+- **UI tests:** a change that alters a form's behaviour also runs `pnpm test:ui`. Neither `pnpm check:push` nor the Check workflow runs it, as [ADR 0013](../adr/0013-ui-tests.md) sets out.
 - **Help pages:** a change to a Help page isn't documentation alone, since Help is built into Fathom, so it runs every check.
 
 ## The Check on GitHub
@@ -194,8 +198,11 @@ flowchart TD
     Change["A change on its branch"] --> CheckPush["pnpm check:push, as The Local Check draws"]
     CheckPush --> AffectsContainers{"Does it change the containers?"}
     AffectsContainers -- Yes --> TestContainers["pnpm test:containers"]
-    AffectsContainers -- No --> LocalPassed{"Did everything pass?"}
-    TestContainers --> LocalPassed
+    AffectsContainers -- No --> FormChange{"Does it change a form's behaviour?"}
+    TestContainers --> FormChange
+    FormChange -- Yes --> TestUi["pnpm test:ui, with pnpm dev running"]
+    FormChange -- No --> LocalPassed{"Did everything pass?"}
+    TestUi --> LocalPassed
     LocalPassed -- No --> Fix["A round of fixes"]
     Fix --> SecurityInputs{"Did the round change dependencies, the lockfile, a container file or the scans' settings?"}
     SecurityInputs -- Yes --> Security["pnpm security, as The Security Report draws"]

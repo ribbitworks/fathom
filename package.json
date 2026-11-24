@@ -51,6 +51,7 @@
     "stack:create-administrator": "bash scripts/stack.sh create-administrator",
     "account:create": "bash scripts/create-account.sh",
     "admin:create": "bash scripts/create-administrator.sh",
+    "test:ui": "bash scripts/test-ui.sh",
     "test:containers": "node --test --test-timeout=1800000 \"scripts/container-tests/*.test.mjs\"",
     "typecheck": "tsc --build",
     "build": "pnpm --filter @fathom/web build"
