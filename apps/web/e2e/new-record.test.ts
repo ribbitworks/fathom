@@ -4,13 +4,15 @@
 // Esc reaches the panel, and a required value left empty is refused.
 
 import { expect, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("productManager") });
 
 test("refuses a new project whose Name was emptied, naming why under it and saving nothing", async ({
   page,
 }) => {
   // Given the Product Manager on Projects, with the New project panel open
-  await signIn(page, "/projects", "product.manager@fathom.test");
+  await page.goto("/projects");
   const count = page.getByRole("status").filter({ hasText: /projects?$/ });
   const before = await count.innerText();
   expect(before).toMatch(/^\d+ projects?$/);
