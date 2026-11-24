@@ -150,6 +150,9 @@ export const personDraftSchema = z.object({
     notes: notesSchema.optional(),
     numbers: numbersSchema.optional(),
   }),
+  // Set, for a role that approves people's drafts, on one holding details the role can't see, which
+  // another approver must decide; trying would tell the role as much.
+  holdsUnseen: z.literal(true).optional(),
   ...draftShape,
 });
 

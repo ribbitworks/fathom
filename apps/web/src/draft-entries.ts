@@ -157,6 +157,9 @@ function entry(
   };
 }
 
+// Why another approver must decide a person's draft holding details the role can't see.
+const unseenDetails = "This role can't see all of this draft's details";
+
 const listFieldNames = ["name", "description", "visibility", "retired"];
 
 interface Credited {
@@ -603,7 +606,8 @@ export type DraftEntries =
       choosable: (one: Entry) => boolean;
       // Whether the reader may decide a draft now, as toDecide keeps it.
       decidesNow: (one: Entry) => boolean;
-      // Why another approver must decide a draft of a list whose class the reader's role can't see.
+      // Why another approver must decide a draft holding what the reader's role can't see: of a list
+      // of a class it can't see, or of a person, with details it can't see.
       unseen: (one: Entry) => string | undefined;
       // The other drafts deciding a published draft takes with it, whatever the reader's role
       // decides: those approved with it while it waits, or those waiting on it once rejected.
@@ -704,8 +708,16 @@ export function useDraftEntries({
     },
   };
   const unchangeable = unchangeableLists(listsData, permissions);
+  const holdingUnseen = new Set(
+    peopleData.people.flatMap(({ id, draft }) =>
+      draft?.holdsUnseen === true ? [id] : [],
+    ),
+  );
   const unseen = ({ selects }: Entry) =>
-    unseenInDrafts(selects, listsData, unchangeable);
+    unseenInDrafts(selects, listsData, unchangeable) ??
+    (selects.people.some((id) => holdingUnseen.has(id))
+      ? unseenDetails
+      : undefined);
   const reading = {
     waits: ({ state, selects }: Entry) =>
       state === "waiting" &&

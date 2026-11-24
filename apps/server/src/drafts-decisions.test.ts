@@ -86,6 +86,26 @@ describe("approving and rejecting", () => {
     expect(undone.statusCode).toBe(409);
   });
 
+  it("marks a draft shown only in part for an Approver who can't decide it, and no one else", async () => {
+    // Given a change of a name the role sees and of an end date it doesn't
+    const partly = await livePerson({ startDate: "2020-01-01" });
+    await saved("PATCH", `/api/people/${partly.id}`, {
+      preferredName: unique("Fictional"),
+      endDate: "2032-01-01",
+    });
+    const markOf = async (held: Permission[]) =>
+      (await seen((await test.signedIn(held)).cookie, partly.id))?.draft
+        ?.holdsUnseen;
+
+    // Then an Approver who can't see the end date is told another must decide it
+    expect(await markOf(["people:approve", "people:view"])).toBe(true);
+    // And neither one who doesn't approve people nor one who sees it all is
+    expect(await markOf(["people:view"])).toBeUndefined();
+    expect(
+      await markOf(["people:approve", "people:view", "personal:view"]),
+    ).toBeUndefined();
+  });
+
   it("lets only Approvers who see every value in the drafts approve or reject them", async () => {
     const person = await livePerson({ startDate: "2020-01-01" });
     await saved("PATCH", `/api/people/${person.id}`, { endDate: "2032-01-01" });

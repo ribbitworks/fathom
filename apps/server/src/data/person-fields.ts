@@ -14,6 +14,7 @@ import {
   type Tier,
 } from "@fathom/shared";
 import { inArray } from "drizzle-orm";
+import { type Actor, seesSensitivity } from "../access.ts";
 import { BadRequestError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { fitsColumns, type Recorded } from "./draft-records.ts";
@@ -76,6 +77,16 @@ export function personTier(columns: PeopleColumns) {
     ]),
   ]);
   return (field: string): Tier => tiers.get(field) ?? "general";
+}
+
+// Whether an actor sees a field of a person's draft: a detail, or a value in one of the columns
+// given, of a class the actor sees. Deciding a draft needs every field it holds seen.
+export function seesPersonField(actor: Actor, columns: PeopleColumns) {
+  const tierOf = personTier(columns);
+  const shown = new Set(columns.map(({ id }) => valueField(id)));
+  return (field: string): boolean =>
+    (fieldOfValue(field) === null || shown.has(field)) &&
+    seesSensitivity(actor, tierOf(field));
 }
 
 export function recorded(
