@@ -12,13 +12,14 @@ import {
   type ListRequest,
   type Permission,
   type Tier,
+  sameName,
 } from "@fathom/shared";
 import { Button, Group, Stack, Text, Textarea, TextInput } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
-import { createList, nameProblem, sameName, updateList } from "./lists.ts";
+import { createList, nameProblem, updateList } from "./lists.ts";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import classes from "./pages.module.css";
 

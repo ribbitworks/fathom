@@ -4,7 +4,12 @@
 // is checked against the table's other saved views of the same scope as it is typed. The dialog saves the view itself,
 // so a name someone else has just taken is refused here, and cannot be closed while it saves.
 
-import { type ListedView, viewLengths, type ViewScope } from "@fathom/shared";
+import {
+  type ListedView,
+  sameName,
+  viewLengths,
+  type ViewScope,
+} from "@fathom/shared";
 import { Button, Checkbox, Group, Stack, Text, TextInput } from "@mantine/core";
 import type { ViewPart } from "./table-controls.tsx";
 import classes from "./pages.module.css";
@@ -13,7 +18,7 @@ import { Fragment, useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
 import { Count, nameTaken } from "./list-dialog.tsx";
-import { nameProblem, sameName } from "./lists.ts";
+import { nameProblem } from "./lists.ts";
 
 const conflict = 409;
 const includesId = "view-dialog-includes";

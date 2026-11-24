@@ -180,6 +180,29 @@ export function weightProblem(text: string): string | undefined {
   return weightSchema.safeParse(Number(text.trim())).error?.issues[0]?.message;
 }
 
+// Whether two names are the same, ignoring letter case and spaces at either end.
+export function sameName(first: string, second: string): boolean {
+  return first.trim().toLowerCase() === second.trim().toLowerCase();
+}
+
+// What a name, such as one pasted, picks out among choices: the one choice with that name, none, or
+// several, which leaves it unclear which is meant, so none of them is taken.
+export type ChoiceNamed<Named> =
+  { match: "one"; choice: Named } | { match: "none" } | { match: "several" };
+
+export function choiceNamed<Named extends { label: string }>(
+  choices: readonly Named[],
+  name: string,
+): ChoiceNamed<Named> {
+  const [first, ...others] = choices.filter((choice) =>
+    sameName(choice.label, name),
+  );
+  if (first === undefined) return { match: "none" };
+  return others.length === 0
+    ? { match: "one", choice: first }
+    : { match: "several" };
+}
+
 // The meanings a list's choices are tied to, by its built-in key: none for any other list.
 export const meaningsOf = (
   builtIn: BuiltInList | null | undefined,

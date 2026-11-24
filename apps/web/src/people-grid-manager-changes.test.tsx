@@ -7,7 +7,14 @@ import { act, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { formatDay } from "./day-formats.ts";
-import { actions, person, people, grid, text } from "./test-people-grid.tsx";
+import {
+  actions,
+  lead,
+  person,
+  people,
+  grid,
+  text,
+} from "./test-people-grid.tsx";
 
 describe("managers and teams", () => {
   const focus = (row: string, key: string) => {
@@ -22,14 +29,18 @@ describe("managers and teams", () => {
     focus("p2", "managerId");
     await userEvent.keyboard("{Enter}");
     const options = await screen.findAllByRole("option");
-    expect(options.map(({ textContent }) => textContent)).toEqual([
+    expect(
+      options.map((option) => option.querySelector("span")?.textContent),
+    ).toEqual([
       "No manager",
       "Fictional p1",
       "Fictional p2",
       "Fictional p4",
       "Fictional p5",
     ]);
-    await userEvent.click(screen.getByRole("option", { name: "Fictional p4" }));
+    await userEvent.click(
+      screen.getByRole("option", { name: /^Fictional p4\b/ }),
+    );
     expect(update).toHaveBeenLastCalledWith(
       expect.objectContaining({ id: "p2" }),
       { managerId: "p4" },
@@ -40,6 +51,79 @@ describe("managers and teams", () => {
       expect.objectContaining({ id: "p2" }),
       { managerId: null },
     );
+  });
+
+  it("describes each manager offered by position and reporting team, so two with the same name are told apart", async () => {
+    // Given a second manager with the name of the one at the top
+    const namesake = person("p6", {
+      preferredName: "Fictional p1",
+      manager: lead("p2"),
+      team: null,
+    });
+    render(grid({ people: [...people, namesake] }));
+    // When a person's Manager cell is opened
+    focus("p2", "managerId");
+    await userEvent.keyboard("{Enter}");
+    // Then each manager shows their position and the team they are on under their name
+    const options = await screen.findAllByRole("option");
+    expect(
+      options.map((option) =>
+        [...option.querySelectorAll("span, p")].map(
+          ({ textContent }) => textContent,
+        ),
+      ),
+    ).toEqual([
+      ["No manager"],
+      ["Fictional p1", "Fictional Engineer"],
+      ["Fictional p1", "Fictional Engineer, Fictional p2's team"],
+      ["Fictional p2", "Fictional Engineer, Harbour Crew"],
+      ["Fictional p4", "Fictional Engineer, Fictional p3's team"],
+      // A team this reader isn't sent is left out.
+      ["Fictional p5", "Fictional Engineer"],
+    ]);
+  });
+
+  it("refuses a pasted manager's name that more than one manager has, rather than taking the first", async () => {
+    const add = vi.fn();
+    const namesake = person("p6", {
+      preferredName: "Fictional p1",
+      manager: lead("p2"),
+      team: null,
+    });
+    render(
+      grid({
+        people: [...people, namesake],
+        actions: { ...actions, add },
+        order: ["preferredName", "employeeId", "positionId", "managerId"],
+      }),
+    );
+    focus("new-0", "preferredName");
+    await userEvent.paste("Fictional p7\tp7\tFictional Engineer\tFictional p1");
+    expect(add).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toBe(
+      "More than one Manager is called Fictional p1",
+    );
+  });
+
+  it("takes a pasted manager's name that only someone who has left also has", async () => {
+    const add = vi.fn();
+    const gone = person("p6", {
+      preferredName: "Fictional p1",
+      endDate: "2020-01-31",
+      manager: lead("p2"),
+      team: null,
+    });
+    render(
+      grid({
+        people: [...people, gone],
+        actions: { ...actions, add },
+        order: ["preferredName", "employeeId", "positionId", "managerId"],
+      }),
+    );
+    focus("new-0", "preferredName");
+    await userEvent.paste("Fictional p7\tp7\tFictional Engineer\tFictional p1");
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(add).toHaveBeenCalled();
   });
 
   it("keeps the Team column read only, since a team follows from its manager", async () => {

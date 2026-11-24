@@ -11,8 +11,9 @@ import {
   type List,
   listLengths,
   type Meaning,
+  sameName,
 } from "@fathom/shared";
-import { nameProblem, sameName } from "./lists.ts";
+import { nameProblem } from "./lists.ts";
 
 const duplicate = "Already in this list";
 // The most choices one paste adds, as the server allows at once.
