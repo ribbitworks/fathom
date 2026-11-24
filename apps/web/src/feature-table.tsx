@@ -263,11 +263,12 @@ export function featureColumns(
   choices: TableChoices,
   {
     shown: { fields, lists, order } = choices.featureColumns,
-    editsNamers = false,
+    editsCommitments = false,
   }: {
     shown?: AddedColumns;
-    // Whether the projects and proposals that name a feature can be changed here.
-    editsNamers?: boolean;
+    // Whether a feature's customers, and the projects and proposals that name it, can be changed
+    // here: by those who edit the plan.
+    editsCommitments?: boolean;
   } = {},
 ): Column<Feature, PlanChange>[] {
   const meaningOf = new Map(
@@ -292,20 +293,23 @@ export function featureColumns(
       choices: choices.risks,
     }),
     field<Feature>("neededBy", planColumnNames.neededBy, "month"),
-    customersColumn<Feature>(choices.customers),
+    {
+      ...customersColumn<Feature>(choices.customers),
+      readOnlyOn: () => !editsCommitments,
+    },
     featureNamersColumn(
       "projectIds",
       planColumnNames.projectIds,
       choices.projects,
       choices.drafted.projects,
-      editsNamers,
+      editsCommitments,
     ),
     featureNamersColumn(
       "proposalIds",
       planColumnNames.proposalIds,
       choices.proposals,
       choices.drafted.proposals,
-      editsNamers,
+      editsCommitments,
     ),
     field<Feature>("description", planColumnNames.description, "text", {
       maxLength: featureLengths.description,
@@ -425,12 +429,13 @@ export function featureTable(
   choices: TableChoices,
   {
     onOpen,
-    editsNamers = false,
+    editsCommitments = false,
     board = false,
   }: {
     onOpen?: (feature: Feature) => void;
-    // Whether the projects and proposals that name a feature can be changed here.
-    editsNamers?: boolean;
+    // Whether a feature's customers, and the projects and proposals that name it, can be changed
+    // here: by those who edit the plan.
+    editsCommitments?: boolean;
     // Whether the rows are a board's, whose columns are cycles.
     board?: boolean;
   } = {},
@@ -444,7 +449,7 @@ export function featureTable(
     type: "feature",
     ...wordsOf("features"),
     kinds: [newKind, savedKind],
-    columns: (shown) => featureColumns(choices, { shown, editsNamers }),
+    columns: (shown) => featureColumns(choices, { shown, editsCommitments }),
     groupings: [
       ...(board ? [] : [byCycle(choices.cycles)]),
       byTarget("release", "Release", choices.releaseOfCycle),

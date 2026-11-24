@@ -503,6 +503,85 @@ describe("adding and changing", () => {
   });
 });
 
+describe("a feature's customers", () => {
+  // A customer approved and live, to name on features.
+  async function liveCustomer(): Promise<string> {
+    const created = await test.request(
+      planner.cookie,
+      "POST",
+      "/api/customers",
+      { name: unique("Fictional Customer") },
+    );
+    const { id } = created.json<Saved>().plan.customers.at(-1) as {
+      id: string;
+    };
+    await test.request(approver.cookie, "POST", "/api/drafts/approval", {
+      records: [{ type: "customer", id }],
+    });
+    return id;
+  }
+
+  const customersNeedPlan =
+    "Only a role that edits the plan can change which customers a feature is for, as with its projects and proposals";
+
+  it("are given only by a role that edits the plan, so a new feature with them is refused to the Feature Lead", async () => {
+    const name = unique("Fictional Feature");
+    const response = await post(
+      { name, customerIds: [await liveCustomer()] },
+      featureLead.cookie,
+    );
+    expect(response.statusCode).toBe(403);
+    expect(errorOf(response)).toBe(customersNeedPlan);
+    expect((await readPlan()).features.map((one) => one.name)).not.toContain(
+      name,
+    );
+  });
+
+  it("are changed only by a role that edits the plan, leaving the feature as it was", async () => {
+    const [first, second] = [await liveCustomer(), await liveCustomer()];
+    const feature = await liveFeature({ customerIds: [first, second] });
+
+    const changed = await put(
+      feature.id,
+      { name: feature.name, customerIds: [first] },
+      featureLead.cookie,
+    );
+
+    expect(changed.statusCode).toBe(403);
+    expect(errorOf(changed)).toBe(customersNeedPlan);
+    const after = await shown(feature.id);
+    expect(after.customerIds).toEqual([first, second]);
+    expect(after.draft).toBeUndefined();
+  });
+
+  it("are kept, in any order, when the Feature Lead changes the rest of a feature", async () => {
+    const [first, second] = [await liveCustomer(), await liveCustomer()];
+    const feature = await liveFeature({ customerIds: [first, second] });
+
+    const renamed = await put(
+      feature.id,
+      { name: unique("Fictional Renamed"), customerIds: [second, first] },
+      featureLead.cookie,
+    );
+
+    expect(renamed.statusCode, renamed.body).toBe(200);
+  });
+
+  it("are changed by the Product Manager", async () => {
+    const feature = await liveFeature();
+    const customer = await liveCustomer();
+    expect(
+      (
+        await put(feature.id, {
+          name: feature.name,
+          customerIds: [customer],
+        })
+      ).statusCode,
+    ).toBe(200);
+    expect((await shown(feature.id)).customerIds).toEqual([customer]);
+  });
+});
+
 describe("target cycles", () => {
   it("targets one of its stream's cycles", async () => {
     const streamId = await liveStream();

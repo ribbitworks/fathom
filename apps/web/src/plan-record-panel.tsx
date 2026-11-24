@@ -237,7 +237,7 @@ export function recordPanel({
       ),
     features: () =>
       shownOf("feature", plan.features, () =>
-        featureColumns(choices, { editsNamers: editsKind("project") }),
+        featureColumns(choices, { editsCommitments: editsKind("project") }),
       ),
   };
   // The tab is always one of the fixed tabs.

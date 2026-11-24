@@ -486,7 +486,7 @@ export function ProjectsPage({
       features: () => {
         const table = featureTable(choices, {
           onOpen: openRecord,
-          editsNamers: plan.canEdit,
+          editsCommitments: plan.canEdit,
           board: onBoard,
         });
         const offeredParts = cardPartSchema.options;
