@@ -39,7 +39,7 @@ function run({
   const calls = join(root, "calls.log");
   writeFileSync(
     join(root, "scripts", "dev-db.sh"),
-    `echo "dev-db $*" >>"${calls}"\nexit ${reseedFails ? 1 : 0}\n`,
+    `echo "dev-db $* show=\${FATHOM_DEV_SHOW_PASSWORD:-}" >>"${calls}"\nexit ${reseedFails ? 1 : 0}\n`,
   );
   mkdirSync(join(root, ".dev", "secrets"), { recursive: true });
   writeFileSync(join(root, ".dev", "secrets", "dev_account_password"), "x\n");
@@ -112,7 +112,7 @@ describe("scripts/test-ui.sh", () => {
     assert.equal(statSync(accountsFolder).mode & 0o777, 0o700);
     assert.deepEqual(result.called.trim().split("\n"), [
       "curl --silent --max-time 10 --cacert /ca/rootCA.pem --output /dev/null https://localhost:8463/",
-      "dev-db reseed",
+      "dev-db reseed show=false",
       `pnpm --filter @fathom/web exec playwright install chromium url= password= ca=`,
       `pnpm --filter @fathom/web exec playwright test e2e/new-record.test.ts url=https://localhost:8463 password=${password} ca=/ca/rootCA.pem`,
     ]);

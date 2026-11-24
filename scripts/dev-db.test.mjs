@@ -54,11 +54,15 @@ function copy(failingStep = "") {
   return { root, tools, steps };
 }
 
-function reseed({ root, tools }) {
+function reseed({ root, tools }, environment = {}) {
   return spawnSync("bash", ["scripts/dev-db.sh", "reseed"], {
     cwd: root,
     encoding: "utf8",
-    env: { PATH: `${tools}:${process.env.PATH ?? ""}`, HOME: process.env.HOME },
+    env: {
+      PATH: `${tools}:${process.env.PATH ?? ""}`,
+      HOME: process.env.HOME,
+      ...environment,
+    },
   });
 }
 
@@ -76,6 +80,18 @@ describe("scripts/dev-db.sh reseed", () => {
     assert.match(
       result.stdout.trimEnd().split("\n").at(-1),
       /with the password fictional-secret$/,
+    );
+  });
+
+  it("names where the password is kept, without printing it, when asked to hide it", () => {
+    const repository = copy();
+    const result = reseed(repository, { FATHOM_DEV_SHOW_PASSWORD: "false" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(!result.stdout.includes("fictional-secret"), result.stdout);
+    assert.ok(!result.stderr.includes("fictional-secret"), result.stderr);
+    assert.match(
+      result.stdout.trimEnd().split("\n").at(-1),
+      /their password is in \.dev\/secrets\/dev_account_password$/,
     );
   });
 
