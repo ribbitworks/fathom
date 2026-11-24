@@ -4,12 +4,17 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test Basics
 
-What every manual test in `docs/testing/` and `docs/testing/acceptance/` shares: the environment, where the accounts come from, the procedures the test cases refer to by name, and the terms they use. Each manual test links here and adds only what is its own. [Acceptance Tests](acceptance/README.md) gives the order for running every acceptance test in one run. The acceptance tests run on the installation [Installing Fathom](acceptance/acceptance-installing-fathom-manual-test.md) makes, not on the clone's development Fathom, and make their own accounts, so each says what it needs instead of the Test Environment and Test Accounts below.
+What every manual test in `docs/testing/` and `docs/testing/acceptance/` shares: the environment, where the accounts come from, the procedures the test cases refer to by name, and the terms they use. Each manual test links here and adds only what is its own.
+
+For the acceptance tests:
+
+- Their order: [Acceptance Tests](acceptance/README.md) gives the order for running every acceptance test in one run.
+- Their environment and accounts: the acceptance tests run on the installation [Installing Fathom](acceptance/acceptance-installing-fathom-manual-test.md) makes, not on the clone's development Fathom, and make their own accounts. So each says what it needs instead of the Test Environment and Test Accounts below.
 
 ## Test Environment
 
@@ -51,7 +56,10 @@ Mark each step's checkbox while running it, and write anything else under its **
 
 Marks and notes are kept while a test is being run and changed, and cleared before the test is committed, so every committed test starts unmarked.
 
-Before they are cleared, save the marked copy outside the repository, since its notes are working notes. It is named after the test with the date and time it was last run, as `<test>_YYYY_MM_DD_hh_mm.md`, such as `roles-manual-test_2026_11_12_14_30.md`, and starts with the test's title, followed by a line giving that date and time and the branch it was run on, such as **Last run:** 2026-11-12 14:30, on `feat/simpler-roles`.
+Before they are cleared, save the marked copy outside the repository, since its notes are working notes:
+
+- File name: named after the test, with the date and time it was last run, as `<test>_YYYY_MM_DD_hh_mm.md`, such as `roles-manual-test_2026_11_12_14_30.md`.
+- First line: the test's title, followed by a line giving that date and time and the branch it was run on, such as **Last run:** 2026-11-12 14:30, on `feat/simpler-roles`.
 
 ## Common Procedures
 
@@ -72,7 +80,12 @@ Run once, before the first test case.
 
 ### Restore the Seed Data
 
-Run after Start Fathom, before the first test case unless the test starts another way, and wherever a test case says so. Fathom keeps running. This removes the [Fictional Data](../design/development-setup.md#fictional-data) and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. It also forgets the view each development account last showed on each page, so every page opens on its own view. The seed data's own drafts that were approved since it was added are not made again; run Reset the Database to have them back.
+Run after Start Fathom, before the first test case unless the test starts another way, and wherever a test case says so. Fathom keeps running. This:
+
+- Removes and adds: the [Fictional Data](../design/development-setup.md#fictional-data) and every draft of it, including drafts made during the test, then adds the seed data again.
+- Keeps: accounts and anything else added by hand.
+- Forgets views: the view each development account last showed on each page, so every page opens on its own view.
+- Doesn't remake approved seed drafts: the seed data's own drafts that were approved since it was added are not made again; run Reset the Database to have them back.
 
 1. In the second terminal, run:
 
@@ -123,7 +136,13 @@ Run straight after signing in with a password Fathom generated, with the new pas
 
 ### Start Again
 
-Run this in three cases: before [Installing Fathom](acceptance/acceptance-installing-fathom-manual-test.md) when an earlier acceptance run's installation is still on the machine; to end an acceptance run; and before any other manual test in a clone that still has an installation, since the development commands read the clone's `deploy/.env`. This deletes the installation's containers, its database and its secrets, and the clone's `deploy/.env`. It keeps the images it built, named `fathom-app`, `fathom-postgres` and `fathom-proxy`, and leaves the development database alone.
+Run this in three cases:
+
+- Before [Installing Fathom](acceptance/acceptance-installing-fathom-manual-test.md) when an earlier acceptance run's installation is still on the machine.
+- To end an acceptance run.
+- Before any other manual test in a clone that still has an installation, since the development commands read the clone's `deploy/.env`.
+
+This deletes the installation's containers, its database and its secrets, and the clone's `deploy/.env`. It keeps the images it built, named `fathom-app`, `fathom-postgres` and `fathom-proxy`, and leaves the development database alone.
 
 1. In the second terminal, at the repository root, run:
 
@@ -152,30 +171,47 @@ Run this in three cases: before [Installing Fathom](acceptance/acceptance-instal
 
 ## Terms
 
-- **Page and left-hand menu:** Fathom's pages are listed in the left-hand menu, the dark sidebar down the left of the window, in sections such as **Plan** and **People**. "Select the **Features** page" means selecting **Features** there. When the menu is collapsed to a narrow rail of icons, point at an icon to see its page's name, or select the button at the top of the rail, **Expand sidebar**, to show the names again. Opening a page from the menu shows it as that account last left it, with the tab, search, filters, sorting and grouping it had.
+- **Page and left-hand menu:** Fathom's pages are listed in the left-hand menu, the dark sidebar down the left of the window, in sections such as **Plan** and **People**. "Select the **Features** page" means selecting **Features** there.
+  - Collapsed menu: when the menu is collapsed to a narrow rail of icons, point at an icon to see its page's name, or select the button at the top of the rail, **Expand sidebar**, to show the names again.
+  - Last view: opening a page from the menu shows it as that account last left it, with the tab, search, filters, sorting and grouping it had.
 - **Top bar and account menu:** the bar across the top of the window. The account menu opens from the account's name and initials at its right, and holds **Appearance**, with **System**, **Light** and **Dark**, and **Sign out**.
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance** in the account menu.
 - **Role menu:** the choices under **Role** in the account menu, one for each role the account holds, shown only for an account with more than one role.
 - **Publish button:** the button in the top bar that reads **Publish** followed by the number of changes waiting, such as **Publish 4 changes**.
-- **Mark:** a dot just before what a draft changes, such as a record's name, a value, a part such as a team's member, or a column's name, with no words beside it: yellow while the draft waits for approval, hollow yellow for the account's own unpublished changes, and red in a ring once rejected. A green dot marks a live value, the record as it is now, in a Live row or under a drafted value, and, under **Live only**, what a waiting draft would change. Pointing at a dot shows its words, such as **Draft: added**. A removed record or part is struck through after its dot.
+- **Mark:** a dot just before what a draft changes, such as a record's name, a value, a part such as a team's member, or a column's name, with no words beside it. Pointing at a dot shows its words, such as **Draft: added**.
+  - Yellow: while the draft waits for approval.
+  - Hollow yellow: for the account's own unpublished changes.
+  - Red in a ring: once the draft is rejected.
+  - Green: marks a live value, the record as it is now, in a Live row or under a drafted value, and, under **Live only**, what a waiting draft would change.
+  - Struck through: a removed record or part is struck through after its dot.
 - **Lock:** a grey lock before a record someone else has unpublished changes to. Pointing at it shows **Being changed by** and their name. The record is read only until they publish or discard them.
-- **Class mark:** a small grey symbol just before a column's name in its heading, or a list's name, giving the class of its data: an eye with a line through it for **Personal**, and a lock with a keyhole for **Confidential**. Pointing at it shows the class's name. A **General** column or list has none. The lock with a keyhole is not the lock above, which has no keyhole.
+- **Class mark:** a small grey symbol just before a column's name in its heading, or a list's name, giving the class of its data. Pointing at it shows the class's name.
+  - **Personal:** an eye with a line through it.
+  - **Confidential:** a lock with a keyhole. It is not the lock above, which has no keyhole.
+  - **General:** a column or list of this class has none.
 - **Box:** a small outlined word just after an item: yellow for **Moved**, **Reordered**, **Retired** or **Restored**; red for a warning after a value, such as **Left**; grey for a fact, such as **Built in** or **Planned, expected** and a month.
 - **Slot:** the narrow space at the start of a table's row, before its first value, holding the mark of a draft that adds, removes, retires or moves the record. A draft that only changes values the row shows leaves the slot empty, with a dot before each changed value.
-- **Draft row and Live row:** while **Drafts & Live** is chosen in the Draft menu, as each page starts, a row with a draft is tinted faint yellow, or faint red once the draft is rejected, and its changed values are in semibold; under it, a light green Live row shows the record as it is now, with a green dot before each live value the draft changes, or in its slot. **Drafts applied** and **Live only** show no tints and no Live rows.
+- **Draft row and Live row:** how a row with a draft shows, by the choice in the Draft menu:
+  - With **Drafts & Live**, as each page starts, a row with a draft is tinted faint yellow, or faint red once the draft is rejected, and its changed values are in semibold.
+  - With **Drafts & Live**, under the Draft row, a light green Live row shows the record as it is now, with a green dot before each live value the draft changes, or in its slot.
+  - With **Drafts applied** or **Live only**, there are no tints and no Live rows.
 - **Page's heading and title:** the line at the top of a page holding its title, such as **Drafts**, any tabs just after the title, and the page's buttons at its right. On the **Drafts** page, buttons for the ticked rows show there only while rows are ticked.
 - **Tick box:** the small box before a row's slot on a table whose rows can be chosen together, such as on the **Drafts** page. The tick box in the table's header, before the first column's name, ticks every row shown that can be ticked. A greyed-out tick box can't be ticked.
 - **Search for:** clear anything already in the search box above a table, then type the text, so only the matching rows show. A step that types in the search box clears it first too, since a page can open with its last search still there.
 - **Views menu:** the menu that opens from the last of the buttons after the search box above a table. The button reads **Views**, or the name of the view applied.
 - **Draft menu:** the menu that opens from the **Draft** button above a table, beside the search box, or, on the **Org chart** page, just right of the finder. The button, with a funnel icon, names the choice shown, such as **Drafts & Live**, and has a dot after it while a draft filter is in use.
-- **Group by menu:** the menu that opens from the button above a table whose label starts **Group by**, such as **Group by**, **Group by: Cycle** or **Group by: Manager, then Site**. Its choices may be under a **Group by** label and a **Then by** label. While the rows are grouped, the two orders the headings can run in, such as **Earliest first** and **Latest first**, follow the groupings, under a line, and the menu ends with **Clear grouping**.
+- **Group by menu:** the menu that opens from the button above a table whose label starts **Group by**, such as **Group by**, **Group by: Cycle** or **Group by: Manager, then Site**.
+  - Choices: they may be under a **Group by** label and a **Then by** label.
+  - While the rows are grouped: the two orders the headings can run in, such as **Earliest first** and **Latest first**, follow the groupings, under a line, and the menu ends with **Clear grouping**.
 - **Group heading:** the full-width row above each group of rows in a grouped table, naming the group, with how many rows it holds at its right.
 - **Column menu:** the menu that opens from a column's name in a table's header.
 - **⋯ menu:** the menu that opens from a **⋯** button, such as the one at the end of a table row, beside a list's name at the top of its panel, or beside the Publish button. A table row's ⋯ menu also opens from the **⋯** after its details button, or from a right-click anywhere on the row.
 - **Details button:** the small button drawn as a box with a line down its right side, at the right of a row's **Name** cell, or its first cell where that column has no heading, with a **⋯** button after it, both shown while the row is pointed at.
 - **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the details button. Steps also call it the details panel. It is headed with the record's name, and its close button, an **×**, is at its top right.
-- **Open button:** a small box with its right side marked, at the right of a note in a side panel, in place of a change button, shown while the note's row is pointed at or has focus. It opens the note in a panel of its own, to read it, and to change it for accounts that may. Selecting the row anywhere does the same.
-- **Change button:** a small pencil at the right of a value in a side panel, shown to accounts that may change it while the value's row is pointed at or has focus. Selecting the row anywhere does the same. To check whether a value or row has a change button, or whether a panel shows any, point at each row the step names, or at each of the panel's rows.
+- **Open button:** a small box with its right side marked, at the right of a note in a side panel, in place of a change button, shown while the note's row is pointed at or has focus.
+  - What it does: it opens the note in a panel of its own, to read it, and to change it for accounts that may. Selecting the row anywhere does the same.
+- **Change button:** a small pencil at the right of a value in a side panel, shown to accounts that may change it while the value's row is pointed at or has focus. Selecting the row anywhere does the same.
+  - Checking for one: to check whether a value or row has a change button, or whether a panel shows any, point at each row the step names, or at each of the panel's rows.
 - **Grid:** the table on the left of the role dialog, with an area in each row and the columns **Area**, **View**, **Approve** and **Edit**. Under a **Data classification** heading, its last rows are the classes **General**, **Personal** and **Confidential**.
 - **Chart:** on the **Org chart** page, the large panel under the finder and the date row that holds the cards.
 - **Finder:** the box reading **Find a person or team** at the left, just under the **Org chart** heading.
