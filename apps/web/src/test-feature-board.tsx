@@ -36,6 +36,8 @@ export const ids = {
   medium: "f0000000-0000-4000-8000-000000000006",
   high: "f0000000-0000-4000-8000-000000000007",
   calm: "f0000000-0000-4000-8000-000000000008",
+  done: "f0000000-0000-4000-8000-0000000000d1",
+  cancelled: "f0000000-0000-4000-8000-0000000000d2",
 };
 
 export const feature = (name: string, more: Partial<Feature> = {}): Feature =>
@@ -148,6 +150,13 @@ export const choices = {
       name: "In progress",
       retired: false,
       meaning: "in-progress",
+    },
+    { id: ids.done, name: "Done", retired: false, meaning: "done" },
+    {
+      id: ids.cancelled,
+      name: "Cancelled",
+      retired: false,
+      meaning: "cancelled",
     },
   ],
   featureTeams: [],

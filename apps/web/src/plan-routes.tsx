@@ -284,6 +284,7 @@ const featuresSearch = planRecordSearch
     mode: planModeSchema.optional().catch(undefined),
     stream: z.uuid().optional().catch(undefined),
     schedule: z.uuid().optional().catch(undefined),
+    finished: shownChoiceSchema.optional().catch(undefined),
     from: daySchema.optional().catch(undefined),
     hide: z.array(cardPartSchema).optional().catch(undefined),
   })
@@ -294,6 +295,7 @@ const featuresChoices = [
   "stream",
   "schedule",
   "hide",
+  "finished",
   customerChoiceKey,
 ] as const;
 

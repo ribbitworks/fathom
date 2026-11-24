@@ -94,6 +94,7 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
     .strictObject({
       stream: z.uuid().optional(),
       schedule: z.uuid().optional(),
+      finished: shownChoiceSchema.optional(),
       hide: z
         .array(cardPartSchema)
         .max(cardPartSchema.options.length)

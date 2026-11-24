@@ -24,6 +24,10 @@ describe("Features' choices", () => {
     expect(fits({})).toBe(true);
   });
 
+  it("accepts showing done and cancelled features on the Board", () => {
+    expect(fits({ finished: "shown" })).toBe(true);
+  });
+
   it("accepts the schedule whose features alone show by months", () => {
     expect(fits({ schedule: stream, hide: ["status"] })).toBe(true);
   });
@@ -35,6 +39,10 @@ describe("Features' choices", () => {
     ],
     ["a stream that isn't an identifier", { stream: "Platform" }],
     ["a schedule that isn't an identifier", { schedule: "Platform" }],
+    [
+      "done and cancelled features shown other than as shown",
+      { finished: true },
+    ],
     [
       "a schedule's cycles and months of a schedule at once",
       { stream, schedule: stream },

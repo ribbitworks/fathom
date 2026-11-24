@@ -19,6 +19,7 @@ import { formatMonth } from "./day-formats.ts";
 import { monthQuarters, quarterPeriod, quarterSteps } from "./month-strip.ts";
 import { cycleChoiceId } from "./projects.ts";
 import type { ViewPart } from "./table-controls.tsx";
+import { namedChoice } from "./view-choices.ts";
 import type { View } from "./table-view.ts";
 import { daysBetween, includesCycle, keptReleases } from "./releases.ts";
 
@@ -56,6 +57,23 @@ export const boardMenuWords = {
 } as const;
 
 export const cyclesOf = (name: string) => `${name} cycles`;
+
+// A feature whose status means it is done or cancelled, which the Board leaves out unless its view
+// shows them.
+export const finishedOnBoard = (
+  feature: Pick<Feature, "statusId">,
+  statuses: readonly { id: string; meaning?: Meaning | null | undefined }[],
+): boolean => {
+  const meaning = statuses.find(({ id }) => id === feature.statusId)?.meaning;
+  return meaning === "done" || meaning === "cancelled";
+};
+
+// The Board's choice to show done and cancelled features, kept among the view's page choices.
+export const finishedChoice = namedChoice("finished");
+export const finishedWords = {
+  label: "Show done and cancelled",
+  records: "Done and cancelled features",
+} as const;
 
 // The Board's columns as an address names them: a schedule's cycles, or months of one schedule's
 // features, never both, so a view kept from it is one the server takes.
