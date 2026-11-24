@@ -56,6 +56,11 @@ describe("a project's milestones in its panel", () => {
       within(dialog).getByRole("button", { name: "Add milestone" }),
     );
     expect(within(dialog).getByText("Name needed")).toBeTruthy();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        within(dialog).getByRole("textbox", { name: /^Name/ }),
+      );
+    });
     await userEvent.type(
       within(dialog).getByRole("textbox", { name: /^Name/ }),
       "Pilot",

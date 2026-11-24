@@ -143,6 +143,12 @@ function RolesChoice({
               {roles.map((role) => (
                 <Checkbox
                   key={role.id}
+                  // A refused Save focuses the field's ref: the first role that can be chosen.
+                  ref={
+                    role === roles.find(({ id }) => refused?.has(id) !== true)
+                      ? field.ref
+                      : undefined
+                  }
                   value={role.id}
                   label={role.name}
                   description={role.description}

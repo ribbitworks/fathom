@@ -17,6 +17,7 @@ import { useMutation } from "@tanstack/react-query";
 import { type SubmitEvent, useState } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
+import { focusRefusedSoon } from "./focus.ts";
 import { featureColumnGroups, featureColumns } from "./feature-table.tsx";
 import {
   type Identified,
@@ -103,10 +104,13 @@ export function MilestoneForm({
     noRecordProblem,
     noOthers,
   );
-  const submit = (event: SubmitEvent) => {
+  const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitted(true);
-    if (problems.length > 0) return;
+    if (problems.length > 0) {
+      focusRefusedSoon(event.currentTarget);
+      return;
+    }
     mutation.mutate({
       name: values.name as string,
       date: values.date as string,

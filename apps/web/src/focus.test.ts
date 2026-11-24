@@ -4,7 +4,7 @@
 // and selecting a field's text only where it has text to select.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { focusSoon, selectSoon } from "./focus.ts";
+import { focusRefusedSoon, focusSoon, selectSoon } from "./focus.ts";
 
 afterEach(() => {
   document.body.replaceChildren();
@@ -88,5 +88,39 @@ describe("focusing a control a change draws", () => {
     vi.runAllTimers();
 
     expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+describe("focusing the field a save refused", () => {
+  it("focuses the first field marked refused in the form, once drawn", () => {
+    vi.useFakeTimers();
+    const form = document.createElement("form");
+    const fields = ["kept", "refused", "also refused"].map((name) => {
+      const field = document.createElement("input");
+      field.name = name;
+      if (name !== "kept") field.setAttribute("aria-invalid", "true");
+      return field;
+    });
+    form.append(...fields);
+    document.body.append(form);
+
+    focusRefusedSoon(form);
+    vi.runAllTimers();
+
+    expect(document.activeElement).toBe(fields[1]);
+  });
+
+  it("leaves focus where it was when no field is marked refused", () => {
+    vi.useFakeTimers();
+    const form = document.createElement("form");
+    const button = document.createElement("button");
+    form.append(document.createElement("input"), button);
+    document.body.append(form);
+    button.focus();
+
+    focusRefusedSoon(form);
+    vi.runAllTimers();
+
+    expect(document.activeElement).toBe(button);
   });
 });

@@ -100,7 +100,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 - **A value refused:** When the page or the server refuses a value on save, its editor stays open with what was typed, outlined in red, with the reason in red under it, so nothing is lost, in tables, panels and dialogs alike. Esc leaves the value as it was.
   - **Where the reason shows:** In a table, the reason is under the row, in its first cell. In a dialog, it is under the field it's about, or at the foot when it's about no one field.
   - **Focus in a dialog:** A dialog's refused Save puts focus in the first field refused, so it can be put right at once. A reason at the foot leaves focus where it was.
-  - **Drawn by:** `useRecordEditing` in `apps/web/src/record-editing.tsx` for a panel, and `apps/web/src/grid-editing.tsx` for a table; a dialog's focus by `focusRefusedSoon` in `apps/web/src/focus.ts`.
+  - **Drawn by:** `useRecordEditing` in `apps/web/src/record-editing.tsx` for a panel, and `apps/web/src/grid-editing.tsx` for a table; a dialog's focus by `focusRefusedSoon` in `apps/web/src/focus.ts`, or by react-hook-form in the account, role, name and password dialogs, which focuses the first refused field given its `ref`.
   - **Example:** Type 203013 in a Needed by cell on Features: Needed by: use a month such as 2027-03.
 - **Names a role can't read:** A refusal naming the record that blocks a change, and the user's list of unpublished changes, name a record only to a role that reads its kind. Any other role is told only its kind, such as a feature or a planned hire.
   - **A record's name:** A record's name may include the record it belongs to, such as an allocation's feature.

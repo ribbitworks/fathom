@@ -6,7 +6,7 @@
 import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DecisionModal } from "./decision-dialog.tsx";
@@ -25,7 +25,7 @@ const fictional = (total: number, from = 1) =>
   );
 
 function showDecision(decision: Decision) {
-  serverAnswers({
+  const fetch = serverAnswers({
     "POST /api/drafts/approval": () =>
       Response.json({ changeSetId: "00000000-0000-4000-8000-000000000001" }),
   });
@@ -42,6 +42,7 @@ function showDecision(decision: Decision) {
       </MantineProvider>
     </QueryClientProvider>,
   );
+  return fetch;
 }
 
 const approving = (named: string[], othersLeft: string[]): Decision => ({
@@ -104,5 +105,29 @@ describe("the dialog before approving", () => {
     });
     expect(dialog.textContent).toContain(fictional(5).join(""));
     expect(dialog.textContent).not.toContain("other");
+  });
+
+  it("puts focus in Reason when rejecting without one, rejecting nothing", async () => {
+    // Given the dialog asking to reject a draft
+    const fetch = showDecision({
+      asking: "reject",
+      selection: { ...noDrafts(), people: fictional(1) },
+      named: fictional(1),
+    });
+    const dialog = await screen.findByRole("dialog");
+
+    // When it is rejected with no reason
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Reject" }),
+    );
+
+    // Then the reason is asked for under Reason, which has the focus
+    expect(within(dialog).getByText("Give a reason")).toBeDefined();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        within(dialog).getByRole("textbox", { name: "Reason" }),
+      );
+    });
+    expect(fetch).not.toHaveBeenCalled();
   });
 });
