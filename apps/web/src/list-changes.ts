@@ -11,25 +11,49 @@ import {
   noDrafts,
 } from "./drafts.ts";
 
+interface Decided {
+  draft?:
+    | {
+        state: string;
+        unpublished?: boolean | undefined;
+        needsOtherApprover?: boolean | undefined;
+      }
+    | undefined;
+  heldBy?: string | undefined;
+}
+
+// The drafts among the lists given that the rule given keeps: of lists, choices, and orders.
+const draftsWhere = (
+  lists: readonly List[],
+  keeps: (record: Decided) => boolean,
+): DraftSelection => ({
+  ...noDrafts(),
+  lists: lists.filter(keeps).map(({ id }) => id),
+  choices: lists.flatMap((list) =>
+    list.choices.filter(keeps).map(({ id }) => id),
+  ),
+  orders: lists
+    .filter((list) =>
+      keeps({ draft: list.orderDraft, heldBy: list.orderHeldBy }),
+    )
+    .map(({ id }) => id),
+});
+
 // The drafts waiting for approval among the lists given: of lists, choices, and orders.
 export function draftsWaitingIn(lists: readonly List[]): {
   selection: DraftSelection;
   total: number;
 } {
-  const selection: DraftSelection = {
-    ...noDrafts(),
-    lists: lists.filter(decidable).map(({ id }) => id),
-    choices: lists.flatMap((list) =>
-      list.choices.filter(decidable).map(({ id }) => id),
-    ),
-    orders: lists
-      .filter((list) =>
-        decidable({ draft: list.orderDraft, heldBy: list.orderHeldBy }),
-      )
-      .map(({ id }) => id),
-  };
+  const selection = draftsWhere(lists, decidable);
   return { selection, total: draftTotal(selection) };
 }
+
+// The drafts waiting for approval among the lists given that need no other approver.
+export const approvableIn = (lists: readonly List[]): DraftSelection =>
+  draftsWhere(
+    lists,
+    (record) => decidable(record) && record.draft?.needsOtherApprover !== true,
+  );
 
 // A record without one of its optional fields, such as its draft.
 export function withoutField<Record extends object>(

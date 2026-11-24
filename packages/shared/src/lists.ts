@@ -239,6 +239,11 @@ export const keptOf = (
   return meanings.length > 0 ? meanings : ["any"];
 };
 
+// A column that offers a list's choices, named by the page it's on.
+export const listUseSchema = z.object({ page: z.string(), column: z.string() });
+
+export type ListUse = z.infer<typeof listUseSchema>;
+
 // A list as its draft, if any, makes it, with the draft beside, or, for a draft that removes it, as
 // it is.
 export const listSchema = z.object({
@@ -253,6 +258,8 @@ export const listSchema = z.object({
   builtIn: builtInListSchema.nullable().optional(),
   // Set when a column on Features draws on the list, which then stays General as columns there do.
   onFeatures: z.literal(true).optional(),
+  // The columns that offer its choices, by page then column.
+  usedBy: z.array(listUseSchema).optional(),
   // In order, as a draft of the order makes it, offered and retired alike, with choices drafted to
   // be added after the rest, in the order they were drafted.
   choices: z.array(choiceSchema),

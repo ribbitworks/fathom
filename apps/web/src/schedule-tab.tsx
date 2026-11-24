@@ -23,7 +23,7 @@ import {
   inShownOrder,
 } from "./releases.ts";
 import { ReleasesTabTable } from "./releases-tab-table.tsx";
-import { hiddenUnlessShown, type ShowingChoice } from "./view-choices.ts";
+import { hiddenUnlessShown, retiredChoice } from "./view-choices.ts";
 import {
   ownDraftActions,
   type FeaturesAt,
@@ -52,11 +52,6 @@ import type { View } from "./table-view.ts";
 
 const panelId = "release-stream-panel";
 
-// Show retired, which the view keeps as its own, as every table with retired records does.
-const retiredChoice: ShowingChoice = {
-  on: (view) => view.retired === true,
-  turned: (view, on) => ({ ...view, retired: on ? true : undefined }),
-};
 const panelTitleId = "release-stream-panel-title";
 
 // What can be done on the tab, for its panel and row menus.

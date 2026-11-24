@@ -11,18 +11,19 @@ On some pages, a view keeps more:
 
 - On **Releases**, it also keeps whether **Show shipped**, **Show past cycles**, **Show later cycles** or **Show retired** is on.
 - On **Capacity**'s **Allocations**, it also keeps whether **Over** or **Under** is on.
+- On **Lists**, it also keeps whether **Show retired** is on.
 - On **Drafts**, it also keeps its tab.
 - On **Features**, it also keeps the board's columns and what its cards show. The table and the board share one view. Switching between them doesn't change it.
 
 On the board on **Features**, the **Views** menu leaves out the sort, the units, and the columns' order, hidden columns, widths and frozen columns. They stay in the view and show again on the table.
 
-You can save views on the **People**, **Features**, **Projects**, **Releases**, **Org chart**, **Capacity**, **Accounts** and **Drafts** pages. Each tab of **Projects** and of **Releases** has views of its own, and so do **Capacity**'s **Feature teams** and **Allocations**.
+You can save views on the **People**, **Features**, **Projects**, **Releases**, **Lists**, **Org chart**, **Capacity**, **Accounts** and **Drafts** pages. Each tab of **Projects** and of **Releases** has views of its own, and so do **Capacity**'s **Feature teams** and **Allocations**.
 
 On the **Org chart**, a view keeps how the chart is drawn instead. See [Org chart](org-chart.md#save-a-view-of-the-chart).
 
 You save and apply views from the **Views** menu: the last button after the search box, or, on the **Org chart**, the last of the buttons on the left above the chart.
 
-The **Views** menu shows once there's a view to save or apply, a hidden column to show, or a choice such as **Show shipped** on **Releases** or **Over** on **Capacity**'s **Allocations**.
+The **Views** menu shows once there's a view to save or apply, a hidden column to show, or a choice such as **Show shipped** on **Releases**, **Show retired** on **Lists** or **Over** on **Capacity**'s **Allocations**.
 
 ## What to Know First
 

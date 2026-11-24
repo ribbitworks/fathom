@@ -27,8 +27,8 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 - **The lock:** A record someone else has unpublished changes to has a grey lock before it, its tip Being changed by and their name. It is read only until they publish or discard them. Its menu says the same, and that it can be changed once they do.
   - **Drawn by:** `DraftedItem`'s `heldBy` in `apps/web/src/status-mark.tsx`, with the menu's words from `apps/web/src/draft-details.tsx`.
   - **Example:** Viktoria Holmberg on People, held by the second Engineering Operations Manager.
-- **A summary row:** A table of records with few columns, such as the Lists page's lists, draws each record's row, its Live row under it beside live, and a cell naming its parts, such as a list's choices, the same way.
-  - **Drawn by:** `SummaryRow`, `PartsCell` and `LivePartsCell` in `apps/web/src/summary-row.tsx`. On the shared table, `Parts` and `LiveParts`, also there, draw such a cell and mark each part itself; no shared table has one at present.
+- **A summary row:** A table of records with few columns, such as the Lists page's lists, names each record's parts, such as a list's choices, in one cell: how many, then their names, after the mark of their drafts, and the same as they are live in the record's Live row.
+  - **Drawn by:** `Parts` and `LiveParts` in `apps/web/src/summary-row.tsx`, as a column's `content` on the shared table, which then marks each part itself.
   - **Example:** Sites on the Lists page.
 - **A row's slot:** Each row of a table, the Lists page, a list's panel, Releases and the Drafts page starts with a slot of two places, kept even when empty.
   - **The record's own mark:** It comes first. It shows only where its draft changes something the row doesn't show, such as adding, removing, retiring or moving it.
@@ -50,7 +50,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Read aloud:** Screen readers read added, removed or changed after it, since the dot and line are only seen.
   - **A record's parts:** A record whose parts have drafts, such as a list and its choices, has one dot before its parts. That dot is waiting while any part's draft waits, and rejected only once every one was.
   - **As it is live:** As it is live, in a Live row or live only, a part a draft takes away or changes has Live's green dot before it, its tip, live only, naming the change waiting, such as Live. Its removal is waiting for approval.
-  - **Drawn by:** `DraftedPartItem` in `apps/web/src/status-mark.tsx` and `partsMark` in `apps/web/src/draft-marks.ts`, used by `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx`, `PartsCell` in `apps/web/src/summary-row.tsx`, `NamersCell` and `NamerName` in `apps/web/src/plan-table.tsx` for a feature's Projects and Proposals and, through `listedColumn`, a record's own Customers, Proposals and Features, in its cells and its details, and the Person and feature team panels.
+  - **Drawn by:** `DraftedPartItem` in `apps/web/src/status-mark.tsx` and `partsMark` in `apps/web/src/draft-marks.ts`, used by `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx`, `Parts` in `apps/web/src/summary-row.tsx`, `NamersCell` and `NamerName` in `apps/web/src/plan-table.tsx` for a feature's Projects and Proposals and, through `listedColumn`, a record's own Customers, Proposals and Features, in its cells and its details, and the Person and feature team panels.
   - **Example:** Mobile apps on the Org chart's feature teams: Atmananda Ganaka added, Priscille Adam taken away.
 - **A move:** A moved item has its dot and the Moved box, and a dimmed copy stays in its old place after a green dot. On the org chart, a person drafted to another manager is drawn under that manager, with a Live copy under the manager they report to now.
   - **Drawn by:** `ChoiceCells` in `apps/web/src/choice-row.tsx` and `LiveChoiceRow` in `apps/web/src/live-choice-row.tsx` for a list's choices, and `chartPeople` in `apps/web/src/org-chart.ts`.
@@ -78,8 +78,8 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** `DraftView`, `DraftedItem` and `viewedDraft` in `apps/web/src/status-mark.tsx`, with `liveWaitingWords` in `apps/web/src/draft-marks.ts`; each page sets its view once.
   - **Example:** On People, choose Live only in the Draft menu: the Level column's name has a green dot.
 - **A selected row:** A selected row, such as the list whose panel is open, has the hover grey with a thin accent bar at its left edge. It never has the accent's fill, since a row's fill says its draft's state.
-  - **Drawn by:** `selectedRow` in `apps/web/src/pages.module.css`.
-  - **Example:** Select Sites on the Lists page.
+  - **Drawn by:** `selectedRow` in `apps/web/src/pages.module.css`, given on the shared table by `RecordGrid`'s `selected` in `apps/web/src/record-table.ts`, which the Lists page passes.
+  - **Example:** On the Lists page, select the details button of Sites.
 - **Centring:** Every mark (dot, lock or box), and a colour's swatch beside text, is centred on the centreline of its text's capitals. A line holding them lines them up on its text's baseline, and the marks' own spacing is the only spacing. A swatch alone, such as a menu item's icon, is centred in its place instead.
   - **Drawn by:** `dotPlace`, `kind` and `swatchPlace` in `apps/web/src/status-mark.module.css`, `MarkRow` in `apps/web/src/status-mark.tsx`, and `Swatch` in `apps/web/src/colour-swatch.tsx`.
   - **Example:** Any dot before a name on People.

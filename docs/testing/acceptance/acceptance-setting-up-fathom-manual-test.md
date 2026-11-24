@@ -80,7 +80,7 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
   - **Expected:** **Positions** and **Hiring states** are among the lists, each with a grey **Built in** box.
   - **Notes:**
 
-- [ ] `D201` Select **Positions**.
+- [ ] `D201` Select the details button of **Positions**.
   - **Expected:**
     - The panel opens with **Positions** at the top.
     - Its choices are **Employee** and **Manager**.

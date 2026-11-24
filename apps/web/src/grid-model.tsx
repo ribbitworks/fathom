@@ -5,7 +5,7 @@
 
 import { type Field, draftFilterKey } from "@fathom/shared";
 import { Menu } from "@mantine/core";
-import { type ReactNode, useMemo } from "react";
+import { Fragment, type ReactNode, useMemo } from "react";
 import {
   type DraftSelection,
   decidable,
@@ -85,6 +85,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
   above,
   body,
   ticks,
+  selected,
 }: RecordGridProps<Rec, Change, Request>) {
   return {
     everyone,
@@ -115,6 +116,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
     above,
     body,
     ticks,
+    selected,
   };
 }
 
@@ -285,7 +287,8 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
   // The draft a record's menu discards, resubmits, approves or rejects, the drafts approving or
   // rejecting it decides, none on a row standing only for its parts' drafts, and whether it can be
   // decided now. On a table whose rows stand for their parts' drafts too, that is the record's own
-  // draft alone, since its parts' drafts are decided where the parts are shown.
+  // draft alone, since its parts' drafts are decided where the parts are shown, unless the table's
+  // menus decide more than the record's own.
   const menuDraftOf = (
     record: Rec,
   ): {
@@ -301,6 +304,13 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
       };
     }
     const draft = table.ownDraft(record);
+    if (table.menuDecides !== undefined) {
+      return {
+        draft,
+        selection: table.drafts([record.id]),
+        decidable: decidableRow(record),
+      };
+    }
     return {
       draft,
       selection: draft === undefined ? undefined : ownSelectionOf(record),
@@ -410,6 +420,11 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     editsDraftOf(record) &&
     record.heldBy === undefined &&
     ownDraftOf(record) !== undefined;
+  // What else the table offers in a record's menu, keyed as one item among the menu's own.
+  const tableItems = (record: Rec) => {
+    const items = table.menuItems?.(record);
+    return items ? <Fragment key="table-items">{items}</Fragment> : undefined;
+  };
   // What a record's menu offers of the table's own: its details, from its row, then whatever else
   // the table offers.
   const ownItemsOf = (record: Rec, place: MenuPlace = "row"): ReactNode[] =>
@@ -429,7 +444,7 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
       table.keyOf !== undefined && (
         <CopyLinkItem key="copy-link" record={table.keyOf(record)} />
       ),
-      table.menuItems?.(record),
+      tableItems(record),
     ].filter(Boolean);
   // Whether a record's cells cannot be changed: by those who may only view it, while it is drafted
   // to be removed, until the draft is discarded, or while it is being added.

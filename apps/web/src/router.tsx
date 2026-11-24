@@ -336,21 +336,24 @@ const historyRoute = createRoute({
   },
 });
 
-// The Lists page, with the list in the address, if any, open in its side panel. One route, so
-// opening and closing the panel keeps the rest of the page as it was.
+// The Lists page's address: its view, and which lists, with the list, if any, open in its side panel.
+// One route, so opening and closing the panel keeps the rest of the page as it was.
+const listsSearch = viewSearchSchema.extend({
+  kind: listKindSchema.exclude(["all"]).optional().catch(undefined),
+});
+
 const listsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/lists/{-$listId}",
-  validateSearch: z.object({
-    show: showSchema.optional().catch(undefined),
-    search: z.string().max(historySearchLength).optional().catch(undefined),
-    kind: listKindSchema.exclude(["all"]).optional().catch(undefined),
-  }),
-  beforeLoad: reaching("lists"),
+  validateSearch: listsSearch,
+  beforeLoad: (match) => {
+    reaching("lists")(match);
+    openOnLastView(match, shownOn("lists", match.search));
+  },
   component: function Lists() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = listsRoute.useNavigate();
-    const { show, search, kind } = listsRoute.useSearch();
+    const { kind, ...search } = listsRoute.useSearch();
     return (
       <ListsPage
         listId={listsRoute.useParams().listId}
@@ -358,25 +361,14 @@ const listsRoute = createRoute({
         approves={approvableKinds(permissions)}
         seesPeople={permissions.includes("people:view")}
         permissions={permissions}
-        show={show ?? "both"}
-        search={search ?? ""}
+        canShareViews={sharesViews("lists", permissions)}
+        {...viewProps(search, (next, replace) => {
+          void navigate({ search: { ...next, kind }, replace });
+        })}
         kind={kind ?? "all"}
-        onShow={(next) => {
-          void navigate({
-            search: { show: next === "both" ? undefined : next, search, kind },
-            replace: true,
-          });
-        }}
-        onSearch={(next, replace) => {
-          void navigate({
-            search: { show, search: next === "" ? undefined : next, kind },
-            replace,
-          });
-        }}
         onKind={(next) => {
           void navigate({
-            search: { show, search, kind: next === "all" ? undefined : next },
-            replace: true,
+            search: { ...search, kind: next === "all" ? undefined : next },
           });
         }}
       />

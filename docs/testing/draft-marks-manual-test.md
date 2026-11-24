@@ -176,7 +176,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A green dot before the Live row's choices
   - **Notes:**
 
-- [ ] `4A64` Select 'Sites' in its row, not its Live row.
+- [ ] `4A64` Select the details button of 'Sites'.
   - **Expected:**
     - The row of 'Sites' has a thin blue bar at its left edge
     - In the panel, 'Harbourside': a red dot in a ring in its slot

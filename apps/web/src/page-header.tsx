@@ -45,11 +45,14 @@ export function PageHeader({
 // beside.
 export function ModeSwitch<Mode extends string>({
   label = "What the page shows",
+  name,
   modes,
   mode,
   onMode,
 }: {
   label?: string;
+  // Names each option's radio button after its own name, for a page that puts focus on one.
+  name?: string;
   modes: readonly { value: Mode; label: string }[];
   mode: Mode;
   onMode: (mode: Mode) => void;
@@ -57,6 +60,7 @@ export function ModeSwitch<Mode extends string>({
   return (
     <SegmentedControl<Mode>
       aria-label={label}
+      {...(name === undefined ? {} : { name })}
       value={mode}
       onChange={onMode}
       data={[...modes]}

@@ -6,6 +6,7 @@
 import { listItems, lists, type Reader } from "@fathom/db";
 import {
   type BuiltInList,
+  builtInListUses,
   type HiringMeaning,
   type Meaning,
   meaningName,
@@ -14,19 +15,10 @@ import {
 import { and, asc, eq } from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
 
-// The built-in column that draws on each built-in list.
-export const builtInColumns: ReadonlyMap<string, string> = new Map([
-  ["positions", "Position"],
-  ["hiring-states", "State"],
-  ["proposal-statuses", "Status"],
-  ["feature-statuses", "Status"],
-  ["feature-priorities", "Priority"],
-  ["feature-sizes", "Size"],
-  ["feature-risks", "Risk"],
-]);
-
 const columnName = (key: BuiltInList) =>
-  String(builtInColumns.get(key)).toLowerCase();
+  // The key is always one of the built-in lists.
+  // eslint-disable-next-line security/detect-object-injection
+  builtInListUses[key].column.toLowerCase();
 
 // Refuses a choice that is not a live one of the built-in list, or that is retired, unless the
 // record already has it, since a choice a record has stays valid when retired. In a list with

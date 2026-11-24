@@ -6,7 +6,13 @@
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { expect } from "vitest";
-import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
+import {
+  fictionalUser,
+  findRowActions,
+  recordCell,
+  renderApp,
+  serverAnswers,
+} from "./test-support.tsx";
 
 // Sight of people and of every class, which changing a list of each class needs.
 const everyClass = ["people:view", "personal:view", "confidential:view"];
@@ -295,6 +301,40 @@ export const sent = (
   fetch.mock.calls.some(
     ([url, init]) => url.endsWith(path) && init?.method === method,
   );
+
+export const listsGrid = () => screen.findByRole("grid", { name: "Lists" });
+
+const detailsOf = "Show details of ";
+
+// The names of the lists the table shows, in its order, by the buttons that open them.
+export const shownLists = () =>
+  screen
+    .queryAllByRole("button", { name: (name) => name.startsWith(detailsOf) })
+    .map((button) =>
+      (button.getAttribute("aria-label") ?? "").slice(detailsOf.length),
+    );
+
+export const openList = async (name: string) => {
+  await userEvent.click(
+    await screen.findByRole("button", { name: `${detailsOf}${name}` }),
+  );
+};
+
+// What a list's cell in a column of the table reads.
+export const cellText = (id: string, column: string) =>
+  recordCell(id, column)?.textContent;
+
+// The ⋯ menu at the end of a list's row.
+export const rowMenu = async (name: string) => {
+  await userEvent.click(await findRowActions(name));
+  return screen.findByRole("menu");
+};
+
+// Turns Show retired on or off in the Views menu, by the item's whole name.
+export const chooseInViews = async (item: string) => {
+  await userEvent.click(await screen.findByRole("button", { name: /^Views/ }));
+  await userEvent.click(await screen.findByRole("menuitem", { name: item }));
+};
 
 export const openDraftMenu = async () => {
   await userEvent.click(

@@ -309,6 +309,8 @@ export {
   type ChoiceNamed,
   meaningName,
   meaningNames,
+  type ListUse,
+  listUseSchema,
   meaningSchema,
   meaningsOf,
   type OrderDraft,
@@ -321,6 +323,7 @@ export {
   weightProblem,
   weightSchema,
 } from "./lists.ts";
+export { builtInListUses, listUses } from "./list-uses.ts";
 export {
   type HelpLink,
   helpLink,

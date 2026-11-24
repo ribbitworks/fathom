@@ -8,29 +8,16 @@ import {
   type ChoiceRequest,
   type DraftKind,
   type List,
-  matchesWords,
   type Permission,
-  searchWords,
-  type Show,
   type Tier,
-  parseRecordKey,
 } from "@fathom/shared";
-import {
-  Button,
-  Group,
-  Loader,
-  Modal,
-  Paper,
-  SegmentedControl,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Button, Loader, Modal, Stack } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type MouseEvent, type ReactNode, useState } from "react";
 import { DecisionModal } from "./decision-dialog.tsx";
-import { approvesAll, noDrafts, waitsForRejected } from "./drafts.ts";
+import { approvesAll, waitsForRejected } from "./drafts.ts";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
 import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
@@ -49,12 +36,7 @@ import {
   selectionOf,
 } from "./list-drafts.tsx";
 import { entryNameId, rowId } from "./choice-ids.ts";
-import {
-  draftsWaitingIn,
-  reordered,
-  withList,
-  withoutField,
-} from "./list-changes.ts";
+import { reordered, withList, withoutField } from "./list-changes.ts";
 import { type ChoiceActions, ListPanel, titleId } from "./list-panel.tsx";
 import {
   addChoices,
@@ -71,6 +53,8 @@ import {
   liveLists,
   unchangeableLists,
   listRefusal,
+  retiredLive,
+  updateList,
   moveChoice,
   resubmitListDraft,
   setChoiceRetired,
@@ -79,14 +63,27 @@ import {
 } from "./lists.ts";
 import { peopleQuery } from "./people.ts";
 import { PageHeader } from "./page-header.tsx";
-import { sidePanelScroll, WithSidePanel } from "./side-panel.tsx";
 import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
-import { count } from "./numbers.ts";
-import { besideLive, DraftView } from "./status-mark.tsx";
-import { linkId, ListsTable } from "./lists-table.tsx";
+import { besideLive } from "./status-mark.tsx";
+import {
+  listColumnOrder,
+  type ListChange,
+  ListItems,
+  type ListRow,
+  listRows,
+  listTable,
+} from "./lists-table.tsx";
+import { focusRecordCell } from "./grid-row.tsx";
+import { ModeSwitch } from "./page-header.tsx";
+import { RecordGrid } from "./record-grid.tsx";
+import { noRecordActions } from "./record-table.ts";
+import { hiddenUnlessShown, retiredChoice } from "./view-choices.ts";
+import { useSavedViews } from "./saved-views.tsx";
+import { TableTips } from "./table-tips.tsx";
+import { type ChangeView } from "./table-controls.tsx";
+import { searchFor, type View } from "./table-view.ts";
 import { originalOf } from "./record-drafts.ts";
-import { DecideAllItems, DraftMenu, TableSearch } from "./table-controls.tsx";
 
 const newListId = "list-new";
 const listPanelId = "list-panel";
@@ -105,10 +102,11 @@ export function ListsPage({
   listId,
   canEdit: mayEdit,
   approves,
-  show = "both",
-  onShow,
-  search = "",
-  onSearch,
+  view,
+  onView,
+  applied,
+  onApply,
+  canShareViews = false,
   kind = "all",
   onKind,
   seesPeople = false,
@@ -121,24 +119,25 @@ export function ListsPage({
   // Whether the user sees people, whose columns and drafts may use drafts of lists and choices, so
   // deciding those here includes them as the Drafts page does.
   seesPeople?: boolean;
-  // Which version of each list and choice shows: the draft beside the live one, the draft alone, or
-  // the live one alone, which is read only.
-  show?: Show;
-  onShow?: (show: Show) => void;
-  // Words a list's name, description, or choices must all hold to be shown, ignoring case and
-  // accents, as on the People table.
-  search?: string;
-  onSearch?: (search: string, replace: boolean) => void;
+  // The table's view, with which version of each list and choice shows: the draft beside the live
+  // one, the draft alone, or the live one alone, which is read only.
+  view: View;
+  onView: ChangeView;
+  // The saved view the address started from, if any.
+  applied?: string | undefined;
+  onApply: (view: View, id: string, replace?: boolean) => void;
+  canShareViews?: boolean;
   kind?: ListKind;
   onKind?: (kind: ListKind) => void;
   // The role's permissions, which decide whether and to which classes a list may be moved.
   permissions?: readonly Permission[];
 }) {
+  const { show } = view;
   const canEdit = mayEdit && show !== "live";
-  // What to show, the search, and which lists, stay in the address as lists are opened and closed.
+  // The view and which lists stay in the address as lists are opened and closed.
   const showSearch = {
-    ...(show === "both" ? {} : { show }),
-    ...(search === "" ? {} : { search }),
+    ...searchFor(view),
+    ...(applied === undefined ? {} : { view: applied }),
     ...(kind === "all" ? {} : { kind }),
   };
   const query = useQuery(listsQuery);
@@ -189,7 +188,8 @@ export function ListsPage({
   // Closing the panel puts focus back on the list's row in the table, or, if the switch has since
   // hidden the list, on the switch, so focus is never lost.
   const closePanel = (list: List) => {
-    focusSoon(isKind(list, kind) ? linkId(list) : kindOptionId(kind));
+    if (isKind(list, kind)) focusRecordCell(list.id, "name");
+    else focusSoon(kindOptionId(kind));
     void navigate({
       to: "/lists/{-$listId}",
       params: { listId: undefined },
@@ -314,6 +314,23 @@ export function ListsPage({
     },
   });
 
+  const renameList = (row: ListRow, { name }: ListChange) => {
+    const { list } = row;
+    changeList(
+      list,
+      (current) => drafting({ ...current, name }, ["name"]),
+      async () =>
+        (
+          await updateList(list.id, {
+            name,
+            description: list.description,
+            visibility: list.visibility,
+          })
+        ).changeSetId,
+      `Fathom could not rename ${list.name}.`,
+    );
+  };
+
   const retireList = (list: List) => {
     closeDialog();
     const retired = !list.retired;
@@ -329,8 +346,8 @@ export function ListsPage({
   };
 
   // A list only drafted to be added goes, with its choices; a live one stays, struck through, until
-  // its draft is approved.
-  const removeList = (list: List) => {
+  // its draft is approved, with focus kept in its panel, or on its row when removed from there.
+  const removeList = (list: List, fromRow = false) => {
     closeDialog();
     if (list.draft?.action !== "created") {
       changeList(
@@ -338,9 +355,10 @@ export function ListsPage({
         (current) => drafting(current, [], "deleted"),
         () => deleteList(list.id),
         `Fathom could not remove ${list.name}.`,
-        { focus: titleId },
+        fromRow ? {} : { focus: titleId },
       );
-      focusSoon(titleId);
+      if (fromRow) focusRecordCell(list.id, "name");
+      else focusSoon(titleId);
       return;
     }
     closePanel(list);
@@ -475,48 +493,106 @@ export function ListsPage({
       open &&
       event.currentTarget.contains(target) &&
       !target.closest(
-        "[data-list-row], [data-list-panel], [data-side-panel], button, a",
+        "tr, [data-list-panel], [data-side-panel], section, button, a, input",
       )
     ) {
       closePanel(open);
     }
   };
 
-  // The lists of the kind chosen whose name, description, or choices hold every word searched for,
-  // or, where the search is a list's key, that list.
-  const words = searchWords(search);
-  const searchedKey = parseRecordKey(search);
-  const shownLists = lists.filter(
-    (list) =>
-      isKind(list, kind) &&
-      (searchedKey === undefined
-        ? matchesWords(
-            [
-              list.name,
-              list.description,
-              ...list.choices.map(
-                ({ label, description }) => `${label} ${description}`,
-              ),
-            ].join(" "),
-            words,
-          )
-        : searchedKey.kind === "list" &&
-          searchedKey.keyNumber === list.keyNumber),
-  );
-
-  // Every draft waiting among the lists shown, which Approvers approve or reject all at once, with
-  // the drafts that approving them uses, or that use them.
-  const waiting = canApprove
-    ? draftsWaitingIn(shownLists.filter(({ id }) => !unchangeable.has(id)))
-    : { selection: noDrafts(), total: 0 };
-  const decideAll = (asking: "approve" | "reject") => {
-    setDecision(
-      decisionFor(asking, waiting.selection, approves, all, people.data, true),
-    );
-    setDeciding(true);
-  };
-
   const openWhy = open === undefined ? undefined : unchangeable.get(open.id);
+
+  const { rows: kept, choices } = hiddenUnlessShown({
+    rows: all.filter((list) => isKind(list, kind)),
+    hidden: retiredLive,
+    choice: retiredChoice,
+    label: "Show retired",
+    records: "Retired lists",
+    view,
+  });
+  const rows = listRows(kept, show);
+  const table = listTable({
+    lists: all,
+    shown: kept,
+    unchangeable,
+    onOpen: openList,
+    menuItems: (row) =>
+      !row.live &&
+      canEdit &&
+      !unchangeable.has(row.id) &&
+      row.list.heldBy === undefined && (
+        <ListItems
+          list={row.list}
+          onRetire={retireList}
+          onRemove={(list) => {
+            removeList(list, true);
+          }}
+        />
+      ),
+  });
+  const views = useSavedViews({
+    table: "lists",
+    within: listsQuery.queryKey,
+    view,
+    applied,
+    onApply,
+    canShare: canShareViews,
+    blocked: opened || classMove.opened || deciding,
+  });
+  const panels =
+    open === undefined
+      ? []
+      : [
+          {
+            key: "list",
+            id: listPanelId,
+            name: "the list's panel",
+            node: (
+              <div
+                data-list-panel
+                id={listPanelId}
+                className={classes.panelSlot}
+              >
+                <ListPanel
+                  key={open.id}
+                  list={open}
+                  canEdit={canEdit && openWhy === undefined}
+                  canApprove={canApprove && openWhy === undefined}
+                  unchangeable={mayEdit || mayApprove ? openWhy : undefined}
+                  showLive={besideLive(show)}
+                  drafted={originalOf(drafted, open)}
+                  waits={(selection) =>
+                    waitsForRejected(selection, all, people.data)
+                  }
+                  draftActions={draftActions}
+                  narrow={narrow}
+                  actions={choiceActions(open)}
+                  onClose={() => {
+                    closePanel(open);
+                  }}
+                  onEditList={() => {
+                    openDialog({ kind: "edit", list: open });
+                  }}
+                  onMoveClass={
+                    permissions.includes("data:classify")
+                      ? () => {
+                          classMove.open({
+                            name: open.name,
+                            from: open.visibility,
+                            move: (to) => moveListClass(open.id, to),
+                            refusal: listRefusal(open),
+                            moved: (to, changeSetId) => {
+                              movedClass(open, to, changeSetId);
+                            },
+                          });
+                        }
+                      : undefined
+                  }
+                />
+              </div>
+            ),
+          },
+        ];
 
   let content: ReactNode;
   if (query.isPending) {
@@ -525,77 +601,53 @@ export function ListsPage({
     content = (
       <LoadProblem what="the lists" onRetry={() => void query.refetch()} />
     );
-  } else if (lists.length === 0) {
-    content = (
-      <Paper withBorder p="xl">
-        <Text fz="sm" c="dimmed" ta="center">
-          No lists yet
-        </Text>
-      </Paper>
-    );
   } else {
     content = (
-      <>
-        {/* Laid out as the People table's bar: the search, the Draft button, then how many rows
-            there are. */}
-        <Group gap="sm">
-          {onSearch && (
-            <TableSearch
-              label="Search lists"
-              value={search}
-              onChange={onSearch}
-              // Leaving needs an empty search, but the switch can still leave no list to focus.
-              onLeave={() => {
-                const first = shownLists.at(0);
-                if (first !== undefined) focusSoon(linkId(first));
-              }}
-            />
-          )}
-          {onKind && (
-            <SegmentedControl
-              aria-label="Which lists"
-              name={kindName}
-              value={kind}
-              onChange={(chosen) => {
-                onKind(listKindSchema.parse(chosen));
-              }}
-              data={listKindSchema.options.map((option) => ({
-                value: option,
-                label: listKindName(option),
-              }))}
-            />
-          )}
-          {onShow && (
-            <DraftMenu show={show} onShow={onShow}>
-              {waiting.total > 0 && (
-                <DecideAllItems
-                  total={waiting.total}
-                  everywhere={
-                    draftsWaitingIn(
-                      all.filter(({ id }) => !unchangeable.has(id)),
-                    ).total
-                  }
-                  onDecide={decideAll}
-                />
-              )}
-            </DraftMenu>
-          )}
-          <Text fz="sm" c="dimmed" role="status">
-            {searchWords(search).length > 0 || kind !== "all"
-              ? `${count(shownLists.length)} of ${count(lists.length)}`
-              : `${count(lists.length)} ${lists.length === 1 ? "list" : "lists"}`}
-          </Text>
-        </Group>
-        <div className={sidePanelScroll}>
-          <ListsTable
-            lists={shownLists}
-            selected={listId}
-            search={showSearch}
-            originalOf={(list) => originalOf(drafted, list)}
-            onOpen={openList}
-          />
-        </div>
-      </>
+      <TableTips>
+        <RecordGrid
+          records={rows}
+          table={table}
+          fields={[]}
+          order={listColumnOrder}
+          lists={[]}
+          canEdit={canEdit}
+          canAdd={false}
+          rowActions={false}
+          canEditDrafts={(row) => canEdit && !unchangeable.has(row.id)}
+          approves={canApprove ? approves : []}
+          canEditColumns={false}
+          actions={{
+            ...noRecordActions<ListRow, ListChange, undefined>(
+              (asking, selection, every) => {
+                setDecision(
+                  decisionFor(
+                    asking,
+                    selection,
+                    approves,
+                    all,
+                    people.data,
+                    every,
+                  ),
+                );
+                setDeciding(true);
+              },
+            ),
+            update: renameList,
+            discard: (row) => {
+              draftActions.discard({ kind: "list", list: row.original });
+            },
+            resubmit: (row) => {
+              draftActions.resubmit({ kind: "list", list: row.original });
+            },
+          }}
+          view={view}
+          onView={onView}
+          saved={views.saved}
+          panels={panels}
+          viewChoices={choices}
+          selected={open?.id}
+        />
+      </TableTips>
     );
   }
 
@@ -603,85 +655,35 @@ export function ListsPage({
     <Stack gap="md" className={classes.tablePage} onClick={onPageClick}>
       <PageHeader
         title="Lists"
+        beside={
+          onKind && (
+            <ModeSwitch<ListKind>
+              label="Which lists"
+              name={kindName}
+              modes={listKindSchema.options.map((option) => ({
+                value: option,
+                label: listKindName(option),
+              }))}
+              mode={kind}
+              onMode={onKind}
+            />
+          )
+        }
         action={
-          <Group gap="xs">
-            {canEdit && (
-              <Button
-                id={newListId}
-                onClick={() => {
-                  openDialog({ kind: "new" });
-                }}
-              >
-                New list
-              </Button>
-            )}
-          </Group>
+          canEdit && (
+            <Button
+              id={newListId}
+              onClick={() => {
+                openDialog({ kind: "new" });
+              }}
+            >
+              New list
+            </Button>
+          )
         }
       />
-      <DraftView show={show}>
-        <WithSidePanel
-          storageKey="fathom-record-panel-width"
-          panels={
-            open
-              ? [
-                  {
-                    key: "list",
-                    id: listPanelId,
-                    name: "the list's panel",
-                    node: (
-                      <div
-                        data-list-panel
-                        id={listPanelId}
-                        className={classes.panelSlot}
-                      >
-                        <ListPanel
-                          key={open.id}
-                          list={open}
-                          canEdit={canEdit && openWhy === undefined}
-                          canApprove={canApprove && openWhy === undefined}
-                          unchangeable={
-                            mayEdit || mayApprove ? openWhy : undefined
-                          }
-                          showLive={besideLive(show)}
-                          drafted={originalOf(drafted, open)}
-                          waits={(selection) =>
-                            waitsForRejected(selection, all, people.data)
-                          }
-                          draftActions={draftActions}
-                          narrow={narrow}
-                          actions={choiceActions(open)}
-                          onClose={() => {
-                            closePanel(open);
-                          }}
-                          onEditList={() => {
-                            openDialog({ kind: "edit", list: open });
-                          }}
-                          onMoveClass={
-                            permissions.includes("data:classify")
-                              ? () => {
-                                  classMove.open({
-                                    name: open.name,
-                                    from: open.visibility,
-                                    move: (to) => moveListClass(open.id, to),
-                                    refusal: listRefusal(open),
-                                    moved: (to, changeSetId) => {
-                                      movedClass(open, to, changeSetId);
-                                    },
-                                  });
-                                }
-                              : undefined
-                          }
-                        />
-                      </div>
-                    ),
-                  },
-                ]
-              : []
-          }
-        >
-          {content}
-        </WithSidePanel>
-      </DraftView>
+      {content}
+      {views.dialogs}
       <DecisionModal
         decision={decision}
         opened={deciding}

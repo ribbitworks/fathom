@@ -355,6 +355,32 @@ export function withRetiring<D extends { action: string; changed: string[] }>(
     : record.draft;
 }
 
+// What a list's row says about it after its name: Built in, for a list Fathom builds in, and
+// Retired, while it is retired as it is live; a draft retiring or restoring it says so in its own box.
+export const listFacts = (
+  list: Pick<List, "builtIn" | "retired" | "draft">,
+): string[] => [
+  ...(list.builtIn == null ? [] : ["Built in"]),
+  ...(retiredLive(list) ? ["Retired"] : []),
+];
+
+export type ListAction = "retire" | "restore" | "remove";
+
+// What may be done to a list from its row besides its drafts: retiring or restoring it and removing
+// it, for a list Fathom doesn't build in and no draft removes. A list only drafted to be added isn't
+// live yet, so has nothing to retire.
+export function listActions(
+  list: Pick<List, "builtIn" | "retired" | "draft">,
+): ListAction[] {
+  if (list.builtIn != null || list.draft?.action === "deleted") return [];
+  return [
+    ...(list.draft?.action === "created"
+      ? []
+      : [list.retired ? ("restore" as const) : ("retire" as const)]),
+    "remove",
+  ];
+}
+
 export const choice = (
   id: string,
   label: string,

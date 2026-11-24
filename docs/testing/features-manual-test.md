@@ -343,7 +343,7 @@ Covered by [REL-23](release-cycles-manual-test.md#rel-23-a-cycles-new-length-mov
     - **Feature statuses** is in its table.
   - **Notes:**
 
-- [ ] `05D1` Select **Feature statuses** in the table.
+- [ ] `05D1` Select the details button of **Feature statuses** in the table.
   - **Expected:**
     - The list's name has a grey **Built in** box after it.
     - Its choices are, in order, **Possible**, **Planned**, **In progress**, **Done** and **Cancelled**.

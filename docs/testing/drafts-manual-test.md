@@ -161,7 +161,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Lists** page open from the left-hand menu.
 
-- [ ] `2F53` Select 'Skills'.
+- [ ] `2F53` Select the details button of 'Skills'.
   - **Expected:**
     - A panel opens.
     - 'Rust' has a yellow dot in its slot.
@@ -229,7 +229,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-08.
 
-- [ ] `4C9E` Select 'Positions' in its row, not its Live row.
+- [ ] `4C9E` Select the details button of 'Positions'.
   - **Expected:**
     - A panel opens with 'Positions' at the top.
     - A red dot in a ring is before the description under it.
@@ -252,7 +252,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The table of lists shows.
   - **Notes:**
 
-- [ ] `DD9A` Select 'Sites'.
+- [ ] `DD9A` Select the details button of 'Sites'.
   - **Expected:** A panel opens with 'Sites' at the top.
   - **Notes:**
 
@@ -268,7 +268,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The table of lists shows.
   - **Notes:**
 
-- [ ] `EE37` Select 'Sites'.
+- [ ] `EE37` Select the details button of 'Sites'.
   - **Expected:** A panel opens with 'Sites' at the top.
   - **Notes:**
 

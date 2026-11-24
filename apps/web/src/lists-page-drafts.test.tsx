@@ -41,6 +41,8 @@ import {
   sent,
   openDraftMenu,
   noPeople,
+  listsGrid,
+  cellText,
 } from "./test-lists-page.tsx";
 
 afterEach(() => {
@@ -57,7 +59,7 @@ describe("drafts on the Lists page", () => {
         }),
     });
     renderApp("/lists");
-    const table = await screen.findByRole("table", { name: "Lists" });
+    const table = await listsGrid();
     expect(within(table).getByText(/Draft: added, unpublished/)).toBeDefined();
     expect(within(table).queryByText("Unpublished")).toBeNull();
   });
@@ -68,7 +70,7 @@ describe("drafts on the Lists page", () => {
       "GET /api/lists": draftedAnswer,
     });
     renderApp("/lists/l5");
-    const table = await screen.findByRole("table", { name: "Lists" });
+    const table = await listsGrid();
     expect(within(table).getByText(/Draft: added/)).toBeDefined();
     const opened = await screen.findByRole("heading", {
       name: "Teams",
@@ -231,7 +233,7 @@ describe("drafts on the Lists page", () => {
     });
     renderApp("/lists/l1?show=drafts");
     await screen.findByRole("heading", { name: "Locations", level: 2 });
-    const table = screen.getByRole("table", { name: "Lists" });
+    const table = await listsGrid();
     expect(within(table).getByText("Skills")).toBeDefined();
     expect(within(table).queryByText("Talents")).toBeNull();
     expect(within(panel()).queryByText(/moved/)).toBeNull();
@@ -269,7 +271,7 @@ describe("drafts on the Lists page", () => {
     expect(sent(fetch, "PUT", "/api/lists/l1/choices/c4/retired")).toBe(false);
   });
 
-  it("shows a renamed list's live row, resubmits its rejected draft, and discards it", async () => {
+  it("shows a renamed list's live name in its row, resubmits its rejected draft, and discards it", async () => {
     const fetch = serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": otherAnswer,
@@ -277,10 +279,10 @@ describe("drafts on the Lists page", () => {
       "DELETE /api/lists/l2/draft": savedAs(),
     });
     renderApp("/lists/l2");
-    const table = await screen.findByRole("table", { name: "Lists" });
-    // Under the renamed list, and under the list whose choices have drafts.
-    expect(within(table).getAllByText(", live")).toHaveLength(2);
-    // Those two alone: a list with no draft has no Live row, not even an empty one.
+    const table = await listsGrid();
+    expect(cellText("l2", "name")).toMatch(/^Talents.*, draft, live Skills$/);
+    // Live rows only under the renamed list and the list whose choices have drafts: a list with no
+    // draft has none, not even an empty one.
     expect(
       within(table).getAllByRole("row", { hidden: true }).length -
         within(table).getAllByRole("row").length,
@@ -647,7 +649,7 @@ describe("unpublished and held changes on the Lists page", () => {
         ),
       },
     ]);
-    const table = screen.getByRole("table", { name: "Lists" });
+    const table = await listsGrid();
     expect(within(table).getByText(/being changed by/)).toBeDefined();
     expect(
       within(panel()).getAllByText(/being changed by/).length,

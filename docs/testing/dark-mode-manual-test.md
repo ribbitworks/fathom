@@ -794,7 +794,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The row of 'Sites' and its Live row show.
   - **Notes:**
 
-- [ ] `B984` Select 'Sites' in its row, not its Live row.
+- [ ] `B984` Select the details button of 'Sites'.
   - **Expected:**
     - The red dot's ring in the slot of 'Harbourside' is easy to see.
     - The yellow dots and the light green Live row under 'Northmere Labs' are easy to see.

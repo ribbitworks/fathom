@@ -35,7 +35,7 @@ import { createDataAccess } from "./data/index.ts";
 import { findStartingRole, giveRole } from "./data/roles.ts";
 
 // A fictional address for Fathom, and a session secret used only by tests.
-const publicUrl = "https://fathom.example.test";
+export const publicUrl = "https://fathom.example.test";
 const secret = "fictional-session-secret-for-tests-only-0123456789";
 const password = "fictional password 1";
 

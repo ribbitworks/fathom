@@ -34,6 +34,7 @@ import {
   entryName,
   undone,
   undoLast,
+  listsGrid,
 } from "./test-lists-page.tsx";
 
 afterEach(() => {
@@ -105,18 +106,14 @@ describe("creating and editing lists", () => {
     expect(
       await screen.findByRole("heading", { name: "Product areas", level: 2 }),
     ).toBeDefined();
-    expect(
-      within(screen.getByRole("table", { name: "Lists" })).getByText(
-        "Product areas",
-      ),
-    ).toBeDefined();
+    expect(within(await listsGrid()).getByText("Product areas")).toBeDefined();
     await undoWithKeys(fetch);
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
     await waitFor(() => {
       expect(
-        within(screen.getByRole("table", { name: "Lists" })).queryByText(
+        within(screen.getByRole("grid", { name: "Lists" })).queryByText(
           "Product areas",
         ),
       ).toBeNull();
@@ -478,14 +475,8 @@ describe("focus", () => {
 
   it("does not close the panel for clicks on the page's buttons", async () => {
     const { history } = await openPanel();
-    await userEvent.click(
-      within(
-        screen.getByRole("table", { name: "Lists" })
-          .parentElement as HTMLElement,
-      ).getByRole("button", {
-        name: "Show retired (1)",
-      }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
+    expect(await screen.findByRole("menu")).toBeDefined();
     expect(history.location.pathname).toBe("/lists/l1");
   });
 
