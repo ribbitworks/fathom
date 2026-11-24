@@ -64,16 +64,16 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `D783` Read the **Role** and **Accounts** columns from top to bottom.
   - **Expected:**
     - The **Role** and **Accounts** columns read, from top to bottom:
-      - **Administrator** 1
-      - **Engineering Director** 1
-      - **Engineering Manager** 2
-      - **Executive** 1
-      - **Feature Lead** 1
-      - **Product Manager** 1
-      - **Project Manager** 1
+      - **Administrator** 2
+      - **Engineering Director** 2
+      - **Engineering Manager** 3
+      - **Executive** 2
+      - **Feature Lead** 2
+      - **Product Manager** 2
+      - **Project Manager** 2
       - **Superuser** 1
-      - **Team Member** 1
-      - **Workforce Administrator** 2
+      - **Team Member** 2
+      - **Workforce Administrator** 3
     - Each row ends with **Edit** and **Copy** buttons.
     - **New role** is at the top right.
   - **Notes:**
@@ -206,9 +206,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `60DE` Select **Save**.
   - **Expected:**
-    - The dialog, still titled **Edit Project Manager**, says "This change affects 1 account."
-    - It lists **Project Manager**, with its email address.
-    - Under **Gains**: a line for each of the **Accounts**, **Roles**, **Settings** and **Access history** pages, and a sentence about seeing accounts, roles, settings and the access history.
+    - The dialog, still titled **Edit Project Manager**, says "This change affects 2 accounts."
+    - It lists **Project Manager** and **Superuser**, each with its email address.
+    - Under **Gains** for each: a line for each of the **Accounts**, **Roles**, **Settings** and **Access history** pages, and a sentence about seeing accounts, roles, settings and the access history.
     - **Cancel** and **Save changes** are on the right, and there is no **Back** button.
   - **Notes:**
 
@@ -219,7 +219,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `D295` Select **Save**.
-  - **Expected:** The dialog says "This change affects 1 account." again.
+  - **Expected:** The dialog says "This change affects 2 accounts." again.
   - **Notes:**
 
 - [ ] `C2FC` Select **Save changes**.
@@ -262,7 +262,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `CCBE` Select **Save**.
-  - **Expected:** The confirmation lists **Project Manager**, with "The Access history page no longer appears." among the lines under **Loses**.
+  - **Expected:** The confirmation lists **Project Manager** and **Superuser**, each with "The Access history page no longer appears." among the lines under **Loses**.
   - **Notes:**
 
 - [ ] `FE0E` Select **Save changes**.
@@ -367,7 +367,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `826B` Select the **Roles** page in the left-hand menu.
-  - **Expected:** **Copy of Team Member** has 1 account and **Team Member** has 0.
+  - **Expected:** **Copy of Team Member** has 1 account, and **Team Member** has 1, the Superuser.
   - **Notes:**
 
 - [ ] `4E87` Sign out, and sign in as the Team Member, `team.member@fathom.test`.

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts-table.tsx", "apps/web/src/accounts-panel.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/web/src/layout.tsx", "apps/web/src/session.ts", "apps/web/src/names.ts", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts", "packages/seed/src/accounts.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Accounts
@@ -100,8 +100,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:**
     - There are 12 rows, in alphabetical order by name
     - Each **Email address** cell shows the account's email address
-    - Each **Roles** cell shows the account's roles, as [Development Setup](../design/development-setup.md#development-accounts) lists: one for every account but "Feature Lead"
+    - Each **Roles** cell shows the account's roles, as [Development Setup](../design/development-setup.md#development-accounts) lists: one for every account but "Feature Lead" and "Superuser"
     - The "Feature Lead" row's **Roles** cell reads "Feature Lead (default), Engineering Manager"
+    - The "Superuser" row's **Roles** cell reads "Superuser (default)", then every other role
     - Each **Status** cell reads "Active"
     - Each **Created** cell shows a date
   - **Notes:**
