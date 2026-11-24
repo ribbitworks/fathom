@@ -42,6 +42,23 @@ describe("the milestone table's columns", () => {
   });
 });
 
+describe("a date typed into a cell", () => {
+  it("is refused when laying it out would drop a digit", () => {
+    expect(cellKinds.date.problem(milestoneColumn("date"), "2026-101-08")).toBe(
+      "Date: use a date such as 2026-10-31",
+    );
+  });
+
+  it("is saved laid out when only a dash is out of place", () => {
+    expect(
+      cellKinds.date.problem(milestoneColumn("date"), "202611-08"),
+    ).toBeUndefined();
+    expect(milestoneColumn("date").change("202611-08")).toEqual({
+      date: "2026-11-08",
+    });
+  });
+});
+
 describe("a date pasted into a cell", () => {
   it("is laid out as a day", () => {
     expect(cellKinds.date.pasted(milestoneColumn("date"), "20300901")).toEqual({
@@ -411,7 +428,10 @@ describe("a month cell", () => {
   });
 
   it("lays out digits as they are typed, ignoring anything else", () => {
-    expect(month.asTyped?.("2027a03")).toBe("2027-03");
+    expect(month.asTyped?.({ text: "2027a03", cursor: 7 })).toEqual({
+      text: "2027-03",
+      cursor: 7,
+    });
   });
 
   it("takes a pasted month", () => {

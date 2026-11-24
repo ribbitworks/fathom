@@ -81,3 +81,53 @@ describe("a value opened for changing", () => {
     ]).toEqual([0, "FX-100".length]);
   });
 });
+
+describe("a date opened for changing", () => {
+  const starts = cellColumn<CellRecord, PlanChange>("starts", "date", {
+    label: "Starts",
+    required: false,
+    multiple: false,
+    choices: [],
+  });
+
+  function StartsRow() {
+    const { editingOf } = useRecordEditing<CellRecord, PlanChange>();
+    const editing = editingOf({
+      id: "a",
+      kind: "",
+      values: { starts: "2026-11-08" },
+      save: vi.fn(),
+      others: () => [],
+      recordProblem: () => undefined,
+    })(starts);
+    return editing?.open === true ? (
+      editing.editor
+    ) : (
+      <button type="button" onClick={editing?.onStart}>
+        Change Starts
+      </button>
+    );
+  }
+
+  it("leaves the other digits and the cursor in place when a digit in the middle is deleted", async () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <StartsRow />
+      </MantineProvider>,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change Starts" }),
+    );
+    const field = await screen.findByRole<HTMLInputElement>("textbox", {
+      name: "Starts",
+    });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(field);
+    });
+
+    field.setSelectionRange("2026".length, "2026".length);
+    await userEvent.keyboard("{Backspace}");
+
+    expect([field.value, field.selectionStart]).toEqual(["202-11-08", 3]);
+  });
+});

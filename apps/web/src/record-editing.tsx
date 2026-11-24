@@ -4,6 +4,7 @@
 // cells do: which value's editor is open, and what is wrong with the value last given. Each value is
 // saved and checked as its cell saves and checks it, and a note opens in a panel of its own.
 
+import type { Typing } from "@fathom/shared";
 import { Checkbox, Group, NativeSelect, Text } from "@mantine/core";
 import { type ReactNode, useEffect, useEffectEvent, useState } from "react";
 import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
@@ -22,6 +23,7 @@ import {
   fieldLabel,
   withUnit,
 } from "./table-view.ts";
+import { typeIn } from "./type-in.ts";
 
 type Keyed = Pick<Column<never>, "key">;
 
@@ -70,6 +72,7 @@ export function ValueField({
   problem,
   text,
   maxLength,
+  asTyped,
   onText,
   onEnter,
   onCancel,
@@ -82,6 +85,7 @@ export function ValueField({
   problem?: string | undefined;
   text: string;
   maxLength?: number | undefined;
+  asTyped?: ((typing: Typing) => Typing) | undefined;
   onText: (text: string) => void;
   onEnter: () => void;
   // What Esc does; with nothing, Esc is left to the panel, which closes.
@@ -103,7 +107,8 @@ export function ValueField({
       value={text}
       autoComplete="off"
       onChange={(event) => {
-        onText(event.currentTarget.value);
+        const box = event.currentTarget;
+        onText(asTyped === undefined ? box.value : typeIn(box, asTyped));
       }}
       onKeyDown={(event) => {
         if (event.key === "Escape" && onCancel !== undefined) {
@@ -137,7 +142,7 @@ function TextEditor({
   // closes the form instead.
   alwaysOpen?: boolean;
   hint?: string | undefined;
-  asTyped?: ((text: string) => string) | undefined;
+  asTyped?: ((typing: Typing) => Typing) | undefined;
   // In a form or panel, for a column that offers units: the units, and how to enter it in one.
   units?: readonly ColumnUnit[] | undefined;
   onUnit?: ((unit: string) => void) | undefined;
@@ -162,9 +167,8 @@ function TextEditor({
       hint={hint}
       problem={problem}
       text={text}
-      onText={(typed) => {
-        setTyped(asTyped?.(typed) ?? typed);
-      }}
+      asTyped={asTyped}
+      onText={setTyped}
       onEnter={() => {
         onDone(given(text), "enter");
       }}

@@ -66,6 +66,30 @@ describe("the day box", () => {
     expect((input as HTMLInputElement).value).toBe("2027-01");
   });
 
+  const deleteTheYearsLastDigit = async () => {
+    const { input, onChange } = box();
+    const day = input as HTMLInputElement;
+    await userEvent.type(day, "20261108");
+    day.setSelectionRange("2026".length, "2026".length);
+    await userEvent.keyboard("{Backspace}");
+    return { day, onChange };
+  };
+
+  it("leaves the other digits and the cursor in place when a digit in the middle is deleted", async () => {
+    const { day } = await deleteTheYearsLastDigit();
+    expect([day.value, day.selectionStart]).toEqual(["202-11-08", 3]);
+  });
+
+  it("takes a digit typed into the gap, with the cursor after it", async () => {
+    const { day, onChange } = await deleteTheYearsLastDigit();
+    await userEvent.keyboard("7");
+    expect([day.value, day.selectionStart, onChange.mock.lastCall]).toEqual([
+      "2027-11-08",
+      4,
+      ["2027-11-08", true],
+    ]);
+  });
+
   it("says nothing while a day is being typed", async () => {
     const { input } = box();
     await userEvent.type(input, "202701");
