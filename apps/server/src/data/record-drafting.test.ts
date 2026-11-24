@@ -55,18 +55,7 @@ describe("a record to change", () => {
     });
   });
 
-  it("is missing when Fathom keeps it, as a project's general feature", () => {
-    const state = recordsState({
-      feature: kindState([
-        ["feature-1", { name: "General", generalForProjectId: "project-1" }],
-      ]),
-    });
-    expect(recordToChange(state, "feature", "feature-1")).toEqual({
-      refusal: { reason: "missing" },
-    });
-  });
-
-  it("is an ordinary feature, which Fathom doesn't keep", () => {
+  it("is the record as it is when it has no draft", () => {
     const ordinary = feature(null);
     const state = recordsState({
       feature: kindState([["feature-1", ordinary]]),

@@ -4,7 +4,7 @@
 // as a draft from a month, the people, planned hires and features that can be allocated and when,
 // unpublished changes, and someone's employment dates.
 
-import { features, people, projects } from "@fathom/db";
+import { features, people } from "@fathom/db";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -18,7 +18,6 @@ import {
   addPerson,
   addHire,
   addFeature,
-  addGeneralFeature,
   change,
   changed,
   read,
@@ -320,18 +319,15 @@ describe("unpublished changes", () => {
   it("are seen as drafts only by their maker, and named by their feature", async () => {
     const personId = await addPerson();
     const featureId = await addFeature();
-    const general = await addGeneralFeature();
-    for (const each of [featureId, general.featureId]) {
-      expect(
-        (
-          await change(
-            { personId, featureId: each, percentage: 50, from: month(0) },
-            manager,
-            false,
-          )
-        ).statusCode,
-      ).toBe(200);
-    }
+    expect(
+      (
+        await change(
+          { personId, featureId, percentage: 50, from: month(0) },
+          manager,
+          false,
+        )
+      ).statusCode,
+    ).toBe(200);
     expect(
       (await allocationOf({ personId }, featureId, manager))?.draft
         ?.unpublished,
@@ -341,10 +337,6 @@ describe("unpublished changes", () => {
       .select({ name: features.name })
       .from(features)
       .where(eq(features.id, featureId));
-    const [project] = await test.connection
-      .select({ name: projects.name })
-      .from(projects)
-      .where(eq(projects.id, general.projectId));
     const listed = await test.request(
       manager.cookie,
       "GET",
@@ -355,12 +347,7 @@ describe("unpublished changes", () => {
         .json<{ changes: { subject: string }[] }>()
         .changes.map(({ subject }) => subject)
         .sort(),
-    ).toEqual(
-      [
-        `an allocation to the feature ${String(feature?.name)}`,
-        `an allocation to the project ${String(project?.name)}`,
-      ].sort(),
-    );
+    ).toEqual([`an allocation to the feature ${String(feature?.name)}`]);
     await test.request(manager.cookie, "POST", "/api/unpublished/discard");
   });
 });

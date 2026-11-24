@@ -35,7 +35,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftMakers, everything } from "./draft-makers.ts";
 import type { Recorded } from "./draft-records.ts";
-import { allocationFields, allocationKind } from "./allocation-kinds.ts";
+import { allocationKind, allocationRowFields } from "./allocation-kinds.ts";
 import { expectedMonth, hireIdOf } from "./hire-fields.ts";
 import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
 import { drafting, saveRecordDraft } from "./record-drafting.ts";
@@ -567,7 +567,7 @@ export async function removeAllocationsOf(
       "deleted",
       row as unknown as Recorded,
       undefined,
-      allocationFields,
+      allocationRowFields,
     ),
   );
 }

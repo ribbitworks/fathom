@@ -37,7 +37,6 @@ import { liveValuesOf } from "./column-types.ts";
 import { readListsWithin } from "./list-reads.ts";
 import { linksOf, notesOf, numbersOf, valuesOf } from "./person-fields.ts";
 import { milestonesOf } from "./project-kinds.ts";
-import { isGeneralFeature } from "./release-kinds.ts";
 import { text } from "./reporting.ts";
 import { fieldOfValue } from "./values.ts";
 import {
@@ -375,9 +374,9 @@ export async function planOut(
     })),
     projects: projects.map((project) => ownerShown(project, hidden)),
     proposals: proposals.map((proposal) => ownerShown(proposal, hidden)),
-    features: inOrder(state, "feature")
-      .filter((id) => !isGeneralFeature(state, id))
-      .map((id) => featureOut(state, makers, staffed, id)),
+    features: inOrder(state, "feature").map((id) =>
+      featureOut(state, makers, staffed, id),
+    ),
     featureColumns: await featureColumnsOut(transaction, viewer),
   });
 }

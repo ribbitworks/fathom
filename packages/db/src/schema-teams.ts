@@ -16,7 +16,7 @@ import {
 import { sql } from "drizzle-orm";
 import { fathomSchema } from "./schema-core.ts";
 import { people, plannedHires } from "./schema-people.ts";
-import { features } from "./schema-plan.ts";
+import { activities, features } from "./schema-plan.ts";
 
 // Who each person reports to, from a date until their next line starts, so past managers are kept
 // and capacity by manager can be counted for past months. A line with no manager records that the
@@ -127,12 +127,12 @@ export const featureTeamMemberships = fathomSchema.table(
   ],
 );
 
-// Allocations: one person or planned hire on one feature, holding the percentage of a month that
-// takes effect from each month it changes, such as {"2027-01": 50, "2027-07": null}, in force until
-// the next, where null stops it; the server checks its shape. A person or planned hire has at most
-// one allocation to a feature, so each is one draft. Removing a person or planned hire removes
-// their allocations, which the server records; a feature with allocations is refused removal by
-// name before the database refuses it.
+// Allocations: one person or planned hire on one feature or one activity, holding the percentage of
+// a month that takes effect from each month it changes, such as {"2027-01": 50, "2027-07": null}, in
+// force until the next, where null stops it; the server checks its shape. A person or planned hire
+// has at most one allocation to a feature or activity, so each is one draft. Removing a person or
+// planned hire removes their allocations, which the server records; a feature or activity with
+// allocations is refused removal by name before the database refuses it.
 export const allocations = fathomSchema.table(
   "allocations",
   {
@@ -143,9 +143,12 @@ export const allocations = fathomSchema.table(
     plannedHireId: uuid("planned_hire_id").references(() => plannedHires.id, {
       onDelete: "cascade",
     }),
-    featureId: uuid("feature_id")
-      .notNull()
-      .references(() => features.id, { onDelete: "restrict" }),
+    featureId: uuid("feature_id").references(() => features.id, {
+      onDelete: "restrict",
+    }),
+    activityId: uuid("activity_id").references(() => activities.id, {
+      onDelete: "restrict",
+    }),
     months: jsonb("months").$type<Record<string, number | null>>().notNull(),
   },
   (table) => [
@@ -157,7 +160,20 @@ export const allocations = fathomSchema.table(
       table.plannedHireId,
       table.featureId,
     ),
+    uniqueIndex("allocations_person_activity_index").on(
+      table.personId,
+      table.activityId,
+    ),
+    uniqueIndex("allocations_planned_hire_activity_index").on(
+      table.plannedHireId,
+      table.activityId,
+    ),
     index("allocations_feature_index").on(table.featureId),
+    index("allocations_activity_index").on(table.activityId),
+    check(
+      "allocations_one_work",
+      sql`num_nonnulls(${table.featureId}, ${table.activityId}) = 1`,
+    ),
     check(
       "allocations_one_assignee",
       sql`(${table.personId} IS NULL) <> (${table.plannedHireId} IS NULL)`,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The tables of the plan: release streams and their cycles, releases, customers, proposals,
-// projects, milestones, features and the planning settings.
+// projects, milestones, features, activities and the planning settings.
 
 import {
   boolean,
@@ -230,7 +230,6 @@ export const milestones = fathomSchema.table(
 );
 
 // Features: the planned work on the roadmap. A feature's name is unique, ignoring letter case. A
-// project's general feature has no name of its own, since it shows its project's and follows it. A
 // target cycle is known by its stream and start date, as cycles are worked out rather than stored;
 // a feature with none is in Later. Its status is a choice of the built-in list of feature statuses,
 // and its priority, size and risk, each optional, choices of their built-in lists.
@@ -241,7 +240,7 @@ export const features = fathomSchema.table(
   "features",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: text("name"),
+    name: text("name").notNull(),
     statusId: uuid("status_id")
       .notNull()
       .references(() => listItems.id, { onDelete: "restrict" }),
@@ -274,16 +273,9 @@ export const features = fathomSchema.table(
     }),
     description: text("description"),
     note: text("note"),
-    generalForProjectId: uuid("general_for_project_id").references(
-      () => projects.id,
-      { onDelete: "restrict" },
-    ),
   },
   (table) => [
     uniqueIndex("features_name_index").on(sql`lower(${table.name})`),
-    uniqueIndex("features_general_for_project_index").on(
-      table.generalForProjectId,
-    ),
     index("features_target_index").on(table.targetStreamId, table.targetCycle),
     index("features_feature_team_index").on(table.featureTeamId),
     index("features_status_index").on(table.statusId),
@@ -293,10 +285,6 @@ export const features = fathomSchema.table(
     ),
     check("features_note_not_empty", sql`${table.note} <> ''`),
     check(
-      "features_named_or_general",
-      sql`(${table.name} IS NULL) = (${table.generalForProjectId} IS NOT NULL)`,
-    ),
-    check(
       "features_target_whole",
       sql`(${table.targetStreamId} IS NULL) = (${table.targetCycle} IS NULL)`,
     ),
@@ -305,6 +293,51 @@ export const features = fathomSchema.table(
       sql`${table.estimateHours} >= 0 AND ${table.estimateHours} <> 'NaN'`,
     ),
     check("features_description_not_empty", sql`${table.description} <> ''`),
+  ],
+);
+
+// Activities: work a project or a release needs that isn't a feature, such as data migration or
+// release testing, each of exactly one project or one release. An activity's name is unique within
+// its project or release, ignoring letter case. Its note is Markdown checked by the server, and its
+// estimate is in hours, as a feature's are. Its colour is a palette name checked by the server, as a
+// release's is.
+export const activities = fathomSchema.table(
+  "activities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id").references(() => projects.id, {
+      onDelete: "restrict",
+    }),
+    releaseId: uuid("release_id").references(() => releases.id, {
+      onDelete: "restrict",
+    }),
+    name: text("name").notNull(),
+    description: text("description"),
+    note: text("note"),
+    estimateHours: numeric("estimate_hours", {
+      mode: "number",
+      precision: 12,
+      scale: 2,
+    }),
+    colour: text("colour"),
+  },
+  (table) => [
+    uniqueIndex("activities_project_name_index")
+      .on(table.projectId, sql`lower(${table.name})`)
+      .where(sql`${table.projectId} IS NOT NULL`),
+    uniqueIndex("activities_release_name_index")
+      .on(table.releaseId, sql`lower(${table.name})`)
+      .where(sql`${table.releaseId} IS NOT NULL`),
+    check(
+      "activities_one_owner",
+      sql`num_nonnulls(${table.projectId}, ${table.releaseId}) = 1`,
+    ),
+    check("activities_note_not_empty", sql`${table.note} <> ''`),
+    check("activities_description_not_empty", sql`${table.description} <> ''`),
+    check(
+      "activities_estimate_not_negative",
+      sql`${table.estimateHours} >= 0 AND ${table.estimateHours} <> 'NaN'`,
+    ),
   ],
 );
 

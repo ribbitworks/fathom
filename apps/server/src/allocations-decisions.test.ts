@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Integration tests for deciding allocations and removing what they name, against a PostgreSQL
-// server of their own: approving, rejecting and discarding drafts, and who may; removing features,
-// projects, people and planned hires; and the change history, which records both.
+// Integration tests for deciding allocations, removing the features, people and planned hires they
+// name, and the change history, against a PostgreSQL server of their own.
 
-import { features, people, plannedHires, projects } from "@fathom/db";
+import { features, people, plannedHires } from "@fathom/db";
 import { type ChangeHistory } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -24,7 +23,7 @@ import {
   hireNumber,
   addHire,
   addFeature,
-  addGeneralFeature,
+  activityAllocation,
   change,
   changed,
   read,
@@ -214,98 +213,6 @@ describe("removing what allocations name", () => {
     );
   });
 
-  it("refuses removing a project whose general feature has allocations", async () => {
-    const general = await addGeneralFeature();
-    const personId = await addPerson();
-    await changed({
-      personId,
-      featureId: general.featureId,
-      percentage: 50,
-      from: month(0),
-    });
-    const response = await test.request(
-      director.cookie,
-      "DELETE",
-      `/api/projects/${general.projectId}`,
-    );
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toMatch(
-      /has allocations, so it can't be removed\. Allocations are time spent, so the project stays\.$/,
-    );
-  });
-
-  it("refuses allocating to a project's general feature once the project is drafted to be removed", async () => {
-    const general = await addGeneralFeature();
-    const removing = await test.request(
-      director.cookie,
-      "DELETE",
-      `/api/projects/${general.projectId}`,
-    );
-    expect(removing.statusCode, removing.body).toBe(200);
-    const refused = await change({
-      personId: await addPerson(),
-      featureId: general.featureId,
-      percentage: 50,
-      from: month(0),
-    });
-    expect(refused.statusCode).toBe(409);
-    expect(errorOf(refused)).toMatch(
-      /^This links to the project Fictional Project \d+, which is drafted to be removed; discard that draft first$/,
-    );
-  });
-
-  it("names no project drafted to be removed to a role that can't see the plan", async () => {
-    const general = await addGeneralFeature();
-    const removing = await test.request(
-      director.cookie,
-      "DELETE",
-      `/api/projects/${general.projectId}`,
-    );
-    expect(removing.statusCode, removing.body).toBe(200);
-    const allocating = await test.signedIn([
-      "allocations:edit",
-      "features:view",
-      "feature-teams:view",
-      "people:view",
-      "personal:view",
-      "confidential:view",
-    ]);
-    const refused = await change(
-      {
-        personId: await addPerson(),
-        featureId: general.featureId,
-        percentage: 50,
-        from: month(0),
-      },
-      allocating,
-    );
-    expect(refused.statusCode).toBe(409);
-    expect(errorOf(refused)).toBe(
-      "This links to a project, which is drafted to be removed; discard that draft first",
-    );
-  });
-
-  it("refuses allocating to a project's general feature while another holds the project's removal", async () => {
-    const general = await addGeneralFeature();
-    const removing = await test.request(
-      director.cookie,
-      "DELETE",
-      `/api/projects/${general.projectId}`,
-      undefined,
-      { publish: false },
-    );
-    expect(removing.statusCode, removing.body).toBe(200);
-    const refused = await change({
-      personId: await addPerson(),
-      featureId: general.featureId,
-      percentage: 50,
-      from: month(0),
-    });
-    expect(refused.statusCode).toBe(409);
-    expect(errorOf(refused)).toMatch(/has not yet published/);
-    await test.request(director.cookie, "POST", "/api/unpublished/discard");
-  });
-
   it("removes a person's allocations with them, recording it", async () => {
     const { personId, id } = await liveAllocation();
     await test.request(director.cookie, "DELETE", `/api/people/${personId}`);
@@ -320,6 +227,23 @@ describe("removing what allocations name", () => {
     expect(
       (await test.historyOf(id)).filter(({ action }) => action === "deleted"),
     ).not.toHaveLength(0);
+  });
+
+  it("records the activity when removing a person removes an allocation to one", async () => {
+    const { personId, id, activityId } = await activityAllocation();
+    await test.request(director.cookie, "DELETE", `/api/people/${personId}`);
+    const response = await test.request(
+      director.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { people: [personId] },
+    );
+    expect(response.statusCode, response.body).toBe(200);
+    expect(
+      (await test.historyOf(id)).find(
+        ({ action, field }) => action === "deleted" && field === "activityId",
+      )?.oldValue,
+    ).toBe(activityId);
   });
 
   it("refuses removing a person while any of their allocations has a draft", async () => {
@@ -397,24 +321,6 @@ describe("the change history", () => {
       oldValue: [`50% from ${month(0)}`, `0% from ${month(2)}`],
       newValue: [`50% from ${month(0)}`, `25% from ${month(2)}`],
     });
-  });
-
-  it("names a general feature's allocation by its project", async () => {
-    const general = await addGeneralFeature();
-    const personId = await addPerson();
-    await changed({
-      personId,
-      featureId: general.featureId,
-      percentage: 50,
-      from: month(0),
-    });
-    const [project] = await test.connection
-      .select({ name: projects.name })
-      .from(projects)
-      .where(eq(projects.id, general.projectId));
-    expect(
-      (await allocationRecords(director)).map(({ name }) => name),
-    ).toContain(`${await nameOf(personId)} on ${String(project?.name)}`);
   });
 
   it("keeps every allocation from readers who do not see Personal details, even of someone employed today", async () => {

@@ -25,20 +25,21 @@ import { featureId } from "./projects.ts";
 import {
   currentWork,
   earlierWork,
+  workIds,
   workloadPeople,
   workloadRows,
 } from "./workload.ts";
 
 const referenceDate = "2026-11-15";
 const organization = fictionalOrganization({ size: 150, referenceDate });
-const seeded = seededAllocationRows(organization, "general crane-control");
+const seeded = seededAllocationRows(organization);
 const seededPeople = new Set(seeded.map(({ personId }) => personId));
-const generalFeatureIds = new Map(
-  currentWork.flatMap((item) =>
-    "project" in item ? [[item.project, `general ${item.project}`]] : [],
-  ),
-);
-const rows = workloadRows(organization, { generalFeatureIds, seededPeople });
+const rows = workloadRows(organization, { seededPeople });
+// The feature or activity an allocation names.
+const workOf = (allocation: {
+  featureId: string | null;
+  activityId: string | null;
+}) => String(allocation.featureId ?? allocation.activityId);
 const month = monthOf(referenceDate);
 const personOf = (id: string) =>
   organization.people.find((person) => person.id === id);
@@ -55,32 +56,26 @@ describe("the workload", () => {
   });
 
   it("works on current work, or on a done feature only in months past, once each", () => {
-    const current = new Set(
-      currentWork.map((item) =>
-        "feature" in item
-          ? featureId(item.feature)
-          : generalFeatureIds.get(item.project),
-      ),
-    );
+    const current = new Set(currentWork.map((item) => workOf(workIds(item))));
     const done = new Set(
       earlierWork.flatMap((item) =>
         "feature" in item ? [featureId(item.feature)] : [],
       ),
     );
-    for (const { featureId: id, months } of rows) {
-      if (!current.has(id)) {
-        expect(done.has(id)).toBe(true);
-        expect(percentageIn(months, month)).toBeNull();
+    for (const row of rows) {
+      if (!current.has(workOf(row))) {
+        expect(done.has(workOf(row))).toBe(true);
+        expect(percentageIn(row.months, month)).toBeNull();
       }
     }
     const pairs = [...seeded, ...rows].map(
-      ({ personId, featureId: id }) => `${String(personId)} ${id}`,
+      (row) => `${String(row.personId)} ${workOf(row)}`,
     );
     expect(new Set(pairs).size).toBe(pairs.length);
   });
 
   it("staffs every committed Field Apps feature, the one in the next cycle by a planned hire alone", () => {
-    const all: { personId: string | null; featureId: string }[] = [
+    const all: { personId: string | null; featureId: string | null }[] = [
       ...seeded,
       ...rows,
     ];
@@ -106,7 +101,7 @@ describe("the workload", () => {
   it("gives this month most people full time, and some over, under and not allocated", () => {
     const all: {
       personId: string | null;
-      featureId: string;
+      featureId: string | null;
       months: AllocationMonths;
     }[] = [...seeded, ...rows];
     const working = organization.people.filter(
@@ -190,9 +185,7 @@ describe("the workload", () => {
       const keys = (made: readonly { key: string }[]) =>
         made.map(({ key }) => key).sort();
       const onDay = fictionalOrganization({ size: 150, referenceDate: day });
-      expect(
-        keys(workloadRows(onDay, { generalFeatureIds, seededPeople })),
-      ).toEqual(keys(rows));
+      expect(keys(workloadRows(onDay, { seededPeople }))).toEqual(keys(rows));
     },
   );
 
@@ -203,7 +196,7 @@ describe("the workload", () => {
     expect(
       workloadRows(
         { ...organization, people: started },
-        { generalFeatureIds, seededPeople },
+        { seededPeople },
       ).filter(({ key }) => key.endsWith(":early")),
     ).toEqual([]);
   });
