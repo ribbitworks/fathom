@@ -30,7 +30,7 @@ The focus areas below apply to every change. [TypeScript Standards](typescript.m
 Standards apply to new and edited code. Existing code that breaks a rule adopted after it was written is debt, not a finding against an unrelated change:
 
 - Lines a change adds or edits follow the current rules. A change may fix nearby debt when that stays within its scope.
-- A code file a change edits has its header cut to [File Headers](#file-headers), and is split if it is past the [file size](core-principles.md#implementation-rules) limit, in the same change. Files a change does not touch wait until one does; no change sweeps them.
+- A code file a change edits, test files included, has its header cut to [File Headers](#file-headers), and is split if it is past the [file size](core-principles.md#implementation-rules) limit, in the same change. Files a change does not touch wait until one does; no change sweeps them.
 - The review lists newly noticed debt under a "Debt to record" note. It is filed as a GitHub issue in the same change, as [Issues](issues.md) sets out, and the next review checks that it was filed or declined.
 - Security flaws, real data, and documents the change makes untrue are always findings, wherever they are.
 - Every warning a run reports is still resolved, including ones that predate the change.
@@ -122,7 +122,7 @@ A change to documents, tests or configuration only marks them not applicable. Se
 - **No copy-pasted logic:** repeated code is shared; for whole components and helpers, see [Reuse across the codebase](#architecture-and-design).
 - **Comments:** follow [core-principles.md § Comments](core-principles.md#comments).
 - **File headers:** follow [File Headers](#file-headers). A description longer than that rule allows, or one that describes behaviour, is a finding.
-- **File size:** a code file the change leaves past the limit in [core-principles.md § Implementation Rules](core-principles.md#implementation-rules) is a finding, fixed by splitting it as that rule sets out.
+- **File size:** a code file, test files included, the change leaves past the limit in [core-principles.md § Implementation Rules](core-principles.md#implementation-rules) is a finding, fixed by splitting it as that rule sets out.
 
 #### File Headers
 

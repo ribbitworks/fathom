@@ -1,63 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for filling a planned hire in its details panel on People, with the server's responses
-// simulated: the form for a new or an existing person, what it sends, what it asks for, and how a
-// fill waiting for approval shows.
+// simulated: the form for a new or an existing person, what it sends and asks for, and leaving it.
 
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { detailRow, renderApp } from "./test-support.tsx";
 import {
-  detailRow,
-  fictionalUser,
-  renderApp,
-  serverAnswers,
-} from "./test-support.tsx";
+  setUpEachTest,
+  person,
+  robin,
+  hire,
+  answers,
+  openForm,
+  fillNow,
+  type,
+} from "./test-hire-fill-form.tsx";
 
-const person = (id: string, name: string, details: object = {}) => ({
-  id,
-  keyNumber: 1,
-  preferredName: name,
-  employeeId: `E${id}`,
-  positionId: "engineer",
-  startDate: "2020-01-01",
-  endDate: null,
-  isManager: false,
-  manager: null,
-  values: {},
-  links: {},
-  ...details,
-});
-const robin = person("m1", "Robin Fictional", { isManager: true });
+setUpEachTest();
+
 const riley = person("m2", "Riley Fictional", { isManager: true });
+
 const sasha = person("p1", "Sasha Fictional", { positionId: "tester" });
-const hire = (details: object = {}) =>
-  person("h1", "Fictional Hire", {
-    kind: "planned-hire",
-    employeeId: "TBD-1",
-    stateId: "open",
-    startDate: "2030-03-01",
-    expected: "2030-03",
-    manager: { id: "m1", preferredName: "Robin Fictional" },
-    ...details,
-  });
-const builtIn = (id: string, choices: object[]) => ({
-  id,
-  keyNumber: 1,
-  name: id,
-  description: "",
-  visibility: "general",
-  retired: false,
-  builtIn: id,
-  choices,
-});
-const choice = (id: string, label: string, meaning?: string) => ({
-  id,
-  label,
-  description: "",
-  retired: false,
-  ...(meaning === undefined ? {} : { meaning }),
-});
+
 const grade = {
   id: "grade",
   keyNumber: 1,
@@ -69,62 +35,6 @@ const grade = {
   required: true,
   onPlannedHires: true,
 };
-const grades = {
-  ...builtIn("grades", [choice("p1", "P1")]),
-  builtIn: null,
-};
-
-function answers(
-  people: object[],
-  options: {
-    fields?: object[];
-    positionHidden?: boolean;
-    fill?: () => Response;
-    permissions?: string[];
-  } = {},
-) {
-  return serverAnswers({
-    "GET /api/session": () =>
-      Response.json({
-        ...fictionalUser,
-        permissions: options.permissions ?? [
-          "people:view",
-          "people:edit",
-          "hiring-plan:view",
-          "confidential:view",
-          "hiring-plan:edit",
-          "confidential:edit",
-          "personal:view",
-          "plan:view",
-          "features:view",
-        ],
-      }),
-    "GET /api/people": () =>
-      Response.json({
-        people,
-        fields: options.fields ?? [],
-        order: [],
-        ...(options.positionHidden === true ? { positionHidden: true } : {}),
-      }),
-    "GET /api/lists": () =>
-      Response.json({
-        lists: [
-          builtIn("positions", [
-            choice("engineer", "Fictional Engineer"),
-            choice("tester", "Fictional Tester"),
-          ]),
-          builtIn("hiring-states", [
-            choice("open", "Approved to hire", "open"),
-            choice("proposed", "Request to hire", "proposed"),
-          ]),
-          grades,
-        ],
-      }),
-    "GET /api/unpublished": () => Response.json({ changes: [] }),
-    "POST /api/planned-hires/h1/fill":
-      options.fill ?? (() => Response.json({ changeSetId: null })),
-  });
-}
 
 type Fetch = ReturnType<typeof answers>;
 
@@ -140,25 +50,6 @@ async function sent(fetch: Fetch): Promise<unknown> {
   return JSON.parse(init.body as string);
 }
 
-async function openForm() {
-  await userEvent.click(
-    await screen.findByRole("button", { name: "Fill Fictional Hire" }),
-  );
-  await screen.findByRole("heading", { name: "Fill this planned hire" });
-}
-
-const fillNow = () =>
-  userEvent.click(
-    within(
-      screen
-        .getByRole("heading", { name: "Fill this planned hire" })
-        .closest("section") as HTMLElement,
-    ).getByRole("button", { name: "Fill" }),
-  );
-
-const type = (label: string, text: string) =>
-  userEvent.type(screen.getByRole("textbox", { name: label }), text);
-
 const row = (label: string) => detailRow(label);
 
 async function pick(label: string, name: RegExp | string) {
@@ -170,10 +61,6 @@ async function pick(label: string, name: RegExp | string) {
 
 const useExisting = () =>
   userEvent.click(screen.getByRole("radio", { name: "Existing person" }));
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
 
 describe("filling a planned hire with a new person", () => {
   it("begins with the hire's start date, position and manager, and sends what is typed", async () => {
@@ -686,138 +573,5 @@ describe("going back while filling", () => {
     expect(
       screen.queryByRole("heading", { name: "Fill this planned hire" }),
     ).toBeNull();
-  });
-});
-
-describe("a planned hire's details", () => {
-  it("offer Fill when it can be filled", async () => {
-    answers([robin, hire()]);
-    renderApp("/people?open=TBD-1");
-    await screen.findByRole("region", { name: "Fictional Hire" });
-
-    await userEvent.click(
-      within(screen.getByRole("region", { name: "Fictional Hire" })).getByRole(
-        "button",
-        { name: "Fill" },
-      ),
-    );
-
-    expect(
-      await screen.findByRole("heading", { name: "Fill this planned hire" }),
-    ).toBeDefined();
-  });
-
-  it("offer no Fill to those who may not change planned hires", async () => {
-    answers([robin, hire()], {
-      permissions: [
-        "people:view",
-        "people:edit",
-        "hiring-plan:view",
-        "confidential:view",
-        "personal:view",
-        "plan:view",
-        "features:view",
-      ],
-    });
-    renderApp("/people?open=TBD-1");
-    const panel = await screen.findByRole("region", { name: "Fictional Hire" });
-
-    expect(within(panel).queryByRole("button", { name: "Fill" })).toBeNull();
-  });
-
-  it("name who is filling it, with links to them", async () => {
-    answers([
-      robin,
-      person("n1", "Fictional Starter", { employeeId: "E9" }),
-      hire({ filler: "n1" }),
-    ]);
-    renderApp("/people?open=TBD-1");
-    const panel = await screen.findByRole("region", { name: "Fictional Hire" });
-    expect(
-      within(panel).getByRole("heading", { name: "Filled by" }),
-    ).toBeDefined();
-    expect(within(panel).getByRole("button", { name: "E9" })).toBeDefined();
-
-    await userEvent.click(
-      within(panel).getByRole("button", { name: "Fictional Starter" }),
-    );
-
-    expect(
-      await screen.findByRole("region", { name: "Fictional Starter" }),
-    ).toBeDefined();
-  });
-
-  it("say only that it is filled to those who may not know by whom", async () => {
-    answers([robin, hire({ filler: null })]);
-    renderApp("/people?open=TBD-1");
-    const panel = await screen.findByRole("region", { name: "Fictional Hire" });
-
-    expect(
-      within(panel).getByRole("heading", { name: "Filled by" }),
-    ).toBeDefined();
-    expect(within(panel).queryByRole("button", { name: "Fill" })).toBeNull();
-  });
-});
-
-describe("after filling", () => {
-  it("shows the new person once People has them", async () => {
-    let filled = false;
-    const added = person("n1", "Fictional Starter", { employeeId: "E9" });
-    const fetch = serverAnswers({});
-    fetch.mockImplementation((url: string, init?: RequestInit) => {
-      const respond = (body: object) => Promise.resolve(Response.json(body));
-      if (url === "/api/session") {
-        return respond({
-          ...fictionalUser,
-          permissions: [
-            "people:view",
-            "people:edit",
-            "hiring-plan:view",
-            "confidential:view",
-            "hiring-plan:edit",
-            "confidential:edit",
-            "personal:view",
-            "plan:view",
-            "features:view",
-          ],
-        });
-      }
-      if (url === "/api/people") {
-        return respond({
-          people: filled
-            ? [robin, hire({ filler: "n1" }), added]
-            : [robin, hire()],
-          fields: [],
-          order: [],
-        });
-      }
-      if (url === "/api/lists") {
-        return respond({
-          lists: [
-            builtIn("positions", [choice("engineer", "Fictional Engineer")]),
-            builtIn("hiring-states", [
-              choice("open", "Approved to hire", "open"),
-            ]),
-          ],
-        });
-      }
-      if (url === "/api/unpublished") return respond({ changes: [] });
-      if (init?.method === "POST") {
-        filled = true;
-        return respond({ changeSetId: null });
-      }
-      return respond({});
-    });
-    renderApp("/people");
-    await openForm();
-    await type("Name", "Fictional Starter");
-    await type("ID", "E9");
-    await userEvent.tab();
-
-    await fillNow();
-
-    expect(
-      await screen.findByRole("region", { name: "Fictional Starter" }),
-    ).toBeDefined();
   });
 });
