@@ -41,10 +41,6 @@ function packageOf(path) {
     : undefined;
 }
 
-function isWebStylesheet(path) {
-  return path.startsWith(`${webApp}/`) && path.endsWith(".css");
-}
-
 // Whether the tests that import this file are all the tests it can affect. Vitest also reruns every
 // test when a file it loads itself, such as a test setup file, changes.
 function reachedByImports(path) {
@@ -121,17 +117,14 @@ function coveredBy(code, { workspace, exists }) {
 const withTests = (folders, workspace) =>
   [...folders].filter((folder) => workspace.get(folder)?.hasTests).sort();
 
-// The tests to run for these changed paths: none, the web app's tests and the linters, or the
-// script tests with the package folders whose every test runs, which is all of them for a change
-// outside the packages, those whose tests run only when they import a changed file, and the source
-// files whose coverage is checked.
+// The tests to run for these changed paths: none, or the script tests with the package folders
+// whose every test runs, which is all of them for a change outside the packages, those whose tests
+// run only when they import a changed file, and the source files whose coverage is checked.
 export function testsFor(
   paths,
   { workspace = readWorkspace(), exists = existsSync } = {},
 ) {
   const code = paths.filter((path) => !isDocumentation(path));
-  if (code.length > 0 && code.every(isWebStylesheet))
-    return { kind: "stylesheets" };
   if (code.some((path) => packageOf(path) === undefined))
     return {
       kind: "everything",
@@ -255,18 +248,6 @@ export async function runTests(
     return true;
   }
   return inTurn(async (environment) => {
-    if (tests.kind === "stylesheets") {
-      console.log(
-        "==> Only the web app's stylesheets changed, so its tests and the linters run",
-      );
-      const lintPassed = await run(["lint"], environment);
-      const formatPassed = await run(["format:check"], environment);
-      const webPassed = await runPackages(
-        [...filtersFor([webApp]), "exec", "vitest", "run"],
-        { environment },
-      );
-      return lintPassed && formatPassed && webPassed;
-    }
     console.log(
       tests.kind === "everything"
         ? "==> Files outside the packages changed, so every test runs"

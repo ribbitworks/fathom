@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of choosing the tests a change can affect, for 'pnpm test:changed': documentation alone
-// runs none, a package's source runs the tests importing it in that package and those depending on
-// it, any other change in a package runs every test of those packages, a Help page runs the web
-// app's tests importing the Help pages, the web app's stylesheets alone run its tests and the
-// linters, and any other change runs every test; the coverage of each changed source file is
-// checked, a test standing for the file beside it; any tests run in the check's turn, and none waits
-// for it.
+// Tests of 'pnpm test:changed': choosing the tests a change can affect, running them in the check's
+// turn, and checking the coverage of the source files it changed.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -198,14 +193,20 @@ describe("choosing the tests a change can affect", () => {
     });
   });
 
-  it("runs the web app's tests and the linters when only its stylesheets changed, with any documentation", () => {
+  it("runs every web app test, with its coverage, when only its stylesheets changed, with any documentation", () => {
     assert.deepEqual(
       choose([
         "apps/web/src/record-grid.module.css",
         "apps/web/src/theme.css",
         "docs/design/visual-design.md",
       ]),
-      { kind: "stylesheets" },
+      {
+        kind: "packages",
+        whole: ["apps/web"],
+        related: [],
+        files: [],
+        covered: [],
+      },
     );
   });
 
@@ -362,7 +363,13 @@ describe("the command's arguments", () => {
     const { calls, listChanged } = lister(["apps/web/src/theme.css"]);
     assert.deepEqual(
       testsForArguments(["--uncommitted"], listChanged, chooser),
-      { kind: "stylesheets" },
+      {
+        kind: "packages",
+        whole: ["apps/web"],
+        related: [],
+        files: [],
+        covered: [],
+      },
     );
     assert.deepEqual(calls, [{ uncommitted: true }]);
   });
@@ -521,34 +528,6 @@ describe("running the tests chosen", () => {
       ),
       false,
     );
-  });
-
-  it("runs the linters and every web app test in the check's turn, failing when any fails", async (context) => {
-    context.mock.method(console, "log", () => undefined);
-    const { steps, ...options } = recorder();
-    assert.equal(await runTests({ kind: "stylesheets" }, options), false);
-    assert.deepEqual(steps, [
-      "turn",
-      "pnpm lint 1",
-      "pnpm format:check 1",
-      "packages --filter ./apps/web exec vitest run 1",
-    ]);
-  });
-
-  it("fails the stylesheets' run when any one of its steps alone fails", async (context) => {
-    context.mock.method(console, "log", () => undefined);
-    for (const failing of ["lint", "format:check", "web"]) {
-      const options = {
-        inTurn: recorder().inTurn,
-        run: async (args) => args[0] !== failing,
-        runPackages: async () => failing !== "web",
-      };
-      assert.equal(
-        await runTests({ kind: "stylesheets" }, options),
-        false,
-        failing,
-      );
-    }
   });
 
   it("runs the script tests and every package test in the check's turn when anything else changed", async (context) => {
