@@ -18,7 +18,7 @@ import { useGridPanels } from "./grid-panels.tsx";
 import { useTableNoteAddress } from "./grid-note-address.ts";
 import { gridRows } from "./grid-row.tsx";
 import { PanelMenusContext } from "./panel-menu.tsx";
-import { usePublishDraft } from "./publish-draft.tsx";
+import { usePublishDraft, useTakesBack } from "./publish-draft.tsx";
 import { gridSaving } from "./grid-saving.ts";
 import { gridSelection, useGridState } from "./grid-selection.ts";
 import classes from "./pages.module.css";
@@ -48,7 +48,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
   const withSaving = { ...withLayout, ...gridSaving(withLayout) };
   const withMenus = {
     ...withSaving,
-    ...rowMenus({ ...withSaving, publishDraft: usePublishDraft() }),
+    ...rowMenus({
+      ...withSaving,
+      publishDraft: usePublishDraft(),
+      takesBack: useTakesBack(),
+    }),
   };
   const withEditing = { ...withMenus, ...gridEditing(withMenus) };
   useTableNoteAddress(withEditing);

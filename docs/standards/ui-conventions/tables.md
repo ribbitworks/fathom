@@ -27,7 +27,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **The ⋯ at the row's end:** Always shown.
   - **Right-click and keyboard:** A right-click anywhere on the row opens the same menu beside the pointer, except in a cell being typed in, which keeps the browser's own. Shift+F10 and the menu key open it from the keyboard.
   - **The menu:** A record's menu starts with Open and the column's name, such as Open Spec, for each Web link column holding a link. Then come Show details, where it has details, and Copy link, where it has a key. Then come the table's own items, such as Add note…, then Approve draft… and Reject draft… to a role that decides its draft now, then the user's own draft and the record itself, in this order:
-    - **Publish draft…:** For the user's own unpublished draft. It publishes the draft with the changes it must go with, as [Publishing](entering-and-saving.md#publishing) sets out.
+    - **Publish draft…:** For the user's own unpublished draft, or, on a table whose rows change their own records, their discarding of the record's published draft, which shows the record to them as it is live until they publish it. Rows standing for other records' drafts, as on Cycles and Schedules, and a milestone's menu in a project's details, leave a discarding to the top bar's Publish and the Drafts page. It publishes the change with the changes it must go with, as [Publishing](entering-and-saving.md#publishing) sets out.
     - **Resubmit:** For a rejected draft.
     - **Discard draft:** For any draft the user may change.
     - **Remove:** Such as Remove person, for a record the user may change that its draft neither adds nor removes.

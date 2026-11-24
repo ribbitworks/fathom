@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Publishing the user's own draft of a record from the record's menu, and the question naming the
-// changes that go with it.
+// changes that go with it, and which records the user's own unpublished changes take the published
+// drafts back from.
 
 import type { DraftsAsked, Unpublished } from "@fathom/shared";
 import { Modal, Stack, Text } from "@mantine/core";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, createContext, useContext } from "react";
 import { describeProblem } from "./api.ts";
 import { CountedList } from "./counted-list.tsx";
@@ -18,15 +19,21 @@ import {
   unpublishedQuery,
   useUnpublishedActions,
 } from "./unpublished.tsx";
-import { askedAmong, publishedAlong } from "./unpublished-links.ts";
+import { askedAmong, publishedAlong, takesBack } from "./unpublished-links.ts";
 
 // Publishes the draft asked for, with those that go with it.
 export type PublishDraft = (asked: DraftsAsked) => void;
 
+// Whether the drafts asked for are each the user's own unpublished taking back of a published draft.
+export type TakesBack = (asked: DraftsAsked) => boolean;
+
 const PublishDraftContext = createContext<PublishDraft | undefined>(undefined);
+const TakesBackContext = createContext<TakesBack>(() => false);
 
 // How the user's own draft is published from a record's menu, or none where it can't be.
 export const usePublishDraft = () => useContext(PublishDraftContext);
+
+export const useTakesBack = () => useContext(TakesBackContext);
 
 const couldNotPublish = "Fathom could not publish the changes.";
 
@@ -53,7 +60,11 @@ export function PublishDraftProvider({
   const queryClient = useQueryClient();
   const question = useDialogState<Asking>();
   const { publish } = useUnpublishedActions(question.close);
+  const unpublished = useQuery({ ...unpublishedQuery, enabled: publishes });
+  const changes = unpublished.data?.changes ?? [];
+  const asksTakeBack: TakesBack = (asked) => takesBack(changes, asked);
   const publishDraft: PublishDraft = (asked) => {
+    // Read afresh, since what goes along must be what the server publishes now.
     queryClient.query(unpublishedQuery).then(
       ({ changes }) => {
         const along = publishedAlong(changes, asked);
@@ -70,7 +81,9 @@ export function PublishDraftProvider({
   const along = asking?.along ?? [];
   return (
     <PublishDraftContext.Provider value={publishes ? publishDraft : undefined}>
-      {children}
+      <TakesBackContext.Provider value={asksTakeBack}>
+        {children}
+      </TakesBackContext.Provider>
       <Modal
         opened={question.opened}
         onClose={question.close}

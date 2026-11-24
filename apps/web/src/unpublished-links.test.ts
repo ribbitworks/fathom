@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import { noDrafts } from "./drafts.ts";
-import { askedAmong, publishedAlong } from "./unpublished-links.ts";
+import { askedAmong, publishedAlong, takesBack } from "./unpublished-links.ts";
 
 // A list, a choice added to it, a person given the choice, and a feature saved with nothing else.
 const changes = [
@@ -69,5 +69,33 @@ describe("the changes asked for", () => {
         records: [{ type: "feature", id: "f1" }],
       }).map(({ key }) => key),
     ).toEqual(["person p1", "feature f1"]);
+  });
+});
+
+describe("taking back a published draft", () => {
+  const takenBack = [
+    ...changes,
+    {
+      subject: "the person Blake Fictional",
+      discarded: true,
+      key: "person p2",
+      linked: [],
+    },
+  ];
+
+  it("is asked for when each change asked for takes back a published draft", () => {
+    expect(takesBack(takenBack, { ...noDrafts(), people: ["p2"] })).toBe(true);
+  });
+
+  it("is not asked for when a change asked for makes a draft, or is not the user's", () => {
+    expect(
+      [["p1", "p2"], ["p3"]].map((people) =>
+        takesBack(takenBack, { ...noDrafts(), people }),
+      ),
+    ).toEqual([false, false]);
+  });
+
+  it("is not asked for when nothing is", () => {
+    expect(takesBack(takenBack, noDrafts())).toBe(false);
   });
 });

@@ -32,3 +32,16 @@ export function askedAmong(
   const chosen = new Set(draftKeysOf(asked));
   return changes.filter(({ key }) => chosen.has(key));
 }
+
+// Whether the changes asked for are each the user's taking back of a record's published draft,
+// which shows the record as it is live to them alone until they publish it.
+export function takesBack(
+  changes: Unpublished["changes"],
+  asked: DraftsAsked,
+): boolean {
+  const takenBack = new Set(
+    changes.flatMap(({ key, discarded }) => (discarded === true ? [key] : [])),
+  );
+  const keys = draftKeysOf(asked);
+  return keys.length > 0 && keys.every((key) => takenBack.has(key));
+}

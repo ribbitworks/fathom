@@ -31,6 +31,8 @@ To publish your change to one record:
 
 To throw your change away instead, select **Discard draft** in the same menu. The record goes back to how it was.
 
+Discarding a draft you've already published is a change of its own: others keep seeing the draft until you publish the discarding. Until then, the record's **⋯** menu offers **Publish draft…** to publish it, on People, Features and Projects' tables. Elsewhere, publish it with **Publish** in the top bar or on the **Drafts** page.
+
 The menu also offers **Resubmit** once your draft is rejected, and **Approve draft…** and **Reject draft…** if your role approves the draft.
 
 You're done when the record's hollow dot turns yellow, once published, or is gone, once discarded.

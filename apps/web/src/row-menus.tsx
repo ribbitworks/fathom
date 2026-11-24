@@ -24,7 +24,7 @@ import { kindOf } from "./grid-columns.tsx";
 import { isPending } from "./grid-drafts.ts";
 import type { SavingGrid } from "./grid-saving.ts";
 import type { MoreButtonPlace, NewRow, Row } from "./grid-places.ts";
-import type { PublishDraft } from "./publish-draft.tsx";
+import type { PublishDraft, TakesBack } from "./publish-draft.tsx";
 import {
   type MenuPlace,
   menuPlace,
@@ -72,6 +72,7 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
   > & {
     // How the user publishes their own draft, where they can.
     publishDraft: PublishDraft | undefined;
+    takesBack: TakesBack;
   },
 ) {
   const {
@@ -102,16 +103,27 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
     clearable,
     clearNewRow,
     publishDraft,
+    takesBack,
   } = grid;
   // Whether a row has a menu: a record with anything in it to offer, or a new row with something in
   // it to clear.
   const hasRowMenu = (row: Row<Rec>) =>
     row.newRow ? clearable(row.newRow) : hasMenu(row.record);
 
+  // Whether the user's own unpublished change takes back a record's published draft, which leaves
+  // the record showing them no draft of its own. Only on a table whose rows change their own
+  // records, since a row standing for other records' drafts, as on Cycles, names those instead.
+  const isTakenBack = (record: Rec) =>
+    rowActions &&
+    table.ownDraft === undefined &&
+    ownDraftOf(record) === undefined &&
+    takesBack(ownSelectionOf(record));
+
   // Which draft items a record's menu offers, and whether it offers removing the record.
   const offerOf = (record: Rec) =>
     recordMenuOffer({
       ownDraft: ownDraftOf(record),
+      takenBack: isTakenBack(record),
       shownAction: record.draft?.action,
       changes: rowActions && mayChange(record) && record.heldBy === undefined,
       editsOwnDraft: decidesOwnDraft(record),
@@ -195,18 +207,20 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
             {(deciding !== undefined || ownItems.length > 0) && (
               <Menu.Divider />
             )}
-            {ownDraft !== undefined &&
-              publishDraft !== undefined &&
-              offer.publish && (
-                <Menu.Item
-                  onClick={() => {
-                    publishDraft(publishedOf(record, ownDraft));
-                    backToTable();
-                  }}
-                >
-                  Publish draft…
-                </Menu.Item>
-              )}
+            {publishDraft !== undefined && offer.publish && (
+              <Menu.Item
+                onClick={() => {
+                  publishDraft(
+                    ownDraft === undefined
+                      ? ownSelectionOf(record)
+                      : publishedOf(record, ownDraft),
+                  );
+                  backToTable();
+                }}
+              >
+                Publish draft…
+              </Menu.Item>
+            )}
             {ownDraft !== undefined && offer.resubmit && (
               <Menu.Item
                 onClick={() => {
@@ -255,7 +269,9 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
           (mayChange(record) || approvesInMenu(record)) && (
             <HeldNote by={record.heldBy} />
           )}
-        {draft?.unpublished === true && <UnpublishedNote />}
+        {(draft?.unpublished === true || isTakenBack(record)) && (
+          <UnpublishedNote />
+        )}
         {draft && (
           <MenuDraftLines
             draft={draft}

@@ -28,6 +28,9 @@ export const menuPlace = (place: MenuPlace): PlaceRules =>
 export interface RecordMenuFacts {
   // The draft the menu discards, resubmits or publishes: the record's own, if it has one.
   ownDraft: Pick<GridDraft, "state" | "unpublished"> | undefined;
+  // Whether the user's own unpublished change takes back the record's published draft, so the
+  // record shows them none.
+  takenBack: boolean;
   // What the record's draft as shown does, if it has one, which decides whether it can be removed.
   shownAction: GridDraft["action"] | undefined;
   // Whether the user may change the record from its table now, with nobody else holding it.
@@ -50,10 +53,11 @@ export interface RecordMenuOffer {
 }
 
 // A rejected draft is back with its makers, who resubmit or discard it; their own unpublished one
-// is theirs to publish or discard; and a record neither added nor removed by its draft may be
-// removed by those who change it.
+// is theirs to publish or discard, and their taking back of a published one theirs to publish; and
+// a record neither added nor removed by its draft may be removed by those who change it.
 export function recordMenuOffer({
   ownDraft,
+  takenBack,
   shownAction,
   changes,
   editsOwnDraft,
@@ -63,7 +67,10 @@ export function recordMenuOffer({
   const ownDrafts = changes || editsOwnDraft;
   return {
     decide: decides,
-    publish: ownDrafts && publishes && ownDraft?.unpublished === true,
+    publish:
+      ownDrafts &&
+      publishes &&
+      (ownDraft === undefined ? takenBack : ownDraft.unpublished === true),
     resubmit: ownDrafts && ownDraft?.state === "rejected",
     discard: ownDrafts && ownDraft !== undefined,
     remove: changes && shownAction !== "created" && shownAction !== "deleted",

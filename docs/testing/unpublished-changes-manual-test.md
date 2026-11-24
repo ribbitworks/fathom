@@ -11,7 +11,7 @@ last_updated: "2026-11-24"
 
 ## Scope
 
-Verifies that changes are seen only by the person who made them until they're published, that a record someone else is changing is held, that publishing and Discard all… in the top bar work, that publishing leaves the changes the role in use can't make, and that one record's change is published from its row's menu and discarded from the menu in its details. [Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages, and [Drafts Page](drafts-page-manual-test.md) publishing and discarding chosen changes on the Drafts page.
+Verifies that changes are seen only by the person who made them until they're published, that a record someone else is changing is held, that publishing and Discard all… in the top bar work, that publishing leaves the changes the role in use can't make, that one record's change is published from its row's menu and discarded from the menu in its details, and that discarding a published change is itself published from the row's menu. [Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages, and [Drafts Page](drafts-page-manual-test.md) publishing and discarding chosen changes on the Drafts page.
 
 ## Test Environment
 
@@ -282,6 +282,40 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The side panel stays open.
     - Her **Site** has no dot before it, in the table and in the side panel.
+    - The top bar shows **Publish 2 changes**.
+  - **Notes:**
+
+**Afterwards:** Run Restore the Seed Data.
+
+### DRAFT-23: Publishing the Discard of a Published Change
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-22.
+
+**Preconditions:** DRAFT-22's Afterwards done. Signed in with this account. **People** page open.
+
+- [ ] `0E38` Clear the search box above the table, and type `Mariana Metz` in it.
+  - **Expected:** A hollow yellow dot before her new **Site**.
+  - **Notes:**
+
+- [ ] `8103` Select **Publish draft…** in the **⋯** menu at the end of her row.
+  - **Expected:** A solid yellow dot before her new **Site**.
+  - **Notes:**
+
+- [ ] `7154` Select **Discard draft** in the same menu.
+  - **Expected:**
+    - Her **Site** has no dot before it.
+    - The top bar shows **Publish 3 changes**.
+  - **Notes:**
+
+- [ ] `0520` Open the same menu again.
+  - **Expected:**
+    - Under her name, a line reads "Nobody else sees these changes until they're published."
+    - The menu's items are, in order: **Show details**, **Copy link**, **Publish draft…** and **Remove person**.
+  - **Notes:**
+
+- [ ] `6560` Select **Publish draft…**.
+  - **Expected:**
+    - A notice reads "Published 1 change.", with no **Undo**.
     - The top bar shows **Publish 2 changes**.
   - **Notes:**
 

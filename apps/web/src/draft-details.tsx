@@ -268,8 +268,8 @@ export function HeldNote({ by }: { by: string }) {
   return <MenuNote>{heldWords(by)}</MenuNote>;
 }
 
-// In the menu of a record whose draft holds the user's own unpublished changes, which nobody can
-// approve until they publish them.
+// In the menu of a record whose draft holds the user's own unpublished changes, or whose published
+// draft they took back, which nobody can approve until they publish them.
 export function UnpublishedNote() {
   return <MenuNote>{unpublishedWords}</MenuNote>;
 }

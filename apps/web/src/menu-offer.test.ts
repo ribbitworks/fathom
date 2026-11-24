@@ -12,6 +12,7 @@ import {
 
 const facts = (more: Partial<RecordMenuFacts> = {}): RecordMenuFacts => ({
   ownDraft: undefined,
+  takenBack: false,
   shownAction: undefined,
   changes: false,
   editsOwnDraft: false,
@@ -55,6 +56,23 @@ describe("a record's menu offer", () => {
         }),
       ),
     ).toEqual({ ...nothing, publish: true, discard: true, remove: true });
+  });
+
+  it("offers publishing the user's taking back of a published draft, which leaves the record no draft", () => {
+    expect(recordMenuOffer(facts({ changes: true, takenBack: true }))).toEqual({
+      ...nothing,
+      publish: true,
+      remove: true,
+    });
+  });
+
+  it("offers no publishing of a taking back to those who don't change the record, or where nothing is published from", () => {
+    expect(
+      [
+        facts({ takenBack: true }),
+        facts({ changes: true, takenBack: true, publishes: false }),
+      ].map((given) => recordMenuOffer(given).publish),
+    ).toEqual([false, false]);
   });
 
   it("offers no publishing where the user's changes can't be published from", () => {

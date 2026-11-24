@@ -29,6 +29,7 @@ import {
   serverAnswers,
   wholeText,
 } from "./test-support.tsx";
+import { unpublishedWords } from "./draft-details.tsx";
 import { today } from "./today.ts";
 
 const s1 = "00000000-0000-4000-8000-000000000001";
@@ -4145,6 +4146,81 @@ describe("a person's draft from their details and their row", () => {
         }[]
       ).map(({ drafts }) => drafts.people),
     ).toEqual([["p1"]]);
+  });
+
+  // The user's own change taking back a person's published draft, which shows them as they are live.
+  const takenBack = {
+    "GET /api/unpublished": () =>
+      Response.json({
+        changes: [
+          {
+            subject: "the person Avery Fictional",
+            discarded: true,
+            key: "person p1",
+            linked: [],
+          },
+        ],
+      }),
+    "POST /api/unpublished/publish": () => Response.json({ total: 1, left: 0 }),
+  };
+
+  it("publishes the user's taking back of a person's published draft from their row", async () => {
+    // Given a person whose published draft the user took back, not yet published
+    const fetch = await openPeople(takenBack);
+    expect(await screen.findByText("Publish 1 change")).toBeDefined();
+
+    // When Publish draft… is chosen in their row's menu
+    await userEvent.click(rowActions("Avery Fictional"));
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByText(unpublishedWords)).toBeDefined();
+    expect(itemsIn(menu)).toEqual([
+      "Show details",
+      "Copy link",
+      "Publish draft…",
+      "Remove person",
+    ]);
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "Publish draft…" }),
+    );
+
+    // Then the taking back alone is published, and the notification says so
+    expect(await screen.findByText("Published 1 change.")).toBeDefined();
+    expect(
+      (
+        bodyOf(fetch, "POST", "/api/unpublished/publish") as {
+          drafts: { people: string[] };
+        }[]
+      ).map(({ drafts }) => drafts.people),
+    ).toEqual([["p1"]]);
+  });
+
+  it("offers publishing the user's taking back of a person's published draft from the ⋯ in their details", async () => {
+    // Given a person whose published draft the user took back, their details open beside People
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/people": peopleAnswer,
+      "GET /api/lists": listsAnswer,
+      ...takenBack,
+    });
+    renderApp("/people?open=E1");
+    const details = await screen.findByRole("region", {
+      name: "Avery Fictional",
+    });
+    expect(await screen.findByText("Publish 1 change")).toBeDefined();
+
+    // When the ⋯ in their details is opened
+    await userEvent.click(
+      within(details).getByRole("button", {
+        name: "Actions for Avery Fictional",
+      }),
+    );
+
+    // Then it offers publishing the taking back
+    expect(itemsIn(await screen.findByRole("menu"))).toEqual([
+      "Copy link",
+      "Publish draft…",
+      "Remove person",
+    ]);
   });
 });
 
