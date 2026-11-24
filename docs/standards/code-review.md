@@ -87,11 +87,15 @@ Write the review to `.tmp/code-review/code-review_YYYY-MM-DD_HH-MM_{branch}.md`,
 - Logic does not leak across layers, and no layer is skipped or reached into from below.
 - Dependencies are passed in, not created inside the code that uses them.
 - The simplest design that meets the need is preferred.
-- **Reuse across the codebase:** a diff does not show what already exists, so for each component, hook, helper or type a change adds, the reviewer searches the code for one that already does the same job, starting with [Visual Design § Shared Building Blocks](../design/visual-design.md#shared-building-blocks). A second one doing the same job is HIGH unless the change unifies them; a deferral follows the [Approval Criteria](#approval-criteria) and is debt to record.
+- **Reuse across the codebase:** a diff does not show what already exists, so for each component, hook, helper or type a change adds, the reviewer searches the code for one that already does the same job, starting with [Visual Design § Shared Building Blocks](../design/visual-design.md#shared-building-blocks).
+  - **A second one:** a second one doing the same job is HIGH unless the change unifies them.
+  - **Deferring:** a deferral follows the [Approval Criteria](#approval-criteria) and is debt to record.
 
 ### SOLID Principles
 
-When the change adds or reshapes code, rate and comment on each of the five principles separately, each with its own reasoning, paths and lines. Do not collapse them into one score. A change to documents, tests or configuration only marks them not applicable. See [core-principles.md § SOLID](core-principles.md#solid) for what each means.
+When the change adds or reshapes code, rate and comment on each of the five principles separately, each with its own reasoning, paths and lines. Do not collapse them into one score.
+
+A change to documents, tests or configuration only marks them not applicable. See [core-principles.md § SOLID](core-principles.md#solid) for what each means.
 
 - **Single Responsibility:** flag types doing two jobs, such as a UI layer computing domain meaning or a controller accumulating product rules.
 - **Open/Closed:** flag new cases that required editing unrelated code, and one-off special cases inside generic, table-driven dispatchers.
@@ -121,9 +125,16 @@ When the change adds or reshapes code, rate and comment on each of the five prin
 
 #### File Headers
 
-Every source code file, in any language, starts with a header, after any line that must come first, such as a shebang. The header is the `SPDX-License-Identifier` line for Fathom's licence, as [ADR 0002](../adr/0002-libraries.md) decides, then a blank line, then a comment describing the file, then a blank line before the code. `scripts/source-headers.test.mjs` checks that layout. The description is one to three lines saying what the file is for; for tests, what they cover. Behaviour belongs in [UI Conventions](ui-conventions.md), the page documents in `docs/design/pages/` and the tests, not in headers. Headers name no authors, dates, or history, which git records.
+Every source code file, in any language, starts with a header, after any line that must come first, such as a shebang.
 
-Files that cannot hold comments, or that tools generate and that are never edited by hand, are listed in `REUSE.toml` instead. Database migrations are source code: a new migration gets its header after it is generated, and only migrations applied before this rule, which must never change, are listed in `REUSE.toml`. Third-party files keep their own copyright and licence, stated in the file or in a `REUSE.toml` entry after the project-wide one, with the licence text added to `LICENSES/`. `pnpm check` checks every header.
+- **Layout:** the header is the `SPDX-License-Identifier` line for Fathom's licence, as [ADR 0002](../adr/0002-libraries.md) decides, then a blank line, then a comment describing the file, then a blank line before the code. `scripts/source-headers.test.mjs` checks that layout.
+- **Description:** one to three lines saying what the file is for; for tests, what they cover. Behaviour belongs in [UI Conventions](ui-conventions.md), the page documents in `docs/design/pages/` and the tests, not in headers.
+- **No history:** headers name no authors, dates, or history, which git records.
+- **Files without headers:** files that cannot hold comments, or that tools generate and that are never edited by hand, are listed in `REUSE.toml` instead.
+- **Database migrations:** migrations are source code. A new migration gets its header after it is generated, and only migrations applied before this rule, which must never change, are listed in `REUSE.toml`.
+- **Third-party files:** these keep their own copyright and licence, stated in the file or in a `REUSE.toml` entry after the project-wide one, with the licence text added to `LICENSES/`.
+
+`pnpm check` checks every header.
 
 ### Error Handling
 
@@ -142,8 +153,13 @@ Tests are reviewed against [testing.md](testing.md) and [typescript.md](typescri
 
 - **UI tests:** a change to a form's behaviour without a UI test that fails on the old code is a finding, as [Testing Standards § UI Tests](testing.md#ui-tests) sets out.
 - **Coverage exclusions:** each `/* v8 ignore */` comment a change adds is checked against [Testing Standards § Coverage Enforcement](testing.md#coverage-enforcement): it must say why, and be one of the cases listed there. Anything else is a finding.
-- **Testing pyramid:** a new integration test that only re-checks a variation of a rule is a finding: the variation belongs in the rule's unit tests, as [Testing Standards § The Testing Pyramid](testing.md#the-testing-pyramid) sets out. So is a rule tested only through the database in an area the change moves to unit tests, and an integration test removed without the pull request naming what now covers it.
-- **Manual tests:** when the change affects what a manual test in `docs/testing/` covers, or the seed data it relies on, the test is updated in the same change and still follows [Testing Standards § Manual Tests](testing.md#manual-tests): its test cases still test the feature's behaviour, not this change, and every count, name and label they expect still matches the seed and the screens. A change that adds a feature a person must check by hand, before a stage is complete, adds or extends a manual test. The review also checks that a manual test re-checks nothing that automated tests prove, covers what only a person can judge, and stays short enough to run in about 30 minutes.
+- **Testing pyramid:** a new integration test that only re-checks a variation of a rule is a finding: the variation belongs in the rule's unit tests, as [Testing Standards § The Testing Pyramid](testing.md#the-testing-pyramid) sets out.
+  - **Also findings:** a rule tested only through the database in an area the change moves to unit tests, and an integration test removed without the pull request naming what now covers it.
+- **Manual tests:** the review checks the manual tests in `docs/testing/` against [Testing Standards § Manual Tests](testing.md#manual-tests).
+  - **Kept current:** when the change affects what a manual test covers, or the seed data it relies on, the test is updated in the same change and still follows those rules.
+  - **Test cases:** its test cases still test the feature's behaviour, not this change, and every count, name and label they expect still matches the seed and the screens.
+  - **New features:** a change that adds a feature a person must check by hand, before a stage is complete, adds or extends a manual test.
+  - **Scope:** the review also checks that a manual test re-checks nothing that automated tests prove, covers what only a person can judge, and stays short enough to run in about 30 minutes.
 
 ### User Experience and Accessibility
 

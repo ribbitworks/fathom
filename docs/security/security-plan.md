@@ -60,8 +60,12 @@ flowchart LR
 ### Spoofing
 
 - **Signing in as someone else:** Passwords must meet the rules set in Settings, and are hashed with scrypt, Better Auth's default. Each client address may try to sign in 5 times a minute, and every refused sign-in gets the same answer. Accepted: there is no lockout for an account, and failed sign-ins aren't recorded.
-- **Stolen or forged sessions:** Session cookies are Secure, HttpOnly and SameSite, and requests are checked against cross-site forgery. Each sign-in gets a new session, and a session ends after 30 minutes without use. A password change, an administrator's reset or a deactivation ends the account's other sessions. Accepted: a session in use has no absolute end.
-- **Guessable passwords:** Every password a person sets is refused if it is common or easy to guess, whatever Settings say; this is not a setting. zxcvbn-ts checks it against common passwords, words, names, keyboard patterns, and the person's own name and email address, and one scoring below 3, on its scale of 0 to 4, is refused. Passwords Fathom generates aren't checked, since they're random; one from the default recipe scores at least 3.
+- **Stolen or forged sessions:** Session cookies are Secure, HttpOnly and SameSite, and requests are checked against cross-site forgery.
+  - **Session life:** each sign-in gets a new session, and a session ends after 30 minutes without use. A password change, an administrator's reset or a deactivation ends the account's other sessions.
+  - **Accepted:** a session in use has no absolute end.
+- **Guessable passwords:** Every password a person sets is refused if it is common or easy to guess, whatever Settings say; this is not a setting.
+  - **How it is checked:** zxcvbn-ts checks it against common passwords, words, names, keyboard patterns, and the person's own name and email address, and one scoring below 3, on its scale of 0 to 4, is refused.
+  - **Generated passwords:** passwords Fathom generates aren't checked, since they're random; one from the default recipe scores at least 3.
 - **First passwords and resets:** Whoever creates an account, or resets another's password, never chooses it: Fathom generates one from the recipe in Settings and shows it once, so nobody knows another's working password. Until its user changes it, the server refuses every request but that change and signing out, and the new password must differ from the generated one.
 - **Resetting a password:** There is no self-service reset; only administrators reset passwords, and each reset is recorded in the access history.
 - **Posing as the proxy:** The application accepts connections, and the user addresses they name, only from the proxy.
@@ -78,9 +82,14 @@ flowchart LR
 - **The schema:** The application's database role can only read and write data, and a separate role changes the schema.
 - **Record keys:** The database numbers each record itself, as it's added or drafted, and the application's role can only read key numbers, so a key is never changed or given again.
 - **Undoing:** Only the user who made a change can undo it, and not once anything it would change has changed again.
-- **Dependencies:** Packages are installed from the lockfile exactly, and base images are pinned by digest and GitHub Actions by commit. Image builds also install the operating system's security fixes released by `FATHOM_SECURITY_FIXES_DATE`. Renovate, as a GitHub App, may only open pull requests on branches of its own, which are reviewed and merged like any change. Accepted: release images aren't signed and come with no list of their components.
+- **Dependencies:** Packages are installed from the lockfile exactly, and base images are pinned by digest and GitHub Actions by commit.
+  - **Security fixes in images:** image builds also install the operating system's security fixes released by `FATHOM_SECURITY_FIXES_DATE`.
+  - **Renovate:** Renovate, as a GitHub App, may only open pull requests on branches of its own, which are reviewed and merged like any change.
+  - **Accepted:** release images aren't signed and come with no list of their components.
 - **The UI tests' browser:** `pnpm test:ui` downloads Chromium from Playwright's servers, at the version its pinned package names, outside the lockfile and the scans. Accepted: it runs only on a contributor's computer, against fictional data, and never reaches an image.
-- **Workflows:** The Check workflow runs every pull request's code, including a fork's, with a read-only token and no secrets, on the `pull_request` event, never `pull_request_target`. Each job is given the least it needs, and values a person can choose, such as a tag's name, reach a command only as quoted settings. Only the maintainer may push or change release tags, as a tag ruleset on the repository sets out, since a published release runs its workflow from its tag.
+- **Workflows:** The Check workflow runs every pull request's code, including a fork's, with a read-only token and no secrets, on the `pull_request` event, never `pull_request_target`.
+  - **Least access:** each job is given the least it needs, and values a person can choose, such as a tag's name, reach a command only as quoted settings.
+  - **Release tags:** only the maintainer may push or change release tags, as a tag ruleset on the repository sets out, since a published release runs its workflow from its tag.
   - **The merge queue:** a queued pull request's code runs again on the `merge_group` event, in the repository's own context, with the same read-only token and no secrets, once the maintainer queues it.
 - **The default branch:** Changes reach `main` only through a pull request that passes the check, as a ruleset on the repository enforces, set out with the repository's other settings in [Development Setup](../design/development-setup.md#the-repository-on-github). Accepted: commits aren't signed.
 
@@ -101,15 +110,27 @@ flowchart LR
 
 ### Information Disclosure
 
-- **Before sign-in:** Only the front end's files, sign-in, sign-out, changing a password and the session checks are served without a signed-in account. The front end's script names Fathom's release, and holds every Help page. Accepted: anyone who reaches it can look up the release's known weaknesses, which are fixed by updating, not hidden, and the Help pages are public with Fathom's source, holding no organization's data.
-- **Data beyond a role:** One shared data access layer checks permissions and classifications for every page, export and search. A page, view or column is shown only to roles that see every classification it needs, and a column that needs a permission as well, such as People's Feature teams, which needs View on Feature teams, only to roles that hold it.
+- **Before sign-in:** Only the front end's files, sign-in, sign-out, changing a password and the session checks are served without a signed-in account. The front end's script names Fathom's release, and holds every Help page.
+  - **Accepted:** anyone who reaches it can look up the release's known weaknesses, which are fixed by updating, not hidden, and the Help pages are public with Fathom's source, holding no organization's data.
+- **Data beyond a role:** One shared data access layer checks permissions and classifications for every page, export and search.
+  - **Pages, views and columns:** a page, view or column is shown only to roles that see every classification it needs, and a column that needs a permission as well, such as People's Feature teams, which needs View on Feature teams, only to roles that hold it.
 - **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks.
   - **A change's class:** a change is shown only to readers who see its data, at its class then or now, whichever is more sensitive, so its timing doesn't reveal a Personal change.
   - **Who sees which changes:** changes to configuration are seen by those who may open its pages, changes to people by those who see people, a shared view's by those who open its table's page, and a personal saved view's by its maker alone. Something saved with no change a reader may see is left out for them.
-  - **Unpublished changes:** seen only by their maker, who alone publishes or discards them. Asking to publish or discard someone else's is answered as if the change doesn't exist, and a change is linked only to its maker's other changes. Publishing applies the role in use alone, as [Roles](../product/roles.md#accounts-and-the-acting-role) sets out, so a change made under another role waits until a role that may make its kind of change publishes it.
-- **Shared views of Drafts:** Drafts shows each role the drafts of the areas it sees, but its shared views open to every role that opens Drafts. Accepted: a shared view's filters show what its maker typed or chose, such as a person's name in a Record filter, to readers who don't see that area, though never a row they may not see. Only roles with Edit Configuration can share a Drafts view.
-- **Last views:** Each account's last view of each page is read and written only by that account. Saving one refuses what the role couldn't save as a view. Reading it leaves out the filters, sorts, breakdowns, groupings and columns on what the role can no longer see, the whole view once the role no longer opens its page, and a saved view the account may no longer apply. Neither history records it. Accepted: its search is kept as typed, so it may name something the role no longer sees, though only to the account that typed it.
-- **Links to records:** A link by a record's key finds the record only through the read of the page that shows it, for a role that opens that page, and says it was removed only to a role whose History shows the removal. Otherwise it answers "Nothing found", the same whether no record has the key or the role may not see it. Accepted: key numbers count up, so their gaps show that records exist that a role doesn't see, such as drafts and removed records, though nothing about them.
+  - **Unpublished changes:** seen only by their maker, who alone publishes or discards them.
+    - **Others' changes:** asking to publish or discard someone else's is answered as if the change doesn't exist, and a change is linked only to its maker's other changes.
+    - **Publishing:** publishing applies the role in use alone, as [Roles](../product/roles.md#accounts-and-the-acting-role) sets out, so a change made under another role waits until a role that may make its kind of change publishes it.
+- **Shared views of Drafts:** Drafts shows each role the drafts of the areas it sees, but its shared views open to every role that opens Drafts.
+  - **Sharing:** only roles with Edit Configuration can share a Drafts view.
+  - **Accepted:** a shared view's filters show what its maker typed or chose, such as a person's name in a Record filter, to readers who don't see that area, though never a row they may not see.
+- **Last views:** Each account's last view of each page is read and written only by that account.
+  - **Saving:** saving one refuses what the role couldn't save as a view.
+  - **Reading:** reading it leaves out the filters, sorts, breakdowns, groupings and columns on what the role can no longer see, the whole view once the role no longer opens its page, and a saved view the account may no longer apply.
+  - **History:** neither history records it.
+  - **Accepted:** its search is kept as typed, so it may name something the role no longer sees, though only to the account that typed it.
+- **Links to records:** A link by a record's key finds the record only through the read of the page that shows it, for a role that opens that page, and says it was removed only to a role whose History shows the removal.
+  - **Otherwise:** it answers "Nothing found", the same whether no record has the key or the role may not see it.
+  - **Accepted:** key numbers count up, so their gaps show that records exist that a role doesn't see, such as drafts and removed records, though nothing about them.
 - **Exports:** An exported file holds only what the role was sent.
   - **Recording:** the browser asks the server to record an export of Personal or Confidential data once it is confirmed and a place to save it chosen, then writes the file.
   - **Checked by the server:** it finds each column's class and name itself, and refuses an export naming a column the role can't see.
@@ -132,7 +153,8 @@ flowchart LR
 - **Granting oneself access:** Anyone who manages accounts could give themselves any role, or reset a user's password and sign in as them. Every change to accounts and roles is recorded in the access history, and accounts created, changes to roles, and changes to which roles an account holds are marked for review.
 - **Acting with several roles:** A session acts as one role at a time, with only that role's permissions.
 - **Approving one's own change:** Nobody approves their own change, made under any of their roles, unless the role they act as is given that permission.
-- **Approving under either of two areas:** Drafts of schedules and their cycles are changed with Edit on the plan or on configuration, and approved with Approve on either one, so a role granted either reaches them. One shared rule on the server checks either permission, together with seeing schedules, for every change and decision on them, and tests cover each role allowed and denied.
+- **Approving under either of two areas:** Drafts of schedules and their cycles are changed with Edit on the plan or on configuration, and approved with Approve on either one, so a role granted either reaches them.
+  - **One shared rule:** one shared rule on the server checks either permission, together with seeing schedules, for every change and decision on them, and tests cover each role allowed and denied.
 - **Escaping a container:** Every container runs as a user other than root, with a read-only filesystem, all Linux capabilities dropped and no privilege escalation. The application's runtime image is distroless.
 - **The database:** Passwords are stored with SCRAM-SHA-256, and the database refuses superuser logins over the network.
 
@@ -144,7 +166,8 @@ flowchart LR
 - **Releases:** A release tag pushed is built and scanned before its release is drafted, and its images are scanned again when the release is published, before any is pushed to the registry.
   - **Every change:** the Check workflow runs the security report on every pull request, every group in the merge queue and every push to the default branch.
 - **Offline:** `pnpm check --offline` and `pnpm security --offline` skip the dependency audit and the image scans, which need the internet, and run the other scans without network access. The Check workflow, which refuses `--offline`, runs every scan on the pull request, and only its result counts toward a merge.
-- **Security fixes first:** Renovate opens a pull request for each security fix in a dependency the `package.json` files name as soon as it finds one, before any other update and whatever else is waiting, without the seven-day wait the others have. PostgreSQL's minor, patch and image updates, which carry its security fixes, come straight after them in the same way.
+- **Security fixes first:** Renovate opens a pull request for each security fix in a dependency the `package.json` files name as soon as it finds one, before any other update and whatever else is waiting, without the seven-day wait the others have.
+  - **PostgreSQL:** PostgreSQL's minor, patch and image updates, which carry its security fixes, come straight after them in the same way.
 - **Fix times:** Counted from when a fix is released: critical within 14 days, high within 60, and medium within 180. Low findings have no deadline.
 - **Failing:** The security report fails on an overdue fix, any other critical or high finding, or a scan that doesn't finish. A release isn't drafted, and its images aren't published, while any fix in them is overdue.
 - **Indirect dependencies:** Renovate updates only the dependencies the `package.json` files name. A security fix in a package one of them brings in is made by updating the package that brings it in, or, where no release of it takes the fix, by an override in `pnpm-workspace.yaml`, removed once one does.

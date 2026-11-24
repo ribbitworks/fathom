@@ -25,13 +25,15 @@ The standards these rules point to are in `docs/standards/`.
 - Before making any change in a session, ask the owner which mode to use, and
   follow [agent-workflow.md](docs/standards/agent-workflow.md):
   - **Autonomous:** have the owner verify UI changes, and approve or run a new
-    manual test or a significant change to one, before committing. Run the
-    tests, fix failures and warnings, and get a separate-agent code review.
-    Then commit, push and open a pull request without waiting for the owner's
-    approval. Ask the owner about any decision the owner should weigh in on,
-    and before leaving a review finding unfixed; record everyday choices in the
-    pull request under a Decisions heading. Propose any issue to the owner, and
-    file only those approved.
+    manual test or a significant change to one, before committing.
+    - **Checks:** run the tests, fix failures and warnings, and get a
+      separate-agent code review.
+    - **Pull request:** then commit, push and open a pull request without
+      waiting for the owner's approval.
+    - **Decisions:** ask the owner about any decision the owner should weigh
+      in on, and before leaving a review finding unfixed; record everyday
+      choices in the pull request under a Decisions heading.
+    - **Issues:** propose any issue to the owner, and file only those approved.
   - **Restrictive:** get approval before changing code, then edit files only.
     No builds or tests, and no staging, commits, pushes or pull requests unless
     the owner asks in the current turn.
@@ -46,10 +48,12 @@ The standards these rules point to are in `docs/standards/`.
   the owner may be working there.
 - Start each task, once the mode is chosen (and, in Restrictive mode, the
   change approved), by checking that the checkout and its submodules have no
-  uncommitted or untracked work; if they do, stop and tell the owner. Then run
-  `git fetch origin`, `git switch --no-track -c <type>/<task> origin/main`,
-  `git submodule update --init --recursive` and the project's setup command,
-  and tell the owner the branch. Push with `git push -u origin <type>/<task>`.
+  uncommitted or untracked work; if they do, stop and tell the owner.
+  - **Branch:** then run `git fetch origin`,
+    `git switch --no-track -c <type>/<task> origin/main`,
+    `git submodule update --init --recursive` and the project's setup command,
+    and tell the owner the branch.
+  - **Push:** push with `git push -u origin <type>/<task>`.
 - Never commit a submodule pointer change unless the task is to bump it.
 - Delete the local branches of merged pull requests, only when they hold
   nothing the pull request lacks, as
@@ -98,7 +102,7 @@ or tool adds one, remove it.
 ### Comments
 
 Default to no comment. Names carry *what*; comments carry only *why* the code
-cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
+cannot say. Never narrate names, UI, tickets, use-case numbers or history; see
 [core-principles.md § Comments](docs/standards/core-principles.md#comments).
 
 ### Writing
@@ -111,9 +115,15 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 
 ## Project Commands
 
-- **Setup on a new branch:** `pnpm install`, then run `pnpm dev` again, which first stops this clone's running one, since the top bar's development label shows the branch `pnpm dev` started on. A clone that already has `.dev/` needs nothing more to run the app. In a clone without it, ask the owner whether to copy `.dev/` from another clone, so the development accounts keep one password everywhere, and which clone number to give it with `pnpm dev:setup <number>`, run straight after copying, since `.dev/` holds the other clone's number. Each clone number has its own database and ports, as [Development Setup](docs/design/development-setup.md#ways-to-run-fathom) describes.
+- **Setup on a new branch:** `pnpm install`, then run `pnpm dev` again, which first stops this clone's running one, since the top bar's development label shows the branch `pnpm dev` started on.
+  - **Clone that already has `.dev/`:** needs nothing more to run the app.
+  - **Clone without `.dev/`:** ask the owner whether to copy `.dev/` from another clone, so the development accounts keep one password everywhere, and which clone number to give it with `pnpm dev:setup <number>`, run straight after copying, since `.dev/` holds the other clone's number.
+  - **Clone numbers:** each clone number has its own database and ports, as [Development Setup](docs/design/development-setup.md#ways-to-run-fathom) describes.
 - **Workflow test step:** as [Checks and CI](docs/design/checks-and-ci.md#before-a-pull-request) sets out, `pnpm check:push`, for documentation alone too. When a change affects the containers, the test step also runs `pnpm test:containers`, and when it changes a form's behaviour, `pnpm test:ui`, with `pnpm dev` running.
-- **Full suite:** the Check workflow runs the full `pnpm check` on the pull request on GitHub, all but the package tests for documentation alone, as [Checks and CI](docs/design/checks-and-ci.md#the-check-on-github) sets out. Push once the review's findings are fixed and `pnpm check:push` passes on the code rebased onto `main`, without waiting for the owner's approval; then follow the run with `gh pr checks --watch` and fix any failure or warning as a later commit. The owner merges only on green. Running `pnpm check` locally is optional, for when the workflow can't run.
+- **Full suite:** the Check workflow runs the full `pnpm check` on the pull request on GitHub, all but the package tests for documentation alone, as [Checks and CI](docs/design/checks-and-ci.md#the-check-on-github) sets out.
+  - **Push:** push once the review's findings are fixed and `pnpm check:push` passes on the code rebased onto `main`, without waiting for the owner's approval.
+  - **Follow the run:** then follow the run with `gh pr checks --watch` and fix any failure or warning as a later commit. The owner merges only on green.
+  - **Locally:** running `pnpm check` locally is optional, for when the workflow can't run.
 - **Tests only:** `pnpm test`
 - **Checks while working and after each round of fixes:** `pnpm check:push`, as [Checks and CI](docs/design/checks-and-ci.md#before-a-pull-request) describes; without the internet, `pnpm check:push --offline`, as [Development Setup](docs/design/development-setup.md#working-offline) describes
 - **Container tests:** `pnpm test:containers`
@@ -126,7 +136,9 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 
 Changes reach `main` only through a pull request, as [agent-workflow.md](docs/standards/agent-workflow.md) requires. Pull request titles, descriptions and comments follow the commit message rules and carry no AI attribution.
 
-Before starting a task, find and fix the issues in its areas, as [Issues § Fixing an Issue](docs/standards/issues.md#fixing-an-issue) sets out. In Autonomous mode, a set of issues in one area is worked as a batch. A batch commits each fix on its own, then has one review for the whole branch, as an exception to the Autonomous workflow that [Issues § Issue Batches](docs/standards/issues.md#issue-batches) sets out.
+Before starting a task, find and fix the issues in its areas, as [Issues § Fixing an Issue](docs/standards/issues.md#fixing-an-issue) sets out.
+
+In Autonomous mode, a set of issues in one area is worked as a batch. A batch commits each fix on its own, then has one review for the whole branch, as an exception to the Autonomous workflow that [Issues § Issue Batches](docs/standards/issues.md#issue-batches) sets out.
 
 ## Data
 

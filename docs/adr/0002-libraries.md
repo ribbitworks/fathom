@@ -3,7 +3,19 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use; 2026-11-01, to shorten sessions from 12 hours to 30 minutes without use, with the browser signing out on its own; 2026-11-06, to add zxcvbn-ts for refusing passwords that are easy to guess, and to add the Markdown libraries for notes; 2026-11-15, to add rehype-slug for the anchors of Help pages' headings, with github-slugger in tests; 2026-11-17, to drop PowerShell linting, since Fathom has no PowerShell scripts, and to run Renovate as the GitHub App; 2026-11-18, to add CodeQL on GitHub beside Semgrep, now that the repository is public, and to keep a local copy of Semgrep's rules for scanning offline; 2026-11-19, to mark TanStack Table and Playwright as not adopted yet, to say data classes, as Fathom does, rather than tiers, and to group Renovate's minor and patch npm updates weekly, with security fixes and PostgreSQL's updates first; 2026-11-23, to keep Renovate's controls in each pull request's description; 2026-11-24, to adopt Playwright for UI tests, as ADR 0013 sets out
+- **Revised:**
+  - 2026-10-27, to add Faker for fictional data, to point to the roadmap, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image
+  - 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations
+  - 2026-10-29, to add React's rules of hooks to linting
+  - 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use
+  - 2026-11-01, to shorten sessions from 12 hours to 30 minutes without use, with the browser signing out on its own
+  - 2026-11-06, to add zxcvbn-ts for refusing passwords that are easy to guess, and to add the Markdown libraries for notes
+  - 2026-11-15, to add rehype-slug for the anchors of Help pages' headings, with github-slugger in tests
+  - 2026-11-17, to drop PowerShell linting, since Fathom has no PowerShell scripts, and to run Renovate as the GitHub App
+  - 2026-11-18, to add CodeQL on GitHub beside Semgrep, now that the repository is public, and to keep a local copy of Semgrep's rules for scanning offline
+  - 2026-11-19, to mark TanStack Table and Playwright as not adopted yet, to say data classes, as Fathom does, rather than tiers, and to group Renovate's minor and patch npm updates weekly, with security fixes and PostgreSQL's updates first
+  - 2026-11-23, to keep Renovate's controls in each pull request's description
+  - 2026-11-24, to adopt Playwright for UI tests, as ADR 0013 sets out
 
 ## Context
 
@@ -69,7 +81,11 @@ Better Auth settings Fathom's security relies on:
 - **No public sign-up:** Accounts are created only by administrators.
 - **No session caching in cookies:** Role changes and account deactivation take effect immediately.
 - **Password resets by administrators:** No email is sent. Users change their own password by giving their current one, which signs out their other sessions.
-- **Sessions:** End after 30 minutes without use. A session's expiry is pushed back at most once a minute while it is in use, which writes to the database at most once a minute for each session in use, a small load at Fathom's [scale](../product/brief.md#constraints). The browser signs out on its own once none of the user's Fathom tabs has had a key, click, touch, scroll, or mouse movement for 30 minutes, and while there is use it keeps the session alive on the server, telling it at most once a minute, so the server's session ends no more than about two minutes before the browser signs out; the sign-in page then says why, and brings the user back to the page they were on.
+- **Sessions:** End after 30 minutes without use.
+  - **Expiry:** A session's expiry is pushed back at most once a minute while it is in use, which writes to the database at most once a minute for each session in use, a small load at Fathom's [scale](../product/brief.md#constraints).
+  - **Browser sign-out:** The browser signs out on its own once none of the user's Fathom tabs has had a key, click, touch, scroll, or mouse movement for 30 minutes.
+  - **Keeping the session alive:** While there is use, the browser keeps the session alive on the server, telling it at most once a minute, so the server's session ends no more than about two minutes before the browser signs out.
+  - **After sign-out:** The sign-in page then says why, and brings the user back to the page they were on.
 - **Client addresses:** Sign-in limits use only the client address the server passes to Better Auth, never one a client sends, so they cannot be dodged.
 - **Telemetry off:** Set explicitly, although it is off by default.
 
@@ -79,9 +95,15 @@ Better Auth settings Fathom's security relies on:
 - **Configuration:** Settings come from environment variables and secrets from mounted files, all validated with Zod at start-up.
 - **Migrations:** Run as a separate step before the application starts, using a migration database role that can change the schema. The application's own database role can only read and write data. Schema changes are never pushed directly with drizzle-kit; only reviewed migration files reach the database.
 - **Base images:** Builds use Debian slim images, so prebuilt binaries for glibc work. The application runs on a minimal distroless image, to reduce what can be attacked.
-- **Database image:** Fathom's own image, based on the official PostgreSQL Alpine image. It applies the security fixes released up to the day it is built, removes gosu, which is only needed to start as root, and includes Fathom's first-time setup scripts. Alpine was chosen over Debian because its known vulnerabilities all have fixes available. Development, tests, the security report, and production all build the image from the same Dockerfile.
+- **Database image:** Fathom's own image, based on the official PostgreSQL Alpine image.
+  - **Contents:** It applies the security fixes released up to the day it is built, removes gosu, which is only needed to start as root, and includes Fathom's first-time setup scripts.
+  - **Alpine:** Alpine was chosen over Debian because its known vulnerabilities all have fixes available.
+  - **One Dockerfile:** Development, tests, the security report, and production all build the image from the same Dockerfile.
 - **Sorting:** The database sorts text with ICU's international rules, set when the database is created because it cannot be changed afterwards. When an image update changes the ICU version, affected indexes must be rebuilt (`REINDEX`) and the collation version refreshed (`ALTER DATABASE ... REFRESH COLLATION VERSION`).
-- **Dependency updates:** Renovate, as the Renovate GitHub App on the repository, opens one pull request each week for the minor and patch updates of npm packages, and one for each other update, such as a major release or a container image. Its commit messages and descriptions follow the Commit Message Rules, and each description ends with Renovate's own controls, such as the box that rebases it. Security fixes, and PostgreSQL's minor, patch and image updates, come first, without the seven-day wait or the limits on how many pull requests are open. Its updates are reviewed like any other change.
+- **Dependency updates:** Renovate, as the Renovate GitHub App on the repository, opens one pull request each week for the minor and patch updates of npm packages, and one for each other update, such as a major release or a container image.
+  - **Pull request text:** Its commit messages and descriptions follow the Commit Message Rules, and each description ends with Renovate's own controls, such as the box that rebases it.
+  - **Priority:** Security fixes, and PostgreSQL's minor, patch and image updates, come first, without the seven-day wait or the limits on how many pull requests are open.
+  - **Review:** Renovate's updates are reviewed like any other change.
 
 ## Consequences
 
@@ -89,6 +111,9 @@ Better Auth settings Fathom's security relies on:
 - **Database access:** Drizzle keeps queries explicit, but class checks are not automatic; the shared data access layer and its tests enforce them.
 - **Native modules:** If a native module is ever added, dependencies are installed inside the linux/amd64 build, never copied from a machine with a different processor, and the module is explicitly allowed to run its install script in pnpm.
 - **Testcontainers:** Must be verified on each development runtime in [Supported Platforms](../operations/supported-platforms.md). Runtimes other than Docker need extra configuration, and tests need access to the container images they use.
-- **Semgrep:** Community Edition checks one file at a time. Its registry rules are used at scan time, not copied into the repository, because they have their own licence. To scan without the internet, `pnpm offline:prepare` keeps a copy on the developer's own machine, in a git-ignored folder, never committed. Opengrep is the fallback if Semgrep's licensing changes.
+- **Semgrep:** Community Edition checks one file at a time.
+  - **Registry rules:** Semgrep's registry rules are used at scan time, not copied into the repository, because they have their own licence.
+  - **Scanning offline:** To scan without the internet, `pnpm offline:prepare` keeps a copy of the rules on the developer's own machine, in a git-ignored folder, never committed.
+  - **Fallback:** Opengrep is the fallback if Semgrep's licensing changes.
 - **CodeQL on GitHub:** Since the repository is public, CodeQL's default setup also runs on GitHub, for the JavaScript and TypeScript code and the GitHub Actions workflows, on pull requests, pushes to `main`, and weekly. Semgrep stays in `pnpm check`, so every copy of the repository scans before it pushes.
 - **Two lint tools:** ESLint and Prettier mean two tools to configure, in exchange for type-aware and security rules.

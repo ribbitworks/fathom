@@ -144,7 +144,9 @@ A branch checked offline still needs the Check workflow's full check to pass on 
 
 ## Sharing the Machine
 
-A check runs many linters, type checks, scans and tests side by side, and can use every core of the computer. Several copies of the repository on one computer, each running a check, would slow each other until tests time out. So checks take turns, two at a time, share the cores, and stop a step that hangs. A check of documentation alone before a push is quick, so it takes no turn.
+A check runs many linters, type checks, scans and tests side by side, and can use every core of the computer. Several copies of the repository on one computer, each running a check, would slow each other until tests time out.
+
+So checks take turns, two at a time, share the cores, and stop a step that hangs. A check of documentation alone before a push is quick, so it takes no turn.
 
 A turn is held as a slot file, and a check waiting for one leaves a ticket, so copies take their turns in the order they asked.
 
@@ -238,7 +240,9 @@ flowchart TD
 
 ### The Local Check
 
-`pnpm check` and `pnpm check:push` run `scripts/check.sh`. It checks its arguments, its readiness to work offline and the connection first, so a mistake fails at once. Before a push, it runs only the jobs the change needs. Then, unless the change is documentation alone, it waits for a turn through `scripts/check-turn.mjs`, as [Sharing the Machine](#sharing-the-machine) explains, and runs the jobs.
+`pnpm check` and `pnpm check:push` run `scripts/check.sh`. It checks its arguments, its readiness to work offline and the connection first, so a mistake fails at once.
+
+Before a push, it runs only the jobs the change needs. Then, unless the change is documentation alone, it waits for a turn through `scripts/check-turn.mjs`, as [Sharing the Machine](#sharing-the-machine) explains, and runs the jobs.
 
 ```mermaid
 flowchart TD
