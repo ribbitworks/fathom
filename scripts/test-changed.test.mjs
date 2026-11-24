@@ -229,6 +229,7 @@ describe("choosing the tests a change can affect", () => {
       "pnpm-lock.yaml",
       "package.json",
       "scripts/lib.sh",
+      "scripts/test-ui.sh",
       "deploy/compose.dev.yaml",
       "tsconfig.base.json",
     ]) {
@@ -249,6 +250,37 @@ describe("choosing the tests a change can affect", () => {
         path,
       );
     }
+  });
+
+  it("runs only the script tests when only the scripts' modules, the container tests or .github changed", () => {
+    assert.deepEqual(
+      choose([
+        "scripts/changed-paths.mjs",
+        "scripts/check-turn.test.mjs",
+        "scripts/container-tests/containers.test.mjs",
+        ".github/workflows/check.yml",
+        "docs/design/checks-and-ci.md",
+      ]),
+      { kind: "packages", whole: [], related: [], files: [], covered: [] },
+    );
+  });
+
+  it("runs every test of every package when a script that starts the package tests changed", () => {
+    for (const path of [
+      "scripts/check-turn.mjs",
+      "scripts/package-tests.mjs",
+      "scripts/run-command.mjs",
+      "scripts/test-changed.mjs",
+      "scripts/workspace.mjs",
+    ])
+      assert.equal(choose([path]).kind, "everything", path);
+  });
+
+  it("runs the package tests a change can affect beside the scripts' modules, and no more", () => {
+    assert.deepEqual(
+      choose(["scripts/changed-paths.mjs", "apps/web/src/app.tsx"]),
+      choose(["apps/web/src/app.tsx"]),
+    );
   });
 
   it("checks the coverage of the source beside a changed or removed test, running every test importing it", () => {
