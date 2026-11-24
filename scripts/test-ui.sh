@@ -10,13 +10,18 @@ cd "$(dirname "$0")/.."
 source scripts/lib.sh
 
 main() {
-  local url="https://localhost:$FATHOM_DEV_PORT" password_file
-  curl --silent --max-time 10 --cacert "$(mkcert -CAROOT)/rootCA.pem" --output /dev/null "$url/" ||
+  local url="https://localhost:$FATHOM_DEV_PORT" password_file ca_file
+  ca_file="$(mkcert -CAROOT)/rootCA.pem"
+  curl --silent --max-time 10 --cacert "$ca_file" --output /dev/null "$url/" ||
     fail "Fathom isn't answering at $url; start it with 'pnpm dev', then try again"
   password_file="$PWD/$(dev_account_password_file)"
   bash scripts/dev-db.sh reseed
+  # Each run signs its accounts in afresh; their sessions are kept where only this account can read.
+  rm -rf .tmp/ui-accounts
+  (umask 077 && mkdir -p .tmp/ui-accounts)
   pnpm --filter @fathom/web exec playwright install chromium
-  FATHOM_UI_URL="$url" FATHOM_UI_PASSWORD_FILE="$password_file" \
+  # Node.js, which signs the accounts in, trusts the development certificate as the browser does.
+  FATHOM_UI_URL="$url" FATHOM_UI_PASSWORD_FILE="$password_file" NODE_EXTRA_CA_CERTS="$ca_file" \
     pnpm --filter @fathom/web exec playwright test "$@"
 }
 

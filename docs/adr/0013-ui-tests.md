@@ -21,7 +21,8 @@ The unit tests run in jsdom, which doesn't lay out a page, move focus as a brows
 
 Playwright, Apache-2.0, runs the UI tests with `pnpm test:ui`, against the copy's running development server, after reseeding its fictional data.
 
-- **The tests** live in `apps/web/e2e/`, named `*.test.ts`, with helpers named `test-*.ts`.
+- **The tests** live in `apps/web/e2e/`, named `*.test.ts`, with helpers named `test-*.ts` and setup steps `*.setup.ts`.
+- **Signing in:** a setup step signs each account the tests use in once a run, through the API and untraced, and the tests start from its saved session. Signing in once keeps a run under the sign-in limit, and keeps the password out of every trace and page snapshot.
 - **The browser** is Chromium, which the command installs the first time.
 - **Not a database of its own:** a second server and database would add minutes to each run, and the tests would no longer see the code as `pnpm dev` serves it while it's being changed.
 - **Each test makes its own records,** with names of its own, and compares before and after, since the data is reseeded once a run, not before each test.

@@ -126,6 +126,7 @@ Logic, validation, access checks and data handling are never excluded. The code 
 
 - **A form's behaviour:** a change to how a form behaves, such as its refusals, where focus goes or what it saves, **Must** have a UI test in a real browser that fails on the code before the change and passes after it.
 - **Running them:** `pnpm test:ui` runs them against the copy's development server, as [ADR 0013](../adr/0013-ui-tests.md) sets out. They live in `apps/web/e2e/`.
+- **Signed in:** a test starts signed in as one of the accounts listed in `apps/web/e2e/test-accounts.ts`, with `test.use({ storageState: signedInAs(…) })`, never through the sign-in page. A new account is added to that list.
 - **Other changes:** UI tests aren't required. A new user flow lists a short UI test roadmap, happy path first, then the main variations, in the pull request or feature document.
 - **Accessibility identifiers:** interactive elements carry them.
 

@@ -241,7 +241,7 @@ The copy gets new names, and so a new, empty database.
 - **`pnpm check --skip`** and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it.
 - **`pnpm check` without a connection to the internet** stops before starting, naming `--offline`, which leaves out the Renovate settings and the scans that need the internet, once `pnpm offline:prepare` has run, as [Working Offline](#working-offline) describes.
 - **`pnpm test:ui`'s first run** downloads Chromium, so it needs the internet; `pnpm offline:prepare` doesn't fetch it.
-- **A failed UI test** keeps its trace in `.tmp/ui-tests/`, which holds the development accounts' password and a session, so it isn't shared.
+- **A failed UI test** keeps its trace in `.tmp/ui-tests/`, which holds a development account's session, and `.tmp/ui-accounts/` keeps each account's session for the run, so neither is shared. Neither holds the password.
 
 `pnpm lint` keeps a cache in `.tmp/eslint/`, so unchanged files aren't linted again. `pnpm check` and `pnpm check:push` lint without it, since a change to one file's types can break another file.
 

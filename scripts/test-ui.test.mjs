@@ -13,6 +13,7 @@ import {
   readFileSync,
   realpathSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -52,7 +53,7 @@ function run({
   );
   writeFileSync(
     join(tools, "pnpm"),
-    `#!/usr/bin/env bash\necho "pnpm $* url=\${FATHOM_UI_URL:-} password=\${FATHOM_UI_PASSWORD_FILE:-}" >>"${calls}"\ncase "$*" in *"playwright test"*) exit ${testsFail ? 1 : 0} ;; esac\n`,
+    `#!/usr/bin/env bash\necho "pnpm $* url=\${FATHOM_UI_URL:-} password=\${FATHOM_UI_PASSWORD_FILE:-} ca=\${NODE_EXTRA_CA_CERTS:-}" >>"${calls}"\ncase "$*" in *"playwright test"*) exit ${testsFail ? 1 : 0} ;; esac\n`,
     { mode: 0o755 },
   );
   writeFileSync(join(tools, "mkcert"), "#!/usr/bin/env bash\necho /ca\n", {
@@ -107,11 +108,13 @@ describe("scripts/test-ui.sh", () => {
     });
     assert.equal(result.status, 0, result.stderr);
     const password = join(result.root, ".dev/secrets/dev_account_password");
+    const accountsFolder = join(result.root, ".tmp", "ui-accounts");
+    assert.equal(statSync(accountsFolder).mode & 0o777, 0o700);
     assert.deepEqual(result.called.trim().split("\n"), [
       "curl --silent --max-time 10 --cacert /ca/rootCA.pem --output /dev/null https://localhost:8463/",
       "dev-db reseed",
-      `pnpm --filter @fathom/web exec playwright install chromium url= password=`,
-      `pnpm --filter @fathom/web exec playwright test e2e/new-record.test.ts url=https://localhost:8463 password=${password}`,
+      `pnpm --filter @fathom/web exec playwright install chromium url= password= ca=`,
+      `pnpm --filter @fathom/web exec playwright test e2e/new-record.test.ts url=https://localhost:8463 password=${password} ca=/ca/rootCA.pem`,
     ]);
   });
 });

@@ -22,5 +22,13 @@ export default defineConfig({
     baseURL,
     trace: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    // Signs each account in once, untraced, since a trace would hold the password it sends.
+    { name: "accounts", testMatch: /\.setup\.ts$/, use: { trace: "off" } },
+    {
+      name: "chromium",
+      dependencies: ["accounts"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
 });
