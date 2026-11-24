@@ -33,14 +33,10 @@ export const problemId = (column: Keyed) => idOf(column, "problem");
 export const editorId = (column: Keyed) => idOf(column, "editor");
 const wordsId = (column: Keyed) => idOf(column, "words");
 
-// Puts focus on a value being entered: a text or date is a field always open, and any other value
-// opens from its change button.
+// Puts focus on a value being entered: one typed into is a field always open, and any other value,
+// such as a flag's checkbox or a choice's button, is reached by its change control.
 export const focusValue = (column: Keyed & Pick<Column<never>, "kind">) => {
-  focusSoon(
-    cellKinds[column.kind].Editor === undefined
-      ? editorId(column)
-      : changeId(column),
-  );
+  focusSoon(typedInto(column) ? editorId(column) : changeId(column));
 };
 
 // Puts focus on a form's field as the form opens, or opens as another, since the form's title can't
@@ -560,7 +556,13 @@ export function useRecordEditing<
 const hasEditor = (column: Pick<Column<never>, "kind">) =>
   cellKinds[column.kind].Editor !== undefined;
 
+// Whether a field is typed into, such as a text, rather than chosen from a list or ticked.
+const typedInto = (column: Pick<Column<never>, "kind">) => {
+  const { Editor, toggled } = cellKinds[column.kind];
+  return Editor === undefined && toggled === undefined;
+};
+
 // The first of a form's fields typed into, such as Name, or else its first.
 export const firstTypedInto = <Field extends Pick<Column<never>, "kind">>(
   fields: readonly Field[],
-): Field | undefined => fields.find((field) => !hasEditor(field)) ?? fields[0];
+): Field | undefined => fields.find(typedInto) ?? fields[0];
