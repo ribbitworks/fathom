@@ -14,7 +14,7 @@ last_updated: "2026-11-24"
 Verifies the Board on the Features page:
 
 - Switching between the table and the board.
-- The columns of months and No date or of one schedule's cycles and Later.
+- The columns of months and No date, of all schedules' features or one's, or of one schedule's cycles and Later.
 - The cards and the Card menu, the strip and the Columns menu.
 - Rows from the Group by menu, with a card in each row of a feature under several values.
 - How search, drafts, a feature's details and the keyboard work on the board.
@@ -70,7 +70,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A red line runs along the bottom of this month's heading.
   - **Notes:**
 
-- [ ] `5D2A` Select **Columns: Months**, then **Platform cycles**.
+- [ ] `5D2A` Select **Columns: Months**, then **Platform** under **A schedule's cycles**.
   - **Expected:**
     - The button reads **Columns: Platform cycles**.
     - The board's columns are Platform's cycles, from left to right, the last headed "Later".
@@ -256,12 +256,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `8C55` Select **Columns: Platform cycles**.
   - **Expected:**
-    - A menu headed "Columns" lists, from the top, **Months**, **Platform cycles**, **Patches cycles** and **Field Apps cycles**.
-    - **Platform cycles** is ticked.
-    - **Patches cycles** has a yellow dot before it and a yellow **Retired** box after it.
+    - Under the heading "Months", the menu lists, from the top, **All schedules**, **Platform**, **Patches** and **Field Apps**.
+    - Under the heading "A schedule's cycles", it lists **Platform**, **Patches** and **Field Apps**.
+    - **Platform** under "A schedule's cycles" is ticked.
+    - Each **Patches** has a yellow dot before it and a yellow **Retired** box after it.
   - **Notes:**
 
-- [ ] `A0DA` Select **Patches cycles**.
+- [ ] `A0DA` Select **Patches** under **A schedule's cycles**.
   - **Expected:**
     - The button reads **Columns: Patches cycles**.
     - The columns are Patches' cycles, the current one second, named such as "Cycle P26.13", each four weeks long.
@@ -270,7 +271,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - "Later" holds 'Partner Portal', 'Voice Notes' and 'Shift Handover Notes'.
   - **Notes:**
 
-- [ ] `C87D` Select **Columns: Patches cycles**, then **Field Apps cycles**.
+- [ ] `C87D` Select **Columns: Patches cycles**, then **Field Apps** under **A schedule's cycles**.
   - **Expected:**
     - The button reads **Columns: Field Apps cycles**.
     - The columns are Field Apps' cycles, named such as "Cycle FA26.2", each six months long.
@@ -279,7 +280,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - That column holds the card 'Work Order Sync', with no "Not staffed".
   - **Notes:**
 
-**Afterwards:** Select **Columns: Field Apps cycles**, then **Platform cycles**.
+**Afterwards:** Select **Columns: Field Apps cycles**, then **Platform** under **A schedule's cycles**.
 
 ### BOARD-04: Group By Puts the Cards in Rows
 
@@ -500,7 +501,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Features** page open, showing Platform's board, with **Drafts & Live** chosen in the Draft menu. Here, "this month" is the month the tester runs the test in.
 
-- [ ] `9B41` Select **Columns: Platform cycles**, then **Months**.
+- [ ] `9B41` Select **Columns: Platform cycles**, then **All schedules** under **Months**.
   - **Expected:**
     - The button reads **Columns: Months**.
     - The first column is headed the month before this one, and the second is headed this month.
@@ -577,3 +578,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 **Afterwards:** Select **Today**.
+
+### BOARD-10: Months of One Schedule
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-09 ended with.
+
+**Preconditions:** Signed in with this account. **Features** page open, showing the board by months, with **Drafts & Live** chosen in the Draft menu.
+
+- [ ] `C307` Select **Columns: Months**, then **Field Apps** under **Months**.
+  - **Expected:**
+    - The button reads **Columns: Months, Field Apps**.
+    - The columns are still months.
+    - The strip names quarters.
+    - The card 'Work Order Sync' is on the board.
+    - The card 'Offline Sync' isn't on the board.
+  - **Notes:**
+
+**Afterwards:** Select **Columns: Months, Field Apps**, then **All schedules** under **Months**.

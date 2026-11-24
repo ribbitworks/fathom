@@ -165,27 +165,30 @@ describe("the strip and the Columns menu", () => {
     ).toBe("true");
   });
 
-  it("offers Months, then schedules not retired as they are live, under Columns, and shows the one chosen", async () => {
+  it("offers months of all schedules or one, then a schedule's cycles, schedules not retired as they are live, and shows the one chosen", async () => {
     const history = await openBoard();
     await userEvent.click(
       screen.getByRole("button", {
         name: "Columns: Fictional Majors cycles",
       }),
     );
-    expect(await screen.findByRole("group", { name: "Columns" })).toBeTruthy();
-    expect(
-      (await screen.findAllByRole("menuitem")).map(({ textContent }) =>
-        textContent.replace(", chosen", ""),
-      ),
-    ).toEqual([
-      "Months",
-      "Fictional Majors cycles",
-      "Fictional Minors cyclesRetired, Draft: retired",
+    const named = async (group: string) =>
+      within(await screen.findByRole("group", { name: group }))
+        .getAllByRole("menuitem")
+        .map(({ textContent }) => textContent.replace(", chosen", ""));
+    expect(await named("Months")).toEqual([
+      "All schedules",
+      "Fictional Majors",
+      "Fictional MinorsRetired, Draft: retired",
+    ]);
+    expect(await named("A schedule's cycles")).toEqual([
+      "Fictional Majors",
+      "Fictional MinorsRetired, Draft: retired",
     ]);
     await userEvent.click(
-      screen.getByRole("menuitem", {
-        name: "Fictional Minors cycles, Draft: retired",
-      }),
+      within(
+        screen.getByRole("group", { name: "A schedule's cycles" }),
+      ).getByRole("menuitem", { name: "Fictional Minors, Draft: retired" }),
     );
     expect(
       screen.getByRole("button", { name: "Columns: Fictional Minors cycles" }),
@@ -284,12 +287,139 @@ describe("months as columns", () => {
       screen.getByRole("button", { name: "Columns: Fictional Majors cycles" }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Months" }),
+      await screen.findByRole("menuitem", { name: "All schedules" }),
     );
     expect([
       screen.getByRole("button", { name: "Columns: Months" }),
       history.location.search.includes("stream="),
-    ]).toEqual([expect.anything(), false]);
+      history.location.search.includes("schedule="),
+    ]).toEqual([expect.anything(), false, false]);
+  });
+});
+
+describe("months of one schedule", () => {
+  const minor = feature("Fictional Minor", {
+    targetStreamId: retiring.id,
+    targetCycle: "2027-04-01",
+    neededBy: "2027-06",
+  });
+  const unplanned = feature("Fictional Unplanned", { neededBy: "2027-06" });
+  const months = { months: true, features: [alpha, minor, unplanned] };
+
+  it("shows only the features of the schedule chosen under Months, keeping it in the address", async () => {
+    // Given the board by months of all schedules
+    const history = await openBoard("/features?mode=board", months);
+    expect(cardNames("Jun 2027", [alpha, minor, unplanned])).toEqual([
+      "Fictional Alpha",
+      "Fictional Minor",
+      "Fictional Unplanned",
+    ]);
+
+    // When Fictional Majors is chosen under Months
+    await userEvent.click(
+      screen.getByRole("button", { name: "Columns: Months" }),
+    );
+    await userEvent.click(
+      within(await screen.findByRole("group", { name: "Months" })).getByRole(
+        "menuitem",
+        { name: "Fictional Majors" },
+      ),
+    );
+
+    // Then only its features show, by months still, and the address keeps it
+    expect(cardNames("Jun 2027", [alpha, minor, unplanned])).toEqual([
+      "Fictional Alpha",
+    ]);
+    expect(
+      screen.getByRole("button", { name: "Columns: Months, Fictional Majors" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("toolbar", { name: "Quarters" })).toBeTruthy();
+    expect(history.location.search).toContain(`schedule=${majors.id}`);
+  });
+
+  it("opens on the schedule the address names, and goes back to all schedules", async () => {
+    // Given the board opened by months of Fictional Minors
+    const history = await openBoard(
+      `/features?mode=board&schedule=${retiring.id}`,
+      months,
+    );
+    expect(cardNames("Jun 2027", [alpha, minor, unplanned])).toEqual([
+      "Fictional Minor",
+    ]);
+
+    // When All schedules is chosen
+    await userEvent.click(
+      screen.getByRole("button", { name: "Columns: Months, Fictional Minors" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "All schedules" }),
+    );
+
+    // Then every feature shows again, and the address names no schedule
+    expect(cardNames("Jun 2027", [alpha, minor, unplanned])).toHaveLength(3);
+    expect(history.location.search).not.toContain("schedule=");
+  });
+});
+
+describe("months of one schedule, as the board moves and drafts move features", () => {
+  const minor = feature("Fictional Minor", {
+    targetStreamId: retiring.id,
+    targetCycle: "2027-04-01",
+    neededBy: "2027-06",
+  });
+  const moving = feature("Fictional Moving", {
+    targetStreamId: retiring.id,
+    targetCycle: "2027-04-01",
+    neededBy: "2027-06",
+    draft: featureDraft({
+      changed: ["targetStreamId", "targetCycle"],
+      live: { targetStreamId: majors.id, targetCycle: "2027-04-01" },
+    }),
+  });
+  const months = { months: true, features: [alpha, minor, moving] };
+  const choose = async (group: string, name: string) => {
+    await userEvent.click(screen.getByRole("button", { name: /^Columns: / }));
+    await userEvent.click(
+      within(await screen.findByRole("group", { name: group })).getByRole(
+        "menuitem",
+        { name },
+      ),
+    );
+  };
+
+  it("keeps the month gone to when the schedule changes, and leaves it on going to cycles", async () => {
+    // Given the board by months, gone to March 2027
+    const history = await openBoard(
+      "/features?mode=board&from=2027-03-01",
+      months,
+    );
+
+    // When a schedule is chosen under Months, the month gone to stays
+    await choose("Months", "Fictional Majors");
+    expect(history.location.search).toContain("from=2027-03-01");
+
+    // When a schedule's cycles are chosen, it goes
+    await choose("A schedule's cycles", "Fictional Majors");
+    expect(history.location.search).not.toContain("from=");
+  });
+
+  it("shows every schedule's features for a schedule it doesn't have", async () => {
+    await openBoard(
+      "/features?mode=board&schedule=10000000-0000-4000-8000-0000000000ff",
+      months,
+    );
+    expect(
+      screen.getByRole("button", { name: "Columns: Months" }),
+    ).toBeTruthy();
+    expect(cardNames("Jun 2027", [alpha, minor, moving])).toHaveLength(3);
+  });
+
+  it("shows a feature a draft moves to another schedule under the schedule its draft names", async () => {
+    await openBoard(`/features?mode=board&schedule=${retiring.id}`, months);
+    expect(cardNames("Jun 2027", [alpha, minor, moving])).toEqual([
+      "Fictional Minor",
+      "Fictional Moving",
+    ]);
   });
 });
 
