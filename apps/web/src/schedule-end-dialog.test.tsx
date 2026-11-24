@@ -154,12 +154,20 @@ describe("the dialog ending a schedule", () => {
     });
     await userEvent.type(box("Schedule ends"), "20270501");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(
-      await screen.findByText(
-        "The feature Fictional Feature targets a cycle after that day; change it first",
-      ),
-    ).toBeDefined();
-    expect(bodiesOf(fetch)).toEqual([]);
+    const reason =
+      "The feature Fictional Feature targets a cycle after that day; change it first";
+    expect(await screen.findByText(reason)).toBeDefined();
+    // The day stays in its field, outlined as refused, with the reason under it.
+    expect([
+      box("Schedule ends").getAttribute("aria-invalid"),
+      box("Schedule ends").getAttribute("value"),
+      box("Schedule ends")
+        .getAttribute("aria-describedby")
+        ?.split(" ")
+        .map((id) => document.getElementById(id)?.textContent)
+        .includes(reason),
+      bodiesOf(fetch),
+    ]).toEqual(["true", "2027-05-01", true, []]);
   });
 
   it("names no release to one whose role isn't known yet", async () => {
