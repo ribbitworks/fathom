@@ -4,7 +4,7 @@ category: "Guide"
 audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/**"]
 dependencies: ["docs/design/architecture.md", "docs/standards/testing.md", "docs/design/checks-and-ci.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Fathom: Development Setup
@@ -407,7 +407,7 @@ Under **Settings** → **Rules** → **Rulesets**:
 
 - **main:** on the default branch, with nobody allowed to bypass it.
   - Changes reach it only through a pull request, merged by rebasing, so each commit lands as written, as the [Agent Workflow](../standards/agent-workflow.md#rules-for-both-modes) sets out. No approving review is required, since the maintainer merges.
-  - **Full check** and **Container tests**, from GitHub Actions, must pass.
+  - **Full check**, from GitHub Actions, must pass. It needs every other job of the Check workflow, the container tests included.
   - It can't be deleted or force-pushed.
   - A pull request's branch needn't be up to date with it before merging, since the code is rebased onto `main` before it's pushed, as [Checks and CI](checks-and-ci.md#before-a-pull-request) sets out.
 - **release tags:** on `refs/tags/v*`. Only the Repository admin role may create, move or delete a release tag, since a published release runs its workflow from its tag.

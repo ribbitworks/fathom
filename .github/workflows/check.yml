@@ -189,16 +189,36 @@ jobs:
           fi
           pnpm --filter @fathom/server test:merge
 
+  containers:
+    name: Container tests
+    needs: changes
+    if: needs.changes.outputs.documentation-only != 'true'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js and the dependencies
+        uses: ./.github/actions/setup
+
+      - name: Run the container tests
+        run: pnpm test:containers
+
   full:
     name: Full check
-    needs: [changes, check, packages, server-coverage]
+    needs: [changes, check, packages, server-coverage, containers]
     if: always()
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions: {}
     steps:
-      # The package tests and the server's coverage may be left out only for documentation alone;
-      # everything else must pass.
+      # The package tests, the server's coverage and the container tests may be left out only for
+      # documentation alone; everything else must pass.
       # It runs even in a cancelled run, so a cancelled run fails rather than passing unchecked.
       - name: Pass only if every part passed
         if: always()
@@ -207,44 +227,13 @@ jobs:
           CHECKED: ${{ needs.check.result }}
           PACKAGES: ${{ needs.packages.result }}
           COVERAGE: ${{ needs.server-coverage.result }}
+          CONTAINERS: ${{ needs.containers.result }}
           DOCUMENTATION_ONLY: ${{ needs.changes.outputs.documentation-only }}
         run: |
-          echo "Decided: $DECIDED, checked: $CHECKED, package tests: $PACKAGES, server coverage: $COVERAGE, documentation only: $DOCUMENTATION_ONLY"
+          echo "Decided: $DECIDED, checked: $CHECKED, package tests: $PACKAGES, server coverage: $COVERAGE, container tests: $CONTAINERS, documentation only: $DOCUMENTATION_ONLY"
           [ "$DECIDED" = success ] && [ "$CHECKED" = success ] || exit 1
           if [ "$DOCUMENTATION_ONLY" = true ]; then
-            [ "$PACKAGES" = skipped ] && [ "$COVERAGE" = skipped ]
+            [ "$PACKAGES" = skipped ] && [ "$COVERAGE" = skipped ] && [ "$CONTAINERS" = skipped ]
           else
-            [ "$PACKAGES" = success ] && [ "$COVERAGE" = success ]
+            [ "$PACKAGES" = success ] && [ "$COVERAGE" = success ] && [ "$CONTAINERS" = success ]
           fi
-
-  containers:
-    name: Container tests
-    needs: changes
-    # A required check, so it runs and reports whatever the change.
-    if: always()
-    runs-on: ubuntu-26.04
-    timeout-minutes: 60
-    permissions:
-      contents: read
-    steps:
-      # The job isn't cancelled with its run, so it runs its steps to the end, but a run cancelled
-      # before the decision would otherwise skip every step and pass with nothing tested.
-      - name: Stop if the decision failed
-        if: always()
-        env:
-          DECIDED: ${{ needs.changes.result }}
-        run: '[ "$DECIDED" = success ]'
-
-      - name: Check out
-        if: needs.changes.outputs.documentation-only != 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Set up Node.js and the dependencies
-        if: needs.changes.outputs.documentation-only != 'true'
-        uses: ./.github/actions/setup
-
-      - name: Run the container tests
-        if: needs.changes.outputs.documentation-only != 'true'
-        run: pnpm test:containers
