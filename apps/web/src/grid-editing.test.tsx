@@ -69,6 +69,44 @@ describe("Tab across a new row", () => {
     );
   });
 
+  it("leaves a date's other digits and the cursor in place when a digit in the middle is deleted", async () => {
+    renderGadgets({
+      gadgets: [],
+      fields: [],
+      table: nameThen(nextColumn("date")),
+    });
+    act(() => {
+      document.getElementById("cell-new-0-next")?.focus();
+    });
+    await userEvent.keyboard("20261108");
+    const editor = screen.getByRole<HTMLInputElement>("textbox", {
+      name: "Next",
+    });
+    editor.setSelectionRange("2026".length, "2026".length);
+    await userEvent.keyboard("{Backspace}");
+    expect([editor.value, editor.selectionStart]).toEqual(["202-11-08", 3]);
+    await userEvent.keyboard("7");
+    expect([editor.value, editor.selectionStart]).toEqual(["2027-11-08", 4]);
+  });
+
+  it("ignores a digit typed in the middle of a date that holds all its digits", async () => {
+    renderGadgets({
+      gadgets: [],
+      fields: [],
+      table: nameThen(nextColumn("date")),
+    });
+    act(() => {
+      document.getElementById("cell-new-0-next")?.focus();
+    });
+    await userEvent.keyboard("20261108");
+    const editor = screen.getByRole<HTMLInputElement>("textbox", {
+      name: "Next",
+    });
+    editor.setSelectionRange("2026-1".length, "2026-1".length);
+    await userEvent.keyboard("0");
+    expect([editor.value, editor.selectionStart]).toEqual(["2026-11-08", 6]);
+  });
+
   it("moves onto a read-only cell, closing the cell it left", async () => {
     renderGadgets({
       gadgets: [],

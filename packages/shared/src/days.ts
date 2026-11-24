@@ -2,7 +2,7 @@
 
 // Days, such as 2026-10-31, and months, such as 2026-10, as Fathom keeps and shows them everywhere:
 // whether text is a day that exists, and a day typed as digits alone, such as 20261031, put in that
-// form.
+// form without moving or dropping a digit typed.
 
 import { z } from "zod";
 
@@ -60,6 +60,47 @@ export const typedDay = (text: string): string => laidOut(text, [4, 2, 2]);
 
 // A month as it is typed: 2026 and 2026-10.
 export const typedMonth = (text: string): string => laidOut(text, [4, 2]);
+
+// What a day or month box holds, with the cursor where the last key left it: null, as a browser
+// gives for a box without one, is taken as the end.
+export type Typing = { text: string; cursor: number | null };
+
+const notDigitOrDash = /[^\d-]/g;
+
+const digitCount = (text: string): number => text.replace(/\D/g, "").length;
+
+// Whether laying text out as a form lays it would drop a digit typed, as it drops those past the
+// form's last part, so that the text would be saved as a day or month other than the one shown.
+export const layOutDropsDigits = (
+  layOut: (text: string) => string,
+  text: string,
+): boolean => digitCount(layOut(text)) !== digitCount(text);
+
+// The last digit before the cursor, with any dashes after it.
+const lastDigit = /\d-*$/;
+
+// What a day or month box shows after a key: only digits and dashes, laid out as the given form lays
+// them while typing goes on at the end. A key in the middle, such as deleting a digit to correct it,
+// leaves the rest where it was, with the cursor in the gap, so laying them out again doesn't move
+// them along. There, digits past what the form holds are taken back out, just before the cursor, as
+// those just typed, so the box never holds more than one day or month.
+export const typedInPlace =
+  (layOut: (text: string) => string) =>
+  ({ text, cursor }: Typing): Typing => {
+    const kept = text.replace(notDigitOrDash, "");
+    const keptCursor = text
+      .slice(0, cursor ?? text.length)
+      .replace(notDigitOrDash, "").length;
+    if (keptCursor < kept.length) {
+      let before = kept.slice(0, keptCursor);
+      const extra = digitCount(kept) - digitCount(layOut(kept));
+      for (let taken = 0; taken < extra; taken += 1)
+        before = before.replace(lastDigit, "");
+      return { text: before + kept.slice(keptCursor), cursor: before.length };
+    }
+    const typed = layOut(kept);
+    return { text: typed, cursor: typed.length };
+  };
 
 // The day a new reporting line starts unless another is given: today, or the person's start date if
 // that is later.

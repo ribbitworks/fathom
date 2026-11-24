@@ -4,6 +4,7 @@
 // editor of the cell being edited.
 
 import { type ComponentProps, type KeyboardEvent, useState } from "react";
+import type { Typing } from "@fathom/shared";
 import { startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { focusSoon } from "./focus.ts";
@@ -14,6 +15,7 @@ import type { Column, GridRecord } from "./record-table.ts";
 import { opensMenu } from "./row-controls.tsx";
 import type { MenuGrid } from "./row-menus.tsx";
 import { type CellValue, fieldLabel } from "./table-view.ts";
+import { typeIn } from "./type-in.ts";
 
 export function gridEditing<Rec extends GridRecord, Change, Request>(
   grid: Pick<
@@ -126,7 +128,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     const opening =
       typeof value === "string" ? startingText(column, value) : "";
     const given = typedFirst ?? opening;
-    const starting = asTyped?.(given) ?? given;
+    const starting = asTyped?.({ text: given, cursor: null }).text ?? given;
     setOpenedWith((before) => ({
       text: opening,
       value,
@@ -415,7 +417,7 @@ function TypedInput({
   ...input
 }: Omit<ComponentProps<"input">, "value" | "onChange"> & {
   starting: string;
-  asTyped: ((typed: string) => string) | undefined;
+  asTyped: ((typing: Typing) => Typing) | undefined;
   onTyped: (typed: string) => void;
 }) {
   const [value, setValue] = useState(starting);
@@ -425,8 +427,8 @@ function TypedInput({
       value={value}
       autoComplete="off"
       onChange={(event) => {
-        const typedText = event.currentTarget.value;
-        const next = asTyped?.(typedText) ?? typedText;
+        const box = event.currentTarget;
+        const next = asTyped === undefined ? box.value : typeIn(box, asTyped);
         setValue(next);
         onTyped(next);
       }}

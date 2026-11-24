@@ -201,6 +201,9 @@ export {
   monthSchema,
   typedMonth,
   typedDay,
+  typedInPlace,
+  layOutDropsDigits,
+  type Typing,
 } from "./days.ts";
 export { byName, capitalized } from "./text.ts";
 export {

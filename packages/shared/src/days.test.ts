@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for days as Fathom keeps them: which text is a day that exists, and a day typed as digits
-// laid out as it fills.
+// laid out as it fills, never with a digit dropped.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -10,12 +10,14 @@ import {
   isDay,
   isFirstOfMonth,
   isMonth,
+  layOutDropsDigits,
   lineChangesFrom,
   mayDateChange,
   mayDateLineChange,
   monthNumber,
   monthOf,
   typedDay,
+  typedInPlace,
   typedMonth,
 } from "./days.ts";
 
@@ -77,6 +79,119 @@ describe("typedDay", () => {
 
   it("leaves text that is not digits and dashes as typed, trimmed", () => {
     expect(typedDay(" 4 Jan 2027 ")).toBe("4 Jan 2027");
+  });
+});
+
+describe("typedInPlace", () => {
+  const dayTyped = typedInPlace(typedDay);
+
+  it("leaves the other digits and the cursor where they were when a digit in the middle is deleted", () => {
+    expect(dayTyped({ text: "202-11-08", cursor: 3 })).toEqual({
+      text: "202-11-08",
+      cursor: 3,
+    });
+  });
+
+  it("takes a digit typed into the gap, with the cursor after it", () => {
+    expect(dayTyped({ text: "2027-11-08", cursor: 4 })).toEqual({
+      text: "2027-11-08",
+      cursor: 4,
+    });
+  });
+
+  it("lays out digits typed at the end, with the cursor after them", () => {
+    expect(dayTyped({ text: "2026110", cursor: 7 })).toEqual({
+      text: "2026-11-0",
+      cursor: 9,
+    });
+  });
+
+  it("drops anything but digits and dashes, keeping the cursor beside the same digits", () => {
+    expect([
+      dayTyped({ text: "202a-11-08", cursor: 4 }),
+      dayTyped({ text: "2027x01", cursor: 7 }),
+    ]).toEqual([
+      { text: "202-11-08", cursor: 3 },
+      { text: "2027-01", cursor: 7 },
+    ]);
+  });
+
+  it("takes a box without a cursor as typed at the end", () => {
+    expect(dayTyped({ text: "2026110", cursor: null })).toEqual({
+      text: "2026-11-0",
+      cursor: 9,
+    });
+  });
+
+  it("ignores a digit typed in the middle of a day that holds all its digits", () => {
+    expect(dayTyped({ text: "2026-101-08", cursor: 7 })).toEqual({
+      text: "2026-11-08",
+      cursor: 6,
+    });
+  });
+
+  it("leaves the digits and the cursor in place when a dash in the middle is deleted", () => {
+    expect(dayTyped({ text: "202611-08", cursor: 4 })).toEqual({
+      text: "202611-08",
+      cursor: 4,
+    });
+  });
+
+  it("keeps digits pasted in the middle where they go, as pasted", () => {
+    expect(dayTyped({ text: "202611-08", cursor: 6 })).toEqual({
+      text: "202611-08",
+      cursor: 6,
+    });
+  });
+
+  it("takes back out the digits pasted in the middle past what a day holds", () => {
+    expect(dayTyped({ text: "20261108-11-08", cursor: 8 })).toEqual({
+      text: "2026-11-08",
+      cursor: 4,
+    });
+  });
+
+  it("keeps a range typed over in the middle as typed, with the cursor after the new digit", () => {
+    expect(dayTyped({ text: "2026-0-08", cursor: 6 })).toEqual({
+      text: "2026-0-08",
+      cursor: 6,
+    });
+  });
+
+  it("lays out again all the digits of text left unlaid when a digit is typed at its end", () => {
+    expect(dayTyped({ text: "202-11-081", cursor: 10 })).toEqual({
+      text: "2021-10-81",
+      cursor: 10,
+    });
+  });
+
+  it("does the same for a month", () => {
+    const monthTyped = typedInPlace(typedMonth);
+    expect([
+      monthTyped({ text: "202-03", cursor: 3 }),
+      monthTyped({ text: "202703", cursor: 6 }),
+      monthTyped({ text: "2026-131", cursor: 7 }),
+    ]).toEqual([
+      { text: "202-03", cursor: 3 },
+      { text: "2027-03", cursor: 7 },
+      { text: "2026-11", cursor: 6 },
+    ]);
+  });
+});
+
+describe("layOutDropsDigits", () => {
+  it("is true of text with more digits than the form holds", () => {
+    expect(layOutDropsDigits(typedDay, "2026-101-08")).toBe(true);
+    expect(layOutDropsDigits(typedMonth, "2026-113")).toBe(true);
+  });
+
+  it("is false of text whose layout moves only dashes, of anything not digits, and of nothing", () => {
+    expect([
+      layOutDropsDigits(typedDay, "202611-08"),
+      layOutDropsDigits(typedDay, " 2026-11-08 "),
+      layOutDropsDigits(typedDay, "4 Jan 2027"),
+      layOutDropsDigits(typedDay, ""),
+    ]).toEqual([false, false, false, false]);
   });
 });
 

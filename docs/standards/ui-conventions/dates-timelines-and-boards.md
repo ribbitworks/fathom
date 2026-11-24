@@ -23,7 +23,10 @@ Part of [UI Conventions](../ui-conventions.md): how days and months are shown an
   - **Drawn by:** `formatMonth` in `apps/web/src/day-formats.ts`.
   - **Example:** Offline Sync's Needed by.
 - **Typing a day or month:** Days and months are typed as digits, laid out as typed, such as 2026-10-31 and 2027-03, whatever the reader's language.
-  - **Drawn by:** `DayInput` in `apps/web/src/day-input.tsx` for a day's box, and its `digitsAsTyped` for a table's day and month cells, through `cellKinds` in `apps/web/src/cell-kinds.tsx`.
+  - **Correcting a digit:** A key in the middle, such as deleting a digit, leaves the other digits and dashes where they were, with the cursor in the gap, so another digit can be typed there: deleting the 6 of 2026-11-08 leaves 202-11-08. Typing or pasting at the end lays the digits out again.
+  - **In the middle:** A paste in the middle stays where it goes, as pasted, as a key there does. A digit typed or pasted in the middle of a day or month that already holds all its digits is ignored, and the cursor stays where it was.
+  - **Saving:** A cell or a details panel's field lays out on saving text left as typed, such as 202611-08, saved as 2026-11-08. A day's box takes only a whole day, such as 2026-11-08, as it is typed.
+  - **Drawn by:** `typedInPlace` in `packages/shared/src/days.ts`, used by `DayInput` in `apps/web/src/day-input.tsx` for a day's box, and by `cellKinds` in `apps/web/src/cell-kinds.tsx` for a table's day and month cells, each put in its box by `typeIn` in `apps/web/src/type-in.ts`.
   - **Example:** A milestone's Date.
 - **A time:** History entries show the day, its year and the time in the reader's language.
   - **Drawn by:** `EntryRow` in `apps/web/src/history-entries.tsx`.

@@ -12,6 +12,7 @@ import {
   type Choice,
   choiceNamed,
   isDay,
+  layOutDropsDigits,
   isLink,
   type Link,
   linkInWords,
@@ -23,13 +24,14 @@ import {
   numberProblem,
   roundedUpTo,
   typedDay,
+  typedInPlace,
   typedMonth,
   typedNumber,
+  type Typing,
   webAddress,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import { ChoicePicker, type Finish } from "./choice-picker.tsx";
-import { digitsAsTyped } from "./day-input.tsx";
 import { FlagCell } from "./flag-field.tsx";
 import { LinkCell, LinkEditor, LinkMenuItem } from "./link-field.tsx";
 import {
@@ -152,8 +154,9 @@ export interface CellKind {
   // For a kind edited in one step, such as a checkbox: the value editing gives, in place of an
   // editor.
   toggled?: (value: CellValue) => CellValue;
-  // For a kind edited as text and laid out as it is typed, such as a date: the text to show.
-  asTyped?: (text: string) => string;
+  // For a kind edited as text and laid out as it is typed, such as a date: the text to show, and
+  // where its cursor goes.
+  asTyped?: (typing: Typing) => Typing;
   // For a kind edited in the side panel beside the table, such as a note: a click opens it too,
   // read only where the cell may not change.
   inPanel?: boolean;
@@ -213,7 +216,8 @@ function calendarKind({
       isWhole(asText(value)) ? inWords(asText(value)) : asText(value),
     problem: (column, value) => {
       const typed = layOut(asText(value));
-      return typed !== "" && !isWhole(typed)
+      return layOutDropsDigits(layOut, asText(value)) ||
+        (typed !== "" && !isWhole(typed))
         ? `${column.label}: use ${example}`
         : undefined;
     },
@@ -224,7 +228,7 @@ function calendarKind({
     width: () => longest,
     measured: false,
     breaksDownWhenRequired: false,
-    asTyped: digitsAsTyped(layOut),
+    asTyped: typedInPlace(layOut),
     pasted: (_column, content) => ({ value: layOut(content) }),
   };
 }

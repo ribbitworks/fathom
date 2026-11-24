@@ -1,25 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The one box Fathom has for typing a day, such as 2026-10-31: it takes only digits and dashes,
-// laid out as a day as they fill it, so 20261031 becomes 2026-10-31, and the box says what to type
-// once a whole day is typed that is not one. It gives the day once it is whole, and undefined until
-// then, and says whether anything is typed, so a box that may be left empty can tell empty from
-// unfinished. Assistive technology hears whether a day is needed.
+// laid out as a day as they fill it, so 20261031 becomes 2026-10-31, while a digit corrected in the
+// middle leaves the rest in place. The box says what to type once a whole day is typed that is not
+// one. It gives the day once it is whole, and undefined until then, and says whether anything is
+// typed, so a box that may be left empty can tell empty from unfinished. Assistive technology hears
+// whether a day is needed.
 
-import { isDay, typedDay } from "@fathom/shared";
+import { isDay, typedDay, typedInPlace } from "@fathom/shared";
 import { TextInput } from "@mantine/core";
 import { useState } from "react";
+import { typeIn } from "./type-in.ts";
 
 export const dayProblem = "Invalid YYYY-MM-DD date";
 export const dayNeeded = "Date needed";
 
-// What a box shows as it is typed in: only digits and dashes, laid out as the given form lays them.
-export const digitsAsTyped =
-  (layOut: (text: string) => string) =>
-  (text: string): string =>
-    layOut(text.replace(/[^\d-]/g, ""));
-
-export const dayAsTyped = digitsAsTyped(typedDay);
+const dayTyped = typedInPlace(typedDay);
 
 export function DayInput({
   id,
@@ -92,7 +88,7 @@ export function DayInput({
             : problem
       }
       onChange={(event) => {
-        const next = dayAsTyped(event.currentTarget.value);
+        const next = typeIn(event.currentTarget, dayTyped);
         setText(next);
         onChange(isDay(next) ? next : undefined, next !== "");
       }}
