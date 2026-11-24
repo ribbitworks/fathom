@@ -9,7 +9,13 @@
 import type { QueryKey } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ApiError, describeProblem, sendJsonFor } from "./api.ts";
+import {
+  ApiError,
+  describeProblem,
+  type Refusal,
+  refusalOf,
+  sendJsonFor,
+} from "./api.ts";
 import { focusSoon } from "./focus.ts";
 import {
   changeMade,
@@ -47,6 +53,9 @@ export interface Change<Data> {
   // Given the change set, and the data as it was just before the change.
   onSaved?: (changeSetId: string | null, before: Data) => void;
   onFailed?: () => void;
+  // Shows the server's refusal of a value under its field, in place of a notification, saying
+  // whether it could: false when the field isn't shown.
+  onRefused?: ((refusal: Refusal) => boolean) | undefined;
 }
 
 // Fields that are typed in and keep their own undo, the note editor among them.
@@ -123,9 +132,11 @@ export function useSaving<Data>({
       queryClient.setQueryData(queryKey, next(before));
       return { before };
     },
-    onError: (error, { failure, onFailed }, context) => {
+    onError: (error, { failure, onFailed, onRefused }, context) => {
       queryClient.setQueryData(queryKey, (context as { before: Data }).before);
       onFailed?.();
+      const refusal = refusalOf(error);
+      if (refusal !== undefined && onRefused?.(refusal) === true) return;
       notifyFailure(
         error instanceof ApiError && error.status === notFound
           ? removed

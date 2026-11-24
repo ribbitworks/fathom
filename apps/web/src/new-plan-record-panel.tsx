@@ -4,6 +4,7 @@
 // person is added: a row for each column a new record has, each entered as its table's cell is, and
 // any problem Add finds named under its row.
 
+import type { Refusal } from "./api.ts";
 import {
   type FormValues,
   newRecordFields,
@@ -58,7 +59,7 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   // Takes one value, on top of whatever else has been entered, since a note's panel saves long after
   // the form was drawn.
   onValue: (key: string, value: CellValue) => void;
-  onAdd: (request: Request) => void;
+  onAdd: (request: Request, refused: (refusal: Refusal) => boolean) => void;
   onCancel: () => void;
 }) {
   const kind = table.kinds?.[0] ?? "";

@@ -105,7 +105,7 @@ async function refuseTakenIds(
     new Set(lowered).size !== lowered.length ||
     (await takenEmployeeIds(transaction, employeeIds, except)).length > 0
   ) {
-    throw new ConflictError(duplicateEmployeeId);
+    throw new ConflictError(duplicateEmployeeId, "employeeId");
   }
 }
 

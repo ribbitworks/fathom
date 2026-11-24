@@ -482,7 +482,7 @@ export function ProjectsPage({
                     },
                 );
               }}
-              onAdd={(request) => {
+              onAdd={(request, refused) => {
                 afterNote(notes, question.ask, () => {
                   const pending = { ...form, saving: true };
                   setBeingAdded(pending);
@@ -497,6 +497,7 @@ export function ProjectsPage({
                     () => {
                       setBeingAdded({ ...pending, saving: false });
                     },
+                    refused,
                   );
                 });
               }}

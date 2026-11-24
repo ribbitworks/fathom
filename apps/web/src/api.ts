@@ -12,19 +12,22 @@ const conflictStatus = 409;
 const firstServerError = 500;
 const maximumRetries = 2;
 
-// A failed request, with the server's status, its message for users when it gave one, and Better
-// Auth's code for the problem when it gave one.
+// A failed request, with the server's status, its message for users when it gave one, Better
+// Auth's code for the problem when it gave one, and the field the server's refusal is about, when it
+// named one.
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string | undefined;
   // The server's own message for users, when it gave one.
   readonly serverMessage: string | undefined;
+  readonly field: string | undefined;
 
-  constructor(status: number, message?: string, code?: string) {
+  constructor(status: number, message?: string, code?: string, field?: string) {
     super(message ?? `The server answered with status ${String(status)}`);
     this.status = status;
     this.code = code;
     this.serverMessage = message;
+    this.field = field;
   }
 }
 
@@ -35,12 +38,13 @@ export const isConflict = (error: unknown): boolean =>
 const failureSchema = z.object({
   error: z.string().optional(),
   code: z.string().optional(),
+  field: z.string().optional(),
 });
 
 async function failure(response: Response): Promise<ApiError> {
   const body = failureSchema.safeParse(await response.json().catch(() => ({})));
-  const { error, code } = body.success ? body.data : {};
-  return new ApiError(response.status, error, code);
+  const { error, code, field } = body.success ? body.data : {};
+  return new ApiError(response.status, error, code, field);
 }
 
 export function isSignedOut(error: unknown): boolean {
@@ -124,6 +128,24 @@ export async function sendDeleteFor<Schema extends z.ZodType>(
 
 const forbidden = 403;
 const tooManyRequests = 429;
+// The server's answers refusing the values given, such as a name another record has.
+const refusedValues = new Set([400, 409]);
+
+// A value the server refused: why, and the field it is about.
+export interface Refusal {
+  reason: string;
+  field: string;
+}
+
+// The server's refusal of one value given, which belongs under its field, as any refused value
+// does; undefined for every other failure, which a notification names.
+export const refusalOf = (error: Error): Refusal | undefined =>
+  error instanceof ApiError &&
+  refusedValues.has(error.status) &&
+  error.serverMessage !== undefined &&
+  error.field !== undefined
+    ? { reason: error.serverMessage, field: error.field }
+    : undefined;
 
 export const notAllowedMessage =
   "Not allowed for this account. Its roles may have changed.";

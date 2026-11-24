@@ -115,7 +115,7 @@ export function peopleRecordActions({
         ),
       );
     },
-    add: (added, onAdded, onFailed) => {
+    add: (added, onAdded, onFailed, onRefused) => {
       save({
         next: (data) => ({
           ...data,
@@ -151,6 +151,7 @@ export function peopleRecordActions({
         },
         failure: `Fathom could not add ${addedNames(added.map(({ request }) => request))}. Try again in a moment.`,
         onFailed,
+        onRefused,
         onSaved: undoable,
       });
     },

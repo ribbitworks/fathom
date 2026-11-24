@@ -2,6 +2,7 @@
 
 // A feature team's details beside the org chart, and the form that adds one.
 
+import type { Refusal } from "./api.ts";
 import {
   type Choice,
   type FeatureTeam,
@@ -64,7 +65,10 @@ export interface FeatureTeamEdits {
 }
 
 export interface FeatureTeamActions {
-  create: (request: FeatureTeamRequest) => void;
+  create: (
+    request: FeatureTeamRequest,
+    refused: (refusal: Refusal) => boolean,
+  ) => void;
   rename: (team: FeatureTeam, name: string) => void;
   lead: (
     team: FeatureTeam,

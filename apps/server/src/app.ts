@@ -155,7 +155,11 @@ export async function buildApp(options: AppOptions) {
         .status(internalServerError)
         .send({ error: "Internal Server Error" });
     }
-    return reply.status(statusCode).send({ error: error.message });
+    const { field } = error as { field?: string };
+    return reply.status(statusCode).send({
+      error: error.message,
+      ...(field === undefined ? {} : { field }),
+    });
   });
   const page =
     options.webRoot === undefined ? undefined : pageFallback(options.webRoot);

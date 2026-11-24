@@ -414,7 +414,7 @@ export function PeoplePage({
                         )}
                         narrow={narrow}
                         notes={notes}
-                        onAdd={(request) => {
+                        onAdd={(request, refused) => {
                           afterNote(notes, question.ask, () => {
                             const id = pendingId();
                             const saving = { ...beingAdded, saving: true };
@@ -433,6 +433,7 @@ export function PeoplePage({
                                 submitted.current = undefined;
                                 setBeingAdded({ ...saving, saving: false });
                               },
+                              refused,
                             );
                           });
                         }}

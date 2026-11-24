@@ -13,7 +13,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 
 ## Fields
 
-- **An × to empty a field:** Every field typed into shows an × at its right while it holds text, except password fields and those on the Sign in page. The × empties the field and keeps focus in it.
+- **An × to empty a field:** Every field typed into shows an × at its right while it holds text, except password fields and those on the Sign in page. The × empties the field and keeps focus in it, or puts focus there when it was elsewhere, such as on a form's title, so the emptied value is checked when the field is left.
   - **No ×:** A table's cells aren't fields and show no ×: Delete or Backspace empties one. Nor do a list panel's choices, where Delete removes a choice.
   - **Drawn by:** `ClearableInput` in `apps/web/src/clearable-input.tsx`.
   - **Example:** Name in Offline Sync's details, once its pencil opens it.
@@ -104,9 +104,9 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 ## Refusals
 
 - **A value refused:** When the page or the server refuses a value on save, its editor stays open with what was typed, outlined in red, with the reason in red under it, so nothing is lost, in tables, panels and dialogs alike. Esc leaves the value as it was.
-  - **Where the reason shows:** In a table, the reason is under the row, in its first cell. In a dialog, it is under the field it's about, or at the foot when it's about no one field.
+  - **Where the reason shows:** In a table, the reason is under the row, in its first cell. In a dialog, it is under the field it's about, or at the foot when it's about no one field. In a New form, the server's refusal of a value, such as a name another record has, is under that value's field, with focus in it, never in a notification; a refusal about no field the form shows, or a failure, is named in a notification, as [Failures](#saving-and-undo) sets out.
   - **Focus in a dialog:** A dialog's refused Save puts focus in the first field refused, so it can be put right at once. A reason at the foot leaves focus where it was.
-  - **Drawn by:** `useRecordEditing` in `apps/web/src/record-editing.tsx` for a panel, and `apps/web/src/grid-editing.tsx` for a table; a dialog's focus by `focusRefusedSoon` in `apps/web/src/focus.ts`, or by react-hook-form in the account, role, name and password dialogs, which focuses the first refused field given its `ref`.
+  - **Drawn by:** `useRecordEditing` in `apps/web/src/record-editing.tsx` for a panel, and `apps/web/src/grid-editing.tsx` for a table; a dialog's focus by `focusRefusedSoon` in `apps/web/src/focus.ts`, or by react-hook-form in the account, role, name and password dialogs, which focuses the first refused field given its `ref`. A New form's refusal from the server, which names its field, comes from `useSaving`'s `onRefused` in `apps/web/src/saving.ts`, with `refusalOf` in `apps/web/src/api.ts`, through `NewRecordPanel` in `apps/web/src/new-record-panel.tsx`.
   - **Example:** Type 203013 in a Needed by cell on Features: Needed by: use a month such as 2027-03.
 - **Names a role can't read:** A refusal naming the record that blocks a change, the user's list of unpublished changes, the change history, and a list naming the work an allocation is on, name a record only to a role that reads its kind: holds a permission it is read with and sees every class of data its view needs, as Allocations needs Personal. Any other role is told only its kind, such as a feature or a planned hire, as "A feature" where it stands as a name.
   - **A record's name:** A record's name may include the record it belongs to, such as an allocation's feature, named the same way.

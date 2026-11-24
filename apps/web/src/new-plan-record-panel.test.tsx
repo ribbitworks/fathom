@@ -5,7 +5,7 @@
 
 import { addressProblem } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -108,7 +108,10 @@ describe("the rows for each kind of column", () => {
     expect(screen.queryByRole("option", { name: "Gone" })).toBeNull();
     await userEvent.click(offered);
     await add();
-    expect(onAdd).toHaveBeenLastCalledWith({ values: { owner: ["a"] } });
+    expect(onAdd).toHaveBeenLastCalledWith(
+      { values: { owner: ["a"] } },
+      expect.any(Function),
+    );
   });
 
   it("sends several picked choices", async () => {
@@ -120,7 +123,10 @@ describe("the rows for each kind of column", () => {
     await change("tags");
     await userEvent.click(await screen.findByRole("option", { name: "Alpha" }));
     await add();
-    expect(onAdd).toHaveBeenCalledWith({ values: { tags: ["a"] } });
+    expect(onAdd).toHaveBeenCalledWith(
+      { values: { tags: ["a"] } },
+      expect.any(Function),
+    );
   });
 
   it("sends a web link by its address", async () => {
@@ -132,9 +138,10 @@ describe("the rows for each kind of column", () => {
       "https://example.test{Enter}",
     );
     await add();
-    expect(onAdd).toHaveBeenLastCalledWith({
-      links: { site: { address: "https://example.test/", text: "" } },
-    });
+    expect(onAdd).toHaveBeenLastCalledWith(
+      { links: { site: { address: "https://example.test/", text: "" } } },
+      expect.any(Function),
+    );
   });
 
   it("empties a text field from its clear button", async () => {
@@ -152,10 +159,16 @@ describe("the rows for each kind of column", () => {
     renderPanel({ given: table([column("done", "flag")]), onAdd });
     await userEvent.click(screen.getByRole("checkbox", { name: /^done/ }));
     await add();
-    expect(onAdd).toHaveBeenLastCalledWith({ done: true });
+    expect(onAdd).toHaveBeenLastCalledWith(
+      { done: true },
+      expect.any(Function),
+    );
     await userEvent.click(screen.getByRole("checkbox", { name: /^done/ }));
     await add();
-    expect(onAdd).toHaveBeenLastCalledWith({ done: false });
+    expect(onAdd).toHaveBeenLastCalledWith(
+      { done: false },
+      expect.any(Function),
+    );
   });
 
   it("lays a date out as it is typed, and says an unfinished one is not a date", async () => {
@@ -335,5 +348,45 @@ describe("opening the form", () => {
     ]);
     await userEvent.keyboard("{Escape}");
     expect(onCancel).toHaveBeenCalledOnce();
+  });
+});
+
+describe("the server's refusal of a value", () => {
+  // Adds through the form, giving back what it does with the server's refusal.
+  async function refusedBy() {
+    const onAdd = vi.fn();
+    const shown = renderPanel({
+      given: table([column("tick", "flag")]),
+      onAdd,
+    });
+    await add();
+    const [, refused] = onAdd.mock.lastCall as [
+      unknown,
+      (refusal: { reason: string; field: string }) => boolean,
+    ];
+    return { refused, shown };
+  }
+
+  it("is named under its field when the form has it", async () => {
+    const { refused } = await refusedBy();
+    let named = false;
+    act(() => {
+      named = refused({ reason: "Taken", field: "tick" });
+    });
+    expect([named, await screen.findByText("Taken")]).toEqual([
+      true,
+      expect.anything(),
+    ]);
+  });
+
+  it("is left for a notification when the form has no such field", async () => {
+    const { refused } = await refusedBy();
+    expect(refused({ reason: "Taken", field: "elsewhere" })).toBe(false);
+  });
+
+  it("is left for a notification once the form has closed", async () => {
+    const { refused, shown } = await refusedBy();
+    shown.unmount();
+    expect(refused({ reason: "Taken", field: "tick" })).toBe(false);
   });
 });

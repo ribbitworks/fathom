@@ -118,7 +118,7 @@ export function planRecordActions({
     type: PlanRecordKind,
   ): RecordActions<Rec, PlanChange, Request> {
     return {
-      add: (added, onAdded, onFailed) => {
+      add: (added, onAdded, onFailed, onRefused) => {
         save({
           next: (plan) =>
             withAdded(
@@ -148,6 +148,7 @@ export function planRecordActions({
             added.map(({ request }) => (request as { name: string }).name),
           )}. Try again in a moment.`,
           onFailed,
+          onRefused,
           onSaved: undoable,
         });
       },

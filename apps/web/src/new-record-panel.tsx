@@ -7,7 +7,15 @@
 // before discarding it.
 
 import { Button, Group } from "@mantine/core";
-import type { ReactNode } from "react";
+import {
+  type MouseEvent,
+  type ReactNode,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from "react";
+import type { Refusal } from "./api.ts";
 import { cellKinds } from "./cell-kinds.tsx";
 import { DetailSections } from "./record-details.tsx";
 import { firstTypedInto, useFocusOnOpen } from "./record-editing.tsx";
@@ -88,11 +96,23 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
     found: readonly { column: string; message: string }[],
   ) => readonly { column: string; message: string }[];
   onRefused: (found: readonly { column: string; message: string }[]) => void;
-  onAdd: (request: Request) => void;
+  // Adds the record, given what to do with the server's refusal: name it under the first field, as a
+  // table names it in a new row's first cell.
+  // Adds the record, given what to do with the server's refusal of a value: name it under its field,
+  // saying whether the form, still shown, has that field.
+  onAdd: (request: Request, refused: (refusal: Refusal) => boolean) => void;
   onCancel: () => void;
   children: ReactNode;
 }) {
   useFocusOnOpen(firstTypedInto(shown));
+  // Whether the form is still shown, since the server may answer after it was closed or replaced.
+  const stillShown = useRef(false);
+  useEffect(() => {
+    stillShown.current = true;
+    return () => {
+      stillShown.current = false;
+    };
+  }, []);
   const add = () => {
     if (unfinished) return;
     const found = withRefused(
@@ -107,16 +127,57 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
         columns.map((column) => column.change(values[column.key] as CellValue)),
         kind,
       ),
+      ({ reason, field }) => {
+        if (!stillShown.current || !columns.some(({ key }) => key === field)) {
+          return false;
+        }
+        onRefused([{ column: field, message: reason }]);
+        return true;
+      },
     );
+  };
+  // Add and Cancel act once the field being typed in is left, and checked, so they act on its value
+  // as given. Pressing them leaves focus where it is, since leaving the field can show or take away
+  // the reason under it, which would move the button from under the pointer before the click.
+  const [pressed, setPressed] = useState<{ act: "add" | "cancel" }>();
+  const act = useEffectEvent((chosen: "add" | "cancel") => {
+    if (chosen === "add") add();
+    else onCancel();
+  });
+  useEffect(() => {
+    if (pressed !== undefined) act(pressed.act);
+  }, [pressed]);
+  const leavingFor =
+    (chosen: "add" | "cancel") => (event: MouseEvent<HTMLButtonElement>) => {
+      // Leaving the field checks it; focus then goes back to it, where the question Cancel may ask
+      // returns it, and where Add's refusal, if any, puts it.
+      const typing = document.activeElement;
+      if (typing instanceof HTMLElement && typing !== event.currentTarget) {
+        typing.blur();
+        typing.focus();
+      }
+      setPressed({ act: chosen });
+    };
+  const keepFocus = (event: MouseEvent) => {
+    event.preventDefault();
   };
   const body = (
     <DetailSections>
       {children}
       <Group justify="flex-end" gap="xs">
-        <Button variant="default" onClick={onCancel} disabled={saving}>
+        <Button
+          variant="default"
+          onMouseDown={keepFocus}
+          onClick={leavingFor("cancel")}
+          disabled={saving}
+        >
           Cancel
         </Button>
-        <Button onClick={add} loading={saving}>
+        <Button
+          onMouseDown={keepFocus}
+          onClick={leavingFor("add")}
+          loading={saving}
+        >
           Add
         </Button>
       </Group>

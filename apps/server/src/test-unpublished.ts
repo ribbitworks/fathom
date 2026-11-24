@@ -91,7 +91,7 @@ export async function refused(
 ) {
   const response = await send(who, method, url, payload);
   expect(response.statusCode, response.body).toBe(409);
-  expect(response.json()).toEqual({ error });
+  expect(response.json<{ error: string }>().error).toBe(error);
 }
 
 export const held = (holder: User) =>
