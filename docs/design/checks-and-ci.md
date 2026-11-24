@@ -11,7 +11,7 @@ last_updated: "2026-11-23"
 
 How Fathom's checks run, on a contributor's computer and on GitHub, from a change to its merge.
 
-What to test, and the commands to run, are in [Testing Standards](../standards/testing.md#running-tests). Each command's options, and how the checks share a computer, are in [Development Setup](development-setup.md#checks-and-tests).
+What to test, and the commands to run, are in [Testing Standards](../standards/testing.md#running-tests). Each command's options are in [Development Setup](development-setup.md#checks-and-tests).
 
 ## What a Change Runs
 
@@ -21,8 +21,7 @@ What to test, and the commands to run, are in [Testing Standards](../standards/t
 flowchart TD
     AnyCode{"Is any path other than documentation alone?"}
     AnyCode -- No --> NoTests["No tests run, and it passes"]
-    AnyCode -- Yes --> Turn["Takes a check's turn, unless the check that started it holds one"]
-    Turn --> Stylesheets{"Only the web app's stylesheets?"}
+    AnyCode -- Yes --> Stylesheets{"Only the web app's stylesheets?"}
     Stylesheets -- Yes --> StylesheetTests["pnpm lint, pnpm format:check and every web app test"]
     Stylesheets -- No --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page?"}
     Outside -- Yes --> Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
@@ -48,12 +47,9 @@ flowchart TD
     Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
     WholePackages["Every test of those packages and of every package that depends on them, with all their coverage"] --> Imported{"Is any path a script in a package's src folder, or a Help page?"}
     Imported -- Yes --> Related["vitest related: the tests importing those files, in the packages that hold or depend on them and haven't run whole, measuring the coverage of the changed source files alone"]
-    Imported -- No --> InTime
-    Everything --> InTime{"Did each pnpm step end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
-    Related --> InTime
-    InTime -- No --> TooLong["The step and every process it started are stopped, naming it, and it fails"]
-    TooLong --> Outcome
-    InTime -- Yes --> Outcome{"Did every run pass, coverage included?"}
+    Imported -- No --> Outcome
+    Everything --> Outcome{"Did every run pass, coverage included?"}
+    Related --> Outcome
     Outcome -- No --> TestsFailed["Fails"]
     Outcome -- Yes --> TestsPassed["Passes"]
 ```
@@ -65,7 +61,7 @@ flowchart TD
 
 ## Before a Pull Request
 
-While working, run `pnpm check:push`, as [Development Setup](development-setup.md#checks-and-tests) describes, or any one of its parts on its own for a quick answer. This chart is part of [The Whole Path](#the-whole-path).
+While working, run `pnpm check:push`, as [Development Setup](development-setup.md#checks-and-tests) describes, or any one of its parts on its own for a quick answer. A check may wait its turn first; see [Sharing the Machine](#sharing-the-machine). This chart is part of [The Whole Path](#the-whole-path).
 
 ```mermaid
 flowchart TD
@@ -136,10 +132,48 @@ flowchart TD
     NeedsInternet -- Yes --> Connected{"Can this computer reach the internet?"}
     Connected -- No --> NoConnection["Fails, naming --offline"]
     Connected -- Yes --> Run
-    AnyLeft -- Yes --> Run["Runs the jobs side by side, the longest first, no more at once than the cores divided by FATHOM_CHECK_SHARES, or all at once when it isn't set"]
+    AnyLeft -- Yes --> Run["Runs the jobs side by side, the longest first"]
 ```
 
 A branch checked offline still needs the Check workflow's full check to pass on its pull request.
+
+## Sharing the Machine
+
+A check runs many linters, type checks, scans and tests side by side, and can use every core of the computer. Several copies of the repository on one computer, each running a check, would slow each other until tests time out. So checks take turns, two at a time, share the cores, and stop a step that hangs.
+
+A turn is held as a slot file, and a check waiting for one leaves a ticket, so copies take their turns in the order they asked.
+
+```mermaid
+flowchart TD
+    Ticket["check-turn.mjs leaves a ticket in the checks' slot folder"] --> Free{"Is a slot free for this ticket, in the order the copies asked?"}
+    Free -- No --> Wait["Waiting to run a check, naming the slots' holders; it looks again each second"]
+    Wait --> Free
+    Free -- Yes --> OnGitHub{"Is CI true, as on GitHub, or FATHOM_CHECK_SHARES already set?"}
+    OnGitHub -- Yes --> WholeComputer["Its environment is kept: on GitHub, every job runs at once"]
+    OnGitHub -- No --> Alone{"Did any other copy hold or wait for a turn as this one took its own?"}
+    Alone -- Yes --> HalfComputer["Half the computer: FATHOM_CHECK_SHARES is 2"]
+    Alone -- No --> EveryCore["Every core, kept while it runs, even once another copy starts: FATHOM_CHECK_SHARES is 1"]
+    Run["Runs the jobs side by side, the longest first"] --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
+    Limit -- No --> Stopped["The job's process group is stopped, its output shown, and it counts as Stopped"]
+    Limit -- Yes --> Results["Each job's output, then a table of each one's result and seconds"]
+    Stopped --> Results
+```
+
+This chart is part of [The Local Check](#the-local-check), leaving out the steps between sharing the cores and running the jobs.
+
+- **Taking turns:** `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before they start, and two copies hold a turn at most. `pnpm test` takes one for its package tests only, after the script tests, and they share the computer as a check does.
+- **Waiting:** copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the processes and folders that hold the turns, and how many copies asked first.
+- **A check started by a check,** such as `pnpm test:changed` within `pnpm check:push`, uses the turn its check holds.
+- **Cores:** a copy that starts alone has every core, and keeps them while it runs. One that starts beside another takes half. On GitHub, where `CI` is `true`, a check has the whole computer.
+  - `FATHOM_CHECK_SHARES` carries the share: 1 alone, 2 beside another. A check runs no more jobs side by side than the cores divided by it, or all at once when it isn't set, as on GitHub.
+  - Package tests get the same share of the workers: all of them alone, and half beside another.
+- **Workers:** each package's tests use a share of the check's cores, leaving two free for the development servers. `VITEST_MAX_WORKERS` sets the number instead.
+- **Test databases:** no more than 8 test database servers start at once on one computer.
+- **Time limit:** a check stops a job still running after 15 minutes, shows its output up to then, and fails it as Stopped, so a hung job never holds a turn for long. `FATHOM_CHECK_JOB_SECONDS` sets another limit.
+  - `pnpm test:changed`, `pnpm test:packages` and `pnpm test`, run alone or within a check, stop each pnpm step they run past the same limit, naming the step, and fail.
+  - A step stopped, by the limit or by the check stopping it, has every process it started killed if it hasn't ended two seconds later.
+- **Slots and tickets:** they're files in a folder under the system's temporary folder, which only that account on the computer can use. A slot is held until the work is done.
+- **Stale turns:** a slot or ticket whose process has ended is taken over or passed, as is a ticket its copy has stopped looking after for a minute.
 
 ## From a Change to a Merge
 
@@ -148,7 +182,6 @@ The whole picture: the charts below draw every step the checks take, from a chan
 Other documents own what the charts only name:
 
 - **The people's steps,** such as the screen check and the review: [How Fathom Is Built](../how-fathom-is-built.md#how-a-change-is-made)
-- **The slots, cores and time limit:** [Development Setup § How the Checks Run](development-setup.md#how-the-checks-run)
 - **The rules on `main`:** [Development Setup § Rulesets](development-setup.md#rulesets)
 
 ### The Whole Path
@@ -195,7 +228,7 @@ flowchart TD
 
 ### The Local Check
 
-`pnpm check` and `pnpm check:push` run `scripts/check-turn.mjs`, which waits for a turn, then `scripts/check.sh`, which runs the jobs.
+`pnpm check` and `pnpm check:push` run `scripts/check-turn.mjs`, which waits for a turn, as [Sharing the Machine](#sharing-the-machine) explains, then `scripts/check.sh`, which runs the jobs.
 
 ```mermaid
 flowchart TD
@@ -231,7 +264,7 @@ flowchart TD
     NeedsInternet -- Yes --> Connected{"Can this computer reach the internet?"}
     Connected -- No --> NoConnection["Fails, naming --offline"]
     Connected -- Yes --> Run
-    AnyLeft -- Yes --> Run["Runs the jobs side by side, the longest first, no more at once than the cores divided by FATHOM_CHECK_SHARES, or all at once when it isn't set"]
+    AnyLeft -- Yes --> Run["Runs the jobs side by side, the longest first"]
     Run --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
     Limit -- No --> Stopped["The job's process group is stopped, its output shown, and it counts as Stopped"]
     Limit -- Yes --> Results["Each job's output, then a table of each one's result and seconds"]
@@ -241,7 +274,7 @@ flowchart TD
     AllPassed -- Yes --> Passed["Passes; the turn's slot is freed either way"]
 ```
 
-- **Package tests:** each package runs `vitest run --coverage`, which fails below the thresholds [Coverage Enforcement](../standards/testing.md#coverage-enforcement) sets; how many workers and test databases they use is in [How the Checks Run](development-setup.md#how-the-checks-run).
+- **Package tests:** each package runs `vitest run --coverage`, which fails below the thresholds [Coverage Enforcement](../standards/testing.md#coverage-enforcement) sets; how many workers and test databases they use is in [Sharing the Machine](#sharing-the-machine).
 - **Renovate settings:** passes at once unless `renovate.json` changed, as [Checks and Tests](development-setup.md#checks-and-tests) sets out.
 - **A container runtime:** Package tests, Security report, Licences and Renovate settings each fail, naming it, when no container runtime is running.
 - **Licences:** checks that every file states its copyright and licence, with the REUSE tool. The script tests check each header's layout.
