@@ -85,7 +85,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Example:** Any dot before a name on People.
 - **A draft from another day:** Where a draft takes effect from a day other than the one shown, the item is followed in grey by from and the day, such as from Dec 1, 2026.
   - **On an org chart card:** An org chart card has too little room, so its From and the day sit on their own line under the name, a recorded exception.
-  - **Drawn by:** The `from` of `DraftedItem`, and the card in `apps/web/src/org-chart-page.tsx`.
+  - **Drawn by:** The `from` of `DraftedItem`, and the card in `apps/web/src/org-chart-cards.tsx`.
   - **Example:** On the Org chart, move to next month and add someone to a feature team.
 - **Approving several:** Approving several drafts at once, all those waiting from the Draft menu or those ticked on the Drafts page, approves those the user may approve and leaves the rest waiting: drafts the user changed and may not approve, drafts of an area the role doesn't approve, and drafts that use either.
   - **The dialog:** The dialog asking first names the drafts it approves, up to five, then how many others, such as and 2 others, and names those left under This needs another approver and stays waiting, or These need another approver and stay waiting.
