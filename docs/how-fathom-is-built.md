@@ -5,10 +5,14 @@ AI agents write most of Fathom's code and documents, under a human's direction a
 ## Quality at a Glance
 
 - **100% test coverage, enforced:** Every tested package fails its tests below 100% of branches, functions, lines and statements. What is left out, and why, is set out under [Coverage](#coverage).
-- **Manual tests that act as requirements:** Each feature has a written manual test of numbered cases with exact expected results, from a person's side. Each role has a workflow test that follows its daily work, and acceptance tests set Fathom up from nothing and work between roles. The maintainer has run them all, and runs them again as features change.
+- **Manual tests that act as requirements:** Each feature has a written manual test of numbered cases with exact expected results, from a person's side.
+  - **Workflow and acceptance tests:** Each role has a workflow test that follows its daily work, and acceptance tests set Fathom up from nothing and work between roles.
+  - **Run by the maintainer:** The maintainer has run them all, and runs them again as features change.
 - **Every screen seen by a person:** The maintainer looks at every screen change before it is tested or reviewed.
 - **Every change reviewed, every merge approved:** A separate agent reviews each change against written standards, and the maintainer approves every merge, after checking every screen change and every new or significantly changed manual test.
-- **Security checked on every pull request:** Dependency, source code and secret scans run with the tests on every push to a pull request and to `main`, and the container images are scanned again whenever what they're built from changes. The scans fail on a fix that is overdue or any other critical or high finding. CodeQL also scans the code on GitHub for each pull request.
+- **Security checked on every pull request:** Dependency, source code and secret scans run with the tests on every push to a pull request and to `main`, and the container images are scanned again whenever what they're built from changes.
+  - **Failing findings:** The scans fail on a fix that is overdue or any other critical or high finding.
+  - **CodeQL:** CodeQL also scans the code on GitHub for each pull request.
 
 ## The Maintainer
 
@@ -138,7 +142,10 @@ They leave out what automated tests already prove, such as each validation messa
 ## Data and Security
 
 - **Data classes:** every list and column is General, Personal or Confidential, and the server never sends a value a role can't see, as [How Data Is Safeguarded](privacy/data-protection.md) sets out.
-- **Two histories:** the access history records sign-ins, changes to accounts, roles and data classes, exports of Personal or Confidential data, and views of Personal and Confidential data, at most once a day for each person. The change history records every change to the plan, people and configuration, with who made it and when. The database refuses Fathom any change to the access history, and the change history can only be added to, apart from marking a change published.
+- **Two histories:**
+  - **Access history:** records sign-ins, changes to accounts, roles and data classes, exports of Personal or Confidential data, and views of Personal and Confidential data, at most once a day for each person.
+  - **Change history:** records every change to the plan, people and configuration, with who made it and when.
+  - **Protection:** the database refuses Fathom any change to the access history, and the change history can only be added to, apart from marking a change published.
 - **Fictional data only:** the seed data and test data are made up by a generator with a fixed seed. No real data is ever put in the repository, its issues or its pull requests.
 - **Security plan:** the [Security Plan](security/security-plan.md) holds the threat model, the scans and their fix times, and how the source code is assured. A change that adds data, a way in, a role or a dependency updates it in the same change.
 - **Your environment:** [Securing Your Environment](operations/securing-your-environment.md) says what whoever runs Fathom must secure.

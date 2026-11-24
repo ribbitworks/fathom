@@ -226,7 +226,7 @@ The copy gets new names, and so a new, empty database.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests), which the Check workflow runs on every pull request, as [Checks and CI](checks-and-ci.md#the-check-on-github) sets out. `--skip` and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it. Without a connection to the internet it stops before starting, naming `--offline`, which leaves out the Renovate settings and the scans that need the internet, once `pnpm offline:prepare` has run, as [Working Offline](#working-offline) describes |
+| `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests), which the Check workflow runs on every pull request, as [Checks and CI](checks-and-ci.md#the-check-on-github) sets out; its `--skip` and `--offline` options are described below the table |
 | `pnpm check:push` | The tests and linters a change needs, side by side, before a push, as [Checks and CI § The Local Check](checks-and-ci.md#the-local-check) draws. It lists each one's result and time, and names any that failed. `--skip` and `--offline` work as for `pnpm check` |
 | `pnpm test` | Every test: the script tests, then every package's |
 | `pnpm test:changed` | The tests a change can affect, failing when a changed source file, or a package running every test, falls short of its coverage, as on GitHub; with `--uncommitted`, only the work not yet committed |
@@ -238,6 +238,8 @@ The copy gets new names, and so a new, empty database.
 | `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences`, `pnpm lint:renovate` | Each linter on its own. `pnpm lint:renovate` validates `renovate.json` with Renovate's own validator, only when it has changed since `origin/main` |
 | `pnpm format` | Format the source files |
 
+- **`pnpm check --skip`** and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it.
+- **`pnpm check` without a connection to the internet** stops before starting, naming `--offline`, which leaves out the Renovate settings and the scans that need the internet, once `pnpm offline:prepare` has run, as [Working Offline](#working-offline) describes.
 - **`pnpm test:ui`'s first run** downloads Chromium, so it needs the internet; `pnpm offline:prepare` doesn't fetch it.
 - **A failed UI test** keeps its trace in `.tmp/ui-tests/`, which holds the development accounts' password and a session, so it isn't shared.
 
@@ -327,7 +329,10 @@ Seeding adds these accounts:
 
 - One for each persona in the [Product Brief](../product/brief.md#users), holding its role from [Roles](../product/roles.md#starting-roles). The Feature Lead also holds Engineering Manager, to try switching roles.
 - A second Engineering Operations Manager, so some drafts were changed by two people.
-- A Superuser, whose role grants every permission, for trying a feature without changing accounts. It isn't a starting role, so a Fathom set up without the seed data doesn't have it. The Superuser also holds every starting role, so each role can be tried from the role menu without signing out. Its drafts are its own under every role, as [Roles](../product/roles.md#accounts-and-the-acting-role) sets out, so trying an approval as a role without Approve own drafts still needs a second account.
+- A Superuser, whose role grants every permission, for trying a feature without changing accounts.
+  - **Not a starting role:** It isn't a starting role, so a Fathom set up without the seed data doesn't have it.
+  - **Every starting role:** The Superuser also holds every starting role, so each role can be tried from the role menu without signing out.
+  - **Its own drafts:** Its drafts are its own under every role, as [Roles](../product/roles.md#accounts-and-the-acting-role) sets out, so trying an approval as a role without Approve own drafts still needs a second account.
 
 | Account | Name | Roles |
 | --- | --- | --- |
