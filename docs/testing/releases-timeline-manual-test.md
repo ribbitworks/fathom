@@ -285,7 +285,7 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
 - [ ] `C274` Select **Show on the Board**.
   - **Expected:**
     - The **Features** page opens on its board for 'Platform', with a **Release** filter on.
-    - Its cards are 'Bulk Import', 'Offline Sync', 'Single Sign-On Setup' and 'Usage Alerts', and no other.
+    - Its cards are 'Offline Sync' and 'Usage Alerts', and no other.
   - **Notes:**
 
 - [ ] `43EF` Select **Releases** in the left-hand menu.

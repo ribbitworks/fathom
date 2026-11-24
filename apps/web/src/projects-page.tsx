@@ -18,7 +18,13 @@ import { customerFilter } from "./customer-filter.ts";
 import { effortConversionsQuery } from "./effort.ts";
 import { type BoardPlace, FeatureBoard } from "./feature-board-view.tsx";
 import { focusCard } from "./feature-card.tsx";
-import { boardParts } from "./feature-board.ts";
+import {
+  boardParts,
+  finishedChoice,
+  finishedOnBoard,
+  finishedWords,
+} from "./feature-board.ts";
+import { hiddenUnlessShown } from "./view-choices.ts";
 import { today } from "./today.ts";
 import { TableTips } from "./table-tips.tsx";
 import {
@@ -542,6 +548,28 @@ export function ProjectsPage({
           board: onBoard,
         });
         const offeredParts = cardPartSchema.options;
+        // The Board leaves out done and cancelled features unless its view shows them, each by its
+        // status as the Draft view shows it; the table shows every feature.
+        const live =
+          view.show === "live"
+            ? new Map(
+                livePlanRecords(plan.features).map((one) => [one.id, one]),
+              )
+            : undefined;
+        const finished = hiddenUnlessShown({
+          rows: plan.features,
+          hidden: (feature) => {
+            const shown = live === undefined ? feature : live.get(feature.id);
+            return (
+              shown !== undefined &&
+              finishedOnBoard(shown, choices.featureStatuses)
+            );
+          },
+          choice: finishedChoice,
+          label: finishedWords.label,
+          records: finishedWords.records,
+          view,
+        });
         const actions: RecordActions<Feature, PlanChange, FeatureFields> = {
           ...actionsFor<Feature, FeatureFields>("feature"),
           ...columnDraftActions("features", changes),
@@ -560,7 +588,8 @@ export function ProjectsPage({
                 {...shared}
                 linkedColumn={linkedColumn}
                 panels={panelsWith("feature", table, plan.features, actions)}
-                records={plan.features}
+                records={onBoard ? finished.rows : plan.features}
+                viewChoices={onBoard ? finished.choices : undefined}
                 table={table}
                 actions={actions}
                 fields={fields}

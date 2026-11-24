@@ -234,7 +234,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `B660` Select **‹** in the strip twice.
   - **Expected:**
     - The second column is the cycle before the current one, headed "Harbor 2".
-    - It holds the cards 'Single Sign-On Setup' and 'Bulk Import'.
+    - It holds no card.
   - **Notes:**
 
 - [ ] `E492` Select the first cycle in the strip.
@@ -549,8 +549,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **‹** button is turned off.
   - **Notes:**
 
-- [ ] `5C0E` Type `Bulk Import` in the search box.
-  - **Expected:** No column holds a card 'Bulk Import'.
+- [ ] `5C0E` Type `Usage Alerts` in the search box.
+  - **Expected:** The only card on the board is 'Usage Alerts'.
   - **Notes:**
 
 - [ ] `1B96` Empty the search box.
@@ -558,7 +558,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `C2E7` Select the quarter holding the month four months before this one in the strip.
-  - **Expected:** The column headed that month, such as "Jul 2026", holds the card 'Audit Export'.
+  - **Expected:**
+    - A column is headed that month, such as "Jul 2026".
+    - That quarter is filled with blue.
   - **Notes:**
 
 - [ ] `7F30` Select the quarter holding the month four months after this one in the strip.
@@ -595,3 +597,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 **Afterwards:** Select **Columns: Months, Field Apps**, then **All schedules** under **Months**.
+
+### BOARD-11: Done and Cancelled Features
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-10 ended with.
+
+**Preconditions:** Signed in with this account. **Features** page open, showing the board by months of all schedules, with **Drafts & Live** chosen in the Draft menu.
+
+- [ ] `5C1B` Select **Columns: Months**, then **Platform** under **A schedule's cycles**.
+  - **Expected:**
+    - The first column is the cycle before the current one, headed "Harbor 2".
+    - It holds no card.
+  - **Notes:**
+
+- [ ] `D459` Open **Views**, then choose **Show done and cancelled**.
+  - **Expected:**
+    - The first column holds the cards 'Single Sign-On Setup' and 'Bulk Import'.
+    - **Views** marks **Show done and cancelled** as chosen.
+  - **Notes:**
+
+- [ ] `5421` Select **Table** beside the **Features** heading, then open **Views**.
+  - **Expected:** The menu doesn't offer **Show done and cancelled**.
+  - **Notes:**
+
+**Afterwards:** Select **Board**, open **Views**, choose **Show done and cancelled** again to turn it off, then select **Columns: Platform cycles**, then **All schedules** under **Months**.
