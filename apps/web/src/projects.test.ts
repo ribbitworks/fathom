@@ -14,11 +14,14 @@ import {
 } from "./projects.ts";
 import { formatDay } from "./day-formats.ts";
 import {
-  bodyOf,
+  fictionalCycle,
   fictionalRelease,
   fictionalStream,
-  noFeatureColumns,
   quarters,
+} from "./test-releases.ts";
+import {
+  bodyOf,
+  noFeatureColumns,
   recordDraft,
   serverAnswers,
 } from "./test-support.tsx";
@@ -138,14 +141,7 @@ describe("the plan with a feature's projects changed", () => {
 describe("the release each cycle is in", () => {
   const majors = fictionalStream({
     // 27.1 to 27.4, then a cycle only as it is live.
-    liveCycles: [
-      {
-        startsOn: "2028-01-01",
-        endsOn: "2028-03-31",
-        name: "28.1",
-        months: [],
-      },
-    ],
+    liveCycles: [fictionalCycle("28.1", "2028-01-01", "2028-03-31")],
     releases: [
       fictionalRelease({
         id: "later-release",

@@ -3,7 +3,6 @@
 // Tests for the Cycles tab's rows: each a record of its own, whatever its drafts do to its cycles.
 
 import type {
-  Cycle,
   CyclePattern,
   DraftKind,
   Release,
@@ -12,18 +11,12 @@ import type {
 import { describe, expect, it } from "vitest";
 import { type CycleRow, cycleRows, cycleTable } from "./cycle-table.tsx";
 import {
+  fictionalCycle,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
-  recordDraft,
-} from "./test-support.tsx";
-
-const cycle = (name: string, startsOn: string, endsOn: string): Cycle => ({
-  name,
-  startsOn,
-  endsOn,
-  months: [],
-});
+} from "./test-releases.ts";
+import { recordDraft } from "./test-support.tsx";
 
 describe("the Cycles tab's rows", () => {
   it("keep a removed cycle apart from a moved one starting on its first day", () => {
@@ -33,13 +26,13 @@ describe("the Cycles tab's rows", () => {
         fictionalPattern({ draft: recordDraft({ changed: ["length"] }) }),
       ],
       cycles: [
-        cycle("27.2", "2027-04-01", "2027-06-15"),
-        cycle("27.3", "2027-06-16", "2027-09-30"),
+        fictionalCycle("27.2", "2027-04-01", "2027-06-15"),
+        fictionalCycle("27.3", "2027-06-16", "2027-09-30"),
       ],
       liveCycles: [
-        cycle("27.2", "2027-04-01", "2027-06-15"),
-        cycle("Freeze", "2027-06-16", "2027-06-30"),
-        cycle("27.3", "2027-07-01", "2027-09-30"),
+        fictionalCycle("27.2", "2027-04-01", "2027-06-15"),
+        fictionalCycle("Freeze", "2027-06-16", "2027-06-30"),
+        fictionalCycle("27.3", "2027-07-01", "2027-09-30"),
       ],
     });
 
@@ -71,8 +64,8 @@ describe("the Cycles tab's rows", () => {
             ...pattern,
           }),
         ],
-        cycles: [cycle("27.1", "2027-01-01", "2027-02-28")],
-        liveCycles: [cycle("27.1", "2027-01-01", "2027-03-31")],
+        cycles: [fictionalCycle("27.1", "2027-01-01", "2027-02-28")],
+        liveCycles: [fictionalCycle("27.1", "2027-01-01", "2027-03-31")],
         releases: [
           fictionalRelease({
             name: "Harbour",
@@ -296,8 +289,8 @@ describe("the Cycles tab's rows", () => {
         patterns: [
           fictionalPattern({ draft: recordDraft({ changed: ["length"] }) }),
         ],
-        cycles: [cycle("27.2", "2027-05-01", "2027-07-31")],
-        liveCycles: [cycle("27.2", "2027-04-01", "2027-06-30")],
+        cycles: [fictionalCycle("27.2", "2027-05-01", "2027-07-31")],
+        liveCycles: [fictionalCycle("27.2", "2027-04-01", "2027-06-30")],
         releases: [
           fictionalRelease({
             firstCycle: "2027-04-01",

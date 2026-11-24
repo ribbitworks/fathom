@@ -10,12 +10,11 @@ import { render, screen, within } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { type Mock, vi } from "vitest";
 import { sessionQuery } from "./session.ts";
+import { fictionalStream, streamId } from "./test-releases.ts";
 import {
   changesSent,
-  fictionalStream,
   fictionalUser,
   type serverAnswers,
-  streamId,
   testTheme,
 } from "./test-support.tsx";
 

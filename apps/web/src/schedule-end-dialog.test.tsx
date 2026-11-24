@@ -18,14 +18,16 @@ import {
   streamPath,
 } from "./test-release-dialogs.tsx";
 import {
-  fictionalFeature,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
+  streamId,
+} from "./test-releases.ts";
+import {
+  fictionalFeature,
   planAnswers,
   recordDraft,
   serverAnswers,
-  streamId,
 } from "./test-support.tsx";
 
 afterEach(() => {

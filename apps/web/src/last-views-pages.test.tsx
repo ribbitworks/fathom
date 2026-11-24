@@ -7,8 +7,8 @@ import { startingEffortConversions } from "@fathom/shared";
 import { screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fictionalStream, streamsAnswer } from "./test-releases.ts";
 import {
-  fictionalStream,
   fictionalTeamMonths,
   fictionalUser,
   gridNow,
@@ -56,12 +56,7 @@ const noChoices = () =>
 const plan: Answers = {
   ...planAnswers([]),
   "GET /api/projects/choices": noChoices,
-  "GET /api/release-streams": () =>
-    Response.json({
-      streams: [fictionalStream()],
-      canEditStreams: false,
-      canEditReleases: false,
-    }),
+  "GET /api/release-streams": streamsAnswer([fictionalStream()]),
   "GET /api/effort-conversions": () => Response.json(startingEffortConversions),
 };
 

@@ -30,13 +30,12 @@ import {
 } from "./feature-board.ts";
 import { liveStreams } from "./releases.ts";
 import {
-  featureDraft,
   fictionalRelease,
   fictionalStream,
   quarters,
-  recordDraft,
   streamId,
-} from "./test-support.tsx";
+} from "./test-releases.ts";
+import { featureDraft, recordDraft } from "./test-support.tsx";
 
 const cycles = quarters(6);
 

@@ -31,7 +31,7 @@ import {
   newButton,
   rowMenu,
   chooseFrom,
-  streamId,
+  projectStreamId,
   teamId,
   cycleOne,
   streams,
@@ -107,7 +107,7 @@ describe("the Features page", () => {
       scope: "personal",
       definition: {
         search: "first",
-        choices: { stream: streamId, hide: ["risk"] },
+        choices: { stream: projectStreamId, hide: ["risk"] },
       },
       canChange: true,
       canShare: false,
@@ -127,7 +127,7 @@ describe("the Features page", () => {
           "POST /api/views/features": () =>
             Response.json({ view: roadmap, changeSetId }, { status: 201 }),
         },
-        `/features?mode=table&stream=${streamId}&hide=["risk"]&search=first`,
+        `/features?mode=table&stream=${projectStreamId}&hide=["risk"]&search=first`,
       );
 
       // When the view is saved
@@ -155,7 +155,7 @@ describe("the Features page", () => {
       expect(sent(fetch, "POST /api/views/features")[0]).toMatchObject({
         definition: {
           search: "first",
-          choices: { stream: streamId, hide: ["risk"] },
+          choices: { stream: projectStreamId, hide: ["risk"] },
         },
       });
     });
@@ -179,7 +179,7 @@ describe("the Features page", () => {
       await waitFor(() => {
         expect(history.location.search).toContain("search=first");
       });
-      expect(history.location.search).toContain(`stream=${streamId}`);
+      expect(history.location.search).toContain(`stream=${projectStreamId}`);
       expect(history.location.search).toContain("hide=");
       expect(history.location.search).toContain("mode=board");
     });
@@ -285,7 +285,7 @@ describe("the Features page", () => {
       expect(history.location.pathname).toBe("/releases");
     });
     expect(history.location.search).toContain("tab=schedules");
-    expect(history.location.search).toContain(`open=${streamId}`);
+    expect(history.location.search).toContain(`open=${projectStreamId}`);
   });
 
   it("groups features by release, then each stream's cycles in none, then Later", async () => {
@@ -525,11 +525,11 @@ describe("the Features page", () => {
       [path]: saved(featurePlan),
     });
     await operationsOf("feature").change(later, {
-      targetStreamId: streamId,
+      targetStreamId: projectStreamId,
       targetCycle: cycleOne,
     });
     expect(sent(fetch, path)).toMatchObject([
-      { target: { streamId, cycle: cycleOne } },
+      { target: { streamId: projectStreamId, cycle: cycleOne } },
     ]);
   });
 

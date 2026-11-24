@@ -15,14 +15,14 @@ import {
   streamTable,
 } from "./stream-table.tsx";
 import {
+  fictionalCycle,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
-  recordDraft,
-  streamId,
-  fictionalFeature,
   quarters,
-} from "./test-support.tsx";
+  streamId,
+} from "./test-releases.ts";
+import { recordDraft, fictionalFeature } from "./test-support.tsx";
 import { plannedFeatures } from "./release-tabs.ts";
 
 const day = "2027-02-15";
@@ -607,12 +607,7 @@ describe("the table of schedules", () => {
 
   it("names the features of the current cycle as drafted, and as live in its Live row, marked where a draft moves the cycle", () => {
     // Given a pattern drafted to start a month later, moving the current cycle
-    const drafted = {
-      startsOn: "2027-02-01",
-      endsOn: "2027-04-30",
-      name: "27.1",
-      months: [],
-    };
+    const drafted = fictionalCycle("27.1", "2027-02-01", "2027-04-30");
     const stream = fictionalStream({
       patterns: [
         fictionalPattern({

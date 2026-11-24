@@ -18,9 +18,9 @@ import {
 import {
   fictionalRelease,
   fictionalStream,
-  recordDraft,
   streamId,
-} from "./test-support.tsx";
+} from "./test-releases.ts";
+import { recordDraft } from "./test-support.tsx";
 import { plannedFeatures } from "./release-tabs.ts";
 
 const day = "2027-02-15";

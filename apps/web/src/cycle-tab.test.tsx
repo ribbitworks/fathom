@@ -8,22 +8,28 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  fictionalCycle,
+  fictionalMinors,
+  fictionalPattern,
+  fictionalRelease,
+  fictionalStream,
+  minorsId,
+  quarters,
+  streamId,
+  streamsAnswer,
+} from "./test-releases.ts";
+import {
   bodyOf,
   detailRow,
   detailValue,
   fictionalFeature,
-  fictionalPattern,
-  fictionalRelease,
-  fictionalStream,
   fictionalUser,
   planAnswers,
-  quarters,
   recordCell,
   recordDraft,
   renderApp,
   serverAnswers,
   signedIn,
-  streamId,
   featuresAddress,
   openedIn,
   changesSent,
@@ -40,11 +46,10 @@ afterEach(() => {
 });
 
 type Answers = Parameters<typeof serverAnswers>[0];
-type Can = { canEditStreams?: boolean; canEditReleases?: boolean };
+type Can = Parameters<typeof streamsAnswer>[1];
 
 const changeSetId = "00000000-0000-4000-8000-000000000001";
 const savedAs = () => Response.json({ changeSetId });
-const minorsId = "10000000-0000-4000-8000-000000000002";
 const patternId = "20000000-0000-4000-8000-000000000002";
 const editsStreams = { canEditStreams: true };
 const approver = () =>
@@ -58,16 +63,6 @@ const approver = () =>
       "configuration:approve",
     ],
   });
-
-const answer =
-  (shown: ReleaseStream[], can: Can = {}) =>
-  () =>
-    Response.json({
-      streams: shown,
-      canEditStreams: false,
-      canEditReleases: false,
-      ...can,
-    });
 
 const bySchedule = { path: "/releases?tab=cycles&grouping=schedule" };
 
@@ -83,7 +78,7 @@ async function openPage(
 ) {
   const fetch = serverAnswers({
     "GET /api/session": signedIn,
-    "GET /api/release-streams": answer(shown, can),
+    "GET /api/release-streams": streamsAnswer(shown, can),
     ...answers,
   });
   const history = renderApp(path);
@@ -215,7 +210,7 @@ describe("the Cycles tab", () => {
   it("is chosen from its tab, keeping it in the address", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
     });
     const history = renderApp("/releases");
     await userEvent.click(await screen.findByRole("tab", { name: "Cycles" }));
@@ -280,22 +275,10 @@ describe("the Cycles tab", () => {
 
   // Cycles of a week starting on the last day of next quarter and the day after, beside quarters.
   const weeks = () =>
-    fictionalStream({
-      id: minorsId,
-      name: "Fictional Minors",
+    fictionalMinors({
       cycles: [
-        {
-          startsOn: "2027-09-30",
-          endsOn: "2027-09-30",
-          name: "Last",
-          months: [],
-        },
-        {
-          startsOn: "2027-10-01",
-          endsOn: "2027-10-07",
-          name: "After",
-          months: [],
-        },
+        fictionalCycle("Last", "2027-09-30", "2027-09-30"),
+        fictionalCycle("After", "2027-10-01", "2027-10-07"),
       ],
     });
   const startOf = (text: string | null) => text?.split("Fictional")[0];
@@ -392,7 +375,7 @@ describe("the Cycles tab", () => {
   it("says when there are no cycles yet", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({ patterns: [], cycles: [] }),
       ]),
     });
@@ -409,7 +392,7 @@ const twoSchedules = () => [
       fictionalRelease({ firstCycle: "2027-04-01", lastCycle: "2027-04-01" }),
     ],
   }),
-  fictionalStream({ id: minorsId, name: "Fictional Minors" }),
+  fictionalMinors(),
 ];
 
 describe("the Cycles table's columns", () => {
@@ -538,17 +521,11 @@ describe("the Cycles table's columns", () => {
   });
 
   it("list two cycles of one name in one schedule with their first days", async () => {
-    const freeze = (startsOn: string, endsOn: string) => ({
-      startsOn,
-      endsOn,
-      name: "Freeze",
-      months: [],
-    });
     await openPage([
       fictionalStream({
         cycles: [
-          freeze("2027-07-01", "2027-07-07"),
-          freeze("2027-08-01", "2027-08-07"),
+          fictionalCycle("Freeze", "2027-07-01", "2027-07-07"),
+          fictionalCycle("Freeze", "2027-08-01", "2027-08-07"),
         ],
       }),
     ]);
@@ -572,9 +549,7 @@ describe("the Cycles table's columns", () => {
     await openPage(
       [
         fictionalStream({ releases: [onSecond] }),
-        fictionalStream({
-          id: minorsId,
-          name: "Fictional Minors",
+        fictionalMinors({
           releases: [
             { ...onSecond, id: "30000000-0000-4000-8000-000000000009" },
           ],
@@ -1387,12 +1362,6 @@ describe("a cycle's drafts", () => {
 
     it("name a cycle moved off a first day another drafted cycle now has", async () => {
       // Given 27.2 moved from Apr 1 to Feb 1, and 27.04 drafted to start on Apr 1
-      const monthly = (name: string, startsOn: string, endsOn: string) => ({
-        name,
-        startsOn,
-        endsOn,
-        months: [],
-      });
       await openPage(
         [
           fictionalStream({
@@ -1402,14 +1371,14 @@ describe("a cycle's drafts", () => {
               }),
             ],
             cycles: [
-              monthly("27.1", "2027-01-01", "2027-01-31"),
-              monthly("27.2", "2027-02-01", "2027-02-28"),
-              monthly("27.3", "2027-03-01", "2027-03-31"),
-              monthly("27.04", "2027-04-01", "2027-04-30"),
+              fictionalCycle("27.1", "2027-01-01", "2027-01-31"),
+              fictionalCycle("27.2", "2027-02-01", "2027-02-28"),
+              fictionalCycle("27.3", "2027-03-01", "2027-03-31"),
+              fictionalCycle("27.04", "2027-04-01", "2027-04-30"),
             ],
             liveCycles: [
-              monthly("27.1", "2027-01-01", "2027-03-31"),
-              monthly("27.2", "2027-04-01", "2027-06-30"),
+              fictionalCycle("27.1", "2027-01-01", "2027-03-31"),
+              fictionalCycle("27.2", "2027-04-01", "2027-06-30"),
             ],
           }),
         ],
@@ -1459,7 +1428,7 @@ describe("a cycle's drafts", () => {
     await openPage(
       [
         fictionalStream({ draft: recordDraft({ action: "deleted" }) }),
-        fictionalStream({ id: minorsId, name: "Fictional Minors" }),
+        fictionalMinors(),
       ],
       { path: "/releases?tab=cycles&grouping=schedule&show=drafts" },
     );
@@ -1467,9 +1436,7 @@ describe("a cycle's drafts", () => {
   });
 
   it("show a schedule only drafted to be added with every cycle added, none under Live only, where its cycles don't open", async () => {
-    const added = fictionalStream({
-      id: minorsId,
-      name: "Fictional Minors",
+    const added = fictionalMinors({
       draft: recordDraft({ action: "created" }),
     });
     await openPage([fictionalStream(), added], {

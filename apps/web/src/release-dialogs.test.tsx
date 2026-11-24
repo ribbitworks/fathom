@@ -29,13 +29,15 @@ import {
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
+  streamId,
+  quarters,
+} from "./test-releases.ts";
+import {
   recordDraft,
   serverAnswers,
   signedOut,
-  streamId,
   noFeatureColumns,
   featureDraft,
-  quarters,
 } from "./test-support.tsx";
 
 afterEach(() => {

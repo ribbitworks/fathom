@@ -19,20 +19,14 @@ import {
   unitOf,
 } from "./schedules.ts";
 import {
+  fictionalCycle,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
   quarters,
-  recordDraft,
   streamId,
-} from "./test-support.tsx";
-
-const cycle = (startsOn: string, endsOn: string) => ({
-  startsOn,
-  endsOn,
-  name: "Fictional",
-  months: [],
-});
+} from "./test-releases.ts";
+import { recordDraft } from "./test-support.tsx";
 
 describe("a cycle's duration", () => {
   it.each([
@@ -46,7 +40,9 @@ describe("a cycle's duration", () => {
   ] as const)(
     "is in its pattern's unit when whole, or else in days: %s",
     (_case, startsOn, endsOn, unit, words) => {
-      expect(durationWords(cycle(startsOn, endsOn), unit)).toBe(words);
+      expect(
+        durationWords(fictionalCycle("Fictional", startsOn, endsOn), unit),
+      ).toBe(words);
     },
   );
 });
@@ -215,26 +211,19 @@ describe("the drafts that change a schedule's cycles", () => {
 });
 
 describe("each cycle beside itself as it is live", () => {
-  const cycle = (name: string, startsOn: string, endsOn: string) => ({
-    name,
-    startsOn,
-    endsOn,
-    months: [],
-  });
-
   it("is matched by name where the name is its own on both sides, else by its first day, with each live cycle no longer shown on its own", () => {
     const shown = [
-      cycle("27.1", "2027-01-01", "2027-03-31"),
-      cycle("27.2", "2027-04-01", "2027-05-31"),
-      cycle("Freeze", "2027-06-01", "2027-06-30"),
-      cycle("Freeze", "2027-07-01", "2027-07-31"),
-      cycle("27.9", "2027-08-01", "2027-08-31"),
+      fictionalCycle("27.1", "2027-01-01", "2027-03-31"),
+      fictionalCycle("27.2", "2027-04-01", "2027-05-31"),
+      fictionalCycle("Freeze", "2027-06-01", "2027-06-30"),
+      fictionalCycle("Freeze", "2027-07-01", "2027-07-31"),
+      fictionalCycle("27.9", "2027-08-01", "2027-08-31"),
     ];
     const live = [
-      cycle("27.1", "2027-01-01", "2027-03-31"),
-      cycle("27.2", "2027-04-01", "2027-06-30"),
-      cycle("Freeze", "2027-07-01", "2027-07-31"),
-      cycle("27.3", "2027-09-01", "2027-09-30"),
+      fictionalCycle("27.1", "2027-01-01", "2027-03-31"),
+      fictionalCycle("27.2", "2027-04-01", "2027-06-30"),
+      fictionalCycle("Freeze", "2027-07-01", "2027-07-31"),
+      fictionalCycle("27.3", "2027-09-01", "2027-09-30"),
     ];
     expect(
       cycleTwins(shown, live).map(({ cycle: one, twin }) => [
@@ -253,8 +242,8 @@ describe("each cycle beside itself as it is live", () => {
 
   it("is the same cycle moved by a new length, by its name", () => {
     const [twin] = cycleTwins(
-      [cycle("27.3", "2027-06-01", "2027-09-30")],
-      [cycle("27.3", "2027-07-01", "2027-09-30")],
+      [fictionalCycle("27.3", "2027-06-01", "2027-09-30")],
+      [fictionalCycle("27.3", "2027-07-01", "2027-09-30")],
     );
     expect(twin?.twin?.startsOn).toBe("2027-07-01");
   });
