@@ -82,8 +82,11 @@ describe("a column of features picked", () => {
   });
 
   it("shows nothing for no features, or only those it cannot name", () => {
-    expect(column()(proposal([]))).toBeNull();
-    expect(column()(proposal(["gone"]))).toBeNull();
+    for (const ids of [[], ["gone"]]) {
+      const { container, unmount } = render(<>{column()(proposal(ids))}</>);
+      expect(container.textContent).toBe("");
+      unmount();
+    }
   });
 });
 

@@ -281,7 +281,8 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Expected:**
     - The list closes.
     - The cell names both features.
-    - A hollow yellow dot is before them.
+    - The feature just picked has a hollow yellow dot before it.
+    - 'Usage Alerts' has no dot before it.
     - The row is tinted faint yellow.
     - Under it, a light green Live row's **Features** cell names 'Usage Alerts' alone.
   - **Notes:**

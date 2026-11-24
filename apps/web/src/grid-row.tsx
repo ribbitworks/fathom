@@ -359,7 +359,11 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
               ? undefined
               : column.status?.(record);
           const standIn = standInAt(row, column);
-          const changes = draftChanges(cellDraft, column);
+          // A list of records marks each record a change adds or takes away, so its cell is not
+          // marked as changed as a whole; a new record's cells all are.
+          const changes =
+            draftChanges(cellDraft, column) &&
+            !(column.parts !== undefined && cellDraft?.action === "changed");
           const mark = row.record && !editingHere && column.mark?.(row.record);
           const namedMark = column.key === table.nameColumn ? mark : undefined;
           const frozenAt = frozenCell(columnIndex);

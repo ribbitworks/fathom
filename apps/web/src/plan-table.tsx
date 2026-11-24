@@ -36,7 +36,7 @@ import {
   useDraftView,
 } from "./status-mark.tsx";
 import { fieldColumn } from "./grid-columns.tsx";
-import { isPending } from "./grid-drafts.ts";
+import { changedIn, isPending } from "./grid-drafts.ts";
 import {
   liveRecordsBy,
   withLiveFields,
@@ -311,11 +311,16 @@ export const ownerColumn = <Rec extends PlanRecord>(people: Choice[]) =>
 
 export const customersColumn = <Rec extends PlanRecord>(
   customers: readonly Customer[],
+  drafted: readonly Rec[],
 ) =>
-  field<Rec>("customerIds", planColumnNames.customerIds, "choice", {
-    choices: identified(customers),
-    multiple: true,
-  });
+  listedColumn(
+    field<Rec>("customerIds", planColumnNames.customerIds, "choice", {
+      choices: identified(customers),
+      multiple: true,
+    }),
+    customers,
+    drafted,
+  );
 
 // Records in a cell, in the order given, each by its ID, dimmed, and its name, drawn as given. A
 // long list is cut short, so its tip gives every one, one to a line.
@@ -379,27 +384,24 @@ export function namingParts(
     if (!drafted && !live) return [];
     const part: DraftedPart | undefined =
       drafted === live ? undefined : drafted ? "added" : "removed";
-    return [{ record, part, live }];
+    return [{ record, part, live, draft: record.draft }];
   });
 }
 
-// The records naming one that a Draft view lists: as they are live under Live only; as drafted
-// once drafts are applied, which leaves out an addition that was rejected; or all of them beside live.
+// The records in a list that a Draft view shows, those naming a row's record or those its own field
+// lists: as they are live under Live only; as drafted once drafts are applied, which leaves out an
+// addition that was rejected; or all of them beside live.
 export const partsShown = (
   parts: readonly NamingPart[],
   show: Show,
 ): NamingPart[] =>
-  parts.filter(({ record, part, live }) => {
+  parts.filter(({ part, live, draft }) => {
     if (show === "live") return live;
-    return (
-      show !== "drafts" ||
-      part !== "added" ||
-      record.draft?.state !== "rejected"
-    );
+    return show !== "drafts" || part !== "added" || draft?.state !== "rejected";
   });
 
-// A record naming another, marked with its own draft where that adds or takes away the link, as it
-// is drafted, or as it is live.
+// A record in a list, marked with the draft that adds it or takes it away, if any, as it is drafted,
+// or as it is live.
 export function NamerName({
   part,
   live,
@@ -411,7 +413,7 @@ export function NamerName({
 }) {
   return (
     <DraftedPartItem
-      draft={part.part === undefined ? undefined : part.record.draft}
+      draft={part.part === undefined ? undefined : part.draft}
       part={part.part}
       live={live}
     >
@@ -420,8 +422,8 @@ export function NamerName({
   );
 }
 
-// The projects or proposals naming a record, each marked with its own draft, as the Draft view lists
-// them, or as they are live in a Live row.
+// The records in a list, each marked with the draft that adds it or takes it away, as the Draft view
+// lists them, or as they are live in a Live row.
 export function NamersCell({
   parts,
   asLive,
@@ -476,13 +478,68 @@ export function recordsColumn<
   };
 }
 
+// A column of records a row's own field picks, such as a project's features.
 export const pickedColumn = <Rec extends PlanRecord>(
   key: string,
   label: string,
   records: readonly Identified[],
-  namedBy?: (record: Rec) => string[],
+  drafted: readonly Rec[],
 ): Column<Rec, PlanChange> =>
-  recordsColumn<Rec, PlanChange>(key, label, records, { namedBy });
+  listedColumn(
+    recordsColumn<Rec, PlanChange>(key, label, records),
+    records,
+    drafted,
+  );
+
+// The records a row's own field lists, in the choices' order, as drafted and as live: one the row's
+// draft adds is added, one it takes away is removed, each marked with that draft, and the rest
+// unmarked. Given the row as drafted, whatever the view, so a Live view marks them too.
+function listedParts<Rec extends PlanRecord>(
+  column: Column<Rec, PlanChange>,
+  records: readonly Identified[],
+  drafted: Rec,
+): NamingPart[] {
+  const ids = column.value(drafted) as string[];
+  const { draft } = drafted;
+  const liveIds =
+    draft?.action === "changed" && changedIn(draft, column)
+      ? (column.live(draft) as string[])
+      : ids;
+  return records.flatMap((listed) => {
+    const added = ids.includes(listed.id);
+    const live = liveIds.includes(listed.id);
+    if (!added && !live) return [];
+    const part: DraftedPart | undefined =
+      added === live ? undefined : added ? "added" : "removed";
+    return [{ record: listed, part, live, draft }];
+  });
+}
+
+// A column of records a row's own field lists, such as a project's customers, each marked with the
+// row's draft where it adds or takes the record away, so the others aren't marked as changed and
+// the value needs no Live line of its own. Given the rows with their drafts, whatever the view.
+function listedColumn<Rec extends PlanRecord>(
+  column: Column<Rec, PlanChange>,
+  records: readonly Identified[],
+  drafted: readonly Rec[],
+): Column<Rec, PlanChange> {
+  const parts = (record: Rec) =>
+    listedParts(
+      column,
+      records,
+      drafted.find(({ id }) => id === record.id) ?? record,
+    );
+  const cell = (asLive: boolean) => (record: Rec) => (
+    <NamersCell parts={parts(record)} asLive={asLive} />
+  );
+  return {
+    ...column,
+    content: cell(false),
+    liveContent: cell(true),
+    marksParts: true,
+    parts,
+  };
+}
 
 // A column of the projects or proposals naming a row's record through a link field, such as those
 // needing a feature, as the records given show them, each marked with its own draft, so a change to
@@ -499,17 +556,18 @@ export function namersColumn<Rec extends PlanRecord>(
     <NamersCell parts={namingParts(drafted, link, record.id)} asLive={asLive} />
   );
   return {
-    ...pickedColumn<Rec>(key, label, records, (record) =>
-      records
-        // The link is always one of the fixed link fields.
-        // eslint-disable-next-line security/detect-object-injection
-        .filter((namer) => namer[link].includes(record.id))
-        .map(({ id }) => id),
-    ),
+    ...recordsColumn<Rec, PlanChange>(key, label, records, {
+      namedBy: (record) =>
+        records
+          // The link is always one of the fixed link fields.
+          // eslint-disable-next-line security/detect-object-injection
+          .filter((namer) => namer[link].includes(record.id))
+          .map(({ id }) => id),
+    }),
     content: cell(false),
     liveContent: cell(true),
     marksParts: true,
-    parts: (id) => namingParts(drafted, link, id),
+    parts: (record) => namingParts(drafted, link, record.id),
   };
 }
 
