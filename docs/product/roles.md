@@ -2,7 +2,11 @@
 
 **Last updated:** 2026-11-24
 
-What each role can see, change and approve. A role is a set of permissions kept in Fathom, not fixed in its code, so a new feature adds permissions rather than roles. Fathom starts with one role for each persona. Roles can be edited, and copied to make new ones, within the [safeguards](#safeguards-for-administrators). The [Administration Pages](../design/pages/administration.md#roles) describe the Roles page.
+What each role can see, change and approve. The [Administration Pages](../design/pages/administration.md#roles) describe the Roles page.
+
+- **Permissions, not code:** A role is a set of permissions kept in Fathom, not fixed in its code, so a new feature adds permissions rather than roles.
+- **One role per persona:** Fathom starts with one role for each persona.
+- **Changing roles:** Roles can be edited, and copied to make new ones, within the [safeguards](#safeguards-for-administrators).
 
 ## Starting Roles
 
@@ -54,7 +58,9 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 
 - **Several roles:** An account holds one or more roles, starting or made later, one of them its default.
 - **One role at a time:** A session acts as one role, and only that role's permissions apply; an account's roles never add up. A user's own drafts are those made under any of their roles, so switching never lets them approve their own.
-- **Publishing as the role in use:** Publishing publishes the changes made as the role in use, with whatever moved with them. A change made under another of the user's roles is published only if the role in use may make that kind of change; the rest stay unpublished, with the changes that go with them, for a role that may. Discarding takes back any of the user's own changes, whichever role made them, so nothing they made stays held.
+- **Publishing as the role in use:** Publishing publishes the changes made as the role in use, with whatever moved with them.
+  - **Changes under another role:** A change made under another of the user's roles is published only if the role in use may make that kind of change. The rest stay unpublished, with the changes that go with them, for a role that may.
+  - **Discarding:** Discarding takes back any of the user's own changes, whichever role made them, so nothing they made stays held.
 - **Choosing the role:** Signing in acts as the role last chosen on that browser, or else the default. A user switches role from their account's menu without signing in again.
 - **Naming the role:** Changes, drafts and approvals record the role they were made as, shown beside the name, such as "Feature Lead as Engineering Manager".
 - **Your own account:** Every user, whatever their role, changes their own name and password from their account's menu. Their email address and roles stay with whoever manages accounts, since the email address signs them in.
@@ -77,20 +83,29 @@ The classes, and each built-in detail's default class, are set out in the [Domai
   - **Confidential too:** the Org chart's reporting view on future dates, and grouping Capacity's Feature teams or Allocations by manager.
   - **General versions:** Demand, the Plan, and On track or Late will have a General version for roles without Personal data, such as Product Managers and Team Members. It shows totals, with no names and no Personal details. Not built yet ([#209](https://github.com/ribbitworks/fathom/issues/209), [#204](https://github.com/ribbitworks/fathom/issues/204)).
 - **Classify data:** Moves built-in details, lists and columns between classes, the hiring plan included. It is one permission across every class, and a move needs View on both the class left and the class entered.
-- **Lists and columns:** Making or changing a list or column, a list's choices and their order included, and approving or rejecting their drafts, need sight of its class besides the permission that changes or approves it (Edit or Approve Configuration for a list; for a column, Edit on its table's area, and Approve Configuration): View People for General (General values are people's details), View Personal details for Personal, and View Confidential data for Confidential. New lists and columns start General; giving one another class needs Classify data.
+- **Lists and columns:** Making or changing a list or column, a list's choices and their order included, and approving or rejecting their drafts, need sight of its class besides the permission that changes or approves it.
+  - **The permission that changes or approves:** Edit or Approve Configuration for a list; for a column, Edit on its table's area, and Approve Configuration.
+  - **Sight of the class:** View People for General (General values are people's details), View Personal details for Personal, and View Confidential data for Confidential.
+- **New lists and columns:** They start General; giving one another class needs Classify data.
 
 ## Who Sees Which People
 
 - **Who is listed:** People not started yet are hidden from roles that don't see Start date's class, so a start date isn't revealed early. People who have left are hidden from roles that don't see End date's class. Both are judged by the live dates while a draft waits, so a future end date shows nothing until it passes.
-- **New employees:** A person may be added before their start date. Roles that see Personal data see them marked as not yet started. Other roles keep seeing the placeholder of the planned hire the person filled until the start date, even if it moves, and don't see a future starter who filled no hire. Until the person starts, those roles see none of their changes. Who fills a hire is shown only to roles that see Personal data, since it reveals a reporting line to come.
+- **New employees:** A person may be added before their start date. Roles that see Personal data see them marked as not yet started.
+  - **Other roles:** Other roles keep seeing the placeholder of the planned hire the person filled until the start date, even if it moves, and don't see a future starter who filled no hire. Until the person starts, those roles see none of their changes.
+  - **Who fills a hire:** Shown only to roles that see Personal data, since it reveals a reporting line to come.
 - **Changes of manager:** A change of manager is Personal in its draft and in the change history, since it names a past manager, so roles that see only General data see the new manager once the change is approved.
-- **Other dates:** Feature teams and reporting lines on other dates need Personal data. Future reporting lines need Confidential data too, since future-dated reorganizations are Confidential. Anyone who edits feature teams and sees Personal data may change them from a later date, so a Feature Lead changes them from today. Changing them from an earlier date also needs Edit on the class of what it changes (feature team dates or past managers), which is Personal unless moved.
+- **Other dates:** Feature teams and reporting lines on other dates need Personal data. Future reporting lines need Confidential data too, since future-dated reorganizations are Confidential.
+  - **From a later date:** Anyone who edits feature teams and sees Personal data may change feature teams from a later date, so a Feature Lead changes them from today.
+  - **From an earlier date:** Changing feature teams and reporting lines from an earlier date also needs Edit on the class of what it changes (feature team dates or past managers), which is Personal unless moved.
 - **Positions:** A role that can't see the Positions list's class can't add people, since each needs one. Removing a person, or drafting a change to their position, needs the right to change their position.
 - **Not staffed:** Everyone who sees features sees whether one is [Not staffed](../design/domain-model.md#feature), though reading the allocations needs Personal data.
 
 ## Planned Hires in the Plan
 
-- **Placeholders:** Everyone who sees people sees each planned hire not yet filled, and each filled one whose person hasn't started, as a placeholder: a row of People and a card under its manager on the Org chart. It shows its name, ID, position, state, manager, Expected month, and its values in the columns it shares with people, each at its column's class. Its name, ID, manager and Expected month are General; its position and state take the class of the Positions and Hiring states lists.
+- **Placeholders:** Everyone who sees people sees each planned hire not yet filled, and each filled one whose person hasn't started, as a placeholder: a row of People and a card under its manager on the Org chart.
+  - **What it shows:** Its name, ID, position, state, manager, Expected month, and its values in the columns it shares with people, each at its column's class.
+  - **Classes:** Its name, ID, manager and Expected month are General; its position and state take the class of the Positions and Hiring states lists.
 - **Expected:** A month, never a day, so the placeholder doesn't leak the exact date. How it is worked out is in the [Domain Model](../design/domain-model.md#planned-hires).
 - **Counts:** Counts, such as reports per manager, follow what each reader sees, so each hire or new employee counts once.
 - **The hiring plan:** View Hiring plan shows every planned hire with its target date, drafts and history, and needs View People. Edit Hiring plan adds, changes and removes planned hires, and needs Edit People. Both also need the hiring plan's class, Confidential unless moved; View Confidential data alone doesn't show it.
@@ -107,7 +122,8 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 
 - **A table's columns go with its records:** Whoever edits a table's records, and sees people, adds, changes and removes its columns: Edit Features and releases for Features' columns, Edit People for People's. Seeing people is what General lists and columns take, as Lists and columns sets out. Approve Configuration approves both, until approving moves to each table's area.
 - **Columns on Features:** Everyone who edits features adds them, the Product Manager included. Everyone who sees the plan gets the General lists these columns draw on, and sees drafts of the columns and who made them. Drafts of those lists are shown only to roles that see Lists or People.
-- **Saved views:** Everyone who opens a table's page can save personal views. Sharing a view needs Edit Configuration, or Edit Administration on Accounts. Only a shared view's maker, or a role that may share views on that table, updates, renames or deletes it. Only the maker stops sharing it, and only while they may still share.
+- **Saved views:** Everyone who opens a table's page can save personal views. Sharing a view needs Edit Configuration, or Edit Administration on Accounts.
+  - **Changing a shared view:** Only a shared view's maker, or a role that may share views on that table, updates, renames or deletes it. Only the maker stops sharing it, and only while they may still share.
 
 ## Setting Up the Plan's Tables
 
