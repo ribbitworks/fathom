@@ -34,6 +34,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
+import { focusRefusedSoon } from "./focus.ts";
 import { Count, nameTaken } from "./list-dialog.tsx";
 import { nameProblem, sameName } from "./lists.ts";
 import { ClassChoice } from "./move-class-dialog.tsx";
@@ -145,7 +146,11 @@ export function ColumnDialog({
       onSubmit={(event) => {
         event.preventDefault();
         setTried(true);
-        if (problem !== undefined || needsList) return;
+        const form = event.currentTarget;
+        if (problem !== undefined || needsList) {
+          focusRefusedSoon(form);
+          return;
+        }
         setSentName(name);
         saving.mutate(
           type !== "choice"
@@ -166,6 +171,11 @@ export function ColumnDialog({
                 required,
                 onPlannedHires,
               },
+          {
+            onError: () => {
+              focusRefusedSoon(form);
+            },
+          },
         );
       }}
     >
