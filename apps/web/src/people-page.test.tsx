@@ -264,7 +264,7 @@ async function offeredOptions(): Promise<string[]> {
   return options.map((option) => option.textContent);
 }
 
-async function pick(name: string) {
+async function pick(name: string | RegExp) {
   await userEvent.click(await screen.findByRole("option", { name }));
 }
 
@@ -4532,7 +4532,7 @@ describe("adding from New", () => {
     await userEvent.type(field(label), `${text}{Tab}`);
   }
 
-  async function choose(label: string, option: string) {
+  async function choose(label: string, option: string | RegExp) {
     await userEvent.click(
       screen.getByRole("button", { name: `Change ${label}` }),
     );
@@ -4912,7 +4912,7 @@ describe("adding from New", () => {
         }),
     });
     await typeInto("End", "2027-01-31");
-    await choose("Manager", "Avery Fictional");
+    await choose("Manager", /^Avery Fictional\b/);
     await typeInto("Manager assigned", "2026-12-01");
     await choose("State", "Request to hire");
     expect(
@@ -5172,7 +5172,7 @@ describe("on another date", () => {
     );
     focusCell("p2", "managerId");
     await userEvent.keyboard("{Enter}");
-    await pick("Avery Fictional");
+    await pick(/^Avery Fictional\b/);
     await waitFor(() => {
       expect(bodyOf(fetch, "PATCH", "/api/people/p2")).toEqual([
         { managerId: "p1", managerFrom: onDay },

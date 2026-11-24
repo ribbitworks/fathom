@@ -21,6 +21,7 @@ import {
   personLengths,
   type Permission,
   type Tier,
+  sameName,
 } from "@fathom/shared";
 import {
   Button,
@@ -36,7 +37,7 @@ import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
 import { Count, nameTaken } from "./list-dialog.tsx";
-import { nameProblem, sameName } from "./lists.ts";
+import { nameProblem } from "./lists.ts";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import { createField, updateField } from "./column-requests.ts";
 

@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for lists with meanings: which meanings each list's choices take, their names, and what each
-// list must keep a choice for; and for the weights of feature sizes.
+// list must keep a choice for; for the weights of feature sizes; and for finding a choice by name.
 
 import { describe, expect, it } from "vitest";
 import {
+  choiceNamed,
   keptOf,
   meaningName,
   meaningSchema,
   meaningsOf,
+  sameName,
   weighs,
   weightProblem,
   weightSchema,
@@ -88,5 +90,36 @@ describe("weights", () => {
       "Weight: use at most 2 digits after the point",
       undefined,
     ]);
+  });
+});
+
+describe("finding a choice by name", () => {
+  const choices = [
+    { id: "a", label: "Harbour" },
+    { id: "b", label: "Ines Fictional" },
+    { id: "c", label: "ines fictional " },
+  ];
+
+  it("compares names ignoring letter case and spaces at either end", () => {
+    expect(sameName(" Harbour", "harbour ")).toBe(true);
+    expect(sameName("Harbour", "Harbours")).toBe(false);
+  });
+
+  it("finds the one choice with the name, ignoring letter case and spaces at either end", () => {
+    expect(choiceNamed(choices, "  HARBOUR ")).toEqual({
+      match: "one",
+      choice: { id: "a", label: "Harbour" },
+    });
+  });
+
+  it("finds none when no choice has the name", () => {
+    expect(choiceNamed(choices, "Lighthouse")).toEqual({ match: "none" });
+    expect(choiceNamed([], "Harbour")).toEqual({ match: "none" });
+  });
+
+  it("finds several, rather than the first, when more than one choice has the name", () => {
+    expect(choiceNamed(choices, "Ines Fictional")).toEqual({
+      match: "several",
+    });
   });
 });

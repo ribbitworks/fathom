@@ -19,6 +19,7 @@ import {
   builtInColumnTiers,
   defaultClasses,
   personLengths,
+  sameName,
   temporaryIdPrefix,
 } from "@fathom/shared";
 import { addedColumn, cellRequest } from "./added-columns.ts";
@@ -26,7 +27,7 @@ import { notShown, personDraftFields } from "./draft-details.tsx";
 import { leftWarning } from "./status-mark.tsx";
 import { canFill } from "./hire-fill.ts";
 import { noDrafts } from "./drafts.ts";
-import { choice, offered, sameName } from "./lists.ts";
+import { choice, offered } from "./lists.ts";
 import { cellColumn, columnsOn, inOrder } from "./grid-columns.tsx";
 import { isPending } from "./grid-drafts.ts";
 import { liveRecordsOf, recordsAsShown, shownSchema } from "./live-records.ts";
@@ -42,13 +43,16 @@ import type {
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import { flagChoice } from "./cell-kinds.tsx";
 import {
+  aboutPerson,
   isHire,
   personKeyOf,
   peopleAndHires,
+  positionLabel,
   type RowChange,
   rowName,
   type RowRequest,
   stateMeaning,
+  teamCalled,
 } from "./people-rows.ts";
 import type { CellValue } from "./table-view.ts";
 import { formatMonth } from "./day-formats.ts";
@@ -123,8 +127,9 @@ function managersNamed(people: readonly Person[]): Map<string, string> {
 export const byLabel = (choices: Choice[]) =>
   choices.sort((a, b) => collator.compare(a.label, b.label));
 
-// The people and planned hires a row may report to, by name, and, no longer offered, those who have
-// gone, or are no longer marked as managers, while someone still reports to them.
+// The people and planned hires a row may report to, by name, each described by their position and
+// team, so two with the same name are told apart, and, no longer offered, those who have gone, or
+// are no longer marked as managers, while someone still reports to them.
 function managerChoices(
   people: readonly Person[],
   lists: readonly List[],
@@ -132,11 +137,24 @@ function managerChoices(
 ): Choice[] {
   const named = managersNamed(people);
   const shown = new Set(people.map(({ id }) => id));
+  const about = ({ positionId, manager, team }: Person) =>
+    aboutPerson(
+      positionLabel(lists, positionId),
+      // A team not sent to this reader is left out rather than named after its manager.
+      manager && team !== undefined
+        ? teamCalled(team, manager.preferredName)
+        : undefined,
+    );
   return byLabel([
     ...people.flatMap((person) => {
       const manages = mayManage(person, today);
       return manages || named.has(person.id)
-        ? [choice(person.id, rowName(person, lists), !manages)]
+        ? [
+            {
+              ...choice(person.id, rowName(person, lists), !manages),
+              description: about(person),
+            },
+          ]
         : [];
     }),
     ...[...named]

@@ -13,7 +13,7 @@ last_updated: "2026-11-24"
 
 Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **Team** and **Team name** columns:
 
-- Who can be picked as a manager.
+- Who can be picked as a manager, and how each is described in the picker.
 - Checking and clearing **Manager?** as drafts, and the rule that refuses clearing it.
 - Team names.
 - The red **Left** box on a manager who has left.
@@ -85,7 +85,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `D766` Type `Max`.
-  - **Expected:** 'Max Munk' is offered.
+  - **Expected:**
+    - 'Max Munk' is offered.
+    - Under 'Max Munk', in smaller, dimmed text: "Engineering Manager, Mateo Quintero Reynoso's team".
   - **Notes:**
 
 - [ ] `69C3` Clear the text typed, and type `Lilian`.

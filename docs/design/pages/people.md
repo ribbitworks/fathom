@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/people.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Fathom: People Page
@@ -16,7 +16,7 @@ People lists everyone, one row each, with planned hires beside them. It sits in 
 ## Columns
 
 - **Kinds of row:** The State column tells people and planned hires apart, so there is no Kind column. Metrics name each kind, such as 150 people and 6 planned hires.
-- **Manager:** Picked from people flagged as managers and still employed. A manager whose end date has passed shows a Left mark, only to readers who see Personal details.
+- **Manager:** Picked from people flagged as managers and still employed, each described under their name by their position and team, so two with the same name are told apart. A pasted name more than one of them has is refused rather than given to the first. A manager whose end date has passed shows a Left mark, only to readers who see Personal details.
 - **Manager?:** A checkbox straight after Manager, ticked for those flagged as managers.
 - **Manager assigned:** The Personal date the line runs from; changing it moves the line. The label can't be read as the person being a manager since then.
 - **Team:** Follows from Manager and isn't edited, shown by the team's name, or its manager's while it has none.

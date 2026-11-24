@@ -36,6 +36,8 @@ You can also paste rows in from a spreadsheet:
 1. Select the **Name** cell of the empty row at the end of the table.
 1. Paste.
 
+If a value fits more than one choice, such as the name of two managers, Fathom can't tell which you mean. It keeps that row unsaved, with the reason under it. Choose the value in the row's cell instead.
+
 You're done when the new rows show in the table, each with a hollow dot until you publish it.
 
 ### Change a Person
@@ -67,6 +69,7 @@ First, make them a manager:
 Once it's approved, give the person their new manager:
 
 1. On the person's row, choose the manager in **Manager**.
+   - Each manager shows their position and team under their name, so you can tell apart two people with the same name.
 1. If the change happened before today, type the day it took effect in **Manager assigned**.
 1. Select **Publish**, and ask your approver to approve it.
 

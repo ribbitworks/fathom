@@ -10,6 +10,7 @@
 import {
   type ChangeValue,
   type Choice,
+  choiceNamed,
   isDay,
   isLink,
   type Link,
@@ -37,7 +38,7 @@ import {
   NotePanel,
   notePreview,
 } from "./note-editor.tsx";
-import { offered, sameName } from "./lists.ts";
+import { offered } from "./lists.ts";
 import { decimal, decimalUpTo } from "./numbers.ts";
 import {
   type CellValue,
@@ -347,12 +348,20 @@ const choice: CellKind = {
   },
   problem: () => undefined,
   pasted: (column, content) => {
-    const found = column.choices.find(
-      (option) => pickable(column, option) && sameName(option.label, content),
+    const named = choiceNamed(
+      column.choices.filter((option) => pickable(column, option)),
+      content,
     );
-    return found === undefined
-      ? { problem: `No ${column.label} called ${content}` }
-      : { value: [found.id] };
+    switch (named.match) {
+      case "one":
+        return { value: [named.choice.id] };
+      case "none":
+        return { problem: `No ${column.label} called ${content}` };
+      case "several":
+        return {
+          problem: `More than one ${column.label} is called ${content}`,
+        };
+    }
   },
   change: (key, value) => ({ values: { [key]: chosen(value) } }),
   width: (column) =>

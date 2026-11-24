@@ -300,7 +300,7 @@ describe("filling a planned hire with a new person", () => {
     await type("Name", "Fictional Starter");
     await type("ID", "E9");
     await userEvent.tab();
-    await pick("Manager", "Riley Fictional");
+    await pick("Manager", /^Riley Fictional\b/);
 
     await fillNow();
 

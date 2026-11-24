@@ -217,11 +217,6 @@ export function nameProblem(
   return taken ? duplicate : undefined;
 }
 
-// Text for comparing names: trimmed and in lower case.
-export function sameName(first: string, second: string): boolean {
-  return first.trim().toLowerCase() === second.trim().toLowerCase();
-}
-
 // The lists with the drafts chosen taken back: a list or choice only drafted to be added is left out,
 // each list and choice has its live values back, and the choices their live order.
 function withDraftsUndone(

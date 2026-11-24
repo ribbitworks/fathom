@@ -32,6 +32,7 @@ import {
 import { noOthers } from "./new-plan-record-panel.tsx";
 import { NewRecordPanel, newRecordId } from "./new-record-panel.tsx";
 import { noRecordProblem } from "./plan-table.tsx";
+import { aboutPerson, teamCalled } from "./people-rows.ts";
 import classes from "./record-details.module.css";
 import { RecordSection, Row, DetailSections } from "./record-details.tsx";
 import {
@@ -106,11 +107,10 @@ function teamChoices(people: readonly OrgChartPerson[]): Choice[] {
   const aboutOf = (person: OrgChartPerson) => {
     const manager =
       person.managerId === null ? undefined : byId.get(person.managerId);
-    const team =
-      manager === undefined
-        ? undefined
-        : (manager.teamName ?? `${manager.preferredName}'s team`);
-    return [person.position, team].filter(Boolean).join(", ");
+    return aboutPerson(
+      person.position,
+      manager && teamCalled(manager.teamName, manager.preferredName),
+    );
   };
   return people
     .filter((person) => person.planned === undefined && person.left !== true)
