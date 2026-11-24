@@ -25,7 +25,7 @@ import {
   type Touched,
   versionOf,
 } from "./record-state.ts";
-import { featureKind } from "./release-kinds.ts";
+import { featureKind, releaseKind } from "./release-kinds.ts";
 
 export const allocationFields = [
   "personId",
@@ -109,7 +109,7 @@ export const allocationKind: RecordKind = {
 
 const timeSpent = "Allocations are time spent, so";
 
-// A feature, activity or project removed while it, or one of its activities, still has
+// A feature, activity, project or release removed while it, or one of its activities, still has
 // allocations. The count is left out, since it can include people the editor does not see. Records
 // are named only to a role that reads their kind.
 export function allocationProblem(
@@ -127,12 +127,13 @@ export function allocationProblem(
       return `${named(featureKind, id)} has allocations, so it can't be removed. ${timeSpent} cancel the feature instead.`;
     }
     if (
-      type === "project" &&
-      activitiesOf(state, "project", id).some((activity) =>
+      (type === "project" || type === "release") &&
+      activitiesOf(state, type, id).some((activity) =>
         allocated(activity, "activityId"),
       )
     ) {
-      return `${named(projectKind, id)} has allocations, so it can't be removed. ${timeSpent} the project stays.`;
+      const kind = type === "project" ? projectKind : releaseKind;
+      return `${named(kind, id)} has allocations, so it can't be removed. ${timeSpent} the ${type} stays.`;
     }
     if (isActivityType(type) && allocated(id, "activityId")) {
       // The type is always one of the two activity kinds.

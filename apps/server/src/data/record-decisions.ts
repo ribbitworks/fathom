@@ -55,7 +55,14 @@ import {
   recordKinds,
   ruleProblem,
 } from "./records.ts";
-import { drafting, kindChanges, refuseHeldIn } from "./record-drafting.ts";
+import {
+  changeableRecord,
+  drafting,
+  kindChanges,
+  refuseHeldIn,
+  saveRecordDrafts,
+  type Wanted,
+} from "./record-drafting.ts";
 
 // The records only drafted to be added that belong to one, through the links of their kinds, and
 // those that belong to them, and so on.
@@ -470,4 +477,37 @@ export async function rejectRecordDrafts(
     });
   }
   return made;
+}
+
+// Drafts removing a record, once the check given finds it may be, with what belongs to it and goes
+// with it, such as a project's milestones; removing one only drafted to be added discards its
+// draft, as discarding does.
+export async function removingWith(
+  database: Database,
+  maker: Actor,
+  type: RecordType,
+  id: string,
+  check: (state: RecordsState) => void,
+  belonging: (state: RecordsState) => RecordRef[],
+): Promise<string | null> {
+  const discards = await drafting(
+    database,
+    maker.user.id,
+    (_transaction, state) => {
+      check(state);
+      return Promise.resolve(addedOnly(state, type, id));
+    },
+  );
+  if (discards) return discardRecordDraft(database, maker, type, id);
+  return drafting(database, maker.user.id, (transaction, state) => {
+    check(state);
+    const wanted: Wanted[] = [{ type, id, record: undefined }];
+    for (const record of belonging(state)) {
+      if (versionOf(state, record.type, record.id) !== undefined) {
+        changeableRecord(state, record.type, record.id);
+        wanted.push({ ...record, record: undefined });
+      }
+    }
+    return saveRecordDrafts(transaction, maker, state, wanted);
+  });
 }

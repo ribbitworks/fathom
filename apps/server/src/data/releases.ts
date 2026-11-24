@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Release streams, their cycle patterns and their releases: reading them as the viewer sees them,
-// and drafting changes to them. Part of the data access layer; the caller checks the actor's
-// permissions.
+// Release streams, their cycle patterns and their releases with their activities: reading them as
+// the viewer sees them, and drafting changes to them. Part of the data access layer; the caller
+// checks the actor's permissions.
 
 import type { Database } from "@fathom/db";
 import {
+  type ActivityRequest,
   cycleLengthMoves,
   cyclesOf,
   longestCycle,
@@ -16,6 +17,7 @@ import {
   type ReleaseRequest,
   type ReleaseStream,
   type ReleaseStreamRequest,
+  type RecordRef,
   type RecordType,
 } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
@@ -23,7 +25,7 @@ import type { Actor } from "../access.ts";
 import { ConflictError, NotFoundError } from "../errors.ts";
 import type { Saved } from "./changes.ts";
 import type { Recorded } from "./draft-records.ts";
-import { addedOnly, type RecordsState, shownVersion } from "./record-state.ts";
+import { type RecordsState, shownVersion } from "./record-state.ts";
 import {
   changeableRecord,
   drafting,
@@ -31,7 +33,9 @@ import {
   saveRecordDrafts,
   type Wanted,
 } from "./record-drafting.ts";
-import { discardRecordDraft } from "./record-decisions.ts";
+import { removingWith } from "./record-decisions.ts";
+import { activitiesOf } from "./activity-kinds.ts";
+import { activityRecord } from "./activity-records.ts";
 import { keptNote, readRecordMakers, readRecordsState } from "./records.ts";
 import { streamAsSeen, streamOut, streamsOut } from "./release-stream-view.ts";
 import { readToday } from "./settings.ts";
@@ -253,33 +257,85 @@ export async function changeReleaseNote(
   });
 }
 
-// Drafts removing a pattern or release of a stream; removing one only drafted to be added discards
-// its draft, as records.ts discards drafts.
-export async function removeFromStream(
+// Drafts removing a pattern or release of a stream, a release with its activities.
+export const removeFromStream = (
   database: Database,
   maker: Actor,
   streamId: string,
   type: "cycle-pattern" | "release",
   id: string,
-): Promise<string | null> {
-  const discards = await drafting(
+): Promise<string | null> =>
+  removingWith(
     database,
-    maker.user.id,
-    (_transaction, state) => {
+    maker,
+    type,
+    id,
+    (state) => {
       inStreamRecord(state, type, streamId, id);
-      return Promise.resolve(addedOnly(state, type, id));
     },
+    (state) =>
+      type === "release"
+        ? activitiesOf(state, "release", id).map((activity): RecordRef => ({
+            type: "release-activity",
+            id: activity,
+          }))
+        : [],
   );
-  if (discards) {
-    return discardRecordDraft(database, maker, type, id);
+
+// A release's activity to change, refusing one of another release, or a release of another stream.
+export function releaseActivity(
+  state: RecordsState,
+  streamId: string,
+  releaseId: string,
+  id: string,
+): Recorded {
+  inStreamRecord(state, "release", streamId, releaseId);
+  const activity = changeableRecord(state, "release-activity", id);
+  if (activity.releaseId !== releaseId) {
+    throw new NotFoundError("There is no such activity in this release");
   }
-  return (
-    await changingStream(database, maker, streamId, (transaction, state) => {
-      inStreamRecord(state, type, streamId, id);
-      return saveRecordDraft(transaction, maker, state, type, id, undefined);
-    })
-  ).changeSetId;
+  return activity;
 }
+
+// Drafts a release's activity: a new one, or a change to one of its own.
+export const draftReleaseActivity = (
+  database: Database,
+  maker: Actor,
+  streamId: string,
+  releaseId: string,
+  id: string | undefined,
+  request: ActivityRequest,
+): Promise<Saved<ReleaseStream>> =>
+  changingStream(database, maker, streamId, (transaction, state) => {
+    if (id === undefined) inStreamRecord(state, "release", streamId, releaseId);
+    else releaseActivity(state, streamId, releaseId, id);
+    return saveRecordDraft(
+      transaction,
+      maker,
+      state,
+      "release-activity",
+      id ?? randomUUID(),
+      activityRecord("release", releaseId, request),
+    );
+  });
+
+export const removeReleaseActivity = (
+  database: Database,
+  maker: Actor,
+  streamId: string,
+  releaseId: string,
+  id: string,
+): Promise<string | null> =>
+  removingWith(
+    database,
+    maker,
+    "release-activity",
+    id,
+    (state) => {
+      releaseActivity(state, streamId, releaseId, id);
+    },
+    () => [],
+  );
 
 type Kept = ReturnType<typeof streamPatterns>;
 

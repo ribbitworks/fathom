@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A release stream as a reader sees it: its patterns, releases and cycles as drafts make them,
-// laid out from today, with releases only for a reader who may read them.
+// A release stream as a reader sees it: its patterns, releases with their activities, and cycles as
+// drafts make them, laid out from today, with releases only for a reader who may read them.
 
 import {
   cyclesOf,
@@ -21,6 +21,7 @@ import {
   stateOf,
 } from "./record-state.ts";
 import { type Makers, recordExtras, recordKeyNumber } from "./records.ts";
+import { activitiesOut } from "./activity-reads.ts";
 import { releaseKind } from "./release-kinds.ts";
 import {
   endsOnIn,
@@ -55,6 +56,8 @@ export function streamOut(
   makers: Makers,
   id: string,
   today: string,
+  // Every release's activity, read once for every stream shown.
+  activities = activitiesOut(state, makers, "release"),
 ): ReleaseStream {
   const stream = shownVersion(state, "release-stream", id) as Recorded;
   const patterns = inStream(state, "cycle-pattern", id, "startsOn").map(
@@ -77,6 +80,9 @@ export function streamOut(
       shipsOn: typeof record.shipsOn === "string" ? record.shipsOn : null,
       colour: knownColour(record.colour),
       note: typeof record.note === "string" ? record.note : null,
+      activities: activities.filter(
+        (activity) => activity.releaseId === releaseId,
+      ),
       ...recordExtras(state, makers, "release", releaseId),
     }),
   );
@@ -116,12 +122,13 @@ export function streamsOut(
   today: string,
 ): ReleaseStream[] {
   const { rows } = stateOf(state, "release-stream");
+  const activities = activitiesOut(state, makers, "release");
   const placeOf = (id: string) =>
     Number(rows.get(id)?.position ?? Number.MAX_SAFE_INTEGER);
   return shownIds(state, "release-stream")
     .map((id, drafted) => ({ id, place: placeOf(id), drafted }))
     .sort((a, b) => a.place - b.place || a.drafted - b.drafted)
-    .map(({ id }) => streamOut(state, makers, id, today));
+    .map(({ id }) => streamOut(state, makers, id, today, activities));
 }
 
 // A stream as a reader may see it, its releases only to those who may read releases, as the

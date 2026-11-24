@@ -37,6 +37,7 @@ import {
   checkedValues,
   valuesOf,
 } from "./person-fields.ts";
+import { activityRecord } from "./activity-records.ts";
 import { belongingTo } from "./project-kinds.ts";
 import {
   fieldOfValue,
@@ -45,7 +46,6 @@ import {
   valueField,
 } from "./values.ts";
 import {
-  addedOnly,
   linkedIds,
   recordExists,
   type RecordsState,
@@ -59,9 +59,8 @@ import {
   drafting,
   saveRecordDraft,
   saveRecordDrafts,
-  type Wanted,
 } from "./record-drafting.ts";
-import { discardRecordDraft } from "./record-decisions.ts";
+import { removingWith } from "./record-decisions.ts";
 import { keptNote, readRecordsState } from "./records.ts";
 import { readToday } from "./settings.ts";
 import { planOut, type PlanRecords, reasonsOf } from "./project-reads.ts";
@@ -605,17 +604,6 @@ export const changeMilestone = (
     milestoneRecord(projectId, request),
   );
 
-const projectActivityRecord = (
-  projectId: string,
-  request: ActivityRequest,
-) => ({
-  projectId,
-  name: request.name,
-  description: request.description,
-  note: keptNote(request.note),
-  estimateHours: request.estimateHours,
-});
-
 export const addProjectActivity = (
   database: Database,
   maker: Actor,
@@ -628,7 +616,7 @@ export const addProjectActivity = (
     "project-activity",
     projectId,
     undefined,
-    projectActivityRecord(projectId, request),
+    activityRecord("project", projectId, request),
   );
 
 export const changeProjectActivity = (
@@ -644,42 +632,21 @@ export const changeProjectActivity = (
     "project-activity",
     projectId,
     id,
-    projectActivityRecord(projectId, request),
+    activityRecord("project", projectId, request),
   );
 
-// Drafts removing a record, refusing one another record still uses; removing one only drafted to
-// be added discards its draft, as records.ts discards drafts. A project is removed with its
+// Drafts removing a record, refusing one another record still uses. A project is removed with its
 // milestones and activities.
-async function removing(
+const removing = (
   database: Database,
   maker: Actor,
   type: RecordType,
   id: string,
   check: (state: RecordsState) => void,
-): Promise<string | null> {
-  const discards = await drafting(
-    database,
-    maker.user.id,
-    (_transaction, state) => {
-      check(state);
-      return Promise.resolve(addedOnly(state, type, id));
-    },
+) =>
+  removingWith(database, maker, type, id, check, (state) =>
+    type === "project" ? belongingTo(state, id) : [],
   );
-  if (discards) return discardRecordDraft(database, maker, type, id);
-  return drafting(database, maker.user.id, (transaction, state) => {
-    check(state);
-    const wanted: Wanted[] = [{ type, id, record: undefined }];
-    if (type === "project") {
-      for (const record of belongingTo(state, id)) {
-        if (versionOf(state, record.type, record.id) !== undefined) {
-          changeableRecord(state, record.type, record.id);
-          wanted.push({ ...record, record: undefined });
-        }
-      }
-    }
-    return saveRecordDrafts(transaction, maker, state, wanted);
-  });
-}
 
 export async function removeRecord(
   database: Database,

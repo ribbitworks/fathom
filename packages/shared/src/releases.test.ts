@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the requests that change release streams, their cycle patterns, and their releases: a
-// stream's name and last day, how long a cycle may be, and a release's cycles, ship day, colour and
-// note.
+// Tests for the requests that change release streams, their cycle patterns, and their releases, and
+// for a release's activities.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -10,6 +9,7 @@ import {
   cyclePatternRequestSchema,
   movedReleases,
   planSubjects,
+  releaseActivities,
   releaseNoteRequestSchema,
   releaseRequestSchema,
   releaseStreamRequestSchema,
@@ -291,5 +291,38 @@ describe("releases moved with their cycles", () => {
           "Work planned on these cycles would start after the day it ships.",
       });
     });
+  });
+});
+
+describe("a release's activities", () => {
+  const release = {
+    id: "r1",
+    keyNumber: 1,
+    name: "Fictional One",
+    firstCycle: "2027-01-01",
+    lastCycle: "2027-01-01",
+    shipsOn: null,
+    colour: null,
+    note: null,
+  };
+  const activity = {
+    id: "a1",
+    keyNumber: 1,
+    projectId: null,
+    releaseId: "r1",
+    name: "Release testing",
+    description: null,
+    note: null,
+    estimateHours: null,
+  };
+
+  it("are those the release holds", () => {
+    expect(releaseActivities({ ...release, activities: [activity] })).toEqual([
+      activity,
+    ]);
+  });
+
+  it("are none when they are left out", () => {
+    expect(releaseActivities(release)).toEqual([]);
   });
 });

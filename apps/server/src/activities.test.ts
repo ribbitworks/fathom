@@ -1,14 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Integration tests for a project's activities, against a PostgreSQL server of their own: the routes
-// and who may use them, reading them with the plan, their drafts with their project's, and links.
+// Integration tests for a project's and a release's activities, against a PostgreSQL server of their
+// own: the routes and who may use them, reading them, their drafts with their owner's, and links.
 
-import { allocations, people } from "@fathom/db";
+import {
+  allocations,
+  cyclePatterns,
+  people,
+  releases,
+  releaseStreams,
+} from "@fathom/db";
 import {
   type Activity,
   type ChangeHistory,
   type ProjectPlan,
   type RecordLookup,
+  type ReleaseStream,
+  type ReleaseStreams,
   type Role,
   roleSchema,
   startingRoles,
@@ -371,6 +379,213 @@ describe("links", () => {
       outside.cookie,
       "GET",
       `/api/go/activity/${String(activity.keyNumber)}`,
+    );
+    expect(hidden.json<RecordLookup>()).toEqual({ result: "nothing" });
+  });
+});
+
+describe("a release's activities", () => {
+  // A live release of a live schedule of quarters from 2027.
+  async function liveRelease(): Promise<{ streamId: string; id: string }> {
+    const streamId = randomUUID();
+    await test.connection
+      .insert(releaseStreams)
+      .values({ id: streamId, name: unique("Fictional Stream") });
+    await test.connection.insert(cyclePatterns).values({
+      streamId,
+      startsOn: "2027-01-01",
+      length: 3,
+      unit: "months",
+      naming: "{YY}.{N}",
+    });
+    const id = randomUUID();
+    await test.connection.insert(releases).values({
+      id,
+      streamId,
+      name: unique("Fictional Release"),
+      firstCycle: "2027-01-01",
+      lastCycle: "2027-01-01",
+    });
+    return { streamId, id };
+  }
+
+  const pathOf = ({ streamId, id }: { streamId: string; id: string }) =>
+    `/api/release-streams/${streamId}/releases/${id}/activities`;
+
+  const activitiesIn = (stream: ReleaseStream, releaseId: string) =>
+    stream.releases.find(({ id }) => id === releaseId)?.activities ?? [];
+
+  it("drafts one on a release, read with the release", async () => {
+    const release = await liveRelease();
+    const name = unique("Fictional Testing");
+    const response = await send("POST", pathOf(release), {
+      name,
+      estimateHours: 8,
+    });
+    expect(response.statusCode, response.body).toBe(201);
+    expect(
+      activitiesIn(
+        response.json<{ stream: ReleaseStream }>().stream,
+        release.id,
+      ),
+    ).toMatchObject([
+      {
+        name,
+        releaseId: release.id,
+        projectId: null,
+        estimateHours: 8,
+        draft: { action: "created" },
+      },
+    ]);
+    const read = await test.request(
+      planner.cookie,
+      "GET",
+      "/api/release-streams",
+    );
+    const stream = read
+      .json<ReleaseStreams>()
+      .streams.find(({ id }) => id === release.streamId) as ReleaseStream;
+    expect(activitiesIn(stream, release.id).map((one) => one.name)).toEqual([
+      name,
+    ]);
+  });
+
+  it.each(roleSchema.options)(
+    "lets a %s add one only with Edit Features and releases",
+    async (role: Role) => {
+      const release = await liveRelease();
+      const actor = await test.signedIn(role);
+      const response = await send(
+        "POST",
+        pathOf(release),
+        { name: unique("Fictional Testing") },
+        actor.cookie,
+      );
+      // The role is always one of the fixed starting roles.
+      // eslint-disable-next-line security/detect-object-injection
+      const { permissions } = startingRoles[role];
+      expect(response.statusCode).toBe(
+        permissions.includes("features:edit") ? 201 : 403,
+      );
+    },
+  );
+
+  // A release with an approved activity.
+  async function liveActivity() {
+    const release = await liveRelease();
+    const added = await send("POST", pathOf(release), {
+      name: unique("Fictional Notes"),
+    });
+    const [activity] = activitiesIn(
+      added.json<{ stream: ReleaseStream }>().stream,
+      release.id,
+    );
+    const id = String(activity?.id);
+    await approve([{ type: "release-activity", id }]);
+    return { release, id };
+  }
+
+  const draftOf = async (
+    release: { streamId: string; id: string },
+    id: string,
+  ) => {
+    const read = await test.request(
+      planner.cookie,
+      "GET",
+      "/api/release-streams",
+    );
+    const stream = read
+      .json<ReleaseStreams>()
+      .streams.find(({ id: streamId }) => streamId === release.streamId);
+    return activitiesIn(stream as ReleaseStream, release.id).find(
+      (one) => one.id === id,
+    )?.draft;
+  };
+
+  it("changes one as a draft", async () => {
+    const { release, id } = await liveActivity();
+    const renamed = unique("Fictional Renamed");
+    const changed = await send("PUT", `${pathOf(release)}/${id}`, {
+      name: renamed,
+    });
+    expect(changed.statusCode).toBe(200);
+    expect(
+      activitiesIn(
+        changed.json<{ stream: ReleaseStream }>().stream,
+        release.id,
+      ),
+    ).toMatchObject([{ name: renamed, draft: { action: "changed" } }]);
+  });
+
+  it("refuses an activity of another release", async () => {
+    const { id } = await liveActivity();
+    const other = await liveRelease();
+    const elsewhere = await send("PUT", `${pathOf(other)}/${id}`, {
+      name: unique("Fictional Renamed"),
+    });
+    expect(elsewhere.statusCode).toBe(404);
+    expect(errorOf(elsewhere)).toBe(
+      "There is no such activity in this release",
+    );
+  });
+
+  it("removes one as a draft", async () => {
+    const { release, id } = await liveActivity();
+    const removed = await send("DELETE", `${pathOf(release)}/${id}`);
+    expect(removed.statusCode).toBe(200);
+    expect(await draftOf(release, id)).toMatchObject({ action: "deleted" });
+  });
+
+  it("is removed with its release, in the same draft", async () => {
+    const { release, id } = await liveActivity();
+    const removed = await send(
+      "DELETE",
+      `/api/release-streams/${release.streamId}/releases/${release.id}`,
+    );
+    expect(removed.statusCode, removed.body).toBe(200);
+    expect(await draftOf(release, id)).toMatchObject({
+      action: "deleted",
+      uses: [{ type: "release", id: release.id }],
+    });
+    await approve([{ type: "release", id: release.id }]);
+    const read = await test.request(
+      planner.cookie,
+      "GET",
+      "/api/release-streams",
+    );
+    expect(
+      read
+        .json<ReleaseStreams>()
+        .streams.find(({ id: streamId }) => streamId === release.streamId)
+        ?.releases.some(({ id: releaseId }) => releaseId === release.id),
+    ).toBe(false);
+  });
+
+  it("opens one's link on its release's page", async () => {
+    const release = await liveRelease();
+    const added = await send("POST", pathOf(release), {
+      name: unique("Fictional Testing"),
+    });
+    const [activity] = activitiesIn(
+      added.json<{ stream: ReleaseStream }>().stream,
+      release.id,
+    );
+    const found = await test.request(
+      planner.cookie,
+      "GET",
+      `/api/go/activity/${String(activity?.keyNumber)}`,
+    );
+    expect(found.json<RecordLookup>()).toEqual({
+      result: "found",
+      kind: "activity",
+      id: activity?.id,
+      activityOf: { owner: "release", id: release.id },
+    });
+    const outside = await test.signedIn(["plan:view"]);
+    const hidden = await test.request(
+      outside.cookie,
+      "GET",
+      `/api/go/activity/${String(activity?.keyNumber)}`,
     );
     expect(hidden.json<RecordLookup>()).toEqual({ result: "nothing" });
   });

@@ -81,8 +81,8 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Never a feature:** it is on no roadmap, has no status, feature team, cycle or proposal, and is never shown on Features.
 - **Drafts:** added, changed and removed as drafts, as a milestone is. A project's activities are drafts of the plan, changed with Edit Plan and approved with Approve Plan; a release's are drafts of features and releases, changed with Edit Features and releases and approved with Approve Features, as [Roles](../product/roles.md) sets out. An activity of a project or release only drafted to be added uses that draft, so approving it approves its owner too.
 - **Removing:** refused while it has allocations, as a feature is.
-- **Keys:** each has a key, such as #ACTIVITY-14, whose link opens its details under its project's.
-- **Built so far:** a project's activities, on [Projects](pages/projects.md#record-details). A release's activities, choosing an activity's colour, and allocating to activities follow in [issue #207](https://github.com/ribbitworks/fathom/issues/207); until then, Capacity doesn't show or count allocations to activities.
+- **Keys:** each has a key, such as #ACTIVITY-14, whose link opens its details under its project's, or its release's details on Releases.
+- **Built so far:** a project's activities, on [Projects](pages/projects.md#record-details). A release's activities are drafted through the server and read with their release, with links that open their release on Releases. Showing a release's activities on Releases, choosing an activity's colour, and allocating to activities follow in [issue #207](https://github.com/ribbitworks/fathom/issues/207); until then, Capacity doesn't show or count allocations to activities.
 
 ### Proposal
 
@@ -181,6 +181,7 @@ Percentages are whole.
   - **Date and contents:** its date is its Ships on date, the end of its last cycle unless set earlier or later. Its contents are the features that target those cycles.
   - **Colour:** it can have a colour from the palette, chosen by whoever makes or changes it, never given automatically, and drafted and approved with the release. One with none has the default colour.
   - **Note:** it can have a note, as a Note column holds.
+  - **Activities:** it can have [activities](#activity); removing it removes them in the same draft, and is refused while any of them has allocations.
 
 ## Workforce Entities
 

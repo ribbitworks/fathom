@@ -383,6 +383,7 @@ export {
   scheduleEndRequestSchema,
   type ReleaseStreams,
   releaseStreamsSchema,
+  releaseActivities,
 } from "./releases.ts";
 export {
   cycleLengthMoves,

@@ -11,6 +11,7 @@ import {
   type RecordKeyKind,
   type RecordLookup,
   recordPage,
+  releaseActivities,
 } from "@fathom/shared";
 import type { Actor } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
@@ -89,17 +90,31 @@ export function createRecordFinders(database: Database): Finders {
     milestone: inPlan("milestone", (plan) =>
       plan.projects.flatMap((project) => project.milestones),
     ),
-    // Only a project's activities are read by a page yet.
+    // A project's activity is read with the plan, and a release's with its release.
     activity: async (actor, id) => {
-      const activity = (
+      const ofProject = (
         await unlessRefused(async () => seenPlan(database, actor))
       )?.activities.find((one) => one.id === id);
-      return activity?.projectId === null || activity === undefined
+      if (ofProject?.projectId != null) {
+        return {
+          kind: "activity",
+          id,
+          activityOf: { owner: "project", id: ofProject.projectId },
+        };
+      }
+      const release = (
+        await unlessRefused(async () => seenStreams(database, actor))
+      )
+        ?.flatMap((stream) => stream.releases)
+        .find((one) =>
+          releaseActivities(one).some((activity) => activity.id === id),
+        );
+      return release === undefined
         ? undefined
         : {
             kind: "activity",
             id,
-            activityOf: { owner: "project", id: activity.projectId },
+            activityOf: { owner: "release", id: release.id },
           };
     },
     release: inStreams("release", (streams) =>

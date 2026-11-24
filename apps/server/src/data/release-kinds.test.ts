@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Unit tests for the kinds on a release stream's cycles: which drafts a pattern's, release's or
-// feature's draft is decided and discarded with, where a stream added goes, and each kind's name.
+// feature's draft goes with, a release's activities included, where a stream added goes, and names.
 
 import type { RecordRef } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
@@ -108,6 +108,22 @@ describe("the drafts a release's draft uses", () => {
     expect(usesOf(releaseKind, plan({ release: releases }), "record")).toEqual(
       uses,
     );
+  });
+
+  it("are its activities' removals when it is drafted to be removed with them", () => {
+    const state = plan({
+      release: one(alpha, draft("deleted")),
+      "release-activity": kindState(
+        [
+          ["testing", { releaseId: "record", name: "Release testing" }],
+          ["kept", { releaseId: "record", name: "Release notes" }],
+        ],
+        [["testing", draft("deleted")]],
+      ),
+    });
+    expect(usesOf(releaseKind, state, "record")).toEqual([
+      { type: "release-activity", id: "testing" },
+    ]);
   });
 
   it("are the new stream's cycle drafts when it moves to another stream", () => {

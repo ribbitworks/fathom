@@ -6,7 +6,14 @@
 import { describe, expect, it } from "vitest";
 import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
 import type { Draft } from "./draft-records.ts";
-import { draft, kindState, recordsState } from "./test-records-state.ts";
+import {
+  draft,
+  kindState,
+  recordsState,
+  release,
+  schedule,
+  stream,
+} from "./test-records-state.ts";
 
 const readsEverything = [
   "plan:view",
@@ -53,7 +60,7 @@ function plan(
 }
 
 const touched = (
-  type: "project" | "project-activity" | "feature",
+  type: "project" | "project-activity" | "feature" | "release",
   id: string,
 ) => [{ type, id, record: {} }];
 
@@ -121,6 +128,31 @@ describe("removing what allocations are to", () => {
       ),
     ).toBe(
       "The project Crane Control has allocations, so it can't be removed. Allocations are time spent, so the project stays.",
+    );
+  });
+
+  it("refuses a release one of whose activities has allocations", () => {
+    const state = recordsState({
+      "release-stream": kindState([[stream, schedule({ name: "Platform" })]]),
+      release: kindState(
+        [["release-1", release("2027.1", "2027-01-01")]],
+        [["release-1", draft("deleted")]],
+      ),
+      "release-activity": kindState([
+        ["activity-9", { releaseId: "release-1", name: "Release testing" }],
+      ]),
+      allocation: kindState([
+        ["allocation-9", allocation({ activityId: "activity-9" })],
+      ]),
+    });
+    expect(
+      allocationProblem(
+        state,
+        touched("release", "release-1"),
+        readsEverything,
+      ),
+    ).toBe(
+      "The release 2027.1 in Platform has allocations, so it can't be removed. Allocations are time spent, so the release stays.",
     );
   });
 

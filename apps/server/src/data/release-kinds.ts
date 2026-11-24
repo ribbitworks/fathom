@@ -13,7 +13,9 @@ import {
 import {
   type RecordKind,
   type RecordsState,
+  removedByDraft,
   shownVersion,
+  shownWhere,
   stateOf,
   versionOf,
 } from "./record-state.ts";
@@ -157,9 +159,19 @@ export const releaseKind: RecordKind = {
   },
   // A release drafted onto other cycles, or onto cycles only the stream's drafted patterns make,
   // uses those patterns' drafts.
+  // A release drafted to be removed uses the removals of its activities, which go with it.
   alsoUses: (state, id) => {
     const release = versionOf(state, "release", id);
-    if (release === undefined) return [];
+    if (release === undefined) {
+      return shownWhere(state, "release-activity", "releaseId", id)
+        .filter((activity) =>
+          removedByDraft(state, "release-activity", activity),
+        )
+        .map((activity): RecordRef => ({
+          type: "release-activity",
+          id: activity,
+        }));
+    }
     return draftsOfCycles(
       state,
       release,

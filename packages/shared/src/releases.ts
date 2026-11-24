@@ -2,6 +2,7 @@
 
 // Release streams, their cycle patterns and their releases, with their drafts.
 
+import { type Activity, activitySchema } from "./activities.ts";
 import { z } from "zod";
 import type { Permission } from "./access.ts";
 import {
@@ -68,11 +69,18 @@ export const releaseSchema = z.object({
   colour: paletteColourSchema.nullable(),
   // The release's note, as Markdown, or null when it has none.
   note: z.string().nullable(),
+  // Its activities, the live ones by name, then those drafted to be added. The server always sends
+  // them; one left out, as test fixtures leave them, reads as none.
+  activities: z.array(activitySchema).optional(),
   draft: recordDraftSchema.optional(),
   heldBy: heldBySchema,
 });
 
 export type Release = z.infer<typeof releaseSchema>;
+
+// A release's activities, none when an answer leaves them out.
+export const releaseActivities = (release: Release): Activity[] =>
+  release.activities ?? [];
 
 // A stream as its draft, if any, makes it, with its patterns, its cycles as those patterns make
 // them, and its releases, each as its draft makes it, by the day it starts. A draft that removes a

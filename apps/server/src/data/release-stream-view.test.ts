@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Unit tests for a release stream as a reader sees it: its patterns, releases and cycles as drafts
-// make them, how far its cycles are laid out from today, the order of streams, and what a reader
-// who may not read releases receives.
+// Unit tests for a release stream as a reader sees it: its patterns, releases with their activities,
+// cycles, the order of streams, and what a reader who may not read releases receives.
 
 import type { Permission, ReleaseStream } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
@@ -150,8 +149,48 @@ describe("a stream as shown", () => {
         shipsOn: "2027-07-31",
         colour: "grape",
         note: "Fictional note",
+        activities: [],
       },
       expect.objectContaining({ id: "later" }),
+    ]);
+  });
+
+  it("gives each release its own activities, drafts included", () => {
+    // Given two releases, one with a live activity and one drafted to be added
+    const state = {
+      ...plan({
+        releases: [
+          ["alpha", alpha],
+          ["later", release("Fictional Later", "2027-07-01")],
+        ],
+      }),
+      "release-activity": kindState(
+        [["testing", { releaseId: "alpha", name: "Release testing" }]],
+        [
+          [
+            "notes",
+            draft("created", { releaseId: "later", name: "Release notes" }),
+          ],
+        ],
+      ),
+    };
+
+    // When the stream is shown
+    const { releases } = shown(state);
+
+    // Then each release holds only its own
+    const named = (id: string) =>
+      releases
+        .find((one) => one.id === id)
+        ?.activities?.map(({ name, draft: drafted }) => ({
+          name,
+          action: drafted?.action,
+        }));
+    expect(named("alpha")).toEqual([
+      { name: "Release testing", action: undefined },
+    ]);
+    expect(named("later")).toEqual([
+      { name: "Release notes", action: "created" },
     ]);
   });
 

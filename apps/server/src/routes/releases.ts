@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Schedules, their cycle patterns, and their releases: reading every schedule, with its cycles laid
-// out two years ahead; drafting schedules added, renamed, retired, restored, and given a last day,
-// patterns and releases added, changed, and removed, a release's note, and one cycle given a new
-// length; and discarding the drafts of the plan's records, of any kind, or sending rejected ones
-// for approval again. Every change answers with the change set it was saved in. The data access
-// layer checks the actor's permissions.
+// The routes for schedules, their cycle patterns, and their releases with their activities, and for
+// discarding and resubmitting the plan's drafts. The data access layer checks the actor's
+// permissions.
 
 import {
+  activityRequestSchema,
   changeSetIdSchema,
   cycleLengthRequestSchema,
   cyclePatternRequestSchema,
@@ -39,6 +37,10 @@ const streamResponse = z.object({
 const streamParams = z.object({ streamId: z.uuid() });
 const memberParams = z.object({ streamId: z.uuid(), id: z.uuid() });
 const cycleParams = z.object({ streamId: z.uuid(), startsOn: daySchema });
+const releaseParams = z.object({ streamId: z.uuid(), releaseId: z.uuid() });
+const activityParams = releaseParams.extend({ id: z.uuid() });
+const activitiesPath =
+  "/api/release-streams/:streamId/releases/:releaseId/activities";
 const recordParams = z.object({
   type: recordTypeSchema,
   id: recordRefIdSchema,
@@ -259,6 +261,53 @@ export function releaseRoutes(
         );
         return { stream: result, changeSetId };
       },
+    );
+
+    app.post(
+      activitiesPath,
+      {
+        schema: {
+          params: releaseParams,
+          body: activityRequestSchema,
+          response: { [created]: streamResponse },
+        },
+      },
+      async (request, reply) => {
+        const { result, changeSetId } = await releases.addActivity(
+          request.actor,
+          request.params,
+          request.body,
+        );
+        return reply.status(created).send({ stream: result, changeSetId });
+      },
+    );
+    app.put(
+      `${activitiesPath}/:id`,
+      {
+        schema: {
+          params: activityParams,
+          body: activityRequestSchema,
+          response: { 200: streamResponse },
+        },
+      },
+      async (request) => {
+        const { result, changeSetId } = await releases.updateActivity(
+          request.actor,
+          request.params,
+          request.body,
+        );
+        return { stream: result, changeSetId };
+      },
+    );
+    app.delete(
+      `${activitiesPath}/:id`,
+      { schema: { params: activityParams, response: saved } },
+      async (request) => ({
+        changeSetId: await releases.deleteActivity(
+          request.actor,
+          request.params,
+        ),
+      }),
     );
 
     // Discarding a record's draft, and sending a rejected one for approval again unchanged.

@@ -46,6 +46,11 @@ import {
 } from "./page-reads.ts";
 import { columnEditor } from "./column-state.ts";
 
+export interface ReleasePlace {
+  streamId: string;
+  releaseId: string;
+}
+
 // Every change to release streams, patterns, and releases is a draft. Streams and their patterns
 // are planning configuration, edited by those who edit it; releases are part of the plan.
 export interface ReleaseAccess {
@@ -102,6 +107,20 @@ export interface ReleaseAccess {
     id: string,
     request: ReleaseNoteRequest,
   ): Promise<Saved<ReleaseStream>>;
+  addActivity(
+    actor: Actor,
+    release: ReleasePlace,
+    request: ActivityRequest,
+  ): Promise<Saved<ReleaseStream>>;
+  updateActivity(
+    actor: Actor,
+    activity: ReleasePlace & { id: string },
+    request: ActivityRequest,
+  ): Promise<Saved<ReleaseStream>>;
+  deleteActivity(
+    actor: Actor,
+    activity: ReleasePlace & { id: string },
+  ): Promise<ChangeSetId>;
   // Changing one cycle's length changes the stream's patterns, and moves the releases on cycles
   // that move, which those who change cycles may do.
   changeCycleLength(
@@ -204,6 +223,7 @@ export interface AllocationAccess {
 export function createReleaseAccess(database: Database): ReleaseAccess {
   const streams = (actor: Actor) => recordEditor(actor, "release-stream");
   const plan = (actor: Actor) => recordEditor(actor, "release");
+  const activities = (actor: Actor) => recordEditor(actor, "release-activity");
   return {
     read: async (actor) => {
       return {
@@ -255,6 +275,32 @@ export function createReleaseAccess(database: Database): ReleaseAccess {
         streamId,
         id,
         request.note,
+      ),
+    addActivity: async (actor, { streamId, releaseId }, request) =>
+      releases.draftReleaseActivity(
+        database,
+        activities(actor),
+        streamId,
+        releaseId,
+        undefined,
+        request,
+      ),
+    updateActivity: async (actor, { streamId, releaseId, id }, request) =>
+      releases.draftReleaseActivity(
+        database,
+        activities(actor),
+        streamId,
+        releaseId,
+        id,
+        request,
+      ),
+    deleteActivity: async (actor, { streamId, releaseId, id }) =>
+      releases.removeReleaseActivity(
+        database,
+        activities(actor),
+        streamId,
+        releaseId,
+        id,
       ),
     changeCycleLength: async (actor, streamId, startsOn, request) =>
       releases.changeCycleLength(
