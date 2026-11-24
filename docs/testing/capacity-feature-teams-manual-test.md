@@ -4,14 +4,24 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/capacity-feature-teams*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "apps/server/src/data/feature-team-held-changes.ts", "apps/server/src/data/feature-team-month-cells.ts", "apps/server/src/data/feature-team-undo.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Capacity's Feature Teams
 
 ## Scope
 
-Verifies the **Feature teams** tab of the **Capacity** page: how the table of feature teams by month looks and scrolls, moving through it with the strip of quarters above it, grouping its rows, searching and filtering it, keeping it to the people on a feature team in any month, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the tab left out for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies the **Feature teams** tab of the **Capacity** page:
+
+- How the table of feature teams by month looks and scrolls, and moving through it with the strip of quarters above it.
+- Grouping its rows, searching and filtering it, and keeping it to the people on a feature team in any month.
+- How it agrees with the **Org chart** on a chosen month.
+- How drafts made on the **Org chart** show in it.
+- Changing a month's teams in it and finding the change on the **Org chart**.
+- The tab left out for a role without Personal details.
+- Moving around it from the keyboard.
+
+The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 

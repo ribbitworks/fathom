@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["docs/help/**"]
 dependencies: ["docs/standards/documentation.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Help Page Standards
@@ -28,8 +28,11 @@ How Fathom's Help pages in `docs/help/` are written, so they read the way a coll
 
 Besides a page for each page of Fathom, listed in `docs/help/index.md`, Help holds:
 
-- **Pages:** `docs/help/pages.md`, linked first from the index, lists every page of Fathom: what it's for, where it is in the sidebar, and which permission shows it, with the starting roles that hold it. It exists because a page a role can't see is left out of its sidebar with nothing said. Every change to a page's place in the sidebar, or to the permission that shows it, updates it.
-- **Role tutorials:** a page for each starting role, such as `docs/help/working-as-a-product-manager.md`, with the three to five workflows the role does most, each a few steps that link to the Help pages for the details rather than repeat them. They are led by `docs/help/setting-up-fathom.md`, for the Workforce Administrator from an empty database, and `docs/help/how-work-moves-between-roles.md`, from a Product Manager's draft to the Engineering Director's approval and an Engineering Manager's staffing.
+- **Pages:** `docs/help/pages.md`, linked first from the index, lists every page of Fathom: what it's for, where it is in the sidebar, and which permission shows it, with the starting roles that hold it.
+  - It exists because a page a role can't see is left out of its sidebar with nothing said.
+  - Every change to a page's place in the sidebar, or to the permission that shows it, updates it.
+- **Role tutorials:** a page for each starting role, such as `docs/help/working-as-a-product-manager.md`, with the three to five workflows the role does most, each a few steps that link to the Help pages for the details rather than repeat them.
+  - They are led by `docs/help/setting-up-fathom.md`, for the Workforce Administrator from an empty database, and `docs/help/how-work-moves-between-roles.md`, from a Product Manager's draft to the Engineering Director's approval and an Engineering Manager's staffing.
 
 ## Before and After
 

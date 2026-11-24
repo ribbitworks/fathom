@@ -4,14 +4,19 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-reviewing-the-plan-manual-test.md", "docs/help/working-as-a-feature-lead.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Acceptance, Staffing the Work
 
 ## Scope
 
-Verifies that the people who build the plan pick it up once it's approved. The Feature Lead keeps her team's feature and team current, as [Working as a Feature Lead](../../help/working-as-a-feature-lead.md) describes: a status, an estimate and a new member. The Engineering Manager staffs the work, as [Working as an Engineering Manager](../../help/working-as-an-engineering-manager.md) describes: someone put on a feature team from next month, a team's lead changed and a feature estimated. The Engineering Manager then checks who is over or under allocated, and counts the people by site. Their changes wait for the approvers in [Deciding the Changes](acceptance-deciding-the-changes-manual-test.md).
+Verifies that the people who build the plan pick it up once it's approved:
+
+- The Feature Lead keeps her team's feature and team current, as [Working as a Feature Lead](../../help/working-as-a-feature-lead.md) describes: a status, an estimate and a new member.
+- The Engineering Manager staffs the work, as [Working as an Engineering Manager](../../help/working-as-an-engineering-manager.md) describes: someone put on a feature team from next month, a team's lead changed and a feature estimated. The Engineering Manager then checks who is over or under allocated, and counts the people by site.
+
+Both roles' changes wait for the approvers in [Deciding the Changes](acceptance-deciding-the-changes-manual-test.md).
 
 Nobody can be allocated to a feature yet on a new Fathom, since Capacity's **Allocations** tab is read only, so every month from the current one reads **Not allocated**.
 

@@ -4,14 +4,23 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Saved Views
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its schedules in the timeline; that a view on Features is shared by its table and Board, and kept to Features; that a view keeps People grouped by two levels; and that a view on Capacity's Feature teams tab keeps its grouping, and is kept to its tab; that a view on the Org chart keeps the team shown alone and the levels shown; and that Accounts are on the shared table with saved views.
+Verifies how personal and shared views look and work on the People page:
+
+- The Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account.
+- Hiding a column and showing it again.
+- That a view on Releases shows only its schedules in the timeline.
+- That a view on Features is shared by its table and Board, and kept to Features.
+- That a view keeps People grouped by two levels.
+- That a view on Capacity's Feature teams tab keeps its grouping, and is kept to its tab.
+- That a view on the Org chart keeps the team shown alone and the levels shown.
+- That Accounts are on the shared table with saved views.
 
 ## Test Environment
 

@@ -4,14 +4,16 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-setting-up-fathom-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Acceptance, Reporting Lines
 
 ## Scope
 
-Verifies the start of the last round of setting up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, on the people [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) added. Once each manager's **Manager?** tick is approved, the Workforce Administrator chooses everyone's manager, names the two reporting teams, gives each person a site, and adds a planned hire. [Feature Teams](acceptance-feature-teams-manual-test.md) finishes the round and publishes it.
+Verifies the start of the last round of setting up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, on the people [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) added.
+
+Once each manager's **Manager?** tick is approved, the Workforce Administrator chooses everyone's manager, names the two reporting teams, gives each person a site, and adds a planned hire. [Feature Teams](acceptance-feature-teams-manual-test.md) finishes the round and publishes it.
 
 ## Test Environment
 

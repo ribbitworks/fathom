@@ -4,14 +4,17 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-reporting-lines-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Acceptance, Feature Teams
 
 ## Scope
 
-Verifies the end of the last round of setting up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes. The Workforce Administrator records two feature teams from six months ago and publishes the whole round, with the managers, team names, sites and planned hire [Reporting Lines](acceptance-reporting-lines-manual-test.md) drafted. The Engineering Director signs in for the first time, approves them all in one pass, and reads the people and teams that result.
+Verifies the end of the last round of setting up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes:
+
+- The Workforce Administrator records two feature teams from six months ago and publishes the whole round, with the managers, team names, sites and planned hire [Reporting Lines](acceptance-reporting-lines-manual-test.md) drafted.
+- The Engineering Director signs in for the first time, approves them all in one pass, and reads the people and teams that result.
 
 ## Test Environment
 

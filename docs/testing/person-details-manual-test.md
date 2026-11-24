@@ -4,14 +4,23 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/person-panel*", "apps/web/src/person-change.ts", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Person Details
 
 ## Scope
 
-Verifies a person's or planned hire's details in the side panel beside the org chart and People: what it shows of them, moving to another person, drafted values beside live ones and following the Draft menu, the red **Left** box on someone who has left, opening and closing it with the mouse and the keyboard, how it reads, resized, and in a narrow window, changing their details there, beside People and the org chart, being asked before a changed note is discarded, and adding a person or planned hire from **New person**.
+Verifies a person's or planned hire's details in the side panel beside the org chart and People:
+
+- What it shows of them, and moving to another person.
+- Drafted values beside live ones and following the Draft menu.
+- The red **Left** box on someone who has left.
+- Opening and closing it with the mouse and the keyboard.
+- How it reads, resized, and in a narrow window.
+- Changing their details there, beside People and the org chart.
+- Being asked before a changed note is discarded.
+- Adding a person or planned hire from **New person**.
 
 ## Test Environment
 

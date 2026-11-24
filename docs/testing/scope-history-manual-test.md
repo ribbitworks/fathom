@@ -4,14 +4,19 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Scope History
 
 ## Scope
 
-Verifies a feature's customers and notes in its side panel on the Features page, and the scope history in a project's and a proposal's side panel: the features given to it and taken off it, with the reason for removing a feature from a proposal, added once the removal is drafted, while a draft and once approved. Following the links and changing a feature's projects and proposals are verified in [Feature Links](feature-links-manual-test.md).
+Verifies:
+
+- A feature's customers and notes in its side panel on the Features page.
+- The scope history in a project's and a proposal's side panel: the features given to it and taken off it, with the reason for removing a feature from a proposal, added once the removal is drafted, while a draft and once approved.
+
+Following the links and changing a feature's projects and proposals are verified in [Feature Links](feature-links-manual-test.md).
 
 ## Test Environment
 
@@ -33,7 +38,9 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 As [Manual Test Basics](manual-test-basics.md#terms) sets out, and:
 
-- **Scope history:** the list at the foot of a project's or a proposal's side panel, under the heading **Scope history**. Each row names a feature, with a grey line under it saying "Added" or "Removed" and the date, and any reason under that. A draft's row is at the top, with a yellow dot before the feature's name, dated the day it was drafted.
+- **Scope history:** the list at the foot of a project's or a proposal's side panel, under the heading **Scope history**.
+  - Each row names a feature, with a grey line under it saying "Added" or "Removed" and the date, and any reason under that.
+  - A draft's row is at the top, with a yellow dot before the feature's name, dated the day it was drafted.
 
 ## Test Cases
 

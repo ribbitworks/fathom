@@ -4,14 +4,30 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Capacity
 
 ## Scope
 
-Verifies the Capacity page's tabs. Settings holds the planning settings: how it reads for someone who may only see it, drafting a change and undoing it, a value refused, adding and removing months of ramp-up, the change in the change history, and approving a draft and seeing the Effort column on Features follow it once approved. Allocations is the table of allocations by month: switching between the tabs, its over- and under-allocated months, planned hires, the capacity totals of each group and of everyone, rows for someone who changed team or manager, the page left out of the menu for a role that sees no tab, and the count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to, the rows kept to those over or under from the Views menu, and the rows kept to what someone is allocated to in any month. Feature teams has its own [Capacity's Feature Teams](capacity-feature-teams-manual-test.md) test. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies the Capacity page's tabs, and switching between them:
+
+- Settings, which holds the planning settings:
+  - How it reads for someone who may only see it.
+  - Drafting a change and undoing it, and a value refused.
+  - Adding and removing months of ramp-up.
+  - The change in the change history.
+  - Approving a draft and seeing the Effort column on Features follow it once approved.
+- Allocations, the table of allocations by month:
+  - Its over- and under-allocated months, planned hires, and the capacity totals of each group and of everyone.
+  - Rows for someone who changed team or manager.
+  - The page left out of the menu for a role that sees no tab.
+  - The count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to.
+  - The rows kept to those over or under from the Views menu, and the rows kept to what someone is allocated to in any month.
+- Feature teams, which has its own [Capacity's Feature Teams](capacity-feature-teams-manual-test.md) test.
+
+The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 

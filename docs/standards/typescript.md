@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["**/*.ts", "**/*.tsx"]
 dependencies: ["docs/standards/core-principles.md", "docs/standards/code-review.md", "docs/standards/testing.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # TypeScript Standards
@@ -19,10 +19,11 @@ design documents, its commands in `AGENTS.md`, and its decisions in `docs/adr/`.
 - **No `any`:** use precise types, generics or `unknown` with narrowing.
 - **No non-null assertions** (`!`) outside tests.
 - **Exhaustive unions:** a new case of a union must fail to compile or lint.
-  Prefer a `Record<Union, ...>` table where a choice only picks a value. A
-  `switch` handles each case and has a declared return type or assigns every
-  path, with `@typescript-eslint/switch-exhaustiveness-check` on. No unreachable
-  `default` branch only to hold a `never` check, as coverage cannot reach it.
+  - Prefer a `Record<Union, ...>` table where a choice only picks a value.
+  - A `switch` handles each case and has a declared return type or assigns
+    every path, with `@typescript-eslint/switch-exhaustiveness-check` on.
+  - No unreachable `default` branch only to hold a `never` check, as coverage
+    cannot reach it.
 - **Validated boundaries:** data from outside the program (requests,
   environment, files, storage) is parsed against a schema before use, and the
   type comes from that schema.

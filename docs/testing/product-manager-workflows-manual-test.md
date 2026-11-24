@@ -4,14 +4,22 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-product-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Product Manager Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as a Product Manager](../help/working-as-a-product-manager.md) on the seed data: keeping customers, proposals, projects and milestones current, planning a feature for a cycle, a team and a month, choosing a project's features and taking one off a proposal with a reason, as the scope history shows, making a release with a note, and approving and rejecting others' drafts, each sent on to an approver where the role needs one. It also checks that the Product Manager doesn't see someone who has not started.
+Verifies the workflows of [Working as a Product Manager](../help/working-as-a-product-manager.md) on the seed data:
+
+- Keeping customers, proposals, projects and milestones current.
+- Planning a feature for a cycle, a team and a month.
+- Choosing a project's features and taking one off a proposal with a reason, as the scope history shows.
+- Making a release with a note.
+- Approving and rejecting others' drafts, each sent on to an approver where the role needs one.
+
+It also checks that the Product Manager doesn't see someone who has not started.
 
 ## Test Environment
 

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Releases
@@ -37,12 +37,15 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 - **A release's details:** the side panel for the selected release, headed with its name and, under it, its key. Its **Details** rows are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Status**, **Colour** and **Note**.
 - **Pencil:** the change button at the right of a row of **Details**, for **Release**, **Ships on**, **Cycles** and **Colour**.
 - **A release's ⋯ menu:** the ⋯ menu of a release's row. It offers **Remove release**, and **Add note…** while the release has no note, to those who change releases, **Discard draft** and **Resubmit** for the release's draft, and **Approve draft…** and **Reject draft…** to an account whose role approves its drafts.
-- **Timeline:** the section headed **Timeline** above the table, with the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right. It has a row for each schedule the table lists, named on the left, with each release as a strip of its colour and a diamond on the day it ships, over the schedule's cycles, which are drawn faint.
+- **Timeline:** the section headed **Timeline** above the table, with the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right.
+  - It has a row for each schedule the table lists, named on the left, with each release as a strip of its colour and a diamond on the day it ships, over the schedule's cycles, which are drawn faint.
 - **Seeded dates in this test:** 'Lantern 3' is the 'Field Apps' release two cycles after the current one. The examples after "such as" are as the seed data is when added on 17 November 2026.
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. To run the test again, start again from Restore the Seed Data.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
+
+To run the test again, start again from Restore the Seed Data.
 
 ### Part 1: The Releases Tab With the Seed Data
 

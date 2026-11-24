@@ -4,14 +4,17 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-staffing-the-work-manual-test.md", "docs/help/how-work-moves-between-roles.md", "docs/help/working-as-a-product-manager.md", "docs/help/working-as-an-engineering-director.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Acceptance, Deciding the Changes
 
 ## Scope
 
-Verifies that work passes between roles until nothing waits, as [How Work Moves Between Roles](../../help/how-work-moves-between-roles.md) describes. The Product Manager changes the release the Project Manager rejected and sends it again, takes a feature off the proposal with a reason, and approves the Feature Lead's, the Engineering Manager's and the Project Manager's drafts of the plan. The Engineering Director approves the feature teams' changes and the Product Manager's drafts, then reads the plan the team has built and how the rejected release went.
+Verifies that work passes between roles until nothing waits, as [How Work Moves Between Roles](../../help/how-work-moves-between-roles.md) describes:
+
+- The Product Manager changes the release the Project Manager rejected and sends it again, takes a feature off the proposal with a reason, and approves the Feature Lead's, the Engineering Manager's and the Project Manager's drafts of the plan.
+- The Engineering Director approves the feature teams' changes and the Product Manager's drafts, then reads the plan the team has built and how the rejected release went.
 
 ## Test Environment
 

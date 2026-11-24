@@ -4,14 +4,24 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/org-chart*", "apps/server/src/data/org-chart.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/org-chart.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Org Chart
 
 ## Scope
 
-Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, showing a person's details beside the chart from a card, the red **Left** box on a manager who has left, drafts of managers, positions and team names drawn beside the chart, applied to it, or left out with the Draft menu, changing a manager from an earlier date, and planned hires drawn on later dates.
+Verifies the **Org chart** page:
+
+- The levels it opens on, each person's card, and showing reports.
+- Finding a person or team, and one team shown alone.
+- Teams' colours and choosing them, and naming teams.
+- Panning and zooming.
+- Showing a person's details beside the chart from a card.
+- The red **Left** box on a manager who has left.
+- Drafts of managers, positions and team names drawn beside the chart, applied to it, or left out with the Draft menu.
+- Changing a manager from an earlier date.
+- Planned hires drawn on later dates.
 
 ## Test Environment
 

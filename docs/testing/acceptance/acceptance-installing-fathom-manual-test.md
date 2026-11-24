@@ -4,14 +4,16 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["deploy/**", "apps/server/src/create-administrator.ts", "apps/web/src/change-password.tsx"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/operations/installing-fathom.md", "docs/operations/securing-your-environment.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Acceptance, Installing Fathom
 
 ## Scope
 
-Verifies that Fathom installs as [Installing Fathom](../../operations/installing-fathom.md) describes, from building and starting it through the first Administrator's first sign-in on an empty database, and that its data stays when it stops and starts. It runs on a development machine standing in for a server, with an mkcert certificate standing in for the organization's, and is the first acceptance test: every other one runs on the installation it makes, starting with [The Team's Accounts](acceptance-team-accounts-manual-test.md).
+Verifies that Fathom installs as [Installing Fathom](../../operations/installing-fathom.md) describes, from building and starting it through the first Administrator's first sign-in on an empty database, and that its data stays when it stops and starts.
+
+It runs on a development machine standing in for a server, with an mkcert certificate standing in for the organization's. It is the first acceptance test: every other one runs on the installation it makes, starting with [The Team's Accounts](acceptance-team-accounts-manual-test.md).
 
 ## Test Environment
 
@@ -71,7 +73,9 @@ Run before the first test case. This makes the installation's secrets and certif
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes, plus the time the first build takes. Start with Prepare the Installation. Check each step whose expected result you see, and write anything else under its notes. [The Team's Accounts](acceptance-team-accounts-manual-test.md) follows on from the last test case.
+Run the test cases in order, in about 30 minutes, plus the time the first build takes. Start with Prepare the Installation. Check each step whose expected result you see, and write anything else under its notes.
+
+[The Team's Accounts](acceptance-team-accounts-manual-test.md) follows on from the last test case.
 
 ### INSTALL-01: Fathom Is Built and Started
 

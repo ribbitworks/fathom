@@ -4,14 +4,25 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Note Columns on People
 
 ## Scope
 
-Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, a long note folded in a person's details and read in full on Releases, an open note in a person's details kept on reload and a shared link, and a panel under another maximized and restored.
+Verifies what only a person can judge of Note columns on the People table:
+
+- How the note's side panel looks, slides and resizes.
+- Writing a note with the toolbar, and how headings, checkboxes and numbered lists look.
+- Switching between the editor and Markdown, and pasting from another app.
+- Colours, the keyboard and focus.
+- The panel's place beside the Metrics panel.
+- The journey from writing a note to reading it, approving it, and finding it in the change history.
+- Filtering the rows that have a note.
+- A long note folded in a person's details and read in full on Releases.
+- An open note in a person's details kept on reload and a shared link.
+- A panel under another maximized and restored.
 
 ## Test Environment
 
@@ -42,7 +53,9 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
+
+To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
 
 ### NOTE-01: A Note Column Is Added
 

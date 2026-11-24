@@ -4,14 +4,19 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-feature-teams-manual-test.md", "docs/help/working-as-an-engineering-director.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Acceptance, Hiring and Who Sees What
 
 ## Scope
 
-Verifies the Engineering Director's own work, as [Working as an Engineering Director](../../help/working-as-an-engineering-director.md) describes, on the organization the earlier acceptance tests set up: agreeing the planned hire and filling it with a new person, approving the director's own drafts each round; moving someone to another manager; moving the Sites list to **Personal**; and sharing a view of People with everyone who opens the page.
+Verifies the Engineering Director's own work, as [Working as an Engineering Director](../../help/working-as-an-engineering-director.md) describes, on the organization the earlier acceptance tests set up:
+
+- Agreeing the planned hire and filling it with a new person, approving the director's own drafts each round.
+- Moving someone to another manager.
+- Moving the Sites list to **Personal**.
+- Sharing a view of People with everyone who opens the page.
 
 ## Test Environment
 

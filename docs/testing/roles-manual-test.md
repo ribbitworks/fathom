@@ -4,14 +4,24 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Editing Roles
 
 ## Scope
 
-Verifies the Roles page: who sees it, the list of roles, the dialog that sets what a role grants with its summary in plain English, the boxes turned off without what they need, the confirmation of what a change does to the accounts holding a role, restoring a starting role's template, resetting the boxes, copying and creating roles, giving an account a role made later, the refusals, and the access history entries that changes leave. It also verifies the Settings page, where the Administrator changes Fathom's time zone. The access history's wording is proven by automated tests; ROLE-06 checks one entry on screen.
+Verifies the Roles page:
+
+- Who sees it, and the list of roles.
+- The dialog that sets what a role grants with its summary in plain English.
+- The boxes turned off without what they need.
+- The confirmation of what a change does to the accounts holding a role.
+- Restoring a starting role's template, and resetting the boxes.
+- Copying and creating roles, and giving an account a role made later.
+- The refusals, and the access history entries that changes leave.
+
+It also verifies the Settings page, where the Administrator changes Fathom's time zone. The access history's wording is proven by automated tests; ROLE-06 checks one entry on screen.
 
 ## Test Environment
 

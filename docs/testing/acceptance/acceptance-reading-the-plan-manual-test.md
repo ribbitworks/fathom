@@ -4,14 +4,19 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-deciding-the-changes-manual-test.md", "docs/help/working-as-a-team-member.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Acceptance, Reading the Plan
 
 ## Scope
 
-Verifies that those who read the plan find what the team built, without changing it. The Team Member finds someone on the org chart, sees what each cycle and release holds, looks at a project's milestones, and applies the view of People the Engineering Director shared, as [Working as a Team Member](../../help/working-as-a-team-member.md) describes, without seeing the Personal sites. The Executive reads the plan by release, the feature teams in a later month, and the access history of the whole run, and sees the accounts without changing them, as [Working as an Executive](../../help/working-as-an-executive.md) describes. It is the last acceptance test.
+Verifies that those who read the plan find what the team built, without changing it:
+
+- The Team Member finds someone on the org chart, sees what each cycle and release holds, looks at a project's milestones, and applies the view of People the Engineering Director shared, as [Working as a Team Member](../../help/working-as-a-team-member.md) describes, without seeing the Personal sites.
+- The Executive reads the plan by release, the feature teams in a later month, and the access history of the whole run, and sees the accounts without changing them, as [Working as an Executive](../../help/working-as-an-executive.md) describes.
+
+It is the last acceptance test.
 
 ## Test Environment
 

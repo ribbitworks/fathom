@@ -4,14 +4,22 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Managers and Teams on People
 
 ## Scope
 
-Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rule that refuses clearing it, team names, the red **Left** box on a manager who has left, filtering and sorting by **Manager?**, what a Feature Lead sees, and how the rows read grouped by manager.
+Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **Team** and **Team name** columns:
+
+- Who can be picked as a manager.
+- Checking and clearing **Manager?** as drafts, and the rule that refuses clearing it.
+- Team names.
+- The red **Left** box on a manager who has left.
+- Filtering and sorting by **Manager?**.
+- What a Feature Lead sees.
+- How the rows read grouped by manager.
 
 ## Test Environment
 
