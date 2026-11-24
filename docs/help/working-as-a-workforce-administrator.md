@@ -47,6 +47,8 @@ Once the change is approved, a change to the hours or working days changes what 
 
 ## Decide Who Sees What
 
-Each detail, column and list has a class, which decides who sees it. On **Data classes**, under **Administration**, you can change a class. It takes effect straight away, with no draft. See [Data classes](data-classes.md#change-a-class).
+Each detail, column and list has a class, which decides who sees it. On **Data classes**, under **Administration**, you can change a class.
+
+A change of class takes effect straight away, with no draft. See [Data classes](data-classes.md#change-a-class).
 
 You're done when **People** shows everyone with their right manager and team, and nothing of yours is waiting for approval.

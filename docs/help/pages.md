@@ -1,12 +1,18 @@
 # Pages
 
-The left-hand menu shows only the pages your role lets you open. A page your role can't open is left out, and nothing says it's there. This page lists every page of Fathom. It says what each is for, where it is, and which permission shows it.
+The left-hand menu shows only the pages your role lets you open. A page your role can't open is left out, and nothing says it's there.
+
+This page lists every page of Fathom. It says what each is for, where it is, and which permission shows it.
 
 ## What to Know First
 
 - **Sections:** the left-hand menu groups the pages into sections: **Plan**, **People**, **Administration**, **History** and **Help**.
-- **Permissions:** a role is a set of permissions. Each one is a box in the grid on the [Roles](roles.md) page. **View Plan**, for example, is the **View** box in the **Plan** row. **Edit** brings **View** with it, so a role that edits an area sees it too.
-- **Personal details:** **View Personal details** is the **Personal** box under **Data classification**, and **View Confidential data** is the **Confidential** box. Some pages need **View Personal details**, since they show when people start and leave, and the months they join and leave teams. Those dates are Personal unless someone moves them to another class. If they're moved, these pages need the class the dates are in instead. See [Data classes](data-classes.md).
+- **Permissions:** a role is a set of permissions. Each one is a box in the grid on the [Roles](roles.md) page.
+  - **View Plan**, for example, is the **View** box in the **Plan** row.
+  - **Edit** brings **View** with it, so a role that edits an area sees it too.
+- **Personal details:** **View Personal details** is the **Personal** box under **Data classification**, and **View Confidential data** is the **Confidential** box.
+  - Some pages need **View Personal details**, since they show when people start and leave, and the months they join and leave teams.
+  - Those dates are Personal unless someone moves them to another class. If they're moved, these pages need the class the dates are in instead. See [Data classes](data-classes.md).
 - **Starting roles:** Fathom starts with nine roles, one for each kind of work. The lists below say which of them see each page. These roles can be changed, and others made, so check a role's own boxes on the Roles page.
 
 ## Plan
@@ -33,7 +39,10 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
   - **Shown with:** **View People**
   - **Starting roles that see it:** Every role but Administrator
 - [Capacity](capacity.md): It shows who is on which feature team and what each person works on, month by month, and the planning settings.
-  - **Shown with:** Its **Feature teams** tab needs **View Feature teams** and **View Personal details**. Its **Allocations** tab needs **View Allocations**, **View Feature teams**, **View People** and **View Personal details**. Its **Settings** tab needs **View Configuration**. Any tab shows the page.
+  - **Shown with:** One tab is enough to show the page. Each tab needs these permissions:
+    - Its **Feature teams** tab needs **View Feature teams** and **View Personal details**.
+    - Its **Allocations** tab needs **View Allocations**, **View Feature teams**, **View People** and **View Personal details**.
+    - Its **Settings** tab needs **View Configuration**.
   - **Starting roles that see it:** Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive
 
 The Product Manager sees Capacity's **Settings** tab only, since the role doesn't hold **View Personal details**.
@@ -77,6 +86,8 @@ Everyone sees the **Help** section, whatever their role.
 
 ## Where Fathom Opens
 
-Fathom opens on the **Overview**. If your role doesn't see the plan, it opens on the first page your role sees instead, in the order of the left-hand menu. The Administrator, for example, opens on **Accounts**. A role that sees no page opens on Help's list of pages.
+Fathom opens on the **Overview**. If your role doesn't see the plan, it opens on the first page your role sees instead, in the order of the left-hand menu. The Administrator, for example, opens on **Accounts**.
+
+A role that sees no page opens on Help's list of pages.
 
 You're done when you've found the page you need, and know which permission shows it.

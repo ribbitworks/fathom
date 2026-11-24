@@ -12,7 +12,9 @@ A class decides who sees the data.
 
 A page or view that needs a class opens only for roles that see that class. So when you change a class, you can change which pages each role has.
 
-Most changes in Fathom are drafts, which wait for someone to approve them before they go live. A change of class isn't: it takes effect straight away, and it has no **Undo**. So it never shows on the **Drafts** page. It's recorded in the access history, marked as worth checking. See [Access history](access-history.md).
+Most changes in Fathom are drafts, which wait for someone to approve them before they go live. A change of class isn't: it takes effect straight away, and it has no **Undo**.
+
+So a change of class never shows on the **Drafts** page. It's recorded in the access history, marked as worth checking. See [Access history](access-history.md).
 
 A new list or column that isn't approved yet is different. Its class is part of its draft, so changing it changes the draft. The access history records its class once the draft is approved.
 

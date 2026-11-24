@@ -1,14 +1,37 @@
 # Saved views
 
-A view is how you've set up a table: its search, filters, sort, metrics, **Group by**, with its **Then by** and the order of its headings, the **Draft** menu's choice, and its columns' order, hidden columns, widths, frozen columns, and units and decimal places. On **Releases**, it also keeps whether **Show shipped**, **Show past cycles**, **Show later cycles** or **Show retired** is on. On **Capacity**'s **Allocations**, it also keeps whether **Over** or **Under** is on. On **Drafts**, it also keeps its tab. On **Features**, it also keeps the board's columns and what its cards show. The table and the board share one view. Switching between them doesn't change it. The board's **Views** menu leaves out the sort, the units, and the columns' order, hidden columns, widths and frozen columns, which stay in the view and show again on the table. You can save a view under a name, and apply it again later. You can save views on the **People**, **Features**, **Projects**, **Releases**, **Org chart**, **Capacity**, **Accounts** and **Drafts** pages. Each tab of **Projects** and of **Releases** has views of its own, and so do **Capacity**'s **Feature teams** and **Allocations**. On the **Org chart**, a view keeps how the chart is drawn instead, as [Org chart](org-chart.md#save-a-view-of-the-chart) says.
+A view is how you've set up a table. You can save a view under a name, and apply it again later. A view keeps the table's:
 
-You save and apply views from the **Views** menu: the last button after the search box, or, on the **Org chart**, the last of the buttons on the left above the chart. It shows once there's a view to save or apply, a hidden column to show, or a choice such as **Show shipped** on **Releases** or **Over** on **Capacity**'s **Allocations**.
+- Search, filters, sort and metrics
+- **Group by**, with its **Then by** and the order of its headings
+- Choice in the **Draft** menu
+- Columns' order, hidden columns, widths, frozen columns, and units and decimal places
+
+On some pages, a view keeps more:
+
+- On **Releases**, it also keeps whether **Show shipped**, **Show past cycles**, **Show later cycles** or **Show retired** is on.
+- On **Capacity**'s **Allocations**, it also keeps whether **Over** or **Under** is on.
+- On **Drafts**, it also keeps its tab.
+- On **Features**, it also keeps the board's columns and what its cards show. The table and the board share one view. Switching between them doesn't change it.
+
+On the board on **Features**, the **Views** menu leaves out the sort, the units, and the columns' order, hidden columns, widths and frozen columns. They stay in the view and show again on the table.
+
+You can save views on the **People**, **Features**, **Projects**, **Releases**, **Org chart**, **Capacity**, **Accounts** and **Drafts** pages. Each tab of **Projects** and of **Releases** has views of its own, and so do **Capacity**'s **Feature teams** and **Allocations**.
+
+On the **Org chart**, a view keeps how the chart is drawn instead. See [Org chart](org-chart.md#save-a-view-of-the-chart).
+
+You save and apply views from the **Views** menu: the last button after the search box, or, on the **Org chart**, the last of the buttons on the left above the chart.
+
+The **Views** menu shows once there's a view to save or apply, a hidden column to show, or a choice such as **Show shipped** on **Releases** or **Over** on **Capacity**'s **Allocations**.
 
 ## What to Know First
 
 - **Personal views:** a view you save is yours alone, unless you share it. Your own views are under **My views**.
-- **Shared views:** a shared view is seen by everyone who can open the page. They're under **Shared views**. Someone who can't see a column the view uses doesn't see the view. On **Capacity**, a view grouped by **Manager** is seen only by roles that see Confidential data.
-- **Where a page opens:** when you open a page from the left-hand menu, it shows the view you last left it on, in any browser you sign in to. That includes its tab, the view you applied, and on **Features** the table or the board. It still opens on today's date, with no details open. A link that shows a view opens that view instead, and the page then keeps it. To have the page open on the table's own view again, select **Clear view**.
+- **Shared views:** a shared view is seen by everyone who can open the page. They're under **Shared views**.
+  - Someone who can't see a column the view uses doesn't see the view.
+  - On **Capacity**, a view grouped by **Manager** is seen only by roles that see Confidential data.
+- **Where a page opens:** when you open a page from the left-hand menu, it shows the view you last left it on, in any browser you sign in to. That includes its tab, the view you applied, and on **Features** the table or the board. It still opens on today's date, with no details open.
+- **Links to a view:** a link that shows a view opens that view instead, and the page then keeps it. To have the page open on the table's own view again, select **Clear view**.
 - **Who can share:** you can share a view you saved yourself, if your role changes configuration, or, on **Accounts**, if it manages accounts. Only a view's maker, or a role that can share views on the page, can change, rename or delete a shared view.
 
 ## Main Tasks
@@ -81,7 +104,9 @@ You're done when the view has its new name, or is gone from the menu. If your ro
 
 ### Hide a Column and Show It Again
 
-A hidden column leaves the table, but still counts. Its filter and sort still apply, and **Metrics** can still break down by it. An export leaves it out. You can hide any column except the one naming each row, such as **Name** on **People**.
+A hidden column leaves the table, but still counts. Its filter and sort still apply, and **Metrics** can still break down by it. An export leaves it out.
+
+You can hide any column except the one naming each row, such as **Name** on **People**.
 
 1. Open the menu on the column's heading.
 1. Select **Hide column**.
@@ -108,4 +133,6 @@ In the **Views** menu, under **Sort**, each level of the sort is named, and then
 
 ## Where Changes Go
 
-A saved view isn't a draft. It's saved straight away, without approval. Sharing a view, stopping sharing it and deleting it each offer **Undo** for a few seconds. Renaming or deleting a view you can no longer use can't be undone.
+A saved view isn't a draft. It's saved straight away, without approval.
+
+Sharing a view, stopping sharing it and deleting it each offer **Undo** for a few seconds. Renaming or deleting a view you can no longer use can't be undone.

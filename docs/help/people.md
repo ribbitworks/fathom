@@ -7,10 +7,14 @@ The **People** page lists everyone, one row each, with your planned hires beside
 - **Tables:** the page is a table, much like a spreadsheet. Each row is a person or a planned hire, and each column is one thing about them.
 - **State:** each row's **State** says what the row is. **Hired** or **Left** means a person. A hiring state, such as **Request to hire**, means a planned hire.
 - **Lists:** many columns don't take free text. You pick the value from a list instead, such as a position from the list of positions, so everyone's values are spelled the same way. The lists are kept on the **Lists** page.
-- **Classes:** each list and column has a class, which decides who sees it. **General** is seen by everyone who can open the page. **Personal** is for people's private and HR details, and **Confidential** is for business data not yet announced. Only roles allowed to see Personal or Confidential data see those columns. A symbol before a column's name shows its class: an eye with a line through it for **Personal**, and a lock with a keyhole for **Confidential**. Point at it to see the class's name.
-- **Drafts:** almost every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once an approver, such as a Project Manager or the Engineering Director, approves it on the **Drafts** page. A hollow dot marks a change you haven't published yet, and a yellow dot one that's waiting for approval.
+- **Classes:** each list and column has a class, which decides who sees it. **General** is seen by everyone who can open the page.
+  - **Personal** is for people's private and HR details, and **Confidential** is for business data not yet announced. Only roles allowed to see Personal or Confidential data see those columns.
+  - A symbol before a column's name shows its class: an eye with a line through it for **Personal**, and a lock with a keyhole for **Confidential**. Point at it to see the class's name.
+- **Drafts:** almost every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A hollow dot marks a change you haven't published yet, and a yellow dot one that's waiting for approval.
+- **Approval:** a draft goes live once an approver, such as a Project Manager or the Engineering Director, approves it on the **Drafts** page.
 - **Managers:** **Manager?** is ticked for each person others can report to. A manager types their team's name in **Team name**, on their own row. Everyone who reports to them then shows that team in **Team**.
-- **Feature teams:** if your role sees feature teams, **Feature teams** follows **Team** and names the teams each person is on, on the date the page shows. You can't change it here. You change a team's members on the **Org chart**. See [Org chart](org-chart.md).
+- **Feature teams:** if your role sees feature teams, **Feature teams** follows **Team** and names the teams each person is on, on the date the page shows. You can't change it here.
+  - You change a team's members on the **Org chart**. See [Org chart](org-chart.md).
 
 See [Drafts](drafts.md) for more.
 
@@ -77,7 +81,9 @@ People can show another day, in the past or the future. Your role needs to see P
 
 The count above the table names the day it counts, such as "137 people and 10 planned hires on Nov 20, 2026".
 
-On another day, the table lists the people employed then, with their managers and teams as they were, or will be. A future day also lists every planned hire not yet filled. A past day lists none, since past plans aren't kept. A person's details beside the table show them as on that day.
+On another day, the table lists the people employed then, with their managers and teams as they were, or will be. A person's details beside the table show them as on that day.
+
+A future day also lists every planned hire not yet filled. A past day lists none, since past plans aren't kept.
 
 On a past day, you can change someone's manager in **Manager**, from the day shown, if your role changes Personal details. Everything else is changed on today. Otherwise, nothing can be changed on another day, and the table shows people as they're approved.
 
@@ -119,7 +125,9 @@ To remove the column instead, select **Remove column** in the same menu, or in t
 
 You're done when the column shows your change, with a hollow dot until you publish it.
 
-If your role can set classes, the same menu also has **Change class…**, for a column that doesn't use a list. A column that uses a list always takes its list's class. On an approved column, a change of class takes effect straight away, with no draft. On a new column that isn't approved yet, it changes the column's draft, and you can undo it. See [Data classes](data-classes.md).
+If your role can set classes, the same menu also has **Change class…**, for a column that doesn't use a list. A column that uses a list always takes its list's class.
+
+On an approved column, a change of class takes effect straight away, with no draft. On a new column that isn't approved yet, it changes the column's draft, and you can undo it. See [Data classes](data-classes.md).
 
 ### Write a Note
 
@@ -132,7 +140,11 @@ A **Note** column holds a short note for each person, with formatting such as bo
 
 You're done when the cell shows the start of your note.
 
-In a person's details, a long note shows only its first lines. Select **Show more** under it to read it all in its own panel. You can also open a note from the button at the right of its row, which shows when you point at the row. A note stays open when you reload the page, whether you opened it from the details or from its cell, and a link to the page opens it for anyone who can see it. Anything you typed but didn't save is lost when you reload. To give a note opened under the details the whole height, select **Maximize**, the button with four corners at its top right. Select **Restore**, in the same place, to bring the details back.
+In a person's details, a long note shows only its first lines. Select **Show more** under it to read it all in its own panel. You can also open a note from the button at the right of its row, which shows when you point at the row.
+
+A note stays open when you reload the page, whether you opened it from the details or from its cell, and a link to the page opens it for anyone who can see it. Anything you typed but didn't save is lost when you reload.
+
+To give a note opened under the details the whole height, select **Maximize**, the button with four corners at its top right. Select **Restore**, in the same place, to bring the details back.
 
 ### Count People
 
@@ -157,11 +169,15 @@ Grouped by manager, each heading names the manager, then their team's name if th
 
 Grouped by feature teams, someone on two teams shows under each, with a dimmed **+1** after their name. Point at it to see the other team. People on no team, and planned hires, come last, under **No feature team**.
 
-To group each heading's rows again, such as each manager's people by site, select **Group by** again, and choose a column under **Then by**. The button then names both, such as **Group by: Manager, then Site**. Each manager's heading then has a smaller heading for each site, with that site's people under it. A site with nobody under a manager has no heading there.
+To group each heading's rows again, such as each manager's people by site, select **Group by** again, and choose a column under **Then by**. The button then names both, such as **Group by: Manager, then Site**.
+
+Each manager's heading then has a smaller heading for each site, with that site's people under it. A site with nobody under a manager has no heading there.
 
 To turn the headings round, select **Group by** again, and choose the second order after the groupings, such as **Z to A** for managers, or **Reverse list order** for a list such as **Position**. The heading for none, such as **No manager**, then comes first. Choosing another grouping starts again with the first order.
 
-To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**. Either clears **Then by** too. Save a view to keep a grouping you use often. See [Saved views](saved-views.md).
+To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**. Either clears **Then by** too.
+
+Save a view to keep a grouping you use often. See [Saved views](saved-views.md).
 
 You're done when the rows show under the headings you chose.
 
@@ -175,7 +191,9 @@ Exporting saves the table as a file you can open in a spreadsheet.
 
 If the file would hold Personal or Confidential data, such as start dates or planned hires, Fathom asks first, and names what the file holds. Select **Export** to go ahead. That export is recorded in the access history, which roles that see administration can read.
 
-The file holds what the table shows, in the same order. Rows that your search or filters hide are left out. If the table shows **Drafts & Live**, each changed row comes twice, the draft first and then the live row. The **Draft** column says **Yes** on each draft row and is empty on the rest, so you can filter either out in a spreadsheet. The **Change** column says what each draft does.
+The file holds what the table shows, in the same order. Rows that your search or filters hide are left out.
+
+If the table shows **Drafts & Live**, each changed row comes twice, the draft first and then the live row. The **Draft** column says **Yes** on each draft row and is empty on the rest, so you can filter either out in a spreadsheet. The **Change** column says what each draft does.
 
 The file is named after the page, the saved view if you applied one, who exported it, the drafts it holds, if any, and the day the table shows, such as **fathom_people_engineering-director_drafts-and-live_2027-03-31.csv**.
 
@@ -183,7 +201,9 @@ You're done when the file is saved.
 
 ### Remove a Person or Planned Hire
 
-When someone leaves, don't remove them. Give them an **End** date instead, so their row stays. Their **State** follows that date: once it has passed, they show as having left. A state that means Left is only for someone whose **End** date has passed.
+When someone leaves, don't remove them. Give them an **End** date instead, so their row stays.
+
+Their **State** follows that date: once it has passed, they show as having left. A state that means Left is only for someone whose **End** date has passed.
 
 To remove a row:
 

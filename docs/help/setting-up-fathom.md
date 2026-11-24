@@ -22,7 +22,9 @@ A new Fathom comes with only the lists it can't work without, such as **Position
 1. Select the **Lists** page, open **Positions**, and add the positions.
 1. Open **Hiring states**. It starts with **Request to hire**, **Approved to hire**, **Hired** and **Left**.
 1. Rename those to the words you use, if they differ. You can add more too, choosing a meaning for each, but keep at least one for each meaning shown beside them.
-1. Make a list for anything else you'll describe people by, such as their site or their level. Select **New list**, and give it a name. If its values are private, choose **Personal** or **Confidential** as its class there too. Then add its choices.
+1. Make a list for anything else you'll describe people by, such as their site or their level. Select **New list**, and give it a name.
+1. If its values are private, choose **Personal** or **Confidential** as its class on that form too.
+1. Add its choices.
 
 See [Lists](lists.md) for more.
 
@@ -47,7 +49,8 @@ A person's **Position** and **State** can only be choices that are approved. So 
 
 The quickest way to add everyone is to paste them in from a spreadsheet.
 
-1. Put your spreadsheet's columns in the same order as the table's, from **Name** across. Make each value that comes from a list match a choice's name. Capitals and spaces at either end don't matter.
+1. Put your spreadsheet's columns in the same order as the table's, from **Name** across.
+1. Make each value that comes from a list match a choice's name. Capitals and spaces at either end don't matter.
 1. On **People**, select the **Name** cell of the empty row at the end of the table, and paste the rows there.
 1. Tick **Manager?** for everyone who manages others.
 1. Add your planned hires: the jobs you plan to fill. Give each one a hiring state in **State**, such as **Request to hire**.
@@ -73,7 +76,7 @@ See [Releases](releases.md), [Capacity](capacity.md) and [Org chart](org-chart.m
 ## Get the Changes Approved
 
 1. Select **Publish**. It shows how many changes are waiting.
-1. Ask your approver to approve them on the **Drafts** page. A Project Manager or the Engineering Director can. See [Drafts page](drafts-page.md#approve-drafts).
+1. Ask your approver, such as a Project Manager or the Engineering Director, to approve them on the **Drafts** page. See [Drafts page](drafts-page.md#approve-drafts).
 
 Some changes skip the draft and take effect straight away: a team's colour, and a change of class.
 

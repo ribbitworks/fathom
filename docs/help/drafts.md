@@ -6,10 +6,14 @@ Most changes you make to the plan and its people are drafts at first. A draft is
 
 A draft goes through these stages:
 
-- **Saved:** nobody else sees your change yet. **Publish** in the top bar says how many changes are waiting, such as **Publish 3 changes**. Select it to publish them all. Changes you made under another role that your current role can't make stay unpublished; switch roles to publish them. The menu beside it lists them, and **Discard all…** throws them all away, after asking you first. To publish or discard only some of them, use the **Not published** tab of the [Drafts page](drafts-page.md#publish-some-of-your-changes).
+- **Saved:** nobody else sees your change yet. **Publish** in the top bar says how many changes are waiting, such as **Publish 3 changes**. Select it to publish them all.
+  - Changes you made under another role that your current role can't make stay unpublished. Switch roles to publish them.
+  - The menu beside **Publish** lists your changes, and **Discard all…** throws them all away, after asking you first.
+  - To publish or discard only some of them, use the **Not published** tab of the [Drafts page](drafts-page.md#publish-some-of-your-changes).
 - **Published:** the draft waits for an approver, someone whose role approves that kind of change. If someone else changes it, only they see their changes until they publish them.
 - **Approved:** the change goes live. Any new list, column or choice it depends on is approved with it. Approving can't be undone.
-- **Rejected:** the draft goes back to whoever made it. They can change it, resubmit it, or discard it. Drafts that depend on it wait. Rejecting a new list, column or choice also rejects the drafts that depend on it.
+- **Rejected:** the draft goes back to whoever made it. They can change it, resubmit it, or discard it.
+  - Drafts that depend on it wait. Rejecting a new list, column or choice also rejects the drafts that depend on it.
 - **Discarded:** the draft is removed, and the record stays as it was. You can't discard a new list, column or choice while other drafts depend on it. Discard or change those drafts first.
 
 Approvers approve and reject drafts on the [Drafts page](drafts-page.md), under **To decide**, as well as where the records are.
@@ -36,9 +40,13 @@ Each table of records, such as People or Features, has a **Draft** menu, which c
 - **Drafts applied** shows everything as it will be once the waiting drafts are approved. You see the drafts' dots, but no tints, bold or Live rows.
 - **Live only** shows everything as it is now. A green dot marks each record or value a waiting draft would change. Point at it to see what kind of change is waiting.
 
-On the tables of records, such as People, Features, Projects and Releases, the menu also filters the rows, under **Filter**. Choose **Waiting**, **Rejected** or **No draft** to show only the records with that kind of draft, or none. The menu's button has a dot after its name while the filter is on. The filter needs drafts shown, so it's greyed out under **Live only**, and **Rejected** is greyed out under **Drafts applied**.
+On the tables of records, such as People, Features, Projects and Releases, the menu also filters the rows, under **Filter**. Choose **Waiting**, **Rejected** or **No draft** to show only the records with that kind of draft, or none.
 
-If your role approves drafts, the menu ends with **Approve** and **Reject** for every waiting draft the table shows, such as **Approve 4 drafts…**. When a search, a filter or a hidden column hides some, the menu says so, such as **4 of 6 waiting drafts shown**. **Approve** leaves some drafts waiting: those someone else must approve, such as drafts you changed yourself, and those that depend on a rejected draft. The dialog names them.
+The menu's button has a dot after its name while the filter is on. The filter needs drafts shown, so it's greyed out under **Live only**, and **Rejected** is greyed out under **Drafts applied**.
+
+If your role approves drafts, the menu ends with **Approve** and **Reject** for every waiting draft the table shows, such as **Approve 4 drafts…**. When a search, a filter or a hidden column hides some, the menu says so, such as **4 of 6 waiting drafts shown**.
+
+**Approve** leaves some drafts waiting: those someone else must approve, such as drafts you changed yourself, and those that depend on a rejected draft. The dialog names them.
 
 ## Undo
 

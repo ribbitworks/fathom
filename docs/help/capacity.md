@@ -12,7 +12,8 @@
 - **Allocations:** an allocation is the share of someone's month planned for one feature, such as 50%.
 - **Planned hires:** a planned hire is a job you plan to fill. It has a row like a person's, so the work planned for it shows too.
 - **Person-months:** a person-month is one person's work for a month. The settings decide how many hours and days that is.
-- **Who sees which tab:** your role decides which tabs you see. If it sees only one, that tab shows alone, with no tabs above it. If it sees none, you don't have the page. The Pages Help page lists the permissions each tab needs.
+- **Who sees which tab:** your role decides which tabs you see. If it sees only one, that tab shows alone, with no tabs above it.
+- **No tabs:** if your role sees none of the tabs, you don't have the page. The Pages Help page lists the permissions each tab needs.
 - **Drafts:** a change to someone's teams or to a setting is a draft. Nobody else sees it until you select **Publish** in the top bar, and it takes effect once it's approved.
 
 See [Drafts](drafts.md) for more.
@@ -27,7 +28,8 @@ Select **Feature teams**, **Allocations** or **Settings** beside the heading. Th
 
 **Feature teams** and **Allocations** have the same table: a row for each person and planned hire, and a column for each month. It holds whole quarters, from the quarter a year back to the quarter eleven months ahead. It opens with the current month second, after last month, and the current month's heading is underlined in red.
 
-- To scroll to a quarter, select it in the strip above the table. To move a quarter at a time, use **‹** and **›**. The quarters in view are tinted, and the current one is underlined. The quarter you chose stays filled blue until you scroll somewhere else.
+- To scroll to a quarter, select it in the strip above the table. To move a quarter at a time, use **‹** and **›**.
+- The quarters in view are tinted, and the current one is underlined. The quarter you chose stays filled blue until you scroll somewhere else.
 - From the keyboard, press Tab to reach the strip's quarters, and the arrow keys to move between them. Press Enter or Space to choose the quarter you're on.
 - To go back to the current month, select **Today**, at the end of the strip.
 
@@ -54,8 +56,11 @@ You're done when the rows show under the headings you chose.
 
 - To find people by name, type in the search box. You can also type a team's or a feature's name, such as `Payments core` or `Checkout`, to find everyone on it in any month.
 - To filter one month by team or feature, open that month's column menu, select **Filter…**, and pick the teams or features.
-- To see only who is over or under, on **Allocations**, select **Views**, then **Over** or **Under**. They keep the rows **Over**, or **Under** or **Not allocated**, in the current month or any later month in the table. Choose both to see either. Select one again to turn it off.
-- To see only who is on some teams or features in any month, select the button after the search box, **Feature teams** on the **Feature teams** tab or **Allocations** on **Allocations**, and pick them. Pick **No feature team** or **Not allocated** to see who has none in any month. The months you scroll to don't change the rows. To clear it, select the **×** on its pill.
+- To see only who is over or under, on **Allocations**, select **Views**, then **Over** or **Under**. They keep the rows **Over**, or **Under** or **Not allocated**, in the current month or any later month in the table.
+- To see who is either over or under, choose both. To turn one off, select it again.
+- To see only who is on some teams or features in any month, select the button after the search box, and pick them. The button is **Feature teams** on the **Feature teams** tab, and **Allocations** on **Allocations**.
+- To see who has none in any month, pick **No feature team** or **Not allocated** there.
+- With teams or features picked, the months you scroll to don't change the rows. To clear what you picked, select the **×** on its pill.
 
 ### Keep a View of the Table
 
@@ -145,10 +150,13 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 ### In Allocations
 
 - **A line in a cell** names a feature, after a small square in its feature team's colour, and the share of the month it takes, such as **50%**. Point at the name to see all of it.
-- **Over**, in red, ends a month whose allocations add up to more than 100%, with how much more at the right, such as **+25%**. **Under**, in red, ends one under 100%, with how much less, such as **−90%**. **Not allocated**, in red, ends a month with nothing allocated. Point at **Over** or **Under** to see the month's total. They show from the current month on, and features whose status means Possible don't count. A month at exactly 100% has no last line.
+- **Over**, in red, ends a month whose allocations add up to more than 100%, with how much more at the right, such as **+25%**. **Under**, in red, ends one under 100%, with how much less, such as **−90%**.
+- **Not allocated**, in red, ends a month with nothing allocated. A month at exactly 100% has no last line.
+- **Over**, **Under** and **Not allocated** show from the current month on, and features whose status means Possible don't count. Point at **Over** or **Under** to see the month's total.
 - **Planned hires** have rows of their own, under their manager and under **No feature team**. One with no name shows its position and ID in grey, such as **SDET, TBD-5**. Months before one is expected are shaded.
 - **Total, PM**, in bold, ends each group, and **Organization, PM** stays at the foot of the table. PM is person-months.
-- **A total**, such as **7.5 of 9**, is the person-months allocated that month, out of those available. The share is under it. Point at it to see it in words. Totals count only the rows shown.
+- **A total**, such as **7.5 of 9**, is the person-months allocated that month, out of those available. The share is under it.
+- Point at a total to see it in words. Totals count only the rows shown.
 - **Someone on a feature team with nothing allocated** reads **Not allocated**, and counts as **0 of 1** in the totals. Being on a team doesn't allocate anyone to its features.
 - **A green dot inside a line**, in the light green Live row under a drafted row, marks a feature the draft takes off or changes. With **Live only** chosen in the **Draft** menu, it marks each one a waiting draft would change.
 - **Allocations** is read only.

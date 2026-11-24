@@ -7,7 +7,8 @@
 - **Schedules and cycles:** a schedule is a repeating set of cycles of a set length, such as **Platform**'s quarters. Its releases ship the features planned in its cycles. You set them up on [Releases](releases.md).
 - **Target cycle:** the cycle a feature is planned to ship in. **Later** holds the features that don't target a cycle yet.
 - **Feature team:** a group that works on features together, whoever its members report to.
-- **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves features and releases approves it on the **Drafts** page. A hollow dot marks a change you haven't published yet.
+- **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A hollow dot marks a change you haven't published yet.
+- **Approval:** a draft goes live once someone whose role approves features and releases approves it on the **Drafts** page.
 
 See [Drafts](drafts.md) for more.
 
@@ -126,16 +127,26 @@ You're done when the rows show under the headings you chose.
 
 ### See Features as a Board
 
-The board starts with months side by side, from a year back to a year ahead at the least, with a card for each feature in the month it's needed by. That includes a month that has passed. A feature needed more than a year back isn't on the board. **No date** is its last column. The month you opened it on is the second column, so the month before it stays in view. This month's heading is underlined in red. You can show one schedule's cycles instead, with a card for each feature in the cycle it targets, and **Later** last.
+The board starts with months side by side, from a year back to a year ahead at the least. Each feature has a card in the month it's needed by, even a month that has passed.
+
+- A feature needed more than a year back isn't on the board.
+- **No date** is the board's last column.
+- The month you opened it on is the second column, so the month before it stays in view. This month's heading is underlined in red.
+
+You can show one schedule's cycles instead, with a card for each feature in the cycle it targets, and **Later** last.
 
 1. Choose **Board** beside the **Features** heading.
 1. To see a schedule's cycles, select **Columns**, and choose them, such as **Platform cycles**. Choose **Months** to go back.
-1. To see other months or cycles, select **‹** or **›**, or one in the row above the board. By months, the row names quarters, such as **Q1 2027**, and **‹** and **›** step a quarter. By cycles, it names each cycle.
+1. To see other months or cycles, select **‹** or **›**, or one in the row above the board. By months, the row names quarters, such as **Q1 2027**, and **‹** and **›** step a quarter, while by cycles, it names each cycle.
 1. To go back to this month or the current cycle, select **Today**. The period in the row above the board that holds the month or cycle you went to is filled in blue.
 1. To choose what the cards show, select **Card**, and tick or untick each part.
 1. To put the cards in rows, select **Group by**, and choose how, such as **Feature team**. Grouped by **Projects**, a feature two projects need has a card in each project's row.
 
-While **Staffed months** is ticked under **Card**, a card that says **Not staffed** in red is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. So does **Views**: the table and the board share one view, and a saved view keeps the board's columns and what its cards show. On the board, **Views** doesn't offer the sort, units, or hidden, frozen, moved or widened columns, since the board orders its own cards and has no columns to lay out; they come back when you switch to the table. See [Saved views](saved-views.md).
+While **Staffed months** is ticked under **Card**, a card that says **Not staffed** in red is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details.
+
+The search, the **Draft** menu and **Metrics** work on the board as they do on the table. So does **Views**: the table and the board share one view, and a saved view keeps the board's columns and what its cards show.
+
+On the board, **Views** doesn't offer the sort, units, or hidden, frozen, moved or widened columns, since the board orders its own cards and has no columns to lay out. They come back when you switch to the table. See [Saved views](saved-views.md).
 
 You're done when the board shows the months or cycles you want.
 
@@ -167,11 +178,14 @@ You're done when the row is struck through. It's removed once the removal is app
 - **No team**, in red in the **Feature team** cell, marks a planned or in-progress feature that has no feature team yet.
 - **Needed by** is the month the feature is wanted. Type it as digits, such as `2027-03`, and it shows as Mar 2027. It's a rough wish; **Target cycle** is the commitment.
 - **Status** says how far along the feature is. Statuses are named on the **Lists** page, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
-- **Customers**, **Projects** and **Proposals** are changed only if your role edits the plan, as the Product Manager's does. **Projects** and **Proposals** name the projects that need the feature, and the proposals that propose it. Changing them changes that project or proposal, as a draft: one a draft adds has a dot before it, and one it takes away has the dot and is struck through, in the table and in the feature's details. If you take a feature off a proposal, you give the reason on the proposal; see [Projects](projects.md#give-a-reason-for-removing-a-feature-from-a-proposal).
+- **Customers**, **Projects** and **Proposals** are changed only if your role edits the plan, as the Product Manager's does. **Projects** and **Proposals** name the projects that need the feature, and the proposals that propose it.
+- Changing **Projects** or **Proposals** changes that project or proposal, as a draft. One a draft adds has a dot before it, and one it takes away has the dot and is struck through, in the table and in the feature's details.
+- If you take a feature off a proposal, you give the reason on the proposal. See [Projects](projects.md#give-a-reason-for-removing-a-feature-from-a-proposal).
 - **Effort** is the work the feature needs, such as 2.5 PD for person-days. Point at it to see the hours.
 - **Priority** says how much the feature matters, apart from its status, from **Critical** to **Low**.
 - **Size** is the feature's rough size before it's estimated, from **XS** to **XL**.
 - **Risk** says how much could go wrong in building it, from **Low** to **High**.
 - **Priority**, **Size** and **Risk** are optional. Their choices are kept on the **Lists** page.
 - **Release** follows from **Target cycle**, so you can't change it.
-- **Staffed** says **Yes** when someone is allocated to a planned or in-progress feature, and **No** when nobody is. It's empty for other features. Fathom works it out from the allocations, so you can't change it. To find features nobody is on, filter **Staffed** to **No**.
+- **Staffed** says **Yes** when someone is allocated to a planned or in-progress feature, and **No** when nobody is. It's empty for other features.
+- Fathom works out **Staffed** from the allocations, so you can't change it. To find features nobody is on, filter **Staffed** to **No**.
