@@ -17,11 +17,11 @@ import {
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  fictionalCycle,
   fictionalRelease,
   fictionalStream,
-  recordDraft,
-  testTheme,
-} from "./test-support.tsx";
+} from "./test-releases.ts";
+import { recordDraft, testTheme } from "./test-support.tsx";
 import type { ReleaseLayerForm } from "./release-layer.tsx";
 import type { DayRange, TimelineRow } from "./timeline.ts";
 import { TimelineView } from "./timeline-view.tsx";
@@ -567,18 +567,8 @@ describe("the release layer's forms", () => {
       id: "s2",
       name: "Fictional Weeks",
       cycles: [
-        {
-          startsOn: "2027-06-07",
-          endsOn: "2027-06-13",
-          name: "W23",
-          months: [],
-        },
-        {
-          startsOn: "2027-06-14",
-          endsOn: "2027-06-20",
-          name: "W24",
-          months: [],
-        },
+        fictionalCycle("W23", "2027-06-07", "2027-06-13"),
+        fictionalCycle("W24", "2027-06-14", "2027-06-20"),
       ],
     });
     const timeline = showTimeline({

@@ -7,17 +7,21 @@ import type { Feature, ProjectPlan, ReleaseStream } from "@fathom/shared";
 import { startingEffortConversions } from "@fathom/shared";
 import { screen, within } from "@testing-library/react";
 import {
-  featureDraft,
+  fictionalMinors,
   fictionalRelease,
   fictionalStream,
+  quarters,
+  streamId,
+  streamsAnswer,
+} from "./test-releases.ts";
+import {
+  featureDraft,
   fictionalFeature,
   fictionalUser,
   noFeatureColumns,
-  quarters,
   recordDraft,
   renderApp,
   serverAnswers,
-  streamId,
 } from "./test-support.tsx";
 import { size } from "./test-board-width.ts";
 
@@ -119,12 +123,10 @@ export const majors = fictionalStream({
     }),
   ],
 });
-export const retiring: ReleaseStream = {
-  ...fictionalStream({ name: "Fictional Minors" }),
-  id: "10000000-0000-4000-8000-000000000002",
+export const retiring = fictionalMinors({
   retired: true,
   draft: recordDraft({ changed: ["retired"], live: { retired: false } }),
-};
+});
 export const retired: ReleaseStream = {
   ...fictionalStream({ name: "Fictional Old" }),
   id: "10000000-0000-4000-8000-000000000003",
@@ -181,8 +183,7 @@ export async function openBoard(
       }),
     "GET /api/projects": () => Response.json(plan(features)),
     "GET /api/projects/choices": () => Response.json(choices),
-    "GET /api/release-streams": () =>
-      Response.json({ streams, canEditStreams: false, canEditReleases: false }),
+    "GET /api/release-streams": streamsAnswer(streams),
     "GET /api/effort-conversions": () =>
       Response.json(startingEffortConversions),
     ...answers,

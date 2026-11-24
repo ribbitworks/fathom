@@ -3,13 +3,18 @@
 // Helpers for the plan pages' tests: a fictional plan, features and release streams, the server's
 // answers, and ways to open a page, read what was sent and find its panel and menus.
 
-import type { ProjectPlan } from "@fathom/shared";
+import type { ProjectPlan, Release } from "@fathom/shared";
 import { startingEffortConversions } from "@fathom/shared";
 import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import {
-  bodyOf,
+  fictionalCycle,
   fictionalRelease,
+  fictionalStream,
+  streamsAnswer,
+} from "./test-releases.ts";
+import {
+  bodyOf,
   fictionalUser,
   findRowActions,
   noFeatureColumns,
@@ -149,38 +154,26 @@ export const chooseFrom = async (menu: HTMLElement, name: string) => {
   await userEvent.click(within(menu).getByRole("menuitem", { name }));
 };
 
-export const streamId = "00000000-0000-4000-8000-0000000000aa";
+export const projectStreamId = "00000000-0000-4000-8000-0000000000aa";
 export const teamId = "00000000-0000-4000-8000-0000000000ab";
 export const cycleOne = "2027-01-01";
 const cycleTwo = "2027-04-01";
-export const cycle = (startsOn: string, endsOn: string, name: string) => ({
-  startsOn,
-  endsOn,
-  name,
-  months: [],
-});
-const streamsWith = (releases: readonly object[]) => () =>
-  Response.json({
-    streams: [
-      {
-        id: streamId,
-        keyNumber: 1,
+const streamsWith = (releases: Release[]) =>
+  streamsAnswer(
+    [
+      fictionalStream({
+        id: projectStreamId,
         name: "Fictional Stream",
-        position: 1,
-        retired: false,
-        cyclesUntil: "2027-12-31",
-        endsOn: null,
         patterns: [],
         cycles: [
-          cycle(cycleOne, "2027-03-31", "27.1"),
-          cycle(cycleTwo, "2027-06-30", "27.2"),
+          fictionalCycle("27.1", cycleOne, "2027-03-31"),
+          fictionalCycle("27.2", cycleTwo, "2027-06-30"),
         ],
         releases,
-      },
+      }),
     ],
-    canEditStreams: true,
-    canEditReleases: true,
-  });
+    { canEditStreams: true, canEditReleases: true },
+  );
 export const streams = streamsWith([]);
 export const withRelease = {
   "GET /api/release-streams": streamsWith([
@@ -226,7 +219,7 @@ export const feature = (name: string, targetCycle: string | null) => ({
   riskId: null,
   neededBy: null,
   customerIds: [],
-  targetStreamId: targetCycle === null ? null : streamId,
+  targetStreamId: targetCycle === null ? null : projectStreamId,
   targetCycle,
   estimateHours: 40,
   featureTeamId: null,

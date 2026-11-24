@@ -9,12 +9,8 @@ import { describe, expect, it } from "vitest";
 import { cycleChoiceId } from "./projects.ts";
 import type { GridDraft, GridRecord } from "./record-table.ts";
 import { featuresColumn, plannedFeatures } from "./release-tabs.ts";
-import {
-  featureDraft,
-  fictionalFeature,
-  streamId,
-  testTheme,
-} from "./test-support.tsx";
+import { streamId } from "./test-releases.ts";
+import { featureDraft, fictionalFeature, testTheme } from "./test-support.tsx";
 
 const otherStream = "10000000-0000-4000-8000-000000000009";
 const first = cycleChoiceId(streamId, "2027-01-01");

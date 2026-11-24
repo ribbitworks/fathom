@@ -5,10 +5,11 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  fictionalCycle,
   fictionalRelease,
   fictionalStream,
-  recordDraft,
-} from "./test-support.tsx";
+} from "./test-releases.ts";
+import { recordDraft } from "./test-support.tsx";
 import type { ReleaseStream } from "@fathom/shared";
 import {
   axisScale,
@@ -76,9 +77,7 @@ describe("the timeline of release streams", () => {
   const minors = fictionalStream({
     id: "s2",
     name: "Fictional Minors",
-    cycles: [
-      { startsOn: "2026-12-14", endsOn: "2027-01-10", name: "M1", months: [] },
-    ],
+    cycles: [fictionalCycle("M1", "2026-12-14", "2027-01-10")],
   });
 
   it("lays every stream's cycles on one axis of whole months", () => {

@@ -3,7 +3,7 @@
 // Tests for the Releases page's Schedules tab: its table, a schedule's details, cycles and drafts,
 // the changes made from them, the timeline, and what each role may do there.
 
-import type { Cycle, ReleaseStream, ReleaseStreams } from "@fathom/shared";
+import type { Cycle, ReleaseStream } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import {
   act,
@@ -17,24 +17,29 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TimelineView } from "./timeline-view.tsx";
 import {
+  fictionalCycle,
+  fictionalMinors,
+  fictionalPattern,
+  fictionalRelease,
+  fictionalStream,
+  quarters,
+  streamId,
+  streamsAnswer,
+} from "./test-releases.ts";
+import {
   bodyOf,
   detailRow,
   detailValue,
   featureDraft,
   fictionalFeature,
-  fictionalPattern,
-  fictionalRelease,
-  fictionalStream,
   fictionalUser,
   noFeatureColumns,
   planAnswers,
-  quarters,
   recordCell,
   recordDraft,
   renderApp,
   serverAnswers,
   signedIn,
-  streamId,
   testTheme,
   featuresAddress,
   openedIn,
@@ -46,61 +51,24 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const streams: ReleaseStreams = {
-  canEditStreams: false,
-  canEditReleases: false,
-  streams: [
-    {
-      id: "s1",
-      keyNumber: 1,
-      name: "Fictional Majors",
-      retired: false,
-      cyclesUntil: "2028-12-31",
-      endsOn: null,
-      patterns: [
-        {
-          id: "p1",
-          startsOn: "2027-01-01",
-          length: 3,
-          unit: "months",
-          naming: "{YY}.{N}",
-        },
-      ],
-      cycles: [
-        {
-          startsOn: "2027-01-01",
-          endsOn: "2027-03-31",
-          name: "27.1",
-          months: [],
-        },
-        {
-          startsOn: "2027-04-01",
-          endsOn: "2027-06-30",
-          name: "27.2",
-          months: [],
-        },
-      ],
-      releases: [
-        {
-          id: "r1",
-          keyNumber: 1,
-          name: "Fictional One",
-          firstCycle: "2027-01-01",
-          lastCycle: "2027-04-01",
-          shipsOn: null,
-          colour: null,
-          note: null,
-        },
-      ],
-    },
-  ],
-};
+const streamsReply = streamsAnswer([
+  fictionalStream({
+    id: "s1",
+    cyclesUntil: "2028-12-31",
+    patterns: [fictionalPattern({ id: "p1" })],
+    cycles: [
+      fictionalCycle("27.1", "2027-01-01", "2027-03-31"),
+      fictionalCycle("27.2", "2027-04-01", "2027-06-30"),
+    ],
+    releases: [fictionalRelease({ id: "r1", lastCycle: "2027-04-01" })],
+  }),
+]);
 
 describe("the Releases page", () => {
   it("lists every stream for those who see the plan", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": () => Response.json(streams),
+      "GET /api/release-streams": streamsReply,
     });
     renderApp("/releases?tab=schedules");
     expect(
@@ -114,7 +82,7 @@ describe("the Releases page", () => {
   it("opens a stream in its panel at its own address", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": () => Response.json(streams),
+      "GET /api/release-streams": streamsReply,
     });
     renderApp("/releases/s1");
     expect(
@@ -128,7 +96,7 @@ describe("the Releases page", () => {
   it("keeps the panel open when its edge is dragged to resize it", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": () => Response.json(streams),
+      "GET /api/release-streams": streamsReply,
     });
     renderApp("/releases/s1");
     const edge = await screen.findByRole("separator", {
@@ -141,18 +109,6 @@ describe("the Releases page", () => {
   });
 });
 
-const answer =
-  (
-    shown: ReleaseStream[],
-    can: { canEditStreams?: boolean; canEditReleases?: boolean } = {},
-  ) =>
-  () =>
-    Response.json({
-      streams: shown,
-      canEditStreams: false,
-      canEditReleases: false,
-      ...can,
-    });
 const editsAll = { canEditStreams: true, canEditReleases: true };
 const approver = () =>
   Response.json({
@@ -185,7 +141,7 @@ async function openStream(
 ) {
   const fetch = serverAnswers({
     "GET /api/session": signedIn,
-    "GET /api/release-streams": answer(shown, can),
+    "GET /api/release-streams": streamsAnswer(shown, can),
     ...answers,
   });
   const history = renderApp(`/releases/${streamId}`);
@@ -263,7 +219,7 @@ describe("the Schedules table", () => {
     vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({ releases: [release] }),
       ]),
     });
@@ -286,7 +242,7 @@ describe("the Schedules table", () => {
       });
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
       ...planAnswers([
         targeting("2027-01-01", 1),
         targeting("2027-01-01", 2),
@@ -338,7 +294,7 @@ describe("the Schedules table", () => {
       vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
       serverAnswers({
         "GET /api/session": signedIn,
-        "GET /api/release-streams": answer([fictionalStream()]),
+        "GET /api/release-streams": streamsAnswer([fictionalStream()]),
         ...planAnswers([
           fictionalFeature({
             name: "Fictional Feature 1",
@@ -378,7 +334,7 @@ describe("the Schedules table", () => {
       vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
       serverAnswers({
         "GET /api/session": signedIn,
-        "GET /api/release-streams": answer([
+        "GET /api/release-streams": streamsAnswer([
           fictionalStream({ releases: [fictionalRelease()] }),
         ]),
       });
@@ -399,11 +355,9 @@ describe("the Schedules table", () => {
   ])("shows a schedule's own records with %s", async (button, tab) => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({ releases: [fictionalRelease()] }),
-        fictionalStream({
-          id: "10000000-0000-4000-8000-000000000002",
-          name: "Fictional Minors",
+        fictionalMinors({
           releases: [
             fictionalRelease({
               id: "30000000-0000-4000-8000-000000000002",
@@ -438,7 +392,7 @@ describe("the Schedules table", () => {
     vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
     });
     const history = renderApp("/releases?tab=schedules");
     await streamsGrid();
@@ -463,7 +417,7 @@ describe("the Schedules table", () => {
     vi.setSystemTime(new Date("2028-06-15T12:00:00Z"));
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
       ...planAnswers([
         fictionalFeature({
           targetStreamId: streamId,
@@ -484,7 +438,7 @@ describe("the Schedules table", () => {
     vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
       "GET /api/projects": () =>
         Response.json({ error: "No" }, { status: 403 }),
     });
@@ -502,7 +456,7 @@ describe("the Schedules table", () => {
     vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({ releases: [release] }),
         fictionalStream({
           id: "s2",
@@ -561,7 +515,7 @@ describe("the Schedules table", () => {
   it("leaves the cells of a schedule with no cycles blank", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({ patterns: [], cycles: [] }),
       ]),
     });
@@ -573,7 +527,7 @@ describe("the Schedules table", () => {
   it("sits under the Schedules tab, chosen, beside the heading", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
     });
     renderApp("/releases?tab=schedules");
     const tab = await screen.findByRole("tab", { name: "Schedules" });
@@ -590,7 +544,7 @@ describe("the Schedules table", () => {
   it("hides retired streams until Show retired is chosen in the Views menu, keeping the choice in the address", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({ id: "s1", name: "Fictional Old", retired: true }),
         fictionalStream({ id: "s2", name: "Fictional New", patterns: [] }),
       ]),
@@ -624,7 +578,7 @@ describe("the Schedules table", () => {
     let views: object[] = [];
     const fetch = serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({ id: "s1", name: "Fictional Old", retired: true }),
         fictionalStream({ id: "s2", name: "Fictional New", patterns: [] }),
       ]),
@@ -679,7 +633,7 @@ describe("the Schedules table", () => {
   it("offers only the hidden Key column in its Views menu while it would hold nothing else", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
     });
     renderApp("/releases?tab=schedules");
     await streamsGrid();
@@ -694,7 +648,7 @@ describe("the Schedules table", () => {
   it("offers hiding retired streams again while they show, though none is retired any more", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
     });
     const history = renderApp("/releases?tab=schedules&retired=true");
     // Showing retired streams is something to save, so the button is marked.
@@ -716,7 +670,7 @@ describe("the Schedules table", () => {
     vi.setSystemTime(new Date("2027-08-15T12:00:00Z"));
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({
           patterns: [
             pattern,
@@ -744,7 +698,7 @@ describe("the Schedules table", () => {
       fictionalStream({ id, name, draft: recordDraft(fields) });
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         changing("s1", "Fictional A", { action: "created" }),
         {
           ...changing("s4", "Fictional D", { changed: ["retired"] }),
@@ -768,7 +722,7 @@ describe("the Schedules table", () => {
   it("says a stream's retirement is waiting under Live only", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         {
           ...fictionalStream({
             draft: recordDraft({ changed: ["retired"] }),
@@ -787,7 +741,7 @@ describe("the Schedules table", () => {
   it("marks only the cells whose values its parts' drafts change, with a Live row", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({
           id: "s1",
           name: "Fictional Coloured",
@@ -830,7 +784,7 @@ describe("the Schedules table", () => {
   it("says a schedule had no cycle length in its Live row while a draft adds its first cycles", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({
           patterns: [
             fictionalPattern({ draft: recordDraft({ action: "created" }) }),
@@ -848,7 +802,7 @@ describe("the Schedules table", () => {
   it("finds streams by any word in them", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({ id: "s1", name: "Fictional Majors" }),
         fictionalStream({ id: "s2", name: "Fictional Patches" }),
       ]),
@@ -872,7 +826,7 @@ describe("the Schedules table", () => {
   it("starts with no grouping, and groups schedules by status when asked, keeping it in the address", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({ id: "s1", name: "Fictional Majors" }),
         fictionalStream({
           id: "s2",
@@ -902,7 +856,7 @@ describe("the Schedules table", () => {
     const drafted = recordDraft();
     const fetch = serverAnswers({
       "GET /api/session": approver,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({
           name: "Fictional Renamed",
           draft: recordDraft({
@@ -932,7 +886,7 @@ describe("the Schedules table", () => {
   it("says when there are no streams yet", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([]),
+      "GET /api/release-streams": streamsAnswer([]),
     });
     renderApp("/releases?tab=schedules");
     expect(await screen.findByText("No schedules yet.")).toBeDefined();
@@ -946,7 +900,7 @@ describe("the Schedules table", () => {
         tries += 1;
         return tries === 1
           ? Response.json({ error: "Broken" }, { status: 500 })
-          : answer([fictionalStream()])();
+          : streamsAnswer([fictionalStream()])();
       },
     });
     renderApp("/releases?tab=schedules");
@@ -959,7 +913,7 @@ describe("the Schedules table", () => {
   it("opens a schedule from the details button in its Schedule cell", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
     });
     const history = renderApp("/releases?tab=schedules");
     await userEvent.click(await detailsOf("Fictional Majors"));
@@ -1078,7 +1032,7 @@ describe("changing streams", () => {
   it("offers no New schedule under Live only, where nothing new would show", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()], editsAll),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()], editsAll),
     });
     renderApp("/releases?tab=schedules&show=live");
     expect(await screen.findAllByText("Fictional Majors")).not.toHaveLength(0);
@@ -1086,13 +1040,10 @@ describe("changing streams", () => {
   });
 
   it("adds a stream, and opens it", async () => {
-    const added = fictionalStream({
-      id: "10000000-0000-4000-8000-000000000002",
-      name: "Fictional Minors",
-    });
+    const added = fictionalMinors();
     const fetch = serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()], editsAll),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()], editsAll),
       "POST /api/release-streams": () =>
         Response.json({ stream: added, changeSetId }),
     });
@@ -1188,7 +1139,7 @@ describe("changing streams", () => {
     // Given a retired schedule, shown with the retired ones
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer(
+      "GET /api/release-streams": streamsAnswer(
         [fictionalStream({ retired: true })],
         editsAll,
       ),
@@ -1360,12 +1311,7 @@ describe("a schedule's details", () => {
       cycles: [
         first,
         { ...second, endsOn: "2027-05-31" },
-        {
-          startsOn: "2027-06-01",
-          endsOn: "2027-06-30",
-          name: "Freeze",
-          months: [],
-        },
+        fictionalCycle("Freeze", "2027-06-01", "2027-06-30"),
         ...later,
       ],
       liveCycles: quarters(4),
@@ -1396,7 +1342,7 @@ describe("a schedule's details", () => {
     // Given the same drafted change, under Live only
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([recut()]),
+      "GET /api/release-streams": streamsAnswer([recut()]),
     });
     renderApp(`/releases/${streamId}?show=live`);
     await screen.findByRole("heading", { name: "Fictional Majors", level: 2 });
@@ -1490,7 +1436,7 @@ describe("a schedule's details", () => {
       // schedules
       serverAnswers({
         "GET /api/session": signedIn,
-        "GET /api/release-streams": answer([stream], editsAll),
+        "GET /api/release-streams": streamsAnswer([stream], editsAll),
       });
       renderApp(`/releases/${streamId}?retired=true`);
       await screen.findByRole("heading", {
@@ -1767,7 +1713,7 @@ describe("the Draft menu", () => {
   it("shows the streams live alone, as their drafts make them, or beside live, keeping the choice in the address", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer(drafted),
+      "GET /api/release-streams": streamsAnswer(drafted),
     });
     const history = renderApp("/releases?tab=schedules&show=live&retired=true");
     await detailsOf("Fictional Earlier");
@@ -1793,7 +1739,7 @@ describe("the Draft menu", () => {
   it("keeps the choice in the address as a stream is opened", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer(drafted),
+      "GET /api/release-streams": streamsAnswer(drafted),
     });
     const history = renderApp("/releases?tab=schedules&show=drafts");
     await userEvent.click(await detailsOf("Fictional Majors"));
@@ -2262,7 +2208,7 @@ describe("the timeline", () => {
     vi.setSystemTime(new Date(`${today}T12:00:00Z`));
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer(shown),
+      "GET /api/release-streams": streamsAnswer(shown),
     });
     renderApp(`/releases?tab=${tab}${view.replace("?", "&")}`);
     return screen.findByRole("region", { name: "Timeline" });
@@ -2443,7 +2389,7 @@ describe("the timeline", () => {
           ...fictionalUser,
           settings: { ...fictionalUser.settings, timeZone: "Asia/Tokyo" },
         }),
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
     });
     renderApp("/releases?tab=schedules");
     const timeline = await screen.findByRole("region", { name: "Timeline" });
@@ -2520,14 +2466,7 @@ describe("the timeline", () => {
         fictionalStream({
           id: "s2",
           name: "Fictional Minors",
-          cycles: [
-            {
-              startsOn: "2026-07-01",
-              endsOn: "2026-09-30",
-              name: "M1",
-              months: [],
-            },
-          ],
+          cycles: [fictionalCycle("M1", "2026-07-01", "2026-09-30")],
         }),
       ]),
     );
@@ -2632,14 +2571,7 @@ describe("the timeline", () => {
         fictionalStream({
           id: "s2",
           name: "Fictional Minors",
-          cycles: [
-            {
-              startsOn: "2026-12-14",
-              endsOn: "2027-01-10",
-              name: "M1",
-              months: [],
-            },
-          ],
+          cycles: [fictionalCycle("M1", "2026-12-14", "2027-01-10")],
         }),
       ],
       "2027-02-15",
@@ -2902,7 +2834,7 @@ describe("the timeline", () => {
   it("is left out while no stream has cycles", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
+      "GET /api/release-streams": streamsAnswer([
         fictionalStream({ cycles: [], patterns: [] }),
       ]),
     });

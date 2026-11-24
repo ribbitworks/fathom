@@ -12,12 +12,17 @@ import { ReleasesTable } from "./release-tab.tsx";
 import type { SavedViews } from "./table-controls.tsx";
 import { emptyView } from "./table-view.ts";
 import {
+  fictionalMinors,
+  fictionalRelease,
+  fictionalStream,
+  streamId,
+  streamsAnswer,
+} from "./test-releases.ts";
+import {
   bodyOf,
   detailRow,
   detailValue,
   fictionalFeature,
-  fictionalRelease,
-  fictionalStream,
   fictionalUser,
   planAnswers,
   recordCell,
@@ -25,7 +30,6 @@ import {
   renderApp,
   serverAnswers,
   signedIn,
-  streamId,
   testTheme,
   featuresAddress,
   openedIn,
@@ -81,16 +85,6 @@ const approver = () =>
     ],
   });
 
-const answer =
-  (shown: ReleaseStream[], can: { canEditReleases?: boolean } = {}) =>
-  () =>
-    Response.json({
-      streams: shown,
-      canEditStreams: false,
-      canEditReleases: false,
-      ...can,
-    });
-
 // Opens the page at the address given, with the schedules given, and any other answers the test
 // needs, once the table of releases shows.
 async function openPage(
@@ -107,7 +101,7 @@ async function openPage(
 ) {
   const fetch = serverAnswers({
     "GET /api/session": signedIn,
-    "GET /api/release-streams": answer(shown, can),
+    "GET /api/release-streams": streamsAnswer(shown, can),
     ...answers,
   });
   const history = renderApp(path);
@@ -272,7 +266,7 @@ describe("the Releases tab", () => {
   it("says when there are no releases yet", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
     });
     renderApp("/releases");
     expect(await screen.findByText("No releases yet.")).toBeDefined();
@@ -281,9 +275,7 @@ describe("the Releases tab", () => {
   it("draws on its timeline only the schedules of the releases it shows", async () => {
     await openPage([
       ...inStream(release),
-      fictionalStream({
-        id: "10000000-0000-4000-8000-000000000002",
-        name: "Fictional Minors",
+      fictionalMinors({
         releases: [shipped],
       }),
     ]);
@@ -299,7 +291,6 @@ describe("the Releases tab", () => {
   });
 });
 
-const minorsId = "10000000-0000-4000-8000-000000000002";
 const minor = fictionalRelease({
   id: "30000000-0000-4000-8000-000000000003",
   name: "Fictional Two",
@@ -310,9 +301,7 @@ const minor = fictionalRelease({
 // and Fictional Two in Fictional Minors, shipping on Sep 30, 2027.
 const twoSchedules = () => [
   ...inStream(release),
-  fictionalStream({
-    id: minorsId,
-    name: "Fictional Minors",
+  fictionalMinors({
     releases: [minor],
   }),
 ];
@@ -438,9 +427,7 @@ describe("the Releases table's columns", () => {
     await openPage(
       [
         ...inStream(release, third),
-        fictionalStream({
-          id: minorsId,
-          name: "Fictional Minors",
+        fictionalMinors({
           releases: [minor],
         }),
       ],
@@ -474,9 +461,7 @@ describe("the Releases table's columns", () => {
     await openPage(
       [
         ...inStream(spanning),
-        fictionalStream({
-          id: minorsId,
-          name: "Fictional Minors",
+        fictionalMinors({
           releases: [minor],
         }),
       ],
@@ -611,7 +596,7 @@ describe("the Releases page's address", () => {
   it("names no tab once back on Releases", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer(inStream(release)),
+      "GET /api/release-streams": streamsAnswer(inStream(release)),
     });
     const history = renderApp("/releases?tab=schedules&grouping=status");
     await screen.findByRole("grid", { name: "Schedules" });
@@ -623,7 +608,7 @@ describe("the Releases page's address", () => {
   it("keeps the Schedules tab when a schedule is opened", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer(inStream(release)),
+      "GET /api/release-streams": streamsAnswer(inStream(release)),
     });
     const history = renderApp("/releases?tab=schedules");
     await userEvent.click(await detailsOf("Fictional Majors"));
@@ -636,7 +621,7 @@ describe("the Releases page's address", () => {
   it("opens a schedule's old address on the Schedules tab, with the schedule open", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": answer(inStream(release)),
+      "GET /api/release-streams": streamsAnswer(inStream(release)),
     });
     const history = renderApp(`/releases/${streamId}?grouping=status`);
     await screen.findByRole("heading", { name: "Fictional Majors", level: 2 });

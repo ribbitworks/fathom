@@ -34,14 +34,16 @@ import {
   cycleRunWords,
 } from "./releases.ts";
 import {
-  featureDraft,
-  fictionalFeature,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
+  streamId,
+} from "./test-releases.ts";
+import {
+  featureDraft,
+  fictionalFeature,
   recordDraft,
   serverAnswers,
-  streamId,
 } from "./test-support.tsx";
 
 const changeSetId = "00000000-0000-4000-8000-000000000001";

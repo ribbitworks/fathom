@@ -8,10 +8,9 @@ import { describe, expect, it } from "vitest";
 import {
   fictionalRelease,
   fictionalStream,
-  renderApp,
-  serverAnswers,
-  signedIn,
-} from "./test-support.tsx";
+  streamsAnswer,
+} from "./test-releases.ts";
+import { renderApp, serverAnswers, signedIn } from "./test-support.tsx";
 
 const release = fictionalRelease();
 
@@ -19,12 +18,10 @@ describe("a release's note in the address", () => {
   it("opens again with its release's details", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/release-streams": () =>
-        Response.json({
-          streams: [fictionalStream({ releases: [release] })],
-          canEditStreams: false,
-          canEditReleases: true,
-        }),
+      "GET /api/release-streams": streamsAnswer(
+        [fictionalStream({ releases: [release] })],
+        { canEditReleases: true },
+      ),
     });
     renderApp(`/releases?open=${release.id}&note=note.${release.id}`);
     expect(

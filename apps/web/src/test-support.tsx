@@ -9,13 +9,9 @@ import type {
   DraftKind,
   Feature,
   FeatureDraft,
-  Cycle,
-  CyclePattern,
   Field,
   List,
   RecordDraft,
-  Release,
-  ReleaseStream,
   TeamMonths,
 } from "@fathom/shared";
 import {
@@ -235,10 +231,7 @@ export const wholeText =
     );
   };
 
-// A fictional release stream, cycle pattern, release, and draft of one of them, with ids as the
-// server gives them, for each test to override what it needs.
-export const streamId = "10000000-0000-4000-8000-000000000001";
-
+// A fictional draft of a record, for each test to override what it needs.
 export const recordDraft = (
   fields: Partial<RecordDraft> = {},
 ): RecordDraft => ({
@@ -263,63 +256,6 @@ export const featureDraft = ({
 } = {}): FeatureDraft => ({
   ...recordDraft(fields),
   live: { values: {}, links: {}, notes: {}, numbers: {}, ...live },
-});
-
-export const fictionalPattern = (
-  fields: Partial<CyclePattern> = {},
-): CyclePattern => ({
-  id: "20000000-0000-4000-8000-000000000001",
-  startsOn: "2027-01-01",
-  length: 3,
-  unit: "months",
-  naming: "{YY}.{N}",
-  ...fields,
-});
-
-export const fictionalRelease = (fields: Partial<Release> = {}): Release => ({
-  id: "30000000-0000-4000-8000-000000000001",
-  keyNumber: 1,
-  name: "Fictional One",
-  firstCycle: "2027-01-01",
-  lastCycle: "2027-01-01",
-  shipsOn: null,
-  colour: null,
-  note: null,
-  ...fields,
-});
-
-// Cycles of three months from 2027-01-01, named 27.1 to 27.4 and so on.
-export const quarters = (count: number): Cycle[] =>
-  Array.from({ length: count }, (_, at) => {
-    const year = 2027 + Math.floor(at / 4);
-    const quarter = at % 4;
-    const month = (offset: number) =>
-      `${String(year)}-${String(quarter * 3 + offset + 1).padStart(2, "0")}`;
-    // Day 0 of the month after the quarter is the quarter's last day.
-    const endsOn = new Date(Date.UTC(year, quarter * 3 + 3, 0))
-      .toISOString()
-      .slice(0, 10);
-    return {
-      startsOn: `${month(0)}-01`,
-      endsOn,
-      name: `${String(year).slice(2)}.${String(quarter + 1)}`,
-      months: [0, 1, 2].map((offset) => ({ month: month(offset), share: 1 })),
-    };
-  });
-
-export const fictionalStream = (
-  fields: Partial<ReleaseStream> = {},
-): ReleaseStream => ({
-  id: streamId,
-  keyNumber: 1,
-  name: "Fictional Majors",
-  retired: false,
-  cyclesUntil: "2027-12-31",
-  endsOn: null,
-  patterns: [fictionalPattern()],
-  cycles: quarters(4),
-  releases: [],
-  ...fields,
 });
 
 export const fictionalFeature = (fields: Partial<Feature> = {}): Feature => ({

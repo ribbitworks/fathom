@@ -9,6 +9,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { draftPanelId } from "./drafts-panel.tsx";
 import { added, noPeople } from "./test-lists-page.tsx";
+import { streamsAnswer } from "./test-releases.ts";
 import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
 
 afterEach(() => {
@@ -37,12 +38,7 @@ const openDrafts = (session: () => Response, address: string) => {
     "GET /api/session": session,
     "GET /api/people": noPeople,
     "GET /api/lists": () => Response.json({ lists: [personalList] }),
-    "GET /api/release-streams": () =>
-      Response.json({
-        streams: [],
-        canEditStreams: false,
-        canEditReleases: false,
-      }),
+    "GET /api/release-streams": streamsAnswer([]),
     "GET /api/planning-settings": () => Response.json(startingPlanningSettings),
   });
   renderApp(address);

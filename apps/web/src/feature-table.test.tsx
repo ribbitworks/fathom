@@ -14,12 +14,15 @@ import { livePlanRecords } from "./plan-table.tsx";
 import { planDraftFields } from "./project-grids.tsx";
 import { cycleChoices, releaseOfCycle } from "./projects.ts";
 import {
+  fictionalCycle,
+  fictionalRelease,
+  fictionalStream,
+} from "./test-releases.ts";
+import {
   choices,
   cycleChoice,
   feature,
   featureDraft,
-  fictionalRelease,
-  fictionalStream,
   recordDraft,
 } from "./test-support.tsx";
 
@@ -91,27 +94,10 @@ describe("the Features table", () => {
   it("names a cycle only live, kept from being picked, in date order", () => {
     const offered = cycleChoices([
       fictionalStream({
-        cycles: [
-          {
-            startsOn: "2027-06-01",
-            endsOn: "2027-08-31",
-            name: "New",
-            months: [],
-          },
-        ],
+        cycles: [fictionalCycle("New", "2027-06-01", "2027-08-31")],
         liveCycles: [
-          {
-            startsOn: "2027-07-01",
-            endsOn: "2027-09-30",
-            name: "Old",
-            months: [],
-          },
-          {
-            startsOn: "2027-06-01",
-            endsOn: "2027-08-31",
-            name: "New",
-            months: [],
-          },
+          fictionalCycle("Old", "2027-07-01", "2027-09-30"),
+          fictionalCycle("New", "2027-06-01", "2027-08-31"),
         ],
       }),
     ]);
