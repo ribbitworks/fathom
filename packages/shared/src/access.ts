@@ -81,17 +81,17 @@ export const permissionDescriptions: Record<
 > = {
   "plan:view": {
     allows:
-      "Sees the plan: projects, proposals, customers, and milestones, with the change history of each.",
+      "Sees the plan: projects with their milestones and activities, proposals, and customers, with the change history of each.",
     without: "Does not see the plan.",
   },
   "plan:edit": {
     allows:
-      "Drafts changes to projects, proposals, customers, and milestones, and, with View Features and releases or View Configuration, to schedules with their cycles.",
+      "Drafts changes to projects with their milestones and activities, proposals, and customers, and, with View Features and releases or View Configuration, to schedules with their cycles.",
     without: "Cannot change the plan.",
   },
   "plan:approve": {
     allows:
-      "Approves or rejects drafts of projects, proposals, customers, and milestones, and, with View Features and releases or View Configuration, of schedules and cycle patterns.",
+      "Approves or rejects drafts of projects with their milestones and activities, proposals, and customers, and, with View Features and releases or View Configuration, of schedules and cycle patterns.",
     without: "Cannot approve drafts of the plan.",
     needs: ["plan:view"],
   },

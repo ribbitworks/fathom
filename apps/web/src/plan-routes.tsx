@@ -268,9 +268,11 @@ const planRecordSearch = viewSearchSchema.extend({
   open: z.uuid().optional().catch(undefined),
 });
 
-// The Projects page's address adds its tab. Changing the tab starts its view afresh.
+// The Projects page's address adds its tab, and a project's activity shown under its details.
+// Changing the tab starts its view afresh.
 const projectsSearch = planRecordSearch.extend({
   tab: projectTabSchema.optional().catch(undefined),
+  activity: z.uuid().optional().catch(undefined),
 });
 
 // Features' address adds whether it shows a board, and the board's stream, the cycle it starts from,
@@ -385,7 +387,8 @@ export const projectsRoute = createRoute({
   component: function Projects() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = projectsRoute.useNavigate();
-    const { tab, open, note, tableNote, ...search } = projectsRoute.useSearch();
+    const { tab, open, activity, note, tableNote, ...search } =
+      projectsRoute.useSearch();
     const notes = { note, tableNote };
     return (
       <ProjectsPage
@@ -396,11 +399,20 @@ export const projectsRoute = createRoute({
         }}
         approves={approvableKinds(permissions)}
         {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, tab, open, ...notes }, replace });
+          void navigate({
+            search: { ...next, tab, open, activity, ...notes },
+            replace,
+          });
         })}
         open={open}
         onOpen={(next) => {
           void navigate({ search: { ...search, tab, open: next, ...notes } });
+        }}
+        activity={activity}
+        onActivity={(next) => {
+          void navigate({
+            search: { ...search, tab, open, activity: next, ...notes },
+          });
         }}
         onMilestonesOf={(project) => {
           void navigate({

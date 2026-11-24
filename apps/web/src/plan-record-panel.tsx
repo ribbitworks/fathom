@@ -25,6 +25,8 @@ import {
   type PlanChange,
 } from "./plan-table.tsx";
 import {
+  activitiesColumnKey,
+  activityEffortColumn,
   customerTable,
   milestoneColumns,
   projectColumns,
@@ -36,9 +38,11 @@ import {
   changeMilestone,
   isProposal,
   type PlanRecord,
+  projectActivities,
   type PlanRecordKind,
   type PlanTab,
   type TableChoices,
+  planRecordKey,
 } from "./projects.ts";
 import { ScopeHistory } from "./scope-history.tsx";
 import { RecordPanel } from "./record-details.tsx";
@@ -55,6 +59,7 @@ import {
   ProjectExtras,
 } from "./plan-record-details.tsx";
 import type { RecordNode } from "./record-drafts.ts";
+import { type ActivityMenu, ProjectActivities } from "./project-activities.tsx";
 import { RecordKey } from "./record-key.tsx";
 import type { SidePanel } from "./side-panel.tsx";
 import type { CellValue, View } from "./table-view.ts";
@@ -169,6 +174,7 @@ export function recordPanel({
   nodes,
   onClose,
   menu,
+  activityMenu,
   showMilestones,
   follow,
   onChange,
@@ -189,6 +195,7 @@ export function recordPanel({
   nodes: readonly RecordNode[];
   onClose: () => void;
   menu: MilestoneMenu;
+  activityMenu: ActivityMenu;
   showMilestones: (project: Project) => void;
   follow: Follow;
   onChange: (
@@ -226,7 +233,9 @@ export function recordPanel({
     projects: () =>
       shownOf("project", plan.projects, () =>
         projectColumns(choices).filter(
-          ({ key }) => !projectDateColumns.some(([date]) => date === key),
+          ({ key }) =>
+            key !== activitiesColumnKey &&
+            !projectDateColumns.some(([date]) => date === key),
         ),
       ),
     proposals: () =>
@@ -281,15 +290,29 @@ export function recordPanel({
     ) : null;
   const extra =
     type === "project" ? (
-      <ProjectExtras
-        project={shown as Project}
-        show={show}
-        canEdit={canEdit}
-        approves={approves}
-        nodes={nodes}
-        menu={menu}
-        showMilestones={showMilestones}
-      />
+      <>
+        <ProjectExtras
+          project={shown as Project}
+          show={show}
+          canEdit={canEdit}
+          approves={approves}
+          nodes={nodes}
+          menu={menu}
+          showMilestones={showMilestones}
+        />
+        <ProjectActivities
+          project={shown as Project}
+          activities={asShown(projectActivities(plan)).filter(
+            ({ projectId }) => projectId === shown.id,
+          )}
+          effort={activityEffortColumn(choices.effortConversions)}
+          units={units}
+          canEdit={editsKind("project-activity")}
+          approves={approves}
+          nodes={nodes}
+          menu={activityMenu}
+        />
+      </>
     ) : null;
   return {
     key: "record",
@@ -305,9 +328,7 @@ export function recordPanel({
         draft={ownDraft}
         heldBy={shown.heldBy}
         onClose={onClose}
-        subtitle={
-          <RecordKey record={{ kind: type, keyNumber: shown.keyNumber }} />
-        }
+        subtitle={<RecordKey record={planRecordKey(type, shown)} />}
       >
         <PlanRecordDetails
           // Each record's details start in the units the table shows.

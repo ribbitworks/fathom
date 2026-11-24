@@ -171,6 +171,7 @@ describe("the records a draft uses", () => {
       ],
       projects: [],
       proposals: [],
+      activities: [],
       features: [
         feature({ id: "f", draft: featureDraft({ uses: [drafted] }) }),
       ],
@@ -198,6 +199,38 @@ describe("what a draft changes, in words", () => {
       {
         key: "name",
         field: { field: "Name", oldValue: "Before", newValue: "After" },
+      },
+    ]);
+  });
+
+  it("names an activity's changed total effort, in hours", () => {
+    expect(
+      planDraftFields(
+        "project-activity",
+        {
+          id: "a",
+          keyNumber: 1,
+          projectId: "p",
+          releaseId: null,
+          name: "Data migration",
+          description: null,
+          note: null,
+          estimateHours: 80,
+          draft: recordDraft({
+            changed: ["estimateHours"],
+            live: { estimateHours: 40 },
+          }),
+        },
+        choices(),
+      ),
+    ).toEqual([
+      {
+        key: "estimateHours",
+        field: {
+          field: "Total effort",
+          oldValue: "40 hours",
+          newValue: "80 hours",
+        },
       },
     ]);
   });

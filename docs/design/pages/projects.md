@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/projects.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Fathom: Projects Page
@@ -25,6 +25,10 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 ## Record Details
 
 - **Milestones:** have no panel of their own; a project's panel lists them, with Add milestone.
+- **Activities:** a project's panel lists its [activities](../domain-model.md#activity) after Milestones, each a link to its own details with its Total effort, and its menu: Show details, Remove activity and its draft's actions. Add activity sits under the list.
+  - **An activity's details:** open under the project's, at their own address (`activity`), with Name, Project, Description, Total effort and Notes; a link to one opens there.
+  - **Adding:** Add activity opens the New form under the project's details, its Project set; once added, the activity's details open.
+  - **The table:** the Projects tab has an Activities column naming them, read only.
 - **A project's dates:** come from its milestones, so they have no pencil.
 - **Linked records:** customers and proposals open in their own tab's panel; features open on [Features](features.md).
 

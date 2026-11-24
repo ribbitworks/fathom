@@ -56,10 +56,12 @@ export const noteOpenFor = (
 // Whether the address names a note of a record other than the one shown, so it should be taken out.
 export const noteLeftBehind = (
   address: string | undefined,
-  shown: string | undefined,
+  shown: readonly string[],
 ): boolean => {
   const kept = keptNote(address);
-  return kept !== undefined && shown !== undefined && kept.recordId !== shown;
+  return (
+    kept !== undefined && shown.length > 0 && !shown.includes(kept.recordId)
+  );
 };
 
 // The note the page's address keeps open, and how to keep another, or none, there.

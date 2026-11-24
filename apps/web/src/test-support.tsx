@@ -350,6 +350,7 @@ export const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
   customers: [],
   proposals: [],
   projects: [],
+  activities: [],
   features: [],
   statuses: [],
   featureStatuses: [

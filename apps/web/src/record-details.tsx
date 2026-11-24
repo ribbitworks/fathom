@@ -236,14 +236,23 @@ export function RecordSection({
 }
 
 export function RecordLink({
+  id,
   name,
   onShow,
 }: {
+  // Where focus can come back to, once what the link shows closes.
+  id?: string;
   name: ReactNode;
   onShow: () => void;
 }) {
   return (
-    <Anchor component="button" type="button" ta="start" onClick={onShow}>
+    <Anchor
+      id={id}
+      component="button"
+      type="button"
+      ta="start"
+      onClick={onShow}
+    >
       {name}
     </Anchor>
   );

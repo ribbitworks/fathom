@@ -73,6 +73,7 @@ import {
   planNodes,
   projectPlanQuery,
   tableChoices,
+  planRecordKey,
 } from "./projects.ts";
 import { recordKey } from "./record-drafts.ts";
 import { recordNodes, releaseStreamsQuery } from "./releases.ts";
@@ -538,7 +539,7 @@ function planEntries(
           credited(describeField(field), key, draft),
         ),
         { records: [ref] },
-        { kind, keyNumber: record.keyNumber },
+        planRecordKey(kind, record),
         heldBy,
       ),
     ];

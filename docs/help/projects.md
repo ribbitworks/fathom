@@ -8,6 +8,7 @@
 - **Proposals:** a proposal is work offered or requested that may become a project, such as a bid or a customer's request.
 - **Customers:** a customer is whoever a project's work is for.
 - **Milestones:** the dated points in a project, such as a delivery to the customer.
+- **Activities:** work a project needs that isn't a feature, such as data migration or operator training.
 - **Features:** a project or proposal names the features it needs. Features are planned on the [Features](features.md) page.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A hollow dot marks a change you haven't published yet.
 - **Approval:** a draft goes live once someone whose role approves the plan approves it on the **Drafts** page.
@@ -34,7 +35,7 @@ You're done when the new row shows with a hollow dot.
 
 You can also right-click the row and select **Show details**. The details open beside the table.
 
-Each customer, proposal and feature named there is a link to its own details. Milestones have no details of their own.
+Each customer, proposal and feature named there is a link to its own details, and so is each of a project's activities, whose details open under the project's. Milestones have no details of their own.
 
 The record's key is under its name, small and grey. Select it to copy a link to the record, or the key itself. See [Keys and links](keys-and-links.md) for more.
 
@@ -89,6 +90,18 @@ You're done when the milestone shows in the project's details.
 
 To change a milestone there, select **Edit…** in its **⋯** menu. To remove it, select **Remove milestone** in the same menu.
 
+### Add an Activity to a Project
+
+1. Open the project's details.
+1. Under **Activities**, select **Add activity**. A form opens under the project's details.
+1. Type the activity's **Name**.
+1. If you like, type a **Description** and its **Total effort**.
+1. Select **Add**.
+
+The activity's details open, so you can add notes. You're done when the activity shows under **Activities** with a hollow dot.
+
+To change an activity, open its details by selecting its name, then select a value. To remove it, select **Remove activity** in its **⋯** menu. Fathom won't remove an activity once people are allocated to it.
+
 ### Go From a Project to Its Milestones or Features
 
 - To see a project's milestones, select **Show milestones** in the project's **⋯** menu, or beside the **Milestones** heading in its details. **Milestones** opens, showing only that project's.
@@ -124,9 +137,9 @@ See [People](people.md#export-people) for what the file holds.
 1. Open the record's **⋯** menu.
 1. Select **Remove** and the record's kind, such as **Remove project**.
 
-The row is struck through until the removal is approved. A project takes its milestones with it.
+The row is struck through until the removal is approved. A project takes its milestones and activities with it.
 
-Fathom won't remove a customer or a proposal that another record still names. It also won't remove a project once people are allocated to it.
+Fathom won't remove a customer or a proposal that another record still names. It also won't remove a project once people are allocated to one of its activities.
 
 You're done when the row is struck through.
 
@@ -137,6 +150,8 @@ You're done when the row is struck through.
 - **Status** is a proposal's status, such as Open, Won, Lost or Withdrawn. Any status can follow any other.
 - **Owner** names the person who owns the project or proposal.
 - **An internal project** has no customers. Nothing marks it.
+- **Activities** in the **Projects** table names each project's activities.
+- **Total effort** is an activity's estimate. It shows in hours. To type it in another unit, such as person-days, choose the unit beside the box while you change it.
 
 ## Where Changes Go
 

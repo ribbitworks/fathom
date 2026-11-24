@@ -5,9 +5,13 @@
 // draft name it, and each project's and proposal's scope history.
 
 import {
+  type Activity,
+  type ActivityRequest,
+  activitySubject,
   type Choice,
   type Customer,
   type CustomerRequest,
+  draftKeyKinds,
   type EffortConversions,
   type Feature,
   type FeatureColumns,
@@ -26,6 +30,8 @@ import {
   type ProjectRequest,
   projectSubjects,
   type Proposal,
+  type RecordKeyKind,
+  type RecordKeyOf,
   type ProposalRequest,
   type ReleaseStream,
   type RemovalReasonRequest,
@@ -209,36 +215,55 @@ export const namesOf = (
 export const isProposal = (record: PlanRecord): record is Proposal =>
   "removalReasons" in record;
 
-const milestonesPath = (projectId: string) =>
-  `/api/projects/${encodeURIComponent(projectId)}/milestones`;
+// The parts of a project, each under its project's address.
+type ProjectPart = "milestones" | "activities";
+
+const partsPath = (part: ProjectPart, projectId: string) =>
+  `/api/projects/${encodeURIComponent(projectId)}/${part}`;
+
+const partPath = (
+  part: ProjectPart,
+  record: { id: string; projectId: string },
+) => `${partsPath(part, record.projectId)}/${encodeURIComponent(record.id)}`;
+
+const addPart = (part: ProjectPart, projectId: string, request: object) =>
+  sendJsonFor("POST", partsPath(part, projectId), request, savedPlan);
+
+const changePart = (
+  part: ProjectPart,
+  record: { id: string; projectId: string },
+  request: object,
+) => sendJsonFor("PUT", partPath(part, record), request, savedPlan);
+
+const removePart = async (
+  part: ProjectPart,
+  record: { id: string; projectId: string },
+) => (await sendDeleteFor(partPath(part, record), savedSchema)).changeSetId;
 
 export const addMilestone = (
   projectId: string,
   request: MilestoneRequest,
-): Promise<SavedPlan> =>
-  sendJsonFor("POST", milestonesPath(projectId), request, savedPlan);
+): Promise<SavedPlan> => addPart("milestones", projectId, request);
 
 export const changeMilestone = (
   milestone: Milestone,
   request: MilestoneRequest,
-): Promise<SavedPlan> =>
-  sendJsonFor(
-    "PUT",
-    `${milestonesPath(milestone.projectId)}/${encodeURIComponent(milestone.id)}`,
-    request,
-    savedPlan,
-  );
+): Promise<SavedPlan> => changePart("milestones", milestone, request);
 
-export async function removeMilestone(
-  milestone: Milestone,
-): Promise<string | null> {
-  return (
-    await sendDeleteFor(
-      `${milestonesPath(milestone.projectId)}/${encodeURIComponent(milestone.id)}`,
-      savedSchema,
-    )
-  ).changeSetId;
-}
+export const removeMilestone = (milestone: Milestone): Promise<string | null> =>
+  removePart("milestones", milestone);
+
+// A project's activity, which always names its project.
+export type ProjectActivity = Activity & { projectId: string };
+
+export const isProjectActivity = (
+  activity: Activity,
+): activity is ProjectActivity => activity.projectId !== null;
+
+// The activities the plan holds, all of them a project's.
+export const projectActivities = (
+  plan: Pick<ProjectPlan, "activities">,
+): ProjectActivity[] => plan.activities.filter(isProjectActivity);
 
 // What changing a record sends: the whole record, as the server takes it.
 export const customerRequest = (customer: Customer): CustomerRequest => ({
@@ -268,6 +293,13 @@ export const milestoneRequest = (milestone: Milestone): MilestoneRequest => ({
   name: milestone.name,
   date: milestone.date,
   customerDelivery: milestone.customerDelivery,
+});
+
+export const activityRequest = (activity: Activity): ActivityRequest => ({
+  name: activity.name,
+  description: activity.description,
+  note: activity.note,
+  estimateHours: activity.estimateHours,
 });
 
 // The fields a feature's table edits, as the server shows them.
@@ -335,7 +367,7 @@ export const allMilestones = (plan: Pick<ProjectPlan, "projects">) =>
 
 type PlanLists = Pick<
   ProjectPlan,
-  "customers" | "projects" | "proposals" | "features"
+  "customers" | "projects" | "proposals" | "features" | "activities"
 >;
 
 // A record named with its ID first, where it has one, such as P-2001 Crane Control.
@@ -347,13 +379,13 @@ export const identifiedLabel = ({
   externalId?: string | null;
 }) => (externalId == null ? name : `${externalId} ${name}`);
 
-// Every customer, proposal, project, milestone, and feature, named as decisions name them, and as
-// the Drafts table names them.
+// Every customer, proposal, project, milestone, project activity and feature, named as decisions
+// name them, and as the Drafts table names them.
 export function listedPlanRecords(plan: PlanLists): {
   kind: PlanRecordKind;
   record: PlanRecord;
   subject: string;
-  // The record's name as a table names it, with its project's for a milestone.
+  // The record's name as a table names it, with its project's for a milestone or an activity.
   name: string;
 }[] {
   return [
@@ -388,6 +420,14 @@ export function listedPlanRecords(plan: PlanLists): {
         subject: projectSubjects.milestone(record.name, project.name),
         name: `${record.name} of ${identifiedLabel(project)}`,
       })),
+      ...projectActivities(plan)
+        .filter(({ projectId }) => projectId === project.id)
+        .map((record) => ({
+          kind: "project-activity" as const,
+          record,
+          subject: activitySubject(record.name, project.name),
+          name: `${record.name} of ${identifiedLabel(project)}`,
+        })),
     ]),
   ];
 }
@@ -421,15 +461,41 @@ export const planAddress = (next: PlanTab, record?: string) =>
     ? { to: "/features" as const, search: { open: record } }
     : { to: "/projects" as const, search: projectsTabSearch(next, record) };
 
-export type PlanRecord = Customer | Project | Proposal | Milestone | Feature;
+// The address of a project's activity: its details under its project's on Projects.
+export const activityAddress = (projectId: string, activity: string) => ({
+  to: "/projects" as const,
+  search: { open: projectId, activity },
+});
+
+export type PlanRecord =
+  Customer | Project | Proposal | Milestone | ProjectActivity | Feature;
 export const isFeature = (record: PlanRecord): record is Feature =>
   "featureTeamId" in record;
 
 export type PlanRecordKind =
-  "customer" | "project" | "proposal" | "milestone" | "feature";
+  | "customer"
+  | "project"
+  | "proposal"
+  | "milestone"
+  | "project-activity"
+  | "feature";
+
+// A plan record's key, its kind as drafts number it, such as ACTIVITY for a project's activity.
+export const planRecordKey = (
+  kind: PlanRecordKind,
+  { keyNumber }: { keyNumber: number },
+): RecordKeyOf & { kind: Exclude<RecordKeyKind, "column"> } => ({
+  // Every kind of the plan's records has a key, and none is a column.
+  // eslint-disable-next-line security/detect-object-injection
+  kind: draftKeyKinds[kind] as Exclude<RecordKeyKind, "column">,
+  keyNumber,
+});
 
 // A milestone being added, with the project it is added to.
 export type MilestoneAdding = MilestoneRequest & { projectId: string };
+
+// An activity being added, with the project it is added to.
+export type ActivityAdding = ActivityRequest & { projectId: string };
 
 // What each kind of the plan's records has in common: what a new one holds until the server has
 // saved it, where they are in the plan, and how each is saved. Requests are built from the kind's
@@ -442,6 +508,7 @@ interface PlanRecordOperations {
     | Blank<Project>
     | Blank<Proposal>
     | Blank<Milestone>
+    | Blank<ProjectActivity>
     | Blank<Feature>;
   all: (plan: ProjectPlan) => readonly PlanRecord[];
   withAll: (plan: ProjectPlan, records: readonly PlanRecord[]) => ProjectPlan;
@@ -533,6 +600,34 @@ const planRecordOperations: Readonly<
       }),
     remove: (record) => removeMilestone(record as Milestone),
   },
+  "project-activity": {
+    blank: {
+      name: "",
+      projectId: "",
+      releaseId: null,
+      description: null,
+      note: null,
+      estimateHours: null,
+    },
+    all: projectActivities,
+    withAll: (plan, records) => ({
+      ...plan,
+      activities: [
+        ...plan.activities.filter((activity) => !isProjectActivity(activity)),
+        ...(records as ProjectActivity[]),
+      ],
+    }),
+    add: (request) => {
+      const { projectId, ...activity } = request as ActivityAdding;
+      return addPart("activities", projectId, activity);
+    },
+    change: (record, change) =>
+      changePart("activities", record as ProjectActivity, {
+        ...activityRequest(record as ProjectActivity),
+        ...change,
+      }),
+    remove: (record) => removePart("activities", record as ProjectActivity),
+  },
   feature: {
     blank: {
       name: "",
@@ -595,6 +690,7 @@ export interface TableChoices {
   proposals: readonly Proposal[];
   projects: readonly Project[];
   features: readonly Feature[];
+  activities: readonly ProjectActivity[];
   statuses: Choice[];
   // In their list's order, each with its meaning.
   featureStatuses: Choice[];
@@ -640,6 +736,7 @@ export const tableChoices = (
   proposals: plan.proposals,
   projects: plan.projects,
   features: plan.features,
+  activities: projectActivities(plan),
   featureColumns: plan.featureColumns,
   drafted: { projects: plan.projects, proposals: plan.proposals },
   effortConversions,

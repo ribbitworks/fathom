@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Projects, Proposals, Customers and Milestones
@@ -51,7 +51,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The **Projects** page opens.
     - The **Projects** tab is chosen.
-    - The table's columns are **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**.
+    - The table's columns are **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **Activities**, **First milestone**, **Last milestone** and **Next delivery**.
     - There is a row for each seeded project.
     - There is no **New project** button.
   - **Notes:**
@@ -87,7 +87,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `FA04` Open the project's ⋯ menu and select **Show details**.
   - **Expected:**
     - The side panel opens, headed with the project's name.
-    - It lists **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date.
+    - It lists **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date, then **Activities** with each of its activities.
     - There is no **Add milestone** button.
     - No milestone has a ⋯ button.
   - **Notes:**

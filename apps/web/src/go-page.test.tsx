@@ -20,6 +20,7 @@ afterEach(() => {
 });
 
 const recordId = "40000000-0000-4000-8000-000000000001";
+const ownerId = "a0000000-0000-4000-8000-0000000000ff";
 const otherId = "40000000-0000-4000-8000-000000000002";
 
 const lookup = (answer: RecordLookup) => () => Response.json(answer);
@@ -90,31 +91,31 @@ describe("a link to a record found", () => {
   );
 
   it.each([
-    ["project", "/projects"],
-    ["release", "/releases"],
+    ["project", "/projects", `?open=${ownerId}&activity=${recordId}`],
+    ["release", "/releases", `?open=${ownerId}`],
   ] as const)(
-    "opens an activity of a %s on its owner's page, with the owner's details open",
-    async (owner, pathname) => {
+    "opens an activity of a %s on its owner's page",
+    async (owner, pathname, search) => {
       const { history } = await follow("/go/activity/2", {
         "GET /api/go/activity/2": found("activity", {
-          activityOf: { owner, id: recordId },
+          activityOf: { owner, id: ownerId },
         }),
       });
       await waitFor(() => {
         expect(history.location.pathname).toBe(pathname);
       });
-      expect(history.location.search).toBe(`?open=${recordId}`);
+      expect(history.location.search).toBe(search);
     },
   );
 
-  it("opens an activity found without its owner on Projects, by its own ID", async () => {
+  it("opens Projects for an activity found without its owner", async () => {
     const { history } = await follow("/go/activity/2", {
       "GET /api/go/activity/2": found("activity"),
     });
     await waitFor(() => {
       expect(history.location.pathname).toBe("/projects");
     });
-    expect(history.location.search).toBe(`?open=${recordId}`);
+    expect(history.location.search).toBe("");
   });
 
   it("gives way to the record's page, so Back returns to the page the link was followed from", async () => {

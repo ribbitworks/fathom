@@ -579,8 +579,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The **Projects** tab is chosen.
   - **Notes:**
 
-- [ ] `9D69` Select **Show details** in the **⋯** menu of the first project.
+- [ ] `9D69` Select **Show details** in the **⋯** menu of 'Crane Control'.
   - **Expected:** The text, marks and tabs on the page and side panel are easy to read.
+  - **Notes:**
+
+- [ ] `58BA` Under **Activities** in the side panel, select 'Data migration'.
+  - **Expected:** The activity's details open under the project's, and their text and marks are easy to read.
+  - **Notes:**
+
+- [ ] `01C0` Close the activity's details with the **×** at their top right.
+  - **Expected:** The activity's details close, and the project's stay open.
   - **Notes:**
 
 - [ ] `D78F` Close the side panel with the **×** at its top right.

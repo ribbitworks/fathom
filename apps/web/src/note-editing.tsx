@@ -154,16 +154,22 @@ export function useNoteEditing(detailsTitleId: string) {
   // be shown and the address keep it open, once it has caught up with its opening.
   const stillOpen = (
     { recordId, address: kept, inAddress }: Writing,
-    shown: string | undefined,
+    shown: readonly string[],
   ) =>
     changing ||
-    (shown === recordId &&
+    (shown.includes(recordId) &&
       (kept === undefined || !inAddress || address.note === kept));
 
   // The panel of the note open, while there is one, given Fathom's own ID for the record shown, if
-  // any. Showing another record, or none, closes it, unless it has been changed, which the page asks
+  // any, or for each of the records shown, as a project's details and one of its activities'.
+  // Showing another record, or none, closes it, unless it has been changed, which the page asks
   // about first, so it stays only when the address moved on its own, as by Back.
-  const note = (shown: string | undefined): SidePanel | undefined => {
+  const note = (
+    showing: string | undefined | readonly (string | undefined)[],
+  ): SidePanel | undefined => {
+    const shown = (Array.isArray(showing) ? showing : [showing]).filter(
+      (id): id is string => id !== undefined,
+    );
     if (noteLeftBehind(address.note, shown) && !changing) leave(address.note);
     if (writing === undefined) return undefined;
     if (!stillOpen(writing, shown)) {
@@ -175,7 +181,7 @@ export function useNoteEditing(detailsTitleId: string) {
       setWriting({ ...writing, inAddress: true });
     }
     const { recordId, name, column, Editor, value, readOnly, finish } = writing;
-    const stillShown = shown === recordId;
+    const stillShown = shown.includes(recordId);
     // Focus goes back to the note's button, or, with another record shown, to its name.
     const close = () => {
       forget();

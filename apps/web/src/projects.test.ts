@@ -5,7 +5,13 @@
 
 import type { ProjectPlan } from "@fathom/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { namersIn, operationsOf, withNamers } from "./projects.ts";
+import {
+  listedPlanRecords,
+  namersIn,
+  operationsOf,
+  planRecordKey,
+  withNamers,
+} from "./projects.ts";
 import { bodyOf, noFeatureColumns, serverAnswers } from "./test-support.tsx";
 
 const featureId = "a0000000-0000-4000-8000-000000000001";
@@ -118,5 +124,43 @@ describe("the plan with a feature's projects changed", () => {
       [featureId, otherId].sort(),
     ]);
     expect(changed.proposals).toEqual(plan().proposals);
+  });
+});
+
+describe("a project's activity among the plan's records", () => {
+  const withActivity: ProjectPlan = {
+    ...plan(),
+    activities: [
+      {
+        id: "activity",
+        keyNumber: 14,
+        projectId: "kept",
+        releaseId: null,
+        name: "Data migration",
+        description: null,
+        note: null,
+        estimateHours: null,
+      },
+    ],
+  };
+
+  it("is named with its project, as the Drafts page and decisions name it", () => {
+    expect(
+      listedPlanRecords(withActivity)
+        .filter(({ kind }) => kind === "project-activity")
+        .map(({ subject, name }) => ({ subject, name })),
+    ).toEqual([
+      {
+        subject: "the activity Data migration of Fictional kept",
+        name: "Data migration of Fictional kept",
+      },
+    ]);
+  });
+
+  it("is keyed as an ACTIVITY", () => {
+    expect(planRecordKey("project-activity", { keyNumber: 14 })).toEqual({
+      kind: "activity",
+      keyNumber: 14,
+    });
   });
 });

@@ -62,23 +62,29 @@ describe("the note open for the record shown", () => {
 
 describe("a note left behind", () => {
   it("is one named for a record other than the one shown", () => {
-    expect(noteLeftBehind(openNoteValue(recordId, "note"), otherId)).toBe(true);
+    expect(noteLeftBehind(openNoteValue(recordId, "note"), [otherId])).toBe(
+      true,
+    );
+  });
+
+  it("isn't the note of any record shown, as a project's under one of its activities", () => {
+    expect(
+      noteLeftBehind(openNoteValue(recordId, "note"), [otherId, recordId]),
+    ).toBe(false);
   });
 
   it("isn't the note of the record shown", () => {
-    expect(noteLeftBehind(openNoteValue(recordId, "note"), recordId)).toBe(
+    expect(noteLeftBehind(openNoteValue(recordId, "note"), [recordId])).toBe(
       false,
     );
   });
 
   it("isn't known while no record is shown, as while a page loads", () => {
-    expect(noteLeftBehind(openNoteValue(recordId, "note"), undefined)).toBe(
-      false,
-    );
+    expect(noteLeftBehind(openNoteValue(recordId, "note"), [])).toBe(false);
   });
 
   it("isn't anything with no note named", () => {
-    expect(noteLeftBehind(undefined, recordId)).toBe(false);
+    expect(noteLeftBehind(undefined, [recordId])).toBe(false);
   });
 });
 

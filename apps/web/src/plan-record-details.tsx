@@ -2,14 +2,7 @@
 
 // The values of a plan record open beside its table, with a project's dates and milestones.
 
-import type {
-  Asking,
-  DraftKind,
-  Milestone,
-  Project,
-  RecordRef,
-  Show,
-} from "@fathom/shared";
+import type { DraftKind, Milestone, Project, Show } from "@fathom/shared";
 import { Button, Group, Menu, Stack, Text } from "@mantine/core";
 import { Icon } from "./icons.tsx";
 import details from "./record-details.module.css";
@@ -51,25 +44,16 @@ import {
 } from "./record-editing.tsx";
 import type { NoteContext, NoteOpening } from "./note-editing.tsx";
 import { noOthers } from "./new-plan-record-panel.tsx";
-import { type RecordNode, recordNode } from "./record-drafts.ts";
-import { RecordMenu } from "./record-menu.tsx";
-import {
-  besideLive,
-  DraftedItem,
-  MarkRow,
-  useDraftView,
-} from "./status-mark.tsx";
+import type { RecordNode } from "./record-drafts.ts";
+import { changeablePart, type PartMenu, PartRow } from "./project-parts.tsx";
+import { besideLive, useDraftView } from "./status-mark.tsx";
 import type { CellValue, View } from "./table-view.ts";
 import { formatDay } from "./day-formats.ts";
 
 // The kind of a record in a table of one kind.
 export const onlyKind = "";
 
-export interface MilestoneMenu {
-  decide: (asking: Asking, ref: RecordRef) => void;
-  discard: (milestone: Milestone) => void;
-  resubmit: (milestone: Milestone) => void;
-  remove: (milestone: Milestone) => void;
+export interface MilestoneMenu extends PartMenu<Milestone> {
   edit: (project: Project, milestone?: Milestone) => void;
 }
 
@@ -90,6 +74,7 @@ const onTabOf =
 const linkedPages = new Map<string, (follow: Follow, id: string) => void>([
   ["customerIds", onTabOf("customers")],
   ["projectIds", onTabOf("projects")],
+  ["projectId", onTabOf("projects")],
   ["proposalIds", onTabOf("proposals")],
   ["featureIds", onTabOf("features")],
   [
@@ -384,74 +369,44 @@ export function ProjectExtras({
         )}
         <Stack gap={0}>
           {milestones.map((milestone) => (
-            <div
+            <PartRow
               key={milestone.id}
-              className={[details.row, details.itemRow].join(" ")}
-            >
-              <div>
-                <MarkRow>
-                  <DraftedItem
-                    draft={milestone.draft}
-                    heldBy={milestone.heldBy}
-                  >
-                    <Text
-                      fz="sm"
-                      td={
-                        milestone.draft?.action === "deleted"
-                          ? "line-through"
-                          : undefined
-                      }
-                    >
-                      {milestone.name}
-                    </Text>
-                  </DraftedItem>
-                </MarkRow>
-                <Text fz="xs" c="dimmed">
+              kind="milestone"
+              part={milestone}
+              name={milestone.name}
+              line={
+                <>
                   {formatDay(milestone.date)}
                   {milestone.customerDelivery && ", customer delivery"}
-                </Text>
-              </div>
-              <RecordMenu
-                title={milestone.name}
-                node={recordNode("milestone", milestone, "")}
-                canEditDraft={canEdit}
-                actions={{
-                  approves,
-                  nodes,
-                  decide: menu.decide,
-                  resubmit: () => {
-                    menu.resubmit(milestone);
-                  },
-                  discard: () => {
-                    menu.discard(milestone);
-                  },
-                }}
-              >
-                {canEdit &&
-                milestone.heldBy === undefined &&
-                milestone.draft?.action !== "deleted" ? (
-                  <>
+                </>
+              }
+              canEdit={canEdit}
+              approves={approves}
+              nodes={nodes}
+              menu={menu}
+            >
+              {canEdit && changeablePart(milestone) ? (
+                <>
+                  <Menu.Item
+                    onClick={() => {
+                      menu.edit(project, milestone);
+                    }}
+                  >
+                    Edit…
+                  </Menu.Item>
+                  {milestone.draft?.action !== "created" && (
                     <Menu.Item
+                      color="red"
                       onClick={() => {
-                        menu.edit(project, milestone);
+                        menu.remove(milestone);
                       }}
                     >
-                      Edit…
+                      Remove milestone
                     </Menu.Item>
-                    {milestone.draft?.action !== "created" && (
-                      <Menu.Item
-                        color="red"
-                        onClick={() => {
-                          menu.remove(milestone);
-                        }}
-                      >
-                        Remove milestone
-                      </Menu.Item>
-                    )}
-                  </>
-                ) : undefined}
-              </RecordMenu>
-            </div>
+                  )}
+                </>
+              ) : undefined}
+            </PartRow>
           ))}
         </Stack>
         {editable && (

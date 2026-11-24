@@ -28,6 +28,7 @@ import {
   type PlanRecordKind,
   type PlanTab,
   identifiedLabel,
+  planRecordKey,
 } from "./projects.ts";
 import { tipAttribute } from "./table-tips.tsx";
 import {
@@ -198,14 +199,19 @@ const drafts = (type: PlanRecordKind) => (ids: string[]) => ({
 export const noRecordProblem = () => undefined;
 
 // Made once for each kind, so a table's Key column is made again only when its records change.
+const keyOf =
+  (kind: PlanRecordKind) =>
+  (record: PlanRecord): RecordKeyOf =>
+    planRecordKey(kind, record);
 const planKeyOf: Readonly<
   Record<PlanRecordKind, (record: PlanRecord) => RecordKeyOf>
 > = {
-  customer: ({ keyNumber }) => ({ kind: "customer", keyNumber }),
-  project: ({ keyNumber }) => ({ kind: "project", keyNumber }),
-  proposal: ({ keyNumber }) => ({ kind: "proposal", keyNumber }),
-  milestone: ({ keyNumber }) => ({ kind: "milestone", keyNumber }),
-  feature: ({ keyNumber }) => ({ kind: "feature", keyNumber }),
+  customer: keyOf("customer"),
+  project: keyOf("project"),
+  proposal: keyOf("proposal"),
+  milestone: keyOf("milestone"),
+  "project-activity": keyOf("project-activity"),
+  feature: keyOf("feature"),
 };
 
 export function planTable<Rec extends PlanRecord, Request>({

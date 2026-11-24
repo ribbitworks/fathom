@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Projects page's tables, customers, projects, proposals and milestones, each on the shared
-// table.
+// The Projects page's tables, customers, projects, proposals, milestones and projects' activities,
+// each on the shared table.
 
 import {
+  activityLengths,
   type Customer,
   type CustomerRequest,
   type Milestone,
@@ -17,11 +18,13 @@ import {
 } from "@fathom/shared";
 import { Menu } from "@mantine/core";
 import type { DraftField } from "./draft-details.tsx";
-import { featureColumns } from "./feature-table.tsx";
+import { effortColumn, featureColumns } from "./feature-table.tsx";
 import type {
+  ActivityAdding,
   MilestoneAdding,
   PlanRecord,
   PlanRecordKind,
+  ProjectActivity,
   TableChoices,
 } from "./projects.ts";
 import { isPending } from "./grid-drafts.ts";
@@ -39,6 +42,7 @@ import {
   ownerColumn,
   pickedColumn,
   type PlanChange,
+  recordsColumn,
   planTable,
   recordMenu,
   savedKind,
@@ -98,8 +102,84 @@ export function projectColumns(
       planColumnNames.featureIds,
       choices.features,
     ),
+    recordsColumn<Project, PlanChange>(
+      activitiesColumnKey,
+      activitiesLabel,
+      choices.activities,
+      {
+        namedBy: (project) =>
+          choices.activities
+            .filter(({ projectId }) => projectId === project.id)
+            .map(({ id }) => id),
+        readOnly: true,
+      },
+    ),
     ...projectDateColumns.map(([key, label]) => projectDateColumn(key, label)),
   ];
+}
+
+export const activitiesLabel = "Activities";
+
+// The Projects table's column naming each project's activities, which its details list on their own.
+export const activitiesColumnKey = "activities";
+
+export const totalEffortLabel = "Total effort";
+
+// An activity's total effort, in the units effort is shown in.
+export const activityEffortColumn = (
+  effortConversions: TableChoices["effortConversions"],
+): Column<ProjectActivity, PlanChange> =>
+  effortColumn<ProjectActivity>(effortConversions, totalEffortLabel);
+
+// A project's activity: its project, set where it is added, its name, description, total effort
+// and notes.
+export function activityColumns(
+  projects: readonly Project[],
+  effortConversions: TableChoices["effortConversions"],
+): Column<ProjectActivity, PlanChange>[] {
+  return [
+    field<ProjectActivity>("name", planColumnNames.name, "text", {
+      required: true,
+      maxLength: projectLengths.name,
+    }),
+    {
+      ...field<ProjectActivity>(
+        "projectId",
+        planColumnNames.projectId,
+        "choice",
+        {
+          required: true,
+          choices: identified(projects),
+        },
+      ),
+      readOnlyOn: (kind) => kind === savedKind,
+    },
+    field<ProjectActivity>("description", planColumnNames.description, "text", {
+      maxLength: activityLengths.description,
+    }),
+    activityEffortColumn(effortConversions),
+    field<ProjectActivity>("note", planColumnNames.note, "note"),
+  ];
+}
+
+export const activityWords = {
+  label: "Activities",
+  one: "activity",
+  noun: "activities",
+};
+
+// A project's activities, as its details list them and its New form adds one.
+export function activityTable(
+  projects: readonly Project[],
+  effortConversions: TableChoices["effortConversions"],
+): RecordTable<ProjectActivity, PlanChange, ActivityAdding> {
+  return planTable<ProjectActivity, ActivityAdding>({
+    type: "project-activity",
+    ...activityWords,
+    kinds: [newKind, savedKind],
+    columns: () => activityColumns(projects, effortConversions),
+    request: (changes) => merged(changes) as ActivityAdding,
+  });
 }
 
 // What a project's or proposal's menu opens: its details, and the features it names, on Features.
@@ -266,6 +346,8 @@ const draftColumns: Readonly<
   project: projectColumns,
   proposal: proposalColumns,
   milestone: (choices) => milestoneColumns(choices.projects),
+  "project-activity": (choices) =>
+    activityColumns(choices.projects, choices.effortConversions),
   feature: (choices) => featureColumns(choices),
 };
 

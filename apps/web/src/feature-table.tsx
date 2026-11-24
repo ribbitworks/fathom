@@ -33,7 +33,11 @@ import { EffortCell } from "./effort-cell.tsx";
 import { effortColumnUnits, hoursWords, unitLabel } from "./effort.ts";
 import { decimalUpTo } from "./numbers.ts";
 import { choice } from "./lists.ts";
-import { type FeatureFields, type TableChoices } from "./projects.ts";
+import {
+  type FeatureFields,
+  type PlanRecord,
+  type TableChoices,
+} from "./projects.ts";
 import {
   cycleChoiceId,
   type ReleaseGroup,
@@ -93,33 +97,33 @@ const labelled = (
   conversions: EffortConversions,
 ) => ({ ...unit, label: unitLabel(unit, conversions) });
 
-// A feature's estimate, kept in hours and shown in the unit the view names, in which it is typed.
-// Without the conversions, as for a draft's details, it is offered in hours alone, which need none.
-function effortColumn(
+// An estimate, a feature's or an activity's, kept in hours and shown in the unit the view names, in
+// which it is typed. Without the conversions, as for a draft's details, it is offered in hours
+// alone, which need none.
+type Estimated = { estimateHours: number | null };
+
+export function effortColumn<Rec extends PlanRecord & Estimated>(
   conversions: EffortConversions | undefined,
-): Column<Feature, PlanChange> {
+  label: string = planColumnNames.estimateHours,
+): Column<Rec, PlanChange> {
   const [hours, ...others] = effortColumnUnits;
   const converting = conversions ?? startingEffortConversions;
   const shownIn = (
     unit: ColumnUnit,
     places: number,
-  ): Column<Feature, PlanChange> => {
+  ): Column<Rec, PlanChange> => {
     const effortUnit = effortUnitSchema.catch(hours.key).parse(unit.key);
     const amountOf = (estimate: number) =>
       shownEffort(estimate, effortUnit, converting);
     const inUnit = (estimate: unknown) =>
       typeof estimate === "number" ? String(amountOf(estimate)) : "";
     return {
-      ...field<Feature>(
-        "estimateHours",
-        planColumnNames.estimateHours,
-        "number",
-      ),
+      ...field<Rec>("estimateHours", label, "number"),
       unit,
       least: 0,
       most: largestIn(largestEstimateHours, effortUnit, converting),
-      value: (feature) => inUnit(feature.estimateHours),
-      live: (draft) => inUnit((draft.live as Partial<Feature>).estimateHours),
+      value: (record) => inUnit(record.estimateHours),
+      live: (draft) => inUnit((draft.live as Partial<Estimated>).estimateHours),
       change: (value) => {
         const typed = typedNumber(value as string);
         return {
@@ -324,7 +328,7 @@ export function featureColumns(
       change: (value) => targetOf((value as string[]).at(0)),
     },
     releaseColumn(choices.releaseOfCycle),
-    effortColumn(choices.effortConversions),
+    effortColumn<Feature>(choices.effortConversions),
     staffedColumn(meaningOf),
     {
       ...field<Feature>(

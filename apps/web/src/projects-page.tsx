@@ -44,6 +44,7 @@ import classes from "./pages.module.css";
 import { featureTable } from "./feature-table.tsx";
 import { livePlanRecords, type PlanChange, wordsOf } from "./plan-table.tsx";
 import {
+  activityWords,
   customerTable,
   milestoneTable,
   PlanGrid,
@@ -51,6 +52,7 @@ import {
   proposalTable,
 } from "./project-grids.tsx";
 import {
+  type ActivityAdding,
   allMilestones,
   type FeatureFields,
   type FeatureNamer,
@@ -61,6 +63,8 @@ import {
   type PlanRecord,
   type PlanRecordKind,
   type PlanTab,
+  projectActivities,
+  type ProjectActivity,
   projectPlanQuery,
   projectTabs,
   tableChoices,
@@ -98,6 +102,7 @@ import { releaseStreamsQuery } from "./releases.ts";
 import { useSavedViews } from "./saved-views.tsx";
 import { useSaving } from "./saving.ts";
 import { type SidePanel, useNarrow } from "./side-panel.tsx";
+import { projectActivityPanels, useActivityForm } from "./activity-panels.tsx";
 import type { ChangeView } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
 
@@ -133,6 +138,8 @@ export function ProjectsPage({
   canShareViews = false,
   open,
   onOpen,
+  activity,
+  onActivity,
   onMilestonesOf,
   onFeaturesOf,
   onReleaseStream,
@@ -157,6 +164,9 @@ export function ProjectsPage({
   // The record whose details are shown beside the table, by its identifier.
   open?: string | undefined;
   onOpen?: (id: string | undefined) => void;
+  // The project's activity whose details are shown under its project's, by its identifier.
+  activity?: string | undefined;
+  onActivity?: (id: string | undefined) => void;
   // Shows the Milestones tab with only a project's milestones.
   onMilestonesOf?: (project: Project) => void;
   // Shows Features with only those a project or proposal names.
@@ -209,24 +219,33 @@ export function ProjectsPage({
   // Each New starts a form afresh, with none of a discarded one's fields.
   const [forms, setForms] = useState(0);
   const form = beingAdded?.tab === tab ? beingAdded : undefined;
+  const activityAdding = useActivityForm();
+  const activityForm = tab === "projects" ? activityAdding.form : undefined;
   const notes = useNoteEditing(panelTitleId);
-  const note = notes.note(form === undefined ? open : newRecordId);
+  const note = notes.note(
+    form !== undefined || activityForm !== undefined
+      ? newRecordId
+      : [open, activity],
+  );
   // The record just added, whose details show once the plan has it.
   const [justAdded, setJustAdded] = useState<string>();
   const openedAdded = useRef<string>(undefined);
   const question = useDiscardQuestion();
   // Anything that would close the form asks first, while it holds something.
   const leave = (go: () => void) => {
-    if (beingAdded?.saving === true) return;
+    if (beingAdded?.saving === true || activityAdding.saving) return;
     question.ask(
       beingAdded !== undefined && entered(beingAdded)
         ? newRecordQuestion(wordsOf(beingAdded.tab).one)
-        : notes.changing
-          ? noteQuestion
-          : undefined,
+        : activityAdding.entered
+          ? newRecordQuestion(activityWords.one)
+          : notes.changing
+            ? noteQuestion
+            : undefined,
       () => {
         notes.discard();
         setBeingAdded(undefined);
+        activityAdding.onForm(undefined);
         go();
       },
     );
@@ -310,11 +329,12 @@ export function ProjectsPage({
     const streams = streamsQuery.data?.streams ?? [];
     const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
       recordsAsShown(view.show, records, livePlanRecords);
-    // Projects and proposals as the view shows them, so the features they name follow the view.
+    // Projects, proposals and activities as the view shows them, so what they name follows the view.
     const choices = {
       ...tableChoices(plan, choicesQuery.data, streams, effortQuery.data),
       projects: asShown(plan.projects),
       proposals: asShown(plan.proposals),
+      activities: asShown(projectActivities(plan)),
     };
     const nodes = planNodes(plan);
     const openRecord = (record: { id: string }) => {
@@ -333,6 +353,35 @@ export function ProjectsPage({
           onFeaturesOf?.({ type, id: record.id });
         });
       };
+    const follow = {
+      showRecord: (next: PlanTab, id: string) => {
+        // The tab is always one of the fixed tabs.
+        // eslint-disable-next-line security/detect-object-injection
+        if (detailTabs[tab].some((one) => one === next)) {
+          openRecord({ id });
+        } else onTab?.(next, id);
+      },
+      showStream: (streamId: string) => {
+        onReleaseStream?.(streamId);
+      },
+    };
+    const activities = projectActivityPanels({
+      plan,
+      choices,
+      narrow,
+      view,
+      notes,
+      ask: question.ask,
+      leave,
+      actions: actionsFor<ProjectActivity, ActivityAdding>("project-activity"),
+      adding: { ...activityAdding, form: activityForm },
+      project: open,
+      open: activity,
+      onOpen: (id) => {
+        onActivity?.(id);
+      },
+      follow,
+    });
     const panel = recordPanel({
       tab,
       plan,
@@ -369,19 +418,9 @@ export function ProjectsPage({
           setDialogOpened(true);
         },
       },
+      activityMenu: activities.menu,
       showMilestones: showMilestonesOf,
-      follow: {
-        showRecord: (next, id) => {
-          // The tab is always one of the fixed tabs.
-          // eslint-disable-next-line security/detect-object-injection
-          if (detailTabs[tab].some((one) => one === next)) {
-            openRecord({ id });
-          } else onTab?.(next, id);
-        },
-        showStream: (streamId) => {
-          onReleaseStream?.(streamId);
-        },
-      },
+      follow,
       onChange: (type, record, change) => {
         actionsFor<PlanRecord, unknown>(type).update(record, change);
       },
@@ -402,10 +441,15 @@ export function ProjectsPage({
       table: RecordTable<Rec, PlanChange, Request>,
       records: readonly Rec[],
       actions: RecordActions<Rec, PlanChange, Request>,
+      // The panels stacked under the record's details, such as one of a project's activities.
+      below: () => SidePanel[] = () => [],
     ): SidePanel[] {
       const writing = note === undefined ? [] : [note];
       if (form === undefined) {
-        return [...(panel === undefined ? [] : [panel]), ...writing];
+        return [
+          ...(panel === undefined ? [] : [panel, ...below()]),
+          ...writing,
+        ];
       }
       return [
         {
@@ -467,13 +511,14 @@ export function ProjectsPage({
       type: PlanRecordKind,
       table: RecordTable<Rec, PlanChange, Request>,
       records: Rec[],
+      below?: () => SidePanel[],
     ): ReactElement {
       const actions = actionsFor<Rec, Request>(type);
       return (
         <TableTips>
           <PlanGrid
             {...shared}
-            panels={panelsWith(type, table, records, actions)}
+            panels={panelsWith(type, table, records, actions, below)}
             records={records}
             table={table}
             actions={actions}
@@ -577,6 +622,7 @@ export function ProjectsPage({
             onFeatures: showFeaturesOf("project"),
           }),
           plan.projects,
+          activities.panels,
         ),
     };
     // The tab is always one of the fixed tabs.

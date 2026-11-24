@@ -14,10 +14,11 @@ import type { QueryClient } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
 import { getJson } from "./api.ts";
 import { peopleQuery } from "./people.ts";
-import { planAddress } from "./projects.ts";
+import { activityAddress, planAddress } from "./projects.ts";
 
 type RecordAddress =
   | ReturnType<typeof planAddress>
+  | ReturnType<typeof activityAddress>
   | {
       to: "/releases/{-$streamId}";
       params: { streamId: undefined };
@@ -45,7 +46,7 @@ async function recordAddress(
       return planAddress("customers", id);
     case "milestone":
       return planAddress("milestones", id);
-    // An activity opens the project or release it belongs to.
+    // An activity opens under the project it belongs to, or on its release's page.
     case "activity":
       return found.activityOf?.owner === "release"
         ? {
@@ -53,7 +54,9 @@ async function recordAddress(
             params: { streamId: undefined },
             search: { open: found.activityOf.id },
           }
-        : planAddress("projects", found.activityOf?.id ?? id);
+        : found.activityOf === undefined
+          ? planAddress("projects")
+          : activityAddress(found.activityOf.id, id);
     case "schedule":
       return {
         to: "/releases/{-$streamId}",
