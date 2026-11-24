@@ -8,11 +8,10 @@ import { type Choice, type List } from "@fathom/shared";
 import { and, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { type Method } from "./test-app.ts";
+import { type Method, unique } from "./test-app.ts";
 import {
   waitLimit,
   test,
-  unique,
   editor,
   send,
   listWith,

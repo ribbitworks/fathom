@@ -18,11 +18,11 @@ import {
   generalReader,
   otherTestPosition,
   testPosition,
+  unique,
 } from "./test-app.ts";
 import {
   test,
   cookie,
-  unique,
   approved,
   person,
   changed,
@@ -411,8 +411,6 @@ describe("planned hires on the chart", () => {
   });
 });
 
-// After the planned hire tests: run as the same user, these publish a planned hire's fill one of
-// them leaves unpublished, the only test of taking a fill into what is published.
 describe("a team's colour", () => {
   const colour = (managerId: string, body: object, as = cookie) =>
     test.request(as, "PUT", `/api/org-chart/teams/${managerId}/colour`, body);

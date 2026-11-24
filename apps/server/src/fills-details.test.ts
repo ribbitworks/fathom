@@ -8,16 +8,12 @@ import { listItems, lists } from "@fathom/db";
 import { type Field } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { testPosition } from "./test-app.ts";
+import { errorOf, ok, testPosition, unique } from "./test-app.ts";
 import {
   test,
   editor,
-  count,
-  unique,
   send,
-  ok,
   partOfFill,
-  refusal,
   approved,
   reject,
   person,
@@ -38,6 +34,9 @@ beforeAll(startFillTests);
 
 afterAll(closeFillTests);
 
+// Past the built-in positions, so each added one has a place of its own.
+let positionsAdded = 100;
+
 async function otherPosition(): Promise<string> {
   const [positions] = await test.connection
     .select({ id: lists.id })
@@ -48,7 +47,7 @@ async function otherPosition(): Promise<string> {
     .values({
       listId: String(positions?.id),
       label: unique("Fictional Position"),
-      position: 100 + count,
+      position: (positionsAdded += 1),
     })
     .returning({ id: listItems.id });
   return String(added?.id);
@@ -113,7 +112,7 @@ describe("a fill given a manager", () => {
     const response = await fill(id, newPerson({ managerId: planned }));
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose a manager from People");
+    expect(errorOf(response)).toBe("Choose a manager from People");
   });
 });
 
@@ -134,7 +133,7 @@ describe("a hire under a planned manager", () => {
     const response = await fill(id, newPerson({ managerId: null }));
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe("Choose a manager from People");
+    expect(errorOf(response)).toBe("Choose a manager from People");
   });
 
   it("leaves someone already in Fathom given no manager with the one they have", async () => {
@@ -308,7 +307,7 @@ describe("a manager given to a fill", () => {
       newPerson({ managerId: unknown }),
     );
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose a manager from People");
+    expect(errorOf(response)).toBe("Choose a manager from People");
   });
 
   it("is refused when not marked as a manager, even if the line would not move", async () => {
@@ -318,7 +317,7 @@ describe("a manager given to a fill", () => {
     const response = await fill(id, newPerson({ managerId: unmarked }));
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toContain("is not a manager yet");
+    expect(errorOf(response)).toContain("is not a manager yet");
   });
 
   it("is refused when drafted to be removed", async () => {
@@ -331,7 +330,7 @@ describe("a manager given to a fill", () => {
     );
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose a manager from People");
+    expect(errorOf(response)).toBe("Choose a manager from People");
   });
 
   it("is refused when it is a planned hire being filled", async () => {
@@ -344,7 +343,7 @@ describe("a manager given to a fill", () => {
     );
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toContain("is being filled");
+    expect(errorOf(response)).toContain("is being filled");
   });
 
   it("is refused when it is the person filling the hire", async () => {
@@ -387,7 +386,7 @@ describe("a fill with a manager or position, changed later", () => {
     });
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(partOfFill);
+    expect(errorOf(response)).toBe(partOfFill);
   });
 
   it("is undone whole, manager and position with it", async () => {
@@ -461,6 +460,6 @@ describe("a fill with a manager or position, changed later", () => {
     );
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(partOfFill);
+    expect(errorOf(response)).toBe(partOfFill);
   });
 });

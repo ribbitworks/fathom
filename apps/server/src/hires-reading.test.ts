@@ -20,11 +20,13 @@ import { rolesGranting } from "./access.ts";
 import {
   generalApprover,
   generalReader,
+  ok,
   otherTestPosition,
   testPosition,
+  unique,
+  type User,
 } from "./test-app.ts";
 import {
-  type User,
   test,
   editor,
   approver,
@@ -32,9 +34,7 @@ import {
   proposed,
   open,
   hired,
-  unique,
   send,
-  ok,
   person,
   hireRequest,
   draftHire,

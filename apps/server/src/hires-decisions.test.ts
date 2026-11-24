@@ -10,9 +10,14 @@ import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
-import { otherTestPosition, testPosition } from "./test-app.ts";
 import {
+  ok,
+  otherTestPosition,
+  testPosition,
+  unique,
   type User,
+} from "./test-app.ts";
+import {
   test,
   editor,
   approver,
@@ -20,9 +25,7 @@ import {
   proposed,
   open,
   recruiting,
-  unique,
   send,
-  ok,
   approve,
   approved,
   person,

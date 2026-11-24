@@ -6,9 +6,8 @@
 import { features } from "@fathom/db";
 import { type ChangeHistory } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { builtInChoice } from "./test-app.ts";
+import { builtInChoice, errorOf, ok, unique, type User } from "./test-app.ts";
 import {
-  type User,
   test,
   editor,
   datedProposer,
@@ -16,10 +15,7 @@ import {
   chartOnly,
   startFeatureTeamTests,
   closeFeatureTeamTests,
-  unique,
   send,
-  ok,
-  refusal,
   approved,
   reject,
   person,
@@ -64,7 +60,7 @@ describe("a team a feature names", () => {
       });
       const undone = await send(maker, "POST", `/api/undo/${changeSetId}`);
       expect(undone.statusCode).toBe(409);
-      expect(refusal(undone)).toBe(
+      expect(errorOf(undone)).toBe(
         `This feature team is named by ${named ? `the feature ${feature}` : "a feature"}; change that first`,
       );
     },

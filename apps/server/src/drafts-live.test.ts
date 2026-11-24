@@ -8,10 +8,10 @@ import { drafts, fields, recordChanges } from "@fathom/db";
 import { type Choice, type Field, type List } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { unique } from "./test-app.ts";
 import {
   test,
   editor,
-  unique,
   send,
   saved,
   columnWith,

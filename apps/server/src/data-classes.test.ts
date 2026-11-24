@@ -8,13 +8,12 @@ import { dataClasses } from "@fathom/db";
 import { defaultClasses, roleSchema } from "@fathom/shared";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
-import { testPosition, unique } from "./test-app.ts";
+import { errorOf, testPosition, unique } from "./test-app.ts";
 import {
   test,
   classifier,
   seesBoth,
   move,
-  refusal,
   sessionClasses,
   latestMove,
   startDataClassTests,
@@ -77,7 +76,7 @@ describe("a built-in detail's class", () => {
         other.cookie,
       );
       expect(response.statusCode).toBe(403);
-      expect(refusal(response)).toBe("Changing a class needs Classify data");
+      expect(errorOf(response)).toBe("Changing a class needs Classify data");
       expect(await sessionClasses(other.cookie)).toEqual(defaultClasses);
     },
   );
@@ -105,7 +104,7 @@ describe("a built-in detail's class", () => {
         mover.cookie,
       );
       expect(response.statusCode).toBe(403);
-      expect(refusal(response)).toBe("This role can't see Confidential data");
+      expect(errorOf(response)).toBe("This role can't see Confidential data");
     },
   );
 
@@ -186,7 +185,7 @@ describe("views that need a built-in detail", () => {
     await move("/api/data-classes/endDate", "confidential");
     const response = await test.request(reader.cookie, "GET", otherDay);
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe("Other dates need Confidential access.");
+    expect(errorOf(response)).toBe("Other dates need Confidential access.");
   });
 
   it("hide people's dates once moved out of the reader's sight", async () => {

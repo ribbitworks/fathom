@@ -6,17 +6,20 @@
 
 import { type ChangeHistory } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { generalApprover, testPosition } from "./test-app.ts";
 import {
+  errorOf,
+  generalApprover,
+  ok,
+  testPosition,
+  unique,
   type User,
+} from "./test-app.ts";
+import {
   test,
   editor,
   proposed,
-  unique,
   send,
-  ok,
   partOfFill,
-  refusal,
   approve,
   approved,
   reject,
@@ -147,7 +150,7 @@ describe("a fill's draft", () => {
     );
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toMatch(
+    expect(errorOf(response)).toMatch(
       /is changing part of this fill of a planned hire/u,
     );
     expect((await hireOf(id))?.filler).toBeDefined();
@@ -172,7 +175,7 @@ describe("a fill's draft", () => {
     );
 
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This draft is part of filling a planned hire, which this role can't change",
     );
   });
@@ -198,7 +201,7 @@ describe("a fill's draft", () => {
     );
 
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This draft is part of filling a planned hire, which this role can't change",
     );
   });
@@ -217,7 +220,7 @@ describe("a fill's draft", () => {
     const response = await approve({ people: [added] }, peopleApprover);
 
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This draft is part of filling a planned hire, which this role can't decide",
     );
     expect((await liveHire(id))?.filledBy).toBeNull();
@@ -328,10 +331,32 @@ describe("a fill's draft", () => {
     const response = await approve({ plannedHires: [id] }, withoutPersonal);
 
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "A fill names who fills the hire, so an Approver who sees start and end dates must decide it",
     );
     expect((await liveHire(id))?.filledBy).toBeNull();
+  });
+
+  it("is published whole when only its planned hire is chosen", async () => {
+    // Given a hire filled with a new person, left unpublished
+    const id = await hire();
+    const body = newPerson();
+    await ok(await fill(id, body, editor, { publish: false }));
+    const added = String((await rowNamed(body.preferredName))?.id);
+    expect((await rowOf(added))?.draft?.unpublished).toBe(true);
+
+    // When the planned hire alone is published
+    const { total } = await ok<{ total: number }>(
+      await send(editor, "POST", "/api/unpublished/publish", {
+        drafts: { plannedHires: [id] },
+      }),
+    );
+
+    // Then the new person filling it is published with it, waiting for approval as others see it
+    expect(total).toBe(2);
+    const other = await test.signedIn("engineering-director");
+    expect((await rowOf(added, other))?.draft?.state).toBe("waiting");
+    expect((await hireOf(id))?.draft?.state).toBe("waiting");
   });
 });
 
@@ -352,7 +377,7 @@ describe("a fill waiting for approval", () => {
         body,
       );
       expect(response.statusCode).toBe(409);
-      expect(refusal(response)).toBe(partOfFill);
+      expect(errorOf(response)).toBe(partOfFill);
     }
     await ok(
       await send(editor, "PATCH", `/api/planned-hires/${id}`, {
@@ -379,7 +404,7 @@ describe("a fill waiting for approval", () => {
 
     for (const response of [moved, managed, unmarked]) {
       expect(response.statusCode).toBe(409);
-      expect(refusal(response)).toBe(partOfFill);
+      expect(errorOf(response)).toBe(partOfFill);
     }
   });
 
@@ -413,7 +438,7 @@ describe("a fill waiting for approval", () => {
 
     for (const response of [added, changed]) {
       expect(response.statusCode).toBe(400);
-      expect(refusal(response)).toBe(
+      expect(errorOf(response)).toBe(
         "That planned hire is being filled, so it can't be a manager; once the fill is approved, choose the person who fills it",
       );
     }
@@ -431,7 +456,7 @@ describe("a fill waiting for approval", () => {
     );
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(partOfFill);
+    expect(errorOf(response)).toBe(partOfFill);
   });
 
   it("keeps its person's line date", async () => {
@@ -443,7 +468,7 @@ describe("a fill waiting for approval", () => {
     });
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(partOfFill);
+    expect(errorOf(response)).toBe(partOfFill);
   });
 
   it("keeps an undo from putting back a manager change on its person", async () => {
@@ -468,7 +493,7 @@ describe("a fill waiting for approval", () => {
 
     // Then it is refused, as changing the manager would be
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(partOfFill);
+    expect(errorOf(response)).toBe(partOfFill);
   });
 
   it("is not approved once its person has left", async () => {
@@ -485,7 +510,7 @@ describe("a fill waiting for approval", () => {
     const response = await approve({ plannedHires: [id] });
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toMatch(
+    expect(errorOf(response)).toMatch(
       /has left, so can't fill a planned hire$/u,
     );
   });
@@ -509,7 +534,7 @@ describe("a fill and other users' changes", () => {
     const response = await fill(id, newPerson());
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "A planned hire reporting to this one has a draft; approve or discard it before filling this one",
     );
   });
@@ -530,7 +555,7 @@ describe("a fill and other users' changes", () => {
     const response = await fill(await hire(), existing(transfer));
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toMatch(/has a draft; approve or discard it/u);
+    expect(errorOf(response)).toMatch(/has a draft; approve or discard it/u);
   });
 
   it("is not decided by an Approver who approves planned hires but not people", async () => {
@@ -554,7 +579,7 @@ describe("a fill and other users' changes", () => {
 
     for (const response of [approving, rejecting]) {
       expect(response.statusCode).toBe(403);
-      expect(refusal(response)).toBe(
+      expect(errorOf(response)).toBe(
         "This draft is part of filling a planned hire, which this role can't decide",
       );
     }
@@ -574,7 +599,7 @@ describe("a hire with a rejected draft", () => {
     const response = await fill(id, newPerson());
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This planned hire has a rejected draft; discard it or send it for approval again before filling it",
     );
     await ok(await send(editor, "DELETE", `/api/planned-hires/${id}/draft`));

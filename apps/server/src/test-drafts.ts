@@ -16,10 +16,15 @@ import { eq } from "drizzle-orm";
 import { expect } from "vitest";
 import {
   type Method,
+  sender,
   startTestApp,
   type TestApp,
   testPosition,
+  unique,
 } from "./test-app.ts";
+
+// For the tests that open pull requests also edit, until they take it from test-app.ts.
+export { unique };
 
 export let test: TestApp;
 export let editor: { id: string; cookie: string };
@@ -36,20 +41,7 @@ export async function closeDraftTests(): Promise<void> {
   await test.close();
 }
 
-let count = 0;
-export function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-}
-
-export async function send(
-  cookie: string,
-  method: Method,
-  url: string,
-  payload?: object,
-) {
-  return test.request(cookie, method, url, payload);
-}
+export const send = sender(() => test);
 
 // Sends a change as the editor, expecting it to be saved, and returns its change set.
 export async function saved(method: Method, url: string, payload?: object) {

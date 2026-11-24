@@ -5,6 +5,7 @@
 
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { errorOf, ok } from "./test-app.ts";
 import {
   test,
   editor,
@@ -13,8 +14,6 @@ import {
   startFeatureTeamTests,
   closeFeatureTeamTests,
   send,
-  ok,
-  refusal,
   approved,
   person,
   drafted,
@@ -78,7 +77,7 @@ describe("a person named in a team's draft", () => {
     const response = await send(editor, "DELETE", `/api/people/${member}`);
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This person is in a feature team's draft; take them out of it or discard it first",
     );
   });
@@ -117,7 +116,7 @@ describe("a team's lead", () => {
     for (const id of [live, inDraft]) {
       const response = await send(editor, "DELETE", `/api/people/${id}`);
       expect(response.statusCode).toBe(409);
-      expect(refusal(response)).toBe(
+      expect(errorOf(response)).toBe(
         "This person leads a feature team; choose another lead first",
       );
     }

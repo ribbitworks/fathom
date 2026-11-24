@@ -1,15 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the weights of feature sizes, against a PostgreSQL server of their own: each size's
-// choice carries a weight, given when a choice is added and kept or changed when it is edited, other
-// lists' choices carry none, approving saves it, the change history records it, and Undo puts it
-// back.
+// choice carries one and other lists' choices none, kept when edited, saved on approving, recorded
+// in the change history, and put back by Undo.
 
 import { listItems, lists } from "@fathom/db";
 import type { ChangeEntry, Choice, List } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type Method, startTestApp, type TestApp, unique } from "./test-app.ts";
+import {
+  errorOf,
+  type Method,
+  startTestApp,
+  type TestApp,
+  unique,
+} from "./test-app.ts";
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
@@ -33,9 +38,6 @@ afterAll(async () => {
 
 const send = (method: Method, url: string, body?: object, who = editor) =>
   test.request(who.cookie, method, url, body);
-
-const refusal = (response: Awaited<ReturnType<typeof send>>) =>
-  response.json<{ error: string }>().error;
 
 async function readList(id: string): Promise<List> {
   const response = await send("GET", "/api/lists");
@@ -88,7 +90,7 @@ describe("the weights of feature sizes", () => {
   it("needs a weight Fathom keeps for each size added, and refuses one in any other list", async () => {
     const without = await addTo(sizes, [{ label: unique("Fictional XXL") }]);
     expect(without.statusCode).toBe(400);
-    expect(refusal(without)).toBe("Give the size a weight");
+    expect(errorOf(without)).toBe("Give the size a weight");
     for (const weight of [0, 10000, 1.234]) {
       const refused = await addTo(sizes, [
         { label: unique("Fictional XXL"), weight },
@@ -101,7 +103,7 @@ describe("the weights of feature sizes", () => {
     const other = created.json<{ list: List }>().list;
     const weighed = await addTo(other.id, [{ label: "Senior", weight: 2 }]);
     expect(weighed.statusCode).toBe(400);
-    expect(refusal(weighed)).toBe("Only feature sizes have weights");
+    expect(errorOf(weighed)).toBe("Only feature sizes have weights");
     const added = await addTo(other.id, [{ label: "Junior" }]);
     const junior = String(added.json<{ choices: Choice[] }>().choices[0]?.id);
     const reweighed = await send(
@@ -110,7 +112,7 @@ describe("the weights of feature sizes", () => {
       { label: "Junior", weight: 2 },
     );
     expect(reweighed.statusCode).toBe(400);
-    expect(refusal(reweighed)).toBe("Only feature sizes have weights");
+    expect(errorOf(reweighed)).toBe("Only feature sizes have weights");
   });
 
   it("keeps a size's weight when an edit leaves it out, changes it when given, and approving saves it", async () => {

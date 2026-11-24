@@ -13,16 +13,14 @@ import {
 } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { generalApprover } from "./test-app.ts";
+import { errorOf, generalApprover, ok, unique } from "./test-app.ts";
 import {
   test,
   editor,
   approver,
   planner,
   open,
-  unique,
   send,
-  ok,
   approve,
   approved,
   person,
@@ -32,7 +30,6 @@ import {
   hiresSeen,
   hireSeen,
   changed,
-  refusal,
   startHireTests,
   closeHireTests,
 } from "./test-hires.ts";
@@ -187,7 +184,7 @@ describe("values in People's columns", () => {
       hireRequest({ links: { [column.id]: link("https://example.test/") } }),
     );
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       `${column.name} is switched off for planned hires`,
     );
   });
@@ -199,7 +196,7 @@ describe("values in People's columns", () => {
     });
     const refused = await switchOff(column);
     expect(refused.statusCode).toBe(409);
-    expect(refusal(refused)).toBe(
+    expect(errorOf(refused)).toBe(
       `1 planned hire has values in ${column.name}, so it cannot be switched off for planned hires yet. Clear them first.`,
     );
     await changed(id, { links: { [column.id]: null } });
@@ -229,7 +226,7 @@ describe("values in People's columns", () => {
     });
     const refused = await switchOff(column);
     expect(refused.statusCode).toBe(409);
-    expect(refusal(refused)).toBe(
+    expect(errorOf(refused)).toBe(
       `Drafts give planned hires values in ${column.name}, so it cannot be switched off for planned hires yet`,
     );
     await ok(await send(editor, "DELETE", `/api/planned-hires/${id}/draft`));
@@ -293,7 +290,7 @@ describe("values in People's columns", () => {
       single,
     );
     expect(refused.statusCode).toBe(409);
-    expect(refusal(refused)).toBe(
+    expect(errorOf(refused)).toBe(
       `1 planned hire has several choices for ${column.name}, so it cannot take only one yet`,
     );
     await changed(id, { values: { [column.id]: [String(choices[0])] } });
@@ -369,7 +366,7 @@ describe("values in People's columns", () => {
       .where(eq(fields.id, column.id));
     const response = await approve({ plannedHires: [id] });
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "A planned hire's draft no longer fits the columns; change it, then approve it",
     );
   });

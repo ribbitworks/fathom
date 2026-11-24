@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for note columns on the People table, against a migrated PostgreSQL server: adding them,
-// with a visibility of their own; the notes people are given, refused unless notes allow them and
-// kept exactly as sent; drafting, approving, and undoing them; how the change history shows them;
-// and who sees them.
+// the notes people are given and refused, drafting, approving and undoing them, how the change
+// history shows them, and who sees them.
 
 import { fieldValues, recordChanges, valueField } from "@fathom/db";
 import {
@@ -17,11 +16,12 @@ import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
 import {
-  type Method,
+  sender,
   startTestApp,
   type TestApp,
   testPosition,
   missingRecord,
+  unique,
 } from "./test-app.ts";
 
 let test: TestApp;
@@ -34,14 +34,6 @@ afterAll(async () => {
   await test.close();
 });
 
-let count = 0;
-
-// A name or Employee ID no other test uses, so tests sharing the database do not collide.
-function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-}
-
 const kind = "Kind and *careful*, with [notes](https://notes.example.test/)";
 const kindWords = "Kind and careful, with notes";
 
@@ -49,14 +41,7 @@ async function editor() {
   return test.signedIn("workforce-administrator");
 }
 
-async function send(
-  cookie: string,
-  method: Method,
-  url: string,
-  payload?: object,
-) {
-  return test.request(cookie, method, url, payload);
-}
+const send = sender(() => test);
 
 // A note column, approved so it is live.
 async function noteColumn(

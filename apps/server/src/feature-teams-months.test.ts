@@ -6,7 +6,7 @@
 import { monthOf, type TeamMonths } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { personalReader } from "./test-app.ts";
+import { errorOf, ok, personalReader, unique } from "./test-app.ts";
 import {
   test,
   editor,
@@ -17,10 +17,7 @@ import {
   today,
   startFeatureTeamTests,
   closeFeatureTeamTests,
-  unique,
   send,
-  ok,
-  refusal,
   approved,
   person,
   endDated,
@@ -109,7 +106,7 @@ describe("changing the teams someone is on from a month", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       `The draft of ${team.name} already changes ${name} from another month. Approve or discard that draft first.`,
     );
   });
@@ -126,7 +123,7 @@ describe("changing the teams someone is on from a month", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       `${name} has an approved change on ${team.name} in this month or later, so this month can't change here.`,
     );
   });
@@ -170,9 +167,9 @@ describe("changing the teams someone is on from a month", () => {
     const left = await changeTeams(gone, { add: [id] });
 
     expect(missing.statusCode).toBe(404);
-    expect(refusal(missing)).toBe("There is no such person");
+    expect(errorOf(missing)).toBe("There is no such person");
     expect(left.statusCode).toBe(400);
-    expect(refusal(left)).toBe(
+    expect(errorOf(left)).toBe(
       "Someone who has left can't join or leave a team",
     );
   });
@@ -230,7 +227,7 @@ describe("feature teams month by month", () => {
       "/api/feature-teams/months?from=2025-01&to=2025-03",
     );
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "Feature teams on Capacity needs Personal access.",
     );
   });

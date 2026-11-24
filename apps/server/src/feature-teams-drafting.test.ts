@@ -5,6 +5,7 @@
 
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { errorOf, ok, unique } from "./test-app.ts";
 import {
   test,
   editor,
@@ -16,10 +17,7 @@ import {
   today,
   startFeatureTeamTests,
   closeFeatureTeamTests,
-  unique,
   send,
-  ok,
-  refusal,
   approve,
   approved,
   reject,
@@ -85,7 +83,7 @@ describe("adding a feature team", () => {
     for (const name of [live.toUpperCase(), ` ${draftedName.toLowerCase()} `]) {
       const response = await create({ name });
       expect(response.statusCode).toBe(409);
-      expect(refusal(response)).toBe(
+      expect(errorOf(response)).toBe(
         "Another feature team already has that name",
       );
     }
@@ -106,7 +104,7 @@ describe("adding a feature team", () => {
       members: [randomUUID()],
     });
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose members from People");
+    expect(errorOf(response)).toBe("Choose members from People");
   });
 
   it("is refused with the same member twice", async () => {
@@ -125,7 +123,7 @@ describe("adding a feature team", () => {
       proposer,
     );
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose members from People");
+    expect(errorOf(response)).toBe("Choose members from People");
 
     const manager = await test.signedIn("engineering-manager");
     await drafted({ members: [starting] }, manager);
@@ -209,7 +207,7 @@ describe("changing a feature team", () => {
     const response = await change(id, { leadId: member, remove: [member] });
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "The feature lead must be one of the members",
     );
   });
@@ -221,7 +219,7 @@ describe("changing a feature team", () => {
     const response = await change(id, { add: [left], from: "2026-08-03" });
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Someone who has left can't join a team");
+    expect(errorOf(response)).toBe("Someone who has left can't join a team");
   });
 
   it("records members joining and leaving from the day given, and keeps it for the members it still adds or removes", async () => {
@@ -256,7 +254,7 @@ describe("changing a feature team", () => {
       proposer,
     );
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe("Other dates need Personal access.");
+    expect(errorOf(response)).toBe("Other dates need Personal access.");
   });
 
   it("is refused an earlier day by someone who may not change Personal details", async () => {
@@ -268,7 +266,7 @@ describe("changing a feature team", () => {
       datedProposer,
     );
     expect(response.statusCode).toBe(403);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This role can't choose an earlier date. Use today or a later date.",
     );
   });
@@ -315,7 +313,7 @@ describe("changing a feature team", () => {
       const response = await change(id, { leadId: null, from });
 
       expect(response.statusCode).toBe(400);
-      expect(refusal(response)).toBe(
+      expect(errorOf(response)).toBe(
         "This team's lead last changed on 2099-03-01. Choose a later date.",
       );
     }
@@ -353,7 +351,7 @@ describe("changing a feature team", () => {
 
     // Then it is refused, by date for a reader who sees days
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toMatch(
+    expect(errorOf(response)).toMatch(
       /has an approved change on .* before this date\. This date can change once it takes effect\.$/,
     );
   });
@@ -389,7 +387,7 @@ describe("changing a feature team", () => {
     const response = await change(id, { leadId: joining });
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "Choose a day when the new lead is on this team",
     );
   });
@@ -434,7 +432,7 @@ describe("changing a feature team", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "Someone can't join or leave a team after their end date",
     );
   });
@@ -469,7 +467,7 @@ describe("changing a feature team", () => {
   it("answers a team that does not exist as not found", async () => {
     const response = await change(randomUUID(), { leadId: null });
     expect(response.statusCode).toBe(404);
-    expect(refusal(response)).toBe("There is no such feature team");
+    expect(errorOf(response)).toBe("There is no such feature team");
   });
 
   it("is refused for a team its draft removes", async () => {
@@ -525,7 +523,7 @@ describe("the day someone joins or leaves a team", () => {
     });
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This person last joined or left this team on 2025-01-01. Choose a later date.",
     );
   });
@@ -537,7 +535,7 @@ describe("the day someone joins or leaves a team", () => {
       from: "2025-01-01",
     });
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose members from People");
+    expect(errorOf(response)).toBe("Choose members from People");
   });
 
   it("is refused to take effect at approval once it is before the person's start date", async () => {
@@ -554,7 +552,7 @@ describe("the day someone joins or leaves a team", () => {
     const response = await approve(id);
 
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       `${preferredName}'s day in the draft of ${name} is now before their start date; reject the draft so it can be changed`,
     );
     expect(await liveRow(id)).toBeUndefined();
@@ -730,7 +728,7 @@ describe("a team's colour", () => {
     const { id } = await drafted();
     const response = await colour(id, "teal");
     expect(response.statusCode).toBe(404);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This feature team is not approved yet, so it cannot have a colour",
     );
   });

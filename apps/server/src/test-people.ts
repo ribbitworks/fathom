@@ -14,11 +14,15 @@ import {
 import { and, desc, eq, ne } from "drizzle-orm";
 import { expect, vi } from "vitest";
 import {
-  type Method,
+  sender,
   startTestApp,
   type TestApp,
   testPosition,
+  unique,
 } from "./test-app.ts";
+
+// For the tests that open pull requests also edit, until they take it from test-app.ts.
+export { unique };
 
 // How long a test waits for something to happen, so a busy computer does not fail it.
 export const waitLimit = { timeout: 10_000 };
@@ -39,26 +43,11 @@ export async function closePeopleTests(): Promise<void> {
   vi.useRealTimers();
 }
 
-let count = 0;
-
-// A name or Employee ID no other test uses, so tests sharing the database do not collide.
-export function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-}
-
 export async function editor() {
   return test.signedIn("workforce-administrator");
 }
 
-export async function send(
-  cookie: string,
-  method: Method,
-  url: string,
-  payload?: object,
-) {
-  return test.request(cookie, method, url, payload);
-}
+export const send = sender(() => test);
 
 // A list with the given choices, and the choices in order.
 export async function listWith(

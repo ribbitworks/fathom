@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A Fathom server for tests, against a migrated PostgreSQL database of its own, whose built-in
-// Positions list offers two fictional positions, with helpers to sign in fictional accounts holding
-// a given role, to send requests as them, and to approve the drafts of lists that tests set up.
-// Unless asked not to, each change sent is published straight after, as its maker would, so tests
-// of drafts see them as everyone does. Used only by tests.
+// A Fathom server for tests, against a migrated PostgreSQL database of its own offering two
+// fictional positions, with helpers to sign in accounts, send requests as them, publishing each
+// change unless asked not to, add live people, and approve lists' drafts. Used only by tests.
 
 import {
   changes,
@@ -28,6 +26,7 @@ import {
 } from "@fathom/test-utils";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import { expect } from "vitest";
 import { actorFor } from "./access.ts";
 import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
@@ -76,6 +75,17 @@ export const unique = (prefix: string) => {
 export const errorOf = (response: { json: () => unknown }) =>
   (response.json() as { error: string }).error;
 
+type InjectedResponse = Awaited<ReturnType<App["inject"]>>;
+
+// The body of a response expected to have the status given.
+export async function ok<T>(
+  response: InjectedResponse,
+  status = 200,
+): Promise<T> {
+  expect(response.statusCode, response.body).toBe(status);
+  return Promise.resolve(response.json<T>());
+}
+
 // The positions every test app's Positions list offers, for the people and planned hires tests add.
 export const testPosition = "00000000-0000-4000-8000-00000000f001";
 export const otherTestPosition = "00000000-0000-4000-8000-00000000f002";
@@ -98,6 +108,11 @@ export async function builtInChoice(
       ),
     );
   return String(found?.id);
+}
+
+export interface User {
+  id: string;
+  cookie: string;
 }
 
 export interface TestApp {
@@ -134,6 +149,52 @@ export interface TestApp {
   // a test is live, as a fictional Approver.
   approveLists(): Promise<void>;
   close(): Promise<void>;
+}
+
+// Sends requests as a user, or with a session cookie, to the test app the function gives, as tests
+// start their app only once their helpers are made.
+export const sender =
+  (app: () => TestApp) =>
+  (
+    as: Pick<User, "cookie"> | string,
+    method: Method,
+    url: string,
+    payload?: object,
+    options?: { publish?: boolean },
+  ) =>
+    app().request(
+      typeof as === "string" ? as : as.cookie,
+      method,
+      url,
+      payload,
+      options,
+    );
+
+// A fictional person who started in 2020, added with the editor's cookie and approved as given, so
+// they are live, unless the details say otherwise.
+export async function approvedPerson(
+  test: TestApp,
+  editor: string,
+  approved: (id: string) => Promise<void>,
+  details: object = {},
+): Promise<string> {
+  const { ids } = await ok<{ ids: string[] }>(
+    await test.request(editor, "POST", "/api/people", {
+      people: [
+        {
+          preferredName: unique("Fictional Person"),
+          employeeId: unique("FP"),
+          positionId: testPosition,
+          startDate: "2020-01-01",
+          ...details,
+        },
+      ],
+    }),
+    201,
+  );
+  const id = String(ids[0]);
+  await approved(id);
+  return id;
 }
 
 // Publishes the user's unpublished changes after a change they send, as they would, so tests of

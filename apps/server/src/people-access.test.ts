@@ -8,10 +8,9 @@ import { dayIn, defaultTimeZone, roleSchema } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
-import { generalReader, type Method } from "./test-app.ts";
+import { generalReader, type Method, unique } from "./test-app.ts";
 import {
   test,
-  unique,
   editor,
   send,
   columnWith,

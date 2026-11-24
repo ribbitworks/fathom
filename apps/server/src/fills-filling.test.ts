@@ -6,16 +6,19 @@
 
 import { type Field, type Hire } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { generalApprover, testPosition } from "./test-app.ts";
+import {
+  errorOf,
+  generalApprover,
+  ok,
+  testPosition,
+  unique,
+} from "./test-app.ts";
 import {
   test,
   editor,
   proposed,
   open,
-  unique,
   send,
-  ok,
-  refusal,
   approved,
   person,
   hire,
@@ -225,7 +228,7 @@ describe("filling a planned hire with someone already in Fathom", () => {
     const response = await fill(id, existing(former), actor);
 
     expect(response.statusCode).toBe(404);
-    expect(refusal(response)).toBe("There is no such person");
+    expect(errorOf(response)).toBe("There is no such person");
   });
 
   it("answers someone who has not started as no one to an actor who does not see Personal details", async () => {
@@ -243,7 +246,7 @@ describe("filling a planned hire with someone already in Fathom", () => {
     const response = await fill(id, existing(starter), actor);
 
     expect(response.statusCode).toBe(404);
-    expect(refusal(response)).toBe("There is no such person");
+    expect(errorOf(response)).toBe("There is no such person");
   });
 
   it("is refused for someone another user's unpublished draft is filling a hire with", async () => {
@@ -257,7 +260,7 @@ describe("filling a planned hire with someone already in Fathom", () => {
     const response = await fill(await hire(), existing(transfer));
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toMatch(/already filling a planned hire/u);
+    expect(errorOf(response)).toMatch(/already filling a planned hire/u);
   });
 
   it("is refused for someone with a draft of their own", async () => {
@@ -271,7 +274,7 @@ describe("filling a planned hire with someone already in Fathom", () => {
     const response = await fill(await hire(), existing(transfer));
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toMatch(
+    expect(errorOf(response)).toMatch(
       /has a draft; approve or discard it before they fill a planned hire$/u,
     );
   });
@@ -301,7 +304,7 @@ describe("filling a planned hire with someone already in Fathom", () => {
     const response = await fill(id, existing(left));
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toMatch(/has left/u);
+    expect(errorOf(response)).toMatch(/has left/u);
   });
 
   it("is refused for someone already filling another hire in a draft", async () => {
@@ -311,7 +314,7 @@ describe("filling a planned hire with someone already in Fathom", () => {
     const response = await fill(await hire(), existing(transfer));
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toMatch(/already filling a planned hire/u);
+    expect(errorOf(response)).toMatch(/already filling a planned hire/u);
   });
 
   it("is refused for someone who has not started the hire they filled", async () => {
@@ -324,7 +327,7 @@ describe("filling a planned hire with someone already in Fathom", () => {
     const response = await fill(await hire(), existing(starter));
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toMatch(/hasn't started it yet/u);
+    expect(errorOf(response)).toMatch(/hasn't started it yet/u);
   });
 
   it("lets someone who has started fill another hire", async () => {
@@ -346,7 +349,7 @@ describe("the hires that can be filled", () => {
     const response = await fill(id, newPerson());
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This planned hire's headcount isn't approved yet; move it to an approved state before filling it",
     );
   });
@@ -358,7 +361,7 @@ describe("the hires that can be filled", () => {
     const response = await fill(id, newPerson());
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe("Choose a manager from People");
+    expect(errorOf(response)).toBe("Choose a manager from People");
   });
 
   it("refuses one already filled, in a draft or live", async () => {
@@ -368,7 +371,7 @@ describe("the hires that can be filled", () => {
     const response = await fill(id, newPerson());
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe("This planned hire is already filled");
+    expect(errorOf(response)).toBe("This planned hire is already filled");
   });
 
   it("refuses one only drafted to be added", async () => {
@@ -382,7 +385,7 @@ describe("the hires that can be filled", () => {
     const response = await fill(String(ids[0]), newPerson());
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This planned hire is only drafted to be added; approve it before filling it",
     );
   });
@@ -418,7 +421,7 @@ describe("the hires that can be filled", () => {
     for (const id of [added, joined, changed]) {
       const response = await fill(id, newPerson());
       expect(response.statusCode).toBe(409);
-      expect(refusal(response)).toBe(reportsToIt);
+      expect(errorOf(response)).toBe(reportsToIt);
     }
   });
 
@@ -433,7 +436,7 @@ describe("the hires that can be filled", () => {
     const response = await fill(id, newPerson());
 
     expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe(
+    expect(errorOf(response)).toBe(
       "This planned hire's draft changes its manager; approve or discard that draft before filling it",
     );
   });
