@@ -370,6 +370,7 @@ export function PeoplePage({
     content = (
       <>
         <PeopleGrid
+          selected={shownId}
           linkedColumn={linkedColumn}
           teamColourOf={teamColourOf}
           count={countOn}

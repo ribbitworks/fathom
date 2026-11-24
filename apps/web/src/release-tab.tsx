@@ -466,6 +466,7 @@ export function ReleasesTable({
       actions={gridActions}
       view={view}
       onView={onView}
+      selected={open}
       panels={panels}
       viewChoices={choices}
       saved={saved}

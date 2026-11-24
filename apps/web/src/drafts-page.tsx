@@ -353,6 +353,7 @@ export function DraftsPage({
           view={view}
           onView={onView}
           saved={views.saved}
+          selected={open}
           panels={panels}
           withDrafts={false}
           ticks={
