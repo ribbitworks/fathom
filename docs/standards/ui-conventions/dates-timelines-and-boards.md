@@ -64,6 +64,7 @@ Every view with time across it (the Releases timeline, the Plan and the project 
   - **Example:** Platform's releases on the Releases timeline.
 - **The strip:** One strip sits above every timeline, the Features Board and the month grids. It shows the whole range as quarters, or as cycles on the board when it shows a schedule's, each as wide as its share. ‹ comes before the strip; › and Today come after it.
   - Periods in view are tinted, the chosen one is filled with the accent colour, and the current one is underlined in today's red.
+  - **A rail when narrow:** A period is never narrower than its name. When the names don't all fit, the strip scrolls sideways, with the [shared scroll bar](tables.md#tables), keeping the tinted periods in view: the tinted periods centred when they fit, or else starting from the first. Focus moving along it scrolls it to the period focused.
   - On the board by months, the strip names quarters, as a month grid's does, each as wide as its months on the board, the first and last cut short. Choosing a quarter goes to its first month, and ‹ and › step a quarter, named Previous quarter and Next quarter.
   - On the board by a schedule's cycles, the strip names each cycle, and ‹ and › step a cycle.
   - On a timeline, a click, ‹ or › scrolls a quarter's start a sixth of the way across, where Today puts today, so the end of the quarter before stays in sight.

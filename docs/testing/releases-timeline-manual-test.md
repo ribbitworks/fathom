@@ -406,3 +406,36 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
 - [ ] `57F2` Press Enter.
   - **Expected:** The details of 'Harbor 3' open beside the table.
   - **Notes:**
+
+#### REL-49: The Strip in a Narrow Window
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-48 ended with.
+
+**Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, on the **Schedules** tab, with no side panel open.
+
+- [ ] `7495` Make the browser window about 760 pixels wide.
+  - **Expected:**
+    - Each quarter in the strip above the timeline shows its whole name, such as 'Q1 2027'.
+    - A slim grey scroll bar shows under the strip.
+    - The strip starts at the first tinted quarter.
+  - **Notes:**
+
+- [ ] `B104` Select **Zoom in** four times.
+  - **Expected:** The tinted quarters sit in the middle of the strip.
+  - **Notes:**
+
+- [ ] `07CD` Select ‹ six times.
+  - **Expected:** The tinted quarters move left along the strip and stay in sight.
+  - **Notes:**
+
+- [ ] `F00C` Select **Today**.
+  - **Expected:** The tinted quarters are back in the middle of the strip.
+  - **Notes:**
+
+- [ ] `2F4C` Press Tab until a quarter in the strip has focus, then press End.
+  - **Expected:**
+    - The strip scrolls to its end.
+    - The last quarter has a focus ring.
+  - **Notes:**
+
+**Afterwards:** Make the browser window its usual size.

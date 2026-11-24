@@ -377,7 +377,6 @@ export const wholeColumnWidth = ({
 export interface BoardStripPeriod {
   key: string;
   label: string;
-  short: string;
   weight: number;
   inView: boolean;
   // Holding the month or cycle the board went to, by the strip, an arrow or Today, or on opening.
@@ -415,7 +414,6 @@ export function cycleStrip({
     periods: periods.map((cycle, index) => ({
       key: cycle.startsOn,
       label: cycle.name,
-      short: cycle.name,
       weight: daysBetween(cycle.startsOn, cycle.endsOn) + 1,
       inView: index >= start && index < start + fits,
       selected: index === goneTo,

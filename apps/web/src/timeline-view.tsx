@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The timeline every view with time across it shares: a time axis, each day the same width at each
-// zoom, with the view's rows under it, release streams' cycles and releases as a layer the view may
-// show, today marked across them all, and a strip of quarters above it. It only shows; changes are
-// made elsewhere.
+// The timeline every view with time across it shares, its axis, rows, schedules' layer and strip of
+// quarters, as UI Conventions' The shared timeline sets out. It only shows; changes are made
+// elsewhere.
 
 import type { ReleaseStream } from "@fathom/shared";
 import {
@@ -421,13 +420,12 @@ function QuarterStrip({
   return (
     <TimelineStrip
       words={quarterWords}
-      periods={quarters.map(({ day, label, short, at, days }) => ({
+      periods={quarters.map(({ day, label, at, days }) => ({
         key: day,
         onChoose: () => {
           scrollTo({ at, day }, at);
         },
         label,
-        short,
         weight: days,
         inView: px.of(at) < right && px.of(at + days) > left,
         selected: isSelected(day),

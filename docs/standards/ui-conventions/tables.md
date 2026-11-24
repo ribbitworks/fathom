@@ -13,7 +13,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
 
 ## Tables
 
-- **Scroll bars:** Every table, timeline and board uses one style of scroll bar: slim and in the page's greys. It shows whenever there is more to scroll, so a wide view is seen to have more. Each scrolling frame with the style contains the visually hidden text of what it scrolls, so it never stretches the page.
+- **Scroll bars:** Every table, timeline, board and strip uses one style of scroll bar: slim and in the page's greys. It shows whenever there is more to scroll, so a wide view is seen to have more. Each scrolling frame with the style contains the visually hidden text of what it scrolls, so it never stretches the page.
   - **Drawn by:** `scrollBars` in `apps/web/src/pages.module.css`. Its size and colour come from the theme's `--fathom-scrollbar-size` and `--fathom-scrollbar-thumb` in `apps/web/src/theme.ts`.
   - **Example:** On Features, narrow the window until the table scrolls sideways.
 - **Drafts in a table changed elsewhere:** A table whose records are changed outside it, such as in their details panel (every tab on Releases), still offers Publish draft…, Discard draft and Resubmit in a row's menu for a draft the user may change.

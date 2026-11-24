@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The strip above a view with time across it: its periods across the whole range, each as wide as
-// its share of it, those in view tinted, the one chosen filled and the current one underlined,
-// with back and forward arrows and Today. Choosing a period, an arrow or Today is left to the view.
-// The periods are one stop for Tab, the arrow keys, Home and End moving between them.
+// The strip of periods above every view with time across it, with its back and forward arrows and
+// Today, as UI Conventions' The strip sets out.
 
 import { ActionIcon, Button, Group, UnstyledButton } from "@mantine/core";
-import { type KeyboardEvent, type ReactNode, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import classes from "./pages.module.css";
 
 // The strip's name and its arrows' names, such as Quarters and Previous quarter.
@@ -46,8 +50,6 @@ export interface StripPeriod {
   key: string;
   onChoose: () => void;
   label: string;
-  // A shorter label, for when the label does not fit.
-  short: string;
   // Its share of the strip's width, such as its days.
   weight: number;
   inView: boolean;
@@ -62,6 +64,18 @@ const spokenLabel = ({ label, inView, selected }: StripPeriod) =>
     ...(inView ? ["in view"] : []),
     ...(selected ? ["selected"] : []),
   ].join(", ");
+
+// Scrolls a rail so the tinted periods show: centred when they fit, from the first when they don't.
+// The rail is the periods' offset parent, so their offsets count from inside its border, as its
+// scrolling does.
+export function showTinted(rail: HTMLElement): void {
+  const [first, ...rest] = rail.querySelectorAll<HTMLElement>("[data-in-view]");
+  if (first === undefined) return;
+  const last = rest.at(-1) ?? first;
+  const width = last.offsetLeft + last.offsetWidth - first.offsetLeft;
+  const spare = Math.max(0, rail.clientWidth - width);
+  rail.scrollLeft = first.offsetLeft - spare / 2;
+}
 
 // Where each key moves focus among the periods, from the one focused and the last one's place.
 const keyMoves = new Map<string, (focused: number, last: number) => number>([
@@ -96,6 +110,25 @@ export function TimelineStrip({
     periods.findIndex(({ inView }) => inView),
   );
   const focusedAt = periods.findIndex(({ key }) => key === focusedKey);
+  // The periods and those tinted, so the rail scrolls again only when either changes, never against
+  // the reader's own scrolling.
+  const laidOut = periods
+    .map(({ key, inView }) => (inView ? `[${key}]` : key))
+    .join(" ");
+  useLayoutEffect(() => {
+    showTinted(strip.current as HTMLDivElement);
+  }, [laidOut]);
+  // A rail resized, such as by the window, scrolls to show the tinted periods again.
+  useLayoutEffect(() => {
+    const rail = strip.current as HTMLDivElement;
+    const resized = new ResizeObserver(() => {
+      showTinted(rail);
+    });
+    resized.observe(rail);
+    return () => {
+      resized.disconnect();
+    };
+  }, []);
   const tabStop = focusedAt === -1 ? firstInView : focusedAt;
   const move = (event: KeyboardEvent, from: number) => {
     const moved = keyMoves.get(event.key);
@@ -120,7 +153,7 @@ export function TimelineStrip({
       </ActionIcon>
       <div
         ref={strip}
-        className={classes.strip}
+        className={[classes.strip, classes.scrollBars].join(" ")}
         role="toolbar"
         aria-label={words.group}
         onBlur={(event) => {
@@ -130,16 +163,8 @@ export function TimelineStrip({
         }}
       >
         {periods.map((period, index) => {
-          const {
-            key,
-            onChoose,
-            label,
-            short,
-            weight,
-            inView,
-            selected,
-            current,
-          } = period;
+          const { key, onChoose, label, weight, inView, selected, current } =
+            period;
           return (
             <UnstyledButton
               key={key}
@@ -158,12 +183,7 @@ export function TimelineStrip({
               }}
               onClick={onChoose}
             >
-              <span className={classes.stripLabel} aria-hidden>
-                {label}
-              </span>
-              <span className={classes.stripShort} aria-hidden>
-                {short}
-              </span>
+              <span aria-hidden>{label}</span>
             </UnstyledButton>
           );
         })}
