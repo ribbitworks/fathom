@@ -325,36 +325,53 @@ export const columnTables = ["people", "features"] as const;
 
 export type ColumnTable = (typeof columnTables)[number];
 
-// What sets each table apart: its name, what reading it needs, whether planned hires are offered
-// its added columns, whether they must be General, and what removing one needs besides changing
-// configuration.
+// The table a column is on, by the name its row records; one recorded before columns had tables is
+// on People.
+export const columnTableOf = (tableName: unknown): ColumnTable =>
+  tableName === "features" ? "features" : "people";
+
+// What sets each table apart: its name, what reading it needs, what adding, changing and removing
+// its columns needs, which is editing its records and seeing people, whose sight General lists and
+// columns take, whether planned hires are offered its added columns, and whether they must be
+// General.
 export const columnTablePolicies: Readonly<
   Record<
     ColumnTable,
     {
       name: string;
       viewNeeds: Permission;
+      editNeeds: readonly Permission[];
       onPlannedHires: boolean;
       generalOnly: boolean;
-      removalNeeds: Permission;
     }
   >
 > = {
   people: {
     name: "People",
     viewNeeds: "people:view",
+    editNeeds: ["people:edit", "people:view"],
     onPlannedHires: true,
     generalOnly: false,
-    removalNeeds: "people:edit",
   },
   features: {
     name: "Features",
     viewNeeds: "features:view",
+    editNeeds: ["features:edit", "people:view"],
     onPlannedHires: false,
     generalOnly: true,
-    removalNeeds: "features:edit",
   },
 };
+
+// Whether permissions let a role add, change and remove a table's columns.
+export const editsColumnsOf = (
+  permissions: readonly string[],
+  table: ColumnTable,
+): boolean =>
+  // The table is always one of the fixed tables.
+  // eslint-disable-next-line security/detect-object-injection
+  columnTablePolicies[table].editNeeds.every((need) =>
+    permissions.includes(need),
+  );
 
 // A choice column names its list, and takes its visibility from it; a web link, note, or number
 // column names its visibility, no list, and takes one value.

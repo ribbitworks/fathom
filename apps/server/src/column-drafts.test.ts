@@ -209,28 +209,33 @@ describe("drafting columns", () => {
     ).toBe(409);
     const [personId = ""] = drafted.json<{ ids: string[] }>().ids;
     await send("DELETE", `/api/people/${personId}/draft`);
-    // An actor who may change configuration but not people, as no role grants today.
-    const configurationOnly: Actor = {
+    // An actor who may change people but not see Personal details, as no role grants today.
+    const generalPeopleOnly: Actor = {
       user: { id: editor.id, name: "Fictional Editor", email: "" },
       roleId: null,
       dataClasses: defaultClasses,
-      permissions: ["configuration:edit", "configuration:view"],
+      permissions: ["people:edit", "people:view"],
     };
     const refusal = createDataAccess(test.connection).people.deleteField(
-      configurationOnly,
+      generalPeopleOnly,
       field.id,
     );
-    await expect(refusal).rejects.toThrow(/this role can't change/);
+    await expect(refusal).rejects.toThrow(/this role can't see/);
     await expect(refusal).rejects.toBeInstanceOf(ForbiddenError);
   });
 
-  // An actor who may change configuration and see people, but not Personal details, as no role
+  // An actor who may change configuration and people, but not see Personal details, as no role
   // grants today. It is the editor's own user, so it sees the editor's unpublished drafts.
   const generalOnly = (): Actor => ({
     user: { id: editor.id, name: "Fictional Editor", email: "" },
     roleId: null,
     dataClasses: defaultClasses,
-    permissions: ["configuration:edit", "configuration:view", "people:view"],
+    permissions: [
+      "configuration:edit",
+      "configuration:view",
+      "people:edit",
+      "people:view",
+    ],
   });
   const choice = (listId: string, name = unique("Fictional Column")) =>
     fieldRequestSchema.parse({ name, listId });

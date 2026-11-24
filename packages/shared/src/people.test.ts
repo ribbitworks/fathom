@@ -5,6 +5,8 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
+  columnTableOf,
+  editsColumnsOf,
   fieldRequestSchema,
   personChangeSchema,
   personRequestSchema,
@@ -13,6 +15,26 @@ import {
 
 const messages = (result: { error?: { issues: { message: string }[] } }) =>
   result.error?.issues.map((issue) => issue.message) ?? [];
+
+describe("columnTableOf", () => {
+  it("names Features for a column on Features, and People for any other, older ones included", () => {
+    expect(columnTableOf("features")).toBe("features");
+    expect(columnTableOf("people")).toBe("people");
+    expect(columnTableOf(null)).toBe("people");
+  });
+});
+
+describe("editsColumnsOf", () => {
+  it.each([
+    ["people", ["people:edit", "people:view"], true],
+    ["people", ["configuration:edit", "people:view"], false],
+    ["features", ["features:edit", "people:view"], true],
+    ["features", ["features:edit"], false],
+    ["features", ["configuration:edit", "people:view"], false],
+  ] as const)("on %s, with %j, is %s", (table, permissions, expected) => {
+    expect(editsColumnsOf(permissions, table)).toBe(expected);
+  });
+});
 
 describe("fieldRequestSchema", () => {
   it("takes a choice column's tier from its list, so drops any visibility sent", () => {

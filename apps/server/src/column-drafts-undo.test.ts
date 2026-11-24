@@ -14,6 +14,7 @@ import { ConflictError } from "./errors.ts";
 import { testPosition, unique } from "./test-app.ts";
 import {
   test,
+  editor,
   editorActor,
   send,
   decide,
@@ -228,6 +229,32 @@ describe("undoing changes to columns saved before columns had drafts", () => {
 });
 
 describe("undoing changes to column drafts", () => {
+  it("takes out a column its maker added and hasn't published", async () => {
+    const { list } = await liveList(["A"]);
+    const added = await test.request(
+      editor.cookie,
+      "POST",
+      "/api/people/columns",
+      { name: unique("Fictional Column"), listId: list.id },
+      { publish: false },
+    );
+    const { field, changeSetId } = added.json<{
+      field: { id: string };
+      changeSetId: string;
+    }>();
+
+    const undone = await test.request(
+      editor.cookie,
+      "POST",
+      `/api/undo/${changeSetId}`,
+    );
+
+    expect(undone.statusCode, undone.body).toBe(200);
+    expect((await readPeople()).fields.map(({ id }) => id)).not.toContain(
+      field.id,
+    );
+  });
+
   // Drafts a column, discards it, changes something with the given step, and tries to undo the
   // discard, which would put the draft back.
   async function undoDiscardAfter(
@@ -262,9 +289,9 @@ describe("undoing changes to column drafts", () => {
     ).toBe(409);
   });
 
-  it("refuses to put back a removal once its maker may no longer change people", async () => {
+  it("refuses to put back a removal once its maker may no longer see the column's values", async () => {
     const remover = await test.signedIn("workforce-administrator");
-    const { list } = await liveList(["A"]);
+    const { list } = await liveList(["A"], "personal");
     const column = await liveColumn(list.id);
     await test.request(
       remover.cookie,
@@ -278,15 +305,15 @@ describe("undoing changes to column drafts", () => {
         `/api/people/columns/${column.id}/draft`,
       )
     ).json<{ changeSetId: string }>();
-    // No role changes configuration without people today, so the actor is made by hand.
-    const configurationOnly = {
+    // No role changes people without seeing Personal details today, so the actor is made by hand.
+    const generalPeopleOnly = {
       user: { id: remover.id, name: "Fictional Remover", email: "" },
       roleId: null,
       dataClasses: defaultClasses,
-      permissions: ["configuration:edit", "configuration:view"] as Permission[],
+      permissions: ["people:edit", "people:view"] as Permission[],
     };
     await expect(
-      createDataAccess(test.connection).undo(configurationOnly, changeSetId),
+      createDataAccess(test.connection).undo(generalPeopleOnly, changeSetId),
     ).rejects.toThrow(ConflictError);
   });
 

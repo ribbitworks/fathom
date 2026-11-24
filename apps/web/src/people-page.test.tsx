@@ -366,7 +366,23 @@ describe("who sees the People page", () => {
     ).toEqual(["Show details", "Copy link"]);
   });
 
-  it("makes adding a person the main action for those who may, and otherwise adding a column", async () => {
+  it("offers a new column beside a new person to a role that edits people, without configuration", async () => {
+    serverAnswers({
+      "GET /api/session": session(["people:view", "people:edit"]),
+      "GET /api/people": peopleAnswer,
+      "GET /api/lists": listsAnswer,
+    });
+    renderApp("/people");
+    await screen.findByRole("grid", { name: "People" });
+    expect(screen.getByRole("button", { name: "New person" })).toBeDefined();
+    expect(
+      screen
+        .getByRole("button", { name: "New column" })
+        .getAttribute("data-variant"),
+    ).toBe("default");
+  });
+
+  it("offers no new column to a role that changes configuration but not people", async () => {
     serverAnswers({
       "GET /api/session": session([
         "people:view",
@@ -379,11 +395,7 @@ describe("who sees the People page", () => {
     renderApp("/people");
     await screen.findByRole("grid", { name: "People" });
     expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
-    expect(
-      screen
-        .getByRole("button", { name: "New column" })
-        .getAttribute("data-variant"),
-    ).toBe("filled");
+    expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
   });
 
   it("is not linked or shown for anyone else", async () => {

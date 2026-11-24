@@ -15,7 +15,7 @@ Features lists the plan's features in one table, with a board as a second way of
 
 ## Layout
 
-- **Heading:** Table | Board beside the title, kept in the address; at the right, New column for those who change planning configuration, then New feature.
+- **Heading:** Table | Board beside the title, kept in the address; at the right, New column for those who edit features and see people, then New feature.
 - **The table:** edited like People's, as [People](people.md) sets out.
 - **Details:** grouped under Details (Name to Notes), Customers and commitments (Customers, Projects, Proposals), Planning (Priority to Staffed), then Columns, the added ones.
   - The table starts its columns in the details' order, so the two read alike.

@@ -575,42 +575,42 @@ const routes: Route[] = [
   {
     method: "POST",
     pattern: "/api/people/columns",
-    needs: allOf("configuration:edit", "people:view"),
+    needs: allOf("people:edit", "people:view"),
     body: () => ({ ...named(), type: "link", visibility: "general" }),
   },
   {
     method: "PUT",
     pattern: "/api/people/columns/:fieldId",
-    needs: allOf("configuration:edit"),
+    needs: allOf("people:edit", "people:view"),
     body: () => ({ ...named(), type: "link", visibility: "general" }),
   },
   {
     method: "DELETE",
     pattern: "/api/people/columns/:fieldId",
-    needs: allOf("configuration:edit"),
+    needs: allOf("people:edit", "people:view"),
   },
   ...["/draft", "/draft/rejection"].map((end): Route => ({
     method: "DELETE",
     pattern: `/api/people/columns/:fieldId${end}`,
-    needs: allOf("configuration:edit"),
+    needs: allOf("people:edit", "people:view"),
   })),
 
   {
     method: "POST",
     pattern: "/api/features/columns",
-    needs: allOf("configuration:edit"),
+    needs: allOf("features:edit", "people:view"),
     body: () => ({ ...named(), type: "link", visibility: "general" }),
   },
   {
     method: "PUT",
     pattern: "/api/features/columns/:fieldId",
-    needs: allOf("configuration:edit"),
+    needs: allOf("features:edit", "people:view"),
     body: () => ({ ...named(), type: "link", visibility: "general" }),
   },
   ...["", "/draft", "/draft/rejection"].map((end): Route => ({
     method: "DELETE",
     pattern: `/api/features/columns/:fieldId${end}`,
-    needs: allOf("configuration:edit"),
+    needs: allOf("features:edit", "people:view"),
   })),
 
   // Each table's views need what opens its page. Sharing, and changing or deleting someone else's

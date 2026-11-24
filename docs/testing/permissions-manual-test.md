@@ -91,7 +91,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:**
     - **Start**, **End** and **Manager assigned** are shown
     - **Compensation band** and **Performance rating** are shown
-    - **New person** is at the top right, and there is no **New column** button
+    - **New person** is at the top right, with **New column** beside it
   - **Notes:**
 
 - [ ] `1B51` Search for 'Max Munk'.

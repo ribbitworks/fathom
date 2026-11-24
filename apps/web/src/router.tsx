@@ -12,6 +12,7 @@ import {
   chartLevelsSchema,
   daySchema,
   draftsTabSchema,
+  editsColumnsOf,
   editsField,
   historySearchLength,
   opensWith,
@@ -432,7 +433,7 @@ const peopleRoute = createRoute({
           changesHiringPlan(access)
         }
         approves={approvableKinds(permissions)}
-        canEditColumns={onToday && permissions.includes("configuration:edit")}
+        canEditColumns={onToday && editsColumnsOf(permissions, "people")}
         dates={
           otherDates
             ? {

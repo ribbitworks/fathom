@@ -63,8 +63,8 @@ export interface ListAccess {
   resubmitDraft(actor: Actor, target: ListDraftTarget): Promise<ChangeSetId>;
 }
 
-// Checks the actor may change planning configuration, such as lists and columns, and returns who
-// to record as making the change.
+// Checks the actor may change planning configuration, such as lists and the planning settings, and
+// returns who to record as making the change.
 export function editor(actor: Actor): Actor {
   requirePermission(actor, "configuration:edit");
   return actor;

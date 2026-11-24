@@ -9,7 +9,9 @@ import {
   builtInColumnTiers,
   seesBuiltInColumn,
   type ColumnTable,
+  columnTableOf,
   columnTablePolicies,
+  editsColumnsOf,
   featureColumnKeys,
   type Field,
   type FieldDraft,
@@ -17,7 +19,7 @@ import {
 } from "@fathom/shared";
 import { and, asc, eq, inArray, min } from "drizzle-orm";
 import { type Actor, mostSensitive, seesSensitivity } from "../access.ts";
-import { BadRequestError, ConflictError } from "../errors.ts";
+import { BadRequestError, ConflictError, ForbiddenError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import { readColumnOrder } from "./column-order.ts";
 import {
@@ -57,10 +59,17 @@ import { type FieldRow, readBuiltInTiers } from "./values.ts";
 export const table = "people";
 export const noField = "There is no such column";
 
-// What differs between the tables that can have columns added: whether a column can be offered on
-// planned hires too, whether its values must be General, and what removing its values takes.
+// What differs between the tables that can have columns added, for a column by its recorded table.
 export const policyOf = (tableName: unknown) =>
-  columnTablePolicies[tableName === "features" ? "features" : "people"];
+  columnTablePolicies[columnTableOf(tableName)];
+
+// Checks the actor may add and change a table's columns, and returns who to record as making the
+// change.
+export function columnEditor(actor: Actor, table: ColumnTable): Actor {
+  if (!editsColumnsOf(actor.permissions, table)) throw new ForbiddenError();
+  return actor;
+}
+
 export const duplicateField = "There is already a column with that name";
 export const toBeRemoved =
   "This column's draft removes it; discard the draft to change it";
@@ -105,6 +114,17 @@ export async function readColumnsState(
 
 export const draftedField = (state: ColumnsState, id: string) =>
   drafted(state.fields.get(id), state.fieldDrafts.get(id));
+
+// A column as someone sees it: live, or as a draft makes it, their own unpublished ones included;
+// undefined once there is no trace of it.
+export async function columnAsSeenBy(
+  reader: Reader,
+  viewer: string,
+  id: string,
+): Promise<Recorded | undefined> {
+  const state = await readColumnsState(reader, viewer);
+  return state.fields.get(id) ?? draftedField(state, id);
+}
 
 // Whether a column is on a table; a draft written before columns had tables is on People.
 export const isOnTable = (
@@ -265,18 +285,14 @@ export function refuseSensitiveOnFeatures(
   }
 }
 
-// Whether the actor may remove a column's values: those who can change the table's records, and,
-// on People, who see how sensitive the values are.
+// Whether one who may change a table's columns may also remove a column's values: on People, only
+// one who sees how sensitive they are; on Features, whose values are General, anyone.
 export function mayRemoveValuesOf(
   actor: Actor,
   field: Recorded,
   tier: Tier,
 ): boolean {
-  const { generalOnly, removalNeeds } = policyOf(field.tableName);
-  return (
-    actor.permissions.includes(removalNeeds) &&
-    (generalOnly || seesSensitivity(actor, tier))
-  );
+  return policyOf(field.tableName).generalOnly || seesSensitivity(actor, tier);
 }
 
 function draftOut(

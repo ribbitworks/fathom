@@ -8,6 +8,7 @@ import {
   cardPartSchema,
   cyclesViewChoices,
   daySchema,
+  editsColumnsOf,
   editsField,
   opensWith,
   pageNeeds,
@@ -298,7 +299,7 @@ export const featuresRoute = createRoute({
       <ProjectsPage
         linkedColumn={linkedColumn}
         tab="features"
-        canEditColumns={permissions.includes("configuration:edit")}
+        canEditColumns={editsColumnsOf(permissions, "features")}
         canShareViews={sharesViews("features", permissions)}
         onTab={(next, record) => {
           void navigate(planAddress(next, record));

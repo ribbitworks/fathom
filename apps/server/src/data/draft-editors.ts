@@ -4,7 +4,9 @@
 
 import {
   type ClassifiedView,
+  columnTableOf,
   type DraftKind,
+  editsColumnsOf,
   type Permission,
   type RecordType,
   seesView,
@@ -13,6 +15,7 @@ import { type Actor, holdsAnyPermission, requireView } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
 import { changesTeams } from "./feature-teams.ts";
 import { editsHires } from "./hire-checks.ts";
+import type { Recorded } from "./draft-records.ts";
 import { isRecordType, kindOf } from "./records.ts";
 import { readsKind } from "./record-state.ts";
 
@@ -66,10 +69,10 @@ export function recordEditor(actor: Actor, type: RecordType): Actor {
 const changesConfiguration = (actor: Actor): boolean =>
   actor.permissions.includes("configuration:edit");
 
-// Who may change each kind of draft kept outside the plan's records. Every kind must be listed,
-// which the compiler checks.
+// Who may change each kind of draft kept outside the plan's records, but a column's, whose table
+// decides. Every kind must be listed, which the compiler checks.
 const otherEditors: Record<
-  Exclude<DraftKind, RecordType>,
+  Exclude<DraftKind, RecordType | "field">,
   (actor: Actor) => boolean
 > = {
   person: (actor) => actor.permissions.includes("people:edit"),
@@ -78,15 +81,26 @@ const otherEditors: Record<
   list: changesConfiguration,
   "list-item": changesConfiguration,
   "choice-order": changesConfiguration,
-  field: changesConfiguration,
 };
 
 const otherEditorOf = new Map<string, (actor: Actor) => boolean>(
   Object.entries(otherEditors),
 );
 
-// Whether the actor may change a kind of draft; none for a kind Fathom no longer has.
-export const editsDraftKind = (actor: Actor, kind: string): boolean =>
-  isRecordType(kind)
+// Whether the actor may change a draft of a kind: of a column, those who set up the table the
+// column is on, so none when the column is unknown; of a kind Fathom no longer has, none.
+export const editsDraft = (
+  actor: Actor,
+  kind: string,
+  column?: Recorded,
+): boolean => {
+  if (kind === "field") {
+    return (
+      column !== undefined &&
+      editsColumnsOf(actor.permissions, columnTableOf(column.tableName))
+    );
+  }
+  return isRecordType(kind)
     ? editsKind(actor, kind)
     : (otherEditorOf.get(kind)?.(actor) ?? false);
+};

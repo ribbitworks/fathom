@@ -89,7 +89,7 @@ import { readLiveTeams, readTeamDrafts } from "./feature-team-reads.ts";
 import { recordTeamDayChanges, teamChanges } from "./feature-teams.ts";
 import { readFills } from "./fills.ts";
 import { readToday } from "./settings.ts";
-import { editsDraftKind } from "./draft-editors.ts";
+import { editsDraft } from "./draft-editors.ts";
 import {
   changeKey,
   fillKeys,
@@ -592,12 +592,15 @@ async function publishableBy(
       .filter(({ madeAsRoleId }) => madeAsRoleId !== actor.roleId)
       .map(changeKey),
   );
+  // A column's draft is judged by the column's table; no other row has a column to give.
+  const mayMake = (row: Row) =>
+    editsDraft(
+      actor,
+      row.recordType,
+      versionOf(versions, "field", row.recordId),
+    );
   const refused = going
-    .filter(
-      (row) =>
-        madeAsOther.has(changeKey(row)) &&
-        !editsDraftKind(actor, row.recordType),
-    )
+    .filter((row) => madeAsOther.has(changeKey(row)) && !mayMake(row))
     .map(changeKey);
   if (refused.length === 0) return { rows: [...going], left: 0 };
   const uses = usesAmong(

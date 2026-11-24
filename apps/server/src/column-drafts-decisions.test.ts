@@ -29,6 +29,47 @@ beforeAll(startColumnDraftTests);
 afterAll(closeColumnDraftTests);
 
 describe("discarding and sending drafts of columns again", () => {
+  it.each([
+    ["removal", "DELETE", () => undefined],
+    [
+      "rename",
+      "PUT",
+      (listId: string) => ({
+        name: unique("Fictional Renamed"),
+        listId,
+      }),
+    ],
+  ] as const)(
+    "sends a rejected %s again only for a role that still sees the column's values",
+    async (_change, method, body) => {
+      // Given a Personal column whose change was drafted and rejected
+      const maker = await test.signedIn("workforce-administrator");
+      const { list } = await liveList(["A"], "personal");
+      const field = await liveColumn(list.id);
+      const path = `/api/people/columns/${field.id}`;
+      const drafted = await test.request(
+        maker.cookie,
+        method,
+        path,
+        body(list.id),
+      );
+      expect(drafted.statusCode, drafted.body).toBe(200);
+      await decide("rejection", { columns: [field.id], reason: "Keep it" });
+      const resubmit = () =>
+        test.request(maker.cookie, "DELETE", `${path}/draft/rejection`);
+
+      // When its maker still changes people but no longer sees Personal details, then once they do
+      await test.holdOnly(maker.id, ["people:edit", "people:view"]);
+      expect((await resubmit()).statusCode).toBe(403);
+      await test.holdOnly(maker.id, [
+        "people:edit",
+        "people:view",
+        "personal:view",
+      ]);
+      expect((await resubmit()).statusCode).toBe(200);
+    },
+  );
+
   it("sends a rejected draft again, discards it, and refuses drafts that do not exist", async () => {
     const { list } = await liveList(["A"]);
     const field = await liveColumn(list.id);

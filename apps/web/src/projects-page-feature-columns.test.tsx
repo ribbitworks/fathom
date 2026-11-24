@@ -82,7 +82,7 @@ describe("the Features page", () => {
       "features:view",
       "features:edit",
       "configuration:view",
-      "configuration:edit",
+      "people:view",
     ];
     const lists = () => Response.json({ lists: [sizes, hidden] });
     const openWith = (
@@ -129,8 +129,23 @@ describe("the Features page", () => {
       expect(screen.getByRole("grid").textContent).toContain("Small");
     });
 
-    it("offers no new column to those who may not change columns", async () => {
+    it("offers no new column to those who only see features", async () => {
+      await openWith(withColumns(), {}, ["plan:view", "features:view"]);
+      expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
+    });
+
+    it("offers no new column to a feature editor who doesn't see people, whose sight lists take", async () => {
       await openWith(withColumns(), {}, featureEditor);
+      expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
+    });
+
+    it("offers no new column to a role that changes configuration but doesn't edit features", async () => {
+      await openWith(withColumns(), {}, [
+        "plan:view",
+        "features:view",
+        "configuration:view",
+        "configuration:edit",
+      ]);
       expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
     });
 
@@ -232,14 +247,6 @@ describe("the Features page", () => {
         ).toBeNull();
       });
       expect(sentTo(fetch)).toContain(path);
-    });
-
-    it("offers no deleting to those who may not change features", async () => {
-      await openWith(withColumns({ canEditFeatures: false }));
-      const dialog = await editColumn();
-      expect(
-        within(dialog).queryByRole("button", { name: "Remove column" }),
-      ).toBeNull();
     });
 
     it("discards a column's draft through Features' columns", async () => {

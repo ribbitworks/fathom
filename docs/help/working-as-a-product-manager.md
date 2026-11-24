@@ -1,6 +1,6 @@
 # Working as a Product Manager
 
-As a Product Manager, you shape the plan. That's the projects customers need, the proposals that may become projects, the features they need, and the releases that ship them. You also set up schedules' cycles, and approve other people's drafts of the plan, releases and schedules.
+As a Product Manager, you shape the plan. That's the projects customers need, the proposals that may become projects, the features they need, and the releases that ship them. You also set up schedules' cycles and the columns on Features, and approve other people's drafts of the plan, releases and schedules.
 
 ## What to Know First
 

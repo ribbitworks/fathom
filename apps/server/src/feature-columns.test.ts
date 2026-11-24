@@ -13,7 +13,7 @@ import {
   lists,
 } from "@fathom/db";
 import type { Feature, Field, ProjectPlan } from "@fathom/shared";
-import { featuresListGeneral } from "@fathom/shared";
+import { featuresListGeneral, startingRoles } from "@fathom/shared";
 import { and, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -29,7 +29,11 @@ let viewer: { id: string; cookie: string };
 
 beforeAll(async () => {
   test = await startTestApp();
-  editor = await test.signedIn("workforce-administrator");
+  // Edits features and configuration, so makes the lists its columns draw on.
+  editor = await test.signedIn([
+    ...startingRoles["workforce-administrator"].permissions,
+    "features:edit",
+  ]);
   columnApprover = await test.signedIn("engineering-director");
   planner = await test.signedIn("product-manager");
   planApprover = await test.signedIn("project-manager");
@@ -133,6 +137,67 @@ const columns = async (cookie = planner.cookie) =>
 // Enough that columns in any other order would not pass by chance.
 const columnsToOrder = 6;
 
+describe("who adds columns to Features", () => {
+  it("lets only a role that edits features undo a change to one", async () => {
+    // Given a column its maker added while editing features
+    const maker = await test.signedIn([
+      "plan:view",
+      "features:edit",
+      "people:view",
+    ]);
+    const added = await addColumn(
+      { type: "link", visibility: "general" },
+      maker.cookie,
+    );
+    const { changeSetId } = added.json<{ changeSetId: string }>();
+    const undo = () =>
+      test.request(maker.cookie, "POST", `/api/undo/${changeSetId}`);
+
+    // When the maker changes configuration but no longer edits features
+    await test.holdOnly(maker.id, ["configuration:edit", "features:view"]);
+
+    // Then they can't undo it, until they may again
+    expect((await undo()).statusCode).toBe(403);
+    await test.holdOnly(maker.id, ["features:edit", "people:view"]);
+    const undone = await undo();
+    expect(undone.statusCode, undone.body).toBeLessThan(300);
+  });
+
+  it("takes out a column its maker added and hasn't published", async () => {
+    const added = await test.request(
+      planner.cookie,
+      "POST",
+      "/api/features/columns",
+      { name: unique("Fictional Column"), type: "link", visibility: "general" },
+      { publish: false },
+    );
+    const { field, changeSetId } = added.json<{
+      field: Field;
+      changeSetId: string;
+    }>();
+
+    const undone = await test.request(
+      planner.cookie,
+      "POST",
+      `/api/undo/${changeSetId}`,
+    );
+
+    expect(undone.statusCode, undone.body).toBe(200);
+    expect((await columns()).fields.map(({ id }) => id)).not.toContain(
+      field.id,
+    );
+  });
+
+  it("is a role that edits features, such as the Product Manager, and not one that only changes configuration", async () => {
+    const configurer = await test.signedIn("workforce-administrator");
+    const body = { type: "link", visibility: "general" };
+    const refused = await addColumn(body, configurer.cookie);
+    expect(refused.statusCode).toBe(403);
+    const added = await addColumn(body, planner.cookie);
+    expect(added.statusCode, added.body).toBe(201);
+  });
+});
+
 describe("the columns on Features", () => {
   it("drafts a column, shown only on Features until approved and after", async () => {
     const { listId } = await addList();
@@ -216,12 +281,6 @@ describe("the columns on Features", () => {
     }
   });
 
-  it("refuses those who may not change configuration", async () => {
-    const { listId } = await addList();
-    const response = await addColumn({ listId }, planner.cookie);
-    expect(response.statusCode).toBe(403);
-  });
-
   it("lets a name be used on People and Features alike, once on each", async () => {
     const name = unique("Fictional Shared");
     const { listId } = await addList();
@@ -262,6 +321,74 @@ describe("the columns on Features", () => {
       { name, listId: field.listId },
     );
     expect(response.statusCode).toBe(200);
+  });
+
+  it("resubmits a rejected removal only for a role that still edits features", async () => {
+    // Given a live column whose removal was drafted and rejected
+    const { field } = await liveColumn();
+    const remover = await test.signedIn([
+      "plan:view",
+      "features:edit",
+      "configuration:view",
+      "people:view",
+    ]);
+    const path = `/api/features/columns/${field.id}`;
+    expect(
+      (await test.request(remover.cookie, "DELETE", path)).statusCode,
+    ).toBe(200);
+    const rejected = await test.request(
+      columnApprover.cookie,
+      "POST",
+      "/api/drafts/rejection",
+      { columns: [field.id], reason: "Fictional reason" },
+    );
+    expect(rejected.statusCode).toBe(200);
+    const resubmit = () =>
+      test.request(remover.cookie, "DELETE", `${path}/draft/rejection`);
+
+    // When its maker no longer edits features, then once they do again
+    await test.holdOnly(remover.id, [
+      "features:view",
+      "configuration:view",
+      "people:view",
+    ]);
+    expect((await resubmit()).statusCode).toBe(403);
+    await test.holdOnly(remover.id, [
+      "features:edit",
+      "configuration:view",
+      "people:view",
+    ]);
+    expect((await resubmit()).statusCode).toBe(200);
+  });
+
+  it("refuses undoing a column's addition once its draft is gone", async () => {
+    const maker = await test.signedIn([
+      "plan:view",
+      "features:edit",
+      "configuration:view",
+      "people:view",
+    ]);
+    const added = await addColumn(
+      { type: "link", visibility: "general" },
+      maker.cookie,
+    );
+    const { field, changeSetId } = added.json<{
+      field: Field;
+      changeSetId: string;
+    }>();
+    await test.request(
+      maker.cookie,
+      "DELETE",
+      `/api/features/columns/${field.id}/draft`,
+    );
+
+    const undone = await test.request(
+      maker.cookie,
+      "POST",
+      `/api/undo/${changeSetId}`,
+    );
+
+    expect(undone.statusCode).toBe(409);
   });
 
   it("discards a column's draft, and resubmits a rejected one", async () => {
@@ -411,8 +538,9 @@ describe("a feature's values", () => {
 
   it("refuses removing a column to those who cannot change features", async () => {
     const { field } = await liveColumn();
+    const configurer = await test.signedIn("workforce-administrator");
     const removed = await test.request(
-      editor.cookie,
+      configurer.cookie,
       "DELETE",
       `/api/features/columns/${field.id}`,
     );

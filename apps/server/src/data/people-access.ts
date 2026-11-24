@@ -43,7 +43,7 @@ import {
   seenPeople,
   seenPeopleColumns,
 } from "./page-reads.ts";
-import { editor } from "./configuration-access.ts";
+import { columnEditor } from "./column-state.ts";
 
 export interface PeopleAccess {
   // Everyone the actor may see, with the columns whose values they may see, today or on another
@@ -307,20 +307,26 @@ export function createPeopleAccess(database: Database): PeopleAccess {
     resubmitDraft: async (actor, id) =>
       fills.resubmitDraft(database, actor, { kind: "person", id }),
     createField: async (actor, request) => {
-      editor(actor);
+      columnEditor(actor, "people");
       return columnDrafts.createField(database, actor, request);
     },
     updateField: async (actor, id, request) => {
-      editor(actor);
+      columnEditor(actor, "people");
       return columnDrafts.updateField(database, actor, id, request);
     },
     deleteField: async (actor, id) => {
-      editor(actor);
+      columnEditor(actor, "people");
       return columnDrafts.deleteField(database, actor, id);
     },
     discardColumnDraft: async (actor, id) =>
-      columnDrafts.discardColumnDraft(database, editor(actor), { id }),
+      columnDrafts.discardColumnDraft(database, columnEditor(actor, "people"), {
+        id,
+      }),
     resubmitColumnDraft: async (actor, id) =>
-      columnDrafts.resubmitColumnDraft(database, editor(actor), { id }),
+      columnDrafts.resubmitColumnDraft(
+        database,
+        columnEditor(actor, "people"),
+        { id },
+      ),
   };
 }
