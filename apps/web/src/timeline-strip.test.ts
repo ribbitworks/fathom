@@ -20,7 +20,7 @@ const laidOut = (element: HTMLElement, sizes: Record<string, number>) => {
 // tinted.
 function rail(width: number, tinted: readonly number[]) {
   const strip = document.createElement("div");
-  laidOut(strip, { clientWidth: width, offsetLeft: 0 });
+  laidOut(strip, { clientWidth: width });
   for (let at = 0; at < 10; at += 1) {
     const period = document.createElement("button");
     laidOut(period, { offsetLeft: at * 60, offsetWidth: 60 });
