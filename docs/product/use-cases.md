@@ -1,6 +1,6 @@
 # Fathom: Use Cases
 
-**Last updated:** 2026-11-20
+**Last updated:** 2026-11-24
 
 The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
 
@@ -18,7 +18,9 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 - **Goal:** Record a bid or customer request with the features it proposes, and keep its status up to date.
 - **Outcome:** The proposal, its status and the features it proposes are kept, each change approved.
 
-A proposal starts Open, and its status is one of the built-in Proposal statuses, whose choices can be changed, with no rules tied to them, so any status may follow any other, as the [Domain Model](../design/domain-model.md#proposal) sets out. Each change is a draft that needs [approval](../design/domain-model.md#drafts-and-approval). A project may link to one or more proposals. No project is made from a proposal, and nothing marks a proposal Won.
+A proposal starts Open, and its status is one of the built-in Proposal statuses, whose choices can be changed, with no rules tied to them, so any status may follow any other, as the [Domain Model](../design/domain-model.md#proposal) sets out. Each change is a draft that needs [approval](../design/domain-model.md#drafts-and-approval).
+
+A project may link to one or more proposals. No project is made from a proposal, and nothing marks a proposal Won.
 
 ```mermaid
 flowchart TD
@@ -42,7 +44,9 @@ A feature usually starts with few details: a name, a short description, notes, a
 - **Goal:** Take a feature from an idea to a release, whichever comes first, the sale or the work.
 - **Outcome:** The feature is planned, staffed and shipped as one record.
 
-A feature comes in two ways, both normal: sold, then built, through a proposal and usually a project; or built, then sold, planned on its own and included in proposals later. Every change along the way is a draft, approved by someone whose role approves that area: Approve Plan for proposals and projects, Approve Features and releases for features, and Approve Allocations for staffing.
+A feature comes in two ways, both normal: sold, then built, through a proposal and usually a project; or built, then sold, planned on its own and included in proposals later.
+
+Every change along the way is a draft, approved by someone whose role approves that area: Approve Plan for proposals and projects, Approve Features and releases for features, and Approve Allocations for staffing.
 
 ```mermaid
 flowchart TD
