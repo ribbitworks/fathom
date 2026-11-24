@@ -15,60 +15,135 @@ What to test, and the commands to run, are in [Testing Standards](../standards/t
 
 ## What a Change Runs
 
-`pnpm test:changed` runs the script tests, then the package tests below, unless the change is to documentation other than Help pages, or to the web app's stylesheets alone. [The Changed Tests](#the-changed-tests) draws each choice.
+`pnpm test:changed` chooses the tests a change can affect. This chart is part of [The Changed Tests](#the-changed-tests), at the end.
 
-| A change to | Runs |
-| --- | --- |
-| A source file in a package's `src` folder | The tests that import it, directly or through other files, in that package and every package that depends on it |
-| A test, changed or removed | As a change to the source file of the same name beside it, whose importing tests then run too; for a widely imported file, that can be most of a package's tests |
-| Anything else in a package, such as its settings, stylesheets or migrations | Every test of that package and of every package that depends on it |
-| The web app's stylesheets alone | The web app's tests, ESLint and the formatting check |
-| A Help page in `docs/help/` | The web app's tests that import the Help pages, since they're built into it |
-| Anything outside the packages, other than documentation | Every test |
-| Other documentation alone | Nothing |
+```mermaid
+flowchart TD
+    AnyCode{"Is any path other than documentation alone?"}
+    AnyCode -- No --> NoTests["No tests run, and it passes"]
+    AnyCode -- Yes --> Turn["Takes a check's turn, unless the check that started it holds one"]
+    Turn --> Stylesheets{"Only the web app's stylesheets?"}
+    Stylesheets -- Yes --> StylesheetTests["pnpm lint, pnpm format:check and every web app test"]
+    Stylesheets -- No --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page?"}
+    Outside -- Yes --> Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
+    Outside -- No --> Scripts["pnpm test:scripts"]
+    Scripts --> Whole{"Is any path in a package but not a script in its src folder, such as its settings, stylesheets or migrations?"}
+    Whole -- Yes --> WholePackages["Every test of those packages and of every package that depends on them, with all their coverage"]
+    Whole -- No --> Imported
+    WholePackages --> Imported{"Is any path a script in a package's src folder, or a Help page?"}
+    Imported -- Yes --> Related["vitest related: the tests importing those files, in the packages that hold or depend on them and haven't run whole, measuring the coverage of the changed source files alone"]
+```
 
-Tests that reach code other than by importing it, such as building the web app, run in `pnpm check`.
+- **Imports:** a source file's tests are those that import it, directly or through other files, in its package and every package that depends on it.
+- **A changed or removed test** counts as a change to the source file of the same name beside it. For a widely imported file, its importing tests can be most of a package's tests.
+- **A Help page** in `docs/help/` isn't documentation alone, since Help is built into the web app. It stands for `apps/web/src/help-pages.ts`, which gathers the Help pages.
+- **Not by import:** tests that reach code other than by importing it, such as building the web app, run in `pnpm check`.
 
 ## Coverage of a Change
 
-`pnpm test:changed` fails where GitHub's check would on coverage, without running every test:
+`pnpm test:changed` fails where GitHub's check would on coverage, without running every test. This chart is part of [The Changed Tests](#the-changed-tests).
 
-- **A package whose every test runs** has all its coverage measured, since settings, dependencies and files outside the source can change any file's coverage.
-- **Any other package** has only the source files the change touches in its `src` folder measured, against its threshold, apart from those its coverage settings leave out.
-- **A changed or removed test** counts as a change to the source file of the same name beside it, so that file's coverage is measured.
+```mermaid
+flowchart TD
+    Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
+    WholePackages["Every test of those packages and of every package that depends on them, with all their coverage"] --> Imported{"Is any path a script in a package's src folder, or a Help page?"}
+    Imported -- Yes --> Related["vitest related: the tests importing those files, in the packages that hold or depend on them and haven't run whole, measuring the coverage of the changed source files alone"]
+    Imported -- No --> InTime
+    Everything --> InTime{"Did each pnpm step end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
+    Related --> InTime
+    InTime -- No --> TooLong["The step and every process it started are stopped, naming it, and it fails"]
+    TooLong --> Outcome
+    InTime -- Yes --> Outcome{"Did every run pass, coverage included?"}
+    Outcome -- No --> TestsFailed["Fails"]
+    Outcome -- Yes --> TestsPassed["Passes"]
+```
+
+- **Whole packages:** settings, dependencies and files outside the source can change any file's coverage, so a package whose every test runs has all its coverage measured.
+- **The changed files:** they're measured against their package's threshold, apart from those its coverage settings leave out.
 - **The cost:** measuring coverage adds about a quarter to the time of the tests it measures.
 - **The limits:** it can't tell which source a test of another name covers, nor see code a test reaches other than by importing it. So `pnpm check` and GitHub's check still enforce coverage in full.
 
 ## Before a Pull Request
 
-While working, run `pnpm check:push`, as [Development Setup](development-setup.md#checks-and-tests) describes, or any one of its parts on its own for a quick answer. A change then goes through these checks:
+While working, run `pnpm check:push`, as [Development Setup](development-setup.md#checks-and-tests) describes, or any one of its parts on its own for a quick answer. This chart is part of [The Whole Path](#the-whole-path).
 
-1. **Before the code review:** `pnpm check:push`, with `pnpm test:containers` when the change affects the containers.
-1. **After each round of fixes,** from a review or from the maintainer's feedback: `pnpm check:push` again.
-   - `pnpm security` too, if the round changed dependencies, the lockfile, a container file or the security scans' settings.
-   - `pnpm test:containers` again, if the round changed the containers.
-1. **Before the push:** once the review's findings are fixed and those checks pass, rebase onto `main` and run `pnpm check:push` on the rebased code.
-1. **On the pull request:** the Check workflow runs the full `pnpm check`, as [The Check on GitHub](#the-check-on-github) sets out.
+```mermaid
+flowchart TD
+    LocalDocs{"Documentation alone?"}
+    LocalDocs -- Yes --> LintMd["pnpm lint:md"]
+    LocalDocs -- No --> CheckPush["pnpm check:push, as The Local Check draws"]
+    CheckPush --> AffectsContainers{"Does it change the containers?"}
+    AffectsContainers -- Yes --> TestContainers["pnpm test:containers"]
+    AffectsContainers -- No --> LocalPassed{"Did everything pass?"}
+    TestContainers --> LocalPassed
+    LintMd --> LocalPassed
+    LocalPassed -- No --> Fix["A round of fixes"]
+    Fix --> SecurityInputs{"Did the round change dependencies, the lockfile, a container file or the scans' settings?"}
+    SecurityInputs -- Yes --> Security["pnpm security, as The Security Report draws"]
+    Security --> SecurityPassed{"Did it pass?"}
+    SecurityPassed -- No --> Fix
+    SecurityInputs -- No --> LocalDocs
+    SecurityPassed -- Yes --> LocalDocs
+    LocalPassed -- Yes --> Rebased{"Rebased onto the latest origin/main?"}
+    Rebased -- No --> Rebase["git fetch origin, then rebase onto origin/main"]
+    Rebase --> LocalDocs
+    Rebased -- Yes --> Push["git push, then gh pr create for a new pull request"]
+```
 
-A change to documentation alone may skip these checks, apart from `pnpm lint:md`, except a change to a Help page, which is built into Fathom.
+- **When:** these checks run before the code review, and again after each round of fixes, from a review or from the maintainer's feedback.
+- **Help pages:** a change to a Help page isn't documentation alone, since Help is built into Fathom, so it runs every check.
 
 ## The Check on GitHub
 
-- **Every push** to a pull request or to `main` runs the full `pnpm check`, its package tests on runners of their own, as [The Check Workflow](#the-check-workflow) draws.
-- **Documentation alone** means Markdown files, and files under `docs/` other than Help pages, which are built into Fathom. A pull request of documentation alone leaves out the package tests, the server's merged coverage and the container tests; every push to `main` runs them.
+This chart is part of [The Whole Path](#the-whole-path); [The Check Workflow](#the-check-workflow) draws the workflow's jobs.
+
+```mermaid
+flowchart TD
+    Push["git push, then gh pr create for a new pull request"] --> CheckWorkflow["The Check workflow on the pull request, as The Check Workflow draws, with CodeQL beside it"]
+    CheckWorkflow --> Required{"Did Full check and Container tests pass?"}
+    Required -- No --> Fix["A round of fixes"]
+    Required -- Yes --> Merge["The maintainer merges by rebasing; the branch need not be up to date with main"]
+    Merge --> MainRun["The Check workflow on the push to main, running every job"]
+    MainRun --> MainPassed{"Did it pass?"}
+    MainPassed -- No --> MainFailed["main fails its check, which a new pull request fixes"]
+    MainPassed -- Yes --> MainChecked["main is checked"]
+```
+
+- **Every push** to a pull request or to `main` runs the full `pnpm check`, its package tests on runners of their own.
+- **Documentation alone** means Markdown files, and files under `docs/` other than Help pages, which are built into Fathom. On a pull request, it leaves out the package tests, the server's merged coverage and the container tests.
 - **The security report** runs on every pull request, documentation alone included. It scans the container images whenever anything they're built from has changed, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out.
 - **The full suite:** the green check on a pull request's latest push is the full suite's run, once for the whole branch of an [issue batch](../standards/issues.md#issue-batches) too.
-- **Merging:** the maintainer merges only on green. **Full check** and **Container tests** must pass, as [Development Setup](development-setup.md#rulesets) sets out.
+- **Merging:** the checks a merge needs are set in [Development Setup § Rulesets](development-setup.md#rulesets).
 - **Failures:** follow the run with `gh pr checks --watch`, and read a failure or warning with `gh run view --log` (or `--log-failed`). Every warning it reports is fixed, as locally.
 - **Locally:** running the full `pnpm check` is optional, for when the workflow can't run.
 
 ## Offline
 
-`pnpm check:push --offline` runs once `pnpm offline:prepare` has run while connected, as [Development Setup](development-setup.md#working-offline) describes. A branch checked offline still needs the Check workflow's full check to pass on its pull request.
+`pnpm check --offline` and `pnpm check:push --offline` work without the internet, once `pnpm offline:prepare` has run while connected, as [Development Setup](development-setup.md#working-offline) describes. This chart is part of [The Local Check](#the-local-check).
+
+```mermaid
+flowchart TD
+    Offline{"--offline?"}
+    Offline -- Yes --> OfflineInCi{"Is CI set?"}
+    OfflineInCi -- Yes --> OfflineRefused["Fails: --offline can't be used where CI is set"]
+    OfflineInCi -- No --> Prepared{"Has pnpm offline:prepare finished in this copy?"}
+    Prepared -- No --> NotPrepared["Fails: not ready to work offline"]
+    Prepared -- Yes --> OfflineJobs["Security report runs pnpm security --offline, and Renovate settings is left out"]
+    OfflineJobs --> AnyLeft{"Is any job left?"}
+    AnyLeft -- No --> NothingLeft["Fails: every job left needs the internet"]
+    Offline -- No --> NeedsInternet{"Does a job left need the internet: Security report or Renovate settings?"}
+    NeedsInternet -- No --> Run
+    NeedsInternet -- Yes --> Connected{"Can this computer reach the internet?"}
+    Connected -- No --> NoConnection["Fails, naming --offline"]
+    Connected -- Yes --> Run
+    AnyLeft -- Yes --> Run["Runs the jobs side by side, the longest first, no more at once than the cores divided by FATHOM_CHECK_SHARES, or all at once when it isn't set"]
+```
+
+A branch checked offline still needs the Check workflow's full check to pass on its pull request.
 
 ## From a Change to a Merge
 
-The charts below draw every step the checks take, from a change on its branch to its merge and the runs on `main` after it, as the scripts and workflows run them. Diamonds are decisions, and each failure is an end of its own.
+The whole picture: the charts below draw every step the checks take, from a change on its branch to its merge and the runs on `main` after it, as the scripts and workflows run them. Diamonds are decisions, and each failure is an end of its own.
 
 Other documents own what the charts only name:
 
@@ -211,7 +286,7 @@ flowchart TD
     Outcome -- Yes --> TestsPassed["Passes"]
 ```
 
-- **A Help page** stands for `apps/web/src/help-pages.ts`, which gathers them, and a removed file runs nothing of its own, since whatever imported it changed too.
+- **A removed file** runs nothing of its own, since whatever imported it changed too.
 
 ### The Security Report
 
