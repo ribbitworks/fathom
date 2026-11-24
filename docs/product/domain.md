@@ -4,7 +4,7 @@ category: "Domain"
 audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/design/domain-model.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Fathom: Domain Concepts
@@ -18,7 +18,9 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Customer:** Who a project's or proposal's work is for.
 - **Product:** What a feature is part of.
 - **Feature:** The unit Fathom plans: a body of related work, sized in weeks to months of effort, that one feature team delivers. A feature is like an epic: it groups stories or tasks, which Fathom does not hold. Fathom has one roadmap of features.
-  - **One feature:** any planned work, a set of bug fixes included, which a column users add can mark as another kind. Work spanning several cycles is one feature, targeting the cycle it is delivered in, with its earlier work shown by its allocations' months; Fathom has no rule that large work is split. Work on a branch or behind a feature flag is one feature, shipping in the release where it is turned on.
+  - **One feature:** any planned work, a set of bug fixes included, which a column users add can mark as another kind.
+    - **Over several cycles:** work spanning several cycles is one feature, targeting the cycle it is delivered in, with its earlier work shown by its allocations' months; Fathom has no rule that large work is split.
+    - **On a branch or behind a flag:** work on a branch or behind a feature flag is one feature, shipping in the release where it is turned on.
   - **Not one feature:** a variation for another customer is a separate feature. Standing work, such as DevOps, has no record of its own: its features have milestones of their own, or those of a project made for it.
   - **Confidence:** needs no field. How likely a feature is comes from its status, such as Long shot, Maybe or Likely, each meaning Possible, and how firm its timing is from whether it rests on a Size, an estimate, or allocations.
 - **Initiative:** A larger effort made of several related features, such as parts an organization chooses to split a large feature into. Not built in; an organization that uses initiatives adds them as a column.
@@ -55,7 +57,9 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 
 - **Key:** A record's short name in Fathom, the word for its kind, a hyphen and a number, shown after a #, such as #FEATURE-123, which a link to the record names. It is Fathom's, apart from an organization's own IDs, such as a Project ID.
 - **Retired:** A retired choice or list stays on records that already have it, but is no longer offered for new ones, and can be restored.
-- **View:** What a table shows: its search, filters, sort, grouping, which version of each record it shows, its metrics, which of its first columns are frozen, staying in view while the rest scroll sideways, the order of its columns, which are hidden, the widths set for them, the units and decimal places they are shown in, and any of the page's own choices of which records show, such as Show retired.
+- **View:** What a table shows:
+  - **Records and metrics:** its search, filters, sort, grouping, which version of each record it shows, its metrics, and any of the page's own choices of which records show, such as Show retired.
+  - **Columns:** which of its first columns are frozen, staying in view while the rest scroll sideways, the order of its columns, which are hidden, the widths set for them, and the units and decimal places they are shown in.
 - **Metrics:** Counts of a table's rows shown, broken down by the values of one column, or of two crossed, each with its share of those rows.
 - **Draft row:** A row to be added, changed, or removed, waiting for an Approver to approve it, which makes it live, or reject it, which marks it Rejected, with a reason, until it is changed or discarded.
 - **Live:** Approved, and so part of the plan everyone works from.
