@@ -4,7 +4,7 @@ category: "Guide"
 audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/workflows/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Checks and CI
@@ -21,7 +21,7 @@ What to test, and the commands to run, are in [Testing Standards](../standards/t
 flowchart TD
     AnyCode{"Is any path other than documentation alone?"}
     AnyCode -- No --> NoTests["No tests run, and it passes"]
-    AnyCode -- Yes --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page?"}
+    AnyCode -- Yes --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page, a script's Node.js module other than those that start the package tests, or a file in .github/?"}
     Outside -- Yes --> Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
     Outside -- No --> Scripts["pnpm test:scripts"]
     Scripts --> Whole{"Is any path in a package but not a script in its src folder, such as its settings, stylesheets or migrations?"}
@@ -35,6 +35,8 @@ flowchart TD
 - **A changed or removed test** counts as a change to the source file of the same name beside it. For a widely imported file, its importing tests can be most of a package's tests.
 - **A Help page** in `docs/help/` isn't documentation alone, since Help is built into the web app. It stands for `apps/web/src/help-pages.ts`, which gathers the Help pages.
 - **Not by import:** tests that reach code other than by importing it, such as building the web app, run in `pnpm check`.
+- **The scripts' own code:** a change to the scripts' Node.js modules or a file in `.github/` runs the script tests alone, since no package reads them. Container tests run under `pnpm test:containers` instead.
+- **Still every test:** a shell script, since the packages' tests run some, such as `scripts/lib.sh`, and the scripts that start the package tests, such as `scripts/package-tests.mjs`.
 
 ## Coverage of a Change
 
@@ -296,7 +298,7 @@ flowchart TD
     Listed -- Yes --> AnyCode{"Is any path other than documentation alone?"}
     AnyCode -- No --> NoTests["No tests run, and it passes"]
     AnyCode -- Yes --> Turn["Takes a check's turn, unless the check that started it holds one"]
-    Turn --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page?"}
+    Turn --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page, a script's Node.js module other than those that start the package tests, or a file in .github/?"}
     Outside -- Yes --> Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
     Outside -- No --> Scripts["pnpm test:scripts"]
     Scripts --> Whole{"Is any path in a package but not a script in its src folder, such as its settings, stylesheets or migrations?"}

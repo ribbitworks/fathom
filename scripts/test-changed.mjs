@@ -32,6 +32,28 @@ export function isDocumentation(path) {
   );
 }
 
+// The scripts that start the packages' tests, whose own tests stub that out, so a change to one runs
+// every package's tests to show they still start.
+const packageTestRunners = new Set([
+  "scripts/check-turn.mjs",
+  "scripts/package-tests.mjs",
+  "scripts/run-command.mjs",
+  "scripts/test-changed.mjs",
+  "scripts/workspace.mjs",
+]);
+
+// Whether only the script tests can reach a changed path: the scripts' own Node.js modules and their
+// tests, and the files in .github/, which no package reads. Shell scripts are not, since the
+// packages' tests run some, such as scripts/lib.sh to build the test database.
+function reachedByScriptTestsAlone(path) {
+  return (
+    (path.startsWith("scripts/") &&
+      path.endsWith(".mjs") &&
+      !packageTestRunners.has(path)) ||
+    path.startsWith(".github/")
+  );
+}
+
 // The workspace package a path is part of, such as apps/server, or undefined outside the packages.
 function packageOf(path) {
   if (path.startsWith(helpPages)) return webApp;
@@ -118,13 +140,14 @@ const withTests = (folders, workspace) =>
   [...folders].filter((folder) => workspace.get(folder)?.hasTests).sort();
 
 // The tests to run for these changed paths: none, or the script tests with the package folders
-// whose every test runs, which is all of them for a change outside the packages, those whose tests
-// run only when they import a changed file, and the source files whose coverage is checked.
+// whose every test runs, which is all of them for most changes outside the packages, those whose
+// tests run only when they import a changed file, and the source files whose coverage is checked.
 export function testsFor(
   paths,
   { workspace = readWorkspace(), exists = existsSync } = {},
 ) {
-  const code = paths.filter((path) => !isDocumentation(path));
+  const changed = paths.filter((path) => !isDocumentation(path));
+  const code = changed.filter((path) => !reachedByScriptTestsAlone(path));
   if (code.some((path) => packageOf(path) === undefined))
     return {
       kind: "everything",
@@ -133,7 +156,7 @@ export function testsFor(
       files: [],
       covered: coveredBy(code, { workspace, exists }),
     };
-  if (code.length === 0) return { kind: "none" };
+  if (changed.length === 0) return { kind: "none" };
   const covered = coveredBy(code, { workspace, exists });
   const imported = code.filter(reachedByImports);
   const wholly = withDependents(
