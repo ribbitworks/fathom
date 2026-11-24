@@ -52,6 +52,7 @@ import {
   groupBy,
   rowNames,
 } from "./test-projects-page.tsx";
+import { markedUntilClosed } from "./test-open-row.tsx";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -222,6 +223,13 @@ describe("the Features page", () => {
     expect(
       await screen.findByRole("button", { name: "Close details" }),
     ).not.toBeNull();
+  });
+
+  it("marks the row of the feature whose details are open, until they close", async () => {
+    // Given a feature's details open beside the table
+    await open(featurePlan(), {}, `/features?open=${first.id}`);
+    // Then its row alone is marked, until the details close
+    await markedUntilClosed("Fictional First");
   });
 
   const warningBox = (words: HTMLElement) =>

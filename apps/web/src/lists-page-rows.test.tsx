@@ -38,6 +38,7 @@ import {
   waiting,
   type Answers,
 } from "./test-lists-page.tsx";
+import { currentRows } from "./test-open-row.tsx";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -452,13 +453,8 @@ describe("a list's row", () => {
   it("is marked as selected while the list's details are open", async () => {
     await openLists({}, "/lists/l2");
     await waitFor(() => {
-      expect(
-        recordCell("l2", "name")?.closest("tr")?.getAttribute("aria-current"),
-      ).toBe("true");
+      expect(currentRows()).toEqual([expect.stringContaining("Skills")]);
     });
-    expect(
-      recordCell("l1", "name")?.closest("tr")?.hasAttribute("aria-current"),
-    ).toBe(false);
   });
 
   it("says a list's class after its name", async () => {

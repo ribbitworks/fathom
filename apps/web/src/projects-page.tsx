@@ -421,6 +421,7 @@ export function ProjectsPage({
       view,
       onView,
       saved: views.saved,
+      selected: open,
     };
     // The form takes the panel's place while a record is being added.
     function panelsWith<Rec extends PlanRecord, Request>(

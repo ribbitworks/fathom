@@ -316,6 +316,7 @@ export function SchedulesTable({
       }}
       view={view}
       onView={onView}
+      selected={open?.id}
       panels={panels}
       viewChoices={choices}
       saved={saved}

@@ -726,6 +726,7 @@ export function AccountsPage({
             onView={onView}
             saved={views.saved}
             panels={panels}
+            selected={openId}
             withDrafts={false}
           />
         </TableTips>
