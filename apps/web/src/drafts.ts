@@ -141,12 +141,13 @@ function usedByHolder(
       .filter(({ choice }) => choice.draft?.action === "created")
       .map(({ choice }) => choice.id),
   );
+  // Any column a draft gives a value, of choices, a link, a note or a number, is among what it changes.
   const changed = holder.draft?.changed ?? [];
   const values = Object.entries(holder.values ?? {}).filter(([id]) =>
     changed.includes(id),
   );
   return {
-    columns: values.map(([id]) => id).filter((id) => addedField(fields, id)),
+    columns: changed.filter((id) => addedField(fields, id)),
     choices: values.flatMap(([, chosen]) =>
       chosen.filter((id) => added.has(id)),
     ),

@@ -453,9 +453,10 @@ describe("drafts of features that use drafts of columns", () => {
       },
       `the feature ${id}`,
     );
-  // Given features scored in the new column, one published and one not, and one given a new choice
-  const scored = feature("scored", { f4: [] });
-  const mine = feature("mine", { f4: [] }, { unpublished: true });
+  // Given features scored in the new column, one published and one not, and one given a new choice;
+  // a number is no choice, so the draft names the column only among what it changes
+  const scored = feature("scored", {}, { changed: ["f4"] });
+  const mine = feature("mine", {}, { changed: ["f4"], unpublished: true });
   const chosen = feature("chosen", { f3: ["e"] });
   const columns = { fields: [score], records: [scored, mine, chosen] };
   const records = (...ids: string[]) =>
