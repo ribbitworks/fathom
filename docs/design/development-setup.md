@@ -3,7 +3,7 @@ title: "Development Setup"
 category: "Guide"
 audience: "AI Coding Assistant"
 applies_to: ["package.json", "scripts/**", ".github/**"]
-dependencies: ["docs/design/architecture.md", "docs/standards/testing.md"]
+dependencies: ["docs/design/architecture.md", "docs/standards/testing.md", "docs/design/checks-and-ci.md"]
 last_updated: "2026-11-23"
 ---
 
@@ -225,7 +225,7 @@ The copy gets new names, and so a new, empty database.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests). `--skip` and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it. Without a connection to the internet it stops before starting, naming `--offline`, which leaves out the Renovate settings and the scans that need the internet, once `pnpm offline:prepare` has run, as [Working Offline](#working-offline) describes |
+| `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests), which the Check workflow runs on every pull request, as [Checks and CI](checks-and-ci.md#the-check-on-github) sets out. `--skip` and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it. Without a connection to the internet it stops before starting, naming `--offline`, which leaves out the Renovate settings and the scans that need the internet, once `pnpm offline:prepare` has run, as [Working Offline](#working-offline) describes |
 | `pnpm check:push` | The tests a change can affect and the linters, side by side, before a push: `pnpm test:changed`, ESLint, the formatting check, type checking and the Markdown and shell linters. It lists each one's result and time, and names any that failed. `--skip` and `--offline` work as for `pnpm check` |
 | `pnpm test` | Every test: the script tests, then every package's |
 | `pnpm test:changed` | The tests a change can affect, failing when a changed source file, or a package running every test, falls short of its coverage, as on GitHub; with `--uncommitted`, only the work not yet committed |
@@ -266,7 +266,7 @@ See [Releases](#releases) for the steps.
 
 ### How the Checks Run
 
-[Testing Standards § From a Change to a Merge](../standards/testing.md#from-a-change-to-a-merge) draws each step the checks take, here and on GitHub.
+[Checks and CI](checks-and-ci.md#from-a-change-to-a-merge) draws each step the checks take, here and on GitHub.
 
 - **Scanners in containers:** The scanners the [Security Plan](../security/security-plan.md) requires run as containers, pinned by digest, so nothing extra is installed.
   - Image scans read an exported image file, never the container runtime itself.
@@ -422,7 +422,7 @@ Under **Settings** → **Rules** → **Rulesets**:
   - Changes reach it only through a pull request, merged by rebasing, so each commit lands as written, as the [Agent Workflow](../standards/agent-workflow.md#rules-for-both-modes) sets out. No approving review is required, since the maintainer merges.
   - **Full check** and **Container tests**, from GitHub Actions, must pass.
   - It can't be deleted or force-pushed.
-  - A pull request's branch needn't be up to date with it before merging, since the code is rebased onto `main` before it's pushed, as the [Testing Standards](../standards/testing.md#before-a-pull-request) set out.
+  - A pull request's branch needn't be up to date with it before merging, since the code is rebased onto `main` before it's pushed, as [Checks and CI](checks-and-ci.md#before-a-pull-request) sets out.
 - **release tags:** on `refs/tags/v*`. Only the Repository admin role may create, move or delete a release tag, since a published release runs its workflow from its tag.
 
 ### Pull Requests

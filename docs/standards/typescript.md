@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.ts", "**/*.tsx"]
 dependencies: ["docs/standards/core-principles.md", "docs/standards/code-review.md", "docs/standards/testing.md", "docs/standards/agent-workflow.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # TypeScript Standards
@@ -46,7 +46,7 @@ design documents, its commands in `AGENTS.md`, and its decisions in `docs/adr/`.
 - `pnpm check` runs linting, type checking and the test suites. It is the full suite, which the
   Check workflow runs on every pull request but one of documentation alone, as the
   [Agent Workflow](agent-workflow.md#workflow) and
-  [Testing Standards](testing.md#running-tests) set out. Before the review, run
+  [Checks and CI](../design/checks-and-ci.md#the-check-on-github) set out. Before the review, run
   `pnpm check:push`.
 - Markdown is linted with `pnpm lint:md`.
 

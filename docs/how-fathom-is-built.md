@@ -74,7 +74,7 @@ Besides the full check and the container tests, GitHub runs:
 - a build and scan of each release tag's images, before its release is drafted
 - the scan and publishing of a release's images, when the maintainer publishes it
 
-[Testing Standards § From a Change to a Merge](standards/testing.md#from-a-change-to-a-merge) draws every step of these checks.
+[Checks and CI](design/checks-and-ci.md#from-a-change-to-a-merge) draws every step of these checks.
 
 ## The Standards
 
