@@ -1,6 +1,6 @@
 # Fathom: Security Plan
 
-**Last updated:** 2026-11-20
+**Last updated:** 2026-11-24
 
 How Fathom guards against threats as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it, as [Securing Your Environment](../operations/securing-your-environment.md) sets out. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
 
@@ -80,6 +80,7 @@ flowchart LR
 - **Undoing:** Only the user who made a change can undo it, and not once anything it would change has changed again.
 - **Dependencies:** Packages are installed from the lockfile exactly, and base images are pinned by digest and GitHub Actions by commit. Image builds also install the operating system's security fixes released by `FATHOM_SECURITY_FIXES_DATE`. Renovate, as a GitHub App, may only open pull requests on branches of its own, which are reviewed and merged like any change. Accepted: release images aren't signed and come with no list of their components.
 - **Workflows:** The Check workflow runs every pull request's code, including a fork's, with a read-only token and no secrets, on the `pull_request` event, never `pull_request_target`. Each job is given the least it needs, and values a person can choose, such as a tag's name, reach a command only as quoted settings. Only the maintainer may push or change release tags, as a tag ruleset on the repository sets out, since a published release runs its workflow from its tag.
+  - **The merge queue:** a queued pull request's code runs again on the `merge_group` event, in the repository's own context, with the same read-only token and no secrets, once the maintainer queues it.
 - **The default branch:** Changes reach `main` only through a pull request that passes the check, as a ruleset on the repository enforces, set out with the repository's other settings in [Development Setup](../design/development-setup.md#the-repository-on-github). Accepted: commits aren't signed.
 
 ### Repudiation
@@ -139,7 +140,8 @@ flowchart LR
 - **The security report:** `pnpm security` scans dependencies (pnpm audit and Trivy), source code (Semgrep), secrets in the repository and its history (Gitleaks), Dockerfiles (Trivy), and the container images (Trivy) whenever anything they're built from has changed. `pnpm check` runs it, along with tests of the Compose settings.
 - **Secrets on GitHub:** GitHub's secret scanning, with push protection, refuses a push holding a known kind of secret, beside Gitleaks in the security report.
 - **Code scanning on GitHub:** CodeQL's default setup scans the JavaScript and TypeScript code and the GitHub Actions workflows on pull requests, pushes to `main`, and weekly, as [ADR 0002](../adr/0002-libraries.md) sets out. Its results show on each pull request but don't block a merge. Semgrep stays in the security report.
-- **Releases:** A release tag pushed is built and scanned before its release is drafted, and its images are scanned again when the release is published, before any is pushed to the registry. The Check workflow runs the security report on every pull request and every push to the default branch.
+- **Releases:** A release tag pushed is built and scanned before its release is drafted, and its images are scanned again when the release is published, before any is pushed to the registry.
+  - **Every change:** the Check workflow runs the security report on every pull request, every group in the merge queue and every push to the default branch.
 - **Offline:** `pnpm check --offline` and `pnpm security --offline` skip the dependency audit and the image scans, which need the internet, and run the other scans without network access. The Check workflow, which refuses `--offline`, runs every scan on the pull request, and only its result counts toward a merge.
 - **Security fixes first:** Renovate opens a pull request for each security fix in a dependency the `package.json` files name as soon as it finds one, before any other update and whatever else is waiting, without the seven-day wait the others have. PostgreSQL's minor, patch and image updates, which carry its security fixes, come straight after them in the same way.
 - **Fix times:** Counted from when a fix is released: critical within 14 days, high within 60, and medium within 180. Low findings have no deadline.

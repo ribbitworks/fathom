@@ -111,7 +111,9 @@ or "the project's targeted tests", use the ones it names.
     for example `docs/agent-workflow`.
   - Only the owner approves a pull request, by merging it or telling an agent to
     merge it. Without that, **Must Not** merge, turn on auto-merge or request
-    other reviewers.
+    other reviewers. An agent told to merge adds the pull request to the merge
+    queue only once its Full check has passed, since earlier it turns on
+    auto-merge.
   - Merge pull requests by rebasing onto `main`, never by squashing or with a
     merge commit, so each commit lands as written. Each commit therefore
     follows the commit message rules on its own.

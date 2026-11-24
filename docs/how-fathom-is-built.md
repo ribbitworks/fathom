@@ -60,10 +60,10 @@ flowchart TD
    - Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as the [Agent Workflow](standards/agent-workflow.md#rules-for-both-modes) sets out.
    - Every finding is fixed, or the maintainer agrees in writing to leave it.
 1. **Manual tests:** The maintainer approves or runs a new manual test, or a significant change to one, before it is committed. Every other change is committed, pushed and opened as a pull request once it passes its review.
-1. **The full check:** GitHub runs `pnpm check` on every push to a pull request and to `main`: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans.
+1. **The full check:** GitHub runs `pnpm check` on every push to a pull request and to `main`, and on each group in the merge queue: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans.
    - A change to documentation alone leaves out the unit, integration, access control and security tests, and the container tests.
    - Every other change, and every push to `main`, runs them.
-1. **Merge:** Nothing is merged until the full check and the container tests pass, which a rule on `main` enforces, and never without the maintainer's word.
+1. **Merge:** Nothing is merged until the full check, the container tests included, passes on the code `main` will hold, which the merge queue and a rule on `main` enforce, and never without the maintainer's word.
 
 Duplicated code isn't allowed: a new component, helper or rule first looks for one that already does the job, and the review searches for one too. Only the maintainer can approve an exception.
 

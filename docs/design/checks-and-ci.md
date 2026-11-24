@@ -95,18 +95,22 @@ flowchart TD
     Push["git push, then gh pr create for a new pull request"] --> CheckWorkflow["The Check workflow on the pull request, as The Check Workflow draws, with CodeQL beside it"]
     CheckWorkflow --> Required{"Did Full check pass?"}
     Required -- No --> Fix["A round of fixes"]
-    Required -- Yes --> Merge["The maintainer merges by rebasing; the branch need not be up to date with main"]
+    Required -- Yes --> Queue["The maintainer adds it to the merge queue"]
+    Queue --> GroupRun["The Check workflow on its group in the queue: the pull request rebased onto main, after those ahead of it"]
+    GroupRun --> GroupPassed{"Did Full check pass?"}
+    GroupPassed -- No --> Fix
+    GroupPassed -- Yes --> Merge["It lands on main by rebasing, as the group's run checked it"]
     Merge --> MainRun["The Check workflow on the push to main, running every job"]
     MainRun --> MainPassed{"Did it pass?"}
     MainPassed -- No --> MainFailed["main fails its check, which a new pull request fixes"]
     MainPassed -- Yes --> MainChecked["main is checked"]
 ```
 
-- **Every push** to a pull request or to `main` runs the full `pnpm check`, its package tests on runners of their own.
-- **Documentation alone** means Markdown files, and files under `docs/` other than Help pages, which are built into Fathom. On a pull request, it leaves out the package tests, the server's merged coverage and the container tests.
+- **Every push** to a pull request or to `main`, and every group in the merge queue, runs the full `pnpm check`, its package tests on runners of their own.
+- **Documentation alone** means Markdown files, and files under `docs/` other than Help pages, which are built into Fathom. On a pull request or in the merge queue, it leaves out the package tests, the server's merged coverage and the container tests.
 - **The security report** runs on every pull request, documentation alone included. It scans the container images whenever anything they're built from has changed, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out.
 - **The full suite:** the green check on a pull request's latest push is the full suite's run, once for the whole branch of an [issue batch](../standards/issues.md#issue-batches) too.
-- **Merging:** the checks a merge needs are set in [Development Setup § Rulesets](development-setup.md#rulesets).
+- **Merging:** the merge queue checks each pull request on top of the `main` it lands on, and those ahead of it, so two changes that pass alone can't break `main` together. Its settings are in [Development Setup § Rulesets](development-setup.md#rulesets).
 - **Failures:** follow the run with `gh pr checks --watch`, and read a failure or warning with `gh run view --log` (or `--log-failed`). Every warning it reports is fixed, as locally.
 - **Locally:** running the full `pnpm check` is optional, for when the workflow can't run.
 
@@ -206,7 +210,11 @@ flowchart TD
     Push --> CheckWorkflow["The Check workflow on the pull request, as The Check Workflow draws, with CodeQL beside it"]
     CheckWorkflow --> Required{"Did Full check pass?"}
     Required -- No --> Fix
-    Required -- Yes --> Merge["The maintainer merges by rebasing; the branch need not be up to date with main"]
+    Required -- Yes --> Queue["The maintainer adds it to the merge queue"]
+    Queue --> GroupRun["The Check workflow on its group in the queue: the pull request rebased onto main, after those ahead of it"]
+    GroupRun --> GroupPassed{"Did Full check pass?"}
+    GroupPassed -- No --> Fix
+    GroupPassed -- Yes --> Merge["It lands on main by rebasing, as the group's run checked it"]
     Merge --> MainRun["The Check workflow on the push to main, running every job"]
     MainRun --> MainPassed{"Did it pass?"}
     MainPassed -- No --> MainFailed["main fails its check, which a new pull request fixes"]
@@ -216,7 +224,8 @@ flowchart TD
 
 - **A new push to a pull request** starts a new run of the Check workflow, which cancels the pull request's older run. A run cancelled before it ends fails Full check rather than passing unchecked.
 - **A rebase** onto `main` changes the code, so the local check runs again before the push, and the push runs the Check workflow again.
-- **A merge** runs nothing on the pull request again, since [Rulesets](development-setup.md#rulesets) don't require the branch to be up to date with `main`, so the push to `main` that the merge makes is the first run of the merged code.
+- **A merge** goes through the merge queue, which runs the Check workflow on the pull request rebased onto `main`, after those ahead of it, so a branch needn't be up to date. The push to `main` then runs it once more on the same commit.
+- **A failed group** takes its pull request out of the queue. Those behind it are rebuilt without it and checked again.
 - **On `main`,** every job runs, but nothing has changed since `origin/main`, so the Renovate settings aren't validated and the security report doesn't build or scan the images; the daily image scan covers `main`'s images.
 - **Releases** start from `main` and build and scan their own images, as [Development Setup § Releases](development-setup.md#releases) sets out.
 
@@ -356,7 +365,7 @@ flowchart TD
 
 ### The Check Workflow
 
-`.github/workflows/check.yml` runs on each pull request's pushes and on every push to `main`. **Full check** is the one check a merge needs; every other job feeds it. CodeQL's code scanning runs beside it, its results shown but never blocking a merge.
+`.github/workflows/check.yml` runs on each pull request's pushes, each group in the merge queue, and every push to `main`. **Full check** is the one check a merge needs; every other job feeds it. CodeQL's code scanning runs beside it, its results shown but never blocking a merge.
 
 ```mermaid
 flowchart TD
@@ -364,6 +373,7 @@ flowchart TD
     Fork -- Yes --> Approval["Waits for the maintainer's approval to run"]
     Fork -- No --> Starts
     Approval --> Starts
+    Event -- "A group in the merge queue" --> Starts
     Event -- "A push to main" --> Starts["The run starts its first jobs side by side"]
     Starts --> Check["Check without package tests: pnpm check --skip Package tests, every job at once"]
     Starts --> Decide["Decide what the change needs: documentation-only.mjs; a push to main, or a change that can't be told, isn't documentation alone"]

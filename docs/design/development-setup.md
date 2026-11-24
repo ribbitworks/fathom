@@ -409,7 +409,12 @@ Under **Settings** → **Rules** → **Rulesets**:
   - Changes reach it only through a pull request, merged by rebasing, so each commit lands as written, as the [Agent Workflow](../standards/agent-workflow.md#rules-for-both-modes) sets out. No approving review is required, since the maintainer merges.
   - **Full check**, from GitHub Actions, must pass. It needs every other job of the Check workflow, the container tests included.
   - It can't be deleted or force-pushed.
-  - A pull request's branch needn't be up to date with it before merging, since the code is rebased onto `main` before it's pushed, as [Checks and CI](checks-and-ci.md#before-a-pull-request) sets out.
+  - **Merge queue:** each group runs the Check workflow on the pull requests rebased onto `main`, so a branch needn't be up to date with it, as [Checks and CI](checks-and-ci.md#the-check-on-github) sets out. Its settings:
+    - **Merge method:** Rebase
+    - **Build concurrency:** 5
+    - **Minimum group size:** 1, and **Maximum group size:** 5
+    - **Require all queue entries to pass required checks:** on
+    - **Status check timeout:** 90 minutes, longer than the Check workflow's slowest path
 - **release tags:** on `refs/tags/v*`. Only the Repository admin role may create, move or delete a release tag, since a published release runs its workflow from its tag.
 
 ### Pull Requests
