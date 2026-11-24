@@ -266,6 +266,8 @@ See [Releases](#releases) for the steps.
 
 ### How the Checks Run
 
+[Testing Standards § From a Change to a Merge](../standards/testing.md#from-a-change-to-a-merge) draws each step the checks take, here and on GitHub.
+
 - **Scanners in containers:** The scanners the [Security Plan](../security/security-plan.md) requires run as containers, pinned by digest, so nothing extra is installed.
   - Image scans read an exported image file, never the container runtime itself.
   - `pnpm security`, `pnpm scan:images` and `pnpm publish:images` share each copy's Trivy cache, so only one runs at a time in a copy. Another refuses to start, naming the process that holds the cache.

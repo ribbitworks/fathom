@@ -62,7 +62,7 @@ flowchart TD
 
 Duplicated code isn't allowed: a new component, helper or rule first looks for one that already does the job, and the review searches for one too. Only the maintainer can approve an exception.
 
-GitHub runs the full check on `main` and on each pull request, all but its package tests for a pull request of documentation alone, and the container tests on `main` and on each pull request that changes more than documentation, with CodeQL's code scanning beside them, the daily scan of the container images, a build and scan of each release tag's images before its release is drafted, and, when the maintainer publishes a release, the scan and publishing of its images.
+GitHub runs the full check on `main` and on each pull request, all but its package tests for a pull request of documentation alone, and the container tests on `main` and on each pull request that changes more than documentation, with CodeQL's code scanning beside them, the daily scan of the container images, a build and scan of each release tag's images before its release is drafted, and, when the maintainer publishes a release, the scan and publishing of its images. [Testing Standards § From a Change to a Merge](standards/testing.md#from-a-change-to-a-merge) draws every step of these checks.
 
 ## The Standards
 

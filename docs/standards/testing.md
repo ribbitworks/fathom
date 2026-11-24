@@ -128,19 +128,229 @@ UI tests are not required on every change. A new user flow lists a short UI test
 
 Run tests only through Fathom's own commands, never the underlying tools directly.
 
-`pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell and licence linting, Renovate's validation of `renovate.json` when it has changed, the script tests, the unit, integration, access control and security tests, and the build-time security scans, side by side, then lists each one's result and time. `pnpm test:changed` runs the tests a change can affect, committed or not: the script tests, then, for a source file in a package's `src` folder, only the tests that import it, directly or through other files, in that package and every package that depends on it. Any other change in a package, such as its settings, stylesheets or migrations, runs every test of that package and of every package that depends on it. A change outside the packages, other than to documentation, runs every test, a change to the web app's stylesheets alone runs only the web app's tests and the linters, a change to a Help page in `docs/help/` runs the web app's tests that import the Help pages, since they are built into it, and a change to other documentation alone runs none. Tests that reach code other than by importing it, such as building the web app, run in `pnpm check`. `pnpm test:changed --uncommitted` counts only the work not yet committed, for small rounds of fixes after a commit on a long branch. Both run in two copies of the repository at a time on one computer, in the order they asked, a copy that starts alone having every core and one that starts beside another half of them, a copy that has to wait saying so, as [Development Setup](../design/development-setup.md#common-commands) describes. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
+`pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell and licence linting, Renovate's validation of `renovate.json` when it has changed, the script tests, the unit, integration, access control and security tests, and the build-time security scans, side by side, then lists each one's result and time. `pnpm test:changed` runs the tests a change can affect, committed or not: the script tests, then, for a source file in a package's `src` folder, only the tests that import it, directly or through other files, in that package and every package that depends on it. Any other change in a package, such as its settings, stylesheets or migrations, runs every test of that package and of every package that depends on it. A change outside the packages, other than to documentation, runs every test, a change to the web app's stylesheets alone runs only the web app's tests, ESLint and the formatting check, a change to a Help page in `docs/help/` runs the web app's tests that import the Help pages, since they are built into it, and a change to other documentation alone runs none. Tests that reach code other than by importing it, such as building the web app, run in `pnpm check`. `pnpm test:changed --uncommitted` counts only the work not yet committed, for small rounds of fixes after a commit on a long branch. Both run in two copies of the repository at a time on one computer, in the order they asked, a copy that starts alone having every core and one that starts beside another half of them, a copy that has to wait saying so, as [Development Setup](../design/development-setup.md#how-the-checks-run) describes. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
 
 `pnpm test:changed` also fails where GitHub's check would on coverage, without running every test. A package whose every test runs has all its coverage measured, as settings, dependencies and files outside the source can change any file's coverage. Otherwise it measures only the coverage of the source files the change touches in each package's `src` folder, other than those the package's coverage settings leave out, against the package's threshold. A changed or removed test counts as a change to the source file of the same name beside it, whose importing tests then run too, which for a widely imported file can be most of a package's tests. Measuring coverage adds about a quarter to the time of the tests it measures. It cannot tell which source a test of another name covers, nor see code a test reaches other than by importing it, so `pnpm check` and GitHub's check still enforce coverage in full.
 
-While working, run `pnpm check:push`, the tests a change can affect and every linter, side by side, as [Development Setup](../design/development-setup.md#checks-and-tests) describes, or any one of its parts on its own for a quick answer. The workflow's test step, which [agent-workflow.md](agent-workflow.md#autonomous-mode) repeats after each round of fixes, runs:
+While working, run `pnpm check:push`, the tests a change can affect and every linter but the licence and Renovate checks, side by side, as [Development Setup](../design/development-setup.md#checks-and-tests) describes, or any one of its parts on its own for a quick answer. The workflow's test step, which [agent-workflow.md](agent-workflow.md#autonomous-mode) repeats after each round of fixes, runs:
 
 - **Before the code review:** the checks run while working. The full `pnpm check` waits for the last step.
 - **After each round of fixes,** whether from a review, UI feedback or owner feedback: `pnpm check:push`. `pnpm security` runs too, but only if the round changed dependencies, the lockfile, a container file or the security scans' settings.
-- **On the pull request:** the Check workflow on GitHub runs the full `pnpm check` on every push to a pull request and to `main`, its package tests on runners of their own, split by package, so the linters and scans never slow them, with the server's, the longest, split across three runners whose coverage is merged and checked as one, and Full check passes once every part has. A pull request of documentation alone (Markdown files, and files under `docs/` other than Help pages, which are built into Fathom) leaves out the package tests and the server's merged coverage, and Full check then passes once the rest of the check has; every push to `main` runs them. Beside it, the workflow runs `pnpm test:containers` for every change but documentation alone, so every build pushed for review has every scan the [Security Plan](../security/security-plan.md#vulnerability-scanning) runs on every build. Once the review's findings are fixed and the checks after the last round of fixes pass, the code is rebased onto `main`, `pnpm check:push` runs on the rebased code, and it's pushed, without waiting for the owner's approval, as the [Agent Workflow](agent-workflow.md#workflow) sets out. The pull request's green check is the [Agent Workflow](agent-workflow.md#workflow)'s full suite step, for a pull request's commit, or for an [issue batch](issues.md#issue-batches) once for the whole branch, and the owner merges only on green: **Full check** and **Container tests** must pass, as [Development Setup](../design/development-setup.md#rulesets) sets out. Follow the run with `gh pr checks --watch`, and read a failure or warning with `gh run view --log` (or `--log-failed`); every warning it reports is fixed, as locally. Running the full `pnpm check` locally is optional, for when the workflow can't run.
+- **On the pull request:** the Check workflow on GitHub runs the full `pnpm check` on every push to a pull request and to `main`, its package tests on runners of their own, as [The Check Workflow](#the-check-workflow) draws. A pull request of documentation alone (Markdown files, and files under `docs/` other than Help pages, which are built into Fathom) leaves out the package tests, the server's merged coverage and the container tests; every push to `main` runs them. The check's security report runs on every pull request, documentation alone included, and scans the container images whenever anything they're built from has changed, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out. Once the review's findings are fixed and the checks after the last round of fixes pass, the code is rebased onto `main`, `pnpm check:push` runs on the rebased code, and it's pushed, without waiting for the owner's approval, as the [Agent Workflow](agent-workflow.md#workflow) sets out. The pull request's green check is the [Agent Workflow](agent-workflow.md#workflow)'s full suite step, for a pull request's commit, or for an [issue batch](issues.md#issue-batches) once for the whole branch, and the owner merges only on green: **Full check** and **Container tests** must pass, as [Development Setup](../design/development-setup.md#rulesets) sets out. Follow the run with `gh pr checks --watch`, and read a failure or warning with `gh run view --log` (or `--log-failed`); every warning it reports is fixed, as locally. Running the full `pnpm check` locally is optional, for when the workflow can't run.
 
 Without the internet, `pnpm check:push --offline` runs once `pnpm offline:prepare` has run while connected, as [Development Setup](../design/development-setup.md#working-offline) describes. A branch checked offline still needs the Check workflow's full check to pass on its pull request.
 
 A change that affects the containers runs `pnpm test:containers` with the test step before the code review, and again only if a later fix changes the containers. A change to documentation only may skip the test step, as [agent-workflow.md](agent-workflow.md#autonomous-mode) allows, except a change to a Help page, which is built into Fathom.
+
+## From a Change to a Merge
+
+The charts below draw every step the checks take, from a change on its branch to its merge and the runs on `main` after it, as the scripts and workflows run them. Diamonds are decisions, and each failure is an end of its own. The people's steps, such as the screen check and the review, are in [How Fathom Is Built](../how-fathom-is-built.md#how-a-change-is-made); the slots, cores and time limit are set out in [Development Setup § How the Checks Run](../design/development-setup.md#how-the-checks-run), and the rules on `main` in [Development Setup § Rulesets](../design/development-setup.md#rulesets).
+
+### The Whole Path
+
+"Documentation alone" means Markdown files, and files under `docs/` other than the Help pages in `docs/help/`, which are built into Fathom. No Git hook runs anything: each check runs when its command is run.
+
+```mermaid
+flowchart TD
+    Change["A change on its branch"] --> LocalDocs{"Documentation alone?"}
+    LocalDocs -- Yes --> LintMd["pnpm lint:md"]
+    LocalDocs -- No --> CheckPush["pnpm check:push, as The Local Check draws"]
+    CheckPush --> AffectsContainers{"Does it change the containers?"}
+    AffectsContainers -- Yes --> TestContainers["pnpm test:containers"]
+    AffectsContainers -- No --> LocalPassed{"Did everything pass?"}
+    TestContainers --> LocalPassed
+    LintMd --> LocalPassed
+    LocalPassed -- No --> Fix["A round of fixes"]
+    Fix --> SecurityInputs{"Did the round change dependencies, the lockfile, a container file or the scans' settings?"}
+    SecurityInputs -- Yes --> Security["pnpm security, as The Security Report draws"]
+    Security --> SecurityPassed{"Did it pass?"}
+    SecurityPassed -- No --> Fix
+    SecurityInputs -- No --> LocalDocs
+    SecurityPassed -- Yes --> LocalDocs
+    LocalPassed -- Yes --> Rebased{"Rebased onto the latest origin/main?"}
+    Rebased -- No --> Rebase["git fetch origin, then rebase onto origin/main"]
+    Rebase --> LocalDocs
+    Rebased -- Yes --> Push["git push, then gh pr create for a new pull request"]
+    Push --> CheckWorkflow["The Check workflow on the pull request, as The Check Workflow draws, with CodeQL beside it"]
+    CheckWorkflow --> Required{"Did Full check and Container tests pass?"}
+    Required -- No --> Fix
+    Required -- Yes --> Merge["The maintainer merges by rebasing; the branch need not be up to date with main"]
+    Merge --> MainRun["The Check workflow on the push to main, running every job"]
+    MainRun --> MainPassed{"Did it pass?"}
+    MainPassed -- No --> MainFailed["main fails its check, which a new pull request fixes"]
+    MainPassed -- Yes --> MainChecked["main is checked"]
+    Daily["Every day at 05:17 UTC"] --> ScanImages["Scan images daily: pnpm scan:images on main's images and the newest release's"]
+```
+
+- **A new push to a pull request** starts a new run of the Check workflow, which cancels the pull request's older run. A run cancelled before it ends fails Full check rather than passing unchecked.
+- **A rebase** onto `main` changes the code, so the local check runs again before the push, and the push runs the Check workflow again.
+- **A merge** runs nothing on the pull request again, since [Rulesets](../design/development-setup.md#rulesets) don't require the branch to be up to date with `main`, so the push to `main` that the merge makes is the first run of the merged code.
+- **On `main`,** every job runs, but nothing has changed since `origin/main`, so the Renovate settings aren't validated and the security report doesn't build or scan the images; the daily image scan covers `main`'s images.
+- **Releases** start from `main` and build and scan their own images, as [Development Setup § Releases](../design/development-setup.md#releases) sets out.
+
+### The Local Check
+
+`pnpm check` and `pnpm check:push` run `scripts/check-turn.mjs`, which waits for a turn, then `scripts/check.sh`, which runs the jobs.
+
+```mermaid
+flowchart TD
+    Start["pnpm check or pnpm check:push"] --> Holds{"Started by a check that already holds a turn?"}
+    Holds -- Yes --> Jobs
+    Holds -- No --> Ticket["check-turn.mjs leaves a ticket in the checks' slot folder"]
+    Ticket --> Free{"Is a slot free for this ticket, in the order the copies asked?"}
+    Free -- No --> Wait["Waiting to run a check, naming the slots' holders; it looks again each second"]
+    Wait --> Free
+    Free -- Yes --> OnGitHub{"Is CI true, as on GitHub, or FATHOM_CHECK_SHARES already set?"}
+    OnGitHub -- Yes --> WholeComputer["Its environment is kept: on GitHub, every job runs at once"]
+    OnGitHub -- No --> Alone{"Did any other copy hold or wait for a turn as this one took its own?"}
+    Alone -- Yes --> HalfComputer["Half the computer: FATHOM_CHECK_SHARES is 2"]
+    Alone -- No --> EveryCore["Every core, kept while it runs, even once another copy starts: FATHOM_CHECK_SHARES is 1"]
+    WholeComputer --> Jobs{"--before-push?"}
+    HalfComputer --> Jobs
+    EveryCore --> Jobs
+    Jobs -- Yes --> BeforePush["pnpm test:changed, and the linters: pnpm lint --no-cache, pnpm format:check, pnpm typecheck, pnpm lint:md and pnpm lint:shell"]
+    Jobs -- No --> FullCheck["pnpm test:packages, pnpm security, pnpm test:scripts, the same linters, pnpm lint:licences and pnpm lint:renovate"]
+    BeforePush --> Skip{"Are the arguments known, and does each --skip name a job, leaving at least one?"}
+    FullCheck --> Skip
+    Skip -- No --> SkipFailed["Fails, giving the usage or naming the jobs left"]
+    Skip -- Yes --> Offline{"--offline?"}
+    Offline -- Yes --> OfflineInCi{"Is CI set?"}
+    OfflineInCi -- Yes --> OfflineRefused["Fails: --offline can't be used where CI is set"]
+    OfflineInCi -- No --> Prepared{"Has pnpm offline:prepare finished in this copy?"}
+    Prepared -- No --> NotPrepared["Fails: not ready to work offline"]
+    Prepared -- Yes --> OfflineJobs["Security report runs pnpm security --offline, and Renovate settings is left out"]
+    OfflineJobs --> AnyLeft{"Is any job left?"}
+    AnyLeft -- No --> NothingLeft["Fails: every job left needs the internet"]
+    Offline -- No --> NeedsInternet{"Does a job left need the internet: Security report or Renovate settings?"}
+    NeedsInternet -- No --> Run
+    NeedsInternet -- Yes --> Connected{"Can this computer reach the internet?"}
+    Connected -- No --> NoConnection["Fails, naming --offline"]
+    Connected -- Yes --> Run
+    AnyLeft -- Yes --> Run["Runs the jobs side by side, the longest first, no more at once than the cores divided by FATHOM_CHECK_SHARES, or all at once when it isn't set"]
+    Run --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
+    Limit -- No --> Stopped["The job's process group is stopped, its output shown, and it counts as Stopped"]
+    Limit -- Yes --> Results["Each job's output, then a table of each one's result and seconds"]
+    Stopped --> Results
+    Results --> AllPassed{"Did every job pass?"}
+    AllPassed -- No --> ChecksFailed["Fails: these checks failed, naming them"]
+    AllPassed -- Yes --> Passed["Passes; the turn's slot is freed either way"]
+```
+
+- **Package tests:** each package runs `vitest run --coverage`, which fails below the thresholds [Coverage Enforcement](#coverage-enforcement) sets; how many workers and test databases they use is in [How the Checks Run](../design/development-setup.md#how-the-checks-run).
+- **Renovate settings:** passes at once unless `renovate.json` changed, as [Checks and Tests](../design/development-setup.md#checks-and-tests) sets out.
+- **A container runtime:** Package tests, Security report, Licences and Renovate settings each fail, naming it, when no container runtime is running.
+- **Licences:** checks that every file states its copyright and licence, with the REUSE tool. The script tests check each header's layout.
+
+### The Changed Tests
+
+`pnpm test:changed`, run by `pnpm check:push` or on its own, chooses the tests in `scripts/test-changed.mjs`, and checks the coverage of what the change touches, as [Running Tests](#running-tests) sets out.
+
+```mermaid
+flowchart TD
+    Start["pnpm test:changed"]
+    Uncommitted{"--uncommitted?"}
+    Uncommitted -- Yes --> SinceHead["The paths changed since HEAD, and new files git doesn't ignore"]
+    Uncommitted -- No --> SinceBase["The paths changed since the branch left origin/main, committed or not, and new files git doesn't ignore"]
+    Start --> Arguments{"Is every argument known?"}
+    Arguments -- No --> UnknownArgument["Fails with exit status 2"]
+    Arguments -- Yes --> Uncommitted
+    SinceHead --> Listed{"Could git list the changes?"}
+    SinceBase --> Listed
+    Listed -- No --> NotListed["Fails, naming the git command"]
+    Listed -- Yes --> AnyCode{"Is any path other than documentation alone?"}
+    AnyCode -- No --> NoTests["No tests run, and it passes"]
+    AnyCode -- Yes --> Turn["Takes a check's turn, unless the check that started it holds one"]
+    Turn --> Stylesheets{"Only the web app's stylesheets?"}
+    Stylesheets -- Yes --> StylesheetTests["pnpm lint, pnpm format:check and every web app test"]
+    Stylesheets -- No --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page?"}
+    Outside -- Yes --> Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
+    Outside -- No --> Scripts["pnpm test:scripts"]
+    Scripts --> Whole{"Is any path in a package but not a script in its src folder, such as its settings, stylesheets or migrations?"}
+    Whole -- Yes --> WholePackages["Every test of those packages and of every package that depends on them, with all their coverage"]
+    Whole -- No --> Imported
+    WholePackages --> Imported{"Is any path a script in a package's src folder, or a Help page?"}
+    Imported -- Yes --> Related["vitest related: the tests importing those files, in the packages that hold or depend on them and haven't run whole, measuring the coverage of the changed source files alone"]
+    Imported -- No --> InTime
+    StylesheetTests --> InTime{"Did each pnpm step end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
+    Everything --> InTime
+    Related --> InTime
+    InTime -- No --> TooLong["The step and every process it started are stopped, naming it, and it fails"]
+    TooLong --> Outcome
+    InTime -- Yes --> Outcome{"Did every run pass, coverage included?"}
+    Outcome -- No --> TestsFailed["Fails"]
+    Outcome -- Yes --> TestsPassed["Passes"]
+```
+
+- **A Help page** stands for `apps/web/src/help-pages.ts`, which gathers them, and a removed file runs nothing of its own, since whatever imported it changed too.
+- **A changed or removed test** stands for the source file of the same name beside it, whose importing tests then run, and whose coverage is measured.
+
+### The Security Report
+
+`pnpm security` runs `scripts/security-report.sh`: the Security report job of `pnpm check`, and the scans the [Security Plan](../security/security-plan.md#vulnerability-scanning) requires.
+
+```mermaid
+flowchart TD
+    Start["pnpm security"] --> Runtime{"Inside the repository, with a container runtime running?"}
+    Runtime -- No --> NoRuntime["Fails, naming what's missing"]
+    Runtime -- Yes --> Offline{"--offline?"}
+    Offline -- Yes --> OfflineInCi{"Is CI set?"}
+    OfflineInCi -- Yes --> OfflineRefused["Fails: --offline can't be used where CI is set"]
+    OfflineInCi -- No --> Prepared{"Has pnpm offline:prepare fetched the scanners, their rules and Trivy's database?"}
+    Prepared -- No --> NotPrepared["Fails, naming what's missing"]
+    Prepared -- Yes --> Cache
+    Offline -- No --> Connected{"Can this computer reach the internet?"}
+    Connected -- No --> NoConnection["Fails, naming --offline"]
+    Connected -- Yes --> Cache{"Is this copy's Trivy cache free of another pnpm security, pnpm scan:images or pnpm publish:images?"}
+    Cache -- No --> CacheHeld["Fails, naming the process that holds it"]
+    Cache -- Yes --> ImagesChanged{"Online, and did anything the images' scan depends on change since origin/main, or can't that be told?"}
+    ImagesChanged -- Yes --> BuildImages["Builds the images, beside the scans"]
+    ImagesChanged -- No --> Scans
+    BuildImages --> Scans["Side by side: pnpm audit, online only; Gitleaks on the files and the history; Semgrep; Trivy on the dependencies, reusing an unchanged scan, then the configuration"]
+    Scans --> ScanImages["Trivy on the built images, if any"]
+    ScanImages --> FixDates["fix-dates.mjs finds when each fix was released"]
+    FixDates --> Summary["security-summary.mjs writes summary.md in output/security/"]
+    Summary --> Findings{"Is a fix overdue, or of no known release date, is any other finding critical or high, or did a scan not complete, such as when Trivy's database couldn't be updated?"}
+    Findings -- Yes --> ReportFailed["Fails"]
+    Findings -- No --> ReportPassed["Passes"]
+```
+
+### The Check Workflow
+
+`.github/workflows/check.yml` runs on each pull request's pushes and on every push to `main`. **Full check** and **Container tests** are the checks a merge needs; the rest feed Full check. CodeQL's code scanning runs beside it, its results shown but never blocking a merge.
+
+```mermaid
+flowchart TD
+    Event{"What started the run?"} -- "A push to a pull request" --> Fork{"From an outside contributor's fork?"}
+    Fork -- Yes --> Approval["Waits for the maintainer's approval to run"]
+    Fork -- No --> Starts
+    Approval --> Starts
+    Event -- "A push to main" --> Starts["The run starts its first jobs side by side"]
+    Starts --> Check["Check without package tests: pnpm check --skip Package tests, every job at once"]
+    Starts --> Decide["Decide what the change needs: documentation-only.mjs; a push to main, or a change that can't be told, isn't documentation alone"]
+    Decide --> DocsOnly{"Did the decision succeed, with more than documentation?"}
+    DocsOnly -- Yes --> Packages["Package tests on five runners: web; server 1 of 3, 2 of 3 and 3 of 3, each keeping its coverage report; and the rest"]
+    Packages --> PartsPassed{"Did every Package tests runner pass?"}
+    PartsPassed -- No --> CoverageSkipped["Server coverage is skipped"]
+    PartsPassed -- Yes --> Coverage{"Server coverage: are all 3 of the server's reports there?"}
+    Coverage -- No --> MissingReports["Server coverage fails, naming the reports missing"]
+    Coverage -- Yes --> MergeCoverage["pnpm --filter @fathom/server test:merge checks the merged coverage"]
+    DocsOnly -- No --> Skipped["Package tests and Server coverage are skipped"]
+    CoverageSkipped --> Full
+    Decide --> ContainersJob{"Container tests: did the decision succeed?"}
+    ContainersJob -- No --> ContainersFailed["Container tests fails"]
+    ContainersJob -- Yes --> ContainersDocs{"Documentation alone?"}
+    ContainersDocs -- Yes --> ContainersPassed["Container tests passes, running nothing"]
+    ContainersDocs -- No --> TestContainers["pnpm test:containers builds the images and tests them"]
+    Check --> Full{"Full check: did the decision and Check without package tests pass, and did Package tests and Server coverage pass, or, for documentation alone, skip?"}
+    MergeCoverage --> Full
+    MissingReports --> Full
+    Skipped --> Full
+    Full -- No --> FullFailed["Full check fails"]
+    Full -- Yes --> FullPassed["Full check passes"]
+```
+
+- **Time limits:** Check without package tests, each Package tests runner and Container tests stop after 60 minutes, Server coverage after 15, Decide what the change needs after 10 and Full check after 5, and each job of `pnpm check` after its own limit, as [The Local Check](#the-local-check) draws.
+- **A failure in one part** fails Full check, though the other parts still run to the end, so a run reports every failure at once.
 
 ## Problems Found
 
