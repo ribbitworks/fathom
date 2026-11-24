@@ -12,6 +12,7 @@ import {
   listItems,
   lists,
   people,
+  type Reader,
   savedViews,
 } from "@fathom/db";
 import {
@@ -21,6 +22,7 @@ import {
   type Tier,
 } from "@fathom/shared";
 import { and, asc, eq, gt, inArray, or, sql } from "drizzle-orm";
+import { madeWithColumn } from "./new-lists.ts";
 import {
   type Actor,
   mostSensitive,
@@ -111,6 +113,33 @@ const editPermissions = {
   "saved-view": [],
   "planning-settings": ["configuration:edit"],
 } as const;
+
+// Whether a change set adds or discards a column only drafted to be added, as Features' column
+// dialog does with a new list.
+const addsOrDiscardsColumn = (records: readonly Undone[]): boolean =>
+  records.some(
+    ({ recordType, action, draft }) =>
+      recordType === "field" &&
+      draft &&
+      (action === "created" || action === "deleted"),
+  );
+
+// A new list drafted with a column, and its choices, go with the column: their drafts, added or
+// discarded in a change set that adds or discards a column, are undone by whoever may undo the
+// column, checked with it. Only a list made in one change with a column, as New list does, counts.
+async function goesWithColumn(
+  reader: Reader,
+  records: readonly Undone[],
+  record: Undone,
+): Promise<boolean> {
+  return (
+    record.draft &&
+    (record.recordType === "list" || record.recordType === "list-item") &&
+    (record.action === "created" || record.action === "deleted") &&
+    addsOrDiscardsColumn(records) &&
+    (await madeWithColumn(reader, record.recordType, record.id))
+  );
+}
 
 // Lists and columns change class live only when moved, which needs Classify data now, so a move is
 // moved back rather than undone.
@@ -228,6 +257,7 @@ async function undoIn(
     );
   }
   for (const record of records) {
+    if (await goesWithColumn(transaction, records, record)) continue;
     for (const permission of editPermissions[
       record.recordType as keyof typeof editPermissions
     ]) {
@@ -417,12 +447,23 @@ async function undoIn(
   const listDrafts = draftRecords.filter(({ recordType }) =>
     listKinds.includes(recordType),
   );
+  // Columns added are taken back first, so their new lists no longer have them to draw on; the
+  // rest come back after the lists, so they have their lists to draw on.
+  const addedColumns = columnDrafts.filter(
+    ({ action, draft }) => draft && action === "created",
+  );
+  const otherColumns = columnDrafts.filter(
+    (record) => !addedColumns.includes(record),
+  );
+  if (addedColumns.length > 0) {
+    await undoColumnDrafts(transaction, actor, addedColumns);
+  }
   if (listDrafts.length > 0) {
     await undoListDrafts(transaction, actor, listDrafts);
     await removeEmptyOrders(transaction, actor.user.id);
   }
-  if (columnDrafts.length > 0) {
-    await undoColumnDrafts(transaction, actor, columnDrafts);
+  if (otherColumns.length > 0) {
+    await undoColumnDrafts(transaction, actor, otherColumns);
   }
   const settingsDrafts = draftRecords.filter(
     ({ recordType }) => recordType === "planning-settings",

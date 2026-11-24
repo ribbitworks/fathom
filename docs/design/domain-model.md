@@ -350,6 +350,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
   - Approving a draft approves the drafts it uses with it, so the approver's role must approve the areas of both. A feature given a value in a new column, or a new choice, needs Approve Features and Approve Configuration.
   - A draft that others use is rejected only together with them, or once they no longer use it.
   - It cannot be discarded, nor its adding undone, while others use it, except that discarding a list drafted to be added discards its choices' drafts, and discarding a schedule drafted to be added discards its cycles' and releases' drafts, whoever made them.
+  - A column on Features drafted to be added with a new list takes the list and its choices with it: adding them is one change, undone together, and discarding the column's draft discards the list's, unless another column draws on the list, anything changed it since, or someone else is changing it.
 - **Feature teams:** a team's name, lead and member changes make one draft, approved or rejected together.
 - **Lists:** a list cannot be drafted to be removed while its choices or their order have drafts, and the choices of a list drafted to be removed cannot be changed. A restored choice keeps its place in the order.
 - **Undo:** takes back an edit to a draft. Approving and rejecting are not undone: an approved change is changed by a new draft, and a rejected draft by changing it.

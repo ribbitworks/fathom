@@ -8,7 +8,7 @@ import { type Permission, tierSchema } from "./access.ts";
 import { daySchema, monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { type Link, linkValueSchema } from "./links.ts";
-import { listLengths } from "./lists.ts";
+import { listLengths, mostChoicesAtOnce } from "./lists.ts";
 import { numberValueSchema } from "./numbers.ts";
 import { paletteColourSchema } from "./palette.ts";
 import { keyNumberSchema } from "./record-keys.ts";
@@ -349,8 +349,9 @@ export const columnTableOf = (tableName: unknown): ColumnTable =>
 
 // What sets each table apart: its name, what reading it needs, what adding, changing and removing
 // its columns needs, which is editing its records and seeing people, whose sight General lists and
-// columns take, whether planned hires are offered its added columns, and whether they must be
-// General.
+// columns take, whether planned hires are offered its added columns, whether they must be General,
+// and whether a column may draft a new General list with it, for a table whose editors don't make
+// lists on Lists.
 export const columnTablePolicies: Readonly<
   Record<
     ColumnTable,
@@ -360,6 +361,7 @@ export const columnTablePolicies: Readonly<
       editNeeds: readonly Permission[];
       onPlannedHires: boolean;
       generalOnly: boolean;
+      newLists: boolean;
     }
   >
 > = {
@@ -369,6 +371,7 @@ export const columnTablePolicies: Readonly<
     editNeeds: ["people:edit", "people:view"],
     onPlannedHires: true,
     generalOnly: false,
+    newLists: false,
   },
   features: {
     name: "Features",
@@ -376,6 +379,7 @@ export const columnTablePolicies: Readonly<
     editNeeds: ["features:edit", "people:view"],
     onPlannedHires: false,
     generalOnly: true,
+    newLists: true,
   },
 };
 
@@ -390,13 +394,32 @@ export const editsColumnsOf = (
     permissions.includes(need),
   );
 
-// A choice column names its list, and takes its visibility from it; a web link, note, or number
-// column names its visibility, no list, and takes one value.
+// A General list drafted with the column that draws on it, and its choices, in order, approved with
+// the column; offered only on the plan's tables, whose editors don't make lists on Lists.
+export const newListSchema = z.object({
+  name: z.string().trim().min(1).max(listLengths.name),
+  choices: z
+    .array(z.string().trim().min(1).max(listLengths.choice))
+    .min(1)
+    .max(mostChoicesAtOnce)
+    .refine(
+      (labels) =>
+        new Set(labels.map((label) => label.toLowerCase())).size ===
+        labels.length,
+      "A choice is in the list twice",
+    ),
+});
+
+export type NewList = z.infer<typeof newListSchema>;
+
+// A choice column names its list, or a new one, and takes its visibility from it; a web link, note,
+// or number column names its visibility, no list, and takes one value.
 export const fieldRequestSchema = z
   .object({
     name: z.string().trim().min(1).max(personLengths.column),
     type: fieldTypeSchema.default("choice"),
     listId: z.uuid().optional(),
+    newList: newListSchema.optional(),
     visibility: tierSchema.optional(),
     multiple: z.boolean().default(false),
     required: z.boolean().default(false),
@@ -407,11 +430,18 @@ export const fieldRequestSchema = z
       context.addIssue({ code: "custom", message });
     };
     if (request.type === "choice") {
-      if (request.listId === undefined) issue("Choose a list");
+      if (request.listId === undefined && request.newList === undefined) {
+        issue("Choose a list");
+      }
+      if (request.listId !== undefined && request.newList !== undefined) {
+        issue("Choose a list or a new one, not both");
+      }
     } else {
       const { kind, value } = heldAlone[request.type];
       if (request.visibility === undefined) issue("Choose a visibility");
-      if (request.listId !== undefined) issue(`A ${kind} column has no list`);
+      if (request.listId !== undefined || request.newList !== undefined) {
+        issue(`A ${kind} column has no list`);
+      }
       if (request.multiple) issue(`A ${kind} column holds one ${value}`);
     }
   })

@@ -26,6 +26,7 @@ import { addedChoices } from "./list-state.ts";
 import { withUsedRecords } from "./record-decisions.ts";
 import { type RecordsState, refKey, stateOf } from "./record-state.ts";
 import { readRecordsState, recordKinds } from "./records.ts";
+import { choicesMadeWithColumn } from "./new-lists.ts";
 
 // The published drafts of columns, by column, as they make each column: removals left out.
 function draftedColumns(state: ColumnsState) {
@@ -107,7 +108,16 @@ export async function withUsedAcross(
   const lists = new Set(asked.lists);
   for (const { id, field } of draftedColumns(state)) {
     if (columns.has(id) && usesAddedList(state, field)) {
-      lists.add(String(field.listId));
+      const listId = String(field.listId);
+      lists.add(listId);
+      for (const choiceId of await choicesMadeWithColumn(
+        transaction,
+        state.lists,
+        listId,
+        id,
+      )) {
+        choices.add(choiceId);
+      }
     }
   }
   return {

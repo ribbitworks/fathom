@@ -57,6 +57,7 @@ import {
 import { draftsUse } from "./drafted-values.ts";
 import { checkValuesFit, fieldChanges } from "./fields.ts";
 import { unseenDetails } from "./lists.ts";
+import { discardingNewList, draftNewList } from "./new-lists.ts";
 import { readKeyNumber } from "./record-keys.ts";
 import {
   badRequest,
@@ -102,6 +103,8 @@ const requested = (request: FieldRequest, tableName: unknown): Recorded => ({
 
 const sameType = "A column's type cannot change";
 
+const listsOnLists = "A list for this table's columns is made on Lists";
+
 // Saves a column's draft as wanted and records the changes, clearing a rejection.
 async function saveFieldDraft(
   transaction: Transaction,
@@ -110,6 +113,8 @@ async function saveFieldDraft(
   id: string,
   before: Recorded | undefined,
   after: Recorded | undefined,
+  // Changes drafted with the column, such as a new list it draws on, recorded with its own.
+  drawnOn: readonly Change[] = [],
 ): Promise<string | null> {
   const action = actionTo(before, after);
   const live = state.fields.get(id);
@@ -124,6 +129,7 @@ async function saveFieldDraft(
   if (made.length === 0) return null;
   await writeDraft(transaction, maker.user.id, "field", id, live, after);
   return recordChanges(transaction, maker, [
+    ...drawnOn,
     ...made,
     ...clearedRejection(
       id,
@@ -153,6 +159,30 @@ function refuseUnseenTier(
   }
 }
 
+// Discards a column's draft, and, for a column only drafted to be added, a new list drafted with it,
+// recorded as one discard.
+async function discardColumn(
+  transaction: Transaction,
+  maker: Actor,
+  state: ColumnsState,
+  id: string,
+  drafted: Recorded,
+): Promise<string | null> {
+  const made = discardingField(state, id);
+  await discardDrafts(transaction, maker.user.id, "field", [id]);
+  const listMade =
+    !state.fields.has(id) && typeof drafted.listId === "string"
+      ? await discardingNewList(
+          transaction,
+          maker,
+          state.lists,
+          drafted.listId,
+          id,
+        )
+      : [];
+  return recordChanges(transaction, maker, [...made, ...listMade], "discard");
+}
+
 // Drafts adding a column at the end of a table. It can be required only while the table has no
 // records yet.
 export async function createField(
@@ -168,10 +198,21 @@ export async function createField(
     if (request.listId !== undefined) {
       await checkList(transaction, state, request.listId, badRequest);
     }
+    if (request.newList !== undefined && !policyOf(tableName).newLists) {
+      throw new BadRequestError(listsOnLists);
+    }
+    const newList =
+      request.newList === undefined
+        ? undefined
+        : await draftNewList(transaction, actor, state.lists, request.newList);
     const id = randomUUID();
-    const field = requested(request, tableName);
+    const field = requested(
+      newList === undefined ? request : { ...request, listId: newList.id },
+      tableName,
+    );
     refuseUnseenTier(actor, state, field);
-    refuseSensitiveOnFeatures(state, field);
+    // A new list is General, as drafted above, and isn't in the state read before it.
+    if (newList === undefined) refuseSensitiveOnFeatures(state, field);
     classifyDraft(actor, {
       live: false,
       name: request.name,
@@ -191,6 +232,7 @@ export async function createField(
       id,
       undefined,
       field,
+      newList?.changes,
     );
     return {
       result: toFieldOut(
@@ -428,9 +470,7 @@ export async function deleteField(
     const live = state.fields.get(id);
     if (live === undefined) {
       await refuseIfDraftsFill(transaction, actor.user.id, id, field);
-      const made = discardingField(state, id);
-      await discardDrafts(transaction, actor.user.id, "field", [id]);
-      return recordChanges(transaction, actor, made, "discard");
+      return discardColumn(transaction, actor, state, id, field);
     }
     if (await draftsUse(transaction, { column: id }, actor.user.id)) {
       throw new ConflictError(
@@ -477,9 +517,7 @@ export async function discardColumnDraft(
     if (!state.fields.has(id)) {
       await refuseIfDraftsFill(transaction, maker.user.id, id, draft.fields);
     }
-    const made = discardingField(state, id);
-    await discardDrafts(transaction, maker.user.id, "field", [id]);
-    return recordChanges(transaction, maker, made, "discard");
+    return discardColumn(transaction, maker, state, id, draft.fields);
   });
 }
 

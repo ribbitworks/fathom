@@ -4,9 +4,9 @@
 // Part of the data access layer.
 
 import type { Tier } from "@fathom/shared";
-import { type Actor, storedTier } from "../access.ts";
+import { type Actor, seesSensitivity, storedTier } from "../access.ts";
 import { choicesWithAdded } from "./added-columns.ts";
-import { ConflictError } from "../errors.ts";
+import { ConflictError, ForbiddenError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import {
   drafted,
@@ -44,7 +44,7 @@ import {
   readState,
   writeOrderDraft,
 } from "./list-state.ts";
-import { refuseUnseenList } from "./lists.ts";
+import { refuseUnseenList, unseenDetails } from "./lists.ts";
 import { withMark } from "./person-fields.ts";
 import { readLive } from "./people-reads.ts";
 import {
@@ -64,7 +64,12 @@ import {
   partOfFill,
   refuseUnmarkingHireManagers,
 } from "./hire-checks.ts";
-import { byKind, changedSince, type Undone } from "./undo-records.ts";
+import {
+  byKind,
+  changedSince,
+  kindsInOrder,
+  type Undone,
+} from "./undo-records.ts";
 
 // A list of identifiers or keys as the history holds it: an order is always recorded whole.
 const ids = (value: unknown): string[] => (value as unknown[]).map(String);
@@ -251,23 +256,40 @@ function reclassifyDraft(
 // taken out, the one it drafted removing put back as it was, the fields it changed put back, with a
 // rejection's reason, and an order as it was. Each must still have a name no one else has taken
 // since, and belong to a list that is there to change.
+// Records are undone lists first, then their choices, then orders, except that records drafted to
+// be added are taken back after the rest, choices before their list, so nothing is left without
+// its list.
+const undoOrder = (record: Undone): number =>
+  record.action === "created" && record.draft
+    ? 2 * kindsInOrder - byKind(record)
+    : byKind(record);
+
 export async function undoListDrafts(
   transaction: Transaction,
   actor: Actor,
   records: readonly Undone[],
 ): Promise<void> {
   const editor = actor.user.id;
-  for (const record of [...records].sort((a, b) => byKind(a) - byKind(b))) {
+  for (const record of [...records].sort(
+    (a, b) => undoOrder(a) - undoOrder(b),
+  )) {
     const state = await readState(transaction, editor);
     const old = withoutRejection(record.old);
-    // A list's changes are recorded as General, so the list's own class decides who undoes them.
-    refuseUnseenList(
-      actor,
-      state,
-      record.recordType === "list-item"
-        ? (listOfChoice(state, record.id) ?? String(old.get("listId")))
-        : record.id,
-    );
+    // A list's changes are recorded as General, so the list's own class decides who undoes them;
+    // a list its undoing brings back, discarded since, is judged by the class it had.
+    if (record.recordType === "list" && !listExists(state, record.id)) {
+      if (!seesSensitivity(actor, storedTier(old.get("visibility")))) {
+        throw new ForbiddenError(unseenDetails(String(old.get("name"))));
+      }
+    } else {
+      refuseUnseenList(
+        actor,
+        state,
+        record.recordType === "list-item"
+          ? (listOfChoice(state, record.id) ?? String(old.get("listId")))
+          : record.id,
+      );
+    }
     if (record.recordType === "choice-order") {
       // Every change to a draft of an order records the whole order.
       const wanted = ids(old.get("order"));

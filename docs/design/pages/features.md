@@ -40,6 +40,9 @@ Features lists the plan's features in one table, with a board as a second way of
   - A new project or proposal names the feature as it opens; a new customer is linked once added.
 - **Added columns:** General lists only, with no planned hires or other class. A drafted one can be filled straight away, and is approved with the features filled in it, as [Drafts that use drafts](../domain-model.md#drafts-and-approval) sets out.
   - Remove column shows only to those who may also change features.
+- **New list:** first in a new choice column's List picker, it shows List name and Choices, a box that takes each choice on Enter, or several pasted one to a line, each with its own ×, and a × that clears them all.
+  - Both are needed: Name needed under List name, Choices needed under Choices; a choice typed twice says Already in this list under Choices.
+  - The list is drafted General with the column, in one change, as [Roles](../../product/roles.md#columns-and-saved-views) sets out.
 
 ## Grouping
 

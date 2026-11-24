@@ -45,6 +45,9 @@ const kindOrder: readonly RecordType[] = [
 
 export const byKind = (record: Undone) => kindOrder.indexOf(record.recordType);
 
+// How many kinds of record are ordered.
+export const kindsInOrder = kindOrder.length;
+
 // The table each kind of record is kept in. A list's choice order is only ever changed live by
 // approving, which cannot be undone.
 const tables = {

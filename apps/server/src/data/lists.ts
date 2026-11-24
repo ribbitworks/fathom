@@ -10,7 +10,7 @@ import type {
   List,
   ListRequest,
 } from "@fathom/shared";
-import { draftKey, type Tier } from "@fathom/shared";
+import { draftKey, duplicateList, type Tier } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import {
@@ -97,7 +97,6 @@ import {
 
 export const noList = "There is no such list";
 export const noChoice = "There is no such choice";
-const duplicateList = "There is already a list with that name";
 const duplicateChoice = "This list already has a choice with that name";
 const listToBeRemoved =
   "This list's draft removes it; discard the draft to change it";
