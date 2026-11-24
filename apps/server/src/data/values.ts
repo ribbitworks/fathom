@@ -345,6 +345,31 @@ export function valueRows(
   return [];
 }
 
+export type ValueRow = ReturnType<typeof valueRows>[number];
+
+// Removes a record's value for a column.
+export async function deleteValues(
+  transaction: Pick<Database, "delete">,
+  recordId: string,
+  fieldId: string,
+  owner: ValueOwner,
+): Promise<void> {
+  await transaction
+    .delete(fieldValues)
+    .where(
+      and(eq(ownerColumn(owner), recordId), eq(fieldValues.fieldId, fieldId)),
+    );
+}
+
+export async function insertValues(
+  transaction: Pick<Database, "insert">,
+  rows: readonly ValueRow[],
+): Promise<void> {
+  for (const chunk of inChunks(rows)) {
+    await transaction.insert(fieldValues).values(chunk);
+  }
+}
+
 // Replaces a person's or planned hire's value for a column, as the change history records it.
 export async function writeValues(
   transaction: Pick<Database, "delete" | "insert">,
@@ -353,13 +378,8 @@ export async function writeValues(
   value: unknown,
   owner: ValueOwner,
 ): Promise<void> {
-  await transaction
-    .delete(fieldValues)
-    .where(
-      and(eq(ownerColumn(owner), recordId), eq(fieldValues.fieldId, fieldId)),
-    );
-  const rows = valueRows(recordId, fieldId, value, owner);
-  if (rows.length > 0) await transaction.insert(fieldValues).values(rows);
+  await deleteValues(transaction, recordId, fieldId, owner);
+  await insertValues(transaction, valueRows(recordId, fieldId, value, owner));
 }
 
 // The labels of the choices given, by choice.

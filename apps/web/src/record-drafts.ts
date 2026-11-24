@@ -15,6 +15,9 @@ export interface RecordNode {
   subject: string;
   draft: NodeDraft | undefined;
   heldBy: string | undefined;
+  // The choices in the columns added to its table, by column, for a kind that has them, such as a
+  // feature.
+  values?: Readonly<Record<string, readonly string[]>> | undefined;
 }
 
 export const recordNode = (
@@ -23,6 +26,7 @@ export const recordNode = (
     id: string;
     draft?: NodeDraft | undefined;
     heldBy?: string | undefined;
+    values?: Readonly<Record<string, readonly string[]>> | undefined;
   },
   subject: string,
 ): RecordNode => ({
@@ -30,6 +34,7 @@ export const recordNode = (
   subject,
   draft: record.draft,
   heldBy: record.heldBy,
+  ...(record.values === undefined ? {} : { values: record.values }),
 });
 
 export const recordKey = ({ type, id }: RecordRef): string => `${type} ${id}`;

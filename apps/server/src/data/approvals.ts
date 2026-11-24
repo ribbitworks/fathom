@@ -65,7 +65,11 @@ import {
   rejectColumnDrafts,
 } from "./column-approvals.ts";
 import { columnsWithAdded } from "./added-columns.ts";
-import { refuseUsedAcross, withUsedAcross } from "./draft-uses.ts";
+import {
+  refuseColumnsBeyondRole,
+  refuseUsedAcross,
+  withUsedAcross,
+} from "./draft-uses.ts";
 import { withFills } from "./fills.ts";
 import {
   approveTeamsIn,
@@ -86,7 +90,13 @@ import {
 } from "./list-approvals.ts";
 import { approveRecordDrafts, rejectRecordDrafts } from "./record-decisions.ts";
 import { kindOf, refuseRemovingNamed } from "./records.ts";
-import { inListOrder, readColumns, valueRows } from "./values.ts";
+import {
+  insertValues,
+  inListOrder,
+  readColumns,
+  valueField,
+  valueRows,
+} from "./values.ts";
 import { readToday } from "./settings.ts";
 import { recordHiringChanges } from "./hire-fields.ts";
 import {
@@ -255,9 +265,7 @@ async function apply(
         ),
       );
   }
-  for (const chunk of inChunks(chosen)) {
-    await transaction.insert(fieldValues).values(chunk);
-  }
+  await insertValues(transaction, chosen);
 }
 
 async function approvePeopleIn(
@@ -392,7 +400,8 @@ async function deciding(
 // Approves the drafts asked for, with the drafts they use, of any kind, and the rest of any fill they
 // belong to, applying them all to the live records, and returns the change set that applied them.
 // The plan's records come first, then lists and choices, then columns, which may draw on them, then
-// people, who may be given both, then planned hires, whose managers and fillers are people.
+// the records' values in those columns, then people, who may be given both, then planned hires,
+// whose managers and fillers are people.
 export async function approveDrafts(
   database: Database,
   actor: Actor,
@@ -416,17 +425,21 @@ export async function approveDrafts(
         today,
         "approve",
       );
-      const asked = await withUsedAcross(
+      const chosen = await withFills(transaction, actor, requested);
+      const asked = await withUsedAcross(transaction, chosen);
+      await refuseColumnsBeyondRole(transaction, actor, chosen, asked);
+      const { made, values } = await approveRecordDrafts(
         transaction,
-        await withFills(transaction, actor, requested),
+        actor,
+        asked.records,
       );
-      const made = await approveRecordDrafts(transaction, actor, asked.records);
       if (asksForLists(asked)) {
         made.push(...(await approveListDrafts(transaction, actor, asked)));
       }
       if (asksForColumns(asked)) {
         made.push(...(await approveColumnDrafts(transaction, actor, asked)));
       }
+      await insertValues(transaction, values);
       if (asked.people.length > 0) {
         made.push(
           ...(await approvePeopleIn(transaction, actor, asked.people, today)),

@@ -5,7 +5,8 @@
 
 import { z } from "zod";
 import { linkShape } from "./links.ts";
-import { holdsAny, type Permission } from "./access.ts";
+import { holdsAny, type Permission, permissionLabel } from "./access.ts";
+import { eitherOf } from "./words.ts";
 
 // A draft waits for approval until an Approver approves or rejects it; a rejected draft keeps its
 // reason until it is changed again or discarded.
@@ -253,6 +254,20 @@ export const approvesKind = (
   // The kind is always one of the fixed list above.
   // eslint-disable-next-line security/detect-object-injection
   holdsAny(permissions, approvePermissions[kind]);
+
+// Why a role may not approve a draft that takes along another of a kind it does not approve, such
+// as a column only drafted to be added that a feature is given a value in, naming that one, since
+// approving one approves both; undefined when it may.
+export const takenAlongRefusal = (
+  permissions: readonly string[],
+  kind: DraftKind,
+  name: string,
+): string | undefined =>
+  approvesKind(permissions, kind)
+    ? undefined
+    : // The kind is always one of the fixed list above.
+      // eslint-disable-next-line security/detect-object-injection
+      `Approving this also approves ${name}, which needs ${eitherOf(approvePermissions[kind].map(permissionLabel))}.`;
 
 // The kinds of draft some permissions let a user approve and reject.
 export const approvableKinds = (permissions: readonly string[]): DraftKind[] =>

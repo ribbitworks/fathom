@@ -486,7 +486,7 @@ describe("approving a draft with the drafts it uses", () => {
     );
     expect(refused.statusCode).toBe(403);
     expect(refused.json()).toEqual({
-      error: "This role can't approve drafts of configuration",
+      error: `Approving this also approves the new column ${field.name}, which needs Approve Configuration.`,
     });
     expect(await isLive(lists, list.id)).toBe(false);
     expect(await isLive(fields, field.id)).toBe(false);

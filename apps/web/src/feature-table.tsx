@@ -351,11 +351,7 @@ export function featureColumns(
   return [
     ...inGroups,
     ...inOrder(
-      // A value can be given only in a column already approved.
-      fields.map((added) => ({
-        ...addedColumn<Feature, CellChange>(added, lists),
-        readOnly: added.draft?.action === "created",
-      })),
+      fields.map((added) => addedColumn<Feature, CellChange>(added, lists)),
       order,
     ),
   ];

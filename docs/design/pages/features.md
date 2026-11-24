@@ -32,7 +32,7 @@ Features lists the plan's features in one table, with a board as a second way of
   - A change drafts the project or proposal, so the feature's row isn't marked.
   - In the cell and in the feature's details, a project or proposal a draft adds has the draft's dot, and one it takes away has the dot and is struck through, as [A part a draft adds or removes](../../standards/ui-conventions/drafts-and-values.md#drafts) sets out.
   - Those drafts are decided on Projects, where they are drafts of the project or proposal, or with the Draft menu's Approve; the cell has no menu of its own, as no table's cell does.
-- **Added columns:** General lists only, with no planned hires or other class; a drafted one can't be filled until approved.
+- **Added columns:** General lists only, with no planned hires or other class. A drafted one can be filled straight away, and is approved with the features filled in it, as [Drafts that use drafts](../domain-model.md#drafts-and-approval) sets out.
   - Remove column shows only to those who may also change features.
 
 ## Grouping

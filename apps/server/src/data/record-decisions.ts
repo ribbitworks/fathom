@@ -39,7 +39,13 @@ import {
   versionOf,
   withVersion,
 } from "./record-state.ts";
-import { fieldOfValue, valueFieldsIn, writeValues } from "./values.ts";
+import {
+  deleteValues,
+  fieldOfValue,
+  valueFieldsIn,
+  type ValueRow,
+  valueRows,
+} from "./values.ts";
 import { editsKind } from "./draft-editors.ts";
 import { refuseCustomersChange } from "./feature-customers.ts";
 import {
@@ -260,7 +266,7 @@ export async function resubmitRecordDraft(
 }
 
 // The records asked for, with every draft they use, and those those use, and so on.
-function withUsedRecords(
+export function withUsedRecords(
   state: RecordsState,
   asked: readonly RecordRef[],
 ): RecordRef[] {
@@ -324,13 +330,16 @@ async function refuseHeldRecords(
 
 // Approves the drafts of the records asked for, and those they use, applying them to the live
 // records, and returns the changes made, for approvals.ts to record with the other drafts approved
-// at the same time. The live records must still keep every rule once they are applied.
+// at the same time, and the values in added columns to write. Those are written only once the
+// columns and choices approved with the records are live, since a record's draft may give a value in
+// a column or choice only drafted to be added. The live records must still keep every rule once they
+// are applied.
 export async function approveRecordDrafts(
   transaction: Transaction,
   approver: Actor,
   asked: readonly RecordRef[],
-): Promise<Change[]> {
-  if (asked.length === 0) return [];
+): Promise<{ made: Change[]; values: ValueRow[] }> {
+  if (asked.length === 0) return { made: [], values: [] };
   const state = await readRecordsState(transaction);
   requireRecordDrafts(state, asked);
   const approved = withUsedRecords(state, asked);
@@ -339,6 +348,7 @@ export async function approveRecordDrafts(
     approved.map(({ type, id }) => stateOf(state, type).drafts.get(id)),
   );
   const made: Change[] = [];
+  const columnValues: ValueRow[] = [];
   const touched: Touched[] = [];
   const removed: { kind: RecordKind; id: string }[] = [];
   for (const kind of recordKinds) {
@@ -382,15 +392,12 @@ export async function approveRecordDrafts(
           if (same) {
             continue;
           }
-          await writeValues(
-            transaction,
-            id,
-            String(fieldOfValue(field)),
-            // The field names an added column's value.
-            // eslint-disable-next-line security/detect-object-injection
-            after[field],
-            kind.addedColumns.owner,
-          );
+          const fieldId = String(fieldOfValue(field));
+          const { owner } = kind.addedColumns;
+          await deleteValues(transaction, id, fieldId, owner);
+          // The field names an added column's value.
+          // eslint-disable-next-line security/detect-object-injection
+          columnValues.push(...valueRows(id, fieldId, after[field], owner));
         }
       }
       made.push(...kindChanges(kind, id, before, after));
@@ -426,7 +433,7 @@ export async function approveRecordDrafts(
       approved.filter(({ type }) => type === kind.type).map(({ id }) => id),
     );
   }
-  return made;
+  return { made, values: columnValues };
 }
 
 // Rejects the drafts of the records asked for with a reason, refusing a draft that others use

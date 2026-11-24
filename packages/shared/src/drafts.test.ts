@@ -21,6 +21,7 @@ import {
   draftKeysOf,
   withNeeded,
   withUsers,
+  takenAlongRefusal,
 } from "./drafts.ts";
 
 const message = (result: { error?: { issues: { message: string }[] } }) =>
@@ -179,6 +180,36 @@ describe("approving by area", () => {
       "milestone",
     ]);
     expect(approvableKinds(["features:edit", "people:view"])).toEqual([]);
+  });
+
+  it("refuses taking along a draft the role does not approve, naming it and the permission it needs", () => {
+    expect(
+      takenAlongRefusal(
+        ["features:approve"],
+        "field",
+        "the new column Fictional Score",
+      ),
+    ).toBe(
+      "Approving this also approves the new column Fictional Score, which needs Approve Configuration.",
+    );
+  });
+
+  it("names each permission that would do, when any of several approves the kind", () => {
+    expect(
+      takenAlongRefusal([], "release-stream", "the schedule Fictional"),
+    ).toBe(
+      "Approving this also approves the schedule Fictional, which needs Approve Plan or Approve Configuration.",
+    );
+  });
+
+  it("lets a role that approves the kind take it along", () => {
+    expect(
+      takenAlongRefusal(
+        ["features:approve", "configuration:approve"],
+        "field",
+        "the new column Fictional Score",
+      ),
+    ).toBeUndefined();
   });
 });
 

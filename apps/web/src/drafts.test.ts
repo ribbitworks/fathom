@@ -26,6 +26,7 @@ import {
   usingDrafts,
   without,
 } from "./drafts.ts";
+import { type RecordNode, recordNode } from "./record-drafts.ts";
 import {
   bothLists as lists,
   draftToDecide as waiting,
@@ -414,6 +415,77 @@ describe("drafts of people and columns that use drafts of another kind", () => {
         columns.people,
       ),
     ).toEqual(["ADA", "the column Squad", "the list Teams"]);
+  });
+});
+
+describe("drafts of features that use drafts of columns", () => {
+  // A number column drafted to be added to Features.
+  const score: Field = {
+    id: "f4",
+    keyNumber: 1,
+    name: "Fictional Score",
+    type: "number" as const,
+    listId: null,
+    visibility: "general",
+    multiple: false,
+    required: false,
+    onPlannedHires: false,
+    draft: { ...waiting, action: "created", changed: [], live: {} },
+  };
+  const feature = (
+    id: string,
+    values: Record<string, string[]>,
+    draft: Partial<NonNullable<RecordNode["draft"]>> = {},
+  ) =>
+    recordNode(
+      "feature",
+      {
+        id,
+        values,
+        draft: {
+          ...waiting,
+          action: "changed",
+          changed: Object.keys(values),
+          live: {},
+          uses: [],
+          ...draft,
+        },
+      },
+      `the feature ${id}`,
+    );
+  // Given features scored in the new column, one published and one not, and one given a new choice
+  const scored = feature("scored", { f4: [] });
+  const mine = feature("mine", { f4: [] }, { unpublished: true });
+  const chosen = feature("chosen", { f3: ["e"] });
+  const columns = { fields: [score], records: [scored, mine, chosen] };
+  const records = (...ids: string[]) =>
+    ids.map((id) => ({ type: "feature" as const, id }));
+
+  it("approves the new column or choice a feature is given with it", () => {
+    expect(
+      usedDrafts(
+        { ...noDrafts(), records: records("scored", "chosen") },
+        lists,
+        columns,
+      ),
+    ).toEqual({ ...noDrafts(), choices: ["e"], columns: ["f4"] });
+  });
+
+  it("rejects the published features given a column with it", () => {
+    expect(
+      usingDrafts({ ...noDrafts(), columns: ["f4"] }, lists, columns),
+    ).toEqual({ ...noDrafts(), records: records("scored") });
+  });
+
+  it("leaves approving a feature and its column to another approver for a role that approves features alone", () => {
+    const decision = decisionFor(
+      "approve",
+      { ...noDrafts(), records: records("scored") },
+      ["feature"],
+      lists,
+      columns,
+    );
+    expect(decision.beyondRole).toEqual(["the column Fictional Score"]);
   });
 });
 

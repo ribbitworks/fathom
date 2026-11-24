@@ -369,7 +369,7 @@ describe("columns added to Features", () => {
     });
   });
 
-  it("hold no value while only drafted to be added", () => {
+  it("take a value while only drafted to be added", () => {
     const drafted = featureColumns(
       choices({
         featureColumns: {
@@ -384,7 +384,8 @@ describe("columns added to Features", () => {
         },
       }),
     ).find(({ key }) => key === "size");
-    expect(drafted?.readOnly).toBe(true);
+    expect(drafted?.readOnly).toBeFalsy();
+    expect(drafted?.change(["large"])).toEqual({ values: { size: ["large"] } });
   });
 
   it("save a value by its column", () => {
