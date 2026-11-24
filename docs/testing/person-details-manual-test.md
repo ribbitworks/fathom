@@ -2,7 +2,7 @@
 title: "Manual Test: Person Details"
 category: "How-To"
 audience: "Contributors"
-applies_to: ["apps/web/src/person-panel*", "apps/web/src/person-change.ts", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
+applies_to: ["apps/web/src/person-panel*", "apps/web/src/person-change.ts", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "apps/web/src/org-chart-cards.tsx", "apps/web/src/org-chart-canvas.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
 last_updated: "2026-11-24"
 ---

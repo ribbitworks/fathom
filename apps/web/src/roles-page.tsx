@@ -1,33 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Roles page, for users who may see roles: every role with its description and how many active
-// accounts hold it, and a dialog showing what each grants, read only for those who may not edit
-// roles. Those who may edit roles create a role, from nothing or as a copy of another, change one,
-// or put a starting role back to Fathom's own version. The dialog sets what a role grants in a grid
-// of areas and data classes with their actions, beside the result in plain English: the pages and
-// views its holders see and do not see, and what they can and cannot do, marked against what the
-// role granted when the dialog opened, to which its boxes can be reset. A box that does nothing
-// without others is turned off until one of them is ticked, and unticking them unticks it. The box
-// that alone leaves some active account able to manage access cannot be unticked. Before a
-// change to a role held by accounts is saved, the dialog lists what each account would gain and
-// lose, to be confirmed. A dialog cannot be closed while its change is being saved, and shows
-// plainly why a change was refused, such as when someone else changed the role after it was
-// opened.
+// The Roles page: every role with its description and how many active accounts hold it, and the
+// dialogs that show, create and change a role.
 
 import {
-  classesNamedIn,
-  classNames,
   type DataClasses,
-  gridActions,
-  type GridRow,
-  impliedPermissions,
-  eitherOf,
   keptPermissions,
   lockedPermissions,
   type Permission,
-  permissionDescriptions,
-  permissionGrid,
-  permissionLabel,
   type RoleEffects,
   roleRequestSchema,
   roleSchema,
@@ -40,9 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Alert,
   Button,
-  Checkbox,
   Group,
-  List,
   Loader,
   Modal,
   Paper,
@@ -52,7 +30,6 @@ import {
   Text,
   Textarea,
   TextInput,
-  Title,
   VisuallyHidden,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -66,13 +43,10 @@ import { notifySuccess } from "./notices.tsx";
 import { count } from "./numbers.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
-import roleClasses from "./roles-page.module.css";
+import { Effects, Summary } from "./roles-consequences.tsx";
+import { PermissionGrid } from "./roles-permission-grid.tsx";
 import {
-  actionHeadings,
-  consequences,
   createRole,
-  difference,
-  markedLines,
   needsMet,
   previewRole,
   rolesQuery,
@@ -80,7 +54,6 @@ import {
   withNeedsMet,
 } from "./roles.ts";
 import { type SignedInUser, sessionQuery } from "./session.ts";
-import { ClassName } from "./status-mark.tsx";
 
 type Dialog =
   | { kind: "create"; from?: RoleSummary }
@@ -90,361 +63,6 @@ type Dialog =
 const detailsSchema = roleRequestSchema.pick({ name: true, description: true });
 
 type Details = z.infer<typeof detailsSchema>;
-
-// A line of the summary or the confirmation, which Fathom writes, with each class it names marked
-// as a class.
-function Line({ text }: { text: string }) {
-  return classesNamedIn(text).map((part, index) =>
-    "dataClass" in part ? (
-      // Parts keep their place, since the line is split the same way each time.
-      <ClassName key={index} dataClass={part.dataClass} />
-    ) : (
-      part.words
-    ),
-  );
-}
-
-// The permission granted with another, such as viewing with editing, if a granted one brings it.
-function impliedBy(
-  permission: Permission,
-  granted: readonly Permission[],
-): Permission | undefined {
-  return granted.find(
-    // The permission is always one of the shared list.
-    // eslint-disable-next-line security/detect-object-injection
-    (other) => impliedPermissions[other] === permission,
-  );
-}
-
-// One permission's box: ticked when granted, or ticked and greyed when another granted one brings
-// it, such as viewing with editing, or when it must stay. It is turned off while it would do
-// nothing without others not granted.
-function PermissionBox({
-  permission,
-  granted,
-  locked,
-  disabled,
-  onChange,
-  label,
-  description,
-}: {
-  permission: Permission;
-  granted: readonly Permission[];
-  locked: readonly Permission[];
-  disabled: boolean;
-  onChange: ((granted: Permission[]) => void) | undefined;
-  label?: string;
-  description?: string;
-}) {
-  const comesWith = impliedBy(permission, granted);
-  const name = permissionLabel(permission);
-  const kept = locked.includes(permission);
-  const checked = granted.includes(permission) || comesWith !== undefined;
-  // A box already ticked stays free to untick, even on a role saved before its needs were kept to.
-  const waiting =
-    onChange !== undefined &&
-    !checked &&
-    !needsMet(permission, withImplied(granted));
-  // The permission is always one of the shared list.
-  // eslint-disable-next-line security/detect-object-injection
-  const { needs = [] } = permissionDescriptions[permission];
-  return (
-    <Checkbox
-      display={label === undefined ? "inline-block" : undefined}
-      label={label}
-      description={description}
-      aria-label={
-        label !== undefined
-          ? undefined
-          : comesWith !== undefined
-            ? `${name}, which comes with ${permissionLabel(comesWith)}`
-            : kept
-              ? `${name}, which some active account must keep`
-              : waiting
-                ? `${name}, which needs ${eitherOf(needs.map(permissionLabel))}`
-                : name
-      }
-      checked={checked}
-      disabled={disabled || comesWith !== undefined || kept || waiting}
-      readOnly={onChange === undefined}
-      onChange={
-        onChange &&
-        ((event) => {
-          const on = event.currentTarget.checked;
-          onChange(
-            on
-              ? [...granted, permission]
-              : granted.filter((other) => other !== permission),
-          );
-        })
-      }
-    />
-  );
-}
-
-type BoxProps = Omit<Parameters<typeof PermissionBox>[0], "permission">;
-
-// What a role grants, in two parts: a grid of the areas it reaches, with View, Approve and Edit,
-// followed by the classes of data it sees and changes within them, with View and Edit; and the
-// permissions of their own. General data comes with each area. Read only without a way to change
-// it.
-function PermissionGrid({
-  granted,
-  locked = [],
-  disabled,
-  onChange,
-}: {
-  granted: readonly Permission[];
-  locked?: readonly Permission[];
-  disabled: boolean;
-  onChange?: (granted: Permission[]) => void;
-}) {
-  const box: BoxProps = { granted, locked, disabled, onChange };
-  const cells = (actions: GridRow["actions"]) =>
-    gridActions.map((action) => {
-      // The action is always one of the fixed list.
-      // eslint-disable-next-line security/detect-object-injection
-      const permission = actions[action];
-      return permission === undefined ? (
-        <Table.Td key={action} />
-      ) : (
-        <Table.Td key={action} ta="center">
-          <PermissionBox permission={permission} {...box} />
-        </Table.Td>
-      );
-    });
-  return (
-    <Stack gap="sm" role="group" aria-label="What the role grants">
-      <Table withTableBorder verticalSpacing={4}>
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Area</Table.Th>
-            {gridActions.map((action) => (
-              <Table.Th key={action} ta="center">
-                {
-                  // The action is always one of the fixed list.
-                  // eslint-disable-next-line security/detect-object-injection
-                  actionHeadings[action]
-                }
-              </Table.Th>
-            ))}
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {permissionGrid
-            .filter(({ kind }) => kind === "area")
-            .map(({ area, actions }) => (
-              <Table.Tr key={area}>
-                <Table.Td>{area}</Table.Td>
-                {cells(actions)}
-              </Table.Tr>
-            ))}
-          <Table.Tr>
-            <Table.Th colSpan={gridActions.length + 1} scope="colgroup">
-              Data classification
-            </Table.Th>
-          </Table.Tr>
-          <Table.Tr>
-            <Table.Td>{classNames.general}</Table.Td>
-            {gridActions.map((action) => (
-              <Table.Td key={action} ta="center">
-                {action !== "approve" && (
-                  <Checkbox
-                    display="inline-block"
-                    // The action is always one of the fixed list.
-                    // eslint-disable-next-line security/detect-object-injection
-                    aria-label={`${actionHeadings[action]} ${classNames.general}, which comes with each area`}
-                    checked
-                    disabled
-                    readOnly
-                  />
-                )}
-              </Table.Td>
-            ))}
-          </Table.Tr>
-          {permissionGrid.flatMap((row) =>
-            row.kind === "class"
-              ? [
-                  <Table.Tr key={row.area}>
-                    <Table.Td>{classNames[row.dataClass]}</Table.Td>
-                    {cells(row.actions)}
-                  </Table.Tr>,
-                ]
-              : [],
-          )}
-        </Table.Tbody>
-      </Table>
-      {permissionGrid
-        .filter(({ kind }) => kind === "single")
-        .flatMap(({ actions }) => Object.values(actions))
-        .map((permission) => (
-          <PermissionBox
-            key={permission}
-            permission={permission}
-            label={permissionLabel(permission)}
-            description={
-              // The permission is always one of the shared list.
-              // eslint-disable-next-line security/detect-object-injection
-              permissionDescriptions[permission].allows
-            }
-            {...box}
-          />
-        ))}
-    </Stack>
-  );
-}
-
-function Sentences({ title, items }: { title: string; items: string[] }) {
-  if (items.length === 0) return null;
-  return (
-    <Stack gap={4}>
-      <Title order={3} fz="sm">
-        {title}
-      </Title>
-      <List size="sm" spacing={2}>
-        {items.map((item) => (
-          <List.Item key={item}>
-            <Line text={item} />
-          </List.Item>
-        ))}
-      </List>
-    </Stack>
-  );
-}
-
-// Sentences marked against those the dialog opened with: added ones highlighted, and those taken
-// away struck through, which screen readers hear from the summary's live region.
-function ChangingSentences({
-  title,
-  first,
-  items,
-}: {
-  title: string;
-  first: readonly string[];
-  items: readonly string[];
-}) {
-  const lines = markedLines(first, items);
-  if (lines.length === 0) return null;
-  return (
-    <Stack gap={4}>
-      <Title order={3} fz="sm">
-        {title}
-      </Title>
-      <List size="sm" spacing={2}>
-        {lines.map(({ text, change }) => (
-          <List.Item key={text}>
-            {change !== undefined && (
-              <VisuallyHidden>
-                {change === "removed" ? "No longer: " : "New: "}
-              </VisuallyHidden>
-            )}
-            {/* The mark goes on the text itself, which a list item does not pass it down to. */}
-            <span
-              className={
-                change === "added"
-                  ? roleClasses.added
-                  : change === "removed"
-                    ? roleClasses.removed
-                    : undefined
-              }
-            >
-              <Line text={text} />
-            </span>
-          </List.Item>
-        ))}
-      </List>
-    </Stack>
-  );
-}
-
-// The pages and views a role's holders see, with a line saying so when there are none.
-function seen(sees: string[]): string[] {
-  return sees.length === 0 ? ["Nothing."] : sees;
-}
-
-// The result of a role's permissions in plain English, which follows the grid as it changes, marked
-// against what the role granted first.
-function Summary({
-  first,
-  granted,
-  dataClasses,
-}: {
-  first: readonly Permission[];
-  granted: readonly Permission[];
-  dataClasses: DataClasses;
-}) {
-  const before = consequences(first, dataClasses);
-  const now = consequences(granted, dataClasses);
-  return (
-    <Paper
-      withBorder
-      p="sm"
-      role="region"
-      aria-live="polite"
-      aria-label="What the role allows"
-    >
-      <Stack gap="sm">
-        <ChangingSentences
-          title="Sees"
-          first={seen(before.sees)}
-          items={seen(now.sees)}
-        />
-        <ChangingSentences
-          title="Doesn't see"
-          first={before.doesNotSee}
-          items={now.doesNotSee}
-        />
-        <ChangingSentences title="Can" first={before.can} items={now.can} />
-        <ChangingSentences
-          title="Cannot"
-          first={before.cannot}
-          items={now.cannot}
-        />
-      </Stack>
-    </Paper>
-  );
-}
-
-// What a change to a role would do to each account holding it, to be confirmed before it is saved.
-function Effects({
-  effects,
-  userId,
-  dataClasses,
-}: {
-  effects: RoleEffects["effects"];
-  userId: string;
-  dataClasses: DataClasses;
-}) {
-  // The confirmation replaces the grid, and the Save button with it, so focus moves to what it says.
-  const heading = useRef<HTMLParagraphElement>(null);
-  useEffect(() => {
-    heading.current?.focus();
-  }, []);
-  return (
-    <Stack gap="md">
-      <Text ref={heading} tabIndex={-1}>
-        {effects.length === 1
-          ? "This change affects 1 account."
-          : `This change affects ${String(effects.length)} accounts.`}
-      </Text>
-      {effects.map(({ account, before, after }) => {
-        const { gains, losses } = difference(before, after, dataClasses);
-        return (
-          <Paper key={account.id} withBorder p="sm">
-            <Stack gap="xs">
-              <Text fw={600}>
-                {account.name} ({account.email})
-                {account.id === userId && " (this account)"}
-              </Text>
-              <Sentences title="Gains" items={gains} />
-              <Sentences title="Loses" items={losses} />
-            </Stack>
-          </Paper>
-        );
-      })}
-    </Stack>
-  );
-}
 
 // What a role grants, for those who may see roles but not edit them.
 function RoleView({
