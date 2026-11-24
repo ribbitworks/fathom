@@ -30,6 +30,13 @@ const column = (more: object) => ({
 });
 
 describe("viewParts", () => {
+  it("names no sum while the metrics add nothing up", () => {
+    const effort = column({});
+    expect(
+      viewParts({ ...emptyView, breakdown: ["effort"] }, [effort]),
+    ).toEqual([{ name: "Metrics", value: "Effort" }]);
+  });
+
   it("names each part of a view, in order", () => {
     const name = column({ key: "name", label: "Name", kind: "text" });
     const effort = column({ unit: weeks, places: 2 });
