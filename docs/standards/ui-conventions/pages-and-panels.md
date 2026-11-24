@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Pages and Panels
@@ -76,6 +76,13 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
 - **One frame:** Every details panel is drawn in the one side panel frame. One shared piece spaces its sections; no panel spaces its own.
   - **Drawn by:** `SidePanelFrame` in `apps/web/src/side-panel.tsx`, through `RecordPanel` in `apps/web/src/record-details.tsx`, whose `subtitle` holds a record's key under its name, with `DetailSections` there spacing the sections.
   - **Example:** Any seeded person's details beside People.
+- **A panel's menu:** A record's details panel has a ⋯ at its top, before its close ×, named Actions for the record. It opens the same menu as the record's row on its table, less Show details: the same items, words and order, such as Copy link, Approve draft…, Reject draft…, Publish draft…, Resubmit and Discard draft. Each does what it does from the row, and focus stays in the panel.
+  - **A record that goes:** Discarding the draft that added the record takes it away, so focus goes to the table.
+  - **Esc:** Esc closes the menu alone, keeping the panel open, as in every ⋯ menu in a panel.
+  - **Nothing to offer:** A panel whose record's row would offer only Show details has no ⋯.
+  - **Panels with their own:** A list's panel on the Lists page keeps its own menu of the list's drafts, and a feature team's panel on the Org chart its buttons at its foot, since neither is a shared table's record. A person's details beside the Org chart, which has no table, have none.
+  - **Drawn by:** `PanelMenu` in `apps/web/src/panel-menu.tsx`, on `PanelMoreMenu` there, which draws every ⋯ menu in a panel, placed by `RecordPanel` in `apps/web/src/record-details.tsx`, with the items from the table beside it, `RecordGrid`, by `panelMenuItems` in `apps/web/src/row-menus.tsx`, the one piece the row's menu draws.
+  - **Example:** On People, as the Engineering Operations Manager, open Mariana Metz's details and select its ⋯.
 - **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top, then headed sections of rows, then the columns an organization added, under Columns. A panel never mixes in another layout, such as labels over form fields.
   - **Labels:** A label sits beside its value while the panel is wide and over it once narrow. The labels form a column as wide as the section's longest, up to half the panel, so none wraps.
   - **Pencils:** Each value that can be changed has a pencil at its right, named Change and the label. The pencil shows while its row is pointed at or has focus, or always on a screen that can't be pointed at.

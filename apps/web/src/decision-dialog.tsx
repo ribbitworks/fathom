@@ -16,6 +16,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { planChoicesQuery, projectPlanQuery } from "./projects.ts";
 import { useState } from "react";
+import { CountedList } from "./counted-list.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
 import {
   approveDrafts,
@@ -58,9 +59,6 @@ function DraftNameList({
     </List>
   );
 }
-
-// The most drafts a decision names before counting the rest.
-const namedAtMost = 5;
 
 // Why a decision changed nothing: rejected drafts already rejected for that reason, or, rarely,
 // drafts that no longer change anything, such as a change to someone removed another way.
@@ -155,16 +153,12 @@ function DecisionDialog({
             : "The drafts go back to whoever made them, with the reason given. Rejecting cannot be undone."}
         </Text>
         {named.length > 0 && (
-          <div>
-            <DraftNameList names={named.slice(0, namedAtMost)} />
-            {named.length > namedAtMost && (
-              <Text fz="sm" c="dimmed" mt={4}>
-                {named.length - namedAtMost === 1
-                  ? "and 1 other"
-                  : `and ${count(named.length - namedAtMost)} others`}
-              </Text>
-            )}
-          </div>
+          <CountedList
+            items={named.map((name, index) => ({
+              key: `${String(index)} ${name}`,
+              name,
+            }))}
+          />
         )}
         {included.length > 0 && (
           <div>

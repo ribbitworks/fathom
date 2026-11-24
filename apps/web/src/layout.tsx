@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The frame around every page for a signed-in user: a sidebar of Fathom's sections, showing only
-// the pages, current and still to come, that the user's roles allow, marking those still to come,
-// and a top bar saying where they are, with their own account's menu showing the role they act as,
-// for switching to another they hold, changing their name and password, in dialogs, and signing
-// out, which also happens after a time without use. The sidebar collapses to a rail of icons, each
-// naming its page on hover or focus, and remembers the choice. On narrow screens the sidebar opens
-// from a menu button instead.
+// The frame around every page for a signed-in user: the sidebar of Fathom's sections, and the top
+// bar with the user's account menu and its dialogs.
 
 import { AboutBox, build } from "./about.tsx";
 import { AppMenu, MenuChoices } from "./app-menu.tsx";
@@ -51,6 +46,7 @@ import {
 import { useEffect, useState } from "react";
 import { Brand } from "./brand.tsx";
 import { PageExportProvider } from "./page-export.tsx";
+import { PublishDraftProvider } from "./publish-draft.tsx";
 import { DevBadge, devLabel } from "./dev-label.tsx";
 import { shownHelpPage } from "./help-pages.ts";
 import { Icon, type IconName } from "./icons.tsx";
@@ -693,7 +689,9 @@ export function Layout({
           </Alert>
         )}
         <PageExportProvider person={user.name}>
-          <Outlet />
+          <PublishDraftProvider publishes={makesDrafts}>
+            <Outlet />
+          </PublishDraftProvider>
         </PageExportProvider>
       </AppShell.Main>
       <ChangeNameDialog

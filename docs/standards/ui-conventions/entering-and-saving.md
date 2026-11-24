@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Entering and Saving Data
@@ -69,7 +69,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Saved from a pencil:** The planning settings on Capacity each save at once from their pencil, as a draft, as a details panel's values do. An account's name and email address do too, with no notification, and Cmd+Z or Ctrl+Z undoes them.
   - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, and `notifyUndoable` in `apps/web/src/notices.tsx`.
   - **Example:** On People, save a view, then delete it.
-- **Asking first:** Of changes to data, only these ask first, since they can't be undone: approving drafts, rejecting them, Discard all…, discarding chosen changes on the Drafts page (such as Discard 2 changes…), and deleting a saved view its maker can no longer use.
+- **Asking first:** Of changes to data, only these ask first, since they can't be undone: approving drafts, rejecting them, Discard all…, discarding chosen changes on the Drafts page (such as Discard 2 changes…), publishing a draft from its menu when other changes go with it, and deleting a saved view its maker can no longer use.
   - **A saved view its maker can't use:** Deleting it can't be undone because its change history holds what the maker's role can't see.
   - **Also asking:** Leaving unsaved work asks too ([Leaving Unsaved Work](#leaving-unsaved-work)), and so does exporting Personal or Confidential data ([Exporting](tables.md#exporting)).
   - **Confirming:** Each confirms what was done in a notification without Undo, such as Approved 3 drafts, since it takes drafts out of view.
@@ -78,7 +78,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
     - Changing an account's roles.
     - Resetting a password.
     - Deactivating or reactivating an account.
-  - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`, and `DiscardChangesModal` in `apps/web/src/unpublished.tsx` for Discard all… and discarding chosen changes. Their own dialogs draw the role's confirmation, in `apps/web/src/roles-page.tsx`, the account's, in `apps/web/src/accounts-page.tsx`, and deleting a saved view, in `apps/web/src/saved-views.tsx`.
+  - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`, `DiscardChangesModal` in `apps/web/src/unpublished.tsx` for Discard all… and discarding chosen changes, and `PublishDraftProvider` in `apps/web/src/publish-draft.tsx` for publishing a draft from its menu. Their own dialogs draw the role's confirmation, in `apps/web/src/roles-page.tsx`, the account's, in `apps/web/src/accounts-page.tsx`, and deleting a saved view, in `apps/web/src/saved-views.tsx`.
   - **Example:** Approve draft… in a seeded person's draft menu on People.
 - **Failures:** A change that fails says so in plain words, never as a raw error, and says what to do next. Its notification stays until closed, and the record goes back to how it was.
   - **Drawn by:** `notifyFailure` in `apps/web/src/notices.tsx`, with the words from `describeProblem` in `apps/web/src/api.ts`.
@@ -126,5 +126,8 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Changes needing another role:** Changes made under another of the user's roles that the role in use can't make stay unpublished, with those that go with them.
     - **The notification:** The notification says how many, such as Published 3 changes. 1 needs another role., or, when none was published, Nothing was published. 2 changes need another role., which stays until closed.
   - **On the Drafts page:** From the Drafts page's Not published tab, some changes can be published or discarded on their own, with the changes they must go with ticked alongside ([ADR 0008](../../adr/0008-unpublished-drafts.md)). Publishing there confirms it in a notification without Undo, and discarding asks first.
-  - **Drawn by:** `UnpublishedControl`, with `useUnpublishedActions` for both places, in `apps/web/src/unpublished.tsx`.
+  - **From a record's menu:** Publish draft…, in the menu of a record's row on a shared table or in its details, publishes the user's own draft of it with the changes it must go with, those it uses or was saved with.
+    - **Asking first:** When other changes go with it, it asks first, such as Publish 3 changes?, naming the draft's own change, then those going with it, up to five, then how many others. A draft that goes alone is published at once.
+    - **Confirming:** Either way it confirms in a notification without Undo, as Publish does, such as Published 3 changes.
+  - **Drawn by:** `UnpublishedControl`, with `useUnpublishedActions` for every place, in `apps/web/src/unpublished.tsx`; a record's menu's by `PublishDraftProvider` in `apps/web/src/publish-draft.tsx`, with the changes going along from `publishedAlong` in `apps/web/src/unpublished-links.ts`.
   - **Example:** Change any value on Features: Publish 1 change shows in the top bar.

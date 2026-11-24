@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Drafts, Values and Access
@@ -91,7 +91,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **The notification:** The notification after it adds how many, such as Approved 4 drafts. 2 need another approver.
   - **Every draft left:** Only when every draft is left does the dialog approve none, titled Another approver needed, naming them.
   - **A single draft:** A single draft, from its menu or details, has no others to approve, so the dialog names why it can't be approved.
-  - **Drawn by:** `decisionFor` in `apps/web/src/draft-decisions.ts`, which leaves out the drafts `othersToApprove` finds, from the flag the server sets with `draftsChangedBy` in `packages/shared/src/drafts.ts`, the same rule that refuses an approval; the dialog is `DecisionModal` in `apps/web/src/decision-dialog.tsx`.
+  - **Drawn by:** `decisionFor` in `apps/web/src/draft-decisions.ts`, which leaves out the drafts `othersToApprove` finds, from the flag the server sets with `draftsChangedBy` in `packages/shared/src/drafts.ts`, the same rule that refuses an approval; the dialog is `DecisionModal` in `apps/web/src/decision-dialog.tsx`, with its list of five, then how many others, from `CountedList` in `apps/web/src/counted-list.tsx`.
   - **Example:** On Features, as the Project Manager, rename a feature, publish it, then choose Approve n drafts… in the Draft menu.
 
 ## Values

@@ -3,7 +3,12 @@
 // Which of a user's unpublished changes go together, so they are published and discarded together.
 // Part of the data access layer.
 
-import { type DraftKind, draftKey, type RecordType } from "@fathom/shared";
+import {
+  type DraftKind,
+  draftKey,
+  type RecordType,
+  withUsers,
+} from "@fathom/shared";
 import {
   type ColumnsState,
   draftedField,
@@ -147,36 +152,6 @@ export const usesAmong = (
   changes: readonly Change[],
 ): Map<string, string[]> =>
   new Map(linksAmong(own, changes).map(({ key, uses }) => [key, uses]));
-
-// The changes given, with every change they use, those use, and so on.
-export function withNeeded(
-  uses: ReadonlyMap<string, readonly string[]>,
-  given: readonly string[],
-): Set<string> {
-  const found = new Set(given);
-  const queue = [...given];
-  for (let next = queue.pop(); next !== undefined; next = queue.pop()) {
-    for (const used of uses.get(next) ?? []) {
-      if (!found.has(used)) {
-        found.add(used);
-        queue.push(used);
-      }
-    }
-  }
-  return found;
-}
-
-// The changes given, with every change that uses them, those that use those, and so on.
-export function withUsers(
-  uses: ReadonlyMap<string, readonly string[]>,
-  given: readonly string[],
-): Set<string> {
-  const usedBy = new Map<string, string[]>();
-  for (const [user, used] of uses) {
-    for (const one of used) usedBy.set(one, [...(usedBy.get(one) ?? []), user]);
-  }
-  return withNeeded(usedBy, given);
-}
 
 // The changes given that may be published when some may not: all but those refused, and the changes
 // that use them or go together with them, so a change and those it needs are published or left

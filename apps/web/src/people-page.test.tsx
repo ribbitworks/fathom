@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the People page, with the server's responses simulated: who sees it and what they see;
-// moving around the table and editing people's details from the keyboard; adding people in the new
-// rows and by pasting; deleting people; adding, changing, moving, and deleting columns; and Undo
-// and the server's refusals throughout. Helpers that need no page are tested in
-// people-grid.test.ts.
+// Tests for the People page, with the server's responses simulated: who sees what, editing people
+// and columns in the table, drafts, Undo and the server's refusals. Helpers that need no page are
+// tested in people-grid.test.ts.
 
 import {
   act,
@@ -4041,6 +4039,112 @@ describe("unpublished and held changes", () => {
     expect(
       within(menu).getByRole("menuitem", { name: "Edit column…" }),
     ).toBeDefined();
+  });
+});
+
+describe("a person's draft from their details and their row", () => {
+  const changedName = draftOf({
+    action: "changed",
+    changed: ["preferredName"],
+    live: { preferredName: "Avery Before", values: {} },
+  });
+  const itemsIn = (menu: HTMLElement) =>
+    within(menu)
+      .getAllByRole("menuitem")
+      .map(({ textContent }) => textContent);
+
+  it("discards a person's draft from the ⋯ in their details, offering what their row does", async () => {
+    // Given a person with a draft, their details open beside People
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/people": () =>
+        Response.json({
+          people: [{ ...avery, draft: changedName }, blake],
+          fields: [site, role],
+          order,
+        }),
+      "GET /api/lists": listsAnswer,
+      "DELETE /api/people/p1/draft": savedAs(),
+    });
+    renderApp("/people?open=E1");
+    const details = await screen.findByRole("region", {
+      name: "Avery Fictional",
+    });
+
+    // When the ⋯ in their details is opened
+    await userEvent.click(
+      within(details).getByRole("button", {
+        name: "Actions for Avery Fictional",
+      }),
+    );
+
+    // Then it offers what their row's menu does, but Show details, and discards the draft
+    expect(itemsIn(await screen.findByRole("menu"))).toEqual([
+      "Copy link",
+      "Discard draft",
+      "Remove person",
+    ]);
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "Discard draft" }),
+    );
+    await waitFor(() => {
+      expect(
+        fetch.mock.calls
+          .filter(([, init]) => init?.method === "DELETE")
+          .map(([url]) => url),
+      ).toEqual(["/api/people/p1/draft"]);
+    });
+  });
+
+  it("publishes a person's unpublished draft from their row", async () => {
+    // Given the user's own unpublished change to a person, which goes with no other
+    const fetch = await openPeople({
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            { ...avery, draft: { ...changedName, unpublished: true } },
+            blake,
+          ],
+          fields: [site, role],
+          order,
+        }),
+      "GET /api/unpublished": () =>
+        Response.json({
+          changes: [
+            {
+              subject: "the person Avery Fictional",
+              action: "changed",
+              key: "person p1",
+              linked: [],
+            },
+          ],
+        }),
+      "POST /api/unpublished/publish": () =>
+        Response.json({ total: 1, left: 0 }),
+    });
+
+    // When Publish draft… is chosen in their row's menu
+    await userEvent.click(rowActions("Avery Fictional"));
+    expect(itemsIn(await screen.findByRole("menu"))).toEqual([
+      "Show details",
+      "Copy link",
+      "Publish draft…",
+      "Discard draft",
+      "Remove person",
+    ]);
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "Publish draft…" }),
+    );
+
+    // Then the person's draft alone is published, and the notification says so
+    expect(await screen.findByText("Published 1 change.")).toBeDefined();
+    expect(
+      (
+        bodyOf(fetch, "POST", "/api/unpublished/publish") as {
+          drafts: { people: string[] };
+        }[]
+      ).map(({ drafts }) => drafts.people),
+    ).toEqual([["p1"]]);
   });
 });
 

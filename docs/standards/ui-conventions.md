@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/code-review.md", "docs/standards/ui-conventions/drafts-and-values.md", "docs/standards/ui-conventions/dates-timelines-and-boards.md", "docs/standards/ui-conventions/pages-and-panels.md", "docs/standards/ui-conventions/entering-and-saving.md", "docs/standards/ui-conventions/tables.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # UI Conventions
@@ -72,6 +72,7 @@ The rest follow from them:
   - **Drawn by:** The words themselves, shown by `TableTips` or `Tipped` in `apps/web/src/table-tips.tsx` on tables.
   - **Example:** On People, choose Feature teams in Group by, and point at the +1 after Lorenza Thiel's name.
 - **A menu item's "…":** A menu item that opens a dialog or a confirmation ends in "…", such as Edit column…, Approve draft… or Change password….
+  - **Asking only sometimes:** One that asks first only sometimes has one too, such as Publish draft…, which asks only when other changes go with the draft.
   - **No "…":** One that acts at once, even with Undo, or opens a side panel, has none, such as Delete view, Remove column or New feature team. The dialog's own title has none either, such as Edit column.
   - **Drawn by:** The words themselves: the column menu in `apps/web/src/column-header.tsx` and `draftItemLabel`, for a row's Approve draft… and Reject draft…, in `apps/web/src/row-menus.tsx`, and the account menu in `apps/web/src/layout.tsx`.
   - **Example:** On People, open the Site column's menu: Edit column… opens its dialog, and Remove column removes the column at once, as a draft.
@@ -97,7 +98,9 @@ Where Fathom doesn't yet follow the conventions, by the section that sets each o
 - **[Values](ui-conventions/drafts-and-values.md#values):** The Size and Risk marks in a feature's details, a timeline's row labels and group headings, as well as on the Features Board's cards.
 - **[Dates](ui-conventions/dates-timelines-and-boards.md#dates):** People's date cells and Person details, which still have their own fields rather than `DayInput` ([issue #185](https://github.com/ribbitworks/fathom/issues/185)).
 - **[Links to Records](ui-conventions/pages-and-panels.md#links-to-records):** Each record's [record key](../design/domain-model.md#change-and-history-entities) shown beside its name wherever a project or proposal is named with its ID, and links to records in a table's cells.
-- **[Details Panels](ui-conventions/pages-and-panels.md#details-panels):** A project's details, whose Show milestones sits beside the Milestones heading, with no outline, and Add milestone under the list with a + before it; both move under the list, Add milestone first ([issue #35](https://github.com/ribbitworks/fathom/issues/35)).
+- **[Details Panels](ui-conventions/pages-and-panels.md#details-panels):**
+  - A project's details, whose Show milestones sits beside the Milestones heading, with no outline, and Add milestone under the list with a + before it; both move under the list, Add milestone first ([issue #35](https://github.com/ribbitworks/fathom/issues/35)).
+  - A person's details beside the Org chart, which have no ⋯ to discard or publish their draft, since the Org chart has no table to give the menu.
 - **[Fields](ui-conventions/entering-and-saving.md#fields):** The fields with no × yet ([issue #182](https://github.com/ribbitworks/fathom/issues/182), [issue #195](https://github.com/ribbitworks/fathom/issues/195)).
 - **[Saving and Undo](ui-conventions/entering-and-saving.md#saving-and-undo):** The Settings page, which confirms a save in a notification with no Undo, and doesn't ask when left with a change unsaved ([issue #64](https://github.com/ribbitworks/fathom/issues/64)); accounts, edited in a dialog with Save, and changing an account's roles, which doesn't ask first ([issue #252](https://github.com/ribbitworks/fathom/issues/252)).
 - **[Leaving Unsaved Work](ui-conventions/entering-and-saving.md#leaving-unsaved-work):** Leaving a fill, which asks Stop filling this planned hire? with Keep filling ([issue #141](https://github.com/ribbitworks/fathom/issues/141)); and these, left without asking: the role and account dialogs ([issue #242](https://github.com/ribbitworks/fathom/issues/242)), the list dialog ([issue #71](https://github.com/ribbitworks/fathom/issues/71)), the view dialog ([issue #129](https://github.com/ribbitworks/fathom/issues/129)) and New feature team ([issue #150](https://github.com/ribbitworks/fathom/issues/150)).

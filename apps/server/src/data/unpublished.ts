@@ -23,6 +23,8 @@ import {
   type RecordType,
   type Unpublished,
   type UnpublishedPublished,
+  withNeeded,
+  withUsers,
 } from "@fathom/shared";
 import { and, asc, eq, inArray, max, notExists } from "drizzle-orm";
 import {
@@ -97,8 +99,6 @@ import {
   type OwnDrafts,
   publishableAmong,
   usesAmong,
-  withNeeded,
-  withUsers,
 } from "./unpublished-uses.ts";
 import type { PeopleColumns } from "./values.ts";
 

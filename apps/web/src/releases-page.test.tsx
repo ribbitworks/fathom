@@ -984,6 +984,7 @@ describe("a stream's panel", () => {
           (button) => button.getAttribute("aria-label") ?? button.textContent,
         ),
     ).toEqual([
+      "Actions for Fictional Majors",
       "Close details",
       "#SCHEDULE-1, copy link or key",
       "Fictional One",

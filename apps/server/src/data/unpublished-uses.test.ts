@@ -4,6 +4,7 @@
 // publishing, the changes that use them when discarding, each the whole way along, and the changes
 // of a fill, or saved together, always together.
 
+import { withNeeded, withUsers } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import type { ColumnsState } from "./column-state.ts";
 import type { ListsState } from "./lists.ts";
@@ -13,8 +14,6 @@ import {
   type OwnDrafts,
   publishableAmong,
   usesAmong,
-  withNeeded,
-  withUsers,
 } from "./unpublished-uses.ts";
 
 // A list, a choice added to it, and a person given the choice, each using the one before.
@@ -24,29 +23,6 @@ const uses = new Map([
   ["person avery", ["list-item north"]],
   ["person blake", []],
 ]);
-
-describe("the changes that go with those chosen", () => {
-  it("publishes a change with every change it uses, the whole way along", () => {
-    expect([...withNeeded(uses, ["person avery"])].sort()).toEqual([
-      "list sites",
-      "list-item north",
-      "person avery",
-    ]);
-  });
-
-  it("discards a change with every change that uses it, the whole way along", () => {
-    expect([...withUsers(uses, ["list sites"])].sort()).toEqual([
-      "list sites",
-      "list-item north",
-      "person avery",
-    ]);
-  });
-
-  it("takes nothing more with a change nothing uses and that uses nothing", () => {
-    expect([...withNeeded(uses, ["person blake"])]).toEqual(["person blake"]);
-    expect([...withUsers(uses, ["person blake"])]).toEqual(["person blake"]);
-  });
-});
 
 describe("the changes a role may publish", () => {
   const all = [...uses.keys()];
