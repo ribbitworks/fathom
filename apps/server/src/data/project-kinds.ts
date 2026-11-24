@@ -9,32 +9,38 @@ import {
   type RecordRef,
   removalReasonsIn,
 } from "@fathom/shared";
+import { activitiesOf } from "./activity-kinds.ts";
 import { featureKind, projectSubject } from "./release-kinds.ts";
 import {
+  ownerRemovalUsed,
   type RecordKind,
   type RecordsState,
-  shownIds,
+  removedByDraft,
   shownVersion,
-  stateOf,
-  versionOf,
+  shownWhere,
 } from "./record-state.ts";
 
 const nameOf = (state: RecordsState, type: RecordKind["type"], id: string) =>
   String(shownVersion(state, type, id)?.name);
 
-const removedByDraft = (
-  state: RecordsState,
-  type: RecordKind["type"],
-  id: string,
-) =>
-  stateOf(state, type).drafts.has(id) &&
-  versionOf(state, type, id) === undefined;
-
 // The milestones of a project, as shown.
 export const milestonesOf = (state: RecordsState, projectId: string) =>
-  shownIds(state, "milestone").filter(
-    (id) => shownVersion(state, "milestone", id)?.projectId === projectId,
-  );
+  shownWhere(state, "milestone", "projectId", projectId);
+
+// What belongs to a project and is removed with it: its milestones and activities, as shown.
+export const belongingTo = (
+  state: RecordsState,
+  projectId: string,
+): RecordRef[] => [
+  ...milestonesOf(state, projectId).map((id): RecordRef => ({
+    type: "milestone",
+    id,
+  })),
+  ...activitiesOf(state, "project", projectId).map((id): RecordRef => ({
+    type: "project-activity",
+    id,
+  })),
+];
 
 export const customerKind: RecordKind = {
   type: "customer",
@@ -118,13 +124,13 @@ export const projectKind: RecordKind = {
   readWith: ["plan:view"],
   unseenSubject: "a project",
   subject: projectSubject,
-  // A project and its milestones are removed together, each removal using the other's draft, so
-  // they are approved, rejected, and discarded together.
+  // A project and what belongs to it are removed together, each removal using the others'
+  // drafts, so they are approved, rejected, and discarded together.
   alsoUses: (state, id): RecordRef[] =>
     removedByDraft(state, "project", id)
-      ? milestonesOf(state, id)
-          .filter((milestone) => removedByDraft(state, "milestone", milestone))
-          .map((milestone) => ({ type: "milestone", id: milestone }))
+      ? belongingTo(state, id).filter((record) =>
+          removedByDraft(state, record.type, record.id),
+        )
       : [],
 };
 
@@ -143,15 +149,8 @@ export const milestoneKind: RecordKind = {
       nameOf(state, "project", String(milestone?.projectId)),
     );
   },
-  alsoUses: (state, id): RecordRef[] => {
-    const projectId = String(
-      stateOf(state, "milestone").live.get(id)?.projectId,
-    );
-    return removedByDraft(state, "milestone", id) &&
-      removedByDraft(state, "project", projectId)
-      ? [{ type: "project", id: projectId }]
-      : [];
-  },
+  alsoUses: (state, id) =>
+    ownerRemovalUsed(state, "milestone", id, "projectId", "project"),
 };
 
 export const projectKinds = [

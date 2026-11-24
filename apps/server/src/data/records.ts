@@ -18,6 +18,7 @@ import {
   otherApprover,
 } from "./draft-makers.ts";
 import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
+import { activityKinds } from "./activity-kinds.ts";
 import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
 import { planningSettingsKind } from "./planning-settings-kind.ts";
 import { keyNumberOf, readKindsKeyNumbers } from "./record-keys.ts";
@@ -28,6 +29,7 @@ import {
   everyVersion,
   type KindState,
   linkedIds,
+  linksTo,
   type RecordKind,
   type RecordsState,
   type Referred,
@@ -45,6 +47,7 @@ import { readValues, recordedValues, valueFieldsIn } from "./values.ts";
 export const recordKinds: readonly RecordKind[] = [
   ...releaseKinds,
   ...projectKinds,
+  ...Object.values(activityKinds),
   allocationKind,
   planningSettingsKind,
 ];
@@ -58,8 +61,8 @@ function linkedProblem(
   for (const removed of touched) {
     if (versionOf(state, removed.type, removed.id) !== undefined) continue;
     for (const kind of recordKinds) {
-      const linking = Object.entries(kind.links).filter(
-        ([, type]) => type === removed.type,
+      const linking = Object.entries(kind.links).filter(([, to]) =>
+        linksTo(to, removed.type),
       );
       if (linking.length === 0) continue;
       const user = shownIds(state, kind.type).find((id) =>

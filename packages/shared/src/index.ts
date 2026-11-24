@@ -445,6 +445,7 @@ export {
   featureDraftSchema,
   featureLengths,
   featureRequestSchema,
+  estimateHoursSchema,
   featureSchema,
   featuresByMeaning,
   isCommitted,
@@ -454,6 +455,20 @@ export {
   type ProgressMeaning,
   progressMeanings,
 } from "./features.ts";
+export {
+  type Activity,
+  activityLengths,
+  type ActivityOwner,
+  activityOwnerFields,
+  type ActivityRequest,
+  activityRequestSchema,
+  activitySchema,
+  activitySubject,
+  type ActivityType,
+  activityTypeList,
+  activityTypes,
+  isActivityType,
+} from "./activities.ts";
 export {
   type OrgChart,
   type OrgChartDraft,

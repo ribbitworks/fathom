@@ -10,6 +10,7 @@ import type {
   Field,
   FieldRequest,
   FeatureProjectsRequest,
+  ActivityRequest,
   MilestoneRequest,
   PlanChoices,
   ProjectPlan,
@@ -37,7 +38,12 @@ import { readScopeHistory } from "./scope-history.ts";
 import type { PlanKind, PlanRecordRequest } from "./projects.ts";
 import * as releases from "./releases.ts";
 import type { Saved, ChangeSetId } from "./changes.ts";
-import { planOrFeatures, seenPlan, seenStreams } from "./page-reads.ts";
+import {
+  planOrFeatures,
+  seenPlan,
+  seenRecords,
+  seenStreams,
+} from "./page-reads.ts";
 import { columnEditor } from "./column-state.ts";
 
 // Every change to release streams, patterns, and releases is a draft. Streams and their patterns
@@ -172,6 +178,22 @@ export interface ProjectAccess {
     projectId: string,
     id: string,
   ): Promise<ChangeSetId>;
+  addActivity(
+    actor: Actor,
+    projectId: string,
+    request: ActivityRequest,
+  ): Promise<Saved<ProjectPlan>>;
+  changeActivity(
+    actor: Actor,
+    projectId: string,
+    id: string,
+    request: ActivityRequest,
+  ): Promise<Saved<ProjectPlan>>;
+  removeActivity(
+    actor: Actor,
+    projectId: string,
+    id: string,
+  ): Promise<ChangeSetId>;
 }
 
 export interface AllocationAccess {
@@ -256,7 +278,10 @@ const edited = async (
   saved: Promise<Saved<projectReads.PlanRecords>>,
 ): Promise<Saved<ProjectPlan>> => {
   const { result, changeSetId } = await saved;
-  return { result: { ...result, ...planAbilities(actor) }, changeSetId };
+  return {
+    result: { ...seenRecords(actor, result), ...planAbilities(actor) },
+    changeSetId,
+  };
 };
 
 // How each kind of record is added and changed.
@@ -396,9 +421,39 @@ export function createProjectAccess(database: Database): ProjectAccess {
         ),
       ),
     removeMilestone: async (actor, projectId, id) =>
-      projectData.removeMilestone(
+      projectData.removeBelonging(
         database,
         recordEditor(actor, "milestone"),
+        "milestone",
+        projectId,
+        id,
+      ),
+    addActivity: async (actor, projectId, request) =>
+      edited(
+        actor,
+        projectData.addProjectActivity(
+          database,
+          recordEditor(actor, "project-activity"),
+          projectId,
+          request,
+        ),
+      ),
+    changeActivity: async (actor, projectId, id, request) =>
+      edited(
+        actor,
+        projectData.changeProjectActivity(
+          database,
+          recordEditor(actor, "project-activity"),
+          projectId,
+          id,
+          request,
+        ),
+      ),
+    removeActivity: async (actor, projectId, id) =>
+      projectData.removeBelonging(
+        database,
+        recordEditor(actor, "project-activity"),
+        "project-activity",
         projectId,
         id,
       ),

@@ -3,6 +3,7 @@
 // Customers, projects with their milestones, and proposals, as records of the plan.
 
 import { z } from "zod";
+import { activitySchema } from "./activities.ts";
 import { daySchema } from "./days.ts";
 import { featureSchema } from "./features.ts";
 import { listSchema, meaningSchema } from "./lists.ts";
@@ -36,6 +37,7 @@ export const planColumnNames = {
   link: "Link",
   statusId: "Status",
   projectId: "Project",
+  releaseId: "Release",
   date: "Date",
   customerDelivery: "Customer delivery",
   estimateHours: "Effort",
@@ -175,12 +177,14 @@ export const featureColumnsSchema = z.object({
 
 export type FeatureColumns = z.infer<typeof featureColumnsSchema>;
 
-// Every customer, project, proposal, and feature, the live ones by name, then those drafted to be
-// added, in the order drafted, with whether the user may change them: features apart from the rest,
-// since Edit Features is a permission of its own.
+// Every customer, project, proposal, feature and project activity, the live ones by name, then those
+// drafted to be added, in the order drafted, with whether the user may change them: features apart
+// from the rest, since Edit Features is a permission of its own.
 export const projectPlanSchema = z.object({
   customers: z.array(customerSchema),
   projects: z.array(projectSchema),
+  // Sent always; an answer that leaves them out, as test fixtures may, reads as none.
+  activities: z.array(activitySchema).default([]),
   proposals: z.array(proposalSchema),
   features: z.array(featureSchema),
   featureColumns: featureColumnsSchema,

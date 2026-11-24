@@ -72,14 +72,17 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Fields:** a name, required and unique ignoring letter case. Optionally a Project ID, unique ignoring letter case when entered, an owner, who is a person, customers, and the proposals it links to.
 - **Dates:** from its milestones, never entered: its first and last milestone and its next customer delivery.
 - **Scope:** the features it needs, held in the project's draft whichever side they are edited from. Linking a feature is enough to show the project funds it. Time spent on the project that isn't a feature goes to one of its [activities](#activity), since people are allocated to features and activities, never to projects.
-- **Removing:** removes its milestones in the same draft. A project with activities can't be removed yet ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
+- **Removing:** removes its milestones and activities in the same draft, and is refused while any of its activities has allocations.
 
 ### Activity
 
 - **What it is:** work a project or a release needs that isn't a product feature, such as data migration or release testing. It belongs to exactly one project or one release and ends with it. Nothing makes one: an activity named General is an ordinary one a team adds.
 - **Fields:** a name, required and unique within its project or release, ignoring letter case. Optionally a description, a note, an estimate, kept in hours as a feature's is, and a colour from the palette.
 - **Never a feature:** it is on no roadmap, has no status, feature team, cycle or proposal, and is never shown on Features.
-- **Built so far:** activities are kept, and the [fictional data](development-setup.md#fictional-data) has some, with allocations. Capacity doesn't show or count allocations to activities yet; their drafts, pages and allocating to them follow in [issue #207](https://github.com/ribbitworks/fathom/issues/207).
+- **Drafts:** added, changed and removed as drafts, as a milestone is. A project's activities are drafts of the plan, changed with Edit Plan and approved with Approve Plan; a release's are drafts of features and releases, changed with Edit Features and releases and approved with Approve Features, as [Roles](../product/roles.md) sets out. An activity of a project or release only drafted to be added uses that draft, so approving it approves its owner too.
+- **Removing:** refused while it has allocations, as a feature is.
+- **Keys:** each has a key, such as #ACTIVITY-14, whose link opens its project.
+- **Built so far:** a project's activities are read with the plan and drafted through its routes. A release's activities, the pages showing activities, and allocating to them follow in [issue #207](https://github.com/ribbitworks/fathom/issues/207); until then, Capacity doesn't show or count allocations to activities.
 
 ### Proposal
 
@@ -350,11 +353,11 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 - **Change set:** Changes saved together, with who made them and when, and what they did: saved changes, or approved, rejected, or discarded drafts.
 - **Change:** One field of one record changed in a change set, with its class, its old and new values, and whether it changed the record's draft or the live record.
 - **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason.
-  - **What has drafts:** people, planned hires, feature teams, lists, choices, columns, schedules, cycle patterns, releases, features, customers, proposals, projects, milestones, allocations and the planning settings, and the order of each list's choices, held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
+  - **What has drafts:** people, planned hires, feature teams, lists, choices, columns, schedules, cycle patterns, releases, features, customers, proposals, projects, milestones, activities, allocations and the planning settings, and the order of each list's choices, held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
 - **Record key:** A record's number within its kind, such as 123 for #FEATURE-123, shown after a # so it isn't taken for another tool's key.
   - **Held apart:** it is held apart from the record, so a record drafted to be added has one, and a removed record's key still names it.
   - **Numbers:** they count up from 1 for each kind and are never reused, even when a draft is discarded. Each kind keeps the last number it gave.
-  - **Kinds:** FEATURE, PROJECT, PROPOSAL, CUSTOMER, MILESTONE, RELEASE, SCHEDULE, PERSON, HIRE, TEAM (a feature team), LIST, COLUMN, ACCOUNT and ROLE, each whole, never shortened. Cycles have none, since they are named with their schedule.
+  - **Kinds:** FEATURE, PROJECT, PROPOSAL, CUSTOMER, MILESTONE, ACTIVITY, RELEASE, SCHEDULE, PERSON, HIRE, TEAM (a feature team), LIST, COLUMN, ACCOUNT and ROLE, each whole, never shortened. Cycles have none, since they are named with their schedule.
   - **Reading:** a key is read in any letter case, with or without the #. It is General data, telling nothing about its record, and stands beside an organization's own IDs rather than replacing them.
 - **Snapshot:** A point-in-time copy of the plan, taken by hand or on a schedule, holding projects, features, and allocations only, with their custom field values. Not built yet.
 
@@ -369,7 +372,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
     - a column drawing on a list drafted to be added
     - a person or planned hire given a value in a column, or a choice, drafted to be added
     - a record of the plan, such as a project, linking to one drafted to be added
-  - **The exceptions:** a schedule's cycles, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out, and a project's removal, which uses the removals of its milestones.
+  - **The exceptions:** a schedule's cycles, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out, and a project's removal, which uses the removals of its milestones and activities.
   - Approving a draft approves the drafts it uses with it.
   - A draft that others use is rejected only together with them, or once they no longer use it.
   - It cannot be discarded, nor its adding undone, while others use it, except that discarding a list drafted to be added discards its choices' drafts, and discarding a schedule drafted to be added discards its cycles' and releases' drafts, whoever made them.

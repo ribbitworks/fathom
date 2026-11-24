@@ -89,6 +89,7 @@ export const plan = (features: Feature[]): ProjectPlan => ({
   projects: [],
   proposals: [],
   features,
+  activities: [],
   featureColumns: noFeatureColumns,
   canEdit: false,
   canEditFeatures: true,

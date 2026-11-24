@@ -32,9 +32,10 @@ export interface RecordKind {
   rowsWhere?: SQL;
   // The record's fields, as the change history records them, in the order they are shown.
   fields: readonly string[];
-  // The fields that link to other records, by the kind of record each links to. A field links to
-  // one record, by its identifier, or to several, by a list of them, or to none when empty.
-  links: Readonly<Record<string, RecordType>>;
+  // The fields that link to other records, by the kind of record each links to, or the kinds, for a
+  // field whose records are of one of several kinds kept in one table. A field links to one record,
+  // by its identifier, or to several, by a list of them, or to none when empty.
+  links: Readonly<Record<string, LinkTo>>;
   // The link naming the record this one belongs to, such as a release's stream, which the change
   // history names it by.
   belongsTo?: string;
@@ -85,6 +86,12 @@ export interface RecordKind {
   onAdded?: (transaction: Transaction, id: string) => Promise<void>;
   onRemoving?: (transaction: Transaction, id: string) => Promise<void>;
 }
+
+export type LinkTo = RecordType | readonly [RecordType, ...RecordType[]];
+
+// Whether a link field may name records of a kind.
+export const linksTo = (to: LinkTo, type: RecordType): boolean =>
+  typeof to === "string" ? to === type : to.includes(type);
 
 export type Referred = "person" | "choice" | "feature-team";
 
@@ -197,6 +204,74 @@ export function linkedIds(
     : [];
 }
 
+// The kind of a record a link names: the one kind it links to, or, of several, the one that has the
+// record, live, drafted, or held, or the first when none has it.
+export function linkedType(
+  state: RecordsState,
+  to: LinkTo,
+  id: string,
+): RecordType {
+  if (typeof to === "string") return to;
+  const holding = to.find((type) => {
+    const { live, drafts, held } = stateOf(state, type);
+    return live.has(id) || drafts.has(id) || held.has(id);
+  });
+  return holding ?? to[0];
+}
+
+// The records a record links to through its kind's links, each with its kind.
+export const linkedRefs = (
+  kind: RecordKind,
+  state: RecordsState,
+  record: Recorded | undefined,
+): RecordRef[] =>
+  Object.entries(kind.links).flatMap(([field, to]) =>
+    linkedIds(record, field).map((id) => ({
+      type: linkedType(state, to, id),
+      id,
+    })),
+  );
+
+// Whether a record's draft removes it.
+export const removedByDraft = (
+  state: RecordsState,
+  type: RecordType,
+  id: string,
+): boolean =>
+  stateOf(state, type).drafts.has(id) &&
+  versionOf(state, type, id) === undefined;
+
+// The records of a kind shown whose field holds a value, such as a project's milestones.
+export const shownWhere = (
+  state: RecordsState,
+  type: RecordType,
+  field: string,
+  value: string,
+): string[] =>
+  shownIds(state, type).filter(
+    // The field is one of the kind's own, named by the caller.
+    // eslint-disable-next-line security/detect-object-injection
+    (id) => shownVersion(state, type, id)?.[field] === value,
+  );
+
+// The removal a record's removal uses when the record it belongs to, through a field, is drafted
+// to be removed with it, as a milestone's uses its project's.
+export function ownerRemovalUsed(
+  state: RecordsState,
+  type: RecordType,
+  id: string,
+  field: string,
+  ownerType: RecordType,
+): RecordRef[] {
+  // The field is one of the kind's own, named by the caller.
+  // eslint-disable-next-line security/detect-object-injection
+  const ownerId = String(stateOf(state, type).live.get(id)?.[field]);
+  return removedByDraft(state, type, id) &&
+    removedByDraft(state, ownerType, ownerId)
+    ? [{ type: ownerType, id: ownerId }]
+    : [];
+}
+
 // The drafts a record's draft uses: those of the records only drafted to be added that it links to,
 // unless it removes the record, and any others its kind names. A record with no draft uses none.
 export function usesOf(
@@ -206,12 +281,21 @@ export function usesOf(
 ): RecordRef[] {
   if (!state[kind.type].drafts.has(id)) return [];
   const version = versionOf(state, kind.type, id);
-  const linked = Object.entries(kind.links).flatMap(([name, type]) =>
-    linkedIds(version, name)
-      .filter((target) => addedOnly(state, type, target))
-      .map((target) => ({ type, id: target })),
+  const linked = linkedRefs(kind, state, version).filter((target) =>
+    addedOnly(state, target.type, target.id),
   );
   return [...linked, ...(kind.alsoUses?.(state, id) ?? [])];
+}
+
+// The records of a kind shown: the live ones by name, then those drafted to be added, in the order
+// drafted.
+export function inOrder(state: RecordsState, type: RecordType): string[] {
+  const { live } = stateOf(state, type);
+  const name = (id: string) => String(shownVersion(state, type, id)?.name);
+  return [
+    ...[...live.keys()].sort((a, b) => name(a).localeCompare(name(b))),
+    ...shownIds(state, type).filter((id) => !live.has(id)),
+  ];
 }
 
 // Every version of the records of a kind: live, as drafts make them, and as others' unpublished

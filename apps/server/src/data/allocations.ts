@@ -34,7 +34,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftMakers, everything } from "./draft-makers.ts";
 import type { Recorded } from "./draft-records.ts";
-import { allocationKind, allocationRowFields } from "./allocation-kinds.ts";
+import { allocationFields, allocationKind } from "./allocation-kinds.ts";
 import { expectedMonth, hireIdOf } from "./hire-fields.ts";
 import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
 import { drafting, saveRecordDraft } from "./record-drafting.ts";
@@ -68,10 +68,11 @@ export function staffedFeatures(state: RecordsState): {
     new Set(
       shownIds(state, type).flatMap((id) => {
         const record = version(id);
-        return Object.values(monthsOf(record)).some(
-          (percentage) => percentage !== null,
-        )
-          ? [String(record?.featureId)]
+        return typeof record?.featureId === "string" &&
+          Object.values(monthsOf(record)).some(
+            (percentage) => percentage !== null,
+          )
+          ? [record.featureId]
           : [];
       }),
     );
@@ -217,11 +218,12 @@ export async function readAllocations(
   return database.transaction(
     async (transaction) => {
       const state = await readRecordsState(transaction, actor.user.id);
-      const records = shownIds(state, type).map((id) => ({
-        id,
+      // Allocations to activities aren't read here yet, as the pages that read them show features.
+      const records = shownIds(state, type).flatMap((id) => {
         // Every record listed is shown, live or as its draft makes it.
-        record: shownVersion(state, type, id) as Recorded,
-      }));
+        const record = shownVersion(state, type, id) as Recorded;
+        return typeof record.featureId === "string" ? [{ id, record }] : [];
+      });
       const employment = await employmentOf(
         transaction,
         records.flatMap(({ record }) => text(record.personId) ?? []),
@@ -417,6 +419,7 @@ export async function changeAllocation(
             personId: change.personId ?? null,
             plannedHireId: change.plannedHireId ?? null,
             featureId: change.featureId,
+            activityId: null,
             months,
           },
     );
@@ -552,7 +555,7 @@ export async function removeAllocationsOf(
       "deleted",
       row as unknown as Recorded,
       undefined,
-      allocationRowFields,
+      allocationFields,
     ),
   );
 }

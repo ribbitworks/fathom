@@ -27,6 +27,8 @@ import {
 import {
   addedOnly,
   linkedIds,
+  linkedRefs,
+  linksTo,
   liveOnly,
   type RecordKind,
   recordExists,
@@ -63,8 +65,8 @@ function addedBelow(state: RecordsState, root: RecordRef): RecordRef[] {
   for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
     const parent = next;
     for (const kind of recordKinds) {
-      const linking = Object.entries(kind.links).filter(
-        ([, type]) => type === parent.type,
+      const linking = Object.entries(kind.links).filter(([, to]) =>
+        linksTo(to, parent.type),
       );
       if (linking.length === 0) continue;
       for (const id of shownIds(state, kind.type)) {
@@ -168,10 +170,8 @@ export async function discardRecordDraft(
             stateOf(state, kind.type).live.get(heldId),
             draft,
           );
-          return Object.entries(kind.links).some(([name, linked]) =>
-            linkedIds(version, name).some((target) =>
-              addedKeys.has(refKey({ type: linked, id: target })),
-            ),
+          return linkedRefs(kind, state, version).some((target) =>
+            addedKeys.has(refKey(target)),
           );
         }),
       );

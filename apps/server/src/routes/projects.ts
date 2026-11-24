@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, projects with their milestones, proposals, and features: reading them all at once,
-// with what they can be given, and drafting each added, changed, and removed, and a feature's
-// projects and proposals, as drafts of those projects and proposals, with the reason for taking it
-// off a proposal, and each project's and proposal's scope history. Every change answers
-// with the change set it was saved in, and every change but a removal with every record as the
-// editor now sees them. Discarding and resubmitting their drafts goes through the routes for every
-// plan record's draft. The data access layer checks the actor's permissions.
+// The routes for customers, projects with their milestones and activities, proposals, and features,
+// each change answering with the change set it was saved in. The data access layer checks the
+// actor's permissions.
 
 import {
+  activityRequestSchema,
   changeSetIdSchema,
   customerRequestSchema,
   featureProjectsRequestSchema,
@@ -37,7 +34,7 @@ const planResponse = z.object({
 });
 const idParams = z.object({ id: z.uuid() });
 const projectParams = z.object({ projectId: z.uuid() });
-const milestoneParams = z.object({ projectId: z.uuid(), id: z.uuid() });
+const belongingParams = z.object({ projectId: z.uuid(), id: z.uuid() });
 const saved = { 200: savedSchema };
 
 export function projectRoutes(
@@ -242,7 +239,7 @@ export function projectRoutes(
       "/api/projects/:projectId/milestones/:id",
       {
         schema: {
-          params: milestoneParams,
+          params: belongingParams,
           body: milestoneRequestSchema,
           response: { 200: planResponse },
         },
@@ -259,9 +256,58 @@ export function projectRoutes(
     );
     app.delete(
       "/api/projects/:projectId/milestones/:id",
-      { schema: { params: milestoneParams, response: saved } },
+      { schema: { params: belongingParams, response: saved } },
       async (request) => ({
         changeSetId: await projects.removeMilestone(
+          request.actor,
+          request.params.projectId,
+          request.params.id,
+        ),
+      }),
+    );
+
+    app.post(
+      "/api/projects/:projectId/activities",
+      {
+        schema: {
+          params: projectParams,
+          body: activityRequestSchema,
+          response: { [created]: planResponse },
+        },
+      },
+      async (request, reply) => {
+        const { result, changeSetId } = await projects.addActivity(
+          request.actor,
+          request.params.projectId,
+          request.body,
+        );
+        return reply.status(created).send({ plan: result, changeSetId });
+      },
+    );
+    app.put(
+      "/api/projects/:projectId/activities/:id",
+      {
+        schema: {
+          params: belongingParams,
+          body: activityRequestSchema,
+          response: { 200: planResponse },
+        },
+      },
+      async (request) => {
+        const { result, changeSetId } = await projects.changeActivity(
+          request.actor,
+          request.params.projectId,
+          request.params.id,
+          request.body,
+        );
+        return { plan: result, changeSetId };
+      },
+    );
+    app.delete(
+      "/api/projects/:projectId/activities/:id",
+      { schema: { params: belongingParams, response: saved } },
+      async (request) => ({
+        changeSetId: await projects.removeActivity(
           request.actor,
           request.params.projectId,
           request.params.id,

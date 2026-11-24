@@ -12,6 +12,7 @@ import {
   type FeatureRequest,
   type BuiltInList,
   type Meaning,
+  type ActivityRequest,
   type MilestoneRequest,
   type ProjectRequest,
   type ProposalRequest,
@@ -37,7 +38,7 @@ import {
   checkedValues,
   valuesOf,
 } from "./person-fields.ts";
-import { milestonesOf } from "./project-kinds.ts";
+import { belongingTo } from "./project-kinds.ts";
 import {
   fieldOfValue,
   inListOrder,
@@ -519,17 +520,52 @@ export async function changeRemovalReason(
   });
 }
 
-// A project's milestone to change, refusing one of another project.
-function projectMilestone(
+// The kinds of record that belong to a project, as refusals name them.
+type Belonging = "milestone" | "project-activity";
+
+const belongingNames: Record<Belonging, string> = {
+  milestone: "milestone",
+  "project-activity": "activity",
+};
+
+// A record belonging to a project, to change, refusing one of another project.
+function ownedByProject(
   state: RecordsState,
+  type: Belonging,
   projectId: string,
   id: string,
 ): Recorded {
-  const milestone = changeableRecord(state, "milestone", id);
-  if (milestone.projectId !== projectId) {
-    throw new NotFoundError("There is no such milestone in this project");
+  const record = changeableRecord(state, type, id);
+  if (record.projectId !== projectId) {
+    // The kind is always one of the two above.
+    // eslint-disable-next-line security/detect-object-injection
+    const called = belongingNames[type];
+    throw new NotFoundError(`There is no such ${called} in this project`);
   }
-  return milestone;
+  return record;
+}
+
+// Drafts a record belonging to a project: a new one, or a change to one of its own. Saving refuses
+// a project that does not exist, as it does any link to a record.
+function draftBelonging(
+  database: Database,
+  maker: Actor,
+  type: Belonging,
+  projectId: string,
+  id: string | undefined,
+  record: Recorded,
+): Promise<Saved<PlanRecords>> {
+  return changingPlan(database, maker, (transaction, state) => {
+    if (id !== undefined) ownedByProject(state, type, projectId, id);
+    return saveRecordDraft(
+      transaction,
+      maker,
+      state,
+      type,
+      id ?? randomUUID(),
+      record,
+    );
+  });
 }
 
 const milestoneRecord = (projectId: string, request: MilestoneRequest) => ({
@@ -539,48 +575,82 @@ const milestoneRecord = (projectId: string, request: MilestoneRequest) => ({
   customerDelivery: request.customerDelivery,
 });
 
-// Saving refuses a project that does not exist, as it does any link to a record.
-export async function addMilestone(
+export const addMilestone = (
   database: Database,
   maker: Actor,
   projectId: string,
   request: MilestoneRequest,
-): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, (transaction, state) =>
-    saveRecordDraft(
-      transaction,
-      maker,
-      state,
-      "milestone",
-      randomUUID(),
-      milestoneRecord(projectId, request),
-    ),
+): Promise<Saved<PlanRecords>> =>
+  draftBelonging(
+    database,
+    maker,
+    "milestone",
+    projectId,
+    undefined,
+    milestoneRecord(projectId, request),
   );
-}
 
-export async function changeMilestone(
+export const changeMilestone = (
   database: Database,
   maker: Actor,
   projectId: string,
   id: string,
   request: MilestoneRequest,
-): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, (transaction, state) => {
-    projectMilestone(state, projectId, id);
-    return saveRecordDraft(
-      transaction,
-      maker,
-      state,
-      "milestone",
-      id,
-      milestoneRecord(projectId, request),
-    );
-  });
-}
+): Promise<Saved<PlanRecords>> =>
+  draftBelonging(
+    database,
+    maker,
+    "milestone",
+    projectId,
+    id,
+    milestoneRecord(projectId, request),
+  );
+
+const projectActivityRecord = (
+  projectId: string,
+  request: ActivityRequest,
+) => ({
+  projectId,
+  name: request.name,
+  description: request.description,
+  note: keptNote(request.note),
+  estimateHours: request.estimateHours,
+});
+
+export const addProjectActivity = (
+  database: Database,
+  maker: Actor,
+  projectId: string,
+  request: ActivityRequest,
+): Promise<Saved<PlanRecords>> =>
+  draftBelonging(
+    database,
+    maker,
+    "project-activity",
+    projectId,
+    undefined,
+    projectActivityRecord(projectId, request),
+  );
+
+export const changeProjectActivity = (
+  database: Database,
+  maker: Actor,
+  projectId: string,
+  id: string,
+  request: ActivityRequest,
+): Promise<Saved<PlanRecords>> =>
+  draftBelonging(
+    database,
+    maker,
+    "project-activity",
+    projectId,
+    id,
+    projectActivityRecord(projectId, request),
+  );
 
 // Drafts removing a record, refusing one another record still uses; removing one only drafted to
 // be added discards its draft, as records.ts discards drafts. A project is removed with its
-// milestones.
+// milestones and activities.
 async function removing(
   database: Database,
   maker: Actor,
@@ -601,10 +671,10 @@ async function removing(
     check(state);
     const wanted: Wanted[] = [{ type, id, record: undefined }];
     if (type === "project") {
-      for (const milestone of milestonesOf(state, id)) {
-        if (versionOf(state, "milestone", milestone) !== undefined) {
-          changeableRecord(state, "milestone", milestone);
-          wanted.push({ type: "milestone", id: milestone, record: undefined });
+      for (const record of belongingTo(state, id)) {
+        if (versionOf(state, record.type, record.id) !== undefined) {
+          changeableRecord(state, record.type, record.id);
+          wanted.push({ ...record, record: undefined });
         }
       }
     }
@@ -623,13 +693,14 @@ export async function removeRecord(
   });
 }
 
-export async function removeMilestone(
+// Drafts removing a record belonging to a project, refusing one of another project.
+export const removeBelonging = (
   database: Database,
   maker: Actor,
+  type: Belonging,
   projectId: string,
   id: string,
-): Promise<string | null> {
-  return removing(database, maker, "milestone", id, (state) => {
-    projectMilestone(state, projectId, id);
+): Promise<string | null> =>
+  removing(database, maker, type, id, (state) => {
+    ownedByProject(state, type, projectId, id);
   });
-}

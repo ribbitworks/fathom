@@ -390,6 +390,7 @@ export const planAnswers = (features: readonly Feature[]) => ({
       projects: [],
       proposals: [],
       features,
+      activities: [],
       featureColumns: noFeatureColumns,
       canEdit: false,
       canEditFeatures: false,

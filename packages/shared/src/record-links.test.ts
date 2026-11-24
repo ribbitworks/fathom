@@ -33,6 +33,21 @@ describe("the page a record opens on", () => {
   it("opens an added column named without its table on People", () => {
     expect(recordPage({ kind: "column" })).toBe("people");
   });
+
+  it("opens an activity on its project's page or its release's", () => {
+    expect(
+      recordPage({
+        kind: "activity",
+        activityOf: { owner: "project", id: "p1" },
+      }),
+    ).toBe("projects");
+    expect(
+      recordPage({
+        kind: "activity",
+        activityOf: { owner: "release", id: "r1" },
+      }),
+    ).toBe("releases");
+  });
 });
 
 describe("a link's answer", () => {

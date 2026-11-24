@@ -61,6 +61,7 @@ const plan = (): ProjectPlan => ({
     },
   ],
   features: [],
+  activities: [],
   featureColumns: noFeatureColumns,
   canEdit: true,
   canEditFeatures: true,

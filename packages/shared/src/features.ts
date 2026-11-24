@@ -157,6 +157,17 @@ export type Feature = z.infer<typeof featureSchema>;
 
 const hundredths = 100;
 
+// An estimate as a request gives it, in hours, rounded to hundredths, or null for none.
+export const estimateHoursSchema = z
+  .number()
+  .min(0)
+  .max(largestEstimateHours)
+  .nullable()
+  .default(null)
+  .transform((hours) =>
+    hours === null ? null : Math.round(hours * hundredths) / hundredths,
+  );
+
 // A feature added without a status starts in the first status offered that means Possible, and one
 // changed without a status keeps its own. The note is checked by the server.
 export const featureRequestSchema = z.object({
@@ -171,15 +182,7 @@ export const featureRequestSchema = z.object({
     .object({ streamId: z.uuid(), cycle: daySchema })
     .nullable()
     .default(null),
-  estimateHours: z
-    .number()
-    .min(0)
-    .max(largestEstimateHours)
-    .nullable()
-    .default(null)
-    .transform((hours) =>
-      hours === null ? null : Math.round(hours * hundredths) / hundredths,
-    ),
+  estimateHours: estimateHoursSchema,
   featureTeamId: z.uuid().nullable().default(null),
   description: optionalText(featureLengths.description),
   note: z.string().nullable().default(null),

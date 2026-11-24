@@ -89,6 +89,34 @@ describe("a link to a record found", () => {
     },
   );
 
+  it.each([
+    ["project", "/projects"],
+    ["release", "/releases"],
+  ] as const)(
+    "opens an activity of a %s on its owner's page, with the owner's details open",
+    async (owner, pathname) => {
+      const { history } = await follow("/go/activity/2", {
+        "GET /api/go/activity/2": found("activity", {
+          activityOf: { owner, id: recordId },
+        }),
+      });
+      await waitFor(() => {
+        expect(history.location.pathname).toBe(pathname);
+      });
+      expect(history.location.search).toBe(`?open=${recordId}`);
+    },
+  );
+
+  it("opens an activity found without its owner on Projects, by its own ID", async () => {
+    const { history } = await follow("/go/activity/2", {
+      "GET /api/go/activity/2": found("activity"),
+    });
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/projects");
+    });
+    expect(history.location.search).toBe(`?open=${recordId}`);
+  });
+
   it("gives way to the record's page, so Back returns to the page the link was followed from", async () => {
     const { history } = await follow("/go/feature/2", {
       "GET /api/go/feature/2": found("feature"),

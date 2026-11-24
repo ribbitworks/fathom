@@ -81,6 +81,7 @@ export const plan = (more: Partial<Plan> = {}): Plan => ({
   projects: [project()],
   proposals: [proposal()],
   features: [],
+  activities: [],
   featureColumns: noFeatureColumns,
   canEdit: true,
   canEditFeatures: false,

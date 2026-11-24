@@ -89,6 +89,19 @@ export function createRecordFinders(database: Database): Finders {
     milestone: inPlan("milestone", (plan) =>
       plan.projects.flatMap((project) => project.milestones),
     ),
+    // Only a project's activities are read by a page yet.
+    activity: async (actor, id) => {
+      const activity = (
+        await unlessRefused(async () => seenPlan(database, actor))
+      )?.activities.find((one) => one.id === id);
+      return activity?.projectId === null || activity === undefined
+        ? undefined
+        : {
+            kind: "activity",
+            id,
+            activityOf: { owner: "project", id: activity.projectId },
+          };
+    },
     release: inStreams("release", (streams) =>
       streams.flatMap((stream) => stream.releases),
     ),

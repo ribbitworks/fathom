@@ -45,6 +45,15 @@ async function recordAddress(
       return planAddress("customers", id);
     case "milestone":
       return planAddress("milestones", id);
+    // An activity opens the project or release it belongs to.
+    case "activity":
+      return found.activityOf?.owner === "release"
+        ? {
+            to: "/releases/{-$streamId}",
+            params: { streamId: undefined },
+            search: { open: found.activityOf.id },
+          }
+        : planAddress("projects", found.activityOf?.id ?? id);
     case "schedule":
       return {
         to: "/releases/{-$streamId}",

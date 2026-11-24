@@ -26,8 +26,8 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 
 | Area | Team Member | Product Manager | Feature Lead | Project Manager | Engineering Manager | Engineering Director | Workforce Administrator | Executive | Administrator |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Plan: projects, proposals, milestones and customers | View | Edit, Approve | View | Edit, Approve | Edit | Edit, Approve | View | View | None |
-| Features and releases, with estimates, the cycles each release includes, and the columns added to Features | View | Edit, Approve | Edit | Edit, Approve | Edit | Edit, Approve | View | View | None |
+| Plan: projects, proposals, milestones, customers and projects' activities | View | Edit, Approve | View | Edit, Approve | Edit | Edit, Approve | View | View | None |
+| Features and releases, with estimates, the cycles each release includes, the columns added to Features, and releases' activities | View | Edit, Approve | Edit | Edit, Approve | Edit | Edit, Approve | View | View | None |
 | Schedules and their cycles | View | Edit, Approve | View | Edit, Approve | Edit | Edit, Approve | Edit | View | None |
 | Allocations | View | View | None | View, Approve | Edit | Edit, Approve | View | View | None |
 | People, teams, reporting lines, the org chart and the columns added to People | View | View | View | View, Approve | View | Edit, Approve | Edit | View | None |

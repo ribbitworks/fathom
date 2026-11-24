@@ -23,6 +23,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
   - **Confidence:** needs no field. How likely a feature is comes from its status, such as Long shot, Maybe or Likely, each meaning Possible, and how firm its timing is from whether it rests on a Size, an estimate, or allocations.
 - **Initiative:** A larger effort made of several related features, such as parts an organization chooses to split a large feature into. Not built in; an organization that uses initiatives adds them as a column.
 - **Milestone:** A dated point in a project or a feature.
+- **Activity:** Work a project or a release needs that isn't a feature, such as data migration or release testing. People are allocated to it as they are to a feature, and it ends with its project or release.
 - **Needed by:** The month a feature is wanted by: a rough wish, apart from its target cycle, which is the commitment.
 - **Cycle:** A repeating planning period of a set length, such as six months, a quarter, or a program increment. Features target cycles.
 - **Release:** A named delivery that includes one or more cycles, and ships the features that target them.

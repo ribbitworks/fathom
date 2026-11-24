@@ -43,6 +43,8 @@ export const recordsState = (parts: Partial<RecordsState>): RecordsState => ({
   customer: kindState(),
   proposal: kindState(),
   project: kindState(),
+  "project-activity": kindState(),
+  "release-activity": kindState(),
   milestone: kindState(),
   allocation: kindState(),
   "planning-settings": kindState(),

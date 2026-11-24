@@ -31,6 +31,18 @@ const nameIn = (state: RecordsState, id: string): string =>
   // A stream is never removed, so what belongs to it always has one.
   String(shownVersion(state, "release-stream", id)?.name);
 
+// A release's name, and its stream's, as shown.
+export function releaseCalled(
+  state: RecordsState,
+  id: string,
+): { name: string; stream: string } {
+  const release = shownVersion(state, "release", id);
+  return {
+    name: String(release?.name),
+    stream: nameIn(state, String(release?.streamId)),
+  };
+}
+
 // Release streams and cycles are seen with features and releases, and with planning configuration.
 const featuresOrConfiguration = [
   "features:view",
@@ -140,11 +152,8 @@ export const releaseKind: RecordKind = {
   readWith: ["features:view"],
   unseenSubject: "a release",
   subject: (state, id) => {
-    const release = shownVersion(state, "release", id);
-    return planSubjects.release(
-      String(release?.name),
-      nameIn(state, String(release?.streamId)),
-    );
+    const { name, stream } = releaseCalled(state, id);
+    return planSubjects.release(name, stream);
   },
   // A release drafted onto other cycles, or onto cycles only the stream's drafted patterns make,
   // uses those patterns' drafts.

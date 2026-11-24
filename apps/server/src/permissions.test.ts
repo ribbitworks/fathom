@@ -254,6 +254,8 @@ const recordKinds: { type: string; needs: Needs; recordId?: string }[] = [
   { type: "proposal", needs: allOf("plan:edit") },
   { type: "project", needs: allOf("plan:edit") },
   { type: "milestone", needs: allOf("plan:edit") },
+  { type: "project-activity", needs: allOf("plan:edit") },
+  { type: "release-activity", needs: allOf("features:edit") },
   { type: "allocation", needs: allOf("allocations:edit", "personal:view") },
   {
     type: "planning-settings",
@@ -959,6 +961,23 @@ const routes: Route[] = [
   {
     method: "DELETE",
     pattern: "/api/projects/:projectId/milestones/:id",
+    needs: allOf("plan:edit"),
+  },
+  {
+    method: "POST",
+    pattern: "/api/projects/:projectId/activities",
+    needs: allOf("plan:edit"),
+    body: () => ({ name: "Fictional Activity" }),
+  },
+  {
+    method: "PUT",
+    pattern: "/api/projects/:projectId/activities/:id",
+    needs: allOf("plan:edit"),
+    body: () => ({ name: "Fictional Activity" }),
+  },
+  {
+    method: "DELETE",
+    pattern: "/api/projects/:projectId/activities/:id",
     needs: allOf("plan:edit"),
   },
   ...["/draft", "/draft/rejection"].flatMap((end) =>

@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the rules every kind of the plan's records shares, worked out in memory: how a record
-// is shown, which drafts a draft uses, which values are taken, and a change considered before it is
-// saved. A kind made up for the tests, with a link and no unique value, stands beside a real one.
+// Unit tests for the rules every kind of the plan's records shares: how a record is shown, the
+// records its links name, which drafts a draft uses, which values are taken, and a change considered
+// before it is saved.
 
 import { releases } from "@fathom/db";
 import { describe, expect, it } from "vitest";
 import {
+  linkedRefs,
+  linkedType,
+  linksTo,
   type RecordKind,
   shownVersion,
   usesOf,
@@ -16,7 +19,7 @@ import {
 import { releaseKind } from "./release-kinds.ts";
 import { draft, kindState, recordsState } from "./test-records-state.ts";
 
-// A kind that links to streams and has no value that must be unique.
+// A made-up kind that links to streams and has no value that must be unique.
 const linking: RecordKind = {
   type: "cycle-pattern",
   table: releases,
@@ -127,5 +130,50 @@ describe("a change considered before it is saved", () => {
     });
     const after = withVersion(state, "release", "r", { name: "Fictional" });
     expect(after.release.drafts.has("r")).toBe(false);
+  });
+});
+
+describe("the records a link names", () => {
+  const either = ["project-activity", "release-activity"] as const;
+  const state = recordsState({
+    "project-activity": kindState([["activity-1", { name: "Live" }]]),
+    "release-activity": kindState(
+      [],
+      [["activity-2", draft("created", { name: "Drafted" })]],
+    ),
+  });
+
+  it("names the one kind a field links to", () => {
+    expect(linkedType(state, "release-stream", "anything")).toBe(
+      "release-stream",
+    );
+  });
+
+  it("finds, of several kinds, the one that has the record, live or drafted", () => {
+    expect(linkedType(state, either, "activity-1")).toBe("project-activity");
+    expect(linkedType(state, either, "activity-2")).toBe("release-activity");
+  });
+
+  it("takes the first kind when none has the record", () => {
+    expect(linkedType(state, either, "activity-3")).toBe("project-activity");
+  });
+
+  it("says whether a field may name a kind", () => {
+    expect(linksTo("release-stream", "release-stream")).toBe(true);
+    expect(linksTo(either, "release-activity")).toBe(true);
+    expect(linksTo(either, "feature")).toBe(false);
+  });
+
+  it("lists each record a record links to, with its kind", () => {
+    expect(
+      linkedRefs(
+        { ...linking, links: { workId: either, streamId: "release-stream" } },
+        state,
+        { workId: "activity-2", streamId: "stream-1" },
+      ),
+    ).toEqual([
+      { type: "release-activity", id: "activity-2" },
+      { type: "release-stream", id: "stream-1" },
+    ]);
   });
 });

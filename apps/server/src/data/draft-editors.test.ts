@@ -22,6 +22,8 @@ const thePlan: readonly DraftKind[] = [
   "proposal",
   "project",
   "milestone",
+  "project-activity",
+  "release-activity",
 ];
 
 const configuration: readonly DraftKind[] = [
@@ -36,7 +38,7 @@ const configuration: readonly DraftKind[] = [
 const changedBy: Record<Role, readonly DraftKind[]> = {
   "team-member": [],
   "product-manager": thePlan,
-  "feature-lead": ["release", "feature", "feature-team"],
+  "feature-lead": ["release", "feature", "release-activity", "feature-team"],
   "project-manager": thePlan,
   "engineering-manager": [...thePlan, "allocation", "feature-team"],
   "engineering-director": draftKinds.filter((kind) => kind !== "field"),

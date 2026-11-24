@@ -20,7 +20,6 @@ import {
   type Proposal,
   projectDates,
   removalReasonsIn,
-  type RecordType,
   sameDates,
 } from "@fathom/shared";
 import { asc } from "drizzle-orm";
@@ -38,9 +37,9 @@ import { milestonesOf } from "./project-kinds.ts";
 import { text } from "./reporting.ts";
 import { fieldOfValue } from "./values.ts";
 import {
+  inOrder,
   linkedIds,
   type RecordsState,
-  shownIds,
   shownVersion,
   stateOf,
   versionOf,
@@ -54,6 +53,7 @@ import {
   recordKeyNumber,
 } from "./records.ts";
 import { readToday } from "./settings.ts";
+import { activitiesOut } from "./activity-reads.ts";
 
 export type PlanRecords = Omit<ProjectPlan, "canEdit" | "canEditFeatures">;
 
@@ -131,17 +131,6 @@ async function featureColumnsOut(
       .filter((list) => drawnOn.has(list.id) && list.visibility === "general")
       .map((list) => (seesListDrafts(viewer) ? list : withoutDrafts(list))),
   };
-}
-
-// The records of a kind shown: the live ones by name, then those drafted to be added, in the order
-// drafted.
-function inOrder(state: RecordsState, type: RecordType): string[] {
-  const { live } = stateOf(state, type);
-  const name = (id: string) => String(shownVersion(state, type, id)?.name);
-  return [
-    ...[...live.keys()].sort((a, b) => name(a).localeCompare(name(b))),
-    ...shownIds(state, type).filter((id) => !live.has(id)),
-  ];
 }
 
 function milestoneOut(
@@ -285,6 +274,7 @@ export async function planOut(
     projects: inOrder(state, "project").map((id) =>
       projectOut(state, makers, id, today),
     ),
+    activities: activitiesOut(state, makers, "project"),
     proposals: inOrder(state, "proposal").map((id) =>
       proposalOut(state, makers, id),
     ),

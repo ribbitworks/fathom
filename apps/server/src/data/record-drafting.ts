@@ -23,7 +23,7 @@ import {
 } from "./draft-records.ts";
 import { heldMessage, lockDrafts, writeDraft } from "./drafts.ts";
 import {
-  linkedIds,
+  linkedRefs,
   type RecordKind,
   recordExists,
   type RecordsState,
@@ -161,16 +161,14 @@ function misfitOf(
   if (wanted !== undefined) {
     const taken = takenValue(kind, state, wanted, id);
     if (taken !== undefined) return new ConflictError(taken);
-    for (const [name, type] of Object.entries(kind.links)) {
-      for (const target of linkedIds(wanted, name)) {
-        if (!recordExists(state, type, target)) {
-          return new NotFoundError(noRecord);
-        }
-        if (versionOf(state, type, target) === undefined) {
-          return new ConflictError(
-            `This links to ${subjectFor(kindOf(type), state, target, permissions)}, which is drafted to be removed; discard that draft first`,
-          );
-        }
+    for (const { type, id: target } of linkedRefs(kind, state, wanted)) {
+      if (!recordExists(state, type, target)) {
+        return new NotFoundError(noRecord);
+      }
+      if (versionOf(state, type, target) === undefined) {
+        return new ConflictError(
+          `This links to ${subjectFor(kindOf(type), state, target, permissions)}, which is drafted to be removed; discard that draft first`,
+        );
       }
     }
   }
@@ -239,10 +237,8 @@ function holderBreaking(
     const theirs = withHolding(state, holding);
     const linkGone =
       wanted !== undefined &&
-      Object.entries(kind.links).some(([name, type]) =>
-        linkedIds(wanted, name).some(
-          (target) => versionOf(theirs, type, target) === undefined,
-        ),
+      linkedRefs(kind, theirs, wanted).some(
+        ({ type, id: target }) => versionOf(theirs, type, target) === undefined,
       );
     if (linkGone || ruleProblem(theirs, touched, permissions) !== undefined) {
       return holding.holder;
