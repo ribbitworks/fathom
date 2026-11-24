@@ -25,7 +25,7 @@ Activities lists the work releases and projects need that isn't a feature, such 
 
 - **Order:** Name, Status, Description, Notes, Release, Project, Priority, Needed by, Effort, Size, Risk, Feature team, Staffed, then added columns.
 - **Shared with Features:** every column but Release and Project is Features' own, drawn by the same code, with the same rules, such as No team for a Planned or In progress activity with no feature team.
-- **Staffed:** No for every committed activity until allocating to activities is built.
+- **Staffed:** read only, as a feature's is: for Planned or In progress activities, Yes when any allocation gives them a month, a planned hire's included.
 - **Release and Project:** exactly one is filled.
   - **Release:** names a release with its schedule, such as Platform: Harbor 1, as a cycle is named.
   - **Project:** names a project with its Project ID first, as Features' Projects does.
@@ -40,7 +40,6 @@ Group by offers Needed by and each column of choices: Status, Release, Project, 
 ## Planned
 
 - **A project's or release's list:** Total effort under it.
-- **Staffed:** No until allocating to activities is built ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
 - **Duplicate…:** in an activity's row menu and details, with duplicating features.
 - **Colour:** an activity's colour, saved at once with no draft, comes with feature colours.
 - **A Board of activities** is later.

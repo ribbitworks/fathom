@@ -1,23 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafting activities added, changed and removed. Part of the data access layer; the caller checks
+// Drafting activities added and changed. Part of the data access layer; the caller checks
 // the actor may change activities.
 
-import { allocations, type Database } from "@fathom/db";
+import type { Database } from "@fathom/db";
 import { activityOwnerProblem, type ActivityRequest } from "@fathom/shared";
-import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
-import { BadRequestError, ConflictError } from "../errors.ts";
-import { activityKind } from "./activity-kinds.ts";
-import { allocatedRefusal } from "./allocation-kinds.ts";
+import { BadRequestError } from "../errors.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import type { Recorded } from "./draft-records.ts";
 import { planningRecord } from "./planning-records.ts";
-import { changingPlan, removing } from "./projects.ts";
+import { changingPlan } from "./projects.ts";
 import type { PlanRecords } from "./project-reads.ts";
 import { changeableRecord, saveRecordDraft } from "./record-drafting.ts";
-import { subjectFor } from "./record-state.ts";
 
 // An activity as a request makes it, belonging to exactly one release or one project; moving it to
 // another clears the one it had.
@@ -75,30 +71,5 @@ export async function changeActivity(
       id,
       await activityRecord(transaction, maker.user.id, request, activity),
     );
-  });
-}
-
-// Allocations to activities aren't yet among the plan's records, whose rules refuse removing a
-// feature with allocations, so an activity's are read here and refused in the same words.
-export async function removeActivity(
-  database: Database,
-  maker: Actor,
-  id: string,
-): Promise<string | null> {
-  const [allocated] = await database
-    .select({ id: allocations.id })
-    .from(allocations)
-    .where(eq(allocations.activityId, id))
-    .limit(1);
-  return removing(database, maker, "activity", id, (state) => {
-    changeableRecord(state, "activity", id);
-    if (allocated !== undefined) {
-      throw new ConflictError(
-        allocatedRefusal(
-          subjectFor(activityKind, state, id, maker),
-          "activity",
-        ),
-      );
-    }
   });
 }

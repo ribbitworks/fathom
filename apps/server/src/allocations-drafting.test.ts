@@ -7,6 +7,7 @@
 import { features, people } from "@fathom/db";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import type { ChangeHistory } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { errorOf, unique } from "./test-app.ts";
 import {
@@ -18,6 +19,7 @@ import {
   addPerson,
   addHire,
   addFeature,
+  addActivity,
   change,
   changed,
   read,
@@ -292,6 +294,98 @@ describe("allocating", () => {
     );
   });
 
+  it("allocates someone to an activity, changing that allocation after", async () => {
+    // Given someone allocated to an activity from this month
+    const personId = await addPerson();
+    const { activityId } = await addActivity();
+    await changed({ personId, activityId, percentage: 50, from: month(0) });
+    const first = await allocationOf({ personId }, activityId);
+
+    // When their share changes from next month
+    await changed({ personId, activityId, percentage: 25, from: month(1) });
+
+    // Then the one allocation holds both, naming the activity and no feature
+    const after = await allocationOf({ personId }, activityId);
+    expect(after).toMatchObject({ id: first?.id, featureId: null, activityId });
+    expect(after?.draft?.months).toEqual({ [month(0)]: 50, [month(1)]: 25 });
+  });
+
+  it("keeps someone's allocations to two activities apart", async () => {
+    const personId = await addPerson();
+    const first = (await addActivity()).activityId;
+    const second = (await addActivity()).activityId;
+    await changed({
+      personId,
+      activityId: first,
+      percentage: 50,
+      from: month(0),
+    });
+    await changed({
+      personId,
+      activityId: second,
+      percentage: 25,
+      from: month(0),
+    });
+    const [one, two] = await Promise.all([
+      allocationOf({ personId }, first),
+      allocationOf({ personId }, second),
+    ]);
+    expect(one?.id).not.toBe(two?.id);
+    expect([one?.draft?.months, two?.draft?.months]).toEqual([
+      { [month(0)]: 50 },
+      { [month(0)]: 25 },
+    ]);
+  });
+
+  it("refuses an activity that does not exist", async () => {
+    const response = await change({
+      personId: await addPerson(),
+      activityId: randomUUID(),
+      percentage: 50,
+      from: month(0),
+    });
+    expect(response.statusCode).toBe(404);
+    expect(errorOf(response)).toBe("There is no such activity");
+  });
+
+  it("refuses stopping an allocation to an activity someone doesn't have", async () => {
+    const response = await change({
+      personId: await addPerson(),
+      activityId: (await addActivity()).activityId,
+      percentage: null,
+      from: month(0),
+    });
+    expect(response.statusCode).toBe(400);
+    expect(errorOf(response)).toBe(
+      "There is no allocation to stop on that activity",
+    );
+  });
+
+  it("refuses an activity only drafted to be added", async () => {
+    const { projectId } = await addActivity();
+    const name = unique("Fictional Activity");
+    const response = await test.request(
+      director.cookie,
+      "POST",
+      "/api/activities",
+      { name, projectId },
+    );
+    expect(response.statusCode, response.body).toBe(201);
+    const drafted = response
+      .json<{ plan: { activities: { id: string; name: string }[] } }>()
+      .plan.activities.find((activity) => activity.name === name);
+    const refused = await change({
+      personId: await addPerson(),
+      activityId: String(drafted?.id),
+      percentage: 50,
+      from: month(0),
+    });
+    expect(refused.statusCode).toBe(409);
+    expect(errorOf(refused)).toBe(
+      "This activity is waiting for approval. Allocate people to it once it's approved.",
+    );
+  });
+
   it("refuses changing an allocation someone else holds", async () => {
     const personId = await addPerson();
     const featureId = await addFeature();
@@ -407,6 +501,37 @@ describe("employment dates", () => {
     await changed(
       { personId, featureId, percentage: null, from: month(3) },
       manager,
+    );
+  });
+});
+
+describe("the change history", () => {
+  it("names an allocation by who it puts on which feature or activity", async () => {
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    const { activityId } = await addActivity();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    await changed({ personId, activityId, percentage: 25, from: month(0) });
+    const response = await test.request(director.cookie, "GET", "/api/changes");
+    expect(response.statusCode, response.body).toBe(200);
+    const names = response
+      .json<ChangeHistory>()
+      .entries.flatMap(({ records }) => records)
+      .filter(({ kind }) => kind === "allocation")
+      .map(({ name }) => name);
+    const [person] = await test.connection
+      .select({ name: people.preferredName })
+      .from(people)
+      .where(eq(people.id, personId));
+    const [feature] = await test.connection
+      .select({ name: features.name })
+      .from(features)
+      .where(eq(features.id, featureId));
+    expect(names).toEqual(
+      expect.arrayContaining([
+        `${String(person?.name)} on ${String(feature?.name)}`,
+        `${String(person?.name)} on Fictional Activity`,
+      ]),
     );
   });
 });

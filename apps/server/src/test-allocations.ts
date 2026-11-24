@@ -156,17 +156,17 @@ export async function addFeature(
   return id;
 }
 
-// A person allocated to a project's activity, added directly, since activities aren't drafted yet.
-export async function activityAllocation(): Promise<{
-  personId: string;
-  id: string;
+// An activity of a new project, as approved, with the project's name.
+export async function addActivity(): Promise<{
   activityId: string;
+  projectId: string;
+  project: string;
 }> {
-  const personId = await addPerson();
   const projectId = randomUUID();
+  const project = unique("Fictional Project");
   await test.connection
     .insert(projects)
-    .values({ id: projectId, name: unique("Fictional Project") });
+    .values({ id: projectId, name: project });
   const [activity] = await test.connection
     .insert(activities)
     .values({
@@ -179,20 +179,35 @@ export async function activityAllocation(): Promise<{
       ),
     })
     .returning({ id: activities.id });
+  const activityId = String(activity?.id);
+  await named("activity", activityId, "name", "Fictional Activity");
+  return { activityId, projectId, project };
+}
+
+// A person allocated to a project's activity, as approved.
+export async function activityAllocation(): Promise<{
+  personId: string;
+  id: string;
+  activityId: string;
+  project: string;
+}> {
+  const personId = await addPerson();
+  const { activityId, project } = await addActivity();
   const id = randomUUID();
   await test.connection.insert(allocations).values({
     id,
     personId,
-    activityId: activity?.id,
+    activityId,
     months: { [month(0)]: 50 },
   });
-  return { personId, id, activityId: String(activity?.id) };
+  return { personId, id, activityId, project };
 }
 
 type Change = {
   personId?: string;
   plannedHireId?: string;
-  featureId: string;
+  featureId?: string;
+  activityId?: string;
   percentage: number | null;
   from: string;
   to?: string;
@@ -214,14 +229,15 @@ export async function read(who = allocator): Promise<Allocations> {
   return response.json<Allocations>();
 }
 
+// An assignee's allocation to a feature or an activity, by its identifier.
 export async function allocationOf(
   assignee: { personId?: string; plannedHireId?: string },
-  featureId: string,
+  workId: string,
   who = allocator,
 ): Promise<Allocation | undefined> {
   return (await read(who)).allocations.find(
     (allocation) =>
-      allocation.featureId === featureId &&
+      (allocation.featureId ?? allocation.activityId) === workId &&
       (assignee.personId === undefined
         ? allocation.plannedHireId === assignee.plannedHireId
         : allocation.personId === assignee.personId),

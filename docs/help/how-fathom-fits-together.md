@@ -86,7 +86,7 @@ In Fathom: the **Org chart**, under **Feature teams**, and **Capacity**, the **F
 
 ### Allocation
 
-The share of someone's month planned for one feature, such as 50%.
+The share of someone's month planned for one feature or activity, such as 50%.
 
 In Fathom: **Capacity**, the **Allocations** tab. See [Capacity](capacity.md).
 
@@ -129,7 +129,7 @@ A schedule repeats cycles of a set length. A release gathers one or more cycles 
 - A **planned hire** reports to a **person**, or to another **planned hire**.
 - A **planned hire** is filled by a **person**.
 
-Reporting lines and team membership are dated, so past and planned changes are kept. People are allocated to features as a share of each month.
+Reporting lines and team membership are dated, so past and planned changes are kept. People are allocated to features and activities as a share of each month.
 
 ### Access and Drafts
 

@@ -387,9 +387,10 @@ export function createActivityAccess(database: Database): ActivityAccess {
         ),
       ),
     remove: async (actor, id) =>
-      activityData.removeActivity(
+      projectData.removeRecord(
         database,
         recordEditor(actor, "activity"),
+        "activity",
         id,
       ),
   };

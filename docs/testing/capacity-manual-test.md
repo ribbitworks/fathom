@@ -263,7 +263,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `8FAB` Scroll down to the 'Payments core' group.
-  - **Expected:** Under the 'Payments core' group, cells list features, each on a line of its own with its percentage at the right, such as "50%".
+  - **Expected:** Under the 'Payments core' group, cells list features and any activities, each on a line of its own with its percentage at the right, such as "50%".
   - **Notes:**
 
 - [ ] `ABC9` Hold the pointer over a feature's name in a cell.

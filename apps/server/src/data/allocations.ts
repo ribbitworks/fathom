@@ -16,6 +16,7 @@ import {
 } from "@fathom/db";
 import {
   capitalized,
+  type ClassAccess,
   type AllocationChange,
   type AllocationMonths,
   type Allocations,
@@ -35,7 +36,11 @@ import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftMakers, everything } from "./draft-makers.ts";
 import type { Recorded } from "./draft-records.ts";
-import { allocationKind, allocationRowFields } from "./allocation-kinds.ts";
+import {
+  allocationFields,
+  allocationKind,
+  workOf,
+} from "./allocation-kinds.ts";
 import { expectedMonth, hireIdOf } from "./hire-fields.ts";
 import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
 import { drafting, saveRecordDraft } from "./record-drafting.ts";
@@ -48,8 +53,11 @@ import {
   shownIds,
   shownVersion,
   stateOf,
+  subjectFor,
   versionOf,
 } from "./record-state.ts";
+import { activityKind, activityOwnerCalled } from "./activity-kinds.ts";
+import { projectKind } from "./project-kinds.ts";
 import { featureKind, featureNaming } from "./release-kinds.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
@@ -59,9 +67,9 @@ const type = "allocation";
 const monthsOf = (record: Recorded | undefined): AllocationMonths =>
   (record?.months ?? {}) as AllocationMonths;
 
-// The features some allocation gives a month: as the reader's view of drafts makes the allocations,
-// and as they are live.
-export function staffedFeatures(state: RecordsState): {
+// The features and activities some allocation gives a month: as the reader's view of drafts makes
+// the allocations, and as they are live.
+export function staffedWork(state: RecordsState): {
   drafted: ReadonlySet<string>;
   live: ReadonlySet<string>;
 } {
@@ -73,7 +81,7 @@ export function staffedFeatures(state: RecordsState): {
         return Object.values(monthsOf(record)).some(
           (percentage) => percentage !== null,
         )
-          ? [String(record?.featureId)]
+          ? [workOf(record as Recorded).id]
           : [];
       }),
     );
@@ -90,7 +98,8 @@ interface Bounds {
   last?: string;
 }
 
-// Where a change puts someone on a feature outside the months they can be allocated in, if it does.
+// Where a change puts someone on a feature or activity outside the months they can be allocated in,
+// if it does.
 type Outside = { before: string } | { after: string };
 
 function outsideOf(
@@ -110,7 +119,8 @@ function outsideOf(
   return undefined;
 }
 
-const nothingToStop = "There is no allocation to stop on that feature";
+const nothingToStop = (work: string) =>
+  `There is no allocation to stop on that ${work}`;
 
 function draftingRefusal(outside: Outside, person: boolean): string {
   if ("after" in outside) {
@@ -215,8 +225,8 @@ const namedInList = (naming: ReturnType<typeof featureNaming>) =>
 const inSentence = (naming: ReturnType<typeof featureNaming>) =>
   "name" in naming ? naming.name : naming.unseen;
 
-// Every allocation the actor sees, live and as drafts make them, and the features they name, and
-// whether any names someone not current today, which tells of their start or end date.
+// Every allocation the actor sees, live and as drafts make them, the features and activities they
+// name, and whether any names someone not current today, which tells of their start or end date.
 export async function readAllocations(
   database: Database,
   actor: Actor,
@@ -252,29 +262,44 @@ export async function readAllocations(
           ),
         ],
       ] as const);
-      const featureIds = [
-        ...new Set(records.map(({ record }) => String(record.featureId))),
+      const idsOf = (field: "featureId" | "activityId") => [
+        ...new Set(
+          // The field is one of the two fixed ones.
+          // eslint-disable-next-line security/detect-object-injection
+          records.flatMap(({ record }) => text(record[field]) ?? []),
+        ),
       ];
-      const statusOf = (featureId: string) =>
-        String(shownVersion(state, "feature", featureId)?.statusId);
+      // Features and activities alike hold a status and a feature team.
+      const work = [
+        ...idsOf("featureId").map((id) => ({ type: "feature" as const, id })),
+        ...idsOf("activityId").map((id) => ({ type: "activity" as const, id })),
+      ];
+      type Named = (typeof work)[number];
+      const statusOf = ({ type, id }: Named) =>
+        String(shownVersion(state, type, id)?.statusId);
       const meanings = new Map(
-        featureIds.length === 0
+        work.length === 0
           ? []
           : (
               await transaction
                 .select({ id: listItems.id, meaning: listItems.meaning })
                 .from(listItems)
-                .where(
-                  inArray(listItems.id, [...new Set(featureIds.map(statusOf))]),
-                )
+                .where(inArray(listItems.id, [...new Set(work.map(statusOf))]))
             ).map(({ id, meaning }) => [id, meaning]),
       );
-      const teamOf = (featureId: string) =>
-        text(shownVersion(state, "feature", featureId)?.featureTeamId);
+      const teamOf = ({ type, id }: Named) =>
+        text(shownVersion(state, type, id)?.featureTeamId);
       // A feature team's colour is shown only to those who see feature teams.
       const teamIds = actor.permissions.includes("feature-teams:view")
-        ? [...new Set(featureIds.flatMap((id) => teamOf(id) ?? []))]
+        ? [...new Set(work.flatMap((one) => teamOf(one) ?? []))]
         : [];
+      // Every feature and activity has a status, a choice of the feature statuses list, read above.
+      const planned = (one: Named) => ({
+        id: one.id,
+        meaning: meaningSchema.nullable().parse(meanings.get(statusOf(one))),
+        colour: colourOf(colours, teamOf(one)),
+      });
+      const readsPlan = readsKind(projectKind, actor);
       const colours = new Map(
         teamIds.length === 0
           ? []
@@ -292,7 +317,8 @@ export async function readAllocations(
             id,
             personId: text(record.personId),
             plannedHireId: text(record.plannedHireId),
-            featureId: String(record.featureId),
+            featureId: text(record.featureId),
+            activityId: text(record.activityId),
             months: monthsOf(stateOf(state, type).live.get(id)),
             ...(draft === undefined
               ? {}
@@ -319,16 +345,40 @@ export async function readAllocations(
             ...recordHeldBy(state, type, id),
           };
         }),
-        // Every feature has a status, a choice of the feature statuses list, read above.
-        features: featureIds.map((id) => ({
-          id,
-          ...namedInList(featureNaming(state, id, actor)),
-          meaning: meaningSchema.nullable().parse(meanings.get(statusOf(id))),
-          // A feature the reader can't read is told by no team's colour either.
-          colour: readsKind(featureKind, actor)
-            ? colourOf(colours, teamOf(id))
-            : null,
-        })),
+        // A feature or activity the reader can't read is told by no team's colour either.
+        features: work
+          .filter(({ type }) => type === "feature")
+          .map((one) => {
+            const seen = readsKind(featureKind, actor);
+            return {
+              ...planned(one),
+              ...namedInList(featureNaming(state, one.id, actor)),
+              colour: seen ? planned(one).colour : null,
+            };
+          }),
+        activities: work
+          .filter(({ type }) => type === "activity")
+          .map((one) => {
+            if (!readsKind(activityKind, actor)) {
+              return {
+                ...planned(one),
+                name: capitalized(activityKind.unseenSubject),
+                unseen: true as const,
+                colour: null,
+              };
+            }
+            // Every activity named is shown, live or as its draft makes it.
+            const activity = shownVersion(
+              state,
+              "activity",
+              one.id,
+            ) as Recorded;
+            return {
+              ...planned(one),
+              name: String(activity.name),
+              owner: activityOwnerCalled(state, activity, readsPlan),
+            };
+          }),
         includedPersonal: records.some(({ record }) => {
           const person = personOf(record);
           return person !== undefined && !currentOn(person, today);
@@ -339,7 +389,7 @@ export async function readAllocations(
   );
 }
 
-// The allocation a change is to: the one its person or planned hire already has to its feature, as
+// The allocation a change is to: the one its person or planned hire already has to its work, as
 // anyone's drafts, published or not, make it, or a new one.
 function allocationFor(
   state: RecordsState,
@@ -353,21 +403,39 @@ function allocationFor(
     ([, record]) =>
       record !== undefined &&
       assignee(record) &&
-      record.featureId === change.featureId,
+      (text(record.featureId) ?? undefined) === change.featureId &&
+      (text(record.activityId) ?? undefined) === change.activityId,
   )?.[0];
 }
 
-// Refuses a feature that cannot be allocated: one that does not exist, or is only drafted to be
-// added, which is allocated once it is approved.
-function checkFeature(state: RecordsState, featureId: string): void {
-  if (addedOnly(state, "feature", featureId)) {
+type Work = ReturnType<typeof workOf>;
+
+// Refuses a feature or activity that cannot be allocated: one that does not exist, or is only
+// drafted to be added, which is allocated once it is approved.
+function checkWork(state: RecordsState, work: Work): void {
+  const { type } = work.kind;
+  const { id } = work;
+  if (addedOnly(state, type, id)) {
     throw new ConflictError(
-      "This feature is waiting for approval. Allocate people to it once it's approved.",
+      `This ${type} is waiting for approval. Allocate people to it once it's approved.`,
     );
   }
-  if (!stateOf(state, "feature").live.has(featureId)) {
-    throw new NotFoundError("There is no such feature");
+  if (!stateOf(state, type).live.has(id)) {
+    throw new NotFoundError(`There is no such ${type}`);
   }
+}
+
+// The feature or activity an allocation is to, by name: a feature by its own, an activity as its
+// kind names it, with its project or release.
+function workCalled(
+  state: RecordsState,
+  record: Recorded,
+  access: ClassAccess,
+): string {
+  const { kind, id } = workOf(record);
+  return kind.type === "feature"
+    ? inSentence(featureNaming(state, id, access))
+    : subjectFor(kind, state, id, access);
 }
 
 // The months someone can be allocated in, refusing someone who cannot be: a person who does not exist,
@@ -402,7 +470,8 @@ export async function changeAllocation(
   requireView(editor, "allocations");
   const today = await readToday(database);
   return drafting(database, editor.user.id, async (transaction, state) => {
-    checkFeature(state, change.featureId);
+    const work = workOf(change);
+    checkWork(state, work);
     const bounds = await boundsFor(transaction, change, today);
     // Someone else's unpublished changes to it, if any, refuse the change as they hold it.
     const made = allocationFor(state, change);
@@ -410,7 +479,7 @@ export async function changeAllocation(
     const before = monthsOf(versionOf(state, type, id));
     const months = withChange(before, change);
     if (made === undefined && Object.keys(months).length === 0) {
-      throw new BadRequestError(nothingToStop);
+      throw new BadRequestError(nothingToStop(work.kind.type));
     }
     const outside = outsideOf(changedSpans(before, months), bounds);
     if (outside !== undefined) {
@@ -429,7 +498,8 @@ export async function changeAllocation(
         : {
             personId: change.personId ?? null,
             plannedHireId: change.plannedHireId ?? null,
-            featureId: change.featureId,
+            featureId: change.featureId ?? null,
+            activityId: change.activityId ?? null,
             months,
           },
     );
@@ -437,8 +507,8 @@ export async function changeAllocation(
 }
 
 // Refuses deciding drafts of allocations naming someone the Approver does not see, and approving
-// those of a planned hire filled since, or that put someone on a feature outside their employment,
-// as far as the Approver sees it.
+// those of a planned hire filled since, or that put someone on a feature or activity outside their
+// employment, as far as the Approver sees it.
 export async function checkAllocationsAsked(
   transaction: Transaction,
   approver: Actor,
@@ -488,9 +558,7 @@ export async function checkAllocationsAsked(
       throw new ConflictError(
         approvingRefusal(
           outside,
-          `${who} on ${inSentence(
-            featureNaming(state, String(record.featureId), approver),
-          )}`,
+          `${who} on ${workCalled(state, record, approver)}`,
           hire === undefined,
         ),
       );
@@ -567,7 +635,7 @@ export async function removeAllocationsOf(
       "deleted",
       row as unknown as Recorded,
       undefined,
-      allocationRowFields,
+      allocationFields,
     ),
   );
 }

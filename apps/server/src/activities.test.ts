@@ -14,11 +14,18 @@ import {
   privateChanges,
 } from "@fathom/db";
 import { eq } from "drizzle-orm";
-import type { Activity, Field, ProjectPlan } from "@fathom/shared";
+import type {
+  Activity,
+  Allocations,
+  Field,
+  Permission,
+  ProjectPlan,
+} from "@fathom/shared";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   errorOf,
+  generalReader,
   startTestApp,
   type TestApp,
   testPosition,
@@ -99,6 +106,28 @@ async function liveRelease(): Promise<string> {
     lastCycle: "2027-01-01",
   });
   return id;
+}
+
+async function addPerson(): Promise<string> {
+  const personId = randomUUID();
+  await test.connection.insert(people).values({
+    id: personId,
+    preferredName: unique("Fictional Person"),
+    employeeId: unique("ACT"),
+    positionId: testPosition,
+  });
+  return personId;
+}
+
+// Someone allocated to the activity, as approved.
+async function allocateTo(activityId: string): Promise<string> {
+  const personId = await addPerson();
+  await test.connection.insert(allocations).values({
+    personId,
+    activityId,
+    months: { "2027-01": 50 },
+  });
+  return personId;
 }
 
 const added = (saved: Saved, name: string) =>
@@ -247,18 +276,31 @@ describe("removing an activity", () => {
   it("refuses while someone is allocated to it", async () => {
     const activity = await addActivity({ projectId: await liveProject() });
     await approve([{ type: "activity", id: activity.id }]);
-    const personId = randomUUID();
-    await test.connection.insert(people).values({
-      id: personId,
-      preferredName: unique("Fictional Person"),
-      employeeId: unique("ACT"),
-      positionId: testPosition,
-    });
-    await test.connection.insert(allocations).values({
-      personId,
-      activityId: activity.id,
-      months: { "2027-01": 50 },
-    });
+    await allocateTo(activity.id);
+    const response = await send("DELETE", `/api/activities/${activity.id}`);
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toContain(
+      "has allocations, so it can't be removed",
+    );
+  });
+
+  it("refuses while its only allocation is a draft", async () => {
+    const activity = await addActivity({ projectId: await liveProject() });
+    await approve([{ type: "activity", id: activity.id }]);
+    const allocator = await test.signedIn([...generalReader, "personal:view"]);
+    const drafted = await test.request(
+      allocator.cookie,
+      "POST",
+      "/api/allocations/changes",
+      {
+        personId: await addPerson(),
+        activityId: activity.id,
+        percentage: 50,
+        from: "2027-01",
+      },
+      { publish: true },
+    );
+    expect(drafted.statusCode, drafted.body).toBe(200);
     const response = await send("DELETE", `/api/activities/${activity.id}`);
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toContain(
@@ -312,18 +354,7 @@ describe("a release's activity", () => {
   it("is named with its release and schedule where a refusal names it", async () => {
     const activity = await addActivity({ releaseId: await liveRelease() });
     await approve([{ type: "activity", id: activity.id }]);
-    const personId = randomUUID();
-    await test.connection.insert(people).values({
-      id: personId,
-      preferredName: unique("Fictional Person"),
-      employeeId: unique("ACT"),
-      positionId: testPosition,
-    });
-    await test.connection.insert(allocations).values({
-      personId,
-      activityId: activity.id,
-      months: { "2027-01": 50 },
-    });
+    await allocateTo(activity.id);
     const response = await send("DELETE", `/api/activities/${activity.id}`);
     expect(errorOf(response)).toMatch(
       /^The activity .+ of Fictional Stream \d+: Fictional Release \d+ has allocations/u,
@@ -455,5 +486,61 @@ describe("reading activities", () => {
   it("tells a role that sees features whether it may change them", async () => {
     const member = await test.signedIn("team-member");
     expect((await readPlan(member.cookie)).canEditFeatures).toBe(false);
+  });
+});
+
+describe("an activity someone is allocated to", () => {
+  it("reads as staffed", async () => {
+    const activity = await addActivity({ projectId: await liveProject() });
+    await approve([{ type: "activity", id: activity.id }]);
+    await allocateTo(activity.id);
+    const read = (await readPlan()).activities.find(
+      ({ id }) => id === activity.id,
+    );
+    expect(read).toMatchObject({ staffed: true, staffedLive: true });
+  });
+
+  it("is named on Capacity only to a reader of activities, with its release, and its project only to a reader of the plan", async () => {
+    const ofRelease = await addActivity({ releaseId: await liveRelease() });
+    const ofProject = await addActivity({ projectId: await liveProject() });
+    await approve([
+      { type: "activity", id: ofRelease.id },
+      { type: "activity", id: ofProject.id },
+    ]);
+    await allocateTo(ofRelease.id);
+    await allocateTo(ofProject.id);
+    const ownersFor = async (permissions: Permission[]) => {
+      const reader = await test.signedIn([
+        ...permissions,
+        "allocations:view",
+        "people:view",
+        "personal:view",
+        "feature-teams:view",
+      ]);
+      const response = await test.request(
+        reader.cookie,
+        "GET",
+        "/api/allocations",
+      );
+      expect(response.statusCode, response.body).toBe(200);
+      const { activities: named } = response.json<Allocations>();
+      return [ofRelease.id, ofProject.id].map((id) => {
+        const one = named.find((each) => each.id === id);
+        return [one?.name, one?.owner];
+      });
+    };
+    const [release, project] = (
+      await ownersFor(["plan:view", "features:view"])
+    ).map(([, owner]) => owner);
+    expect(release).toMatch(/^Fictional Stream \d+: Fictional Release \d+$/u);
+    expect(project).toMatch(/^Fictional Project/u);
+    expect(
+      (await ownersFor(["features:view"])).map(([, owner]) => owner),
+    ).toEqual([release, "a project"]);
+    // A role that doesn't read activities is told only that it's an activity.
+    expect(await ownersFor(["plan:view"])).toEqual([
+      ["An activity", undefined],
+      ["An activity", undefined],
+    ]);
   });
 });

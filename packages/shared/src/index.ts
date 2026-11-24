@@ -750,6 +750,8 @@ export {
   mostGridMonths,
 } from "./monthly-grid.ts";
 export {
+  type AllocatedActivity,
+  allocatedActivitySchema,
   type AllocatedFeature,
   allocatedFeatureSchema,
   type Allocation,

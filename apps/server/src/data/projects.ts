@@ -571,7 +571,7 @@ export async function removing(
 export async function removeRecord(
   database: Database,
   maker: Actor,
-  type: PlanKind,
+  type: PlanKind | "activity",
   id: string,
 ): Promise<string | null> {
   return removing(database, maker, type, id, (state) => {

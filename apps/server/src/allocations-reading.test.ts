@@ -47,15 +47,27 @@ describe("reading", () => {
     expect(named.find(({ id }) => id === possible)?.meaning).toBe("possible");
   });
 
-  it("leaves out allocations to activities, beside a feature's", async () => {
-    const { personId, id } = await activityAllocation();
+  it("reads allocations to activities beside a feature's, naming each activity with its project", async () => {
+    const { personId, id, activityId, project } = await activityAllocation();
     const featureId = await addFeature();
     await changed({ personId, featureId, percentage: 50, from: month(0) });
-    const allocated = (await read()).allocations.filter(
-      (one) => one.personId === personId,
+    const { allocations: all, activities: named } = await read();
+    const allocated = all.filter((one) => one.personId === personId);
+    expect(
+      allocated.map((one) => [one.id === id, one.featureId, one.activityId]),
+    ).toEqual(
+      expect.arrayContaining([
+        [true, null, activityId],
+        [false, featureId, null],
+      ]),
     );
-    expect(allocated.map((one) => one.featureId)).toEqual([featureId]);
-    expect(allocated.some((one) => one.id === id)).toBe(false);
+    expect(named.find((one) => one.id === activityId)).toEqual({
+      id: activityId,
+      name: "Fictional Activity",
+      owner: project,
+      meaning: "in-progress",
+      colour: null,
+    });
   });
 
   // A feature of a teal team, and one of no team, each allocated.

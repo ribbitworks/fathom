@@ -8,6 +8,7 @@ import { type LoadMark, monthOf } from "@fathom/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
+  allocatedWork,
   allocationMonthRecords,
   allocationMonthsTable,
   allocationsQuery,
@@ -84,7 +85,7 @@ export function CapacityAllocations({
         ? undefined
         : allocationMonthsTable({
             teamMonths: sources.teamMonths,
-            features: sources.allocations.features,
+            works: allocatedWork(sources.allocations),
             managers: byManager
               ? monthManagers(sources.teamMonths, sources.chart)
               : undefined,

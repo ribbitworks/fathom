@@ -13,12 +13,17 @@ import {
   shownVersion,
 } from "./record-state.ts";
 
-// What an activity belongs to, as anyone who sees activities may read it: its release, with its
-// schedule, since releases are seen with Features; a project's name needs the plan, so only "a
-// project".
-const ownerCalled = (state: RecordsState, activity: Recorded) =>
+// What an activity belongs to: its release, with its schedule, since releases are seen with
+// Features; its project by name only to a reader of the plan, else "a project".
+export const activityOwnerCalled = (
+  state: RecordsState,
+  activity: Recorded,
+  readsPlan: boolean,
+) =>
   typeof activity.projectId === "string"
-    ? "a project"
+    ? readsPlan
+      ? String(shownVersion(state, "project", activity.projectId)?.name)
+      : "a project"
     : releaseCalled(state, String(activity.releaseId));
 
 // An activity holds a feature's planning fields and refers to the same lists and feature teams; its
@@ -63,7 +68,8 @@ export const activityKind: RecordKind = {
     const activity = shownVersion(state, "activity", id) as Recorded;
     return projectSubjects.activity(
       String(activity.name),
-      ownerCalled(state, activity),
+      // A subject is the same for every reader, so it names no project.
+      activityOwnerCalled(state, activity, false),
     );
   },
 };

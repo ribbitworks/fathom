@@ -31,7 +31,7 @@ import type { Actor } from "../access.ts";
 import { listChoices } from "./built-in-lists.ts";
 import type { Transaction } from "./changes.ts";
 import type { Recorded } from "./draft-records.ts";
-import { staffedFeatures } from "./allocations.ts";
+import { staffedWork } from "./allocations.ts";
 import { readTeamDrafts } from "./feature-team-reads.ts";
 import { readColumnsOut } from "./column-state.ts";
 import { liveValuesOf } from "./column-types.ts";
@@ -245,7 +245,7 @@ function proposalOut(
 export function planningOut(
   state: RecordsState,
   makers: Makers,
-  staffed: ReturnType<typeof staffedFeatures>,
+  staffed: ReturnType<typeof staffedWork>,
   type: "feature" | "activity",
   id: string,
 ) {
@@ -279,7 +279,7 @@ export function planningOut(
 function featureOut(
   state: RecordsState,
   makers: Makers,
-  staffed: ReturnType<typeof staffedFeatures>,
+  staffed: ReturnType<typeof staffedWork>,
   id: string,
 ): Feature {
   const feature = shownVersion(state, "feature", id) as Recorded;
@@ -294,7 +294,7 @@ function featureOut(
 function activityOut(
   state: RecordsState,
   makers: Makers,
-  staffed: ReturnType<typeof staffedFeatures>,
+  staffed: ReturnType<typeof staffedWork>,
   id: string,
 ): Activity {
   const activity = shownVersion(state, "activity", id) as Recorded;
@@ -376,7 +376,7 @@ export async function planOut(
   today: string,
 ): Promise<PlanRecords> {
   const makers = await readRecordMakers(transaction, state, viewer);
-  const staffed = staffedFeatures(state);
+  const staffed = staffedWork(state);
   const projects = inOrder(state, "project").map((id) =>
     projectOut(state, makers, id, today),
   );

@@ -34,6 +34,7 @@ const allocations: Allocations = {
       personId: "p-casey",
       plannedHireId: null,
       featureId: "f-checkout",
+      activityId: null,
       months: { "2027-03": 50, "2027-05": null },
     },
     {
@@ -41,6 +42,7 @@ const allocations: Allocations = {
       personId: null,
       plannedHireId: "h-tester",
       featureId: "f-checkout",
+      activityId: null,
       months: { "2027-04": 100 },
     },
   ],
@@ -52,6 +54,7 @@ const allocations: Allocations = {
       colour: null,
     },
   ],
+  activities: [],
 };
 
 const chart: OrgChart = {
@@ -277,6 +280,7 @@ describe("Allocations kept to those over or under", () => {
     personId: "p-avery",
     plannedHireId: null,
     featureId,
+    activityId: null,
     months: { "2027-04": 75, "2027-05": null },
   });
   const loads = () =>
@@ -290,6 +294,7 @@ describe("Allocations kept to those over or under", () => {
           personId: "p-blair",
           plannedHireId: null,
           featureId: "f-checkout",
+          activityId: null,
           months: { "2027-03": 100 },
         },
       ],
@@ -302,7 +307,8 @@ describe("Allocations kept to those over or under", () => {
           colour: null,
         },
       ],
-    });
+      activities: [],
+    } satisfies Allocations);
 
   it("keeps only the row over in a month from the current one on once Over is chosen, keeping it in the address", async () => {
     // Given Allocations, with Avery alone over
@@ -367,6 +373,7 @@ describe("Allocations kept to what someone is allocated to", () => {
         { ...allocations.allocations[1], featureId: second },
       ],
       features: [unseen(first), unseen(second)],
+      activities: [],
     });
   };
 

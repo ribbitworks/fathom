@@ -23,6 +23,7 @@ import {
   hireNumber,
   addHire,
   addFeature,
+  addActivity,
   activityAllocation,
   change,
   changed,
@@ -72,6 +73,28 @@ describe("approving", () => {
     expect(refused.statusCode).toBe(409);
     expect(errorOf(refused)).toBe(
       `The draft of ${String(name)} on ${await nameOfFeature(featureId)} runs past their last month, ${month(2)}. Reject the draft so it can be changed.`,
+    );
+  });
+
+  it("names the activity in a refusal", async () => {
+    // Given a draft of someone on an activity from this month, who starts in two months
+    const personId = await addPerson();
+    const { activityId } = await addActivity();
+    await changed({ personId, activityId, percentage: 50, from: month(0) });
+    const id = String((await allocationOf({ personId }, activityId))?.id);
+    const [person] = await test.connection
+      .update(people)
+      .set({ startDate: dayIn(2) })
+      .where(eq(people.id, personId))
+      .returning({ name: people.preferredName });
+
+    // When it is approved
+    const refused = await decide(director, "approval", [id]);
+
+    // Then the refusal names the activity as its subject does, its project as a project
+    expect(refused.statusCode).toBe(409);
+    expect(errorOf(refused)).toBe(
+      `The draft of ${String(person?.name)} on the activity Fictional Activity of a project starts before their first month, ${month(2)}. Reject the draft so it can be changed.`,
     );
   });
 
