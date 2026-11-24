@@ -402,11 +402,3 @@ function PersonCard({ data }: NodeProps<CardNode>) {
 export const nodeTypes = { person: PersonCard };
 
 export const cardLinkId = (id: string) => `card-${id}`;
-
-// How the address names a person, for the team shown alone and the person found: by Employee ID,
-// or, for a planned hire, by Fathom's own ID. Null for a Live copy, which the person themselves
-// stands for.
-export function addressOf(person: ChartPerson): string | null {
-  if (person.liveCopyOf !== undefined) return null;
-  return person.planned === undefined ? person.employeeId : person.id;
-}

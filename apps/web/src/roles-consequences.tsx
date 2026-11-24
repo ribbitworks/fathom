@@ -11,7 +11,7 @@ import {
 } from "@fathom/shared";
 import { List, Paper, Stack, Text, Title, VisuallyHidden } from "@mantine/core";
 import { useEffect, useRef } from "react";
-import roleClasses from "./roles-page.module.css";
+import roleClasses from "./roles-consequences.module.css";
 import { consequences, difference, markedLines } from "./roles.ts";
 import { ClassName } from "./status-mark.tsx";
 
