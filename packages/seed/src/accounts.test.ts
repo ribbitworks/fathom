@@ -19,7 +19,7 @@ import {
 import { createAccount } from "@fathom/server/accounts";
 import { createAuth } from "@fathom/server/auth";
 import { findStartingRole } from "@fathom/server/roles";
-import { permissionSchema, startingRoles } from "@fathom/shared";
+import { permissionSchema, roleSchema, startingRoles } from "@fathom/shared";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { asc, desc, eq, inArray } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -119,6 +119,12 @@ describe("the persona accounts", () => {
     expect(actor.permissions).toEqual([...permissionSchema.options].sort());
   });
 
+  it("give the Superuser every starting role besides its own default", () => {
+    const superuser = personaAccounts.find(({ name }) => name === "Superuser");
+    expect(superuser?.role).toBe("superuser");
+    expect(superuser?.otherRoles).toEqual(roleSchema.options);
+  });
+
   it("act as their persona's starting role", () => {
     const manager = personaActor(
       { id: "", name: "", email: "" },
@@ -158,7 +164,7 @@ describe("seeding the accounts", () => {
               name: expect.any(String) as unknown,
               isDefault: true,
             },
-        ...(account.otherRoles ?? []).map((key) => ({
+        ...[...(account.otherRoles ?? [])].sort().map((key) => ({
           key,
           name: expect.any(String) as unknown,
           isDefault: false,

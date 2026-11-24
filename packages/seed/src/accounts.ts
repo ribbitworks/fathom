@@ -14,7 +14,7 @@ import { type Actor, actorFor, actorWith } from "@fathom/server/access";
 import { createAccount, setAccountActive } from "@fathom/server/accounts";
 import type { Auth } from "@fathom/server/auth";
 import { findStartingRole } from "@fathom/server/roles";
-import { permissionSchema, type Role } from "@fathom/shared";
+import { permissionSchema, type Role, roleSchema } from "@fathom/shared";
 import { and, inArray, isNull, sql } from "drizzle-orm";
 
 // The email domain of the seeded accounts.
@@ -95,6 +95,7 @@ export const personaAccounts: readonly PersonaAccount[] = [
     name: "Superuser",
     email: `superuser@${accountDomain}`,
     role: "superuser",
+    otherRoles: roleSchema.options,
   },
 ];
 

@@ -327,7 +327,7 @@ Seeding adds these accounts:
 
 - One for each persona in the [Product Brief](../product/brief.md#users), holding its role from [Roles](../product/roles.md#starting-roles). The Feature Lead also holds Engineering Manager, to try switching roles.
 - A second Engineering Operations Manager, so some drafts were changed by two people.
-- A Superuser, whose role grants every permission, for trying a feature without changing accounts. It isn't a starting role, so a Fathom set up without the seed data doesn't have it.
+- A Superuser, whose role grants every permission, for trying a feature without changing accounts. It isn't a starting role, so a Fathom set up without the seed data doesn't have it. The Superuser also holds every starting role, so each role can be tried from the role menu without signing out. Its drafts are its own under every role, as [Roles](../product/roles.md#accounts-and-the-acting-role) sets out, so trying an approval as a role without Approve own drafts still needs a second account.
 
 | Account | Name | Roles |
 | --- | --- | --- |
@@ -341,7 +341,7 @@ Seeding adds these accounts:
 | `executive@fathom.test` | Executive | Executive |
 | `team.member@fathom.test` | Team Member | Team Member |
 | `fathom.administrator@fathom.test` | Fathom Administrator | Administrator |
-| `superuser@fathom.test` | Superuser | Superuser |
+| `superuser@fathom.test` | Superuser | Superuser (default) and every starting role |
 
 - They share one random password, kept in `.dev/secrets/dev_account_password` so it stays the same between resets. `pnpm db:seed` and `pnpm dev:reset` print it.
 - They don't have to change it at first sign-in.
