@@ -4,12 +4,14 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/markdown-style-guidelines.md", "docs/standards/help-pages.md", "docs/standards/testing.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Documentation Standards
 
-How Fathom's documents are written and kept current. Documents are read by people and by AI coding assistants, so they must be clear, unambiguous and correct. Formatting rules live in [Markdown Style Guidelines](markdown-style-guidelines.md). Help pages also follow [Help Page Standards](help-pages.md), and manual tests [Testing Standards § Manual Tests](testing.md#manual-tests).
+How Fathom's documents are written and kept current. Documents are read by people and by AI coding assistants, so they must be clear, unambiguous and correct.
+
+Formatting rules live in [Markdown Style Guidelines](markdown-style-guidelines.md). Help pages also follow [Help Page Standards](help-pages.md), and manual tests [Testing Standards § Manual Tests](testing.md#manual-tests).
 
 ## One Fact, One Place
 
@@ -76,7 +78,10 @@ Each fact lives in the one document that owns it. The documents marked as summar
 - Documents are updated in the same change as the code, not later.
 - A change updates every document it makes untrue, incomplete or out of date, not only the documents it edits: the README's quick start and links, setup steps and commands, the repository layout, architecture, decisions, use cases, Help pages, roadmap and issues.
 - Deferred or partial features stay marked as such; never document unshipped behaviour as done.
-- Known problems, deferred work and accepted review findings are filed as GitHub issues through the issue forms, only with the owner's explicit approval and with the labels [Issues](issues.md) sets out, rather than in a document, and any document that needs one links to it. A pull request that fixes one says `Fixes #n` in its description, never in commit messages or code comments.
+- Known problems, deferred work and accepted review findings are filed as GitHub issues, not kept in a document.
+  - Each is filed through the issue forms, only with the owner's explicit approval, and with the labels [Issues](issues.md) sets out.
+  - Any document that needs one links to it.
+  - A pull request that fixes one says `Fixes #n` in its description, never in commit messages or code comments.
 
 ## Product Language and Implementation Detail
 
@@ -138,12 +143,17 @@ README files, Help pages and documents meant for outside readers may omit frontm
 
 ## Style and Tone
 
-- **Succinct:** prefer short sentences and bullet points over long paragraphs.
+- **Succinct:** short sentences, each saying one thing.
+- **No walls of text:** a paragraph, list item or table cell **Must Not** run past about three sentences, or about 60 words, whichever comes first.
+  - Steps in order are a numbered list, a set of facts or options is bullets, and a comparison is a table.
+  - A section that grows long is split under headings.
+  - **Bad:** one paragraph naming each command, what it runs, when, and its exceptions.
+  - **Good:** a bullet for each command, then a short list of the exceptions.
 - **Imperative in rules:** standards use **Must**, **Must Not** and **Required**, not "should probably" or "consider".
 - **Generic examples:** use generic names such as `TargetEntity` or `ExampleService` in pattern examples, so they are not copied as real code.
 - **Plain punctuation:** no emoji, and no em dashes or en dashes; use a comma, colon, semicolon, parentheses or a new sentence instead, and write ranges with "to".
 - **Canadian English:** documents and on-screen text use Canadian English, such as colour, harbour, centre, and licence as a noun.
 - **Full paths:** refer to files by their full path from the repository root, such as `docs/design/domain-model.md`, not a bare file name.
 - **Descriptive links:** link text says what the target is, such as `[Architecture](docs/design/architecture.md) for layer rules`, never "this" or "here".
-- **Diagrams as code:** use Mermaid for flows and relationships, and tables for comparisons. Prefer them to images.
+- **Diagrams as code:** use Mermaid for flows and relationships, preferring it to images.
 - **No unrequested documents:** do not add Markdown files nobody asked for unless the change needs them.

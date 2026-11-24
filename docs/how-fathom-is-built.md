@@ -55,14 +55,26 @@ flowchart TD
 1. **Small pull requests:** Each pull request covers one task, usually in one reviewed commit. A batch of issue fixes in one area commits each fix on its own, has one review for the whole branch, and stays under about 1,500 added lines, as [Issues](standards/issues.md#issue-batches) sets out.
 1. **The screen check:** The maintainer looks at every screen change, in a browser, before the tests and the review. Nothing goes further until the maintainer is satisfied with the screen.
 1. **Tests while working:** The tests that import the changed code, and the linters, run while the change is made, and again, with `pnpm check:push`, before each push.
-1. **A separate review:** Another agent, which did not write the change, reviews it against the [Code Review Standards](standards/code-review.md). It rates each focus area from 1 to 5, and the change is ready only when every area rates 5. A faster model may review changes to documents, scripts, on-screen wording and ordinary tests. Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as [Code Review Standards § Review Process](standards/code-review.md#review-process) sets out. Every finding is fixed, or the maintainer agrees in writing to leave it.
+1. **A separate review:** Another agent, which did not write the change, reviews it against the [Code Review Standards](standards/code-review.md). It rates each focus area from 1 to 5, and the change is ready only when every area rates 5.
+   - A faster model may review changes to documents, scripts, on-screen wording and ordinary tests.
+   - Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as [Code Review Standards § Review Process](standards/code-review.md#review-process) sets out.
+   - Every finding is fixed, or the maintainer agrees in writing to leave it.
 1. **Manual tests:** The maintainer approves or runs a new manual test, or a significant change to one, before it is committed. Every other change is committed, pushed and opened as a pull request once it passes its review.
-1. **The full check:** GitHub runs `pnpm check` on every push to a pull request and to `main`: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans. A change to documentation alone leaves out the unit, integration, access control and security tests and the container tests, which every other change and every push to `main` runs.
+1. **The full check:** GitHub runs `pnpm check` on every push to a pull request and to `main`: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans.
+   - A change to documentation alone leaves out the unit, integration, access control and security tests, and the container tests.
+   - Every other change, and every push to `main`, runs them.
 1. **Merge:** Nothing is merged until the full check and the container tests pass, which a rule on `main` enforces, and never without the maintainer's word.
 
 Duplicated code isn't allowed: a new component, helper or rule first looks for one that already does the job, and the review searches for one too. Only the maintainer can approve an exception.
 
-GitHub runs the full check on `main` and on each pull request, all but its package tests for a pull request of documentation alone, and the container tests on `main` and on each pull request that changes more than documentation, with CodeQL's code scanning beside them, the daily scan of the container images, a build and scan of each release tag's images before its release is drafted, and, when the maintainer publishes a release, the scan and publishing of its images. [Testing Standards § From a Change to a Merge](standards/testing.md#from-a-change-to-a-merge) draws every step of these checks.
+Besides the full check and the container tests, GitHub runs:
+
+- CodeQL's code scanning
+- the daily scan of the container images
+- a build and scan of each release tag's images, before its release is drafted
+- the scan and publishing of a release's images, when the maintainer publishes it
+
+[Testing Standards § From a Change to a Merge](standards/testing.md#from-a-change-to-a-merge) draws every step of these checks.
 
 ## The Standards
 
