@@ -14,7 +14,9 @@ Two earlier decisions constrain it. Every read goes through one data access laye
 ## Options
 
 - **A JSON column on each table:** Each record holds its custom values in one PostgreSQL `jsonb` column. Simple to read and write, but PostgreSQL's foreign keys work only on columns, so links inside JSON cannot be enforced, and enforcing uniqueness needs an index for each field, which is a schema change.
-- **A values table:** One table holds every custom value, one row per record and field, with one typed column for each field type, such as text, number, and date, plus foreign key columns for the record a value belongs to and the record it links to. Fixed indexes and foreign keys, created by migrations, enforce links and uniqueness for every field.
+- **A values table:** One table holds every custom value, one row per record and field.
+  - **Columns:** One typed column for each field type, such as text, number, and date, plus foreign key columns for the record a value belongs to and the record it links to.
+  - **Enforcement:** Fixed indexes and foreign keys, created by migrations, enforce links and uniqueness for every field.
 - **Database tables created by users:** Each custom table and field becomes a real table or column. Ruled out by ADR 0002, since the application cannot change the schema.
 
 ## Decision
@@ -42,7 +44,11 @@ Custom fields and tables use a values table.
 Columns on People, planned hires and features can be of four types, "Choice from a list", "Web link", "Note", and "Number", as the [Domain Model](../design/domain-model.md#configuration-entities) records:
 
 - **Storage:** field definitions, and a values table with an owner column each for people, planned hires and features, a link column for choices, a typed address column and text column for web links, a text column for a note's Markdown, which is never empty, and a numeric column for numbers.
-- **Checks:** exactly one owner column is set, and each value row holds exactly one of a choice, a link, a note, or a number. Each chosen choice has a row of its own, and an index allows one link, one note, and one number for each record and column. A list or choice cannot be deleted while a column or value uses it.
+- **Checks:**
+  - **One owner:** exactly one owner column is set.
+  - **One value:** each value row holds exactly one of a choice, a link, a note, or a number.
+  - **Rows per column:** each chosen choice has a row of its own, and an index allows one link, one note, and one number for each record and column.
+  - **Deleting:** a list or choice cannot be deleted while a column or value uses it.
 - **Classes:** a web link, note, or number column has a class of its own, since it draws on no list.
 - **Column order:** the order of a table's columns, built-in and added alike, is kept as one list of column keys for each table.
 
