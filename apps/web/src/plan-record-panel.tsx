@@ -20,7 +20,6 @@ import { DialogActions } from "./dialog-actions.tsx";
 import { featureColumnGroups, featureColumns } from "./feature-table.tsx";
 import { focusRefusedSoon } from "./focus.ts";
 import {
-  type Identified,
   livePlanRecords,
   noRecordProblem,
   type PlanChange,
@@ -256,13 +255,6 @@ export function recordPanel({
   const { type, record: shown, ownDraft } = found;
   const columns = found.columns();
   const canEdit = editsKind(type);
-  const identified = new Map<string, Identified>(
-    [
-      ...asShown(plan.customers),
-      ...asShown(plan.projects),
-      ...asShown(plan.proposals),
-    ].map((one) => [one.id, one]),
-  );
   // Projects and proposals, which name features, show their scope history.
   const scope =
     "featureIds" in shown ? (
@@ -321,7 +313,6 @@ export function recordPanel({
           record={shown}
           ownDraft={ownDraft}
           canEdit={canEdit}
-          identified={identified}
           follow={follow}
           onChange={(change) => {
             onChange(type, shown, change);

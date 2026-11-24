@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Feature Links
@@ -163,7 +163,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `59FB` Select the **Projects** page in the left-hand menu.
   - **Expected:** In the row 'Internal Tools':
     - Its **Features** cell names 'Bulk Import' and 'Usage Alerts'.
-    - A hollow yellow dot is before them.
+    - 'Bulk Import' has a hollow yellow dot before it.
+    - 'Usage Alerts' has no dot before it.
     - The light green Live row under it names 'Usage Alerts' alone in its **Features** cell.
   - **Notes:**
 

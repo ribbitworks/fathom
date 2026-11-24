@@ -87,16 +87,18 @@ export function projectColumns(
     nameColumn(),
     idColumn<Project>(planIdNames.project),
     ownerColumn<Project>(choices.people),
-    customersColumn<Project>(choices.customers),
+    customersColumn<Project>(choices.customers, choices.drafted.projects),
     pickedColumn<Project>(
       "proposalIds",
       planColumnNames.proposalIds,
       choices.proposals,
+      choices.drafted.projects,
     ),
     pickedColumn<Project>(
       "featureIds",
       planColumnNames.featureIds,
       choices.features,
+      choices.drafted.projects,
     ),
     ...projectDateColumns.map(([key, label]) => projectDateColumn(key, label)),
   ];
@@ -137,7 +139,7 @@ export function proposalColumns(
     idColumn<Proposal>(planIdNames.proposal),
     field<Proposal>("link", planColumnNames.link, "link"),
     ownerColumn<Proposal>(choices.people),
-    customersColumn<Proposal>(choices.customers),
+    customersColumn<Proposal>(choices.customers, choices.drafted.proposals),
     {
       ...field<Proposal>("statusId", planColumnNames.statusId, "choice", {
         required: true,
@@ -150,6 +152,7 @@ export function proposalColumns(
       "featureIds",
       planColumnNames.featureIds,
       choices.features,
+      choices.drafted.proposals,
     ),
   ];
 }

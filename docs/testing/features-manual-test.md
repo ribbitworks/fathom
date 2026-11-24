@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Features
@@ -270,7 +270,7 @@ Covered by [REL-23](release-cycles-manual-test.md#rel-23-a-cycles-new-length-mov
 - [ ] `53DF` In the row 'Scheduler API', select the **Customers** cell and pick the first two customers offered.
   - **Expected:**
     - The cell shows both customers' names.
-    - A hollow yellow dot is before them.
+    - Each has its own hollow yellow dot before it.
   - **Notes:**
 
 - [ ] `C664` In the row 'Offline Sync', select the **Notes** cell.

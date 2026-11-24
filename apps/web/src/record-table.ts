@@ -87,21 +87,25 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
   resubmitColumn: (id: string) => void;
 }
 
-// Another record naming a row's record, as drafted or as live, with what its own draft does to the
-// link, if anything.
+type PartDraft =
+  | (Omit<DraftLike, "action"> & {
+      action: NonNullable<DraftLike["action"]>;
+    })
+  | undefined;
+
+// A record in a list a row shows, as drafted or as live, with what a draft does to it there, if
+// anything: another record naming the row's, by that record's own draft, or one the row's own
+// field lists, by the row's draft.
 export interface NamingPart {
   record: {
     id: string;
     name: string;
     externalId?: string | null;
-    draft?:
-      | (Omit<DraftLike, "action"> & {
-          action: NonNullable<DraftLike["action"]>;
-        })
-      | undefined;
   };
   part: DraftedPart | undefined;
   live: boolean;
+  // The draft that adds the record to the list or takes it away.
+  draft: PartDraft;
 }
 
 // A record's built-in detail, keyed by its name, or an added column, keyed by its identifier, with
@@ -139,9 +143,9 @@ export interface Column<
   // What a record's cell shows in place of its value in words, such as labels in a team's colours,
   // after its colour's square where it has one, in its Live row too, given the record as it is live.
   content?: (record: Rec) => ReactNode;
-  // For a column of other records naming the row's record, each of them, as drafted and as live,
-  // given the row's record's identifier, so a details panel marks them as the cell does.
-  parts?: (id: string) => readonly NamingPart[];
+  // For a column listing records, each of them, as drafted and as live, given the row's record, so a
+  // details panel marks them as the cell does.
+  parts?: (record: Rec) => readonly NamingPart[];
   // What a Live row's cell shows, given the record as it is live, where it differs from content's,
   // such as parts other records' drafts change, drawn as they are live.
   liveContent?: (record: Rec) => ReactNode;

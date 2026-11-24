@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Drafts, Values and Access
@@ -46,10 +46,11 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** `draftRowClass` in `apps/web/src/list-drafts.tsx`, with the row of the table or panel that holds it.
   - **Example:** Salvador Quiñones Méndez on People.
 - **A part a draft adds or removes:** A part of a record, such as a feature team's member, a manager's direct report or a team in a month's cell, has the draft's dot before it, and is struck through when the draft takes it away.
+  - **A list of records:** A record listing others, such as a project's customers, marks only those its draft adds or takes away, each with its own dot, in its cell and its details alike. The rest have no mark, and its details have no Live line for the list.
   - **Read aloud:** Screen readers read added, removed or changed after it, since the dot and line are only seen.
   - **A record's parts:** A record whose parts have drafts, such as a list and its choices, has one dot before its parts. That dot is waiting while any part's draft waits, and rejected only once every one was.
   - **As it is live:** As it is live, in a Live row or live only, a part a draft takes away or changes has Live's green dot before it, its tip, live only, naming the change waiting, such as Live. Its removal is waiting for approval.
-  - **Drawn by:** `DraftedPartItem` in `apps/web/src/status-mark.tsx` and `partsMark` in `apps/web/src/draft-marks.ts`, used by `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx`, `PartsCell` in `apps/web/src/summary-row.tsx`, `NamersCell` and `NamerName` in `apps/web/src/plan-table.tsx` for a feature's Projects and Proposals, in its cells and its details, and the Person and feature team panels.
+  - **Drawn by:** `DraftedPartItem` in `apps/web/src/status-mark.tsx` and `partsMark` in `apps/web/src/draft-marks.ts`, used by `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx`, `PartsCell` in `apps/web/src/summary-row.tsx`, `NamersCell` and `NamerName` in `apps/web/src/plan-table.tsx` for a feature's Projects and Proposals and, through `listedColumn`, a record's own Customers, Proposals and Features, in its cells and its details, and the Person and feature team panels.
   - **Example:** Mobile apps on the Org chart's feature teams: Atmananda Ganaka added, Priscille Adam taken away.
 - **A move:** A moved item has its dot and the Moved box, and a dimmed copy stays in its old place after a green dot. On the org chart, a person drafted to another manager is drawn under that manager, with a Live copy under the manager they report to now.
   - **Drawn by:** `ChoiceCells` in `apps/web/src/choice-row.tsx` and `LiveChoiceRow` in `apps/web/src/live-choice-row.tsx` for a list's choices, and `chartPeople` in `apps/web/src/org-chart.ts`.

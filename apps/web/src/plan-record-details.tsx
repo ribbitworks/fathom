@@ -19,7 +19,6 @@ import {
   releaseColumnKey,
 } from "./feature-table.tsx";
 import {
-  type Identified,
   livePlanRecords,
   NamerName,
   noRecordProblem,
@@ -103,29 +102,21 @@ const linkedPages = new Map<string, (follow: Follow, id: string) => void>([
   ],
 ]);
 
-// The records a panel's links can name with an ID of their own, by identifier.
-type IdentifiedRecords = ReadonlyMap<string, Identified>;
-
 function RecordLinks({
   column,
   ids,
-  identified,
   onShow,
 }: {
   column: Column<never, PlanChange>;
   ids: readonly string[];
-  identified: IdentifiedRecords;
   onShow: (id: string) => void;
 }) {
-  const named = ids.flatMap((id) => {
-    const choice = column.choices.find((one) => one.id === id);
-    return choice === undefined ? [] : [choice];
-  });
+  const named = column.choices.filter(({ id }) => ids.includes(id));
   return (
     <RecordLinkList
       links={named.map(({ id, label }) => ({
         id,
-        name: <RecordName record={identified.get(id) ?? { id, name: label }} />,
+        name: <RecordName record={{ id, name: label }} />,
         onShow: () => {
           onShow(id);
         },
@@ -141,7 +132,6 @@ export function PlanRecordDetails({
   record,
   ownDraft,
   canEdit,
-  identified,
   follow,
   onChange,
   sections,
@@ -153,7 +143,6 @@ export function PlanRecordDetails({
   // The record's draft, whatever the Draft view, which decides how its marks show.
   ownDraft: PlanRecord["draft"] | undefined;
   canEdit: boolean;
-  identified: IdentifiedRecords;
   follow: Follow;
   onChange: (change: PlanChange) => void;
   // The parts its details are shown in, any column none names in a last part of its own; or one
@@ -205,7 +194,6 @@ export function PlanRecordDetails({
       value={column.value(record as never)}
       ownDraft={ownDraft}
       editing={editing(edited)}
-      identified={identified}
       follow={follow}
     />
   );
@@ -245,7 +233,6 @@ function DetailRow({
   value,
   ownDraft,
   editing,
-  identified,
   follow,
 }: {
   column: Column<never, PlanChange>;
@@ -255,22 +242,24 @@ function DetailRow({
   value: CellValue;
   ownDraft: PlanRecord["draft"] | undefined;
   editing: Editing | undefined;
-  identified: IdentifiedRecords;
   follow: Follow;
 }) {
   const draft =
-    ownDraft?.action === "changed" && ownDraft.changed.includes(column.key)
+    ownDraft?.action === "changed" &&
+    ownDraft.changed.includes(column.key) &&
+    column.marksParts !== true
       ? ownDraft
       : undefined;
   const linkedPage = linkedPages.get(column.key);
   const also = inUnitsWords(column, units, record);
   const show = useDraftView();
-  // Records naming this one are listed as the Draft view lists them, each named and marked by its
-  // own part, so one a draft removes still shows.
+  // A list of records, those naming this one or those its own field names, shows as the Draft
+  // view shows it, each record marked by its own part, so one a draft removes still shows, with
+  // no Live line.
   const namers =
     column.parts === undefined
       ? undefined
-      : partsShown(column.parts(record.id), show);
+      : partsShown(column.parts(record as never), show);
   const shown =
     linkedPage !== undefined && namers !== undefined ? (
       namers.length === 0 ? undefined : (
@@ -293,7 +282,6 @@ function DetailRow({
       <RecordLinks
         column={column}
         ids={value}
-        identified={identified}
         onShow={(id) => {
           linkedPage(follow, id);
         }}

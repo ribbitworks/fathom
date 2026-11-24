@@ -294,7 +294,7 @@ export function featureColumns(
     }),
     field<Feature>("neededBy", planColumnNames.neededBy, "month"),
     {
-      ...customersColumn<Feature>(choices.customers),
+      ...customersColumn<Feature>(choices.customers, choices.drafted.features),
       readOnlyOn: () => !editsCommitments,
     },
     featureNamersColumn(
