@@ -34,6 +34,21 @@ export function monthQuarters(months: readonly string[]): MonthQuarter[] {
   return quarters;
 }
 
+// A quarter as a strip names it: as wide as its months, in view while any of its months is, and
+// current while it holds this month.
+export const quarterPeriod = (
+  quarter: MonthQuarter,
+  inView: (month: string) => boolean,
+  thisMonth: string,
+) => ({
+  key: quarter.start,
+  label: quarter.label,
+  short: quarter.short,
+  weight: quarter.months.length,
+  inView: quarter.months.some(inView),
+  current: quarter.months.includes(thisMonth),
+});
+
 // The quarter the ‹ arrow goes to, starting before the first month on screen, which is the start
 // of the quarter on screen when partway into it; and the quarter › goes to, starting after it.
 export function quarterSteps(

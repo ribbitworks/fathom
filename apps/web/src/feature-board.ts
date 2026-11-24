@@ -16,10 +16,11 @@ import {
   type ReleaseStream,
 } from "@fathom/shared";
 import { formatMonth } from "./day-formats.ts";
+import { monthQuarters, quarterPeriod, quarterSteps } from "./month-strip.ts";
 import { cycleChoiceId } from "./projects.ts";
 import type { ViewPart } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
-import { includesCycle, keptReleases } from "./releases.ts";
+import { daysBetween, includesCycle, keptReleases } from "./releases.ts";
 
 const boardLabel = "Board";
 
@@ -105,20 +106,29 @@ export interface BoardColumn {
 const releaseIn = (stream: ReleaseStream, startsOn: string) =>
   keptReleases(stream).find((release) => includesCycle(release, startsOn));
 
-// Where a stream's cycles are shown from: the cycle starting on the day asked for, or else the
-// current one, or else the first to come, or else the last; moved back where needed so as many as
-// fit are shown.
-export function firstShown(
+// The month or cycle the board goes to: the one starting on the day asked for, or else the current
+// one, or else the first to come, or else the last.
+export function periodGoneTo(
   cycles: readonly Cycle[],
-  fits: number,
   today: string,
   from?: string,
 ): number {
   const asked = cycles.findIndex(({ startsOn }) => startsOn === from);
+  if (asked !== -1) return asked;
   const coming = cycles.findIndex(({ endsOn }) => endsOn >= today);
-  let start = asked;
-  if (start === -1) start = coming === -1 ? cycles.length - 1 : coming;
-  return Math.max(0, Math.min(start, cycles.length - fits));
+  return coming === -1 ? cycles.length - 1 : coming;
+}
+
+// Where the board's columns start: second the period gone to, so the one before it stays in view,
+// as on a month grid, or first where only one fits; moved back where needed so as many as fit are
+// shown.
+export function firstShown(
+  count: number,
+  fits: number,
+  goneTo: number,
+): number {
+  const before = fits > 1 ? 1 : 0;
+  return Math.max(0, Math.min(goneTo - before, count - fits));
 }
 
 export const isCurrent = (cycle: Cycle, today: string): boolean =>
@@ -159,11 +169,13 @@ export const monthPeriod = (month: string): Cycle => ({
   months: [{ month, share: 1 }],
 });
 
-// How far ahead the board's months run at the least, so ‹ and › step through a year.
+// How far back the board's months run, and how far ahead at the least, so ‹ and › step through a
+// year either way. A feature needed before the first month is left off the board.
+const monthsBack = 12;
 const monthsAhead = 12;
 
-// The months a board shows: from this month to the latest any feature is needed by, a year ahead at
-// the least, and at least as many as fit.
+// The months a board shows: from a year back to the latest any feature is needed by, a year ahead
+// at the least, and at least as many as fit from this month.
 export function boardMonths(
   features: readonly Pick<Feature, "neededBy">[],
   thisMonth: string,
@@ -173,9 +185,10 @@ export function boardMonths(
     .map(({ neededBy }) => neededBy ?? thisMonth)
     .reduce((last, month) => (month > last ? month : last), thisMonth);
   const least = addToMonth(thisMonth, Math.max(monthsAhead, fits - 1));
-  return monthsBetween(thisMonth, latest > least ? latest : least).map(
-    monthPeriod,
-  );
+  return monthsBetween(
+    addToMonth(thisMonth, -monthsBack),
+    latest > least ? latest : least,
+  ).map(monthPeriod);
 }
 
 // The board's columns by month: as many as fit, from the first shown, then No date.
@@ -194,14 +207,10 @@ export const monthColumns = (
   { key: noDateKey, kind: "noDate", current: false },
 ];
 
-// The column a feature is in by month: the month it is needed by, this month where that has passed,
-// or No date.
-export const monthColumnOf =
-  (thisMonth: string) =>
-  ({ neededBy }: Pick<Feature, "neededBy">): string => {
-    if (neededBy === null) return noDateKey;
-    return neededBy < thisMonth ? thisMonth : neededBy;
-  };
+// The column a feature is in by month: the month it is needed by, or No date.
+export const monthColumnOf = ({
+  neededBy,
+}: Pick<Feature, "neededBy">): string => neededBy ?? noDateKey;
 
 // Whether a feature's draft moves it to another month.
 export const movesMonth = (feature: Pick<Feature, "draft">): boolean =>
@@ -237,9 +246,9 @@ export const movesCycle = (feature: Pick<Feature, "draft">): boolean =>
   );
 
 // How the board lays out its features: months, unless a stream is chosen, whose cycles are then
-// its columns; the periods its strip names, the columns shown from the first, the column each
-// feature is in, and whether a draft moves a feature to another column. Months run to the latest
-// month any feature is needed by, as drafted or as live.
+// its columns; its strip, the columns shown from the first, the column each feature is in, and
+// whether a draft moves a feature to another column. Months run to the latest month any feature is
+// needed by, as drafted or as live.
 export function boardLayout({
   stream,
   live,
@@ -256,24 +265,26 @@ export function boardLayout({
   fits: number;
   from: string | undefined;
 }) {
-  const thisMonth = monthOf(today);
+  const placeOf = (periods: readonly Cycle[]) => {
+    const goneTo = periodGoneTo(periods, today, from);
+    const start = firstShown(periods.length, fits, goneTo);
+    return { periods, start, goneTo, fits, today };
+  };
   if (stream === undefined) {
-    const periods = boardMonths(features, thisMonth, fits);
-    const start = firstShown(periods, fits, today, from);
+    const place = placeOf(boardMonths(features, monthOf(today), fits));
     return {
-      periods,
-      start,
-      columns: monthColumns(periods, start, fits, today),
-      columnOf: monthColumnOf(thisMonth),
+      periods: place.periods,
+      strip: quarterStrip(place),
+      columns: monthColumns(place.periods, place.start, fits, today),
+      columnOf: monthColumnOf,
       moves: movesMonth,
     };
   }
-  const periods = stream.cycles;
-  const start = firstShown(periods, fits, today, from);
+  const place = placeOf(stream.cycles);
   return {
-    periods,
-    start,
-    columns: boardColumns(stream, start, fits, today, live),
+    periods: place.periods,
+    strip: cycleStrip(place),
+    columns: boardColumns(stream, place.start, fits, today, live),
     columnOf,
     moves: movesCycle,
   };
@@ -346,4 +357,110 @@ export function riskStep(
       steps: offered.length,
     }
   );
+}
+
+// A column's width in whole pixels, so the one-pixel lines between columns fall on whole pixels and
+// none is drawn thicker or lost: the room's share less its lines, never under the least width.
+export const wholeColumnWidth = ({
+  room,
+  columns,
+  lines,
+  least,
+}: {
+  room: number;
+  columns: number;
+  lines: number;
+  least: number;
+}): number => Math.max(least, Math.floor((room - lines) / columns));
+
+// A period the board's strip names, and the period choosing it puts first on the board.
+export interface BoardStripPeriod {
+  key: string;
+  label: string;
+  short: string;
+  weight: number;
+  inView: boolean;
+  // Holding the month or cycle the board went to, by the strip, an arrow or Today, or on opening.
+  selected: boolean;
+  current: boolean;
+  first: Cycle;
+}
+
+// What the board's strip is drawn from: the board's months or cycles, where its columns start, the
+// one gone to, by the strip, an arrow or Today, or on opening, and how many fit.
+interface StripPlace {
+  periods: readonly Cycle[];
+  start: number;
+  goneTo: number;
+  fits: number;
+  today: string;
+}
+
+// The board's strip, with the periods ‹ and › step to, › only while a later one is out of view.
+export interface BoardStrip {
+  periods: BoardStripPeriod[];
+  previous: Cycle | undefined;
+  next: Cycle | undefined;
+}
+
+// A schedule's cycles in the strip, each as wide as its days, ‹ and › stepping a cycle.
+export function cycleStrip({
+  periods,
+  start,
+  goneTo,
+  fits,
+  today,
+}: StripPlace): BoardStrip {
+  return {
+    periods: periods.map((cycle, index) => ({
+      key: cycle.startsOn,
+      label: cycle.name,
+      short: cycle.name,
+      weight: daysBetween(cycle.startsOn, cycle.endsOn) + 1,
+      inView: index >= start && index < start + fits,
+      selected: index === goneTo,
+      current: isCurrent(cycle, today),
+      first: cycle,
+    })),
+    previous: goneTo > 0 ? periods.at(goneTo - 1) : undefined,
+    next: start + fits < periods.length ? periods.at(goneTo + 1) : undefined,
+  };
+}
+
+// The quarters the board's months fall in, as a month grid's strip names them, so a long range of
+// months still fits, ‹ and › stepping a quarter; › goes to the last month once no later quarter
+// starts, while the months after those shown are still out of view.
+export function quarterStrip({
+  periods,
+  start,
+  goneTo,
+  fits,
+  today,
+}: StripPlace): BoardStrip {
+  const monthsShown = new Set(
+    periods.slice(start, start + fits).map(({ startsOn }) => monthOf(startsOn)),
+  );
+  const quarters = monthQuarters(
+    periods.map(({ startsOn }) => monthOf(startsOn)),
+  );
+  const goneToMonth = monthOf(periods.at(goneTo)?.startsOn ?? today);
+  const steps = quarterSteps(quarters, goneToMonth);
+  return {
+    periods: quarters.map((quarter) => ({
+      ...quarterPeriod(
+        quarter,
+        (month) => monthsShown.has(month),
+        monthOf(today),
+      ),
+      selected: quarter.months.includes(goneToMonth),
+      first: monthPeriod(quarter.months[0]),
+    })),
+    previous: steps.previous && monthPeriod(steps.previous.months[0]),
+    next:
+      start + fits < periods.length
+        ? steps.next === undefined
+          ? periods.at(-1)
+          : monthPeriod(steps.next.months[0])
+        : undefined,
+  };
 }

@@ -38,7 +38,7 @@ Every view with time across it (the Releases timeline, the Plan and the project 
 | Triangle under the bar, the size of a diamond, named such as Needed by May | Needed by, at the end of its month |
 | Red Late or Not staffed pill at the end of a bar | [Late](../../product/domain.md#planning-terms), or [Not staffed](../../design/pages/features.md#columns). Never a faint red outline. |
 | Short upright grey line at a cycle lane's end | A schedule's last day, where it ends |
-| Red line | Today, only ever as a thin line, such as a timeline's line, the strip's underline, the underline of a month grid's current month and the line along the top of the Features Board's current heading. Never red words, a red fill or a red box, which mean a problem, such as Late. |
+| Red line | Today, only ever as a thin line, such as a timeline's line, the strip's underline, the underline of a month grid's current month and the underline of the Features Board's current heading. Never red words, a red fill or a red box, which mean a problem, such as Late. |
 
 - **The language:** Each mark in the table means one thing on every timeline. Drafts use the [draft marks](drafts-and-values.md#drafts), and a dashed edge never means a draft.
   - **Drawn by:** `Tracks` in `apps/web/src/timeline-view.tsx` draws today's line in the theme's `--fathom-today`. `ReleaseBar` and `useReleaseLayer` in `apps/web/src/release-layer.tsx` draw the release diamonds, a schedule's end, and the drafts of schedules and releases.
@@ -61,13 +61,15 @@ Every view with time across it (the Releases timeline, the Plan and the project 
   - Where the view asks, each release span, cycle block, diamond and schedule name is a button that opens its record. Tab reaches it, and it is named as its tip reads.
   - **Drawn by:** `useReleaseLayer` in `apps/web/src/release-layer.tsx` shows every schedule's releases, each drawn by `ReleaseBar` in the form its `ReleaseLayerForm` names. It opens a mark's record through its optional `onOpen`.
   - **Example:** Platform's releases on the Releases timeline.
-- **The strip:** One strip sits above every timeline, the Features Board and the month grids. It shows the whole range as quarters, or as months or cycles on the board, each as wide as its share. ‹ comes before the strip; › and Today come after it.
+- **The strip:** One strip sits above every timeline, the Features Board and the month grids. It shows the whole range as quarters, or as cycles on the board when it shows a schedule's, each as wide as its share. ‹ comes before the strip; › and Today come after it.
   - Periods in view are tinted, the chosen one is filled with the accent colour, and the current one is underlined in today's red.
-  - On the board, it steps by month or by cycle. On a timeline, a click, ‹ or › scrolls a quarter's start a sixth of the way across, where Today puts today, so the end of the quarter before stays in sight.
+  - On the board by months, the strip names quarters, as a month grid's does, each as wide as its months on the board, the first and last cut short. Choosing a quarter goes to its first month, and ‹ and › step a quarter, named Previous quarter and Next quarter.
+  - On the board by a schedule's cycles, the strip names each cycle, and ‹ and › step a cycle.
+  - On a timeline, a click, ‹ or › scrolls a quarter's start a sixth of the way across, where Today puts today, so the end of the quarter before stays in sight.
   - On a month grid, a click, ‹ or › scrolls the quarter's first month to just after the frozen columns, and Today scrolls to the current month.
   - Scrolling moves the tint. On a month grid, a month counts as in view once half its column is.
   - The periods are one Tab stop, landing on the one last focused while focus stays in the strip, or else the first in view. The arrow keys, Home and End move between them, and Enter or Space chooses one.
-  - The chosen one, or the one stepped to by ‹ or ›, stays filled until the view moves elsewhere, even when the timeline's end leaves the view where it was.
+  - The chosen one, or the one stepped to by ‹ or ›, stays filled until the view moves elsewhere, even when the timeline's end leaves the view where it was. On the board, the period holding the month or cycle gone to is filled, including on opening and after Today.
   - For assistive technology, periods in view are named as in view, and the chosen one as selected.
   - **Drawn by:** `TimelineStrip` in `apps/web/src/timeline-strip.tsx`. A timeline's quarters come from `QuarterStrip` in `apps/web/src/timeline-view.tsx`, the board's months or cycles from `FeatureBoard` in `apps/web/src/feature-board-view.tsx`, and a month grid's quarters from `MonthStrip` in `apps/web/src/month-grid.tsx`, with the quarters and months in view from `apps/web/src/month-strip.ts`.
   - **Example:** The strip above the Releases timeline, or above Capacity's Feature teams.
@@ -84,9 +86,11 @@ Every view with time across it (the Releases timeline, the Plan and the project 
 
 - **A board:** A board shows a table's records as cards. Its columns are periods, such as months or one schedule's cycles, as many as fit, then a column for none, such as No date or Later. Its rows come from the Group by menu's first grouping, starting with none.
   - It sits under the table's bar, so the search, Draft menu, Metrics, Group by and Views work on it as on the table. The exception: Group by offers no Then by on a board, and a Then by chosen on the table is kept but not shown.
-  - Each column's heading names its period, and, for a cycle, its release in its [coloured box](drafts-and-values.md#values) and the cycle's days. The current period's heading has a red line along its top, like today's line. Every line between headings, rows and cells is one thin line.
+  - Each column's heading names its period, and, for a cycle, its release in its [coloured box](drafts-and-values.md#values) and the cycle's days. The current period's heading is underlined in today's red along its bottom, as a month grid's current month is. Every line between headings, rows and cells is one thin line, so the columns' widths are whole pixels, and the headers draw their own line under them, which stays as rows scroll under the sticky headers.
+  - Months run from 12 months back to the latest month any feature is needed by, a year ahead at the least. A card sits in the month it is needed by, including a month that has passed. A feature needed before the first month isn't on the board, as one targeting a cycle outside the board's columns isn't.
+  - The month or cycle gone to, by opening the board, Today, choosing in the strip, or ‹ or ›, is shown second, so the one before it stays in view, as on a month grid. It is shown first only where just one column fits, and the board moves back where needed so as many as fit are shown.
   - While a side panel, such as a record's details or Metrics, is open beside it, the board keeps its columns and their widths and scrolls sideways under the panel. It fits the space again once the panel has gone.
-  - **Drawn by:** `FeatureBoard` in `apps/web/src/feature-board-view.tsx`, drawn in place of the table by `RecordGrid`'s `body` in `apps/web/src/record-grid.tsx`. Its columns and card order come from `apps/web/src/feature-board.ts`, and the current heading's line from the theme's `--fathom-today-overline` in `apps/web/src/theme.ts`.
+  - **Drawn by:** `FeatureBoard` in `apps/web/src/feature-board-view.tsx`, drawn in place of the table by `RecordGrid`'s `body` in `apps/web/src/record-grid.tsx`. Its columns and card order come from `apps/web/src/feature-board.ts`, the strip's periods from `quarterStrip` and `cycleStrip` there, the whole-pixel widths from `wholeColumnWidth`, and the current heading's underline from the theme's `--fathom-today-underline` in `apps/web/src/theme.ts`.
   - **Example:** The Board on Features.
 - **A card:** A card shows its record's name, then the values the Card menu chooses, one to a line, starting with its key, under its name, small and dimmed. Its height follows what it shows.
   - Its draft is marked as a row's is: a dot before each value a draft changes; the record's own dot before its name for a draft of what the card doesn't show, with Moved for a move; and a tint beside live. A card a draft moves keeps a dimmed copy in its old place, after Live's green dot.
@@ -103,5 +107,6 @@ Every view with time across it (the Releases timeline, the Plan and the project 
   - Like Group by's button, the button names the choice in use, such as Columns: Months, and the menu ticks it.
   - A menu of parts to show, such as the Card menu, ticks each one shown and stays open while they're chosen.
   - Each choice is kept in the address and in a saved view.
-  - **Drawn by:** `AppMenu`, `MenuChoices` and `MenuToggle` in `apps/web/src/app-menu.tsx`, placed by `FeatureBoard` in `TimelineStrip`'s `before`.
+  - The Views menu above a board leaves out what only changes the table (its sort, units, and hidden, frozen, moved and widened columns), since the board orders its own cards and lays out no columns; they stay in the shared view and show again on the table.
+  - **Drawn by:** `AppMenu`, `MenuChoices` and `MenuToggle` in `apps/web/src/app-menu.tsx`, placed by `FeatureBoard` in `TimelineStrip`'s `before`, with the Views menu's `laysOutColumns` in `apps/web/src/table-controls.tsx` false on the board.
   - **Example:** Columns: Months and Card on the Features Board.

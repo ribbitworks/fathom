@@ -400,8 +400,6 @@ select.cellInput {
 
 /* A cell moved to is never left under the header row. */
 .tableScroll {
-  /* Contains its cells' visually hidden text, which would otherwise stretch the page. */
-  position: relative;
   min-height: 0;
   overflow: auto;
   scroll-padding-top: var(--fathom-table-head-height);
@@ -413,7 +411,12 @@ select.cellInput {
    to scroll, slim, in the page's greys, so a wide view is seen to have more, even where the system
    hides scroll bars until used. Chrome, Edge and Safari keep a scroll bar shown once it is styled
    this way; Firefox takes the standard properties instead, which in Chrome would turn the styling
-   below off. */
+   below off. Each contains the visually hidden text of what it scrolls, such as a cell's or a card's
+   words for screen readers, which would otherwise reach past it and stretch the page. */
+.scrollBars {
+  position: relative;
+}
+
 .scrollBars::-webkit-scrollbar {
   width: var(--fathom-scrollbar-size);
   height: var(--fathom-scrollbar-size);

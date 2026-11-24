@@ -4,7 +4,14 @@
 // what each persona drafts, publishes, holds, and rejects, that seeding again makes none of them
 // again, and that removing the seed data discards them, leaving drafts of other records alone.
 
-import { type Database, drafts, unpublishedDrafts, users } from "@fathom/db";
+import {
+  type Database,
+  drafts,
+  features,
+  unpublishedDrafts,
+  users,
+} from "@fathom/db";
+import { addToMonth } from "@fathom/shared";
 import { fictionalOrganization } from "@fathom/fixtures";
 import { createDataAccess } from "@fathom/server/data";
 import { eq, inArray } from "drizzle-orm";
@@ -161,6 +168,17 @@ describe("the seed's drafts of the plan and feature teams", () => {
     expect(
       made.find(({ recordType }) => recordType === "release-stream")?.fields,
     ).toMatchObject({ retired: true });
+    const movedFeature = made.find(
+      ({ recordType, action }) =>
+        recordType === "feature" && action === "changed",
+    );
+    const [liveFeature] = await connection
+      .select({ neededBy: features.neededBy })
+      .from(features)
+      .where(eq(features.id, String(movedFeature?.recordId)));
+    expect(movedFeature?.fields.neededBy).toBe(
+      addToMonth(String(liveFeature?.neededBy), 1),
+    );
     expect(
       made
         .filter(({ recordType }) => recordType === "feature-team")

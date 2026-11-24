@@ -114,16 +114,16 @@ You're done when the rows show under the headings you chose.
 
 ### See Features as a Board
 
-The board starts with months side by side, from this month, with a card for each feature in the month it's needed by. A feature needed by a month that has passed is in this month's column. **No date** is its last column. You can show one schedule's cycles instead, with a card for each feature in the cycle it targets, and **Later** last.
+The board starts with months side by side, from a year back to a year ahead at the least, with a card for each feature in the month it's needed by. That includes a month that has passed. A feature needed more than a year back isn't on the board. **No date** is its last column. The month you opened it on is the second column, so the month before it stays in view. This month's heading is underlined in red. You can show one schedule's cycles instead, with a card for each feature in the cycle it targets, and **Later** last.
 
 1. Choose **Board** beside the **Features** heading.
 1. To see a schedule's cycles, select **Columns**, and choose them, such as **Platform cycles**. Choose **Months** to go back.
-1. To see other months or cycles, select **‹** or **›**, or one in the row above the board.
-1. To go back to this month or the current cycle, select **Today**.
+1. To see other months or cycles, select **‹** or **›**, or one in the row above the board. By months, the row names quarters, such as **Q1 2027**, and **‹** and **›** step a quarter. By cycles, it names each cycle.
+1. To go back to this month or the current cycle, select **Today**. The period in the row above the board that holds the month or cycle you went to is filled in blue.
 1. To choose what the cards show, select **Card**, and tick or untick each part.
 1. To put the cards in rows, select **Group by**, and choose how, such as **Feature team**. Grouped by **Projects**, a feature two projects need has a card in each project's row.
 
-While **Staffed months** is ticked under **Card**, a card that says **Not staffed** in red is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. So does **Views**: the table and the board share one view, and a saved view keeps the board's columns and what its cards show. See [Saved views](saved-views.md).
+While **Staffed months** is ticked under **Card**, a card that says **Not staffed** in red is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. So does **Views**: the table and the board share one view, and a saved view keeps the board's columns and what its cards show. On the board, **Views** doesn't offer the sort, units, or hidden, frozen, moved or widened columns, since the board orders its own cards and has no columns to lay out; they come back when you switch to the table. See [Saved views](saved-views.md).
 
 You're done when the board shows the months or cycles you want.
 

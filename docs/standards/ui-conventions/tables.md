@@ -13,7 +13,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
 
 ## Tables
 
-- **Scroll bars:** Every table, timeline and board uses one style of scroll bar: slim and in the page's greys. It shows whenever there is more to scroll, so a wide view is seen to have more.
+- **Scroll bars:** Every table, timeline and board uses one style of scroll bar: slim and in the page's greys. It shows whenever there is more to scroll, so a wide view is seen to have more. Each scrolling frame with the style contains the visually hidden text of what it scrolls, so it never stretches the page.
   - **Drawn by:** `scrollBars` in `apps/web/src/pages.module.css`. Its size and colour come from the theme's `--fathom-scrollbar-size` and `--fathom-scrollbar-thumb` in `apps/web/src/theme.ts`.
   - **Example:** On Features, narrow the window until the table scrolls sideways.
 - **Drafts in a table changed elsewhere:** A table whose records are changed outside it, such as in their details panel (every tab on Releases), still offers Discard draft and Resubmit in a row's menu for a draft the user may change.
@@ -36,7 +36,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Drawn by:** `columnHeaders` in `apps/web/src/column-header.tsx`.
   - **Example:** On Features, select Move left in the Priority column's menu.
 - **Hiding columns:** Anyone who sees a table can hide any column, required ones included, except the column naming each record. A new table is drawn by the shared table, so its columns hide too.
-  - **The menus:** Hide column is in the column's menu, with Freeze up to this column and the width items. The Views menu shows the column again.
+  - **The menus:** Hide column is in the column's menu, with Freeze up to this column and the width items. The table's Views menu shows the column again; a board's leaves out what only changes the table, as [Menus above a board](dates-timelines-and-boards.md#boards) sets out.
   - **What stays:** A hidden column keeps its filter, its place in the sort and its place in the order. Its filter's pill stays, so nothing narrows the rows unseen. Metrics still offer it.
   - **Frozen columns:** Hiding a frozen column leaves one fewer frozen.
   - **What leaves it out:** An export, and so the question before exporting Personal or Confidential data. The empty row skips it, but still names a required one it needs, such as Site needed. A new record's form shows every column.
@@ -81,7 +81,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
     - **Kept from a reader:** A shared view is kept from a reader when it filters, sorts, breaks down or groups by a column they can't see, at either level, or groups by data they can't see.
   - **Pages not opened:** A role that doesn't open a table's page is sent none of its views. The views are kept, and come back with the page.
   - **The menu:** While a view is applied, Save as new view… sits beside Update view, and Stop sharing current view makes a shared view personal again. The menu names the view the address started from, marked once the view has changed. With none applied, it is marked once the view differs from the table's default.
-  - **One view, two forms:** Features' table and Board share one view. It keeps the Board's schedule and card parts, but not which form shows. Each of Projects' tabs has views of its own, while a view on Drafts keeps its tab.
+  - **One view, two forms:** Features' table and Board share one view. It keeps the Board's columns and card parts, but not which form shows. The Board's Views menu leaves out what only changes the table (its sort, units, and hidden, frozen, moved and widened columns), which stays in the view and shows again on the table. Each of Projects' tabs has views of its own, while a view on Drafts keeps its tab.
   - **The last view:** A page opened from the menu shows its last view (see [Kept in the address](#the-address)), even when it is the page already open. The server keeps it for each account and page, so it follows the account to another browser.
     - **What it holds:** The tab, the view, the saved view it started from and Features' Table or Board. It never holds the record shown, an open form, a note's panel or the time shown, such as People's date, the Board's first cycle or a month grid's quarter.
     - **Addresses:** An address naming a view, as a link does, wins and becomes the last view. An address naming a tab other than the page's first shows the last view only if it was on that tab.

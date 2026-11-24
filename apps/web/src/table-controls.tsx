@@ -650,6 +650,7 @@ export function ViewsMenu({
   choices = [],
   pageParts = noPageParts,
   groupings = [],
+  laysOutColumns = true,
 }: {
   saved?: SavedViews | undefined;
   columns: readonly AnyColumn[];
@@ -661,6 +662,10 @@ export function ViewsMenu({
   choices?: readonly ViewChoice[];
   pageParts?: PageParts;
   groupings?: readonly GroupingChoice[];
+  // False above rows drawn their own way, such as a board's, which lay out no columns, so the sort,
+  // units and frozen, moved, hidden and widened columns the view keeps for its table aren't offered
+  // there.
+  laysOutColumns?: boolean;
 }) {
   const views = saved?.views ?? [];
   const unusable = saved?.unusable ?? [];
@@ -680,7 +685,8 @@ export function ViewsMenu({
   const widths = widened(view, columns);
   const shownIn = unitsShown(view, columns);
   const hidden = hiddenColumnsOf(view, columns);
-  // What the view sets beyond the rows it shows, each part set apart, removing what it names.
+  // What the view sets beyond the rows it shows, each part set apart, removing what it names. Each
+  // only changes the table, so none is offered above rows drawn their own way.
   const sections = [
     {
       key: "sort",
@@ -800,12 +806,19 @@ export function ViewsMenu({
         </Menu.Item>
       ),
     },
-  ].filter(({ items }) => items !== false);
+  ].filter(({ items }) => laysOutColumns && items !== false);
   const actions = !empty || current?.canChange === true;
   const hasChoices = choices.length > 0;
   const listed = views.length + unusable.length > 0;
   // A column hidden at first is shown again from here, even before the view sets anything.
-  if (!listed && empty && !hasChoices && hidden.length === 0) return null;
+  if (
+    !listed &&
+    empty &&
+    !hasChoices &&
+    (hidden.length === 0 || !laysOutColumns)
+  ) {
+    return null;
+  }
   return (
     <AppMenu position="bottom-start" hideDetached={false}>
       <AppMenu.Target>
@@ -1265,6 +1278,7 @@ export function ViewBar({
   pageParts,
   groupings,
   nests = false,
+  laysOutColumns = true,
   withDrafts = true,
 }: {
   // What the rows are, one and several, such as "person" and "people".
@@ -1285,6 +1299,8 @@ export function ViewBar({
   groupings?: readonly GroupingChoice[] | undefined;
   // False for rows drawn their own way, such as a board's, or made for their grouping.
   nests?: boolean;
+  // False for rows drawn their own way, such as a board's, which lay out no columns.
+  laysOutColumns?: boolean;
   // Goes back to the table from the search field.
   onLeave: () => void;
   saved?: SavedViews | undefined;
@@ -1357,6 +1373,7 @@ export function ViewBar({
         onClear={() => {
           onView(emptyView);
         }}
+        laysOutColumns={laysOutColumns}
         {...(choices === undefined ? {} : { choices })}
         {...(pageParts === undefined ? {} : { pageParts })}
         {...(groupings === undefined ? {} : { groupings })}
