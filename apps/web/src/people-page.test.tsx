@@ -2557,6 +2557,40 @@ describe("searching, sorting, and filtering", () => {
     });
   });
 
+  it.each([
+    ["offers no decision on", true],
+    ["offers a decision on", false],
+  ] as const)(
+    "%s a draft holding details the approver can't see, as the server marks it",
+    async (_offers, holdsUnseen) => {
+      await openAt("/people", {
+        "GET /api/session": session(["people:view", "people:approve"]),
+        "GET /api/people": () =>
+          Response.json({
+            people: [
+              {
+                ...avery,
+                preferredName: "Avery Drafted",
+                draft: draftOf({
+                  action: "changed",
+                  changed: ["preferredName"],
+                  live: { preferredName: "Avery Fictional", values: {} },
+                  ...(holdsUnseen ? { holdsUnseen: true } : {}),
+                }),
+              },
+            ],
+            fields: [site, role],
+            order,
+          }),
+      });
+      await userEvent.click(await findRowActions("Avery Drafted"));
+      const menu = await screen.findByRole("menu");
+      expect(
+        within(menu).queryByRole("menuitem", { name: /^Approve/u }) === null,
+      ).toBe(holdsUnseen);
+    },
+  );
+
   it("turns draft filters off again from the Draft menu", async () => {
     const { history } = await openAt("/people");
     await userEvent.click(

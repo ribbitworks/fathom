@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// People and the columns people add to the People table. Every person has a preferred name, an
-// Employee ID, and a position, which are General, and may have start and end dates, which are
-// Personal. A choice column draws on a list, and its values are choices from that list, as
-// sensitive as the list's visibility; a web link column holds one link for each person, a note
-// column one note, and a number column one number, as sensitive as the column's own visibility.
-// What a user receives leaves out what their role does not let them see.
+// People, their drafts, and the columns added to the People table, as requests send them and
+// readers receive them.
 
 import { z } from "zod";
 import { type Permission, tierSchema } from "./access.ts";

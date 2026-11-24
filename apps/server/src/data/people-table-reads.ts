@@ -324,7 +324,8 @@ async function readPeopleIn(
       const at = personFields.indexOf(field as (typeof personFields)[number]);
       return at === -1 ? personFields.length : at;
     };
-    const fields = draftFields(before, draft)
+    const held = draftFields(before, draft);
+    const fields = held
       .filter((field) => shownFields.has(field))
       .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
     if (fields.length === 0) return undefined;
@@ -360,13 +361,10 @@ async function readPeopleIn(
     const reason =
       draft.state === "rejected" &&
       draft.reason !== null &&
-      draftFields(before, draft).every((field) =>
-        seesSensitivity(actor, tierOf(field)),
-      )
+      held.every((field) => seesSensitivity(actor, tierOf(field)))
         ? { reason: draft.reason }
         : {};
-    const unseen =
-      approvesPeople && !draftFields(before, draft).every(seesDraftField);
+    const unseen = approvesPeople && !held.every(seesDraftField);
     return {
       action: draft.action,
       changed: fields.map((field) => fieldOfValue(field) ?? field),
