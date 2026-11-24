@@ -4,7 +4,7 @@ category: "Domain"
 audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/design/domain-model.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Fathom: Domain Concepts

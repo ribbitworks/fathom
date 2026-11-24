@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafting changes to customers, projects with their milestones, proposals and features. Part of
-// the data access layer; the caller checks the actor may change the kind, and a feature's customers
-// are checked here, since they take more than changing features.
+// Drafting changes to customers, projects with their milestones and activities, proposals and
+// features. Part of the data access layer; the caller checks the actor may change the kind.
 
 import { type Database, people } from "@fathom/db";
 import {

@@ -294,8 +294,8 @@ export const features = fathomSchema.table(
 // Activities: work a project or a release needs that isn't a feature, such as data migration or
 // release testing, each of exactly one project or one release. An activity's name is unique within
 // its project or release, ignoring letter case. Its note is Markdown checked by the server, and its
-// estimate is in hours, as a feature's are. Its colour is a palette name checked by the server, as a
-// release's is.
+// estimate is in hours, as a feature's are. Its colour is a palette name, as a release's is; nothing
+// sets it yet.
 export const activities = fathomSchema.table(
   "activities",
   {
