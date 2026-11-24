@@ -1,7 +1,7 @@
 ---
 title: "Testing Standards"
 category: "Standards"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/code-review.md", "docs/standards/typescript.md", "docs/design/checks-and-ci.md"]
 last_updated: "2026-11-23"

@@ -1,10 +1,10 @@
 ---
 title: "Domain Model"
 category: "Domain"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["packages/shared/src/**", "packages/db/**", "apps/server/src/**"]
 dependencies: ["docs/product/domain.md", "docs/product/roles.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Fathom: Domain Model

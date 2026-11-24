@@ -1,7 +1,7 @@
 ---
 title: "Documentation Standards"
 category: "Standards"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/markdown-style-guidelines.md", "docs/standards/help-pages.md", "docs/standards/testing.md"]
 last_updated: "2026-11-23"
@@ -9,7 +9,7 @@ last_updated: "2026-11-23"
 
 # Documentation Standards
 
-How Fathom's documents are written and kept current. Documents are read by people and by AI coding assistants, so they must be clear, unambiguous and correct.
+How Fathom's documents are written and kept current. Documents are written for people first, and read by AI coding assistants too, so they must be clear, unambiguous and correct.
 
 Formatting rules live in [Markdown Style Guidelines](markdown-style-guidelines.md). Help pages also follow [Help Page Standards](help-pages.md), and manual tests [Testing Standards § Manual Tests](testing.md#manual-tests).
 
@@ -98,7 +98,7 @@ Standards, architecture, domain and design documents start with YAML frontmatter
 ---
 title: "Service Layer Architecture"
 category: "Architecture"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["src/domain/**"]
 dependencies: ["docs/design/architecture.md"]
 last_updated: "2026-11-20"
@@ -107,7 +107,7 @@ last_updated: "2026-11-20"
 
 - `title`: the document's name.
 - `category`: one of `Standards`, `Architecture`, `Domain`, `Guide`, `How-To`, `Design`, `Index`.
-- `audience`: who the document is written for, such as `"Contributors"` or `"AI Coding Assistant"`.
+- `audience`: `"Contributors"`, since every document is written for people first. Only the [Agent Workflow](agent-workflow.md) is `"AI Coding Assistant"`.
 - `applies_to`: the files or modules the document governs.
 - `dependencies`: related documents to read with it; omit or leave empty when there are none.
 - `last_updated`: `YYYY-MM-DD`.
@@ -144,6 +144,7 @@ README files, Help pages and documents meant for outside readers may omit frontm
 
 ## Style and Tone
 
+- **People first:** every document is written for contributors. Directions to AI coding agents go only in `AGENTS.md` and the [Agent Workflow](agent-workflow.md).
 - **Succinct:** short sentences, each saying one thing.
 - **No walls of text:** a paragraph, list item or table cell **Must Not** run past about three sentences, or about 60 words, whichever comes first.
   - Steps in order are a numbered list, a set of facts or options is bullets, and a comparison is a table.

@@ -1,10 +1,10 @@
 ---
 title: "Core Development Principles"
 category: "Standards"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["**/*"]
-dependencies: ["docs/standards/agent-workflow.md", "docs/standards/code-review.md", "docs/standards/documentation.md"]
-last_updated: "2026-11-19"
+dependencies: ["docs/standards/code-review.md", "docs/standards/documentation.md"]
+last_updated: "2026-11-23"
 ---
 
 # Core Development Principles
@@ -15,8 +15,6 @@ records.
 
 ## Workflow
 
-- **Working mode:** before making any change in a session, ask the owner which
-  mode to use and follow [agent-workflow.md](agent-workflow.md).
 - **Incremental changes:** prefer small, verifiable steps.
 - **Verify architecture:** every change respects the project's layers and
   dependency direction.

@@ -1,10 +1,10 @@
 ---
 title: "Code Review Standards"
 category: "Standards"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["**/*"]
-dependencies: ["docs/standards/core-principles.md", "docs/standards/testing.md", "docs/standards/documentation.md", "docs/standards/markdown-style-guidelines.md", "docs/standards/agent-workflow.md", "docs/standards/typescript.md", "docs/standards/shell.md"]
-last_updated: "2026-11-20"
+dependencies: ["docs/standards/core-principles.md", "docs/standards/testing.md", "docs/standards/documentation.md", "docs/standards/markdown-style-guidelines.md", "docs/standards/typescript.md", "docs/standards/shell.md"]
+last_updated: "2026-11-23"
 ---
 
 # Code Review Standards
@@ -15,24 +15,15 @@ The focus areas below apply to every change. [TypeScript Standards](typescript.m
 
 ## The Reviewer's Role
 
-- **Reports only:** the reviewer does not edit files, stage or commit. Findings are addressed afterwards, following [agent-workflow.md](agent-workflow.md).
+- **Reports only:** the reviewer does not edit files, stage or commit. The change's author addresses the findings afterwards.
 - **Specific and educational:** every finding names the file and line, explains why it matters, and suggests a fix.
 - **No estimates:** reviews do not estimate effort or time.
 
 ## Review Scope
 
-- Ask first: staged files, the last commit, the working tree, or a pull request (`gh pr diff`)?
-- In Autonomous mode the scope is set by [agent-workflow.md](agent-workflow.md): the uncommitted changes (the whole commit when amending), or, in the cases that workflow names, an interaction review of a branch's commits or the whole branch against `main` before a pull request.
-- A review subagent gets its scope in its prompt and never asks.
+- A review covers one of these: the staged files, the last commit, the working tree, a branch against `main`, or a pull request (`gh pr diff`).
 - The review states its scope at the top. For very large diffs, do several passes.
-
-## Review Process
-
-Identify every changed file in the diff, including new and deleted files, before reviewing.
-
-A separate agent running a faster model may review a change that touches only documentation, scripts, wording on screens, or tests other than access control and security tests. Anything the [Security and Data](#security-and-data) focus area covers, such as sign-in, sessions, access control, the data access layer, migrations, secrets, the containers, and checks on user input, including web addresses, is reviewed with the full model, and so is any change where the choice is in doubt.
-
-The interaction review that the [Agent Workflow](agent-workflow.md#pushing-and-pull-requests) sets out before a pull request may be run by a faster model under the rule above.
+- Before reviewing, identify every changed file in the diff, including new and deleted files.
 
 ## Existing Code
 
@@ -40,9 +31,9 @@ Standards apply to new and edited code. Existing code that breaks a rule adopted
 
 - Lines a change adds or edits follow the current rules. A change may fix nearby debt when that stays within its scope.
 - A code file a change edits has its header cut to [File Headers](#file-headers), and is split if it is past the [file size](core-principles.md#implementation-rules) limit, in the same change. Files a change does not touch wait until one does; no change sweeps them.
-- The review lists newly noticed debt under a "Debt to record" note, and the implementing agent proposes it to the owner as a GitHub issue in the same change, as [Issues](issues.md) sets out. The next review checks that it was filed or declined.
+- The review lists newly noticed debt under a "Debt to record" note. It is filed as a GitHub issue in the same change, as [Issues](issues.md) sets out, and the next review checks that it was filed or declined.
 - Security flaws, real data, and documents the change makes untrue are always findings, wherever they are.
-- The Autonomous warnings step in [agent-workflow.md](agent-workflow.md) still resolves every warning the run reports.
+- Every warning a run reports is still resolved, including ones that predate the change.
 
 ## Rating System
 
@@ -60,7 +51,7 @@ A 4 is not a pass. Every rating below 5 **Must** have at least one entry in the 
 
 - **Approve:** every applicable focus area is rated 5 and no action-list item is open.
 - **Request changes:** any focus area is rated 4 or lower, or any BLOCKING or HIGH item is open.
-- **Deferral:** a finding may be left unfixed only with the owner's explicit agreement, recorded in the review or in a GitHub issue.
+- **Deferral:** a finding may be left unfixed only with the maintainer's explicit agreement, recorded in the review or in a GitHub issue.
 
 ## Priority Levels
 
@@ -158,7 +149,7 @@ Tests are reviewed against [testing.md](testing.md) and [typescript.md](typescri
 When the change affects the user interface:
 
 - Interactive controls have accessibility labels and are reachable by keyboard or assistive technology.
-- The change was verified by the owner, as the workflow requires.
+- The changed screens were checked in a browser before the change was committed.
 - The change follows [UI Conventions](ui-conventions.md), [Visual Design](../design/visual-design.md), and the page's design in `docs/design/pages/`.
 - Read aloud every sentence the change adds or rewords that people see, the server's refusals and the manual tests' expected text included, and flag any that a person would not say, as [UI Conventions § Principles](ui-conventions.md#principles) sets out under "Words people say".
 
@@ -177,7 +168,7 @@ The reviewer goes through each document [Documentation Standards § Which Docume
 - **Development Setup:** Every command, setting, and folder the change adds, renames, or removes is listed, the setup steps still work as written, and the repository layout matches the top-level folders.
 - **Roadmap:** Work that is now done no longer reads as future work in the pinned [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398), and its sub-issues and milestones still match.
 - **Open questions and proposals:** Any the change answers or decides are resolved in the document that owns them, and any it raises are added there.
-- **Issues:** Deferred work, accepted findings and debt to record are proposed to the owner and filed as GitHub issues once approved, as [Issues](issues.md) sets out, and the pull request says `Fixes #n` in its description for each issue the change resolves, which closes it on merge.
+- **Issues:** Deferred work, accepted findings and debt to record are filed as GitHub issues, as [Issues](issues.md) sets out, and the pull request says `Fixes #n` in its description for each issue the change resolves, which closes it on merge.
 - **Summaries of safeguards:** How Data Is Safeguarded and Securing Your Environment kept consistent with every fact they summarize that the change affects.
 - **Architecture, ADRs, and Domain Model:** Updated for new parts, decisions, and entities, with the revision noted where an ADR is revised. The Security Plan is covered under [Security and Data](#security-and-data).
 - **Product and operations documents:** New terms, decisions, roles, use cases, platforms, and deployment needs are recorded in the documents that own them.
@@ -207,7 +198,7 @@ feat: split stock lending export into transaction rows
 
 ## After the Review
 
-The review never commits. It only writes its file and suggests a commit message. Who commits afterwards depends on the working mode in [agent-workflow.md](agent-workflow.md).
+The review never commits. It only writes its file and suggests a commit message; the change's author commits afterwards.
 
 When findings are addressed, append this to the response or the review file:
 
@@ -217,7 +208,7 @@ When findings are addressed, append this to the response or the review file:
 ## Updates Made After Review
 
 - [Updates, with file paths]
-- [Deferred or rejected items, with reasons and the owner's approval]
+- [Deferred or rejected items, with reasons and the maintainer's approval]
 
 **Final Summary:** [Brief outcome]
 ```

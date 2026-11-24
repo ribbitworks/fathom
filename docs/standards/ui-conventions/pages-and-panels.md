@@ -1,10 +1,10 @@
 ---
 title: "UI Conventions: Pages and Panels"
 category: "Standards"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Pages and Panels

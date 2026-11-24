@@ -1,7 +1,7 @@
 ---
 title: "UI Conventions: Tables, Addresses and Search"
 category: "Standards"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
 last_updated: "2026-11-23"

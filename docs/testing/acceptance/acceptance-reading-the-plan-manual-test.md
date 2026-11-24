@@ -1,7 +1,7 @@
 ---
 title: "Manual Test: Acceptance, Reading the Plan"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-deciding-the-changes-manual-test.md", "docs/help/working-as-a-team-member.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
 last_updated: "2026-11-23"

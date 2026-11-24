@@ -1,10 +1,10 @@
 ---
 title: "Manual Test: Acceptance, Reviewing the Plan"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-planning-features-and-a-release-manual-test.md", "docs/help/working-as-a-project-manager.md", "docs/help/drafts-page.md", "docs/product/roles.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Acceptance, Reviewing the Plan

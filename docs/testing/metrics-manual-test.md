@@ -1,10 +1,10 @@
 ---
 title: "Manual Test: Metrics, Frozen Columns, and Column Widths on the People Table"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Metrics, Frozen Columns, and Column Widths on the People Table

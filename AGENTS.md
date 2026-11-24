@@ -91,8 +91,9 @@ or tool adds one, remove it.
   `.tmp/code-review/`, not a skill's raw findings list.
 - A review never stages or commits. A skill's fix or comment modes apply only
   when the owner asks.
-- The scope follows the standard: ask first, except in Autonomous mode or as a
-  subagent.
+- The scope follows
+  [agent-workflow.md § Rules for Both Modes](docs/standards/agent-workflow.md#rules-for-both-modes):
+  ask first, except in Autonomous mode or as a subagent.
 
 ### Comments
 
