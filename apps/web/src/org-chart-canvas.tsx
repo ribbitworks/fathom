@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { TeamsPanel } from "./teams-panel.tsx";
 import { colourVariable } from "./colours.ts";
 import { ChartControls } from "./org-chart-controls.tsx";
-import { addressOf, type CardNode, nodeTypes } from "./org-chart-cards.tsx";
+import { type CardNode, nodeTypes } from "./org-chart-cards.tsx";
 import {
   cardWidth,
   type ChartPerson,
@@ -31,6 +31,14 @@ import classes from "./org-chart.module.css";
 import { motionLasts } from "./side-panel.tsx";
 import { besideLive } from "./status-mark.tsx";
 import { DraftMenu } from "./table-controls.tsx";
+
+// How the address names a person, for the team shown alone and the person found: by Employee ID,
+// or, for a planned hire, by Fathom's own ID. Null for a Live copy, which the person themselves
+// stands for.
+function addressOf(person: ChartPerson): string | null {
+  if (person.liveCopyOf !== undefined) return null;
+  return person.planned === undefined ? person.employeeId : person.id;
+}
 
 // The least zoom at which a card can still be read, below which a person found is centred alone
 // rather than fitted to the screen with their Live copy, and the room left around cards fitted.

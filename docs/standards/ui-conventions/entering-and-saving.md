@@ -78,7 +78,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
     - Changing an account's roles.
     - Resetting a password.
     - Deactivating or reactivating an account.
-  - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`, `DiscardChangesModal` in `apps/web/src/unpublished.tsx` for Discard all… and discarding chosen changes, and `PublishDraftProvider` in `apps/web/src/publish-draft.tsx` for publishing a draft from its menu. Their own dialogs draw the role's confirmation, in `apps/web/src/roles-page.tsx`, the account's, in `apps/web/src/accounts-page.tsx`, and deleting a saved view, in `apps/web/src/saved-views.tsx`.
+  - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`, `DiscardChangesModal` in `apps/web/src/unpublished.tsx` for Discard all… and discarding chosen changes, and `PublishDraftProvider` in `apps/web/src/publish-draft.tsx` for publishing a draft from its menu. Their own dialogs draw the role's confirmation, in `apps/web/src/roles-page.tsx` with its accounts' changes in `apps/web/src/roles-consequences.tsx`, the account's, in `apps/web/src/accounts-page.tsx`, and deleting a saved view, in `apps/web/src/saved-views.tsx`.
   - **Example:** Approve draft… in a seeded person's draft menu on People.
 - **Failures:** A change that fails says so in plain words, never as a raw error, and says what to do next. Its notification stays until closed, and the record goes back to how it was.
   - **Drawn by:** `notifyFailure` in `apps/web/src/notices.tsx`, with the words from `describeProblem` in `apps/web/src/api.ts`.
