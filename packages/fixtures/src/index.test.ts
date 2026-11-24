@@ -641,3 +641,34 @@ describe("the organization on another day", () => {
     },
   );
 });
+
+describe("organizations built in one run", () => {
+  it("share no lists, columns or positions, so changing one leaves the next as it was", () => {
+    // Given
+    const changed = fictionalOrganization({ size: 5 });
+    const expected = structuredClone(fictionalOrganization({ size: 5 }));
+
+    // When
+    changed.lists.push({
+      id: "added",
+      name: "Added",
+      visibility: "general",
+      choices: [],
+    });
+    for (const list of changed.lists) {
+      list.name = "Renamed";
+      list.choices.push({ id: "added", label: "Added" });
+      for (const option of list.choices) option.label = "Relabelled";
+    }
+    changed.columns.pop();
+    for (const column of changed.columns) column.name = "Renamed";
+    changed.positions.push({ id: "added", label: "Added" });
+    for (const position of changed.positions) position.label = "Relabelled";
+    const next = fictionalOrganization({ size: 5 });
+
+    // Then
+    expect(next.lists).toEqual(expected.lists);
+    expect(next.columns).toEqual(expected.columns);
+    expect(next.positions).toEqual(expected.positions);
+  });
+});
