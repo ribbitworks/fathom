@@ -563,7 +563,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The red "Not staffed" on 'Scheduler API' is easy to read.
   - **Notes:**
 
-- [ ] `6B2D` Select **Columns: Months**, then **Platform cycles**.
+- [ ] `6B2D` Select **Columns: Months**, then **Platform** under **A schedule's cycles**.
   - **Expected:** The column headings' release boxes are easy to read.
   - **Notes:**
 

@@ -22,12 +22,21 @@ describe("Features' choices", () => {
     expect(fits({})).toBe(true);
   });
 
+  it("accepts the schedule whose features alone show by months", () => {
+    expect(fits({ schedule: stream, hide: ["status"] })).toBe(true);
+  });
+
   it.each([
     [
       "the table or the board, which the two share a view across",
       { mode: "board" },
     ],
     ["a stream that isn't an identifier", { stream: "Platform" }],
+    ["a schedule that isn't an identifier", { schedule: "Platform" }],
+    [
+      "a schedule's cycles and months of a schedule at once",
+      { stream, schedule: stream },
+    ],
     ["a card part it doesn't have", { hide: ["colour"] }],
     ["a card part twice", { hide: ["status", "status"] }],
     ["a choice it doesn't keep", { from: "2026-01-01" }],

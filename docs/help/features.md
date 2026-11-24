@@ -135,10 +135,11 @@ The board starts with months side by side, from a year back to a year ahead at t
 - **No date** is the board's last column.
 - The month you opened it on is the second column, so the month before it stays in view. This month's heading is underlined in red.
 
-You can show one schedule's cycles instead, with a card for each feature in the cycle it targets, and **Later** last.
+You can show only one schedule's features by months, or that schedule's cycles instead, with a card for each feature in the cycle it targets, and **Later** last.
 
 1. Choose **Board** beside the **Features** heading.
-1. To see a schedule's cycles, select **Columns**, and choose them, such as **Platform cycles**. Choose **Months** to go back.
+1. To see only one schedule's features by months, select **Columns**, and choose the schedule under **Months**, such as **Platform**. Choose **All schedules** to see every feature again.
+1. To see a schedule's cycles, select **Columns**, and choose the schedule under **A schedule's cycles**. Choose **All schedules** under **Months** to go back.
 1. To see other months or cycles, select **‹** or **›**, or one in the row above the board. By months, the row names quarters, such as **Q1 2027**, and **‹** and **›** step a quarter, while by cycles, it names each cycle.
 1. To go back to this month or the current cycle, select **Today**. The period in the row above the board that holds the month or cycle you went to is filled in blue.
 1. To choose what the cards show, select **Card**, and tick or untick each part.

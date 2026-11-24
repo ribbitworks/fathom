@@ -90,14 +90,23 @@ export type DraftsTab = z.infer<typeof draftsTabSchema>;
 // its view takes none.
 export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
   people: noChoices,
-  features: z.strictObject({
-    stream: z.uuid().optional(),
-    hide: z
-      .array(cardPartSchema)
-      .max(cardPartSchema.options.length)
-      .refine((parts) => new Set(parts).size === parts.length, "Repeated part")
-      .optional(),
-  }),
+  features: z
+    .strictObject({
+      stream: z.uuid().optional(),
+      schedule: z.uuid().optional(),
+      hide: z
+        .array(cardPartSchema)
+        .max(cardPartSchema.options.length)
+        .refine(
+          (parts) => new Set(parts).size === parts.length,
+          "Repeated part",
+        )
+        .optional(),
+    })
+    .refine(
+      ({ stream, schedule }) => stream === undefined || schedule === undefined,
+      "Columns of a schedule's cycles or of months, not both",
+    ),
   projects: noChoices,
   proposals: noChoices,
   customers: noChoices,

@@ -11,6 +11,7 @@ import {
   boardMonths,
   cycleStrip,
   boardParts,
+  oneBoardColumns,
   cardOrder,
   columnOf,
   firstShown,
@@ -284,11 +285,23 @@ describe("the parts a card shows", () => {
   });
 });
 
+describe("oneBoardColumns", () => {
+  it("keeps a schedule by months only while no schedule's cycles are named", () => {
+    expect(oneBoardColumns({ schedule: streamId })).toEqual({
+      schedule: streamId,
+    });
+    expect(oneBoardColumns({ stream: streamId, schedule: "other" })).toEqual({
+      stream: streamId,
+      schedule: undefined,
+    });
+  });
+});
+
 describe("boardParts", () => {
   const streams = [{ id: streamId, name: "Platform" }];
   const offered = ["status", "priority", "risk"] as const;
 
-  it("names the stream and the parts the cards show, each once chosen", () => {
+  it("names the stream or the schedule by months, and the parts the cards show, each once chosen", () => {
     expect(
       boardParts(
         { choices: { stream: streamId, hide: ["risk"] } },
@@ -307,12 +320,18 @@ describe("boardParts", () => {
     expect(
       boardParts({ choices: { stream: streamId } }, streams, offered),
     ).toEqual([{ name: "Board", value: "Columns Platform cycles" }]);
+    expect(
+      boardParts({ choices: { schedule: streamId } }, streams, offered),
+    ).toEqual([{ name: "Board", value: "Columns Months, Platform" }]);
   });
 
-  it("names nothing for a board left as it starts, or a stream it doesn't have", () => {
+  it("names nothing for a board left as it starts, or a stream or schedule it doesn't have", () => {
     expect(boardParts({}, streams, offered)).toEqual([]);
     expect(
       boardParts({ choices: { stream: "gone" } }, streams, offered),
+    ).toEqual([]);
+    expect(
+      boardParts({ choices: { schedule: "gone" } }, streams, offered),
     ).toEqual([]);
   });
 });

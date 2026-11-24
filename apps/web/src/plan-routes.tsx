@@ -30,6 +30,7 @@ import {
   shownCapacityMode,
 } from "./capacity.ts";
 import { removedCycleMark } from "./cycle-table.tsx";
+import { oneBoardColumns } from "./feature-board.ts";
 import { lastViewsQuery } from "./last-views.ts";
 import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
 import { featureNamers, planAddress } from "./projects.ts";
@@ -275,13 +276,16 @@ const projectsSearch = planRecordSearch.extend({
 
 // Features' address adds whether it shows a board, and the board's stream, the cycle it starts from,
 // and the parts of its cards hidden.
-const featuresSearch = planRecordSearch.extend({
-  column: linkedColumnSearch,
-  mode: planModeSchema.optional().catch(undefined),
-  stream: z.uuid().optional().catch(undefined),
-  from: daySchema.optional().catch(undefined),
-  hide: z.array(cardPartSchema).optional().catch(undefined),
-});
+const featuresSearch = planRecordSearch
+  .extend({
+    column: linkedColumnSearch,
+    mode: planModeSchema.optional().catch(undefined),
+    stream: z.uuid().optional().catch(undefined),
+    schedule: z.uuid().optional().catch(undefined),
+    from: daySchema.optional().catch(undefined),
+    hide: z.array(cardPartSchema).optional().catch(undefined),
+  })
+  .transform(oneBoardColumns);
 
 export const featuresRoute = createRoute({
   getParentRoute: () => signedInRoute,
@@ -291,7 +295,12 @@ export const featuresRoute = createRoute({
     reaching("features")(match);
     openOnLastView(
       match,
-      shownOn("features", match.search, ["stream", "hide"], match.search.mode),
+      shownOn(
+        "features",
+        match.search,
+        ["stream", "schedule", "hide"],
+        match.search.mode,
+      ),
     );
   },
   component: function Features() {
@@ -302,7 +311,7 @@ export const featuresRoute = createRoute({
     const { open, note, tableNote, mode, from, column, ...search } =
       featuresRoute.useSearch();
     const notes = { note, tableNote };
-    const { stream, hide } = search;
+    const { stream, schedule, hide } = search;
     const linkedColumn = useLinkedColumn(column, () => {
       void navigate({
         search: (shown) => ({ ...shown, column: undefined }),
@@ -334,7 +343,7 @@ export const featuresRoute = createRoute({
               replace,
             });
           },
-          ["stream", "hide"],
+          ["stream", "schedule", "hide"],
         )}
         open={open}
         onOpen={(next) => {
@@ -355,7 +364,7 @@ export const featuresRoute = createRoute({
               },
             });
           },
-          place: { stream, from, hide },
+          place: { stream, schedule, from, hide },
           onPlace: (place) => {
             void navigate({
               search: { ...search, mode, ...place, open, ...notes },

@@ -50,19 +50,32 @@ export const shownParts = (
 export const boardMenuWords = {
   columns: "Columns",
   months: "Months",
+  allSchedules: "All schedules",
+  cycles: "A schedule's cycles",
   card: "Card",
 } as const;
 
 export const cyclesOf = (name: string) => `${name} cycles`;
 
-// How Save view names the Board's choices a view keeps: its schedule's cycles as its columns, and
-// the parts its cards show, each once chosen; months, the columns it starts with, aren't named.
+// The Board's columns as an address names them: a schedule's cycles, or months of one schedule's
+// features, never both, so a view kept from it is one the server takes.
+export const oneBoardColumns = <
+  Search extends { stream?: string | undefined; schedule?: string | undefined },
+>(
+  search: Search,
+): Search =>
+  search.stream === undefined ? search : { ...search, schedule: undefined };
+export const monthsOf = (name: string) => `${boardMenuWords.months}, ${name}`;
+
+// How Save view names the Board's choices a view keeps: its schedule's cycles as its columns, or the
+// schedule whose features alone show by months, and the parts its cards show, each once chosen;
+// months of all schedules, the columns it starts with, aren't named.
 export function boardParts(
   view: Pick<View, "choices">,
   streams: readonly Pick<ReleaseStream, "id" | "name">[],
   offered: readonly CardPart[],
 ): ViewPart[] {
-  const { stream, hide } = view.choices ?? {};
+  const { stream, schedule, hide } = view.choices ?? {};
   const hidden = [hide ?? []].flat();
   const shown = offered
     .filter((part) => !hidden.includes(part))
@@ -73,6 +86,9 @@ export function boardParts(
     ...streams
       .filter(({ id }) => id === stream)
       .map(({ name }) => `${boardMenuWords.columns} ${cyclesOf(name)}`),
+    ...streams
+      .filter(({ id }) => id === schedule)
+      .map(({ name }) => `${boardMenuWords.columns} ${monthsOf(name)}`),
     ...(hide === undefined
       ? []
       : [`${boardMenuWords.card} ${shown.join(", ")}`]),

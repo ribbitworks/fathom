@@ -21,6 +21,7 @@ import {
   boardMenuWords,
   cardPartLabels,
   cyclesOf,
+  monthsOf,
   shownParts,
   wholeColumnWidth,
 } from "./feature-board.ts";
@@ -53,9 +54,11 @@ const columnWidth = 200;
 const rowLabelWidth = 160;
 
 // What the board shows, kept in the page's address: the stream whose cycles are its columns, or none
-// for months, the cycle or month it starts from, and the parts of the cards hidden.
+// for months, with the schedule whose features alone show by months, or none for all, the cycle or
+// month it starts from, and the parts of the cards hidden.
 export interface BoardPlace {
   stream?: string | undefined;
+  schedule?: string | undefined;
   from?: string | undefined;
   hide?: CardPart[] | undefined;
 }
@@ -66,7 +69,8 @@ const cycleWords = {
   next: "Next cycle",
 };
 
-// The choice of months among the Columns menu's choices, which no stream's identifier is.
+// The choice of months of all schedules among the Columns menu's choices, which no stream's
+// identifier is.
 const monthsChoice = "months";
 
 // The streams offered: those not retired as they are live, since a stream drafted to be retired
@@ -78,7 +82,14 @@ const offeredStreams = (
 ) => streams.filter(({ id }) => !retired.has(id) || id === shown?.id);
 
 export function FeatureBoard({
-  shown: { records, panelOpen, groupOf, groupsReversed, draftOf, liveOf },
+  shown: {
+    records: shownRecords,
+    panelOpen,
+    groupOf,
+    groupsReversed,
+    draftOf,
+    liveOf,
+  },
   streams,
   choices,
   place,
@@ -111,6 +122,16 @@ export function FeatureBoard({
   );
   // Months unless a stream is chosen, whose cycles are then the columns.
   const stream = shownStreams.find(({ id }) => id === place.stream);
+  const schedule =
+    stream === undefined
+      ? shownStreams.find(({ id }) => id === place.schedule)
+      : undefined;
+  const records =
+    schedule === undefined
+      ? shownRecords
+      : shownRecords.filter(
+          ({ targetStreamId }) => targetStreamId === schedule.id,
+        );
   const [focused, setFocused] = useState<string>();
   const grouped = groupOf !== undefined;
   // While a side panel is open, such as a feature's details or Metrics, the board keeps the width it
@@ -201,44 +222,64 @@ export function FeatureBoard({
     onPlace({ ...place, from: startsOn });
   };
   const { previous, next } = strip;
+  const offered = offeredStreams(shownStreams, retired, stream ?? schedule).map(
+    ({ id, name }) => {
+      const own = streams.find((one) => one.id === id);
+      return {
+        id,
+        label: (
+          <DraftedItem
+            draft={markedDraft(own?.draft, own?.retired)}
+            heldBy={own?.heldBy}
+          >
+            {name}
+          </DraftedItem>
+        ),
+      };
+    },
+  );
   const menus = (
     <>
       <AppMenu position="bottom-start">
         <AppMenu.Target>
           <Button variant="default">
             {boardMenuWords.columns}:{" "}
-            {stream === undefined
-              ? boardMenuWords.months
-              : cyclesOf(stream.name)}
+            {stream !== undefined
+              ? cyclesOf(stream.name)
+              : schedule !== undefined
+                ? monthsOf(schedule.name)
+                : boardMenuWords.months}
           </Button>
         </AppMenu.Target>
         <AppMenu.Dropdown>
           <MenuChoices
-            label={boardMenuWords.columns}
+            label={boardMenuWords.months}
+            divided={false}
             choices={[
-              { value: monthsChoice, label: boardMenuWords.months },
-              ...offeredStreams(shownStreams, retired, stream).map(
-                ({ id, name }) => {
-                  const own = streams.find((one) => one.id === id);
-                  return {
-                    value: id,
-                    label: (
-                      <DraftedItem
-                        draft={markedDraft(own?.draft, own?.retired)}
-                        heldBy={own?.heldBy}
-                      >
-                        {cyclesOf(name)}
-                      </DraftedItem>
-                    ),
-                  };
-                },
-              ),
+              { value: monthsChoice, label: boardMenuWords.allSchedules },
+              ...offered.map(({ id, label }) => ({ value: id, label })),
             ]}
-            chosen={stream?.id ?? monthsChoice}
+            chosen={
+              stream === undefined ? (schedule?.id ?? monthsChoice) : undefined
+            }
             onChoose={(next) => {
               onPlace({
                 ...place,
-                stream: next === monthsChoice ? undefined : next,
+                stream: undefined,
+                schedule: next === monthsChoice ? undefined : next,
+                from: stream === undefined ? place.from : undefined,
+              });
+            }}
+          />
+          <MenuChoices
+            label={boardMenuWords.cycles}
+            choices={offered.map(({ id, label }) => ({ value: id, label }))}
+            chosen={stream?.id}
+            onChoose={(next) => {
+              onPlace({
+                ...place,
+                stream: next,
+                schedule: undefined,
                 from: undefined,
               });
             }}
