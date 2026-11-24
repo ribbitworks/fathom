@@ -14,7 +14,7 @@ const send = (page: Page, method: string, path: string, body?: object) =>
         headers: { "content-type": "application/json" },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
-      return { ok: response.ok, body: (await response.json()) as unknown };
+      return { ok: response.ok, body: await response.json() };
     },
     { method, path, body },
   );
