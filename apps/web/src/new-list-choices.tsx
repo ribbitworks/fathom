@@ -4,7 +4,7 @@
 
 import type { Choice, ChoiceRequest } from "@fathom/shared";
 import { Input, Menu } from "@mantine/core";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import { onRowsKey } from "./choice-editing.ts";
 import { useChoiceEntry } from "./choice-entry.ts";
@@ -42,11 +42,14 @@ export function NewListChoices({
   choices,
   needed,
   onChoices,
+  onTyping,
 }: {
   choices: readonly NewChoice[];
   // Why the list can't be made yet, such as having no choices, shown under the empty row.
   needed: string | undefined;
   onChoices: (choices: NewChoice[]) => void;
+  // What is being typed in the empty row and not yet taken, so a dialog knows it holds it.
+  onTyping: (typed: string) => void;
 }) {
   const typed = choices.map(asChoice);
   // The row focus is on, drawn selected as a list's panel draws its row.
@@ -76,6 +79,11 @@ export function NewListChoices({
     rowAbove: typed.at(-1),
     rowBelow: undefined,
   });
+
+  const typing = `${entry.entry.label}${entry.entry.description}`;
+  useEffect(() => {
+    onTyping(typing);
+  }, [typing, onTyping]);
 
   return (
     <Input.Wrapper label="Choices" labelElement="div" id={labelId}>

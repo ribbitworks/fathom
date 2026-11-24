@@ -10,6 +10,11 @@ export const newRecordQuestion = (thing: string) => ({
   keep: "Keep adding",
 });
 
+export const changesQuestion = (thing: string) => ({
+  title: `Discard changes to the ${thing}?`,
+  keep: "Keep editing",
+});
+
 // Asking whether to discard what is being written before showing another record or adding one: a
 // note changed, or a record being added that holds something. Discard goes on; Keep writing, or
 // closing the question, stays.

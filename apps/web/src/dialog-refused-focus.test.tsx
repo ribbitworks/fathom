@@ -136,6 +136,7 @@ describe("a refused Save puts focus in the field refused", () => {
         lists={[]}
         permissions={[]}
         onSaved={() => undefined}
+        onChanged={() => undefined}
         {...dialogProps}
       />
     ));
