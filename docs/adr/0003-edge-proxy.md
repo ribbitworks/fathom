@@ -8,7 +8,12 @@
 
 [ADR 0001](0001-tech-stack.md) requires that Fathom's containers cannot reach the internet at runtime, and planned two containers: the application and PostgreSQL. Users must still reach the application.
 
-Docker Compose cannot give one container both. A container on an internal network has no route out, but its ports cannot be published. On a normal network, its ports can be published, but it can reach the internet. Turning off the network's address translation, or using its routed mode, did not stop outbound traffic in testing. Blocking outbound traffic with host firewall rules would depend on the host and container runtime, and could not be tested on development machines.
+Docker Compose cannot give one container both:
+
+- **An internal network:** A container on one has no route out, but its ports cannot be published.
+- **A normal network:** A container's ports can be published, but it can reach the internet.
+- **Network settings:** Turning off the network's address translation, or using its routed mode, did not stop outbound traffic in testing.
+- **Host firewall rules:** Blocking outbound traffic with them would depend on the host and container runtime, and could not be tested on development machines.
 
 ## Options
 

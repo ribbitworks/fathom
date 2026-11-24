@@ -3,11 +3,21 @@
 - **ADR:** 0009
 - **Status:** Superseded by the Roadmap and the Plan, as [Domain Concepts](../product/domain.md#planning-terms) defines them. Its choice of libraries, below, still stands
 - **Date:** 2026-11-03
-- **Revised:** 2026-11-03, to point to how a cycle's demand is counted; 2026-11-10, since large work is no longer split into a feature for each increment; 2026-11-11, since the board and timeline it proposed were revised into the Features Board and the shared timeline, keeping the choice of libraries; 2026-11-12, marked superseded; 2026-11-15, to note that release streams, the streams below, are now called schedules
+- **Revised:**
+  - 2026-11-03, to point to how a cycle's demand is counted
+  - 2026-11-10, since large work is no longer split into a feature for each increment
+  - 2026-11-11, since the board and timeline it proposed were revised into the Features Board and the shared timeline, keeping the choice of libraries
+  - 2026-11-12, marked superseded
+  - 2026-11-15, to note that release streams, the streams below, are now called schedules
 
 ## Context
 
-The [Product Brief](../product/brief.md#goals-for-v1) asks for a roadmap view, where Product Managers shape the roadmap of features by cycle and release and leadership reads it, and a timeline or Gantt view, which changes dates and assignments by drag and drop. The [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398) places both in the first stage, after its table of features grouped by cycle. [ADR 0004](0004-ui-components.md) chose vis-timeline for them, to be confirmed later; this ADR replaces that choice.
+The [Product Brief](../product/brief.md#goals-for-v1) asks for two views:
+
+- **A roadmap view,** where Product Managers shape the roadmap of features by cycle and release and leadership reads it.
+- **A timeline or Gantt view,** which changes dates and assignments by drag and drop.
+
+The [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398) places both in the first stage, after its table of features grouped by cycle. [ADR 0004](0004-ui-components.md) chose vis-timeline for them, to be confirmed later; this ADR replaces that choice.
 
 What the views move is coarse, as the [Domain Model](../design/domain-model.md#planning-entities) sets out:
 
@@ -16,7 +26,10 @@ What the views move is coarse, as the [Domain Model](../design/domain-model.md#p
 - **No dependency lines:** Dependencies between features are not recorded, and Fathom plans features, never tasks.
 - **Every change is a draft:** Moves are drafts, private until published, as [ADR 0007](0007-draft-rows.md) and [ADR 0008](0008-unpublished-drafts.md) set out, shown with the marks every other table uses.
 
-The board and timeline below were later revised, keeping the choice of libraries: the board became the Features Board, the Roadmap, whose columns are months or one stream's cycles and whose rows follow Group by, and the timeline became one shared timeline, taken out of the Releases timeline, for the Plan, the project timeline and Releases, each day the same width, as [Visual Design](../design/visual-design.md#components) and [UI Conventions](../standards/ui-conventions/dates-timelines-and-boards.md#timelines) set out.
+The board and timeline below were later revised, keeping the choice of libraries:
+
+- **The board** became the Features Board, the Roadmap, whose columns are months or one stream's cycles and whose rows follow Group by.
+- **The timeline** became one shared timeline, taken out of the Releases timeline, for the Plan, the project timeline and Releases, each day the same width, as [Visual Design](../design/visual-design.md#components) and [UI Conventions](../standards/ui-conventions/dates-timelines-and-boards.md#timelines) set out.
 
 Every choice must meet ADR 0004's rules: completely open source with no paid edition, bundled and working offline, no code built from strings, React 19, and actively maintained. The candidates below were compared from GitHub and npm on 2026-11-03, without test pages; sizes are minified and compressed, from bundlephobia.
 
@@ -32,7 +45,11 @@ Every choice must meet ADR 0004's rules: completely open source with no paid edi
 
 ## Decision
 
-- **Fathom's own views:** The Features Board is built on Mantine, with a column for each cycle of one stream and a row for each value of the Group by chosen, as [the Features page](../design/pages/features.md#features-board) sets out. Cards are moved with the mouse by @hello-pangea/dnd, as ADR 0004 chose for ordering, with each cycle of each row its own list, since the library moves items between lists but does not lay out a grid. Keyboard users move cards with Fathom's own keys, as for ordering. The timelines are drawn by Fathom's own shared timeline, taken out of the Releases timeline.
+- **Fathom's own views:**
+  - **Board:** The Features Board is built on Mantine, with a column for each cycle of one stream and a row for each value of the Group by chosen, as [the Features page](../design/pages/features.md#features-board) sets out.
+  - **Moving with the mouse:** Cards are moved with the mouse by @hello-pangea/dnd, as ADR 0004 chose for ordering, with each cycle of each row its own list, since the library moves items between lists but does not lay out a grid.
+  - **Moving with the keyboard:** Keyboard users move cards with Fathom's own keys, as for ordering.
+  - **Timelines:** The timelines are drawn by Fathom's own shared timeline, taken out of the Releases timeline.
 - **Moves are drafts:** Dropping a card on another cycle or row changes the feature's target cycle or that row's value through the same draft functions every table uses.
 - **No timeline library:** vis-timeline, chosen in ADR 0004 to be confirmed, is not used; this replaces that choice once accepted.
 - **Fallback:** If dragging months freely or resizing bars turns out to be needed, dnd-timeline is the first library to try, styled with Mantine.

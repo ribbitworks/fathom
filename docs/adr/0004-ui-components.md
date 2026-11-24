@@ -3,7 +3,15 @@
 - **ADR:** 0004
 - **Status:** Accepted
 - **Date:** 2026-10-30
-- **Revised:** 2026-10-30, to add the typeface chosen with the visual design, and to name the roadmap stage for the timeline views rather than number it; 2026-10-31, to add drag and drop for ordering; 2026-11-03, to point to ADR 0009's proposal for the Gantt and timeline views; 2026-11-05, to lay out the org chart with Fathom's own code rather than dagre; 2026-11-06, to add the rich-text editor for notes; 2026-11-11, since the timeline views moved to the first stage, with Fathom's own timeline, as ADR 0009 sets out; 2026-11-12, since ADR 0009 is superseded, keeping its choice of libraries; 2026-11-19, to mark Mantine's date and chart packages, Recharts and TanStack Table as not adopted yet
+- **Revised:**
+  - 2026-10-30, to add the typeface chosen with the visual design, and to name the roadmap stage for the timeline views rather than number it
+  - 2026-10-31, to add drag and drop for ordering
+  - 2026-11-03, to point to ADR 0009's proposal for the Gantt and timeline views
+  - 2026-11-05, to lay out the org chart with Fathom's own code rather than dagre
+  - 2026-11-06, to add the rich-text editor for notes
+  - 2026-11-11, since the timeline views moved to the first stage, with Fathom's own timeline, as ADR 0009 sets out
+  - 2026-11-12, since ADR 0009 is superseded, keeping its choice of libraries
+  - 2026-11-19, to mark Mantine's date and chart packages, Recharts and TanStack Table as not adopted yet
 
 ## Context
 
@@ -28,9 +36,17 @@ Each candidate below was built into a test page. None loads anything from other 
 | Tables | [TanStack Table](https://tanstack.com/table) as decided in ADR 0002, with Mantine's table. TanStack Table is not adopted yet. Tables edited like a spreadsheet, such as People, are Fathom's own, built on Mantine's table and its Combobox for picking choices | A spreadsheet grid library, such as react-datasheet-grid, Glide Data Grid, or RevoGrid | Unchanged for plain tables. No chosen library offers spreadsheet editing, and [AG Grid](https://www.ag-grid.com)'s free edition leaves out pasting. Building on Mantine keeps the visual design and accessibility, at the cost of maintaining the editing code |
 | Charts | [Recharts](https://recharts.github.io), through [Mantine's chart package](https://mantine.dev/charts/getting-started/). Not adopted yet: Fathom has no charts | [ECharts](https://echarts.apache.org), [Chart.js](https://www.chartjs.org), [Nivo](https://nivo.rocks) | SVG charts that screen readers and keyboard users can reach, styled to match Mantine. ECharts is larger and styled separately from Mantine, Chart.js draws only on a canvas, and Nivo's releases have slowed |
 | Drag and drop | [@hello-pangea/dnd](https://github.com/hello-pangea/dnd), for ordering rows | [dnd-kit](https://github.com/clauderic/dnd-kit)'s `@dnd-kit/react`, [Pragmatic drag and drop](https://github.com/atlassian/pragmatic-drag-and-drop) | Apache-2.0, supports React 19, and the drag-and-drop library Mantine's own documentation uses. `@dnd-kit/react` is active but not yet at version 1.0, and Pragmatic drag and drop has no keyboard dragging |
-| Org chart | [React Flow](https://reactflow.dev), with the tree laid out by Fathom's own code | [d3-org-chart](https://github.com/bumbeishvili/org-chart), [dagre](https://github.com/dagrejs/dagre) for layout | React Flow is widely used, active, and completely open source; its [paid subscription](https://reactflow.dev/pro) sells examples and support, not library features. d3-org-chart has one maintainer and no recent release. dagre, chosen first, lays out general graphs with every card in a row at one height, so it cannot stack the reports who manage nobody in a column under their manager, which keeps a large organization narrow enough to read; an org chart is a tree, which a short layout of Fathom's own handles. [elkjs](https://github.com/kieler/elkjs), a common layout engine, is licensed GPL or EPL, so it is ruled out |
-| Rich-text editor | [Tiptap](https://tiptap.dev), through [Mantine's editor package](https://mantine.dev/x/tiptap/), loading only the formats notes allow | [Lexical](https://lexical.dev), [Milkdown](https://milkdown.dev), a Markdown text box alone | Mantine's own package, so the toolbar matches the rest of Fathom. Tiptap, built on ProseMirror, is MIT-licensed, widely used, and builds a document only from the extensions loaded, so typing or pasting cannot make a format notes do not allow. Lexical has no Mantine package and Milkdown is less used; a Markdown text box alone would ask everyone to write Markdown, so it is offered beside the editor instead |
+| Org chart | [React Flow](https://reactflow.dev), with the tree laid out by Fathom's own code | [d3-org-chart](https://github.com/bumbeishvili/org-chart), [dagre](https://github.com/dagrejs/dagre) for layout | React Flow is widely used, active, and completely open source; its [paid subscription](https://reactflow.dev/pro) sells examples and support, not library features. d3-org-chart has one maintainer and no recent release. The tree's layout is set out below the table |
+| Rich-text editor | [Tiptap](https://tiptap.dev), through [Mantine's editor package](https://mantine.dev/x/tiptap/), loading only the formats notes allow | [Lexical](https://lexical.dev), [Milkdown](https://milkdown.dev), a Markdown text box alone | Mantine's own package, so the toolbar matches the rest of Fathom. Tiptap, built on ProseMirror, is MIT-licensed, widely used, and builds a document only from the extensions loaded, so typing or pasting cannot make a format notes do not allow. The alternatives are set out below the table |
 | Gantt and timeline | [vis-timeline](https://github.com/visjs/vis-timeline), not used: Fathom's own view instead, as [ADR 0009](0009-roadmap-and-timeline-views.md) chose | A custom React and SVG view, [Frappe Gantt](https://github.com/frappe/gantt) | Active and completely open source, with rows of bars that can be dragged to new dates or rows, and zooming. [SVAR React Gantt](https://svar.dev/react/gantt/) and [DHTMLX Gantt](https://dhtmlx.com/docs/products/dhtmlxGantt/) are open-core, so they are ruled out, and Frappe Gantt's releases have slowed |
+
+Two choices need more reasons than their rows hold:
+
+- **Org chart layout:**
+  - **dagre,** chosen first, lays out general graphs with every card in a row at one height, so it cannot stack the reports who manage nobody in a column under their manager. Stacking them keeps a large organization narrow enough to read.
+  - **Fathom's own layout:** an org chart is a tree, which a short layout of Fathom's own handles.
+  - **[elkjs](https://github.com/kieler/elkjs),** a common layout engine, is licensed GPL or EPL, so it is ruled out.
+- **Rich-text editor:** Lexical has no Mantine package and Milkdown is less used. A Markdown text box alone would ask everyone to write Markdown, so it is offered beside the editor instead.
 
 ## Consequences
 

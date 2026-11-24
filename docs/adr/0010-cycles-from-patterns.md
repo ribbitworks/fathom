@@ -3,11 +3,17 @@
 - **ADR:** 0010
 - **Status:** Accepted
 - **Date:** 2026-11-03
-- **Revised:** 2026-11-04, to make cycles up to each stream's Cycles until date rather than two years ahead, and to keep releases on the cycles they include when one cycle's length changes; 2026-11-08, to keep features on the cycles they target in the same way; 2026-11-14, to let a stream end on a day of its own, cutting its last cycle short; 2026-11-15, to lay cycles out two years ahead of today, leaving the Ends day as a stream's only date, and to note that release streams, the streams below, are now called schedules, though the code keeps `ReleaseStream`
+- **Revised:**
+  - 2026-11-04, to make cycles up to each stream's Cycles until date rather than two years ahead, and to keep releases on the cycles they include when one cycle's length changes
+  - 2026-11-08, to keep features on the cycles they target in the same way
+  - 2026-11-14, to let a stream end on a day of its own, cutting its last cycle short
+  - 2026-11-15, to lay cycles out two years ahead of today, leaving the Ends day as a stream's only date, and to note that release streams, the streams below, are now called schedules, though the code keeps `ReleaseStream`
 
 ## Context
 
-Each release stream has its own cycles, laid out two years ahead of today, from a configurable length and naming pattern, which can change from a chosen date while the cycles before keep their names and dates, as the [Domain Model](../design/domain-model.md#release-entities) sets out. Releases include consecutive cycles of their stream, features target a cycle, and each cycle's share of the months it spans counts allocations, capacity, and demand. The [Domain Model](../design/domain-model.md#release-entities) gives each stream cycle patterns, each in force from its start until the next.
+Each release stream has its own cycles, laid out two years ahead of today, from a configurable length and naming pattern. That length and naming pattern can change from a chosen date while the cycles before keep their names and dates, as the [Domain Model](../design/domain-model.md#release-entities) sets out.
+
+Releases include consecutive cycles of their stream, features target a cycle, and each cycle's share of the months it spans counts allocations, capacity, and demand. The [Domain Model](../design/domain-model.md#release-entities) gives each stream cycle patterns, each in force from its start until the next.
 
 ## Options
 
@@ -18,7 +24,10 @@ Each release stream has its own cycles, laid out two years ahead of today, from 
 
 ## Decision
 
-- **Cycles are not stored:** The server works a stream's cycles out from its patterns whenever it needs them, those that start up to two years from today when they are shown, and as far as any release or feature on them reaches when a change is checked, or, for a stream that ends, on or before its Ends day, the cycle holding that day cut short to end on it. Only the patterns and the Ends day are stored.
+- **Cycles are not stored:** The server works a stream's cycles out from its patterns whenever it needs them. Only the patterns and the Ends day are stored. The cycles it works out are:
+  - **When they are shown:** those that start up to two years from today.
+  - **When a change is checked:** as far as any release or feature on them reaches.
+  - **For a stream that ends:** on or before its Ends day, the cycle holding that day cut short to end on it.
 - **A cycle is known by its stream and start day:** Releases name their first and last cycles by the days they start, and features name the cycle they target the same way.
 - **Counting from the pattern's start:** Each of a pattern's cycles starts a whole number of lengths after the pattern starts, so cycles in months keep the same day of the month. A day the month does not have, such as the 31st, becomes the month's last day, without moving the cycles after it.
 - **Rules the server keeps:** So that a cycle's start day stays a cycle's start day, the server refuses a change that would break any of these, both when it is drafted and when it is approved:
