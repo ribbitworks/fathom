@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for metrics over a table's rows: counting rows by one column's groups and by two crossed,
-// with rows holding several choices counted in each; the groups each kind of column offers; and
-// shares.
+// with rows holding several choices counted in each; adding a number column up in each group; the
+// groups each kind of column offers, months among them; and shares.
 
 import { describe, expect, it } from "vitest";
 import { countRows, emptyGroup, groupsFor, share } from "./metrics.ts";
@@ -12,6 +12,8 @@ interface Row {
   start: string;
   level: string[];
   role: string[];
+  hours?: number | null;
+  needed?: string;
 }
 
 const level: TableColumn<Row> = {
@@ -49,11 +51,42 @@ const start: TableColumn<Row> = {
   value: (row) => row.start,
 };
 
+const hours: TableColumn<Row> = {
+  key: "hours",
+  label: "Effort",
+  kind: "number",
+  choices: [],
+  multiple: false,
+  value: (row) => (row.hours == null ? "" : String(row.hours)),
+  sum: { amount: (row) => row.hours ?? null },
+};
+
+const needed: TableColumn<Row> = {
+  key: "needed",
+  label: "Needed by",
+  kind: "month",
+  choices: [],
+  multiple: false,
+  value: (row) => row.needed ?? "",
+};
+
 const rows: Row[] = [
-  { start: "2024-01-01", level: ["p4"], role: ["test"] },
-  { start: "", level: ["p4"], role: ["test", "dev"] },
-  { start: "2025-06-30", level: ["p3"], role: ["dev"] },
-  { start: "", level: [], role: [] },
+  {
+    start: "2024-01-01",
+    level: ["p4"],
+    role: ["test"],
+    hours: 10,
+    needed: "2027-03",
+  },
+  {
+    start: "",
+    level: ["p4"],
+    role: ["test", "dev"],
+    hours: 4.5,
+    needed: "2026-12",
+  },
+  { start: "2025-06-30", level: ["p3"], role: ["dev"], needed: "2027-03" },
+  { start: "", level: [], role: [], hours: 0 },
 ];
 
 describe("counting rows", () => {
@@ -95,6 +128,30 @@ describe("counting rows", () => {
     const counts = countRows([], [level, role]);
     expect(counts.rows).toBe(0);
     expect(counts.of([undefined, undefined])).toBe(0);
+  });
+});
+
+describe("adding a number column up", () => {
+  it("totals each group's amounts, counting the rows that have one", () => {
+    const counts = countRows(rows, [level], hours);
+    expect(counts.summed(["p4"])).toEqual({ total: 14.5, valued: 2 });
+    expect(counts.summed(["p3"])).toEqual({ total: 0, valued: 0 });
+    expect(counts.summed([emptyGroup])).toEqual({ total: 0, valued: 1 });
+    expect(counts.summed([undefined])).toEqual({ total: 14.5, valued: 3 });
+  });
+
+  it("adds a row holding several choices into each, and once into the whole", () => {
+    const counts = countRows(rows, [role], hours);
+    expect(counts.summed(["test"])).toEqual({ total: 14.5, valued: 2 });
+    expect(counts.summed(["dev"])).toEqual({ total: 4.5, valued: 1 });
+    expect(counts.summed([undefined]).total).toBe(14.5);
+  });
+
+  it("adds nothing up without a column to add", () => {
+    expect(countRows(rows, [level]).summed([undefined])).toEqual({
+      total: 0,
+      valued: 0,
+    });
   });
 });
 
@@ -140,6 +197,22 @@ describe("a column's groups", () => {
     const counted = countRows(rows, [manager]);
     expect(counted.of(["yes"])).toBe(2);
     expect(counted.of([emptyGroup])).toBe(2);
+  });
+
+  it("are a month column's months, in date order, then its empty value", () => {
+    const counts = countRows(rows, [needed]);
+    expect(
+      groupsFor(
+        needed as TableColumn<never>,
+        (group) => counts.of([group]) > 0,
+        counts.seen(0),
+      ),
+    ).toEqual([
+      { id: "2026-12", label: "Dec 2026" },
+      { id: "2027-03", label: "Mar 2027" },
+      { id: emptyGroup, label: "Empty" },
+    ]);
+    expect(counts.of(["2027-03"])).toBe(2);
   });
 
   it("are Populated and Empty for columns without choices", () => {

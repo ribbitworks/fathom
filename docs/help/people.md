@@ -154,6 +154,7 @@ To give a note opened under the details the whole height, select **Maximize**, t
 1. Select **Metrics**. The **Metrics** panel opens beside the table.
 1. Under **Break down by**, choose the column to count by.
 1. To count by two columns at once, choose the second under **and by**.
+1. To add up a column of numbers, choose it under **Sum of**.
 
 The counts include every row the table shows, planned hires too. So a search or a filter changes them.
 

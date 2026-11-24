@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Metrics panel beside a table: how many of the rows the view shows fall in each group of a
-// column, or of two columns crossed, and what share of those rows each is. Only the columns the
-// table has are offered, which are those the user may see. With drafts shown beside live, each
+// column, or of two columns crossed, what share of those rows each is, and, with a number column
+// added up, each group's total, average and how many have none. Only the columns the table has are
+// offered, which are those the user may see. With drafts shown beside live, each
 // figure counts the rows as their drafts show them, with the live figure beside it where it
 // differs. Esc, from anywhere in the panel, or its close button closes it.
 
@@ -10,6 +11,7 @@ import { SegmentedControl, Select, Table, Text } from "@mantine/core";
 import { useState } from "react";
 import { MarkedItem } from "./status-mark.tsx";
 import classes from "./metrics.module.css";
+import { numberShown } from "./cell-kinds.tsx";
 import {
   type Counts,
   countRows,
@@ -43,7 +45,15 @@ function Figure({ now, live }: { now: string; live: string | undefined }) {
   );
 }
 
-type Measure = "count" | "share";
+type Measure = "count" | "share" | "sum";
+
+// What a column added up is called in the panel: its name, and its unit's code, such as Effort (PD).
+const addedLabel = ({ label, unit }: TableColumn<never>) =>
+  unit === undefined ? label : `${label} (${unit.code})`;
+
+// A total or an average as the column shows its numbers.
+const amountShown = (column: TableColumn<never>, amount: number) =>
+  column.sum?.shown?.(amount) ?? numberShown(column, amount);
 
 export function MetricsPanel<Row>({
   one,
@@ -54,6 +64,9 @@ export function MetricsPanel<Row>({
   offered,
   breakdown,
   onBreakdown,
+  summable,
+  sum,
+  onSum,
   onClose,
 }: {
   // What the rows are, one and several, such as "person" and "people".
@@ -72,6 +85,10 @@ export function MetricsPanel<Row>({
   offered: readonly TableColumn<Row>[];
   breakdown: readonly string[];
   onBreakdown: (keys: string[]) => void;
+  // The number columns that may be added up, and the key of the one that is, or empty for none.
+  summable: readonly TableColumn<Row>[];
+  sum: string;
+  onSum: (key: string) => void;
   onClose: () => void;
 }) {
   const narrow = useNarrow();
@@ -82,10 +99,12 @@ export function MetricsPanel<Row>({
   const liveBy = by.flatMap((column) =>
     (live?.columns ?? []).filter(({ key }) => key === column.key),
   );
-  const counts = countRows(rows, by);
+  const added = summable.find((column) => column.key === sum);
+  const liveAdded = live?.columns.find((column) => column.key === added?.key);
+  const counts = countRows(rows, by, added);
   const liveCounts =
     live && liveBy.length === by.length
-      ? countRows(live.rows, liveBy)
+      ? countRows(live.rows, liveBy, liveAdded)
       : undefined;
   const rowsLabel = (counted: readonly Row[]) =>
     kinds?.counted(counted) ??
@@ -97,19 +116,49 @@ export function MetricsPanel<Row>({
 
   // The groups of one of the columns broken down by, at its place among them.
   const groupsAt = (column: TableColumn<Row>, index: number): Group[] =>
-    groupsFor(column, (group) => {
-      const pick = by.map((_, at) => (at === index ? group : undefined));
-      return counts.of(pick) > 0 || (liveCounts?.of(pick) ?? 0) > 0;
-    });
+    groupsFor(
+      column,
+      (group) => {
+        const pick = by.map((_, at) => (at === index ? group : undefined));
+        return counts.of(pick) > 0 || (liveCounts?.of(pick) ?? 0) > 0;
+      },
+      new Set([...counts.seen(index), ...(liveCounts?.seen(index) ?? [])]),
+    );
 
-  // A live share is of the live rows.
-  const figure = (pick: (string | undefined)[], measured: Measure) => {
-    const format = (of: Counts) =>
-      measured === "count" ? count(of.of(pick)) : share(of.of(pick), of.rows);
+  // A total or an average shown, or a dash where no row has an amount.
+  const amount = (summed: number | undefined) =>
+    added === undefined || summed === undefined
+      ? "–"
+      : amountShown(added, summed);
+
+  // A live share is of the live rows. A total adds the amounts of the rows that have one, an average
+  // is of those rows, and None counts the rest, blank when there are none.
+  const figure = (
+    pick: (string | undefined)[],
+    measured: Measure | "average" | "none",
+  ) => {
+    const format = (of: Counts) => {
+      const { total, valued } = of.summed(pick);
+      switch (measured) {
+        case "count":
+          return count(of.of(pick));
+        case "share":
+          return share(of.of(pick), of.rows);
+        case "sum":
+          return amount(valued === 0 ? undefined : total);
+        case "average":
+          return amount(valued === 0 ? undefined : total / valued);
+        case "none": {
+          const missing = of.of(pick) - valued;
+          return missing === 0 ? "" : count(missing);
+        }
+      }
+    };
     return (
       <Figure now={format(counts)} live={liveCounts && format(liveCounts)} />
     );
   };
+  const allLabel = `All ${kinds?.noun ?? noun}`;
 
   const [first, second] = by;
   const picker = (
@@ -151,28 +200,46 @@ export function MetricsPanel<Row>({
               <Table.Th>{first.label}</Table.Th>
               <Table.Th className={classes.number}>{capitalNoun}</Table.Th>
               <Table.Th className={classes.number}>Share</Table.Th>
+              {added !== undefined && (
+                <>
+                  <Table.Th className={classes.number}>
+                    {addedLabel(added)}
+                  </Table.Th>
+                  <Table.Th className={classes.number}>Average</Table.Th>
+                  <Table.Th className={classes.number}>None</Table.Th>
+                </>
+              )}
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {groupsAt(first, 0).map((group) => (
-              <Table.Tr key={group.id}>
+            {[...groupsAt(first, 0), undefined].map((group) => (
+              <Table.Tr key={group?.id ?? "all"}>
                 <Table.Th scope="row" className={classes.groupName}>
-                  {group.label}
+                  {group?.label ?? allLabel}
                 </Table.Th>
-                <Table.Td className={classes.number}>
-                  {figure([group.id], "count")}
-                </Table.Td>
-                <Table.Td className={classes.number}>
-                  {figure([group.id], "share")}
-                </Table.Td>
+                {(
+                  [
+                    "count",
+                    "share",
+                    ...(added === undefined
+                      ? []
+                      : (["sum", "average", "none"] as const)),
+                  ] as const
+                ).map((measured) => (
+                  <Table.Td key={measured} className={classes.number}>
+                    {figure([group?.id], measured)}
+                  </Table.Td>
+                ))}
               </Table.Tr>
             ))}
           </Table.Tbody>
         </Table>
         {first.multiple && (
           <Text fz="xs" c="dimmed" mt="xs">
-            A {one} may hold several choices of {first.label}, so shares can add
-            up to more than 100%.
+            A {one} may hold several choices of {first.label}, so shares
+            {added === undefined
+              ? " can add up to more than 100%."
+              : " and totals can add up to more than the whole."}
           </Text>
         )}
       </>
@@ -185,13 +252,16 @@ export function MetricsPanel<Row>({
           size="xs"
           mb="sm"
           aria-label="Show figures as"
-          value={measure}
+          value={measure === "sum" && added === undefined ? "count" : measure}
           onChange={(value) => {
-            setMeasure(value);
+            setMeasure(value as Measure);
           }}
           data={[
             { value: "count", label: "Count" },
             { value: "share", label: "Share" },
+            ...(added === undefined
+              ? []
+              : [{ value: "sum", label: addedLabel(added) }]),
           ]}
         />
         <div className={classes.crossed}>
@@ -220,7 +290,12 @@ export function MetricsPanel<Row>({
                       key={column?.id ?? "all"}
                       className={classes.number}
                     >
-                      {figure([row?.id, column?.id], measure)}
+                      {figure(
+                        [row?.id, column?.id],
+                        measure === "sum" && added === undefined
+                          ? "count"
+                          : measure,
+                      )}
                     </Table.Td>
                   ))}
                 </Table.Tr>
@@ -275,6 +350,10 @@ export function MetricsPanel<Row>({
               onBreakdown(key === undefined ? [first.key] : [first.key, key]);
             },
           )}
+        {summable.length > 0 &&
+          picker("Sum of", "Nothing", added, summable, (key) => {
+            onSum(key ?? "");
+          })}
       </div>
       {body}
     </SidePanelFrame>

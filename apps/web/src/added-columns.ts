@@ -42,6 +42,13 @@ export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
       multiple: field.multiple,
     }),
     dataClass: columnClass(field, list),
+    ...(field.type === "number"
+      ? {
+          sum: {
+            amount: (record: Rec) => record.numbers?.[field.id] ?? null,
+          },
+        }
+      : {}),
   };
 };
 

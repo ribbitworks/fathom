@@ -156,6 +156,11 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
       onBreakdown={(breakdown) => {
         onView({ ...view, breakdown });
       }}
+      summable={allColumns.filter((column) => column.sum !== undefined)}
+      sum={view.sum ?? table.sumAtFirst ?? ""}
+      onSum={(sum) => {
+        onView({ ...view, sum });
+      }}
       onClose={() => {
         onView({ ...view, breakdown: undefined });
         focusSoon(metricsButtonId);

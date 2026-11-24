@@ -6,6 +6,7 @@ import { act, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import {
+  breaksDown,
   inOrder,
   keyColumn,
   keyColumnKey,
@@ -252,5 +253,33 @@ describe("the Key column", () => {
         "A record's key can't be changed",
       );
     });
+  });
+});
+
+describe("which columns Metrics breaks rows down by", () => {
+  it.each([
+    ["text", false, false],
+    ["note", false, false],
+    ["link", false, false],
+    ["choice", true, true],
+    ["flag", true, true],
+    ["month", true, true],
+    ["date", false, true],
+    ["number", false, true],
+  ] as const)(
+    "a %s column: required %s, otherwise %s",
+    (kind, whenRequired, otherwise) => {
+      expect(breaksDown({ kind, required: true })).toBe(whenRequired);
+      expect(breaksDown({ kind, required: false })).toBe(otherwise);
+    },
+  );
+
+  it("follows the column where a table says otherwise", () => {
+    expect(
+      breaksDown({ kind: "text", required: false, breaksDown: true }),
+    ).toBe(true);
+    expect(
+      breaksDown({ kind: "choice", required: true, breaksDown: false }),
+    ).toBe(false);
   });
 });

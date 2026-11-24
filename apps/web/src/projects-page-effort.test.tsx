@@ -2,7 +2,7 @@
 
 // Tests for features' effort on the Features page, in the units each view shows.
 
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { recordCell } from "./test-support.tsx";
@@ -62,6 +62,29 @@ describe("the Features page", () => {
     const featurePath = `PUT /api/features/${first.id}`;
     const effortCell = () =>
       recordCell(first.id, "estimateHours") as HTMLElement;
+
+    it("is what Metrics adds up at first, its total shown in the view's unit, rounded up", async () => {
+      // Given a feature estimated at 100 hours, shown in person-months
+      await open(
+        withEstimate(100),
+        {},
+        `${inUnit("person-months")}&breakdown=${encodeURIComponent(
+          JSON.stringify(["statusId"]),
+        )}`,
+      );
+
+      // Then Metrics adds Effort up, in person-months
+      const metrics = await screen.findByRole("region", { name: "Metrics" });
+      expect(
+        within(metrics).getByRole("columnheader", { name: "Effort (PM)" }),
+      ).toBeTruthy();
+      const all = within(metrics).getByRole("rowheader", { name: /^All / });
+      expect(
+        within(all.closest("tr") as HTMLElement)
+          .getAllByRole("cell")
+          .map((cell) => cell.textContent),
+      ).toEqual(["1", "100%", "0.65", "0.65", ""]);
+    });
 
     it("leaves the address once Effort is back in hours to two decimal places", async () => {
       const { history } = await open(

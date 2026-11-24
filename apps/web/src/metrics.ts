@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Metrics over a table's rows: how many rows fall in each of a column's groups, its choices, or for
-// other columns whether a value is filled in, and what share of the rows that is, for one column or
-// two crossed. They are counted in the browser, over the rows the view shows and from the columns
-// the user may see, as ADR 0006 sets out, so they reveal nothing the table does not.
+// Metrics over a table's rows: how many rows fall in each of a column's groups, its choices, its
+// months, or for other columns whether a value is filled in, what share of the rows that is, and,
+// with a number column added up, the total of their amounts, for one column or two crossed. They are
+// counted in the browser, over the rows the view shows and from the columns the user may see, as
+// ADR 0006 sets out, so they reveal nothing the table does not.
 
+import { formatMonth } from "./day-formats.ts";
 import type { CellValue, TableColumn } from "./table-view.ts";
 import { isEmptyIn } from "./table-rows.ts";
 
@@ -23,7 +25,7 @@ export const emptyGroup = "";
 // The group of rows with any value, in columns without choices.
 const filledGroup = "filled";
 
-// The groups a value falls in: each choice it holds, or whether it is filled in.
+// The groups a value falls in: each choice it holds, its month, or whether it is filled in.
 function groupsOf(column: TableColumn<never>, value: CellValue): string[] {
   if (column.kind === "flag") {
     return (value as string[]).length > 0
@@ -31,16 +33,27 @@ function groupsOf(column: TableColumn<never>, value: CellValue): string[] {
       : [emptyGroup];
   }
   if (isEmptyIn(column, value)) return [emptyGroup];
-  return column.kind === "choice"
-    ? [...new Set(value as string[])]
-    : [filledGroup];
+  if (column.kind === "choice") return [...new Set(value as string[])];
+  return column.kind === "month" ? [value as string] : [filledGroup];
 }
 
+// The amounts of a number column added up over some rows: their total, and how many have one.
+export interface Summed {
+  total: number;
+  valued: number;
+}
+
+const noneSummed: Summed = { total: 0, valued: 0 };
+
 // Rows counted by the groups of some columns, in order. `of` gives how many rows fall in a group of
-// each column, where a column left undefined counts rows in any of its groups.
+// each column, where a column left undefined counts rows in any of its groups; `summed` gives the
+// amounts of the column added up, if any, over the same rows; and `seen` the groups the rows of a
+// column, by its place, fell in.
 export interface Counts {
   rows: number;
   of: (groups: readonly (string | undefined)[]) => number;
+  summed: (groups: readonly (string | undefined)[]) => Summed;
+  seen: (index: number) => ReadonlySet<string>;
 }
 
 // Group identifiers hold no control characters, so these stand for any group and between groups.
@@ -61,36 +74,67 @@ function picks(groupsByColumn: readonly string[][]): (string | undefined)[][] {
 export function countRows<Row>(
   rows: readonly Row[],
   columns: readonly TableColumn<Row>[],
+  added?: TableColumn<Row>,
 ): Counts {
   const counted = new Map<string, number>();
+  const sums = new Map<string, Summed>();
+  const seen = columns.map(() => new Set<string>());
   for (const row of rows) {
     const groups = columns.map((column) =>
       groupsOf(column as TableColumn<never>, column.value(row)),
     );
+    groups.forEach((held, at) => {
+      for (const group of held) seen.at(at)?.add(group);
+    });
+    const amount = added?.sum?.amount(row) ?? null;
     for (const pick of picks(groups)) {
       const key = keyOf(pick);
       counted.set(key, (counted.get(key) ?? 0) + 1);
+      if (amount !== null) {
+        const { total, valued } = sums.get(key) ?? noneSummed;
+        sums.set(key, { total: total + amount, valued: valued + 1 });
+      }
     }
   }
   return {
     rows: rows.length,
     of: (groups) => counted.get(keyOf(groups)) ?? 0,
+    summed: (groups) => sums.get(keyOf(groups)) ?? noneSummed,
+    seen: (index) => seen.at(index) ?? new Set(),
   };
 }
 
+// The groups a column's rows fill in, before the empty one: its choices, its months, or Populated.
+function filledGroups(
+  column: TableColumn<never>,
+  held: (group: string) => boolean,
+  seen: ReadonlySet<string>,
+): Group[] {
+  if (column.kind === "choice" || column.kind === "flag") {
+    return column.choices
+      .filter((choice) => choice.retired !== true || held(choice.id))
+      .map(({ id, label }) => ({ id, label }));
+  }
+  if (column.kind === "month") {
+    // Months written as 2027-03 sort as text in date order.
+    return [...seen]
+      .filter((month) => month !== emptyGroup)
+      .sort()
+      .map((month) => ({ id: month, label: formatMonth(month) }));
+  }
+  return [{ id: filledGroup, label: "Populated" }];
+}
+
 // A column's groups, in order: its choices in their list's order, leaving out retired ones no row
-// counted holds, or, for other columns, Populated; then its empty value, when any row counted has it.
-// `held` says whether any row counted is in a group.
+// counted holds, its months in date order, or, for other columns, Populated; then its empty value,
+// when any row counted has it. `held` says whether any row counted is in a group, and `seen` the
+// groups any row counted fell in.
 export function groupsFor(
   column: TableColumn<never>,
   held: (group: string) => boolean,
+  seen: ReadonlySet<string> = new Set(),
 ): Group[] {
-  const filled =
-    column.kind === "choice" || column.kind === "flag"
-      ? column.choices
-          .filter((choice) => choice.retired !== true || held(choice.id))
-          .map(({ id, label }) => ({ id, label }))
-      : [{ id: filledGroup, label: "Populated" }];
+  const filled = filledGroups(column, held, seen);
   return [
     ...filled,
     ...(held(emptyGroup)

@@ -271,11 +271,13 @@ export function keptForKind<Col extends AnyColumn>(
   };
 }
 
-export const breaksDown = (
+export function breaksDown(
   column: Pick<AnyColumn, "required" | "kind" | "breaksDown">,
-) =>
-  column.breaksDown ??
-  (!column.required || kindOf(column).breaksDownWhenRequired);
+): boolean {
+  if (column.breaksDown !== undefined) return column.breaksDown;
+  const byKind = kindOf(column).breaksDown;
+  return byKind === "unless required" ? !column.required : byKind === "always";
+}
 
 export const emptyValue = (column: { kind: Kind }): CellValue =>
   kindOf(column).empty;

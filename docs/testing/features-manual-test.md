@@ -865,3 +865,29 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 - [ ] `FCD5` Point at the **+1** after 'Offline Sync' under **Clinic Booking**.
   - **Expected:** A tip reads "Also under P-2001 Crane Control"
   - **Notes:**
+
+### FEAT-30: Metrics Adds Up Effort
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-29 ended with.
+
+**Preconditions:** Select the **Features** page in the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
+
+- [ ] `EEB5` Select **Metrics**, then **Status** under **Break down by**.
+  - **Expected:**
+    - **Sum of** reads **Effort**.
+    - The panel's table has the columns **Status**, **Features**, **Share**, **Effort (h)**, **Average** and **None**.
+    - Its last row, **All features**, counts every feature in the table.
+    - Each figure is easy to read and lines up under its column's name.
+  - **Notes:**
+
+- [ ] `65D1` Open the column menu of **Effort** in the table and select **Person-days (8 hours)**.
+  - **Expected:** The panel's column reads **Effort (PD)**, and its totals and averages are in person-days.
+  - **Notes:**
+
+- [ ] `9D82` Choose **Needed by** under **Break down by**.
+  - **Expected:** A row for each month features are needed by, earliest first, with the empty value last.
+  - **Notes:**
+
+- [ ] `BE37` Choose **Nothing** under **Sum of**.
+  - **Expected:** The **Effort (PD)**, **Average** and **None** columns go, and the rest stays.
+  - **Notes:**

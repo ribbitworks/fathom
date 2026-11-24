@@ -78,6 +78,14 @@ export interface TableColumn<Row> {
   // decimal places shown, each number rounded up to them, as estimates are.
   unit?: ColumnUnit | undefined;
   places?: number | undefined;
+  // For number columns whose amounts add up, such as Effort: a row's amount, in what totals are kept
+  // in, and, where that isn't what the cells show, a total or an average as they would show it.
+  sum?:
+    | {
+        amount: (row: Row) => number | null;
+        shown?: (amount: number) => string;
+      }
+    | undefined;
   // For text columns: what an empty cell shows in grey in its place, such as a name made from other
   // details, which sorting, filtering, and searching take as its value.
   standIn?: (row: Row) => string;
@@ -135,6 +143,8 @@ export interface View {
   sort: SortLevel[];
   // The keys of the columns the metrics break the rows down by, set while the metrics show.
   breakdown?: string[] | undefined;
+  // The key of the number column the metrics add up, or empty for none, when not the table's own.
+  sum?: string | undefined;
   // Which of a table's groupings the rows are under, when they aren't in one list.
   grouping?: string | undefined;
   // Which of the table's groupings the rows under each of the first grouping's headings are under.
@@ -196,6 +206,7 @@ export function viewFrom(search: ViewDefinition): View {
         : { key: level, descending: false },
     ),
     ...(search.breakdown === undefined ? {} : { breakdown: search.breakdown }),
+    ...(search.sum === undefined ? {} : { sum: search.sum }),
     ...(grouping === undefined ? {} : { grouping }),
     ...(grouping === undefined || search.thenBy === undefined
       ? {}
@@ -374,6 +385,7 @@ export function searchFor(view: View): ViewDefinition {
           ),
         }),
     ...(view.breakdown === undefined ? {} : { breakdown: view.breakdown }),
+    ...(view.sum === undefined ? {} : { sum: view.sum }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.thenBy === undefined ? {} : { thenBy: view.thenBy }),
     ...(view.groupsReversed === true ? { groupsReversed: true } : {}),
@@ -404,10 +416,10 @@ function canonical(value: unknown): unknown {
 // The view as a saved view keeps it: as the address holds it, without the metrics while they break
 // down by nothing, since an empty Metrics panel is nothing to save.
 export function savedFor(view: View): ViewDefinition {
-  const { breakdown, ...rest } = searchFor(view);
+  const { breakdown, sum, ...rest } = searchFor(view);
   return breakdown === undefined || breakdown.length === 0
     ? rest
-    : { ...rest, breakdown };
+    : { ...rest, breakdown, ...(sum === undefined ? {} : { sum }) };
 }
 
 // Whether two views show the same rows in the same order, with the same metrics, which is whether
@@ -522,7 +534,8 @@ export function narrows(view: View): boolean {
 // offers that are not columns, leaving out those on columns the user may not see, such as in a link
 // from someone who may, and with its groupings, frozen columns, retired records and the page's
 // choices, and the hidden columns, widths, units, and decimal places of the columns the table has.
-// The breakdown keeps only the columns the metrics offer, when given.
+// The breakdown keeps only the columns the metrics offer, when given, and the sum only a column the
+// table has.
 export function knownView(
   view: View,
   columns: readonly { key: string }[],
@@ -549,6 +562,9 @@ export function knownView(
             (key) => known.has(key) && counted.has(key),
           ),
         }),
+    ...(view.sum === undefined || (view.sum !== "" && !known.has(view.sum))
+      ? {}
+      : { sum: view.sum }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.thenBy === undefined ? {} : { thenBy: view.thenBy }),
     ...(view.groupsReversed === true ? { groupsReversed: true as const } : {}),
