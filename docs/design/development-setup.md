@@ -4,7 +4,7 @@ category: "Guide"
 audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/**"]
 dependencies: ["docs/design/architecture.md", "docs/standards/testing.md", "docs/design/checks-and-ci.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Fathom: Development Setup
@@ -226,7 +226,7 @@ The copy gets new names, and so a new, empty database.
 | Command | What it does |
 | --- | --- |
 | `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests), which the Check workflow runs on every pull request, as [Checks and CI](checks-and-ci.md#the-check-on-github) sets out. `--skip` and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it. Without a connection to the internet it stops before starting, naming `--offline`, which leaves out the Renovate settings and the scans that need the internet, once `pnpm offline:prepare` has run, as [Working Offline](#working-offline) describes |
-| `pnpm check:push` | The tests a change can affect and the linters, side by side, before a push: `pnpm test:changed`, ESLint, the formatting check, type checking and the Markdown and shell linters. It lists each one's result and time, and names any that failed. `--skip` and `--offline` work as for `pnpm check` |
+| `pnpm check:push` | The tests and linters a change needs, side by side, before a push, as [Checks and CI § The Local Check](checks-and-ci.md#the-local-check) draws. It lists each one's result and time, and names any that failed. `--skip` and `--offline` work as for `pnpm check` |
 | `pnpm test` | Every test: the script tests, then every package's |
 | `pnpm test:changed` | The tests a change can affect, failing when a changed source file, or a package running every test, falls short of its coverage, as on GitHub; with `--uncommitted`, only the work not yet committed |
 | `pnpm test:scripts` | The script tests alone |
@@ -293,7 +293,7 @@ See [Releases](#releases) for the steps.
   - After `pnpm reset-caches`, which removes Trivy's database.
   - After pulling changes that update one of those images or the database image's Dockerfile, which offline can't fetch or build.
   - Before a long time offline, since offline scans find only what was known on the day they were prepared.
-- **What `--offline` leaves out:** `pnpm check --offline` leaves out the Renovate settings, and runs `pnpm security --offline`, which skips the dependency audit and the image scans and runs every other scanner without network access. Its summary names what it skipped. `pnpm check:push --offline` runs every job, since none needs the internet.
+- **What `--offline` leaves out:** `pnpm check --offline` leaves out the Renovate settings, and runs `pnpm security --offline`, which skips the dependency audit and the image scans and runs every other scanner without network access. Its summary names what it skipped. `pnpm check:push --offline` leaves no job out, since none needs the internet.
 - **Other commands:** without the internet, the database tests can't fetch the day's security fixes for their image. `pnpm check --offline` and `pnpm check:push --offline` build it with the fixes `pnpm offline:prepare` fetched; for other commands, such as `pnpm test` or `pnpm dev`, set `FATHOM_OFFLINE=1`, which does the same once that copy has been prepared.
 - **Before a merge:** a branch checked offline still needs the Check workflow's full check, which refuses `--offline`, to pass on its pull request, as [Rulesets](#rulesets) sets out.
 

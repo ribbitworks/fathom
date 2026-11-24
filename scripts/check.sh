@@ -27,7 +27,7 @@ full_check=(
   "Licences|pnpm lint:licences"
   "Renovate settings|pnpm lint:renovate"
 )
-before_push=(
+before_push_jobs=(
   "Changed tests|pnpm test:changed"
   "${linters[@]}"
 )
@@ -46,6 +46,8 @@ job_limit_seconds="$(node --input-type=module --eval \
   fail "the job time limit must be a whole number of seconds, not '$job_limit_seconds'"
 stop_grace_seconds=5
 logs=""
+# Set when a change before a push is documentation alone, whose quick check takes no turn.
+without_turn=""
 # The process of each job still running, emptied once it ends.
 pids=()
 # Whether each job's wait for another copy of the repository has been shown, as it waits.
@@ -54,12 +56,13 @@ results=()
 seconds=()
 
 main() {
-  local index started skip offline=""
+  local index started skip offline="" before_push=""
   local -a starts=() skips=() arguments=("$@")
   while [ "$#" -gt 0 ]; do
     case "$1" in
       --before-push)
-        jobs=("${before_push[@]}")
+        jobs=("${before_push_jobs[@]}")
+        before_push=1
         shift
         ;;
       --offline)
@@ -75,13 +78,17 @@ main() {
     esac
   done
   for skip in ${skips[@]+"${skips[@]}"}; do skip_job "$skip"; done
-  if [ -n "$offline" ]; then
+  [ -z "$before_push" ] || scope_to_change
+  if [ -n "$offline" ] && [ -n "$without_turn" ]; then
+    # Documentation alone needs nothing 'pnpm offline:prepare' fetches.
+    refuse_offline_in_ci
+  elif [ -n "$offline" ]; then
     work_offline
   elif needs_connection; then
     require_connection
   fi
   # The arguments and the connection are checked before waiting for a turn, so a mistake fails at once.
-  if ! in_turn; then
+  if ! in_turn && [ -z "$without_turn" ]; then
     exec node scripts/check-turn.mjs bash scripts/check.sh ${arguments[@]+"${arguments[@]}"}
   fi
   mkdir -p .tmp && chmod 700 .tmp
@@ -187,13 +194,49 @@ show_wait() {
 }
 
 skip_job() {
-  local job kept=() matched=""
+  remove_job "$1" || fail "No job left to skip is named $1; those left are: $(job_names)"
+  [ "${#jobs[@]}" -gt 0 ] || fail "Every job is skipped, so there is nothing to check"
+}
+
+# Removes the job with this name, failing when none is left by that name.
+remove_job() {
+  local job kept=() matched=1
   for job in "${jobs[@]}"; do
-    if [ "${job%%|*}" = "$1" ]; then matched=1; else kept+=("$job"); fi
+    if [ "${job%%|*}" = "$1" ]; then matched=0; else kept+=("$job"); fi
   done
-  [ -n "$matched" ] || fail "No job left to skip is named $1; those left are: $(job_names)"
-  [ "${#kept[@]}" -gt 0 ] || fail "Every job is skipped, so there is nothing to check"
-  jobs=("${kept[@]}")
+  jobs=(${kept[@]+"${kept[@]}"})
+  return "$matched"
+}
+
+# Before a push, keeps only the jobs the change needs: documentation alone needs only the Markdown
+# linter, since Prettier leaves Markdown alone and reads no other file under docs/, and is quick
+# enough to run without waiting for a turn. ShellCheck runs only when a shell script changed. When
+# the changes can't be listed, every job runs.
+scope_to_change() {
+  local scope job
+  if ! scope="$(node --input-type=module --eval \
+    'import { changedPaths } from "./scripts/changed-paths.mjs";
+     import { isDocumentationOnly } from "./scripts/documentation-only.mjs";
+     const paths = changedPaths();
+     console.log(isDocumentationOnly(paths) ? "documentation" : paths.some((path) => path.endsWith(".sh")) ? "shell" : "code");' 2>&1)"; then
+    ! in_turn || info "The changes couldn't be listed, so every job runs: $scope"
+    return 0
+  fi
+  case "$scope" in
+    documentation)
+      without_turn=1
+      for job in "${jobs[@]}"; do
+        [ "${job%%|*}" = "Markdown" ] || remove_job "${job%%|*}"
+      done
+      [ "${#jobs[@]}" -gt 0 ] || fail "Every job this change needs is skipped, so there is nothing to check"
+      info "Only documentation changed, so only Markdown runs"
+      ;;
+    code)
+      remove_job "Shell scripts" || return 0
+      [ "${#jobs[@]}" -gt 0 ] || fail "Every job this change needs is skipped, so there is nothing to check"
+      ! in_turn || info "No shell script changed, so Shell scripts doesn't run"
+      ;;
+  esac
 }
 
 # Whether any job left needs the internet.
