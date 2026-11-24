@@ -3,13 +3,13 @@ title: "Testing Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
-dependencies: ["docs/standards/agent-workflow.md", "docs/standards/code-review.md", "docs/standards/typescript.md"]
+dependencies: ["docs/standards/code-review.md", "docs/standards/typescript.md"]
 last_updated: "2026-11-23"
 ---
 
 # Testing Standards
 
-How Fathom's changes are tested. Every change that adds or changes behaviour includes its tests in the same change, and tests run as part of the [Agent Workflow](agent-workflow.md). Test locations for TypeScript are in [TypeScript Standards](typescript.md#tests), and test tools are chosen in the architecture decision records in `docs/adr/`.
+How Fathom's changes are tested. Every change that adds or changes behaviour includes its tests in the same change, and [Before a Pull Request](#before-a-pull-request) says when they run. Test locations for TypeScript are in [TypeScript Standards](typescript.md#tests), and test tools are chosen in the architecture decision records in `docs/adr/`.
 
 ## Principles
 
@@ -29,8 +29,8 @@ How Fathom's changes are tested. Every change that adds or changes behaviour inc
 | Access control | Every role's access to every protected operation and every level of protected data, allowed and denied | Every change |
 | Security | Input handling, sessions, request forgery protection, rate limiting, audit records, and log contents | Every change |
 | Container | Behaviour that needs the built containers, such as network isolation | On every pull request but documentation alone, and every push to `main`; locally, every change that affects the containers, and before a stage is complete |
-| UI | Key user journeys in a real browser | Not required for each change and not run in the workflow's test step; run when the user asks, and passing before a stage is complete |
-| Manual | What a person sees and does in a feature, by hand in a real browser, as [Manual Tests](#manual-tests) describes | Before a stage that changes the feature is complete, and when the owner asks |
+| UI | Key user journeys in a real browser | Not required for each change and not run before a pull request; run when the maintainer asks, and passing before a stage is complete |
+| Manual | What a person sees and does in a feature, by hand in a real browser, as [Manual Tests](#manual-tests) describes | Before a stage that changes the feature is complete, and when the maintainer asks |
 
 Every new or changed API operation has integration tests, as well as unit tests for its rules.
 
@@ -107,7 +107,7 @@ Logic, validation, access checks and data handling are never excluded. The code 
 - **One behaviour per test:** arrange the data, act once, assert the outcome. Mark the phases with `Given`, `When` and `Then` comments in non-trivial tests.
 - **Drive through the public surface:** set up and mutate state through the same APIs callers use, not by poking storage directly.
 - **No sleeping:** tests wait for conditions or advance a controlled clock, never wait for fixed amounts of time.
-- **Flaky tests:** a test that fails intermittently is fixed, or reported to the owner. Tests are never removed, skipped or weakened without the owner's approval.
+- **Flaky tests:** a test that fails intermittently is fixed, or filed as an issue. Tests are never removed, skipped or weakened without the maintainer's approval.
 
 ## Web App Tests
 
@@ -128,7 +128,7 @@ UI tests are not required on every change. A new user flow lists a short UI test
 
 ## Running Tests
 
-Run tests only through Fathom's own commands, never the underlying tools directly. If any category of tests can't run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
+Run tests only through Fathom's own commands, never the underlying tools directly. If a category of tests can't run, such as without a container runtime, the change isn't checked: say so in the pull request.
 
 ### The Commands
 
@@ -164,26 +164,26 @@ Tests that reach code other than by importing it, such as building the web app, 
 - **The cost:** measuring coverage adds about a quarter to the time of the tests it measures.
 - **The limits:** it can't tell which source a test of another name covers, nor see code a test reaches other than by importing it. So `pnpm check` and GitHub's check still enforce coverage in full.
 
-### The Test Step
+### Before a Pull Request
 
-While working, run `pnpm check:push`, as [Development Setup](../design/development-setup.md#checks-and-tests) describes, or any one of its parts on its own for a quick answer. The workflow's test step, which [agent-workflow.md](agent-workflow.md#autonomous-mode) repeats after each round of fixes, and the steps after it:
+While working, run `pnpm check:push`, as [Development Setup](../design/development-setup.md#checks-and-tests) describes, or any one of its parts on its own for a quick answer. A change then goes through these checks:
 
-1. **Before the code review:** the checks run while working, with `pnpm test:containers` when the change affects the containers. The full `pnpm check` waits for the last step.
-1. **After each round of fixes,** whether from a review, UI feedback or owner feedback: `pnpm check:push`.
+1. **Before the code review:** `pnpm check:push`, with `pnpm test:containers` when the change affects the containers.
+1. **After each round of fixes,** from a review or from the maintainer's feedback: `pnpm check:push` again.
    - `pnpm security` too, if the round changed dependencies, the lockfile, a container file or the security scans' settings.
    - `pnpm test:containers` again, if the round changed the containers.
-1. **Before the push:** once the review's findings are fixed and those checks pass, the code is rebased onto `main` and `pnpm check:push` runs on the rebased code. It's then pushed without waiting for the owner's approval, as the [Agent Workflow](agent-workflow.md#workflow) sets out.
-1. **On the pull request:** the Check workflow, as [The Check on GitHub](#the-check-on-github) sets out.
+1. **Before the push:** once the review's findings are fixed and those checks pass, rebase onto `main` and run `pnpm check:push` on the rebased code.
+1. **On the pull request:** the Check workflow runs the full `pnpm check`, as [The Check on GitHub](#the-check-on-github) sets out.
 
-A change to documentation alone may skip the test step, as [agent-workflow.md](agent-workflow.md#autonomous-mode) allows, except a change to a Help page, which is built into Fathom.
+A change to documentation alone may skip these checks, apart from `pnpm lint:md`, except a change to a Help page, which is built into Fathom.
 
 ### The Check on GitHub
 
 - **Every push** to a pull request or to `main` runs the full `pnpm check`, its package tests on runners of their own, as [The Check Workflow](#the-check-workflow) draws.
 - **Documentation alone** means Markdown files, and files under `docs/` other than Help pages, which are built into Fathom. A pull request of documentation alone leaves out the package tests, the server's merged coverage and the container tests; every push to `main` runs them.
 - **The security report** runs on every pull request, documentation alone included. It scans the container images whenever anything they're built from has changed, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out.
-- **The full suite step:** the pull request's green check is the [Agent Workflow](agent-workflow.md#workflow)'s full suite step, for a pull request's commit, or once for the whole branch of an [issue batch](issues.md#issue-batches).
-- **Merging:** the owner merges only on green. **Full check** and **Container tests** must pass, as [Development Setup](../design/development-setup.md#rulesets) sets out.
+- **The full suite:** the green check on a pull request's latest push is the full suite's run, once for the whole branch of an [issue batch](issues.md#issue-batches) too.
+- **Merging:** the maintainer merges only on green. **Full check** and **Container tests** must pass, as [Development Setup](../design/development-setup.md#rulesets) sets out.
 - **Failures:** follow the run with `gh pr checks --watch`, and read a failure or warning with `gh run view --log` (or `--log-failed`). Every warning it reports is fixed, as locally.
 - **Locally:** running the full `pnpm check` is optional, for when the workflow can't run.
 
@@ -408,7 +408,7 @@ flowchart TD
 
 ## Problems Found
 
-A problem a test finds that the change does not fix, whether a failing manual test step, a test that fails now and then, or a gap in coverage, is proposed to the owner as a GitHub issue and filed through its form once approved, as [Issues](issues.md) sets out, never left in a document or a test's notes.
+A problem a test finds that the change does not fix, whether a failing manual test step, a test that fails now and then, or a gap in coverage, is filed as a GitHub issue through its form, as [Issues](issues.md) sets out, never left in a document or a test's notes.
 
 ## Manual Tests
 
