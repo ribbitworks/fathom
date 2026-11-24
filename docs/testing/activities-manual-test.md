@@ -99,7 +99,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `C7E4` Type `General` in **Name**.
-  - **Expected:** **Name** reads `General`, and "Name needed" is gone.
+  - **Expected:** **Name** reads `General`.
   - **Notes:**
 
 - [ ] `21FD` Select **Add**.
