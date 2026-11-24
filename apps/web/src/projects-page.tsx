@@ -496,15 +496,7 @@ export function ProjectsPage({
           editColumn: (field) => {
             columnDialog.open({ kind: "edit", field });
           },
-          ...(plan.canEditFeatures
-            ? {
-                removeColumn: columnRemover(
-                  "features",
-                  changes,
-                  withFeatureColumns,
-                ),
-              }
-            : {}),
+          removeColumn: columnRemover("features", changes, withFeatureColumns),
         };
         const { fields, order, lists } = plan.featureColumns;
         return (
@@ -548,7 +540,6 @@ export function ProjectsPage({
               table="features"
               fields={fields}
               lists={listsToOffer.data ?? lists}
-              canDelete={plan.canEditFeatures}
               saving={changes}
               withColumns={withFeatureColumns}
               newColumnButton={newColumnId}

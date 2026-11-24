@@ -380,6 +380,28 @@ describe("publishing as the role in use", () => {
     expect(await published(maker)).toEqual({ total: 4, left: 0 });
   });
 
+  it.each([
+    ["features", "product-manager", ["people:edit"], ["features:edit"]],
+    ["people", "workforce-administrator", ["features:edit"], ["people:edit"]],
+  ] as const)(
+    "publishes a column on %s only as a role that sets up that table",
+    async (table, makerRole, other, own) => {
+      // Given a column made as a role that sets up the table
+      const maker = await user(makerRole);
+      await saved(maker, "POST", `/api/${table}/columns`, {
+        name: unique("Fictional Role Column"),
+        type: "link",
+        visibility: "general",
+      });
+
+      // When publishing as a role that sets up only the other table, then as one that sets up this
+      await test.holdOnly(maker.id, [...other, "people:view"]);
+      expect(await published(maker)).toEqual({ total: 0, left: 1 });
+      await test.holdOnly(maker.id, [...own, "people:view"]);
+      expect(await published(maker)).toEqual({ total: 1, left: 0 });
+    },
+  );
+
   it("publishes nothing when the role may make none of the changes, which it still discards", async () => {
     const maker = await user("workforce-administrator");
     await draftPeople(maker, [unique("Fictional Left Person")]);

@@ -38,7 +38,7 @@ import type { PlanKind, PlanRecordRequest } from "./projects.ts";
 import * as releases from "./releases.ts";
 import type { Saved, ChangeSetId } from "./changes.ts";
 import { planOrFeatures, seenPlan, seenStreams } from "./page-reads.ts";
-import { editor } from "./configuration-access.ts";
+import { columnEditor } from "./column-state.ts";
 
 // Every change to release streams, patterns, and releases is a draft. Streams and their patterns
 // are planning configuration, edited by those who edit it; releases are part of the plan.
@@ -283,27 +283,45 @@ export function createProjectAccess(database: Database): ProjectAccess {
       return projectReads.readPlanChoices(database);
     },
     createFeatureColumn: async (actor, request) =>
-      columnDrafts.createField(database, editor(actor), request, "features"),
+      columnDrafts.createField(
+        database,
+        columnEditor(actor, "features"),
+        request,
+        "features",
+      ),
     updateFeatureColumn: async (actor, id, request) =>
       columnDrafts.updateField(
         database,
-        editor(actor),
+        columnEditor(actor, "features"),
         id,
         request,
         "features",
       ),
     deleteFeatureColumn: async (actor, id) =>
-      columnDrafts.deleteField(database, editor(actor), id, "features"),
+      columnDrafts.deleteField(
+        database,
+        columnEditor(actor, "features"),
+        id,
+        "features",
+      ),
     discardFeatureColumnDraft: async (actor, id) =>
-      columnDrafts.discardColumnDraft(database, editor(actor), {
-        id,
-        table: "features",
-      }),
+      columnDrafts.discardColumnDraft(
+        database,
+        columnEditor(actor, "features"),
+        {
+          id,
+          table: "features",
+        },
+      ),
     resubmitFeatureColumnDraft: async (actor, id) =>
-      columnDrafts.resubmitColumnDraft(database, editor(actor), {
-        id,
-        table: "features",
-      }),
+      columnDrafts.resubmitColumnDraft(
+        database,
+        columnEditor(actor, "features"),
+        {
+          id,
+          table: "features",
+        },
+      ),
     // The kind is one of the fixed kinds above, and the request the one it takes, as
     // PlanRecordRequest pairs them.
     add: async (actor, { type, request }) =>

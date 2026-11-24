@@ -102,8 +102,8 @@ export const permissionDescriptions: Record<
   },
   "features:edit": {
     allows:
-      "Drafts changes to features and their estimates, without changing the rest of the plan.",
-    without: "Cannot change features or estimates.",
+      "Drafts changes to features, their estimates, and the columns on Features, without changing the rest of the plan.",
+    without: "Cannot change features, estimates, or the columns on Features.",
   },
   "features:approve": {
     allows: "Approves or rejects drafts of features and releases.",
@@ -131,8 +131,8 @@ export const permissionDescriptions: Record<
   },
   "people:edit": {
     allows:
-      "Drafts adding, changing, and removing people, with their teams and reporting lines, and chooses the colour each team is drawn in.",
-    without: "Cannot change people.",
+      "Drafts adding, changing, and removing people, with their teams, reporting lines, and the columns on People, and chooses the colour each team is drawn in.",
+    without: "Cannot change people or the columns on People.",
   },
   "people:approve": {
     allows:
@@ -173,18 +173,17 @@ export const permissionDescriptions: Record<
   },
   "configuration:view": {
     allows:
-      "Sees configuration, such as lists of choices and People's columns.",
+      "Sees configuration, such as lists of choices and the planning settings.",
     without:
       "Does not see configuration; choices still show wherever they are used.",
   },
   "configuration:edit": {
-    allows:
-      "Changes configuration, such as lists of choices, People's columns, and schedules.",
+    allows: "Changes configuration, such as lists of choices and schedules.",
     without: "Cannot change configuration.",
   },
   "configuration:approve": {
     allows:
-      "Approves or rejects drafts of configuration, such as lists of choices and People's columns, and, with View Features and releases or View Configuration, of schedules and cycle patterns.",
+      "Approves or rejects drafts of configuration, such as lists of choices, the columns on People and Features, and, with View Features and releases or View Configuration, schedules and their cycles.",
     without: "Cannot approve drafts of configuration.",
     needs: ["configuration:view", "people:view"],
   },
@@ -487,7 +486,7 @@ export const startingRoles: Record<
   "feature-lead": {
     name: "Feature Lead",
     description:
-      "Sees the plan and people's General details, edits features and estimates, and proposes feature teams.",
+      "Sees the plan and people's General details, edits features and estimates, and edits feature teams.",
     permissions: [
       "plan:view",
       "features:edit",
@@ -523,7 +522,7 @@ export const startingRoles: Record<
   "engineering-manager": {
     name: "Engineering Manager",
     description:
-      "Edits the plan and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and proposes feature teams.",
+      "Edits the plan and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and edits feature teams.",
     permissions: [
       "plan:edit",
       "features:edit",

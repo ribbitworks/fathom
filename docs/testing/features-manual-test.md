@@ -359,7 +359,7 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 ### FEAT-16: A Column Is Added to Features as a Draft
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-13 ended with.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-13.
 
 **Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
 
@@ -388,14 +388,14 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 - [ ] `F38D` Open the `Fictional Score` column menu.
   - **Expected:**
-    - The menu offers **Edit column…**, **Move left** and **Move right**.
+    - The menu offers **Edit column…**, **Remove column**, **Move left** and **Move right**.
   - **Notes:**
 
 - [ ] `5FEE` Select **Edit column…**.
   - **Expected:**
     - The **Edit column** dialog opens.
     - **Type** is greyed out.
-    - There is no **Remove column** button.
+    - It has a red **Remove column** button.
   - **Notes:**
 
 - [ ] `1BF3` Select **Cancel**.

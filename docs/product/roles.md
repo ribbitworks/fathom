@@ -23,13 +23,13 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 | Area | Team Member | Product Manager | Feature Lead | Project Manager | Engineering Manager | Engineering Director | Workforce Administrator | Executive | Administrator |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Plan: projects, proposals, milestones and customers | View | Edit, Approve | View | Edit, Approve | Edit | Edit, Approve | View | View | None |
-| Features and releases, with estimates and the cycles each release includes | View | Edit, Approve | Edit | Edit, Approve | Edit | Edit, Approve | View | View | None |
+| Features and releases, with estimates, the cycles each release includes, and the columns added to Features | View | Edit, Approve | Edit | Edit, Approve | Edit | Edit, Approve | View | View | None |
 | Schedules and their cycles | View | Edit, Approve | View | Edit, Approve | Edit | Edit, Approve | Edit | View | None |
 | Allocations | View | View | None | View, Approve | Edit | Edit, Approve | View | View | None |
-| People, teams, reporting lines and the org chart | View | View | View | View, Approve | View | Edit, Approve | Edit | View | None |
+| People, teams, reporting lines, the org chart and the columns added to People | View | View | View | View, Approve | View | Edit, Approve | Edit | View | None |
 | Feature teams | View | View | Edit | View, Approve | Edit | Edit, Approve | Edit | View | None |
 | Hiring plan | None | None | None | View, Approve | View | Edit, Approve | Edit | View | None |
-| Configuration: lists, the columns added to People and Features, and the planning settings | None | View | None | View, Approve | View | Edit, Approve | Edit | View | None |
+| Configuration: lists and the planning settings | None | View | None | View, Approve | View | Edit, Approve | Edit | View | None |
 | Personal details | None | None | None | View | View | Edit | Edit | View | None |
 | Confidential data | None | None | None | View | View | Edit | Edit | View | None |
 | Classify data | None | None | None | None | None | Yes | Yes | None | None |
@@ -76,7 +76,7 @@ The classes, and each built-in detail's default class, are set out in the [Domai
   - **Confidential too:** the Org chart's reporting view on future dates, and grouping Capacity's Feature teams or Allocations by manager.
   - **General versions:** Demand, the Plan, and On track or Late will have a General version for roles without Personal data, such as Product Managers and Team Members. It shows totals, with no names and no Personal details. Not built yet ([#209](https://github.com/ribbitworks/fathom/issues/209), [#204](https://github.com/ribbitworks/fathom/issues/204)).
 - **Classify data:** Moves built-in details, lists and columns between classes, the hiring plan included. It is one permission across every class, and a move needs View on both the class left and the class entered.
-- **Lists and columns:** Making or changing a list or column, a list's choices and their order included, and approving or rejecting their drafts, need sight of its class besides Edit or Approve Configuration: View People for General (General values are people's details), View Personal details for Personal, and View Confidential data for Confidential. New lists and columns start General; giving one another class needs Classify data.
+- **Lists and columns:** Making or changing a list or column, a list's choices and their order included, and approving or rejecting their drafts, need sight of its class besides the permission that changes or approves it (Edit or Approve Configuration for a list; for a column, Edit on its table's area, and Approve Configuration): View People for General (General values are people's details), View Personal details for Personal, and View Confidential data for Confidential. New lists and columns start General; giving one another class needs Classify data.
 
 ## Who Sees Which People
 
@@ -102,20 +102,20 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 - **Schedules:** Roles with Edit Plan or Edit Configuration add, rename, retire, restore and end schedules, and change their cycle lengths and naming patterns.
 - **Moving with cycles:** Changing a cycle's length moves the releases and features on the cycles that move. A role that changes schedules may do this without edit rights on releases or features. Only a role that may change cycles discards those drafts.
 
-## Columns on Features and Saved Views
+## Columns and Saved Views
 
-- **Columns on Features:** Added and changed with Edit Configuration, and approved with Approve Configuration. Removing one also needs Edit Features, since it removes features' values. Everyone who sees the plan gets the General lists these columns draw on, and sees drafts of the columns and who made them. Drafts of those lists are shown only to roles that see Lists or People.
+- **A table's columns go with its records:** Whoever edits a table's records, and sees people, adds, changes and removes its columns: Edit Features and releases for Features' columns, Edit People for People's. Seeing people is what General lists and columns take, as Lists and columns sets out. Approve Configuration approves both, until approving moves to each table's area.
+- **Columns on Features:** Everyone who edits features adds them, the Product Manager included. Everyone who sees the plan gets the General lists these columns draw on, and sees drafts of the columns and who made them. Drafts of those lists are shown only to roles that see Lists or People.
 - **Saved views:** Everyone who opens a table's page can save personal views. Sharing a view needs Edit Configuration, or Edit Administration on Accounts. Only a shared view's maker, or a role that may share views on that table, updates, renames or deletes it. Only the maker stops sharing it, and only while they may still share.
 
 ## Setting Up the Plan's Tables
 
-Not built yet ([#13](https://github.com/ribbitworks/fathom/issues/13)). Until it is, the rules for schedules under [Approving](#approving) and [Releases](#releases), and for columns and sharing views under [Columns on Features and Saved Views](#columns-on-features-and-saved-views), hold. Then:
+Whoever edits a table's records sets the table up (owner, 2026-11-23), so there is no permission of its own; [Columns and Saved Views](#columns-and-saved-views) sets out what is built. The rest is not built yet ([#13](https://github.com/ribbitworks/fathom/issues/13)). Until it is, the rules for schedules under [Approving](#approving) and [Releases](#releases), and for approving columns and sharing views under [Columns and Saved Views](#columns-and-saved-views), hold. Then:
 
-- **The permission:** Set up the plan's tables, a permission of its own, adds and changes the columns on the plan's tables in place of Edit Configuration. Product Managers and Engineering Directors hold it.
 - **Approving:** A column is approved in its table's own area, so anyone holding Approve Features approves Features' columns. The Project Manager keeps every Approve it holds, Approve Configuration included.
-- **Lists:** New list, in a column's dialog, makes a General list, approved with the column.
+- **Lists:** New list, in a column's dialog, makes a General list, approved with the column, so whoever sets up a table makes the lists its columns need.
 - **Schedules:** Schedules and cycle lengths become the plan's alone, edited with Edit Plan and approved with Approve Plan, so Edit Configuration and Approve Configuration no longer change them.
-- **Sharing views:** Sharing a view on the plan's tables takes Set up the plan's tables.
+- **Sharing views:** Sharing a view on a table takes what setting up its columns takes.
 
 ## Safeguards for Administrators
 

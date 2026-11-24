@@ -80,7 +80,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `DE52` Read the **Description** column.
   - **Expected:**
-    - **Engineering Manager** reads "Edits the plan and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and proposes feature teams."
+    - **Engineering Manager** reads "Edits the plan and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and edits feature teams."
     - **Personal** and **Confidential** are in the same plain text as the rest of the description, with no class mark.
   - **Notes:**
 

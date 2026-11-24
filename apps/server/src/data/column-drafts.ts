@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Drafting columns added to tables: adding, changing, moving to another class and removing them,
-// and discarding or resubmitting their drafts. The caller checks the actor may change planning
-// configuration.
+// and discarding or resubmitting their drafts. The caller checks the actor may set up the column's
+// table.
 
 import { type Database, fields } from "@fathom/db";
 import {
   type ColumnTable,
+  columnTableOf,
   type Field,
   type FieldRequest,
   fieldTypeSchema,
@@ -17,7 +18,6 @@ import { randomUUID } from "node:crypto";
 import {
   type Actor,
   mostSensitive,
-  requirePermission,
   seesSensitivity,
   storedTier,
 } from "../access.ts";
@@ -69,6 +69,7 @@ import {
   mayRemoveValuesOf,
   nameTaken,
   noField,
+  columnEditor,
   policyOf,
   readColumnsState,
   refuseHeldIn,
@@ -307,7 +308,7 @@ async function classifyAddedField(
   // A column that isn't live is only ever a draft adding it.
   const field = draftedField(state, id);
   if (field === undefined) throw new NotFoundError(noField);
-  requirePermission(actor, "configuration:edit");
+  columnEditor(actor, columnTableOf(field.tableName));
   const row = columnRow(id, field);
   if (row.visibility === null) throw new BadRequestError(takesListsClass);
   const { changeSetId } = await changeField(
@@ -323,7 +324,7 @@ async function classifyAddedField(
       required: row.required,
       onPlannedHires: row.onPlannedHires,
     },
-    row.tableName === "features" ? "features" : "people",
+    columnTableOf(row.tableName),
   );
   return changeSetId;
 }
@@ -420,8 +421,8 @@ async function refuseIfDraftsFill(
 }
 
 // Drafts removing a column and its values; removing a column only drafted to be added discards its
-// draft. Its values are people's data, so the actor must also be able to change people, and the
-// tier of the column's values, and drafts of people must not change it.
+// draft. On People the actor must also see the class of the column's values, and no draft of a
+// person may change them.
 export async function deleteField(
   database: Database,
   actor: Actor,
@@ -447,14 +448,7 @@ export async function deleteField(
       columnTier(state, live),
     ]);
     if (!mayRemoveValuesOf(actor, field, tier)) {
-      if (field.tableName === "features") {
-        throw new ForbiddenError(
-          `Removing ${String(field.name)} removes its values from features, so it takes someone who can change features`,
-        );
-      }
-      throw new ForbiddenError(
-        `${String(field.name)} holds people's details this role can't change, so someone who can must delete it`,
-      );
+      throw new ForbiddenError(unseenDetails(String(field.name)));
     }
     return saveFieldDraft(transaction, actor, state, id, field, undefined);
   });
@@ -495,6 +489,25 @@ export async function discardColumnDraft(
   });
 }
 
+// Refuses sending a column's draft again to a role that couldn't make it now: a removal needs
+// what removing its values needs, and any other change sight of the column's values, live and
+// drafted, as drafting them does.
+function refuseResubmitting(actor: Actor, state: ColumnsState, id: string) {
+  const live = state.fields.get(id);
+  const field = draftedField(state, id);
+  if (field === undefined) {
+    // A removal, whose draft only ever removes a live column.
+    const removed = live as Recorded;
+    if (!mayRemoveValuesOf(actor, removed, columnTier(state, removed))) {
+      throw new ForbiddenError(unseenDetails(String(removed.name)));
+    }
+    return;
+  }
+  for (const version of [live, field].filter((one) => one !== undefined)) {
+    refuseUnseenTier(actor, state, version, unseenDetails(String(field.name)));
+  }
+}
+
 // Sends a rejected draft of a column for approval again, unchanged.
 export async function resubmitColumnDraft(
   database: Database,
@@ -507,6 +520,7 @@ export async function resubmitColumnDraft(
     if (draft.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
     }
+    refuseResubmitting(maker, state, id);
     await setRejection(transaction, "field", [id], {
       state: "waiting",
       reason: null,

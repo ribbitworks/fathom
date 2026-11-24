@@ -40,6 +40,8 @@ import {
 } from "./changes.ts";
 import { lockDrafts, setRejection } from "./drafts.ts";
 import { rejectedField } from "./draft-records.ts";
+import { columnAsSeenBy } from "./column-state.ts";
+import { editsDraft } from "./draft-editors.ts";
 import { lockFields } from "./fields.ts";
 import { removeEmptyOrders } from "./lists.ts";
 import {
@@ -99,7 +101,8 @@ const editPermissions = {
   list: ["configuration:edit"],
   "list-item": ["configuration:edit"],
   "choice-order": ["configuration:edit"],
-  field: ["configuration:edit"],
+  // Editing them is checked for each column's table.
+  field: [],
   person: ["people:edit"],
   "planned-hire": ["people:edit"],
   // Editing them is checked for the teams themselves.
@@ -229,6 +232,16 @@ async function undoIn(
       record.recordType as keyof typeof editPermissions
     ]) {
       requirePermission(actor, permission);
+    }
+    if (record.recordType === "field") {
+      // A column's removal records the table it was on; otherwise it is still there to read.
+      const recorded = record.old.get("tableName");
+      const column =
+        typeof recorded === "string"
+          ? { tableName: recorded }
+          : await columnAsSeenBy(transaction, actor.user.id, record.id);
+      if (column === undefined) throw new ConflictError(changedSince);
+      if (!editsDraft(actor, "field", column)) throw new ForbiddenError();
     }
   }
   if (records.some(({ recordType }) => recordType === "planned-hire")) {

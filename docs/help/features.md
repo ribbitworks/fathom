@@ -84,6 +84,18 @@ You're done when the cell shows the start of your note.
 
 See [People](people.md#write-a-note) for more.
 
+### Add a Column
+
+You can add your own columns to Features if your role edits features and sees people, as the Product Manager's does.
+
+1. Select **New column**, at the right of the page's heading.
+1. Type the column's **Name**.
+1. Choose its **Type**: **Choice from a list**, **Web link**, **Note** or **Number**.
+1. If you chose **Choice from a list**, choose a list. Only lists whose class is **General** are offered, since everyone who sees features sees these columns.
+1. Select **Add column**.
+
+You're done when the new column shows in the table, with a hollow dot until you publish it. Its cells can be filled once someone whose role approves configuration approves it.
+
 ### Count Features
 
 1. Select **Metrics**. The **Metrics** panel opens beside the table.

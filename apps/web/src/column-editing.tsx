@@ -100,7 +100,6 @@ export function ColumnModal<Data>({
   table,
   fields,
   lists,
-  canDelete = true,
   permissions = [],
   saving: { save, shown, undoable, done },
   withColumns,
@@ -110,7 +109,6 @@ export function ColumnModal<Data>({
   table: ColumnTable;
   fields: Field[];
   lists: List[];
-  canDelete?: boolean;
   // The role's permissions, which decide the classes a column may be moved to.
   permissions?: readonly Permission[];
   saving: ColumnSaving<Data>;
@@ -193,7 +191,7 @@ export function ColumnModal<Data>({
             fields={fields}
             lists={lists}
             onSaved={saved}
-            onDelete={canDelete ? remove : undefined}
+            onDelete={remove}
             onCancel={close}
             onBusy={setBusy}
             permissions={permissions}

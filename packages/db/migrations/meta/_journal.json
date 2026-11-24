@@ -442,6 +442,13 @@
       "when": 1795149615279,
       "tag": "0062_product_manager_description",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1795446718406,
+      "tag": "0063_feature_team_descriptions",
+      "breakpoints": true
     }
   ]
 }

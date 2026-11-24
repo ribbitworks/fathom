@@ -828,12 +828,13 @@ export function PeoplePage({
       <PageHeader
         title="People"
         action={
-          (changesRows || canEditColumns) && (
+          // Changing People's columns takes changing people, so needs these rows too.
+          changesRows && (
             <Group gap="xs">
               {canEditColumns && (
                 <Button
                   id={newColumnId}
-                  variant={changesRows ? "default" : "filled"}
+                  variant="default"
                   onClick={() => {
                     columnDialog.open({ kind: "new" });
                   }}
@@ -842,7 +843,7 @@ export function PeoplePage({
                 </Button>
               )}
               {/* The live people alone are read only. */}
-              {changesRows && view.show !== "live" && (
+              {view.show !== "live" && (
                 <Button
                   id={newRecordButtonId}
                   variant="filled"
