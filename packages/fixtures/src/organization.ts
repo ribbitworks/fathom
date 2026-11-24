@@ -36,7 +36,23 @@ import type { FictionalOrganization, FictionalPerson } from "./types.ts";
 // How many newcomers an organization has.
 export const newcomerCount = 2;
 
-const day = (date: Date) => date.toISOString().slice(0, 10);
+const isoDateLength = "YYYY-MM-DD".length;
+const day = (date: Date) => date.toISOString().slice(0, isoDateLength);
+
+// Each generator's seed, after the organization's own, so no two draw the same numbers.
+const chooserSeedOffset = 1;
+const firstNamerSeedOffset = 2;
+
+const managerShare = 0.12;
+const teamLeadShare = 0.15;
+const designAuthorityShare = 0.06;
+
+const startingBelow = 0.04;
+const leftBelow = 0.1;
+const startsWithinDays = 120;
+const startedWithinYears = 12;
+
+const firstEmployeeNumber = 10001;
 
 // A fictional organization of the given size: its lists, the columns on people drawing on them and
 // a note column, and its people, current and former, and a few who start after the reference date,
@@ -52,10 +68,13 @@ export function fictionalOrganization({
   referenceDate?: string;
 }): FictionalOrganization {
   const faker = new Faker({ locale: [en, base], seed });
-  const chooser = new Faker({ locale: [base], seed: seed + 1 });
+  const chooser = new Faker({ locale: [base], seed: seed + chooserSeedOffset });
   const namers = nameSources.map((source, index) => ({
     source,
-    namer: new Faker({ locale: [...source.locale], seed: seed + 2 + index }),
+    namer: new Faker({
+      locale: [...source.locale],
+      seed: seed + firstNamerSeedOffset + index,
+    }),
   }));
   const pickName = () => {
     const { source, namer } = chooser.helpers.weightedArrayElement(
@@ -67,7 +86,7 @@ export function fictionalOrganization({
   const everyone = Array.from(
     { length: size + newcomerCount },
     (_, index): FictionalPerson => {
-      const manager = faker.number.float() < 0.12;
+      const manager = faker.number.float() < managerShare;
       const position = manager
         ? "Engineering Manager"
         : faker.helpers.arrayElement([
@@ -88,21 +107,22 @@ export function fictionalOrganization({
           ]);
       const roll = faker.number.float();
       // Most are current; some have left, and a few start soon.
-      const starting = roll < 0.04;
-      const left = !starting && roll < 0.1;
+      const starting = roll < startingBelow;
+      const left = !starting && roll < leftBelow;
       const start = starting
-        ? faker.date.soon({ days: 120, refDate: reference })
-        : faker.date.past({ years: 12, refDate: reference });
+        ? faker.date.soon({ days: startsWithinDays, refDate: reference })
+        : faker.date.past({ years: startedWithinYears, refDate: reference });
       const end = left
         ? faker.date.between({ from: start, to: reference })
         : null;
       const roles: string[] = [];
-      if (faker.number.float() < 0.15) roles.push("Team Lead");
-      if (faker.number.float() < 0.06) roles.push("Design Authority");
+      if (faker.number.float() < teamLeadShare) roles.push("Team Lead");
+      if (faker.number.float() < designAuthorityShare)
+        roles.push("Design Authority");
       return {
         id: fictionalId(`person:${String(index)}`),
         preferredName: pickName(),
-        employeeId: `E${String(10001 + index)}`,
+        employeeId: `E${String(firstEmployeeNumber + index)}`,
         positionId: choice(positions, position),
         startDate: day(start),
         endDate: end === null ? null : day(end),
@@ -156,7 +176,7 @@ export function fictionalOrganization({
   growFeatureTeams(people, hires, featureTeams, referenceDate);
   return {
     referenceDate,
-    lists: [
+    lists: structuredClone([
       sites,
       levels,
       teamRoles,
@@ -165,9 +185,9 @@ export function fictionalOrganization({
       workPatterns,
       compensationBands,
       performanceRatings,
-    ],
-    positions: positions.choices,
-    columns: [
+    ]),
+    positions: structuredClone(positions.choices),
+    columns: structuredClone([
       siteColumn,
       levelColumn,
       teamRoleColumn,
@@ -175,7 +195,7 @@ export function fictionalOrganization({
       workPatternColumn,
       compensationColumn,
       ratingColumn,
-    ],
+    ]),
     people,
     ...lines,
     newcomers: everyone.slice(size),
