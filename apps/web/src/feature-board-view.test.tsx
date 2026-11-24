@@ -20,6 +20,7 @@ import {
   retiring,
   openBoard,
   cardNames,
+  column,
   majors,
   card,
   headings,
@@ -57,13 +58,13 @@ describe("switching Features between its table and its board", () => {
 });
 
 describe("the columns", () => {
-  it("shows the stream's cycles from the current one, as many as fit, then Later", async () => {
+  it("shows the stream's cycles from the one before the current one, as many as fit, then Later", async () => {
     await openBoard();
     expect(headings()).toEqual([
+      "Cycle 27.1",
       "Cycle 27.2",
       "Cycle 27.3",
       "Cycle 27.4",
-      "Cycle 28.1",
       "Later",
     ]);
   });
@@ -116,17 +117,30 @@ describe("the columns", () => {
 });
 
 describe("the strip and the Columns menu", () => {
+  it("leaves the table's hidden columns out of the Views menu", async () => {
+    await openBoard();
+    await userEvent.click(screen.getByRole("button", { name: /^Views/u }));
+    const menu = await screen.findByRole("menu");
+    expect([
+      within(menu).queryByText("Hidden"),
+      within(menu).queryByRole("menuitem", { name: /^Key/u }),
+    ]).toEqual([null, null]);
+  });
+
   it("steps by cycle, and Today goes back to the current one", async () => {
     await openBoard();
+    expect(
+      screen.getByRole("button", { name: "27.2, in view, selected" }),
+    ).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Next cycle" }));
-    expect(headings().at(0)).toBe("Cycle 27.3");
+    expect(headings().at(0)).toBe("Cycle 27.2");
     expect(
       screen.getByRole("button", { name: "27.3, in view, selected" }),
     ).toBeTruthy();
     await userEvent.click(
       screen.getByRole("button", { name: "Previous cycle" }),
     );
-    expect(headings().at(0)).toBe("Cycle 27.2");
+    expect(headings().at(0)).toBe("Cycle 27.1");
     await userEvent.click(screen.getByRole("button", { name: /^27\.1/ }));
     expect(headings().at(0)).toBe("Cycle 27.1");
     expect(
@@ -135,7 +149,10 @@ describe("the strip and the Columns menu", () => {
         .getAttribute("aria-disabled"),
     ).toBe("true");
     await userEvent.click(screen.getByRole("button", { name: "Today" }));
-    expect(headings().at(0)).toBe("Cycle 27.2");
+    expect([
+      headings().at(0),
+      screen.getByRole("button", { name: "27.2, in view, selected" }),
+    ]).toEqual(["Cycle 27.1", expect.anything()]);
   });
 
   it("goes no further than the last cycles that fit", async () => {
@@ -177,11 +194,14 @@ describe("the strip and the Columns menu", () => {
   });
 });
 
+// From May 2027, the quarters back to May 2026: Apr, Jan, Oct, Jul and May.
+const quartersBack = 5;
+
 describe("months as columns", () => {
   const overdue = feature("Fictional Overdue", { neededBy: "2027-02" });
   const months = { months: true, features: [alpha, beta, overdue] };
 
-  it("opens on months from this month, as many as fit, then No date", async () => {
+  it("opens on months from the one before this month, as many as fit, then No date", async () => {
     await openBoard("/features?mode=board", months);
     expect([
       screen.getByRole("button", { name: "Columns: Months" }),
@@ -193,46 +213,69 @@ describe("months as columns", () => {
         ?.getAttribute("aria-current"),
     ]).toEqual([
       expect.anything(),
-      ["May 2027", "Jun 2027", "Jul 2027", "Aug 2027", "No date"],
+      ["Apr 2027", "May 2027", "Jun 2027", "Jul 2027", "No date"],
       "date",
     ]);
   });
 
-  it("puts each feature in the month it's needed by, this month once that has passed, or No date", async () => {
+  it("puts each feature in the month it's needed by, or No date", async () => {
     await openBoard("/features?mode=board", months);
     const among = [alpha, beta, overdue];
     expect([
       cardNames("May 2027", among),
       cardNames("Jun 2027", among),
       cardNames("No date", among),
-    ]).toEqual([
-      ["Fictional Overdue"],
-      ["Fictional Alpha"],
-      ["Fictional Beta"],
-    ]);
+    ]).toEqual([[], ["Fictional Alpha"], ["Fictional Beta"]]);
   });
 
-  it("shows no Live copy for a draft that moves a feature between months that have passed", async () => {
-    const movedPast = feature("Fictional Moved", {
-      neededBy: "2027-03",
+  it("keeps a dimmed copy where a feature is live, for a draft that moves it to another month", async () => {
+    const moved = feature("Fictional Moved", {
+      neededBy: "2027-06",
       draft: featureDraft({
         changed: ["neededBy"],
-        live: { neededBy: "2027-02" },
+        live: { neededBy: "2027-07" },
       }),
     });
     await openBoard("/features?mode=board", {
       months: true,
-      features: [movedPast],
+      features: [moved],
     });
-    expect(cardNames("May 2027", [movedPast])).toEqual(["Fictional Moved"]);
+    expect([
+      cardNames("Jun 2027", [moved]),
+      within(column("Jul 2027")).getByText("Fictional Moved"),
+    ]).toEqual([["Fictional Moved"], expect.anything()]);
   });
 
-  it("steps by month, and Today goes back to this month", async () => {
+  it("goes back a year, to a month that has passed, leaving off a feature needed before it", async () => {
+    const tooEarly = feature("Fictional Too Early", { neededBy: "2026-04" });
+    await openBoard("/features?mode=board&from=2027-02-01", {
+      months: true,
+      features: [overdue, tooEarly],
+    });
+    expect(cardNames("Feb 2027", [overdue, tooEarly])).toEqual([
+      "Fictional Overdue",
+    ]);
+    await userEvent.click(screen.getByRole("button", { name: "Today" }));
+    for (let step = 0; step < quartersBack; step += 1) {
+      await userEvent.click(
+        screen.getByRole("button", { name: "Previous quarter" }),
+      );
+    }
+    expect([
+      headings().at(0),
+      screen.queryByText("Fictional Too Early"),
+    ]).toEqual(["May 2026", null]);
+  });
+
+  it("names quarters in the strip, steps by quarter, and Today goes back to this month", async () => {
     await openBoard("/features?mode=board", { months: true });
-    await userEvent.click(screen.getByRole("button", { name: "Next month" }));
+    expect(
+      screen.getByRole("toolbar", { name: "Quarters" }).textContent,
+    ).toContain("Q3 2027");
+    await userEvent.click(screen.getByRole("button", { name: "Next quarter" }));
     expect(headings().at(0)).toBe("Jun 2027");
     await userEvent.click(screen.getByRole("button", { name: "Today" }));
-    expect(headings().at(0)).toBe("May 2027");
+    expect(headings().at(0)).toBe("Apr 2027");
   });
 
   it("goes back to months from a schedule's cycles, keeping no schedule", async () => {

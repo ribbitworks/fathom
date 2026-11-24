@@ -5,6 +5,7 @@
    them are the grid's own background showing through a one-pixel gap, so every line is one width. */
 
 .board {
+  --head-line: 0 1px 0 var(--mantine-color-default-border);
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -29,15 +30,17 @@
   top: 0;
   z-index: 1;
   background: var(--mantine-color-body);
+  /* Drawn by the headers over the grid's line under them, so it stays as the rows scroll under. */
+  box-shadow: var(--head-line);
 }
 
 .header {
   padding: 8px 10px;
 }
 
-/* The current cycle, marked as today is, by a red line. */
+/* The current month or cycle, underlined in today's red, as a month grid's current month is. */
 .header[aria-current] {
-  box-shadow: var(--fathom-today-overline);
+  box-shadow: var(--fathom-today-underline), var(--head-line);
 }
 
 /* Room for a release's box, kept when a cycle is in none, so every header's lines line up. */

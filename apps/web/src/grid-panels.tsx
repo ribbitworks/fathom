@@ -48,6 +48,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     | "fieldsLive"
     | "liveBeside"
     | "nests"
+    | "laysOutColumns"
     | "countedOnce"
     | "shownRecords"
     | "setPanelWriting"
@@ -92,6 +93,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     fieldsLive,
     liveBeside,
     nests,
+    laysOutColumns,
     countedOnce,
     shownRecords,
     setPanelWriting,
@@ -246,6 +248,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
       }
       groupings={table.groupings}
       nests={nests}
+      laysOutColumns={laysOutColumns}
       withDrafts={withDrafts}
       onLeave={() => {
         const active = activeNow();

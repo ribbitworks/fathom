@@ -26,8 +26,10 @@ import type { Actor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
 import {
   addDays,
+  addToMonth,
   type Feature,
   type FeatureRequest,
+  monthSchema,
   type Project,
   type Proposal,
   type RecordType,
@@ -340,6 +342,8 @@ async function draftFeatures(
       ...featureRequest(changed),
       estimateHours: draftedEstimateHours,
       description: "Approve requests from a phone.",
+      // A month later, so the Board's months show the card moved, with its Live copy.
+      neededBy: addToMonth(monthSchema.parse(changed.neededBy), 1),
     },
   });
   await data.projects.add(editor, {

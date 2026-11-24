@@ -34,6 +34,7 @@ import {
   scrollTargetFor,
   type MonthQuarter,
   monthQuarters,
+  quarterPeriod,
   quarterSteps,
 } from "./month-strip.ts";
 import type { MonthRow } from "./team-months.tsx";
@@ -346,16 +347,15 @@ const MonthStrip = memo(function MonthStrip({
     <TimelineStrip
       words={quarterWords}
       periods={quarters.map((quarter) => ({
-        key: quarter.start,
+        ...quarterPeriod(
+          quarter,
+          (month) => onScreen.months.includes(month),
+          monthOf(now),
+        ),
         onChoose: () => {
           stepTo(quarter);
         },
-        label: quarter.label,
-        short: quarter.short,
-        weight: quarter.months.length,
-        inView: quarter.months.some((month) => onScreen.months.includes(month)),
         selected: stillThere && chosen.key === quarter.start,
-        current: quarter.months.includes(monthOf(now)),
       }))}
       onPrevious={
         previous &&

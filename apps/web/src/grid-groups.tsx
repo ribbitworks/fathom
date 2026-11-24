@@ -180,6 +180,8 @@ export function useShownRows<Rec extends GridRecord, Change, Request>(
   );
   // A page drawing the rows its own way, such as a board, shows the first grouping alone.
   const nests = table.oneLevel !== true && body === undefined;
+  // A page drawing the rows its own way has no columns laid out, to freeze, move, hide or widen.
+  const laysOutColumns = body === undefined;
   const subgroupOf = useSteadyGroups(
     records,
     rowView,
@@ -243,6 +245,7 @@ export function useShownRows<Rec extends GridRecord, Change, Request>(
     stableId,
     groupOf,
     nests,
+    laysOutColumns,
     countedOnce,
     shownRows,
     shownRecords,

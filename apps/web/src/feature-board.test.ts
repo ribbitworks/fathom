@@ -9,12 +9,17 @@ import { describe, expect, it } from "vitest";
 import {
   boardColumns,
   boardMonths,
+  cycleStrip,
   boardParts,
   cardOrder,
   columnOf,
   firstShown,
+  periodGoneTo,
+  quarterStrip,
   laterKey,
   monthColumnOf,
+  monthPeriod,
+  wholeColumnWidth,
   monthColumns,
   movesCycle,
   movesMonth,
@@ -35,29 +40,37 @@ import {
 
 const cycles = quarters(6);
 
+describe("the month or cycle gone to", () => {
+  it("is the one asked for", () => {
+    expect(periodGoneTo(cycles, "2027-05-01", "2027-07-01")).toBe(2);
+  });
+
+  it("is the current one when none is asked for", () => {
+    expect(periodGoneTo(cycles, "2027-05-01")).toBe(1);
+  });
+
+  it("is the next to come between cycles", () => {
+    expect(periodGoneTo(quarters(2), "2026-12-01")).toBe(0);
+  });
+
+  it("is the last once every one has ended", () => {
+    expect(periodGoneTo(cycles, "2030-01-01")).toBe(5);
+  });
+
+  it("is the current one when the day asked for starts none", () => {
+    expect(periodGoneTo(cycles, "2027-05-01", "2027-05-15")).toBe(1);
+  });
+});
+
 describe("the cycles shown first", () => {
-  it("starts from the cycle asked for", () => {
-    expect(firstShown(cycles, 2, "2027-05-01", "2027-07-01")).toBe(2);
-  });
-
-  it("starts from the current cycle when none is asked for", () => {
-    expect(firstShown(cycles, 2, "2027-05-01")).toBe(1);
-  });
-
-  it("starts from the next cycle to come between cycles", () => {
-    expect(firstShown(quarters(2), 1, "2026-12-01")).toBe(0);
-  });
-
-  it("starts from the last cycle once every one has ended", () => {
-    expect(firstShown(cycles, 1, "2030-01-01")).toBe(5);
-  });
-
-  it("moves back so as many as fit are shown", () => {
-    expect(firstShown(cycles, 3, "2027-05-01", "2028-04-01")).toBe(3);
-  });
-
-  it("starts from the first when they all fit", () => {
-    expect(firstShown(cycles, 10, "2028-05-01")).toBe(0);
+  it.each([
+    ["the one gone to second, the one before it first", 6, 2, 2, 1],
+    ["the one gone to first where only one fits", 6, 1, 2, 2],
+    ["the first one first, with none before it", 2, 1, 0, 0],
+    ["as many as fit, moving back from the end", 6, 3, 5, 3],
+    ["from the first when they all fit", 6, 10, 5, 0],
+  ])("shows %s", (_, count, fits, goneTo, start) => {
+    expect(firstShown(count, fits, goneTo)).toBe(start);
   });
 });
 
@@ -374,33 +387,37 @@ describe("a stream's current cycle", () => {
 
 describe("months as the board's columns", () => {
   it.each([
-    ["a year ahead at the least", [], 4, "May 2028", 13],
+    ["a year ahead at the least", [], 4, "May 2028", 25],
     [
       "to the latest month needed by",
       [{ neededBy: "2028-08" }],
       4,
       "Aug 2028",
-      16,
+      28,
     ],
-    ["as many as fit", [{ neededBy: null }], 15, "Jul 2028", 15],
-  ])("runs from this month %s", (_, features, fits, last, count) => {
+    [
+      "as many as fit from this month",
+      [{ neededBy: null }],
+      15,
+      "Jul 2028",
+      27,
+    ],
+  ])("runs from a year back %s", (_, features, fits, last, count) => {
     const months = boardMonths(features, "2027-05", fits);
     expect([
       months.at(0)?.name,
       months.at(-1)?.name,
       months.length,
       [months.at(0)?.startsOn, months.at(0)?.endsOn],
-    ]).toEqual(["May 2027", last, count, ["2027-05-01", "2027-05-31"]]);
+    ]).toEqual(["May 2026", last, count, ["2026-05-01", "2026-05-31"]]);
   });
 
   it("shows as many as fit from the first shown, the current one marked, then No date", () => {
     const months = boardMonths([], "2027-05", 4);
     expect(
-      monthColumns(months, 1, 2, "2027-05-10").map(({ key, current, kind }) => [
-        key,
-        current,
-        kind,
-      ]),
+      monthColumns(months, 13, 2, "2027-05-10").map(
+        ({ key, current, kind }) => [key, current, kind],
+      ),
     ).toEqual([
       ["2027-06", false, "month"],
       ["2027-07", false, "month"],
@@ -410,10 +427,10 @@ describe("months as the board's columns", () => {
 
   it.each([
     ["the month it's needed by", "2027-07", "2027-07"],
-    ["this month, once its month has passed", "2027-02", "2027-05"],
+    ["the month it's needed by, once that has passed", "2027-02", "2027-02"],
     ["No date, needed by none", null, noDateKey],
   ])("puts a feature in %s", (_, neededBy, column) => {
-    expect(monthColumnOf("2027-05")({ neededBy })).toBe(column);
+    expect(monthColumnOf({ neededBy })).toBe(column);
   });
 
   it.each([
@@ -427,5 +444,112 @@ describe("months as the board's columns", () => {
     ["no draft", undefined, false],
   ])("moves a card for %s", (_, draft, moved) => {
     expect(movesMonth({ draft })).toBe(moved);
+  });
+});
+
+describe("the board's strip", () => {
+  const months = boardMonths([], "2027-05", 4);
+  const strip = (goneTo: number, fits = 4) =>
+    quarterStrip({
+      periods: months,
+      start: firstShown(months.length, fits, goneTo),
+      goneTo,
+      fits,
+      today: "2027-05-10",
+    });
+
+  it("names the quarters the months fall in, those in view tinted, the one gone to chosen and this one current", () => {
+    const { periods } = strip(12);
+    expect(
+      periods
+        .slice(0, 6)
+        .map(({ label, weight, inView, selected, current, first }) => [
+          label,
+          weight,
+          inView,
+          selected,
+          current,
+          first.name,
+        ]),
+    ).toEqual([
+      ["Q2 2026", 2, false, false, false, "May 2026"],
+      ["Q3 2026", 3, false, false, false, "Jul 2026"],
+      ["Q4 2026", 3, false, false, false, "Oct 2026"],
+      ["Q1 2027", 3, false, false, false, "Jan 2027"],
+      ["Q2 2027", 3, true, true, true, "Apr 2027"],
+      ["Q3 2027", 3, true, false, false, "Jul 2027"],
+    ]);
+  });
+
+  it.each([
+    ["from a quarter's middle, back to its start", 12, "Apr 2027", "Jul 2027"],
+    ["from the first month, with nothing before it", 0, undefined, "Jul 2026"],
+    ["to the end, with nothing more to show", 24, "Apr 2028", undefined],
+  ])("steps a quarter %s", (_, goneTo, previous, next) => {
+    const steps = strip(goneTo);
+    expect([steps.previous?.name, steps.next?.name]).toEqual([previous, next]);
+  });
+
+  it.each([
+    ["while months after those shown are out of view", 23, "May 2028"],
+    ["none once the last month is shown", 24, undefined],
+  ])("steps › to the last month in the last quarter %s", (_, goneTo, next) => {
+    expect(strip(goneTo, 2).next?.name).toBe(next);
+  });
+
+  it("names no quarters without months", () => {
+    expect(
+      quarterStrip({
+        periods: [],
+        start: 0,
+        goneTo: 0,
+        fits: 4,
+        today: "2027-05-10",
+      }),
+    ).toEqual({ periods: [], previous: undefined, next: undefined });
+  });
+
+  it("names a schedule's cycles, each as wide as its days, the one gone to chosen, stepping a cycle", () => {
+    const cycles = [
+      monthPeriod("2027-04"),
+      monthPeriod("2027-05"),
+      monthPeriod("2027-06"),
+    ];
+    const { periods, previous, next } = cycleStrip({
+      periods: cycles,
+      start: 0,
+      goneTo: 1,
+      fits: 2,
+      today: "2027-05-10",
+    });
+    expect([
+      periods.map(({ weight, inView, selected, current }) => [
+        weight,
+        inView,
+        selected,
+        current,
+      ]),
+      previous?.name,
+      next?.name,
+    ]).toEqual([
+      [
+        [30, true, false, false],
+        [31, true, true, true],
+        [30, false, false, false],
+      ],
+      "Apr 2027",
+      "Jun 2027",
+    ]);
+  });
+});
+
+describe("a column's width", () => {
+  it.each([
+    ["the room's share less its lines, in whole pixels", 1003, 250],
+    ["never under the least", 500, 200],
+  ])("is %s", (_, room, width) => {
+    expect(wholeColumnWidth({ room, columns: 4, lines: 3, least: 200 })).toBe(
+      width,
+    );
   });
 });

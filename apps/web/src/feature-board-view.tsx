@@ -21,15 +21,14 @@ import {
   boardMenuWords,
   cardPartLabels,
   cyclesOf,
-  isCurrent,
   shownParts,
+  wholeColumnWidth,
 } from "./feature-board.ts";
 import { cardId, FeatureCard, LiveCard } from "./feature-card.tsx";
 import classes from "./feature-board-view.module.css";
 import pages from "./pages.module.css";
 import type { ShownRows } from "./record-table.ts";
 import {
-  daysBetween,
   draftsById,
   liveStreams,
   markedDraft,
@@ -47,7 +46,7 @@ import { wasWords } from "./draft-marks.ts";
 import { byGroupRank, type OtherPlace, type RowGroups } from "./row-groups.ts";
 import { formatDay } from "./day-formats.ts";
 import { TeamLabels } from "./team-labels.tsx";
-import { TimelineStrip } from "./timeline-strip.tsx";
+import { quarterWords, TimelineStrip } from "./timeline-strip.tsx";
 
 // How wide a column is at the least, and the rows' labels, in pixels.
 const columnWidth = 200;
@@ -61,9 +60,10 @@ export interface BoardPlace {
   hide?: CardPart[] | undefined;
 }
 
-const stripWords = {
-  cycles: { group: "Cycles", previous: "Previous cycle", next: "Next cycle" },
-  months: { group: "Months", previous: "Previous month", next: "Next month" },
+const cycleWords = {
+  group: "Cycles",
+  previous: "Previous cycle",
+  next: "Next cycle",
 };
 
 // The choice of months among the Columns menu's choices, which no stream's identifier is.
@@ -100,6 +100,7 @@ export function FeatureBoard({
 }) {
   const show = useDraftView();
   const { ref, width } = useElementSize();
+  const { ref: gridRef, width: gridWidth } = useElementSize();
   // The streams as the Draft view shows them, each release marked with its own draft.
   const shownStreams = streamsShown(streams, show);
   const releaseDrafts = draftsById(streams);
@@ -110,19 +111,20 @@ export function FeatureBoard({
   );
   // Months unless a stream is chosen, whose cycles are then the columns.
   const stream = shownStreams.find(({ id }) => id === place.stream);
-  // The month or cycle chosen in the strip, or stepped to, which stays selected while it is the first
-  // shown.
-  const [chosen, setChosen] = useState<string>();
   const [focused, setFocused] = useState<string>();
   const grouped = groupOf !== undefined;
   // While a side panel is open, such as a feature's details or Metrics, the board keeps the width it
   // had, scrolling sideways under the panel rather than dropping columns and narrowing the rest at
   // once; once it closes, it keeps it until the panel has gone and the board's own width changes.
-  const [held, setHeld] = useState<{ width: number; closedAt?: number }>();
+  const [held, setHeld] = useState<{
+    width: number;
+    gridWidth: number;
+    closedAt?: number;
+  }>();
   if (panelOpen && held === undefined && width > 0) {
-    setHeld({ width });
+    setHeld({ width, gridWidth });
   } else if (panelOpen && held?.closedAt !== undefined) {
-    setHeld({ width: held.width });
+    setHeld({ width: held.width, gridWidth: held.gridWidth });
   } else if (!panelOpen && held !== undefined) {
     if (held.closedAt === undefined) setHeld({ ...held, closedAt: width });
     else if (width !== held.closedAt) setHeld(undefined);
@@ -130,7 +132,7 @@ export function FeatureBoard({
   const boardWidth = held?.width ?? width;
   const room = boardWidth - (grouped ? rowLabelWidth : 0);
   const fits = Math.max(1, Math.floor(room / columnWidth) - 1);
-  const { periods, start, columns, columnOf, moves } = boardLayout({
+  const { periods, strip, columns, columnOf, moves } = boardLayout({
     stream,
     live: besideLive(show)
       ? streamsLive.find(({ id }) => id === stream?.id)
@@ -143,6 +145,12 @@ export function FeatureBoard({
     today,
     fits,
     from: place.from,
+  });
+  const eachColumn = wholeColumnWidth({
+    room: (held?.gridWidth ?? gridWidth) - (grouped ? rowLabelWidth : 0),
+    columns: columns.length,
+    lines: columns.length - (grouped ? 0 : 1),
+    least: columnWidth,
   });
   const shownKeys = new Set(columns.map(({ key }) => key));
   const order = cardOrder(choices.priorities, choices.featureStatuses);
@@ -190,13 +198,9 @@ export function FeatureBoard({
     document.getElementById(cardId(target.id))?.focus();
   };
   const stepTo = ({ startsOn }: Cycle) => {
-    setChosen(startsOn);
     onPlace({ ...place, from: startsOn });
   };
-  const previous = periods.slice(0, start).at(-1);
-  // The next month or cycle, while a later one is still out of view.
-  const next =
-    start + fits < periods.length ? periods.at(start + 1) : undefined;
+  const { previous, next } = strip;
   const menus = (
     <>
       <AppMenu position="bottom-start">
@@ -232,7 +236,6 @@ export function FeatureBoard({
             ]}
             chosen={stream?.id ?? monthsChoice}
             onChoose={(next) => {
-              setChosen(undefined);
               onPlace({
                 ...place,
                 stream: next === monthsChoice ? undefined : next,
@@ -277,19 +280,13 @@ export function FeatureBoard({
         </Group>
       ) : (
         <TimelineStrip
-          words={stream === undefined ? stripWords.months : stripWords.cycles}
+          words={stream === undefined ? quarterWords : cycleWords}
           before={menus}
-          periods={periods.map((cycle, index) => ({
-            key: cycle.startsOn,
+          periods={strip.periods.map(({ first, ...period }) => ({
+            ...period,
             onChoose: () => {
-              stepTo(cycle);
+              stepTo(first);
             },
-            label: cycle.name,
-            short: cycle.name,
-            weight: daysBetween(cycle.startsOn, cycle.endsOn) + 1,
-            inView: index >= start && index < start + fits,
-            selected: chosen === cycle.startsOn && index === start,
-            current: isCurrent(cycle, today),
           }))}
           onPrevious={
             previous === undefined
@@ -306,20 +303,19 @@ export function FeatureBoard({
                 }
           }
           onToday={() => {
-            setChosen(undefined);
             onPlace({ ...place, from: undefined });
           }}
         />
       )}
-      <Paper withBorder className={[classes.panel, pages.scrollBars].join(" ")}>
+      <Paper
+        ref={gridRef}
+        withBorder
+        className={[classes.panel, pages.scrollBars].join(" ")}
+      >
         <div
           className={classes.grid}
           style={{
-            gridTemplateColumns: `${grouped ? `${String(rowLabelWidth)}px ` : ""}repeat(${String(columns.length)}, ${
-              held === undefined
-                ? `minmax(${String(columnWidth)}px, 1fr)`
-                : `${String(Math.max(columnWidth, room / columns.length))}px`
-            })`,
+            gridTemplateColumns: `${grouped ? `${String(rowLabelWidth)}px ` : ""}repeat(${String(columns.length)}, ${String(eachColumn)}px)`,
           }}
         >
           {grouped && <div className={classes.corner} />}

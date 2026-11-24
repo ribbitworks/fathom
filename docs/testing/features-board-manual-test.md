@@ -36,7 +36,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 - **Board:** the panel of columns and cards shown once **Board** is chosen.
 - **Column heading:** the top of each column of the board, naming its month or cycle, or **No date** or **Later**.
 - **Card:** the box for one feature on the board.
-- **Strip:** the row of month or cycle names above the board, after the **Columns** and **Card** buttons, between a **‹** button and the **›** and **Today** buttons.
+- **Strip:** the row of quarter or cycle names above the board, after the **Columns** and **Card** buttons, between a **‹** button and the **›** and **Today** buttons.
 
 ## Test Cases
 
@@ -58,8 +58,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The bar above the board holds the search box, **Draft**, **Metrics** and **Group by**.
     - Under it, one row starts with the buttons **Columns: Months** and **Card**, then the strip.
-    - The board's columns are months, from left to right, the first headed this month, such as "Nov 2026", and the last "No date".
-    - A red line runs along the top of this month's heading.
+    - The board's columns are months, from left to right, the first headed the month before this one and the second headed this month, such as "Oct 2026" and "Nov 2026", and the last "No date".
+    - A red line runs along the bottom of this month's heading.
   - **Notes:**
 
 - [ ] `5D2A` Select **Columns: Months**, then **Platform cycles**.
@@ -68,27 +68,33 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The board's columns are Platform's cycles, from left to right, the last headed "Later".
   - **Notes:**
 
-- [ ] `F45E` Read the first column heading.
+- [ ] `A17D` Read the first column heading.
+  - **Expected:**
+    - It names the cycle before the current one, such as "Cycle 26.3".
+    - No red line is along its bottom edge.
+  - **Notes:**
+
+- [ ] `F45E` Read the second column heading.
   - **Expected:**
     - At its top, a yellow dot is before "Harbor 2 LTS" in a teal box.
     - Under it, the cycle is named, such as "Cycle 26.4".
     - Under that, in grey, its first and last days read, such as "1 Oct 2026 to 31 Dec 2026", and today falls between them.
-    - A red line runs along the heading's top edge.
+    - A red line runs along the heading's bottom edge.
   - **Notes:**
 
 - [ ] `E3C1` Point at the yellow dot before "Harbor 2 LTS".
   - **Expected:** A tip reads "Draft: changed from “Harbor 2”".
   - **Notes:**
 
-- [ ] `D480` Read the second column heading.
+- [ ] `D480` Read the third column heading.
   - **Expected:**
     - At its top, a green dot is before "Harbor 3" in a grey box, dimmed.
     - Under it, the next cycle is named.
     - Under that, in grey, its first and last days read.
-    - No red line is along its top edge.
+    - No red line is along its bottom edge.
   - **Notes:**
 
-- [ ] `69B1` Read the third column heading.
+- [ ] `69B1` Read the fourth column heading.
   - **Expected:**
     - At its top, a yellow dot is before "Harbor 3" in a grey box, with a yellow **Moved** box after it.
     - No dimmed release is under it.
@@ -105,7 +111,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - It names each of Platform's cycles, from the earliest on the left.
     - The cycles shown as columns are tinted.
-    - The current cycle, the first column's, is underlined in red, the same red as the line along the top of its column's heading.
+    - The current cycle, the second column's, is underlined in red, the same red as the line along the bottom of its column's heading.
+    - The current cycle is filled with blue.
   - **Notes:**
 
 - [ ] `3C2E` Reload the page.
@@ -126,7 +133,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open, showing the board.
 
-- [ ] `285F` Read the cards in the first column, from the top.
+- [ ] `285F` Read the cards in the second column, from the top.
   - **Expected:**
     - 'Offline Sync' is first, then 'Usage Alerts'.
   - **Notes:**
@@ -148,7 +155,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** A tip reads "High".
   - **Notes:**
 
-- [ ] `C157` Read the card 'Scheduler API' in the second column.
+- [ ] `C157` Read the card 'Scheduler API' in the third column.
   - **Expected:**
     - "Planned · Medium priority" is under its name.
     - At its foot, "Not staffed" is in red words, with no box.
@@ -206,18 +213,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-02 ended with.
 
-**Preconditions:** **Features** page open, showing the board from the current cycle, with **Drafts & Live** chosen in the Draft menu; select **Today** in the strip if it doesn't show the current cycle first.
+**Preconditions:** **Features** page open, showing the board from the current cycle, with **Drafts & Live** chosen in the Draft menu; select **Today** in the strip if it doesn't show the current cycle second.
 
 - [ ] `72C8` Select **›** in the strip.
   - **Expected:**
-    - The first column is the next cycle, headed "Harbor 3".
+    - The first column is the current cycle.
+    - The second column is the next cycle, headed "Harbor 3".
     - In the strip, that cycle is filled with blue.
     - The last column is still "Later".
   - **Notes:**
 
 - [ ] `B660` Select **‹** in the strip twice.
   - **Expected:**
-    - The first column is the cycle before the current one, headed "Harbor 2".
+    - The second column is the cycle before the current one, headed "Harbor 2".
     - It holds the cards 'Single Sign-On Setup' and 'Bulk Import'.
   - **Notes:**
 
@@ -229,13 +237,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `0191` Press the browser's Back button.
-  - **Expected:** The first column is again the cycle before the current one.
+  - **Expected:** The second column is again the cycle before the current one.
   - **Notes:**
 
 - [ ] `21F1` Select **Today**.
   - **Expected:**
-    - The first column is the current cycle, with the red line along its heading's top.
-    - No cycle in the strip is filled with blue.
+    - The first column is the cycle before the current one, and the second is the current cycle, with the red line along its heading's bottom.
+    - In the strip, the current cycle is filled with blue.
   - **Notes:**
 
 - [ ] `8C55` Select **Columns: Platform cycles**.
@@ -248,8 +256,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `A0DA` Select **Patches cycles**.
   - **Expected:**
     - The button reads **Columns: Patches cycles**.
-    - The columns are Patches' cycles from the current one, named such as "Cycle P26.13", each four weeks long.
-    - The first two columns are each headed with the same patch release, such as "Patch Dec", in a red box, after a red dot in a ring.
+    - The columns are Patches' cycles, the current one second, named such as "Cycle P26.13", each four weeks long.
+    - The second and third columns are each headed with the same patch release, such as "Patch Dec", in a red box, after a red dot in a ring.
     - No column other than "Later" holds a card.
     - "Later" holds 'Partner Portal', 'Voice Notes' and 'Shift Handover Notes'.
   - **Notes:**
@@ -258,7 +266,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The button reads **Columns: Field Apps cycles**.
     - The columns are Field Apps' cycles, named such as "Cycle FA26.2", each six months long.
-    - The current cycle's column, with the red line along its heading's top, is headed "Lantern 2" in an indigo box.
+    - The current cycle's column, the second, with the red line along its heading's bottom, is headed "Lantern 2" in an indigo box.
     - The column after it has no release at its top.
     - That column holds the card 'Work Order Sync', with no "Not staffed".
   - **Notes:**
@@ -298,7 +306,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `A791` Look at 'Scheduler API'.
-  - **Expected:** It is in the row "No feature team", in the second column.
+  - **Expected:** It is in the row "No feature team", in the third column.
   - **Notes:**
 
 - [ ] `63AD` Select **Table** in the Table and Board switch.
@@ -369,7 +377,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `861B` Press the Right arrow.
-  - **Expected:** The focus ring moves to a card in the second column.
+  - **Expected:** The focus ring moves to a card in the third column.
   - **Notes:**
 
 - [ ] `752E` Press Enter.
@@ -408,15 +416,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `B431` Select **Board** in the Table and Board switch.
   - **Expected:**
-    - 'Scheduler API' is in the third column, with a hollow yellow dot before its name and a yellow **Moved** box after it.
+    - 'Scheduler API' is in the fourth column, with a hollow yellow dot before its name and a yellow **Moved** box after it.
     - The card is tinted faint yellow.
-    - In the second column, a dimmed card 'Scheduler API' has a green dot before its name.
+    - In the third column, a dimmed card 'Scheduler API' has a green dot before its name.
   - **Notes:**
 
 - [ ] `FB10` Select **Draft**, then **Live only**.
   - **Expected:**
-    - 'Scheduler API' is in the second column, with a green dot before its name.
-    - No card is in the third column under that name.
+    - 'Scheduler API' is in the third column, with a green dot before its name.
+    - No card is in the fourth column under that name.
     - 'Shift Handover Notes' isn't shown.
   - **Notes:**
 
@@ -430,7 +438,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `C5FB` Select **Board** in the Table and Board switch.
   - **Expected:**
-    - The board shows months from this month.
+    - The board shows months, with this month second.
     - 'Scheduler API' shows "Not staffed" in red words.
   - **Notes:**
 
@@ -478,28 +486,86 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Afterwards:** Select **Group by: Cycle, then Status**, then **Clear grouping**.
 
-### BOARD-09: Months Step by Month
+### BOARD-09: Months Step by Quarter
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from BOARD-08.
 
-**Preconditions:** Signed in with this account. **Features** page open, showing Platform's board.
+**Preconditions:** Signed in with this account. **Features** page open, showing Platform's board, with **Drafts & Live** chosen in the Draft menu. Here, "this month" is the month the tester runs the test in.
 
 - [ ] `9B41` Select **Columns: Platform cycles**, then **Months**.
   - **Expected:**
     - The button reads **Columns: Months**.
-    - The first column is headed this month, with a red line along its heading's top.
-    - The strip names months, this month underlined in red.
+    - The first column is headed the month before this one, and the second is headed this month.
+    - A red line runs along the bottom of this month's heading.
   - **Notes:**
 
-- [ ] `E7C3` Select **›** in the strip.
+- [ ] `B3D8` Read the strip.
   - **Expected:**
-    - The first column is headed next month.
-    - In the strip, next month is filled with blue.
+    - It names quarters, such as "Q4 2026", each as wide as its months on the board, the first and last cut short.
+    - The quarters holding the months shown as columns are tinted.
+    - The quarter holding this month is underlined in red.
+    - The quarter holding this month is filled with blue.
+  - **Notes:**
+
+- [ ] `4E1A` Select the quarter after the one holding this month in the strip.
+  - **Expected:**
+    - The second column is the first month of that quarter.
+    - The first column is the month before it.
+    - That quarter is filled with blue.
+    - The quarter holding this month is still underlined in red.
+  - **Notes:**
+
+- [ ] `6AD2` Select **›** in the strip.
+  - **Expected:**
+    - The second column is the first month of the quarter after.
+    - That quarter is filled with blue.
     - The last column is still "No date".
+  - **Notes:**
+
+- [ ] `0D72` Select **‹** in the strip.
+  - **Expected:**
+    - The second column is again the first month of the quarter after the one holding this month.
+    - That quarter is filled with blue.
   - **Notes:**
 
 - [ ] `2A6F` Select **Today**.
   - **Expected:**
-    - The first column is headed this month again.
-    - No month in the strip is filled with blue.
+    - The first column is headed the month before this one, and the second is headed this month.
+    - The quarter holding this month is filled with blue.
   - **Notes:**
+
+- [ ] `A8F3` Select the first quarter in the strip.
+  - **Expected:**
+    - The first column is headed the month a year before this one, such as "Nov 2025".
+    - The **‹** button is turned off.
+  - **Notes:**
+
+- [ ] `5C0E` Type `Bulk Import` in the search box.
+  - **Expected:** No column holds a card 'Bulk Import'.
+  - **Notes:**
+
+- [ ] `1B96` Empty the search box.
+  - **Expected:** The board shows cards again.
+  - **Notes:**
+
+- [ ] `C2E7` Select the quarter holding the month four months before this one in the strip.
+  - **Expected:** The column headed that month, such as "Jul 2026", holds the card 'Audit Export'.
+  - **Notes:**
+
+- [ ] `7F30` Select the quarter holding the month four months after this one in the strip.
+  - **Expected:** The columns headed the month three months after this one and the month four months after it are both shown.
+  - **Notes:**
+
+- [ ] `D96B` Read the card 'Mobile Approvals' in the column headed the month four months after this one.
+  - **Expected:**
+    - A yellow dot is before **Needed by** on the card.
+    - The card is tinted faint yellow.
+  - **Notes:**
+
+- [ ] `38C4` Read the card 'Mobile Approvals' in the column headed the month three months after this one.
+  - **Expected:**
+    - The card is dimmed.
+    - A green dot is before its name.
+  - **Notes:**
+
+**Afterwards:** Select **Today**.
