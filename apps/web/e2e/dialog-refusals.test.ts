@@ -3,13 +3,15 @@
 // UI tests of a dialog refusing Save: focus goes into the field the reason is under.
 
 import { expect, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("engineeringDirector") });
 
 test("puts focus in Name when a new list is created without one, saving nothing", async ({
   page,
 }) => {
   // Given the Engineering Director on Lists, with the New list dialog open
-  await signIn(page, "/lists", "engineering.director@fathom.test");
+  await page.goto("/lists");
   const changes: string[] = [];
   page.on("request", (request) => {
     if (request.method() !== "GET" && request.url().includes("/api/"))
@@ -36,7 +38,7 @@ test("puts focus in Schedule when a new release is made without one, saving noth
   page,
 }) => {
   // Given the Engineering Director on Releases, with the New release dialog open
-  await signIn(page, "/releases", "engineering.director@fathom.test");
+  await page.goto("/releases");
   await page.getByRole("tab", { name: "Releases" }).click();
   const changes: string[] = [];
   page.on("request", (request) => {

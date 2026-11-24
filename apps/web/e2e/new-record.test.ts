@@ -46,7 +46,7 @@ test("refuses a new project whose Name was emptied, naming why under it and savi
 test("opens the New project panel with the cursor in Name, ready to type into", async ({
   page,
 }) => {
-  await signIn(page, "/projects", "product.manager@fathom.test");
+  await page.goto("/projects");
   await page.getByRole("button", { name: "New project" }).click();
   const panel = page.getByRole("region", { name: "New project" });
   const name = panel.getByRole("textbox", { name: "Name" });
@@ -63,20 +63,20 @@ test("opens the New project panel with the cursor in Name, ready to type into", 
   ).toBeVisible();
 });
 
-test("opens New feature team, from the Org chart's Feature teams menu, with the cursor in Name", async ({
-  page,
-}) => {
-  await signIn(
-    page,
-    "/org-chart?teams=feature",
-    "engineering.director@fathom.test",
-  );
-  await page.getByRole("button", { name: "Feature teams" }).click();
-  await page.getByRole("menuitem", { name: "New feature team" }).click();
-  const panel = page.getByRole("region", { name: "New feature team" });
-  await expect(panel.getByRole("textbox", { name: "Name" })).toBeFocused();
+test.describe("as the Engineering Director", () => {
+  test.use({ storageState: signedInAs("engineeringDirector") });
 
-  // And Esc, with nothing entered, closes it at once
-  await page.keyboard.press("Escape");
-  await expect(panel).toBeHidden();
+  test("opens New feature team, from the Org chart's Feature teams menu, with the cursor in Name", async ({
+    page,
+  }) => {
+    await page.goto("/org-chart?teams=feature");
+    await page.getByRole("button", { name: "Feature teams" }).click();
+    await page.getByRole("menuitem", { name: "New feature team" }).click();
+    const panel = page.getByRole("region", { name: "New feature team" });
+    await expect(panel.getByRole("textbox", { name: "Name" })).toBeFocused();
+
+    // And Esc, with nothing entered, closes it at once
+    await page.keyboard.press("Escape");
+    await expect(panel).toBeHidden();
+  });
 });
