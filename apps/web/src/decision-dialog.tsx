@@ -17,6 +17,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { planChoicesQuery, projectPlanQuery } from "./projects.ts";
 import { useState } from "react";
 import { DialogActions } from "./dialog-actions.tsx";
+import { focusRefusedSoon } from "./focus.ts";
 import {
   approveDrafts,
   type DraftSelection,
@@ -146,6 +147,7 @@ function DecisionDialog({
         event.preventDefault();
         setTried(true);
         if (!missing) deciding.mutate();
+        else focusRefusedSoon(event.currentTarget);
       }}
     >
       <Stack gap="md">

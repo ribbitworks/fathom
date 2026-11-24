@@ -17,6 +17,7 @@ import { Button, Group, Stack, Text, Textarea, TextInput } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
+import { focusRefusedSoon } from "./focus.ts";
 import { createList, nameProblem, sameName, updateList } from "./lists.ts";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import classes from "./pages.module.css";
@@ -111,12 +112,23 @@ export function ListDialog({
       onSubmit={(event) => {
         event.preventDefault();
         setTried(true);
-        if (problem !== undefined || descriptionTooLong) return;
-        saving.mutate({
-          name: name.trim(),
-          description: description.trim(),
-          visibility,
-        });
+        const form = event.currentTarget;
+        if (problem !== undefined || descriptionTooLong) {
+          focusRefusedSoon(form);
+          return;
+        }
+        saving.mutate(
+          {
+            name: name.trim(),
+            description: description.trim(),
+            visibility,
+          },
+          {
+            onError: () => {
+              focusRefusedSoon(form);
+            },
+          },
+        );
       }}
     >
       <Stack gap="md">

@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { DayInput } from "./day-input.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
+import { focusRefusedSoon } from "./focus.ts";
 import { projectPlanQuery } from "./projects.ts";
 import { CyclesPreview, type Saving, useSave } from "./release-dialogs.tsx";
 import { plannedOnStream, setStreamEnd } from "./releases.ts";
@@ -58,6 +59,7 @@ export function EndsDialog({
         event.preventDefault();
         setTried(true);
         if (endsOn !== undefined && problem === undefined) save.mutate(endsOn);
+        else focusRefusedSoon(event.currentTarget);
       }}
     >
       <Stack gap="md">

@@ -43,6 +43,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Swatch } from "./colour-swatch.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
+import { focusRefusedSoon } from "./focus.ts";
 import { DayInput } from "./day-input.tsx";
 import { Count } from "./list-dialog.tsx";
 import classes from "./pages.module.css";
@@ -127,6 +128,7 @@ export function StreamDialog({
         event.preventDefault();
         setTried(true);
         if (problem === undefined) save.mutate(name.trim());
+        else focusRefusedSoon(event.currentTarget);
       }}
     >
       <Stack gap="md">
@@ -286,6 +288,7 @@ export function PatternDialog({
         event.preventDefault();
         setTried(true);
         if (startOk && lengthOk && namingOk) save.mutate(undefined);
+        else focusRefusedSoon(event.currentTarget);
       }}
     >
       <Stack gap="md">
@@ -460,6 +463,7 @@ export function CycleLengthDialog({
         event.preventDefault();
         setTried(true);
         if (lengthOk && problem === undefined) save.mutate(undefined);
+        else focusRefusedSoon(event.currentTarget);
       }}
     >
       <Stack gap="md">
@@ -634,6 +638,7 @@ export function ReleaseDialog({
         event.preventDefault();
         setTried(true);
         if (stream !== undefined && !wrong) save.mutate(stream.id);
+        else focusRefusedSoon(event.currentTarget);
       }}
     >
       <Stack gap="md">

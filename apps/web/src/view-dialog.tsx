@@ -11,6 +11,7 @@ import classes from "./pages.module.css";
 import { useMutation } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
+import { focusRefusedSoon } from "./focus.ts";
 import { Count, nameTaken } from "./list-dialog.tsx";
 import { nameProblem, sameName } from "./lists.ts";
 
@@ -89,9 +90,17 @@ export function ViewDialog({
       onSubmit={(event) => {
         event.preventDefault();
         setTried(true);
-        if (problem !== undefined) return;
+        const form = event.currentTarget;
+        if (problem !== undefined) {
+          focusRefusedSoon(form);
+          return;
+        }
         setSent({ name, scope });
-        saving.mutate(name.trim());
+        saving.mutate(name.trim(), {
+          onError: () => {
+            focusRefusedSoon(form);
+          },
+        });
       }}
     >
       <Stack gap="md">
