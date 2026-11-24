@@ -573,6 +573,80 @@ describe("seeding", () => {
     expect(await seed(connection, organization)).toBe(true);
   });
 
+  it("adds the seed data again around a project kept for its seeded owner, with the planned hires", async () => {
+    // Given a project added by hand, owned by a seeded person, so removing the seed data keeps them
+    const [owner] = organization.people;
+    const ownerId = String(owner?.id);
+    const [project] = await connection
+      .insert(projects)
+      .values({ name: "Fictional Kept Project", ownerId })
+      .returning({ id: projects.id });
+    try {
+      await seedHires(connection, organization);
+      await unseed(connection, organization);
+      const linesBefore = await connection
+        .select({ id: reportingLines.id })
+        .from(reportingLines)
+        .where(eq(reportingLines.personId, ownerId));
+      const ownerChangesBefore = await connection
+        .select({ id: changes.id })
+        .from(changes)
+        .where(eq(changes.recordId, ownerId));
+
+      // When the seed data is added again
+      const added = await seed(connection, organization);
+
+      // Then every seeded person is back once, the kept owner neither added nor recorded again, and
+      // the planned hires, whose managers are among them, can be added
+      expect(added).toBe(true);
+      const ids = organization.people.map(({ id }) => id);
+      const [row] = await connection
+        .select({ total: count() })
+        .from(people)
+        .where(inArray(people.id, ids));
+      expect(row?.total).toBe(ids.length);
+      expect(
+        await connection
+          .select({ id: reportingLines.id })
+          .from(reportingLines)
+          .where(eq(reportingLines.personId, ownerId)),
+      ).toHaveLength(linesBefore.length);
+      expect(
+        await connection
+          .select({ id: changes.id })
+          .from(changes)
+          .where(eq(changes.recordId, ownerId)),
+      ).toHaveLength(ownerChangesBefore.length);
+      expect(await seedHires(connection, organization)).toBe(true);
+    } finally {
+      await connection
+        .delete(projects)
+        .where(eq(projects.id, String(project?.id)));
+      await unseed(connection, organization);
+      await seed(connection, organization);
+    }
+  });
+
+  it("adds a seeded feature team removed by hand, leaving the people and the other teams as they are", async () => {
+    // Given the seed data, with its first feature team removed by hand
+    const [first] = organization.featureTeams;
+    await connection
+      .delete(featureTeams)
+      .where(eq(featureTeams.id, String(first?.id)));
+    const peopleBefore = await totalOf(connection, people);
+
+    // When the seed data is added again
+    const added = await seed(connection, organization);
+
+    // Then that team is back, each other team is there once, and no person is added
+    expect(added).toBe(true);
+    const [teamsAfter] = await connection
+      .select({ total: count() })
+      .from(featureTeams);
+    expect(teamsAfter?.total).toBe(organization.featureTeams.length);
+    expect(await totalOf(connection, people)).toBe(peopleBefore);
+  });
+
   it("removes only what seeding added, keeping a column and list that people added by hand use", async () => {
     const [site] = organization.columns;
     const [sites, levels] = organization.lists;
@@ -848,7 +922,7 @@ describe("the seed command", () => {
       expect(await seedCommand(["unseed"], command.environment())).toBe(0);
       const addresses = personaAccounts.map(({ email }) => email);
       expect(log.mock.calls.map(([line]) => line as string)).toEqual([
-        "Added 150 fictional people, with their lists and columns",
+        "Added the fictional people, with their lists, columns and feature teams, that were missing",
         "Added 12 fictional planned hires",
         "Added fictional schedules, with their cycles and releases",
         "Added fictional features",
