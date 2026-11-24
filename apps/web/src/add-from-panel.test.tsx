@@ -499,15 +499,11 @@ describe("adding a record from a feature's picker", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("offers no New to a role that changes features but not the plan", async () => {
+  it("offers no New to a role that changes features but not the plan, which can't change Customers", async () => {
     await open(featurePlan(), {}, atFirst);
     await screen.findByRole("heading", { name: /Fictional First/ });
-    await userEvent.click(
-      within(sidePanel()).getByRole("button", { name: "Change Customers" }),
-    );
     expect(
-      await screen.findByRole("option", { name: "Fictional Customer" }),
-    ).toBeTruthy();
-    expect(screen.queryByRole("option", { name: /^New customer/ })).toBeNull();
+      within(sidePanel()).queryByRole("button", { name: "Change Customers" }),
+    ).toBeNull();
   });
 });
