@@ -61,7 +61,7 @@ export interface ColumnInfo extends FieldRow {
 
 // The People table's columns, carrying the tiers of its built-in details with them, so every tier
 // worked out from the columns read has them.
-export type PeopleColumns = readonly ColumnInfo[] & BuiltInTiers;
+export type TableColumns = readonly ColumnInfo[] & BuiltInTiers;
 
 export async function readBuiltInTiers(reader: Reader): Promise<BuiltInTiers> {
   return {
@@ -95,7 +95,7 @@ export async function readColumns(
   reader: Reader,
   lock = false,
   table: ColumnTable = "people",
-): Promise<PeopleColumns> {
+): Promise<TableColumns> {
   if (lock) {
     await reader
       .select({ id: fields.id })
@@ -129,7 +129,7 @@ export interface ClassedColumn {
 }
 
 export function columnClasses(
-  columns: PeopleColumns,
+  columns: TableColumns,
 ): Map<string, ClassedColumn> {
   return new Map([
     ...[...builtInColumnTiers(columns)].map(
@@ -368,6 +368,48 @@ export async function insertValues(
   for (const chunk of inChunks(rows)) {
     await transaction.insert(fieldValues).values(chunk);
   }
+}
+
+// Writes each value whose column and choices are live, and returns the rest, which use a column or
+// choice only drafted to be added, to be written once those are approved. Values written before the
+// columns are approved are checked against any change to a live column approved with them.
+export async function insertLiveValues(
+  transaction: Pick<Database, "insert" | "select">,
+  values: readonly (readonly ValueRow[])[],
+): Promise<(readonly ValueRow[])[]> {
+  const rows = values.flat();
+  const fieldIds = [...new Set(rows.map(({ fieldId }) => fieldId))];
+  const choiceIds = [
+    ...new Set(rows.flatMap(({ choiceId }) => choiceId ?? [])),
+  ];
+  const liveFields = new Set(
+    fieldIds.length === 0
+      ? []
+      : (
+          await transaction
+            .select({ id: fields.id })
+            .from(fields)
+            .where(inArray(fields.id, fieldIds))
+        ).map(({ id }) => id),
+  );
+  const liveChoices = new Set(
+    choiceIds.length === 0
+      ? []
+      : (
+          await transaction
+            .select({ id: listItems.id })
+            .from(listItems)
+            .where(inArray(listItems.id, choiceIds))
+        ).map(({ id }) => id),
+  );
+  const isLive = (row: ValueRow) =>
+    liveFields.has(row.fieldId) &&
+    (row.choiceId === undefined ||
+      row.choiceId === null ||
+      liveChoices.has(row.choiceId));
+  const now = values.filter((value) => value.every(isLive));
+  await insertValues(transaction, now.flat());
+  return values.filter((value) => !value.every(isLive));
 }
 
 // Replaces a person's or planned hire's value for a column, as the change history records it.

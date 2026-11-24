@@ -100,7 +100,7 @@ import {
   publishableAmong,
   usesAmong,
 } from "./unpublished-uses.ts";
-import type { PeopleColumns } from "./values.ts";
+import type { TableColumns } from "./values.ts";
 
 type Row = typeof unpublishedDrafts.$inferSelect;
 
@@ -138,7 +138,7 @@ interface Versions {
   mine: { lists: ListsState; columns: ColumnsState };
   theirs: { lists: ListsState; columns: ColumnsState };
   people: {
-    columns: PeopleColumns;
+    columns: TableColumns;
     live: Map<string, Recorded>;
     mine: Map<string, Draft>;
     theirs: Map<string, Draft>;

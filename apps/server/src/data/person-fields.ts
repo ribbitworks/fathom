@@ -26,7 +26,7 @@ import { keptNote } from "./records.ts";
 import { reportingFields } from "./reporting.ts";
 import {
   type ColumnInfo,
-  type PeopleColumns,
+  type TableColumns,
   type FieldValue,
   inListOrder,
   readColumns,
@@ -62,7 +62,7 @@ export const personalDetailFields = [
 // in past managers', since they name them; the position, state, and each column's values are as
 // sensitive as their list, and the rest is General. Every value field recorded is for one of the
 // columns given.
-export function personTier(columns: PeopleColumns) {
+export function personTier(columns: TableColumns) {
   const { startDate, endDate, managerHistory } = columns.dataClasses;
   const tiers = new Map<string, Tier>([
     ["positionId", columns.positionTier],
@@ -196,7 +196,7 @@ export const numbersOf = (person: Recorded): Numbers =>
 
 // The changes between two versions of a person, with each field's tier.
 export function personChanges(
-  columns: PeopleColumns,
+  columns: TableColumns,
   id: string,
   action: Change["action"],
   before: Recorded | undefined,

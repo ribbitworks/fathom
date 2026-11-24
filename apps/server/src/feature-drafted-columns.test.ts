@@ -103,6 +103,62 @@ const draftState = async (recordType: string, recordId: string) =>
 const refusalFor = (column: Field) =>
   `Approving this also approves the new column ${column.name}, which needs Approve Configuration.`;
 
+const choiceLabel = "Fictional Gold";
+
+// A live column on Features whose live list has a live choice and a choice drafted to be added.
+async function columnWithNewChoice(body: object = {}) {
+  const listId = randomUUID();
+  await test.connection.insert(lists).values({
+    id: listId,
+    name: unique("Fictional List"),
+    visibility: "general",
+  });
+  const liveChoiceId = randomUUID();
+  await test.connection.insert(listItems).values({
+    id: liveChoiceId,
+    listId,
+    label: unique("Fictional Silver"),
+    position: 0,
+  });
+  const columnResponse = await test.request(
+    planner.cookie,
+    "POST",
+    "/api/features/columns",
+    { name: unique("Fictional Tier"), listId, ...body },
+  );
+  const { field: column } = columnResponse.json<{ field: Field }>();
+  expect((await decide("approval", { columns: [column.id] })).statusCode).toBe(
+    200,
+  );
+  const configurer = await test.signedIn("workforce-administrator");
+  const choiceResponse = await test.request(
+    configurer.cookie,
+    "POST",
+    `/api/lists/${listId}/choices`,
+    { choices: [{ label: choiceLabel }] },
+  );
+  expect(choiceResponse.statusCode, choiceResponse.body).toBe(201);
+  const [choice] = choiceResponse.json<{ choices: Choice[] }>().choices;
+  return { column, choiceId: String(choice?.id), liveChoiceId };
+}
+
+// A feature drafted with the choices given in a column.
+async function featureGiven(column: Field, choiceIds: string[]) {
+  const drafted = await draftFeature({ values: { [column.id]: choiceIds } });
+  expect(drafted.statusCode, drafted.body).toBe(201);
+  return drafted
+    .json<{ plan: ProjectPlan }>()
+    .plan.features.find(
+      ({ values }) => values[column.id]?.at(0) === choiceIds.at(0),
+    ) as Feature;
+}
+
+// A feature drafted with a choice drafted to be added to the live list of a live column on Features.
+async function featureGivenNewChoice() {
+  const { column, choiceId } = await columnWithNewChoice();
+  return { choiceId, feature: await featureGiven(column, [choiceId]) };
+}
+
 describe("a feature given a value in a column drafted to be added", () => {
   it("is drafted by a Product Manager, holding the value before the column is approved", async () => {
     const { column, feature } = await scoredDrafts();
@@ -133,40 +189,8 @@ describe("a feature given a value in a column drafted to be added", () => {
   });
 
   it("approves a choice drafted to be added to a live list with the feature given it", async () => {
-    // Given a live column on Features drawing on a live list, and a choice drafted to be added to it
-    const listId = randomUUID();
-    await test.connection.insert(lists).values({
-      id: listId,
-      name: unique("Fictional List"),
-      visibility: "general",
-    });
-    const columnResponse = await test.request(
-      planner.cookie,
-      "POST",
-      "/api/features/columns",
-      { name: unique("Fictional Tier"), listId },
-    );
-    const { field: column } = columnResponse.json<{ field: Field }>();
-    expect(
-      (await decide("approval", { columns: [column.id] })).statusCode,
-    ).toBe(200);
-    const configurer = await test.signedIn("workforce-administrator");
-    const choiceResponse = await test.request(
-      configurer.cookie,
-      "POST",
-      `/api/lists/${listId}/choices`,
-      { choices: [{ label: "Fictional Gold" }] },
-    );
-    expect(choiceResponse.statusCode, choiceResponse.body).toBe(201);
-    const [choice] = choiceResponse.json<{ choices: Choice[] }>().choices;
-    const choiceId = String(choice?.id);
-    const drafted = await draftFeature({ values: { [column.id]: [choiceId] } });
-    expect(drafted.statusCode, drafted.body).toBe(201);
-    const feature = drafted
-      .json<{ plan: ProjectPlan }>()
-      .plan.features.find(
-        ({ values }) => values[column.id]?.at(0) === choiceId,
-      ) as Feature;
+    // Given a feature given a choice drafted to be added
+    const { choiceId, feature } = await featureGivenNewChoice();
 
     // When the feature is approved
     const approved = await decide("approval", {
@@ -182,6 +206,33 @@ describe("a feature given a value in a column drafted to be added", () => {
         .from(fieldValues)
         .where(eq(fieldValues.featureId, feature.id)),
     ).toEqual([{ choiceId }]);
+  });
+
+  it("refuses a column taking one choice approved with a feature given a live and a new choice", async () => {
+    // Given a live column drafted to take one choice, and a feature given a live and a new choice
+    const { column, choiceId, liveChoiceId } = await columnWithNewChoice({
+      multiple: true,
+    });
+    const changed = await test.request(
+      planner.cookie,
+      "PUT",
+      `/api/features/columns/${column.id}`,
+      { name: column.name, listId: column.listId, multiple: false },
+    );
+    expect(changed.statusCode, changed.body).toBe(200);
+    const feature = await featureGiven(column, [liveChoiceId, choiceId]);
+
+    // When the feature and the column are approved together
+    const response = await decide("approval", {
+      records: featureRecords(feature),
+      columns: [column.id],
+    });
+
+    // Then the column is refused, and nothing is approved
+    expect(response.statusCode, response.body).toBe(409);
+    expect(errorOf(response)).toContain("cannot take only one yet");
+    expect(await isLive(features, feature.id)).toBe(false);
+    expect(await isLive(listItems, choiceId)).toBe(false);
   });
 
   it("refuses an approver with Approve Features alone, naming the column, and approves nothing", async () => {
@@ -201,6 +252,27 @@ describe("a feature given a value in a column drafted to be added", () => {
     expect(errorOf(refused)).toBe(refusalFor(column));
     expect(await isLive(features, feature.id)).toBe(false);
     expect(await isLive(fields, column.id)).toBe(false);
+  });
+
+  it("refuses an approver with Approve Features alone, naming a new choice, and approves nothing", async () => {
+    const { choiceId, feature } = await featureGivenNewChoice();
+    const featuresApprover = await test.signedIn([
+      "features:approve",
+      "features:view",
+    ]);
+
+    const refused = await decide(
+      "approval",
+      { records: featureRecords(feature) },
+      featuresApprover.cookie,
+    );
+
+    expect(refused.statusCode).toBe(403);
+    expect(errorOf(refused)).toBe(
+      `Approving this also approves the new choice ${choiceLabel}, which needs Approve Configuration.`,
+    );
+    expect(await isLive(features, feature.id)).toBe(false);
+    expect(await isLive(listItems, choiceId)).toBe(false);
   });
 
   it("refuses an approver with Approve Configuration alone, and approves nothing", async () => {

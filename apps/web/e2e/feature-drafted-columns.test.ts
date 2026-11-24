@@ -55,7 +55,8 @@ test("fills a column drafted to be added, and leaves approving it to a role that
 
   // Then the Product Manager, who approves features but not configuration, is told another approver
   // must approve the new column with the feature, and approves nothing
-  const approver = await (await browser.newContext()).newPage();
+  const approverContext = await browser.newContext();
+  const approver = await approverContext.newPage();
   await signIn(approver, "/features", "product.manager@fathom.test");
   // The row's own ⋯, at its end, is always shown.
   await approver
@@ -72,4 +73,5 @@ test("fills a column drafted to be added, and leaves approving it to a role that
     features: { id: string; draft?: unknown }[];
   };
   expect(after.features.find((one) => one.id === id)?.draft).toBeDefined();
+  await approverContext.close();
 });

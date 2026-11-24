@@ -66,7 +66,7 @@ import {
 } from "./column-approvals.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import {
-  refuseColumnsBeyondRole,
+  refuseTakenAlongBeyondRole,
   refuseUsedAcross,
   withUsedAcross,
 } from "./draft-uses.ts";
@@ -91,6 +91,7 @@ import {
 import { approveRecordDrafts, rejectRecordDrafts } from "./record-decisions.ts";
 import { kindOf, refuseRemovingNamed } from "./records.ts";
 import {
+  insertLiveValues,
   insertValues,
   inListOrder,
   readColumns,
@@ -427,19 +428,21 @@ export async function approveDrafts(
       );
       const chosen = await withFills(transaction, actor, requested);
       const asked = await withUsedAcross(transaction, chosen);
-      await refuseColumnsBeyondRole(transaction, actor, chosen, asked);
-      const { made, values } = await approveRecordDrafts(
+      await refuseTakenAlongBeyondRole(transaction, actor, chosen, asked);
+      const { made, values: unwritten } = await approveRecordDrafts(
         transaction,
         actor,
         asked.records,
       );
+      let values = unwritten;
       if (asksForLists(asked)) {
         made.push(...(await approveListDrafts(transaction, actor, asked)));
+        values = await insertLiveValues(transaction, values);
       }
       if (asksForColumns(asked)) {
         made.push(...(await approveColumnDrafts(transaction, actor, asked)));
       }
-      await insertValues(transaction, values);
+      await insertValues(transaction, values.flat());
       if (asked.people.length > 0) {
         made.push(
           ...(await approvePeopleIn(transaction, actor, asked.people, today)),

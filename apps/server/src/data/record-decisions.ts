@@ -42,6 +42,7 @@ import {
 import {
   deleteValues,
   fieldOfValue,
+  insertLiveValues,
   valueFieldsIn,
   type ValueRow,
   valueRows,
@@ -330,15 +331,14 @@ async function refuseHeldRecords(
 
 // Approves the drafts of the records asked for, and those they use, applying them to the live
 // records, and returns the changes made, for approvals.ts to record with the other drafts approved
-// at the same time, and the values in added columns to write. Those are written only once the
-// columns and choices approved with the records are live, since a record's draft may give a value in
-// a column or choice only drafted to be added. The live records must still keep every rule once they
-// are applied.
+// at the same time, and the values still to write: those in a column or choice only drafted to be
+// added, written once it is approved with the records. The live records must still keep every rule
+// once they are applied.
 export async function approveRecordDrafts(
   transaction: Transaction,
   approver: Actor,
   asked: readonly RecordRef[],
-): Promise<{ made: Change[]; values: ValueRow[] }> {
+): Promise<{ made: Change[]; values: (readonly ValueRow[])[] }> {
   if (asked.length === 0) return { made: [], values: [] };
   const state = await readRecordsState(transaction);
   requireRecordDrafts(state, asked);
@@ -348,7 +348,7 @@ export async function approveRecordDrafts(
     approved.map(({ type, id }) => stateOf(state, type).drafts.get(id)),
   );
   const made: Change[] = [];
-  const columnValues: ValueRow[] = [];
+  const columnValues: ValueRow[][] = [];
   const touched: Touched[] = [];
   const removed: { kind: RecordKind; id: string }[] = [];
   for (const kind of recordKinds) {
@@ -397,12 +397,13 @@ export async function approveRecordDrafts(
           await deleteValues(transaction, id, fieldId, owner);
           // The field names an added column's value.
           // eslint-disable-next-line security/detect-object-injection
-          columnValues.push(...valueRows(id, fieldId, after[field], owner));
+          columnValues.push(valueRows(id, fieldId, after[field], owner));
         }
       }
       made.push(...kindChanges(kind, id, before, after));
     }
   }
+  const drafted = await insertLiveValues(transaction, columnValues);
   // Judged before anything is deleted, so a record still linked to is refused by name rather than
   // by the database.
   const problem = ruleProblem(
@@ -433,7 +434,7 @@ export async function approveRecordDrafts(
       approved.filter(({ type }) => type === kind.type).map(({ id }) => id),
     );
   }
-  return { made, values: columnValues };
+  return { made, values: drafted };
 }
 
 // Rejects the drafts of the records asked for with a reason, refusing a draft that others use

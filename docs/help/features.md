@@ -97,7 +97,7 @@ You can add your own columns to Features if your role edits features and sees pe
 
 You're done when the new column shows in the table, with a hollow dot until you publish it.
 
-You can fill the new column's cells straight away, before it's approved. Approving a feature you've filled it for approves the column too. So whoever approves that feature needs a role that approves both features and configuration, such as the Project Manager's.
+You can fill the new column's cells straight away, before it's approved. Approving a feature with a value in the column approves the column too. So whoever approves that feature needs a role that approves both features and configuration, such as the Project Manager's.
 
 ### Count Features
 

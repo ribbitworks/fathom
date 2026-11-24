@@ -5,6 +5,7 @@
 
 import { fieldOfValue } from "@fathom/db";
 import {
+  approvesKind,
   type DraftsRequest,
   type RecordRef,
   takenAlongRefusal,
@@ -71,6 +72,19 @@ const valueHolders = (
       ),
     );
 
+// The drafts of records holding values in added columns approved with the records asked for.
+async function recordsApproved(
+  transaction: Transaction,
+  asked: readonly RecordRef[],
+): Promise<Draft[]> {
+  if (asked.length === 0) return [];
+  const records = await readRecordsState(transaction);
+  const approved = new Set(withUsedRecords(records, asked).map(refKey));
+  return valueHolders(records, (ref) => approved.has(refKey(ref))).map(
+    ([, draft]) => draft,
+  );
+}
+
 // The drafts asked for, with the columns and choices only drafted to be added that the people,
 // planned hires, and the plan's records approved with them are given, and the lists only drafted to
 // be added that those columns and the columns asked for draw on.
@@ -79,16 +93,12 @@ export async function withUsedAcross(
   asked: DraftsRequest,
 ): Promise<DraftsRequest> {
   const state = await readColumnsState(transaction);
-  const records = await readRecordsState(transaction);
-  const approved = new Set(withUsedRecords(records, asked.records).map(refKey));
   const columns = new Set(asked.columns);
   const choices = new Set(asked.choices);
   for (const draft of [
     ...(await readPersonDrafts(transaction, asked.people)).values(),
     ...(await readHireDrafts(transaction, asked.plannedHires)).values(),
-    ...valueHolders(records, (ref) => approved.has(refKey(ref))).map(
-      ([, draft]) => draft,
-    ),
+    ...(await recordsApproved(transaction, asked.records)),
   ]) {
     const used = usedByRecord(state, draft);
     for (const id of used.columns) columns.add(id);
@@ -108,29 +118,39 @@ export async function withUsedAcross(
   };
 }
 
-// Refuses approving drafts that take along a column only drafted to be added whose area the
-// approver's role does not approve, naming the column, since approving one approves both.
-export async function refuseColumnsBeyondRole(
+// Refuses approving drafts that take along a column or choice only drafted to be added whose area
+// the approver's role does not approve, naming the first, since approving one approves both. A list
+// is only taken along with a column drawing on it, which is named instead.
+export async function refuseTakenAlongBeyondRole(
   transaction: Transaction,
   actor: Actor,
   chosen: DraftsRequest,
   asked: DraftsRequest,
 ): Promise<void> {
-  const taken = asked.columns.filter((id) => !chosen.columns.includes(id));
-  if (taken.length === 0) return;
-  for (const { id, field } of draftedColumns(
-    await readColumnsState(transaction),
-  )) {
-    const refusal = taken.includes(id)
-      ? takenAlongRefusal(
-          actor.permissions,
-          "field",
-          `the new column ${String(field.name)}`,
-        )
-      : undefined;
-    if (refusal !== undefined) throw new ForbiddenError(refusal);
-  }
+  const takenAlong = [
+    { kind: "field", ids: without(asked.columns, chosen.columns) },
+    { kind: "list-item", ids: without(asked.choices, chosen.choices) },
+  ] as const;
+  const refused = takenAlong.find(
+    ({ kind, ids }) => ids.length > 0 && !approvesKind(actor.permissions, kind),
+  );
+  if (refused === undefined) return;
+  const id = String(refused.ids.at(0));
+  const { lists, fieldDrafts } = await readColumnsState(transaction);
+  const named: Record<(typeof takenAlong)[number]["kind"], () => string> = {
+    field: () => `the new column ${String(fieldDrafts.get(id)?.fields.name)}`,
+    "list-item": () =>
+      `the new choice ${String(lists.choiceDrafts.get(id)?.fields.label)}`,
+  };
+  throw new ForbiddenError(
+    String(
+      takenAlongRefusal(actor.permissions, refused.kind, named[refused.kind]()),
+    ),
+  );
 }
+
+const without = (ids: readonly string[], left: readonly string[]) =>
+  ids.filter((id) => !left.includes(id));
 
 const usedTogether =
   "Other drafts depend on these drafts. Reject them together, or wait until those drafts no longer depend on these.";
@@ -156,6 +176,8 @@ export async function refuseUsedAcross(
     ...asked.choices,
     ...asked.lists.flatMap((id) => addedChoices(state.lists, id)),
   ]);
+  if (columns.size === 0 && choices.size === 0) return;
+  const rejected = new Set(asked.records.map(refKey));
   const others = [
     ...[...(await readPersonDrafts(transaction))].filter(
       ([id]) => !asked.people.includes(id),
@@ -165,7 +187,7 @@ export async function refuseUsedAcross(
     ),
     ...valueHolders(
       await readRecordsState(transaction),
-      (ref) => !asked.records.some((one) => refKey(one) === refKey(ref)),
+      (ref) => !rejected.has(refKey(ref)),
     ),
   ];
   for (const [, draft] of others) {

@@ -369,7 +369,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
     - a feature given a value in a column on Features, or a choice, drafted to be added
     - a record of the plan, such as a project, linking to one drafted to be added
   - **The exceptions:** a schedule's cycles, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out, and a project's removal, which uses the removals of its milestones.
-  - Approving a draft approves the drafts it uses with it, so the approver's role must approve the areas of both. A feature given a value in a new column needs Approve Features and Approve Configuration.
+  - Approving a draft approves the drafts it uses with it, so the approver's role must approve the areas of both. A feature given a value in a new column, or a new choice, needs Approve Features and Approve Configuration.
   - A draft that others use is rejected only together with them, or once they no longer use it.
   - It cannot be discarded, nor its adding undone, while others use it, except that discarding a list drafted to be added discards its choices' drafts, and discarding a schedule drafted to be added discards its cycles' and releases' drafts, whoever made them.
 - **Feature teams:** a team's name, lead and member changes make one draft, approved or rejected together.
