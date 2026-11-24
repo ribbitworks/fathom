@@ -220,6 +220,60 @@ describe("hiding columns", () => {
     expect(removeColumn).toHaveBeenCalledWith(colour);
   });
 
+  it("groups an added column's menu: its link, sorting, filtering and Metrics, laying out, then changing it", async () => {
+    renderViewing(emptyView, noop, {
+      given: actions({ removeColumn: vi.fn() }),
+      canEditColumns: true,
+    });
+
+    const menu = await columnMenu("Colour");
+    // The lines between the menu's groups are drawn, not read aloud, so they are found by their kind.
+    const groups: string[][] = [[]];
+    for (const item of menu.querySelectorAll(
+      '[role="menuitem"], .mantine-Menu-divider',
+    )) {
+      if (item.getAttribute("role") !== "menuitem") groups.push([]);
+      // A shortcut's keys follow its name.
+      else
+        groups.at(-1)?.push(item.textContent.replace(/(Shift|Alt)\+.*$/u, ""));
+    }
+
+    expect(groups).toEqual([
+      [],
+      ["Copy link"],
+      ["List order", "Reverse list order"],
+      ["Filter…", "Metrics"],
+      [
+        "Freeze up to this column",
+        "Unfreeze columns",
+        "Wider",
+        "Narrower",
+        "Move left",
+        "Move right",
+        "Hide column",
+      ],
+      ["Edit column…", "Remove column"],
+    ]);
+  });
+
+  it("ends a viewer's column menu with its last item, not a line", async () => {
+    renderViewing(emptyView);
+
+    const menu = await columnMenu("Colour");
+    const parts = [
+      ...menu.querySelectorAll('[role="menuitem"], .mantine-Menu-divider'),
+    ];
+
+    expect(parts.at(-1)?.textContent).toBe("Hide column");
+    expect(
+      parts.some(
+        (part, place) =>
+          part.getAttribute("role") !== "menuitem" &&
+          parts[place + 1]?.getAttribute("role") !== "menuitem",
+      ),
+    ).toBe(false);
+  });
+
   it("offers no Remove column without a way to remove it", async () => {
     renderViewing(emptyView, noop, { canEditColumns: true });
 
