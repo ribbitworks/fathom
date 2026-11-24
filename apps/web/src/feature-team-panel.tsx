@@ -14,7 +14,6 @@ import {
 } from "@fathom/shared";
 import { Button, Group, Text } from "@mantine/core";
 import { type ReactNode, useMemo, useState } from "react";
-import { colourWords } from "./colours.ts";
 import {
   featureTeamsQuery,
   liveTeam,
@@ -41,7 +40,7 @@ import {
   type DraftedPart,
   DraftedPartItem,
 } from "./status-mark.tsx";
-import { TeamColourMenu } from "./team-colour-menu.tsx";
+import { ColourMenu, ColourRow } from "./colour-menu.tsx";
 import { today } from "./today.ts";
 
 export const featureTeamPanelId = "feature-team-panel";
@@ -151,15 +150,6 @@ function teamColumns(
 }
 
 // The team's colour, shown as its row, changed from its own menu, since a colour is no draft.
-const colourColumn = {
-  key: "colour",
-  label: "Colour",
-  kind: "text",
-  multiple: false,
-  choices: [],
-  required: false,
-} as const satisfies Parameters<typeof Row>[0]["column"];
-
 // A team's members by name, one to a line, each with what a draft does to them, if anything.
 function MemberList({
   members,
@@ -426,29 +416,22 @@ function TeamDetails({
               }
               editing={editing(columns.name)}
             />
-            <Row
-              column={colourColumn}
-              value={team.colour ?? ""}
+            <ColourRow
               colour={team.colour}
-              action={
+              menu={
                 edits.undated &&
                 live !== undefined &&
                 draft?.action !== "deleted" && (
-                  <TeamColourMenu
-                    teamId={team.id}
+                  <ColourMenu
                     current={team.colour}
-                    team={shown.name}
+                    name={shown.name}
                     look="change"
                     save={actions.colour(team)}
                     refreshes={featureTeamsQuery.queryKey}
                   />
                 )
               }
-            >
-              {team.colour === null ? undefined : (
-                <Text>{colourWords(team.colour)}</Text>
-              )}
-            </Row>
+            />
           </RecordSection>
           <RecordSection id="feature-team-members" title="Members">
             <Row

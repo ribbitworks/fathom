@@ -27,6 +27,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import { type Recorded, tidy } from "./draft-records.ts";
+import { requireColouring } from "./feature-colours.ts";
 import { refuseCustomersChange } from "./feature-customers.ts";
 import { checkTeamForFeature } from "./feature-team-removals.ts";
 import { typeOf } from "./column-types.ts";
@@ -357,11 +358,14 @@ async function optionalChoice(
   return asked;
 }
 
+// A feature's colour is no draft, so a draft keeps one only for a feature it adds, to give it once
+// approved: the one asked for on adding it, kept while its addition is changed.
 async function featureRecord(
   transaction: Transaction,
   editor: string,
   request: FeatureRequest,
   current?: Recorded,
+  colour: unknown = null,
 ) {
   await checkTeamForFeature(transaction, request.featureTeamId);
   const added = await featureValues(transaction, editor, request, current);
@@ -400,6 +404,7 @@ async function featureRecord(
     featureTeamId: request.featureTeamId,
     description: request.description,
     note: keptNote(request.note),
+    ...(colour === null || colour === undefined ? {} : { colour }),
   };
 }
 
@@ -408,8 +413,15 @@ export async function addFeature(
   maker: Actor,
   request: FeatureRequest,
 ): Promise<Saved<PlanRecords>> {
+  if (request.colour !== null) requireColouring(maker);
   return changingPlan(database, maker, async (transaction, state) => {
-    const record = await featureRecord(transaction, maker.user.id, request);
+    const record = await featureRecord(
+      transaction,
+      maker.user.id,
+      request,
+      undefined,
+      request.colour,
+    );
     refuseCustomersChange(maker, undefined, record);
     return saveRecordDraft(
       transaction,
@@ -430,11 +442,13 @@ export async function changeFeature(
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
     const feature = changeableRecord(state, "feature", id);
+    const adding = !stateOf(state, "feature").live.has(id);
     const record = await featureRecord(
       transaction,
       maker.user.id,
       request,
       feature,
+      adding ? feature.colour : null,
     );
     refuseCustomersChange(maker, feature, record);
     return saveRecordDraft(transaction, maker, state, "feature", id, record);

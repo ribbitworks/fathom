@@ -2,6 +2,7 @@
 
 // The values of a plan record open beside its table, with a project's dates and milestones.
 
+import { Fragment, type ReactNode } from "react";
 import type {
   Asking,
   DraftKind,
@@ -133,6 +134,7 @@ export function PlanRecordDetails({
   follow,
   onChange,
   sections,
+  after = {},
   notes,
 }: {
   columns: readonly Column<never, PlanChange>[];
@@ -146,6 +148,9 @@ export function PlanRecordDetails({
   // The parts its details are shown in, any column none names in a last part of its own; or one
   // list of its columns, in the table's order.
   sections?: readonly ColumnGroup[] | undefined;
+  // Rows of the record's own that are no column, each after the row of the column it is keyed by,
+  // such as a feature's colour after its feature team.
+  after?: Readonly<Record<string, ReactNode>> | undefined;
   // Opens a note, which the page holds, since a note is written in a panel of its own.
   notes: NoteOpening;
 }) {
@@ -184,16 +189,18 @@ export function PlanRecordDetails({
   closeStale(context);
   const editing = editingOf(context);
   const rowOf = ({ column, edited }: (typeof rows)[number]) => (
-    <DetailRow
-      key={column.key}
-      column={column}
-      units={units}
-      record={record}
-      value={column.value(record as never)}
-      ownDraft={ownDraft}
-      editing={editing(edited)}
-      follow={follow}
-    />
+    <Fragment key={column.key}>
+      <DetailRow
+        column={column}
+        units={units}
+        record={record}
+        value={column.value(record as never)}
+        ownDraft={ownDraft}
+        editing={editing(edited)}
+        follow={follow}
+      />
+      {after[column.key]}
+    </Fragment>
   );
   if (sections === undefined) {
     return <dl className={details.list}>{rows.map(rowOf)}</dl>;
@@ -291,10 +298,16 @@ function DetailRow({
     <Row
       column={column}
       value={value}
+      colour={column.colour?.(record as never) ?? null}
       changed={
         draft === undefined
           ? undefined
-          : { live: column.live(draft as never), draft }
+          : {
+              live: column.live(draft as never),
+              liveColour:
+                column.colour?.({ ...record, ...draft.live } as never) ?? null,
+              draft,
+            }
       }
       editing={editing}
     >

@@ -11,6 +11,7 @@ import {
   type FeatureColumns,
   type FeatureDraft,
   type BuiltInList,
+  knownColour,
   type List,
   meaningSchema,
   type Milestone,
@@ -35,7 +36,7 @@ import { liveValuesOf } from "./column-types.ts";
 import { readListsWithin } from "./lists.ts";
 import { linksOf, notesOf, numbersOf, valuesOf } from "./person-fields.ts";
 import { milestonesOf } from "./project-kinds.ts";
-import { isGeneralFeature } from "./release-kinds.ts";
+import { featureColour, isGeneralFeature } from "./release-kinds.ts";
 import { text } from "./reporting.ts";
 import { fieldOfValue } from "./values.ts";
 import {
@@ -56,7 +57,10 @@ import {
 } from "./records.ts";
 import { readToday } from "./settings.ts";
 
-export type PlanRecords = Omit<ProjectPlan, "canEdit" | "canEditFeatures">;
+export type PlanRecords = Omit<
+  ProjectPlan,
+  "canEdit" | "canEditFeatures" | "canColourFeatures"
+>;
 
 // A draft of a feature, naming its added columns as a person's draft does.
 function featureDraftOf(draft: RecordDraftOut): FeatureDraft {
@@ -255,6 +259,7 @@ function featureOut(
     estimateHours:
       typeof feature.estimateHours === "number" ? feature.estimateHours : null,
     featureTeamId: text(feature.featureTeamId),
+    colour: featureColour(state, id),
     description: text(feature.description),
     note: text(feature.note),
     values: Object.fromEntries(valuesOf(feature)),
@@ -333,9 +338,11 @@ export async function readPlanRecords(
 
 // People as owners, by name alone, those whose end date has passed retired, the proposal and feature
 // statuses and features' priorities, sizes, with their weights, and risks, in their lists' order,
-// and the live feature teams by name, those drafted to be removed retired.
+// and the live feature teams by name, those drafted to be removed retired, with their colours for
+// those who see feature teams.
 export async function readPlanChoices(
   database: Database,
+  seesTeams: boolean,
   asOf?: string,
 ): Promise<PlanChoices> {
   const today = asOf ?? (await readToday(database));
@@ -355,7 +362,11 @@ export async function readPlanChoices(
       retired,
     }));
   const teams = await database
-    .select({ id: featureTeams.id, name: featureTeams.name })
+    .select({
+      id: featureTeams.id,
+      name: featureTeams.name,
+      colour: featureTeams.colour,
+    })
     .from(featureTeams)
     .orderBy(asc(featureTeams.name), asc(featureTeams.id));
   const teamDrafts = await readTeamDrafts(database);
@@ -375,9 +386,11 @@ export async function readPlanChoices(
       ({ id, name, retired, weight }) => ({ id, name, retired, weight }),
     ),
     risks: await offered("feature-risks"),
-    featureTeams: teams.map((team) => ({
-      ...team,
-      retired: teamDrafts.get(team.id)?.action === "deleted",
+    featureTeams: teams.map(({ id, name, colour }) => ({
+      id,
+      name,
+      retired: teamDrafts.get(id)?.action === "deleted",
+      colour: seesTeams ? knownColour(colour) : null,
     })),
   };
 }

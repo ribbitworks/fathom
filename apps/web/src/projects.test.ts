@@ -67,6 +67,7 @@ const plan = (): ProjectPlan => ({
   featureColumns: noFeatureColumns,
   canEdit: true,
   canEditFeatures: true,
+  canColourFeatures: false,
 });
 
 afterEach(() => {
@@ -101,6 +102,7 @@ describe("a change to a feature", () => {
       targetCycle: null,
       estimateHours: null,
       featureTeamId: null,
+      colour: null,
       description: null,
       note: null,
       values: {},

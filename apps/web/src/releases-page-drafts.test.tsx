@@ -258,6 +258,7 @@ describe("a schedule's draft in its row's menu", () => {
             ],
             canEdit: false,
             canEditFeatures: false,
+            canColourFeatures: false,
             featureColumns: noFeatureColumns,
           }),
       },

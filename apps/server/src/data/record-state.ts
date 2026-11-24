@@ -58,8 +58,9 @@ export interface RecordKind {
   // Fields that mean one thing together, so a draft changing any of them shows them all.
   changedTogether?: readonly string[];
   // Values a record added is given beside its fields, such as its place at the end of an order,
-  // from the kind's rows, including those added before it in the same approval.
-  added?: (rows: ReadonlyMap<string, Recorded>) => Recorded;
+  // from the kind's rows, including those added before it in the same approval, or kept beside its
+  // fields in the draft that adds it, such as a feature's colour.
+  added?: (rows: ReadonlyMap<string, Recorded>, version: Recorded) => Recorded;
   // Whether Fathom keeps the record itself, so nobody can change or remove it through a draft.
   keptByFathom?: (state: RecordsState, id: string) => boolean;
   // How the change history names a record with no name of its own: from the records its addition

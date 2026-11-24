@@ -15,6 +15,7 @@ import {
   isCommitted,
   type Meaning,
   needsFeatureTeam,
+  paletteColours,
   planColumnNames,
   type Project,
   type Proposal,
@@ -35,6 +36,7 @@ import { decimalUpTo } from "./numbers.ts";
 import { choice } from "./lists.ts";
 import {
   cycleChoiceId,
+  featureColour,
   type ReleaseGroup,
   type FeatureFields,
   type TableChoices,
@@ -63,6 +65,7 @@ import type {
 } from "./record-table.ts";
 import type { ColumnUnit } from "./table-view.ts";
 import { formatMonth } from "./day-formats.ts";
+import { colourWords } from "./colours.ts";
 import { type RowGroup, rankOfNone } from "./row-groups.ts";
 
 // A column of the projects or proposals that name a feature. It is set on a feature once it is added.
@@ -277,7 +280,10 @@ export function featureColumns(
     choices.featureStatuses.map(({ id, meaning }) => [id, meaning]),
   );
   const builtIn: Column<Feature, PlanChange>[] = [
-    nameColumn<Feature>(),
+    {
+      ...nameColumn<Feature>(),
+      colour: (feature) => featureColour(feature, choices.teamColours),
+    },
     {
       ...field<Feature>("statusId", planColumnNames.statusId, "choice", {
         required: true,
@@ -339,6 +345,10 @@ export function featureColumns(
           emptyLabel: "No feature team",
         },
       ),
+      colour: ({ featureTeamId }) =>
+        featureTeamId === null
+          ? null
+          : (choices.teamColours.get(featureTeamId) ?? null),
       status: (feature) =>
         needsFeatureTeam(meaningOf.get(feature.statusId), feature.featureTeamId)
           ? { words: "No team", spoken: "it needs a feature team to own it" }
@@ -429,6 +439,7 @@ export function featureTable(
     onOpen,
     editsCommitments = false,
     board = false,
+    colours = false,
   }: {
     onOpen?: (feature: Feature) => void;
     // Whether a feature's customers, and the projects and proposals that name it, can be changed
@@ -436,6 +447,8 @@ export function featureTable(
     editsCommitments?: boolean;
     // Whether the rows are a board's, whose columns are cycles.
     board?: boolean;
+    // Whether a new feature's form asks for its colour, for those who choose features' colours.
+    colours?: boolean;
   } = {},
 ): RecordTable<Feature, PlanChange, FeatureFields> {
   const byListed = featureColumns(choices)
@@ -443,7 +456,7 @@ export function featureTable(
     .map((column) =>
       byChoice(column, groupedByName.has(column.key) ? { holds: "names" } : {}),
     );
-  return planTable<Feature, FeatureFields>({
+  const table = planTable<Feature, FeatureFields>({
     type: "feature",
     ...wordsOf("features"),
     kinds: [newKind, savedKind],
@@ -463,4 +476,18 @@ export function featureTable(
     },
     showDetails: onOpen,
   });
+  return colours
+    ? {
+        ...table,
+        formColumns: [{ after: "featureTeamId", column: colourColumn }],
+      }
+    : table;
 }
+
+// A new feature's colour, one of the palette's, or none, so it shows its team's.
+const colourColumn = field<Feature>("colour", "Colour", "choice", {
+  choices: paletteColours.map((colour) =>
+    choice(colour, colourWords(colour), false),
+  ),
+  emptyLabel: "Team's colour",
+});

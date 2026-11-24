@@ -6,6 +6,8 @@
 import { cyclePatterns, features, releases, releaseStreams } from "@fathom/db";
 import {
   cyclesOf,
+  knownColour,
+  type PaletteColour,
   planSubjects,
   projectSubjects,
   type RecordRef,
@@ -177,6 +179,18 @@ export function featureCalled(state: RecordsState, id: string): string {
   );
 }
 
+// A feature's own colour: its row's once approved, or, while it is only drafted to be added, the one
+// the draft keeps beside its fields.
+export function featureColour(
+  state: RecordsState,
+  id: string,
+): PaletteColour | null {
+  const row = stateOf(state, "feature").rows.get(id);
+  return knownColour(
+    row === undefined ? versionOf(state, "feature", id)?.colour : row.colour,
+  );
+}
+
 export const projectSubject = (state: RecordsState, id: string): string =>
   projectSubjects.project(String(shownVersion(state, "project", id)?.name));
 
@@ -208,6 +222,7 @@ export const featureKind: RecordKind = {
     riskId: "choice",
   },
   keptByFathom: (state, id) => isGeneralFeature(state, id),
+  added: (_rows, version) => ({ colour: knownColour(version.colour) }),
   addedColumns: { owner: "feature", table: "features" },
   changedTogether: ["targetStreamId", "targetCycle"],
   unique: [

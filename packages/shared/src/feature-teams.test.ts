@@ -7,7 +7,6 @@ import { describe, expect, it } from "vitest";
 import {
   disbandedMonth,
   featureTeamChangeSchema,
-  featureTeamColourSchema,
   featureTeamDraftSchema,
   featureTeamLengths,
   featureTeamRequestSchema,
@@ -248,19 +247,5 @@ describe("a feature team's draft", () => {
       featureTeamDraftSchema.safeParse({ ...draft, days: { [person]: "soon" } })
         .success,
     ).toBe(false);
-  });
-});
-
-describe("a feature team's colour", () => {
-  it("is one of the palette, or none", () => {
-    expect(featureTeamColourSchema.parse({ colour: "teal" })).toEqual({
-      colour: "teal",
-    });
-    expect(featureTeamColourSchema.parse({ colour: null })).toEqual({
-      colour: null,
-    });
-    expect(featureTeamColourSchema.safeParse({ colour: "sea" }).success).toBe(
-      false,
-    );
   });
 });

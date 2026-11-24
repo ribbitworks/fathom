@@ -17,6 +17,7 @@ import {
   type FeatureRequest,
   type Milestone,
   type MilestoneRequest,
+  type PaletteColour,
   type PlanChoice,
   type PlanChoices,
   planChoicesSchema,
@@ -31,10 +32,11 @@ import {
   type RemovalReasonRequest,
   savedSchema,
   scopeHistorySchema,
+  shownColourOf,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
-import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
+import { getJson, sendDeleteFor, sendJson, sendJsonFor } from "./api.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import { choice } from "./lists.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
@@ -104,6 +106,30 @@ export async function removeRecord(
 ): Promise<string | null> {
   return (await sendDeleteFor(recordPath(type, id), savedSchema)).changeSetId;
 }
+
+// Sets a feature's own colour, or takes it away so it shows its team's, at once: it is no draft.
+export async function setFeatureColour(
+  id: string,
+  colour: PaletteColour | null,
+): Promise<void> {
+  await sendJson("PUT", `${recordPath("feature", id)}/colour`, { colour });
+}
+
+// Each feature team's colour, by the team.
+export const teamColoursOf = (
+  teams: PlanChoices["featureTeams"],
+): TableChoices["teamColours"] =>
+  new Map(teams.map(({ id, colour }) => [id, colour]));
+
+// The colour a feature is shown in: its own, or its feature team's, where the reader sees it.
+export const featureColour = (
+  { colour, featureTeamId }: Pick<Feature, "colour" | "featureTeamId">,
+  teamColours: TableChoices["teamColours"],
+): PaletteColour | null =>
+  shownColourOf(
+    colour,
+    featureTeamId === null ? null : (teamColours.get(featureTeamId) ?? null),
+  );
 
 // The kinds of record that name features: the field a feature's row shows them in, and where the
 // plan holds them.
@@ -288,6 +314,7 @@ export type FeatureFields = Pick<
   | "targetCycle"
   | "estimateHours"
   | "featureTeamId"
+  | "colour"
   | "description"
   | "note"
 >;
@@ -305,6 +332,7 @@ export const featureRequest = (
     customerIds,
     estimateHours,
     featureTeamId,
+    colour,
     description,
     note,
     targetStreamId,
@@ -321,6 +349,7 @@ export const featureRequest = (
   customerIds,
   estimateHours,
   featureTeamId,
+  colour,
   description,
   note,
   values,
@@ -551,6 +580,7 @@ const planRecordOperations: Readonly<
       targetCycle: null,
       estimateHours: null,
       featureTeamId: null,
+      colour: null,
       description: null,
       note: null,
       values: {},
@@ -608,6 +638,8 @@ export interface TableChoices {
   sizes: Choice[];
   risks: Choice[];
   featureTeams: Choice[];
+  // Each feature team's colour, by the team, where the reader sees it.
+  teamColours: ReadonlyMap<string, PaletteColour | null>;
   // Every cycle a feature can target.
   cycles: Choice[];
   // The release each of those cycles is in, by its choice.
@@ -763,6 +795,7 @@ export const tableChoices = (
   sizes: asChoices(picks.sizes),
   risks: asChoices(picks.risks),
   featureTeams: asChoices(picks.featureTeams),
+  teamColours: teamColoursOf(picks.featureTeams),
   cycles: cycleChoices(streams),
   releaseOfCycle: releaseOfCycle(streams),
   customers: plan.customers,

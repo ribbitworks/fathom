@@ -100,6 +100,7 @@ export const plan = (features: Feature[]): ProjectPlan => ({
   featureColumns: noFeatureColumns,
   canEdit: false,
   canEditFeatures: true,
+  canColourFeatures: false,
 });
 
 export const majors = fictionalStream({

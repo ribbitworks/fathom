@@ -200,9 +200,3 @@ export const memberTeamsChangeSchema = z
   );
 
 export type MemberTeamsChange = z.infer<typeof memberTeamsChangeSchema>;
-
-// A feature team's colour, chosen on the chart, or null for none. It is not part of any draft, so it
-// changes at once.
-export const featureTeamColourSchema = z.object({
-  colour: paletteColourSchema.nullable(),
-});

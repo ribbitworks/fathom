@@ -23,6 +23,7 @@ import type {
   RetiredRequest,
   AllocationChange,
   Allocations,
+  PaletteColour,
 } from "@fathom/shared";
 import {
   type Actor,
@@ -30,6 +31,7 @@ import {
   requirePermission,
 } from "../access.ts";
 import * as columnDrafts from "./column-drafts.ts";
+import { coloursFeatures, setFeatureColour } from "./feature-colours.ts";
 import { editsKind, recordEditor } from "./draft-editors.ts";
 import * as projectData from "./projects.ts";
 import * as projectReads from "./project-reads.ts";
@@ -135,6 +137,12 @@ export interface ProjectAccess {
     changed: PlanRecordRequest,
   ): Promise<Saved<ProjectPlan>>;
   remove(actor: Actor, type: PlanKind, id: string): Promise<ChangeSetId>;
+  // Sets a feature's own colour, or takes it away, at once, as a feature team's is.
+  setFeatureColour(
+    actor: Actor,
+    id: string,
+    colour: PaletteColour | null,
+  ): Promise<void>;
   // Changes which projects need a feature and which proposals propose it, drafting each project
   // and proposal, so it takes those who edit the plan.
   changeFeatureProjects(
@@ -249,6 +257,7 @@ export function createReleaseAccess(database: Database): ReleaseAccess {
 const planAbilities = (actor: Actor) => ({
   canEdit: actor.permissions.includes("plan:edit"),
   canEditFeatures: actor.permissions.includes("features:edit"),
+  canColourFeatures: coloursFeatures(actor),
 });
 
 const edited = async (
@@ -279,9 +288,14 @@ export function createProjectAccess(database: Database): ProjectAccess {
       ...(await seenPlan(database, actor)),
       ...planAbilities(actor),
     }),
+    setFeatureColour: async (actor, id, colour) =>
+      setFeatureColour(database, actor, id, colour),
     readChoices: async (actor) => {
       requireAnyPermission(actor, planOrFeatures);
-      return projectReads.readPlanChoices(database);
+      return projectReads.readPlanChoices(
+        database,
+        actor.permissions.includes("feature-teams:view"),
+      );
     },
     createFeatureColumn: async (actor, request) =>
       columnDrafts.createField(

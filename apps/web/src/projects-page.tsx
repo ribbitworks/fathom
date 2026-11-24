@@ -488,6 +488,7 @@ export function ProjectsPage({
           onOpen: openRecord,
           editsCommitments: plan.canEdit,
           board: onBoard,
+          colours: plan.canColourFeatures,
         });
         const offeredParts = cardPartSchema.options;
         const actions: RecordActions<Feature, PlanChange, FeatureFields> = {

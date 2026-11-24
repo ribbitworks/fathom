@@ -113,6 +113,7 @@ describe("the Drafts page", () => {
           features: [],
           canEdit: false,
           canEditFeatures: false,
+          canColourFeatures: false,
           featureColumns: noFeatureColumns,
         }),
     });
@@ -179,6 +180,7 @@ describe("the Drafts page", () => {
           },
           canEdit: false,
           canEditFeatures: false,
+          canColourFeatures: false,
         }),
     });
     renderApp("/drafts");
@@ -238,6 +240,7 @@ describe("the Drafts page", () => {
           ],
           canEdit: false,
           canEditFeatures: false,
+          canColourFeatures: false,
           featureColumns: noFeatureColumns,
         }),
     });

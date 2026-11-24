@@ -121,6 +121,7 @@ export const noPlan = () =>
     features: [],
     canEdit: false,
     canEditFeatures: false,
+    canColourFeatures: false,
     featureColumns: noFeatureColumns,
   });
 export const noPlanChoices = () =>

@@ -6,10 +6,10 @@
 // drafts.ts. The data access layer checks the actor's permissions.
 
 import {
+  colourChangeSchema,
   changeSetIdSchema,
   dayQuerySchema,
   featureTeamChangeSchema,
-  featureTeamColourSchema,
   featureTeamRequestSchema,
   featureTeamsSchema,
   memberTeamsChangeSchema,
@@ -145,7 +145,7 @@ export function featureTeamRoutes(
 
     app.put(
       "/api/feature-teams/:teamId/colour",
-      { schema: { params: teamParams, body: featureTeamColourSchema } },
+      { schema: { params: teamParams, body: colourChangeSchema } },
       async (request, reply) => {
         await teams.setColour(
           request.actor,

@@ -21,7 +21,11 @@ import {
   useRecordEditing,
 } from "./record-editing.tsx";
 import { inViewUnits } from "./grid-columns.tsx";
-import type { GridRecord, RecordTable } from "./record-table.ts";
+import {
+  type GridRecord,
+  type RecordTable,
+  withFormColumns,
+} from "./record-table.ts";
 import type { CellValue, View } from "./table-view.ts";
 
 // The plan's records are checked on their own, not beside each other.
@@ -68,9 +72,10 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
     valueOf,
     values: shown,
   } = newRecordFields(
-    table
-      .columnsFor(added.fields, added.lists, added.order, records)
-      .map((column) => inViewUnits(column, { units: units.units })),
+    withFormColumns(
+      table.columnsFor(added.fields, added.lists, added.order, records),
+      table.formColumns,
+    ).map((column) => inViewUnits(column, { units: units.units })),
     kind,
     values,
   );

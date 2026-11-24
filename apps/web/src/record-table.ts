@@ -201,6 +201,23 @@ export interface ColumnUnits {
 // What is particular to a kind of record: what its table and rows are called, its columns, how its
 // records are as they are live, what adding one asks for, what is wrong with one taken whole, and
 // which drafts name it.
+export interface FormColumn<Rec extends GridRecord, Change> {
+  after: string;
+  column: Column<Rec, Change>;
+}
+
+// A new record's form's columns: the table's, with each of its form's own after the one it names.
+export const withFormColumns = <Rec extends GridRecord, Change>(
+  columns: readonly Column<Rec, Change>[],
+  formColumns: readonly FormColumn<Rec, Change>[] = [],
+): Column<Rec, Change>[] =>
+  columns.flatMap((column) => [
+    column,
+    ...formColumns
+      .filter(({ after }) => after === column.key)
+      .map(({ column: added }) => added),
+  ]);
+
 export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // The table's name, for assistive technology, such as "People".
   label: string;
@@ -237,6 +254,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
     order: readonly string[],
     records: readonly Rec[],
   ) => Column<Rec, Change>[];
+  // Values a new record's form asks for that are no column of the table, each placed after the
+  // column it names, such as a feature's colour.
+  formColumns?: readonly FormColumn<Rec, Change>[];
   // The records as they are live, without drafts.
   liveRecords: (records: readonly Rec[]) => Rec[];
   // What a record's draft changes, field by field, as the change history words it.

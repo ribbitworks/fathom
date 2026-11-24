@@ -93,6 +93,7 @@ export const plan = (more: Partial<Plan> = {}): Plan => ({
   featureColumns: noFeatureColumns,
   canEdit: true,
   canEditFeatures: false,
+  canColourFeatures: false,
   ...more,
 });
 
@@ -227,6 +228,7 @@ export const feature = (name: string, targetCycle: string | null) => ({
   targetCycle,
   estimateHours: 40,
   featureTeamId: null,
+  colour: null,
   description: null,
   note: null,
   values: {},
@@ -242,6 +244,7 @@ export const featurePlan = (more: Partial<Plan> = {}) =>
     features: [later, second, first],
     canEdit: false,
     canEditFeatures: true,
+    canColourFeatures: false,
     ...more,
   });
 export const answers = {

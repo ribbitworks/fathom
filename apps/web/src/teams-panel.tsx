@@ -10,10 +10,11 @@ import { Swatch, teamSwatchSize } from "./colour-swatch.tsx";
 import {
   hasApprovedName,
   type ChartPerson,
+  managersTeamColour,
   type OrgTree,
 } from "./org-chart.ts";
 import classes from "./org-chart.module.css";
-import { TeamColourMenu } from "./team-colour-menu.tsx";
+import { ColourMenu } from "./colour-menu.tsx";
 import { TeamNameEditor } from "./team-name-editor.tsx";
 import { LiveLine, MarkRow } from "./status-mark.tsx";
 import { TeamMarks } from "./org-chart-marks.tsx";
@@ -62,10 +63,10 @@ export function TeamsPanel({ tree }: { tree: OrgTree }) {
             <Group key={person.id} gap="sm" wrap="nowrap">
               <span className={classes.teamDot}>
                 {person.teamName === null ? null : hasApprovedName(person) ? (
-                  <TeamColourMenu
-                    teamId={person.id}
+                  <ColourMenu
+                    {...managersTeamColour(person.id)}
                     current={person.teamColour}
-                    team={person.teamName}
+                    name={person.teamName}
                     look="square"
                   />
                 ) : (

@@ -140,6 +140,7 @@ const feature = (more: Partial<Feature> = {}): Feature => ({
   targetCycle: null,
   estimateHours: null,
   featureTeamId: null,
+  colour: null,
   description: null,
   note: null,
   values: {},

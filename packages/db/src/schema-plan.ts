@@ -235,7 +235,8 @@ export const milestones = fathomSchema.table(
 // a feature with none is in Later. Its status is a choice of the built-in list of feature statuses,
 // and its priority, size and risk, each optional, choices of their built-in lists.
 // The month it is needed by is kept as text such as 2027-03. Its note is Markdown checked by the
-// server. The estimate is one value, in hours, whichever unit it is shown in; PostgreSQL ranks NaN
+// server. Its colour, a palette name checked by the server and no part of any draft, is null while it
+// shows its feature team's. The estimate is one value, in hours, whichever unit it is shown in; PostgreSQL ranks NaN
 // above every number, so it must be refused by name.
 export const features = fathomSchema.table(
   "features",
@@ -274,6 +275,7 @@ export const features = fathomSchema.table(
     }),
     description: text("description"),
     note: text("note"),
+    colour: text("colour"),
     generalForProjectId: uuid("general_for_project_id").references(
       () => projects.id,
       { onDelete: "restrict" },

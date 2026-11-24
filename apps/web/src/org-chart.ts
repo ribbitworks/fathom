@@ -486,6 +486,12 @@ export async function setTeamColour(
   );
 }
 
+// What changes a manager's team's colour from its menu: saving it, then reloading the chart.
+export const managersTeamColour = (managerId: string) => ({
+  save: (colour: PaletteColour | null) => setTeamColour(managerId, colour),
+  refreshes: orgChartQuery.queryKey,
+});
+
 // How many levels the chart has, counting the people at the top as the first.
 export function levelsOf(tree: OrgTree): number {
   const below = (id: string): number =>

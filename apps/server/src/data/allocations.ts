@@ -25,6 +25,7 @@ import {
   meaningSchema,
   type PaletteColour,
   type MonthSpan,
+  shownColourOf,
   withChange,
 } from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
@@ -48,7 +49,7 @@ import {
   stateOf,
   versionOf,
 } from "./record-state.ts";
-import { featureCalled } from "./release-kinds.ts";
+import { featureCalled, featureColour } from "./release-kinds.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
@@ -314,7 +315,10 @@ export async function readAllocations(
           id,
           name: featureCalled(state, id),
           meaning: meaningSchema.nullable().parse(meanings.get(statusOf(id))),
-          colour: colourOf(colours, teamOf(id)),
+          colour: shownColourOf(
+            featureColour(state, id),
+            colourOf(colours, teamOf(id)),
+          ),
         })),
         includedPersonal: records.some(({ record }) => {
           const person = personOf(record);
@@ -573,7 +577,7 @@ export async function refuseFillingAllocated(
   }
 }
 
-// A feature's colour, its team's; none for a feature with no team, or a team not read.
+// A feature's team's colour; none for a feature with no team, or a team not read.
 const colourOf = (
   colours: ReadonlyMap<string, PaletteColour | null>,
   teamId: string | null | undefined,

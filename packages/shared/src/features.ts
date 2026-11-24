@@ -16,6 +16,7 @@ import {
   valuesSchema,
 } from "./people.ts";
 import type { Meaning } from "./lists.ts";
+import { paletteColourSchema } from "./palette.ts";
 import {
   optionalText,
   picked,
@@ -141,6 +142,8 @@ export const featureSchema = z.object({
   targetCycle: z.string().nullable(),
   estimateHours: z.number().nullable(),
   featureTeamId: z.string().nullable(),
+  // Its own colour, not drafted, or null while it shows its feature team's.
+  colour: paletteColourSchema.nullable(),
   description: z.string().nullable(),
   note: z.string().nullable(),
   values: valuesSchema,
@@ -181,6 +184,8 @@ export const featureRequestSchema = z.object({
       hours === null ? null : Math.round(hours * hundredths) / hundredths,
     ),
   featureTeamId: z.uuid().nullable().default(null),
+  // Its own colour, kept only on adding it: a feature's colour is changed on its own, never drafted.
+  colour: paletteColourSchema.nullable().default(null),
   description: optionalText(featureLengths.description),
   note: z.string().nullable().default(null),
   values: requestedValuesSchema.default({}),

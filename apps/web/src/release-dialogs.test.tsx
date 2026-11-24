@@ -928,6 +928,7 @@ describe("the dialog changing one cycle's length", () => {
       links: {},
       estimateHours: null,
       featureTeamId: null,
+      colour: null,
       description: null,
       targetStreamId: streamId,
       targetCycle: "2027-07-01",
@@ -948,6 +949,7 @@ describe("the dialog changing one cycle's length", () => {
           ],
           canEdit: false,
           canEditFeatures: false,
+          canColourFeatures: false,
           featureColumns: noFeatureColumns,
         }),
     });

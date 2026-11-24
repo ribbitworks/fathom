@@ -679,16 +679,17 @@ export {
   signInRequestSchema,
 } from "./session.ts";
 export {
+  colourChangeSchema,
   knownColour,
   type PaletteColour,
   paletteColours,
   paletteColourSchema,
+  shownColourOf,
 } from "./palette.ts";
 export {
   type FeatureTeam,
   type FeatureTeamChange,
   featureTeamChangeSchema,
-  featureTeamColourSchema,
   type FeatureTeamDraft,
   featureTeamDraftSchema,
   featureTeamLengths,

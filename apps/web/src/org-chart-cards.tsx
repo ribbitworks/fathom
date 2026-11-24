@@ -19,7 +19,7 @@ import { type CSSProperties, type MouseEvent } from "react";
 import { Swatch, teamSwatchSize } from "./colour-swatch.tsx";
 import { CardMenu } from "./card-menu.tsx";
 import { CopyLinkItem } from "./record-key.tsx";
-import { TeamColourMenu } from "./team-colour-menu.tsx";
+import { ColourMenu } from "./colour-menu.tsx";
 import { TeamNameEditor } from "./team-name-editor.tsx";
 import { colourVariable } from "./colours.ts";
 import { Icon } from "./icons.tsx";
@@ -31,6 +31,7 @@ import {
   stackIndent,
   type ChartSearch,
   chartKeyOf,
+  managersTeamColour,
 } from "./org-chart.ts";
 import classes from "./org-chart.module.css";
 import {
@@ -99,10 +100,10 @@ function TeamRow({
     <>
       <MarkRow small>
         {colourChosen && person.teamName !== null ? (
-          <TeamColourMenu
-            teamId={person.id}
+          <ColourMenu
+            {...managersTeamColour(person.id)}
             current={person.teamColour}
-            team={person.teamName}
+            name={person.teamName}
           />
         ) : (
           person.teamColour !== null && (

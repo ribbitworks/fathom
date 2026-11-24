@@ -372,7 +372,7 @@ export async function approveRecordDrafts(
       }
       const values = ownFields(kind, after);
       if (before === undefined) {
-        const row = { ...values, ...kind.added?.(rows) };
+        const row = { ...values, ...kind.added?.(rows, after) };
         await transaction.insert(table).values({ id, ...row } as never);
         rows.set(id, row);
         await kind.onAdded?.(transaction, id);

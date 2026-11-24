@@ -3,13 +3,15 @@
 // Customers, projects with their milestones, proposals, and features: reading them all at once,
 // with what they can be given, and drafting each added, changed, and removed, and a feature's
 // projects and proposals, as drafts of those projects and proposals, with the reason for taking it
-// off a proposal, and each project's and proposal's scope history. Every change answers
+// off a proposal, each project's and proposal's scope history, and setting a feature's colour,
+// which is no draft. Every other change answers
 // with the change set it was saved in, and every change but a removal with every record as the
 // editor now sees them. Discarding and resubmitting their drafts goes through the routes for every
 // plan record's draft. The data access layer checks the actor's permissions.
 
 import {
   changeSetIdSchema,
+  colourChangeSchema,
   customerRequestSchema,
   featureProjectsRequestSchema,
   featureRequestSchema,
@@ -30,6 +32,7 @@ import type { PlanKind, PlanRecordRequest } from "../data/index.ts";
 import type { ProjectAccess } from "../data/plan-access.ts";
 
 const created = 201;
+const noContent = 204;
 
 const planResponse = z.object({
   plan: projectPlanSchema,
@@ -99,6 +102,18 @@ export function projectRoutes(
     recordRoutes("projects", "project", projectRequestSchema);
     recordRoutes("proposals", "proposal", proposalRequestSchema);
     recordRoutes("features", "feature", featureRequestSchema);
+    app.put(
+      "/api/features/:id/colour",
+      { schema: { params: idParams, body: colourChangeSchema } },
+      async (request, reply) => {
+        await projects.setFeatureColour(
+          request.actor,
+          request.params.id,
+          request.body.colour,
+        );
+        return reply.status(noContent).send();
+      },
+    );
     app.put(
       "/api/features/:id/projects-and-proposals",
       {

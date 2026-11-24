@@ -5,6 +5,7 @@
 
 import type {
   DraftKind,
+  Feature,
   Milestone,
   MilestoneRequest,
   Project,
@@ -36,12 +37,15 @@ import {
   addMilestone,
   changeMilestone,
   isProposal,
+  projectPlanQuery,
+  setFeatureColour,
   type PlanRecord,
   type PlanRecordKind,
   type PlanTab,
   type TableChoices,
 } from "./projects.ts";
 import { ScopeHistory } from "./scope-history.tsx";
+import { ColourMenu, ColourRow } from "./colour-menu.tsx";
 import { RecordPanel } from "./record-details.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { Column, ColumnGroup } from "./record-table.ts";
@@ -289,6 +293,15 @@ export function recordPanel({
         }
       />
     ) : null;
+  const colour =
+    type === "feature" ? (
+      <FeatureColourRow
+        feature={shown as Feature}
+        draft={ownDraft}
+        teamColours={choices.teamColours}
+        chooses={plan.canColourFeatures}
+      />
+    ) : null;
   const extra =
     type === "project" ? (
       <ProjectExtras
@@ -334,6 +347,7 @@ export function recordPanel({
           // The kind is always one of the fixed kinds.
           // eslint-disable-next-line security/detect-object-injection
           sections={columnGroupsOf[type]}
+          after={colour === null ? undefined : { featureTeamId: colour }}
           notes={notes}
         />
         {extra}
@@ -341,4 +355,43 @@ export function recordPanel({
       </RecordPanel>
     ),
   };
+}
+
+// A feature's Colour, under its Feature team: its own, or its team's, with the menu that changes it
+// for those who choose features' colours, once the feature is approved and while no draft removes it.
+function FeatureColourRow({
+  feature,
+  draft,
+  teamColours,
+  chooses,
+}: {
+  feature: Feature;
+  draft: PlanRecord["draft"];
+  teamColours: TableChoices["teamColours"];
+  chooses: boolean;
+}) {
+  const inherited =
+    feature.featureTeamId === null
+      ? null
+      : (teamColours.get(feature.featureTeamId) ?? null);
+  const approved = draft?.action !== "created" && draft?.action !== "deleted";
+  return (
+    <ColourRow
+      colour={feature.colour}
+      inherited={inherited}
+      menu={
+        chooses &&
+        approved && (
+          <ColourMenu
+            current={feature.colour}
+            inherited={inherited}
+            name={feature.name}
+            look="change"
+            save={(colour) => setFeatureColour(feature.id, colour)}
+            refreshes={projectPlanQuery.queryKey}
+          />
+        )
+      }
+    />
+  );
 }

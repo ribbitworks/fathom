@@ -12,11 +12,13 @@ import {
 import { Menu, Text, UnstyledButton } from "@mantine/core";
 import { type KeyboardEvent } from "react";
 import { CardMenu } from "./card-menu.tsx";
+import { ColouredName } from "./colour-swatch.tsx";
 import { focusFoundSoon } from "./focus.ts";
 import { riskStep } from "./feature-board.ts";
 import classes from "./feature-board-view.module.css";
 import { draftRowClass } from "./list-drafts.tsx";
 import { RiskMark, SizeMark } from "./planning-marks.tsx";
+import { featureColour, teamColoursOf } from "./projects.ts";
 import { CopyLinkItem, isSaved } from "./record-key.tsx";
 import { AlsoUnder } from "./grid-groups.tsx";
 import {
@@ -155,7 +157,14 @@ export function FeatureCard({
           >
             <DraftedItem draft={own} heldBy={feature.heldBy}>
               <DraftedValue {...value(["name"], "Name")}>
-                {feature.name}
+                <ColouredName
+                  colour={featureColour(
+                    feature,
+                    teamColoursOf(choices.featureTeams),
+                  )}
+                >
+                  {feature.name}
+                </ColouredName>
               </DraftedValue>
             </DraftedItem>
             <AlsoUnder others={others} />

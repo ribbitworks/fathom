@@ -367,7 +367,7 @@ describe("a stream added", () => {
       4,
     ],
   ])("%s", (_, rows, position) => {
-    expect(streamKind.added?.(new Map(rows))).toEqual({ position });
+    expect(streamKind.added?.(new Map(rows), {})).toEqual({ position });
   });
 });
 

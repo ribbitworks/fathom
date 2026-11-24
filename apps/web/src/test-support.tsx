@@ -272,6 +272,7 @@ export const fictionalFeature = (fields: Partial<Feature> = {}): Feature => ({
   targetCycle: null,
   estimateHours: null,
   featureTeamId: null,
+  colour: null,
   description: null,
   note: null,
   values: {},
@@ -293,6 +294,7 @@ export const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
     { ...cycleChoice("planned", "Planned"), meaning: "planned" },
   ],
   featureTeams: [],
+  teamColours: new Map(),
   priorities: [],
   sizes: [],
   risks: [],
@@ -329,6 +331,7 @@ export const planAnswers = (features: readonly Feature[]) => ({
       featureColumns: noFeatureColumns,
       canEdit: false,
       canEditFeatures: false,
+      canColourFeatures: false,
     }),
 });
 
