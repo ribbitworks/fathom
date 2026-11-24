@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A row's menu in the shared table, from its ⋯ buttons or a right-click, and the controls over its
-// Name cell.
+// A row's menu in the shared table, from its ⋯ buttons or a right-click, the controls over its Name
+// cell, and the same menu's items for the ⋯ in the record's details panel.
 
 import { Menu } from "@mantine/core";
 import type { MouseEvent, ReactNode } from "react";
@@ -19,11 +19,19 @@ import {
   UnpublishedNote,
   draftLines,
 } from "./draft-details.tsx";
-import { draftTotal } from "./drafts.ts";
+import { type DraftSelection, draftTotal, noDrafts } from "./drafts.ts";
 import { kindOf } from "./grid-columns.tsx";
 import { isPending } from "./grid-drafts.ts";
 import type { SavingGrid } from "./grid-saving.ts";
 import type { MoreButtonPlace, NewRow, Row } from "./grid-places.ts";
+import type { PublishDraft } from "./publish-draft.tsx";
+import {
+  type MenuPlace,
+  menuPlace,
+  offersAny,
+  offersOwn,
+  recordMenuOffer,
+} from "./menu-offer.ts";
 import type { DraftOf, GridRecord } from "./record-table.ts";
 import { MoreButton, RowControls, actionsFor } from "./row-controls.tsx";
 
@@ -42,6 +50,7 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
     | "fields"
     | "columns"
     | "ownDraftOf"
+    | "ownSelectionOf"
     | "approvesInMenu"
     | "decidedInMenu"
     | "mayChange"
@@ -53,13 +62,17 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
     | "setMenuFor"
     | "pointedAt"
     | "setPointedAt"
+    | "records"
     | "rows"
     | "rowKey"
     | "activeNow"
     | "moveTo"
     | "clearable"
     | "clearNewRow"
-  >,
+  > & {
+    // How the user publishes their own draft, where they can.
+    publishDraft: PublishDraft | undefined;
+  },
 ) {
   const {
     table,
@@ -69,6 +82,7 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
     fields,
     columns,
     ownDraftOf,
+    ownSelectionOf,
     approvesInMenu,
     decidedInMenu,
     mayChange,
@@ -80,25 +94,45 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
     setMenuFor,
     pointedAt,
     setPointedAt,
+    records,
     rows,
     rowKey,
     activeNow,
     moveTo,
     clearable,
     clearNewRow,
+    publishDraft,
   } = grid;
   // Whether a row has a menu: a record with anything in it to offer, or a new row with something in
   // it to clear.
   const hasRowMenu = (row: Row<Rec>) =>
     row.newRow ? clearable(row.newRow) : hasMenu(row.record);
 
-  const recordMenuItems = (record: Rec) => {
-    const draft = record.draft as DraftOf<Rec> | undefined;
+  // Which draft items a record's menu offers, and whether it offers removing the record.
+  const offerOf = (record: Rec) =>
+    recordMenuOffer({
+      ownDraft: ownDraftOf(record),
+      shownAction: record.draft?.action,
+      changes: rowActions && mayChange(record) && record.heldBy === undefined,
+      editsOwnDraft: decidesOwnDraft(record),
+      decides: decidedInMenu(record) !== undefined,
+      publishes: publishDraft !== undefined,
+    });
+
+  // The user's own draft of a record, as publishing names it: by the record it is of, where the
+  // page says, or else as the table names the record's own draft.
+  const publishedOf = (record: Rec, draft: DraftOf<Rec>): DraftSelection =>
+    actions.draftRef === undefined
+      ? ownSelectionOf(record)
+      : { ...noDrafts(), records: [actions.draftRef(record, draft)] };
+
+  // What a record's menu offers to do with it, the same from its row and from its details panel:
+  // following its links, the table's own items, deciding its draft, then the user's own draft and
+  // removing the record. From its row, focus goes back to the table once an item changes it, as it
+  // does from the panel once the record is gone, its draft having added it.
+  const recordActionItems = (record: Rec, place: MenuPlace) => {
     const ownDraft = ownDraftOf(record);
-    const ownItems = ownItemsOf(record);
-    const changes =
-      rowActions && mayChange(record) && record.heldBy === undefined;
-    const draftItems = changes || decidesOwnDraft(record);
+    const ownItems = ownItemsOf(record, place);
     const deciding = decidedInMenu(record);
     const decides = table.menuDecides?.(record);
     // A draft keeps needing another approver once rejected, when it is no longer what Approve sends.
@@ -106,39 +140,21 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
       decides === undefined
         ? ownDraft?.state === "waiting" && ownDraft.needsOtherApprover === true
         : draftTotal(decides.approved) === 0;
-    const removes =
-      changes && draft?.action !== "created" && draft?.action !== "deleted";
+    const offer = offerOf(record);
+    // Back to the row whose menu it was, in the active column, or, where that row is gone or the
+    // menu was the panel's, to the active cell.
+    const backToTable = (recordLeaves = false) => {
+      if (!menuPlace(place).backToTable && !recordLeaves) return;
+      const active = activeNow();
+      const ownRow = rows.findIndex((row) =>
+        menuFor === undefined
+          ? row.record?.id === record.id
+          : rowKey(row) === menuFor.key,
+      );
+      moveTo(ownRow < 0 || recordLeaves ? active.row : ownRow, active.column);
+    };
     return (
       <>
-        {/* Names whose menu it is, and gives every menu somewhere to click that closes it. */}
-        <MenuTitle>{table.nameOf(record)}</MenuTitle>
-        {/* Who holds the record matters only to those who may change or decide it. */}
-        {record.heldBy !== undefined &&
-          (mayChange(record) || approvesInMenu(record)) && (
-            <HeldNote by={record.heldBy} />
-          )}
-        {draft?.unpublished === true && <UnpublishedNote />}
-        {draft && (
-          <MenuDraftLines
-            draft={draft}
-            lines={[
-              ...(table.draftSubject === undefined
-                ? []
-                : [[table.draftSubject(record)]]),
-              ...draftLines(
-                draft,
-                table.draftFields(record, draft, fields, lists),
-              ),
-            ]}
-            // Set apart from the items after it, when any are offered.
-            divider={
-              (mayChange(record) && record.heldBy === undefined) ||
-              decidesOwnDraft(record) ||
-              deciding !== undefined ||
-              ownItems.length > 0
-            }
-          />
-        )}
         {columns.map((column) => {
           const { MenuItem } = kindOf(column);
           return (
@@ -174,12 +190,24 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
             </Menu.Item>
           </>
         )}
-        {draftItems && (ownDraft !== undefined || removes) && (
+        {offersOwn(offer) && (
           <>
             {(deciding !== undefined || ownItems.length > 0) && (
               <Menu.Divider />
             )}
-            {ownDraft?.state === "rejected" && (
+            {ownDraft !== undefined &&
+              publishDraft !== undefined &&
+              offer.publish && (
+                <Menu.Item
+                  onClick={() => {
+                    publishDraft(publishedOf(record, ownDraft));
+                    backToTable();
+                  }}
+                >
+                  Publish draft…
+                </Menu.Item>
+              )}
+            {ownDraft !== undefined && offer.resubmit && (
               <Menu.Item
                 onClick={() => {
                   actions.resubmit(record, ownDraft);
@@ -188,24 +216,22 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
                 Resubmit
               </Menu.Item>
             )}
-            {ownDraft && (
+            {ownDraft !== undefined && offer.discard && (
               <Menu.Item
                 onClick={() => {
                   actions.discard(record, ownDraft);
-                  const active = activeNow();
-                  moveTo(active.row, active.column);
+                  backToTable(ownDraft.action === "created");
                 }}
               >
                 Discard draft
               </Menu.Item>
             )}
-            {removes && (
+            {offer.remove && (
               <Menu.Item
                 color="red"
                 onClick={() => {
                   actions.remove(record);
-                  const active = activeNow();
-                  moveTo(active.row, active.column);
+                  backToTable();
                 }}
               >
                 {table.removeLabel(record)}
@@ -215,6 +241,55 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
         )}
       </>
     );
+  };
+
+  // A record's row menu: whose it is, who holds it, and its draft in words, then what it offers.
+  const recordMenuItems = (record: Rec) => {
+    const draft = record.draft as DraftOf<Rec> | undefined;
+    return (
+      <>
+        {/* Names whose menu it is, and gives every menu somewhere to click that closes it. */}
+        <MenuTitle>{table.nameOf(record)}</MenuTitle>
+        {/* Who holds the record matters only to those who may change or decide it. */}
+        {record.heldBy !== undefined &&
+          (mayChange(record) || approvesInMenu(record)) && (
+            <HeldNote by={record.heldBy} />
+          )}
+        {draft?.unpublished === true && <UnpublishedNote />}
+        {draft && (
+          <MenuDraftLines
+            draft={draft}
+            lines={[
+              ...(table.draftSubject === undefined
+                ? []
+                : [[table.draftSubject(record)]]),
+              ...draftLines(
+                draft,
+                table.draftFields(record, draft, fields, lists),
+              ),
+            ]}
+            // Set apart from the items after it, when any are offered.
+            divider={
+              (mayChange(record) && record.heldBy === undefined) ||
+              decidesOwnDraft(record) ||
+              decidedInMenu(record) !== undefined ||
+              ownItemsOf(record).length > 0
+            }
+          />
+        )}
+        {recordActionItems(record, "row")}
+      </>
+    );
+  };
+
+  // What a record's details panel offers in its menu, or none when it offers nothing.
+  const panelMenuItems = (id: string) => {
+    const record = records.find((one) => one.id === id);
+    return record !== undefined &&
+      !isPending(record) &&
+      (ownItemsOf(record, "panel").length > 0 || offersAny(offerOf(record)))
+      ? recordActionItems(record, "panel")
+      : undefined;
   };
 
   const newRowMenuItems = (newRow: NewRow) => (
@@ -336,6 +411,7 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
   return {
     hasRowMenu,
     rowMenuItems,
+    panelMenuItems,
     rowMenu,
     rowMoreButton,
     nameCellControls,

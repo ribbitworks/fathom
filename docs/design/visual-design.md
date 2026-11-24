@@ -63,6 +63,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
   - **Width:** The edge drags, or moves with the arrow keys, and the width is kept, starting at 640 pixels. Lists' record panel keeps a width of its own.
   - **Stacking:** Panels open together, such as a note and Metrics, stack, each scrolling on its own, with at least a fifth of the height. Only the top one shows on a narrow screen. A panel under another can be maximized, as [Maximizing](../standards/ui-conventions/pages-and-panels.md#panels-and-focus) sets out, folding the panels above it away and back as a panel closing or opening does.
   - **Motion:** A panel slides in from the right, unless the computer asks for less motion.
+  - **Heading:** A panel's heading holds its title, then its buttons at the right: a record's ⋯ menu, as [A panel's menu](../standards/ui-conventions/pages-and-panels.md#details-panels) sets out, then Maximize on a panel stacked under another, then the close ×.
   - **Labels:** Beside their values while the panel is wide, over them once it is narrow, following the panel's width, not the window's. A record's details follow [Details Panels](../standards/ui-conventions/pages-and-panels.md#details-panels).
 - **Text fields:** As [Fields](../standards/ui-conventions/entering-and-saving.md#fields) sets out.
 - **Entering data:** Lists of items are edited in place, from the keyboard, as [Entering Data](../standards/ui-conventions/entering-and-saving.md#entering-data) sets out.
@@ -199,7 +200,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 
 - **Tables of records:** `RecordGrid` in `record-grid.tsx`, given its records, columns and actions as `record-table.ts` sets out, with each kind of cell, its display and its editor, in `cellKinds` in `cell-kinds.tsx`.
 - **Search, views, and the bar above a table:** `TableSearch`, `ViewBar`, and `ViewsMenu` in `table-controls.tsx`, with a page's saved views, on a table or not, such as the Org chart's, from `useSavedViews` in `saved-views.tsx`.
-- **Side panels:** `WithSidePanel` and `SidePanelFrame` in `side-panel.tsx`, the frame holding a panel's heading, with its marks beside it, its subtitle and its actions. A record's details panel is `RecordPanel` in `record-details.tsx`, on that frame.
+- **Side panels:** `WithSidePanel` and `SidePanelFrame` in `side-panel.tsx`, the frame holding a panel's heading, with its marks beside it, its subtitle and its actions. A record's details panel is `RecordPanel` in `record-details.tsx`, on that frame, with its ⋯ menu from `PanelMenu` in `panel-menu.tsx`. Every ⋯ menu in a side panel, `RecordMenu`'s and a list's drafts' included, is drawn by `PanelMoreMenu` there.
 - **A coloured name:** `ColouredName` in `colour-swatch.tsx`, as [A coloured name](../standards/ui-conventions/drafts-and-values.md#values) sets out.
 - **One tooltip for a whole table:** `TableTips` in `table-tips.tsx`, showing the tip of whatever carries `tipAttribute` under the pointer or in the cell with keyboard focus, such as a feature team's whole name or an estimate's hours.
 - **Resizing by an edge:** `ResizeEdge` in `resize-edge.tsx`, for side panels and table columns, with a table's column widths in `useColumnWidths` in `column-widths.ts`.
@@ -212,7 +213,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **Adding a record in a side panel:** `NewRecordPanel` in `new-record-panel.tsx`, driven by a table's columns, with each page drawing its own fields in it: `NewPersonPanel` in `new-person-panel.tsx` for People and `NewPlanRecordPanel` in `new-plan-record-panel.tsx` for the plan's records.
 - **A record's details in a side panel:** `Row` for each value, `RecordLink` for a link to another record, `RecordLinkList` for several, one to a line, `RecordSection` for a headed group of rows, and `DetailSections` spacing the sections, in `record-details.tsx`, with `FoldedNote` in `folded-note.tsx` and `FoldedList` in `folded-list.tsx` for a long note or list.
 - **Changing a record's values in a side panel:** `useRecordEditing` in `record-editing.tsx`, with what a person's notes add in `person-editing.tsx`.
-- **A record's menu outside a table:** `RecordMenu` in `record-menu.tsx`.
+- **A record's menu outside a table:** `RecordMenu` in `record-menu.tsx`, such as a milestone's in a project's details, offering Publish draft… where `usePublishDraft` in `publish-draft.tsx` gives it.
 - **Something that could not be loaded:** `LoadProblem` in `load-problem.tsx`.
 - **The buttons over a Name cell:** `RowControls` in `row-controls.tsx`, placed by `nameCellControls` in `row-menus.tsx` in the column its table names.
 - **Notes:** `NotePanel`, `NoteView`, and `NoteCell` in `note-editor.tsx`, with `useNoteEditing` in `note-editing.tsx` opening one from a record's details and keeping it in the address, through `note-address.ts`, and `useTableNoteAddress` in `grid-note-address.ts` keeping one opened from a table's cell.

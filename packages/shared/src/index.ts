@@ -270,6 +270,8 @@ export {
   type UnpublishedPublished,
   unpublishedPublishedSchema,
   unpublishedSchema,
+  withNeeded,
+  withUsers,
 } from "./drafts.ts";
 export {
   featuresListGeneral,

@@ -125,7 +125,7 @@ export const notAllowedMessage =
 
 // Puts a failed request plainly for users: the server's own message when it refused the request for
 // a reason the user can act on, and otherwise a plain sentence, never a raw error.
-export function describeProblem(error: Error, fallback: string): string {
+export function describeProblem(error: unknown, fallback: string): string {
   if (!(error instanceof ApiError)) return fallback;
   if (error.status === forbidden) return notAllowedMessage;
   if (error.status === tooManyRequests) {

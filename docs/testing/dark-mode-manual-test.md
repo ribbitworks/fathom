@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Dark Mode
@@ -216,6 +216,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - In the **Manager** row, the yellow dot before 'Silje Holm-Schrøder' and the green dot before 'Viktoria Holmberg' are easy to see.
     - The red **Left** box is easy to read.
     - Every label, value, link and change button in the side panel is easy to read.
+  - **Notes:**
+
+- [ ] `7D45` Select the **⋯** button just before the **×** at the side panel's top right.
+  - **Expected:** The menu and each of its items are easy to read.
+  - **Notes:**
+
+- [ ] `6E59` Press Esc.
+  - **Expected:**
+    - The menu closes.
+    - The side panel stays open.
   - **Notes:**
 
 - [ ] `D167` Select the change button beside **Grade**.
@@ -916,6 +926,38 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The hollow yellow dot before her new **Site** is easy to see.
   - **Notes:**
 
+- [ ] `D6E1` Select the **Lists** page in the left-hand menu, then 'Sites'.
+  - **Expected:** A panel opens with 'Sites' at the top.
+  - **Notes:**
+
+- [ ] `C86D` Type `Dark Harbour` in the empty row's **Name** box and press Enter.
+  - **Expected:** 'Dark Harbour' is listed, after a hollow yellow dot.
+  - **Notes:**
+
+- [ ] `8D22` Select the **People** page in the left-hand menu.
+  - **Expected:** The table of people shows.
+  - **Notes:**
+
+- [ ] `2DBC` Clear the search box, and type `Mariana Metz` in it.
+  - **Expected:** The row of 'Mariana Metz' shows.
+  - **Notes:**
+
+- [ ] `A4B2` Select the **Site** cell in her row, press Enter, choose 'Dark Harbour', and press Enter.
+  - **Expected:** Her **Site** reads 'Dark Harbour', after a hollow yellow dot.
+  - **Notes:**
+
+- [ ] `E490` Select the **⋯** button at the end of her row, then **Publish draft…**.
+  - **Expected:**
+    - A dialog titled "Publish 2 changes?" opens.
+    - It names "Changed Mariana Metz".
+    - Under that, it reads "Also publishes the changes it goes with:", then names "Added the choice Dark Harbour in Sites".
+    - Its words and buttons are easy to read.
+  - **Notes:**
+
+- [ ] `37D3` Select **Cancel**.
+  - **Expected:** The dialog closes.
+  - **Notes:**
+
 - [ ] `6A94` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
   - **Expected:** The page is dark.
   - **Notes:**
@@ -928,4 +970,4 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu closes.
   - **Notes:**
 
-**Afterwards:** Choose **Light** in the Appearance menu.
+**Afterwards:** Choose **Light** in the Appearance menu, then run Restore the Seed Data.

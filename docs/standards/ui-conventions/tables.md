@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Tables, Addresses and Search
@@ -16,9 +16,9 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
 - **Scroll bars:** Every table, timeline and board uses one style of scroll bar: slim and in the page's greys. It shows whenever there is more to scroll, so a wide view is seen to have more. Each scrolling frame with the style contains the visually hidden text of what it scrolls, so it never stretches the page.
   - **Drawn by:** `scrollBars` in `apps/web/src/pages.module.css`. Its size and colour come from the theme's `--fathom-scrollbar-size` and `--fathom-scrollbar-thumb` in `apps/web/src/theme.ts`.
   - **Example:** On Features, narrow the window until the table scrolls sideways.
-- **Drafts in a table changed elsewhere:** A table whose records are changed outside it, such as in their details panel (every tab on Releases), still offers Discard draft and Resubmit in a row's menu for a draft the user may change.
-  - **A row for its parts too:** A row that stands for its parts' drafts as well as its own discards or resubmits the record's own draft.
-  - **Drawn by:** `RecordGrid`'s `canEditDrafts`, one answer for the table or one for each row, such as a cycle's row carrying its release's draft on Releases' Cycles tab, with a table's `ownDraft`, in `apps/web/src/record-table.ts`.
+- **Drafts in a table changed elsewhere:** A table whose records are changed outside it, such as in their details panel (every tab on Releases), still offers Publish draft…, Discard draft and Resubmit in a row's menu for a draft the user may change.
+  - **A row for its parts too:** A row that stands for its parts' drafts as well as its own publishes, discards or resubmits the record's own draft.
+  - **Drawn by:** `RecordGrid`'s `canEditDrafts`, one answer for the table or one for each row, such as a cycle's row carrying its release's draft on Releases' Cycles tab, with a table's `ownDraft`, in `apps/web/src/record-table.ts`, and the actions' `draftRef` naming the record each draft is of.
   - **Example:** On Releases' Schedules tab, a schedule drafted to be retired.
 - **A row's controls:** While a row is pointed at, or its Name cell has focus, two buttons show at the right of the Name cell.
   - **The details button:** On a table whose records have details, a box with its right side marked, since the details open beside the table.
@@ -26,9 +26,15 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **One row at a time:** One row shows them at a time: the row whose menu is open, from its ⋯ or a right-click; else the row pointed at; else the row whose Name cell has focus.
   - **The ⋯ at the row's end:** Always shown.
   - **Right-click and keyboard:** A right-click anywhere on the row opens the same menu beside the pointer, except in a cell being typed in, which keeps the browser's own. Shift+F10 and the menu key open it from the keyboard.
-  - **The menu:** A record's menu offers Show details, where it has details.
+  - **The menu:** A record's menu starts with Open and the column's name, such as Open Spec, for each Web link column holding a link. Then come Show details, where it has details, and Copy link, where it has a key. Then come the table's own items, such as Add note…, then Approve draft… and Reject draft… to a role that decides its draft now, then the user's own draft and the record itself, in this order:
+    - **Publish draft…:** For the user's own unpublished draft. It publishes the draft with the changes it must go with, as [Publishing](entering-and-saving.md#publishing) sets out.
+    - **Resubmit:** For a rejected draft.
+    - **Discard draft:** For any draft the user may change.
+    - **Remove:** Such as Remove person, for a record the user may change that its draft neither adds nor removes.
+  - **Focus after an item:** Once Publish draft…, Discard draft or Remove acts, or the question Publish draft… asks closes, focus goes back to the row's cell.
+  - **In its details:** The same menu, less Show details, opens from the ⋯ at the top of the record's details panel, as [A panel's menu](pages-and-panels.md#details-panels) sets out.
   - **No row header:** There is no row header at the left: the slot before the first value keeps the draft's dot.
-  - **Drawn by:** `RowControls` and `MoreButton` in `apps/web/src/row-controls.tsx`, placed by `nameCellControls` in `apps/web/src/row-menus.tsx` in the column its table names as `nameColumn`, with the record's details from the table's `showDetails`, and the menu beside the pointer by `MenuAtPoint` in `apps/web/src/app-menu.tsx`, which a card's `CardMenu` uses too.
+  - **Drawn by:** `RowControls` and `MoreButton` in `apps/web/src/row-controls.tsx`, placed by `nameCellControls` in `apps/web/src/row-menus.tsx` in the column its table names as `nameColumn`, the menu's items by `recordActionItems` there, from the rule `recordMenuOffer` in `apps/web/src/menu-offer.ts`, with the record's details from the table's `showDetails`, and the menu beside the pointer by `MenuAtPoint` in `apps/web/src/app-menu.tsx`, which a card's `CardMenu` uses too.
   - **Example:** On People, point at any row, or right-click its Start cell.
 - **Moving columns:** Anyone who sees a table can move any of its columns, built-in or added. A new table is drawn by the shared table, so its columns move too.
   - **Part of the view:** Column order, hiding, freezing and widths are part of the view, never a draft. So each user has their own, and nothing needs approval.

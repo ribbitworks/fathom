@@ -11,6 +11,7 @@ import type {
   Field,
   List,
   RecordKeyOf,
+  RecordRef,
   Show,
   Tier,
 } from "@fathom/shared";
@@ -76,6 +77,9 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
   discard: (record: Rec, draft: DraftOf<Rec>) => void;
   // Sends a rejected draft for approval again, unchanged.
   resubmit: (record: Rec, draft: DraftOf<Rec>) => void;
+  // The record a draft is of, where the table's drafts name only those that can be decided, so
+  // the user's own unpublished draft is published by it.
+  draftRef?: ((record: Rec, draft: DraftOf<Rec>) => RecordRef) | undefined;
   editColumn: (field: Field) => void;
   // Removes an added column as a draft, for a role that may.
   removeColumn?: ((field: Field) => void) | undefined;

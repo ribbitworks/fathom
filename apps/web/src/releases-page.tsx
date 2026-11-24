@@ -304,7 +304,7 @@ export function ReleasesPage({
         .catch((error: unknown) => {
           notifyFailure(
             describeProblem(
-              error as Error,
+              error,
               "Fathom could not make this change. Try again in a moment.",
             ),
           );

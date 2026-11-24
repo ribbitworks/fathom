@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the drafts an Approver approves or rejects at once, the area each kind belongs to, and
-// which drafts a user changed.
+// Tests for the drafts an Approver approves or rejects at once, the area each kind belongs to,
+// which drafts a user changed, and which of a user's unpublished changes go with those chosen.
 
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
@@ -19,6 +19,8 @@ import {
   recordRefSchema,
   rejectionRequestSchema,
   draftKeysOf,
+  withNeeded,
+  withUsers,
 } from "./drafts.ts";
 
 const message = (result: { error?: { issues: { message: string }[] } }) =>
@@ -288,5 +290,47 @@ describe("the drafts a user changed, which need another approver", () => {
         "u1",
       ),
     ).toEqual(new Set(["r1"]));
+  });
+});
+
+// A list, a choice added to it, and a person given the choice, each using the one before.
+const uses = new Map([
+  ["list sites", []],
+  ["list-item north", ["list sites"]],
+  ["person avery", ["list-item north"]],
+  ["person blake", []],
+]);
+
+describe("the changes that go with those chosen", () => {
+  it("publishes a change with every change it uses, the whole way along", () => {
+    expect([...withNeeded(uses, ["person avery"])].sort()).toEqual([
+      "list sites",
+      "list-item north",
+      "person avery",
+    ]);
+  });
+
+  it("discards a change with every change that uses it, the whole way along", () => {
+    expect([...withUsers(uses, ["list sites"])].sort()).toEqual([
+      "list sites",
+      "list-item north",
+      "person avery",
+    ]);
+  });
+
+  it("takes each change once, though changes go with each other both ways", () => {
+    const together = new Map([
+      ["person a", ["person b"]],
+      ["person b", ["person a"]],
+    ]);
+    expect([...withNeeded(together, ["person a"])]).toEqual([
+      "person a",
+      "person b",
+    ]);
+  });
+
+  it("takes nothing more with a change nothing uses and that uses nothing", () => {
+    expect([...withNeeded(uses, ["person blake"])]).toEqual(["person blake"]);
+    expect([...withUsers(uses, ["person blake"])]).toEqual(["person blake"]);
   });
 });

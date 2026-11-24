@@ -299,6 +299,43 @@ describe("a project's milestones in its panel", () => {
     });
   });
 
+  it("publishes the user's own unpublished draft", async () => {
+    const start = withMilestone({ draft: recordDraft({ unpublished: true }) });
+    const { fetch } = await openPage(atProject, start, {
+      "GET /api/unpublished": () =>
+        Response.json({
+          changes: [
+            {
+              subject: "the milestone Fictional Kickoff",
+              action: "changed",
+              key: `milestone ${milestoneId}`,
+              linked: [],
+            },
+          ],
+        }),
+      "POST /api/unpublished/publish": () =>
+        Response.json({ total: 1, left: 0 }),
+    });
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Actions for Fictional Kickoff",
+      }),
+    );
+
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Publish draft…" }),
+    );
+
+    expect(await screen.findByText("Published 1 change.")).toBeTruthy();
+    expect(
+      (
+        sent(fetch, "POST /api/unpublished/publish") as {
+          drafts: { records: unknown[] };
+        }[]
+      ).map(({ drafts }) => drafts.records),
+    ).toEqual([[{ type: "milestone", id: milestoneId }]]);
+  });
+
   it("asks before approving or rejecting its draft", async () => {
     await openPage(
       atProject,

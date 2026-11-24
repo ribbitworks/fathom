@@ -452,7 +452,7 @@ To run the test again after finishing it, start from Reset the Database, since t
 
 - [ ] `7BA7` Open the ⋯ menu of `Testing Project` again.
   - **Expected:**
-    - The menu offers **Discard draft**.
+    - The menu offers **Publish draft…** and **Discard draft**.
     - It has no **Remove project**.
     - Its cells do not open for editing.
   - **Notes:**

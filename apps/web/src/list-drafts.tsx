@@ -8,7 +8,6 @@
 import { allOf } from "@fathom/shared";
 import type { Choice, List } from "@fathom/shared";
 import { Menu } from "@mantine/core";
-import { useState } from "react";
 import {
   HeldNote,
   MenuDraftLines,
@@ -20,9 +19,8 @@ import {
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
 import { makerNames } from "./names.ts";
 import { withRetiring } from "./lists.ts";
-import { closesOnBlankClick } from "./app-menu.tsx";
 import classes from "./pages.module.css";
-import { MoreButton } from "./row-controls.tsx";
+import { PanelMoreMenu } from "./panel-menu.tsx";
 import { type DraftLike, partsMark } from "./draft-marks.ts";
 
 // What can be done with drafts on the Lists page; each names the draft it acts on.
@@ -212,104 +210,77 @@ export function ListDraftMenu({
   canApprove: boolean;
   actions: ListDraftActions;
 }) {
-  const [opened, setOpened] = useState(false);
   const { draft, orderDraft } = list;
-  const act = (run: () => void) => () => {
-    setOpened(false);
-    run();
-  };
   const on = { kind: "list" as const, list };
   const order = { kind: "order" as const, list };
   return (
-    <Menu
-      opened={opened}
-      onChange={setOpened}
-      closeOnItemClick={false}
-      position="bottom-end"
-      hideDetached={false}
-      width={260}
-    >
-      <Menu.Target>
-        <MoreButton label={`Drafts of ${list.name}`} />
-      </Menu.Target>
-      <Menu.Dropdown
-        onClick={closesOnBlankClick(() => {
-          setOpened(false);
-        })}
-        // Esc closes the menu alone, not the panel around it too.
-        onKeyDown={(event) => {
-          if (event.key === "Escape") event.preventDefault();
-        }}
-      >
-        <MenuTitle>{list.name}</MenuTitle>
-        {draft && (
-          <>
-            <MenuDraftLines
-              draft={withRetiring({ ...list, draft })}
-              lines={[[`${madeVerb(draft.action)} by ${makers(draft)}`]]}
-              divider={false}
-            />
-            {list.heldBy !== undefined && <HeldNote by={list.heldBy} />}
-            {draft.unpublished === true && <UnpublishedNote />}
-            <DraftItems
-              canEdit={canEdit && list.heldBy === undefined}
-              canApprove={canApprove && decidable(list)}
-              othersApprove={draft.needsOtherApprover === true}
-              rejected={draft.state === "rejected"}
-              onApprove={act(() => {
-                actions.decide("approve", on);
-              })}
-              onReject={act(() => {
-                actions.decide("reject", on);
-              })}
-              onResubmit={act(() => {
-                actions.resubmit(on);
-              })}
-              onDiscard={act(() => {
-                actions.discard(on);
-              })}
-            />
-          </>
-        )}
-        {orderDraft && (
-          <>
-            {draft && <Menu.Divider />}
-            <MenuDraftLines
-              draft={orderDraft}
-              lines={[[`Reordered by ${makers(orderDraft)}`]]}
-              divider={false}
-            />
-            {list.orderHeldBy !== undefined && (
-              <HeldNote by={list.orderHeldBy} />
-            )}
-            {orderDraft.unpublished === true && <UnpublishedNote />}
-            <DraftItems
-              canEdit={canEdit && list.orderHeldBy === undefined}
-              canApprove={
-                canApprove &&
-                decidable({ draft: orderDraft, heldBy: list.orderHeldBy })
-              }
-              othersApprove={orderDraft.needsOtherApprover === true}
-              rejected={orderDraft.state === "rejected"}
-              waits={orderWaits}
-              discard="Discard new order"
-              onApprove={act(() => {
-                actions.decide("approve", order);
-              })}
-              onReject={act(() => {
-                actions.decide("reject", order);
-              })}
-              onResubmit={act(() => {
-                actions.resubmit(order);
-              })}
-              onDiscard={act(() => {
-                actions.discard(order);
-              })}
-            />
-          </>
-        )}
-      </Menu.Dropdown>
-    </Menu>
+    <PanelMoreMenu label={`Drafts of ${list.name}`}>
+      <MenuTitle>{list.name}</MenuTitle>
+      {draft && (
+        <>
+          <MenuDraftLines
+            draft={withRetiring({ ...list, draft })}
+            lines={[[`${madeVerb(draft.action)} by ${makers(draft)}`]]}
+            divider={false}
+          />
+          {list.heldBy !== undefined && <HeldNote by={list.heldBy} />}
+          {draft.unpublished === true && <UnpublishedNote />}
+          <DraftItems
+            canEdit={canEdit && list.heldBy === undefined}
+            canApprove={canApprove && decidable(list)}
+            othersApprove={draft.needsOtherApprover === true}
+            rejected={draft.state === "rejected"}
+            onApprove={() => {
+              actions.decide("approve", on);
+            }}
+            onReject={() => {
+              actions.decide("reject", on);
+            }}
+            onResubmit={() => {
+              actions.resubmit(on);
+            }}
+            onDiscard={() => {
+              actions.discard(on);
+            }}
+          />
+        </>
+      )}
+      {orderDraft && (
+        <>
+          {draft && <Menu.Divider />}
+          <MenuDraftLines
+            draft={orderDraft}
+            lines={[[`Reordered by ${makers(orderDraft)}`]]}
+            divider={false}
+          />
+          {list.orderHeldBy !== undefined && <HeldNote by={list.orderHeldBy} />}
+          {orderDraft.unpublished === true && <UnpublishedNote />}
+          <DraftItems
+            canEdit={canEdit && list.orderHeldBy === undefined}
+            canApprove={
+              canApprove &&
+              decidable({ draft: orderDraft, heldBy: list.orderHeldBy })
+            }
+            othersApprove={orderDraft.needsOtherApprover === true}
+            rejected={orderDraft.state === "rejected"}
+            waits={orderWaits}
+            discard="Discard new order"
+            onApprove={() => {
+              actions.decide("approve", order);
+            }}
+            onReject={() => {
+              actions.decide("reject", order);
+            }}
+            onResubmit={() => {
+              actions.resubmit(order);
+            }}
+            onDiscard={() => {
+              actions.discard(order);
+            }}
+          />
+        </>
+      )}
+    </PanelMoreMenu>
   );
 }
 
@@ -334,6 +305,7 @@ export function DraftItems({
   discard = "Discard draft",
   onApprove,
   onReject,
+  onPublish,
   onResubmit,
   onDiscard,
 }: {
@@ -346,6 +318,8 @@ export function DraftItems({
   discard?: string;
   onApprove: () => void;
   onReject: () => void;
+  // Where the user's own unpublished draft can be published from the menu.
+  onPublish?: (() => void) | undefined;
   onResubmit: () => void;
   onDiscard: () => void;
 }) {
@@ -363,6 +337,9 @@ export function DraftItems({
           {othersApprove && !waits && <OtherApproverNote />}
           <Menu.Item onClick={onReject}>Reject…</Menu.Item>
         </>
+      )}
+      {canEdit && onPublish !== undefined && (
+        <Menu.Item onClick={onPublish}>Publish draft…</Menu.Item>
       )}
       {canEdit && rejected && (
         <Menu.Item onClick={onResubmit}>Resubmit</Menu.Item>

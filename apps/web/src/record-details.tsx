@@ -18,6 +18,7 @@ import { Icon } from "./icons.tsx";
 import { LinkCell } from "./link-field.tsx";
 import { FoldedNote } from "./folded-note.tsx";
 import { focusSoon } from "./focus.ts";
+import { PanelMenu, usePanelMenu } from "./panel-menu.tsx";
 import { OpenBesideButton } from "./row-controls.tsx";
 import {
   changeId,
@@ -149,8 +150,9 @@ export function inUnitsWords(
 }
 
 // A record's details beside its table: its name as the panel's heading, marked with the draft of the
-// record as a whole, who holds it and its facts, and with its name's draft; focus goes to the name
-// as each record opens. Its sections scroll under the heading.
+// record as a whole, who holds it and its facts, and with its name's draft, then the ⋯ of the
+// record's menu, where the table beside offers one; focus goes to the name as each record opens.
+// Its sections scroll under the heading.
 export function RecordPanel({
   id,
   titleId,
@@ -183,12 +185,16 @@ export function RecordPanel({
   useEffect(() => {
     focusSoon(titleId);
   }, [recordId, titleId]);
+  const menu = usePanelMenu(recordId);
   return (
     <SidePanelFrame
       id={id}
       titleId={titleId}
       narrow={narrow}
       title={title}
+      actions={
+        menu === undefined ? undefined : <PanelMenu name={title} items={menu} />
+      }
       marked={(heading) => (
         <DraftedItem draft={draft} heldBy={heldBy} facts={facts}>
           <DraftedValue draft={nameDraft} fields={["name"]} named="Name">
