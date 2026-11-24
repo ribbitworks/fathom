@@ -3,13 +3,15 @@
 // UI tests of the shared timeline: its row labels drawn at the size of the table's text.
 
 import { expect, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("engineeringDirector") });
 
 test("draws a timeline's row names at the table's text size", async ({
   page,
 }) => {
   // Given the Engineering Director on Releases' Schedules tab, its timeline above the table
-  await signIn(page, "/releases", "engineering.director@fathom.test");
+  await page.goto("/releases");
   await page.getByRole("tab", { name: "Schedules" }).click();
   const name = page
     .getByRole("listitem")

@@ -6,7 +6,7 @@
 import { test as setup } from "@playwright/test";
 import { accounts, developmentPassword, signedInAs } from "./test-accounts.ts";
 
-// The server allows about six sign-ins a minute, so the list stays short.
+// The server limits how many times a minute an account signs in, so the list stays short.
 for (const { name, email } of accounts) {
   setup(`signs in as ${email}`, async ({ request, baseURL }) => {
     // The server refuses a sign-in that names no origin, as a browser's always does.
