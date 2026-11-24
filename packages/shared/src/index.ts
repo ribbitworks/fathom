@@ -4,6 +4,17 @@
 // Only code that is safe to reach the browser belongs here.
 
 export {
+  type Coverage,
+  type CoveredMonth,
+  deliveredHours,
+  effortNeeded,
+  monthsThrough,
+  neededByMonth,
+  rampUpPercent,
+  workWindow,
+  type WorkPlan,
+} from "./forecast.ts";
+export {
   type Account,
   accountActiveSchema,
   type AccountChangeRequest,
