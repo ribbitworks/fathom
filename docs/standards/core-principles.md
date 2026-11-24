@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/code-review.md", "docs/standards/documentation.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Core Development Principles
@@ -61,7 +61,8 @@ separately. Violations are architectural defects, not style preferences.
   except `0`, `1` and `-1` in calculations.
 - **No abbreviations** in names.
 - **File size:** a code file past about 800 lines is split by responsibility,
-  so each new file has one reason to change.
+  so each new file has one reason to change. Test files count too: a change
+  that edits a test file past the limit splits it.
 - **No forced unwraps or non-null assertions** outside tests, or after an
   explicit check.
 - **Design system:** colours, typography and spacing come from the project's
