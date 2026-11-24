@@ -17,8 +17,8 @@ import { useMutation } from "@tanstack/react-query";
 import { type SubmitEvent, useState } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
-import { focusRefusedSoon } from "./focus.ts";
 import { featureColumnGroups, featureColumns } from "./feature-table.tsx";
+import { focusRefusedSoon } from "./focus.ts";
 import {
   type Identified,
   livePlanRecords,
