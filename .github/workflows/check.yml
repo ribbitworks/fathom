@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# Runs the full check, 'pnpm check', on every pull request and every push to the default branch,
-# leaving out the package tests, the server's coverage and the container tests on a pull request of
-# documentation alone.
+# Runs the full check, 'pnpm check', on every pull request, every group in the merge queue and every
+# push to the default branch, leaving out the package tests, the server's coverage and the container
+# tests for documentation alone.
 
 name: Check
 
 on:
   pull_request:
+  merge_group:
   push:
     branches: [main]
 
@@ -43,9 +44,8 @@ jobs:
       - name: Decide whether the change is documentation alone
         id: decide
         env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-        # Every push to the default branch runs everything, and so does a pull request whose changes
-        # can't be told.
+          BASE: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+        # Every push to the default branch runs everything, and so does a change that can't be told.
         run: |
           only=false
           if [ -n "$BASE" ]; then

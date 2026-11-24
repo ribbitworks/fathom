@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Prints "true" or "false", for the Check workflow, saying whether a pull request changes only
-// documentation. Usage: node scripts/documentation-only.mjs <base commit>
+// Prints "true" or "false", for the Check workflow, saying whether a pull request, or a group in the
+// merge queue, changes only documentation. Usage: node scripts/documentation-only.mjs <base commit>
 
 import { pathToFileURL } from "node:url";
 import { changedPaths } from "./changed-paths.mjs";
