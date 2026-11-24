@@ -4,13 +4,12 @@
 // arrows step to from the first month on screen, and which months' columns are on screen.
 
 import { addToMonth, quarterStart } from "@fathom/shared";
-import { quarterName, quarterOf } from "./timeline.ts";
+import { quarterName } from "./timeline.ts";
 
 export interface MonthQuarter {
   // The quarter's first month, which keys it.
   start: string;
   label: string;
-  short: string;
   // Its months on the grid, the first and last quarter's cut short by the grid's ends.
   months: [string, ...string[]];
 }
@@ -26,7 +25,6 @@ export function monthQuarters(months: readonly string[]): MonthQuarter[] {
       quarters.push({
         start,
         label: quarterName(`${start}-01`),
-        short: quarterOf(`${start}-01`),
         months: [month],
       });
     }
@@ -43,7 +41,6 @@ export const quarterPeriod = (
 ) => ({
   key: quarter.start,
   label: quarter.label,
-  short: quarter.short,
   weight: quarter.months.length,
   inView: quarter.months.some(inView),
   current: quarter.months.includes(thisMonth),

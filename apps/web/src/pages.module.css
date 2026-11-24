@@ -1475,23 +1475,25 @@ th.liveColumn {
   margin-bottom: var(--mantine-spacing-sm);
 }
 
-/* The strip above a timeline: its periods side by side, each as wide as its share, those in view
-   tinted with the accent, the one chosen filled with it, and the current one underlined. A period too narrow for its label shows
-   the shorter one, or none. */
+/* The strip above a timeline: its periods side by side, each as wide as its share and never narrower
+   than its name, those in view tinted with the accent, the one chosen filled with it, and the
+   current one underlined. When the names don't all fit, it scrolls sideways, with the shared scroll
+   bars. */
 .strip {
   display: flex;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid var(--mantine-color-default-border);
   border-radius: var(--mantine-radius-sm);
 }
 
+/* Room either side of a name, so names side by side read apart. */
 .stripPeriod {
   flex: var(--strip-weight) 1 0;
-  min-width: 0;
+  min-width: max-content;
   height: 28px;
-  container-type: inline-size;
+  padding: 0 var(--mantine-spacing-xs);
   overflow: hidden;
   color: var(--mantine-color-dimmed);
   font-size: var(--mantine-font-size-xs);
@@ -1533,26 +1535,6 @@ th.liveColumn {
 .stripPeriod[data-selected] {
   background: var(--mantine-primary-color-filled);
   color: var(--mantine-primary-color-contrast);
-}
-
-.stripShort {
-  display: none;
-}
-
-@container (max-width: 56px) {
-  .stripLabel {
-    display: none;
-  }
-
-  .stripShort {
-    display: inline;
-  }
-}
-
-@container (max-width: 20px) {
-  .stripShort {
-    display: none;
-  }
 }
 
 /* A password Fathom made, shown as text that cannot be changed, though it can be selected. */

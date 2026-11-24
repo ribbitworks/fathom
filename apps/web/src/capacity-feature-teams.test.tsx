@@ -48,19 +48,19 @@ describe("Capacity's Feature teams", () => {
     const strip = screen.getByRole("toolbar", { name: "Quarters" });
     const quarters = within(strip).getAllByRole("button");
     expect(quarters.map((quarter) => quarter.textContent)).toEqual([
-      "Q1 2026Q1",
-      "Q2 2026Q2",
-      "Q3 2026Q3",
-      "Q4 2026Q4",
-      "Q1 2027Q1",
-      "Q2 2027Q2",
-      "Q3 2027Q3",
-      "Q4 2027Q4",
-      "Q1 2028Q1",
+      "Q1 2026",
+      "Q2 2026",
+      "Q3 2026",
+      "Q4 2026",
+      "Q1 2027",
+      "Q2 2027",
+      "Q3 2027",
+      "Q4 2027",
+      "Q1 2028",
     ]);
     expect(
       within(strip).getByRole("button", { current: "date" }).textContent,
-    ).toBe("Q1 2027Q1");
+    ).toBe("Q1 2027");
     expect(
       grid
         .querySelector('th[data-column="2027-03"]')

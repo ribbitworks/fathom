@@ -28,16 +28,14 @@ describe("monthQuarters", () => {
       {
         start: "2026-10",
         label: "Q4 2026",
-        short: "Q4",
         months: ["2026-11", "2026-12"],
       },
       {
         start: "2027-01",
         label: "Q1 2027",
-        short: "Q1",
         months: ["2027-01", "2027-02", "2027-03"],
       },
-      { start: "2027-04", label: "Q2 2027", short: "Q2", months: ["2027-04"] },
+      { start: "2027-04", label: "Q2 2027", months: ["2027-04"] },
     ]);
   });
 
