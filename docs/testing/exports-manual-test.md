@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Exports
@@ -38,7 +38,9 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. Run EXP-01 in Chrome or Edge, and EXP-02 in Safari or Firefox where one is at hand.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
+
+Run EXP-01 in Chrome or Edge, and EXP-02 in Safari or Firefox where one is at hand.
 
 ### EXP-01: Exporting Personal and Confidential Data Asks First and Is Recorded
 

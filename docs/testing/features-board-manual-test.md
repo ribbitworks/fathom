@@ -4,14 +4,22 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Features Board
 
 ## Scope
 
-Verifies the Board on the Features page: switching between the table and the board, the columns of months and No date or of one schedule's cycles and Later, the cards and the Card menu, the strip and the Columns menu, rows from the Group by menu, with a card in each row of a feature under several values, and how search, drafts, a feature's details and the keyboard work on the board. The table itself is verified in [Features](features-manual-test.md).
+Verifies the Board on the Features page:
+
+- Switching between the table and the board.
+- The columns of months and No date or of one schedule's cycles and Later.
+- The cards and the Card menu, the strip and the Columns menu.
+- Rows from the Group by menu, with a card in each row of a feature under several values.
+- How search, drafts, a feature's details and the keyboard work on the board.
+
+The table itself is verified in [Features](features-manual-test.md).
 
 ## Test Environment
 

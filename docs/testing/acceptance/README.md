@@ -20,11 +20,15 @@ The acceptance tests install Fathom, set it up, and follow work as it passes bet
 | 12 | [Reading the Plan](acceptance-reading-the-plan-manual-test.md) | What Deciding the Changes leaves | 9 | 30 minutes |
 | | **Total** | | **73** | **About 5 hours 35 minutes, plus the first build** |
 
-Installing Fathom builds Fathom from the clone and installs it, with its own secrets, containers and database, and every later test runs on that installation, straight after the one before, using only what the run has made: no seed data and no development accounts. [Start Again](../manual-test-basics.md#start-again) removes the installation, for a fresh run or before other manual tests in the clone.
+Installing Fathom builds Fathom from the clone and installs it, with its own secrets, containers and database. Every later test runs on that installation, straight after the one before, using only what the run has made: no seed data and no development accounts.
+
+[Start Again](../manual-test-basics.md#start-again) removes the installation, for a fresh run or before other manual tests in the clone.
 
 ## Role Workflow Tests
 
-Each starting role also has a workflow test, which follows the workflows of its role tutorial in [Help](../../help/index.md) on the seed data. They are kept in `docs/testing/` beside the feature tests, for a quicker check after a change. They aren't part of a whole run. Each starts from [Reset the Database](../manual-test-basics.md#reset-the-database), so they may run in any order; the order below is that of the role tutorials.
+Each starting role also has a workflow test, which follows the workflows of its role tutorial in [Help](../../help/index.md) on the seed data. They are kept in `docs/testing/` beside the feature tests, for a quicker check after a change.
+
+They aren't part of a whole run. Each starts from [Reset the Database](../manual-test-basics.md#reset-the-database), so they may run in any order; the order below is that of the role tutorials.
 
 | Test | Cases | Time |
 | --- | --- | --- |

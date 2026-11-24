@@ -4,14 +4,19 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-hiring-and-who-sees-what-manual-test.md", "docs/help/working-as-a-product-manager.md", "docs/help/projects.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Acceptance, Planning Projects
 
 ## Scope
 
-Verifies that a Product Manager starts the plan on a new Fathom, as [Working as a Product Manager](../../help/working-as-a-product-manager.md) describes: the customers and projects pasted in from files, fixing the one row Fathom refuses, then a proposal, a project's customer and its milestones added by hand. Nothing is published yet: [Planning Features and a Release](acceptance-planning-features-and-a-release-manual-test.md) adds the rest of the plan and publishes it all at once.
+Verifies that a Product Manager starts the plan on a new Fathom, as [Working as a Product Manager](../../help/working-as-a-product-manager.md) describes:
+
+- The customers and projects pasted in from files, fixing the one row Fathom refuses.
+- A proposal, a project's customer and its milestones added by hand.
+
+Nothing is published yet: [Planning Features and a Release](acceptance-planning-features-and-a-release-manual-test.md) adds the rest of the plan and publishes it all at once.
 
 ## Test Environment
 

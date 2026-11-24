@@ -11,7 +11,9 @@ last_updated: "2026-11-24"
 
 ## Scope
 
-Verifies adding a customer, a proposal and a project with milestones on the Projects page, the dates milestones give a project, and approving those drafts, then changing a milestone, removing the project and approving the removal. [Projects, Proposals, Customers and Milestones](projects-manual-test.md) verifies the tabs as a Team Member sees them, editing in a table and a side panel, and the features projects and proposals need.
+Verifies adding a customer, a proposal and a project with milestones on the Projects page, the dates milestones give a project, and approving those drafts, then changing a milestone, removing the project and approving the removal.
+
+[Projects, Proposals, Customers and Milestones](projects-manual-test.md) verifies the tabs as a Team Member sees them, editing in a table and a side panel, and the features projects and proposals need.
 
 ## Test Environment
 
@@ -38,7 +40,9 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. To run the test again after finishing it, start from Reset the Database, since the records it adds stay once approved, and their names cannot be used twice.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
+
+To run the test again after finishing it, start from Reset the Database, since the records it adds stay once approved, and their names cannot be used twice.
 
 ### PROJ-02: The Product Manager Adds a Customer
 

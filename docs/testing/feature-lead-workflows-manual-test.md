@@ -4,14 +4,21 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Feature Lead Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as a Feature Lead](../help/working-as-a-feature-lead.md) on the seed data: shaping a feature team, approved by a Project Manager; keeping a feature's status and estimate current, approved by a Product Manager; seeing what each release and cycle holds, and keeping views of one schedule and of the Features board; and finding someone on the org chart. It also verifies that the account, which holds a second role, switches between them at once, and that the change history names the role a change was made as.
+Verifies the workflows of [Working as a Feature Lead](../help/working-as-a-feature-lead.md) on the seed data:
+
+- Shaping a feature team, approved by a Project Manager.
+- Keeping a feature's status and estimate current, approved by a Product Manager.
+- Seeing what each release and cycle holds, and keeping views of one schedule and of the Features board.
+- Finding someone on the org chart.
+
+It also verifies that the account, which holds a second role, switches between them at once, and that the change history names the role a change was made as.
 
 ## Test Environment
 

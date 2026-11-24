@@ -4,14 +4,22 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Data Classes
 
 ## Scope
 
-Verifies what only a person can judge of changing the class of data: the Data classes page and its three sections, the dialog that changes a class, the symbol marking a classified column or list, how a change of class changes what another role sees, and how changing the class of a column drafted to be added changes its draft. Changing a list's class from its panel is in [Lists](lists-manual-test.md) LIST-07.
+Verifies what only a person can judge of changing the class of data:
+
+- The Data classes page and its three sections.
+- The dialog that changes a class.
+- The symbol marking a classified column or list.
+- How a change of class changes what another role sees.
+- How changing the class of a column drafted to be added changes its draft.
+
+Changing a list's class from its panel is in [Lists](lists-manual-test.md) LIST-07.
 
 ## Test Environment
 

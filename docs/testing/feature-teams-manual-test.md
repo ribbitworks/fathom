@@ -4,14 +4,25 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/org-chart*", "apps/web/src/people-grid.tsx", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "apps/server/src/data/feature-team-rules.ts", "apps/server/src/data/feature-team-held-changes.ts", "apps/server/src/data/feature-team-sight.ts", "apps/server/src/data/feature-team-reads.ts", "apps/server/src/data/feature-team-records.ts", "apps/server/src/data/feature-team-decisions.ts", "apps/server/src/data/feature-team-undo.ts", "apps/server/src/data/feature-team-removals.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/org-chart.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Feature Teams
 
 ## Scope
 
-Verifies feature teams on the **Org chart** page: how each team is drawn under its lead, a team's panel, proposing, adding, renaming and removing teams as drafts with their marks on the chart and in the panel, what a reader who may not change teams sees, changing teams from another date, approving a team's draft on the Drafts page, using a team's panel from the keyboard, choices shown with their descriptions when picked, and each person's feature teams on the **People** page, grouped by team. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies feature teams on the **Org chart** page:
+
+- How each team is drawn under its lead, and a team's panel.
+- Proposing, adding, renaming and removing teams as drafts, with their marks on the chart and in the panel.
+- What a reader who may not change teams sees.
+- Changing teams from another date.
+- Approving a team's draft on the Drafts page.
+- Using a team's panel from the keyboard.
+- Choices shown with their descriptions when picked.
+- Each person's feature teams on the **People** page, grouped by team.
+
+The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Schedules
@@ -43,7 +43,9 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From a
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Start From an Empty Database. REL-01 to REL-05 start from an empty database; REL-06 adds the seed data; REL-31 restores it. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. To run the test again, start again from Start From an Empty Database.
+Run the test cases in order. Start with Start Fathom, then Start From an Empty Database. REL-01 to REL-05 start from an empty database; REL-06 adds the seed data; REL-31 restores it.
+
+Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. To run the test again, start again from Start From an Empty Database.
 
 ### Part 1: From an Empty Database
 

@@ -4,14 +4,22 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Drafts Page
 
 ## Scope
 
-Verifies the Drafts page: its table of drafts, its three tabs and who sees each, ticking rows and the actions they bring to the page's heading, approving drafts from there, a draft's details, and publishing and discarding chosen changes with the changes they must go with. [Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages, and [Unpublished Changes](unpublished-changes-manual-test.md) publishing all changes or discarding them all from the top bar.
+Verifies the Drafts page:
+
+- Its table of drafts, and its three tabs and who sees each.
+- Ticking rows, and the actions they bring to the page's heading.
+- Approving drafts from there.
+- A draft's details.
+- Publishing and discarding chosen changes with the changes they must go with.
+
+[Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages, and [Unpublished Changes](unpublished-changes-manual-test.md) publishing all changes or discarding them all from the top bar.
 
 ## Test Environment
 

@@ -1,6 +1,6 @@
 # Fathom: Securing Your Environment
 
-**Last updated:** 2026-11-19
+**Last updated:** 2026-11-24
 
 What Fathom can't secure for itself, and recommendations for securing it. The [Security Plan](../security/security-plan.md) covers what it does; everything below is up to whoever runs it. Settings named here are in `deploy/compose.env.example`, and [Installing Fathom](installing-fathom.md) sets out the installation itself.
 
@@ -39,7 +39,11 @@ What Fathom can't secure for itself, and recommendations for securing it. The [S
 
 ## On Windows 11 With WSL2
 
-Windows 11 with WSL2 runs Fathom inside a Linux distro in a virtual machine, as [Architecture](../design/architecture.md#on-windows-11-with-wsl2) shows. Everything above applies inside the distro. These steps cover Windows around it. They are commands to run in PowerShell opened as administrator, since Fathom has no Windows scripts. On Windows Server, run Fathom in a Linux virtual machine instead, and secure it as any Linux host.
+Windows 11 with WSL2 runs Fathom inside a Linux distro in a virtual machine, as [Architecture](../design/architecture.md#on-windows-11-with-wsl2) shows. Everything above applies inside the distro.
+
+These steps cover Windows around it. They are commands to run in PowerShell opened as administrator, since Fathom has no Windows scripts.
+
+On Windows Server, run Fathom in a Linux virtual machine instead, and secure it as any Linux host.
 
 - **Install:** on Windows 11 22H2 or later, run `wsl --install` and restart. Install Docker Engine inside the distro, following Docker's instructions for it, never Docker Desktop.
 - **Use mirrored networking:** set `networkingMode=mirrored` under `[wsl2]` in the `.wslconfig` file of the Windows user that owns the distro. The distro then shares Windows' addresses, so each user's own address reaches Fathom. Set `FATHOM_BIND_ADDRESS` to the address users reach.

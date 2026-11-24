@@ -4,14 +4,20 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-planning-projects-manual-test.md", "docs/help/working-as-a-product-manager.md", "docs/help/features.md", "docs/help/releases.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Acceptance, Planning Features and a Release
 
 ## Scope
 
-Verifies that a Product Manager finishes a first plan, as [Working as a Product Manager](../../help/working-as-a-product-manager.md) describes, on the projects [Planning Projects](acceptance-planning-projects-manual-test.md) drafted: features pasted in from a file, each planned for a cycle, a team and a month, the features tied to the projects and the proposal that need them, and a release made with a note. The whole plan is then published in one go, for the Project Manager to decide in [Reviewing the Plan](acceptance-reviewing-the-plan-manual-test.md).
+Verifies that a Product Manager finishes a first plan, as [Working as a Product Manager](../../help/working-as-a-product-manager.md) describes, on the projects [Planning Projects](acceptance-planning-projects-manual-test.md) drafted:
+
+- Features pasted in from a file, each planned for a cycle, a team and a month.
+- The features tied to the projects and the proposal that need them.
+- A release made with a note.
+
+The whole plan is then published in one go, for the Project Manager to decide in [Reviewing the Plan](acceptance-reviewing-the-plan-manual-test.md).
 
 ## Test Environment
 

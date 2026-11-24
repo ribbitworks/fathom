@@ -4,14 +4,24 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts-table.tsx", "apps/web/src/accounts-panel.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/web/src/layout.tsx", "apps/web/src/session.ts", "apps/web/src/names.ts", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts", "packages/seed/src/accounts.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Accounts
 
 ## Scope
 
-Verifies what only a person can judge on the Accounts page and the screens around it: who sees the Accounts page, creating an account and the one-time password Fathom generates for it, with its eye button and Copy button; the journey from the administrator's browser to the new person's first sign-in, the forced change of the generated password with its checklist, and a reset; an account's side panel, editing, deactivating, and reactivating an account, finding accounts by status, and the greyed-out control that keeps one account with Edit Administration; giving an account several roles and a default, switching role from the account menu with the pages following at once, the role chosen last coming back at sign-in, and the role a change was made as in the change history and on the Drafts page; the password settings and a generated password that follows them; and the command that creates the Fathom Administrator account at install. The server's refusals, validation messages, permissions, and every wording of the access history are proven by automated tests.
+Verifies what only a person can judge on the Accounts page and the screens around it:
+
+- Who sees the Accounts page.
+- Creating an account and the one-time password Fathom generates for it, with its eye button and Copy button.
+- The journey from the administrator's browser to the new person's first sign-in, the forced change of the generated password with its checklist, and a reset.
+- An account's side panel, editing, deactivating, and reactivating an account, finding accounts by status, and the greyed-out control that keeps one account with Edit Administration.
+- Giving an account several roles and a default, switching role from the account menu with the pages following at once, the role chosen last coming back at sign-in, and the role a change was made as in the change history and on the Drafts page.
+- The password settings and a generated password that follows them.
+- The command that creates the Fathom Administrator account at install.
+
+The server's refusals, validation messages, permissions, and every wording of the access history are proven by automated tests.
 
 ## Test Environment
 

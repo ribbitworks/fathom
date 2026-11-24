@@ -4,14 +4,20 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-director.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Engineering Director Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as an Engineering Director](../help/working-as-an-engineering-director.md) on the seed data: filling a planned hire and approving the director's own drafts, changing a reporting line from an earlier date and seeing it on the org chart, changing a detail's class, sharing a view of People that another account sees until it is no longer shared, and sharing views of the schedules, of Features and of the Proposals tab.
+Verifies the workflows of [Working as an Engineering Director](../help/working-as-an-engineering-director.md) on the seed data:
+
+- Filling a planned hire and approving the director's own drafts.
+- Changing a reporting line from an earlier date and seeing it on the org chart.
+- Changing a detail's class.
+- Sharing a view of People that another account sees until it is no longer shared.
+- Sharing views of the schedules, of Features and of the Proposals tab.
 
 ## Test Environment
 

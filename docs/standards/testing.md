@@ -167,7 +167,7 @@ A manual test is a test specification a test engineer, including one new to Fath
 
 The acceptance tests are kept in `docs/testing/acceptance/` instead, as the last rule below sets out. Each manual test has these sections:
 
-- **Scope:** one or two sentences on what the test verifies.
+- **Scope:** what the test verifies, in one or two sentences, or a lead sentence and a short list.
 - **Test Environment:** what must be running and set up, linking to [Manual Test Basics](../testing/manual-test-basics.md#test-environment) for what every test needs, and adding only what this test needs besides.
 - **Test Accounts:** each account the test uses, named by its role in Fathom, with its email address, and its name as Fathom shows it where that differs from the role. [Manual Test Basics](../testing/manual-test-basics.md#test-accounts) says where the accounts come from, links to the roles they hold, and where their password comes from.
 - **Common Procedures:** the procedures the test cases refer to.

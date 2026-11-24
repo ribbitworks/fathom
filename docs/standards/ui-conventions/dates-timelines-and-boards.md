@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Dates, Timelines and Boards
@@ -87,7 +87,8 @@ Every view with time across it (the Releases timeline, the Plan and the project 
 
 - **A board:** A board shows a table's records as cards. Its columns are periods, such as months or one schedule's cycles, as many as fit, then a column for none, such as No date or Later. Its rows come from the Group by menu's first grouping, starting with none.
   - It sits under the table's bar, so the search, Draft menu, Metrics, Group by and Views work on it as on the table. The exception: Group by offers no Then by on a board, and a Then by chosen on the table is kept but not shown.
-  - Each column's heading names its period, and, for a cycle, its release in its [coloured box](drafts-and-values.md#values) and the cycle's days. The current period's heading is underlined in today's red along its bottom, as a month grid's current month is. Every line between headings, rows and cells is one thin line, so the columns' widths are whole pixels, and the headers draw their own line under them, which stays as rows scroll under the sticky headers.
+  - Each column's heading names its period, and, for a cycle, its release in its [coloured box](drafts-and-values.md#values) and the cycle's days. The current period's heading is underlined in today's red along its bottom, as a month grid's current month is.
+  - Every line between headings, rows and cells is one thin line, so the columns' widths are whole pixels, and the headers draw their own line under them, which stays as rows scroll under the sticky headers.
   - Months run from 12 months back to the latest month any feature is needed by, a year ahead at the least. A card sits in the month it is needed by, including a month that has passed. A feature needed before the first month isn't on the board, as one targeting a cycle outside the board's columns isn't.
   - The month or cycle gone to, by opening the board, Today, choosing in the strip, or ‹ or ›, is shown second, so the one before it stays in view, as on a month grid. It is shown first only where just one column fits, and the board moves back where needed so as many as fit are shown.
   - While a side panel, such as a record's details or Metrics, is open beside it, the board keeps its columns and their widths and scrolls sideways under the panel. It fits the space again once the panel has gone.

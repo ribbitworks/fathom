@@ -4,14 +4,18 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-planning-features-and-a-release-manual-test.md", "docs/help/working-as-a-project-manager.md", "docs/help/drafts-page.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Acceptance, Reviewing the Plan
 
 ## Scope
 
-Verifies that a Project Manager decides a Product Manager's first plan and keeps a project on track, as [Working as a Project Manager](../../help/working-as-a-project-manager.md) describes, on the plan [Planning Features and a Release](acceptance-planning-features-and-a-release-manual-test.md) published: the release is rejected with a reason, everything else is approved in one pass, and the Project Manager then adds a milestone, reads the project's scope history and goes from the project to its features.
+Verifies that a Project Manager decides a Product Manager's first plan and keeps a project on track, as [Working as a Project Manager](../../help/working-as-a-project-manager.md) describes, on the plan [Planning Features and a Release](acceptance-planning-features-and-a-release-manual-test.md) published:
+
+- The release is rejected with a reason.
+- Everything else is approved in one pass.
+- The Project Manager then adds a milestone, reads the project's scope history and goes from the project to its features.
 
 ## Test Environment
 

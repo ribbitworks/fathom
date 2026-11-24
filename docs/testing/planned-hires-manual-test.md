@@ -4,14 +4,24 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Planned Hires on People
 
 ## Scope
 
-Verifies planned hires shown as rows of the People table: how their rows look beside people's, their names, the **State** column, a column planned hires have values in, people who have left, a planned manager whom other planned hires report to, adding one with the keyboard and by pasting, what a Feature Lead sees, and filling a hire from its details panel with a new or an existing person, approved on the Drafts page. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies planned hires shown as rows of the People table:
+
+- How their rows look beside people's, their names, and the **State** column.
+- A column planned hires have values in.
+- People who have left.
+- A planned manager whom other planned hires report to.
+- Adding one with the keyboard and by pasting.
+- What a Feature Lead sees.
+- Filling a hire from its details panel with a new or an existing person, approved on the Drafts page.
+
+The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 

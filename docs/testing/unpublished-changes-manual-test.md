@@ -4,14 +4,21 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Unpublished Changes
 
 ## Scope
 
-Verifies that changes are seen only by the person who made them until they're published, that a record someone else is changing is held, that publishing and Discard all… in the top bar work, and that publishing leaves the changes the role in use can't make. [Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages, and [Drafts Page](drafts-page-manual-test.md) publishing and discarding chosen changes on the Drafts page.
+Verifies:
+
+- That changes are seen only by the person who made them until they're published.
+- That a record someone else is changing is held.
+- That publishing and Discard all… in the top bar work.
+- That publishing leaves the changes the role in use can't make.
+
+[Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages, and [Drafts Page](drafts-page-manual-test.md) publishing and discarding chosen changes on the Drafts page.
 
 ## Test Environment
 
