@@ -21,9 +21,7 @@ What to test, and the commands to run, are in [Testing Standards](../standards/t
 flowchart TD
     AnyCode{"Is any path other than documentation alone?"}
     AnyCode -- No --> NoTests["No tests run, and it passes"]
-    AnyCode -- Yes --> Stylesheets{"Only the web app's stylesheets?"}
-    Stylesheets -- Yes --> StylesheetTests["pnpm lint, pnpm format:check and every web app test"]
-    Stylesheets -- No --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page?"}
+    AnyCode -- Yes --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page?"}
     Outside -- Yes --> Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
     Outside -- No --> Scripts["pnpm test:scripts"]
     Scripts --> Whole{"Is any path in a package but not a script in its src folder, such as its settings, stylesheets or migrations?"}
@@ -298,9 +296,7 @@ flowchart TD
     Listed -- Yes --> AnyCode{"Is any path other than documentation alone?"}
     AnyCode -- No --> NoTests["No tests run, and it passes"]
     AnyCode -- Yes --> Turn["Takes a check's turn, unless the check that started it holds one"]
-    Turn --> Stylesheets{"Only the web app's stylesheets?"}
-    Stylesheets -- Yes --> StylesheetTests["pnpm lint, pnpm format:check and every web app test"]
-    Stylesheets -- No --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page?"}
+    Turn --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page?"}
     Outside -- Yes --> Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
     Outside -- No --> Scripts["pnpm test:scripts"]
     Scripts --> Whole{"Is any path in a package but not a script in its src folder, such as its settings, stylesheets or migrations?"}
@@ -308,8 +304,7 @@ flowchart TD
     Whole -- No --> Imported
     WholePackages --> Imported{"Is any path a script in a package's src folder, or a Help page?"}
     Imported -- Yes --> Related["vitest related: the tests importing those files, in the packages that hold or depend on them and haven't run whole, measuring the coverage of the changed source files alone"]
-    Imported -- No --> InTime
-    StylesheetTests --> InTime{"Did each pnpm step end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
+    Imported -- No --> InTime{"Did each pnpm step end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
     Everything --> InTime
     Related --> InTime
     InTime -- No --> TooLong["The step and every process it started are stopped, naming it, and it fails"]
