@@ -12,12 +12,17 @@ import {
   listLengths,
   type Meaning,
   sameName,
+  mostChoicesAtOnce,
 } from "@fathom/shared";
 import { nameProblem } from "./lists.ts";
 
-const duplicate = "Already in this list";
-// The most choices one paste adds, as the server allows at once.
-const pasteLimit = 1000;
+export const duplicateChoice = "Already in this list";
+
+// Why a choice's name can't be taken: it is longer than a choice may be.
+export const choiceTooLong = "Too long";
+
+// Why too many choices can't be added at once.
+export const tooManyChoices = `Up to ${String(mostChoicesAtOnce)} lines at once`;
 
 export const removedChoice = (choice: Choice) =>
   choice.draft?.action === "deleted";
@@ -69,7 +74,7 @@ export const choiceNameProblem = (list: List, label: string, except?: string) =>
     list.choices.some(
       (other) => other.id !== except && sameName(other.label, label),
     ),
-    duplicate,
+    duplicateChoice,
   );
 
 // Why pasted choices cannot be added, if they can't, naming the line when there are several.
@@ -77,9 +82,7 @@ export function pasteProblem(
   list: List,
   pasted: readonly ChoiceRequest[],
 ): string | undefined {
-  if (pasted.length > pasteLimit) {
-    return `Up to ${String(pasteLimit)} lines at once`;
-  }
+  if (pasted.length > mostChoicesAtOnce) return tooManyChoices;
   const seen: string[] = [];
   for (const [index, choice] of pasted.entries()) {
     const problem =
@@ -88,7 +91,7 @@ export function pasteProblem(
         ? "Description too long"
         : undefined) ??
       (seen.some((label) => sameName(label, choice.label))
-        ? duplicate
+        ? duplicateChoice
         : undefined);
     if (problem !== undefined) {
       return pasted.length === 1

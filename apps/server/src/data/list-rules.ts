@@ -133,17 +133,15 @@ export const choicesHaveDrafts = (state: ListsState, listId: string) =>
   ) ||
   [...state.held.choices.keys()].some((id) => heldListOf(state, id) === listId);
 
-// Refuses a change to a list while a column draws on it, live or in a draft, naming the columns
-// others may see: live ones and published drafts. A column only in someone's unpublished draft
-// counts too, so the list cannot go from under it, but is not named, since only its maker sees it.
-// The editor's unpublished drafts of columns stand in for the published drafts of the same columns.
-// A built-in list's built-in column always draws on it.
-export async function refuseIfUsed(
+// The columns that draw on a list, live or in a draft: those others may see by name, live ones and
+// published drafts, and how many more are only in someone's unpublished draft, unnamed, since only
+// its maker sees it. The editor's unpublished drafts of columns stand in for the published drafts
+// of the same columns. A built-in list's built-in column always draws on it.
+export async function columnsDrawingOn(
   transaction: Reader,
   id: string,
-  change: string,
   editor?: string,
-): Promise<void> {
+): Promise<{ named: string[]; unnamed: number }> {
   const builtIn = await transaction
     .select({ key: lists.builtIn })
     .from(lists)
@@ -201,6 +199,17 @@ export async function refuseIfUsed(
   const unnamed = (await drafted(privateChanges)).filter(
     (column) => !shown.some((other) => other.id === column.id),
   ).length;
+  return { named, unnamed };
+}
+
+// Refuses a change to a list while a column draws on it, naming those others may see.
+export async function refuseIfUsed(
+  transaction: Reader,
+  id: string,
+  change: string,
+  editor?: string,
+): Promise<void> {
+  const { named, unnamed } = await columnsDrawingOn(transaction, id, editor);
   if (named.length === 0 && unnamed === 0) return;
   const users = [
     ...named,

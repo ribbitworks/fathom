@@ -8,10 +8,12 @@ import {
   columnTableOf,
   editsColumnsOf,
   fieldRequestSchema,
+  newListSchema,
   personChangeSchema,
   personRequestSchema,
   personSchema,
 } from "./people.ts";
+import { listLengths, mostChoicesAtOnce } from "./lists.ts";
 
 const messages = (result: { error?: { issues: { message: string }[] } }) =>
   result.error?.issues.map((issue) => issue.message) ?? [];
@@ -56,10 +58,42 @@ describe("fieldRequestSchema", () => {
     });
   });
 
-  it("asks a choice column for a list", () => {
+  it("asks a choice column for a list, or a new one, not both", () => {
     expect(messages(fieldRequestSchema.safeParse({ name: "Site" }))).toEqual([
       "Choose a list",
     ]);
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "Site",
+          listId: randomUUID(),
+          newList: { name: "Sites", choices: ["Harbourside"] },
+        }),
+      ),
+    ).toEqual(["Choose a list or a new one, not both"]);
+  });
+
+  it("takes a new list with its choices, each once, whatever its case", () => {
+    expect(
+      fieldRequestSchema.parse({
+        name: "Tier",
+        newList: { name: " Tiers ", choices: [" Gold ", "Silver"] },
+      }).newList,
+    ).toEqual({ name: "Tiers", choices: ["Gold", "Silver"] });
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "Tier",
+          newList: { name: "Tiers", choices: ["Gold", "gold"] },
+        }),
+      ),
+    ).toEqual(["A choice is in the list twice"]);
+    expect(
+      fieldRequestSchema.safeParse({
+        name: "Tier",
+        newList: { name: "Tiers", choices: [] },
+      }).success,
+    ).toBe(false);
   });
 
   it("keeps a web link column's visibility", () => {
@@ -72,13 +106,26 @@ describe("fieldRequestSchema", () => {
     ).toBe("general");
   });
 
-  it("refuses a web link column without a visibility, with a list, or with several links", () => {
+  it("refuses a web link column with a list", () => {
     expect(
       messages(
         fieldRequestSchema.safeParse({
           name: "Profile",
           type: "link",
+          visibility: "general",
           listId: randomUUID(),
+        }),
+      ),
+    ).toEqual(["A web link column has no list"]);
+  });
+
+  it("refuses a web link column without a visibility, with a new list, or with several links", () => {
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "Profile",
+          type: "link",
+          newList: { name: "Sites", choices: ["Harbourside"] },
           multiple: true,
         }),
       ),
@@ -173,6 +220,48 @@ describe("notes", () => {
         positionId: randomUUID(),
       }).notes,
     ).toBeUndefined();
+  });
+});
+
+describe("newListSchema", () => {
+  const most = (length: number) => "x".repeat(length);
+
+  it.each([
+    ["an empty name", { name: " ", choices: ["Gold"] }],
+    [
+      "a name too long",
+      { name: most(listLengths.name + 1), choices: ["Gold"] },
+    ],
+    ["no choices", { name: "Tiers", choices: [] }],
+    ["a blank choice", { name: "Tiers", choices: [" "] }],
+    [
+      "a choice too long",
+      { name: "Tiers", choices: [most(listLengths.choice + 1)] },
+    ],
+    [
+      "too many choices",
+      {
+        name: "Tiers",
+        choices: Array.from(
+          { length: mostChoicesAtOnce + 1 },
+          (_, at) => `Choice ${String(at)}`,
+        ),
+      },
+    ],
+  ])("refuses %s", (_, list) => {
+    expect(newListSchema.safeParse(list).success).toBe(false);
+  });
+
+  it("takes the longest name and choice, and the most choices", () => {
+    expect(
+      newListSchema.safeParse({
+        name: most(listLengths.name),
+        choices: Array.from(
+          { length: mostChoicesAtOnce },
+          (_, at) => `Choice ${String(at)}`,
+        ),
+      }).success,
+    ).toBe(true);
   });
 });
 

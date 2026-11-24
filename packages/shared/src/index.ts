@@ -281,6 +281,8 @@ export {
   withUsers,
 } from "./drafts.ts";
 export {
+  duplicateList,
+  mostChoicesAtOnce,
   featuresListGeneral,
   featureBuiltInLists,
   type BuiltInList,
@@ -490,6 +492,8 @@ export {
   type FieldDraft,
   fieldDraftSchema,
   type FieldRequest,
+  type NewList,
+  newListSchema,
   type ColumnTable,
   columnTables,
   columnTableOf,

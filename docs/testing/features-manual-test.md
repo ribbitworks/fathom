@@ -14,7 +14,7 @@ last_updated: "2026-11-25"
 Verifies the Features page:
 
 - How the table reads, grouped by cycle with Later, by release, by the month needed and by project, two levels deep, with the +1 after a feature shown under two headings.
-- Its columns: Release, a month, customers and a note, columns added to Features, and moving any column.
+- Its columns: Release, a month, customers and a note, columns added to Features, with a new list made in the column's dialog, and moving any column.
 - A feature's status, effort in the unit chosen, priority, size and risk, from their built-in lists.
 - Editing features as drafts, who may change them, and how their drafts show on the Drafts page.
 - Writing a note in New feature.
@@ -937,6 +937,68 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
     - The **New project** panel is gone.
     - The **Projects** row of 'Offline Sync' names `Testing Survey`.
     - The change button in the **Projects** row has focus.
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
+
+### FEAT-32: A Column Is Added With a New List
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-31 ended with.
+
+**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
+
+- [ ] `0C22` Select **New column**.
+  - **Expected:** The **New column** dialog opens, and **Type** reads **Choice from a list**.
+  - **Notes:**
+
+- [ ] `D9A0` Type `Fictional Tier` in **Name**.
+  - **Expected:** **Name** holds `Fictional Tier`.
+  - **Notes:**
+
+- [ ] `9B4B` Choose **New list** under **List**.
+  - **Expected:**
+    - **New list** is the first choice offered.
+    - Under **List**, the fields **List name** and **Choices** show.
+  - **Notes:**
+
+- [ ] `BA76` Select **Add column**.
+  - **Expected:** The dialog stays open, with the cursor in **List name**.
+  - **Notes:**
+
+- [ ] `4CA2` Type `Fictional Tiers` in **List name**.
+  - **Expected:** **List name** holds `Fictional Tiers`, with no message under it.
+  - **Notes:**
+
+- [ ] `F802` In **Choices**, type `Gold` and press Enter.
+  - **Expected:** **Gold** shows in **Choices** as a tag with an **×**, and the box is empty again.
+  - **Notes:**
+
+- [ ] `DD69` Type `Silver` and press Enter.
+  - **Expected:** **Gold** and **Silver** show, in that order.
+  - **Notes:**
+
+- [ ] `6E8E` Copy these two lines, then paste them into **Choices**:
+
+  ```text
+  Bronze
+  Iron
+  ```
+
+  - **Expected:** **Gold**, **Silver**, **Bronze** and **Iron** show, in that order.
+  - **Notes:**
+
+- [ ] `C79F` Select **Add column**.
+  - **Expected:**
+    - The dialog closes.
+    - A `Fictional Tier` column is added at the right end of the table, with a hollow yellow dot before its name in its header.
+  - **Notes:**
+
+- [ ] `44BA` Select the **Lists** page in the left-hand menu.
+  - **Expected:** `Fictional Tiers` is listed with a hollow yellow dot, as a draft.
+  - **Notes:**
+
+- [ ] `0CD6` Select `Fictional Tiers`.
+  - **Expected:** Its choices are **Gold**, **Silver**, **Bronze** and **Iron**, in that order.
   - **Notes:**
 
 **Afterwards:** Run Discard the Unpublished Changes.

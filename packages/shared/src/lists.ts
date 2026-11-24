@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Lists of choices that people define, such as locations or skills, for columns elsewhere to draw
-// on. Each list has a name, an optional description, and a visibility: the sensitivity tier of the
-// values chosen from it. Its choices are in the order set for them, and lists and choices can each
-// be retired. Lists, choices, and the order of each list's choices have drafts, shown in place of
-// the live values, with the draft beside. In a built-in list with meanings, each choice is tied to
-// one of the meanings Fathom fixes for it, which Fathom acts on while showing the choice's name.
-// Each choice of feature sizes has a weight, how many of the size S it counts as.
+// Lists of choices that columns draw on, with their choices, drafts and requests.
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
@@ -300,9 +294,15 @@ export const choiceRequestSchema = z.object({
 
 export type ChoiceRequest = z.infer<typeof choiceRequestSchema>;
 
+// Why a list can't take a name: another list has it.
+export const duplicateList = "There is already a list with that name";
+
+// The most choices added at once, such as by pasting.
+export const mostChoicesAtOnce = 1000;
+
 // Adds one choice, or several pasted at once, to the end of a list, all saved together.
 export const choicesRequestSchema = z.object({
-  choices: z.array(choiceRequestSchema).min(1).max(1000),
+  choices: z.array(choiceRequestSchema).min(1).max(mostChoicesAtOnce),
 });
 
 export const retiredRequestSchema = z.object({ retired: z.boolean() });

@@ -10,7 +10,10 @@ import {
   type FieldRequest,
   type FieldType,
   fieldTypeSchema,
+  duplicateList,
   type List,
+  listLengths,
+  mostChoicesAtOnce,
   personLengths,
   type Permission,
   type Tier,
@@ -22,20 +25,43 @@ import {
   Group,
   Select,
   Stack,
+  TagsInput,
   Text,
   TextInput,
 } from "@mantine/core";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
+import {
+  choiceTooLong,
+  duplicateChoice,
+  tooManyChoices,
+} from "./choice-rules.ts";
 import { Count } from "./counted-input.tsx";
 import { nameTaken } from "./list-dialog.tsx";
-import { nameProblem } from "./lists.ts";
+import { listsQuery, nameProblem } from "./lists.ts";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import { createField, updateField } from "./column-requests.ts";
 
 const conflict = 409;
+
+// The List picker's choice that drafts a new list with the column, which no list's ID can be.
+const newListChoice = "new";
+
+// Choices pasted several at once, one to a line, are split into each.
+const choiceSeparators = ["\n", "\r"];
+
+// A choice as typed or pasted: its name, without a description pasted after a tab from a sheet.
+const choiceLabel = (typed: string) => typed.split("\t", 1).join("").trim();
+
+// Why choices typed or pasted can't be taken, if they can't: too many at once, or one too long.
+const typedChoicesProblem = (typed: readonly string[]): string | undefined => {
+  if (typed.length > mostChoicesAtOnce) return tooManyChoices;
+  return typed.some((label) => choiceLabel(label).length > listLengths.choice)
+    ? choiceTooLong
+    : undefined;
+};
 
 // Every type must be named, which the compiler checks.
 const typeNames: Record<FieldType, string> = {
@@ -76,6 +102,12 @@ export function ColumnDialog({
     field?.visibility ?? "general",
   );
   const [listId, setListId] = useState<string | null>(field?.listId ?? null);
+  const [listName, setListName] = useState("");
+  const [choices, setChoices] = useState<string[]>([]);
+  // Why the choice last typed or pasted wasn't taken, until the choices change.
+  const [choiceRefused, setChoiceRefused] = useState<string>();
+  // The list name last sent, so a refusal of it as taken no longer applies once the name changes.
+  const [sentListName, setSentListName] = useState("");
   const [multiple, setMultiple] = useState(field?.multiple ?? false);
   const [required, setRequired] = useState(field?.required ?? false);
   // The table is always one of the fixed tables.
@@ -89,6 +121,7 @@ export function ColumnDialog({
     field?.onPlannedHires ?? policy.onPlannedHires,
   );
   const [tried, setTried] = useState(false);
+  const queryClient = useQueryClient();
   // The name last sent, so a refusal of it as taken no longer applies once the name changes.
   const [sentName, setSentName] = useState("");
   const saving = useMutation({
@@ -102,7 +135,11 @@ export function ColumnDialog({
     onSettled: () => {
       onBusy(false);
     },
-    onSuccess: ({ field: saved, changeSetId }) => {
+    onSuccess: ({ field: saved, changeSetId }, request) => {
+      // The lists offered are read apart from the table, so a new list is read with them.
+      if (request.newList !== undefined) {
+        void queryClient.invalidateQueries({ queryKey: listsQuery.queryKey });
+      }
       onSaved(saved, changeSetId);
     },
   });
@@ -134,6 +171,26 @@ export function ColumnDialog({
     );
   const needsList = type === "choice" && listId === null;
   const listProblem = tried && needsList ? "List needed" : undefined;
+  // A new list drafted with the column, offered only on a table whose editors don't make lists.
+  const offersNewList = policy.newLists && field === undefined;
+  const makesList = type === "choice" && listId === newListChoice;
+  const listRefusedAsTaken =
+    saving.error instanceof ApiError &&
+    saving.error.status === conflict &&
+    saving.error.serverMessage === duplicateList;
+  const listNameProblem = makesList
+    ? nameProblem(
+        listName,
+        listLengths.name,
+        (listRefusedAsTaken && sameName(sentListName, listName)) ||
+          lists.some((list) => sameName(list.name, listName)),
+        nameTaken("list"),
+      )
+    : undefined;
+  const choicesProblem =
+    makesList && choices.length === 0 ? "Choices needed" : undefined;
+  const shownChoicesProblem =
+    choiceRefused ?? (tried ? choicesProblem : undefined);
 
   return (
     <form
@@ -142,11 +199,17 @@ export function ColumnDialog({
         event.preventDefault();
         setTried(true);
         const form = event.currentTarget;
-        if (problem !== undefined || needsList) {
+        if (
+          problem !== undefined ||
+          needsList ||
+          listNameProblem !== undefined ||
+          choicesProblem !== undefined
+        ) {
           focusRefusedSoon(form);
           return;
         }
         setSentName(name);
+        setSentListName(listName);
         saving.mutate(
           type !== "choice"
             ? {
@@ -161,7 +224,9 @@ export function ColumnDialog({
                 name: name.trim(),
                 type,
                 // A choice column cannot be saved without its list, as checked above.
-                listId: listId as string,
+                ...(makesList
+                  ? { newList: { name: listName.trim(), choices } }
+                  : { listId: listId as string }),
                 multiple,
                 required,
                 onPlannedHires,
@@ -221,6 +286,9 @@ export function ColumnDialog({
             <Select
               label="List"
               data={[
+                ...(offersNewList
+                  ? [{ value: newListChoice, label: "New list" }]
+                  : []),
                 // A list in a class beyond General names it, and one only drafted to be added says
                 // it is new.
                 ...offered.map((list) => {
@@ -243,6 +311,42 @@ export function ColumnDialog({
               error={listProblem}
               onChange={setListId}
             />
+            {makesList && (
+              <>
+                <TextInput
+                  label="List name"
+                  value={listName}
+                  error={tried || listName !== "" ? listNameProblem : undefined}
+                  rightSection={
+                    <Count
+                      length={listName.trim().length}
+                      maximum={listLengths.name}
+                    />
+                  }
+                  rightSectionWidth={56}
+                  onChange={(event) => {
+                    setListName(event.currentTarget.value);
+                  }}
+                />
+                <TagsInput
+                  label="Choices"
+                  value={choices}
+                  error={shownChoicesProblem}
+                  splitChars={choiceSeparators}
+                  maxLength={listLengths.choice}
+                  clearable
+                  onDuplicate={() => {
+                    setChoiceRefused(duplicateChoice);
+                  }}
+                  onChange={(next) => {
+                    const refused = typedChoicesProblem(next);
+                    setChoiceRefused(refused);
+                    if (refused === undefined)
+                      setChoices(next.map(choiceLabel));
+                  }}
+                />
+              </>
+            )}
             <Checkbox
               label="Several choices"
               checked={multiple}
@@ -271,7 +375,7 @@ export function ColumnDialog({
             }}
           />
         )}
-        {saving.error && !refusedAsTaken && (
+        {saving.error && !refusedAsTaken && !listRefusedAsTaken && (
           <Text fz="sm" c="red" role="alert">
             {describeProblem(
               saving.error,

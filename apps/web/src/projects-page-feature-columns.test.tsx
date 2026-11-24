@@ -4,6 +4,7 @@
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import { listLengths, mostChoicesAtOnce } from "@fathom/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   chooseIn,
@@ -162,7 +163,10 @@ describe("the Features page", () => {
       expect(
         within(dialog).queryByLabelText("Offered on planned hires"),
       ).toBeNull();
-      expect(await optionsIn(dialog, "List")).toEqual(["Fictional Sizes"]);
+      expect(await optionsIn(dialog, "List")).toEqual([
+        "New list",
+        "Fictional Sizes",
+      ]);
       await userEvent.click(
         screen.getByRole("option", { name: "Fictional Sizes" }),
       );
@@ -188,6 +192,191 @@ describe("the Features page", () => {
       expect(
         await screen.findByRole("button", { name: "Fictional New column" }),
       ).toBeDefined();
+    });
+
+    it("adds a column with a new list, its choices typed one at a time, and reads the lists again", async () => {
+      // Given the New column dialog, with New list chosen
+      const path = "POST /api/features/columns";
+      const added = { ...size, id: "new", name: "Fictional Tier" };
+      const { fetch, held } = await openWith(withColumns(), {
+        [path]: () => {
+          held.plan = withColumns({ featureColumns: columnsOf([size, added]) });
+          return Response.json({ field: added, changeSetId }, { status: 201 });
+        },
+      });
+      const dialog = await newColumn();
+      await userEvent.type(
+        within(dialog).getByLabelText("Name"),
+        "Fictional Tier",
+      );
+      await chooseIn(dialog, "List", "New list");
+
+      // When the list is named and given two choices, and the column added
+      await userEvent.type(
+        within(dialog).getByLabelText("List name"),
+        "Fictional Tiers",
+      );
+      await userEvent.type(
+        within(dialog).getByLabelText("Choices"),
+        "Gold{Enter}Silver{Enter}",
+      );
+      const listReads = () =>
+        fetch.mock.calls.filter(([url]) => url === "/api/lists").length;
+      const readsBefore = listReads();
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Add column" }),
+      );
+
+      // Then the column is sent with its new list, and the lists offered are read again
+      await waitFor(() => {
+        expect(sent(fetch, path)).toEqual([
+          {
+            name: "Fictional Tier",
+            type: "choice",
+            newList: { name: "Fictional Tiers", choices: ["Gold", "Silver"] },
+            multiple: false,
+            required: false,
+            onPlannedHires: false,
+          },
+        ]);
+      });
+      await waitFor(() => {
+        expect(listReads()).toBeGreaterThan(readsBefore);
+      });
+    });
+
+    // The New column dialog with New list chosen, for a column named Fictional Tier.
+    const newListDialog = async () => {
+      const dialog = await newColumn();
+      await userEvent.type(
+        within(dialog).getByLabelText("Name"),
+        "Fictional Tier",
+      );
+      await chooseIn(dialog, "List", "New list");
+      return dialog;
+    };
+
+    it("asks a new list for its name and its choices, sending nothing", async () => {
+      const { fetch } = await openWith(withColumns());
+      const dialog = await newListDialog();
+
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Add column" }),
+      );
+
+      expect(within(dialog).getByText("Name needed")).toBeDefined();
+      expect(within(dialog).getByText("Choices needed")).toBeDefined();
+      expect(sent(fetch, "POST /api/features/columns")).toEqual([]);
+    });
+
+    it("asks a new list for a name no other list has", async () => {
+      await openWith(withColumns());
+      const dialog = await newListDialog();
+
+      await userEvent.type(
+        within(dialog).getByLabelText("List name"),
+        "fictional sizes",
+      );
+
+      expect(
+        within(dialog).getByText("Another list already has that name"),
+      ).toBeDefined();
+    });
+
+    it("says so under Choices when a choice is typed twice, keeping it once", async () => {
+      await openWith(withColumns());
+      const dialog = await newListDialog();
+
+      await userEvent.type(
+        within(dialog).getByLabelText("Choices"),
+        "Gold{Enter}Gold{Enter}",
+      );
+
+      expect(within(dialog).getByText("Already in this list")).toBeDefined();
+      expect(within(dialog).getAllByText("Gold")).toHaveLength(1);
+    });
+
+    it("refuses pasting more choices than a list takes at once, keeping those it has", async () => {
+      await openWith(withColumns());
+      const dialog = await newListDialog();
+      const box = within(dialog).getByLabelText("Choices");
+      await userEvent.click(box);
+
+      await userEvent.paste(
+        Array.from(
+          { length: mostChoicesAtOnce + 1 },
+          (_, at) => `Choice ${String(at)}`,
+        ).join("\n"),
+      );
+
+      expect(
+        within(dialog).getByText(
+          `Up to ${String(mostChoicesAtOnce)} lines at once`,
+        ),
+      ).toBeDefined();
+      expect(within(dialog).queryByText("Choice 0")).toBeNull();
+    });
+
+    it("takes a pasted choice's name, leaving out a description after a tab", async () => {
+      await openWith(withColumns());
+      const dialog = await newListDialog();
+      await userEvent.click(within(dialog).getByLabelText("Choices"));
+
+      await userEvent.paste("Gold\tThe best\nSilver");
+
+      expect(within(dialog).getByText("Gold")).toBeDefined();
+      expect(within(dialog).getByText("Silver")).toBeDefined();
+      expect(within(dialog).queryByText(/The best/u)).toBeNull();
+    });
+
+    it("refuses a pasted choice longer than a choice may be", async () => {
+      await openWith(withColumns());
+      const dialog = await newListDialog();
+      await userEvent.click(within(dialog).getByLabelText("Choices"));
+
+      await userEvent.paste(`Gold\n${"x".repeat(listLengths.choice + 1)}`);
+
+      expect(within(dialog).getByText("Too long")).toBeDefined();
+      expect(within(dialog).queryByText("Gold")).toBeNull();
+    });
+
+    it("names a list the server finds taken under List name, not as an alert", async () => {
+      const path = "POST /api/features/columns";
+      await openWith(withColumns(), {
+        [path]: () =>
+          Response.json(
+            { error: "There is already a list with that name" },
+            { status: 409 },
+          ),
+      });
+      const dialog = await newColumn();
+      await userEvent.type(
+        within(dialog).getByLabelText("Name"),
+        "Fictional Tier",
+      );
+      await chooseIn(dialog, "List", "New list");
+      await userEvent.type(
+        within(dialog).getByLabelText("List name"),
+        "Fictional Tiers",
+      );
+      await userEvent.type(
+        within(dialog).getByLabelText("Choices"),
+        "Gold{Enter}",
+      );
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Add column" }),
+      );
+
+      expect(
+        await within(dialog).findByText("Another list already has that name"),
+      ).toBeDefined();
+      expect(within(dialog).queryByRole("alert")).toBeNull();
+
+      // And the refusal goes once the name changes
+      await userEvent.type(within(dialog).getByLabelText("List name"), " Two");
+      expect(
+        within(dialog).queryByText("Another list already has that name"),
+      ).toBeNull();
     });
 
     it("asks no visibility for a column that holds its own values", async () => {
