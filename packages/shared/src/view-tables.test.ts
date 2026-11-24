@@ -187,6 +187,7 @@ describe("Sharing views", () => {
     cycles: ["plan:edit", "configuration:edit"],
     "release-streams": ["plan:edit", "configuration:edit"],
     capacity: ["allocations:edit"],
+    "capacity-coverage": ["allocations:edit"],
     "feature-assignments": ["feature-teams:edit"],
     lists: ["configuration:edit"],
     drafts: ["configuration:edit"],

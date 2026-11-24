@@ -123,27 +123,38 @@ export function addedNames(requests: readonly RowRequest[]): string {
     : "the people and planned hires";
 }
 
-// How Metrics and the count above a table call rows of people and planned hires together, and how
-// many of each some rows are, such as "150 people and 6 planned hires".
-export function peopleAndHires<Row>(isPlanned: (row: Row) => boolean): {
-  noun: string;
-  counted: (rows: readonly Row[]) => string;
-} {
+// What a kind of row is called, one and several.
+interface RowNames {
+  one: string;
+  many: string;
+}
+
+// How Metrics and the count above a table call rows of two kinds together, and how many of each
+// some rows are, such as "150 people and 6 planned hires": the first kind named unless there are
+// only rows of the second.
+export function twoKindsOfRow<Row>(
+  first: RowNames,
+  second: RowNames,
+  isSecond: (row: Row) => boolean,
+): { noun: string; counted: (rows: readonly Row[]) => string } {
+  const named = (number: number, { one, many }: RowNames) =>
+    `${count(number)} ${number === 1 ? one : many}`;
   return {
-    noun: "people and planned hires",
+    noun: `${first.many} and ${second.many}`,
     counted: (rows) => {
-      const hires = rows.filter(isPlanned).length;
-      const people = rows.length - hires;
+      const seconds = rows.filter(isSecond).length;
+      const firsts = rows.length - seconds;
       return [
-        ...(people > 0 || hires === 0
-          ? [`${count(people)} ${people === 1 ? "person" : "people"}`]
-          : []),
-        ...(hires > 0
-          ? [
-              `${count(hires)} ${hires === 1 ? "planned hire" : "planned hires"}`,
-            ]
-          : []),
+        ...(firsts > 0 || seconds === 0 ? [named(firsts, first)] : []),
+        ...(seconds > 0 ? [named(seconds, second)] : []),
       ].join(" and ");
     },
   };
 }
+
+export const peopleAndHires = <Row>(isPlanned: (row: Row) => boolean) =>
+  twoKindsOfRow(
+    { one: "person", many: "people" },
+    { one: "planned hire", many: "planned hires" },
+    isPlanned,
+  );

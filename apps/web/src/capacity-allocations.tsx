@@ -14,7 +14,11 @@ import {
   type AllocationRow,
   marksFrom,
 } from "./allocation-months.tsx";
-import { MonthGrid, type MonthGridProps } from "./month-grid.tsx";
+import {
+  MonthGrid,
+  peopleCounting,
+  type MonthGridProps,
+} from "./month-grid.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import { orgChartQuery } from "./org-chart.ts";
 import { monthManagers } from "./planned-hire-months.ts";
@@ -133,6 +137,7 @@ export function CapacityAllocations({
   );
   return (
     <MonthGrid
+      counting={peopleCounting}
       what="the allocations"
       reads={[monthsRead, allocationsRead, chartRead]}
       table={table}

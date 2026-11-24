@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-workforce-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Manual Test: Workforce Administrator Workflows
@@ -440,7 +440,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `6AC7` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The page is headed **Capacity**, with the tabs **Feature teams**, **Allocations** and **Settings**.
+  - **Expected:** The page is headed **Capacity**, with the tabs **Feature teams**, **Allocations**, **Coverage** and **Settings**.
   - **Notes:**
 
 - [ ] `BE47` Select the **Settings** tab.

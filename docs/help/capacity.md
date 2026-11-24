@@ -1,9 +1,10 @@
 # Capacity
 
-**Capacity** is about who works where and how much feature work people can deliver. It has three tabs, beside the heading:
+**Capacity** is about who works where and how much feature work people can deliver. It has four tabs, beside the heading:
 
 - **Feature teams** shows who is on which feature team, month by month.
 - **Allocations** shows what each person and planned hire works on, month by month, and how much of their month it takes.
+- **Coverage** shows each feature's effort against the hours allocated to it, month by month.
 - **Settings** holds the planning settings, which apply to everyone.
 
 ## What to Know First
@@ -22,7 +23,7 @@ See [Drafts](drafts.md) for more.
 
 ### Choose a Tab
 
-Select **Feature teams**, **Allocations** or **Settings** beside the heading. The page opens on the tab you used last.
+Select **Feature teams**, **Allocations**, **Coverage** or **Settings** beside the heading. The page opens on the tab you used last.
 
 ### Move Through the Months
 
@@ -161,13 +162,26 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 - **A green dot inside a line**, in the light green Live row under a drafted row, marks a feature the draft takes off or changes. With **Live only** chosen in the **Draft** menu, it marks each one a waiting draft would change.
 - **Allocations** is read only.
 
+### In Coverage
+
+- **A row** is a feature still to be done, or a project's own work that people are allocated to. Done and cancelled features aren't listed. A project's work has no effort, so its **Effort** and **Remaining** are blank.
+- **Effort** is the feature's estimate with the default buffer added.
+- **Allocated** is the hours people's allocations deliver over the months shown. An allocation's hours are its share of the working month, at the default focus, and at the ramp-up for someone in their first months.
+- **Remaining** is the effort not yet allocated. **Over**, in red, shows how many hours the allocations go past the effort, such as **Over +32 h**.
+- **A month**, such as **64 of 24 h**, reads the hours allocated in it of the hours it needs.
+- **The hours a month needs:** Fathom spreads the effort not covered by past months evenly over the months the feature is planned in. Those are its target cycle's months, or the months until **Needed by** when it has no cycle, and any month someone is allocated to it.
+- **Past months**, and months once the effort is covered, show the hours allocated alone.
+- **Group by** offers **Feature team**. **Show details** on a feature's row opens it on **Features**.
+- **Drafts:** with **Drafts applied** chosen in the **Draft** menu, the hours follow drafted allocations, features and settings. Otherwise they follow what's approved.
+- **Coverage** is read only. It needs the planning settings, so you see it only if you see **Settings** too.
+
 ### In Settings
 
 - **Hours a day**, **Working days a week** and **Working days a month** set what a person-day, person-week and person-month are, in the **Effort** column on **Features**. An estimate keeps its hours, so changing these changes what it reads in the larger units.
 - **Default focus** is the share of a person's time that goes to feature work at all, after meetings, support and the like.
 - **Default buffer** is a percentage added to a feature's effort before forecasting. The effort entered stays as it is.
 - **Ramp-up for new starters** is the share of full output a new starter delivers in each of their first months. The last row, such as **From month 3**, shows that they deliver **100%** from then on.
-- Focus, buffer and ramp-up don't change any figure Fathom shows.
+- Focus, buffer and ramp-up change only the hours on **Coverage**.
 - **A yellow dot** marks a setting a draft changes, with the live value under it after a green dot. **No month 3**, or the like, marks a month the draft adds or removes. **Draft**, above **Working time**, chooses how drafts show.
 
 ## Where Changes Go

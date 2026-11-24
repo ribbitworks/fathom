@@ -17,7 +17,6 @@ import { useColumnWidths } from "./column-widths.ts";
 import {
   type ScrollEdges,
   cellKey,
-  frozenByDefault,
   frozenLayout,
   frozenLeft,
   sameEdges,
@@ -30,7 +29,7 @@ import type { SelectionGrid } from "./grid-selection.ts";
 import classes from "./pages.module.css";
 import type { AnyColumn, Column, GridRecord } from "./record-table.ts";
 import { classMarkChars, draftMarkChars } from "./status-mark.tsx";
-import { valueOrStandIn } from "./table-view.ts";
+import { frozenAtFirst, valueOrStandIn } from "./table-view.ts";
 import { valueStore } from "./value-store.ts";
 
 const widestChars = 30;
@@ -188,7 +187,8 @@ export function useGridLayout<Rec extends GridRecord, Change, Request>(
       .join(" "),
     edges.set,
   );
-  const frozenAsked = Math.min(view.frozen ?? frozenByDefault, columns.length);
+  const atFirst = frozenAtFirst(columns);
+  const frozenAsked = Math.min(view.frozen ?? atFirst, columns.length);
   const frozen = frozenLayout(measured, headerCells, frozenAsked);
   // Held from the table's first drawing, so the page can let the link go at once.
   const [linkedAtFirst] = useState(linkedColumn?.key);
@@ -241,8 +241,7 @@ export function useGridLayout<Rec extends GridRecord, Change, Request>(
           style: { left: `var(${frozenLeft(cellKey(index, copy))})` },
         }
       : { className: "", style: undefined };
-  const frozenView = (count: number) =>
-    count === frozenByDefault ? undefined : count;
+  const frozenView = (count: number) => (count === atFirst ? undefined : count);
   const freeze = (count: number) => {
     onView({ ...view, frozen: frozenView(count) });
   };

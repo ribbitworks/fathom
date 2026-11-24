@@ -19,6 +19,7 @@ import {
   shownChoiceSchema,
 } from "@fathom/shared";
 import { createRoute, redirect } from "@tanstack/react-router";
+import { useCallback } from "react";
 import { z } from "zod";
 import { CapacityPage } from "./capacity-page.tsx";
 import {
@@ -231,6 +232,13 @@ export const capacityRoute = createRoute({
     const mode = shownCapacityMode(asked, access);
     // The address keeps the tab shown, not one asked for that the role doesn't see.
     const kept = asked === undefined ? {} : { mode };
+    // Kept from one drawing to the next, so Coverage's table isn't made again.
+    const onFeature = useCallback(
+      (id: string) => {
+        void navigate(planAddress("features", id));
+      },
+      [navigate],
+    );
     return (
       <CapacityPage
         modes={capacityModes(access)}
@@ -259,6 +267,7 @@ export const capacityRoute = createRoute({
         )}
         canEditSettings={permissions.includes("configuration:edit")}
         approves={approvableKinds(permissions)}
+        onFeature={onFeature}
       />
     );
   },

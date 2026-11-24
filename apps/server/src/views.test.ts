@@ -1544,6 +1544,7 @@ describe("every starting role on every view table", () => {
     lists: { opens: seesConfiguration, shares: configurers },
     "feature-assignments": { opens: seesAssignments, shares: teamEditors },
     capacity: { opens: seesAssignments, shares: allocationEditors },
+    "capacity-coverage": { opens: seesAssignments, shares: allocationEditors },
     "org-chart": { opens: everyoneButAdministrator, shares: peopleEditors },
     drafts: { opens: everyoneButAdministrator, shares: configurers },
     accounts: {

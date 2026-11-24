@@ -359,7 +359,10 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
     const { record } = row;
     const { showDetails } = table;
     const details =
-      record && showDetails !== undefined && !isPending(record)
+      record &&
+      showDetails !== undefined &&
+      !isPending(record) &&
+      table.hasDetails?.(record) !== false
         ? {
             name: table.nameOf(record),
             onShow: () => {

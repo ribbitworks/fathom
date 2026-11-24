@@ -6,7 +6,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { MonthGrid, type MonthGridProps } from "./month-grid.tsx";
+import {
+  MonthGrid,
+  peopleCounting,
+  type MonthGridProps,
+} from "./month-grid.tsx";
 import { orgChartQuery } from "./org-chart.ts";
 import { hireRows, monthManagers } from "./planned-hire-months.ts";
 import { useSavedViews } from "./saved-views.tsx";
@@ -81,6 +85,7 @@ export function CapacityFeatureTeams({
   );
   return (
     <MonthGrid
+      counting={peopleCounting}
       what="the feature teams"
       reads={[query, chartRead]}
       table={table}

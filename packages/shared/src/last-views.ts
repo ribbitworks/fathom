@@ -43,6 +43,7 @@ export const viewPageOf: Record<ViewTable, ViewPage> = {
   lists: "lists",
   "feature-assignments": "capacity",
   capacity: "capacity",
+  "capacity-coverage": "capacity",
   "org-chart": "org-chart",
   accounts: "accounts",
   drafts: "drafts",

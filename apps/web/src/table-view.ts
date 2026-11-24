@@ -85,6 +85,9 @@ export interface TableColumn<Row> {
   dataClass?: Tier | undefined;
   // Set for a column hidden until a view shows it, such as one that repeats what a mark says.
   hiddenAtFirst?: boolean | undefined;
+  // Set for each of a table's first columns frozen until a view says otherwise, such as the figures
+  // beside a monthly grid's names; otherwise the first column alone is.
+  frozenAtFirst?: true | undefined;
   // False for a column the search leaves out, such as the Key column, whose numbers would match
   // inside other words; a key typed whole finds its record.
   searched?: false | undefined;
@@ -585,6 +588,14 @@ function knownKeys<Key extends "hidden" | "shown">(
 export interface Hideable {
   key: string;
   hiddenAtFirst?: boolean | undefined;
+  frozenAtFirst?: true | undefined;
+}
+
+// How many of the columns, in order, stay frozen until the view says otherwise: those marked frozen
+// at first from the first on, and at least the first.
+export function frozenAtFirst(columns: readonly Hideable[]): number {
+  const unmarked = columns.findIndex((column) => column.frozenAtFirst !== true);
+  return Math.max(frozenByDefault, unmarked === -1 ? columns.length : unmarked);
 }
 
 const hiddenIn = (
@@ -636,9 +647,15 @@ export function withHidden(
       : [...before].filter((key) => !keys.includes(key)),
   );
   const shownBefore = ordered.filter((key) => !before.has(key));
+  // The default, as the table works it out, counts the columns shown, before and after.
+  const shownOf = (keys: readonly string[]) =>
+    columns.filter(({ key }) => keys.includes(key));
   const frozenBefore = Math.min(
-    view.frozen ?? frozenByDefault,
+    view.frozen ?? frozenAtFirst(shownOf(shownBefore)),
     shownBefore.length,
+  );
+  const frozenFirstAfter = frozenAtFirst(
+    shownOf(ordered.filter((key) => !after.has(key))),
   );
   const lastFrozen = shownBefore.slice(0, frozenBefore).at(-1);
   const frozenEnd =
@@ -659,7 +676,7 @@ export function withHidden(
     ...view,
     hidden: hidden.length === 0 ? undefined : hidden,
     shown: shown.length === 0 ? undefined : shown,
-    frozen: frozen === frozenByDefault ? undefined : frozen,
+    frozen: frozen === frozenFirstAfter ? undefined : frozen,
   };
 }
 

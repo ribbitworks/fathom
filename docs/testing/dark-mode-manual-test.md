@@ -800,7 +800,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `D1A7` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:**
-    - The tabs read **Feature teams**, **Allocations** and **Settings**, with **Allocations** chosen.
+    - The tabs read **Feature teams**, **Allocations**, **Coverage** and **Settings**, with **Allocations** chosen.
     - The tabs, the column headings and the names are easy to read.
   - **Notes:**
 
@@ -817,6 +817,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `6D09` Scroll the table to the bottom.
   - **Expected:** The total rows, headed **Total, PM**, and the **Organization, PM** row at the foot are easy to read and to tell apart from the rows above them.
+  - **Notes:**
+
+- [ ] `6009` Select the **Coverage** tab.
+  - **Expected:** These are easy to read and to tell apart:
+    - the hours in **Effort**, **Allocated** and **Remaining**, and in the months' cells, such as "64 of 80 h"
+    - the red "Over" and the hours after it
   - **Notes:**
 
 - [ ] `04E5` Select the **Settings** tab.

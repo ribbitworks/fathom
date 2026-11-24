@@ -115,6 +115,15 @@ const viewTableNeeds: Record<ViewTable, Needs> = {
     "people:view",
     "personal:view",
   ),
+  // Coverage reads the features and the planning settings besides.
+  "capacity-coverage": allOf(
+    "allocations:view",
+    "feature-teams:view",
+    "people:view",
+    "personal:view",
+    "features:view",
+    "configuration:view",
+  ),
   "org-chart": allOf("people:view"),
   drafts: anyOf(
     "people:view",

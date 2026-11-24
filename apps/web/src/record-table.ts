@@ -226,6 +226,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // Shows a record's details beside the table, from its Name cell and its menu, for a table whose
   // records have them.
   showDetails?: (record: Rec) => void;
+  // Whether a record has details, on a table where only some do, such as Coverage's features
+  // beside its projects' own work; every record does otherwise.
+  hasDetails?: (record: Rec) => boolean;
   // Whether a record cannot be changed by this user, though others of the table can.
   readOnlyRecord?: (record: Rec) => boolean;
   // The table's columns, from its added columns and their lists, and the records, live or as

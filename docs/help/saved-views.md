@@ -16,7 +16,7 @@ On some pages, a view keeps more:
 
 On the board on **Features**, the **Views** menu leaves out the sort, the units, and the columns' order, hidden columns, widths and frozen columns. They stay in the view and show again on the table.
 
-You can save views on the **People**, **Features**, **Projects**, **Releases**, **Org chart**, **Capacity**, **Accounts** and **Drafts** pages. Each tab of **Projects** and of **Releases** has views of its own, and so do **Capacity**'s **Feature teams** and **Allocations**.
+You can save views on the **People**, **Features**, **Projects**, **Releases**, **Org chart**, **Capacity**, **Accounts** and **Drafts** pages. Each tab of **Projects** and of **Releases** has views of its own, and so do **Capacity**'s **Feature teams**, **Allocations** and **Coverage**.
 
 On the **Org chart**, a view keeps how the chart is drawn instead. See [Org chart](org-chart.md#save-a-view-of-the-chart).
 
@@ -33,7 +33,7 @@ The **Views** menu shows once there's a view to save or apply, a hidden column t
 - **Where a page opens:** when you open a page from the left-hand menu, it shows the view you last left it on, in any browser you sign in to. That includes its tab, the view you applied, and on **Features** the table or the board. It still opens on today's date, with no details open.
 - **Links to a view:** a link that shows a view opens that view instead, and the page then keeps it. To have the page open on the table's own view again, select **Clear view**.
 - **Who can share:** you can share a view you saved yourself on a table whose records your role changes, such as **Features** if it edits features, or **People** and the **Org chart** if it edits people.
-  - On a page with tabs, each tab is its own table: on **Capacity**, sharing **Allocations** takes changing allocations, and **Feature teams** changing feature teams.
+  - On a page with tabs, each tab is its own table: on **Capacity**, sharing **Allocations** or **Coverage** takes changing allocations, and **Feature teams** changing feature teams.
   - To share on **Lists** or **Drafts**, your role must change configuration; on **Accounts**, it must manage accounts.
   - Only a view's maker, or a role that can share views on the page, can change, rename or delete a shared view.
 

@@ -38,10 +38,11 @@ This page lists every page of Fathom. It says what each is for, where it is, and
 - [Org chart](org-chart.md): It draws reporting teams and feature teams as cards, today or, with **View Personal details**, on past dates. Future dates in **Reporting teams** also need **View Confidential data**.
   - **Shown with:** **View People**
   - **Starting roles that see it:** Every role but Administrator
-- [Capacity](capacity.md): It shows who is on which feature team and what each person works on, month by month, and the planning settings.
+- [Capacity](capacity.md): It shows who is on which feature team, what each person works on and how well each feature's effort is covered, month by month, and the planning settings.
   - **Shown with:** One tab is enough to show the page. Each tab needs these permissions:
     - Its **Feature teams** tab needs **View Feature teams** and **View Personal details**.
     - Its **Allocations** tab needs **View Allocations**, **View Feature teams**, **View People** and **View Personal details**.
+    - Its **Coverage** tab needs what **Allocations** needs, and **View Features** and **View Configuration**.
     - Its **Settings** tab needs **View Configuration**.
   - **Starting roles that see it:** Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive
 

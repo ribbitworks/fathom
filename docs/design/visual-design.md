@@ -123,7 +123,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 - **Frozen columns:** Freeze up to this column keeps that column and those before it on the left while the rest scroll sideways. Which columns are frozen is part of the view.
   - **Edge:** A thin line, with a soft shadow while scrolled sideways; a fade at either edge shows more columns that way.
   - **Limit:** Frozen columns take at most half the table's width.
-  - **Default:** The first column is frozen; any other choice shows in the Views menu.
+  - **Default:** The first column is frozen, or the first few a table marks, as [Frozen at first](../standards/ui-conventions/tables.md#tables) sets out; any other choice shows in the Views menu.
 - **Metrics:** A Metrics button after the Draft menu, or after the search field on a table without drafts, opens the Metrics panel. Metrics in a column's menu opens it broken down by that column.
   - **Count:** The rows counted, such as "35 people", or "35 people with drafts, 34 live".
   - **Break down by:** One column gives a row for each choice, with its count and share; a column without choices gives Populated and Empty. A second, and by, crosses them in a table with All, as Count or Share. A share of a narrower group comes from filtering first.

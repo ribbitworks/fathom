@@ -7,9 +7,11 @@ import { describe, expect, it } from "vitest";
 import {
   deliveredHours,
   effortNeeded,
-  monthsThrough,
+  firstMonthIn,
+  isForecast,
   neededByMonth,
   rampUpPercent,
+  targetCycleMonths,
   workWindow,
 } from "./forecast.ts";
 
@@ -53,6 +55,16 @@ describe("deliveredHours", () => {
   });
 });
 
+describe("isForecast", () => {
+  it("forecasts work still to be done, and none done or cancelled", () => {
+    expect(isForecast("in-progress")).toBe(true);
+    expect(isForecast("planned")).toBe(true);
+    expect(isForecast(null)).toBe(true);
+    expect(isForecast("done")).toBe(false);
+    expect(isForecast("cancelled")).toBe(false);
+  });
+});
+
 describe("effortNeeded", () => {
   it("adds the buffer to the estimate", () => {
     expect(effortNeeded(100, 20)).toBe(120);
@@ -65,18 +77,57 @@ describe("effortNeeded", () => {
   });
 });
 
-describe("monthsThrough", () => {
-  it("lists every month from the first to the last, across a year", () => {
-    expect(monthsThrough("2026-11", "2027-02")).toEqual([
-      "2026-11",
-      "2026-12",
-      "2027-01",
-      "2027-02",
-    ]);
+describe("firstMonthIn", () => {
+  it("finds the month someone starts in, after months outside their employment", () => {
+    expect(
+      firstMonthIn(new Set(["2027-01"]), ["2027-01", "2027-02", "2027-03"]),
+    ).toBe("2027-02");
   });
 
-  it("lists none when the last comes first", () => {
-    expect(monthsThrough("2027-02", "2027-01")).toEqual([]);
+  it("finds none for someone employed from the first month on", () => {
+    expect(
+      firstMonthIn(new Set(["2027-03"]), ["2027-01", "2027-02", "2027-03"]),
+    ).toBeUndefined();
+  });
+});
+
+describe("targetCycleMonths", () => {
+  const streams = [
+    {
+      id: "s-majors",
+      cycles: [
+        {
+          startsOn: "2027-01-01",
+          endsOn: "2027-03-31",
+          name: "27.1",
+          months: ["2027-01", "2027-02", "2027-03"].map((month) => ({
+            month,
+            share: 1,
+          })),
+        },
+      ],
+    },
+  ];
+
+  it("gives the months of the cycle a feature targets", () => {
+    expect(
+      targetCycleMonths(
+        { targetStreamId: "s-majors", targetCycle: "2027-01-01" },
+        streams,
+      ),
+    ).toEqual(["2027-01", "2027-02", "2027-03"]);
+  });
+
+  it("gives none for a feature with no target, or one no longer laid out", () => {
+    expect(
+      targetCycleMonths({ targetStreamId: null, targetCycle: null }, streams),
+    ).toBeUndefined();
+    expect(
+      targetCycleMonths(
+        { targetStreamId: "s-majors", targetCycle: "2029-01-01" },
+        streams,
+      ),
+    ).toBeUndefined();
   });
 });
 

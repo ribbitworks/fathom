@@ -26,7 +26,7 @@ As a Project Manager, you see projects through to delivery: their milestones, th
 
 ## Keep a View
 
-A view is how you've set up a table, such as its search and filters. You can save one on each **Projects** tab, such as **Milestones**, and on **Capacity**'s **Feature teams** and **Allocations**, to come back to.
+A view is how you've set up a table, such as its search and filters. You can save one on each **Projects** tab, such as **Milestones**, and on **Capacity**'s **Feature teams**, **Allocations** and **Coverage**, to come back to.
 
 Only you see it. See [Saved views](saved-views.md#save-a-view).
 

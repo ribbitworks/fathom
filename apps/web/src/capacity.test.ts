@@ -30,8 +30,22 @@ const seesAllocations: Permission[] = [
 describe("the tabs a role sees", () => {
   it("gives every tab, in order, to a role that sees them all", () => {
     expect(
-      capacityModes(access([...seesAllocations, "configuration:view"])),
-    ).toEqual(["feature-teams", "allocations", "settings"]);
+      capacityModes(
+        access([...seesAllocations, "features:view", "configuration:view"]),
+      ),
+    ).toEqual(["feature-teams", "allocations", "coverage", "settings"]);
+  });
+
+  it.each([
+    ["the features", "features:view", ["settings"]],
+    ["the planning settings", "configuration:view", []],
+  ] as const)("leaves out Coverage without %s", (_, missing, besides) => {
+    const all = [...seesAllocations, "features:view", "configuration:view"];
+    expect(
+      capacityModes(
+        access(all.filter((one) => one !== missing) as Permission[]),
+      ),
+    ).toEqual(["feature-teams", "allocations", ...besides]);
   });
 
   it("gives Feature teams to a role that sees feature teams and Personal details", () => {

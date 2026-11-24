@@ -25,6 +25,7 @@ Verifies the Capacity page's tabs, and switching between them:
   - The page left out of the menu for a role that sees no tab.
   - The count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to.
   - The rows kept to those over or under from the Views menu, and the rows kept to what someone is allocated to in any month.
+- Coverage, each feature's effort against the hours allocated to it: how it reads, the columns that stay at the left, and opening a feature from it.
 - Feature teams, which has its own [Capacity's Feature Teams](capacity-feature-teams-manual-test.md) test.
 
 The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
@@ -732,4 +733,42 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `AED6` Select the **×** on the "Allocated to: Not allocated" pill.
   - **Expected:** The table lists every row again.
+  - **Notes:**
+
+### CAP-19: Coverage Shows Each Feature's Effort Against Its Hours
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-18.
+
+**Preconditions:** **Capacity** open, nothing in the search box and no filters.
+
+- [ ] `D896` Select the **Coverage** tab.
+  - **Expected:**
+    - **Coverage** is chosen in the tabs.
+    - Above the table, in order: a search box, a **Draft** button, **Metrics**, **Group by** and **Views**, then a count such as "22 features and 5 projects".
+    - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
+    - The table's columns start with **Work**, **Effort**, **Allocated** and **Remaining**, then months; on a narrow window, **Remaining** may be scrolled out of view to the left.
+    - The current month's heading is underlined in red.
+  - **Notes:**
+
+- [ ] `F7CE` Type `Mobile Approvals` in the search box.
+  - **Expected:**
+    - Only the 'Mobile Approvals' row shows.
+    - **Effort** and **Allocated** read hours, such as "720 h".
+    - The current month's cell reads hours allocated of hours needed, such as "64 of 80 h".
+  - **Notes:**
+
+- [ ] `3B10` Scroll the table to its left end.
+  - **Expected:** **Remaining**, after **Allocated**, reads "Over" in red, then the hours past the effort, such as "+464 h".
+  - **Notes:**
+
+- [ ] `5480` Scroll the table right, past the last month.
+  - **Expected:** **Work**, **Effort** and **Allocated** stay at the left, with **Remaining** after them where the window is wide enough.
+  - **Notes:**
+
+- [ ] `4C83` Open the 'Mobile Approvals' row's **⋯** menu, at the end of the row, and select **Show details**.
+  - **Expected:** The **Features** page opens, with the details of 'Mobile Approvals' beside the table.
+  - **Notes:**
+
+- [ ] `8B5E` Select the browser's back button.
+  - **Expected:** **Capacity** shows again, with the **Coverage** tab chosen.
   - **Notes:**

@@ -414,7 +414,8 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     [
       menuPlace(place).showsDetails &&
         table.showDetails !== undefined &&
-        !isPending(record) && (
+        !isPending(record) &&
+        table.hasDetails?.(record) !== false && (
           <Menu.Item
             key="details"
             onClick={() => {

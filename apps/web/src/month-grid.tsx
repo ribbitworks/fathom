@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The monthly grid of people by month, as Capacity's Feature teams and Allocations show it, once
-// what it reads has loaded, under the strip of quarters every view with time across it shares,
-// following the grid as it scrolls.
+// The monthly grid of rows by month, as Capacity's tabs show it, once what it reads has loaded,
+// under the strip of quarters every view with time across it shares, following the grid as it
+// scrolls.
 
 import { type MonthRange, monthOf, monthsBetween } from "@fathom/shared";
 import { Center, Loader } from "@mantine/core";
@@ -10,7 +10,6 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import {
   memo,
   type ReactNode,
-  useCallback,
   useLayoutEffect,
   useMemo,
   useState,
@@ -22,7 +21,7 @@ import { LoadProblem } from "./load-problem.tsx";
 import { peopleAndHires } from "./people-rows.ts";
 import { type TableScroll, useTableScroll } from "./grid-layout.ts";
 import { RecordGrid } from "./record-grid.tsx";
-import type { RecordActions, RecordTable } from "./record-table.ts";
+import type { CellRecord, RecordActions, RecordTable } from "./record-table.ts";
 import type { SavedViews, ViewChoice } from "./table-controls.tsx";
 import { formatMonth } from "./day-formats.ts";
 import type { View } from "./table-view.ts";
@@ -53,7 +52,25 @@ export interface MonthGridProps {
   canShareViews: boolean;
 }
 
-export function MonthGrid<Rec extends MonthRow>({
+// How a grid counts its rows by the month in view, such as the people employed in it.
+export interface MonthCounting<Rec extends CellRecord> {
+  counted: NonNullable<RecordTable<Rec, CellChange, CellChange>["counted"]>;
+  inMonth: (rows: readonly Rec[], month: string) => string;
+}
+
+// People and planned hires alike: those employed in the month the count is for, and the planned
+// hires expected by then, naming that month.
+const peopleAndPlannedHires = peopleAndHires(
+  (row: MonthRow) => row.plannedHire === true,
+);
+
+export const peopleCounting: MonthCounting<MonthRow> = {
+  counted: peopleAndPlannedHires,
+  inMonth: (rows, month) =>
+    `${peopleAndPlannedHires.counted(rows.filter((row) => !row.outside.has(month)))} in ${formatMonth(month)}`,
+};
+
+export function MonthGrid<Rec extends CellRecord>({
   what,
   reads,
   table,
@@ -66,6 +83,7 @@ export function MonthGrid<Rec extends MonthRow>({
   onView,
   views,
   viewChoices,
+  counting,
 }: {
   // What could not be loaded, such as "the allocations".
   what: string;
@@ -83,6 +101,8 @@ export function MonthGrid<Rec extends MonthRow>({
   views: { saved: SavedViews; dialogs: ReactNode };
   // Choices of which rows the grid shows, first in the Views menu.
   viewChoices?: readonly ViewChoice[];
+  // Counted by the month in view, where the rows change with it; otherwise as any table counts.
+  counting?: MonthCounting<Rec> | undefined;
 }) {
   // The month the count is for, which only the count listens for, so scrolling never redraws the
   // table; the current month, where the grid opens, until the strip says otherwise.
@@ -90,12 +110,20 @@ export function MonthGrid<Rec extends MonthRow>({
     valueStore<string>((kept, next) => kept === next, monthOf(now)),
   );
   const countedTable = useMemo(
-    () => (table === undefined ? undefined : countedAsPeople(table)),
-    [table],
+    () =>
+      table === undefined || counting === undefined
+        ? table
+        : { ...table, counted: counting.counted },
+    [table, counting],
   );
-  const count = useCallback(
-    (rows: readonly Rec[]) => <CountInView rows={rows} month={countedMonth} />,
-    [countedMonth],
+  const count = useMemo(
+    () =>
+      counting === undefined
+        ? undefined
+        : (rows: readonly Rec[]) => (
+            <CountInView rows={rows} month={countedMonth} counting={counting} />
+          ),
+    [countedMonth, counting],
   );
   if (reads.some(({ isError }) => isError)) {
     return (
@@ -150,30 +178,18 @@ export function MonthGrid<Rec extends MonthRow>({
   );
 }
 
-// Both grids count people and planned hires alike.
-function countedAsPeople<Rec extends MonthRow>(
-  table: RecordTable<Rec, CellChange, CellChange>,
-): RecordTable<Rec, CellChange, CellChange> {
-  return {
-    ...table,
-    counted: peopleAndHires((row: Rec) => row.plannedHire === true),
-  };
-}
-
-// The rows both grids count: the people employed in the month the count is for, and the planned
-// hires expected by then, naming that month.
-function CountInView({
+// The rows counted in the month the count is for, which only this listens for.
+function CountInView<Rec extends CellRecord>({
   rows,
   month,
+  counting,
 }: {
-  rows: readonly MonthRow[];
+  rows: readonly Rec[];
   month: ValueStore<string, string>;
+  counting: MonthCounting<Rec>;
 }) {
   const shown = useSyncExternalStore(month.subscribe, month.get);
-  const { counted } = peopleAndHires(
-    (row: MonthRow) => row.plannedHire === true,
-  );
-  return `${counted(rows.filter((row) => !row.outside.has(shown)))} in ${formatMonth(shown)}`;
+  return counting.inMonth(rows, shown);
 }
 
 // Where each month's column is in the table, from its heading.

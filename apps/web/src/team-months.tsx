@@ -172,6 +172,15 @@ const madeNameOf = ({ madeName }: MonthRow) => madeName ?? "";
 // The key of the filter by the choices in any month, in the address and in views.
 export const anyMonthKey = "any-month";
 
+// How a month's column looks in any monthly grid: named for its month, its heading centred, and
+// marked when it is the current month.
+export const monthColumnLook = (month: string, currentMonth: string) => ({
+  label: formatMonth(month),
+  cellChars: monthCellChars,
+  headingCentred: true,
+  current: month === currentMonth,
+});
+
 // The table of the monthly grid: a row's name, frozen on the left, then a column for each month,
 // whose cells show what the content gives, shaded outside someone's employment.
 
@@ -211,6 +220,7 @@ export function monthGridTable<
       choices: monthChoices,
       multiple: true,
     }),
+    ...monthColumnLook(month, currentMonth),
     content: (record) => content(record, month),
     marksParts: true,
     shaded: (record) => record.outside.has(month),
@@ -218,9 +228,6 @@ export function monthGridTable<
       record.outside.has(month) ? (
         <VisuallyHidden>Not employed</VisuallyHidden>
       ) : undefined,
-    cellChars: monthCellChars,
-    headingCentred: true,
-    current: month === currentMonth,
     readOnly: readOnly(month),
   }));
   const columns = [

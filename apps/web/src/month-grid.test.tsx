@@ -13,7 +13,7 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MonthGrid } from "./month-grid.tsx";
+import { MonthGrid, peopleCounting } from "./month-grid.tsx";
 import { emptyView } from "./table-view.ts";
 import {
   readOnlyMonthActions,
@@ -312,6 +312,7 @@ describe("a grid of months that doesn't hold today", () => {
     render(
       <MantineProvider theme={testTheme}>
         <MonthGrid
+          counting={peopleCounting}
           what="the months"
           reads={[]}
           table={teamMonthsTable(

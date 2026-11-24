@@ -42,6 +42,8 @@ import {
   planningSettingsRef as ref,
   planningSettingsSubject as subject,
   settingsDraftWords,
+  liveSettings,
+  shownSettings,
 } from "./planning-settings.ts";
 import { RecordSection, Row } from "./record-details.tsx";
 import { RecordMenu, type RecordMenuActions } from "./record-menu.tsx";
@@ -51,7 +53,6 @@ import {
   useRecordEditing,
 } from "./record-editing.tsx";
 import { fieldColumn } from "./grid-columns.tsx";
-import { withLiveFields } from "./live-records.ts";
 import type { Column } from "./record-table.ts";
 import classes from "./planning-settings-tab.module.css";
 import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
@@ -171,23 +172,6 @@ function settingsProblem(
 
 function Percentage({ value }: { value: number }) {
   return <Text>{percentage(value)}</Text>;
-}
-
-// The settings as they are live, with their draft taken back.
-function liveSettings(settings: Settings): Settings {
-  const { draft, ...rest } = settings;
-  return draft === undefined
-    ? settings
-    : withLiveFields<Settings>(settings, draft, rest);
-}
-
-// The settings as the Draft view shows them: as drafted, or as they are live, Live only and, once
-// rejected, Drafts applied, which takes a rejected draft back.
-function shownSettings(settings: Settings, show: Show): Settings {
-  const takenBack =
-    show === "live" ||
-    (show === "drafts" && settings.draft?.state === "rejected");
-  return takenBack ? liveSettings(settings) : settings;
 }
 
 export function PlanningSettingsTab({

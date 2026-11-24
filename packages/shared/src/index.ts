@@ -8,9 +8,11 @@ export {
   type CoveredMonth,
   deliveredHours,
   effortNeeded,
-  monthsThrough,
+  firstMonthIn,
+  isForecast,
   neededByMonth,
   rampUpPercent,
+  targetCycleMonths,
   workWindow,
   type WorkPlan,
 } from "./forecast.ts";

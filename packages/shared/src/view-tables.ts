@@ -22,6 +22,7 @@ export const viewTableSchema = z.enum([
   "lists",
   "feature-assignments",
   "capacity",
+  "capacity-coverage",
   "org-chart",
   "accounts",
   "drafts",
@@ -117,6 +118,7 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
   lists: noChoices,
   "feature-assignments": noChoices,
   capacity: allocationsViewChoices,
+  "capacity-coverage": noChoices,
   "org-chart": z.strictObject({
     teams: z.literal("feature").optional(),
     levels: chartLevelsSchema.optional(),
@@ -144,6 +146,7 @@ const viewSharers: Record<ViewTable, readonly Permission[]> = {
   lists: ["configuration:edit"],
   "feature-assignments": ["feature-teams:edit"],
   capacity: recordEditors.allocation,
+  "capacity-coverage": recordEditors.allocation,
   "org-chart": ["people:edit"],
   accounts: ["administration:edit"],
   drafts: ["configuration:edit"],

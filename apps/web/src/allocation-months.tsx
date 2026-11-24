@@ -86,16 +86,22 @@ const offWholeMonth = (total: number) =>
     ? `+${String(total - wholeMonth)}%`
     : `\u2212${String(wholeMonth - total)}%`;
 
-// A month's total as the Draft menu shows it: as drafts make it only with drafts applied, and
+// A line's percentage as the Draft menu shows it: as drafted only with drafts applied, and
 // otherwise as approved.
+export const shownPercentage = (
+  { percentage, live }: Pick<AllocationLine, "percentage" | "live">,
+  show: Show,
+): number => (show === "drafts" ? percentage : (live ?? 0));
+
+// A month's total as the Draft menu shows it.
 export function monthTotal(
   lines: readonly AllocationLine[],
   show: Show,
 ): number {
   return allocatedTotal(
-    lines.map(({ meaning, percentage, live }) => ({
-      meaning,
-      percentage: show === "drafts" ? percentage : (live ?? 0),
+    lines.map((line) => ({
+      meaning: line.meaning,
+      percentage: shownPercentage(line, show),
     })),
   );
 }

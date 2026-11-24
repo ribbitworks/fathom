@@ -4,9 +4,12 @@
 // how what is left of it spreads over the months it is done in.
 
 import { wholeMonth } from "./allocations.ts";
-import { addToMonth } from "./cycles.ts";
+import type { Feature } from "./features.ts";
+import type { Meaning } from "./lists.ts";
+import { monthsBetween } from "./monthly-grid.ts";
 import type { PlanningSettings } from "./planning-settings.ts";
 import { fullOutputPercent } from "./planning-settings.ts";
+import type { ReleaseStream } from "./releases.ts";
 
 // The share of full output someone gives in a month, from their first month: the ramp-up's
 // percentages, one a month, then full output. Before the first month, or with none known, full.
@@ -16,7 +19,7 @@ export function rampUpPercent(
   rampUpPercents: readonly number[],
 ): number {
   if (firstMonth === undefined || month < firstMonth) return fullOutputPercent;
-  const into = monthsThrough(firstMonth, month).length - 1;
+  const into = monthsBetween(firstMonth, month).length - 1;
   return rampUpPercents.at(into) ?? fullOutputPercent;
 }
 
@@ -46,6 +49,24 @@ export function deliveredHours({
   );
 }
 
+// The first month someone is employed in, when it falls among the months given after the first,
+// so their ramp-up counts from it; none when they were employed from the first month given.
+export function firstMonthIn(
+  outside: ReadonlySet<string>,
+  months: readonly string[],
+): string | undefined {
+  return months.find(
+    (month, index) =>
+      index > 0 &&
+      !outside.has(month) &&
+      outside.has(String(months[index - 1])),
+  );
+}
+
+// Whether work is still to be done, and so forecast: not once it is done or cancelled.
+export const isForecast = (meaning: Meaning | null | undefined): boolean =>
+  meaning !== "done" && meaning !== "cancelled";
+
 // The effort a work needs: its estimate with the buffer the settings add; none without an estimate.
 export const effortNeeded = (
   estimateHours: number | null | undefined,
@@ -55,13 +76,15 @@ export const effortNeeded = (
     ? undefined
     : estimateHours * (1 + bufferPercent / fullOutputPercent);
 
-// Every month from the first to the last, in order; none when the last comes before the first.
-export function monthsThrough(first: string, last: string): string[] {
-  const months: string[] = [];
-  for (let month = first; month <= last; month = addToMonth(month, 1)) {
-    months.push(month);
-  }
-  return months;
+// The months a feature's target cycle covers, from its schedule's cycles; none without one.
+export function targetCycleMonths(
+  feature: Pick<Feature, "targetStreamId" | "targetCycle">,
+  streams: readonly Pick<ReleaseStream, "id" | "cycles">[],
+): string[] | undefined {
+  return streams
+    .find(({ id }) => id === feature.targetStreamId)
+    ?.cycles.find(({ startsOn }) => startsOn === feature.targetCycle)
+    ?.months.map(({ month }) => month);
 }
 
 // Where a work's months come from, in the order tried: its target cycle's months, then from the
@@ -88,7 +111,7 @@ export function workWindow(
   const first = months.at(0);
   const last = months.at(-1);
   if (first === undefined || last === undefined) return undefined;
-  return monthsThrough(first, last);
+  return monthsBetween(first, last);
 }
 
 // A month of a work: the hours allocated in it, and, from the current month on, its share of what

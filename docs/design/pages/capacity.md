@@ -15,9 +15,10 @@ Capacity shows who is on which feature team and who is allocated to what, month 
 
 ## Tabs and Access
 
-- **Tabs:** Feature teams, Allocations and Settings, kept in the address, in the page's heading. A role sees the tabs it may; a role that sees one sees it alone, with no tabs, and a role that sees none has no page.
+- **Tabs:** Feature teams, Allocations, Coverage and Settings, kept in the address, in the page's heading. A role sees the tabs it may; a role that sees one sees it alone, with no tabs, and a role that sees none has no page.
 - **Feature teams:** needs View Feature teams and Personal details, since it shows the months people join and leave teams.
 - **Allocations:** needs View Allocations, plus View Feature teams, View People and Personal details.
+- **Coverage:** needs what Allocations needs, plus View Features and View Configuration, since it reads the features and the planning settings.
 - **Settings:** needs View Configuration.
 - **The last view:** the page opens on the tab and view it last showed, as [The last view](../../standards/ui-conventions/tables.md#tables) sets out. Each grid tab has its own saved views; Settings keeps none, so the page opens on the last grid tab.
 - **Old addresses:** the Feature assignments page's old address opens the Feature teams tab, with the same view, and its old Allocations mode opens Allocations, as does Capacity's old People mode.
@@ -75,18 +76,35 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
   - The Organization row counts each person once; a person on two feature teams counts in both.
   - Drafts count only under Drafts applied.
 
+## Coverage
+
+A month grid, as the grid tabs are: the same months, strip, current month and where the grid lands. Its rows are work, not people.
+
+- **Read only.**
+- **Rows:** one per feature still to be done, and one per project's general work that someone is allocated to, named as Allocations names it. Done and Cancelled features are left out, as `isForecast` in `packages/shared/src/forecast.ts` sets out.
+- **Frozen columns:** Work, Effort, Allocated and Remaining, frozen on the left until the view says otherwise, as far as the frozen columns' share of the table allows.
+- **Effort:** the estimate with the default buffer, as `effortNeeded` sets out; blank without an estimate, as empty values are.
+- **Allocated:** the hours the allocations deliver over the grid's months, as `deliveredHours` sets out: the share of the month's working hours, at the default focus, and at the ramp-up from the first month someone is employed in, when that falls in the grid after its first month; someone employed from the grid's first month is taken as past their ramp-up. Allocations outside employment count for nothing.
+- **Remaining:** the effort less the hours allocated; Over and the hours past it, in red, as Allocations' Over reads; blank without an effort.
+- **A month's cell:** the hours allocated of the hours needed, such as 64 of 24 h. A past month, and a month once the effort is covered, show the hours allocated alone.
+- **Hours needed:** `neededByMonth` spreads the effort left after past months' hours evenly over the work's window from the current month on: its target cycle's months, or from the current month to Needed by, widened to every month an allocation reaches. Work with none of these shows no months.
+- **Drafts:** as Allocations' totals: the allocations, the features and the planning settings as drafted with Drafts applied, and as live otherwise.
+- **The count:** the features and projects shown, such as 22 features and 5 projects.
+- **Group by:** None and Feature team.
+- **Details:** a feature's details button, and Show details in its menu, open it on Features, since Coverage has no details panel of its own. A project's work has no details.
+
 ## Settings
 
 - **Sections:** Working time, Forecasts and Ramp-up for new starters, laid out as a details panel.
 - **Ramp-up:** a row per month, up to 12, then a fixed From month N row at 100%.
 - **Drafts:** the settings are one draft, approved whole with Approve Configuration, so each changed row's menu lists every change.
   - Approval is needed since a change alters every estimate's units. Effort uses the settings as approved, so a draft changes no estimate until then.
-- **Forecasts and Ramp-up:** kept for demand forecasting; nothing uses them yet.
+- **Forecasts and Ramp-up:** Coverage's hours use them, and so will the demand forecast.
 
 ## Planned
 
 - **Choosing a month by its heading:** clicking a month's heading moves the grid to it.
-- **More tabs:** Work and Demand, between Allocations and Settings.
+- **More tabs:** Work and Demand, between Coverage and Settings.
 - **Work:** the [Plan](../../product/domain.md#planning-terms) on the [shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines): when each piece of work happens, whether it is staffed, and whether it makes its date.
   - The organization's capacity row, on all staffed work, comes first, then the groups.
   - Group by offers Feature team, the first, Project, Priority, Status, Risk and Release.
@@ -95,6 +113,8 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
   - Features in Later are listed under the timeline.
 - **Work and Allocations together:** they share the search, filters, Group by, Views and capacity total rows.
   - A bar in Work opens its feature's people in Allocations, and an allocation in Allocations links to its feature in Work.
+- **Coverage's Later column:** for work with no window, all of its effort needed there, as Demand's Later.
+- **Coverage's other groupings and activities:** Group by Release, and project activities' rows, once activities are built.
 - **Demand:** the demand forecast ([issue #209](https://github.com/ribbitworks/fathom/issues/209)).
 - **Schedule picker on the grid tabs:** after the search, kept in the address and saved views; the first schedule by default, with no lines while there are none.
   - Each cycle's end is a thin upright line labelled with its name.

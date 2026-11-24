@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Capacity page: its tabs, Feature teams, Allocations and Settings, and the tab shown.
+// The Capacity page: its tabs, Feature teams, Allocations, Coverage and Settings, and the tab shown.
 
 import type { CapacityMode, DraftKind } from "@fathom/shared";
 import { Stack } from "@mantine/core";
 import { type ReactNode, useState } from "react";
 import { CapacityAllocations } from "./capacity-allocations.tsx";
+import { CapacityCoverage } from "./capacity-coverage.tsx";
 import { CapacityFeatureTeams } from "./capacity-feature-teams.tsx";
 import type { MonthGridProps } from "./month-grid.tsx";
 import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
@@ -16,6 +17,7 @@ import { today } from "./today.ts";
 const tabLabels: Record<CapacityMode, string> = {
   "feature-teams": "Feature teams",
   allocations: "Allocations",
+  coverage: "Coverage",
   settings: "Settings",
 };
 
@@ -30,6 +32,7 @@ export function CapacityPage({
   changesDates,
   canEditSettings,
   approves,
+  onFeature,
   ...grid
 }: Omit<MonthGridProps, "now"> & {
   // The tabs the role sees, in order.
@@ -44,6 +47,8 @@ export function CapacityPage({
   canEditSettings: boolean;
   // The kinds of draft the user may approve and reject.
   approves: readonly DraftKind[];
+  // Opens a feature's details on Features.
+  onFeature: (id: string) => void;
 }) {
   const [now] = useState(today);
   const tabs: Record<CapacityMode, () => ReactNode> = {
@@ -57,6 +62,9 @@ export function CapacityPage({
       />
     ),
     allocations: () => <CapacityAllocations now={now} {...grid} />,
+    coverage: () => (
+      <CapacityCoverage now={now} onFeature={onFeature} {...grid} />
+    ),
     settings: () => (
       <PlanningSettingsTab
         canEdit={canEditSettings}

@@ -46,6 +46,7 @@ export const opensWith = (needs: PageNeeds, access: ClassAccess) =>
 export const capacityModeNames = [
   "feature-teams",
   "allocations",
+  "coverage",
   "settings",
 ] as const;
 
@@ -64,6 +65,13 @@ export const capacityModeNeeds: Record<CapacityMode, PageNeed> = {
   allocations: {
     permission: allocationsOpening,
     with: allocationsOthers,
+    view: "allocations",
+  },
+  // Coverage reads the allocations as Allocations does, and the features and planning settings its
+  // forecast needs.
+  coverage: {
+    permission: allocationsOpening,
+    with: [...allocationsOthers, "features:view", "configuration:view"],
     view: "allocations",
   },
   settings: { permission: "configuration:view" },

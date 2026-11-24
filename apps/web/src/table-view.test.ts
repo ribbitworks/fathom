@@ -15,6 +15,7 @@ import {
   notGrouped,
   emptyView,
   fieldLabel,
+  frozenAtFirst,
   knownView,
   sameView,
   savedFor,
@@ -455,6 +456,40 @@ describe("a view's hidden columns", () => {
     expect(
       withHidden(emptyView, ordered, ["code"], true).frozen,
     ).toBeUndefined();
+  });
+
+  describe("frozen at first", () => {
+    const figures = [
+      { key: "name", frozenAtFirst: true as const },
+      { key: "effort", frozenAtFirst: true as const },
+      { key: "allocated", frozenAtFirst: true as const },
+      { key: "march" },
+    ];
+
+    it("freezes the columns marked from the first on, and the first alone otherwise", () => {
+      expect(frozenAtFirst(figures)).toBe(3);
+      expect(frozenAtFirst(ordered)).toBe(1);
+      expect(frozenAtFirst([])).toBe(1);
+      expect(frozenAtFirst(figures.slice(0, 2))).toBe(2);
+    });
+
+    it("keeps a view at the table's own frozen columns while columns are hidden and shown again", () => {
+      expect(
+        withHidden(emptyView, figures, ["march"], true).frozen,
+      ).toBeUndefined();
+      const hidden = withHidden(emptyView, figures, ["effort"], true);
+      expect(hidden.frozen).toBeUndefined();
+      expect(
+        withHidden(hidden, figures, ["effort"], false).frozen,
+      ).toBeUndefined();
+    });
+
+    it("keeps a count frozen by hand as a frozen column is hidden", () => {
+      expect(
+        withHidden({ ...emptyView, frozen: 2 }, figures, ["effort"], true)
+          .frozen,
+      ).toBe(1);
+    });
   });
 
   describe("hidden at first", () => {

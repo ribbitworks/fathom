@@ -24,6 +24,7 @@ export const capacityModeSchema = z.preprocess(
 export const capacityTables = {
   "feature-teams": "feature-assignments",
   allocations: "capacity",
+  coverage: "capacity-coverage",
 } as const satisfies Partial<Record<CapacityMode, ViewTable>>;
 
 export type CapacityGridMode = keyof typeof capacityTables;
@@ -35,6 +36,7 @@ export const capacityTabChoices: Record<
 > = {
   "feature-teams": [],
   allocations: allocationsViewChoices.keyof().options,
+  coverage: [],
   settings: [],
 };
 
@@ -42,6 +44,7 @@ export const capacityTabChoices: Record<
 const capacityModesOfTables: Partial<Record<ViewTable, CapacityGridMode>> = {
   [capacityTables["feature-teams"]]: "feature-teams",
   [capacityTables.allocations]: "allocations",
+  [capacityTables.coverage]: "coverage",
 };
 
 export const capacityModeOfTable = (
