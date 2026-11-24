@@ -159,9 +159,9 @@ flowchart TD
     Stopped --> Results
 ```
 
-This chart is part of [The Local Check](#the-local-check), leaving out the steps between sharing the cores and running the jobs.
+This chart is part of [The Local Check](#the-local-check), which also draws the checks a run makes before its turn.
 
-- **Taking turns:** `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before they start, and two copies hold a turn at most. `pnpm test` takes one for its package tests only, after the script tests, and they share the computer as a check does.
+- **Taking turns:** `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before running their jobs, once their arguments and the connection are checked. Two copies hold a turn at most. `pnpm test` takes one for its package tests only, after the script tests, and they share the computer as a check does.
 - **Waiting:** copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the processes and folders that hold the turns, and how many copies asked first.
 - **A check started by a check,** such as `pnpm test:changed` within `pnpm check:push`, uses the turn its check holds.
 - **Cores:** a copy that starts alone has every core, and keeps them while it runs. One that starts beside another takes half. On GitHub, where `CI` is `true`, a check has the whole computer.
@@ -228,24 +228,11 @@ flowchart TD
 
 ### The Local Check
 
-`pnpm check` and `pnpm check:push` run `scripts/check-turn.mjs`, which waits for a turn, as [Sharing the Machine](#sharing-the-machine) explains, then `scripts/check.sh`, which runs the jobs.
+`pnpm check` and `pnpm check:push` run `scripts/check.sh`. It checks its arguments, its readiness to work offline and the connection first, so a mistake fails at once. Then it waits for a turn through `scripts/check-turn.mjs`, as [Sharing the Machine](#sharing-the-machine) explains, and runs the jobs.
 
 ```mermaid
 flowchart TD
-    Start["pnpm check or pnpm check:push"] --> Holds{"Started by a check that already holds a turn?"}
-    Holds -- Yes --> Jobs
-    Holds -- No --> Ticket["check-turn.mjs leaves a ticket in the checks' slot folder"]
-    Ticket --> Free{"Is a slot free for this ticket, in the order the copies asked?"}
-    Free -- No --> Wait["Waiting to run a check, naming the slots' holders; it looks again each second"]
-    Wait --> Free
-    Free -- Yes --> OnGitHub{"Is CI true, as on GitHub, or FATHOM_CHECK_SHARES already set?"}
-    OnGitHub -- Yes --> WholeComputer["Its environment is kept: on GitHub, every job runs at once"]
-    OnGitHub -- No --> Alone{"Did any other copy hold or wait for a turn as this one took its own?"}
-    Alone -- Yes --> HalfComputer["Half the computer: FATHOM_CHECK_SHARES is 2"]
-    Alone -- No --> EveryCore["Every core, kept while it runs, even once another copy starts: FATHOM_CHECK_SHARES is 1"]
-    WholeComputer --> Jobs{"--before-push?"}
-    HalfComputer --> Jobs
-    EveryCore --> Jobs
+    Start["pnpm check or pnpm check:push"] --> Jobs{"--before-push?"}
     Jobs -- Yes --> BeforePush["pnpm test:changed, and the linters: pnpm lint --no-cache, pnpm format:check, pnpm typecheck, pnpm lint:md and pnpm lint:shell"]
     Jobs -- No --> FullCheck["pnpm test:packages, pnpm security, pnpm test:scripts, the same linters, pnpm lint:licences and pnpm lint:renovate"]
     BeforePush --> Skip{"Are the arguments known, and does each --skip name a job, leaving at least one?"}
@@ -260,11 +247,24 @@ flowchart TD
     OfflineJobs --> AnyLeft{"Is any job left?"}
     AnyLeft -- No --> NothingLeft["Fails: every job left needs the internet"]
     Offline -- No --> NeedsInternet{"Does a job left need the internet: Security report or Renovate settings?"}
-    NeedsInternet -- No --> Run
+    NeedsInternet -- No --> Holds
     NeedsInternet -- Yes --> Connected{"Can this computer reach the internet?"}
     Connected -- No --> NoConnection["Fails, naming --offline"]
-    Connected -- Yes --> Run
-    AnyLeft -- Yes --> Run["Runs the jobs side by side, the longest first"]
+    Connected -- Yes --> Holds
+    AnyLeft -- Yes --> Holds{"Started by a check that already holds a turn?"}
+    Holds -- Yes --> Run
+    Holds -- No --> Ticket["check-turn.mjs leaves a ticket in the checks' slot folder, then runs check.sh again in its turn"]
+    Ticket --> Free{"Is a slot free for this ticket, in the order the copies asked?"}
+    Free -- No --> Wait["Waiting to run a check, naming the slots' holders; it looks again each second"]
+    Wait --> Free
+    Free -- Yes --> OnGitHub{"Is CI true, as on GitHub, or FATHOM_CHECK_SHARES already set?"}
+    OnGitHub -- Yes --> WholeComputer["Its environment is kept: on GitHub, every job runs at once"]
+    OnGitHub -- No --> Alone{"Did any other copy hold or wait for a turn as this one took its own?"}
+    Alone -- Yes --> HalfComputer["Half the computer: FATHOM_CHECK_SHARES is 2"]
+    Alone -- No --> EveryCore["Every core, kept while it runs, even once another copy starts: FATHOM_CHECK_SHARES is 1"]
+    WholeComputer --> Run
+    HalfComputer --> Run
+    EveryCore --> Run["Runs the jobs side by side, the longest first"]
     Run --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
     Limit -- No --> Stopped["The job's process group is stopped, its output shown, and it counts as Stopped"]
     Limit -- Yes --> Results["Each job's output, then a table of each one's result and seconds"]

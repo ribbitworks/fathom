@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of the check's jobs: choosing them, how many run side by side, stopping one that hangs, and
-// naming each job that failed.
+// Tests of the check's jobs: choosing them, checking them before waiting for a turn, how many run side
+// by side, stopping one that hangs, and naming each job that failed.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -47,6 +47,23 @@ function copy({ prepared }) {
   for (const name of ["lib.sh", "check.sh", "run-command.mjs"])
     copyFileSync(join(scripts, name), join(root, "scripts", name));
   writeFileSync(
+    join(root, "scripts", "check-turn.mjs"),
+    [
+      'import { spawnSync } from "node:child_process";',
+      "const [command, ...args] = process.argv.slice(2);",
+      'if (process.env.TURN_RUNS !== "1") {',
+      "  console.log(`turn: ${JSON.stringify([command, ...args])}`);",
+      "  process.exit(0);",
+      "}",
+      "const { status } = spawnSync(command, args, {",
+      '  stdio: "inherit",',
+      '  env: { ...process.env, FATHOM_CHECK_SLOT: "1" },',
+      "});",
+      "process.exit(status ?? 1);",
+      "",
+    ].join("\n"),
+  );
+  writeFileSync(
     join(root, "scripts", "offline.mjs"),
     'process.exit(process.env.ONLINE === "0" ? 1 : 0);\n',
   );
@@ -86,6 +103,7 @@ function run(
       HOME: process.env.HOME,
       FAILING: failing,
       ONLINE: online ? "1" : "0",
+      FATHOM_CHECK_SLOT: "1",
       ...(ci === undefined ? {} : { CI: ci }),
       ...environment,
     },
@@ -93,6 +111,7 @@ function run(
 }
 
 const check = (...args) => run(args);
+const withoutTurn = { FATHOM_CHECK_SLOT: "" };
 
 afterEach(() => {
   for (const made of folders.splice(0))
@@ -166,6 +185,48 @@ describe("scripts/check.sh", () => {
       ),
       result.stderr,
     );
+  });
+
+  it("waits for its turn once its arguments are checked, passing them on", () => {
+    const result = run(["--before-push", "--skip", "Changed tests"], {
+      environment: withoutTurn,
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(
+      result.stdout,
+      `turn: ${JSON.stringify(["bash", "scripts/check.sh", "--before-push", "--skip", "Changed tests"])}\n`,
+    );
+  });
+
+  it("refuses an unknown job before waiting for a turn", () => {
+    const result = run(["--skip", "Packages"], { environment: withoutTurn });
+    assert.equal(result.status, 1);
+    assert.ok(
+      result.stderr.includes("No job left to skip is named Packages"),
+      result.stderr,
+    );
+    assert.ok(!result.stdout.includes("turn:"), result.stdout);
+  });
+
+  it("says what working offline leaves out once, in its turn", () => {
+    const result = run(["--offline"], {
+      environment: { ...withoutTurn, TURN_RUNS: "1" },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const output = result.stdout + result.stderr;
+    for (const line of [
+      "Working offline, so these are left out: Renovate settings",
+      "The security report names each scan it skips offline",
+      "The Check workflow runs everything on the pull request",
+    ])
+      assert.equal(output.split(line).length - 1, 1, output);
+  });
+
+  it("stops without a connection before waiting for a turn", () => {
+    const result = run([], { online: false, environment: withoutTurn });
+    assert.equal(result.status, 1);
+    assert.ok(result.stderr.includes("--offline"), result.stderr);
+    assert.ok(!result.stdout.includes("turn:"), result.stdout);
   });
 
   it("runs only the changed tests and the linters before a push", () => {
@@ -373,7 +434,10 @@ describe("scripts/check.sh", () => {
   });
 
   it("refuses to work offline until prepared", () => {
-    const result = run(["--offline"], { prepared: false });
+    const result = run(["--offline"], {
+      prepared: false,
+      environment: withoutTurn,
+    });
     assert.equal(result.status, 1);
     assert.ok(
       result.stderr.includes(
@@ -382,6 +446,7 @@ describe("scripts/check.sh", () => {
       result.stderr,
     );
     assert.ok(!result.stdout.includes("ran"), result.stdout);
+    assert.ok(!result.stdout.includes("turn:"), result.stdout);
   });
 
   it("refuses to work offline when only jobs that need the internet are left", () => {
