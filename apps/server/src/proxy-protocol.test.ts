@@ -278,7 +278,13 @@ describe("accepting connections from the proxy", () => {
       cert: certificate.cert,
       key: certificate.key,
     });
-    expect(await refused(await frontFor({}, { target: stopped }))).toBe(true);
+    // The proxy's address is fixed, so the connection is always from the proxy and is closed for the
+    // stopped server, never as one from elsewhere, however this computer looks up localhost.
+    const url = await frontFor(
+      { resolveProxy: () => Promise.resolve(["127.0.0.1"]) },
+      { target: stopped },
+    );
+    expect(await refused(url)).toBe(true);
   });
 
   it("closes connections that do not start with a header", async () => {
