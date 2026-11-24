@@ -1,10 +1,10 @@
 ---
 title: "Manual Test: What Each Permission Allows"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["packages/shared/src/access.ts", "packages/shared/src/page-access.ts", "apps/web/src/layout.tsx", "apps/web/src/router.tsx", "apps/web/src/signed-in-route.tsx", "apps/web/src/plan-routes.tsx", "apps/web/src/*-page.tsx", "apps/server/src/access.ts", "apps/server/src/data/**", "apps/server/src/routes/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/testing/roles-manual-test.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: What Each Permission Allows

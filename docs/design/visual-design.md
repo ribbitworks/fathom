@@ -1,7 +1,7 @@
 ---
 title: "Visual Design"
 category: "Design"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/ui-conventions.md"]
 last_updated: "2026-11-23"

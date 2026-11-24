@@ -1,10 +1,10 @@
 ---
 title: "Architecture"
 category: "Architecture"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/design/domain-model.md", "docs/security/security-plan.md", "docs/adr/"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Fathom: Architecture

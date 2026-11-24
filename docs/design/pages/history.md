@@ -1,10 +1,10 @@
 ---
 title: "History Pages"
 category: "Design"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Fathom: History Pages

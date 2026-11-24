@@ -1,7 +1,7 @@
 ---
 title: "Manual Test: Acceptance, Setting Up Fathom"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-team-accounts-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
 last_updated: "2026-11-23"

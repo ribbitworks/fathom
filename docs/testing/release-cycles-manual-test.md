@@ -1,10 +1,10 @@
 ---
 title: "Manual Test: Cycles"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Cycles

@@ -1,10 +1,10 @@
 ---
 title: "Help Page Standards"
 category: "Standards"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["docs/help/**"]
 dependencies: ["docs/standards/documentation.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-23"
 ---
 
 # Help Page Standards

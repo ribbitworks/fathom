@@ -1,10 +1,10 @@
 ---
 title: "Shell Script Standards"
 category: "Standards"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["**/*.sh"]
 dependencies: ["docs/standards/core-principles.md", "docs/standards/code-review.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Shell Script Standards

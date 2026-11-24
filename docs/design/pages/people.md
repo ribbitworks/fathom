@@ -1,7 +1,7 @@
 ---
 title: "People Page"
 category: "Design"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/people.md"]
 last_updated: "2026-11-23"

@@ -84,6 +84,20 @@ or "the project's targeted tests", use the ones it names.
   the owner asks to.
 - **Code reviews:** follow [code-review.md](code-review.md). A review only
   writes its review file; it **Must Not** stage or commit.
+  - **Scope:** in Restrictive mode, ask the owner which scope to review. In
+    Autonomous mode, review the uncommitted changes (the whole commit when
+    amending), or the branch as
+    [Pushing and Pull Requests](#pushing-and-pull-requests) sets out. A review
+    subagent gets its scope in its prompt and never asks.
+  - **A faster model:** a separate agent running a faster model may review a
+    change to documentation, scripts or wording on screens alone, or to tests
+    other than access control and security tests. It may also run the
+    interaction review before a pull request.
+  - **The full model:** reviews anything the
+    [Security and Data](code-review.md#security-and-data) focus area covers,
+    such as sign-in, sessions, access control, the data access layer,
+    migrations, secrets, the containers, and checks on user input, including
+    web addresses. It also reviews any change where the choice is in doubt.
 - **Commit messages and pull requests:** follow
   [code-review.md § Commit Message Rules](code-review.md#commit-message-rules),
   including its no-attribution rule.

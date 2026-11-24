@@ -1,7 +1,7 @@
 ---
 title: "Development Setup"
 category: "Guide"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/**"]
 dependencies: ["docs/design/architecture.md", "docs/standards/testing.md", "docs/design/checks-and-ci.md"]
 last_updated: "2026-11-23"

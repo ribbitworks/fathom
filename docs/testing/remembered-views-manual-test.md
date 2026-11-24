@@ -1,10 +1,10 @@
 ---
 title: "Manual Test: Remembered Views"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Remembered Views

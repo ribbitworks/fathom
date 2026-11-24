@@ -1,7 +1,7 @@
 ---
 title: "Markdown Style Guidelines"
 category: "Standards"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["**/*.md"]
 dependencies: ["docs/standards/documentation.md"]
 last_updated: "2026-11-23"

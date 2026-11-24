@@ -1,7 +1,7 @@
 ---
 title: "Manual Test: Saved Views"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
 last_updated: "2026-11-23"

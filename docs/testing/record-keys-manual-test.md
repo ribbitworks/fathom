@@ -1,10 +1,10 @@
 ---
 title: "Manual Test: Record Keys and Links"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Record Keys and Links

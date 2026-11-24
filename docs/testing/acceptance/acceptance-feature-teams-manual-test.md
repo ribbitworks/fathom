@@ -1,7 +1,7 @@
 ---
 title: "Manual Test: Acceptance, Feature Teams"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-reporting-lines-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
 last_updated: "2026-11-23"

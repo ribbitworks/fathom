@@ -1,10 +1,10 @@
 ---
 title: "Capacity Page"
 category: "Design"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/capacity.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Fathom: Capacity Page

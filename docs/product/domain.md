@@ -1,7 +1,7 @@
 ---
 title: "Domain Concepts"
 category: "Domain"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/design/domain-model.md"]
 last_updated: "2026-11-23"

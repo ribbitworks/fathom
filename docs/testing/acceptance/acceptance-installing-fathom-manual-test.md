@@ -1,10 +1,10 @@
 ---
 title: "Manual Test: Acceptance, Installing Fathom"
 category: "How-To"
-audience: "AI Coding Assistant"
+audience: "Contributors"
 applies_to: ["deploy/**", "apps/server/src/create-administrator.ts", "apps/web/src/change-password.tsx"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/operations/installing-fathom.md", "docs/operations/securing-your-environment.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Acceptance, Installing Fathom
