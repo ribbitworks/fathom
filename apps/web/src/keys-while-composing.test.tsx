@@ -14,7 +14,6 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Field } from "@fathom/shared";
 import { ChoicePicker } from "./choice-picker.tsx";
 import { SidePanelFrame } from "./side-panel.tsx";
 import { entryName, focusRow, openPanel } from "./test-lists-page.tsx";
@@ -26,6 +25,7 @@ import {
   gadget,
   gadgetTable,
   renderGadgets,
+  site,
   testTheme,
 } from "./test-support.tsx";
 
@@ -123,6 +123,7 @@ describe.each(composingKeys)("pressed %s a word", (_, how) => {
       });
     },
   );
+
   it("leaves the table's search to the reader's Esc, which clears it", async () => {
     renderGadgets({ gadgets: [gadget("g1")] });
     const search = screen.getByRole<HTMLInputElement>("textbox", {
@@ -141,17 +142,6 @@ describe.each(composingKeys)("pressed %s a word", (_, how) => {
   ])(
     "%s leaves a web link being edited to the reader's Esc, which cancels it",
     async (key, label) => {
-      const site: Field = {
-        id: "f2",
-        keyNumber: 1,
-        name: "Site",
-        type: "link",
-        listId: null,
-        visibility: "general",
-        multiple: false,
-        required: false,
-        onPlannedHires: true,
-      };
       renderGadgets({
         gadgets: [gadget("g1")],
         fields: [site],

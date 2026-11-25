@@ -7,7 +7,14 @@
 
 import { colourTag } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import {
@@ -21,7 +28,7 @@ import { Editor } from "@tiptap/core";
 import { NoteCell, NotePanel, notePreview, NoteView } from "./note-editor.tsx";
 import { noteExtensions } from "./note-format.ts";
 import { docToNote } from "./note-markdown.ts";
-import { testTheme } from "./test-support.tsx";
+import { composingKeys, testTheme } from "./test-support.tsx";
 
 const teal = colourTag("teal");
 
@@ -552,6 +559,24 @@ describe("a link in the editor", () => {
     ).toBeDefined();
     expect(screen.getByRole("form", { name: "Link" })).toBe(form);
   });
+
+  it.each(composingKeys)(
+    "keeps the link form at an Esc pressed %s a word, closing at the reader's",
+    async (_, composing) => {
+      const { form } = await editorWith("Some words");
+      const address = field(form, "Address");
+      await userEvent.type(address, "example.com");
+      fireEvent.keyDown(address, { key: "Escape", ...composing });
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(screen.getByRole("form", { name: "Link" })).toBe(form);
+      await userEvent.keyboard("{Escape}");
+      await waitFor(() => {
+        expect(screen.queryByRole("form", { name: "Link" })).toBeNull();
+      });
+    },
+  );
 
   it("leaves the note as it was on Cancel or clicking away", async () => {
     const { form } = await editorWith("Some words");

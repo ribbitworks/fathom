@@ -9,7 +9,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DateControl, labelEvery } from "./date-control.tsx";
-import { testTheme } from "./test-support.tsx";
+import { composingKeys, testTheme } from "./test-support.tsx";
 
 const now = "2027-03-10";
 
@@ -172,6 +172,26 @@ describe("the date control", () => {
       screen.getByRole<HTMLInputElement>("textbox", { name: "Date" }).value,
     ).toBe("2027-02-01");
   });
+
+  it.each(composingKeys)(
+    "keeps what is typed at an Esc pressed %s a word, putting the date back at the reader's",
+    async (_, composing) => {
+      control("2027-02-01");
+      const box = screen.getByRole<HTMLInputElement>("textbox", {
+        name: "Date",
+      });
+      await userEvent.clear(box);
+      await userEvent.type(box, "2025");
+      fireEvent.keyDown(box, { key: "Escape", ...composing });
+      expect(
+        screen.getByRole<HTMLInputElement>("textbox", { name: "Date" }).value,
+      ).toBe("2025");
+      await userEvent.keyboard("{Escape}");
+      expect(
+        screen.getByRole<HTMLInputElement>("textbox", { name: "Date" }).value,
+      ).toBe("2027-02-01");
+    },
+  );
 
   it("steps from a date past the timeline's end, keeping to that date's own month", async () => {
     const onDay = control("2035-01-01");

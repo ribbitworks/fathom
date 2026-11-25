@@ -2,10 +2,10 @@
 
 // Tests for features' effort on the Features page, in the units each view shows.
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { recordCell } from "./test-support.tsx";
+import { composingKeys, recordCell } from "./test-support.tsx";
 import {
   saved,
   sent,
@@ -290,6 +290,35 @@ describe("the Features page", () => {
       });
       expect(sent(fetch, featurePath)).toEqual([]);
     });
+
+    it.each(composingKeys)(
+      "keeps the estimate open in the details at an Esc pressed %s a word, cancelling at the reader's",
+      async (_, composing) => {
+        await open(
+          withEstimate(20),
+          { [featurePath]: saved(() => withEstimate(20)) },
+          `${inUnit("person-days")}&open=${first.id}`,
+        );
+        await editInDetails();
+        // The field opens focused.
+        await waitFor(() => {
+          expect(document.activeElement?.tagName).toBe("INPUT");
+        });
+        fireEvent.keyDown(document.activeElement as HTMLElement, {
+          key: "Escape",
+          ...composing,
+        });
+        expect(
+          screen.getByRole("combobox", { name: "Effort unit" }),
+        ).toBeDefined();
+        await userEvent.keyboard("{Escape}");
+        await waitFor(() => {
+          expect(
+            screen.queryByRole("combobox", { name: "Effort unit" }),
+          ).toBeNull();
+        });
+      },
+    );
 
     it("shows the same estimate in another unit chosen before typing, saving nothing", async () => {
       const { fetch } = await open(
