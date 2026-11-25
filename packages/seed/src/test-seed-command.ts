@@ -1,11 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The seed command's settings for tests against a test database, with a fictional session secret and
-// account password in a folder of its own, and a clean start without the seed data, whatever the
-// test before left; and a test database of a test's own, with a connection and the command's
-// settings for it. Used only by tests.
+// Helpers for the seeding tests, used only by them: the seed command's settings against a test
+// database, with fictional secrets and a clean start; a test database of a test's own; and the
+// organization they seed, with a table's row count.
 
-import { createDatabase, createPool, type Database } from "@fathom/db";
+import {
+  createDatabase,
+  createPool,
+  type Database,
+  type fields,
+  type lists,
+  type people,
+  type Reader,
+  type reportingLines,
+  type teams,
+} from "@fathom/db";
+import { fictionalOrganization } from "@fathom/fixtures";
+import { count } from "drizzle-orm";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -81,4 +92,21 @@ export async function startSeedTestDatabase(): Promise<SeedTestDatabase> {
       command.remove();
     },
   };
+}
+
+// The fictional organization the seeding tests seed.
+export const organization = fictionalOrganization({ size: 20 });
+
+// How many rows a table holds.
+export async function totalOf(
+  reader: Reader,
+  table:
+    | typeof people
+    | typeof lists
+    | typeof fields
+    | typeof reportingLines
+    | typeof teams,
+) {
+  const [row] = await reader.select({ total: count() }).from(table);
+  return row?.total;
 }
