@@ -166,6 +166,11 @@
   flex-basis: auto;
 }
 
+/* Its height follows what it holds, so the room kept for focus rings counts too. */
+.stackItemFitted .scroll {
+  max-height: none;
+}
+
 /* A panel added to the stack grows into its share of the height, and one closed shrinks away, the
    others making room or taking it back. */
 .stackItemArriving,
