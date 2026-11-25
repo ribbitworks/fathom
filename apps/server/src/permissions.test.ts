@@ -28,6 +28,7 @@ import {
   startTestApp,
   type TestApp,
   testPosition,
+  unique,
 } from "./test-app.ts";
 import { findStartingRole } from "./data/roles.ts";
 
@@ -124,15 +125,8 @@ const viewTableNeeds: Record<ViewTable, Needs> = {
   accounts: allOf("administration:view"),
 };
 
-let count = 0;
 // The role a new account is given, which must exist, read once the server has started.
 let teamMember = "";
-
-// A name no other request uses, so requests that create something never collide.
-function unique(prefix: string): string {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-}
 
 const id = () => randomUUID();
 const named = () => ({ name: unique("Fictional Name") });
