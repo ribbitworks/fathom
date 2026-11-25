@@ -340,11 +340,17 @@
   gap: 8px;
 }
 
+/* The top edge is there unseen while unscrolled, so showing it moves nothing. */
 .body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 0 16px 16px;
+  border-top: 1px solid transparent;
+}
+
+.body[data-scrolled] {
+  border-top-color: var(--mantine-color-default-border);
 }
 
 .foot {

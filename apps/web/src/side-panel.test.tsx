@@ -9,6 +9,7 @@
 import { MantineProvider } from "@mantine/core";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   maximizable,
@@ -16,6 +17,7 @@ import {
   motionLasts,
   type SidePanel,
   SidePanelFrame,
+  sidePanelScroll,
   stackShares,
   WithSidePanel,
   roomWithoutScrollBar,
@@ -596,6 +598,81 @@ describe("a side panel's frame", () => {
     expect(
       follows(subtitle, screen.getByRole("button", { name: "Inside" })),
     ).toBe(true);
+  });
+
+  describe("the edge above what it holds", () => {
+    const holding = (held: ReactNode) => {
+      render(
+        <MantineProvider theme={testTheme}>
+          <SidePanelFrame
+            id="frame"
+            titleId="frame-title"
+            title="Sites"
+            subtitle="Where people work"
+            narrow={false}
+          >
+            {held}
+          </SidePanelFrame>
+        </MantineProvider>,
+      );
+      return document.querySelector("#frame-title")?.closest("section")
+        ?.lastElementChild as HTMLElement;
+    };
+    const scroll = (box: Element, top: number, left = 0) => {
+      box.scrollTop = top;
+      box.scrollLeft = left;
+      fireEvent.scroll(box);
+    };
+    const edged = (body: HTMLElement) => body.hasAttribute("data-scrolled");
+
+    it("shows while its scrolling box is scrolled, and goes once it is back at the top", () => {
+      // Given a panel holding its rows in a scrolling box
+      const body = holding(
+        <div className={sidePanelScroll} data-testid="held" />,
+      );
+      const held = screen.getByTestId("held");
+      expect(edged(body)).toBe(false);
+
+      // When the box is scrolled down and back to the top
+      scroll(held, 40);
+      const whileScrolled = edged(body);
+      scroll(held, 0);
+
+      // Then the edge shows only while it was scrolled
+      expect(whileScrolled).toBe(true);
+      expect(edged(body)).toBe(false);
+    });
+
+    it("shows while the frame itself is scrolled", () => {
+      // Given a panel whose rows sit in the frame
+      const body = holding(<p>Rows</p>);
+
+      // When the frame is scrolled down
+      scroll(body, 40);
+
+      // Then the edge shows
+      expect(edged(body)).toBe(true);
+    });
+
+    it("stays as it is while a list or table inside scrolls", () => {
+      // Given a scrolled panel holding a list in its box and a table of its own
+      const body = holding(
+        <>
+          <div className={sidePanelScroll} data-testid="held">
+            <div data-testid="list" />
+          </div>
+          <div data-testid="table" />
+        </>,
+      );
+      scroll(screen.getByTestId("held"), 40);
+
+      // When the list scrolls back to its top and the table sideways
+      scroll(screen.getByTestId("list"), 0);
+      scroll(screen.getByTestId("table"), 0, 30);
+
+      // Then the edge still shows
+      expect(edged(body)).toBe(true);
+    });
   });
 
   it("draws a title's marks around its heading, leaving the heading named by the title alone", () => {

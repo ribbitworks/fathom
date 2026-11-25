@@ -524,8 +524,9 @@ export function PanelSubtitle({
 
 // A side panel's frame: its title, with any controls for the whole record beside it and a line
 // under it, a close button unless it closes only by its own buttons, what it holds, scrolling, and
-// a foot that stays in view, such as Save. Esc closes it too, unless something inside has used it
-// already. Under another panel, it offers Maximize. Covering the content on a narrow screen, it holds
+// a foot that stays in view, such as Save. What it holds scrolls in the frame, or in a box of
+// `sidePanelScroll` right inside it, for the edge drawn above it once scrolled. Esc closes it too,
+// unless something inside has used it already. Under another panel, it offers Maximize. Covering the content on a narrow screen, it holds
 // focus until it is closed.
 export function SidePanelFrame({
   id,
@@ -555,6 +556,7 @@ export function SidePanelFrame({
   children: ReactNode;
 }) {
   const place = useContext(StackPlaceContext);
+  const [scrolled, setScrolled] = useState(false);
   return (
     <FocusTrap active={narrow}>
       <section
@@ -623,7 +625,25 @@ export function SidePanelFrame({
             {subtitle}
           </PanelSubtitle>
         )}
-        <div className={classes.body}>{children}</div>
+        <div
+          className={classes.body}
+          data-scrolled={scrolled || undefined}
+          // A scroll does not bubble, so what scrolls inside is heard as it is captured. Only the
+          // body and its scrolling box count, not a list in it or a table scrolled sideways.
+          onScrollCapture={(event) => {
+            const box = event.target;
+            if (
+              box === event.currentTarget ||
+              (box instanceof HTMLElement &&
+                box.parentElement === event.currentTarget &&
+                box.classList.contains(classes.scroll))
+            ) {
+              setScrolled(box.scrollTop > 0);
+            }
+          }}
+        >
+          {children}
+        </div>
         {foot !== undefined && <div className={classes.foot}>{foot}</div>}
       </section>
     </FocusTrap>
