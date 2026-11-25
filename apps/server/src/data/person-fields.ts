@@ -81,7 +81,7 @@ export function personTier(columns: TableColumns) {
 
 // Whether an actor sees a field of a person's draft: a detail, or a value in one of the columns
 // given, of a class the actor sees. Deciding a draft needs every field it holds seen.
-export function seesPersonField(actor: Actor, columns: PeopleColumns) {
+export function seesPersonField(actor: Actor, columns: TableColumns) {
   const tierOf = personTier(columns);
   const shown = new Set(columns.map(({ id }) => valueField(id)));
   return (field: string): boolean =>

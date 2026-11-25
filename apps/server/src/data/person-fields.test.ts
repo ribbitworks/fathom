@@ -7,7 +7,7 @@ import { defaultClasses, type Permission } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import type { Actor } from "../access.ts";
 import { seesPersonField } from "./person-fields.ts";
-import type { ColumnInfo, PeopleColumns } from "./values.ts";
+import type { ColumnInfo, TableColumns } from "./values.ts";
 
 const actor = (permissions: Permission[]): Actor => ({
   user: { id: "fictional-user", name: "Fictional User", email: "" },
@@ -27,7 +27,7 @@ const columns = Object.assign(
     stateTier: "general" as const,
     dataClasses: defaultClasses,
   },
-) as PeopleColumns;
+) as TableColumns;
 
 describe("seesPersonField", () => {
   const general = seesPersonField(actor(["people:view"]), columns);

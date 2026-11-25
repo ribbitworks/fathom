@@ -13,6 +13,7 @@ export const accounts = [
     name: "engineeringOperationsManager",
     email: "engineering.operations.manager@fathom.test",
   },
+  { name: "featureLead", email: "feature.lead@fathom.test" },
 ] as const;
 
 export type AccountName = (typeof accounts)[number]["name"];
