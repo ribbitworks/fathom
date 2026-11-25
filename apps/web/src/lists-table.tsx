@@ -344,6 +344,19 @@ export function listTable({
   };
 }
 
+// What retiring or restoring a list from its menu does: each drafts the list's change of state.
+const retiringActions: Record<
+  Exclude<ListAction, "remove">,
+  (list: List, onRetire: (list: List) => void) => void
+> = {
+  retire: (list, onRetire) => {
+    onRetire(list);
+  },
+  restore: (list, onRetire) => {
+    onRetire(list);
+  },
+};
+
 const actionLabels: Record<ListAction, string> = {
   retire: "Retire",
   restore: "Restore",
@@ -359,12 +372,16 @@ export function ListItems({
   onRetire: (list: List) => void;
 }) {
   return listActions(list)
-    .filter((action) => action !== "remove")
+    .filter(
+      (action): action is Exclude<ListAction, "remove"> => action !== "remove",
+    )
     .map((action) => (
       <Menu.Item
         key={action}
         onClick={() => {
-          onRetire(list);
+          // The action is always one of those named above.
+          // eslint-disable-next-line security/detect-object-injection
+          retiringActions[action](list, onRetire);
         }}
       >
         {

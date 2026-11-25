@@ -357,8 +357,8 @@ export function ListsPage({
         `Fathom could not remove ${list.name}.`,
         fromRow ? {} : { focus: titleId },
       );
-      if (fromRow) focusRecordCell(list.id, "name");
-      else focusSoon(titleId);
+      // From its row, the row's menu puts focus back on the row, as on every table.
+      if (!fromRow) focusSoon(titleId);
       return;
     }
     closePanel(list);
