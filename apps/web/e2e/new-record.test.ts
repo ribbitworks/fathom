@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // UI tests of adding a record from its New panel: the cursor starts in its first field typed into,
-// Esc reaches the panel, and a required value left empty is refused.
+// Enter adds the record, Esc reaches the panel, and a required value left empty is refused.
 
 import { expect, test } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";
@@ -43,6 +43,25 @@ test("refuses a new project whose Name was emptied, naming why under it and savi
   await page.reload();
   await page.getByRole("tab", { name: "Projects" }).click();
   await expect(count).toHaveText(before);
+});
+
+test("adds a new customer with Enter in its Name", async ({ page }) => {
+  // Given the New customer panel open on Projects' Customers
+  await page.goto("/projects?tab=customers");
+  const count = page.getByRole("status").filter({ hasText: /customers?$/ });
+  const before = Number.parseInt(await count.innerText(), 10);
+  await page.getByRole("button", { name: "New customer" }).click();
+  const panel = page.getByRole("region", { name: "New customer" });
+
+  // When a name is typed and Enter pressed
+  await panel.getByRole("textbox", { name: "Name" }).fill("Fictional Wharf");
+  await panel.getByRole("textbox", { name: "Name" }).press("Enter");
+
+  // Then the panel closes and the table counts one customer more
+  await expect(panel).toHaveCount(0);
+  await expect(count).toHaveText(
+    new RegExp(`^${String(before + 1)} customers$`),
+  );
 });
 
 test("opens the New project panel with the cursor in Name, ready to type into", async ({

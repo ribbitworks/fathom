@@ -107,6 +107,16 @@ test("Cancel asks before discarding a name typed, and Keep adding puts focus bac
   await expect(name).toHaveValue("Fictional Pier Two");
 });
 
+test("Cancel asks before discarding the name typed into the picker, though left as it opened", async ({
+  page,
+}) => {
+  const { form } = await newCustomerFromBid(page, "Fictional Pier");
+  await form.getByRole("button", { name: "Cancel" }).click();
+  await expect(
+    page.getByRole("dialog", { name: "Discard the new customer?" }),
+  ).toBeVisible();
+});
+
 test("the page's own New proposal names a taken name under Name, with focus in it, saving nothing", async ({
   page,
 }) => {
