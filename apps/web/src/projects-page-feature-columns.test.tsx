@@ -279,7 +279,7 @@ describe("the Features page", () => {
       );
 
       expect(
-        within(dialog).getByText("Another list already has that name"),
+        within(dialog).getByText("Another list has that name"),
       ).toBeDefined();
     });
 
@@ -368,14 +368,14 @@ describe("the Features page", () => {
       );
 
       expect(
-        await within(dialog).findByText("Another list already has that name"),
+        await within(dialog).findByText("Another list has that name"),
       ).toBeDefined();
       expect(within(dialog).queryByRole("alert")).toBeNull();
 
       // And the refusal goes once the name changes
       await userEvent.type(within(dialog).getByLabelText("List name"), " Two");
       expect(
-        within(dialog).queryByText("Another list already has that name"),
+        within(dialog).queryByText("Another list has that name"),
       ).toBeNull();
     });
 

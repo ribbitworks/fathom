@@ -141,16 +141,15 @@ export async function choicesMadeWithColumn(
   return choiceIds.filter((id) => made.has(id));
 }
 
-// Discards a list only drafted to be added, and its choices, with the column drafted to be added
-// with it, in the same change, returning the changes to record with the column's. The list stays
-// when another column draws on it, when anything changed it, its choices or their order since, or
-// when someone else is changing it or one of its choices.
+// Discards a list made with a column, and its choices, with the last column drawing on it, whether
+// the one it was made with or another since, returning the changes to record with the column's. The
+// list stays while another column draws on it, when anything changed it, its choices or their order
+// since it was made, or when someone else is changing it or one of its choices.
 export async function discardingNewList(
   transaction: Transaction,
   maker: Actor,
   state: ListsState,
   listId: string,
-  columnId: string,
 ): Promise<Change[]> {
   if (
     state.lists.has(listId) ||
@@ -165,18 +164,17 @@ export async function discardingNewList(
       ({ draft }) => draft.fields.listId === listId,
     );
   if (heldByOthers) return [];
-  const columnSets = await changeSetsOf(transaction, [
-    { recordType: "field", ids: [columnId] },
-  ]);
   const listSets = await changeSetsOf(transaction, [
     { recordType: "list", ids: [listId] },
     { recordType: "choice-order", ids: [listId] },
     { recordType: "list-item", ids: addedChoices(state, listId) },
   ]);
-  const onlyWithColumn = [...listSets].every((changeSetId) =>
-    columnSets.has(changeSetId),
-  );
-  if (!onlyWithColumn) return [];
+  if (
+    listSets.size !== 1 ||
+    !(await madeWithColumn(transaction, "list", listId))
+  ) {
+    return [];
+  }
   const { named, unnamed } = await columnsDrawingOn(
     transaction,
     listId,
