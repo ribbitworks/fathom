@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Feature Lead Workflows
@@ -155,7 +155,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - No dot is before 'Polly Smith' or 'Rosendo Champlin'.
   - **Notes:**
 
-### LEAD-03: A Feature's Status and Estimate Are Kept Current
+### LEAD-03: A Feature's Team, Status and Estimate Are Kept Current
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from LEAD-02. Step `DA73` signs in as another account.
 
@@ -180,8 +180,12 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The cell reads "40 h", with a hollow yellow dot before it.
   - **Notes:**
 
+- [ ] `7C31` Select the row's **Feature team** cell, press Enter, choose 'Platform reliability', and press Enter.
+  - **Expected:** The cell reads 'Platform reliability', with a hollow yellow dot before it.
+  - **Notes:**
+
 - [ ] `B465` Run Publish.
-  - **Expected:** The dots before "In progress" and "40 h" are filled yellow.
+  - **Expected:** The dots before "In progress", "40 h" and 'Platform reliability' are filled yellow.
   - **Notes:**
 
 - [ ] `DA73` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
@@ -200,7 +204,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - A notice reads "Approved 1 draft."
     - 'Data Retention Controls' has no dot.
-    - It reads "In progress" in **Status** and "40 h" in **Effort**.
+    - It reads "In progress" in **Status**, "40 h" in **Effort** and 'Platform reliability' in **Feature team**.
   - **Notes:**
 
 ### LEAD-04: What Each Release and Cycle Holds

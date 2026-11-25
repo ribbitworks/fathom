@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-product-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Product Manager Workflows
@@ -14,7 +14,7 @@ last_updated: "2026-11-24"
 Verifies the workflows of [Working as a Product Manager](../help/working-as-a-product-manager.md) on the seed data:
 
 - Keeping customers, proposals, projects and milestones current.
-- Planning a feature for a cycle, a team and a month.
+- Planning a feature for a cycle and a month.
 - Choosing a project's features and taking one off a proposal with a reason, as the scope history shows.
 - Making a release with a note.
 - Approving and rejecting others' drafts, each sent on to an approver where the role needs one.
@@ -224,7 +224,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Afterwards:** Select the **Projects** tab.
 
-### PRODUCT-03: A Feature Is Planned for a Cycle and a Team
+### PRODUCT-03: A Feature Is Planned for a Cycle and a Month
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from PRODUCT-02. Step `C828` signs in as another account.
 
@@ -242,10 +242,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `E267` Select the change button in the **Target cycle** row, and choose next quarter's cycle, such as **Platform: 27.1**.
   - **Expected:** **Target cycle** shows the cycle chosen.
-  - **Notes:**
-
-- [ ] `EF83` Select the change button in the **Feature team** row, and choose 'Mobile apps'.
-  - **Expected:** **Feature team** shows 'Mobile apps'.
   - **Notes:**
 
 - [ ] `3C7F` Type `203003` in **Needed by**, and press Enter.

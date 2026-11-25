@@ -146,8 +146,9 @@ export const permissionDescriptions: Record<
     needs: ["people:view"],
   },
   "feature-teams:edit": {
-    allows: "Drafts adding, changing, and removing feature teams.",
-    without: "Cannot change feature teams.",
+    allows:
+      "Drafts adding, changing, and removing feature teams, and, with Edit Features and releases, each feature's feature team.",
+    without: "Cannot change feature teams or which team a feature has.",
     needs: ["people:view"],
   },
   "feature-teams:approve": {
@@ -486,7 +487,7 @@ export const startingRoles: Record<
   "feature-lead": {
     name: "Feature Lead",
     description:
-      "Sees the plan and people's General details, edits features and estimates, and edits feature teams.",
+      "Sees the plan and people's General details, edits features and estimates, and edits feature teams and which team each feature has.",
     permissions: [
       "plan:view",
       "features:edit",
@@ -522,7 +523,7 @@ export const startingRoles: Record<
   "engineering-manager": {
     name: "Engineering Manager",
     description:
-      "Edits the plan and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and edits feature teams.",
+      "Edits the plan and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and edits feature teams and which team each feature has.",
     permissions: [
       "plan:edit",
       "features:edit",

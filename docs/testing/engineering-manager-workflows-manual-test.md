@@ -144,7 +144,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - Its only line reads "Not allocated", in red and bold, with no percentage.
   - **Notes:**
 
-### MANAGER-03: A Feature Is Estimated
+### MANAGER-03: A Feature Is Given a Team and Estimated
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as MANAGER-02.
 
@@ -160,6 +160,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `AFF1` Select its **Effort** cell, type `120`, and press Enter.
   - **Expected:** The cell reads "120 h", with a hollow yellow dot before it.
+  - **Notes:**
+
+- [ ] `4D8E` Select its **Feature team** cell, press Enter, choose 'Mobile apps', and press Enter.
+  - **Expected:** The cell reads 'Mobile apps', with a hollow yellow dot before it.
   - **Notes:**
 
 ### MANAGER-04: An Engineering Manager Reads a Note Beside the Chart

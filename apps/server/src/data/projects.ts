@@ -2,7 +2,7 @@
 
 // Drafting changes to customers, projects with their milestones, proposals and features. Part of
 // the data access layer; the caller checks the actor may change the kind, and a feature's customers
-// are checked here, since they take more than changing features.
+// and feature team are checked here, since they take more than changing features.
 
 import { type Database, people } from "@fathom/db";
 import {
@@ -33,7 +33,7 @@ import {
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import { type Recorded, tidy, unseenDraft } from "./draft-records.ts";
-import { refuseCustomersChange } from "./feature-customers.ts";
+import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import { checkTeamForFeature } from "./feature-team-removals.ts";
 import { typeOf } from "./column-types.ts";
 import {
@@ -478,7 +478,7 @@ export async function addFeature(
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
     const record = await featureRecord(transaction, maker.user.id, request);
-    refuseCustomersChange(maker, undefined, record);
+    refuseFeatureFieldChanges(maker, undefined, record);
     return saveRecordDraft(
       transaction,
       maker,
@@ -504,7 +504,7 @@ export async function changeFeature(
       request,
       feature,
     );
-    refuseCustomersChange(maker, feature, record);
+    refuseFeatureFieldChanges(maker, feature, record);
     return saveRecordDraft(transaction, maker, state, "feature", id, record);
   });
 }

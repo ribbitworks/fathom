@@ -128,6 +128,7 @@ export function ProjectsPage({
   onTab,
   approves = [],
   canEditColumns = false,
+  editsFeatureTeams = false,
   view,
   onView,
   applied,
@@ -152,6 +153,8 @@ export function ProjectsPage({
   approves?: readonly DraftKind[];
   // Whether the user may add and change the columns on Features.
   canEditColumns?: boolean;
+  // Whether the user may set a feature's feature team.
+  editsFeatureTeams?: boolean;
   view: View;
   onView: ChangeView;
   // The saved view the view started from, as the address names it.
@@ -366,6 +369,7 @@ export function ProjectsPage({
       editsKind: (type) =>
         view.show !== "live" &&
         (type === "feature" ? plan.canEditFeatures : plan.canEdit),
+      editsFeatureTeams,
       approves,
       nodes,
       onClose: () => {
@@ -509,6 +513,7 @@ export function ProjectsPage({
         const table = featureTable(choices, {
           onOpen: openRecord,
           editsCommitments: plan.canEdit,
+          editsFeatureTeams,
           board: onBoard,
         });
         const offeredParts = cardPartSchema.options;

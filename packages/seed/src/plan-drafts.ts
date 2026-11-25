@@ -317,7 +317,6 @@ async function draftProjects(
 async function draftFeatures(
   database: Database,
   editor: Actor,
-  organization: FictionalOrganization,
 ): Promise<boolean> {
   if (await draftedSinceAdded(database, changedFeature)) return false;
   const data = createDataAccess(database);
@@ -344,7 +343,8 @@ async function draftFeatures(
       customerIds: [],
       target: null,
       estimateHours: null,
-      featureTeamId: present(organization.featureTeams[0]?.id, "feature team"),
+      // The Product Manager drafts it, whose role doesn't give a feature its team.
+      featureTeamId: null,
       description: "Pass notes from one shift to the next.",
       note: null,
       values: {},
@@ -406,7 +406,7 @@ export async function seedPlanDrafts(
     ...(await draftReleases(database, editor, configurer)),
     ...(await draftProjects(database, editor, organization.referenceDate)),
   ];
-  const features = await draftFeatures(database, editor, organization);
+  const features = await draftFeatures(database, editor);
   const teams = await draftFeatureTeams(database, configurer, organization);
   if (refused.length > 0) {
     await createDataAccess(database).drafts.reject(

@@ -53,6 +53,8 @@ You're done when **Target cycle** shows the cycle, with a hollow dot.
 
 ### Give a Feature to a Team
 
+Only a role that edits feature teams, such as the Feature Lead's or the Engineering Manager's, gives a feature to a team.
+
 Choose a team in the feature's **Feature team**.
 
 You're done when **Feature team** shows the team, with a hollow dot.
@@ -191,6 +193,7 @@ You're done when the row is struck through. It's removed once the removal is app
 - **No team**, in red in the **Feature team** cell, marks a planned or in-progress feature that has no feature team yet.
 - **Needed by** is the month the feature is wanted. Type it as digits, such as `2027-03`, and it shows as Mar 2027. It's a rough wish; **Target cycle** is the commitment.
 - **Status** says how far along the feature is. Statuses are named on the **Lists** page, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
+- **Feature team** is changed only if your role edits feature teams, as the Feature Lead's does.
 - **Customers**, **Projects** and **Proposals** are changed only if your role edits the plan, as the Product Manager's does. **Projects** and **Proposals** name the projects that need the feature, and the proposals that propose it.
 - Changing **Projects** or **Proposals** changes that project or proposal, as a draft. One a draft adds has a dot before it, and one it takes away has the dot and is struck through, in the table and in the feature's details.
 - If you take a feature off a proposal, you give the reason on the proposal. See [Projects](projects.md#give-a-reason-for-removing-a-feature-from-a-proposal).

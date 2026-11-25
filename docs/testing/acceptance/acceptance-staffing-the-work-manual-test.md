@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-reviewing-the-plan-manual-test.md", "docs/help/working-as-a-feature-lead.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Acceptance, Staffing the Work
@@ -13,8 +13,8 @@ last_updated: "2026-11-24"
 
 Verifies that the people who build the plan pick it up once it's approved:
 
-- The Feature Lead keeps her team's feature and team current, as [Working as a Feature Lead](../../help/working-as-a-feature-lead.md) describes: a status, an estimate and a new member.
-- The Engineering Manager staffs the work, as [Working as an Engineering Manager](../../help/working-as-an-engineering-manager.md) describes: someone put on a feature team from next month, a team's lead changed and a feature estimated. The Engineering Manager then checks who is over or under allocated, and counts the people by site.
+- The Feature Lead keeps her team's feature and team current, as [Working as a Feature Lead](../../help/working-as-a-feature-lead.md) describes: the feature's team, a status, an estimate and a new member.
+- The Engineering Manager staffs the work, as [Working as an Engineering Manager](../../help/working-as-an-engineering-manager.md) describes: someone put on a feature team from next month, a team's lead changed, and two features given their team, one of them estimated. The Engineering Manager then checks who is over or under allocated, and counts the people by site.
 
 Both roles' changes wait for the approvers in [Deciding the Changes](acceptance-deciding-the-changes-manual-test.md).
 
@@ -75,7 +75,11 @@ Run the test cases in order, in about 30 minutes, straight after [Reviewing the 
 **Preconditions:** STAFF-01 done.
 
 - [ ] `2C5A` Select the **Features** page in the left-hand menu.
-  - **Expected:** `Fictional Gauge Alerts` reads "Planned" in **Status** and `Harbour team` in **Feature team**, with no dot.
+  - **Expected:** `Fictional Gauge Alerts` reads "Planned" in **Status**, with no dot, and its **Feature team** cell shows **No team** in red.
+  - **Notes:**
+
+- [ ] `6B1E` Select the **Feature team** cell of `Fictional Gauge Alerts`, press Enter, choose `Harbour team`, and press Enter.
+  - **Expected:** The cell reads `Harbour team`, with a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] `085F` Select the **Status** cell of `Fictional Gauge Alerts`, press Enter, choose **In progress**, and press Enter.
@@ -200,7 +204,7 @@ Run the test cases in order, in about 30 minutes, straight after [Reviewing the 
     - In the **Members** row, `Freya Holt` has a hollow yellow dot before her name, followed in grey by "from" and the first day of next month.
   - **Notes:**
 
-### STAFF-07: A Feature Is Estimated
+### STAFF-07: Two Features Are Given Their Team, and One Is Estimated
 
 **Account:** Engineering Manager, `ada.quill@fathom.test`, the same as STAFF-06.
 
@@ -212,12 +216,22 @@ Run the test cases in order, in about 30 minutes, straight after [Reviewing the 
     - A Live row under it reads "Planned".
   - **Notes:**
 
+- [ ] `5F2A` Select the **Feature team** cell of `Fictional Tide Tables`, press Enter, choose `Tide team`, and press Enter.
+  - **Expected:** The cell reads `Tide team`, with a hollow yellow dot before it.
+  - **Notes:**
+
+- [ ] `C3D8` Select the **Feature team** cell of `Fictional Lamp Schedule`, press Enter, choose `Tide team`, and press Enter.
+  - **Expected:**
+    - The cell reads `Tide team`, with a hollow yellow dot before it.
+    - No **Feature team** cell shows **No team**.
+  - **Notes:**
+
 - [ ] `EC4D` Select the **Effort** cell of `Fictional Lamp Schedule`, type `80`, and press Enter.
   - **Expected:** The cell reads "80 h", with a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] `B422` Run Publish.
-  - **Expected:** The Publish button, which read **Publish 2 changes**, is gone.
+  - **Expected:** The Publish button, which read **Publish 3 changes**, is gone.
   - **Notes:**
 
 ### STAFF-08: Who Is Over or Under Allocated
