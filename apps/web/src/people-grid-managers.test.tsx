@@ -6,7 +6,7 @@
 import type { Choice, Person } from "@fathom/shared";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { columnsFor } from "./people-grid.tsx";
+import { columnsFor, withTeamColours } from "./people-grid.tsx";
 import { emptyView } from "./table-view.ts";
 import { person, lead, people, grid, text } from "./test-people-grid.tsx";
 import { positions } from "./test-support.tsx";
@@ -21,6 +21,17 @@ describe("managers and teams", () => {
     const team = columnsFor([], [], [], true).find(({ key }) => key === "team");
     expect(team?.readOnly).toBe(true);
     expect(team?.change(["p1"])).toEqual({});
+  });
+
+  it("gives each team in Team its colour, for its square in the filter and group headings", () => {
+    const [team] = withTeamColours(
+      columnsFor([], [], [], true).filter(({ key }) => key === "team"),
+      (id) => (id === "p1" ? "teal" : null),
+    );
+    expect([team?.choiceColour?.("p1"), team?.choiceColour?.("p2")]).toEqual([
+      "teal",
+      null,
+    ]);
   });
 
   it("shows a reporting team's colour as its square before its name", () => {

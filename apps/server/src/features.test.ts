@@ -415,7 +415,7 @@ describe("feature teams", () => {
     );
 
   it("are offered by name, with their colour, to those who see the plan", async () => {
-    const featureTeamId = await liveTeam();
+    const featureTeamId = await liveTeam("teal");
     const response = await test.request(
       viewer.cookie,
       "GET",
@@ -430,7 +430,7 @@ describe("feature teams", () => {
       "name",
       "retired",
     ]);
-    expect(offered?.retired).toBe(false);
+    expect([offered?.colour, offered?.retired]).toEqual(["teal", false]);
   });
 
   it("are not offered once drafted to be removed", async () => {

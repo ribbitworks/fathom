@@ -469,7 +469,6 @@ const otherRows = (
     .filter(({ key }) => key !== rowKey)
     .map((group) => ({ group }));
 
-// A row of the board: a group's records under its label, or all of them.
 interface BoardRow {
   key: string;
   label: string;

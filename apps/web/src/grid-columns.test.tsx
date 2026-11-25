@@ -7,7 +7,6 @@ import { describe, expect, it, vi } from "vitest";
 import { MantineProvider } from "@mantine/core";
 import { act, render, screen, within } from "@testing-library/react";
 import { choice } from "./lists.ts";
-import type { PlanChange } from "./plan-table.tsx";
 import {
   breaksDown,
   cellColumn,
@@ -17,7 +16,7 @@ import {
   liveContent,
   wordsColumn,
 } from "./grid-columns.tsx";
-import type { CellRecord, GridDraft, RecordActions } from "./record-table.ts";
+import type { GridDraft, RecordActions } from "./record-table.ts";
 import { type View, emptyView } from "./table-view.ts";
 import {
   type Gadget,
@@ -294,7 +293,7 @@ describe("a Live row's coloured choices", () => {
         <span id="live">
           {liveContent(
             {
-              ...cellColumn<CellRecord, PlanChange>("teams", "choice", {
+              ...cellColumn<Gadget, GadgetChange>("teams", "choice", {
                 label: "Feature teams",
                 required: false,
                 multiple: true,

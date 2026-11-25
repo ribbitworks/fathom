@@ -48,7 +48,6 @@ import {
   unitAmountWords,
   type View,
 } from "./table-view.ts";
-import { TeamLabels } from "./team-labels.tsx";
 
 type DetailColumn = Pick<
   Column<never>,
@@ -116,7 +115,17 @@ function Value({
   }
   const coloured = colouredChoices(column, value as CellValue);
   if (coloured !== undefined) {
-    return coloured.length === 0 ? none : <TeamLabels teams={coloured} />;
+    return coloured.length === 0 ? (
+      none
+    ) : (
+      <Stack gap={2}>
+        {coloured.map(({ id, name, colour }) => (
+          <Text key={id}>
+            <ColouredName colour={colour}>{name}</ColouredName>
+          </Text>
+        ))}
+      </Stack>
+    );
   }
   const words = kind.inWords(
     column,
@@ -468,7 +477,8 @@ export function Row({
                   colour={
                     isEmpty(liveUnder.live)
                       ? null
-                      : (liveUnder.liveColour ?? null)
+                      : (liveUnder.liveColour ??
+                        chosenColour(column, liveUnder.live))
                   }
                 >
                   <Value column={column} value={liveUnder.live} drafted />

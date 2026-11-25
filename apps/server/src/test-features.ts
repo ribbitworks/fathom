@@ -38,11 +38,11 @@ export async function closeFeatureTests(): Promise<void> {
 
 export type Saved = { plan: ProjectPlan; changeSetId: string | null };
 
-export async function liveTeam(): Promise<string> {
+export async function liveTeam(colour: string | null = null): Promise<string> {
   const id = randomUUID();
   await test.connection
     .insert(featureTeams)
-    .values({ id, name: unique("Fictional Team") });
+    .values({ id, name: unique("Fictional Team"), colour });
   return id;
 }
 

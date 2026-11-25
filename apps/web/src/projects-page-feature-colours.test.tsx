@@ -6,7 +6,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { recordCell } from "./test-support.tsx";
+import { featureDraft, recordCell } from "./test-support.tsx";
 import {
   featurePlan,
   first,
@@ -86,6 +86,38 @@ describe("a feature's team on Features", () => {
     );
   });
 
+  it("draws the team's square in a Live row under a draft that takes the team away", async () => {
+    await open(
+      featurePlan({
+        features: [
+          {
+            ...first,
+            featureTeamId: null,
+            draft: featureDraft({
+              changed: ["featureTeamId"],
+              live: { featureTeamId: teamId },
+            }),
+          },
+        ],
+      }),
+    );
+    const live = await screen.findByText("Fictional Team");
+    expect(squareIn(live.closest("td"))).toBe("teal");
+  });
+
+  it("labels the team's row on the Board after its square", async () => {
+    await open(onTeam, {}, "/features?grouping=featureTeamId");
+    await userEvent.click(screen.getByRole("radio", { name: "Board" }));
+    const label = await waitFor(() => {
+      const found = screen
+        .getAllByText(/Fictional Team/)
+        .find((element) => element.tagName === "DIV");
+      expect(found).toBeDefined();
+      return found;
+    });
+    expect(squareIn(label)).toBe("teal");
+  });
+
   it("draws no square for a team the page doesn't know", async () => {
     await open(
       featurePlan({
@@ -116,5 +148,17 @@ describe("a feature's release on Features", () => {
       );
     });
     expect(squareIn(recordCell(first.id, "release"))).toBe("sea");
+  });
+
+  it("heads the release's group with its square", async () => {
+    await open(
+      featurePlan({ features: [first] }),
+      withRelease,
+      "/features?grouping=release",
+    );
+    const heading = await screen.findByRole("rowheader", {
+      name: /Fictional Release/,
+    });
+    expect(squareIn(heading)).toBe("sea");
   });
 });
