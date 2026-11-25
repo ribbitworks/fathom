@@ -2,13 +2,14 @@
 
 // The feature teams a person is on, on the day their details show, read only: those they lead, then
 // those they are a member of, each with who leads it, each opening on the org chart's feature teams
-// beside their details. Shown only to readers who see feature teams.
+// beside their details, after its colour's square. Shown only to readers who see feature teams.
 
 import type { FeatureTeam } from "@fathom/shared";
 import { Anchor, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { ColouredName } from "./colour-swatch.tsx";
 import { featureTeamsQueryOn, someoneUnseen } from "./feature-teams.ts";
 import { orgChartQuery } from "./org-chart.ts";
 import classes from "./record-details.module.css";
@@ -42,21 +43,23 @@ export function PersonFeatureTeams({
   const led = teams.filter(({ leadId }) => leadId === personId);
   const others = teams.filter(({ leadId }) => leadId !== personId);
   const teamLink = (team: FeatureTeam) => (
-    <Anchor
-      renderRoot={(props) => (
-        <Link
-          {...props}
-          to="/org-chart"
-          search={{
-            view: "feature-teams",
-            featureTeam: team.id,
-            open: employeeId,
-          }}
-        />
-      )}
-    >
-      {team.name}
-    </Anchor>
+    <ColouredName colour={team.colour}>
+      <Anchor
+        renderRoot={(props) => (
+          <Link
+            {...props}
+            to="/org-chart"
+            search={{
+              view: "feature-teams",
+              featureTeam: team.id,
+              open: employeeId,
+            }}
+          />
+        )}
+      >
+        {team.name}
+      </Anchor>
+    </ColouredName>
   );
   const row = (label: string, content: ReactNode) => (
     <div className={classes.row}>
