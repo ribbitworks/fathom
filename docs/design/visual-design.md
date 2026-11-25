@@ -224,7 +224,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **The buttons over a Name cell:** `RowControls` in `row-controls.tsx`, placed by `nameCellControls` in `row-menus.tsx` in the column its table names.
 - **Notes:** `NotePanel`, `NoteView`, and `NoteCell` in `note-editor.tsx`, with `useNoteEditing` in `note-editing.tsx` opening one from a record's details and keeping it in the address, through `note-address.ts`, and `useTableNoteAddress` in `grid-note-address.ts` keeping one opened from a table's cell.
 - **Links:** `LinkEditor`, `LinkCell`, and `LinkMenuItem` in `link-field.tsx`.
-- **A draft's menu items and deciding drafts:** `DraftItems` in `list-drafts.tsx`, `DecisionModal` in `decision-dialog.tsx`, and `OtherApproverNote` in `draft-details.tsx`.
+- **A draft's menu items and deciding drafts:** `DraftItems` in `list-drafts.tsx`, `DecisionModal` in `decision-dialog.tsx`, opened by `useDecisionDialog` there, and `OtherApproverNote` in `draft-details.tsx`.
 - **Draft and status marks:** `DraftedItem`, `DraftedValue`, `RowMarks`, `MarkedItem`, `FactBox` and `LiveLine` in `status-mark.tsx`, under the page's `DraftView`, as [Drafts](../standards/ui-conventions/drafts-and-values.md#drafts) sets out.
 - **A page's title row:** `PageHeader` in `page-header.tsx`, with the Export icon from `PageExportMenu` in `page-export.tsx`, and the tabs beside it from `HeadingTabs` and `HeadingTabPanel` there.
 - **Exporting a table:** `useTableExport` in `table-export.tsx`, offering the export to the Export icon through `useOfferedExport` in `page-export.tsx`, the question in `export-question.tsx`, and the file, its name and saving it in `exports.ts`.

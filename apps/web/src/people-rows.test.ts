@@ -6,7 +6,13 @@
 import type { Person } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { hireChange, hireRequest } from "./hires.ts";
-import { addedNames, personOnly, rowName } from "./people-rows.ts";
+import {
+  addedNames,
+  noticeName,
+  personOnly,
+  plannedHireName,
+  rowName,
+} from "./people-rows.ts";
 import { positions } from "./test-support.tsx";
 
 const hire: Person = {
@@ -27,6 +33,31 @@ describe("a row's name", () => {
     ).toBe("Fictional opening");
     expect(rowName(hire, [positions])).toBe("Fictional Engineer, TBD-7");
     expect(rowName(hire, [])).toBe("TBD-7");
+  });
+});
+
+describe("a planned hire's name in a sentence", () => {
+  it("says it is a planned hire", () => {
+    expect(plannedHireName(hire, [positions])).toBe(
+      "the planned hire Fictional Engineer, TBD-7",
+    );
+  });
+});
+
+describe("a row's name in a notice", () => {
+  it("is a person's preferred name alone", () => {
+    expect(
+      noticeName(
+        {
+          ...hire,
+          id: "p1",
+          kind: "person",
+          preferredName: "Fictional Person",
+          employeeId: "E-1",
+        },
+        [positions],
+      ),
+    ).toBe("Fictional Person");
   });
 });
 

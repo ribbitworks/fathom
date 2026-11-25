@@ -253,3 +253,9 @@ export function useSaving<Data>({
     done,
   };
 }
+
+// What a page's saving gives the actions on its records.
+export type RecordSaving<Data> = Pick<
+  ReturnType<typeof useSaving<Data>>,
+  "save" | "undoable" | "done"
+>;
