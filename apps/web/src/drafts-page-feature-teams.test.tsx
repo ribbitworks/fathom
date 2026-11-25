@@ -84,6 +84,21 @@ describe("drafts of feature teams on the Drafts page", () => {
     expect(await showOn("Fictional Pier", "org chart")).toBe("/go/team/1");
   });
 
+  it("names a team's draft after its colour's square", async () => {
+    await open([
+      featureTeam("Fictional Pier", {
+        colour: "teal",
+        draft: draft({ action: "changed", changed: ["name"], live: {} }),
+      }),
+    ]);
+    const record = (await screen.findAllByText("Fictional Pier"))
+      .map((name) => name.closest("td"))
+      .find((cell) => cell !== null);
+    expect(
+      record?.querySelector("[data-colour]")?.getAttribute("data-colour"),
+    ).toBe("teal");
+  });
+
   it("names someone who has not started from the team's own names", async () => {
     await open([
       featureTeam("Fictional Pier", {

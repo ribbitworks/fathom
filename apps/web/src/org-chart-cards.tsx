@@ -16,7 +16,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
 import { type CSSProperties, type MouseEvent } from "react";
-import { Swatch, teamSwatchSize } from "./colour-swatch.tsx";
+import { ColouredName } from "./colour-swatch.tsx";
 import { CardMenu } from "./card-menu.tsx";
 import { CopyLinkItem } from "./record-key.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
@@ -98,44 +98,42 @@ function TeamRow({
   return (
     <>
       <MarkRow small>
-        {colourChosen && person.teamName !== null ? (
+        {colourChosen && person.teamName !== null && (
           <TeamColourMenu
             teamId={person.id}
             current={person.teamColour}
             team={person.teamName}
           />
-        ) : (
-          person.teamColour !== null && (
-            <Swatch colour={person.teamColour} size={teamSwatchSize} />
-          )
         )}
         {/* A feature team's own card names the team, and marks it there, not again here. */}
         <TeamMarks person={person} plain={person.teamCard === true}>
-          {onFeatureTeam !== undefined && person.teamName !== null ? (
-            <Anchor
-              component="button"
-              size="xs"
-              className={["nodrag", "nopan"].join(" ")}
-              onClick={onFeatureTeam}
-            >
-              {person.teamName}
-            </Anchor>
-          ) : editsTeams ? (
-            <TeamNameEditor
-              managerId={person.id}
-              managerName={person.preferredName}
-              name={person.teamName}
-            />
-          ) : (
-            <Text
-              size="xs"
-              c="dimmed"
-              fs={person.teamName === null ? "italic" : undefined}
-              truncate
-            >
-              {person.teamName ?? "No name"}
-            </Text>
-          )}
+          <ColouredName colour={colourChosen ? null : person.teamColour}>
+            {onFeatureTeam !== undefined && person.teamName !== null ? (
+              <Anchor
+                component="button"
+                size="xs"
+                className={["nodrag", "nopan"].join(" ")}
+                onClick={onFeatureTeam}
+              >
+                {person.teamName}
+              </Anchor>
+            ) : editsTeams ? (
+              <TeamNameEditor
+                managerId={person.id}
+                managerName={person.preferredName}
+                name={person.teamName}
+              />
+            ) : (
+              <Text
+                size="xs"
+                c="dimmed"
+                fs={person.teamName === null ? "italic" : undefined}
+                truncate
+              >
+                {person.teamName ?? "No name"}
+              </Text>
+            )}
+          </ColouredName>
         </TeamMarks>
       </MarkRow>
       {renamed !== undefined && renamed.live !== null && (
