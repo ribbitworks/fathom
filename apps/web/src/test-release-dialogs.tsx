@@ -7,6 +7,7 @@ import { sessionResponseSchema } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { type Mock, vi } from "vitest";
 import { sessionQuery } from "./session.ts";
@@ -68,3 +69,11 @@ export const cyclesIn = (name: string) =>
 
 export const box = (name: string) =>
   screen.getByRole<HTMLInputElement>("textbox", { name });
+
+export const picker = (name: string) =>
+  screen.getByRole<HTMLInputElement>("combobox", { name });
+
+export async function choose(label: string, option: string) {
+  await userEvent.click(picker(label));
+  await userEvent.click(await screen.findByRole("option", { name: option }));
+}

@@ -160,9 +160,7 @@ describe("drafts on the Lists page", () => {
     const menu = await screen.findByRole("menu");
     const approve = within(menu).getByRole("menuitem", { name: "Approve…" });
     expect(approve.hasAttribute("data-disabled")).toBe(true);
-    expect(
-      within(menu).getByText("Waiting for a rejected draft to be resubmitted"),
-    ).toBeDefined();
+    expect(within(menu).getByText("Waits on a rejected draft")).toBeDefined();
     await userEvent.click(approve);
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(sent(fetch, "POST", "/api/drafts/approval")).toBe(false);
@@ -208,9 +206,7 @@ describe("drafts on the Lists page", () => {
         .getAllByRole("menuitem", { name: "Approve…" })
         .map((item) => item.hasAttribute("data-disabled")),
     ).toEqual([true]);
-    expect(
-      within(menu).getByText("Waiting for a rejected draft to be resubmitted"),
-    ).toBeDefined();
+    expect(within(menu).getByText("Waits on a rejected draft")).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
@@ -226,7 +222,7 @@ describe("drafts on the Lists page", () => {
     });
     expect(
       within(dialog).getByText(
-        "Waiting for a rejected draft to be resubmitted.",
+        "This draft can't be decided until the rejected draft it waits on is resubmitted.",
       ),
     ).toBeDefined();
     await userEvent.click(
@@ -347,9 +343,7 @@ describe("drafts on the Lists page", () => {
         .getByRole("menuitem", { name: "Approve…" })
         .hasAttribute("data-disabled"),
     ).toBe(true);
-    expect(
-      within(menu).getByText("Waiting for a rejected draft to be resubmitted"),
-    ).toBeDefined();
+    expect(within(menu).getByText("Waits on a rejected draft")).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();

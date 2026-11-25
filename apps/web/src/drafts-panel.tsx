@@ -4,7 +4,11 @@
 
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { useEffect } from "react";
-import { heldWords, unpublishedWords, waitingWords } from "./draft-details.tsx";
+import {
+  heldWords,
+  unpublishedWords,
+  waitingSentence,
+} from "./draft-details.tsx";
 import type { ReactNode } from "react";
 import type { NamedDraft } from "./draft-reading.ts";
 import { placeKey } from "./draft-places.ts";
@@ -76,7 +80,7 @@ function whyNot(
   if (unseen !== undefined) {
     return `${unseen}, so another approver must decide this draft.`;
   }
-  return waits ? waitingWords : undefined;
+  return waits ? waitingSentence(1) : undefined;
 }
 
 export function DraftPanel({

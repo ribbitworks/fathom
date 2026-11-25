@@ -404,7 +404,7 @@ describe("a schedule's draft in its row's menu", () => {
     // Then Fathom says it waits for the rejected one, and approves nothing
     expect(
       await screen.findByText(
-        "Waiting for a rejected draft to be resubmitted.",
+        "This draft can't be decided until the rejected draft it waits on is resubmitted.",
       ),
     ).toBeDefined();
     expect(calls(fetch, "POST")).toEqual([]);

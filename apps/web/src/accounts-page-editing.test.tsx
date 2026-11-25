@@ -295,9 +295,7 @@ describe("creating an account", () => {
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create account" }),
     );
-    expect(
-      await within(dialog).findByText("Enter the person's name."),
-    ).toBeDefined();
+    expect(await within(dialog).findByText("Name needed")).toBeDefined();
     expect(
       within(dialog).getByText("Enter a valid email address."),
     ).toBeDefined();
@@ -402,9 +400,7 @@ describe("changing an account", () => {
     await userEvent.clear(email);
     await userEvent.type(email, "not an address");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(
-      await within(dialog).findByText("Enter the person's name."),
-    ).toBeDefined();
+    expect(await within(dialog).findByText("Name needed")).toBeDefined();
     expect(
       within(dialog).getByText("Enter a valid email address."),
     ).toBeDefined();

@@ -98,6 +98,20 @@ describe("the dialog before approving", () => {
     ).toBeDefined();
   });
 
+  it("says several drafts waiting on rejected drafts can't be decided yet", async () => {
+    showDecision({
+      asking: "approve",
+      selection: { ...noDrafts(), people: fictional(2) },
+      named: [],
+      waiting: true,
+    });
+    expect(
+      await screen.findByText(
+        "These drafts can't be decided until the rejected drafts they wait on are resubmitted.",
+      ),
+    ).toBeDefined();
+  });
+
   it("names five drafts with no count after them, and nothing left for another approver", async () => {
     showDecision(approving(fictional(5), []));
     const dialog = await screen.findByRole("dialog", {
