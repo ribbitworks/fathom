@@ -240,7 +240,7 @@
   }
 
   .stackEdge,
-  .stackItem:not(:first-of-type) {
+  .stackItemBehind {
     display: none;
   }
 }

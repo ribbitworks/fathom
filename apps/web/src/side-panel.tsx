@@ -195,6 +195,18 @@ function useStackHeights(storageKey: string) {
   return { height, shareOf, share };
 }
 
+// The panel a narrow screen shows of a stack, where only one fits: the one opened last, or the top
+// one once that closes.
+function useFrontPanel(panels: readonly SidePanel[]): string | undefined {
+  const keys = panels.map(({ key }) => key);
+  const before = usePrevious(keys) ?? keys;
+  const [latest, setLatest] = useState<string>();
+  const opened = keys.filter((key) => !before.includes(key)).at(-1);
+  if (opened !== undefined && opened !== latest) setLatest(opened);
+  const front = opened ?? latest;
+  return front !== undefined && keys.includes(front) ? front : keys[0];
+}
+
 // The panel maximized in a stack, and its place for each panel under another; the stack folds the
 // panels above it away, or unfolds them, with motion where the stack moves.
 function useMaximized(
@@ -254,6 +266,7 @@ const PanelStack = memo(function PanelStack({
     moves,
   );
   const { maximized, folding, placeOf } = useMaximized(panels, narrow, moves);
+  const front = useFrontPanel(panels);
   const items = useRef(new Map<string, HTMLDivElement>());
   // Shares are kept as weights, scaled so the smallest open is 1: a flex item whose weights add up
   // to less than 1 takes only that part of the room, so a panel left alone after its neighbour
@@ -322,6 +335,7 @@ const PanelStack = memo(function PanelStack({
                 isArriving(panel) && classes.stackItemArriving,
                 gone && classes.stackItemLeaving,
                 hidden && classes.stackItemFolded,
+                panel.key !== front && classes.stackItemBehind,
               )}
               style={
                 { "--stack-share": height(panel) / smallest } as CSSProperties
