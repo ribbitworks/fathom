@@ -91,15 +91,15 @@ const addingLabel = (one: string, typed: string): string =>
 // An option's words after its tick, in a picker where several can be picked. The tick is hidden, not
 // left out, on an option not picked, so every option's words start in line.
 function Ticked({
-  shown,
+  ticks,
   ticked,
   children,
 }: {
-  shown: boolean;
+  ticks: boolean;
   ticked: boolean;
   children: ReactNode;
 }) {
-  return shown ? (
+  return ticks ? (
     <Group gap="xs" wrap="nowrap">
       <CheckIcon
         size={12}
@@ -301,7 +301,7 @@ export function ChoicePicker({
                 active={chosen(option.value)}
                 aria-selected={chosen(option.value)}
               >
-                <Ticked shown={multiple} ticked={chosen(option.value)}>
+                <Ticked ticks={multiple} ticked={chosen(option.value)}>
                   <OptionWords option={option} />
                 </Ticked>
               </Combobox.Option>
@@ -314,7 +314,7 @@ export function ChoicePicker({
               value={addingValue}
               className={comboboxClasses.adding}
             >
-              <Ticked shown={multiple} ticked={false}>
+              <Ticked ticks={multiple} ticked={false}>
                 <span className={comboboxClasses.addingWords}>
                   {addingLabel(adding.one, search.trim())}
                 </span>
