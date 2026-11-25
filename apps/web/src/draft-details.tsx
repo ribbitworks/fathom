@@ -252,7 +252,11 @@ export function MenuNote({
 
 // Why a draft can't be decided by this account, or yet, as its menu and its details say it.
 export const otherApproverWords = "Needs another approver";
-export const waitingWords = "Waiting for a rejected draft to be resubmitted";
+export const waitingWords = "Waits on a rejected draft";
+export const waitingSentence = (drafts: number) =>
+  drafts === 1
+    ? "This draft can't be decided until the rejected draft it waits on is resubmitted."
+    : "These drafts can't be decided until the rejected drafts they wait on are resubmitted.";
 export const heldWords = (by: string) =>
   `Being changed by ${by}. It can be changed once they publish or discard their changes.`;
 export const unpublishedWords =

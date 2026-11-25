@@ -11,6 +11,7 @@ import {
   type DraftsTab,
   draftsTabSchema,
 } from "@fathom/shared";
+import { otherApproverWords, waitingWords } from "./draft-details.tsx";
 import { joined, noDrafts } from "./drafts.ts";
 import type { Entry } from "./draft-entries.ts";
 import { placeKey } from "./draft-places.ts";
@@ -93,9 +94,6 @@ const stateNames = {
   unpublished: "Not published",
 } as const;
 
-export const waitsOnRejected = "Waits on a rejected draft";
-export const needsAnotherApprover = "Needs another approver";
-
 const choicesOf = (labels: readonly string[]) =>
   labels.map((label) => ({
     id: label,
@@ -152,11 +150,11 @@ export function draftRows(
     facts:
       one.state === "waiting" && !one.unpublished && choosable(one)
         ? [
-            ...(waits(one) ? [waitsOnRejected] : []),
+            ...(waits(one) ? [waitingWords] : []),
             ...(one.needsOtherApprover ||
             unseen(one) !== undefined ||
             needsOtherApproval(one)
-              ? [needsAnotherApprover]
+              ? [otherApproverWords]
               : []),
           ]
         : [],

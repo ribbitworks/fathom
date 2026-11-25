@@ -276,7 +276,7 @@ function CreateAccount({
       <Stack>
         <TextInput
           label="Name"
-          error={nameProblem(errors.name, "Enter the person's name.")}
+          error={nameProblem(errors.name, "Name needed")}
           {...form.register("name")}
         />
         <TextInput
@@ -362,7 +362,7 @@ function EditAccount({
       <Stack>
         <TextInput
           label="Name"
-          error={nameProblem(errors.name, "Enter the person's name.")}
+          error={nameProblem(errors.name, "Name needed")}
           {...form.register("name")}
         />
         <TextInput

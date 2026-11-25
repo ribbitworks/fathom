@@ -14,6 +14,7 @@ import { emptyView } from "./table-view.ts";
 import { applyView } from "./table-rows.ts";
 import { testTheme } from "./test-support.tsx";
 import { noDrafts } from "./drafts.ts";
+import { otherApproverWords, waitingWords } from "./draft-details.tsx";
 import {
   areaOf,
   draftColumns,
@@ -22,10 +23,8 @@ import {
   draftsTabOf,
   viewOnTab,
   isOnTab,
-  needsAnotherApprover,
   selectionOf,
   tabsFor,
-  waitsOnRejected,
 } from "./drafts-table.tsx";
 
 const entry = (key: string, more: Partial<Entry> = {}): Entry => ({
@@ -119,10 +118,10 @@ describe("a draft's row", () => {
       reading,
     );
     expect(rows.map(({ facts }) => facts)).toEqual([
-      [waitsOnRejected],
-      [needsAnotherApprover],
-      [needsAnotherApprover],
-      [needsAnotherApprover],
+      [waitingWords],
+      [otherApproverWords],
+      [otherApproverWords],
+      [otherApproverWords],
     ]);
   });
 
@@ -186,7 +185,7 @@ describe("the Drafts table's columns", () => {
         {waits && record?.mark?.(waits)}
       </MantineProvider>,
     );
-    expect(screen.getByText(waitsOnRejected)).toBeDefined();
+    expect(screen.getByText(waitingWords)).toBeDefined();
     expect(rows[0] && record?.mark?.(rows[0])).toBe(false);
   });
 });

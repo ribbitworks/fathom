@@ -18,6 +18,7 @@ import { planChoicesQuery, projectPlanQuery } from "./projects.ts";
 import { useState } from "react";
 import { CountedList } from "./counted-list.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
+import { waitingSentence } from "./draft-details.tsx";
 import { focusRefusedSoon } from "./focus.ts";
 import {
   approveDrafts,
@@ -281,7 +282,7 @@ export function DecisionModal({
       )}
       {decision?.waiting && (
         <Stack gap="md">
-          <Text fz="sm">Waiting for a rejected draft to be resubmitted.</Text>
+          <Text fz="sm">{waitingSentence(draftTotal(decision.selection))}</Text>
           <Group justify="flex-end">
             <Button onClick={onClose}>Close</Button>
           </Group>

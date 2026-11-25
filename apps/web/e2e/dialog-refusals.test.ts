@@ -62,3 +62,35 @@ test("puts focus in Schedule when a new release is made without one, saving noth
   await expect(dialog).toBeVisible();
   expect(changes).toEqual([]);
 });
+
+test("puts focus in Names when a schedule's cycles are changed without them, saving nothing", async ({
+  page,
+}) => {
+  // Given the Engineering Director with Field Apps' cycles dialog open
+  await page.goto("/releases");
+  await page.getByRole("tab", { name: "Schedules" }).click();
+  await page
+    .getByRole("button", { name: "Show details of Field Apps" })
+    .click();
+  const changes: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() !== "GET" && request.url().includes("/api/"))
+      changes.push(`${request.method()} ${request.url()}`);
+  });
+  await page.getByRole("button", { name: "Change Name pattern" }).click();
+  const dialog = page.getByRole("dialog");
+  const names = dialog.getByRole("textbox", { name: "Names" });
+
+  // When the cycles are changed with Names emptied
+  await names.fill("");
+  await dialog.getByRole("button", { name: "Change cycles" }).click();
+
+  // Then the reason shows under Names, which has the focus
+  await expect(dialog.getByText("Names needed")).toBeVisible();
+  await expect(names).toHaveAttribute("aria-invalid", "true");
+  await expect(names).toBeFocused();
+
+  // And the dialog stays open, with nothing sent to be saved
+  await expect(dialog).toBeVisible();
+  expect(changes).toEqual([]);
+});

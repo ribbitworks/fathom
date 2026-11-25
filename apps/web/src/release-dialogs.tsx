@@ -46,6 +46,7 @@ import { DialogActions } from "./dialog-actions.tsx";
 import { focusRefusedSoon } from "./focus.ts";
 import { DayInput } from "./day-input.tsx";
 import { Count } from "./list-dialog.tsx";
+import { nameProblem } from "./lists.ts";
 import classes from "./pages.module.css";
 import {
   changeCycleLength,
@@ -94,12 +95,8 @@ export function useSave<Request>(
 const same = (first: string, second: string) =>
   first.trim().toLowerCase() === second.trim().toLowerCase();
 
-// A name's problem, if any: missing, too long, or one another record has.
-function nameProblem(name: string, taken: boolean): string | undefined {
-  if (name.trim() === "") return "Give a name";
-  if (name.trim().length > releaseLengths.name) return "Too long";
-  return taken ? "Already used" : undefined;
-}
+const releaseNameProblem = (name: string, taken: boolean) =>
+  nameProblem(name, releaseLengths.name, taken, "Already used");
 
 export function StreamDialog({
   stream,
@@ -119,7 +116,7 @@ export function StreamDialog({
         : renameStream(stream.id, wanted),
     saving,
   );
-  const problem = nameProblem(
+  const problem = releaseNameProblem(
     name,
     streams.some((other) => other.id !== stream?.id && same(other.name, name)),
   );
@@ -262,8 +259,14 @@ export function PatternDialog({
     Number(length) >= 1 &&
     Number(length) <= longestCycleIn(unit);
   const startOk = isDay(startsOn);
-  const namingOk =
-    naming.trim() !== "" && naming.trim().length <= releaseLengths.naming;
+  const namingProblem = nameProblem(
+    naming,
+    releaseLengths.naming,
+    false,
+    "",
+    "Names needed",
+  );
+  const namingOk = namingProblem === undefined;
   // The first three cycles from the day chosen, named as the stream will name them, counting the
   // cycles of its other patterns before them.
   const following =
@@ -343,9 +346,7 @@ export function PatternDialog({
         <TextInput
           label="Names"
           value={naming}
-          error={
-            tried && !namingOk ? "Give a pattern for the names" : undefined
-          }
+          error={tried ? namingProblem : undefined}
           onChange={(event) => {
             setNaming(event.currentTarget.value);
           }}
@@ -596,7 +597,7 @@ export function ReleaseDialog({
     saving,
   );
   const asks = (wanted: ReleasePart) => part === undefined || part === wanted;
-  const problem = nameProblem(
+  const problem = releaseNameProblem(
     name,
     stream?.releases.some(
       (other) => other.id !== release?.id && same(other.name, name),
