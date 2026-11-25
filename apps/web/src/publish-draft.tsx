@@ -20,8 +20,9 @@ import {
 } from "./unpublished.tsx";
 import { askedAmong, publishedAlong } from "./unpublished-links.ts";
 
-// Publishes the draft asked for, with those that go with it.
-export type PublishDraft = (asked: DraftsAsked) => void;
+// Publishes the draft asked for, with those that go with it. Where it asks first, focus goes back
+// to where the caller says once the question closes, or else to where it was as the question opened.
+export type PublishDraft = (asked: DraftsAsked, focusBack?: () => void) => void;
 
 const PublishDraftContext = createContext<PublishDraft | undefined>(undefined);
 
@@ -34,6 +35,7 @@ interface Asking {
   asked: DraftsAsked;
   chosen: Unpublished["changes"];
   along: Unpublished["changes"];
+  focusBack: (() => void) | undefined;
 }
 
 const named = (changes: Unpublished["changes"]) =>
@@ -52,14 +54,24 @@ export function PublishDraftProvider({
 }) {
   const queryClient = useQueryClient();
   const question = useDialogState<Asking>();
-  const { publish } = useUnpublishedActions(question.close);
-  const publishDraft: PublishDraft = (asked) => {
+  // Publishing closes the question too, so focus goes back only from a question still open.
+  const close = () => {
+    if (question.opened) question.dialog?.focusBack?.();
+    question.close();
+  };
+  const { publish } = useUnpublishedActions(close);
+  const publishDraft: PublishDraft = (asked, focusBack) => {
     queryClient.query(unpublishedQuery).then(
       ({ changes }) => {
         const along = publishedAlong(changes, asked);
         if (along.length === 0) publish.mutate(asked);
         else
-          question.open({ asked, chosen: askedAmong(changes, asked), along });
+          question.open({
+            asked,
+            chosen: askedAmong(changes, asked),
+            along,
+            focusBack,
+          });
       },
       (error: unknown) => {
         notifyFailure(describeProblem(error, couldNotPublish));
@@ -73,7 +85,9 @@ export function PublishDraftProvider({
       {children}
       <Modal
         opened={question.opened}
-        onClose={question.close}
+        onClose={close}
+        // It opens once the changes load, when focus may have moved on, such as to the row's ⋯.
+        returnFocus={asking?.focusBack === undefined}
         closeOnEscape={!publish.isPending}
         closeOnClickOutside={!publish.isPending}
         withCloseButton={!publish.isPending}
@@ -97,7 +111,7 @@ export function PublishDraftProvider({
                 error={null}
                 pending={publish.isPending}
                 label="Publish"
-                onCancel={question.close}
+                onCancel={close}
               />
             </Stack>
           </form>
