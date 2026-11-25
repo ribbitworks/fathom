@@ -249,7 +249,7 @@ describe("feature teams on the org chart", () => {
     expect(screen.getByRole("region", { name: "Uma Fictional" })).toBeDefined();
   });
 
-  it("lists the teams a person leads apart from those they are a member of", async () => {
+  it("lists the teams a person leads apart from those they are a member of, each after its square", async () => {
     await openFeatureTeams({
       path: "/org-chart?teams=feature&open=FX-p4",
       shown: [
@@ -258,6 +258,7 @@ describe("feature teams on the org chart", () => {
           name: "Fictional Lighthouse",
           leadId: "p2",
           members: ["p2", "p4"],
+          colour: "teal",
         }),
         featureTeam({
           id: quay,
@@ -280,6 +281,15 @@ describe("feature teams on the org chart", () => {
       "Fictional Quay",
       "Fictional LighthouseLed by Sasha Fictional",
     ]);
+    const squareOf = (name: string) =>
+      within(memberships)
+        .getByRole("link", { name })
+        .parentElement?.querySelector("[data-colour]")
+        ?.getAttribute("data-colour");
+    expect([
+      squareOf("Fictional Lighthouse"),
+      squareOf("Fictional Quay"),
+    ]).toEqual(["teal", undefined]);
   });
 
   it("finds people with the feature team of their card, and a team with no lead as a team", async () => {
