@@ -121,7 +121,7 @@ describe("the org chart", () => {
       { colour: "grape" },
     ]);
     expect(
-      await screen.findByText("Fictional team now has the colour Grape."),
+      await screen.findByText("Fictional team's colour is now Grape."),
     ).toBeDefined();
     expect(
       card("Tatum Fictional")

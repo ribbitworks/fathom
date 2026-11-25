@@ -43,7 +43,7 @@ import {
   targetOf,
 } from "./projects.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
-import { inOrder } from "./grid-columns.tsx";
+import { inOrder, isEmpty } from "./grid-columns.tsx";
 import {
   customersColumn,
   field,
@@ -63,7 +63,7 @@ import type {
   RecordTable,
   RowGrouping,
 } from "./record-table.ts";
-import type { ColumnUnit } from "./table-view.ts";
+import type { CellValue, ColumnUnit } from "./table-view.ts";
 import { formatMonth } from "./day-formats.ts";
 import { colourWords } from "./colours.ts";
 import { type RowGroup, rankOfNone } from "./row-groups.ts";
@@ -484,10 +484,14 @@ export function featureTable(
     : table;
 }
 
-// A new feature's colour, one of the palette's, or none, so it shows its team's.
-const colourColumn = field<Feature>("colour", "Colour", "choice", {
-  choices: paletteColours.map((colour) =>
-    choice(colour, colourWords(colour), false),
-  ),
-  emptyLabel: "Team's colour",
-});
+// A new feature's colour, one of the palette's, or none, so it shows its team's: once a team is
+// chosen, no colour reads as the team's, and before then as no value does.
+const colourColumn = (values: Readonly<Record<string, CellValue>>) =>
+  field<Feature>("colour", "Colour", "choice", {
+    choices: paletteColours.map((colour) =>
+      choice(colour, colourWords(colour), false),
+    ),
+    ...(isEmpty(values.featureTeamId ?? null)
+      ? {}
+      : { emptyLabel: "Team's colour" }),
+  });

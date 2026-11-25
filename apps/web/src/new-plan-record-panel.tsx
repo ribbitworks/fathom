@@ -75,6 +75,7 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
     withFormColumns(
       table.columnsFor(added.fields, added.lists, added.order, records),
       table.formColumns,
+      values,
     ).map((column) => inViewUnits(column, { units: units.units })),
     kind,
     values,

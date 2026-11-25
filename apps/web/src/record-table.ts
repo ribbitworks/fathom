@@ -203,19 +203,21 @@ export interface ColumnUnits {
 // which drafts name it.
 export interface FormColumn<Rec extends GridRecord, Change> {
   after: string;
-  column: Column<Rec, Change>;
+  // The column, as what the form holds so far has it, such as its words for no value.
+  column: (values: Readonly<Record<string, CellValue>>) => Column<Rec, Change>;
 }
 
 // A new record's form's columns: the table's, with each of its form's own after the one it names.
 export const withFormColumns = <Rec extends GridRecord, Change>(
   columns: readonly Column<Rec, Change>[],
   formColumns: readonly FormColumn<Rec, Change>[] = [],
+  values: Readonly<Record<string, CellValue>> = {},
 ): Column<Rec, Change>[] =>
   columns.flatMap((column) => [
     column,
     ...formColumns
       .filter(({ after }) => after === column.key)
-      .map(({ column: added }) => added),
+      .map(({ column: added }) => added(values)),
   ]);
 
 export interface RecordTable<Rec extends GridRecord, Change, Request> {
