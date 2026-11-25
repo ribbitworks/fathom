@@ -349,6 +349,7 @@ describe("typing in a cell", () => {
       code: "G2X",
     });
   });
+});
 
 describe("typing fast into a cell", () => {
   it.each([
