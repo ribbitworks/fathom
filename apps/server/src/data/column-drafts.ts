@@ -159,8 +159,8 @@ function refuseUnseenTier(
   }
 }
 
-// Discards a column's draft, and, for a column only drafted to be added, a new list drafted with it,
-// recorded as one discard.
+// Discards a column's draft, and, for a column only drafted to be added, a list made with a column
+// that no column draws on any longer, recorded as one discard.
 async function discardColumn(
   transaction: Transaction,
   maker: Actor,
@@ -172,13 +172,7 @@ async function discardColumn(
   await discardDrafts(transaction, maker.user.id, "field", [id]);
   const listMade =
     !state.fields.has(id) && typeof drafted.listId === "string"
-      ? await discardingNewList(
-          transaction,
-          maker,
-          state.lists,
-          drafted.listId,
-          id,
-        )
+      ? await discardingNewList(transaction, maker, state.lists, drafted.listId)
       : [];
   return recordChanges(transaction, maker, [...made, ...listMade], "discard");
 }

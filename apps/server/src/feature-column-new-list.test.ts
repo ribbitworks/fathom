@@ -387,6 +387,37 @@ describe("a new list drafted with a column on Features", () => {
     expect(await listDraftOf(listId)).toBeDefined();
   });
 
+  it("is discarded with the last column drawing on it, once the column it was made with is gone", async () => {
+    // Given a column with a new list, a second column drawing on it, and the first column removed
+    const { field } = await addedColumn();
+    const listId = String(field.listId);
+    const second = await test.request(
+      planner.cookie,
+      "POST",
+      "/api/features/columns",
+      { name: unique("Fictional Grade"), type: "choice", listId },
+    );
+    const secondId = second.json<{ field: Field }>().field.id;
+    await test.request(
+      planner.cookie,
+      "DELETE",
+      `/api/features/columns/${field.id}`,
+    );
+    expect(await listDraftOf(listId)).toBeDefined();
+
+    // When the second column is removed too
+    const removed = await test.request(
+      planner.cookie,
+      "DELETE",
+      `/api/features/columns/${secondId}`,
+    );
+
+    // Then the list and its choices go with it, leaving nothing used by no column
+    expect(removed.statusCode, removed.body).toBe(200);
+    expect(await listDraftOf(listId)).toBeUndefined();
+    expect(await choiceDraftsOf(listId)).toHaveLength(0);
+  });
+
   it("isn't discarded with a column that only draws on it, drafted apart", async () => {
     // Given a list drafted on Lists, and a column drawing on it
     const configurer = await test.signedIn("workforce-administrator");
