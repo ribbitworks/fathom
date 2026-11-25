@@ -4,14 +4,21 @@
 // Save view dialog names it, and the panel's table scrolls within it rather than the page.
 
 import { expect, type Page, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("productManager") });
 
 const narrowWidth = 820;
 const screenHeight = 900;
 
 async function openMetrics(page: Page) {
-  await signIn(page, "/features", "product.manager@fathom.test");
+  await page.goto("/features");
   await page.getByRole("button", { name: "Metrics", exact: true }).click();
+}
+
+// Measure shows only once Break down by has a column.
+async function breakDownByStatus(page: Page) {
+  await pick(page, "Break down by", "Status");
 }
 
 async function pick(page: Page, label: string, option: string | RegExp) {
@@ -19,16 +26,17 @@ async function pick(page: Page, label: string, option: string | RegExp) {
   await page.getByRole("option", { name: option }).first().click();
 }
 
-test("counts Sum of Nothing as a change, which Clear view takes back to Effort", async ({
+test("counts Measure set to Nothing as a change, which Clear view takes back to Effort", async ({
   page,
 }) => {
-  // Given the Product Manager on Features, with the Metrics panel open and nothing broken down
+  // Given the Product Manager on Features, with the Metrics panel broken down by Status
   await openMetrics(page);
-  const sumOf = page.getByRole("combobox", { name: "Sum of", exact: true });
-  await expect(sumOf).toHaveValue("Effort");
+  await breakDownByStatus(page);
+  const measure = page.getByRole("combobox", { name: "Measure", exact: true });
+  await expect(measure).toHaveValue("Effort (h)");
 
-  // When Sum of is set to Nothing
-  await pick(page, "Sum of", "Nothing");
+  // When Measure is set to Nothing
+  await pick(page, "Measure", "Nothing");
 
   // Then Views shows a change, and Clear view brings Effort back
   const views = page.getByRole("button", { name: /^Views.*, changed$/u });
@@ -37,22 +45,26 @@ test("counts Sum of Nothing as a change, which Clear view takes back to Effort",
   await page.getByRole("menuitem", { name: "Clear view" }).click();
   await expect(page.getByRole("button", { name: "Views" })).toBeVisible();
   await page.getByRole("button", { name: "Metrics", exact: true }).click();
-  await expect(sumOf).toHaveValue("Effort");
+  await breakDownByStatus(page);
+  await expect(measure).toHaveValue("Effort (h)");
 });
 
-test("names Sum of Nothing among what Save view includes", async ({ page }) => {
-  // Given the Product Manager on Features, with Sum of set to Nothing
+test("names Measure set to Nothing among what Save view includes", async ({
+  page,
+}) => {
+  // Given the Product Manager on Features, broken down by Status, with Measure set to Nothing
   await openMetrics(page);
-  await pick(page, "Sum of", "Nothing");
+  await breakDownByStatus(page);
+  await pick(page, "Measure", "Nothing");
 
   // When Save view is opened
   await page.getByRole("button", { name: /^Views.*, changed$/u }).click();
   await page.getByRole("menuitem", { name: "Save view…" }).click();
 
-  // Then its Includes names Sum of Nothing
+  // Then its Includes names Measure Nothing
   const dialog = page.getByRole("dialog", { name: "Save view" });
   await expect(
-    dialog.getByRole("term").filter({ hasText: "Sum of" }),
+    dialog.getByRole("term").filter({ hasText: "Measure" }),
   ).toBeVisible();
   await expect(
     dialog.getByRole("definition").filter({ hasText: "Nothing" }),
@@ -67,7 +79,7 @@ test("keeps the page from scrolling sideways when the panel's table is wider tha
   await openMetrics(page);
 
   // When the metrics break down by Status, giving a table wider than the panel
-  await pick(page, "Break down by", "Status");
+  await breakDownByStatus(page);
   const panel = page.getByRole("region", { name: "Metrics" });
   const figures = panel.getByRole("table");
   await expect(figures).toBeVisible();

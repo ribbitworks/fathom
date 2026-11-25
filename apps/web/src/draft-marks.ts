@@ -180,16 +180,20 @@ export function partsMark(
     : undefined;
 }
 
-// What an empty value says, in grey, where a draft's mark would otherwise mark nothing, as where a
-// draft empties a value, or fills one that was empty: a column's own words for none, or else "No"
-// and the value's name. Its first letter is lower-cased for a name written as a phrase, as in "No
-// needed by" or "No proposal ID", and kept for an abbreviation, as in "No ID", or a name whose
-// later words are capitalized, as an added column's "No Fictional Score".
-export function emptiedWords(name: string, emptyLabel?: string): string {
-  if (emptyLabel !== undefined) return emptyLabel;
+// A column's name inside a sentence: its first letter lower-cased for a name written as a phrase,
+// as in "needed by" or "proposal ID", and kept for an abbreviation, as in "ID", or a name whose
+// later words are capitalized, as an added column's "Fictional Score".
+export function inSentence(name: string): string {
   const [first = "", ...later] = name.split(" ");
   const asNamed =
     first.slice(1) !== first.slice(1).toLowerCase() ||
     later.some((word) => /^\p{Lu}\p{Ll}/u.test(word));
-  return `No ${asNamed ? name : name.charAt(0).toLowerCase() + name.slice(1)}`;
+  return asNamed ? name : name.charAt(0).toLowerCase() + name.slice(1);
+}
+
+// What an empty value says, in grey, where a draft's mark would otherwise mark nothing, as where a
+// draft empties a value, or fills one that was empty: a column's own words for none, or else "No"
+// and the value's name, as in "No needed by".
+export function emptiedWords(name: string, emptyLabel?: string): string {
+  return emptyLabel ?? `No ${inSentence(name)}`;
 }

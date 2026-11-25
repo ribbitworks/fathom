@@ -873,7 +873,7 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 **Preconditions:** Select the **Features** page in the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
 - [ ] `EEB5` Select **Metrics**.
-  - **Expected:** The **Metrics** panel opens, and **Sum of** reads **Effort**.
+  - **Expected:** The **Metrics** panel opens.
   - **Notes:**
 
 - [ ] `D7C2` Choose **Status** under **Break down by**.
@@ -895,6 +895,10 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
   - **Expected:** A row for each month features are needed by, earliest first, then **Empty**.
   - **Notes:**
 
-- [ ] `BE37` Choose **Nothing** under **Sum of**.
+- [ ] `BE37` Choose **Nothing** under **Measure**.
   - **Expected:** The **Effort (PD)**, **Average** and **None** columns go, and the rest stays.
+  - **Notes:**
+
+- [ ] `7E3B` Choose **Projects** under **Break down by**.
+  - **Expected:** Under the panel's table, a note says a feature in several projects counts in each, and is easy to read.
   - **Notes:**

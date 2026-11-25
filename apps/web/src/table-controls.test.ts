@@ -40,13 +40,13 @@ describe("viewParts", () => {
   it("names Nothing when the metrics add nothing up, with or without a breakdown", () => {
     const effort = column({});
     expect(viewParts({ ...emptyView, sum: "" }, [effort])).toEqual([
-      { name: "Sum of", value: "Nothing" },
+      { name: "Measure", value: "Nothing" },
     ]);
     expect(
       viewParts({ ...emptyView, breakdown: ["effort"], sum: "" }, [effort]),
     ).toEqual([
       { name: "Metrics", value: "Effort" },
-      { name: "Sum of", value: "Nothing" },
+      { name: "Measure", value: "Nothing" },
     ]);
   });
 
@@ -78,7 +78,7 @@ describe("viewParts", () => {
       { name: "Sort", value: "Name ↑, Effort ↓" },
       { name: "Draft", value: "Drafts applied" },
       { name: "Metrics", value: "Name" },
-      { name: "Sum of", value: "Effort" },
+      { name: "Measure", value: "Effort" },
       { name: "Frozen", value: "Up to Name" },
       { name: "Column order", value: "Moved" },
       { name: "Widths", value: "Name" },
