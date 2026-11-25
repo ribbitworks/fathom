@@ -129,7 +129,7 @@ See [People](people.md#export-people) for what the file holds.
 
 The row is struck through until the removal is approved. A project takes its milestones with it.
 
-While a project, proposal or feature names a customer, **Remove customer** is greyed out, with a line under it naming one of them, such as "P-2001 Crane Control names this customer." Take the customer off that record first.
+While a project, proposal or feature names a customer, **Remove customer** is greyed out, with a line under it naming the first of them and counting the rest, such as "P-2001 Crane Control and 2 others name this customer." Take the customer off that record first.
 
 Fathom won't remove a proposal that another record still names. It also won't remove a project once people are allocated to it.
 
