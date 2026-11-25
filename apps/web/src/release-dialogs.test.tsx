@@ -475,7 +475,7 @@ describe("the dialog making or changing a release", () => {
     expect([
       box("Ships on").placeholder,
       screen.queryByText(/Leave empty/),
-    ]).toEqual(["2027-06-30 (end of the last cycle)", null]);
+    ]).toEqual(["Jun 30, 2027 (end of the last cycle)", null]);
   });
 
   it("offers only the cycles no other release includes", async () => {

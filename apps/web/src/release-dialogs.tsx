@@ -66,6 +66,7 @@ import {
 import { projectPlanQuery } from "./projects.ts";
 import { cycleUnitWords, patternOn } from "./schedules.ts";
 import { sessionQuery } from "./session.ts";
+import { formatDay } from "./day-formats.ts";
 
 export interface Saving {
   onSaved: (saved: SavedStream) => void;
@@ -726,7 +727,7 @@ export function ReleaseDialog({
             }
             {...(end === undefined
               ? {}
-              : { placeholder: `${end} (end of the last cycle)` })}
+              : { placeholder: `${formatDay(end)} (end of the last cycle)` })}
             required={false}
             value={release?.shipsOn ?? undefined}
             problem={shipsProblem}
