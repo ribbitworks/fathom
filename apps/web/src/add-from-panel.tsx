@@ -7,9 +7,10 @@ import type { Feature, Project, ProjectPlan, Proposal } from "@fathom/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { newRecordQuestion } from "./discard-question.tsx";
+import { differingKeys } from "./drafts.ts";
 import { pendingId } from "./grid-drafts.ts";
 import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
-import type { FormValues } from "./new-record-panel.tsx";
+import { entered, type FormValues } from "./new-record-panel.tsx";
 import type { NoteOpening } from "./note-editing.tsx";
 import { type PlanChange, wordsOf } from "./plan-table.tsx";
 import { operationsOf } from "./plan-record-operations.ts";
@@ -126,8 +127,8 @@ interface Linking {
   kind: LinkedKind;
   linkedBy: LinkedBy;
   values: FormValues;
-  // The form as it opens with nothing typed, which leaving it so discards without asking: a name typed
-  // into the picker counts as entered, what the picker fills in itself does not.
+  // The form as it opens with nothing typed: a name typed into the picker counts as entered, what
+  // the picker fills in itself does not.
   blank: FormValues;
   saving: boolean;
   // The kind of record the picker was for, and the record or new row it was in.
@@ -135,6 +136,17 @@ interface Linking {
   to: AddedTo;
   back: () => void;
 }
+
+// Whether the form holds anything entered, as the page's own New form judges it, in the fields that
+// differ from how it opens with nothing typed.
+const enteredSinceBlank = ({ values, blank }: Linking) => {
+  const changed = new Set(differingKeys(values, blank, Object.keys(values)));
+  return entered({
+    values: Object.fromEntries(
+      Object.entries(values).filter(([key]) => changed.has(key)),
+    ),
+  });
+};
 
 const oneOf = (kind: LinkedKind): string =>
   // The kind is always one of the fixed kinds.
@@ -195,8 +207,7 @@ export function useAddFromPanel({
   };
 
   const question =
-    linking !== undefined &&
-    JSON.stringify(linking.values) !== JSON.stringify(linking.blank)
+    linking !== undefined && enteredSinceBlank(linking)
       ? newRecordQuestion(oneOf(linking.kind))
       : undefined;
 

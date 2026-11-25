@@ -202,6 +202,23 @@ describe("adding a record from a picker", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("closes without asking a form opened with nothing typed, whose description was typed and emptied again", async () => {
+    await typeInCustomers("");
+    await userEvent.click(screen.getByRole("option", { name: "New customer" }));
+    const form = newForm() as HTMLElement;
+    const description = within(form).getByRole("textbox", {
+      name: "Description",
+    });
+    await userEvent.type(description, "Ferries{Tab}");
+    await userEvent.clear(description);
+    await userEvent.tab();
+    await userEvent.click(within(form).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => {
+      expect(newForm()).toBeNull();
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("adds from a cell's picker beside the table, then puts focus back on the cell", async () => {
     const { fetch, held } = await openPage("/projects?tab=proposals", plan(), {
       "POST /api/customers": saved(() => withAdded),
