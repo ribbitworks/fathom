@@ -352,25 +352,27 @@ describe("typing in a cell", () => {
 
 describe("typing fast into a cell", () => {
   it.each([
-    ["Name", "name", "Wid", "Wid"],
-    ["Next", "next", "203009", "2030-09"],
-  ])(
-    "keeps the keys typed into %s before its editor has focus, after the first",
-    async (name, key, typed, shown) => {
+    ["name", "text", "Wid", "Wid"],
+    ["next", "date", "203009", "2030-09"],
+    ["next", "choice", "Wid", "Wid"],
+    ["next", "link", "exa", "exa"],
+  ] as const)(
+    "keeps the keys typed into the %s cell, a %s, before its editor has focus",
+    async (key, kind, typed, shown) => {
       renderGadgets({
         gadgets: [],
         fields: [],
-        table: nameThen(nextColumn("date")),
+        table: nameThen(nextColumn(kind)),
       });
       const cell = document.getElementById(`cell-new-0-${key}`) as HTMLElement;
       act(() => {
         cell.focus();
       });
       for (const one of typed) fireEvent.keyDown(cell, { key: one });
+      const editor = () =>
+        document.getElementById(`cell-new-0-${key}-editor`) as HTMLInputElement;
       await waitFor(() => {
-        expect(
-          screen.getByRole<HTMLInputElement>("textbox", { name }).value,
-        ).toBe(shown);
+        expect(editor().value).toBe(shown);
       });
     },
   );
