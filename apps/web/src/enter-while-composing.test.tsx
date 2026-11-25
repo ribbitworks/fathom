@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests that Enter ending a word composed with an input method acts on nothing, in each field that
-// takes typed words: a table's cell, the choice picker, and a list's new and edited choices.
+// Tests that Enter ending a word composed with an input method acts on nothing, and the reader's
+// Enter after it acts once, in each field that takes typed words: a table's cell, the choice
+// picker, and a list's new and edited choices. The New form's field is tested with its panel.
 
 import { MantineProvider } from "@mantine/core";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ChoicePicker } from "./choice-picker.tsx";
@@ -12,6 +19,7 @@ import { entryName, focusRow, openPanel } from "./test-lists-page.tsx";
 import {
   actions,
   bodyOf,
+  composingEnters,
   gadget,
   renderGadgets,
   testTheme,
@@ -21,32 +29,31 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const composing = [
-  ["while composing", { isComposing: true }],
-  ["as Safari sends it to end composing", { keyCode: 229 }],
-] as const;
-
-async function composingEnter(field: HTMLElement, how: object) {
+// The Enter that ends composing, which leaves the field open, then the reader's own Enter.
+async function enterAfterComposing(field: HTMLElement, how: object) {
   fireEvent.keyDown(field, { key: "Enter", ...how });
-  await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 20));
-  });
+  expect(field.isConnected).toBe(true);
+  await userEvent.keyboard("{Enter}");
 }
 
-describe.each(composing)("Enter %s a word", (_, how) => {
-  it("leaves a table's cell open, saving nothing", async () => {
+describe.each(composingEnters)("Enter %s a word", (_, how) => {
+  it("saves a table's cell only at the reader's Enter", async () => {
     const update = vi.fn();
     renderGadgets({ gadgets: [gadget("g1")], given: actions({ update }) });
     act(() => {
       document.getElementById("cell-g1-name")?.focus();
     });
     await userEvent.keyboard("Widget");
-    await composingEnter(screen.getByRole("textbox", { name: "Name" }), how);
-    expect(screen.getByRole("textbox", { name: "Name" })).toBeDefined();
-    expect(update).not.toHaveBeenCalled();
+    await enterAfterComposing(
+      screen.getByRole("textbox", { name: "Name" }),
+      how,
+    );
+    await waitFor(() => {
+      expect(update).toHaveBeenCalledOnce();
+    });
   });
 
-  it("leaves the choice picker open with nothing to pick", async () => {
+  it("finishes the choice picker with nothing to pick only at the reader's Enter", async () => {
     const onDone = vi.fn();
     render(
       <MantineProvider theme={testTheme}>
@@ -64,26 +71,28 @@ describe.each(composing)("Enter %s a word", (_, how) => {
     );
     const field = screen.getByLabelText("Teams");
     await userEvent.type(field, "zz");
-    await composingEnter(field, how);
-    expect(onDone).not.toHaveBeenCalled();
+    await enterAfterComposing(field, how);
+    expect(onDone).toHaveBeenCalledExactlyOnceWith([], "enter");
   });
 
-  it("adds no choice to a list", async () => {
+  it("adds a choice to a list only at the reader's Enter", async () => {
     const { fetch } = await openPanel();
     await userEvent.type(entryName(), "Ashgrove");
-    await composingEnter(entryName(), how);
-    expect(bodyOf(fetch, "POST", "/api/lists/l1/choices")).toHaveLength(0);
-    expect(entryName().value).toBe("Ashgrove");
+    await enterAfterComposing(entryName(), how);
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/lists/l1/choices")).toHaveLength(1);
+    });
   });
 
-  it("keeps a choice being edited open, saving nothing", async () => {
+  it("saves a choice being edited only at the reader's Enter", async () => {
     const { fetch } = await openPanel();
     focusRow("c2");
     await userEvent.keyboard("{Enter}");
     const name = await screen.findByLabelText<HTMLInputElement>("name");
     await userEvent.type(name, " Lab");
-    await composingEnter(name, how);
-    expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2")).toHaveLength(0);
-    expect(screen.getByLabelText("name")).toBe(name);
+    await enterAfterComposing(name, how);
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2")).toHaveLength(1);
+    });
   });
 });

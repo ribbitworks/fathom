@@ -21,10 +21,10 @@ import {
   lastKept,
   removedChoice as removed,
 } from "./choice-rules.ts";
+import { composingWord } from "./composing.ts";
 import { focusSoon } from "./focus.ts";
 import type { ChoiceActions } from "./list-panel.tsx";
 import { opensMenu } from "./row-controls.tsx";
-import { composingWord } from "./composing.ts";
 
 const typedWeight = (weight: number | undefined) =>
   weight === undefined ? "" : String(weight);

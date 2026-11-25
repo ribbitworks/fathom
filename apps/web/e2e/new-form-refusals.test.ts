@@ -20,7 +20,7 @@ function changesSent(page: Page): string[] {
 }
 
 // Opens Fleet Tracking Bid's details, then its Customers picker's New customer form, named by what
-// was typed. Panels are regions beside the page, and dialogs covering a narrow screen.
+// was typed, if anything. Panels are regions beside the page, and dialogs covering a narrow screen.
 async function newCustomerFromBid(
   page: Page,
   typed: string,
@@ -37,7 +37,11 @@ async function newCustomerFromBid(
   const details = page.getByRole(role, { name: /Fleet Tracking Bid/ });
   await details.getByText("Customers", { exact: true }).click();
   await details.getByRole("textbox", { name: "Customers" }).fill(typed);
-  await page.getByRole("option", { name: `New customer “${typed}”` }).click();
+  await page
+    .getByRole("option", {
+      name: typed === "" ? "New customer" : `New customer “${typed}”`,
+    })
+    .click();
   const form = page.getByRole(role, { name: "New customer" });
   return { details, form, name: form.getByRole("textbox", { name: "Name" }) };
 }
@@ -115,6 +119,20 @@ test("Cancel asks before discarding the name typed into the picker, though left 
   await expect(
     page.getByRole("dialog", { name: "Discard the new customer?" }),
   ).toBeVisible();
+});
+
+test("Cancel closes a form opened with nothing typed, whose Description was typed and emptied again, without asking", async ({
+  page,
+}) => {
+  const { form } = await newCustomerFromBid(page, "");
+  const description = form.getByRole("textbox", { name: "Description" });
+  await description.fill("Fictional ferries");
+  await description.press("Tab");
+  await description.fill("");
+  await description.press("Tab");
+  await form.getByRole("button", { name: "Cancel" }).click();
+  await expect(form).toBeHidden();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
 test("the page's own New proposal names a taken name under Name, with focus in it, saving nothing", async ({

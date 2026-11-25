@@ -196,6 +196,13 @@ export const recordCell = (id: string, columnKey: string) =>
 
 // The simulated browser has no layout, so everything seems off screen, and a tooltip or menu would
 // hide itself once placed, sometimes before the test looked.
+// The two ways an Enter that ends composing a word arrives: marked as composing, or, as Safari sends
+// it, marked only by the old key code 229.
+export const composingEnters = [
+  ["while composing", { isComposing: true }],
+  ["as Safari sends it to end composing", { keyCode: 229 }],
+] as const;
+
 export const testTheme = mergeThemeOverrides(theme, {
   components: {
     Tooltip: { defaultProps: { hideDetached: false } },
