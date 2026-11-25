@@ -15,7 +15,7 @@ import {
   requestedValuesSchema,
   valuesSchema,
 } from "./people.ts";
-import type { Meaning } from "./lists.ts";
+import { byMeaning, type Meaning } from "./lists.ts";
 import {
   optionalText,
   picked,
@@ -46,8 +46,20 @@ export const largestEstimateHours = 999_999;
 
 // Whether a feature's status commits to it: planned or being worked on, rather than possible, done
 // or cancelled.
-export const isCommitted = (meaning: Meaning | null | undefined): boolean =>
-  meaning === "planned" || meaning === "in-progress";
+export const isCommitted = byMeaning(
+  {
+    proposed: false,
+    open: false,
+    hired: false,
+    left: false,
+    possible: false,
+    planned: true,
+    "in-progress": true,
+    done: false,
+    cancelled: false,
+  },
+  false,
+);
 
 // A committed feature needs a feature team to own it; a possible one need not have one yet, and a
 // done or cancelled one raises no warnings.

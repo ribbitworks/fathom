@@ -5,7 +5,7 @@
 
 import { wholeMonth } from "./allocations.ts";
 import type { Feature } from "./features.ts";
-import type { Meaning } from "./lists.ts";
+import { byMeaning } from "./lists.ts";
 import { monthsBetween } from "./monthly-grid.ts";
 import type { PlanningSettings } from "./planning-settings.ts";
 import { fullOutputPercent } from "./planning-settings.ts";
@@ -66,10 +66,9 @@ export function firstMonthEmployed(
   });
 }
 
-// Whether work with a status of each meaning is still to be done, and so forecast; every meaning is
-// named, which the compiler checks.
-const forecastMeanings = new Map<string, boolean>(
-  Object.entries({
+// Whether work is still to be done, and so forecast: not once it is done or cancelled.
+export const isForecast = byMeaning(
+  {
     proposed: true,
     open: true,
     hired: true,
@@ -79,13 +78,9 @@ const forecastMeanings = new Map<string, boolean>(
     "in-progress": true,
     done: false,
     cancelled: false,
-  } satisfies Record<Meaning, boolean>),
+  },
+  true,
 );
-
-export const isForecast = (meaning: Meaning | null | undefined): boolean =>
-  meaning === null ||
-  meaning === undefined ||
-  forecastMeanings.get(meaning) === true;
 
 // The effort a work needs: its estimate with the buffer the settings add, multiplied before it is
 // divided so 50 h with 15% stays 57.5 h; none without an estimate.
