@@ -23,6 +23,12 @@
   overflow-wrap: anywhere;
 }
 
+/* Links keep the theme's link colour, not the browser's blue and purple once visited. */
+.view a {
+  color: var(--mantine-color-anchor);
+  text-underline-offset: 2px;
+}
+
 .view > :first-child {
   margin-top: 0;
 }
