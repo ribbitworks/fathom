@@ -43,6 +43,7 @@ import {
 } from "./status-mark.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { today } from "./today.ts";
+import { draftOffer } from "./menu-offer.ts";
 
 export const featureTeamPanelId = "feature-team-panel";
 const titleId = "feature-team-panel-title";
@@ -335,6 +336,15 @@ function TeamDetails({
       ? ownDraft
       : undefined;
   const changes = edits.members && show !== "live" && team.heldBy === undefined;
+  // The panel's buttons offer the team's own draft; deciding it is the Drafts page's.
+  const teamOffer = draftOffer({
+    hasDraft: draft !== undefined,
+    rejected: draft?.state === "rejected",
+    unpublished: draft?.unpublished === true,
+    editsDraft: changes,
+    decides: false,
+    publishes: false,
+  });
   const columns = teamColumns(choices, edits.undated);
   const save = (change: TeamChange) => {
     if (change.name !== undefined) actions.rename(team, change.name);
@@ -492,7 +502,7 @@ function TeamDetails({
           </RecordSection>
           {changes && (
             <Group gap="xs">
-              {draft?.state === "rejected" && (
+              {teamOffer.resubmit && (
                 <Button
                   variant="default"
                   onClick={() => {
@@ -502,7 +512,7 @@ function TeamDetails({
                   Resubmit
                 </Button>
               )}
-              {draft !== undefined && (
+              {teamOffer.discard && (
                 <Button
                   variant="default"
                   onClick={() => {
