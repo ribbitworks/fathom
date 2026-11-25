@@ -106,3 +106,7 @@ export async function chooseRowAction(name: string, item: string) {
   await userEvent.click(more as HTMLElement);
   await userEvent.click(await screen.findByRole("menuitem", { name: item }));
 }
+
+// The details panel of the release the tests open, Fictional One.
+export const releasePanel = () =>
+  screen.getByRole("region", { name: "Fictional One" });

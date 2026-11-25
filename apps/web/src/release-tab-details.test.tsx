@@ -37,6 +37,7 @@ import {
   editsReleases,
   openPage,
   openRelease,
+  releasePanel,
   inStream,
   searchOf,
   chooseRowAction,
@@ -57,9 +58,6 @@ const noSavedViews: SavedViews = {
   onDeleteUnusable: vi.fn(),
   onScope: vi.fn(),
 };
-
-const releasePanel = () =>
-  screen.getByRole("region", { name: "Fictional One" });
 
 describe("a release's details", () => {
   it("show the table's values in its order, then its colour and note, with Not shipped for a release to come", async () => {
