@@ -45,6 +45,19 @@ export const meaningSchema = z.enum([
 
 export type Meaning = z.infer<typeof meaningSchema>;
 
+// A rule naming whether it holds for every meaning, which the compiler checks, so a new meaning is
+// decided rather than counted by accident; and whether it holds for a status with none.
+export function byMeaning(
+  rule: Record<Meaning, boolean>,
+  none: boolean,
+): (meaning: Meaning | null | undefined) => boolean {
+  const holds = new Map<string, boolean>(Object.entries(rule));
+  return (meaning) =>
+    meaning === null || meaning === undefined
+      ? none
+      : holds.get(meaning) === true;
+}
+
 export const meaningNames: Readonly<Record<Meaning, string>> = {
   proposed: "Proposed",
   open: "Open",

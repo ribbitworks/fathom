@@ -8,6 +8,7 @@ import {
   featureLengths,
   featureRequestSchema,
   featuresByMeaning,
+  isCommitted,
   largestEstimateHours,
   needsFeatureTeam,
   needsStaffing,
@@ -101,6 +102,19 @@ describe("a feature request", () => {
       parse({ description: "a".repeat(featureLengths.description + 1) })
         .success,
     ).toBe(false);
+  });
+});
+
+describe("which features are committed to", () => {
+  it.each([
+    ["planned", true],
+    ["in-progress", true],
+    ["possible", false],
+    ["done", false],
+    ["cancelled", false],
+    [null, false],
+  ] as const)("a status meaning %s is committed: %s", (meaning, committed) => {
+    expect(isCommitted(meaning)).toBe(committed);
   });
 });
 
