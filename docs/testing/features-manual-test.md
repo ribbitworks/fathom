@@ -957,8 +957,8 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 - [ ] `9B4B` Choose **New list** under **List**.
   - **Expected:**
-    - **New list** is the first choice offered.
-    - Under **List**, the fields **List name** and **Choices** show.
+    - **New list** is the last choice offered, under a line, in blue.
+    - Under **List**, **List name** and **Choices** show, with a row starting with **+** under **Choices**.
   - **Notes:**
 
 - [ ] `BA76` Select **Add column**.
@@ -969,15 +969,15 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
   - **Expected:** **List name** holds `Fictional Tiers`, with no message under it.
   - **Notes:**
 
-- [ ] `F802` In **Choices**, type `Gold` and press Enter.
-  - **Expected:** **Gold** shows in **Choices** as a tag with an **×**, and the box is empty again.
+- [ ] `F802` In the row starting with **+**, type `Gold` and press Enter.
+  - **Expected:** **Gold** shows in a row of its own above it, and the **+** row is empty again.
   - **Notes:**
 
 - [ ] `DD69` Type `Silver` and press Enter.
   - **Expected:** **Gold** and **Silver** show, in that order.
   - **Notes:**
 
-- [ ] `6E8E` Copy these two lines, then paste them into **Choices**:
+- [ ] `6E8E` Copy these two lines, then paste them into the **+** row:
 
   ```text
   Bronze
@@ -985,6 +985,10 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
   ```
 
   - **Expected:** **Gold**, **Silver**, **Bronze** and **Iron** show, in that order.
+  - **Notes:**
+
+- [ ] `5D1E` Open **Iron**'s **⋯** and select **Remove**.
+  - **Expected:** **Iron** is gone, and **Gold**, **Silver** and **Bronze** stay.
   - **Notes:**
 
 - [ ] `C79F` Select **Add column**.
@@ -998,7 +1002,7 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
   - **Notes:**
 
 - [ ] `0CD6` Select `Fictional Tiers`.
-  - **Expected:** Its choices are **Gold**, **Silver**, **Bronze** and **Iron**, in that order.
+  - **Expected:** Its choices are **Gold**, **Silver** and **Bronze**, in that order.
   - **Notes:**
 
 **Afterwards:** Run Discard the Unpublished Changes.

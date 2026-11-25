@@ -4,10 +4,12 @@
 // column is drafted drawing on it.
 
 import { expect, type Page, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("productManager") });
 
 async function openNewColumn(page: Page) {
-  await signIn(page, "/features", "product.manager@fathom.test");
+  await page.goto("/features");
   await page.getByRole("button", { name: "New column" }).click();
   const dialog = page.getByRole("dialog", { name: "New column" });
   await dialog
@@ -50,11 +52,11 @@ test("adds a choice column drawing on a new list, made with it", async ({
   await dialog
     .getByRole("textbox", { name: "List name" })
     .fill("Fictional Tiers");
-  const choices = dialog.getByLabel("Choices", { exact: true });
-  await choices.fill("Fictional Gold");
-  await choices.press("Enter");
-  await choices.fill("Fictional Silver");
-  await choices.press("Enter");
+  const choice = dialog.getByRole("textbox", { name: "New choice name" });
+  await choice.fill("Fictional Gold");
+  await choice.press("Enter");
+  await choice.fill("Fictional Silver");
+  await choice.press("Enter");
   const saved = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
@@ -71,7 +73,10 @@ test("adds a choice column drawing on a new list, made with it", async ({
   const sent = (await saved).request().postDataJSON() as { newList: unknown };
   expect(sent.newList).toEqual({
     name: "Fictional Tiers",
-    choices: ["Fictional Gold", "Fictional Silver"],
+    choices: [
+      { label: "Fictional Gold", description: "" },
+      { label: "Fictional Silver", description: "" },
+    ],
   });
 
   // Then the column shows, drawing on the new list, which its dialog names as new

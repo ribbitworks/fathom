@@ -164,8 +164,8 @@ describe("the Features page", () => {
         within(dialog).queryByLabelText("Offered on planned hires"),
       ).toBeNull();
       expect(await optionsIn(dialog, "List")).toEqual([
-        "New list",
         "Fictional Sizes",
+        "New list",
       ]);
       await userEvent.click(
         screen.getByRole("option", { name: "Fictional Sizes" }),
@@ -216,10 +216,7 @@ describe("the Features page", () => {
         within(dialog).getByLabelText("List name"),
         "Fictional Tiers",
       );
-      await userEvent.type(
-        within(dialog).getByLabelText("Choices"),
-        "Gold{Enter}Silver{Enter}",
-      );
+      await userEvent.type(choiceEntry(dialog), "Gold{Enter}Silver{Enter}");
       const listReads = () =>
         fetch.mock.calls.filter(([url]) => url === "/api/lists").length;
       const readsBefore = listReads();
@@ -233,7 +230,13 @@ describe("the Features page", () => {
           {
             name: "Fictional Tier",
             type: "choice",
-            newList: { name: "Fictional Tiers", choices: ["Gold", "Silver"] },
+            newList: {
+              name: "Fictional Tiers",
+              choices: [
+                { label: "Gold", description: "" },
+                { label: "Silver", description: "" },
+              ],
+            },
             multiple: false,
             required: false,
             onPlannedHires: false,
@@ -244,6 +247,10 @@ describe("the Features page", () => {
         expect(listReads()).toBeGreaterThan(readsBefore);
       });
     });
+
+    // The empty row's name, where a new list's choices are typed or pasted.
+    const choiceEntry = (dialog: HTMLElement) =>
+      within(dialog).getByRole("textbox", { name: "New choice name" });
 
     // The New column dialog with New list chosen, for a column named Fictional Tier.
     const newListDialog = async () => {
@@ -283,14 +290,11 @@ describe("the Features page", () => {
       ).toBeDefined();
     });
 
-    it("says so under Choices when a choice is typed twice, keeping it once", async () => {
+    it("says so under the choice typed twice, keeping it once", async () => {
       await openWith(withColumns());
       const dialog = await newListDialog();
 
-      await userEvent.type(
-        within(dialog).getByLabelText("Choices"),
-        "Gold{Enter}Gold{Enter}",
-      );
+      await userEvent.type(choiceEntry(dialog), "Gold{Enter}Gold{Enter}");
 
       expect(within(dialog).getByText("Already in this list")).toBeDefined();
       expect(within(dialog).getAllByText("Gold")).toHaveLength(1);
@@ -299,8 +303,7 @@ describe("the Features page", () => {
     it("refuses pasting more choices than a list takes at once, keeping those it has", async () => {
       await openWith(withColumns());
       const dialog = await newListDialog();
-      const box = within(dialog).getByLabelText("Choices");
-      await userEvent.click(box);
+      await userEvent.click(choiceEntry(dialog));
 
       await userEvent.paste(
         Array.from(
@@ -317,27 +320,142 @@ describe("the Features page", () => {
       expect(within(dialog).queryByText("Choice 0")).toBeNull();
     });
 
-    it("takes a pasted choice's name, leaving out a description after a tab", async () => {
+    it("takes pasted choices one to a line, each description after a tab, as a list's panel does", async () => {
       await openWith(withColumns());
       const dialog = await newListDialog();
-      await userEvent.click(within(dialog).getByLabelText("Choices"));
+      await userEvent.click(choiceEntry(dialog));
 
       await userEvent.paste("Gold\tThe best\nSilver");
 
       expect(within(dialog).getByText("Gold")).toBeDefined();
+      expect(within(dialog).getByText("The best")).toBeDefined();
       expect(within(dialog).getByText("Silver")).toBeDefined();
-      expect(within(dialog).queryByText(/The best/u)).toBeNull();
     });
 
     it("refuses a pasted choice longer than a choice may be", async () => {
       await openWith(withColumns());
       const dialog = await newListDialog();
-      await userEvent.click(within(dialog).getByLabelText("Choices"));
+      await userEvent.click(choiceEntry(dialog));
 
       await userEvent.paste(`Gold\n${"x".repeat(listLengths.choice + 1)}`);
 
-      expect(within(dialog).getByText("Too long")).toBeDefined();
+      expect(within(dialog).getByText(/Too long/u)).toBeDefined();
       expect(within(dialog).queryByText("Gold")).toBeNull();
+    });
+
+    it("moves between the choices' rows by keys, as a list's panel does, from the empty row too", async () => {
+      await openWith(withColumns());
+      const dialog = await newListDialog();
+      await userEvent.type(
+        choiceEntry(dialog),
+        "Gold{Enter}Silver{Enter}Bronze{Enter}",
+      );
+      const row = (label: string) =>
+        within(dialog).getByText(label).closest('[role="row"]');
+
+      // Up from the empty row goes to the last choice, and Home and End to the first and last
+      await userEvent.keyboard("{ArrowUp}");
+      await waitFor(() => {
+        expect(document.activeElement).toBe(row("Bronze"));
+      });
+      await userEvent.keyboard("{Home}");
+      await waitFor(() => {
+        expect(document.activeElement).toBe(row("Gold"));
+      });
+      await userEvent.keyboard("{ArrowDown}");
+      await waitFor(() => {
+        expect(document.activeElement).toBe(row("Silver"));
+      });
+      await userEvent.keyboard("{End}");
+      await waitFor(() => {
+        expect(document.activeElement).toBe(row("Bronze"));
+      });
+
+      // A key held with Ctrl does nothing; Down past the last choice goes to the empty row
+      await userEvent.keyboard("{Control>}{Backspace}{/Control}");
+      expect(row("Bronze")).not.toBeNull();
+      await userEvent.keyboard("{ArrowDown}");
+      await waitFor(() => {
+        expect(document.activeElement).toBe(choiceEntry(dialog));
+      });
+    });
+
+    it("empties a choice being typed on Esc, keeping the dialog open, and closes it on Esc after", async () => {
+      await openWith(withColumns());
+      const dialog = await newListDialog();
+      await userEvent.type(choiceEntry(dialog), "Gold");
+
+      await userEvent.keyboard("{Escape}");
+
+      expect(choiceEntry(dialog)).toHaveProperty("value", "");
+      expect(screen.getByRole("dialog", { name: "New column" })).toBeDefined();
+      await userEvent.keyboard("{Escape}");
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: "New column" })).toBeNull();
+      });
+    });
+
+    it("takes out a choice from its row's menu, which a click on its title closes", async () => {
+      await openWith(withColumns());
+      const dialog = await newListDialog();
+      await userEvent.type(choiceEntry(dialog), "Gold{Enter}Silver{Enter}");
+      const menuOf = (label: string) =>
+        within(dialog).getByRole("button", { name: `Actions for ${label}` });
+
+      await userEvent.click(menuOf("Silver"));
+      await userEvent.click(
+        within(await screen.findByRole("menu")).getByText("Silver"),
+      );
+      await waitFor(() => {
+        expect(screen.queryByRole("menuitem", { name: /Remove/u })).toBeNull();
+      });
+      await userEvent.click(menuOf("Gold"));
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: /Remove/u }),
+      );
+
+      expect(within(dialog).queryByText("Gold")).toBeNull();
+      expect(within(dialog).getByText("Silver")).toBeDefined();
+
+      // And Delete on the ⋯ itself, not its row, takes nothing out
+      menuOf("Silver").focus();
+      await userEvent.keyboard("{Delete}");
+      expect(within(dialog).getByText("Silver")).toBeDefined();
+    });
+
+    it("takes out the last choice with Backspace, putting focus in the empty row", async () => {
+      await openWith(withColumns());
+      const dialog = await newListDialog();
+      await userEvent.type(choiceEntry(dialog), "Gold{Enter}Silver{Enter}");
+      await userEvent.keyboard("{ArrowUp}");
+
+      await userEvent.keyboard("{Backspace}");
+
+      expect(within(dialog).queryByText("Silver")).toBeNull();
+      await waitFor(() => {
+        expect(document.activeElement).toBe(choiceEntry(dialog));
+      });
+    });
+
+    it("takes out a choice with Delete on its row, putting focus on the next", async () => {
+      await openWith(withColumns());
+      const dialog = await newListDialog();
+      await userEvent.type(choiceEntry(dialog), "Gold{Enter}Silver{Enter}");
+      const gold = within(dialog).getByText("Gold").closest('[role="row"]');
+      (gold as HTMLElement).focus();
+
+      await userEvent.keyboard("{Delete}");
+
+      expect(within(dialog).queryByText("Gold")).toBeNull();
+      const silver = within(dialog).getByText("Silver").closest('[role="row"]');
+      await waitFor(() => {
+        expect(document.activeElement).toBe(silver);
+      });
+      expect(silver?.className).toMatch(/selectedRow/u);
+
+      // And leaving the row leaves it unselected
+      await userEvent.click(choiceEntry(dialog));
+      expect(silver?.className).not.toMatch(/selectedRow/u);
     });
 
     it("names a list the server finds taken under List name, not as an alert", async () => {
@@ -359,10 +477,7 @@ describe("the Features page", () => {
         within(dialog).getByLabelText("List name"),
         "Fictional Tiers",
       );
-      await userEvent.type(
-        within(dialog).getByLabelText("Choices"),
-        "Gold{Enter}",
-      );
+      await userEvent.type(choiceEntry(dialog), "Gold{Enter}");
       await userEvent.click(
         within(dialog).getByRole("button", { name: "Add column" }),
       );

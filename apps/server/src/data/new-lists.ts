@@ -33,12 +33,12 @@ export async function draftNewList(
   const id = randomUUID();
   const list = { name, description: "", visibility: "general", retired: false };
   await writeDraft(transaction, maker.user.id, "list", id, undefined, list);
-  const added = choices.map((label) => ({
+  const added = choices.map(({ label, description }) => ({
     id: randomUUID(),
     fields: {
       listId: id,
       label,
-      description: "",
+      description,
       retired: false,
       meaning: null,
       weight: null,

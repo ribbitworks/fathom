@@ -8,7 +8,11 @@ import { type Permission, tierSchema } from "./access.ts";
 import { daySchema, monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { type Link, linkValueSchema } from "./links.ts";
-import { listLengths, mostChoicesAtOnce } from "./lists.ts";
+import {
+  choiceRequestSchema,
+  listLengths,
+  mostChoicesAtOnce,
+} from "./lists.ts";
 import { numberValueSchema } from "./numbers.ts";
 import { paletteColourSchema } from "./palette.ts";
 import { keyNumberSchema } from "./record-keys.ts";
@@ -399,13 +403,13 @@ export const editsColumnsOf = (
 export const newListSchema = z.object({
   name: z.string().trim().min(1).max(listLengths.name),
   choices: z
-    .array(z.string().trim().min(1).max(listLengths.choice))
+    .array(choiceRequestSchema.pick({ label: true, description: true }))
     .min(1)
     .max(mostChoicesAtOnce)
     .refine(
-      (labels) =>
-        new Set(labels.map((label) => label.toLowerCase())).size ===
-        labels.length,
+      (choices) =>
+        new Set(choices.map(({ label }) => label.toLowerCase())).size ===
+        choices.length,
       "A choice is in the list twice",
     ),
 });

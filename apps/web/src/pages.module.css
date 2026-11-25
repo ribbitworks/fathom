@@ -275,6 +275,14 @@ select.cellInput {
   background: var(--mantine-color-body);
 }
 
+/* The empty row's name starts where the names above it do, after their slot for a draft's marks. */
+.entry .choiceName {
+  padding-left: calc(
+    var(--fathom-ring-room) + 2 *
+      (var(--fathom-dot-size) + var(--fathom-mark-gap))
+  );
+}
+
 .plus {
   position: absolute;
   top: 10px;

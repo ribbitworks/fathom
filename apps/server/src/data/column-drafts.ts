@@ -159,8 +159,8 @@ function refuseUnseenTier(
   }
 }
 
-// Discards a column's draft, and, for a column only drafted to be added, a list made with a column
-// that no column draws on any longer, recorded as one discard.
+// Discards a column's draft, and a list made with a column that the draft drew on and no column
+// draws on any longer, recorded as one discard.
 async function discardColumn(
   transaction: Transaction,
   maker: Actor,
@@ -170,8 +170,12 @@ async function discardColumn(
 ): Promise<string | null> {
   const made = discardingField(state, id);
   await discardDrafts(transaction, maker.user.id, "field", [id]);
+  // Only a table whose columns make lists takes one along, so a People column, which may draw on a
+  // list made with a Features column, never discards it without Edit Configuration.
   const listMade =
-    !state.fields.has(id) && typeof drafted.listId === "string"
+    policyOf(drafted.tableName).newLists &&
+    typeof drafted.listId === "string" &&
+    drafted.listId !== state.fields.get(id)?.listId
       ? await discardingNewList(transaction, maker, state.lists, drafted.listId)
       : [];
   return recordChanges(transaction, maker, [...made, ...listMade], "discard");
