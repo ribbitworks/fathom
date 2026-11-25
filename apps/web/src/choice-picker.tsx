@@ -88,6 +88,32 @@ export interface Adding {
 const addingLabel = (one: string, typed: string): string =>
   typed === "" ? `New ${one}` : `New ${one} “${typed}”`;
 
+// An option's words after its tick, in a picker where several can be picked. The tick is hidden, not
+// left out, on an option not picked, so every option's words start in line.
+function Ticked({
+  shown,
+  ticked,
+  children,
+}: {
+  shown: boolean;
+  ticked: boolean;
+  children: ReactNode;
+}) {
+  return shown ? (
+    <Group gap="xs" wrap="nowrap">
+      <CheckIcon
+        size={12}
+        aria-hidden
+        visibility={ticked ? "visible" : "hidden"}
+        className={comboboxClasses.tick}
+      />
+      {children}
+    </Group>
+  ) : (
+    children
+  );
+}
+
 // Keys typed fast reach a cell until its editor has focus, adding to what was typed to open it; the
 // editor takes them while nothing has been typed into it since.
 export function useTypedBeforeFocus(
@@ -275,19 +301,9 @@ export function ChoicePicker({
                 active={chosen(option.value)}
                 aria-selected={chosen(option.value)}
               >
-                {multiple ? (
-                  <Group gap="xs" wrap="nowrap">
-                    {/* Hidden, not left out, so every label starts in line. */}
-                    <CheckIcon
-                      size={12}
-                      aria-hidden
-                      visibility={chosen(option.value) ? "visible" : "hidden"}
-                    />
-                    <OptionWords option={option} />
-                  </Group>
-                ) : (
+                <Ticked shown={multiple} ticked={chosen(option.value)}>
                   <OptionWords option={option} />
-                )}
+                </Ticked>
               </Combobox.Option>
             ))}
           {matching.length === 0 && !noneShown && adding === undefined && (
@@ -298,19 +314,11 @@ export function ChoicePicker({
               value={addingValue}
               className={comboboxClasses.adding}
             >
-              {multiple ? (
-                <Group gap="xs" wrap="nowrap">
-                  {/* Hidden, as on a choice not picked, so its words start in line with theirs. */}
-                  <CheckIcon size={12} aria-hidden visibility="hidden" />
-                  <span className={comboboxClasses.addingWords}>
-                    {addingLabel(adding.one, search.trim())}
-                  </span>
-                </Group>
-              ) : (
+              <Ticked shown={multiple} ticked={false}>
                 <span className={comboboxClasses.addingWords}>
                   {addingLabel(adding.one, search.trim())}
                 </span>
-              )}
+              </Ticked>
             </Combobox.Option>
           )}
         </Combobox.Options>
