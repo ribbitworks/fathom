@@ -4,10 +4,12 @@
 // reason under the field, focus in it, nothing saved, and Add and Cancel acting on the first click.
 
 import { expect, type Page, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("productManager") });
 
 // The requests that would save something, as the page sends them.
-function changesSent(): string[] {
+function changesSent(page: Page): string[] {
   const changes: string[] = [];
   page.on("request", (request) => {
     if (request.method() !== "GET" && request.url().includes("/api/"))
@@ -16,22 +18,10 @@ function changesSent(): string[] {
   return changes;
 }
 
-// One page, signed in once for the file, since signing in again for each test meets the limit on
-// sign-in attempts.
-test.describe.configure({ mode: "serial" });
-let page: Page;
-test.beforeAll(async ({ browser }) => {
-  page = await browser.newPage();
-  await signIn(page, "/projects?tab=proposals", "product.manager@fathom.test");
-  await page.getByRole("button", { name: "New proposal" }).waitFor();
-});
-test.afterAll(async () => {
-  await page.close();
-});
-
 // Opens Fleet Tracking Bid's details, then its Customers picker's New customer form, named by what
 // was typed.
-async function newCustomerFromBid(typed: string) {
+async function newCustomerFromBid(page: Page, typed: string) {
+  await page.goto("/projects?tab=proposals");
   const bidId = await page.evaluate(async () => {
     const plan = (await (await fetch("/api/projects")).json()) as {
       proposals: { id: string; name: string }[];
@@ -47,7 +37,7 @@ async function newCustomerFromBid(typed: string) {
   return { form, name: form.getByRole("textbox", { name: "Name" }) };
 }
 
-const customersNamed = (name: string) =>
+const customersNamed = (page: Page, name: string) =>
   page.evaluate(async (wanted) => {
     const plan = (await (await fetch("/api/projects")).json()) as {
       customers: { name: string }[];
@@ -55,10 +45,12 @@ const customersNamed = (name: string) =>
     return plan.customers.filter((one) => one.name === wanted).length;
   }, name);
 
-test("the stacked form refuses a Name emptied with its ×, keeping focus in it and saving nothing", async () => {
+test("the stacked form refuses a Name emptied with its ×, keeping focus in it and saving nothing", async ({
+  page,
+}) => {
   // Given the New customer form stacked under a proposal's details, its Name filled in
-  const { form, name } = await newCustomerFromBid("Fictional Depot");
-  const changes = changesSent();
+  const { form, name } = await newCustomerFromBid(page, "Fictional Depot");
+  const changes = changesSent(page);
 
   // When Name is emptied with its ×, focus is in it
   await form.getByRole("button", { name: "Clear Name" }).click();
@@ -74,12 +66,14 @@ test("the stacked form refuses a Name emptied with its ×, keeping focus in it a
 
   // Then nothing was sent to be saved
   expect(changes).toEqual([]);
-  expect(await customersNamed("Fictional Depot")).toBe(0);
+  expect(await customersNamed(page, "Fictional Depot")).toBe(0);
 });
 
-test("the stacked form names a taken name under Name, with focus in it, and adds at the first click once it is changed", async () => {
+test("the stacked form names a taken name under Name, with focus in it, and adds at the first click once it is changed", async ({
+  page,
+}) => {
   // Given the New customer form, named as a customer already is
-  const { form, name } = await newCustomerFromBid("Marlow City Transit");
+  const { form, name } = await newCustomerFromBid(page, "Marlow City Transit");
   const reason = "There is already a customer with that name";
 
   // When Add is selected, the server's refusal is under Name, not in a notification
@@ -88,18 +82,20 @@ test("the stacked form names a taken name under Name, with focus in it, and adds
   await expect(name).toHaveAttribute("aria-invalid", "true");
   await expect(name).toBeFocused();
   await expect(page.getByText(reason)).toHaveCount(1);
-  expect(await customersNamed("Marlow City Transit")).toBe(1);
+  expect(await customersNamed(page, "Marlow City Transit")).toBe(1);
 
   // And when a new name is typed, leaving it takes the reason away, which moves Add up; one click
   // on Add still adds the customer
   await name.fill("Fictional Harbour Works");
   await form.getByRole("button", { name: "Add", exact: true }).click();
   await expect(form).toBeHidden();
-  expect(await customersNamed("Fictional Harbour Works")).toBe(1);
+  expect(await customersNamed(page, "Fictional Harbour Works")).toBe(1);
 });
 
-test("Cancel asks before discarding a name typed, and Keep adding puts focus back in it", async () => {
-  const { form, name } = await newCustomerFromBid("Fictional Pier");
+test("Cancel asks before discarding a name typed, and Keep adding puts focus back in it", async ({
+  page,
+}) => {
+  const { form, name } = await newCustomerFromBid(page, "Fictional Pier");
   await name.fill("Fictional Pier Two");
   await form.getByRole("button", { name: "Cancel" }).click();
   await page.getByRole("button", { name: "Keep adding" }).click();
@@ -107,7 +103,9 @@ test("Cancel asks before discarding a name typed, and Keep adding puts focus bac
   await expect(name).toHaveValue("Fictional Pier Two");
 });
 
-test("the page's own New proposal names a taken name under Name, with focus in it, saving nothing", async () => {
+test("the page's own New proposal names a taken name under Name, with focus in it, saving nothing", async ({
+  page,
+}) => {
   // Given the New proposal form on Projects
   await page.goto("/projects?tab=proposals");
   await page.getByRole("button", { name: "New proposal" }).click();
