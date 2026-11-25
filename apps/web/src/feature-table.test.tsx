@@ -109,7 +109,7 @@ describe("the Features table", () => {
 
   it("marks a planned feature with no feature team", () => {
     expect(team?.status?.(feature({ featureTeamId: null }))).toEqual({
-      words: "No team",
+      words: "No feature team",
       spoken: "it needs a feature team to own it",
     });
   });

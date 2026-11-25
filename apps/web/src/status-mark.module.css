@@ -142,9 +142,9 @@
 }
 
 /* A warning about an item, such as Left: the same box outlined in red, since it is a fact about the
-   item, not a draft's state, which a dot shows. In an empty value's place, such as No team, it is
-   the words alone, since there is no value for a box to follow. Both take a red dark enough to read
-   on a draft's tinted row. */
+   item, not a draft's state, which a dot shows. In an empty value's place, such as No feature team,
+   it is the words alone, since there is no value for a box to follow. Both take a red dark enough
+   to read on a draft's tinted row. */
 .warningKind {
   border-color: var(--mantine-color-red-6);
 }

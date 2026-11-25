@@ -200,6 +200,9 @@ function releaseColumn(
   };
 }
 
+// The words for a feature with no feature team, as its empty value and as the warning in its place.
+const noFeatureTeam = "No feature team";
+
 export const staffedColumnKey = "staffed";
 
 export const staffedChoices = { yes: "yes", no: "no" } as const;
@@ -340,12 +343,15 @@ export function featureColumns(
         "choice",
         {
           choices: choices.featureTeams,
-          emptyLabel: "No feature team",
+          emptyLabel: noFeatureTeam,
         },
       ),
       status: (feature) =>
         needsFeatureTeam(meaningOf.get(feature.statusId), feature.featureTeamId)
-          ? { words: "No team", spoken: "it needs a feature team to own it" }
+          ? {
+              words: noFeatureTeam,
+              spoken: "it needs a feature team to own it",
+            }
           : undefined,
       readOnlyOn: () => !editsFeatureTeams,
     },

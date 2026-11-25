@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Drafts, Values and Access
@@ -20,7 +20,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** `DraftedItem` in `apps/web/src/status-mark.tsx`, with the words from `draftWords` and `draftTip` in `apps/web/src/draft-marks.ts`, and the menu's heading from `apps/web/src/draft-details.tsx`.
   - **Example:** Vianney Rousseau, drafted to be added, and Ophélie Roussel, whose addition was rejected, on People.
 - **What a dot can't say:** On a draft still waiting, Moved, Reordered, Retired and Restored are a small yellow box after the item. A dot always means a draft's state, never a fact.
-  - **Facts:** A fact about an item is also a box after it: grey for Built in, for Planned, expected and its month, and for a schedule's Ended; red for a warning, such as Left. A warning with no value before it, such as No team, is red words with no box, as [Warnings on a value](#values) sets out.
+  - **Facts:** A fact about an item is also a box after it: grey for Built in, for Planned, expected and its month, and for a schedule's Ended; red for a warning, such as Left. A warning with no value before it, such as No feature team, is red words with no box, as [Warnings on a value](#values) sets out.
   - **Their order:** Facts come before the draft's box: a fact says what the item is, the draft's box what is about to happen to it.
   - **Drawn by:** `DraftedItem`, `FactBox` and `MarkedItem` in `apps/web/src/status-mark.tsx`; a schedule's Ended by `EndedBox` there too.
   - **Example:** Languages on the Lists page, then its Retired box; Viktoria Holmberg's Left on People.
@@ -38,7 +38,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** `RowMarks` and `DraftedItem`'s `slot` in `apps/web/src/status-mark.tsx`, with `recordMark` in `apps/web/src/draft-marks.ts`; the sizes are the theme's `--fathom-dot-size`, `--fathom-mark-gap` and `--fathom-ring-room` in `apps/web/src/theme.ts`.
   - **Example:** On Projects' Milestones tab, Second crane live, drafted to be added, beside Final handover, drafted to be renamed.
 - **A changed value:** Each value a draft changes has the draft's dot before it, and is semibold while drafts show beside live.
-  - **Emptied or filled:** Where a draft empties a value, or fills an empty one, the empty side shows its words for none in grey italics, such as No start, in tables and panels alike.
+  - **Emptied or filled:** Where a draft empties a value, or fills an empty one, the empty side shows its words for none in grey italics, such as No start, in tables and panels alike. Where a warning stands in that side's place, it shows instead, as [A draft emptying or filling the value](#values) sets out.
   - **Another record's draft:** A value another record's draft changes, such as a cycle's Release that its release's draft renames, has that draft's dot, in that draft's state, whatever its row's draft is.
   - **Drawn by:** `DraftedValue` and `EmptiedValue` in `apps/web/src/status-mark.tsx`, with `changedValue` in `apps/web/src/draft-marks.ts`; the table's rows in `apps/web/src/grid-row.tsx` in a table, with a row's `cellDrafts` in `apps/web/src/record-table.ts` for values another record's draft changes, and `Row` in `apps/web/src/record-details.tsx` in a panel.
   - **Example:** 西尾 亮's End and Grade on People.
@@ -111,12 +111,13 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** The table's rows in `apps/web/src/grid-row.tsx`, with the org chart and the Teams panel drawing their own.
   - **Example:** A seeded planned hire with no name, named by its position and ID on People.
 - **Warnings on a value:** A warning about a value is a red box after it, in words, such as Left, read aloud with why.
-  - **No value before it:** A warning with no value before it, in an empty cell or on a line of its own, is its words in red in the value's place, with no box, read aloud the same way. Examples are No team in a Feature team cell and Not staffed on a card.
+  - **No value before it:** A warning with no value before it, in an empty cell or on a line of its own, is its words in red in the value's place, with no box, read aloud the same way. Examples are No feature team in a Feature team cell and Not staffed on a card.
+  - **A draft emptying or filling the value:** Where a draft empties or fills a value whose words for none are the warning's own, the warning stands alone in the empty side's place, after the draft's dot or in the Live row, so the same words never show twice.
   - **The red:** Box and words use a red dark enough to read on a draft's tinted row.
   - **A status isn't a warning:** A status a value is in, such as Over and Under on Capacity's Allocations, isn't a warning, and isn't read aloud with why.
     - **How it shows:** In words, in red with no box, with how far it is from what is expected beside it, such as Over +25%, and its figures, such as Total 125%, in a tooltip.
   - **Drawn by:** `MarkedItem` with the `warning` tone, in `apps/web/src/status-mark.tsx`, with `empty` for a warning in an empty value's place.
-  - **Example:** No team, in Scheduler API's Feature team cell.
+  - **Example:** No feature team, in Scheduler API's Feature team cell.
 - **Values in units:** An amount shows its unit's code in a table, such as 2.5 PD, and spells the unit out in a panel, such as 2.5 person-days (20 hours). Totals of one unit, such as the capacity totals on Capacity's Allocations, name it once, by its code, in their heading, such as Total, PM.
   - **Drawn by:** `EffortCell` in `apps/web/src/effort-cell.tsx`, and `inUnitsWords` in `apps/web/src/record-details.tsx`; the capacity totals by `CapacityTotal` in `apps/web/src/allocation-months.tsx`, with the units' words from `unitWords` in `apps/web/src/effort.ts`.
   - **Example:** Audit Export's Effort.
