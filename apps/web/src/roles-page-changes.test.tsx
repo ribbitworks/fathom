@@ -161,7 +161,7 @@ describe("creating a role", () => {
       "GET /api/roles": roleList,
       "POST /api/roles": () =>
         Response.json(
-          { error: "A role with this name already exists" },
+          { error: "Another role has that name" },
           { status: 409 },
         ),
     });
@@ -172,7 +172,7 @@ describe("creating a role", () => {
       within(dialog).getByRole("button", { name: "Create role" }),
     );
     expect((await within(dialog).findByRole("alert")).textContent).toBe(
-      "A role with this name already exists",
+      "Another role has that name",
     );
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Cancel" }),
@@ -346,7 +346,7 @@ describe("changing a role", () => {
         }),
       "PUT /api/roles/00000000-0000-4000-8000-000000000002": () =>
         Response.json(
-          { error: "A role with this name already exists" },
+          { error: "Another role has that name" },
           { status: 409 },
         ),
     });
@@ -361,7 +361,7 @@ describe("changing a role", () => {
       await within(dialog).findByRole("button", { name: "Save changes" }),
     );
     expect((await within(dialog).findByRole("alert")).textContent).toBe(
-      "A role with this name already exists",
+      "Another role has that name",
     );
     expect(
       within(dialog).getByText("This change affects 1 account."),

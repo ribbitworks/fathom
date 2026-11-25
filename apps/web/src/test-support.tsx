@@ -708,7 +708,9 @@ export const nameThen = (next: Column<Gadget, GadgetChange>) => ({
   ...gadgetTable(),
   columnsFor: () => [...gadgetColumns([], [], []).slice(0, 1), next],
 });
-export const nextColumn = (kind: "date" | "flag" | "text") =>
+export const nextColumn = (
+  kind: "choice" | "date" | "flag" | "link" | "text",
+) =>
   cellColumn<Gadget, GadgetChange>("next", kind, {
     label: "Next",
     required: false,
