@@ -65,16 +65,40 @@ const spokenLabel = ({ label, inView, selected }: StripPeriod) =>
     ...(selected ? ["selected"] : []),
   ].join(", ");
 
-// Scrolls a rail so the tinted periods show: centred when they fit, from the first when they don't.
-// The rail is the periods' offset parent, so their offsets count from inside its border, as its
-// scrolling does.
+const periodsOf = (rail: HTMLElement) => [
+  ...rail.querySelectorAll<HTMLElement>("button"),
+];
+
+// Scrolls a rail so the tinted periods show, as near centred as a whole name at the start allows
+// when they fit, from the first when they don't. The rail is the periods' offset parent, so their
+// offsets count from inside its border, as its scrolling does.
 export function showTinted(rail: HTMLElement): void {
   const [first, ...rest] = rail.querySelectorAll<HTMLElement>("[data-in-view]");
   if (first === undefined) return;
   const last = rest.at(-1) ?? first;
   const width = last.offsetLeft + last.offsetWidth - first.offsetLeft;
   const spare = Math.max(0, rail.clientWidth - width);
-  rail.scrollLeft = first.offsetLeft - spare / 2;
+  const centred = first.offsetLeft - spare / 2;
+  rail.scrollLeft = periodsOf(rail)
+    .map(({ offsetLeft }) => offsetLeft)
+    .reduce((best, start) =>
+      Math.abs(start - centred) < Math.abs(best - centred) ? start : best,
+    );
+}
+
+// Gives a rail room after its last period, just enough that scrolled to its end it starts with a
+// whole name, as it does wherever else it comes to rest.
+export function roomAtEnd(rail: HTMLElement): void {
+  // Measured without the room given before, which would count into it.
+  rail.style.setProperty("--strip-end", "0px");
+  const periods = periodsOf(rail);
+  const last = periods.at(-1);
+  if (last === undefined) return;
+  const over = last.offsetLeft + last.offsetWidth - rail.clientWidth;
+  const start = periods.find(({ offsetLeft }) => offsetLeft >= over);
+  // Offsets are whole pixels, so periods that just fill the rail may seem to run a pixel over.
+  const room = over <= 1 ? 0 : (start?.offsetLeft ?? over) - over;
+  rail.style.setProperty("--strip-end", `${String(room)}px`);
 }
 
 // Where each key moves focus among the periods, from the one focused and the last one's place.
@@ -115,6 +139,13 @@ export function TimelineStrip({
   const laidOut = periods
     .map(({ key, inView }) => (inView ? `[${key}]` : key))
     .join(" ");
+  // The periods and their shares, which set the room after the last, such as on zooming.
+  const shared = periods
+    .map(({ key, weight }) => `${key}:${String(weight)}`)
+    .join(" ");
+  useLayoutEffect(() => {
+    roomAtEnd(strip.current as HTMLDivElement);
+  }, [shared]);
   useLayoutEffect(() => {
     showTinted(strip.current as HTMLDivElement);
   }, [laidOut]);
@@ -122,6 +153,7 @@ export function TimelineStrip({
   useLayoutEffect(() => {
     const rail = strip.current as HTMLDivElement;
     const resized = new ResizeObserver(() => {
+      roomAtEnd(rail);
       showTinted(rail);
     });
     resized.observe(rail);
