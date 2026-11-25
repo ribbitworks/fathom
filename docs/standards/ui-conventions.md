@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/code-review.md", "docs/standards/ui-conventions/drafts-and-values.md", "docs/standards/ui-conventions/dates-timelines-and-boards.md", "docs/standards/ui-conventions/pages-and-panels.md", "docs/standards/ui-conventions/entering-and-saving.md", "docs/standards/ui-conventions/tables.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # UI Conventions
@@ -31,6 +31,7 @@ These principles come first:
 - **No assumptions:** Screens add no purposes, defaults, restrictions, or wording the maintainer has not asked for. Where something is unclear, it is left out and the maintainer is asked.
 - **Words people say:** Every label, note, and message on screen, the server's refusals included, reads as a person would say it aloud.
   - **Short, with a subject and a verb:** Such as "Hiring states needs a choice that means Proposed", never a stack of nouns, such as "the only offered choice meaning Proposed".
+    - **Under its field:** A refusal shown under its own field may be the noun and "needed", such as Name needed, Date needed or Reason needed. A refusal anywhere else, such as in a notice, under a table's row or in a dialog's text, stays a full sentence.
   - **Everyday verbs:** Such as "the column that uses this list", never "the column drawing on it".
   - **Fewest words:** The fewest plain words that say it, such as "Show all features", never "Show all its features". No filler words, and no label that explains its control, such as "Save changes to this project" for "Save".
 - **Never the second person:** Nothing on screen, the server's refusals included, says "you" or "your". Say what is so, such as "This role can't choose an earlier date". Help pages are the exception, as [Help Page Standards](help-pages.md) sets out.
