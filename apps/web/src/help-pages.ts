@@ -50,9 +50,19 @@ export function readHelpPage(
   return { name, title, parts };
 }
 
+const styleBlock = /<style\b[^>]*>[\s\S]*?<\/style>/gu;
+
 // A drawing's own colours are for where it's shown as an image, such as on GitHub.
-export const withoutStyle = (drawing: string) =>
-  drawing.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gu, "");
+export function withoutStyle(drawing: string): string {
+  let current = drawing;
+  let previous: string;
+  // Repeat, since removing a nested style block can join a new one.
+  do {
+    previous = current;
+    current = current.replace(styleBlock, "");
+  } while (current !== previous);
+  return current;
+}
 
 // Vitest caches no file it sees calling import.meta.glob, which a type argument would hide.
 const files: Record<string, string> = import.meta.glob(
