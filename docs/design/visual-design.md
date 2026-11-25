@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/ui-conventions.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Fathom: Visual Design
@@ -38,6 +38,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 - **Pages:** Each starts with its heading, as [The Page Heading](../standards/ui-conventions/pages-and-panels.md#the-page-heading) sets out. The main action is at the right, after the Export icon where the table exports, as [Exporting](../standards/ui-conventions/tables.md#exporting) sets out. Content sits in bordered panels on a canvas a shade darker than them.
 - **Help pages:** Help pages opens Help's index, `docs/help/index.md`. Each Help page has its own address, open to every role, as [Help](../standards/ui-conventions/pages-and-panels.md#help) sets out.
   - **Look:** Its title is the heading, and the rest is one bordered panel as wide as the page, drawn as a note reads, with its headings as anchors.
+  - **Diagrams:** Drawn at their own size, so their words never shrink, and scrolled sideways with the slim scroll bar when the panel is narrower. Boxes are edged as the Org chart's cards are, on the panel's colour, and arrows and their words are in its lines' grey, light or dark.
 - **About Fathom:** It opens a box in the middle of the screen, over the current page. Dialogs open near the top, but this one asks nothing of the user.
   - **Rows:** Under Fathom's mark and name: Version, Commit, and Committed, as [Version and Build](development-setup.md#version-and-build) sets out. Commit adds "modified" for a build from changed files.
   - **Unknown:** A build given nothing from git, as [Development Setup](development-setup.md#ways-to-run-fathom) describes, shows each row as Unknown.

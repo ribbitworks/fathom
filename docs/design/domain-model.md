@@ -4,7 +4,7 @@ category: "Domain"
 audience: "Contributors"
 applies_to: ["packages/shared/src/**", "packages/db/**", "apps/server/src/**"]
 dependencies: ["docs/product/domain.md", "docs/product/roles.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Fathom: Domain Model
@@ -18,30 +18,9 @@ Fathom's core entities, how they relate, and the rules that always hold for them
 
 ## Overview
 
-Fathom in one picture: what's planned, when it ships, and who works on it. Each arrow runs from a thing to what it belongs to or serves. Dotted lines are Activities, approved but not built yet. Each area's entities, with their full relationships, follow below.
+Fathom in one picture: what's planned, when it ships, and who works on it. Each arrow runs from a thing to what it belongs to or serves. Help's [How Fathom Fits Together](../help/how-fathom-fits-together.md#how-they-connect) shows the same drawing, kept in `docs/help/diagrams/`. It leaves out Activities, which aren't built yet. Each area's entities, with their full relationships, follow below.
 
-```mermaid
-flowchart LR
-    subgraph Plan
-      Feature -- "needed by" --> Project
-      Project -- for --> Customer
-      Feature -- "proposed in" --> Proposal
-      Proposal -- for --> Customer
-      Activity -. in .-> Project
-    end
-    subgraph Ship
-      Cycle -- in --> Release
-    end
-    subgraph People
-      Person -- on --> FT[Feature team]
-    end
-    Feature -- "ships in" --> Cycle
-    Activity -. in .-> Release
-    FT -- delivers --> Feature
-    FT -. does .-> Activity
-    Person -- "allocated to" --> Feature
-    Person -. "allocated to" .-> Activity
-```
+![How Fathom's records fit together](../help/diagrams/how-fathom-fits-together.svg)
 
 - **Plan:** projects and proposals are for customers. A project is committed work, and a proposal is work offered to a customer that may or may not be won. Both name the features they need, and a feature ships in a cycle of a release.
 - **People:** people are on feature teams, which deliver features, and are allocated to features month by month.

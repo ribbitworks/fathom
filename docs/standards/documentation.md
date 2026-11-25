@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/markdown-style-guidelines.md", "docs/standards/help-pages.md", "docs/standards/testing.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Documentation Standards
@@ -157,5 +157,5 @@ README files, Help pages and documents meant for outside readers may omit frontm
 - **Canadian English:** documents and on-screen text use Canadian English, such as colour, harbour, centre, and licence as a noun.
 - **Full paths:** refer to files by their full path from the repository root, such as `docs/design/domain-model.md`, not a bare file name.
 - **Descriptive links:** link text says what the target is, such as `[Architecture](docs/design/architecture.md) for layer rules`, never "this" or "here".
-- **Diagrams as code:** use Mermaid for flows and relationships, preferring it to images.
+- **Diagrams as code:** use Mermaid for flows and relationships, preferring it to images. A diagram Help shows is an SVG file instead, as [Help Page Standards](help-pages.md#rules) sets out, since Help can't draw Mermaid.
 - **No unrequested documents:** do not add Markdown files nobody asked for unless the change needs them.

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for Help in Fathom, with the server's responses simulated: every signed-in user reaches the
-// index from the sidebar, whatever their role; each page shows its title as the page's heading and
-// its headings as anchors; links between Help pages stay in Fathom, at the heading named; and an
-// address naming no Help page says there is no such page.
+// Tests for Help in Fathom, with the server simulated: every user reaches the index from the
+// sidebar; a page shows its title, its headings as anchors and its diagrams; links between pages
+// stay in Fathom, at the heading named; and an address naming no page says there's no such page.
 
 import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -54,6 +53,23 @@ describe("Help", () => {
     expect(screen.getByRole("heading", { name: "Group the Table" }).id).toBe(
       "group-the-table",
     );
+  });
+
+  it("draws a page's diagram, named by its title", async () => {
+    serverAnswers({
+      "GET /api/session": () => Response.json(fictionalUser),
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/help/how-fathom-fits-together");
+    await screen.findByRole("heading", {
+      name: "How Fathom Fits Together",
+      level: 1,
+    });
+    expect(
+      screen.getByRole("img", {
+        name: "How Fathom's records fit together",
+      }),
+    ).toBeDefined();
   });
 
   it("follows a link to another Help page in the same tab, to the heading named", async () => {
