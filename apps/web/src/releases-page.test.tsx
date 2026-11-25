@@ -2285,15 +2285,13 @@ describe("the timeline", () => {
     const timeline = await showTimeline([fictionalStream()], "2027-02-15");
     const cycles = items(timeline, "Cycles of Fictional Majors");
     expect(cycles.map((cycle) => cycle.getAttribute("data-tip"))).toEqual([
-      "27.1: Jan 1, 2027 to Mar 31, 2027",
-      "27.2: Apr 1, 2027 to Jun 30, 2027",
-      "27.3: Jul 1, 2027 to Sep 30, 2027",
-      "27.4: Oct 1, 2027 to Dec 31, 2027",
+      "27.1: Jan 1 to Mar 31, 2027",
+      "27.2: Apr 1 to Jun 30, 2027",
+      "27.3: Jul 1 to Sep 30, 2027",
+      "27.4: Oct 1 to Dec 31, 2027",
     ]);
     expect(
-      within(cycles[0] as HTMLElement).getByText(
-        "27.1, Jan 1, 2027 to Mar 31, 2027",
-      ),
+      within(cycles[0] as HTMLElement).getByText("27.1, Jan 1 to Mar 31, 2027"),
     ).toBeDefined();
     // Three pixels a day: 90 days in the first quarter, 91 in the second.
     expect(cycles.map(({ style }) => [style.left, style.width])).toEqual([
@@ -2315,10 +2313,10 @@ describe("the timeline", () => {
       lane.map((item) => item.querySelector("[aria-hidden]")?.textContent),
     ).toEqual([undefined, undefined, undefined, undefined, undefined]);
     expect(lane.map(({ textContent }) => textContent)).toEqual([
-      "27.1, Jan 1, 2027 to Mar 31, 2027",
-      "27.2, Apr 1, 2027 to Jun 30, 2027",
-      "27.3, Jul 1, 2027 to Sep 30, 2027",
-      "27.4, Oct 1, 2027 to Dec 31, 2027",
+      "27.1, Jan 1 to Mar 31, 2027",
+      "27.2, Apr 1 to Jun 30, 2027",
+      "27.3, Jul 1 to Sep 30, 2027",
+      "27.4, Oct 1 to Dec 31, 2027",
       "Ends Dec 31, 2027",
     ]);
     expect(

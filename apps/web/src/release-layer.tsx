@@ -36,7 +36,7 @@ import {
 } from "./status-mark.tsx";
 import { draftTip, liveWaitingWords } from "./draft-marks.ts";
 import { TableTips, Tipped, tipAttribute } from "./table-tips.tsx";
-import { formatDay } from "./day-formats.ts";
+import { formatDay, formatDayRange } from "./day-formats.ts";
 import {
   charactersWidth,
   type DayRange,
@@ -231,7 +231,7 @@ function CycleBlock({
   streamId: string;
   onOpen: OpenMark;
 }) {
-  const days = `${formatDay(cycle.startsOn)} to ${formatDay(cycle.endsOn)}`;
+  const days = formatDayRange(cycle.startsOn, cycle.endsOn);
   const current = named && isCurrent(cycle, today);
   return (
     <li

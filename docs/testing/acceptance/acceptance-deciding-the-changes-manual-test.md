@@ -76,7 +76,7 @@ Run the test cases in order, in about 30 minutes, straight after [Staffing the W
     - Its **First cycle** and **Last cycle** each read next year's first cycle.
   - **Notes:**
 
-- [ ] `6CA7` Choose next year's second cycle in **Last cycle**, such as "27.2 (2027-04-01 to 2027-06-30)".
+- [ ] `6CA7` Choose next year's second cycle in **Last cycle**, such as "27.2 (Apr 1 to Jun 30, 2027)".
   - **Expected:** **Last cycle** shows the cycle chosen.
   - **Notes:**
 

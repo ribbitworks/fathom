@@ -14,6 +14,21 @@ export function formatDay(value: string): string {
   return day.format(new Date(`${value}T00:00:00Z`));
 }
 
+const dayInYear = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+});
+
+// Two days as people read them, such as Jan 1 to Mar 31, 2027, naming the year once when both
+// share it. Intl's own range uses a dash, which Fathom's words don't.
+export function formatDayRange(first: string, last: string): string {
+  if (first.slice(0, 4) !== last.slice(0, 4)) {
+    return `${formatDay(first)} to ${formatDay(last)}`;
+  }
+  return `${dayInYear.format(new Date(`${first}T00:00:00Z`))} to ${formatDay(last)}`;
+}
+
 const momentDay = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
 
 // The day of a moment, such as when something was saved, as people read it where they are, with its

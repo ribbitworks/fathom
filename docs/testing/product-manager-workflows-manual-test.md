@@ -435,7 +435,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `D146` Choose the last cycle in the list in **Last cycle**.
-  - **Expected:** The empty **Ships on** field shows, in grey, that cycle's last day and "(end of the last cycle)".
+  - **Expected:** The empty **Ships on** field shows, in grey, that cycle's last day, then "end of" and the cycle's name in brackets.
   - **Notes:**
 
 - [ ] `C642` Select **Make release**.

@@ -192,9 +192,9 @@ describe("the dialog changing a stream's cycles", () => {
     show((handlers) => <PatternDialog stream={empty} {...handlers} />);
     await userEvent.type(box("First cycle starts"), "20270101");
     expect(cyclesIn("First cycles")).toEqual([
-      "27.12027-01-01 to 2027-03-31",
-      "27.22027-04-01 to 2027-06-30",
-      "27.32027-07-01 to 2027-09-30",
+      "27.1Jan 1 to Mar 31, 2027",
+      "27.2Apr 1 to Jun 30, 2027",
+      "27.3Jul 1 to Sep 30, 2027",
     ]);
   });
 
@@ -202,7 +202,7 @@ describe("the dialog changing a stream's cycles", () => {
     show((handlers) => <PatternDialog stream={empty} {...handlers} />);
     await userEvent.type(box("First cycle starts"), "20270104");
     await userEvent.click(screen.getByText("Weeks"));
-    expect(cyclesIn("First cycles")[0]).toBe("27.12027-01-04 to 2027-01-24");
+    expect(cyclesIn("First cycles")[0]).toBe("27.1Jan 4 to Jan 24, 2027");
   });
 
   it("makes cycles of months again once the unit is changed back", async () => {
@@ -214,7 +214,7 @@ describe("the dialog changing a stream's cycles", () => {
       />
     ));
     await userEvent.click(screen.getByText("Months"));
-    expect(cyclesIn("First cycles")[0]).toBe("27.12027-01-01 to 2027-02-28");
+    expect(cyclesIn("First cycles")[0]).toBe("27.1Jan 1 to Feb 28, 2027");
   });
 
   it("shows no cycles until a whole day is typed", async () => {
@@ -317,11 +317,11 @@ describe("the dialog changing a stream's cycles", () => {
 
   it("names the first cycles of a change as the stream will, counting the cycles before it", async () => {
     show((handlers) => <PatternDialog stream={changing} {...handlers} />);
-    await choose("From the start of", "2027-04-01 (27.2)");
+    await choose("From the start of", "Apr 1, 2027 (27.2)");
     expect(cyclesIn("First cycles")).toEqual([
-      "27.22027-04-01 to 2027-06-30",
-      "27.32027-07-01 to 2027-07-31",
-      "27.42027-08-01 to 2027-08-31",
+      "27.2Apr 1 to Jun 30, 2027",
+      "27.3Jul 1 to Jul 31, 2027",
+      "27.4Aug 1 to Aug 31, 2027",
     ]);
   });
 
@@ -332,7 +332,7 @@ describe("the dialog changing a stream's cycles", () => {
     const { onSaved } = show((handlers) => (
       <PatternDialog stream={changing} {...handlers} />
     ));
-    await choose("From the start of", "2027-04-01 (27.2)");
+    await choose("From the start of", "Apr 1, 2027 (27.2)");
     await userEvent.click(
       screen.getByRole("button", { name: "Change cycles" }),
     );
@@ -348,7 +348,7 @@ describe("the dialog changing a stream's cycles", () => {
     show((handlers) => (
       <PatternDialog stream={changing} pattern={second} {...handlers} />
     ));
-    expect(picker("From the start of").value).toBe("2027-07-01 (27.3)");
+    expect(picker("From the start of").value).toBe("Jul 1, 2027 (27.3)");
   });
 
   it("lets the earliest change start on any day", () => {
@@ -413,7 +413,7 @@ describe("the dialog making or changing a release", () => {
       <ReleaseDialog stream={releasing} {...handlers} />
     ));
     await userEvent.type(box("Name"), "Fictional Two");
-    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
     await userEvent.click(screen.getByRole("button", { name: "Make release" }));
     await waitFor(() => {
       expect(onSaved).toHaveBeenCalled();
@@ -437,7 +437,7 @@ describe("the dialog making or changing a release", () => {
       <ReleaseDialog stream={releasing} {...handlers} />
     ));
     await userEvent.type(box("Name"), "Fictional Two");
-    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
     expect(picker("Colour").value).toBe("Sea (default)");
     await choose("Colour", "Grape");
     await userEvent.click(screen.getByRole("button", { name: "Make release" }));
@@ -468,14 +468,14 @@ describe("the dialog making or changing a release", () => {
     expect(bodiesOf(fetch)).toMatchObject([{ colour: null }]);
   });
 
-  it("shows the day an empty Ships on falls back to, the end of the last cycle", async () => {
+  it("shows the day an empty Ships on falls back to, the end of the last cycle by name", async () => {
     show((handlers) => <ReleaseDialog stream={releasing} {...handlers} />);
     expect(box("Ships on").placeholder).toBe("");
-    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
     expect([
       box("Ships on").placeholder,
       screen.queryByText(/Leave empty/),
-    ]).toEqual(["Jun 30, 2027 (end of the last cycle)", null]);
+    ]).toEqual(["Jun 30, 2027 (end of 27.2)", null]);
   });
 
   it("offers only the cycles no other release includes", async () => {
@@ -486,9 +486,9 @@ describe("the dialog making or changing a release", () => {
         ({ textContent }) => textContent,
       ),
     ).toEqual([
-      "27.1 (2027-01-01 to 2027-03-31)",
-      "27.2 (2027-04-01 to 2027-06-30)",
-      "27.4 (2027-10-01 to 2027-12-31)",
+      "27.1 (Jan 1 to Mar 31, 2027)",
+      "27.2 (Apr 1 to Jun 30, 2027)",
+      "27.4 (Oct 1 to Dec 31, 2027)",
     ]);
   });
 
@@ -509,8 +509,8 @@ describe("the dialog making or changing a release", () => {
         {...handlers}
       />
     ));
-    await choose("First cycle", "27.3 (2027-07-01 to 2027-09-30)");
-    expect(picker("Last cycle").value).toBe("27.3 (2027-07-01 to 2027-09-30)");
+    await choose("First cycle", "27.3 (Jul 1 to Sep 30, 2027)");
+    expect(picker("Last cycle").value).toBe("27.3 (Jul 1 to Sep 30, 2027)");
   });
 
   it("keeps the last cycle when the first is chosen before it", async () => {
@@ -524,16 +524,16 @@ describe("the dialog making or changing a release", () => {
         {...handlers}
       />
     ));
-    await choose("First cycle", "27.1 (2027-01-01 to 2027-03-31)");
-    expect(picker("Last cycle").value).toBe("27.3 (2027-07-01 to 2027-09-30)");
+    await choose("First cycle", "27.1 (Jan 1 to Mar 31, 2027)");
+    expect(picker("Last cycle").value).toBe("27.3 (Jul 1 to Sep 30, 2027)");
   });
 
   it("refuses cycles with one between them that another release includes", async () => {
     const fetch = serverAnswers({});
     show((handlers) => <ReleaseDialog stream={releasing} {...handlers} />);
     await userEvent.type(box("Name"), "Fictional Two");
-    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
-    await choose("Last cycle", "27.4 (2027-10-01 to 2027-12-31)");
+    await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
+    await choose("Last cycle", "27.4 (Oct 1 to Dec 31, 2027)");
     await userEvent.click(screen.getByRole("button", { name: "Make release" }));
     expect([
       screen.getByText("Choose cycles no other release includes"),
@@ -546,9 +546,9 @@ describe("the dialog making or changing a release", () => {
     const fetch = serverAnswers({});
     show((handlers) => <ReleaseDialog stream={releasing} {...handlers} />);
     await userEvent.type(box("Name"), "Fictional Two");
-    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
-    await choose("Last cycle", "27.2 (2027-04-01 to 2027-06-30)");
-    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
+    await choose("Last cycle", "27.2 (Apr 1 to Jun 30, 2027)");
+    await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
     await userEvent.click(screen.getByRole("button", { name: "Make release" }));
     expect([
       picker("First cycle").value,
@@ -567,14 +567,14 @@ describe("the dialog making or changing a release", () => {
         {...handlers}
       />
     ));
-    await choose("First cycle", "27.1 (2027-01-01 to 2027-03-31)");
+    await choose("First cycle", "27.1 (Jan 1 to Mar 31, 2027)");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect([
       picker("First cycle").value,
       picker("Last cycle").value,
       screen.getByText("Choose a cycle"),
       fetch.mock.calls,
-    ]).toEqual(["", "27.1 (2027-01-01 to 2027-03-31)", expect.anything(), []]);
+    ]).toEqual(["", "27.1 (Jan 1 to Mar 31, 2027)", expect.anything(), []]);
   });
 
   it("asks for a last cycle once it is deselected", async () => {
@@ -586,7 +586,7 @@ describe("the dialog making or changing a release", () => {
         {...handlers}
       />
     ));
-    await choose("Last cycle", "27.1 (2027-01-01 to 2027-03-31)");
+    await choose("Last cycle", "27.1 (Jan 1 to Mar 31, 2027)");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect([
       picker("Last cycle").value,
@@ -770,15 +770,15 @@ describe("the dialog making a release in a schedule chosen", () => {
         ({ textContent }) => textContent,
       ),
     ).toEqual([
-      "Minor 27.1 (2027-01-01 to 2027-03-31)",
-      "Minor 27.2 (2027-04-01 to 2027-06-30)",
+      "Minor 27.1 (Jan 1 to Mar 31, 2027)",
+      "Minor 27.2 (Apr 1 to Jun 30, 2027)",
     ]);
   });
 
   it("empties the cycles chosen once another schedule is chosen", async () => {
     show((handlers) => <ReleaseDialog streams={schedules} {...handlers} />);
     await choose("Schedule", "Fictional Majors");
-    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
     await choose("Schedule", "Fictional Minors");
     expect([picker("First cycle").value, picker("Last cycle").value]).toEqual([
       "",
@@ -789,9 +789,9 @@ describe("the dialog making a release in a schedule chosen", () => {
   it("keeps the cycles chosen when the same schedule is chosen again", async () => {
     show((handlers) => <ReleaseDialog streams={schedules} {...handlers} />);
     await choose("Schedule", "Fictional Majors");
-    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
     await choose("Schedule", "Fictional Majors");
-    expect(picker("First cycle").value).toBe("27.2 (2027-04-01 to 2027-06-30)");
+    expect(picker("First cycle").value).toBe("27.2 (Apr 1 to Jun 30, 2027)");
   });
 
   it("makes the release in the schedule chosen", async () => {
@@ -803,7 +803,7 @@ describe("the dialog making a release in a schedule chosen", () => {
     ));
     await choose("Schedule", "Fictional Minors");
     await userEvent.type(box("Name"), "Fictional Two");
-    await choose("First cycle", "Minor 27.2 (2027-04-01 to 2027-06-30)");
+    await choose("First cycle", "Minor 27.2 (Apr 1 to Jun 30, 2027)");
     await userEvent.click(screen.getByRole("button", { name: "Make release" }));
     await waitFor(() => {
       expect(onSaved).toHaveBeenCalled();
@@ -856,7 +856,7 @@ describe("the dialog changing one of a release's values", () => {
         {...handlers}
       />
     ));
-    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect([screen.getByText(shipsBeforeStart), fetch.mock.calls]).toEqual([
       expect.anything(),
@@ -890,15 +890,15 @@ describe("the dialog changing one cycle's length", () => {
     ));
     expect(lengthBox().value).toBe("3");
     expect(cyclesIn("New dates")).toEqual([
-      "27.22027-04-01 to 2027-06-30",
-      "27.32027-07-01 to 2027-09-30",
-      "27.42027-10-01 to 2027-12-31",
+      "27.2Apr 1 to Jun 30, 2027",
+      "27.3Jul 1 to Sep 30, 2027",
+      "27.4Oct 1 to Dec 31, 2027",
     ]);
     await typeLength("2");
     expect(cyclesIn("New dates")).toEqual([
-      "27.22027-04-01 to 2027-05-31",
-      "27.32027-06-01 to 2027-08-31",
-      "27.42027-09-01 to 2027-11-30",
+      "27.2Apr 1 to May 31, 2027",
+      "27.3Jun 1 to Aug 31, 2027",
+      "27.4Sep 1 to Nov 30, 2027",
     ]);
     expect(screen.queryByText("Releases that move")).not.toBeNull();
     expect(screen.queryByText("Fictional Later")).not.toBeNull();
@@ -991,9 +991,9 @@ describe("the dialog changing one cycle's length", () => {
       screen.getByRole("radio", { name: "Keep their dates" }),
     );
     expect(cyclesIn("New dates")).toEqual([
-      "27.22027-04-01 to 2027-05-31",
-      "27.32027-06-01 to 2027-09-30",
-      "27.42027-10-01 to 2027-12-31",
+      "27.2Apr 1 to May 31, 2027",
+      "27.3Jun 1 to Sep 30, 2027",
+      "27.4Oct 1 to Dec 31, 2027",
     ]);
     expect(screen.queryByText(/with its cycles|ships/)).toBeNull();
   });
@@ -1075,7 +1075,7 @@ describe("the dialog changing one cycle's length", () => {
     expect(screen.getByText("weeks")).not.toBeNull();
     await typeLength("1");
     expect(screen.getByText("week")).not.toBeNull();
-    expect(cyclesIn("New dates")[0]).toBe("27.12027-01-01 to 2027-01-07");
+    expect(cyclesIn("New dates")[0]).toBe("27.1Jan 1 to Jan 7, 2027");
   });
 
   it("asks for a length from one cycle to two years", async () => {

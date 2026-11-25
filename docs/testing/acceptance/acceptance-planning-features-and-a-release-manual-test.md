@@ -203,10 +203,10 @@ Run the test cases in order, in about 30 minutes, straight after [Planning Proje
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `AF81` Choose next year's first cycle in **First cycle**, such as "27.1 (2027-01-01 to 2027-03-31)".
+- [ ] `AF81` Choose next year's first cycle in **First cycle**, such as "27.1 (Jan 1 to Mar 31, 2027)".
   - **Expected:**
     - **First cycle** and **Last cycle** both show the cycle chosen.
-    - The empty **Ships on** field shows, in grey, the cycle's last day and "(end of the last cycle)", such as "Mar 31, 2027 (end of the last cycle)".
+    - The empty **Ships on** field shows, in grey, the cycle's last day and its name, such as "Mar 31, 2027 (end of 27.1)".
   - **Notes:**
 
 - [ ] `E09E` Select **Make release**.

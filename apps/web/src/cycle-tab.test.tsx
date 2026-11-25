@@ -1502,8 +1502,8 @@ describe("the Cycles timeline", () => {
     const items = within(lane("Fictional Majors")).getAllByRole("listitem");
     // Each name shows inside its block, and its words follow for assistive technology.
     expect(items.map(({ textContent }) => textContent)).toEqual([
-      "27.227.2, Apr 1, 2027 to Jun 30, 2027, current",
-      "27.327.3, Jul 1, 2027 to Sep 30, 2027",
+      "27.227.2, Apr 1 to Jun 30, 2027, current",
+      "27.327.3, Jul 1 to Sep 30, 2027",
       "Fictional One ships Jun 30, 2027",
     ]);
     // The current cycle is marked as today's, and its tip says so.
@@ -1513,8 +1513,8 @@ describe("the Cycles timeline", () => {
         item.getAttribute("data-tip"),
       ]),
     ).toEqual([
-      ["date", "27.2: Apr 1, 2027 to Jun 30, 2027, current"],
-      [null, "27.3: Jul 1, 2027 to Sep 30, 2027"],
+      ["date", "27.2: Apr 1 to Jun 30, 2027, current"],
+      [null, "27.3: Jul 1 to Sep 30, 2027"],
       [null, "Fictional One ships Jun 30, 2027"],
     ]);
   });
@@ -1530,9 +1530,9 @@ describe("the Cycles timeline", () => {
         item.matches("[class*='timelineCyclePast']"),
       ]),
     ).toEqual([
-      ["27.1: Jan 1, 2027 to Mar 31, 2027", true],
-      ["27.2: Apr 1, 2027 to Jun 30, 2027, current", false],
-      ["27.3: Jul 1, 2027 to Sep 30, 2027", false],
+      ["27.1: Jan 1 to Mar 31, 2027", true],
+      ["27.2: Apr 1 to Jun 30, 2027, current", false],
+      ["27.3: Jul 1 to Sep 30, 2027", false],
     ]);
   });
 
@@ -1543,8 +1543,8 @@ describe("the Cycles timeline", () => {
         .getAllByRole("listitem")
         .map((item) => item.getAttribute("data-tip")),
     ).toEqual([
-      "27.2: Apr 1, 2027 to Jun 30, 2027, current",
-      "27.3: Jul 1, 2027 to Sep 30, 2027",
+      "27.2: Apr 1 to Jun 30, 2027, current",
+      "27.3: Jul 1 to Sep 30, 2027",
     ]);
   });
 });

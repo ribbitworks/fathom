@@ -117,9 +117,9 @@ Record each step's result as [Manual Test Basics](manual-test-basics.md#recordin
 
 - [ ] `5CDA` Select **Weeks**.
   - **Expected:** Under **First cycles**, three lines:
-    - `27.1` with `2027-01-04 to 2027-01-17`.
-    - `27.2` with `2027-01-18 to 2027-01-31`.
-    - `27.3` with `2027-02-01 to 2027-02-14`.
+    - `27.1` with `Jan 4 to Jan 17, 2027`.
+    - `27.2` with `Jan 18 to Jan 31, 2027`.
+    - `27.3` with `Feb 1 to Feb 14, 2027`.
   - **Notes:**
 
 - [ ] `2BC4` Replace **Names** with `Sprint {#}`.
