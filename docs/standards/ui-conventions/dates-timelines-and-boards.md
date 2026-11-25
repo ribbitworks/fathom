@@ -47,7 +47,7 @@ Every view with time across it (the Releases timeline, the Plan and the project 
 | Red line | Today, only ever as a thin line, such as a timeline's line, the strip's underline, the underline of a month grid's current month and the underline of the Features Board's current heading. Never red words, a red fill or a red box, which mean a problem, such as Late. |
 
 - **The language:** Each mark in the table means one thing on every timeline. Drafts use the [draft marks](drafts-and-values.md#drafts), and a dashed edge never means a draft.
-  - **Drawn by:** `Tracks` in `apps/web/src/timeline-view.tsx` draws today's line in the theme's `--fathom-today`. `ReleaseBar` and `useReleaseLayer` in `apps/web/src/release-layer.tsx` draw the release diamonds, a schedule's end, and the drafts of schedules and releases.
+  - **Drawn by:** `Tracks` in `apps/web/src/timeline-view.tsx` draws today's line in the theme's `--fathom-today`; `RecordTimeline` in `apps/web/src/record-timeline.tsx` draws the same line across a record's timeline of days, newest first, as a person's timeline beside People. `ReleaseBar` and `useReleaseLayer` in `apps/web/src/release-layer.tsx` draw the release diamonds, a schedule's end, and the drafts of schedules and releases.
   - **Example:** Today's red line on the Releases timeline.
 - **The shared timeline:** One component draws every view with time across it. Zoom, axis and scrolling work the same on every timeline.
   - **What it draws:** The axis, which stays in view while the rows scroll; the zoom, kept in the browser for each view; today's line; the scrolling; the strip; and schedules' cycles and releases, as a layer a view may show, first.
