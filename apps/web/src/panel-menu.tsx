@@ -23,14 +23,7 @@ export function PanelMoreMenu({
       <AppMenu.Target>
         <MoreButton label={label} />
       </AppMenu.Target>
-      <AppMenu.Dropdown
-        // Esc closes the menu alone, not the panel around it too.
-        onKeyDown={(event) => {
-          if (event.key === "Escape") event.preventDefault();
-        }}
-      >
-        {children}
-      </AppMenu.Dropdown>
+      <AppMenu.Dropdown>{children}</AppMenu.Dropdown>
     </AppMenu>
   );
 }

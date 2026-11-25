@@ -156,7 +156,7 @@ afterEach(() => {
 });
 
 describe("the Metrics panel", () => {
-  it("opens from the bar above the table and closes with Esc, giving focus back", async () => {
+  it("opens from the bar above the table and closes with Esc, once its choices are closed, giving focus back", async () => {
     const user = userEvent.setup();
     render(<Table />);
     const button = screen.getByRole("button", { name: "Metrics" });
@@ -165,6 +165,8 @@ describe("the Metrics panel", () => {
     expect(panel().textContent).toContain("4 people");
     expect(button.getAttribute("aria-expanded")).toBe("true");
     await user.click(within(panel()).getByLabelText("Break down by"));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("region", { name: "Metrics" })).not.toBeNull();
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("region", { name: "Metrics" })).toBeNull();
     await new Promise((resolve) => setTimeout(resolve, 0));
