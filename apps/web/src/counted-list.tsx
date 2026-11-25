@@ -4,7 +4,7 @@
 
 import { List, Text } from "@mantine/core";
 import type { ReactNode } from "react";
-import { count } from "./numbers.ts";
+import { andOthers } from "./numbers.ts";
 
 // The most a dialog names before counting the rest.
 const namedAtMost = 5;
@@ -31,7 +31,7 @@ export function CountedList({
       </List>
       {rest > 0 && (
         <Text fz="sm" c="dimmed" mt={4}>
-          {rest === 1 ? "and 1 other" : `and ${count(rest)} others`}
+          {andOthers(rest)}
         </Text>
       )}
     </div>

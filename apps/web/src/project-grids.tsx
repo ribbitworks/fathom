@@ -50,6 +50,7 @@ import {
   namersColumn,
   workedOutColumn,
 } from "./plan-table.tsx";
+import { andOthers } from "./numbers.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import type {
   Column,
@@ -142,15 +143,17 @@ function customerColumns(
   ];
 }
 
-// Why a customer can't be removed while something names it, naming the record that keeps it.
+// Why a customer can't be removed while something names it, naming the first record that keeps it
+// and counting the others.
 function customerRemoveTurnedOff(
   choices: CustomerChoices,
   customer: Customer,
 ): string | undefined {
-  const keeping = customerKeptBy(choices, customer.id);
-  return keeping === undefined
-    ? undefined
-    : `${identifiedLabel(keeping)} names this customer.`;
+  const [first, ...others] = customerKeptBy(choices, customer.id);
+  if (first === undefined) return undefined;
+  return others.length === 0
+    ? `${identifiedLabel(first)} names this customer.`
+    : `${identifiedLabel(first)} ${andOthers(others.length)} name this customer.`;
 }
 
 export function customerTable(
