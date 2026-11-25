@@ -21,14 +21,13 @@ Fathom's core entities, how they relate, and the rules that always hold for them
 Fathom in one picture: what's planned, when it ships, and who works on it. Each arrow points from a record to what it belongs to or serves.
 
 - **One drawing:** Help's [How Fathom Fits Together](../help/how-fathom-fits-together.md#how-they-connect) shows the same file, kept in `docs/help/diagrams/`.
-- **Activities:** left out, since they aren't built yet.
 - **Each area:** its entities, with their full relationships, follow below.
 
 ![How Fathom's records fit together](../help/diagrams/how-fathom-fits-together.svg)
 
 - **Plan:** projects and proposals are for customers. A project is committed work, and a proposal is work offered to a customer that may or may not be won. Both name the features they need, and a feature ships in a cycle of a release.
 - **People:** people are on feature teams, which deliver features, and are allocated to features month by month.
-- **Activities:** approved, not built yet. They are work that isn't a feature, such as release testing, each in one release or one project, done by a feature team, with people allocated to it as to a feature.
+- **Activities:** work that isn't a feature, such as release testing, each in one release or one project, done by a feature team. The drawing leaves out that people are allocated to an activity, which comes with allocating to activities.
 
 A feature needs none of these links: one with no project or proposal is an idea not yet committed to anything.
 
