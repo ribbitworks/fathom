@@ -194,15 +194,18 @@ export const recordCell = (id: string, columnKey: string) =>
   document.querySelector<HTMLElement>(recordCellSelector(id, columnKey)) ??
   undefined;
 
-// The simulated browser has no layout, so everything seems off screen, and a tooltip or menu would
-// hide itself once placed, sometimes before the test looked.
-// The two ways an Enter that ends composing a word arrives: marked as composing, or, as Safari sends
-// it, marked only by the old key code 229.
-export const composingEnters = [
+// The two ways a key pressed while composing a word arrives: marked as composing, or, as Safari
+// sends the Enter that accepts the word, marked only by the old key code 229.
+export const composingKeys = [
   ["while composing", { isComposing: true }],
   ["as Safari sends it to end composing", { keyCode: 229 }],
 ] as const;
 
+// How a key pressed while composing is marked.
+export type ComposingMark = (typeof composingKeys)[number][1];
+
+// The simulated browser has no layout, so everything seems off screen, and a tooltip or menu would
+// hide itself once placed, sometimes before the test looked.
 export const testTheme = mergeThemeOverrides(theme, {
   components: {
     Tooltip: { defaultProps: { hideDetached: false } },

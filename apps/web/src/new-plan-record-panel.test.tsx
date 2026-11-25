@@ -22,7 +22,7 @@ import { useNoteEditing } from "./note-editing.tsx";
 import type { PlanChange } from "./plan-table.tsx";
 import { cellColumn } from "./grid-columns.tsx";
 import type { CellRecord, RecordTable } from "./record-table.ts";
-import { composingEnters, testTheme } from "./test-support.tsx";
+import { composingKeys, testTheme } from "./test-support.tsx";
 
 const choice = (id: string, label: string, retired = false) => ({
   id,
@@ -296,7 +296,7 @@ describe("adding", () => {
     });
   });
 
-  it.each(composingEnters)(
+  it.each(composingKeys)(
     "adds only at the reader's Enter after Enter %s a word",
     async (_, composing) => {
       const onAdd = vi.fn();
@@ -311,7 +311,7 @@ describe("adding", () => {
     },
   );
 
-  it.each(composingEnters)(
+  it.each(composingKeys)(
     "stays open at Esc pressed %s a word, closing at the reader's Esc",
     async (_, composing) => {
       const onCancel = vi.fn();

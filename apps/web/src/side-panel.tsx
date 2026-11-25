@@ -24,6 +24,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { composingWord } from "./composing.ts";
 import { Icon } from "./icons.tsx";
 import { ResizeEdge } from "./resize-edge.tsx";
 import classes from "./side-panel.module.css";
@@ -646,6 +647,7 @@ export function SidePanelFrame({
             event.key !== "Escape" ||
             event.defaultPrevented ||
             hasOpenDropdown(event.target) ||
+            composingWord(event) ||
             close === undefined ||
             close.byEscape === false
           ) {

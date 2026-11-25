@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // UI tests of adding a record from its New panel: the cursor starts in its first field typed into,
-// Enter adds the record or fills a planned hire, Esc reaches the panel, and a required value left
-// empty, or an activity of no owner, is refused.
+// Enter adds the record or fills a planned hire, Esc reaches the panel unless a word is being
+// composed, and a required value left empty, or an activity of no owner, is refused.
 
 import { expect, test } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";
@@ -63,6 +63,34 @@ test("adds a new customer with Enter in its Name", async ({ page }) => {
   // Then the panel closes and the table counts one customer more
   await expect(panel).toHaveCount(0);
   await expect(count).toHaveText(`${String(before + 1)} customers`);
+});
+
+test("keeps the New customer panel open at an Esc pressed while composing a word, asking at the reader's", async ({
+  page,
+}) => {
+  // Given the New customer panel open on Projects' Customers, with nothing entered
+  await page.goto("/projects?tab=customers");
+  await page.getByRole("button", { name: "New customer" }).click();
+  const panel = page.getByRole("region", { name: "New customer" });
+  const name = panel.getByRole("textbox", { name: "Name" });
+  await expect(name).toBeFocused();
+
+  // When Esc comes as an input method sends it while a word is composed
+  await name.dispatchEvent("keydown", {
+    key: "Escape",
+    isComposing: true,
+    bubbles: true,
+  });
+
+  // Then the panel stays open to the name typed next, and the reader's own Esc keeps it, then
+  // asks before discarding it
+  await name.pressSequentially("Fictional Quay");
+  await expect(name).toHaveValue("Fictional Quay");
+  await name.press("Escape");
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("dialog", { name: "Discard the new customer?" }),
+  ).toBeVisible();
 });
 
 test("opens the New project panel with the cursor in Name, ready to type into", async ({

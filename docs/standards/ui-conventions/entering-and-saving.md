@@ -51,7 +51,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 
 - **From the keyboard:** Wherever items are added or changed, everything works from the keyboard. Tab moves between fields, Enter saves and starts the next item, Esc cancels, and arrow keys move between items.
   - **Clicking away and pasting:** Clicking or tabbing away saves an item too, and pasting several lines adds one item per line.
-  - **Composing a word:** While a word is composed with an input method, as in Japanese or Chinese, Enter, Esc and Tab belong to the word: Enter accepts it, and neither the field nor its panel acts on them. `heldForComposing` in `apps/web/src/composing.ts` holds them back, in every field whose own key handler acts on those keys.
+  - **Composing a word:** While a word is composed with an input method, as in Japanese or Chinese, Enter, Esc and Tab belong to the word: Enter accepts it, and neither the field nor the panel or menu holding it acts on them. `composingWord` in `apps/web/src/composing.ts` tells them apart, in each field's own key handler and in a side panel's and a choice menu's Esc.
   - **A record's parts:** A record's parts, such as a project's milestones, are added from the record's details, or from their own table's New form, which asks which record they belong to.
   - **Drawn by:** `apps/web/src/grid-editing.tsx` and `apps/web/src/grid-saving.ts` for tables, and `useChoiceEditing` in `apps/web/src/choice-editing.ts` and `useChoiceEntry` in `apps/web/src/choice-entry.ts` for a list's choices.
   - **Example:** On the Lists page, select the details button of Sites and type a new choice in its empty row.
