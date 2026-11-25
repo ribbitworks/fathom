@@ -23,9 +23,9 @@ import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import type { ListDraftActions } from "./list-drafts.tsx";
 import { withRetiring } from "./lists.ts";
+import { draftOffer, offersDraft } from "./menu-offer.ts";
 import { shortcutsFor } from "./menu-shortcuts.ts";
 import { actionsFor, MoreButton } from "./row-controls.tsx";
-import { draftOffer, offersDraft } from "./menu-offer.ts";
 
 const shortcuts = shortcutsFor(navigator.userAgent);
 

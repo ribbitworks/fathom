@@ -22,6 +22,7 @@ import {
   takesEffect,
   teamPersonNamer,
 } from "./feature-teams.ts";
+import { draftOffer } from "./menu-offer.ts";
 import { noOthers } from "./new-plan-record-panel.tsx";
 import { NewRecordPanel, newRecordId } from "./new-record-panel.tsx";
 import { noRecordProblem } from "./plan-table.tsx";
@@ -43,7 +44,6 @@ import {
 } from "./status-mark.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { today } from "./today.ts";
-import { draftOffer } from "./menu-offer.ts";
 
 export const featureTeamPanelId = "feature-team-panel";
 const titleId = "feature-team-panel-title";
