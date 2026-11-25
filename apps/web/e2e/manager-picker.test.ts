@@ -4,13 +4,15 @@
 // two with the same name are told apart.
 
 import { expect, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("engineeringOperationsManager") });
 
 test("describes each manager in a Manager cell's picker by position and team, under the name", async ({
   page,
 }) => {
   // Given the Engineering Operations Manager on People, with one person found
-  await signIn(page, "/people", "engineering.operations.manager@fathom.test");
+  await page.goto("/people");
   const changes: string[] = [];
   page.on("request", (request) => {
     if (request.method() !== "GET" && request.url().includes("/api/"))
