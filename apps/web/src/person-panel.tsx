@@ -23,15 +23,16 @@ import { useTeamColours } from "./org-chart.ts";
 import {
   columnsFor,
   type Column,
-  changesFromDay,
   datedKey,
-  livePeople,
-  peopleAsShown,
-  personKind,
-  recordProblem,
   withTeamColours,
 } from "./people-grid.tsx";
-import { isHire, personKeyOf, rowName, type RowChange } from "./people-rows.ts";
+import {
+  isHire,
+  personKeyOf,
+  rowName,
+  type RowChange,
+  personKind,
+} from "./people-rows.ts";
 import { RecordKey } from "./record-key.tsx";
 import { changedFrom, managerChangesFrom } from "./person-change.ts";
 import type { NoteOpening } from "./note-editing.tsx";
@@ -62,6 +63,8 @@ import type { DraftLike } from "./draft-marks.ts";
 import type { CellValue } from "./table-view.ts";
 import { formatDay, plannedWords } from "./day-formats.ts";
 import { today } from "./today.ts";
+import { changesFromDay, livePeople, peopleAsShown } from "./people-live.ts";
+import { recordProblem } from "./people-requests.ts";
 
 export { personPanelId };
 const titleId = "person-panel-title";

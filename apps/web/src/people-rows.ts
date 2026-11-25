@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The two kinds of row of the People table, people and planned hires: what changing or adding one
-// holds, and what a row is called in menus, notices, and the drafts it names: by its name, or, for
-// a planned hire with none, by its position and ID, such as "Software Engineer, TBD-7", or by its
-// ID alone to those who cannot see positions; and how someone is told apart from others with the
-// same name, by their position and the team they are on or whom they report to.
+// holds, and what a row and the people on it are called.
 
 import { count } from "./numbers.ts";
 import {
@@ -58,10 +55,10 @@ export const positionLabel = (
     .find(({ builtIn }) => builtIn === "positions")
     ?.choices.find(({ id }) => id === positionId)?.label;
 
-// Which team someone is on, in words: its name, or whom they report to while it has none, never
-// "their manager's team", which reads as if that manager leads it.
+// Which team someone is on, in words: its name, or whom they report to while it has none. Never
+// "their manager's team": under a manager's name, that reads as the team they lead.
 export const reportingWords = (
-  teamName: string | null | undefined,
+  teamName: string | null,
   managerName: string,
 ): string => teamName ?? `reports to ${managerName}`;
 
@@ -71,6 +68,34 @@ export const aboutPerson = (
   position: string | null | undefined,
   team: string | undefined,
 ): string => [position, team].filter(Boolean).join(", ");
+
+// The kinds of row, as a new row's request names them.
+export const personKind = "person";
+export const hireKind = "planned-hire";
+
+// The keys of a person's built-in details held as text.
+export type DetailKey =
+  | "preferredName"
+  | "employeeId"
+  | "positionId"
+  | "stateId"
+  | "startDate"
+  | "endDate"
+  | "managerFrom"
+  | "teamName"
+  | "isManager";
+
+export const detailKeys: readonly DetailKey[] = [
+  "preferredName",
+  "employeeId",
+  "positionId",
+  "stateId",
+  "startDate",
+  "endDate",
+  "managerFrom",
+  "teamName",
+  "isManager",
+];
 
 export const stateMeaning = (
   lists: readonly List[],

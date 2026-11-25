@@ -7,15 +7,13 @@
 
 import { allOf, hireCalled, type List, type Person } from "@fathom/shared";
 import { Text } from "@mantine/core";
+import { type Column } from "./people-grid.tsx";
 import {
-  type Column,
+  positionLabel,
+  type RowRequest,
   hireKind,
-  kindOfState,
-  requestFromChanges,
   personKind,
-  recordProblem,
-} from "./people-grid.tsx";
-import { positionLabel, type RowRequest } from "./people-rows.ts";
+} from "./people-rows.ts";
 import {
   type EditingContext,
   personPanelId,
@@ -33,6 +31,11 @@ import {
 import { RecordSection, Row } from "./record-details.tsx";
 import { keptForKind } from "./grid-columns.tsx";
 import type { CellValue } from "./table-view.ts";
+import {
+  kindOfState,
+  requestFromChanges,
+  recordProblem,
+} from "./people-requests.ts";
 
 const table = { recordProblem, request: requestFromChanges };
 
