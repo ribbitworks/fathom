@@ -99,6 +99,15 @@ or tool adds one, remove it.
   [agent-workflow.md § Rules for Both Modes](docs/standards/agent-workflow.md#rules-for-both-modes):
   ask first, except in Autonomous mode or as a subagent.
 
+### Building
+
+- Before adding behaviour for one kind of record, look at how the other kinds
+  already do it, and share that code rather than copy it; see
+  [core-principles.md § Implementation Rules](docs/standards/core-principles.md#implementation-rules).
+- Before the owner's screen check, a separate agent reviews screenshots of each
+  changed screen; see
+  [agent-workflow.md § Workflow](docs/standards/agent-workflow.md#workflow).
+
 ### Comments
 
 Default to no comment. Names carry *what*; comments carry only *why* the code
