@@ -1,16 +1,16 @@
 # How Fathom Fits Together
 
-Fathom keeps track of three things: what's planned, when it ships, and who works on it. They're connected, so a change in one shows in the others. For example, a project needs a feature. That feature ships in a cycle of a release, and a feature team's people work on it.
+Fathom keeps track of what's planned, when it ships, and who works on it. They're connected, so a change in one shows in the others. For example, a project needs a feature. That feature ships in a cycle of a release, and a feature team's people work on it.
 
 ## How They Connect
 
-Each arrow runs from a thing to what it belongs to or serves.
+Each arrow points from a record to what it belongs to or serves.
 
 ![How Fathom's records fit together](diagrams/how-fathom-fits-together.svg)
 
 Projects and proposals are for customers. A project is committed work, and a proposal is work offered to a customer that may or may not be won. Both name the features they need.
 
-## Each Thing
+## The Records
 
 ### Customer
 
