@@ -774,7 +774,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - A dialog titled "Save view" opens.
     - Under **Includes**, **Search** reads “offline sync”.
-    - Under **Includes**, **Board** reads "Card Key, Status, Priority, Size, Needed by, Staffed months".
+    - Under **Includes**, **Card** reads "Key, Status, Priority, Size, Needed by, Staffed months".
   - **Notes:**
 
 - [ ] `7293` Type `Fictional roadmap` in **Name**.

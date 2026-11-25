@@ -309,20 +309,18 @@ describe("boardParts", () => {
         offered,
       ),
     ).toEqual([
-      {
-        name: "Board",
-        value: "Columns Platform cycles, Card Status, Priority",
-      },
+      { name: "Columns", value: "Platform cycles" },
+      { name: "Card", value: "Status, Priority" },
     ]);
     expect(
       boardParts({ choices: { hide: ["status"] } }, streams, offered),
-    ).toEqual([{ name: "Board", value: "Card Priority, Risk" }]);
+    ).toEqual([{ name: "Card", value: "Priority, Risk" }]);
     expect(
       boardParts({ choices: { stream: streamId } }, streams, offered),
-    ).toEqual([{ name: "Board", value: "Columns Platform cycles" }]);
+    ).toEqual([{ name: "Columns", value: "Platform cycles" }]);
     expect(
       boardParts({ choices: { schedule: streamId } }, streams, offered),
-    ).toEqual([{ name: "Board", value: "Columns Months, Platform" }]);
+    ).toEqual([{ name: "Columns", value: "Months, Platform" }]);
   });
 
   it("names nothing for a board left as it starts, or a stream or schedule it doesn't have", () => {
