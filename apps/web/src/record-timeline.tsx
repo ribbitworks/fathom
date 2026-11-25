@@ -44,7 +44,7 @@ export function TimelineDayRow({
       className={[
         classes.row,
         planned ? pages.timelinePlanned : "",
-        marked ? pages.selectedRow : "",
+        marked ? `${pages.selectedRow} ${pages.timelineMarked}` : "",
       ].join(" ")}
     >
       <dt className={classes.label}>

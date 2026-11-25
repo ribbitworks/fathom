@@ -1426,6 +1426,26 @@ th.liveColumn {
   color: var(--mantine-color-teal-7);
 }
 
+/* The day shown, marked as a selected row, its bar and shade reaching past its text as a hovered
+   detail's do, so the text stays in line with the rows around it. */
+.timelineMarked {
+  --timeline-reach: var(--mantine-spacing-xs);
+
+  position: relative;
+  box-shadow:
+    calc(-1 * var(--timeline-reach)) 0 0 var(--mantine-color-default-hover),
+    var(--timeline-reach) 0 0 var(--mantine-color-default-hover);
+}
+
+.timelineMarked::before {
+  position: absolute;
+  inset-block: 0;
+  left: calc(-1 * var(--timeline-reach));
+  width: var(--fathom-selected-bar-width);
+  background: var(--selected-bar-colour);
+  content: "";
+}
+
 /* A planned day's row, which is yet to come, in grey. */
 .timelinePlanned {
   color: var(--mantine-color-dimmed);
