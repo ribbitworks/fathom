@@ -385,7 +385,7 @@ describe("the table of releases", () => {
 
   it("shows the table's columns in a release's details, then its colour", () => {
     expect(
-      releaseDetailColumns([], [], noFeatures).map(({ key }) => key),
+      releaseDetailColumns([], [], noFeatures, []).map(({ key }) => key),
     ).toEqual([...releaseColumnOrder, "colour"]);
   });
 
@@ -461,6 +461,7 @@ describe("the table of releases", () => {
     const releases = table([], {
       menuItems: () => "Add note…",
       planned: noFeatures,
+      activities: [],
     });
     const row = rowOf(fictionalRelease());
     expect([

@@ -40,7 +40,7 @@ In Fathom: **Features**, as a table or a board. See [Features](features.md).
 
 ### Activity
 
-Work a project or a release needs that isn't a feature, such as data migration or release testing. Each belongs to one project or one release. See [Activities](activities.md). In Fathom: **Activities**, and a project's details on **Projects**.
+Work a project or a release needs that isn't a feature, such as data migration or release testing. Each belongs to one project or one release. See [Activities](activities.md). In Fathom: **Activities**, a project's details on **Projects**, and a release's details on **Releases**.
 
 ### Milestone
 

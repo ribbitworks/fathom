@@ -6,6 +6,7 @@
 import type { Asking, DraftKind, Release, ReleaseStream } from "@fathom/shared";
 import { Menu } from "@mantine/core";
 import { useEffect, useEffectEvent, useRef } from "react";
+import { type ActivityRow, listingActivities } from "./activity-list.tsx";
 import { noteOf } from "./cell-kinds.tsx";
 import type { DraftSelection } from "./drafts.ts";
 import { noOthers } from "./new-plan-record-panel.tsx";
@@ -79,12 +80,14 @@ function ReleaseDetails({
   note,
   notes,
   planned,
+  activities,
   onFeatures,
   showIn,
 }: {
   // Every schedule, which a release's Schedule is chosen from.
   streams: readonly ReleaseStream[];
   planned: PlannedFeatures | undefined;
+  activities: ReleaseActivities | undefined;
   onFeatures: (at: FeaturesAt) => void;
   showIn: ShowIn;
   rows: ReleaseDetailRows;
@@ -104,49 +107,57 @@ function ReleaseDetails({
   return (
     <RecordSection id="release-details" title="Details">
       <ColumnRows
-        columns={listingFeatures(
-          drawnAs(
-            releaseDetailColumns(streams, [shown, drafted, live], planned),
+        columns={listingActivities(
+          listingFeatures(
+            drawnAs(
+              releaseDetailColumns(
+                streams,
+                [shown, drafted, live],
+                planned,
+                activities?.activities,
+              ),
+              {
+                cycles: ({ cycles, stream }) => (
+                  <RecordLinkList
+                    links={stream.cycles
+                      .map(({ name, startsOn }) => ({
+                        name,
+                        id: cycleChoiceId(stream.id, startsOn),
+                      }))
+                      .filter(({ id }) => cycles.includes(id))
+                      .map(({ id, name }) => ({
+                        id,
+                        name,
+                        onShow: () => {
+                          showIn("cycles", id);
+                        },
+                      }))}
+                  />
+                ),
+                schedule: ({ stream }) => (
+                  <RecordLink
+                    name={stream.name}
+                    onShow={() => {
+                      showIn("schedules", stream.id);
+                    }}
+                  />
+                ),
+              },
+            ),
+            planned,
             {
-              cycles: ({ cycles, stream }) => (
-                <RecordLinkList
-                  links={stream.cycles
-                    .map(({ name, startsOn }) => ({
-                      name,
-                      id: cycleChoiceId(stream.id, startsOn),
-                    }))
-                    .filter(({ id }) => cycles.includes(id))
-                    .map(({ id, name }) => ({
-                      id,
-                      name,
-                      onShow: () => {
-                        showIn("cycles", id);
-                      },
-                    }))}
-                />
-              ),
-              schedule: ({ stream }) => (
-                <RecordLink
-                  name={stream.name}
-                  onShow={() => {
-                    showIn("schedules", stream.id);
-                  }}
-                />
-              ),
+              cyclesOf: ({ cycles }) => cycles,
+              at: ({ stream, release }) => ({
+                filter: {
+                  key: releaseColumnKey,
+                  value: releaseGroupKey(stream.id, release.id),
+                },
+                board: { stream: stream.id, from: release.firstCycle },
+              }),
+              onFeatures,
             },
           ),
-          planned,
-          {
-            cyclesOf: ({ cycles }) => cycles,
-            at: ({ stream, release }) => ({
-              filter: {
-                key: releaseColumnKey,
-                value: releaseGroupKey(stream.id, release.id),
-              },
-              board: { stream: stream.id, from: release.firstCycle },
-            }),
-            onFeatures,
-          },
+          releaseActivityRow(activities),
         )}
         shown={shown}
         draft={draft}
@@ -186,6 +197,7 @@ function ReleasePanel({
   notes,
   onClose,
   planned,
+  activities,
   onFeatures,
   showIn,
 }: {
@@ -193,6 +205,7 @@ function ReleasePanel({
   release: Release;
   rows: ReleaseDetailRows;
   planned: PlannedFeatures | undefined;
+  activities: ReleaseActivities | undefined;
   onFeatures: (at: FeaturesAt) => void;
   showIn: ShowIn;
   canEdit: boolean;
@@ -226,6 +239,7 @@ function ReleasePanel({
         note={note}
         notes={notes}
         planned={planned}
+        activities={activities}
         onFeatures={onFeatures}
         showIn={showIn}
       />
@@ -246,6 +260,7 @@ export function ReleasesTable({
   onOpen,
   onClose,
   planned,
+  activities,
   onFeatures,
   showIn,
   notes,
@@ -271,6 +286,8 @@ export function ReleasesTable({
   // Closes the release's details, given its ID.
   onClose: (id: string) => void;
   planned: PlannedFeatures | undefined;
+  // A role's activities, for one that sees them.
+  activities?: ReleaseActivities | undefined;
   onFeatures: (at: FeaturesAt) => void;
   showIn: ShowIn;
   // Opens a release's note, which the page holds, and its panel while one is open.
@@ -330,6 +347,7 @@ export function ReleasesTable({
     streams,
     day,
     planned,
+    activities: activities?.activities,
     changeable: (row) => !row.live && changeable(row.stream, row.release),
     onOpen: (release) => {
       onOpen(release.id);
@@ -422,6 +440,7 @@ export function ReleasesTable({
                   onClose(opened.release.id);
                 }}
                 planned={planned}
+                activities={activities}
                 onFeatures={onFeatures}
                 showIn={showIn}
               />
@@ -474,3 +493,21 @@ export function ReleasesTable({
     />
   );
 }
+
+// A role's activities on Releases, for one that sees them.
+export type ReleaseActivities = Omit<
+  ActivityRow<ReleaseRow>,
+  "owner" | "idOf" | "removing"
+>;
+
+const releaseActivityRow = (
+  activities: ReleaseActivities | undefined,
+): ActivityRow<ReleaseRow> | undefined =>
+  activities === undefined
+    ? undefined
+    : {
+        ...activities,
+        owner: "releaseId",
+        idOf: ({ releaseId }) => releaseId,
+        removing: ({ release }) => release.draft?.action === "deleted",
+      };

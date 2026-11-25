@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The fictional organization's release streams, added live and dated from the day they are added:
-// Platform, in quarters and then halves, with three releases, Patches, in four-week cycles, with
-// two, and Field Apps, in six-month cycles, with three, each recorded in the change history as made
-// by Fathom itself. Removing them first discards every draft, published or not, of their records or
-// of records drafted to be added to them, and keeps a stream that has a live pattern or release
-// added by hand. A development-only package, never included in the runtime image.
+// The fictional organization's release streams, added live as if made by Fathom, and removing them
+// with their drafts while keeping what was added by hand. A development-only package, never in the
+// runtime image.
 
 import {
+  activities,
   cyclePatterns,
   type Database,
   features,
@@ -355,12 +353,13 @@ export async function seedReleases(
   });
 }
 
-// Removes the drafts, published or not, of the records given or of patterns and releases in the
-// streams given.
+// Removes the drafts, published or not, of the records given, of patterns and releases in the
+// streams given, and of activities in the releases given.
 async function discardDraftsOf(
   transaction: Pick<Database, "delete">,
   recordIds: readonly string[],
   streamIds: readonly string[],
+  releaseIds: readonly string[],
 ): Promise<void> {
   for (const table of [drafts, privateChanges]) {
     await transaction
@@ -376,6 +375,12 @@ async function discardDraftsOf(
             eq(table.recordType, "feature"),
             inArray(sql`${table.fields}->>'targetStreamId'`, [...streamIds]),
           ),
+          releaseIds.length === 0
+            ? undefined
+            : and(
+                eq(table.recordType, "activity"),
+                inArray(sql`${table.fields}->>'releaseId'`, [...releaseIds]),
+              ),
         ),
       );
   }
@@ -412,17 +417,28 @@ export async function unseedReleases(database: Database): Promise<string[]> {
         .from(features)
         .where(eq(features.targetStreamId, id))
         .limit(1);
+      // Seeded activities went with the projects, so any left were added by hand.
+      const releaseIds = releaseRows.map((release) => release.id);
+      const doneIn =
+        releaseIds.length === 0
+          ? []
+          : await transaction
+              .select({ id: activities.id })
+              .from(activities)
+              .where(inArray(activities.releaseId, releaseIds))
+              .limit(1);
       // A stream kept keeps every draft of it and its records, which may be people's own.
       if (
         own.some((recordId) => !seeded.has(recordId)) ||
-        targeting.length > 0
+        targeting.length > 0 ||
+        doneIn.length > 0
       ) {
         kept.push(
-          `The ${row.name} schedule, which has releases, cycles, or features added by hand`,
+          `The ${row.name} schedule, which has releases, cycles, features, or activities added by hand`,
         );
         continue;
       }
-      await discardDraftsOf(transaction, [id, ...own], [id]);
+      await discardDraftsOf(transaction, [id, ...own], [id], releaseIds);
       for (const release of releaseRows) {
         const { id: recordId, ...values } = release;
         made.push(...recorded("release", recordId, "deleted", values));

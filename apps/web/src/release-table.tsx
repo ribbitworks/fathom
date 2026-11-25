@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Releases tab's table on the shared table, read only: each release's name after its colour's
-// square, its schedule, the day it ships, its cycles, and Shipped once its day has passed. The rows
-// can be grouped by schedule. A release's row is marked where its draft changes what the row
-// shows, and has its own mark for a draft of what it doesn't show, such as its note.
+// The Releases tab's table on the shared table, read only, with a release's row marked where its
+// draft changes it.
 
 import type {
+  Activity,
   Choice,
   RecordKeyOf,
   Release,
@@ -13,6 +12,7 @@ import type {
   Show,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
+import { activitiesColumn, activitiesColumnKey } from "./activity-list.tsx";
 import { differingKeys, type DraftSelection, noDrafts } from "./drafts.ts";
 import { choice } from "./lists.ts";
 import { draftFieldsOf } from "./plan-table.tsx";
@@ -235,6 +235,8 @@ export function releaseColumns(
   streams: readonly ReleaseStream[],
   records: readonly ReleaseRow[],
   planned?: PlannedFeatures,
+  // The activities as the view shows them, for a role that sees them.
+  activities?: readonly Activity[],
 ): Column<ReleaseRow, never>[] {
   const listed = releaseListNames(streams);
   const names = new Map(records.map((row) => [row.releaseId, row.name]));
@@ -277,6 +279,15 @@ export function releaseColumns(
             "cycles",
           ),
         ]),
+    ...(activities === undefined
+      ? []
+      : [
+          activitiesColumn<ReleaseRow, never>(
+            activities,
+            "releaseId",
+            ({ releaseId }) => releaseId,
+          ),
+        ]),
     {
       ...column("status", "Status", "choice", {
         emptyLabel: "Not shipped",
@@ -294,6 +305,7 @@ export const releaseColumnOrder = [
   "shipsOn",
   "cycles",
   "features",
+  activitiesColumnKey,
   "status",
 ];
 
@@ -303,11 +315,13 @@ export const releaseDetailColumns = (
   streams: readonly ReleaseStream[],
   records: readonly ReleaseRow[],
   planned?: PlannedFeatures,
+  activities?: readonly Activity[],
 ): Column<ReleaseRow, never>[] => [
-  ...releaseColumns(streams, withLiveCopies(records), planned).map((each) =>
-    each.key === "name"
-      ? { ...each, ...column("name", "Release", "text") }
-      : each,
+  ...releaseColumns(streams, withLiveCopies(records), planned, activities).map(
+    (each) =>
+      each.key === "name"
+        ? { ...each, ...column("name", "Release", "text") }
+        : each,
   ),
   { ...column("colour", "Colour", "text"), colour: releaseColour },
 ];
@@ -332,11 +346,13 @@ export function releaseTable({
   onOpen,
   menuItems,
   planned,
+  activities,
 }: {
   // Every schedule, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
   day: string;
   planned?: PlannedFeatures | undefined;
+  activities?: readonly Activity[] | undefined;
   // Whether the user may change a release now.
   changeable: (row: ReleaseRow) => boolean;
   onOpen: (release: Release) => void;
@@ -345,7 +361,7 @@ export function releaseTable({
 }): RecordTable<ReleaseRow, never, undefined> {
   // A draft's menu names every value it changes, those only the details show included.
   const describedColumns = (row: ReleaseRow) => [
-    ...releaseDetailColumns(streams, [row], planned),
+    ...releaseDetailColumns(streams, [row], planned, activities),
     releaseNoteColumn,
   ];
   const drafts = (ids: string[]): DraftSelection => ({
@@ -374,7 +390,7 @@ export function releaseTable({
     },
     readOnlyRecord: (row) => !changeable(row),
     columnsFor: (_fields, _lists, _order, records) =>
-      releaseColumns(streams, records, planned),
+      releaseColumns(streams, records, planned, activities),
     liveRecords: (rows) => liveRows(rows, day),
     draftFields: (row, draft) =>
       draftFieldsOf(describedColumns(row), row, draft),

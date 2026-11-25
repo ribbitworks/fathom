@@ -5,6 +5,7 @@
 // removing only what seeding added.
 
 import {
+  activities,
   changes,
   changeSets,
   createDatabase,
@@ -12,6 +13,8 @@ import {
   cyclePatterns,
   type Database,
   drafts,
+  listItems,
+  lists,
   releases,
   releaseStreams,
 } from "@fathom/db";
@@ -45,6 +48,7 @@ beforeAll(async () => {
 
 afterEach(async () => {
   await connection.delete(drafts);
+  await connection.delete(activities);
   await connection.delete(releases);
   await connection.delete(cyclePatterns);
   await connection.delete(releaseStreams);
@@ -264,9 +268,32 @@ describe("removing release streams", () => {
       lastCycle: "2027-07-01",
     });
     expect(await unseedReleases(connection)).toEqual([
-      "The Platform schedule, which has releases, cycles, or features added by hand",
+      "The Platform schedule, which has releases, cycles, features, or activities added by hand",
     ]);
     expect(await streamNames()).toEqual(["Platform"]);
+  });
+
+  it("keeps a stream with a release that has an activity added by hand", async () => {
+    await seedReleases(connection, today);
+    const [harbor] = await connection
+      .select({ id: releases.id })
+      .from(releases)
+      .where(eq(releases.name, "Harbor 1"));
+    const [status] = await connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(eq(lists.builtIn, "feature-statuses"))
+      .limit(1);
+    await connection.insert(activities).values({
+      releaseId: String(harbor?.id),
+      name: "Fictional By Hand",
+      statusId: String(status?.id),
+    });
+    expect(await unseedReleases(connection)).toEqual([
+      "The Platform schedule, which has releases, cycles, features, or activities added by hand",
+    ]);
+    expect(await streamNames()).toContain("Platform");
   });
 
   it("discards the drafts of a stream's records and of records drafted to be added to it", async () => {
@@ -290,6 +317,30 @@ describe("removing release streams", () => {
     expect(await unseedReleases(connection)).toEqual([]);
     expect(await connection.select().from(drafts)).toEqual([]);
     expect(await streamNames()).toEqual([]);
+  });
+
+  it("discards the drafts of activities drafted to be added to a release it removes", async () => {
+    await seedReleases(connection, today);
+    const [harbor] = await connection
+      .select({ id: releases.id })
+      .from(releases)
+      .where(eq(releases.name, "Harbor 1"));
+    await connection.insert(drafts).values({
+      recordType: "activity",
+      recordId: randomUUID(),
+      action: "created",
+      fields: { releaseId: String(harbor?.id), name: "Fictional Drafted" },
+    });
+    await connection.insert(drafts).values({
+      recordType: "activity",
+      recordId: randomUUID(),
+      action: "created",
+      fields: { releaseId: randomUUID(), name: "Fictional Elsewhere" },
+    });
+    expect(await unseedReleases(connection)).toEqual([]);
+    expect(
+      (await connection.select().from(drafts)).map(({ fields }) => fields),
+    ).toEqual([expect.objectContaining({ name: "Fictional Elsewhere" })]);
   });
 
   it("keeps the drafts of a stream it keeps", async () => {

@@ -39,8 +39,7 @@ Group by offers Needed by and each column of choices: Status, Release, Project, 
 
 ## Planned
 
-- **Releases:** a release's details listing its first five activities, its row's name a link to Activities, with Add activity, and Releases' Activities column, come with the Releases changes, as a project's are on [Projects](projects.md#record-details) ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
-- **A project's list:** Total effort under it.
+- **A project's or release's list:** Total effort under it.
 - **Staffed:** No until allocating to activities is built ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
 - **Duplicate…:** in an activity's row menu and details, with duplicating features.
 - **Colour:** an activity's colour, saved at once with no draft, comes with feature colours.

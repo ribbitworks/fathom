@@ -15,7 +15,7 @@ import {
 import { fictionalId, type FictionalOrganization } from "@fathom/fixtures";
 import { addToMonth, type AllocationMonths, monthOf } from "@fathom/shared";
 import { and, count, eq, inArray, or, sql } from "drizzle-orm";
-import { seededActivityIds } from "./activities.ts";
+import { seededActivityIds, seededProjectActivityIds } from "./activities.ts";
 import { seededFeatures } from "./features.ts";
 import { featureId } from "./projects.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
@@ -223,7 +223,7 @@ export async function seedAllocations(
       .select({ id: allocations.id })
       .from(allocations)
       .where(inArray(allocations.id, seededIds()));
-    const activityIds = seededActivityIds();
+    const activityIds = seededProjectActivityIds();
     const [{ activitiesPresent } = { activitiesPresent: 0 }] = await transaction
       .select({ activitiesPresent: count() })
       .from(activities)

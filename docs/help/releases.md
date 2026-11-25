@@ -57,6 +57,8 @@ A record's panel names the records it's tied to, each as a link that opens it on
 
 The **Features** row lists the features one to a line, each a link to it on **Features**. After the first five, select **Show all** under them to see the rest. **Show on Features** opens **Features** showing only those features, and **Show on the Board** opens the **Features** board at their cycle.
 
+A release's **Activities** row lists its activities the same way, each a link to it on **Activities**. **Show on Activities** opens **Activities** showing only the release's, and **Add activity** opens **Activities** with **New activity** beside them and the release chosen.
+
 On the timeline, each release, cycle and schedule name opens its record too. From the keyboard, press Tab to reach it, then Enter.
 
 You're done when the record you followed is open in its panel, on its own tab.

@@ -317,6 +317,7 @@ See [Releases](#releases) for the steps.
   - Twelve planned hires, two of them filled.
   - Eight feature teams: Payments core, Search, Platform reliability, Mobile apps, Field tools, Data pipeline, Identity and Integrations.
   - Five customers, most with a description and some with notes, one long enough to fold, one with neither; five projects with milestones and activities, some named General; and proposals in every status.
+  - Activities of the Platform schedule's Harbor 1 and Harbor 2 releases, such as Release testing.
   - Three schedules, Platform, Patches and Field Apps, each with releases, and features targeting their cycles.
   - Allocations to features and to projects' activities, with people over-allocated, under-allocated and not allocated.
   - Drafts by each persona, some approved, some rejected and some left unpublished.

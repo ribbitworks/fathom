@@ -1,18 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The fictional projects' activities, seeded with their projects. A development-only package, never
-// in the runtime image.
+// The fictional projects' and releases' activities, seeded with the projects. A development-only
+// package, never in the runtime image.
 
 import { fictionalId } from "@fathom/fixtures";
 import type { SeededPlanning } from "./seeded-planning.ts";
 
-// Each activity is known by its project's key and a key of its own.
-export interface SeededActivity extends SeededPlanning {
-  project: string;
+interface SeededActivityValues extends SeededPlanning {
   key: string;
   name: string;
   description: string | null;
   estimateHours: number | null;
+}
+
+// Each activity is known by its project's key and a key of its own.
+export interface SeededActivity extends SeededActivityValues {
+  project: string;
 }
 
 export const seededActivities: readonly SeededActivity[] = [
@@ -99,8 +102,67 @@ export const seededActivities: readonly SeededActivity[] = [
   },
 ];
 
+// A release's activities, known by its schedule's name, its key and a key of their own.
+export interface SeededReleaseActivity extends SeededActivityValues {
+  stream: string;
+  release: string;
+}
+
+export const seededReleaseActivities: readonly SeededReleaseActivity[] = [
+  {
+    stream: "Platform",
+    release: "harbor-1",
+    key: "release-testing",
+    name: "Release testing",
+    status: "done",
+    priority: "High",
+    size: "M",
+    risk: "Medium",
+    team: 0,
+    description: "Test the release end to end before it ships.",
+    estimateHours: 160,
+  },
+  {
+    stream: "Platform",
+    release: "harbor-1",
+    key: "release-notes",
+    name: "Release notes",
+    status: "done",
+    priority: "Medium",
+    size: "S",
+    risk: "Low",
+    team: null,
+    description: null,
+    estimateHours: 24,
+  },
+  {
+    stream: "Platform",
+    release: "harbor-2",
+    key: "release-testing",
+    name: "Release testing",
+    status: "possible",
+    priority: "High",
+    size: "M",
+    team: 0,
+    description: "Test the release end to end before it ships.",
+    estimateHours: 160,
+  },
+];
+
 export const activityId = (project: string, key: string) =>
   fictionalId(`activity:${project}:${key}`);
 
-export const seededActivityIds = () =>
+export const releaseActivityId = ({
+  stream,
+  release,
+  key,
+}: Pick<SeededReleaseActivity, "stream" | "release" | "key">) =>
+  fictionalId(`activity:release:${stream}:${release}:${key}`);
+
+export const seededProjectActivityIds = () =>
   seededActivities.map(({ project, key }) => activityId(project, key));
+
+export const seededActivityIds = () => [
+  ...seededProjectActivityIds(),
+  ...seededReleaseActivities.map(releaseActivityId),
+];

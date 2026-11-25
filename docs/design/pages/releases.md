@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/releases.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Fathom: Releases Page
@@ -43,12 +43,15 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 
 ## Releases Tab
 
-- **Columns:** Release, Schedule, Ships on, Cycles, Features and Status. Features shows only to those who see features.
+- **Columns:** Release, Schedule, Ships on, Cycles, Features, Activities and Status. Features and Activities show only to those who see features; Activities names each release's activities on one line, read only, since an activity moves on [Activities](activities.md).
 - **Rows:** One list at first, or grouped by schedule; shipped releases show only with **Show shipped**.
 - **New release:** For those who change releases. It asks for the schedule first, and is greyed out while no schedule takes new releases.
 
 ## Release Details
 
+- **Activities:** for those who see features, an Activities row after Features lists the release's activities one to a line, each opening on [Activities](activities.md), folded past the first five, or None, as a project's details do on [Projects](projects.md#record-details).
+  - **Show on Activities:** under the list whenever the release has an activity, opening Activities filtered to the release.
+  - **Add activity:** under the list for those who edit features, opening Activities filtered to the release with New activity open and the release set; not in the Live view, or on a release being removed.
 - **Pencils:** Release, Ships on, Cycles and Colour, for those who change releases, as [Releases](../../product/roles.md#releases) in Roles sets out.
 - **No pencils:** On a release in a retired schedule, drafted to be removed, or held by another's unpublished changes.
 - **Note:** Each release has one built-in note, and schedules have none. Those who see releases read it, and those who change releases write it.
