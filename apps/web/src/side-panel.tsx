@@ -124,7 +124,8 @@ function useMotionEnds(moving: boolean, ended: () => void, aim?: unknown) {
 function useStackChanges(
   panels: readonly SidePanel[],
   moves: boolean,
-  still: (panel: SidePanel) => boolean,
+  // Those that come and go at once, as one as tall as what it holds does.
+  movesAtOnce: (panel: SidePanel) => boolean,
 ) {
   const [leaving, setLeaving] = useState<
     readonly { panel: SidePanel; at: number }[]
@@ -140,7 +141,7 @@ function useStackChanges(
     const gone = before.filter(
       (panel) =>
         !keys.includes(panel.key) &&
-        !still(panel) &&
+        !movesAtOnce(panel) &&
         !leaving.some((gone) => gone.panel.key === panel.key),
     );
     if (gone.length > 0) {
@@ -153,7 +154,7 @@ function useStackChanges(
       .filter(
         (panel) =>
           !before.some(({ key }) => key === panel.key) &&
-          !still(panel) &&
+          !movesAtOnce(panel) &&
           !arriving.includes(panel.key),
       )
       .map(({ key }) => key);
@@ -272,6 +273,35 @@ function useMaximized(
   return { maximized, folding: folding !== undefined, placeOf };
 }
 
+// The height each panel of a stack is drawn with, by its key, measured once drawn and whenever it
+// changes.
+function useDrawnHeights(
+  items: RefObject<Map<string, HTMLDivElement>>,
+  shownKeys: string,
+): Readonly<Record<string, number>> {
+  const [drawn, setDrawn] = useState<Readonly<Record<string, number>>>({});
+  useLayoutEffect(() => {
+    const measure = () => {
+      const now = Object.fromEntries(
+        [...items.current].map(([key, item]) => [
+          key,
+          item.getBoundingClientRect().height,
+        ]),
+      );
+      setDrawn((before) =>
+        JSON.stringify(before) === JSON.stringify(now) ? before : now,
+      );
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    for (const item of items.current.values()) observer.observe(item);
+    return () => {
+      observer.disconnect();
+    };
+  }, [items, shownKeys]);
+  return drawn;
+}
+
 // Not drawn again while only the panels' width changes, as while their edge is dragged.
 const PanelStack = memo(function PanelStack({
   panels,
@@ -308,23 +338,35 @@ const PanelStack = memo(function PanelStack({
     (items.current.get(panel.key) as HTMLDivElement).getBoundingClientRect();
   // A panel is as tall as what it holds only under another, with none maximized; alone or
   // maximized, it fills the column as any panel does.
+  // A narrow screen shows one panel, covering it.
   const fitted = (panel: SidePanel) =>
-    fits(panel) && keys.indexOf(panel.key) > 0 && maximized === undefined;
-  // The share of the height above an edge, as drawn where a panel beside it fits what it holds.
+    fits(panel) &&
+    !narrow &&
+    keys.indexOf(panel.key) > 0 &&
+    maximized === undefined;
+  const drawn = useDrawnHeights(items, keys.join("\n"));
+  // The share of the height above an edge, as drawn where a panel beside it fits what it holds,
+  // within the least each may have.
   const shownShare = (above: SidePanel, below: SidePanel) => {
-    const [top, bottom] = [above, below].map((one) =>
-      items.current.get(one.key)?.getBoundingClientRect(),
-    );
-    if (!(fitted(above) || fitted(below)) || !top || !bottom)
+    const top = drawn[above.key] ?? 0;
+    const bottom = drawn[below.key] ?? 0;
+    if (!(fitted(above) || fitted(below)) || top + bottom === 0)
       return shareOf(above, below);
-    return Math.round((100 * top.height) / (top.height + bottom.height));
+    return Math.max(
+      stackShares.least,
+      Math.min(
+        100 - stackShares.least,
+        Math.round((100 * top) / (top + bottom)),
+      ),
+    );
   };
   return (
     <div
       className={joined(classes.stack, folding && classes.stackFolding)}
       style={
         {
-          "--stack-most": `${String(100 - stackShares.least)}%`,
+          // Each other panel keeps its least.
+          "--stack-most": `${String(100 - stackShares.least * (keys.length - 1))}%`,
         } as CSSProperties
       }
     >
