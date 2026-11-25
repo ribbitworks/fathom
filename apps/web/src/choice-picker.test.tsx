@@ -299,3 +299,32 @@ describe("adding the record a picker names", () => {
     },
   );
 });
+
+describe("keys typed before the picker has focus", () => {
+  const picker = (typed: string) => (
+    <MantineProvider theme={testTheme}>
+      <ChoicePicker
+        id="picker"
+        label="Teams"
+        options={options}
+        multiple
+        initial={[]}
+        typed={typed}
+        onDone={() => undefined}
+        onCancel={() => undefined}
+      />
+    </MantineProvider>
+  );
+
+  it("adds them to the search while nothing has been typed into it since", async () => {
+    const { rerender } = render(picker("A"));
+    rerender(picker("Al"));
+    const search = screen.getByLabelText<HTMLInputElement>("Teams");
+    expect(search.value).toBe("Al");
+
+    await userEvent.type(search, "p");
+    rerender(picker("Alx"));
+
+    expect(search.value).toBe("Alp");
+  });
+});

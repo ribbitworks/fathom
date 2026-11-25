@@ -5,6 +5,7 @@
 
 import { matchesWords, searchWords } from "@fathom/shared";
 import { CheckIcon, Combobox, Group, Text, useCombobox } from "@mantine/core";
+import { usePrevious } from "@mantine/hooks";
 import {
   type ComponentProps,
   type KeyboardEvent,
@@ -87,6 +88,17 @@ export interface Adding {
 const addingLabel = (one: string, typed: string): string =>
   typed === "" ? `New ${one}` : `New ${one} “${typed}”`;
 
+// Keys typed fast reach a cell until its editor has focus, adding to what was typed to open it; the
+// editor takes them while nothing has been typed into it since.
+export function useTypedBeforeFocus(
+  typed: string,
+  shown: string,
+  show: (text: string) => void,
+) {
+  const before = usePrevious(typed);
+  if (before !== undefined && typed !== before && shown === before) show(typed);
+}
+
 export function ChoicePicker({
   id,
   label,
@@ -120,6 +132,7 @@ export function ChoicePicker({
 }) {
   const store = useCombobox({ opened: true });
   const [search, setSearch] = useState(typed);
+  useTypedBeforeFocus(typed, search, setSearch);
   const [picked, setPicked] = useState(initial);
   // Every word typed, found anywhere in a choice's name or description, as a search finds rows.
   const wanted = searchWords(search);

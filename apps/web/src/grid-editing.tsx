@@ -297,9 +297,14 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     } else if (event.key.length === 1) {
       event.preventDefault();
       // Keys typed fast reach the cell until its editor has focus, and follow the first.
-      if (editing?.row === cell.row && editing.column === cell.column) {
-        const { asTyped } = kindOf(column);
+      const { asTyped, inPanel } = kindOf(column);
+      if (
+        editing?.row === cell.row &&
+        editing.column === cell.column &&
+        inPanel !== true
+      ) {
         setText((typed) => asTyped?.(typed + event.key) ?? typed + event.key);
+        focusSoon(`${cellId(cell.row, cell.column)}-editor`);
       } else startEdit(cell, event.key);
     }
   };

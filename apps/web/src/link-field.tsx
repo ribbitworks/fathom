@@ -27,7 +27,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { type KeyboardEvent, type MouseEvent, useState } from "react";
-import type { Finish } from "./choice-picker.tsx";
+import { type Finish, useTypedBeforeFocus } from "./choice-picker.tsx";
 import { CountedInput } from "./counted-input.tsx";
 import classes from "./pages.module.css";
 
@@ -113,6 +113,7 @@ export function useLinkForm({
 }) {
   const textId = `${id}-text`;
   const [address, setAddress] = useState(typed ?? initial?.address ?? "");
+  useTypedBeforeFocus(typed ?? "", address, setAddress);
   const [text, setText] = useState(initial?.text ?? "");
   const [tried, setTried] = useState(false);
   const [leftAddress, setLeftAddress] = useState(false);
