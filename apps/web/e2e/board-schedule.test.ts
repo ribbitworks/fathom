@@ -41,7 +41,7 @@ test("shows one schedule's features by months, and a saved view keeps the choice
   await page.getByRole("menuitem", { name: "Save view…" }).click();
   const dialog = page.getByRole("dialog", { name: "Save view" });
   await expect(dialog.getByText("Months, Field Apps")).toBeVisible();
-  // Saved views outlast the seed data, so each run names its own.
+  // Saved views outlast the seed data, so each run names its own, in case one is left behind.
   const named = `Fictional Field Apps ${Date.now().toString(36)}`;
   await dialog.getByRole("textbox", { name: "Name" }).fill(named);
   await dialog.getByRole("button", { name: "Save view" }).click();
@@ -55,4 +55,18 @@ test("shows one schedule's features by months, and a saved view keeps the choice
   // Then the board shows Field Apps' features by months again
   await expect(columns).toHaveText("Columns: Months, Field Apps");
   await expect(page.getByText("Offline Sync", { exact: true })).toHaveCount(0);
+
+  // The view is taken away again, so runs leave none behind.
+  const removed = await page.evaluate(async (name) => {
+    const views = (await (await fetch("/api/views/features")).json()) as {
+      id: string;
+      name: string;
+    }[];
+    const saved = views.find((view) => view.name === name);
+    return saved === undefined
+      ? 0
+      : (await fetch(`/api/views/features/${saved.id}`, { method: "DELETE" }))
+          .status;
+  }, named);
+  expect(removed).toBe(200);
 });
