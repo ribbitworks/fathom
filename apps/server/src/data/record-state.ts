@@ -48,8 +48,13 @@ export interface RecordKind {
   // The kind of owner holding values in the columns added to the kind's table, for a kind that can
   // have them, and the table.
   addedColumns?: { owner: ValueOwner; table: ColumnTable };
-  // The record as the Drafts page names it, such as "the schedule Major".
-  subject: (state: RecordsState, id: string) => string;
+  // The record as the Drafts page names it to a role, such as "the schedule Major", naming any record
+  // it belongs to only as the role may read it.
+  subject: (
+    state: RecordsState,
+    id: string,
+    permissions: readonly Permission[],
+  ) => string;
   // The record as named to a role that can't read the kind, such as "a release".
   unseenSubject: string;
   // The drafts the record's draft uses beyond the records it links to, such as the cycle patterns
@@ -150,7 +155,7 @@ export const subjectFor = (
 ): string =>
   readsKind(kind, permissions) &&
   shownVersion(state, kind.type, id) !== undefined
-    ? kind.subject(state, id)
+    ? kind.subject(state, id, permissions)
     : kind.unseenSubject;
 
 // Whether a record is live, or drafted to be added.

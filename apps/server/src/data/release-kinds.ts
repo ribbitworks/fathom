@@ -6,6 +6,8 @@
 import { cyclePatterns, features, releases, releaseStreams } from "@fathom/db";
 import {
   cyclesOf,
+  holdsAny,
+  type Permission,
   planSubjects,
   projectSubjects,
   type RecordRef,
@@ -13,6 +15,7 @@ import {
 import {
   type RecordKind,
   type RecordsState,
+  readsKind,
   shownVersion,
   stateOf,
   versionOf,
@@ -167,6 +170,29 @@ const generalForProject = (state: RecordsState, id: string): unknown =>
 export const isGeneralFeature = (state: RecordsState, id: string): boolean =>
   typeof generalForProject(state, id) === "string";
 
+// Who reads projects, and what anyone else is told one is. Kept beside projectSubject, since a
+// project's general feature is named by its project.
+export const projectReaders: readonly Permission[] = ["plan:view"];
+export const unseenProject = "a project";
+
+export const readsProjects = (permissions: readonly Permission[]) =>
+  holdsAny(permissions, projectReaders);
+
+// A feature's name as a role is told it, or only its kind, for one the role can't read: a feature
+// to a role that doesn't read features, and a general feature's project to one that doesn't read
+// projects.
+export function featureNaming(
+  state: RecordsState,
+  id: string,
+  permissions: readonly Permission[],
+): { name: string } | { unseen: string } {
+  if (!readsKind(featureKind, permissions))
+    return { unseen: featureKind.unseenSubject };
+  return isGeneralFeature(state, id) && !readsProjects(permissions)
+    ? { unseen: unseenProject }
+    : { name: featureCalled(state, id) };
+}
+
 // A feature's name as shown, a project's general feature taking its project's.
 export function featureCalled(state: RecordsState, id: string): string {
   const project = generalForProject(state, id);
@@ -215,10 +241,15 @@ export const featureKind: RecordKind = {
   ],
   readWith: ["features:view"],
   unseenSubject: "a feature",
-  subject: (state, id) =>
-    (isGeneralFeature(state, id)
-      ? projectSubjects.project
-      : projectSubjects.feature)(featureCalled(state, id)),
+  subject: (state, id, permissions) => {
+    const naming = featureNaming(state, id, permissions);
+    if (!("name" in naming)) return naming.unseen;
+    return (
+      isGeneralFeature(state, id)
+        ? projectSubjects.project
+        : projectSubjects.feature
+    )(naming.name);
+  },
   // A feature drafted onto another cycle, or onto one only the stream's drafted patterns make, uses
   // those patterns' drafts, as a release does.
   alsoUses: (state, id) => {

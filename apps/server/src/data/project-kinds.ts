@@ -17,7 +17,12 @@ import {
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { firstOfferedOrRefused } from "./built-in-lists.ts";
-import { featureKind, projectSubject } from "./release-kinds.ts";
+import {
+  featureKind,
+  projectReaders,
+  projectSubject,
+  unseenProject,
+} from "./release-kinds.ts";
 import {
   type RecordKind,
   type RecordsState,
@@ -126,8 +131,8 @@ export const projectKind: RecordKind = {
       message: "There is already a project with that Project ID",
     },
   ],
-  readWith: ["plan:view"],
-  unseenSubject: "a project",
+  readWith: projectReaders,
+  unseenSubject: unseenProject,
   subject: projectSubject,
   onAdded: async (transaction, id) => {
     const statusId = await firstOfferedOrRefused(

@@ -117,14 +117,20 @@ describe("a general feature", () => {
     expect(await generalFeatures(project.id)).toHaveLength(1);
   });
 
-  it("is named by its project", async () => {
+  it("is named by its project, only to a role that reads projects", async () => {
     const project = await addProject();
     await approve(project.id);
     const [general] = await generalFeatures(project.id);
     const state = await readRecordsState(test.connection);
-    expect(featureKind.subject(state, String(general?.id))).toBe(
-      `the project ${project.name}`,
-    );
+    expect(
+      featureKind.subject(state, String(general?.id), [
+        "features:view",
+        "plan:view",
+      ]),
+    ).toBe(`the project ${project.name}`);
+    expect(
+      featureKind.subject(state, String(general?.id), ["features:view"]),
+    ).toBe("a project");
   });
 
   it("is kept off the features listed", async () => {

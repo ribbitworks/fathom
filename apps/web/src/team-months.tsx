@@ -186,6 +186,7 @@ export function monthGridTable<
   readOnly,
   groupings,
   filter,
+  choiceOf = (id) => id,
 }: {
   months: readonly string[];
   currentMonth: string;
@@ -194,35 +195,51 @@ export function monthGridTable<
   // The filter across every month, by the choices: its button, the pill's name for a choice, and
   // its words for a row with none in any month.
   filter: { button: string; label: string; none: string };
+  // The choice the filter offers for each, where several are one to the reader, such as features
+  // they can't read.
+  choiceOf?: (id: string) => string;
   content: (record: Rec, month: string) => ReactNode;
   readOnly: (month: string) => boolean;
   groupings: readonly RowGrouping<Rec>[];
 }): RecordTable<Rec, CellChange, CellChange> {
-  const monthChoices = [...choices].sort(byName).map(({ id, name }) => ({
-    id,
-    label: name,
-    description: "",
-    retired: false,
-  }));
-  const monthColumns = months.map((month): Column<Rec, CellChange> => ({
-    ...cellColumn<Rec, CellChange>(month, "choice", {
+  const monthChoices = [
+    ...new Map(
+      [...choices]
+        .sort(byName)
+        .map(({ id, name }) => [
+          choiceOf(id),
+          { id: choiceOf(id), label: name, description: "", retired: false },
+        ]),
+    ).values(),
+  ];
+  const monthColumns = months.map((month): Column<Rec, CellChange> => {
+    const cell = cellColumn<Rec, CellChange>(month, "choice", {
       label: formatMonth(month),
       required: false,
       choices: monthChoices,
       multiple: true,
-    }),
-    content: (record) => content(record, month),
-    marksParts: true,
-    shaded: (record) => record.outside.has(month),
-    mark: (record) =>
-      record.outside.has(month) ? (
-        <VisuallyHidden>Not employed</VisuallyHidden>
-      ) : undefined,
-    cellChars: monthCellChars,
-    headingCentred: true,
-    current: month === currentMonth,
-    readOnly: readOnly(month),
-  }));
+    });
+    return {
+      ...cell,
+      value: (record) => [
+        ...new Set((cell.value(record) as string[]).map(choiceOf)),
+      ],
+      live: (draft) => [
+        ...new Set((cell.live(draft) as string[]).map(choiceOf)),
+      ],
+      content: (record) => content(record, month),
+      marksParts: true,
+      shaded: (record) => record.outside.has(month),
+      mark: (record) =>
+        record.outside.has(month) ? (
+          <VisuallyHidden>Not employed</VisuallyHidden>
+        ) : undefined,
+      cellChars: monthCellChars,
+      headingCentred: true,
+      current: month === currentMonth,
+      readOnly: readOnly(month),
+    };
+  });
   const columns = [
     {
       ...cellColumn<Rec, CellChange>("name", "text", {

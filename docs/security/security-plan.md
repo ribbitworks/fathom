@@ -1,6 +1,6 @@
 # Fathom: Security Plan
 
-**Last updated:** 2026-11-24
+**Last updated:** 2026-11-25
 
 How Fathom guards against threats as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it, as [Securing Your Environment](../operations/securing-your-environment.md) sets out. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
 
@@ -114,6 +114,7 @@ flowchart LR
   - **Accepted:** anyone who reaches it can look up the release's known weaknesses, which are fixed by updating, not hidden, and the Help pages are public with Fathom's source, holding no organization's data.
 - **Data beyond a role:** One shared data access layer checks permissions and classifications for every page, export and search.
   - **A change's answer:** a change answers with the records as the role's read would show them, never more; the plan's records pass through one filter on every read and every answer, which tests check for each way a role may hold only part of the plan.
+  - **A record named with another:** a record named with one it belongs to, such as an allocation by its feature, names that one only to a role that reads its kind, and to any other only by its kind, as "a feature", in reads, drafts, unpublished changes, the change history and refusals. Accepted: a feature hidden so still sends its status's meaning, which Capacity's totals need, and its identifier, so the role sees which people share one feature it can't read; its team's colour is withheld.
   - **Pages, views and columns:** a page, view or column is shown only to roles that see every classification it needs, and a column that needs a permission as well, such as People's Feature teams, which needs View on Feature teams, only to roles that hold it.
 - **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks.
   - **A change's class:** a change is shown only to readers who see its data, at its class then or now, whichever is more sensitive, so its timing doesn't reveal a Personal change. Accepted: a role that approves people's drafts is told when one holds details it can't see, so it leaves the draft to another approver; trying to decide the draft would tell it as much.

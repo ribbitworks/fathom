@@ -197,6 +197,8 @@ export const allocatedFeatureSchema = z.object({
   meaning: meaningSchema.nullable(),
   // Its feature team's, sent only to those who see feature teams.
   colour: paletteColourSchema.nullable(),
+  // Set for a feature the reader can't read, named only by its kind.
+  unseen: z.literal(true).optional(),
 });
 
 export type AllocatedFeature = z.infer<typeof allocatedFeatureSchema>;

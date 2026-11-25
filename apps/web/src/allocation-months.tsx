@@ -465,6 +465,10 @@ export function allocationMonthRecords({
   ];
 }
 
+// The one choice for every feature the reader can't read, never a feature's own identifier, so a
+// filter kept in an address or a view means the same whichever such features there are.
+export const unseenFeatureChoice = "unseen-feature";
+
 export function allocationMonthsTable({
   teamMonths,
   features,
@@ -479,12 +483,17 @@ export function allocationMonthsTable({
   currentMonth: string;
   show: Show;
 }): RecordTable<AllocationRow, CellChange, CellChange> {
+  // Features the reader can't read are one choice to them, since they can't tell them apart.
+  const unseenIds = new Set(
+    features.flatMap(({ id, unseen }) => (unseen === true ? [id] : [])),
+  );
   return {
     ...monthGridTable<AllocationRow>({
       months: teamMonths.months,
       currentMonth,
       label: "Allocations by month",
       choices: features,
+      choiceOf: (id) => (unseenIds.has(id) ? unseenFeatureChoice : id),
       filter: {
         button: "Allocations",
         label: "Allocated to",
