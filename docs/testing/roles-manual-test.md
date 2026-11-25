@@ -405,7 +405,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `D424` Select **Create role**.
-  - **Expected:** A red box in the dialog says "A role with that name already exists", and the dialog stays open.
+  - **Expected:** A red box in the dialog says "Another role has that name", and the dialog stays open.
   - **Notes:**
 
 - [ ] `459D` Select **Cancel**.
