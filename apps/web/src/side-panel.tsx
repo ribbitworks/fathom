@@ -51,6 +51,8 @@ export interface SidePanel {
   // The panel's name in the names of those edges, such as "metrics".
   name: string;
   node: ReactNode;
+  // As tall as what it holds, leaving the rest to the panels beside it, until its edge is moved.
+  fits?: boolean;
 }
 
 // The least share of the height a stacked panel may have, against the one beside it, in percent,
@@ -177,6 +179,8 @@ function useStackHeights(storageKey: string) {
     defaultValue: {},
   });
   const height = (panel: SidePanel) => heights[panel.key] ?? 1;
+  const fitted = (panel: SidePanel) =>
+    panel.fits === true && heights[panel.key] === undefined;
   // The share of the height of the panel above an edge, of it and the one below, in percent.
   const shareOf = (above: SidePanel, below: SidePanel) =>
     Math.round((100 * height(above)) / (height(above) + height(below)));
@@ -192,7 +196,7 @@ function useStackHeights(storageKey: string) {
       [below.key]: (both * (100 - kept)) / 100,
     }));
   };
-  return { height, shareOf, share };
+  return { height, fitted, shareOf, share };
 }
 
 // The keys of a stack's panels open now and as it was last drawn.
@@ -268,7 +272,7 @@ const PanelStack = memo(function PanelStack({
   moves: boolean;
   narrow: boolean;
 }) {
-  const { height, shareOf, share } = useStackHeights(storageKey);
+  const { height, fitted, shareOf, share } = useStackHeights(storageKey);
   const { shown, isLeaving, isArriving, settled } = useStackChanges(
     panels,
     moves,
@@ -350,6 +354,7 @@ const PanelStack = memo(function PanelStack({
                 gone && classes.stackItemLeaving,
                 hidden && classes.stackItemFolded,
                 panel.key !== front && classes.stackItemBehind,
+                fitted(panel) && classes.stackItemFitted,
               )}
               style={
                 { "--stack-share": height(panel) / smallest } as CSSProperties

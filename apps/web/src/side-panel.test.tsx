@@ -809,3 +809,30 @@ describe("the panel in front, which a narrow screen shows", () => {
     expect(["Details", "Form"].map(behind)).toEqual([false, true]);
   });
 });
+
+describe("a panel as tall as what it holds", () => {
+  const fitted = (text: string) =>
+    /stackItemFitted/u.test(
+      (screen.getByText(text).parentElement as HTMLElement).className,
+    );
+
+  it("fits what it holds under another until its edge is moved", async () => {
+    localStorage.clear();
+    render(
+      layout([
+        one("Details", "details"),
+        { ...one("Form", "form"), fits: true },
+      ]),
+    );
+    expect(["Details", "Form"].map(fitted)).toEqual([false, true]);
+
+    act(() => {
+      screen
+        .getByRole("separator", { name: "Resize heights of details and form" })
+        .focus();
+    });
+    await userEvent.keyboard("{ArrowDown}");
+
+    expect(fitted("Form")).toBe(false);
+  });
+});
