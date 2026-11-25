@@ -174,6 +174,9 @@ describe("publishing a draft from its record's menu", () => {
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
+    await waitFor(() => {
+      expect(document.activeElement?.id).toMatch(/^cell-g1-/);
+    });
   });
 
   it("puts focus back on the row's cell once it publishes at once", async () => {
@@ -192,21 +195,72 @@ describe("publishing a draft from its record's menu", () => {
     });
   });
 
-  it("puts focus back on the row's cell once the question is cancelled", async () => {
+  it("puts focus back on the row's cell once the question is cancelled, wherever focus was as it opened", async () => {
+    // Given the changes load only once focus has gone elsewhere, as the closing menu hands it to
+    // the row's ⋯ on a slow connection
+    let answer: (response: Response) => void = () => undefined;
     serverAnswers({
       "GET /api/unpublished": () =>
-        Response.json({ changes: [change("g1", ["list g2"]), change("g2")] }),
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
     });
     renderPublishing([gadget("g1", { draft: unpublished })]);
     await publishFromMenu();
+    await waitFor(() => {
+      expect(document.activeElement?.id).toMatch(/^cell-g1-/);
+    });
+    rowActions("Gadget g1").focus();
+    answer(
+      Response.json({ changes: [change("g1", ["list g2"]), change("g2")] }),
+    );
     const dialog = await screen.findByRole("dialog");
 
+    // When the question is cancelled
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Cancel" }),
     );
 
+    // Then focus is back on the row's cell
     await waitFor(() => {
       expect(document.activeElement?.id).toMatch(/^cell-g1-/);
+    });
+  });
+
+  it("puts focus on the next row published from, not the row of a question cancelled before", async () => {
+    // Given a question for g1 cancelled, and g2's draft going alone
+    serverAnswers({
+      "GET /api/unpublished": () =>
+        Response.json({
+          changes: [change("g1", ["list g3"]), change("g2"), change("g3")],
+        }),
+      "POST /api/unpublished/publish": () =>
+        Response.json({ total: 1, left: 0 }),
+    });
+    renderPublishing([
+      gadget("g1", { draft: unpublished }),
+      gadget("g2", { draft: unpublished }),
+    ]);
+    await publishFromMenu();
+    await userEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Cancel",
+      }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    // When g2's draft is published from its row
+    await userEvent.click(rowActions("Gadget g2"));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Publish draft…" }),
+    );
+
+    // Then focus is on g2's cell
+    expect(await screen.findByText("Published 1 change.")).toBeTruthy();
+    await waitFor(() => {
+      expect(document.activeElement?.id).toMatch(/^cell-g2-/);
     });
   });
 

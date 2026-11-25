@@ -200,7 +200,10 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
               offer.publish && (
                 <Menu.Item
                   onClick={() => {
-                    publishDraft(publishedOf(record, ownDraft));
+                    publishDraft(
+                      publishedOf(record, ownDraft),
+                      menuPlace(place).backToTable ? backToTable : undefined,
+                    );
                     backToTable();
                   }}
                 >
