@@ -857,8 +857,14 @@ describe("a panel as tall as what it holds", () => {
     expect(
       screen.queryAllByRole("separator", { name: /^Resize heights .*form/u }),
     ).toEqual([]);
+    // The gap between them stays.
     const stack = (screen.getByText("Form").parentElement as HTMLElement)
       .parentElement as HTMLElement;
+    expect(
+      [...stack.children].filter(({ className }) =>
+        /stackEdge/u.test(className),
+      ),
+    ).toHaveLength(2);
     expect(stack.className).toMatch(/stackFitting/u);
     expect(stack.style.getPropertyValue("--stack-least")).toBe(
       `${String(stackShares.least)}%`,

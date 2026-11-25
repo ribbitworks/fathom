@@ -336,8 +336,7 @@ const PanelStack = memo(function PanelStack({
         const hidden = maximized !== undefined && maximized !== panel.key;
         return (
           <Fragment key={panel.key}>
-            {/* A panel as tall as what it holds has no height to move to. */}
-            {above !== undefined && !fitted(above) && !fitted(panel) && (
+            {above !== undefined && (
               <div
                 className={joined(
                   classes.stackEdge,
@@ -351,32 +350,35 @@ const PanelStack = memo(function PanelStack({
                 )}
                 inert={gone || isLeaving(above) || maximized !== undefined}
               >
-                <ResizeEdge
-                  separator={{
-                    vertical: false,
-                    label: `Resize heights of ${namesOf([above, panel])}`,
-                    controls: `${above.id} ${panel.id}`,
-                    value: shareOf(above, panel),
-                    least: stackShares.least,
-                    most: 100 - stackShares.least,
-                    onStep: (step) => {
+                {/* Beside a panel as tall as what it holds, the gap stays, with no height to move. */}
+                {!fitted(above) && !fitted(panel) && (
+                  <ResizeEdge
+                    separator={{
+                      vertical: false,
+                      label: `Resize heights of ${namesOf([above, panel])}`,
+                      controls: `${above.id} ${panel.id}`,
+                      value: shareOf(above, panel),
+                      least: stackShares.least,
+                      most: 100 - stackShares.least,
+                      onStep: (step) => {
+                        share(
+                          above,
+                          panel,
+                          shareOf(above, panel) + step * stackShares.step,
+                        );
+                      },
+                    }}
+                    className={classes.stackResizer}
+                    onDrag={({ y }) => {
+                      const top = box(above).top;
                       share(
                         above,
                         panel,
-                        shareOf(above, panel) + step * stackShares.step,
+                        (100 * (y - top)) / (box(panel).bottom - top),
                       );
-                    },
-                  }}
-                  className={classes.stackResizer}
-                  onDrag={({ y }) => {
-                    const top = box(above).top;
-                    share(
-                      above,
-                      panel,
-                      (100 * (y - top)) / (box(panel).bottom - top),
-                    );
-                  }}
-                />
+                    }}
+                  />
+                )}
               </div>
             )}
             <div
