@@ -154,7 +154,9 @@ test("puts focus back on the row's cell once the question is cancelled, however 
       response.request().method() === "DELETE" &&
       response.url().endsWith("/draft"),
   );
-  await (await openRowMenu(page, renamedTo))
+  await (
+    await openRowMenu(page, renamedTo)
+  )
     .getByRole("menuitem", { name: "Discard draft" })
     .click();
   expect((await discarded).ok()).toBe(true);
