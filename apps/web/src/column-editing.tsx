@@ -200,7 +200,7 @@ export function ColumnModal<Data>({
         // Esc is handled here, so the question it may open doesn't take the same Esc as its own.
         closeOnEscape={false}
         onKeyDown={(event) => {
-          // Esc in an open drop-down list closes the list alone.
+          // Esc in anything open, a drop-down list or a choice's ⋯ menu, closes that alone.
           const inOpenList =
             event.target instanceof HTMLElement &&
             event.target.getAttribute("aria-expanded") === "true";

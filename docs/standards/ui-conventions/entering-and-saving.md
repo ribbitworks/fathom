@@ -100,7 +100,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 ## Leaving Unsaved Work
 
 - **Asking before discarding:** Leaving a form, a note or a Settings panel with anything changed asks first, whether by Cancel, the close button, another tab or another record. A dialog with anything typed in it counts as a form.
-  - **The question:** The question always starts with Discard and names what is lost, such as Discard the new customer? with Keep adding and Discard, Discard changes to the note? with Keep writing and Discard, or Discard the fill of TBD-3?
+  - **The question:** The question always starts with Discard and names what is lost, such as Discard the new customer? with Keep adding and Discard, Discard changes to the note? with Keep writing and Discard, Discard changes to the column? with Keep editing and Discard, or Discard the fill of TBD-3?
   - **While saving:** A form can't be left while its record is being added, and a dialog can't be closed while a change is being saved.
   - **A dialog:** Esc, the ×, Cancel and a click outside each ask, and Esc in an open drop-down list closes only the list, as the column dialog does in `apps/web/src/column-editing.tsx`.
   - **Drawn by:** `useDiscardQuestion`, `newRecordQuestion` and `changesQuestion` in `apps/web/src/discard-question.tsx`, and the note's question, `noteQuestion`, in `apps/web/src/note-editing.tsx`.
