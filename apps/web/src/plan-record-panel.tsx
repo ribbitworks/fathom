@@ -370,9 +370,10 @@ function FeatureColourRow({
   teamColours: TableChoices["teamColours"];
   chooses: boolean;
 }) {
+  // A feature with no team has no team's colour to take, so its menu offers none.
   const inherited =
     feature.featureTeamId === null
-      ? null
+      ? undefined
       : (teamColours.get(feature.featureTeamId) ?? null);
   const approved = draft?.action !== "created" && draft?.action !== "deleted";
   return (
@@ -383,6 +384,7 @@ function FeatureColourRow({
         chooses &&
         approved && (
           <ColourMenu
+            title="Change the colour"
             current={feature.colour}
             inherited={inherited}
             name={feature.name}

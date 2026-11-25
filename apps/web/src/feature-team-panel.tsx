@@ -149,7 +149,6 @@ function teamColumns(
   };
 }
 
-// The team's colour, shown as its row, changed from its own menu, since a colour is no draft.
 // A team's members by name, one to a line, each with what a draft does to them, if anything.
 function MemberList({
   members,

@@ -43,6 +43,7 @@ import {
   targetOf,
 } from "./projects.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
+import { teamsColourWords } from "./colour-menu.tsx";
 import { inOrder, isEmpty } from "./grid-columns.tsx";
 import {
   customersColumn,
@@ -493,5 +494,5 @@ const colourColumn = (values: Readonly<Record<string, CellValue>>) =>
     ),
     ...(isEmpty(values.featureTeamId ?? null)
       ? {}
-      : { emptyLabel: "Team's colour" }),
+      : { emptyLabel: teamsColourWords }),
   });

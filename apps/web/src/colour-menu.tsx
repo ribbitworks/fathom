@@ -26,7 +26,7 @@ type ColourMenuLook = "dot" | "square" | "change";
 
 // A record with no colour of its own that takes its team's, such as a feature, chooses its team's
 // by these words, rather than none.
-const teamsColourWords = "Team's colour";
+export const teamsColourWords = "Team's colour";
 
 export function ColourMenu({
   current,
@@ -35,6 +35,7 @@ export function ColourMenu({
   look = "dot",
   save,
   refreshes,
+  title = "Change the team's colour",
 }: {
   current: PaletteColour | null;
   // The colour shown while the record has none of its own, its team's, for a record that takes
@@ -48,6 +49,8 @@ export function ColourMenu({
   save: (colour: PaletteColour | null) => Promise<void>;
   // The data the colour is drawn from, reloaded once it is saved.
   refreshes: QueryKey;
+  // What pointing at the menu's button says it does, a team's colour unless the caller says.
+  title?: string;
 }) {
   const queryClient = useQueryClient();
   const takesTeams = inherited !== undefined;
@@ -95,7 +98,6 @@ export function ColourMenu({
     ) : (
       <Swatch colour={current} size={teamSwatchSize} alone />
     );
-  const title = takesTeams ? "Change the colour" : "Change the team's colour";
   const targets: Record<ColourMenuLook, ReactNode> = {
     dot: (
       <UnstyledButton

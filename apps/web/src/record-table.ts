@@ -203,7 +203,8 @@ export interface ColumnUnits {
 // which drafts name it.
 export interface FormColumn<Rec extends GridRecord, Change> {
   after: string;
-  // The column, as what the form holds so far has it, such as its words for no value.
+  // The column, given what has been entered in the form so far, which may change its words for
+  // no value.
   column: (values: Readonly<Record<string, CellValue>>) => Column<Rec, Change>;
 }
 
