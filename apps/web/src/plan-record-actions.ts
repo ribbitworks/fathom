@@ -29,10 +29,10 @@ import {
 } from "./projects.ts";
 import type { RecordActions } from "./record-table.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
-import type { RecordSaving } from "./saving.ts";
+import { draftSaving, type RecordSaving } from "./saving.ts";
 
 export function planRecordActions({
-  changes: { save, undoable, done },
+  changes,
   plan,
   approves,
   onDecision,
@@ -44,6 +44,8 @@ export function planRecordActions({
   approves: readonly DraftKind[];
   onDecision: (decision: Decision) => void;
 }) {
+  const { save, undoable } = changes;
+  const drafts = draftSaving(changes);
   const decide = (asking: Asking, chosen: DraftSelection, all?: boolean) => {
     const shownPlan = plan as ProjectPlan;
     onDecision(
@@ -62,22 +64,11 @@ export function planRecordActions({
   };
 
   const discard = (type: PlanRecordKind, record: PlanRecord) => {
-    const gone = record.draft?.action === "created";
-    save({
+    drafts.discard({
+      name: record.name,
       next: (plan) => withRecord(plan, type, record.id, discarded),
       save: () => discardRecordDraft({ type, id: record.id }),
-      failure: `Fathom could not discard the draft of ${record.name}.`,
-      onSaved: (changeSetId, before) => {
-        if (gone) {
-          done(
-            `Discarded the draft adding ${record.name}.`,
-            changeSetId,
-            before,
-          );
-        } else {
-          undoable(changeSetId, before);
-        }
-      },
+      notice: record.draft?.action === "created" ? "adding" : undefined,
     });
   };
 
@@ -106,11 +97,10 @@ export function planRecordActions({
   };
 
   const resubmit = (type: PlanRecordKind, record: PlanRecord) => {
-    save({
+    drafts.resubmit({
+      name: record.name,
       next: (plan) => withRecord(plan, type, record.id, draftSentAgain),
       save: () => resubmitRecordDraft({ type, id: record.id }),
-      failure: `Fathom could not send the draft of ${record.name} for approval again.`,
-      onSaved: undoable,
     });
   };
 

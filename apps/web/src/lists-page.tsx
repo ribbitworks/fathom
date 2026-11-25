@@ -81,7 +81,7 @@ import { peopleQuery } from "./people.ts";
 import { PageHeader } from "./page-header.tsx";
 import { sidePanelScroll, WithSidePanel } from "./side-panel.tsx";
 import classes from "./pages.module.css";
-import { useSaving } from "./saving.ts";
+import { draftSaving, useSaving } from "./saving.ts";
 import { count } from "./numbers.ts";
 import { besideLive, DraftView } from "./status-mark.tsx";
 import { linkId, ListsTable } from "./lists-table.tsx";
@@ -166,6 +166,7 @@ export function ListsPage({
     removed: "Someone else has removed this. The lists have been refreshed.",
     blocked: opened || classMove.opened || decisionDialog.opened,
   });
+  const drafts = draftSaving({ save, undoable, done });
   const all = query.data ?? [];
   const lists =
     show === "live"
@@ -395,33 +396,22 @@ export function ListsPage({
       const gone =
         what.kind === "list" && what.list.draft?.action === "created";
       if (gone) closePanel(what.list);
-      save({
+      drafts.discard({
+        name: draftName(what),
         next: (current) => withoutDraft(current, what),
         save: () => discardListDraft(targetOf(what)),
-        failure: `Fathom could not discard the draft of ${draftName(what)}.`,
-        onSaved: (changeSetId, before) => {
-          done(
-            `Discarded the draft of ${draftName(what)}.`,
-            changeSetId,
-            before,
-            undefined,
-            gone
-              ? () => {
-                  openList(what.list);
-                }
-              : undefined,
-          );
-        },
+        notice: "of",
+        onUndone: gone
+          ? () => {
+              openList(what.list);
+            }
+          : undefined,
       });
     },
     resubmit: (what) => {
-      save({
-        next: (current) => current,
+      drafts.resubmit({
+        name: draftName(what),
         save: () => resubmitListDraft(targetOf(what)),
-        failure: `Fathom could not send the draft of ${draftName(what)} for approval again.`,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
       });
     },
     decide: (asking, what) => {

@@ -24,7 +24,7 @@ import {
   discardColumnDraft,
   resubmitColumnDraft,
 } from "./column-requests.ts";
-import type { useSaving } from "./saving.ts";
+import { draftSaving, type useSaving } from "./saving.ts";
 
 type Dialog =
   | { kind: "new" }
@@ -43,28 +43,19 @@ export const useColumnDialog = () => useDialogState<Dialog>();
 
 export function columnDraftActions<Data>(
   table: ColumnTable,
-  { save, undoable, done }: ColumnSaving<Data>,
+  saving: ColumnSaving<Data>,
 ) {
+  const drafts = draftSaving(saving);
   return {
     discardColumn: (id: string, name: string) => {
-      save({
-        next: (data) => data,
+      drafts.discard({
+        name,
         save: () => discardColumnDraft(id, table),
-        failure: `Fathom could not discard the draft of ${name}.`,
-        onSaved: (changeSetId, before) => {
-          done(`Discarded the draft of ${name}.`, changeSetId, before);
-        },
+        notice: "of",
       });
     },
     resubmitColumn: (id: string) => {
-      save({
-        next: (data) => data,
-        save: () => resubmitColumnDraft(id, table),
-        failure: "Fathom could not send the draft for approval again.",
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
-      });
+      drafts.resubmit({ save: () => resubmitColumnDraft(id, table) });
     },
   };
 }

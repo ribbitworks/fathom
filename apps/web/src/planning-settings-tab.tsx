@@ -55,7 +55,7 @@ import { withLiveFields } from "./live-records.ts";
 import type { Column } from "./record-table.ts";
 import classes from "./planning-settings-tab.module.css";
 import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
-import { useSaving } from "./saving.ts";
+import { draftSaving, useSaving } from "./saving.ts";
 import { settingsPageWidth } from "./settings-page.tsx";
 import { DraftedItem, DraftView } from "./status-mark.tsx";
 import { DraftMenu } from "./table-controls.tsx";
@@ -252,16 +252,7 @@ export function PlanningSettingsTab({
     (changeSetId: string | null, before: PlanningSettingsShown) => {
       undoable(changeSetId, before, focus);
     };
-  const run = (work: () => Promise<string | null>, failure: string) => {
-    save({
-      next: (data) => data,
-      save: work,
-      failure,
-      onSaved: (changeSetId, before) => {
-        undoable(changeSetId, before);
-      },
-    });
-  };
+  const drafts = draftSaving({ save, undoable, done });
   const node = planningSettingsNode(original);
   const actions: RecordMenuActions = {
     approves,
@@ -275,16 +266,16 @@ export function PlanningSettingsTab({
       );
     },
     resubmit: () => {
-      run(
-        () => resubmitRecordDraft(ref),
-        `Fathom could not send the draft of ${subject} for approval again.`,
-      );
+      drafts.resubmit({
+        name: subject,
+        save: () => resubmitRecordDraft(ref),
+      });
     },
     discard: () => {
-      run(
-        () => discardRecordDraft(ref),
-        `Fathom could not discard the draft of ${subject}.`,
-      );
+      drafts.discard({
+        name: subject,
+        save: () => discardRecordDraft(ref),
+      });
     },
   };
   // A changed row's menu, for the draft of the settings as a whole, so it names every change the

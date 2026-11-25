@@ -15,7 +15,7 @@ import {
   setFeatureTeamColour,
   updateFeatureTeam,
 } from "./feature-teams.ts";
-import { useSaving } from "./saving.ts";
+import { draftSaving, useSaving } from "./saving.ts";
 
 export function useFeatureTeamActions(
   // Shows the team just added.
@@ -23,12 +23,14 @@ export function useFeatureTeamActions(
   // While another of the page's dialogs is open, which Cmd+Z leaves alone.
   blocked: boolean,
 ): FeatureTeamActions {
-  const { save: saving, undoable } = useSaving<FeatureTeams>({
+  const changes = useSaving<FeatureTeams>({
     queryKey: featureTeamsQuery.queryKey,
     removed:
       "Someone else has removed this feature team. The teams have been refreshed.",
     blocked,
   });
+  const { save: saving, undoable } = changes;
+  const drafts = draftSaving(changes);
   const saveTeam = (save: () => Promise<string | null>, failure: string) => {
     saving({
       next: (data) => data,
@@ -81,16 +83,16 @@ export function useFeatureTeamActions(
       );
     },
     discard: (team) => {
-      saveTeam(
-        () => discardFeatureTeamDraft(team.id),
-        `Fathom could not discard the draft of ${team.name}.`,
-      );
+      drafts.discard({
+        name: team.name,
+        save: () => discardFeatureTeamDraft(team.id),
+      });
     },
     resubmit: (team) => {
-      saveTeam(
-        () => resubmitFeatureTeamDraft(team.id),
-        `Fathom could not send the draft of ${team.name} for approval again.`,
-      );
+      drafts.resubmit({
+        name: team.name,
+        save: () => resubmitFeatureTeamDraft(team.id),
+      });
     },
     colour: (team) => (colour) => setFeatureTeamColour(team.id, colour),
   };

@@ -35,7 +35,7 @@ import {
   type ChangesFrom,
   personUpdate,
 } from "./person-change.ts";
-import type { RecordSaving } from "./saving.ts";
+import { draftSaving, type RecordSaving } from "./saving.ts";
 
 // Someone or a planned hire being added, as the table shows them before they are saved: a draft
 // adding them.
@@ -79,7 +79,7 @@ function drafted(person: Person): Person {
 }
 
 export function peopleRecordActions({
-  changes: { save, undoable, done },
+  changes,
   data,
   lists,
   approves,
@@ -98,6 +98,8 @@ export function peopleRecordActions({
   PeopleActions,
   "decide" | "add" | "update" | "remove" | "resubmit" | "discard"
 > {
+  const { save, undoable } = changes;
+  const drafts = draftSaving(changes);
   const nameOf = (row: Person) => noticeName(row, lists as List[]);
   return {
     decide: (asking, chosen, all) => {
@@ -187,7 +189,8 @@ export function peopleRecordActions({
       });
     },
     resubmit: (person) => {
-      save({
+      drafts.resubmit({
+        name: nameOf(person),
         next: (data) => ({
           ...data,
           people: data.people.map((other) =>
@@ -198,15 +201,12 @@ export function peopleRecordActions({
           isHire(person)
             ? resubmitHireDraft(person.id)
             : resubmitDraft(person.id),
-        failure: `Fathom could not send the draft of ${nameOf(person)} for approval again.`,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
       });
     },
     discard: (person, draft) => {
       const gone = draft.action === "created";
-      save({
+      drafts.discard({
+        name: nameOf(person),
         next: (data) => ({
           ...data,
           people: gone
@@ -219,18 +219,7 @@ export function peopleRecordActions({
           isHire(person)
             ? discardHireDraft(person.id)
             : discardDraft(person.id),
-        failure: `Fathom could not discard the draft of ${nameOf(person)}.`,
-        onSaved: (changeSetId, before) => {
-          if (gone) {
-            done(
-              `Discarded the draft adding ${nameOf(person)}.`,
-              changeSetId,
-              before,
-            );
-          } else {
-            undoable(changeSetId, before);
-          }
-        },
+        notice: gone ? "adding" : undefined,
       });
     },
   };

@@ -259,3 +259,79 @@ export type RecordSaving<Data> = Pick<
   ReturnType<typeof useSaving<Data>>,
   "save" | "undoable" | "done"
 >;
+
+// Discarding or resubmitting a record's draft: how to save it, how the data shows it at once, if it
+// changes, and the record's name for its notices.
+export interface DraftChange<Data> {
+  name: string;
+  save: () => Promise<string | null>;
+  next?: (data: Data) => Data;
+}
+
+// Discarding a draft that may take its record out of view says so, offering Undo there, and runs
+// onUndone once undone; any other discard is undone by Cmd+Z alone.
+export interface DraftDiscard<Data> extends DraftChange<Data> {
+  notice?: "adding" | "of" | undefined;
+  onUndone?: (() => void) | undefined;
+}
+
+// Some drafts are resent without their record's name, as from a column's header.
+export type DraftResubmit<Data> = Omit<DraftChange<Data>, "name"> & {
+  name?: string;
+};
+
+// Discarding and resubmitting a record's draft, each as one change that can be undone.
+export function draftSaving<Data>({
+  save,
+  undoable,
+  done,
+}: RecordSaving<Data>) {
+  const unchanged = (data: Data) => data;
+  return {
+    discard: ({
+      name,
+      save: saveDiscard,
+      next = unchanged,
+      notice,
+      onUndone,
+    }: DraftDiscard<Data>) => {
+      save({
+        next,
+        save: saveDiscard,
+        failure: `Fathom could not discard the draft of ${name}.`,
+        onSaved: (changeSetId, before) => {
+          if (notice === undefined) {
+            undoable(changeSetId, before);
+          } else {
+            done(
+              notice === "adding"
+                ? `Discarded the draft adding ${name}.`
+                : `Discarded the draft of ${name}.`,
+              changeSetId,
+              before,
+              undefined,
+              onUndone,
+            );
+          }
+        },
+      });
+    },
+    resubmit: ({
+      name,
+      save: saveResubmit,
+      next = unchanged,
+    }: DraftResubmit<Data>) => {
+      save({
+        next,
+        save: saveResubmit,
+        failure:
+          name === undefined
+            ? "Fathom could not send the draft for approval again."
+            : `Fathom could not send the draft of ${name} for approval again.`,
+        onSaved: (changeSetId, before) => {
+          undoable(changeSetId, before);
+        },
+      });
+    },
+  };
+}
