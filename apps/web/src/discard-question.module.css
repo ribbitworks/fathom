@@ -2,6 +2,7 @@
 
 /* The question's body starts straight under its title, and clips what is drawn outside it, so the
    room a focus ring needs is kept at its top, where the first button opens focused. */
+
 .body {
   padding-top: var(--fathom-focus-room);
 }

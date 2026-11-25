@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // UI tests of adding a record from its New panel: the cursor starts in its first field typed into,
-// Enter adds the record, Esc reaches the panel, and a required value left empty is refused.
+// Enter adds the record or fills a planned hire, Esc reaches the panel, and a required value left
+// empty is refused.
 
 import { expect, test } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";

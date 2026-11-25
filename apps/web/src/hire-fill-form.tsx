@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Filling a planned hire in its details panel, in place of its details: as a new person, who is
-// named, given an ID and a start date that begins as the hire's target date, or as someone already
-// in Fathom, chosen from those who can fill it, with the day they move to their manager when they
-// would move. The manager begins as the hire's and can be changed for either. A new person is also
-// asked for anything People requires that the hire has no value for. Each value is checked as a new
-// row's cell checks it, and Fill checks the whole, naming any problem under its field. The page holds
-// what has been entered, so it can ask before discarding it.
+// Filling a planned hire, as a new person or as someone already in Fathom. The page holds what has
+// been entered, so it can ask before discarding it.
 
 import {
   type HireFill,
@@ -346,11 +341,11 @@ export function HireFillForm({
     });
   };
 
-  const fillOnEnter = useAfterUpdate(fill);
+  const fillOnEnter = useAfterUpdate<void>(fill);
   return (
     <NewFormEnter
       value={() => {
-        fillOnEnter(undefined);
+        fillOnEnter();
       }}
     >
       <section aria-labelledby="hire-fill-heading" inert={saving}>
