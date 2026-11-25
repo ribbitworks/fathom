@@ -311,6 +311,23 @@ describe("adding", () => {
     },
   );
 
+  it.each(composingEnters)(
+    "stays open at Esc pressed %s a word, closing at the reader's Esc",
+    async (_, composing) => {
+      const onCancel = vi.fn();
+      renderPanel({
+        given: table([column("name", "text")]),
+        onAdd: vi.fn(),
+        onCancel,
+      });
+      const field = screen.getByRole("textbox", { name: "name" });
+      fireEvent.keyDown(field, { key: "Escape", ...composing });
+      expect(onCancel).not.toHaveBeenCalled();
+      await userEvent.keyboard("{Escape}");
+      expect(onCancel).toHaveBeenCalledOnce();
+    },
+  );
+
   it("does not close while saving", async () => {
     const onCancel = vi.fn();
     renderPanel({

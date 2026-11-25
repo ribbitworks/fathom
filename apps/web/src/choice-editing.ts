@@ -21,7 +21,7 @@ import {
   lastKept,
   removedChoice as removed,
 } from "./choice-rules.ts";
-import { composingWord } from "./composing.ts";
+import { heldForComposing } from "./composing.ts";
 import { focusSoon } from "./focus.ts";
 import type { ChoiceActions } from "./list-panel.tsx";
 import { opensMenu } from "./row-controls.tsx";
@@ -271,6 +271,7 @@ export function useChoiceEditing({
   };
 
   const onEditKey = (event: KeyboardEvent, field: Field, choice: Choice) => {
+    if (heldForComposing(event)) return;
     const leaving =
       event.key === "Tab" &&
       (field === lastField(choice)
@@ -279,10 +280,7 @@ export function useChoiceEditing({
     if (event.key === "Escape") {
       event.preventDefault();
       cancelEdit(choice);
-    } else if (
-      (event.key === "Enter" && !event.shiftKey && !composingWord(event)) ||
-      leaving
-    ) {
+    } else if ((event.key === "Enter" && !event.shiftKey) || leaving) {
       event.preventDefault();
       saveEdit(choice);
     }

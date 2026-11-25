@@ -18,7 +18,7 @@ import {
   pastedChoices,
   pasteProblem,
 } from "./choice-rules.ts";
-import { composingWord } from "./composing.ts";
+import { heldForComposing } from "./composing.ts";
 import { focusSoon } from "./focus.ts";
 import type { ChoiceActions } from "./list-panel.tsx";
 
@@ -121,7 +121,8 @@ export function useChoiceEntry({
   };
 
   const onEntryKey = (event: KeyboardEvent, field: Field) => {
-    if (event.key === "Enter" && !event.shiftKey && !composingWord(event)) {
+    if (heldForComposing(event)) return;
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       addEntry();
     } else if (event.key === "Escape") {
