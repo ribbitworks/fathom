@@ -1402,6 +1402,13 @@ th.liveColumn {
   line-height: 16px;
 }
 
+/* A record's timeline of days, its lines keeping their room above and below when two meet, as the
+   items of a column do. */
+.timelineDays {
+  display: flex;
+  flex-direction: column;
+}
+
 /* Today across a record's timeline of days, as a timeline's Today is drawn down its months: the
    same line and word, with room above and below; the day the page shows, when it has no row, the
    same in teal with the day as its word. */

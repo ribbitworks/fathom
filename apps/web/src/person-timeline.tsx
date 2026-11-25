@@ -131,6 +131,21 @@ interface TimelineContext {
   dayLink: DayLink | undefined;
 }
 
+// Opens the person's timeline, where focus goes back once it closes.
+export function ShowTimeline({ onOpen }: { onOpen: () => void }) {
+  return (
+    <Anchor
+      id={showButtonId}
+      component="button"
+      type="button"
+      className={foldControl}
+      onClick={onOpen}
+    >
+      Show timeline
+    </Anchor>
+  );
+}
+
 // The end of a person's details: the next day of changes after the day shown and the latest on or
 // before it, then Show timeline.
 export function TimelinePreview({
@@ -175,15 +190,7 @@ export function TimelinePreview({
                     ],
               )}
             </dl>
-            <Anchor
-              id={showButtonId}
-              component="button"
-              type="button"
-              className={foldControl}
-              onClick={onOpen}
-            >
-              Show timeline
-            </Anchor>
+            <ShowTimeline onOpen={onOpen} />
           </>
         )
       }

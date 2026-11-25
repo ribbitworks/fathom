@@ -67,6 +67,7 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
   - **Who sees what:** readers who see start and end dates; managers until today with Past managers' class and later ones with Future reorganizations', feature teams with their dates' class, and the hire filled with the hiring plan. Reading it is recorded in the access history, and the hiring plan's view too when it names a hire.
   - **Links:** a manager links to their details when People lists them on the day shown; a team to the Org chart's feature teams for readers who see feature teams; a filled hire to its key's link.
   - **Following a link:** opening another person's details closes the timeline; moving to another day keeps it open.
+  - **A day someone isn't employed:** the timeline stays open beside the line saying so, still listing every day of their changes, and Show timeline on that line opens it again.
 - **Notes:** A note opens in its own panel under the details, sharing the height, kept in the address as [Kept in the address](../../standards/ui-conventions/tables.md#the-address) sets out, and can be maximized, as [Maximizing](../../standards/ui-conventions/pages-and-panels.md#panels-and-focus) sets out.
 
 ### Planned Hires

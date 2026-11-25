@@ -114,13 +114,16 @@ describe("a person's timeline", () => {
   });
 
   // The timeline open beside Sasha's details, as its address keeps it.
-  const openedTimeline = async (more: Record<string, () => Response> = {}) => {
+  const openedTimeline = async (
+    more: Record<string, () => Response> = {},
+    address = "/people?open=E2&timeline=true",
+  ) => {
     editAnswers({
       "GET /api/feature-teams": () => Response.json({ teams: [] }),
       "GET /api/people/2/timeline": timeline,
       ...more,
     });
-    const history = renderApp("/people?open=E2&timeline=true");
+    const history = renderApp(address);
     await waitFor(() => {
       expect(timelinePanel()).not.toBeNull();
     });
@@ -317,6 +320,51 @@ describe("a person's timeline", () => {
 
     await waitFor(() => {
       expect(history.location.search).not.toContain("day=");
+    });
+  });
+
+  describe("on a day someone isn't employed", () => {
+    // Sasha's timeline open on a day People doesn't list her.
+    const notEmployed = () =>
+      openedTimeline(
+        {
+          "GET /api/people?on=2019-06-03": peopleAnswer([robin, uma]),
+          "GET /api/people": peopleAnswer(),
+        },
+        "/people?open=E2&timeline=true&day=2019-06-03",
+      );
+
+    it("keeps the timeline open beside the line saying so, with every day of their changes", async () => {
+      const { inPanel } = await notEmployed();
+
+      expect(
+        await screen.findByText(
+          /Sasha Fictional isn't employed on Jun 3, 2019\./u,
+        ),
+      ).toBeDefined();
+      expect(
+        inPanel.getAllByRole("term").map(({ textContent }) => textContent),
+      ).toEqual(["Jan 4, 2099", "Mar 1, 2024", "Jan 1, 2020", "Dec 2, 2019"]);
+    });
+
+    it("offers Show timeline on that line, focus going back to it once closed and to the title once opened again", async () => {
+      const { history } = await notEmployed();
+      await userEvent.click(
+        screen.getByRole("button", { name: "Close timeline" }),
+      );
+      expect(timelinePanel()).toBeNull();
+      await waitFor(() => {
+        expect(document.activeElement?.textContent).toBe("Show timeline");
+      });
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Show timeline" }),
+      );
+
+      await waitFor(() => {
+        expect(document.activeElement?.textContent).toBe("Timeline");
+      });
+      expect(history.location.search).toContain("timeline=true");
     });
   });
 

@@ -51,7 +51,12 @@ import {
 } from "./new-person-panel.tsx";
 import { entered, newRecordId } from "./new-record-panel.tsx";
 import { afterNote, noteQuestion } from "./note-editing.tsx";
-import { usePersonNotes, useShownId } from "./person-editing.tsx";
+import {
+  namedBy,
+  usePersonNotes,
+  useShownId,
+  useTodaysPeople,
+} from "./person-editing.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { useNarrow } from "./side-panel.tsx";
@@ -167,10 +172,11 @@ export function PeoplePage({
   const changesRows = canEdit && day === undefined;
   const changesFrom =
     day !== undefined && canEdit && dates?.changes === true ? day : undefined;
-  // Today's people, while changes are made from another day, whose lines today decide them.
-  const todays = useQuery({
-    ...peopleQuery,
-    enabled: changesFrom !== undefined,
+  const todays = useTodaysPeople({
+    day,
+    changesFrom,
+    people: query.data?.people,
+    open,
   });
   const from = useMemo(
     () => changesFromDay(changesFrom, todays.data?.people),
@@ -263,7 +269,9 @@ export function PeoplePage({
   };
   const personTimeline = usePersonTimeline({
     people: query.data?.people,
-    shown: shownRecord,
+    shown:
+      shownRecord ??
+      (day === undefined ? undefined : namedBy(todays.data?.people, open)),
     shownOn: day,
     opened: timeline?.opened === true,
     onShow: (opened) => {
