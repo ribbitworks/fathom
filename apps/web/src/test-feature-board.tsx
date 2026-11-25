@@ -100,6 +100,8 @@ export const plan = (features: Feature[]): ProjectPlan => ({
   proposals: [],
   features,
   featureColumns: noFeatureColumns,
+  activities: [],
+  activityColumns: noFeatureColumns,
   canEdit: false,
   canEditFeatures: true,
 });

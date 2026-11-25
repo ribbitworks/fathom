@@ -6,6 +6,7 @@
 
 import { type Database, featureTeams, people } from "@fathom/db";
 import {
+  type Activity,
   type Customer,
   type Feature,
   type FeatureColumns,
@@ -290,8 +291,22 @@ function featureOut(
   };
 }
 
-// The plan's records a reader may see: features and their columns with features, and the rest with
-// the plan. Every read and every change's answer goes through it.
+function activityOut(
+  state: RecordsState,
+  makers: Makers,
+  staffed: ReturnType<typeof staffedFeatures>,
+  id: string,
+): Activity {
+  const activity = shownVersion(state, "activity", id) as Recorded;
+  return {
+    ...planningOut(state, makers, staffed, "activity", id),
+    releaseId: text(activity.releaseId),
+    projectId: text(activity.projectId),
+  };
+}
+
+// The plan's records a reader may see: features, activities and their columns with features, and
+// the rest with the plan. Every read and every change's answer goes through it.
 export function seenRecords(reader: Actor, records: PlanRecords): PlanRecords {
   const seesPlan = reader.permissions.includes("plan:view");
   const seesFeatures = reader.permissions.includes("features:view");
@@ -302,6 +317,10 @@ export function seenRecords(reader: Actor, records: PlanRecords): PlanRecords {
     features: seesFeatures ? records.features : [],
     featureColumns: seesFeatures
       ? records.featureColumns
+      : { fields: [], order: [], lists: [] },
+    activities: seesFeatures ? records.activities : [],
+    activityColumns: seesFeatures
+      ? records.activityColumns
       : { fields: [], order: [], lists: [] },
   };
 }
@@ -387,6 +406,14 @@ export async function planOut(
     proposals: proposals.map((proposal) => ownerShown(proposal, hidden)),
     features: inOrder(state, "feature").map((id) =>
       featureOut(state, makers, staffed, id),
+    ),
+    activities: inOrder(state, "activity").map((id) =>
+      activityOut(state, makers, staffed, id),
+    ),
+    activityColumns: await planningColumnsOut(
+      transaction,
+      viewer,
+      "activities",
     ),
     featureColumns: await planningColumnsOut(transaction, viewer, "features"),
   });

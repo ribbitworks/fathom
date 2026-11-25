@@ -114,6 +114,8 @@ describe("the Drafts page", () => {
           canEdit: false,
           canEditFeatures: false,
           featureColumns: noFeatureColumns,
+          activities: [],
+          activityColumns: noFeatureColumns,
         }),
     });
     renderApp("/drafts");
@@ -177,6 +179,8 @@ describe("the Drafts page", () => {
             order: ["name", "f1"],
             lists: [],
           },
+          activities: [],
+          activityColumns: noFeatureColumns,
           canEdit: false,
           canEditFeatures: false,
         }),
@@ -239,6 +243,8 @@ describe("the Drafts page", () => {
           canEdit: false,
           canEditFeatures: false,
           featureColumns: noFeatureColumns,
+          activities: [],
+          activityColumns: noFeatureColumns,
         }),
     });
     // Approving the plan doesn't approve features, so the draft is under All drafts.

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The routes for activities, of releases and projects alike. The data access layer checks the
-// actor's permissions.
+// The routes drafting activities, of releases and projects alike, which are read with the plan. The
+// data access layer checks the actor's permissions.
 
 import {
-  activityPlanSchema,
   activityRequestSchema,
   changeSetIdSchema,
+  projectPlanSchema,
   savedSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
@@ -16,7 +16,7 @@ import type { ActivityAccess } from "../data/plan-access.ts";
 const created = 201;
 const idParams = z.object({ id: z.uuid() });
 const planResponse = z.object({
-  activities: activityPlanSchema,
+  plan: projectPlanSchema,
   changeSetId: changeSetIdSchema,
 });
 
@@ -24,11 +24,6 @@ export function activityRoutes(
   activities: ActivityAccess,
 ): FastifyPluginCallbackZod {
   return (app, _options, done) => {
-    app.get(
-      "/api/activities",
-      { schema: { response: { 200: activityPlanSchema } } },
-      async (request) => activities.read(request.actor),
-    );
     app.post(
       "/api/activities",
       {
@@ -42,7 +37,7 @@ export function activityRoutes(
           request.actor,
           request.body,
         );
-        return reply.status(created).send({ activities: result, changeSetId });
+        return reply.status(created).send({ plan: result, changeSetId });
       },
     );
     app.put(
@@ -60,7 +55,7 @@ export function activityRoutes(
           request.params.id,
           request.body,
         );
-        return { activities: result, changeSetId };
+        return { plan: result, changeSetId };
       },
     );
     app.delete(

@@ -5,7 +5,6 @@
 
 import type { Database } from "@fathom/db";
 import type {
-  ActivityPlan,
   ActivityRequest,
   CycleLengthRequest,
   CyclePatternRequest,
@@ -37,12 +36,7 @@ import { readScopeHistory } from "./scope-history.ts";
 import type { PlanKind, PlanRecordRequest } from "./projects.ts";
 import * as releases from "./releases.ts";
 import type { Saved, ChangeSetId } from "./changes.ts";
-import {
-  planOrFeatures,
-  seenActivities,
-  seenPlan,
-  seenStreams,
-} from "./page-reads.ts";
+import { planOrFeatures, seenPlan, seenStreams } from "./page-reads.ts";
 
 // Every change to release streams, patterns, and releases is a draft. Streams and their patterns
 // are planning configuration, edited by those who edit it; releases are part of the plan.
@@ -359,37 +353,22 @@ export function createProjectAccess(database: Database): ProjectAccess {
   };
 }
 
-// Activities are drafted and read with Features' permissions, whichever release or project each
-// belongs to.
+// Activities are drafted with Features' permissions, whichever release or project each belongs to,
+// and read with the plan; each change answers with the plan as the editor now sees it.
 export interface ActivityAccess {
-  read(actor: Actor): Promise<ActivityPlan>;
-  add(actor: Actor, request: ActivityRequest): Promise<Saved<ActivityPlan>>;
+  add(actor: Actor, request: ActivityRequest): Promise<Saved<ProjectPlan>>;
   change(
     actor: Actor,
     id: string,
     request: ActivityRequest,
-  ): Promise<Saved<ActivityPlan>>;
+  ): Promise<Saved<ProjectPlan>>;
   remove(actor: Actor, id: string): Promise<ChangeSetId>;
 }
 
 export function createActivityAccess(database: Database): ActivityAccess {
-  const withAbilities = async (
-    actor: Actor,
-    saved: Promise<Saved<activityData.ActivityRecords>>,
-  ): Promise<Saved<ActivityPlan>> => {
-    const { result, changeSetId } = await saved;
-    return {
-      result: { ...result, canEdit: editsKind(actor, "activity") },
-      changeSetId,
-    };
-  };
   return {
-    read: async (actor) => ({
-      ...(await seenActivities(database, actor)),
-      canEdit: editsKind(actor, "activity"),
-    }),
     add: async (actor, request) =>
-      withAbilities(
+      edited(
         actor,
         activityData.addActivity(
           database,
@@ -398,7 +377,7 @@ export function createActivityAccess(database: Database): ActivityAccess {
         ),
       ),
     change: async (actor, id, request) =>
-      withAbilities(
+      edited(
         actor,
         activityData.changeActivity(
           database,

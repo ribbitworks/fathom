@@ -14,12 +14,7 @@ import {
   unpublishedDrafts,
 } from "@fathom/db";
 import { eq } from "drizzle-orm";
-import type {
-  Activity,
-  ActivityPlan,
-  Field,
-  ProjectPlan,
-} from "@fathom/shared";
+import type { Activity, Field, ProjectPlan } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -44,7 +39,7 @@ afterAll(async () => {
   await test.close();
 });
 
-type Saved = { activities: ActivityPlan; changeSetId: string | null };
+type Saved = { plan: ProjectPlan; changeSetId: string | null };
 
 const send = (
   method: "POST" | "PUT" | "DELETE",
@@ -53,10 +48,10 @@ const send = (
   cookie = planner.cookie,
 ) => test.request(cookie, method, url, body);
 
-async function readActivities(cookie = planner.cookie): Promise<ActivityPlan> {
-  const response = await test.request(cookie, "GET", "/api/activities");
+async function readPlan(cookie = planner.cookie): Promise<ProjectPlan> {
+  const response = await test.request(cookie, "GET", "/api/projects");
   expect(response.statusCode, response.body).toBe(200);
-  return response.json<ActivityPlan>();
+  return response.json<ProjectPlan>();
 }
 
 const approve = async (records: { type: string; id: string }[]) => {
@@ -107,7 +102,7 @@ async function liveRelease(): Promise<string> {
 }
 
 const added = (saved: Saved, name: string) =>
-  saved.activities.activities.find((one) => one.name === name) as Activity;
+  saved.plan.activities.find((one) => one.name === name) as Activity;
 
 async function addActivity(
   owner: { projectId?: string; releaseId?: string },
@@ -228,9 +223,12 @@ describe("changing an activity", () => {
       address: "https://example.com/runbook",
       text: "",
     });
-    const read = await readActivities();
-    expect(read.columns.fields.map(({ id }) => id)).toContain(field.id);
-    expect(read.columns.order.slice(0, 2)).toEqual(["name", "statusId"]);
+    const read = await readPlan();
+    expect(read.activityColumns.fields.map(({ id }) => id)).toContain(field.id);
+    expect(read.activityColumns.order.slice(0, 2)).toEqual([
+      "name",
+      "statusId",
+    ]);
   });
 });
 
@@ -240,7 +238,7 @@ describe("removing an activity", () => {
     await approve([{ type: "activity", id: activity.id }]);
     const response = await send("DELETE", `/api/activities/${activity.id}`);
     expect(response.statusCode, response.body).toBe(200);
-    const read = await readActivities();
+    const read = await readPlan();
     expect(
       read.activities.find(({ id }) => id === activity.id)?.draft?.action,
     ).toBe("deleted");
@@ -369,9 +367,11 @@ describe("a link to an activity", () => {
 });
 
 describe("reading activities", () => {
-  it("answers whether the role may change them", async () => {
+  it("sends them with the plan to roles that see features, and whether they may change them", async () => {
+    const activity = await addActivity({ projectId: await liveProject() });
     const member = await test.signedIn("team-member");
-    expect((await readActivities(member.cookie)).canEdit).toBe(false);
-    expect((await readActivities()).canEdit).toBe(true);
+    const read = await readPlan(member.cookie);
+    expect(read.activities.map(({ id }) => id)).toContain(activity.id);
+    expect(read.canEditFeatures).toBe(false);
   });
 });

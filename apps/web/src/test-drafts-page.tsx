@@ -122,6 +122,8 @@ export const noPlan = () =>
     canEdit: false,
     canEditFeatures: false,
     featureColumns: noFeatureColumns,
+    activities: [],
+    activityColumns: noFeatureColumns,
   });
 export const noPlanChoices = () =>
   Response.json({
