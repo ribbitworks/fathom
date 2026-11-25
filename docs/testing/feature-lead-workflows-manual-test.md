@@ -382,7 +382,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `71F1` Open the Views menu, and select **Save view…**.
   - **Expected:**
     - A dialog titled "Save view" shows **Name**.
-    - Under **Includes**, **Board** reads "Card Key, Status, Priority, Size, Needed by, Staffed months".
+    - Under **Includes**, **Card** reads "Key, Status, Priority, Size, Needed by, Staffed months".
   - **Notes:**
 
 - [ ] `00CA` Type `Fictional board` in **Name**.

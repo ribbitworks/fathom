@@ -40,7 +40,7 @@ test("shows one schedule's features by months, and a saved view keeps the choice
   await page.getByRole("button", { name: /^Views/ }).click();
   await page.getByRole("menuitem", { name: "Save view…" }).click();
   const dialog = page.getByRole("dialog", { name: "Save view" });
-  await expect(dialog.getByText("Columns Months, Field Apps")).toBeVisible();
+  await expect(dialog.getByText("Months, Field Apps")).toBeVisible();
   // Saved views outlast the seed data, so each run names its own.
   const named = `Fictional Field Apps ${Date.now().toString(36)}`;
   await dialog.getByRole("textbox", { name: "Name" }).fill(named);
