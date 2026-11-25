@@ -40,6 +40,7 @@ import {
   headerState,
 } from "./table-controls.tsx";
 import { type View, orderAfterMove, withHidden } from "./table-view.ts";
+import { draftOffer, offersDraft } from "./menu-offer.ts";
 
 const headerId = (column: { key: string }) => `${column.key}-heading`;
 
@@ -199,6 +200,15 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
       ...noDrafts(),
       columns: ownWaiting ? [field.id] : [],
     };
+    // A rejected draft is back with its makers until they send it again, so it isn't decided.
+    const columnOffer = draftOffer({
+      hasDraft: field?.draft !== undefined,
+      rejected: field?.draft?.state === "rejected",
+      unpublished: field?.draft?.unpublished === true,
+      editsDraft: changesColumn,
+      decides: ownWaiting && mayDecide(approves, deciding),
+      publishes: false,
+    });
     const dragProps = {
       draggable: true,
       // A press on the column's edge resizes it, which the browser would otherwise take as
@@ -307,13 +317,9 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
                 <MenuDraftLines
                   draft={field.draft}
                   lines={fieldDraftLines(field, lists)}
-                  divider={
-                    (ownWaiting && mayDecide(approves, deciding)) ||
-                    changesColumn
-                  }
+                  divider={offersDraft(columnOffer)}
                 />
-                {/* A rejected draft is back with its makers until they send it again. */}
-                {ownWaiting && mayDecide(approves, deciding) && (
+                {columnOffer.decide && (
                   <>
                     <Menu.Item
                       disabled={field.draft.needsOtherApprover === true}
@@ -335,7 +341,7 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
                     </Menu.Item>
                   </>
                 )}
-                {changesColumn && field.draft.state === "rejected" && (
+                {columnOffer.resubmit && (
                   <Menu.Item
                     onClick={() => {
                       actions.resubmitColumn(field.id);
@@ -344,7 +350,7 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
                     Resubmit
                   </Menu.Item>
                 )}
-                {changesColumn && (
+                {columnOffer.discard && (
                   <Menu.Item
                     onClick={() => {
                       actions.discardColumn(field.id, field.name);
