@@ -9,6 +9,7 @@ import {
   addMonths,
   monthOf,
   type ReleaseStream,
+  parseDay,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import {
@@ -224,15 +225,14 @@ const weekdayName = new Intl.DateTimeFormat("en", {
   timeZone: "UTC",
 });
 
-const dateOf = (day: string) => new Date(`${day}T00:00:00Z`);
-const monthWords = (day: string) => monthName.format(dateOf(day));
+const monthWords = (day: string) => monthName.format(parseDay(day));
 const dayNumber = (day: string) => String(Number(day.slice(8)));
 const monthNumber = (day: string) => Number(day.slice(5, 7));
 
 const nextDay = (day: string) => addDays(day, 1);
 
 const nextMonday = (day: string) =>
-  addDays(day, (8 - dateOf(day).getUTCDay()) % 7 || 7);
+  addDays(day, (8 - parseDay(day).getUTCDay()) % 7 || 7);
 
 // The first month of the period of some months, counted from January, that a day falls in.
 const periodStart = (months: number, day: string) =>
@@ -338,7 +338,7 @@ export function timelineAxis(
     return {
       above: months(true),
       ticks: cut(nextMonday, (day) =>
-        dateOf(day).getUTCDay() === 1
+        parseDay(day).getUTCDay() === 1
           ? `${monthWords(day)} ${dayNumber(day)}`
           : "",
       ).map((tick) => ({ ...tick, short: dayNumber(tick.day) })),
@@ -348,7 +348,7 @@ export function timelineAxis(
     above: months(true),
     ticks: cut(
       nextDay,
-      (day) => `${weekdayName.format(dateOf(day))} ${dayNumber(day)}`,
+      (day) => `${weekdayName.format(parseDay(day))} ${dayNumber(day)}`,
     ),
   };
 }

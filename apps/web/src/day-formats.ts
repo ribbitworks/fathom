@@ -2,6 +2,8 @@
 
 // Days, moments and months as people read them, in their own language, each with its year.
 
+import { parseDay } from "@fathom/shared";
+
 const day = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
   month: "short",
@@ -11,7 +13,7 @@ const day = new Intl.DateTimeFormat(undefined, {
 
 // A date as people read it, with its year.
 export function formatDay(value: string): string {
-  return day.format(new Date(`${value}T00:00:00Z`));
+  return day.format(parseDay(value));
 }
 
 const dayInYear = new Intl.DateTimeFormat(undefined, {
@@ -26,7 +28,7 @@ export function formatDayRange(first: string, last: string): string {
   if (first.slice(0, 4) !== last.slice(0, 4)) {
     return `${formatDay(first)} to ${formatDay(last)}`;
   }
-  return `${dayInYear.format(new Date(`${first}T00:00:00Z`))} to ${formatDay(last)}`;
+  return `${dayInYear.format(parseDay(first))} to ${formatDay(last)}`;
 }
 
 const momentDay = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
@@ -45,7 +47,7 @@ const month = new Intl.DateTimeFormat(undefined, {
 
 // A month, such as 2027-03, as people read it, such as Mar 2027.
 export function formatMonth(value: string): string {
-  return month.format(new Date(`${value}-01T00:00:00Z`));
+  return month.format(parseDay(`${value}-01`));
 }
 
 // What marks a planned hire: the month it is expected, or no date when that month comes from none,

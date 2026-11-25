@@ -34,9 +34,7 @@ export function useFeatureTeamActions(
       next: (data) => data,
       save,
       failure,
-      onSaved: (changeSetId, before) => {
-        undoable(changeSetId, before);
-      },
+      onSaved: undoable,
     });
   };
   return {

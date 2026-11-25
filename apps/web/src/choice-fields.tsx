@@ -9,7 +9,7 @@ import {
   meaningSchema,
 } from "@fathom/shared";
 import type { ClipboardEvent, KeyboardEvent } from "react";
-import { Count } from "./list-dialog.tsx";
+import { Count } from "./counted-input.tsx";
 import classes from "./pages.module.css";
 
 export interface Draft {

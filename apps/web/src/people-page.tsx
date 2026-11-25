@@ -404,9 +404,7 @@ export function PeoplePage({
         },
         failure: `Fathom could not add ${addedNames(added.map(({ request }) => request))}. Try again in a moment.`,
         onFailed,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
+        onSaved: undoable,
       });
     },
     update: (person, given) => {
@@ -416,9 +414,7 @@ export function PeoplePage({
         from === undefined ? given : changedFrom(given, person.id, from);
       save({
         ...personUpdate(person, change, nameOf(person)),
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
+        onSaved: undoable,
       });
     },
     // Removing someone live is a draft, shown in place; removing someone only drafted to be added
@@ -434,9 +430,7 @@ export function PeoplePage({
         save: () =>
           isHire(person) ? deleteHire(person.id) : deletePerson(person.id),
         failure: `Fathom could not remove ${nameOf(person)}.`,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
+        onSaved: undoable,
       });
     },
     resubmit: (person) => {
@@ -452,9 +446,7 @@ export function PeoplePage({
             ? resubmitHireDraft(person.id)
             : resubmitDraft(person.id),
         failure: `Fathom could not send the draft of ${nameOf(person)} for approval again.`,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
+        onSaved: undoable,
       });
     },
     discard: (person, draft) => {

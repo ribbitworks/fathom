@@ -14,38 +14,27 @@ import {
   type Tier,
   sameName,
 } from "@fathom/shared";
-import { Button, Group, Stack, Text, Textarea, TextInput } from "@mantine/core";
+import { Button, Group, Stack, Text, Textarea } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { ApiError, describeProblem } from "./api.ts";
+import { describeProblem, isConflict } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
 import { createList, nameProblem, updateList } from "./lists.ts";
+import { CountedInput } from "./counted-input.tsx";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import classes from "./pages.module.css";
-
-const conflict = 409;
-// How close to a field's limit its count of characters appears.
-const nearLimit = 5;
-
-// The count of characters, shown only near the limit, and in red over it.
-export function Count({
-  length,
-  maximum,
-}: {
-  length: number;
-  maximum: number;
-}) {
-  if (length < maximum - nearLimit) return null;
-  return (
-    <span className={length > maximum ? classes.countOver : classes.count}>
-      {length}/{maximum}
-    </span>
-  );
-}
 
 // What a name says when another of its kind, such as a view, already has it.
 export const nameTaken = (kind: string) =>
   `Another ${kind} already has that name`;
+
+// A name's problem, if any, saying so when another of its kind already has it.
+export const takenNameProblem = (
+  kind: string,
+  name: string,
+  maximum: number,
+  taken: boolean,
+) => nameProblem(name, maximum, taken, nameTaken(kind));
 
 export function ListDialog({
   list,
@@ -97,15 +86,12 @@ export function ListDialog({
   const taken = lists.some(
     (other) => other.id !== list?.id && sameName(other.name, name),
   );
-  const refusedAsTaken =
-    saving.error instanceof ApiError &&
-    saving.error.status === conflict &&
-    sameName(sentName, name);
-  const problem = nameProblem(
+  const refusedAsTaken = isConflict(saving.error) && sameName(sentName, name);
+  const problem = takenNameProblem(
+    "list",
     name,
     listLengths.name,
     taken || refusedAsTaken,
-    nameTaken("list"),
   );
   const shownProblem = tried || name !== "" ? problem : undefined;
   const descriptionTooLong =
@@ -138,15 +124,12 @@ export function ListDialog({
       }}
     >
       <Stack gap="md">
-        <TextInput
+        <CountedInput
           label="Name"
           data-autofocus
           value={name}
+          maximum={listLengths.name}
           error={shownProblem}
-          rightSection={
-            <Count length={name.trim().length} maximum={listLengths.name} />
-          }
-          rightSectionWidth={56}
           onChange={(event) => {
             setName(event.currentTarget.value);
           }}

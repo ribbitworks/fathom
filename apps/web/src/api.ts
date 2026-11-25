@@ -8,6 +8,7 @@ import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 
 const unauthorized = 401;
+const conflictStatus = 409;
 const firstServerError = 500;
 const maximumRetries = 2;
 
@@ -26,6 +27,10 @@ export class ApiError extends Error {
     this.serverMessage = message;
   }
 }
+
+// Whether the server refused a request as conflicting with a record it has, such as a name taken.
+export const isConflict = (error: unknown): boolean =>
+  error instanceof ApiError && error.status === conflictStatus;
 
 const failureSchema = z.object({
   error: z.string().optional(),

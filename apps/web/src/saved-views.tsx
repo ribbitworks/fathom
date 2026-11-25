@@ -163,9 +163,7 @@ export function useSavedViews({
         save: async () =>
           (await updateView(table, view.id, { definition })).changeSetId,
         failure: `Fathom could not update ${view.name}.`,
-        onSaved: (changeSetId, before) => {
-          changes.undoable(changeSetId, before);
-        },
+        onSaved: changes.undoable,
       });
     },
     onDelete: (view) => {

@@ -130,6 +130,30 @@ function RoleBox({
   );
 }
 
+// An account's name and email address, with the reason under each the form refuses.
+function NameAndEmail({
+  form,
+}: {
+  form: ReturnType<typeof useForm<AccountForm>>;
+}) {
+  const { errors } = form.formState;
+  return (
+    <>
+      <TextInput
+        label="Name"
+        error={nameProblem(errors.name, "Name needed")}
+        {...form.register("name")}
+      />
+      <TextInput
+        label="Email address"
+        type="email"
+        error={errors.email && "Enter a valid email address."}
+        {...form.register("email")}
+      />
+    </>
+  );
+}
+
 // The account's roles, from every role, each with what it is for, and, with several picked, which
 // of them is the default.
 function RolesChoice({
@@ -253,7 +277,6 @@ function CreateAccount({
       roleIds: teamMember === undefined ? [] : [teamMember],
     },
   });
-  const { errors } = form.formState;
   const creating = useAccountChange(createAccount, onBusy);
   return (
     <form
@@ -274,17 +297,7 @@ function CreateAccount({
       }
     >
       <Stack>
-        <TextInput
-          label="Name"
-          error={nameProblem(errors.name, "Name needed")}
-          {...form.register("name")}
-        />
-        <TextInput
-          label="Email address"
-          type="email"
-          error={errors.email && "Enter a valid email address."}
-          {...form.register("email")}
-        />
+        <NameAndEmail form={form} />
         <RolesChoice form={form} roles={roles} />
         <DialogActions
           error={creating.error}
@@ -337,7 +350,6 @@ function EditAccount({
       roleIds: account.roles.map(({ id }) => id),
     },
   });
-  const { errors } = form.formState;
   const picked = useWatch({ control: form.control, name: "roleIds" });
   const refused = refusedChanges(account, picked, accounts, roles);
   const refreshOwn = useOwnAccountRefresh();
@@ -360,17 +372,7 @@ function EditAccount({
       }
     >
       <Stack>
-        <TextInput
-          label="Name"
-          error={nameProblem(errors.name, "Name needed")}
-          {...form.register("name")}
-        />
-        <TextInput
-          label="Email address"
-          type="email"
-          error={errors.email && "Enter a valid email address."}
-          {...form.register("email")}
-        />
+        <NameAndEmail form={form} />
         <RolesChoice form={form} roles={roles} refused={refused.roleIds} />
         <DialogActions
           error={saving.error}
