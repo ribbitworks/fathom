@@ -25,6 +25,7 @@ import type { ListDraftActions } from "./list-drafts.tsx";
 import { withRetiring } from "./lists.ts";
 import { shortcutsFor } from "./menu-shortcuts.ts";
 import { actionsFor, MoreButton } from "./row-controls.tsx";
+import { draftOffer, offersDraft } from "./menu-offer.ts";
 
 const shortcuts = shortcutsFor(navigator.userAgent);
 
@@ -101,6 +102,14 @@ export function ChoiceMenu({
   const editable =
     canEdit && !removedChoice(choice) && choice.heldBy === undefined;
   const keptFor = lastKept(list, choice);
+  const choiceOffer = draftOffer({
+    hasDraft: choiceDraft !== undefined,
+    rejected: choiceDraft?.state === "rejected",
+    unpublished: choiceDraft?.unpublished === true,
+    editsDraft: mayEdit && choice.heldBy === undefined,
+    decides: canApprove && decidable(choice),
+    publishes: false,
+  });
   // Each item closes the menu and moves focus itself, so focus never stays on the menu's button.
   const act = (run: () => void) => () => {
     setOpened(false);
@@ -144,10 +153,7 @@ export function ChoiceMenu({
               configDraftFields(choiceDraft, choice),
             )}
             // Set apart from the items after it, when any are offered.
-            divider={
-              (mayEdit && choice.heldBy === undefined) ||
-              (canApprove && decidable(choice))
-            }
+            divider={offersDraft(choiceOffer)}
           />
         )}
         {editable && (
@@ -217,7 +223,7 @@ export function ChoiceMenu({
         {choiceDraft && (
           <>
             {editable && <Menu.Divider />}
-            {editable && choiceDraft.state === "rejected" && (
+            {choiceOffer.resubmit && (
               <Menu.Item
                 onClick={act(() => {
                   draftActions.resubmit(on);
@@ -226,7 +232,7 @@ export function ChoiceMenu({
                 Resubmit
               </Menu.Item>
             )}
-            {mayEdit && choice.heldBy === undefined && (
+            {choiceOffer.discard && (
               <Menu.Item
                 onClick={act(() => {
                   draftActions.discard(on);
@@ -235,7 +241,7 @@ export function ChoiceMenu({
                 Discard draft
               </Menu.Item>
             )}
-            {canApprove && decidable(choice) && (
+            {choiceOffer.decide && (
               <>
                 <Menu.Item
                   disabled={

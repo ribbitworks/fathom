@@ -152,6 +152,46 @@ describe("drafts on the Lists page", () => {
     });
   });
 
+  it("offers resubmitting a choice's rejected removal, as it offers discarding it, and resubmits it", async () => {
+    // Given a choice whose removal was rejected
+    const rejectedRemoval = {
+      ...locations,
+      choices: [
+        {
+          ...locations.choices[0],
+          draft: { ...removal, state: "rejected", reason: "Keep it" },
+        },
+        ...locations.choices.slice(1),
+      ],
+    };
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () =>
+        Response.json({ lists: [rejectedRemoval, skills, empty, regions] }),
+      "DELETE /api/lists/l1/choices/c1/draft/rejection": savedAs(),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+
+    // When its menu is opened and Resubmit chosen
+    focusRow("c1");
+    await userEvent.keyboard("{ContextMenu}");
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu).getByRole("menuitem", { name: "Discard draft" }),
+    ).toBeDefined();
+    await userEvent.click(
+      within(menu).getByRole("menuitem", { name: "Resubmit" }),
+    );
+
+    // Then the removal is sent for approval again
+    await waitFor(() => {
+      expect(
+        sent(fetch, "DELETE", "/api/lists/l1/choices/c1/draft/rejection"),
+      ).toBe(true);
+    });
+  });
+
   // Opens the menu of a list's drafts, beside its name in the panel, once no other menu is open.
 
   it("discards a draft of the order from the list's menu", async () => {
