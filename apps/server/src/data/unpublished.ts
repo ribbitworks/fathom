@@ -283,12 +283,7 @@ function subjectOf(versions: Versions, row: Row, actor: Actor): string {
     (versionOf(versions, "list", listId)?.name as string | undefined) ??
     "a removed list";
   if (isRecordType(row.recordType)) {
-    return recordSubject(
-      versions.records,
-      row.recordType,
-      id,
-      actor.permissions,
-    );
+    return recordSubject(versions.records, row.recordType, id, actor);
   }
   const other = otherKindOf.get(row.recordType) ?? unknownKind;
   if (!other.reads(actor)) return other.unseen;

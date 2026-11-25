@@ -8,6 +8,7 @@ import {
   endsBeforeFirstCycle,
   type Permission,
   type RecordType,
+  defaultClasses,
 } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import type { Recorded } from "./draft-records.ts";
@@ -100,7 +101,10 @@ function problemOf(
   permissions: readonly Permission[] = seesWork,
 ): string | undefined {
   const { after, touched } = changed(state, changes);
-  return releaseProblem(after, touched, permissions);
+  return releaseProblem(after, touched, {
+    permissions,
+    dataClasses: defaultClasses,
+  });
 }
 
 const endingOn = (endsOn: string): Change => [

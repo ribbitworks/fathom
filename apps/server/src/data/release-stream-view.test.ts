@@ -4,7 +4,11 @@
 // make them, how far its cycles are laid out from today, the order of streams, and what a reader
 // who may not read releases receives.
 
-import type { Permission, ReleaseStream } from "@fathom/shared";
+import {
+  defaultClasses,
+  type Permission,
+  type ReleaseStream,
+} from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import type { Draft, Recorded } from "./draft-records.ts";
 import type { RecordsState } from "./record-state.ts";
@@ -303,11 +307,18 @@ describe("a stream as a reader sees it", () => {
   ])(
     "has no releases for a reader of %s alone, and is otherwise the same",
     (_, permissions) => {
-      expect(streamAsSeen(permissions)(out)).toEqual({ ...out, releases: [] });
+      expect(
+        streamAsSeen({ permissions, dataClasses: defaultClasses })(out),
+      ).toEqual({ ...out, releases: [] });
     },
   );
 
   it("has its releases for a reader who reads features", () => {
-    expect(streamAsSeen(["features:view"])(out).releases).toEqual(out.releases);
+    expect(
+      streamAsSeen({
+        permissions: ["features:view"],
+        dataClasses: defaultClasses,
+      })(out).releases,
+    ).toEqual(out.releases);
   });
 });

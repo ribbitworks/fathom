@@ -4,8 +4,14 @@
 // showing each draft. Part of the data access layer.
 
 import { fields, type Reader } from "@fathom/db";
-import type { Permission, RecordDraft, RecordType } from "@fathom/shared";
-import { draftKeyKinds, noteProblem, recordTypeSchema } from "@fathom/shared";
+import {
+  type ClassAccess,
+  draftKeyKinds,
+  noteProblem,
+  type RecordDraft,
+  type RecordType,
+  recordTypeSchema,
+} from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { Actor } from "../access.ts";
@@ -53,7 +59,7 @@ export const recordKinds: readonly RecordKind[] = [
 function linkedProblem(
   state: RecordsState,
   touched: readonly Touched[],
-  permissions: readonly Permission[],
+  access: ClassAccess,
 ): string | undefined {
   for (const removed of touched) {
     if (versionOf(state, removed.type, removed.id) !== undefined) continue;
@@ -68,7 +74,7 @@ function linkedProblem(
         ),
       );
       if (user !== undefined) {
-        return `This is used by ${subjectFor(kind, state, user, permissions)}; change that first`;
+        return `This is used by ${subjectFor(kind, state, user, access)}; change that first`;
       }
     }
   }
@@ -81,7 +87,7 @@ function linkedProblem(
 const recordRules: readonly ((
   state: RecordsState,
   touched: readonly Touched[],
-  permissions: readonly Permission[],
+  access: ClassAccess,
 ) => string | undefined)[] = [
   allocationProblem,
   linkedProblem,
@@ -92,10 +98,10 @@ const recordRules: readonly ((
 export const ruleProblem = (
   state: RecordsState,
   touched: readonly Touched[],
-  permissions: readonly Permission[],
+  access: ClassAccess,
 ) =>
   recordRules
-    .map((rule) => rule(state, touched, permissions))
+    .map((rule) => rule(state, touched, access))
     .find((found) => found !== undefined);
 
 export const kindOf = (type: RecordType): RecordKind =>
@@ -172,7 +178,7 @@ export async function refuseRemovingNamed(
     throw new ConflictError(
       // The kind of record removed is one of the two named above.
       // eslint-disable-next-line security/detect-object-injection
-      `${removedWords[named]} is named by ${subjectFor(kind, state, id, actor.permissions)}; change that first`,
+      `${removedWords[named]} is named by ${subjectFor(kind, state, id, actor)}; change that first`,
     );
   }
 }
@@ -383,13 +389,13 @@ export function recordSubject(
   { mine, theirs }: RecordVersions,
   type: RecordType,
   id: string,
-  permissions: readonly Permission[],
+  access: ClassAccess,
 ): string {
   const seen = versionOf(mine, type, id) ?? stateOf(mine, type).live.get(id);
   return subjectFor(
     kindOf(type),
     seen === undefined ? theirs : mine,
     id,
-    permissions,
+    access,
   );
 }

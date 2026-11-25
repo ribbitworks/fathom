@@ -4,7 +4,7 @@
 // follows each project's approval and stays off every roadmap.
 
 import { features, listItems, lists } from "@fathom/db";
-import type { ProjectPlan } from "@fathom/shared";
+import { defaultClasses, type ProjectPlan } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readRecordsState } from "./data/records.ts";
@@ -123,13 +123,16 @@ describe("a general feature", () => {
     const [general] = await generalFeatures(project.id);
     const state = await readRecordsState(test.connection);
     expect(
-      featureKind.subject(state, String(general?.id), [
-        "features:view",
-        "plan:view",
-      ]),
+      featureKind.subject(state, String(general?.id), {
+        permissions: ["features:view", "plan:view"],
+        dataClasses: defaultClasses,
+      }),
     ).toBe(`the project ${project.name}`);
     expect(
-      featureKind.subject(state, String(general?.id), ["features:view"]),
+      featureKind.subject(state, String(general?.id), {
+        permissions: ["features:view"],
+        dataClasses: defaultClasses,
+      }),
     ).toBe("a project");
   });
 

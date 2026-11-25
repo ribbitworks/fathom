@@ -15,7 +15,6 @@ import {
 import {
   recordTypeSchema,
   seesClass,
-  seesView,
   type Tier,
   tierSchema,
 } from "@fathom/shared";
@@ -67,13 +66,7 @@ const planKinds: readonly RecordType[] = recordTypeSchema.options;
 // kind is read with rather than through the tiers of people's data, and, for a kind that needs one,
 // with every class of data its view needs.
 const seenPlanKinds = (actor: Actor): RecordType[] =>
-  recordKinds
-    .filter(
-      (kind) =>
-        readsKind(kind, actor.permissions) &&
-        (kind.view === undefined || seesView(kind.view, actor)),
-    )
-    .map((kind) => kind.type);
+  recordKinds.filter((kind) => readsKind(kind, actor)).map((kind) => kind.type);
 
 // Each list's visibility now: as it is, or, for a list deleted since, as it was last recorded. A
 // tier the server no longer knows is treated as the most sensitive rather than trusted.

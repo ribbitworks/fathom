@@ -44,7 +44,7 @@ export async function readReleaseStreams(
         state,
         await readRecordMakers(transaction, state, viewer),
         await readToday(transaction),
-      ).map(streamAsSeen(viewer.permissions));
+      ).map(streamAsSeen(viewer));
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
@@ -65,7 +65,7 @@ async function changingStream(
     const changeSetId = await change(transaction, state);
     const now = await readRecordsState(transaction, editor.user.id);
     return {
-      result: streamAsSeen(editor.permissions)(
+      result: streamAsSeen(editor)(
         streamOut(
           now,
           await readRecordMakers(transaction, now, editor),

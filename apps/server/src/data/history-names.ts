@@ -422,7 +422,7 @@ export async function nameByParts(
   // project only to one who reads projects.
   const partNamed = (linkedType: string | undefined, partId: string) => {
     const linked = planKindOf.get(linkedType ?? "");
-    if (linked !== undefined && !readsKind(linked, actor.permissions))
+    if (linked !== undefined && !readsKind(linked, actor))
       return linked.unseenSubject;
     const project = generals.get(partId);
     if (project !== undefined && !readsProjects(actor.permissions))
