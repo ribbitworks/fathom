@@ -7,6 +7,8 @@ export interface RowGroup {
   key: string;
   label: string;
   rank: number;
+  // The colour of what the group is for, such as a team, drawn as its square before the label.
+  colour?: string | null | undefined;
 }
 
 // What a grouping's groups are, which names the two orders they can run in.

@@ -7,6 +7,7 @@ import { daySchema } from "./days.ts";
 import { featureLengths, featureSchema } from "./features.ts";
 import { listSchema, meaningSchema } from "./lists.ts";
 import { addressProblem, linkLengths, webAddress } from "./links.ts";
+import { paletteColourSchema } from "./palette.ts";
 import { fieldSchema } from "./people.ts";
 import {
   optionalText,
@@ -214,7 +215,9 @@ export const planChoicesSchema = z.object({
   // Each size with its weight, how many of the list's S it is.
   sizes: z.array(planChoiceSchema.extend({ weight: z.number().nullable() })),
   risks: z.array(planChoiceSchema),
-  featureTeams: z.array(planChoiceSchema),
+  featureTeams: z.array(
+    planChoiceSchema.extend({ colour: paletteColourSchema.nullable() }),
+  ),
 });
 
 export type PlanChoices = z.infer<typeof planChoicesSchema>;

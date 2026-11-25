@@ -18,7 +18,7 @@ import type {
   Tier,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
-import type { CellSource } from "./cell-kinds.tsx";
+import { type CellSource, chosenColour } from "./cell-kinds.tsx";
 import type { Credited, DraftField } from "./draft-details.tsx";
 import type { DraftSelection } from "./drafts.ts";
 import type { HeldDetail } from "./exports.ts";
@@ -217,6 +217,14 @@ export interface ColumnUnits {
 // What is particular to a kind of record: what its table and rows are called, its columns, how its
 // records are as they are live, what adding one asks for, what is wrong with one taken whole, and
 // which drafts name it.
+// The colour a record's value is drawn in: the column's own for the record, or that of the one
+// choice the value holds.
+export const colourOf = <Rec extends GridRecord, Change>(
+  column: Column<Rec, Change>,
+  record: Rec,
+): string | null =>
+  column.colour?.(record) ?? chosenColour(column, column.value(record));
+
 export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // The table's name, for assistive technology, such as "People".
   label: string;

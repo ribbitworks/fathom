@@ -11,6 +11,7 @@ import {
   type FeatureColumns,
   type FeatureDraft,
   type BuiltInList,
+  knownColour,
   type List,
   meaningSchema,
   type Milestone,
@@ -424,7 +425,11 @@ export async function readPlanChoices(
       retired,
     }));
   const teams = await database
-    .select({ id: featureTeams.id, name: featureTeams.name })
+    .select({
+      id: featureTeams.id,
+      name: featureTeams.name,
+      colour: featureTeams.colour,
+    })
     .from(featureTeams)
     .orderBy(asc(featureTeams.name), asc(featureTeams.id));
   const teamDrafts = await readTeamDrafts(database);
@@ -448,6 +453,7 @@ export async function readPlanChoices(
     risks: await offered("feature-risks"),
     featureTeams: teams.map((team) => ({
       ...team,
+      colour: knownColour(team.colour),
       retired: teamDrafts.get(team.id)?.action === "deleted",
     })),
   };

@@ -45,6 +45,7 @@ import {
   withSchedule,
 } from "./releases.ts";
 import { formatDay } from "./day-formats.ts";
+import { shownColour } from "./releases.ts";
 
 export const projectPlanQuery = queryOptions({
   queryKey: ["projects"],
@@ -608,6 +609,8 @@ export interface TableChoices {
   sizes: Choice[];
   risks: Choice[];
   featureTeams: Choice[];
+  // Each feature team's colour, by the team.
+  featureTeamColours: ReadonlyMap<string, string | null>;
   // Every cycle a feature can target.
   cycles: Choice[];
   // The release each of those cycles is in, by its choice.
@@ -683,6 +686,8 @@ export interface ReleaseGroup {
   label: string;
   rank: number;
   name: string;
+  // The release's colour; none for a stream's cycles in no release.
+  colour: string | null;
 }
 
 export const releaseGroupKey = (streamId: string, releaseId: string | null) =>
@@ -725,6 +730,7 @@ export function releaseOfCycle(
           shipsOn === undefined ? name : `${name}, ships ${formatDay(shipsOn)}`,
         rank,
         name,
+        colour: shownColour(release.colour),
       },
       (startsOn) => includesCycle(release, startsOn),
     );
@@ -738,6 +744,7 @@ export function releaseOfCycle(
         label: name,
         rank: releases.length + order,
         name,
+        colour: null,
       },
       () => true,
     );
@@ -763,6 +770,9 @@ export const tableChoices = (
   sizes: asChoices(picks.sizes),
   risks: asChoices(picks.risks),
   featureTeams: asChoices(picks.featureTeams),
+  featureTeamColours: new Map(
+    picks.featureTeams.map(({ id, colour }) => [id, colour]),
+  ),
   cycles: cycleChoices(streams),
   releaseOfCycle: releaseOfCycle(streams),
   customers: plan.customers,

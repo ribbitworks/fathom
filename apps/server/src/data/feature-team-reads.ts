@@ -18,6 +18,7 @@ import {
   type FeatureTeam,
   type FeatureTeams,
   knownColour,
+  type PersonFeatureTeam,
 } from "@fathom/shared";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { type Actor, requirePermission, requireView } from "../access.ts";
@@ -154,14 +155,14 @@ export async function readLiveTeams(
 export async function readTeamsOfPeople(
   reader: Reader,
   day: string,
-): Promise<Map<string, { id: string; name: string }[]>> {
-  const { teams } = await readLiveTeams(reader, day);
-  const teamsOf = new Map<string, { id: string; name: string }[]>();
+): Promise<Map<string, PersonFeatureTeam[]>> {
+  const { teams, colours } = await readLiveTeams(reader, day);
+  const teamsOf = new Map<string, PersonFeatureTeam[]>();
   for (const [id, team] of teams) {
     for (const personId of membersOf(team)) {
       teamsOf.set(personId, [
         ...(teamsOf.get(personId) ?? []),
-        { id, name: String(team.name) },
+        { id, name: String(team.name), colour: knownColour(colours.get(id)) },
       ]);
     }
   }

@@ -72,6 +72,7 @@ interface GroupRun<Rec> {
   first: string;
   last: string;
   label: string;
+  colour: string | null;
   nested: boolean;
   records: Rec[];
 }
@@ -98,6 +99,7 @@ function runsOf<Rec>(
         first: row.key,
         last: row.key,
         label: group.label,
+        colour: group.colour ?? null,
         nested,
         records: [row.record],
       });

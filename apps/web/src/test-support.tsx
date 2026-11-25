@@ -294,6 +294,7 @@ export const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
     { ...cycleChoice("planned", "Planned"), meaning: "planned" },
   ],
   featureTeams: [],
+  featureTeamColours: new Map(),
   priorities: [],
   sizes: [],
   risks: [],

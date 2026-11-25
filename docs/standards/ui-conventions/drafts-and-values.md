@@ -133,8 +133,8 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 - **A coloured name:** A team or release named with its colour is the draft's dot, if any, then its colour's square, then its name, wherever it is shown: in tables, details panels, the Features Board's headings, the month grids, menus, pills and timeline labels. No name is ever shown in a box tinted with its colour.
   - **What stays:** Colour as drawing stays: a timeline's spans and diamonds, and a card's top edge. A fact's grey and red boxes, such as Not staffed, aren't coloured names, and stay.
   - **Empty values:** An empty value shows no square.
-  - **Drawn by:** `ColouredName` in `apps/web/src/colour-swatch.tsx`; in a table, a column's `colour` in `apps/web/src/record-table.ts`, and in a panel, `Row`'s `colour`, with `liveColour` for its live value, in `apps/web/src/record-details.tsx`.
-  - **Example:** Mobile apps in the Org chart's list of feature teams, or a manager's Team name on People.
+  - **Drawn by:** `ColouredName`, and `ColouredNames` for several in one line, in `apps/web/src/colour-swatch.tsx`. A choice column gives each choice's colour with its `choiceColour`, in `apps/web/src/table-view.ts`, which cells, panels, pickers, group headings, the Board's lanes and the filter's list and pill all draw from; a column whose colour comes from the record, such as a manager's team, gives its `colour`, and `colourOf` in `apps/web/src/record-table.ts` picks between them. A filter's pill is `FilterWords` in `apps/web/src/filter-words.tsx`.
+  - **Example:** Mobile apps in the Org chart's list of feature teams, a manager's Team name on People, or Features grouped by Feature team.
 
 ## Access
 

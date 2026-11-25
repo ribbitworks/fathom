@@ -3,7 +3,13 @@
 // How the shared table's columns are made, and what each kind of cell does with a column's values.
 
 import { type Choice, type RecordKeyOf, shownRecordKey } from "@fathom/shared";
-import { type CellChange, type CellSource, cellKinds } from "./cell-kinds.tsx";
+import {
+  type CellChange,
+  type CellSource,
+  cellKinds,
+  colouredChoices,
+} from "./cell-kinds.tsx";
+import { ColouredNames } from "./colour-swatch.tsx";
 import { choice } from "./lists.ts";
 import { isSaved } from "./record-key.tsx";
 import type {
@@ -295,6 +301,8 @@ export function shown(column: AnyColumn, value: CellValue): string {
 
 // What a cell shows: its value in its kind's own cell, or in words.
 export function cellContent(column: AnyColumn, value: CellValue) {
+  const coloured = colouredChoices(column, value);
+  if (coloured !== undefined) return <ColouredNames names={coloured} />;
   const { Cell } = kindOf(column);
   return Cell === undefined ? shown(column, value) : <Cell value={value} />;
 }
@@ -302,6 +310,8 @@ export function cellContent(column: AnyColumn, value: CellValue) {
 // What a live row's cell shows: in words, so nothing in it can be focused or followed, except a
 // kind edited in one step, such as a checkbox, whose cell is drawn as it is in other rows.
 export function liveContent(column: AnyColumn, value: CellValue) {
+  const coloured = colouredChoices(column, value);
+  if (coloured !== undefined) return <ColouredNames names={coloured} />;
   return kindOf(column).toggled === undefined
     ? shown(column, value)
     : cellContent(column, value);

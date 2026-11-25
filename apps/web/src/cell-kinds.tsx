@@ -56,6 +56,7 @@ type AnyColumn = Pick<
   | "places"
   | "emptyLabel"
   | "choicesInWords"
+  | "choiceColour"
 > & {
   choices: readonly Choice[];
   // Whether a choice may be put in a cell, apart from being offered in its list: any may, unless
@@ -328,6 +329,9 @@ const choicesFor = (column: AnyColumn, value: readonly string[]) =>
       value: option.id,
       label: option.label,
       ...(option.description === "" ? {} : { description: option.description }),
+      ...(column.choiceColour === undefined
+        ? {}
+        : { colour: column.choiceColour(option.id) }),
     }));
 
 const chosen = (value: CellValue) => value as string[];
@@ -338,6 +342,30 @@ export const labels = (column: Choices, value: CellValue): string[] =>
     const label = column.choices.find((option) => option.id === id)?.label;
     return label === undefined ? [] : [label];
   });
+
+// The colour of the one choice a value holds, where the column's choices have colours.
+export const chosenColour = (
+  column: Pick<AnyColumn, "multiple" | "choiceColour">,
+  value: CellValue,
+): string | null => {
+  if (column.choiceColour === undefined || column.multiple) return null;
+  const [id] = chosen(value);
+  return id === undefined ? null : column.choiceColour(id);
+};
+
+// The choices a value of several holds, each with its colour, where the column's choices have
+// colours; otherwise none, and the value is drawn in words.
+export const colouredChoices = (
+  column: Choices & Pick<AnyColumn, "multiple" | "choiceColour">,
+  value: CellValue,
+) => {
+  const { choiceColour } = column;
+  if (choiceColour === undefined || !column.multiple) return undefined;
+  return chosen(value).flatMap((id) => {
+    const name = column.choices.find((option) => option.id === id)?.label;
+    return name === undefined ? [] : [{ id, name, colour: choiceColour(id) }];
+  });
+};
 
 const choice: CellKind = {
   empty: [],

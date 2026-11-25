@@ -25,6 +25,7 @@ import {
   shownParts,
   wholeColumnWidth,
 } from "./feature-board.ts";
+import { ColouredName } from "./colour-swatch.tsx";
 import { cardId, FeatureCard, LiveCard } from "./feature-card.tsx";
 import classes from "./feature-board-view.module.css";
 import pages from "./pages.module.css";
@@ -379,7 +380,7 @@ export function FeatureBoard({
           {rows.map((row, rowIndex) => [
             grouped && (
               <div key={`label-${row.key}`} className={classes.rowLabel}>
-                {row.label}
+                <ColouredName colour={row.colour}>{row.label}</ColouredName>
                 <Text component="span" fz="sm" c="dimmed" ml="xs">
                   {row.records.length}
                 </Text>
@@ -468,22 +469,27 @@ const otherRows = (
     .filter(({ key }) => key !== rowKey)
     .map((group) => ({ group }));
 
+// A row of the board: a group's records under its label, or all of them.
+interface BoardRow {
+  key: string;
+  label: string;
+  colour: string | null;
+  records: Feature[];
+}
+
 // The rows: the groups the records are in, in their order, or one row holding them all.
 function rowsOf(
   records: readonly Feature[],
   groupOf: ((record: Feature) => RowGroups) | undefined,
   groupsReversed: boolean,
-): { key: string; label: string; records: Feature[] }[] {
+): BoardRow[] {
   if (groupOf === undefined) {
-    return [{ key: "all", label: "", records: [...records] }];
+    return [{ key: "all", label: "", colour: null, records: [...records] }];
   }
-  const rows = new Map<
-    string,
-    { key: string; label: string; rank: number; records: Feature[] }
-  >();
+  const rows = new Map<string, BoardRow & { rank: number }>();
   for (const record of records) {
-    for (const { key, label, rank } of groupOf(record)) {
-      const row = rows.get(key) ?? { key, label, rank, records: [] };
+    for (const { key, label, rank, colour = null } of groupOf(record)) {
+      const row = rows.get(key) ?? { key, label, colour, rank, records: [] };
       row.records.push(record);
       rows.set(key, row);
     }
