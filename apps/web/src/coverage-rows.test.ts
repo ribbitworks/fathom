@@ -196,10 +196,10 @@ describe("coverageRows", () => {
       currentMonth: "2027-03",
     });
     expect(
-      rows.map(({ name, allocated, projectId }) => ({
+      rows.map(({ name, allocated, project: of }) => ({
         name,
         allocated,
-        projectId,
+        projectId: of?.id,
       })),
     ).toEqual([
       { name: "P-2001 Depot Operations", allocated: 40, projectId: depot.id },
@@ -221,6 +221,6 @@ describe("coverageRows", () => {
       currentMonth: "2027-03",
     });
     expect(row?.name).toBe("Depot Operations");
-    expect(row?.projectId).toBeUndefined();
+    expect(row?.project).toBeUndefined();
   });
 });

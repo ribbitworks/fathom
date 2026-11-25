@@ -33,7 +33,7 @@ export interface CoverageRow extends CellRecord {
   name: string;
   feature?: Feature;
   // For a project's own work, its project, where the reader sees Projects.
-  projectId?: string;
+  project?: Pick<Project, "id" | "name" | "externalId">;
   // The effort needed, with the buffer; none for work with no estimate.
   effort?: number;
   allocated: number;
@@ -117,7 +117,7 @@ export function coverageRows({
     id: string,
     name: string,
     feature: Feature | undefined,
-    projectId?: string,
+    project?: Project,
   ): CoverageRow => {
     const allocatedByMonth = delivered.get(id) ?? new Map<string, number>();
     const effort = effortNeeded(feature?.estimateHours, settings.bufferPercent);
@@ -128,7 +128,15 @@ export function coverageRows({
       values: {},
       links: {},
       ...(feature === undefined ? {} : { feature }),
-      ...(projectId === undefined ? {} : { projectId }),
+      ...(project === undefined
+        ? {}
+        : {
+            project: {
+              id: project.id,
+              name: project.name,
+              externalId: project.externalId,
+            },
+          }),
       ...(effort === undefined
         ? {}
         : { effort, remaining: effort - allocated }),
@@ -158,7 +166,7 @@ export function coverageRows({
           projectId === undefined ? undefined : projectsById.get(projectId);
         return project === undefined
           ? row(id, name, undefined)
-          : row(id, identifiedLabel(project), undefined, project.id);
+          : row(id, identifiedLabel(project), undefined, project);
       }),
   ];
 }

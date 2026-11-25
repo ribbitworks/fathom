@@ -187,14 +187,18 @@ describe("Capacity's Coverage", () => {
   // A role that sees Projects, so it is sent Depot Operations' project.
   const seesProjects = [...seesCoverage, "plan:view"];
 
-  it("names a project's own work with its Project ID first, and reads None for its effort", async () => {
+  it("names a project's own work with its Project ID first, dimmed, and reads None for its effort", async () => {
     // Given Avery on Depot Operations' own work, which has no effort
     openCoverage(seesProjects);
 
     // When its row shows
-    const row = await rowOf("P-2001 Depot Operations");
+    const row = await rowOf("Depot Operations");
 
-    // Then its Effort and Remaining read None, and it has 64 h allocated
+    // Then its Project ID is dimmed, as links to records dim it
+    expect(row.getByText("P-2001").getAttribute("style") ?? "").toContain(
+      "dimmed",
+    );
+    // And its Effort and Remaining read None, and it has 64 h allocated
     expect(row.getAllByText("None")).toHaveLength(2);
     expect(row.getByText("64 h")).toBeDefined();
   });
@@ -203,7 +207,7 @@ describe("Capacity's Coverage", () => {
     // Given Avery's quarter month in January and March on Depot Operations, none in February, seen
     // in March
     openCoverage(seesProjects);
-    const row = await rowOf("P-2001 Depot Operations");
+    const row = await rowOf("Depot Operations");
 
     // Then January and March each read 32 h, January's in grey, and February nothing
     expect(row.queryByText("0 h")).toBeNull();
@@ -217,7 +221,7 @@ describe("Capacity's Coverage", () => {
   it("opens a project's own work on Projects from its details button", async () => {
     // Given Depot Operations' row
     const history = openCoverage(seesProjects);
-    const row = await rowOf("P-2001 Depot Operations");
+    const row = await rowOf("Depot Operations");
 
     // When its details button is selected
     await userEvent.click(

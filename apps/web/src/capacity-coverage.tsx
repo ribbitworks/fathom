@@ -22,6 +22,7 @@ import { cellColumn } from "./grid-columns.tsx";
 import { MonthGrid, type MonthGridProps } from "./month-grid.tsx";
 import { count } from "./numbers.ts";
 import { orgChartQuery } from "./org-chart.ts";
+import { RecordName } from "./plan-table.tsx";
 import { twoKindsOfRow } from "./people-rows.ts";
 import { liveRecordsBy, withLiveFields } from "./live-records.ts";
 import {
@@ -181,6 +182,12 @@ export function coverageTable({
       }),
       value: (row) => row.name,
       cellChars: workChars,
+      content: (row) =>
+        row.project === undefined ? (
+          row.name
+        ) : (
+          <RecordName record={row.project} />
+        ),
       colour: (row) =>
         teams.find(({ id }) => id === row.feature?.featureTeamId)?.colour ??
         null,
@@ -191,7 +198,7 @@ export function coverageTable({
       numberColumn(
         "effort",
         "Effort",
-        8,
+        effortChars,
         (row) => row.effort,
         (row) => orNone(row.effort, hours),
       ),
@@ -200,7 +207,7 @@ export function coverageTable({
       numberColumn(
         "remaining",
         "Remaining",
-        10,
+        remainingChars,
         (row) => row.remaining,
         (row) =>
           orNone(row.remaining, (remaining) => (
@@ -249,11 +256,10 @@ export function coverageTable({
     liveRecords: (rows) => [...rows],
     drafts: () => noDrafts(),
     groupings: [byChoice(team, { holds: "names" })],
-    hasDetails: (row) =>
-      row.feature !== undefined || row.projectId !== undefined,
+    hasDetails: (row) => row.feature !== undefined || row.project !== undefined,
     showDetails: (row) => {
-      if (row.projectId === undefined) onDetails("features", row.id);
-      else onDetails("projects", row.projectId);
+      if (row.project === undefined) onDetails("features", row.id);
+      else onDetails("projects", row.project.id);
     },
   };
 }
