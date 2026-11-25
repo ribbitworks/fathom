@@ -5,7 +5,9 @@
 // taking back a published draft waits, unpublished, until its maker publishes it.
 
 import { expect, type Page, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("engineeringOperationsManager") });
 
 const person = "Max Munk";
 
@@ -46,11 +48,7 @@ test("publishes a change from its row, then discards it from its details, puttin
 }) => {
   // Given the Workforce Administrator on People, with Max Munk renamed, not yet published
   const renamed = `${person} Fictional ${Date.now().toString(36)}`;
-  await signIn(
-    page,
-    `/people?search=${encodeURIComponent(person)}`,
-    "engineering.operations.manager@fathom.test",
-  );
+  await page.goto(`/people?search=${encodeURIComponent(person)}`);
   await nameCell(page, person).dblclick();
   const input = grid(page).getByRole("textbox");
   await input.fill(renamed);
