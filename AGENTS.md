@@ -109,6 +109,10 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history; see
 
 - No em dashes or en dashes in user-facing copy or documentation; use a period,
   comma, colon, semicolon or parentheses. Write ranges with "to".
+- Words on screen are the fewest plain words that say it: "Show all features",
+  not "Show all its features". No filler words, and no label that explains its
+  control; see
+  [UI Conventions § Principles](docs/standards/ui-conventions.md#principles).
 - Do not add Markdown files nobody asked for.
 - Follow [documentation.md](docs/standards/documentation.md) and
   [markdown-style-guidelines.md](docs/standards/markdown-style-guidelines.md).

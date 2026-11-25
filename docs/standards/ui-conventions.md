@@ -32,6 +32,7 @@ These principles come first:
 - **Words people say:** Every label, note, and message on screen, the server's refusals included, reads as a person would say it aloud.
   - **Short, with a subject and a verb:** Such as "Hiring states needs a choice that means Proposed", never a stack of nouns, such as "the only offered choice meaning Proposed".
   - **Everyday verbs:** Such as "the column that uses this list", never "the column drawing on it".
+  - **Fewest words:** The fewest plain words that say it, such as "Show all features", never "Show all its features". No filler words, and no label that explains its control, such as "Save changes to this project" for "Save".
 - **Never the second person:** Nothing on screen, the server's refusals included, says "you" or "your". Say what is so, such as "This role can't choose an earlier date". Help pages are the exception, as [Help Page Standards](help-pages.md) sets out.
 - **Keyboard-first data entry:** Wherever people enter or change data, everything can be done from the keyboard, and adding many items in a row never needs the mouse.
   - **Keys:** Tab moves between fields, Enter saves and starts the next item, Esc cancels, and arrow keys move between items.
