@@ -158,7 +158,7 @@ function featureTeamsColumn(people: readonly Person[]): Column | undefined {
   }
   const teams = new Map(
     people.flatMap(({ featureTeams = [] }) =>
-      featureTeams.map(({ id, name }) => [id, name] as const),
+      featureTeams.map((team) => [team.id, team] as const),
     ),
   );
   return {
@@ -167,7 +167,10 @@ function featureTeamsColumn(people: readonly Person[]): Column | undefined {
     label: builtInColumnNames.get("featureTeams") as string,
     required: false,
     multiple: true,
-    choices: byLabel([...teams].map(([id, name]) => choice(id, name, false))),
+    choices: byLabel(
+      [...teams.values()].map(({ id, name }) => choice(id, name, false)),
+    ),
+    choiceColour: (id) => teams.get(id)?.colour ?? null,
     emptyLabel: "No feature team",
     readOnly: true,
     value: (person) => (person.featureTeams ?? []).map(({ id }) => id),
@@ -497,6 +500,7 @@ export const withTeamColours = (
           manager === undefined || manager === null
             ? null
             : teamColourOf(manager.id),
+        choiceColour: teamColourOf,
       };
     }
     return column.key === "teamName"

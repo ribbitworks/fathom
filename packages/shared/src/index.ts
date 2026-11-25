@@ -515,6 +515,8 @@ export {
   personDraftSchema,
   personLengths,
   personRequestSchema,
+  type PersonFeatureTeam,
+  personFeatureTeamSchema,
   personSchema,
   recordIdSchema,
   type RowKind,

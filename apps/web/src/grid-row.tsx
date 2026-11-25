@@ -30,7 +30,13 @@ import { NamedWithOthers } from "./grid-groups.tsx";
 import type { Place, PlaceStore } from "./grid-places.ts";
 import type { PanelGrid } from "./grid-panels.tsx";
 import classes from "./pages.module.css";
-import type { Column, DraftOf, GridRecord, RowTotals } from "./record-table.ts";
+import {
+  type Column,
+  colourOf,
+  type DraftOf,
+  type GridRecord,
+  type RowTotals,
+} from "./record-table.ts";
 import { RowTick } from "./row-ticks.tsx";
 import { DraftedItem, MarkedItem, besideLive } from "./status-mark.tsx";
 import { wasWords } from "./draft-marks.ts";
@@ -318,7 +324,9 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
             }
           >
             <span className={classes.recordGroupLabel}>
-              {heading.label}
+              <ColouredName colour={heading.colour}>
+                {heading.label}
+              </ColouredName>
               <Text component="span" fz="sm" c="dimmed" ml="xs">
                 {heading.records.length}
                 <VisuallyHidden>
@@ -549,7 +557,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                               colour={
                                 row.record === undefined || isEmpty(value)
                                   ? null
-                                  : (column.colour?.(row.record) ?? null)
+                                  : colourOf(column, row.record)
                               }
                             >
                               {row.record && column.content
@@ -675,8 +683,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                             colour={
                               isEmpty(liveShown)
                                 ? null
-                                : (liveColumn(column).colour?.(liveRecord) ??
-                                  null)
+                                : colourOf(liveColumn(column), liveRecord)
                             }
                           >
                             {(

@@ -203,6 +203,7 @@ function releaseColumn(
         .sort((a, b) => a.rank - b.rank)
         .map(({ key, name }) => choice(key, name, false)),
     }),
+    choiceColour: (key) => groups.get(key)?.colour ?? null,
     value: releaseOf,
     live: (draft) => releaseOf(draft.live),
     change: () => ({}),
@@ -353,6 +354,7 @@ export function featureColumns(
           emptyLabel: noFeatureTeam,
         },
       ),
+      choiceColour: (id) => choices.featureTeamColours.get(id) ?? null,
       status: (feature) =>
         needsFeatureTeam(meaningOf.get(feature.statusId), feature.featureTeamId)
           ? {

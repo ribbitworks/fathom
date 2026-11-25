@@ -60,6 +60,20 @@ export const Swatch = ({
 // A name in its colour, as tables, panels and timelines show a team or release that has one: its
 // colour's square before it, centred on its text, in the line that holds it, such as a cell's after
 // a draft's dot.
+// Several coloured names in one line, such as the teams in a table's cell, each after its square.
+export function ColouredNames({
+  names,
+}: {
+  names: readonly { id: string; name: string; colour: string | null }[];
+}) {
+  return names.map(({ id, name, colour }, index) => (
+    <span key={id}>
+      {index > 0 && ", "}
+      <ColouredName colour={colour}>{name}</ColouredName>
+    </span>
+  ));
+}
+
 export function ColouredName({
   colour,
   children,

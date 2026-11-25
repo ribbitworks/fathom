@@ -10,6 +10,7 @@ import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { type Link, linkValueSchema } from "./links.ts";
 import { listLengths } from "./lists.ts";
 import { numberValueSchema } from "./numbers.ts";
+import { paletteColourSchema } from "./palette.ts";
 import { keyNumberSchema } from "./record-keys.ts";
 
 export const personLengths = {
@@ -179,6 +180,15 @@ export type RowKind = z.infer<typeof rowKindSchema>;
 // makes it, with the draft beside, or, for a draft that removes it, as it is. A planned hire's
 // name, which may be empty, is its preferred name, its requisition or temporary ID its ID, and its
 // target date its start date.
+// A feature team someone is on, as People names it.
+export const personFeatureTeamSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  colour: paletteColourSchema.nullable(),
+});
+
+export type PersonFeatureTeam = z.infer<typeof personFeatureTeamSchema>;
+
 export const personSchema = z.object({
   id: z.string(),
   // A person's key number, or a planned hire's for its row.
@@ -218,9 +228,7 @@ export const personSchema = z.object({
   isManager: z.boolean().optional(),
   // The feature teams the person is on, live, on the day shown, by name; none for a planned hire.
   // Left out for users who cannot see feature teams.
-  featureTeams: z
-    .array(z.object({ id: z.string(), name: z.string() }))
-    .optional(),
+  featureTeams: z.array(personFeatureTeamSchema).optional(),
   values: valuesSchema,
   links: linksSchema.default({}),
   notes: notesSchema.optional(),

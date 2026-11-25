@@ -31,7 +31,16 @@ export function byChoice<Rec extends GridRecord, Change>(
       const chosen = new Set(column.value(record) as string[]);
       const [first = none, ...rest] = column.choices.flatMap((choice, rank) =>
         chosen.has(choice.id)
-          ? [{ key: choice.id, label: headingOf(choice), rank }]
+          ? [
+              {
+                key: choice.id,
+                label: headingOf(choice),
+                rank,
+                ...(column.choiceColour === undefined
+                  ? {}
+                  : { colour: column.choiceColour(choice.id) }),
+              },
+            ]
           : [],
       );
       return [first, ...rest];

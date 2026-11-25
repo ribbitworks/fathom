@@ -2,17 +2,22 @@
 
 // Tests for making the shared table's columns, with a made-up kind of record, gadgets.
 
-import { act, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { MantineProvider } from "@mantine/core";
+import { act, render, screen, within } from "@testing-library/react";
+import { choice } from "./lists.ts";
+import type { PlanChange } from "./plan-table.tsx";
 import {
   breaksDown,
+  cellColumn,
   inOrder,
   keyColumn,
   keyColumnKey,
+  liveContent,
   wordsColumn,
 } from "./grid-columns.tsx";
-import type { GridDraft, RecordActions } from "./record-table.ts";
+import type { CellRecord, GridDraft, RecordActions } from "./record-table.ts";
 import { type View, emptyView } from "./table-view.ts";
 import {
   type Gadget,
@@ -24,6 +29,7 @@ import {
   nextColumn,
   recordCell,
   renderGadgets,
+  testTheme,
   waiting,
 } from "./test-support.tsx";
 
@@ -281,5 +287,35 @@ describe("which columns Metrics breaks rows down by", () => {
     expect(
       breaksDown({ kind: "choice", required: true, breaksDown: false }),
     ).toBe(false);
+describe("a Live row's coloured choices", () => {
+  it("names each after its square, in one line", () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <span id="live">
+          {liveContent(
+            {
+              ...cellColumn<CellRecord, PlanChange>("teams", "choice", {
+                label: "Feature teams",
+                required: false,
+                multiple: true,
+                choices: [
+                  choice("t1", "Mobile apps", false),
+                  choice("t2", "Data platform", false),
+                ],
+              }),
+              choiceColour: (id) => (id === "t1" ? "teal" : null),
+            },
+            ["t1", "t2"],
+          )}
+        </span>
+      </MantineProvider>,
+    );
+    const live = document.getElementById("live");
+    expect([
+      live?.textContent,
+      [...(live?.querySelectorAll<HTMLElement>("[data-colour]") ?? [])].map(
+        (square) => square.dataset.colour,
+      ),
+    ]).toEqual(["Mobile apps, Data platform", ["teal"]]);
   });
 });

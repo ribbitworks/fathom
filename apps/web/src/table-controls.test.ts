@@ -4,12 +4,7 @@
 // longer use is missing.
 
 import { describe, expect, it } from "vitest";
-import {
-  describeFilter,
-  missingWords,
-  type ViewChoice,
-  viewParts,
-} from "./table-controls.tsx";
+import { missingWords, type ViewChoice, viewParts } from "./table-controls.tsx";
 import { type ColumnUnit, emptyView } from "./table-view.ts";
 
 const weeks: ColumnUnit = {
@@ -230,25 +225,6 @@ describe("viewParts of hidden columns", () => {
       { name: "Frozen", value: "Up to Effort" },
       { name: "Hidden", value: "Grade, Site" },
     ]);
-  });
-});
-
-describe("describeFilter of every value that isn't empty", () => {
-  it("names it in words matching the column's Empty box, alone", () => {
-    expect(
-      describeFilter(column({ label: "Onboarding", kind: "note" }), {
-        notEmpty: true,
-        contains: "plan",
-      }),
-    ).toBe("Onboarding: Not empty");
-    expect(
-      describeFilter(column({ label: "Start", kind: "date" }), {
-        notEmpty: true,
-      }),
-    ).toBe("Start: Any date");
-    expect(describeFilter(column({}), { notEmpty: true })).toBe(
-      "Effort: Any number",
-    );
   });
 });
 

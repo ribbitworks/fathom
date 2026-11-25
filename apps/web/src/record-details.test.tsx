@@ -222,3 +222,44 @@ describe("the rows of a record's columns", () => {
     ]).toEqual([true, false, true]);
   });
 });
+
+describe("a value of several coloured choices in a panel", () => {
+  const teams = {
+    key: "teams",
+    label: "Feature teams",
+    kind: "choice" as const,
+    multiple: true,
+    required: false,
+    emptyLabel: "No feature team",
+    choices: [
+      { id: "t1", label: "Mobile apps", retired: false, description: "" },
+      { id: "t2", label: "Data platform", retired: false, description: "" },
+    ],
+    choiceColour: (id: string) => (id === "t1" ? "teal" : "grape"),
+  };
+  const renderTeams = (value: string[]) =>
+    render(
+      <MantineProvider theme={testTheme}>
+        <dl>
+          <Row column={teams} value={value} />
+        </dl>
+      </MantineProvider>,
+    );
+
+  it("names each, one to a line, after its square, leaving out one no longer known", () => {
+    renderTeams(["t2", "gone", "t1"]);
+    const value = screen.getByText("Data platform").closest("dd");
+    expect([
+      value?.textContent,
+      [...(value?.querySelectorAll<HTMLElement>("[data-colour]") ?? [])].map(
+        (square) => square.dataset.colour,
+      ),
+    ]).toEqual(["Data platformMobile apps", ["grape", "teal"]]);
+  });
+
+  it("names none by the column's words, with no square", () => {
+    renderTeams([]);
+    const none = screen.getByText("No feature team").closest("dd");
+    expect(none?.querySelector("[data-colour]")).toBeNull();
+  });
+});

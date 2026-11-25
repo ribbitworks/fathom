@@ -217,16 +217,41 @@ describe("managers and teams", () => {
     const sent = [
       person("p1", {
         featureTeams: [
-          { id: "t2", name: "Search" },
-          { id: "t1", name: "Payments core" },
+          { id: "t2", name: "Search", colour: null },
+          { id: "t1", name: "Payments core", colour: null },
         ],
       }),
-      person("p2", { featureTeams: [{ id: "t2", name: "Search" }] }),
+      person("p2", {
+        featureTeams: [{ id: "t2", name: "Search", colour: null }],
+      }),
     ];
     const columnOf = (records: readonly Person[]) =>
       columnsFor([], [], [], false, records).find(
         ({ key }) => key === "featureTeams",
       );
+
+    it("names each of someone's teams after its square, in one line", () => {
+      render(
+        grid({
+          people: [
+            person("p1", {
+              featureTeams: [
+                { id: "t2", name: "Search", colour: "teal" },
+                { id: "t1", name: "Payments core", colour: null },
+                { id: "t3", name: "Field tools", colour: "grape" },
+              ],
+            }),
+          ],
+        }),
+      );
+      const cell = document.getElementById("cell-p1-featureTeams");
+      expect([
+        cell?.textContent,
+        [...(cell?.querySelectorAll<HTMLElement>("[data-colour]") ?? [])].map(
+          (square) => square.dataset.colour,
+        ),
+      ]).toEqual(["Search, Payments core, Field tools", ["teal", "grape"]]);
+    });
 
     it("comes just after Team", () => {
       const keys = columnsFor([], [], [], false, sent).map(({ key }) => key);

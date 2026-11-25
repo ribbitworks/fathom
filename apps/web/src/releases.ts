@@ -442,7 +442,6 @@ export const releaseColourStyle = (
 ): CSSProperties =>
   ({
     "--release-filled": colourVariable(shownColour(colour), "filled"),
-    "--release-light": colourVariable(shownColour(colour), "light"),
   }) as CSSProperties;
 
 // A cycle or release named with its schedule, such as "Platform: 27.1", where nothing around it says

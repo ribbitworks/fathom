@@ -12,7 +12,7 @@ import {
   useEffect,
   useEffectEvent,
 } from "react";
-import { cellKinds } from "./cell-kinds.tsx";
+import { cellKinds, chosenColour, colouredChoices } from "./cell-kinds.tsx";
 import { ColouredName } from "./colour-swatch.tsx";
 import { Icon } from "./icons.tsx";
 import { LinkCell } from "./link-field.tsx";
@@ -30,7 +30,7 @@ import classes from "./record-details.module.css";
 import { roundedUpTo } from "@fathom/shared";
 import { isEmpty, shownInView } from "./grid-columns.tsx";
 import { cellDraftOf } from "./grid-drafts.ts";
-import type { Column, GridRecord } from "./record-table.ts";
+import { type Column, colourOf, type GridRecord } from "./record-table.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   DraftedItem,
@@ -48,10 +48,18 @@ import {
   unitAmountWords,
   type View,
 } from "./table-view.ts";
+import { TeamLabels } from "./team-labels.tsx";
 
 type DetailColumn = Pick<
   Column<never>,
-  "key" | "label" | "kind" | "multiple" | "choices" | "required" | "emptyLabel"
+  | "key"
+  | "label"
+  | "kind"
+  | "multiple"
+  | "choices"
+  | "required"
+  | "emptyLabel"
+  | "choiceColour"
 >;
 
 // A value as it was before a draft changed it, for its draft's tip; none for a note or a link,
@@ -105,6 +113,10 @@ function Value({
     ) : (
       <LinkCell link={value as WebLink} inTable={false} />
     );
+  }
+  const coloured = colouredChoices(column, value as CellValue);
+  if (coloured !== undefined) {
+    return coloured.length === 0 ? none : <TeamLabels teams={coloured} />;
   }
   const words = kind.inWords(
     column,
@@ -315,7 +327,7 @@ export const opensOnClick = (start: (() => void) | undefined) =>
 export function Row({
   column,
   value,
-  colour = null,
+  colour,
   changed,
   editing,
   children,
@@ -399,7 +411,9 @@ export function Row({
                 ) : (
                   <ColouredName
                     colour={
-                      children === undefined && isEmpty(value) ? null : colour
+                      children === undefined && isEmpty(value)
+                        ? null
+                        : (colour ?? chosenColour(column, value))
                     }
                   >
                     {children ?? (
@@ -499,12 +513,12 @@ export function ColumnRows<Rec extends GridRecord, Change>({
             key={column.key}
             column={column}
             value={value}
-            colour={column.colour?.(shown) ?? null}
+            colour={colourOf(column, shown)}
             changed={
               draft?.changed.includes(column.key) === true
                 ? {
                     live: column.live(draft),
-                    liveColour: column.colour?.(live) ?? null,
+                    liveColour: colourOf(column, live),
                     // A value another record's draft changes is marked by that draft.
                     draft: cellDraftOf(shown.cellDrafts, column) ?? draft,
                   }

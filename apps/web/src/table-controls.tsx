@@ -73,13 +73,18 @@ import {
   withUnit,
 } from "./table-view.ts";
 import type { GroupingChoice, GroupsHold } from "./row-groups.ts";
-import { formatDay, formatDayRange } from "./day-formats.ts";
 import { AppMenu, MenuChoices, MenuToggle, Tick } from "./app-menu.tsx";
 import type { ColumnUnits } from "./record-table.ts";
 import classes from "./pages.module.css";
 import { ClearableInput } from "./clearable-input.tsx";
+import {
+  FilterWords,
+  describeFilter,
+  notEmptyLabels,
+} from "./filter-words.tsx";
+import { ColouredName } from "./colour-swatch.tsx";
 import { classWords } from "./status-mark.tsx";
-import { count, decimal } from "./numbers.ts";
+import { count } from "./numbers.ts";
 
 // Changes the view, replacing the current address rather than adding to its history when asked.
 export type ChangeView = (view: View, replace?: boolean) => void;
@@ -101,6 +106,7 @@ type AnyColumn = Pick<
   | "places"
   | "dataClass"
   | "hiddenAtFirst"
+  | "choiceColour"
 >;
 
 // Each kind's sorts, ascending then descending.
@@ -308,73 +314,6 @@ function frozenUpTo(
 ): string {
   const last = columns.slice(0, frozen).at(-1);
   return last === undefined ? none : `${upTo} ${last.label}`;
-}
-
-// A filter in words, such as "Site: Harbour, Northmere".
-// What a filter's choice of every value that isn't empty is called, matching its Empty box. A
-// checkbox's filter offers none, since a checkbox is never empty, but an address or saved view may
-// still hold one, which its pill names.
-const notEmptyLabels: Record<Kind, string> = {
-  text: "Not empty",
-  month: "Not empty",
-  link: "Not empty",
-  note: "Not empty",
-  choice: "Not empty",
-  flag: "Not empty",
-  date: "Any date",
-  number: "Any number",
-};
-
-export function describeFilter(column: AnyColumn, filter: Filter): string {
-  // Any value matches, so nothing else the filter holds narrows it further.
-  if (filter.notEmpty === true) {
-    return `${column.label}: ${notEmptyLabels[column.kind]}`;
-  }
-  const parts: string[] = [];
-  switch (column.kind) {
-    case "choice":
-    case "flag":
-      parts.push(
-        ...column.choices
-          .filter((choice) => (filter.any ?? []).includes(choice.id))
-          .map((choice) => choice.label),
-      );
-      if (filter.empty) parts.push(column.emptyLabel ?? "Empty");
-      return `${column.label}: ${parts.join(", ")}`;
-    case "date": {
-      const { from, to } = filter;
-      if (from !== undefined && to !== undefined) {
-        parts.push(formatDayRange(from, to));
-      } else if (from !== undefined) {
-        parts.push(`from ${formatDay(from)}`);
-      } else if (to !== undefined) {
-        parts.push(`until ${formatDay(to)}`);
-      }
-      if (filter.empty) parts.push("No date");
-      return `${column.label}: ${parts.join(" or ")}`;
-    }
-    case "number": {
-      const { atLeast, atMost } = filter;
-      if (atLeast !== undefined && atMost !== undefined) {
-        parts.push(`${decimal(atLeast)} to ${decimal(atMost)}`);
-      } else if (atLeast !== undefined) {
-        parts.push(`at least ${decimal(atLeast)}`);
-      } else if (atMost !== undefined) {
-        parts.push(`at most ${decimal(atMost)}`);
-      }
-      if (filter.empty) parts.push("No number");
-      return `${column.label}: ${parts.join(" or ")}`;
-    }
-    case "text":
-    case "month":
-    case "link":
-    case "note": {
-      const contains = (filter.contains ?? "").trim();
-      if (contains !== "") parts.push(`contains “${contains}”`);
-      if (filter.empty) parts.push("Empty");
-      return `${column.label}: ${parts.join(" or ")}`;
-    }
-  }
 }
 
 // How a column is sorted and filtered, in words for its header's name, such as ", sorted
@@ -1425,7 +1364,7 @@ export function ViewBar({
             onView(withFilter(view, column.key, undefined));
           }}
         >
-          {describeFilter(column, filter)}
+          <FilterWords column={column} filter={filter} />
         </FilterPill>
       ))}
       {/* Always there, so screen readers announce the count as it changes. */}
@@ -1929,7 +1868,11 @@ function ChoiceFilter({
   const box = (choice: ColumnChoice, first: boolean) => (
     <Checkbox
       key={choice.id}
-      label={choice.label}
+      label={
+        <ColouredName colour={column.choiceColour?.(choice.id) ?? null}>
+          {choice.label}
+        </ColouredName>
+      }
       {...(!many && first ? { "data-autofocus": true } : {})}
       checked={picked.includes(choice.id)}
       onChange={(event) => {

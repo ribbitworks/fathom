@@ -208,7 +208,9 @@ export const choices = () =>
         meaning: "planned",
       },
     ],
-    featureTeams: [{ id: teamId, name: "Fictional Team", retired: false }],
+    featureTeams: [
+      { id: teamId, name: "Fictional Team", colour: "teal", retired: false },
+    ],
     priorities: [],
     sizes: [],
     risks: [],

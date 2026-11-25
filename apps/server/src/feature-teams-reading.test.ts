@@ -660,6 +660,20 @@ describe("each person's feature teams on People", () => {
     expect(await teamsOf(loner, planner)).toEqual([]);
   });
 
+  it("gives each team its colour, for its square", async () => {
+    const lead = await person();
+    const name = unique("Fictional Coloured Team");
+    const id = await liveTeam({ name, leadId: lead });
+    await test.connection
+      .update(featureTeams)
+      .set({ colour: "teal" })
+      .where(eq(featureTeams.id, id));
+    const everyone = await peopleSeen(editor);
+    expect(everyone.find((one) => one.id === lead)?.featureTeams).toEqual([
+      { id, name, colour: "teal" },
+    ]);
+  });
+
   it("leaves out a team's drafts: a member not yet approved, and a new name", async () => {
     // Given a live team, with a draft renaming it and adding someone
     const lead = await person();
@@ -673,7 +687,7 @@ describe("each person's feature teams on People", () => {
 
     // Then the team shows as live: by its live name, without the newcomer
     expect(everyone.find((one) => one.id === lead)?.featureTeams).toEqual([
-      { id, name },
+      { id, name, colour: null },
     ]);
     expect(everyone.find((one) => one.id === newcomer)?.featureTeams).toEqual(
       [],

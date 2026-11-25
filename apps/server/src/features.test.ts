@@ -414,7 +414,7 @@ describe("feature teams", () => {
       options,
     );
 
-  it("are offered by name to those who see the plan", async () => {
+  it("are offered by name, with their colour, to those who see the plan", async () => {
     const featureTeamId = await liveTeam();
     const response = await test.request(
       viewer.cookie,
@@ -425,6 +425,7 @@ describe("feature teams", () => {
       .json<PlanChoices>()
       .featureTeams.find(({ id }) => id === featureTeamId);
     expect(Object.keys(offered ?? {}).sort()).toEqual([
+      "colour",
       "id",
       "name",
       "retired",

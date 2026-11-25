@@ -50,6 +50,7 @@ import {
 import { onRow } from "./grid-columns.tsx";
 import { heldBack } from "./grid-drafts.ts";
 import { shownSchema } from "./live-records.ts";
+import { colourOf } from "./record-table.ts";
 import {
   besideLive,
   DraftedPartItem,
@@ -388,14 +389,14 @@ export function PersonPanel({
         key={column.key}
         column={column}
         value={column.value(person)}
-        colour={column.colour?.(person) ?? null}
+        colour={colourOf(column, person)}
         changed={
           draft === undefined
             ? undefined
             : {
                 live: column.live(draft),
                 // Only a record drafted to be added has no live copy, and its draft changes no value.
-                liveColour: column.colour?.({ ...person, ...live }) ?? null,
+                liveColour: colourOf(column, { ...person, ...live }),
                 draft,
                 warning:
                   column.key === "managerId" && live?.managerLeft === true

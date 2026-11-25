@@ -101,8 +101,8 @@ describe("managers and teams", () => {
   });
 
   it("groups people under each feature team they are on, by name, then those on none, counting each once", () => {
-    const mobile = { id: "t2", name: "Mobile apps" };
-    const payments = { id: "t1", name: "Payments core" };
+    const mobile = { id: "t2", name: "Mobile apps", colour: null };
+    const payments = { id: "t1", name: "Payments core", colour: null };
     render(
       grid({
         people: [
