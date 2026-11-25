@@ -18,15 +18,21 @@ import {
   type RemovalReasonRequest,
   removalReasonsAfter,
   withRemovalReason,
+  type RecordRef,
   type RecordType,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
-import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "../errors.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
-import { type Recorded, tidy } from "./draft-records.ts";
+import { type Recorded, tidy, unseenDraft } from "./draft-records.ts";
 import { refuseCustomersChange } from "./feature-customers.ts";
 import { checkTeamForFeature } from "./feature-team-removals.ts";
 import { typeOf } from "./column-types.ts";
@@ -41,6 +47,7 @@ import {
 import { columnsWithAdded } from "./added-columns.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import { isGeneralFeature } from "./release-kinds.ts";
+import { text } from "./reporting.ts";
 import { fieldOfValue, valueField } from "./values.ts";
 import {
   addedOnly,
@@ -59,8 +66,9 @@ import {
   saveRecordDrafts,
   type Wanted,
 } from "./record-drafting.ts";
-import { discardRecordDraft } from "./record-decisions.ts";
+import { discardRecordDraft, withUsedRecords } from "./record-decisions.ts";
 import { keptNote, readRecordsState } from "./records.ts";
+import { hiddenPeople } from "./people-reads.ts";
 import { readToday } from "./settings.ts";
 import { planOut, type PlanRecords, reasonsOf } from "./project-reads.ts";
 
@@ -85,19 +93,63 @@ async function changingPlan(
   });
 }
 
-// Refuses an owner who is not one of People.
-async function checkOwner(
+// Refuses deciding a project's or proposal's draft that gives or takes an owner the actor doesn't
+// see, as a feature team's draft naming someone hidden is refused, since the actor can't tell what
+// it does.
+export async function checkOwnersAsked(
   transaction: Transaction,
-  ownerId: string | null,
+  actor: Actor,
+  records: readonly RecordRef[],
+  today: string,
+  asking: "approve" | "reject",
 ): Promise<void> {
-  if (ownerId === null) return;
+  const state = await readRecordsState(transaction);
+  // Approving a draft approves those it uses, so each of them is checked too; rejecting rejects only
+  // those asked for.
+  const decided =
+    asking === "approve" ? withUsedRecords(state, records) : records;
+  const changes = decided.flatMap(({ type, id }) => {
+    if (type !== "project" && type !== "proposal") return [];
+    const live = text(stateOf(state, type).live.get(id)?.ownerId);
+    const drafted = text(versionOf(state, type, id)?.ownerId);
+    return live === drafted ? [] : [live, drafted];
+  });
+  const hidden = await hiddenPeople(
+    transaction,
+    actor,
+    changes.filter((id): id is string => id !== null),
+    today,
+  );
+  if (hidden.size > 0) throw new ForbiddenError(unseenDraft);
+}
+
+// The owner a request gives a record: the current one when the request names the owner the actor is
+// shown, which for one hidden from them is none, so a save never changes an owner they can't see;
+// otherwise one of People as the actor sees them.
+async function ownerFor(
+  transaction: Transaction,
+  actor: Actor,
+  requested: string | null,
+  had: unknown,
+): Promise<string | null> {
+  const current = typeof had === "string" ? had : null;
+  const hidden = await hiddenPeople(
+    transaction,
+    actor,
+    [requested, current].filter((id): id is string => id !== null),
+    await readToday(transaction),
+  );
+  const shown = current !== null && hidden.has(current) ? null : current;
+  if (requested === shown) return current;
+  if (requested === null) return null;
   const [found] = await transaction
     .select({ id: people.id })
     .from(people)
-    .where(eq(people.id, ownerId));
-  if (found === undefined) {
+    .where(eq(people.id, requested));
+  if (found === undefined || hidden.has(requested)) {
     throw new BadRequestError("Choose an owner from People");
   }
+  return requested;
 }
 
 // Refuses a project's general feature, which is off the roadmap, as a feature a record names.
@@ -171,7 +223,12 @@ export async function addProject(
   request: ProjectRequest,
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
-    await checkOwner(transaction, request.ownerId);
+    const ownerId = await ownerFor(
+      transaction,
+      maker,
+      request.ownerId,
+      undefined,
+    );
     checkRoadmapFeatures(state, request.featureIds);
     return saveRecordDraft(
       transaction,
@@ -179,7 +236,7 @@ export async function addProject(
       state,
       "project",
       randomUUID(),
-      projectRecord(request),
+      projectRecord({ ...request, ownerId }),
     );
   });
 }
@@ -192,7 +249,12 @@ export async function changeProject(
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
     changeableRecord(state, "project", id);
-    await checkOwner(transaction, request.ownerId);
+    const ownerId = await ownerFor(
+      transaction,
+      maker,
+      request.ownerId,
+      shownVersion(state, "project", id)?.ownerId,
+    );
     checkRoadmapFeatures(state, request.featureIds);
     return saveRecordDraft(
       transaction,
@@ -200,7 +262,7 @@ export async function changeProject(
       state,
       "project",
       id,
-      projectRecord(request),
+      projectRecord({ ...request, ownerId }),
     );
   });
 }
@@ -245,17 +307,23 @@ async function statusFor(
 // A proposal as a request makes it, from the version shown, if any.
 async function proposalRecord(
   transaction: Transaction,
+  maker: Actor,
   state: RecordsState,
   request: ProposalRequest,
   current?: Recorded,
 ) {
-  await checkOwner(transaction, request.ownerId);
+  const ownerId = await ownerFor(
+    transaction,
+    maker,
+    request.ownerId,
+    current?.ownerId,
+  );
   checkRoadmapFeatures(state, request.featureIds);
   return {
     name: request.name,
     externalId: request.externalId,
     link: request.link,
-    ownerId: request.ownerId,
+    ownerId,
     customerIds: request.customerIds,
     statusId: await statusFor(
       transaction,
@@ -284,7 +352,7 @@ export async function addProposal(
       state,
       "proposal",
       randomUUID(),
-      await proposalRecord(transaction, state, request),
+      await proposalRecord(transaction, maker, state, request),
     ),
   );
 }
@@ -303,7 +371,7 @@ export async function changeProposal(
       state,
       "proposal",
       id,
-      await proposalRecord(transaction, state, request, proposal),
+      await proposalRecord(transaction, maker, state, request, proposal),
     );
   });
 }

@@ -37,6 +37,7 @@ import {
 } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { rejectedField } from "./draft-records.ts";
+import { hiddenPeople } from "./people-reads.ts";
 import { readToday } from "./settings.ts";
 import { personTier } from "./person-fields.ts";
 import { columnsWithAdded } from "./added-columns.ts";
@@ -77,6 +78,32 @@ export interface ReadChangeHistory {
   // records.
   includedSensitive: boolean;
 }
+
+// The people a change names, whom a reader who doesn't see start and end dates may not see while
+// they haven't started or once they have left: the person changed, a team's members and lead, and a
+// hire's manager or filler.
+export function peopleNamedBy(row: StoredChange): string[] {
+  if (row.recordType === "person") return [row.recordId];
+  if (namesMembers(row)) return [row.oldValue, row.newValue].flatMap(strings);
+  return (row.recordType === "planned-hire" &&
+    (row.field === "managerId" || row.field === "filledBy")) ||
+    (row.recordType === "feature-team" && row.field === "leadId")
+    ? valuesNamed(row)
+    : [];
+}
+
+// The owners a change names, whom the plan hides only while they haven't started, naming those who
+// have left as retired.
+export const ownersNamedBy = (row: StoredChange): string[] =>
+  (row.recordType === "project" || row.recordType === "proposal") &&
+  row.field === "ownerId"
+    ? valuesNamed(row)
+    : [];
+
+const valuesNamed = (row: StoredChange) =>
+  [row.oldValue, row.newValue].filter(
+    (value): value is string => typeof value === "string",
+  );
 
 // The records a change set changed, in the order first changed, each with the fields it changed.
 function recordsOf(
@@ -222,31 +249,25 @@ async function readBatch(
   );
   // Readers who do not see start and end dates see nobody who has not started or has left, as People
   // hides them: neither a person's own changes, nor records about them, nor a hire's manager or
-  // filler naming them.
+  // filler, a team's lead, or a project's or proposal's owner naming them, an owner only while not
+  // yet started, as the plan names one who has left as retired.
   const seesPersonal = seesEmployment(actor);
+  const today = await readToday(database);
   const hidden = seesPersonal
     ? new Set<string>()
-    : await notCurrentAmong(
-        database,
-        [
-          ...new Set(
-            rows.flatMap((row) => {
-              if (row.recordType === "person") return [row.recordId];
-              if (namesMembers(row)) {
-                return [row.oldValue, row.newValue].flatMap(strings);
-              }
-              return (row.recordType === "planned-hire" &&
-                (row.field === "managerId" || row.field === "filledBy")) ||
-                (row.recordType === "feature-team" && row.field === "leadId")
-                ? [row.oldValue, row.newValue].filter(
-                    (value): value is string => typeof value === "string",
-                  )
-                : [];
-            }),
-          ),
-        ],
-        await readToday(database),
-      );
+    : new Set([
+        ...(await notCurrentAmong(
+          database,
+          [...new Set(rows.flatMap(peopleNamedBy))],
+          today,
+        )),
+        ...(await hiddenPeople(
+          database,
+          actor,
+          rows.flatMap(ownersNamedBy),
+          today,
+        )),
+      ]);
   const seenRows = (
     await visibleRows(database, actor, rows, facts, tierNow)
   ).filter(

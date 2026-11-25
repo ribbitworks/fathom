@@ -281,7 +281,7 @@ export function createProjectAccess(database: Database): ProjectAccess {
     }),
     readChoices: async (actor) => {
       requireAnyPermission(actor, planOrFeatures);
-      return projectReads.readPlanChoices(database);
+      return projectReads.readPlanChoices(database, actor);
     },
     createFeatureColumn: async (actor, request) =>
       columnDrafts.createField(

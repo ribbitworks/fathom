@@ -1,6 +1,6 @@
 # Fathom: Roles
 
-**Last updated:** 2026-11-24
+**Last updated:** 2026-11-25
 
 What each role can see, change and approve. The [Administration Pages](../design/pages/administration.md#roles) describe the Roles page.
 
@@ -90,10 +90,11 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 
 ## Who Sees Which People
 
-- **Who is listed:** People not started yet are hidden from roles that don't see Start date's class, so a start date isn't revealed early. People who have left are hidden from roles that don't see End date's class. Both are judged by the live dates while a draft waits, so a future end date shows nothing until it passes.
+- **Who is listed:** People not started yet, and people who have left, are hidden from roles that don't see both Start date's and End date's classes, so a start date isn't revealed early. Both are judged by the live dates while a draft waits, so a future end date shows nothing until it passes.
 - **New employees:** A person may be added before their start date. Roles that see Personal data see them marked as not yet started.
   - **Other roles:** Other roles keep seeing the placeholder of the planned hire the person filled until the start date, even if it moves, and don't see a future starter who filled no hire. Until the person starts, those roles see none of their changes.
   - **Who fills a hire:** Shown only to roles that see Personal data, since it reveals a reporting line to come.
+- **Owners:** Someone not started yet is offered as a project's or proposal's owner only to roles that see Personal data, as People lists them. To any other role, a project or proposal they own reads as having no owner, kept when that role saves it. A draft making them its owner is no change to that role, which can't approve or reject it, and the change history doesn't name them.
 - **Changes of manager:** A change of manager is Personal in its draft and in the change history, since it names a past manager, so roles that see only General data see the new manager once the change is approved.
 - **Other dates:** Feature teams and reporting lines on other dates need Personal data. Future reporting lines need Confidential data too, since future-dated reorganizations are Confidential.
   - **From a later date:** Anyone who edits feature teams and sees Personal data may change feature teams from a later date, so a Feature Lead changes them from today.
