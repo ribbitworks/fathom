@@ -10,7 +10,7 @@ Each arrow points from a record to what it belongs to or serves.
 
 ![How Fathom's records fit together](diagrams/how-fathom-fits-together.svg)
 
-Projects and proposals are for customers. A project is committed work, and a proposal is work offered to a customer that may or may not be won. Both name the features they need.
+Projects and proposals are for customers. A project is committed work, and a proposal is work offered to a customer that may or may not be won. Both name the features they need. An activity is work a project or a release needs that isn't a feature.
 
 ## The Records
 
@@ -37,6 +37,10 @@ In Fathom: **Projects**, the **Proposals** tab. See [Projects](projects.md).
 A piece of work planned to ship, with a status, a priority and an estimate of the effort it needs.
 
 In Fathom: **Features**, as a table or a board. See [Features](features.md).
+
+### Activity
+
+Work a project or a release needs that isn't a feature, such as data migration or release testing. Each belongs to one project or one release. See [Activities](activities.md). In Fathom: **Activities**.
 
 ### Milestone
 
