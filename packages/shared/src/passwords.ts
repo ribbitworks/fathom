@@ -182,7 +182,7 @@ export function passwordProblem(
 export function recipeProblems({ rules, recipe }: PasswordSettings): string[] {
   const problems: string[] = [];
   if (kindsIn(recipe).length === 0) {
-    problems.push("Choose at least one character type.");
+    problems.push("Generated passwords need at least one character type.");
   }
   if (recipe.length < rules.minimumLength) {
     problems.push(

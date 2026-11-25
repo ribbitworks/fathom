@@ -333,7 +333,9 @@ describe("the password settings", () => {
       await userEvent.click(box(name));
     }
     expect(
-      within(panel()).getByText("Choose at least one character type."),
+      within(panel()).getByText(
+        "Generated passwords need at least one character type.",
+      ),
     ).toBeDefined();
   });
 

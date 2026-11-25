@@ -213,7 +213,7 @@ describe("recipeProblems", () => {
           { uppercase: false, lowercase: false, digits: false, symbols: false },
         ),
       ),
-    ).toEqual(["Choose at least one character type."]);
+    ).toEqual(["Generated passwords need at least one character type."]);
   });
 
   it("refuses a recipe shorter than the rule's minimum", () => {
