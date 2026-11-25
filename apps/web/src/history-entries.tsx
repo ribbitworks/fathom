@@ -2,7 +2,7 @@
 
 // How both history pages show their entries, so they look alike: a list of rows, newest first, each
 // with its date and time, then who did what, with details dimmed after a colon, and a grey Worth
-// checking box after entries that deserve a second look.
+// checking box after entries that need a second look.
 
 import { Group, Text, VisuallyHidden } from "@mantine/core";
 import type { ReactNode } from "react";
@@ -50,7 +50,7 @@ export function EntryRow({
   );
 }
 
-// Marks an entry that deserves a second look with a grey box after it, as a fact is, since a dot
+// Marks an entry that needs a second look with a grey box after it, as a fact is, since a dot
 // always means a draft.
 export function WorthChecking() {
   return (

@@ -1,6 +1,6 @@
 # Working as a Feature Lead
 
-As a Feature Lead, you lead a feature team: a group that works on features together, whoever its members report to. You keep the team's features and estimates current, and you shape who is on the team.
+As a Feature Lead, you lead a feature team: a group that works on features together, whoever its members report to. You keep the team's features and estimates current, and you choose who is on the team.
 
 ## What to Know First
 
@@ -25,7 +25,7 @@ A view is how you've set up a table, such as its search and grouping. You can sa
 
 Only you see it. See [Saved views](saved-views.md#save-a-view).
 
-## Shape the Feature Team
+## Change the Feature Team
 
 1. On the **Org chart**, choose **Feature teams**, and open your team's panel. See [Org chart](org-chart.md#change-a-feature-team).
 1. Change its members or its lead.

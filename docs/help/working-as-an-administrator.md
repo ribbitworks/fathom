@@ -54,6 +54,6 @@ On the **Settings** page, set Fathom's time zone and the rules for passwords. Se
 ## Check the Access History
 
 1. Select the **Access history** page.
-1. Look for entries ending in a grey **Worth checking** box. Those deserve a second look, such as a change to someone's roles. See [Access history](access-history.md#check-what-deserves-a-second-look).
+1. Look for entries ending in a grey **Worth checking** box. Those need a second look, such as a change to someone's roles. See [Access history](access-history.md#check-the-marked-entries).
 
 You're done when everyone who needs Fathom can sign in with the right roles.

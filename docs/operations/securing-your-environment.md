@@ -50,7 +50,7 @@ On Windows Server, run Fathom in a Linux virtual machine instead, and secure it 
 - **Allow only Fathom's port:** through the Hyper-V firewall, only from the users' network, never all inbound connections: `New-NetFirewallHyperVRule -Name "Fathom" -DisplayName "Fathom" -Direction Inbound -VMCreatorId '{40E0AC32-46A5-438A-A0B2-2B479E8F2E90}' -Protocol TCP -LocalPorts <port> -RemoteAddresses <users' network>`.
 - **Keep it running:** WSL2 shuts a distro down when it has been idle for 15 seconds, and starts none when Windows starts.
   - In the same `.wslconfig` file, set `instanceIdleTimeout=-1` under `[general]`, so it keeps running.
-  - Start it when Windows starts, with a Task Scheduler task at startup that runs `wsl.exe -d <distro> --exec /bin/true` as that user, whether or not they are signed in.
+  - Start it when Windows starts, with a Task Scheduler task at startup that runs `wsl.exe -d <distro> --exec /bin/true` as that user, even when they aren't signed in.
   - After a restart, check that Fathom answers.
 - **Limit who can open the distro:** anyone who can sign in as the Windows user that owns it can open it as root with `wsl`, and Windows administrators can mount its virtual disk. Either can read Fathom's data and secrets, so give that access only to the people who run Fathom.
 - **Encrypt the distro's disk:** its virtual disk, holding the database and secrets, is a file under `%LocalAppData%\wsl` by default. Turn on BitLocker for that drive, or Device Encryption on Windows 11 Home.

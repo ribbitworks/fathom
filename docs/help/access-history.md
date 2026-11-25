@@ -15,7 +15,7 @@ Type in the **Search** box at the top of the page: a name, an email address, or 
 
 You're done when you find the entry you want.
 
-### Check What Deserves a Second Look
+### Check the Marked Entries
 
 Look for the entries ending in a grey **Worth checking** box. They mark changes that could give someone access or take it away:
 
@@ -32,7 +32,7 @@ You're done when you've checked each entry marked **Worth checking**.
 ## Marks and Terms
 
 - **An entry** gives the date and time, then a sentence: who did what, and to what. For example, an Administrator **reactivated the account for** someone. An email address follows each account's name, so you can tell accounts apart.
-- **Worth checking**, in a grey box after an entry, means it deserves a second look.
+- **Worth checking**, in a grey box after an entry, means it needs a second look.
 - **Viewing private details** is recorded at most once a day for each account. The entry doesn't name whose details they were. Viewing the hiring plan's planned hires is recorded the same way.
 - **An export** is recorded only when the file held Personal or Confidential data. The entry names the table, and that data.
 - **A change to private details** is recorded without its values. It names the person only to roles that see people.
