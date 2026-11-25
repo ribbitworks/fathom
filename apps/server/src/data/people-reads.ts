@@ -3,8 +3,9 @@
 // Reading people as recorded, live, and when each is current. Part of the data access layer.
 
 import { inChunks, people, type Reader } from "@fathom/db";
-import { monthOf } from "@fathom/shared";
+import { monthOf, seesEmployment } from "@fathom/shared";
 import { inArray } from "drizzle-orm";
+import type { Actor } from "../access.ts";
 import type { Recorded } from "./draft-records.ts";
 import { readToday } from "./settings.ts";
 import { readLines, readTeams, reportingOf } from "./reporting.ts";
@@ -84,4 +85,25 @@ export function currentOn(person: Recorded, today: string): boolean {
     (typeof startDate !== "string" || startDate <= today) &&
     (typeof endDate !== "string" || endDate >= today)
   );
+}
+
+// The people a reader doesn't see among those given, as People hides them: those not yet started,
+// to a reader who doesn't see start and end dates. Those who have left stay named, retired.
+export async function hiddenPeople(
+  transaction: Reader,
+  reader: Actor,
+  ids: readonly string[],
+  today: string,
+): Promise<Set<string>> {
+  const hidden = new Set<string>();
+  if (seesEmployment(reader)) return hidden;
+  for (const chunk of inChunks([...new Set(ids)])) {
+    for (const person of await transaction
+      .select({ id: people.id, startDate: people.startDate })
+      .from(people)
+      .where(inArray(people.id, chunk))) {
+      if (notStarted(person, today)) hidden.add(person.id);
+    }
+  }
+  return hidden;
 }

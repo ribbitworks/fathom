@@ -4,6 +4,7 @@
 // the data access layer.
 
 import { checkAllocationsAsked, removeAllocationsOf } from "./allocations.ts";
+import { checkOwnersAsked } from "./projects.ts";
 import {
   type Database,
   databaseCodes,
@@ -425,6 +426,13 @@ export async function approveDrafts(
         today,
         "approve",
       );
+      await checkOwnersAsked(
+        transaction,
+        actor,
+        requested.records,
+        today,
+        "approve",
+      );
       const chosen = await withFills(transaction, actor, requested);
       const asked = await withUsedAcross(transaction, chosen);
       await refuseTakenAlongBeyondRole(transaction, actor, chosen, asked);
@@ -525,6 +533,7 @@ export async function rejectDrafts(
       today,
       "reject",
     );
+    await checkOwnersAsked(transaction, actor, asked.records, today, "reject");
     await refuseUsedAcross(transaction, asked);
     const made = await rejectRecordDrafts(transaction, asked.records, reason);
     if (asksForLists(asked)) {

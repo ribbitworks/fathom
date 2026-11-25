@@ -22,6 +22,7 @@ import {
   removalReasonsIn,
   type RecordType,
   sameDates,
+  seesEmployment,
 } from "@fathom/shared";
 import { asc } from "drizzle-orm";
 import type { Actor } from "../access.ts";
@@ -54,6 +55,7 @@ import {
   recordExtras,
   recordKeyNumber,
 } from "./records.ts";
+import { hiddenPeople, notStarted } from "./people-reads.ts";
 import { readToday } from "./settings.ts";
 
 export type PlanRecords = Omit<ProjectPlan, "canEdit" | "canEditFeatures">;
@@ -284,6 +286,50 @@ export function seenRecords(reader: Actor, records: PlanRecords): PlanRecords {
   };
 }
 
+// A project or proposal with an owner the reader doesn't see named by none, live and drafted, as a
+// feature team's lead is. A draft whose owner then reads the same before and after, such as one
+// adding a record with such an owner, changes no owner to the reader, and a changed record's draft
+// changing nothing else is no draft.
+export function ownerShown<Rec extends Project | Proposal>(
+  record: Rec,
+  hidden: ReadonlySet<string>,
+): Rec {
+  const shown = (owner: unknown) =>
+    typeof owner === "string" && !hidden.has(owner) ? owner : null;
+  const ownerId = shown(record.ownerId);
+  const { draft } = record;
+  if (draft === undefined || !draft.changed.includes("ownerId")) {
+    return { ...record, ownerId };
+  }
+  const before = shown(draft.live.ownerId);
+  if (before !== ownerId) {
+    const live =
+      "ownerId" in draft.live ? { ...draft.live, ownerId: before } : draft.live;
+    return { ...record, ownerId, draft: { ...draft, live } };
+  }
+  const changed = draft.changed.filter((field) => field !== "ownerId");
+  return {
+    ...record,
+    ownerId,
+    draft:
+      changed.length === 0 && draft.action === "changed"
+        ? undefined
+        : {
+            ...draft,
+            changed,
+            live: without(draft.live, "ownerId"),
+            changedBy: without(draft.changedBy ?? {}, "ownerId"),
+          },
+  };
+}
+
+// An object with one key left out.
+const without = <Value>(
+  object: Readonly<Record<string, Value>>,
+  key: string,
+): Record<string, Value> =>
+  Object.fromEntries(Object.entries(object).filter(([name]) => name !== key));
+
 export async function planOut(
   transaction: Transaction,
   viewer: Actor,
@@ -292,6 +338,22 @@ export async function planOut(
 ): Promise<PlanRecords> {
   const makers = await readRecordMakers(transaction, state, viewer);
   const staffed = staffedFeatures(state);
+  const projects = inOrder(state, "project").map((id) =>
+    projectOut(state, makers, id, today),
+  );
+  const proposals = inOrder(state, "proposal").map((id) =>
+    proposalOut(state, makers, id),
+  );
+  const hidden = await hiddenPeople(
+    transaction,
+    viewer,
+    [...projects, ...proposals].flatMap((record) =>
+      [record.ownerId, record.draft?.live.ownerId].filter(
+        (owner): owner is string => typeof owner === "string",
+      ),
+    ),
+    today,
+  );
   return seenRecords(viewer, {
     customers: inOrder(state, "customer").map((id): Customer => ({
       id,
@@ -301,12 +363,8 @@ export async function planOut(
       note: text(shownVersion(state, "customer", id)?.note),
       ...recordExtras(state, makers, "customer", id),
     })),
-    projects: inOrder(state, "project").map((id) =>
-      projectOut(state, makers, id, today),
-    ),
-    proposals: inOrder(state, "proposal").map((id) =>
-      proposalOut(state, makers, id),
-    ),
+    projects: projects.map((project) => ownerShown(project, hidden)),
+    proposals: proposals.map((proposal) => ownerShown(proposal, hidden)),
     features: inOrder(state, "feature")
       .filter((id) => !isGeneralFeature(state, id))
       .map((id) => featureOut(state, makers, staffed, id)),
@@ -331,18 +389,20 @@ export async function readPlanRecords(
   );
 }
 
-// People as owners, by name alone, those whose end date has passed retired, the proposal and feature
-// statuses and features' priorities, sizes, with their weights, and risks, in their lists' order,
-// and the live feature teams by name, those drafted to be removed retired.
+// People as owners, by name alone, those whose end date has passed retired, and those not yet
+// started only to a reader who sees start and end dates, as People lists them; the proposal and
+// feature statuses and features' priorities, sizes, with their weights, and risks, in their lists'
+// order, and the live feature teams by name, those drafted to be removed retired.
 export async function readPlanChoices(
   database: Database,
-  asOf?: string,
+  reader: Actor,
 ): Promise<PlanChoices> {
-  const today = asOf ?? (await readToday(database));
+  const today = await readToday(database);
   const owners = await database
     .select({
       id: people.id,
       name: people.preferredName,
+      startDate: people.startDate,
       endDate: people.endDate,
     })
     .from(people)
@@ -360,11 +420,13 @@ export async function readPlanChoices(
     .orderBy(asc(featureTeams.name), asc(featureTeams.id));
   const teamDrafts = await readTeamDrafts(database);
   return {
-    owners: owners.map(({ id, name, endDate }) => ({
-      id,
-      name,
-      retired: endDate !== null && endDate < today,
-    })),
+    owners: owners
+      .filter((person) => seesEmployment(reader) || !notStarted(person, today))
+      .map(({ id, name, endDate }) => ({
+        id,
+        name,
+        retired: endDate !== null && endDate < today,
+      })),
     statuses: await offered("proposal-statuses"),
     featureStatuses: featureStatuses.map((status) => ({
       ...status,
