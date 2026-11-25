@@ -51,6 +51,7 @@ const reading = {
   choosable: ({ key }: Entry) => key !== "not-ours",
   unseen: ({ key }: Entry) =>
     key === "unseen" ? "This role can't see Personal data" : undefined,
+  othersApprove: ({ key }: Entry) => key === "takes-along",
 };
 
 describe("a draft's row", () => {
@@ -113,11 +114,13 @@ describe("a draft's row", () => {
         entry("waits"),
         entry("p5", { needsOtherApprover: true }),
         entry("unseen"),
+        entry("takes-along"),
       ],
       reading,
     );
     expect(rows.map(({ facts }) => facts)).toEqual([
       [waitsOnRejected],
+      [needsAnotherApprover],
       [needsAnotherApprover],
       [needsAnotherApprover],
     ]);

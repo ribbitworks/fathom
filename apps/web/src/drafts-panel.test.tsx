@@ -61,6 +61,7 @@ function show({
     waits: () => waits,
     choosable: () => approves,
     unseen: () => unseen,
+    othersApprove: () => false,
   });
   const [row] = rows;
   if (row === undefined) throw new Error("No row");

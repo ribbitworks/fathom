@@ -6,7 +6,7 @@
 
 import { type Field, type List, type Person, draftKinds } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { decisionFor } from "./draft-decisions.ts";
+import { decisionFor, needsOtherApproval } from "./draft-decisions.ts";
 import {
   creditedBy,
   decidable,
@@ -487,6 +487,29 @@ describe("drafts of features that use drafts of columns", () => {
       columns,
     );
     expect(decision.beyondRole).toEqual(["the column Fictional Score"]);
+  });
+
+  it("rejects the feature alone, leaving its column waiting, as a person's draft leaves its column", () => {
+    const decision = decisionFor(
+      "reject",
+      { ...noDrafts(), records: records("scored") },
+      ["feature"],
+      lists,
+      columns,
+    );
+    expect(decision.named).toEqual(["the feature scored"]);
+    expect(decision.included).toBeUndefined();
+    expect(decision.beyondRole).toBeUndefined();
+  });
+
+  it("marks the feature for another approver only for a role that can't approve its column", () => {
+    const scoredOnly = { ...noDrafts(), records: records("scored") };
+    expect(
+      needsOtherApproval(scoredOnly, ["feature"], lists, columns),
+    ).toBe(true);
+    expect(
+      needsOtherApproval(scoredOnly, ["feature", "field"], lists, columns),
+    ).toBe(false);
   });
 });
 
