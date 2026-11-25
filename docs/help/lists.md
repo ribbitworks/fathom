@@ -69,13 +69,13 @@ You're done when the choice shows a **Retired** box, or is struck through.
 
 To change a list's name or description:
 
-1. In the list's panel, select **Edit list**.
+1. In the list's panel, select **Edit list…**.
 1. Change the name or the description.
 1. Select **Save**.
 
 To retire or remove a list:
 
-1. In the list's panel, select **Edit list**.
+1. In the list's panel, select **Edit list…**.
 1. At the foot of the dialog, select **Retire list** or **Remove list**.
 
 Fathom refuses to retire or remove a list while a column uses it. A retired list's dialog has **Restore list** in the same place, to bring it back.

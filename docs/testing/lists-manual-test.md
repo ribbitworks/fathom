@@ -166,7 +166,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** LIST-06 done. Signed in with this account. **Lists** page open, with the **Positions** panel open.
 
-- [ ] `3AA3` Select **Edit list**.
+- [ ] `3AA3` Select **Edit list…**.
   - **Expected:**
     - A dialog opens.
     - It has no **Class** choice in it.

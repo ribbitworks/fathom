@@ -108,7 +108,7 @@ export function ListActions({
     <>
       {canEdit && (
         <Button variant="default" size="compact-sm" onClick={onEditList}>
-          Edit list
+          Edit list…
         </Button>
       )}
       {onMoveClass &&

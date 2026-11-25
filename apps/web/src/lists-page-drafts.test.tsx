@@ -680,7 +680,7 @@ describe("unpublished and held changes on the Lists page", () => {
     expect(
       within(panel()).getAllByText(/being changed by/).length,
     ).toBeGreaterThan(1);
-    expect(screen.queryByRole("button", { name: "Edit list" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit list…" })).toBeNull();
     let menu = await menuOf("Drafts of Locations");
     expect(within(menu).getAllByText(held)).toHaveLength(2);
     for (const item of [
