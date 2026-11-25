@@ -18,7 +18,11 @@ Fathom's core entities, how they relate, and the rules that always hold for them
 
 ## Overview
 
-Fathom in one picture: what's planned, when it ships, and who works on it. Each arrow points from a record to what it belongs to or serves. Help's [How Fathom Fits Together](../help/how-fathom-fits-together.md#how-they-connect) shows the same drawing, kept in `docs/help/diagrams/`. It leaves out Activities, which aren't built yet. Each area's entities, with their full relationships, follow below.
+Fathom in one picture: what's planned, when it ships, and who works on it. Each arrow points from a record to what it belongs to or serves.
+
+- **One drawing:** Help's [How Fathom Fits Together](../help/how-fathom-fits-together.md#how-they-connect) shows the same file, kept in `docs/help/diagrams/`.
+- **Activities:** left out, since they aren't built yet.
+- **Each area:** its entities, with their full relationships, follow below.
 
 ![How Fathom's records fit together](../help/diagrams/how-fathom-fits-together.svg)
 

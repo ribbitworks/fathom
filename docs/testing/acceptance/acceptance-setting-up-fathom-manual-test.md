@@ -4,14 +4,17 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-team-accounts-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Acceptance, Setting Up Fathom
 
 ## Scope
 
-Verifies the first two rounds of setting up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, on the installation [The Team's Accounts](acceptance-team-accounts-manual-test.md) readied. The Workforce Administrator pastes the positions and a list of sites in from files, adds a column, a schedule with its cycles and the working time, and the Project Manager approves them. The Workforce Administrator then adds one person by hand and pastes in the rest, fixing the two rows Fathom refuses, and the Project Manager approves them. Each signs in for the first time on the way.
+Verifies the first two rounds of setting up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, on the installation [The Team's Accounts](acceptance-team-accounts-manual-test.md) readied. Each account signs in for the first time on the way.
+
+1. The Workforce Administrator pastes the positions and a list of sites in from files, adds a column, a schedule with its cycles and the working time, and the Project Manager approves them.
+2. The Workforce Administrator adds one person by hand and pastes in the rest, fixing the two rows Fathom refuses, and the Project Manager approves them.
 
 ## Test Environment
 

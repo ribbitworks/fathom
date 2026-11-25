@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Tables, Addresses and Search
@@ -26,7 +26,11 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **One row at a time:** One row shows them at a time: the row whose menu is open, from its ⋯ or a right-click; else the row pointed at; else the row whose Name cell has focus.
   - **The ⋯ at the row's end:** Always shown.
   - **Right-click and keyboard:** A right-click anywhere on the row opens the same menu beside the pointer, except in a cell being typed in, which keeps the browser's own. Shift+F10 and the menu key open it from the keyboard.
-  - **The menu:** A record's menu starts with Open and the column's name, such as Open Spec, for each Web link column holding a link. Then come Show details, where it has details, and Copy link, where it has a key. Then come the table's own items, such as Add note…, then Approve draft… and Reject draft… to a role that decides its draft now, then the user's own draft and the record itself, in this order:
+  - **The menu:** A record's menu holds, in this order:
+    - **Links:** Open and the column's name, such as Open Spec, for each Web link column holding a link.
+    - **The record:** Show details, where it has details, and Copy link, where it has a key.
+    - **The table's own:** items such as Add note….
+    - **Deciding:** Approve draft… and Reject draft…, to a role that decides its draft now.
     - **Publish draft…:** For the user's own unpublished draft. It publishes the draft with the changes it must go with, as [Publishing](entering-and-saving.md#publishing) sets out.
     - **Resubmit:** For a rejected draft.
     - **Discard draft:** For any draft the user may change.
@@ -74,7 +78,10 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Checkbox columns:** A checkbox column is never empty, so it offers none.
   - **Drawn by:** `FilterForm` and `describeFilter` in `apps/web/src/table-controls.tsx`, with the match in `apps/web/src/table-rows.ts` and the filter's `notEmpty` in `packages/shared/src/views.ts`.
   - **Example:** On People, tick Not empty in the Onboarding column's filter.
-- **Filtering across a table:** A filter that is no one column's, such as a feature in any month of a grid of months, has a button of its own after the search field, named for what it filters by, such as Allocations on Capacity's Allocations. It opens the same filter as a column's, beside the button, and focus goes back to the button when it closes. While it filters, the button is marked with a dot, as the Draft menu is, and its pill names it as a column's does, such as Allocated to: Offline Sync. The view, the address and saved views keep it as they keep a column's filter.
+- **Filtering across a table:** A filter that is no one column's, such as a feature in any month of a grid of months, has a button of its own after the search field, named for what it filters by, such as Allocations on Capacity's Allocations.
+  - **Opening:** it opens the same filter as a column's, beside the button, and focus goes back to the button when it closes.
+  - **While it filters:** the button is marked with a dot, as the Draft menu is, and its pill names it as a column's does, such as Allocated to: Offline Sync.
+  - **Kept:** the view, the address and saved views keep it as they keep a column's filter.
   - **Drawn by:** a table's `barFilters` in `apps/web/src/record-table.ts`, each a `BarFilter`, drawn by `BarFilterButton` in `apps/web/src/table-controls.tsx` with `FilterPopover`, and filtering the rows with the draft filter through `filtersBesideColumns` in `apps/web/src/table-view.ts`.
   - **Example:** on Capacity's Allocations, select Allocations, then Offline Sync.
 - **What the Views menu holds:** Besides the sort, saved views and Clear view, the Views menu may hold choices of which records the table shows beyond its filters. A page's modes and switches stay where they are.
@@ -92,7 +99,9 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
     - **Kept from a reader:** A shared view is kept from a reader when it filters, sorts, breaks down or groups by a column they can't see, at either level, or groups by data they can't see.
   - **Pages not opened:** A role that doesn't open a table's page is sent none of its views. The views are kept, and come back with the page.
   - **The menu:** While a view is applied, Save as new view… sits beside Update view, and Stop sharing current view makes a shared view personal again. The menu names the view the address started from, marked once the view has changed. With none applied, it is marked once the view differs from the table's default.
-  - **One view, two forms:** Features' table and Board share one view. It keeps the Board's columns and card parts, but not which form shows. The Board's Views menu leaves out what only changes the table (its sort, units, and hidden, frozen, moved and widened columns), which stays in the view and shows again on the table. Each of Projects' tabs has views of its own, while a view on Drafts keeps its tab.
+  - **One view, two forms:** Features' table and Board share one view, which keeps the Board's columns and card parts, but not which form shows.
+    - **The Board's Views menu:** it leaves out what only changes the table (its sort, units, and hidden, frozen, moved and widened columns), which stays in the view and shows again on the table.
+    - **Other pages:** each of Projects' tabs has views of its own, while a view on Drafts keeps its tab.
   - **The last view:** A page opened from the menu shows its last view (see [Kept in the address](#the-address)), even when it is the page already open. The server keeps it for each account and page, so it follows the account to another browser.
     - **What it holds:** The tab, the view, the saved view it started from and Features' Table or Board. It never holds the record shown, an open form, a note's panel or the time shown, such as People's date, the Board's first cycle or a month grid's quarter.
     - **Addresses:** An address naming a view, as a link does, wins and becomes the last view. An address naming a tab other than the page's first shows the last view only if it was on that tab.

@@ -1,6 +1,6 @@
 # Fathom: Security Plan
 
-**Last updated:** 2026-11-24
+**Last updated:** 2026-11-25
 
 How Fathom guards against threats as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it, as [Securing Your Environment](../operations/securing-your-environment.md) sets out. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
 
@@ -117,7 +117,8 @@ flowchart LR
   - **A change's answer:** a change answers with the records as the role's read would show them, never more; the plan's records pass through one filter on every read and every answer, which tests check for each way a role may hold only part of the plan.
   - **Pages, views and columns:** a page, view or column is shown only to roles that see every classification it needs, and a column that needs a permission as well, such as People's Feature teams, which needs View on Feature teams, only to roles that hold it.
 - **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks.
-  - **A change's class:** a change is shown only to readers who see its data, at its class then or now, whichever is more sensitive, so its timing doesn't reveal a Personal change. Accepted: a role that approves people's drafts is told when one holds details it can't see, so it leaves the draft to another approver; trying to decide the draft would tell it as much.
+  - **A change's class:** a change is shown only to readers who see its data, at its class then or now, whichever is more sensitive, so its timing doesn't reveal a Personal change.
+    - **Accepted:** a role that approves people's drafts is told when one holds details it can't see, so it leaves the draft to another approver. Trying to decide the draft would tell it as much.
   - **Who sees which changes:** changes to configuration are seen by those who may open its pages, changes to people by those who see people, a shared view's by those who open its table's page, and a personal saved view's by its maker alone. Something saved with no change a reader may see is left out for them.
   - **Unpublished changes:** seen only by their maker, who alone publishes or discards them.
     - **Others' changes:** asking to publish or discard someone else's is answered as if the change doesn't exist, and a change is linked only to its maker's other changes.

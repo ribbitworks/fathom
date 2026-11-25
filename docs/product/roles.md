@@ -1,6 +1,6 @@
 # Fathom: Roles
 
-**Last updated:** 2026-11-24
+**Last updated:** 2026-11-25
 
 What each role can see, change and approve. The [Administration Pages](../design/pages/administration.md#roles) describe the Roles page.
 
@@ -122,9 +122,18 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 
 - **A table's columns go with its records:** Whoever edits a table's records, and sees people, adds, changes and removes its columns: Edit Features and releases for Features' columns, Edit People for People's. Seeing people is what General lists and columns take, as Lists and columns sets out. Approve Configuration approves both, until approving moves to each table's area.
 - **Columns on Features:** Everyone who edits features adds them, the Product Manager included. Everyone who sees the plan gets the General lists these columns draw on, and sees drafts of the columns and who made them. Drafts of those lists are shown only to roles that see Lists or People.
-- **Filling a new column on Features:** Whoever edits features may give a feature a value in a column only drafted to be added, as on People. Approving the feature approves the column with it, so it needs Approve Configuration as well as Approve Features. A role holding only one, such as the Product Manager, is refused, and another approver decides both.
+- **Filling a new column on Features:** Whoever edits features may give a feature a value in a column only drafted to be added, as on People.
+  - **Approving:** approving the feature approves the column with it, so it needs Approve Configuration as well as Approve Features.
+  - **Holding one:** a role holding only one, such as the Product Manager, is refused, and another approver decides both.
 - **Saved views:** Everyone who opens a table's page can save personal views.
-  - **Sharing:** Sharing a view on a table needs Edit on the area whose records the table holds: People and the Org chart, Edit People; Features and Releases, Edit Features and releases; Projects' tabs, Edit Plan; schedules and their cycles, Edit Plan or Edit Configuration, as they are edited; Capacity's Allocations, Edit Allocations; its Feature teams, Edit Feature teams; Accounts, Edit Administration. Lists and Drafts take Edit Configuration.
+  - **Sharing:** Sharing a view on a table needs Edit on the area whose records the table holds:
+    - **People and the Org chart:** Edit People.
+    - **Features and Releases:** Edit Features and releases.
+    - **Projects' tabs:** Edit Plan.
+    - **Schedules and their cycles:** Edit Plan or Edit Configuration, as they are edited.
+    - **Capacity:** Edit Allocations on its Allocations, and Edit Feature teams on its Feature teams.
+    - **Accounts:** Edit Administration.
+    - **Lists and Drafts:** Edit Configuration.
   - **Changing a shared view:** Only a shared view's maker, or a role that may share views on that table, updates, renames or deletes it. Only the maker stops sharing it, and only while they may still share.
 
 ## Setting Up the Plan's Tables

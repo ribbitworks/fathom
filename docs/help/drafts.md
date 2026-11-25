@@ -21,7 +21,10 @@ Approvers approve and reject drafts on the [Drafts page](drafts-page.md), under 
 
 ## Publish or Discard One Change
 
-Each record's **⋯** menu acts on its draft. The menu opens from the **⋯** at the end of the record's row, or from the **⋯** at the top of its details, just before the **×**. Both offer the same, except that only the row's offers **Show details**. A person's details beside the Org chart have no **⋯**.
+Each record's **⋯** menu acts on its draft. It opens from two places, which offer the same, except that only the row's offers **Show details**:
+
+- The **⋯** at the end of the record's row.
+- The **⋯** at the top of its details, just before the **×**. A person's details beside the Org chart have none.
 
 To publish your change to one record:
 

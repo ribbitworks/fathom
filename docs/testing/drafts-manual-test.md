@@ -4,14 +4,20 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
 
 ## Scope
 
-Verifies how drafts of people, columns, lists, choices, and choice orders are shown on the People and Lists pages, and what a Workforce Administrator, an Engineering Director and a Project Manager can do with them, there and from the top bar, including drafts that use drafts of another kind, and that nobody approves drafts they changed unless their role grants it, as [Roles](../product/roles.md#what-each-role-can-do) sets out, shown here with a feature's draft. [Drafts Page](drafts-page-manual-test.md) verifies the Drafts page: its table, tabs, ticks and details. [Unpublished Changes](unpublished-changes-manual-test.md) verifies changes not yet published, and publishing all of them or discarding them all from the top bar.
+Verifies drafts on the People and Lists pages:
+
+- How drafts of people, columns, lists, choices, and choice orders are shown.
+- What a Workforce Administrator, an Engineering Director and a Project Manager can do with them, there and from the top bar, including drafts that use drafts of another kind.
+- That nobody approves drafts they changed unless their role grants it, as [Roles](../product/roles.md#what-each-role-can-do) sets out, shown here with a feature's draft.
+
+The Drafts page has [Drafts Page](drafts-page-manual-test.md), and publishing or discarding every change from the top bar has [Unpublished Changes](unpublished-changes-manual-test.md).
 
 ## Test Environment
 

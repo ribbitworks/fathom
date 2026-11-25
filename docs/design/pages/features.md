@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/features.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Fathom: Features Page
@@ -51,7 +51,7 @@ Features lists the plan's features in one table, with a board as a second way of
 - **What it is:** the [Roadmap](../../product/domain.md#planning-terms), drawn as [Boards](../../standards/ui-conventions/dates-timelines-and-boards.md#boards) sets out.
 - **Read only:** nothing on the board can be changed.
 - **One view:** table and board share the page's controls and view. A saved view keeps the Board's columns and card choices, but not which shows or the month or cycle the Board starts from.
-- **Columns:** chosen in a Columns menu of two groups. Under Months: All schedules, the default, or one schedule, whose features alone then show. Under A schedule's cycles: each schedule. The button names the choice, such as Columns: Months, Field Apps or Columns: Platform cycles.
+- **Columns:** chosen in a Columns menu of two groups: Months, with All schedules, the default, or one schedule, whose features alone then show; and A schedule's cycles, with each schedule. The button names the choice, such as Columns: Months, Field Apps or Columns: Platform cycles.
   - **Months:** one column a month, as many as fit, then No date. The months run from 12 months back to the latest month any feature shown is needed by, a year ahead at the least.
     - **One schedule:** only features whose target cycle is in that schedule show, those with no target left out. A feature a draft moves to another schedule shows under the schedule its draft names, with its Live copy where its month differs.
     - **Metrics and Export:** they count the view's features, as its search and filters choose them, not only those the Board shows.

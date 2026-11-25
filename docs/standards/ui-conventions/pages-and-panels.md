@@ -76,7 +76,9 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
 - **One frame:** Every details panel is drawn in the one side panel frame. One shared piece spaces its sections; no panel spaces its own.
   - **Drawn by:** `SidePanelFrame` in `apps/web/src/side-panel.tsx`, through `RecordPanel` in `apps/web/src/record-details.tsx`, whose `subtitle` holds a record's key under its name, with `DetailSections` there spacing the sections.
   - **Example:** Any seeded person's details beside People.
-- **A panel's menu:** A record's details panel has a ⋯ at its top, before its close ×, named Actions for the record. It opens the same menu as the record's row on its table, less Show details: the same items, words and order, such as Copy link, Approve draft…, Reject draft…, Publish draft…, Resubmit and Discard draft. Each does what it does from the row, and focus stays in the panel.
+- **A panel's menu:** A record's details panel has a ⋯ at its top, before its close ×, named Actions for the record.
+  - **The same menu:** it opens the menu of the record's row on its table, less Show details: the same items, words and order, such as Copy link, Approve draft…, Reject draft…, Publish draft…, Resubmit and Discard draft.
+  - **Acting:** each item does what it does from the row, and focus stays in the panel.
   - **A record that goes:** Discarding the draft that added the record takes it away, so focus goes to the table.
   - **Esc:** Esc closes the menu alone, keeping the panel open, as in every ⋯ menu in a panel.
   - **Nothing to offer:** A panel whose record's row would offer only Show details has no ⋯.
