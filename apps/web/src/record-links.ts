@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Following a link to a record by its key: the server finds the record under the reader's
-// permissions, and the link gives way to the page that shows it, with its details open, so Back
-// returns to wherever the reader came from.
+// Following a link to a record by its key: the server finds it under the reader's permissions, and
+// the link gives way to the page that shows it, with its details open.
 
 import {
+  type ColumnTable,
   type FoundRecord,
   type RecordKeyOf,
   recordLookupSchema,
@@ -26,21 +26,26 @@ type RecordAddress =
   | { to: "/people"; search: { open: string | undefined } }
   | { to: "/org-chart"; search: { teams: "feature"; featureTeam: string } }
   | { to: "/lists/{-$listId}"; params: { listId: string } }
-  | { to: "/features" | "/people"; search: { column: string } }
+  | { to: "/features" | "/activities" | "/people"; search: { column: string } }
   | { to: "/accounts" | "/roles"; search: { open: string } };
 
-// The address that shows the record, or none for a record with no page yet, which a link then
-// shows nothing for.
+// The page each table's added columns open on.
+const columnPages = {
+  people: "/people",
+  features: "/features",
+  activities: "/activities",
+} as const satisfies Record<ColumnTable, string>;
+
 async function recordAddress(
   queryClient: QueryClient,
   found: FoundRecord,
-): Promise<RecordAddress | undefined> {
+): Promise<RecordAddress> {
   const { kind, id } = found;
   switch (kind) {
     case "feature":
       return planAddress("features", id);
     case "activity":
-      return undefined;
+      return planAddress("activities", id);
     case "project":
       return planAddress("projects", id);
     case "proposal":
@@ -76,12 +81,10 @@ async function recordAddress(
     case "list":
       return { to: "/lists/{-$listId}", params: { listId: id } };
     case "column":
-      return found.table === "activities"
-        ? undefined
-        : {
-            to: found.table === "features" ? "/features" : "/people",
-            search: { column: id },
-          };
+      return {
+        to: columnPages[found.table ?? "people"],
+        search: { column: id },
+      };
     case "account":
       return { to: "/accounts", search: { open: id } };
     case "role":
@@ -101,13 +104,12 @@ export async function followLink(
     `/api/go/${parsed.kind}/${String(parsed.keyNumber)}`,
     recordLookupSchema,
   );
-  const address =
-    lookup.result === "found"
-      ? await recordAddress(queryClient, lookup)
-      : undefined;
-  if (address !== undefined) {
+  if (lookup.result === "found") {
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-    throw redirect({ ...address, replace: true });
+    throw redirect({
+      ...(await recordAddress(queryClient, lookup)),
+      replace: true,
+    });
   }
   return {
     shownKey: shownRecordKey(parsed.kind, parsed.keyNumber),

@@ -481,6 +481,7 @@ export {
   type Activity,
   activityColumnKeys,
   activityOwnerProblem,
+  ownersAfter,
   type ActivityRequest,
   activityRequestSchema,
   activitySchema,

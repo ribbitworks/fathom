@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The plan as the Projects and Features pages show it while a change to its records is saved.
+// The plan as the Projects, Features and Activities pages show it while a change to its records is
+// saved.
 
 import type { FeatureColumns, ProjectPlan } from "@fathom/shared";
 import { withCellChange } from "./added-columns.ts";
@@ -8,13 +9,13 @@ import type { CellChange } from "./cell-kinds.tsx";
 import { pendingDraft, unsavedKeyNumber } from "./drafts.ts";
 import { livePlanRecords, type PlanChange } from "./plan-table.tsx";
 import {
-  isFeature,
+  isPlanned,
   namersIn,
-  operationsOf,
   type PlanRecord,
   type PlanRecordKind,
   withNamers,
 } from "./projects.ts";
+import { operationsOf } from "./plan-record-operations.ts";
 
 // The plan with the columns of one of its tables of planned work changed.
 const withPlannedColumns =
@@ -80,7 +81,7 @@ export function withAdded(
 const withChange = (record: PlanRecord, change: PlanChange): PlanRecord => ({
   ...record,
   ...change,
-  ...(isFeature(record) ? withCellChange(record, change) : {}),
+  ...(isPlanned(record) ? withCellChange(record, change) : {}),
 });
 
 // The plan with a change to a record applied, as the table shows it before it is saved: the

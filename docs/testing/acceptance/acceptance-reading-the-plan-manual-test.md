@@ -69,7 +69,7 @@ Run the test cases in order, in about 30 minutes, straight after [Deciding the C
 
 - [ ] `A740` Look at the left-hand menu.
   - **Expected:**
-    - The **Plan** section shows **Overview**, **Projects**, **Features** and **Releases**.
+    - The **Plan** section shows **Overview**, **Projects**, **Features**, **Activities** and **Releases**.
     - The **People** section shows **People** and **Org chart**, with no **Capacity**.
   - **Notes:**
 

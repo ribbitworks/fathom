@@ -60,7 +60,7 @@ You're done when the new role shows in the list.
 - Under **Data classification**, **General** comes with every area. You tick **Personal** and **Confidential** on their own.
 - **Hiring plan** also needs the hiring plan's class, which is **Confidential** unless someone changes it. Without that class, planned hires show only as placeholders.
 - **Edit** on **Plan** also changes which customers a feature is for and which projects and proposals name it. **Edit** on **Feature teams**, with **Edit** on **Features and releases**, also changes a feature's **Feature team**. **Edit** on **Features and releases** alone changes the rest of a feature.
-- **Columns** added to **Features** or **People** are set up with **Edit** on that area, together with **View** on **People**.
+- **Columns** added to **Features**, **Activities** or **People** are set up with **Edit** on that area, together with **View** on **People**; **Activities** go with **Features and releases**.
 - **Classify data**, under the grid, lets the role change the class of details, lists and columns.
 - **Approve own drafts**, under the grid, lets the role approve drafts its holders made themselves, which otherwise need someone else.
 

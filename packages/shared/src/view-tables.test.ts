@@ -191,6 +191,7 @@ describe("Sharing views", () => {
     people: ["people:edit"],
     "org-chart": ["people:edit"],
     features: ["features:edit"],
+    activities: ["features:edit"],
     releases: ["features:edit"],
     projects: ["plan:edit"],
     proposals: ["plan:edit"],

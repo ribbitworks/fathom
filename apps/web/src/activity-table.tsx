@@ -6,41 +6,41 @@
 import {
   type Activity,
   activityOwnerProblem,
+  ownersAfter,
   planColumnNames,
 } from "@fathom/shared";
-import {
-  addedColumn,
-  type AddedColumns,
-  cellRequest,
-} from "./added-columns.ts";
-import type { CellChange } from "./cell-kinds.tsx";
+import { type AddedColumns } from "./added-columns.ts";
 import type { CellValue } from "./table-view.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
-import { inOrder } from "./grid-columns.tsx";
 import {
   field,
   identified,
-  merged,
   namesCell,
   newKind,
   type PlanChange,
   planTable,
+  wordsOf,
   savedKind,
 } from "./plan-table.tsx";
 import {
   byNeededBy,
+  inGroupsThenAdded,
+  plannedRequest,
   planningColumns,
   staffedColumnKey,
 } from "./planning-columns.tsx";
-import type { ActivityFields, TableChoices } from "./projects.ts";
-import type { Column, RecordTable, RowProblem } from "./record-table.ts";
+import type { TableChoices } from "./projects.ts";
+import type { ActivityFields } from "./plan-record-operations.ts";
+import type {
+  Column,
+  ColumnGroup,
+  RecordTable,
+  RowProblem,
+} from "./record-table.ts";
 
 // An activity's built-in columns in the headed groups its details show them in, in order: the
 // order the table starts its columns in too.
-export const activityColumnGroups: readonly {
-  title: string;
-  keys: readonly string[];
-}[] = [
+export const activityColumnGroups: readonly ColumnGroup[] = [
   {
     title: "Details",
     keys: ["name", "statusId", "description", "note", "releaseId", "projectId"],
@@ -59,7 +59,9 @@ export const activityColumnGroups: readonly {
   },
 ];
 
-const activityColumnOrder = activityColumnGroups.flatMap(({ keys }) => keys);
+// What the Release or Project an activity doesn't belong to reads, alike in its cells, details and
+// drafts.
+const noOwner = "None";
 
 export function activityColumns(
   choices: TableChoices,
@@ -76,26 +78,22 @@ export function activityColumns(
     ...planningColumns<Activity>(choices, { editsFeatureTeams }),
     field<Activity>("releaseId", planColumnNames.releaseId, "choice", {
       choices: choices.releases,
+      emptyLabel: noOwner,
     }),
     {
       ...field<Activity>("projectId", planColumnNames.projectId, "choice", {
         choices: identified(choices.projects),
+        emptyLabel: noOwner,
       }),
       content: ({ projectId }) =>
         projectId === null ? null : namesCell(choices.projects)([projectId]),
     },
   ];
-  const inGroups = [...builtIn].sort(
-    (a, b) =>
-      activityColumnOrder.indexOf(a.key) - activityColumnOrder.indexOf(b.key),
-  );
-  return [
-    ...inGroups,
-    ...inOrder(
-      fields.map((added) => addedColumn<Activity, CellChange>(added, lists)),
-      order,
-    ),
-  ];
+  return inGroupsThenAdded(builtIn, activityColumnGroups, {
+    fields,
+    lists,
+    order,
+  });
 }
 
 const ownerIn = (
@@ -109,27 +107,27 @@ const ownerIn = (
 };
 
 // Why an activity's values can't be saved: it belongs to neither a release nor a project, or, in a
-// new one, to both. Checked when one of those two changes, or the whole record is added; choosing
-// one in a saved activity's cell moves it there, clearing the other.
+// new one, to both. Checked when one of those two changes, by the rule that moves it, or when the
+// whole record is added.
 export function activityProblem(
   values: Record<string, CellValue>,
   changed?: string,
 ): RowProblem | undefined {
-  if (
-    changed !== undefined &&
-    changed !== "releaseId" &&
-    changed !== "projectId"
-  ) {
-    return undefined;
+  const owners = {
+    releaseId: ownerIn(values, "releaseId"),
+    projectId: ownerIn(values, "projectId"),
+  };
+  if (changed === undefined) {
+    const message = activityOwnerProblem(owners);
+    return message === undefined ? undefined : { message, column: "releaseId" };
   }
-  const releaseId =
-    changed === "projectId" ? null : ownerIn(values, "releaseId");
-  const projectId =
-    changed === "releaseId" ? null : ownerIn(values, "projectId");
-  const message = activityOwnerProblem({ releaseId, projectId });
-  return message === undefined
-    ? undefined
-    : { message, column: changed ?? "releaseId" };
+  if (changed !== "releaseId" && changed !== "projectId") return undefined;
+  const message = activityOwnerProblem(
+    // The key is always one of the two fields naming an owner.
+    // eslint-disable-next-line security/detect-object-injection
+    ownersAfter(owners, { [changed]: owners[changed] }),
+  );
+  return message === undefined ? undefined : { message, column: changed };
 }
 
 // The grouped columns whose choices are listed by name, as the server sends them.
@@ -153,20 +151,12 @@ export function activityTable(
   return {
     ...planTable<Activity, ActivityFields>({
       type: "activity",
-      label: "Activities",
-      one: "activity",
-      noun: "activities",
+      ...wordsOf("activities"),
       kinds: [newKind, savedKind],
       columns: (shown) =>
         activityColumns(choices, { shown, editsFeatureTeams }),
       groupings: [byNeededBy, ...byListed],
-      request: (changes) => {
-        const request: PlanChange = {
-          ...merged(changes),
-          ...cellRequest(changes),
-        };
-        return request as ActivityFields;
-      },
+      request: (changes) => plannedRequest(changes) as ActivityFields,
       showDetails: onOpen,
     }),
     recordProblem: (values, _others, changed) =>

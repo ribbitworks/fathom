@@ -7,11 +7,11 @@ import type { ProjectPlan } from "@fathom/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   namersIn,
-  operationsOf,
   releaseOfCycle,
   streamOfReleaseGroup,
   withNamers,
 } from "./projects.ts";
+import { operationsOf } from "./plan-record-operations.ts";
 import { formatDay } from "./day-formats.ts";
 import {
   fictionalCycle,

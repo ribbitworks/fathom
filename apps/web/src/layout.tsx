@@ -420,7 +420,12 @@ function Sidebar({ access, rail }: { access: ClassAccess; rail: boolean }) {
                     to={item.to}
                     state={(previous) => ({ ...previous, ...menuChoice })}
                     className={classes.link}
-                    activeOptions={{ exact: item.nested !== true }}
+                    // The current page stays marked whatever its address shows, such as a
+                    // record's details or a grouping.
+                    activeOptions={{
+                      exact: item.nested !== true,
+                      includeSearch: false,
+                    }}
                   >
                     <ItemContent item={item} rail={rail} />
                   </Link>

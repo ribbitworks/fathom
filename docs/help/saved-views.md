@@ -17,7 +17,7 @@ On some pages, a view keeps more:
 
 On the board on **Features**, the **Views** menu leaves out the sort, the units, and the columns' order, hidden columns, widths and frozen columns. They stay in the view and show again on the table.
 
-You can save views on the **People**, **Features**, **Projects**, **Releases**, **Lists**, **Org chart**, **Capacity**, **Accounts** and **Drafts** pages. Each tab of **Projects** and of **Releases** has views of its own, and so do **Capacity**'s **Feature teams** and **Allocations**.
+You can save views on the **People**, **Features**, **Activities**, **Projects**, **Releases**, **Lists**, **Org chart**, **Capacity**, **Accounts** and **Drafts** pages. Each tab of **Projects** and of **Releases** has views of its own, and so do **Capacity**'s **Feature teams** and **Allocations**.
 
 On the **Org chart**, a view keeps how the chart is drawn instead. See [Org chart](org-chart.md#save-a-view-of-the-chart).
 

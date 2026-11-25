@@ -13,7 +13,8 @@ import {
   activityTable,
 } from "./activity-table.tsx";
 import { planDraftFields } from "./project-grids.tsx";
-import { movedActivity, planAddress } from "./projects.ts";
+import { planAddress } from "./projects.ts";
+import { movedActivity } from "./plan-record-operations.ts";
 import { project as fictionalProject } from "./test-projects-page.tsx";
 import { choices, testTheme } from "./test-support.tsx";
 
@@ -147,6 +148,12 @@ describe("what an activity belongs to", () => {
         { releaseId: [release], projectId: [project] },
         "releaseId",
       ),
+    ).toBeUndefined();
+  });
+
+  it("takes emptying the empty one, which leaves it where it is", () => {
+    expect(
+      activityProblem({ releaseId: [], projectId: [project] }, "releaseId"),
     ).toBeUndefined();
   });
 

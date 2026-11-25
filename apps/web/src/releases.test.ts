@@ -30,7 +30,6 @@ import {
   setStreamRetired,
   setStreamEnd,
   shipsOffCycle,
-  withSchedule,
   cycleRunWords,
 } from "./releases.ts";
 import {
@@ -335,12 +334,6 @@ describe("cycles and releases by name and day", () => {
       "Fictional Lone",
       "Fictional Unlisted",
     ]);
-  });
-
-  it("names a cycle or release with its schedule", () => {
-    expect(withSchedule(stream, "Fictional One")).toBe(
-      "Fictional Majors: Fictional One",
-    );
   });
 });
 

@@ -108,7 +108,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 
 - [ ] `83BF` Look at the left-hand menu.
   - **Expected:**
-    - The **Plan** section shows **Overview**, **Projects**, **Features** and **Releases**.
+    - The **Plan** section shows **Overview**, **Projects**, **Features**, **Activities** and **Releases**.
     - The **People** section shows **People** and **Org chart**.
     - There is no **Capacity**.
     - The **History** section shows **Drafts** and **Change history**.

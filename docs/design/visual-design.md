@@ -20,6 +20,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 - **[Capacity](pages/capacity.md):** who is on which feature team and allocated to what, month by month, and the planning settings.
 - **[Projects](pages/projects.md):** the tabs for projects, proposals, customers, and milestones, and their details.
 - **[Features](pages/features.md):** the features table and the Features Board.
+- **[Activities](pages/activities.md):** the activities table, built as Features' is.
 - **[Releases](pages/releases.md):** releases, cycles, and schedules, on a timeline over a table.
 - **[Administration](pages/administration.md):** Accounts, Roles, Settings, Lists, and Data classes.
 - **[History pages](pages/history.md):** Change history and Access history.
@@ -208,6 +209,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 One component does each job, in `apps/web/src/`. A new screen uses or extends the one listed rather than making another, and a review rates a second one doing the same job as HIGH, as [Reuse across the codebase](../standards/code-review.md#architecture-and-design) sets out.
 
 - **Tables of records:** `RecordGrid` in `record-grid.tsx`, given its records, columns and actions as `record-table.ts` sets out, with each kind of cell, its display and its editor, in `cellKinds` in `cell-kinds.tsx`.
+- **Columns of planned work:** `planningColumns` and `inGroupsThenAdded` in `planning-columns.tsx`, the columns features and activities share, drawn by Features' and Activities' tables, `feature-table.tsx` and `activity-table.tsx`, through `plannedGrid` in `projects-page.tsx`.
 - **Search, views, and the bar above a table:** `TableSearch`, `ViewBar`, and `ViewsMenu` in `table-controls.tsx`, with a page's saved views, on a table or not, such as the Org chart's, from `useSavedViews` in `saved-views.tsx`.
 - **Side panels:** `WithSidePanel` and `SidePanelFrame` in `side-panel.tsx`, the frame holding a panel's heading, with its marks beside it, its subtitle and its actions. A record's details panel is `RecordPanel` in `record-details.tsx`, on that frame, with its ⋯ menu from `PanelMenu` in `panel-menu.tsx`. Every ⋯ menu in a side panel, `RecordMenu`'s and a list's drafts' included, is drawn by `PanelMoreMenu` there.
 - **A coloured name:** `ColouredName` in `colour-swatch.tsx`, as [A coloured name](../standards/ui-conventions/drafts-and-values.md#values) sets out.

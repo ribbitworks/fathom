@@ -11,7 +11,7 @@ import {
   recordCell,
   recordDraft,
 } from "./test-support.tsx";
-import { operationsOf } from "./projects.ts";
+import { operationsOf } from "./plan-record-operations.ts";
 import {
   changeSetId,
   saved,

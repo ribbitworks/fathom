@@ -219,11 +219,14 @@ describe("recording an export", () => {
     ).toEqual({ exported: "People", personalColumns: ["Start"] });
   });
 
-  it("records nothing for Features, whose columns are all General", async () => {
-    const reader = await test.signedIn(["features:view"]);
-    const response = await exported(reader.cookie, ["name"], "features");
-    expect(response.json()).toEqual({ recorded: false });
-  });
+  it.each(["features", "activities"] as const)(
+    "records nothing for %s, whose columns are all General",
+    async (table) => {
+      const reader = await test.signedIn(["features:view"]);
+      const response = await exported(reader.cookie, ["name"], table);
+      expect(response.json()).toEqual({ recorded: false });
+    },
+  );
 });
 
 describe("who may record an export", () => {
@@ -259,6 +262,7 @@ describe("who may record an export", () => {
   it.each([
     ["people", ["plan:view"]],
     ["features", ["plan:view"]],
+    ["activities", ["plan:view"]],
   ] as const)(
     "refuses an export of %s to a role that doesn't see it",
     async (table, permissions) => {

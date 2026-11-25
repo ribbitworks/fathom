@@ -41,6 +41,23 @@ export const activityRequestSchema = z.object({
 
 export type ActivityRequest = z.infer<typeof activityRequestSchema>;
 
+type Owners = Pick<ActivityRequest, "releaseId" | "projectId">;
+
+// What an activity belongs to once a change chooses its release or its project: choosing one moves
+// it there, clearing the other; a change that chooses neither leaves both as they were.
+export const ownersAfter = (
+  owners: Owners,
+  change: Partial<Owners>,
+): Owners => {
+  if (typeof change.releaseId === "string") {
+    return { releaseId: change.releaseId, projectId: null };
+  }
+  if (typeof change.projectId === "string") {
+    return { releaseId: null, projectId: change.projectId };
+  }
+  return { ...owners, ...change };
+};
+
 // Why an activity can't belong to what it names: an activity belongs to exactly one release or
 // one project.
 export const activityOwnerProblem = (

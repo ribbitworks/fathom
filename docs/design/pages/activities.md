@@ -29,7 +29,7 @@ Activities lists the work releases and projects need that isn't a feature, such 
   - **Release:** names a release with its schedule, such as Platform: Harbor 1, as a cycle is named.
   - **Project:** names a project with its Project ID first, as Features' Projects does.
   - **Moving:** choosing a value in the empty one moves the activity there, as a draft, and clears the other.
-  - **Clearing:** clearing the filled one is refused under the cell: "Choose a release or a project".
+  - **Clearing:** clearing the filled one is refused under the row, as any refused value is: "Choose a release or a project".
 - **New activity:** the shared New form, with Release and Project as two pickers, neither marked required. Add with neither, or both, is refused under Release, with focus there, and nothing is sent: "Choose a release or a project", or "Choose a release or a project, not both".
 
 ## Grouping
@@ -38,6 +38,8 @@ Group by offers Needed by and each column of choices: Status, Release, Project, 
 
 ## Planned
 
-- **Releases and projects:** a release's or project's details listing its first five activities, with Show on Activities and Add activity, come with the Releases and Projects changes.
+- **Releases and projects:** a release's or project's details listing its first five activities, with Show on Activities and Add activity, come with the Releases and Projects changes, with Release and Project as links in an activity's details ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
+- **Staffed:** No until allocating to activities is built ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
+- **Duplicate…:** in an activity's row menu and details, with duplicating features.
 - **Colour:** an activity's colour, saved at once with no draft, comes with feature colours.
 - **A Board of activities** is later.

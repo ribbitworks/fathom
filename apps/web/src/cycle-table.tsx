@@ -8,6 +8,7 @@
 // it where that changes the cycle as well, or alone where the change behind it can't be decided.
 
 import {
+  withSchedule,
   type Choice,
   type Cycle,
   draftKey,
@@ -51,7 +52,6 @@ import {
   releaseListNames,
   scheduledNames,
   shownColour,
-  withSchedule,
 } from "./releases.ts";
 import {
   bySchedule,

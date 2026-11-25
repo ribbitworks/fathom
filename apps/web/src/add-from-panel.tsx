@@ -12,8 +12,8 @@ import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
 import type { FormValues } from "./new-record-panel.tsx";
 import type { NoteOpening } from "./note-editing.tsx";
 import { type PlanChange, wordsOf } from "./plan-table.tsx";
+import { operationsOf } from "./plan-record-operations.ts";
 import {
-  operationsOf,
   type PlanRecord,
   type PlanRecordKind,
   projectPlanQuery,
@@ -92,6 +92,7 @@ const pickersOf: Readonly<Record<PlanRecordKind, readonly AddingPicker[]>> = {
   milestone: [
     { key: "projectId", kind: "project", opening: named, linkedBy: "fill" },
   ],
+  activity: [],
 };
 
 export type Adds = NonNullable<Column<never, PlanChange>["adds"]>;

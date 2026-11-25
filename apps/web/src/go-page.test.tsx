@@ -63,6 +63,7 @@ async function follow(
 describe("a link to a record found", () => {
   it.each([
     ["feature", "/features", `?open=${recordId}`],
+    ["activity", "/activities", `?open=${recordId}`],
     ["project", "/projects", `?open=${recordId}`],
     ["proposal", "/projects", `?tab=proposals&open=${recordId}`],
     ["customer", "/projects", `?tab=customers&open=${recordId}`],
@@ -141,6 +142,7 @@ describe("a link to a record found", () => {
 
   it.each([
     ["features", "/features"],
+    ["activities", "/activities"],
     ["people", "/people"],
   ] as const)(
     "opens an added column on the %s table it is on",
@@ -153,6 +155,15 @@ describe("a link to a record found", () => {
       });
     },
   );
+
+  it("opens an added column that names no table on People", async () => {
+    const { history } = await follow("/go/column/4", {
+      "GET /api/go/column/4": found("column", {}),
+    });
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/people");
+    });
+  });
 });
 
 describe("a link to no record", () => {
@@ -169,32 +180,6 @@ describe("a link to no record", () => {
       screen.queryByRole("link", { name: "Show change history" }),
     ).toBeNull();
   });
-
-  it.each([
-    ["an activity", "activity", { kind: "activity" } as const, "#ACTIVITY-9"],
-    [
-      "a column on Activities",
-      "column",
-      { kind: "column", table: "activities" } as const,
-      "#COLUMN-9",
-    ],
-  ])(
-    "says nothing was found for %s, which has no page to open",
-    async (_case, kind, found, key) => {
-      await follow(`/go/${kind}/9`, {
-        [`GET /api/go/${kind}/9`]: lookup({
-          result: "found",
-          id: recordId,
-          ...found,
-        }),
-      });
-      expect(
-        await screen.findByRole("heading", {
-          name: `Nothing found for ${key}`,
-        }),
-      ).toBeDefined();
-    },
-  );
 
   it("says a record was removed, linking to the change history", async () => {
     const { history } = await follow("/go/FEATURE-9", {

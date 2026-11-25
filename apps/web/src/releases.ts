@@ -447,7 +447,6 @@ export const releaseColourStyle = (
 
 // A cycle or release named with its schedule, such as "Platform: 27.1", where nothing around it says
 // which schedule it is in.
-export { withSchedule };
 
 // A run of cycles in words, from the first's name to the last's, such as "26.1 to 26.2", or the one
 // cycle's name.
