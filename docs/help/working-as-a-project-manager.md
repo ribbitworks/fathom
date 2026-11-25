@@ -54,7 +54,7 @@ Open the project's details. **Scope history**, at the end, lists each feature ad
 
 ### See Where Each Feature Stands
 
-Select **Show on Features** in the project's **⋯** menu. **Features** opens, showing only the features it needs, with their status and target cycle. See [Projects](projects.md#go-from-a-project-to-its-milestones-or-features).
+Select **Show on Features** in the project's **⋯** menu. **Features** opens, showing only the features it needs, with their status and target cycle. See [Projects](projects.md#go-from-a-project-to-its-milestones-features-or-activities).
 
 ## Move Work When Dates Change
 

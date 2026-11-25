@@ -39,7 +39,7 @@ See [Projects](projects.md#see-a-records-details).
 1. Open the project's **⋯** menu.
 1. Select **Show on Milestones**. **Milestones** opens, showing only that project's, with their dates.
 
-See [Projects](projects.md#go-from-a-project-to-its-milestones-or-features).
+See [Projects](projects.md#go-from-a-project-to-its-milestones-features-or-activities).
 
 ## Find Someone
 

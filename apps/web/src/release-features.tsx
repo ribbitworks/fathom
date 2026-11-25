@@ -1,21 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A release's, cycle's or schedule's features as its details' Features row lists them, one to a
-// line, each a link opening the feature's details on Features, as a panel lists several records;
-// folded past the first five. Then Show on Features and Show on the Board, which open them there.
+// The features a release's, cycle's or schedule's details list.
 
 import type { Feature } from "@fathom/shared";
-import { Button, Group, Stack } from "@mantine/core";
-import { FoldedList } from "./folded-list.tsx";
-import { RecordLinkList } from "./record-details.tsx";
 import type { Column, GridRecord } from "./record-table.ts";
+import { ShortList } from "./short-list.tsx";
 import {
   type FeaturesAt,
   featuresColumnKey,
   type PlannedFeatures,
 } from "./release-tabs.ts";
-
-const shownFirst = 5;
 
 // Where a record's features are seen on Features: by its filter there, and, on the Board, the
 // schedule and the cycle the board starts from.
@@ -31,39 +25,27 @@ export function FeatureList({
   onFeatures: (at: FeaturesAt) => void;
 }) {
   return (
-    <Stack gap="xs" align="flex-start">
-      <FoldedList items={features} first={shownFirst} noun="features">
-        {(shown) => (
-          <RecordLinkList
-            links={shown.map(({ id, name }) => ({
-              id,
-              name,
-              onShow: () => {
-                onFeatures({ feature: id });
-              },
-            }))}
-          />
-        )}
-      </FoldedList>
-      <Group gap="xs">
-        <Button
-          variant="default"
-          onClick={() => {
+    <ShortList
+      items={features}
+      noun="features"
+      onShow={(feature) => {
+        onFeatures({ feature });
+      }}
+      actions={[
+        {
+          label: "Show on Features",
+          onClick: () => {
             onFeatures({ filter: at.filter });
-          }}
-        >
-          Show on Features
-        </Button>
-        <Button
-          variant="default"
-          onClick={() => {
+          },
+        },
+        {
+          label: "Show on the Board",
+          onClick: () => {
             onFeatures(at);
-          }}
-        >
-          Show on the Board
-        </Button>
-      </Group>
-    </Stack>
+          },
+        },
+      ]}
+    />
   );
 }
 

@@ -278,7 +278,9 @@ function DetailRow({
       ? undefined
       : partsShown(column.parts(record as never), show);
   const shown =
-    linkedPage !== undefined && namers !== undefined ? (
+    column.details !== undefined ? (
+      column.details(record as never)
+    ) : linkedPage !== undefined && namers !== undefined ? (
       namers.length === 0 ? undefined : (
         <RecordLinkList
           links={namers.map((part) => ({

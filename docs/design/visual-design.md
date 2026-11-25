@@ -225,6 +225,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **Adding a record in a side panel:** `NewRecordPanel` in `new-record-panel.tsx`, driven by a table's columns, with each page drawing its own fields in it: `NewPersonPanel` in `new-person-panel.tsx` for People and `NewPlanRecordPanel` in `new-plan-record-panel.tsx` for the plan's records.
 - **A record's details in a side panel:** `Row` for each value, `RecordLink` for a link to another record, `RecordLinkList` for several, one to a line, `RecordSection` for a headed group of rows, and `DetailSections` spacing the sections, in `record-details.tsx`, with `FoldedNote` in `folded-note.tsx` and `FoldedList` in `folded-list.tsx` for a long note or list.
 - **A record's timeline of days:** `RecordTimeline` in `record-timeline.tsx`, one row a day newest first, each change a `Phrase` whose values may link, with Today drawn across as a timeline draws it, and `FoldedList`'s newest-first folds.
+- **A short list of records in a side panel, with buttons under it:** `ShortList` in `short-list.tsx`, such as a release's features and a project's activities.
 - **Changing a record's values in a side panel:** `useRecordEditing` in `record-editing.tsx`, with what a person's notes add in `person-editing.tsx`.
 - **A record's menu outside a table:** `RecordMenu` in `record-menu.tsx`, such as a milestone's in a project's details, offering Publish draft… where `usePublishDraft` in `publish-draft.tsx` gives it.
 - **Something that could not be loaded:** `LoadProblem` in `load-problem.tsx`.

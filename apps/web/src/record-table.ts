@@ -155,6 +155,9 @@ export interface Column<
   // The records a choice column offers, so a link to one names it in full, such as a project by its
   // Project ID and name.
   named?: readonly NamingPart["record"][];
+  // What a record's details show for it, empty or not, in place of its value, such as a list with
+  // actions on it.
+  details?: (record: Rec) => ReactNode;
   // For a column listing records, each of them, as drafted and as live, given the row's record, so a
   // details panel marks them as the cell does.
   parts?: (record: Rec) => readonly NamingPart[];

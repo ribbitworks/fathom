@@ -54,8 +54,8 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **Example:** Point at any row on People.
 - **Several records in a cell:** A cell naming several records lists them on one line, cut short where they don't fit, with every name in its tooltip, one to a line.
   - **In a details panel:** A details panel lists them one to a line, each linked to its record.
-  - **A list of features:** A list of features in a panel, such as a release's, cycle's or schedule's Features, folds past its first five as [A long list](#details-panels) sets out. Under it, Show on Features and Show on the Board open Features or its Board filtered to the record.
-  - **Drawn by:** The cell's kind in `apps/web/src/cell-kinds.tsx`, its column from `recordsColumn` in `apps/web/src/plan-table.tsx`, and its tip from `TableTips` in `apps/web/src/table-tips.tsx`. In a panel, `RecordLinkList` in `apps/web/src/record-details.tsx`, with `FeatureList` in `apps/web/src/release-features.tsx` for a record's features.
+  - **A short list:** A list of records in a panel, such as a release's, cycle's or schedule's Features or a project's Activities, folds past its first five as [A long list](#details-panels) sets out, and reads None when empty. Under it, buttons act on them: Show on Features and Show on the Board for features; Show on Activities, whenever there is one, and Add activity, for those who may, for activities.
+  - **Drawn by:** The cell's kind in `apps/web/src/cell-kinds.tsx`, its column from `recordsColumn` in `apps/web/src/plan-table.tsx`, and its tip from `TableTips` in `apps/web/src/table-tips.tsx`. In a panel, `RecordLinkList` in `apps/web/src/record-details.tsx`, with `ShortList` in `apps/web/src/short-list.tsx` for a short list, used by `FeatureList` in `apps/web/src/release-features.tsx` for a record's features.
   - **Example:** Crane Control's Features cell.
 
 ## History

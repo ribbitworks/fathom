@@ -234,18 +234,35 @@ export function useLinkedColumn(
   column: string | undefined,
   drop: () => void,
 ): LinkedColumn | undefined {
-  const [linked, setLinked] = useState(column);
+  const linked = useLinkedAsk(column, drop);
+  return linked === undefined
+    ? undefined
+    : { key: linked.asked, onOpened: linked.onDone };
+}
+
+// What a link asks a page to do once, such as opening a column's menu or a New form: taken out of
+// the address at once, so going back doesn't ask again, and kept until the page has done it.
+export interface LinkedAsk<Asked> {
+  asked: Asked;
+  onDone: () => void;
+}
+
+export function useLinkedAsk<Asked>(
+  asked: Asked | undefined,
+  drop: () => void,
+): LinkedAsk<Asked> | undefined {
+  const [linked, setLinked] = useState(asked);
   const dropped = useRef(false);
   useEffect(() => {
-    if (column === undefined || dropped.current) return;
+    if (asked === undefined || dropped.current) return;
     dropped.current = true;
     drop();
-  }, [column, drop]);
+  }, [asked, drop]);
   return linked === undefined
     ? undefined
     : {
-        key: linked,
-        onOpened: () => {
+        asked: linked,
+        onDone: () => {
           setLinked(undefined);
         },
       };

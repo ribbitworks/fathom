@@ -378,6 +378,8 @@ export interface TableChoices {
   releaseOfCycle: Map<string, ReleaseGroup>;
   // Every release an activity can belong to, each named with its schedule.
   releases: Choice[];
+  // The activities, for a page whose role sees them.
+  activities?: readonly Activity[] | undefined;
   featureColumns: FeatureColumns;
   activityColumns: FeatureColumns;
   // The records with their drafts, whatever the view, which mark the records each lists, or the

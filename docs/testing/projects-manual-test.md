@@ -59,7 +59,7 @@ To run the test again, run Restore the Seed Data first.
   - **Expected:**
     - The **Projects** page opens.
     - The **Projects** tab is chosen.
-    - The table's columns are **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**.
+    - The table's columns are **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **Activities**, **First milestone**, **Last milestone** and **Next delivery**.
     - There is a row for each seeded project.
     - There is no **New project** button.
   - **Notes:**
@@ -95,7 +95,7 @@ To run the test again, run Restore the Seed Data first.
 - [ ] `FA04` Open the project's ⋯ menu and select **Show details**.
   - **Expected:**
     - The side panel opens, headed with the project's name.
-    - It lists **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date.
+    - It lists **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **Activities**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date.
     - There is no **Add milestone** button.
     - No milestone has a ⋯ button.
   - **Notes:**
@@ -430,6 +430,64 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Expected:**
     - The **Projects** tab is chosen.
     - The side panel shows the details of 'Depot Operations'.
+
+### PROJ-18: A Project's Activities
+
+**Account:** Product Manager, `product.manager@fathom.test`.
+
+**Preconditions:** Restore the Seed Data run, then signed in with this account. **Projects** page open, **Projects** tab chosen.
+
+- [ ] `F7F6` Look at the **Activities** column of 'Crane Control'.
+  - **Expected:** The cell names the project's activities on one line, separated by commas.
+  - **Notes:**
+
+- [ ] `9737` Open the ⋯ menu of 'Crane Control' and select **Show details**.
+  - **Expected:**
+    - The side panel lists the project's activities under **Activities**, each a link on a line of its own.
+    - **Show on Activities** and **Add activity** are under the list.
+  - **Notes:**
+
+- [ ] `28C8` Select the first activity under **Activities**.
+  - **Expected:**
+    - The **Activities** page opens.
+    - That activity's side panel is beside the table.
+  - **Notes:**
+
+- [ ] `09B0` Select the browser's back button.
+  - **Expected:** The details of 'Crane Control' show on **Projects**.
+  - **Notes:**
+
+- [ ] `D4E1` Select **Show on Activities**.
+  - **Expected:**
+    - The **Activities** page opens.
+    - The table shows only the activities of 'Crane Control'.
+  - **Notes:**
+
+- [ ] `5DB3` Select the browser's back button.
+  - **Expected:** The details of 'Crane Control' show on **Projects**.
+  - **Notes:**
+
+- [ ] `6F18` Select **Add activity**.
+  - **Expected:**
+    - The **Activities** page opens, with the **New activity** form beside the table.
+    - **Project** reads 'P-2001 Crane Control'.
+    - **Release** reads None.
+  - **Notes:**
+
+- [ ] `4F2A` Type 'Fictional Rehearsal' in **Name**, and select **Add**.
+  - **Expected:** 'Fictional Rehearsal' shows in the table with a hollow dot, its **Project** 'P-2001 Crane Control'.
+  - **Notes:**
+
+### PROJ-19: A Team Member Sees a Project's Activities
+
+**Account:** Team Member, `team.member@fathom.test`.
+
+**Preconditions:** Restore the Seed Data run, then signed in with this account. **Projects** page open, **Projects** tab chosen.
+
+- [ ] `BBD3` Open the ⋯ menu of 'Crane Control' and select **Show details**.
+  - **Expected:**
+    - **Activities** lists the project's activities, with **Show on Activities** under them.
+    - There's no **Add activity**.
   - **Notes:**
 
 ### PROJ-17: The Product Manager Adds a Project From a New Milestone's Row
