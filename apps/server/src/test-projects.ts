@@ -7,8 +7,10 @@ import { listItems, lists, people } from "@fathom/db";
 import type { Project, ProjectPlan } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { expect } from "vitest";
 import {
+  type Method,
+  ok,
+  sender,
   startTestApp,
   type TestApp,
   testPosition,
@@ -33,24 +35,20 @@ export async function closeProjectTests(): Promise<void> {
 
 export type Saved = { plan: ProjectPlan; changeSetId: string | null };
 
-export async function readPlan(cookie = planner.cookie): Promise<ProjectPlan> {
-  const response = await test.request(cookie, "GET", "/api/projects");
-  expect(response.statusCode).toBe(200);
-  return response.json<ProjectPlan>();
-}
+const sendAs = sender(() => test);
+
+export const readPlan = async (cookie = planner.cookie) =>
+  ok<ProjectPlan>(await sendAs(cookie, "GET", "/api/projects"));
 
 export const send = (
-  method: "POST" | "PUT" | "DELETE",
+  method: Exclude<Method, "GET" | "PATCH">,
   url: string,
   body?: object,
   options?: { publish?: boolean },
-) => test.request(planner.cookie, method, url, body, options);
+) => sendAs(planner, method, url, body, options);
 
-export async function added(path: string, body: object): Promise<ProjectPlan> {
-  const response = await send("POST", `/api/${path}`, body);
-  expect(response.statusCode).toBe(201);
-  return response.json<Saved>().plan;
-}
+export const added = async (path: string, body: object) =>
+  (await ok<Saved>(await send("POST", `/api/${path}`, body), 201)).plan;
 
 export const byName = <Named extends { name: string }>(
   records: readonly Named[],
@@ -77,21 +75,17 @@ export async function addFeature() {
 }
 
 export async function addMilestone(projectId: string, body: object) {
-  const response = await send("POST", `/api/projects/${projectId}/milestones`, {
-    name: unique("Fictional Milestone"),
-    ...body,
-  });
-  expect(response.statusCode).toBe(201);
+  await ok(
+    await send("POST", `/api/projects/${projectId}/milestones`, {
+      name: unique("Fictional Milestone"),
+      ...body,
+    }),
+    201,
+  );
 }
 
 export const approve = async (records: { type: string; id: string }[]) => {
-  const response = await test.request(
-    approver.cookie,
-    "POST",
-    "/api/drafts/approval",
-    { records },
-  );
-  expect(response.statusCode).toBe(200);
+  await ok(await sendAs(approver, "POST", "/api/drafts/approval", { records }));
 };
 
 export const projectNamed = async (id: string): Promise<Project> =>
