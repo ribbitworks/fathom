@@ -123,14 +123,14 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
 ## Panels and Focus
 
 - **Opening and closing:** Choosing a record opens its details in a side panel, at its own address. Esc, the close button, or a click on the page outside the panel, the rows and the controls closes it.
-  - **Narrow screens:** On a narrow screen, the panel covers the screen and keeps focus until closed.
+  - **Narrow screens:** On a narrow screen, the panel covers the screen and keeps focus until closed. Of panels stacked, the one opened last shows, such as a New form opened from a picker in a record's details, and closing it shows the top one again.
   - **Panels listing records:** A panel listing records, such as the Org chart's Teams, is also a side panel at its own address, never a drawer.
   - **Drawn by:** `WithSidePanel` and `SidePanelFrame` in `apps/web/src/side-panel.tsx`.
   - **Example:** Offline Sync's details on Features.
 - **Maximizing:** A panel stacked under another, such as a note under a record's details or Metrics, has a Maximize button before its close button, showing four corners pointing out. It gives the panel the side column's whole height, folding away the panels above it, which keep what they hold.
   - **Restoring:** The button then shows the corners pointing in, named Restore, and brings them back as they were. Opening or closing any panel restores the stack too, so a panel opened shows.
   - **Not kept:** Maximizing is layout, as the panels' heights are, so the address doesn't keep it, and neither does the browser.
-  - **No Maximize:** The top panel has no Maximize, and nor does a narrow screen, where only the top panel shows.
+  - **No Maximize:** The top panel has no Maximize, and nor does a narrow screen, where only one panel shows.
   - **Drawn by:** `SidePanelFrame` in `apps/web/src/side-panel.tsx`, given its place in the stack by `PanelStack` there, with `maximizable` and `maximizedPanel` deciding which panel may be maximized and which is.
   - **Example:** On People, open Jarrod Mante's details, then his Onboarding note, and select Maximize on the note.
 - **Focus goes where expected:** Opening a panel or dialog puts focus on its first thing to read or change, such as the record's name. Closing it puts focus back where it was opened from, such as the record's Name cell.

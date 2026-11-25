@@ -124,3 +124,39 @@ test("the page's own New proposal names a taken name under Name, with focus in i
   await expect(page.getByText(reason)).toHaveCount(1);
   await expect(form).toBeVisible();
 });
+
+test.describe("on a narrow screen", () => {
+  test.use({ viewport: { width: 760, height: 900 } });
+
+  test("the stacked form covers the details, and adding the customer shows them again with it", async ({
+    page,
+  }) => {
+    // Given a proposal's details covering the screen, a new name typed into its Customers picker
+    await page.goto("/projects?tab=proposals");
+    const bidId = await page.evaluate(async () => {
+      const plan = (await (await fetch("/api/projects")).json()) as {
+        proposals: { id: string; name: string }[];
+      };
+      return plan.proposals.find(({ name }) => name === "Fleet Tracking Bid")
+        ?.id;
+    });
+    await page.goto(`/projects?tab=proposals&open=${String(bidId)}`);
+    const details = page.getByRole("dialog", { name: /Fleet Tracking Bid/ });
+    await details.getByText("Customers", { exact: true }).click();
+    const typed = `Fictional Quay ${Date.now().toString(36)}`;
+    await details.getByRole("textbox", { name: "Customers" }).fill(typed);
+
+    // When New customer is chosen, the form covers the details, with the cursor in Name
+    await page.getByRole("option", { name: `New customer “${typed}”` }).click();
+    const form = page.getByRole("dialog", { name: "New customer" });
+    await expect(form).toBeVisible();
+    await expect(details).toBeHidden();
+    await expect(form.getByRole("textbox", { name: "Name" })).toBeFocused();
+
+    // And when it is added, the details show again, the customer among their Customers
+    await form.getByRole("button", { name: "Add", exact: true }).click();
+    await expect(form).toHaveCount(0);
+    await expect(details).toBeVisible();
+    await expect(details.getByText(typed, { exact: true })).toBeVisible();
+  });
+});
