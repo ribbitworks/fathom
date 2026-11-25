@@ -3,8 +3,8 @@
 // Tests against a real PostgreSQL server built from Fathom's own image: migrations, the client, the
 // permissions of each database role, and the server's security settings.
 
-import { eq, getTableName, isTable } from "drizzle-orm";
-import { getTableConfig, type PgTable } from "drizzle-orm/pg-core";
+import { eq, getTableName, is } from "drizzle-orm";
+import { getTableConfig, PgTable } from "drizzle-orm/pg-core";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -126,8 +126,8 @@ describe("schema", () => {
   ]);
   // Every table the schema module defines, alongside the schema object itself.
   const tables = Object.values(schema as Record<string, unknown>).filter(
-    (value) => isTable(value),
-  ) as PgTable[];
+    (value) => is(value, PgTable),
+  );
 
   it("matches the tables the migrations build: columns, foreign keys, and indexes", async () => {
     expect(tables.length).toBeGreaterThan(1);
