@@ -281,6 +281,26 @@ describe("months as columns", () => {
     expect(headings().at(0)).toBe("Apr 2027");
   });
 
+  it("starts every name in the Columns menu in line, keeping room for a mark on each", async () => {
+    await openBoard("/features?mode=board", { months: true });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Columns: Months" }),
+    );
+    const months = within(await screen.findByRole("group", { name: "Months" }));
+    // The slot a choice's marks sit in, before its name.
+    const slotOf = (name: RegExp) =>
+      months
+        .getByRole("menuitem", { name })
+        .querySelector<HTMLElement>("[class*='slot']");
+    // A schedule whose retirement is drafted has its dot in the slot; one with no mark, and All
+    // schedules, keep the slot empty, so their names start where the marked one's does.
+    expect([
+      slotOf(/^Fictional Minors/)?.childElementCount,
+      slotOf(/^Fictional Majors/)?.childElementCount,
+      slotOf(/^All schedules/)?.childElementCount,
+    ]).toEqual([1, 0, 0]);
+  });
+
   it("goes back to months from a schedule's cycles, keeping no schedule", async () => {
     const history = await openBoard();
     await userEvent.click(
