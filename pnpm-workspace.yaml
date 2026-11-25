@@ -42,7 +42,7 @@ overrides:
   # Testcontainers' archiver and markdownlint-cli have no release that takes these fixes, and
   # ESLint's and typescript-eslint's are too new to install yet.
   "archiver-utils>glob@<14.0.2": 14.0.6
-  "minimatch@>=7.0.0 <11.0.1": 11.0.8
+  "minimatch@>=7.0.0 <11.0.1": 11.0.9
   # Drizzle can use Kysely, which Better Auth brings in, but Fathom does not, so Drizzle is installed
   # without it; otherwise the server and the database package would each get a separate copy.
   "drizzle-orm>kysely": "-"
