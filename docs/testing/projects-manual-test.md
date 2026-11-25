@@ -342,12 +342,12 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 - [ ] `B074` Select the ⋯ at the end of the row of 'Kestrel Mining Cooperative'.
   - **Expected:**
-    - The menu offers **Show all its features**.
+    - The menu offers **Show all features**.
     - **Remove customer** is greyed out.
     - Under it, a line reads "P-2017 Depot Operations names this customer."
   - **Notes:**
 
-- [ ] `22DB` Select **Show all its features**.
+- [ ] `22DB` Select **Show all features**.
   - **Expected:**
     - The **Features** page opens.
     - Above the table, after **Views**, a pill reads "For Kestrel Mining Cooperative", with an × at its end.

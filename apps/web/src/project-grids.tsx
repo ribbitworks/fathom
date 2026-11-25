@@ -172,7 +172,7 @@ export function customerTable(
     columns: () => customerColumns(choices, seesFeatures),
     request: (changes) => merged(changes) as CustomerRequest,
     showDetails: onOpen,
-    menuItems: recordMenu<Customer>([["Show all its features", onFeatures]]),
+    menuItems: recordMenu<Customer>([["Show all features", onFeatures]]),
     removeTurnedOff: (customer) => customerRemoveTurnedOff(choices, customer),
   });
 }

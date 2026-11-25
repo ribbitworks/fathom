@@ -131,7 +131,7 @@ You're done when the rows show under the headings you chose.
 
 1. Select **Projects** in the sidebar, then the **Customers** tab.
 1. Open the customer's **⋯** menu.
-1. Select **Show all its features**.
+1. Select **Show all features**.
 
 **Features** opens with a filter above the table named for the customer, such as **For Bluefin Harbour Authority**. It shows the features that name the customer, and those its projects need or its proposals propose. A filter on a column, such as **Status**, narrows them further. To see every feature again, select the **×** on the customer's filter.
 
