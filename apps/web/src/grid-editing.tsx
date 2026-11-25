@@ -41,6 +41,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     | "at"
     | "writingInPanel"
     | "setActive"
+    | "editing"
     | "setEditing"
     | "moveTo"
     | "valueAt"
@@ -75,6 +76,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     at,
     writingInPanel,
     setActive,
+    editing,
     setEditing,
     moveTo,
     valueAt,
@@ -294,7 +296,11 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       if (!save(cell, emptyValue(column))) putBack();
     } else if (event.key.length === 1) {
       event.preventDefault();
-      startEdit(cell, event.key);
+      // Keys typed fast reach the cell until its editor has focus, and follow the first.
+      if (editing?.row === cell.row && editing.column === cell.column) {
+        const { asTyped } = kindOf(column);
+        setText((typed) => asTyped?.(typed + event.key) ?? typed + event.key);
+      } else startEdit(cell, event.key);
     }
   };
   // The problem in a cell, if any: one saving its value found, or one found in it when its new row
