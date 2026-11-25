@@ -15,6 +15,7 @@ import { Button, Group, Text } from "@mantine/core";
 import { Fragment, useEffect, useState } from "react";
 import { useChoiceEditing } from "./choice-editing.ts";
 import { useChoiceEntry } from "./choice-entry.ts";
+import { ChoiceEntryRow } from "./choice-entry-row.tsx";
 import { Fields } from "./choice-fields.tsx";
 import { entryNameId, rowId } from "./choice-ids.ts";
 import { ChoiceMenu, useChoiceMenus } from "./choice-menu.tsx";
@@ -22,7 +23,6 @@ import { ChoiceCells, ChoiceRow, choiceShape } from "./choice-row.tsx";
 import { meaningKeptBy, removedChoice as removed } from "./choice-rules.ts";
 import type { DraftSelection } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
-import { Icon } from "./icons.tsx";
 import { builtInNote } from "./list-facts.tsx";
 import { type ListDraftActions, movedChoices } from "./list-drafts.tsx";
 import { ListActions, ListHeading, ListSubtitle } from "./list-panel-head.tsx";
@@ -353,35 +353,15 @@ export function ListPanel({
             </Droppable>
           </DragDropContext>
           {canEdit && (
-            <div
-              role="row"
-              className={[...shape, classes.entry].join(" ")}
-              // Leaving the empty row, by clicking or tabbing elsewhere, adds what was typed, as
-              // leaving a choice being edited saves it.
-              onBlur={(event) => {
-                if (event.currentTarget.contains(event.relatedTarget)) return;
-                entry.addEntry(false);
+            <ChoiceEntryRow
+              entry={entry}
+              shape={shape}
+              meanings={meanings}
+              weighed={weighed}
+              onFocus={() => {
+                editing.setSelected(undefined);
               }}
-            >
-              <span className={classes.plus} aria-hidden>
-                <Icon name="plus" size={14} />
-              </span>
-              <Fields
-                idPrefix="choice-entry"
-                draft={entry.entry}
-                problem={entry.entryProblem}
-                label="New choice "
-                meanings={meanings}
-                weighed={weighed}
-                weightProblem={entry.entryWeightProblem}
-                onChange={entry.change}
-                onKeyDown={entry.onEntryKey}
-                onFocus={() => {
-                  editing.setSelected(undefined);
-                }}
-                onPaste={entry.paste}
-              />
-            </div>
+            />
           )}
         </div>
         {unchangeable !== undefined && (

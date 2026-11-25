@@ -13,7 +13,6 @@ import {
   duplicateList,
   type List,
   listLengths,
-  mostChoicesAtOnce,
   personLengths,
   type Permission,
   type Tier,
@@ -25,7 +24,6 @@ import {
   Group,
   Select,
   Stack,
-  TagsInput,
   Text,
   TextInput,
 } from "@mantine/core";
@@ -33,13 +31,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
-import {
-  choiceTooLong,
-  duplicateChoice,
-  tooManyChoices,
-} from "./choice-rules.ts";
+import { addingLabel } from "./choice-picker.tsx";
+import comboboxClasses from "./combobox.module.css";
 import { Count } from "./counted-input.tsx";
 import { nameTaken } from "./list-dialog.tsx";
+import { type NewChoice, NewListChoices } from "./new-list-choices.tsx";
 import { listsQuery, nameProblem } from "./lists.ts";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import { createField, updateField } from "./column-requests.ts";
@@ -48,20 +44,6 @@ const conflict = 409;
 
 // The List picker's choice that drafts a new list with the column, which no list's ID can be.
 const newListChoice = "new";
-
-// Choices pasted several at once, one to a line, are split into each.
-const choiceSeparators = ["\n", "\r"];
-
-// A choice as typed or pasted: its name, without a description pasted after a tab from a sheet.
-const choiceLabel = (typed: string) => typed.split("\t", 1).join("").trim();
-
-// Why choices typed or pasted can't be taken, if they can't: too many at once, or one too long.
-const typedChoicesProblem = (typed: readonly string[]): string | undefined => {
-  if (typed.length > mostChoicesAtOnce) return tooManyChoices;
-  return typed.some((label) => choiceLabel(label).length > listLengths.choice)
-    ? choiceTooLong
-    : undefined;
-};
 
 // Every type must be named, which the compiler checks.
 const typeNames: Record<FieldType, string> = {
@@ -103,9 +85,7 @@ export function ColumnDialog({
   );
   const [listId, setListId] = useState<string | null>(field?.listId ?? null);
   const [listName, setListName] = useState("");
-  const [choices, setChoices] = useState<string[]>([]);
-  // Why the choice last typed or pasted wasn't taken, until the choices change.
-  const [choiceRefused, setChoiceRefused] = useState<string>();
+  const [choices, setChoices] = useState<NewChoice[]>([]);
   // The list name last sent, so a refusal of it as taken no longer applies once the name changes.
   const [sentListName, setSentListName] = useState("");
   const [multiple, setMultiple] = useState(field?.multiple ?? false);
@@ -189,8 +169,6 @@ export function ColumnDialog({
     : undefined;
   const choicesProblem =
     makesList && choices.length === 0 ? "Choices needed" : undefined;
-  const shownChoicesProblem =
-    choiceRefused ?? (tried ? choicesProblem : undefined);
 
   return (
     <form
@@ -285,10 +263,10 @@ export function ColumnDialog({
           <>
             <Select
               label="List"
+              {...(offersNewList
+                ? { classNames: { options: comboboxClasses.lastAdds } }
+                : {})}
               data={[
-                ...(offersNewList
-                  ? [{ value: newListChoice, label: "New list" }]
-                  : []),
                 // A list in a class beyond General names it, and one only drafted to be added says
                 // it is new.
                 ...offered.map((list) => {
@@ -306,6 +284,9 @@ export function ColumnDialog({
                         : `${list.name} (${notes.join(", ")})`,
                   };
                 }),
+                ...(offersNewList
+                  ? [{ value: newListChoice, label: addingLabel("list", "") }]
+                  : []),
               ]}
               value={listId}
               error={listProblem}
@@ -328,22 +309,10 @@ export function ColumnDialog({
                     setListName(event.currentTarget.value);
                   }}
                 />
-                <TagsInput
-                  label="Choices"
-                  value={choices}
-                  error={shownChoicesProblem}
-                  splitChars={choiceSeparators}
-                  maxLength={listLengths.choice}
-                  clearable
-                  onDuplicate={() => {
-                    setChoiceRefused(duplicateChoice);
-                  }}
-                  onChange={(next) => {
-                    const refused = typedChoicesProblem(next);
-                    setChoiceRefused(refused);
-                    if (refused === undefined)
-                      setChoices(next.map(choiceLabel));
-                  }}
+                <NewListChoices
+                  choices={choices}
+                  needed={tried ? choicesProblem : undefined}
+                  onChoices={setChoices}
                 />
               </>
             )}

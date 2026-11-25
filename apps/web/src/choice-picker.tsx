@@ -92,7 +92,7 @@ export interface Adding {
   onNew: (typed: string) => void;
 }
 
-const addingLabel = (one: string, typed: string): string =>
+export const addingLabel = (one: string, typed: string): string =>
   typed === "" ? `New ${one}` : `New ${one} “${typed}”`;
 
 // An option's words after its tick, in a picker where several can be picked. The tick is hidden, not

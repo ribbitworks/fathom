@@ -16,13 +16,10 @@ import {
 } from "@fathom/shared";
 import { nameProblem } from "./lists.ts";
 
-export const duplicateChoice = "Already in this list";
-
-// Why a choice's name can't be taken: it is longer than a choice may be.
-export const choiceTooLong = "Too long";
+const duplicateChoice = "Already in this list";
 
 // Why too many choices can't be added at once.
-export const tooManyChoices = `Up to ${String(mostChoicesAtOnce)} lines at once`;
+const tooManyChoices = `Up to ${String(mostChoicesAtOnce)} lines at once`;
 
 export const removedChoice = (choice: Choice) =>
   choice.draft?.action === "deleted";
@@ -67,7 +64,11 @@ export function pastedChoices(text: string): ChoiceRequest[] {
 }
 
 // Why a choice's name will not do, if it won't; a choice being renamed may keep its own name.
-export const choiceNameProblem = (list: List, label: string, except?: string) =>
+export const choiceNameProblem = (
+  list: Pick<List, "choices">,
+  label: string,
+  except?: string,
+) =>
   nameProblem(
     label,
     listLengths.choice,
@@ -79,7 +80,7 @@ export const choiceNameProblem = (list: List, label: string, except?: string) =>
 
 // Why pasted choices cannot be added, if they can't, naming the line when there are several.
 export function pasteProblem(
-  list: List,
+  list: Pick<List, "choices">,
   pasted: readonly ChoiceRequest[],
 ): string | undefined {
   if (pasted.length > mostChoicesAtOnce) return tooManyChoices;

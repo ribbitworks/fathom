@@ -28,6 +28,48 @@ import { opensMenu } from "./row-controls.tsx";
 const typedWeight = (weight: number | undefined) =>
   weight === undefined ? "" : String(weight);
 
+// A plain key on a row of choices, on the row itself: the arrows, Home and End select another, and
+// Delete or Backspace takes it out, in a list's panel and among a new list's choices alike. Whether
+// the key was one of them.
+export function onRowsKey<Row, Item extends Row>(
+  event: KeyboardEvent,
+  rows: readonly Row[],
+  row: Item,
+  {
+    select,
+    remove,
+  }: { select: (row: Row | undefined) => void; remove: (row: Item) => void },
+): boolean {
+  if (event.target !== event.currentTarget) return false;
+  if (event.altKey || event.metaKey || event.ctrlKey) return false;
+  const index = rows.indexOf(row);
+  switch (event.key) {
+    case "ArrowUp":
+      event.preventDefault();
+      select(rows[index - 1]);
+      return true;
+    case "ArrowDown":
+      event.preventDefault();
+      select(rows[index + 1]);
+      return true;
+    case "Home":
+      event.preventDefault();
+      select(rows[0]);
+      return true;
+    case "End":
+      event.preventDefault();
+      select(rows.at(-1));
+      return true;
+    case "Delete":
+    case "Backspace":
+      event.preventDefault();
+      remove(row);
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function useChoiceEditing({
   list,
   canMove,
@@ -196,7 +238,6 @@ export function useChoiceEditing({
 
   const onRowKey = (event: KeyboardEvent, choice: Choice) => {
     if (event.target !== event.currentTarget) return;
-    const index = order.indexOf(choice);
     const plain = !event.altKey && !event.metaKey && !event.ctrlKey;
     const handled = () => {
       event.preventDefault();
@@ -207,27 +248,14 @@ export function useChoiceEditing({
     } else if (event.altKey && event.key === "ArrowDown") {
       handled();
       moveBy(choice, 1);
-    } else if (plain && event.key === "ArrowUp") {
-      handled();
-      select(order[index - 1]);
-    } else if (plain && event.key === "ArrowDown") {
-      handled();
-      select(order[index + 1]);
-    } else if (plain && event.key === "Home") {
-      handled();
-      select(order[0]);
-    } else if (plain && event.key === "End") {
-      handled();
-      select(order.at(-1));
+    } else if (onRowsKey(event, order, choice, { select, remove })) {
+      return;
     } else if (plain && event.key === "Enter") {
       handled();
       startEdit(choice);
     } else if (plain && event.key.toLowerCase() === "r") {
       handled();
       retireOrRestore(choice);
-    } else if (plain && (event.key === "Delete" || event.key === "Backspace")) {
-      handled();
-      remove(choice);
     } else if (opensMenu(event)) {
       handled();
       setMenuFor(choice.id);

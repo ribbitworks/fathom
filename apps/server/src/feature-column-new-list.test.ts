@@ -33,6 +33,10 @@ afterAll(async () => {
 });
 
 const tiers = ["Fictional Gold", "Fictional Silver"];
+const tierChoices = [
+  { label: "Fictional Gold", description: "The top fictional tier" },
+  { label: "Fictional Silver" },
+];
 
 const addColumn = (
   cookie: string,
@@ -46,7 +50,7 @@ const addColumn = (
     {
       name: unique("Fictional Tier"),
       type: "choice",
-      newList: { name: unique("Fictional Tiers"), choices: tiers },
+      newList: { name: unique("Fictional Tiers"), choices: tierChoices },
       ...more,
     },
     options,
@@ -84,7 +88,7 @@ const choiceDraftsOf = async (
   );
 
 describe("a new list drafted with a column on Features", () => {
-  it("is drafted General with its choices, in order, and the column draws on it", async () => {
+  it("is drafted General with its choices, in order, with their descriptions, and the column draws on it", async () => {
     const { field } = await addedColumn();
 
     const listId = String(field.listId);
@@ -92,10 +96,17 @@ describe("a new list drafted with a column on Features", () => {
       fields: { visibility: "general", retired: false },
     });
     expect(
-      (await choiceDraftsOf(listId)).map(
-        ({ fields: choice }) => (choice as { label: string }).label,
-      ),
-    ).toEqual(tiers);
+      (await choiceDraftsOf(listId)).map(({ fields: choice }) => {
+        const { label, description } = choice as {
+          label: string;
+          description: string;
+        };
+        return [label, description];
+      }),
+    ).toEqual([
+      ["Fictional Gold", "The top fictional tier"],
+      ["Fictional Silver", ""],
+    ]);
   });
 
   it("is approved with the column, with its choices", async () => {
@@ -149,9 +160,7 @@ describe("a new list drafted with a column on Features", () => {
     expect(await listDraftOf(listId, privateChanges)).toBeUndefined();
     expect(await choiceDraftsOf(listId, privateChanges)).toEqual([]);
     expect(
-      (await draftsOf("field", privateChanges)).map(
-        ({ recordId }) => recordId,
-      ),
+      (await draftsOf("field", privateChanges)).map(({ recordId }) => recordId),
     ).not.toContain(field.id);
   });
 
@@ -418,6 +427,37 @@ describe("a new list drafted with a column on Features", () => {
     expect(await choiceDraftsOf(listId)).toHaveLength(0);
   });
 
+  it("isn't discarded with a People column drawing on it, which makes no lists", async () => {
+    // Given a Features column with a new list, a People column drawing on the list, and the Features
+    // column removed
+    const { field } = await addedColumn();
+    const listId = String(field.listId);
+    const peopleEditor = await test.signedIn("workforce-administrator");
+    const onPeople = await test.request(
+      peopleEditor.cookie,
+      "POST",
+      "/api/people/columns",
+      { name: unique("Fictional Grade"), type: "choice", listId },
+    );
+    expect(onPeople.statusCode, onPeople.body).toBe(201);
+    await test.request(
+      planner.cookie,
+      "DELETE",
+      `/api/features/columns/${field.id}`,
+    );
+
+    // When the People column is removed
+    const removed = await test.request(
+      peopleEditor.cookie,
+      "DELETE",
+      `/api/people/columns/${onPeople.json<{ field: Field }>().field.id}`,
+    );
+
+    // Then the list stays, for those who change configuration to decide
+    expect(removed.statusCode, removed.body).toBe(200);
+    expect(await listDraftOf(listId)).toBeDefined();
+  });
+
   it("isn't discarded with a column that only draws on it, drafted apart", async () => {
     // Given a list drafted on Lists, and a column drawing on it
     const configurer = await test.signedIn("workforce-administrator");
@@ -449,12 +489,12 @@ describe("a new list drafted with a column on Features", () => {
   it("is refused a name another list has", async () => {
     const name = unique("Fictional Taken");
     const first = await addColumn(planner.cookie, {
-      newList: { name, choices: tiers },
+      newList: { name, choices: tierChoices },
     });
     expect(first.statusCode, first.body).toBe(201);
 
     const refused = await addColumn(planner.cookie, {
-      newList: { name, choices: tiers },
+      newList: { name, choices: tierChoices },
     });
 
     expect(refused.statusCode).toBe(409);
@@ -471,7 +511,7 @@ describe("a new list drafted with a column on Features", () => {
       {
         name: unique("Fictional Tier"),
         type: "choice",
-        newList: { name: listName, choices: tiers },
+        newList: { name: listName, choices: tierChoices },
       },
     );
     expect(refused.statusCode).toBe(400);
@@ -505,7 +545,7 @@ describe("each starting role adding a column on Features with a new list", () =>
     const listName = unique("Fictional Tiers");
 
     const response = await addColumn(signedIn.cookie, {
-      newList: { name: listName, choices: tiers },
+      newList: { name: listName, choices: tierChoices },
     });
 
     // eslint-disable-next-line security/detect-object-injection

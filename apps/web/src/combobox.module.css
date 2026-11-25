@@ -27,10 +27,15 @@
   margin-bottom: calc(var(--mantine-spacing-xs) / 2);
 }
 
-/* A picker's New option, set apart by a line, in the accent colour of an action, pointed at or not. */
+/* A picker's New option, set apart by a line, in the accent colour of an action, pointed at or not;
+   in a drop-down list given lastAdds, its last option, which must be the one that adds, such as a
+   column's New list. */
 .adding,
 .adding:hover,
-.adding[data-combobox-selected] {
+.adding[data-combobox-selected],
+.lastAdds .option:last-child,
+.lastAdds .option:last-child:hover,
+.lastAdds .option:last-child[data-combobox-selected] {
   border-top: 1px solid var(--mantine-color-default-border);
   border-radius: 0;
   margin-top: calc(var(--mantine-spacing-xs) / 2);

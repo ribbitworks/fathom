@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The state and keys of a list panel's empty row, where new choices are typed or pasted.
+// The state and keys of the empty row where a list's new choices are typed or pasted.
 
 import {
   type Choice,
@@ -30,7 +30,8 @@ export function useChoiceEntry({
   rowAbove,
   rowBelow,
 }: {
-  list: List;
+  // The choices a new one is checked against.
+  list: Pick<List, "choices">;
   meanings: readonly Meaning[];
   weighed: boolean;
   add: ChoiceActions["add"];

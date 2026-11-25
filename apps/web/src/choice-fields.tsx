@@ -43,6 +43,7 @@ export function Fields({
   onKeyDown,
   onFocus,
   onPaste,
+  keepsEscape = false,
 }: {
   idPrefix: "choice-entry" | "choice-edit";
   draft: Draft;
@@ -58,6 +59,9 @@ export function Fields({
   onKeyDown: (event: KeyboardEvent, field: Field) => void;
   onFocus?: () => void;
   onPaste?: (event: ClipboardEvent<HTMLInputElement>) => void;
+  // Whether Esc stays with the fields, emptying what was typed, rather than also closing a dialog
+  // they are in.
+  keepsEscape?: boolean | undefined;
 }) {
   const entry = idPrefix === "choice-entry";
   // A refused weight's reason is under the row's first cell, as any refused value's is.
@@ -68,6 +72,7 @@ export function Fields({
         <input
           id={`${idPrefix}-name`}
           className={classes.cellInput}
+          data-mantine-stop-propagation={keepsEscape || undefined}
           value={draft.label}
           aria-label={`${label}name`}
           aria-invalid={problem !== undefined}
@@ -105,6 +110,7 @@ export function Fields({
         <textarea
           id={`${idPrefix}-description`}
           className={classes.cellInput}
+          data-mantine-stop-propagation={keepsEscape || undefined}
           rows={1}
           value={draft.description}
           aria-label={`${label}description`}

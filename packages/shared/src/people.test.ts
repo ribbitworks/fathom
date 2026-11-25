@@ -67,7 +67,7 @@ describe("fieldRequestSchema", () => {
         fieldRequestSchema.safeParse({
           name: "Site",
           listId: randomUUID(),
-          newList: { name: "Sites", choices: ["Harbourside"] },
+          newList: { name: "Sites", choices: [{ label: "Harbourside" }] },
         }),
       ),
     ).toEqual(["Choose a list or a new one, not both"]);
@@ -77,14 +77,29 @@ describe("fieldRequestSchema", () => {
     expect(
       fieldRequestSchema.parse({
         name: "Tier",
-        newList: { name: " Tiers ", choices: [" Gold ", "Silver"] },
+        newList: {
+          name: " Tiers ",
+          choices: [
+            { label: " Gold ", description: "Top" },
+            { label: "Silver" },
+          ],
+        },
       }).newList,
-    ).toEqual({ name: "Tiers", choices: ["Gold", "Silver"] });
+    ).toEqual({
+      name: "Tiers",
+      choices: [
+        { label: "Gold", description: "Top" },
+        { label: "Silver", description: "" },
+      ],
+    });
     expect(
       messages(
         fieldRequestSchema.safeParse({
           name: "Tier",
-          newList: { name: "Tiers", choices: ["Gold", "gold"] },
+          newList: {
+            name: "Tiers",
+            choices: [{ label: "Gold" }, { label: "gold" }],
+          },
         }),
       ),
     ).toEqual(["A choice is in the list twice"]);
@@ -125,7 +140,7 @@ describe("fieldRequestSchema", () => {
         fieldRequestSchema.safeParse({
           name: "Profile",
           type: "link",
-          newList: { name: "Sites", choices: ["Harbourside"] },
+          newList: { name: "Sites", choices: [{ label: "Harbourside" }] },
           multiple: true,
         }),
       ),
@@ -227,39 +242,61 @@ describe("newListSchema", () => {
   const most = (length: number) => "x".repeat(length);
 
   it.each([
-    ["an empty name", { name: " ", choices: ["Gold"] }],
+    ["an empty name", { name: " ", choices: [{ label: "Gold" }] }],
     [
       "a name too long",
-      { name: most(listLengths.name + 1), choices: ["Gold"] },
+      { name: most(listLengths.name + 1), choices: [{ label: "Gold" }] },
     ],
     ["no choices", { name: "Tiers", choices: [] }],
-    ["a blank choice", { name: "Tiers", choices: [" "] }],
+    ["a blank choice", { name: "Tiers", choices: [{ label: " " }] }],
+    [
+      "a description too long",
+      {
+        name: "Tiers",
+        choices: [
+          { label: "Gold", description: most(listLengths.description + 1) },
+        ],
+      },
+    ],
     [
       "a choice too long",
-      { name: "Tiers", choices: [most(listLengths.choice + 1)] },
+      { name: "Tiers", choices: [{ label: most(listLengths.choice + 1) }] },
     ],
     [
       "too many choices",
       {
         name: "Tiers",
-        choices: Array.from(
-          { length: mostChoicesAtOnce + 1 },
-          (_, at) => `Choice ${String(at)}`,
-        ),
+        choices: Array.from({ length: mostChoicesAtOnce + 1 }, (_, at) => ({
+          label: `Choice ${String(at)}`,
+        })),
       },
     ],
   ])("refuses %s", (_, list) => {
     expect(newListSchema.safeParse(list).success).toBe(false);
   });
 
+  it("trims each choice's name and description, and gives a missing description none", () => {
+    expect(
+      newListSchema.parse({
+        name: "Tiers",
+        choices: [
+          { label: " Gold ", description: " Top " },
+          { label: "Silver" },
+        ],
+      }).choices,
+    ).toEqual([
+      { label: "Gold", description: "Top" },
+      { label: "Silver", description: "" },
+    ]);
+  });
+
   it("takes the longest name and choice, and the most choices", () => {
     expect(
       newListSchema.safeParse({
         name: most(listLengths.name),
-        choices: Array.from(
-          { length: mostChoicesAtOnce },
-          (_, at) => `Choice ${String(at)}`,
-        ),
+        choices: Array.from({ length: mostChoicesAtOnce }, (_, at) => ({
+          label: `Choice ${String(at)}`,
+        })),
       }).success,
     ).toBe(true);
   });
