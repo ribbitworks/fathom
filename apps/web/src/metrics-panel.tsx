@@ -3,8 +3,15 @@
 // The Metrics panel beside a table: its rows counted, shared out and added up by one column's
 // groups or two crossed.
 
-import { SegmentedControl, Select, Table, Text } from "@mantine/core";
+import {
+  CheckIcon,
+  SegmentedControl,
+  Select,
+  Table,
+  Text,
+} from "@mantine/core";
 import { useState } from "react";
+import { inSentence } from "./draft-marks.ts";
 import { MarkedItem } from "./status-mark.tsx";
 import classes from "./metrics.module.css";
 import { numberShown } from "./cell-kinds.tsx";
@@ -20,6 +27,7 @@ import {
 } from "./metrics.ts";
 import { count } from "./numbers.ts";
 import { SidePanelFrame, useNarrow } from "./side-panel.tsx";
+import { Tipped } from "./table-tips.tsx";
 import type { TableColumn } from "./table-view.ts";
 
 // Some rows and the columns to read them by.
@@ -39,6 +47,20 @@ function Figure({ now, live }: { now: string; live: string | undefined }) {
         </Text>
       )}
     </>
+  );
+}
+
+// A column's name ending in an s, but not in ss, is, or us, is taken as plural; Fathom keeps no
+// plural for a column's name, so another reads as its choices.
+const isPlural = (name: string) => /(?<![siu])s$/u.test(name);
+
+function CountsInEach({ one, name }: { one: string; name: string }) {
+  const named = inSentence(name);
+  return (
+    <Text fz="xs" c="dimmed" mt="xs">
+      A {one} in several {isPlural(name) ? named : `${named} choices`} counts in
+      each.
+    </Text>
   );
 }
 
@@ -175,32 +197,53 @@ export function MetricsPanel<Row>({
   );
 
   const [first, second] = by;
-  const picker = (
-    label: string,
-    none: string,
-    picked: TableColumn<Row> | undefined,
-    choices: typeof offered,
-    onPick: (key: string | undefined) => void,
-  ) => (
-    // A drop-down list that opens on Enter, and cuts a long column name short rather than widening
-    // the panel, as the browser's own list does neither.
-    <Select
-      label={label}
-      size="sm"
-      allowDeselect={false}
-      data={[
-        { value: "", label: none },
-        ...choices.map((column) => ({
-          value: column.key,
-          label: column.label,
-        })),
-      ]}
-      value={picked?.key ?? ""}
-      onChange={(value) => {
-        onPick(value || undefined);
-      }}
-    />
-  );
+  const picker = ({
+    label,
+    none,
+    picked,
+    choices,
+    onPick,
+    choiceLabel = ({ label: name }) => name,
+  }: {
+    label: string;
+    none: string;
+    picked: TableColumn<Row> | undefined;
+    choices: typeof offered;
+    onPick: (key: string | undefined) => void;
+    choiceLabel?: (column: TableColumn<Row>) => string;
+  }) => {
+    const shown = picked === undefined ? none : choiceLabel(picked);
+    return (
+      // A drop-down list that opens on Enter, and cuts a long name short rather than widening the
+      // panel, as the browser's own list does neither.
+      <Select
+        label={label}
+        size="sm"
+        allowDeselect={false}
+        title={shown}
+        styles={{ input: { textOverflow: "ellipsis" } }}
+        data={[
+          { value: "", label: none },
+          ...choices.map((column) => ({
+            value: column.key,
+            label: choiceLabel(column),
+          })),
+        ]}
+        value={picked?.key ?? ""}
+        onChange={(value) => {
+          onPick(value || undefined);
+        }}
+        renderOption={({ option, checked }) => (
+          <span className={classes.choice}>
+            {checked === true && <CheckIcon className={classes.tick} />}
+            <Tipped tip={option.label} className={classes.choiceName}>
+              {option.label}
+            </Tipped>
+          </span>
+        )}
+      />
+    );
+  };
 
   let body;
   if (first === undefined) {
@@ -218,7 +261,12 @@ export function MetricsPanel<Row>({
                 {added !== undefined && (
                   <>
                     <Table.Th className={classes.number}>
-                      {addedLabel(added)}
+                      <Tipped
+                        tip={addedLabel(added)}
+                        className={classes.measuredName}
+                      >
+                        {addedLabel(added)}
+                      </Tipped>
                     </Table.Th>
                     <Table.Th className={classes.number}>Average</Table.Th>
                     <Table.Th className={classes.number}>None</Table.Th>
@@ -238,14 +286,7 @@ export function MetricsPanel<Row>({
             </Table.Tfoot>
           </Table>
         </div>
-        {first.multiple && (
-          <Text fz="xs" c="dimmed" mt="xs">
-            A {one} may hold several choices of {first.label}, so shares
-            {added === undefined
-              ? " can add up to more than 100%."
-              : " and totals can add up to more than the whole."}
-          </Text>
-        )}
+        {first.multiple && <CountsInEach one={one} name={first.label} />}
       </>
     );
   } else {
@@ -308,11 +349,10 @@ export function MetricsPanel<Row>({
           </Table>
         </div>
         {(first.multiple || second.multiple) && (
-          <Text fz="xs" c="dimmed" mt="xs">
-            A {one} may hold several choices of{" "}
-            {first.multiple ? first.label : second.label}, so figures can add up
-            to more than their total.
-          </Text>
+          <CountsInEach
+            one={one}
+            name={(first.multiple ? first : second).label}
+          />
         )}
       </>
     );
@@ -335,28 +375,42 @@ export function MetricsPanel<Row>({
           `, ${count(live.rows.length)} live`}
       </Text>
       <div className={classes.pickers}>
-        {picker("Break down by", "Choose a column", first, offered, (key) => {
-          onBreakdown(
-            key === undefined
-              ? []
-              : [key, ...by.slice(1).map((column) => column.key)].filter(
-                  (picked, at, keys) => keys.indexOf(picked) === at,
-                ),
-          );
+        {picker({
+          label: "Break down by",
+          none: "Choose a column",
+          picked: first,
+          choices: offered,
+          onPick: (key) => {
+            onBreakdown(
+              key === undefined
+                ? []
+                : [key, ...by.slice(1).map((column) => column.key)].filter(
+                    (picked, at, keys) => keys.indexOf(picked) === at,
+                  ),
+            );
+          },
         })}
         {first !== undefined &&
-          picker(
-            "and by",
-            "Nothing more",
-            second,
-            offered.filter((column) => column.key !== first.key),
-            (key) => {
+          picker({
+            label: "and by",
+            none: "Nothing more",
+            picked: second,
+            choices: offered.filter((column) => column.key !== first.key),
+            onPick: (key) => {
               onBreakdown(key === undefined ? [first.key] : [first.key, key]);
             },
-          )}
-        {summable.length > 0 &&
-          picker("Sum of", "Nothing", added, summable, (key) => {
-            onSum(key ?? "");
+          })}
+        {first !== undefined &&
+          summable.length > 0 &&
+          picker({
+            label: "Measure",
+            none: "Nothing",
+            picked: added,
+            choices: summable,
+            onPick: (key) => {
+              onSum(key ?? "");
+            },
+            choiceLabel: addedLabel,
           })}
       </div>
       {body}

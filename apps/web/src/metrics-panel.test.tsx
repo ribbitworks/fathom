@@ -220,17 +220,26 @@ describe("the Metrics panel", () => {
       <Table people={counted} fields={[level, role, hours]} start={start} />
     );
 
+    it("offers Measure only once Break down by has a column", async () => {
+      render(summing({ ...emptyView, breakdown: [] }));
+      expect(within(panel()).queryByLabelText("Measure")).toBeNull();
+
+      await chooseIn(panel(), "Break down by", "Level");
+
+      expect(within(panel()).getByLabelText("Measure")).toBeTruthy();
+    });
+
     it("offers the number columns, and adds nothing up at first where the table names none", () => {
       render(summing({ ...emptyView, breakdown: ["f1"] }));
       expect(
-        within(panel()).getByLabelText<HTMLInputElement>("Sum of").value,
+        within(panel()).getByLabelText<HTMLInputElement>("Measure").value,
       ).toBe("Nothing");
       expect(figures("P4")).toEqual(["2", share(2, 4)]);
     });
 
     it("gives each group its total, the average of those with an amount, and how many have none, then the whole", async () => {
       render(summing({ ...emptyView, breakdown: ["f1"] }));
-      await chooseIn(panel(), "Sum of", "Hours");
+      await chooseIn(panel(), "Measure", "Hours");
       expect(
         within(panel()).getByRole("columnheader", { name: "Hours" }),
       ).toBeTruthy();
@@ -279,7 +288,7 @@ describe("the Metrics panel", () => {
       const user = userEvent.setup();
       render(summing({ ...emptyView, breakdown: ["f1", "f2"], sum: "f3" }));
       await user.click(within(panel()).getByRole("radio", { name: "Hours" }));
-      await chooseIn(panel(), "Sum of", "Nothing");
+      await chooseIn(panel(), "Measure", "Nothing");
       expect(
         within(panel()).queryByRole("radio", { name: "Hours" }),
       ).toBeNull();
@@ -298,19 +307,19 @@ describe("the Metrics panel", () => {
       );
       await user.click(screen.getByRole("button", { name: "Clear all" }));
       expect(
-        within(panel()).getByLabelText<HTMLInputElement>("Sum of").value,
+        within(panel()).getByLabelText<HTMLInputElement>("Measure").value,
       ).toBe("Hours");
     });
 
     it("adds nothing up once Nothing is chosen", async () => {
       render(summing({ ...emptyView, breakdown: ["f1"], sum: "f3" }));
-      await chooseIn(panel(), "Sum of", "Nothing");
+      await chooseIn(panel(), "Measure", "Nothing");
       expect(
         within(panel()).queryByRole("columnheader", { name: "Hours" }),
       ).toBeNull();
     });
 
-    it("says totals as well as shares can add up to more than the whole", () => {
+    it("says a row counts in each of a column's several choices, with totals too", () => {
       render(
         <Table
           people={counted}
@@ -320,11 +329,34 @@ describe("the Metrics panel", () => {
       );
       expect(
         within(panel()).getByText(
-          /so shares and totals can add up to more than the whole/,
+          "A person in several role choices counts in each.",
         ),
       ).toBeTruthy();
     });
   });
+
+  it.each([
+    ["Projects", "A person in several projects counts in each."],
+    ["KPIs", "A person in several KPIs counts in each."],
+    [
+      "Fictional Scores",
+      "A person in several Fictional Scores counts in each.",
+    ],
+    ["Status", "A person in several status choices counts in each."],
+    ["Class", "A person in several class choices counts in each."],
+  ])(
+    "names a column %s with several choices in the note under the figures",
+    (label, note) => {
+      render(
+        <Table
+          people={[person("a", ["p4"], ["test", "dev"])]}
+          fields={[level, { ...role, name: label, multiple: true }]}
+          start={{ ...emptyView, breakdown: ["f2"] }}
+        />,
+      );
+      expect(within(panel()).getByText(note)).toBeTruthy();
+    },
+  );
 
   it("opens a column's list on Enter, and picks from it with the arrow keys and Enter", async () => {
     const user = userEvent.setup();
@@ -491,12 +523,12 @@ describe("the Metrics panel", () => {
     );
     expect(panel().textContent).toContain("1 person");
     expect(panel().textContent).toContain(
-      "A person may hold several choices of Role, so shares can add up to more than 100%.",
+      "A person in several role choices counts in each.",
     );
     expect(figures("Test engineer")).toEqual(["1", share(1, 1)]);
     await chooseIn(panel(), "and by", "Level");
     expect(panel().textContent).toContain(
-      "A person may hold several choices of Role, so figures can add up to more than their total.",
+      "A person in several role choices counts in each.",
     );
     await chooseIn(panel(), "Break down by", "Level");
     expect(
@@ -504,7 +536,7 @@ describe("the Metrics panel", () => {
     ).toBe("Nothing more");
     await chooseIn(panel(), "and by", "Role");
     expect(panel().textContent).toContain(
-      "A person may hold several choices of Role, so figures can add up to more than their total.",
+      "A person in several role choices counts in each.",
     );
     await chooseIn(panel(), "Break down by", "Choose a column");
     expect(panel().textContent).not.toContain("Choose a column to count");

@@ -48,3 +48,40 @@
   display: block;
   line-height: 1.2;
 }
+
+.choice {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+}
+
+/* No width of its own, so the list's content, at least as wide as what it holds, isn't widened by
+   a long name. */
+.choiceName {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* As light and small as the tick in the app's other lists. */
+.tick {
+  flex: none;
+  width: 0.8em;
+  height: 0.8em;
+  color: var(--mantine-color-dimmed);
+}
+
+/* A measured column's long name is cut short, its whole name in its tip. */
+.measuredName {
+  display: block;
+  max-width: 12rem;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

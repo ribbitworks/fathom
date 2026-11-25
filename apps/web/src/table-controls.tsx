@@ -238,7 +238,7 @@ export function viewParts(
       : [{ name: "Metrics", value: breakdown.join(" by ") }]),
     ...(view.sum === undefined
       ? []
-      : [{ name: "Sum of", value: labelOf(view.sum).at(0) ?? "Nothing" }]),
+      : [{ name: "Measure", value: labelOf(view.sum).at(0) ?? "Nothing" }]),
     ...(grouping === undefined ? [] : [{ name: "Group by", value: grouping }]),
     ...(first === undefined || view.groupsReversed !== true
       ? []
