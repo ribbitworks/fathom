@@ -43,7 +43,7 @@ export const useNarrow = () => useMediaQuery("(max-width: 48em)");
 
 // A panel beside the content. Several open at once are stacked, the first at the top, each taking a
 // share of the height that the edges between them move, kept for next time by the kind of panel, or
-// as tall as what it holds, with no edge beside it.
+// as tall as what it holds, with no edge beside it to move.
 export interface SidePanel {
   // The kind of panel, such as "metrics", by which its share of the height is kept.
   key: string;
