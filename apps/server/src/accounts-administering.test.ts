@@ -525,8 +525,7 @@ describe("the last active Administrator", () => {
     );
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
-      error:
-        "No other active account can manage accounts. Give another one a role with Edit Administration first.",
+      error: "No other account can manage accounts.",
     });
     expect(
       (await request(admin.cookie, "GET", "/api/accounts")).statusCode,
@@ -561,8 +560,7 @@ describe("the last active Administrator", () => {
     );
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
-      error:
-        "No other active account can manage accounts. Give another one a role with Edit Administration first.",
+      error: "No other account can manage accounts.",
     });
     expect(
       (await request(admin.cookie, "GET", "/api/session")).statusCode,

@@ -405,16 +405,14 @@ describe("the last active account with Edit Administration", () => {
     expect(choice("Team Member").disabled).toBe(false);
   });
 
-  it("says why under the role and Deactivate…, each read with its control, and under nothing else", async () => {
+  it("says why in place of the role's description and under Deactivate…, each read with its control, and nowhere else", async () => {
     const { deactivate, choice } = await controlsFor([own, planner, former]);
-    const why =
-      "No other active account can manage accounts. Give another one a role with Edit Administration first.";
+    const why = "No other account can manage accounts.";
     expect(screen.getAllByText(why)).toHaveLength(2);
     expect(within(deactivate).queryByText(why)).toBeNull();
     expect(described(deactivate)).toBe(why);
-    expect(described(choice("Administrator"))).toBe(
-      `${administratorRole.description} ${why}`,
-    );
+    expect(described(choice("Administrator"))).toBe(why);
+    expect(screen.queryByText(administratorRole.description)).toBeNull();
     expect(described(choice("Team Member"))).toBe(teamMemberRole.description);
   });
 
