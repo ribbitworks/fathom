@@ -5,6 +5,7 @@
 
 import { activityColumnGroups, activityColumns } from "./activity-table.tsx";
 import type {
+  Activity,
   DraftKind,
   Milestone,
   MilestoneRequest,
@@ -26,6 +27,8 @@ import {
   type PlanChange,
 } from "./plan-table.tsx";
 import {
+  activitiesColumnKey,
+  activitiesOfProject,
   customerColumnGroups,
   customerColumns,
   milestoneColumns,
@@ -45,6 +48,7 @@ import {
 import { ScopeHistory } from "./scope-history.tsx";
 import { type AddsByKey, withAdding } from "./add-from-panel.tsx";
 import { recordsAsShown, withOwnDrafts } from "./live-records.ts";
+import { ShortList } from "./short-list.tsx";
 import { RecordPanel } from "./record-details.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { Column, ColumnGroup } from "./record-table.ts";
@@ -194,6 +198,7 @@ export function recordPanel({
   onClose,
   menu,
   showMilestones,
+  activitiesOf,
   follow,
   onChange,
   changeReason,
@@ -219,6 +224,8 @@ export function recordPanel({
   onClose: () => void;
   menu: MilestoneMenu;
   showMilestones: (project: Project) => void;
+  // Set for a role that sees activities.
+  activitiesOf?: ActivitiesOf | undefined;
   follow: Follow;
   onChange: (
     type: PlanRecordKind,
@@ -258,9 +265,33 @@ export function recordPanel({
   > = {
     projects: () =>
       shownOf("project", plan.projects, () =>
-        projectColumns(choices).filter(
-          ({ key }) => !projectDateColumns.some(([date]) => date === key),
-        ),
+        projectColumns(choices)
+          .filter(
+            ({ key }) => !projectDateColumns.some(([date]) => date === key),
+          )
+          .map((column) =>
+            column.key === activitiesColumnKey && activitiesOf !== undefined
+              ? {
+                  ...column,
+                  details: (project: Project) => (
+                    <ProjectActivities
+                      project={project}
+                      activities={asShown(plan.activities)}
+                      onShow={(id) => {
+                        follow.showRecord("activities", id);
+                      }}
+                      showAll={activitiesOf.showAll}
+                      add={
+                        editsKind("activity") &&
+                        project.draft?.action !== "deleted"
+                          ? activitiesOf.add
+                          : undefined
+                      }
+                    />
+                  ),
+                }
+              : column,
+          ),
       ),
     proposals: () =>
       shownOf("proposal", plan.proposals, () => proposalColumns(choices)),
@@ -364,4 +395,55 @@ export function recordPanel({
       </RecordPanel>
     ),
   };
+}
+
+// Where a project's activities are seen and added, on Activities.
+export interface ActivitiesOf {
+  showAll: (projectId: string) => void;
+  add: (projectId: string) => void;
+}
+
+function ProjectActivities({
+  project,
+  activities,
+  onShow,
+  showAll,
+  add,
+}: {
+  project: Project;
+  activities: readonly Activity[];
+  onShow: (id: string) => void;
+  showAll: (projectId: string) => void;
+  add?: ((projectId: string) => void) | undefined;
+}) {
+  const own = activitiesOfProject(activities, project.id);
+  return (
+    <ShortList
+      items={own}
+      noun="activities"
+      onShow={onShow}
+      actions={[
+        ...(own.length === 0
+          ? []
+          : [
+              {
+                label: "Show on Activities",
+                onClick: () => {
+                  showAll(project.id);
+                },
+              },
+            ]),
+        ...(add === undefined
+          ? []
+          : [
+              {
+                label: "Add activity",
+                onClick: () => {
+                  add(project.id);
+                },
+              },
+            ]),
+      ]}
+    />
+  );
 }

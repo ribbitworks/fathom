@@ -3,7 +3,7 @@
 // Helpers for the plan pages' tests: a fictional plan, features and release streams, the server's
 // answers, and ways to open a page, read what was sent and find its panel and menus.
 
-import type { ProjectPlan, Release } from "@fathom/shared";
+import type { Activity, ProjectPlan, Release } from "@fathom/shared";
 import { startingEffortConversions } from "@fathom/shared";
 import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -288,3 +288,25 @@ export const rowNames = () =>
         /Fictional (Later|Second|First)/.exec(textContent)?.[0],
     )
     .filter((name) => name !== undefined);
+
+export const activity = (more: Partial<Activity> = {}): Activity => ({
+  id: "50000000-0000-4000-8000-000000000001",
+  keyNumber: 7,
+  name: "Fictional Migration",
+  statusId: "",
+  priorityId: null,
+  sizeId: null,
+  riskId: null,
+  neededBy: null,
+  estimateHours: null,
+  featureTeamId: null,
+  description: null,
+  note: null,
+  values: {},
+  links: {},
+  staffed: false,
+  staffedLive: false,
+  releaseId: null,
+  projectId,
+  ...more,
+});

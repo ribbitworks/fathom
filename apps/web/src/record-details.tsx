@@ -542,7 +542,8 @@ export function ColumnRows<Rec extends GridRecord, Change>({
               )
             }
           >
-            {isEmpty(value) ? undefined : column.content?.(shown)}
+            {column.details?.(shown) ??
+              (isEmpty(value) ? undefined : column.content?.(shown))}
           </Row>
         );
       })}

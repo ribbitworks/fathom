@@ -9,6 +9,7 @@
 - **Customers:** a customer is whoever a project's work is for. Each can have a short **Description** and **Notes**, which hold formatting, as a feature's do. The **Customers** tab also lists the **Projects** and **Proposals** that name each customer, and its **Features**: those that name it, and those its projects need or its proposals propose. Fathom works these out from the links, so you change them on the project, proposal or feature.
 - **Milestones:** the dated points in a project, such as a delivery to the customer.
 - **Features:** a project or proposal names the features it needs. Features are planned on the [Features](features.md) page.
+- **Activities:** work a project needs that isn't a feature, such as data migration. Activities are planned on the [Activities](activities.md) page.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A hollow dot marks a change you haven't published yet.
 - **Approval:** a draft goes live once someone whose role approves the plan approves it on the **Drafts** page.
 
@@ -105,11 +106,14 @@ To change a milestone there, select **Edit…** in its **⋯** menu. To remove i
 
 You can also type a new milestone in the empty row at the end of the **Milestones** tab. If its project isn't there yet, type the project's name in the row's **Project** list and select **New project** with the name. Add the project in the form that opens, and the row's **Project** then names it.
 
-### Go From a Project to Its Milestones or Features
+### Go From a Project to Its Milestones, Features or Activities
 
 - To see a project's milestones, select **Show on Milestones** in the project's **⋯** menu, or **Show milestones** beside the **Milestones** heading in its details. **Milestones** opens, showing only that project's.
 - To see the features a project or proposal names, select **Show on Features** in its **⋯** menu. **Features** opens, showing only those features.
 - To see every feature a customer gets or asks for, select **Show all features** in the customer's **⋯** menu. **Features** opens with a filter named for the customer, such as **For Bluefin Harbour Authority**. See [Features](features.md#see-a-customers-features) for more.
+- To see a project's activities, open its details and select **Show on Activities** under **Activities**. **Activities** opens, showing only that project's.
+- To open one of a project's activities, select its name under **Activities** in the project's details. Its details open on **Activities**.
+- To add an activity to a project, select **Add activity** in the project's details. **Activities** opens, showing only that project's, with **New activity** beside them and the project chosen.
 - To go from a milestone to its project, select **Show project** in the milestone's **⋯** menu. The project's details open.
 
 You're done when the page shows what you chose.

@@ -83,6 +83,7 @@ import {
   type ProjectsPageProps,
 } from "./plan-page-settings.ts";
 import {
+  type ActivitiesOf,
   detailTabs,
   MilestoneForm,
   panelId,
@@ -107,6 +108,7 @@ import type {
 } from "./record-table.ts";
 import { newRecordQuestion, useDiscardQuestion } from "./discard-question.tsx";
 import { entered, type FormValues, newRecordId } from "./new-record-panel.tsx";
+import type { LinkedAsk } from "./signed-in-route.tsx";
 import { afterNote, noteQuestion, useNoteEditing } from "./note-editing.tsx";
 import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
 import { focusSoon } from "./focus.ts";
@@ -136,6 +138,8 @@ export function ProjectsPage({
   onCustomerFeatures,
   seesFeatures = true,
   onReleaseStream,
+  activitiesOf,
+  adding,
   board,
   linkedColumn,
 }: ProjectsPageProps) {
@@ -174,6 +178,8 @@ export function ProjectsPage({
   const [beingAdded, setBeingAdded] = useState<{
     tab: PlanTab;
     values: FormValues;
+    // What a link started the form with, which isn't anything entered.
+    starting?: FormValues;
     saving?: boolean;
   }>();
   // Each New starts a form afresh, with none of a discarded one's fields.
@@ -224,6 +230,26 @@ export function ProjectsPage({
   });
   const { shown, undoable } = changes;
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
+  // A New form a link asks for opens once New could, and the ask is let go whether it opened or not.
+  const newReady = query.isSuccess && choicesSettled;
+  const [openedFor, setOpenedFor] = useState<FormValues>();
+  if (
+    adding !== undefined &&
+    adding.asked !== openedFor &&
+    newReady &&
+    canEdit &&
+    view.show !== "live"
+  ) {
+    setOpenedFor(adding.asked);
+    setForms((count) => count + 1);
+    setBeingAdded({ tab, values: adding.asked, starting: adding.asked });
+  }
+  const addingDone = adding?.onDone;
+  const addingSettled =
+    adding !== undefined && (adding.asked === openedFor || newReady);
+  useEffect(() => {
+    if (addingSettled) addingDone?.();
+  }, [addingSettled, addingDone]);
 
   const { decide, discard, changeReason, resubmit, actionsFor } =
     planRecordActions({
@@ -291,6 +317,9 @@ export function ProjectsPage({
       ...tableChoices(plan, choicesQuery.data, streams, effortQuery.data),
       projects: asShown(plan.projects),
       proposals: asShown(plan.proposals),
+      ...(activitiesOf === undefined
+        ? {}
+        : { activities: asShown(plan.activities) }),
     };
     // The records a customer's features are worked out from, as the view shows them. Every
     // customer follows those shown, so the pill still names one the Draft menu leaves out.
@@ -370,6 +399,21 @@ export function ProjectsPage({
         },
       },
       showMilestones: showMilestonesOf,
+      activitiesOf:
+        activitiesOf === undefined
+          ? undefined
+          : {
+              showAll: (projectId) => {
+                leave(() => {
+                  activitiesOf.showAll(projectId);
+                });
+              },
+              add: (projectId) => {
+                leave(() => {
+                  activitiesOf.add(projectId);
+                });
+              },
+            },
       follow: {
         showRecord: (next, id) => {
           // The tab is always one of the fixed tabs.
@@ -690,7 +734,7 @@ export function ProjectsPage({
         canEdit={canEdit}
         show={view.show}
         columnsReady={query.isSuccess && listsToOffer.isSuccess}
-        newReady={query.isSuccess && choicesSettled}
+        newReady={newReady}
         onTab={(next) => {
           leave(() => {
             onTab?.(next);

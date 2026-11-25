@@ -5,6 +5,7 @@
 
 import { activityColumns } from "./activity-table.tsx";
 import {
+  type Activity,
   type Customer,
   customerFeatures,
   customerKeptBy,
@@ -33,6 +34,7 @@ import { isPending } from "./grid-drafts.ts";
 import {
   customersColumn,
   draftFieldsOf,
+  recordsColumn,
   field,
   firstStatus,
   idColumn,
@@ -217,9 +219,37 @@ export function projectColumns(
       choices.features,
       choices.drafted.projects,
     ),
+    ...activitiesColumn(choices.activities),
     ...projectDateColumns.map(([key, label]) => projectDateColumn(key, label)),
   ];
 }
+
+export const activitiesColumnKey = "activityIds";
+
+export const activitiesOfProject = (
+  activities: readonly Activity[],
+  id: string,
+) => activities.filter(({ projectId }) => projectId === id);
+
+// A project's activities, on one line, for a role that sees them: read only, since an activity is
+// moved to another project on Activities.
+const activitiesColumn = (
+  activities: readonly Activity[] | undefined,
+): Column<Project, PlanChange>[] =>
+  activities === undefined
+    ? []
+    : [
+        recordsColumn<Project, PlanChange>(
+          activitiesColumnKey,
+          "Activities",
+          activities,
+          {
+            namedBy: (project) =>
+              activitiesOfProject(activities, project.id).map(({ id }) => id),
+            readOnly: true,
+          },
+        ),
+      ];
 
 // What a project's or proposal's menu opens: its details, and the features it names, on Features.
 interface NamerMenu<Rec> {

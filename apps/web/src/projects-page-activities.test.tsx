@@ -3,12 +3,12 @@
 // Tests for the Activities page: its table and details, adding an activity, moving one to a
 // release in its cell, removing one, and who may change them.
 
-import type { Activity } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { recordCell } from "./test-support.tsx";
 import {
+  activity,
   answers,
   chooseFrom,
   deleted,
@@ -31,28 +31,6 @@ afterEach(() => {
 
 const releaseId = "30000000-0000-4000-8000-000000000001";
 const releaseActivityId = "50000000-0000-4000-8000-000000000002";
-
-const activity = (more: Partial<Activity> = {}): Activity => ({
-  id: "50000000-0000-4000-8000-000000000001",
-  keyNumber: 7,
-  name: "Fictional Migration",
-  statusId: "",
-  priorityId: null,
-  sizeId: null,
-  riskId: null,
-  neededBy: null,
-  estimateHours: null,
-  featureTeamId: null,
-  description: null,
-  note: null,
-  values: {},
-  links: {},
-  staffed: false,
-  staffedLive: false,
-  releaseId: null,
-  projectId,
-  ...more,
-});
 
 const activityPlan = (more: Partial<ReturnType<typeof plan>> = {}) =>
   plan({

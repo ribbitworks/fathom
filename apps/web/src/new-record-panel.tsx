@@ -26,14 +26,24 @@ const titleId = "new-record-title";
 // What the record being added is known by, until it is added and has an ID of its own.
 export const newRecordId = "new-record";
 
-// Whether anything has been entered, so discarding it asks first.
-export const entered = ({ values }: { values: FormValues }) =>
-  Object.values(values).some(
-    (value) =>
+// Whether anything has been entered, so discarding it asks first: a value the form didn't start
+// with, such as a project a link set, which the person never chose.
+export const entered = ({
+  values,
+  starting = {},
+}: {
+  values: FormValues;
+  starting?: FormValues | undefined;
+}) => {
+  const startedWith = new Map(Object.entries(starting));
+  return Object.entries(values).some(
+    ([key, value]) =>
       value !== null &&
       value !== "" &&
-      !(Array.isArray(value) && value.length === 0),
+      !(Array.isArray(value) && value.length === 0) &&
+      JSON.stringify(value) !== JSON.stringify(startedWith.get(key)),
   );
+};
 
 // The columns a new record of a kind is given values in, and each one's value so far.
 export function newRecordFields<Rec extends GridRecord, Change>(
