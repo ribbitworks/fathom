@@ -78,7 +78,7 @@ describe("changing one's own name", () => {
     const dialog = await openDialog();
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(await within(dialog).findByText("Enter a name.")).toBeDefined();
+    expect(await within(dialog).findByText("Name needed")).toBeDefined();
   });
 
   it("names the rule a name breaks", async () => {

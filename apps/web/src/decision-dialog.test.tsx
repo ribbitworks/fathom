@@ -122,7 +122,7 @@ describe("the dialog before approving", () => {
     );
 
     // Then the reason is asked for under Reason, which has the focus
-    expect(within(dialog).getByText("Give a reason")).toBeDefined();
+    expect(within(dialog).getByText("Reason needed")).toBeDefined();
     await waitFor(() => {
       expect(document.activeElement).toBe(
         within(dialog).getByRole("textbox", { name: "Reason" }),

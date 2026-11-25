@@ -103,9 +103,7 @@ describe("creating a role", () => {
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create role" }),
     );
-    expect(
-      await within(dialog).findByText("Enter a name for the role."),
-    ).toBeDefined();
+    expect(await within(dialog).findByText("Name needed")).toBeDefined();
     expect(
       within(dialog).getByText("Use at most 500 characters."),
     ).toBeDefined();

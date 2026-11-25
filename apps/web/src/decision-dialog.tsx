@@ -197,7 +197,7 @@ function DecisionDialog({
             minRows={2}
             maxLength={reasonLength}
             value={reason}
-            error={tried && missing ? "Give a reason" : undefined}
+            error={tried && missing ? "Reason needed" : undefined}
             onChange={(event) => {
               setReason(event.currentTarget.value);
             }}

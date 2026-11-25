@@ -405,7 +405,7 @@ describe("approving and rejecting", () => {
     expect(clashed.statusCode).toBe(409);
     expect(clashed.json()).toEqual({
       error:
-        "A draft no longer fits the data as it is; refresh, change it, then approve it",
+        "A draft no longer fits the data; refresh, change it, then approve it",
     });
     const strayed = await approve([stray]);
     expect(strayed.json()).toEqual({
