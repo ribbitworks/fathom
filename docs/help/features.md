@@ -162,7 +162,7 @@ The board starts with months side by side, from a year back to a year ahead at t
 - **No date** is the board's last column.
 - The month you opened it on is the second column, so the month before it stays in view. This month's heading is underlined in red.
 
-The board leaves out features that are done or cancelled. To see them too, open **Views** and choose **Show done and cancelled**.
+The board, its count, **Metrics** and **Export** all leave out features that are done or cancelled. To see and count them too, open **Views** and choose **Show done and cancelled**.
 
 You can show only one schedule's features by months, or that schedule's cycles instead, with a card for each feature in the cycle it targets, and **Later** last.
 

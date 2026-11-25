@@ -13,6 +13,8 @@ import {
   cardNames,
   feature,
   ids,
+  later,
+  majors,
   openBoard,
   size,
   target,
@@ -84,6 +86,32 @@ describe("the Board without done and cancelled features", () => {
       "Fictional Dropped",
     ]);
     expect(history.location.search).toContain("finished=shown");
+  });
+
+  it("leaves them out of the count Metrics and Export share until Views shows them", async () => {
+    // Given the board, leaving out the done and cancelled features
+    await openBoard(undefined, { features });
+    expect(screen.getByRole("status").textContent).toBe("1 feature");
+
+    // When Show done and cancelled is chosen in the Views menu
+    await userEvent.click(screen.getByRole("button", { name: /^Views/ }));
+    await userEvent.click(await showItem());
+
+    // Then they are counted too
+    expect(screen.getByRole("status").textContent).toBe("3 features");
+  });
+
+  it("counts the features one schedule leaves off the board, since Columns is only its layout", async () => {
+    // Given the board by months of one schedule, a feature with no target left off it
+    const among = [alpha, later, shipped];
+    await openBoard(`/features?mode=board&schedule=${majors.id}`, {
+      features: among,
+      months: true,
+    });
+    expect(cardNames("Jun 2027", among)).toEqual(["Fictional Alpha"]);
+
+    // Then the count still holds the feature with no target, but not the done one
+    expect(screen.getByRole("status").textContent).toBe("2 features");
   });
 
   it("leaves them out of months too", async () => {

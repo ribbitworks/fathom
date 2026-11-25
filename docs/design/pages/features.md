@@ -57,6 +57,7 @@ Features lists the plan's features in one table, with a board as a second way of
 - **What it is:** the [Roadmap](../../product/domain.md#planning-terms), drawn as [Boards](../../standards/ui-conventions/dates-timelines-and-boards.md#boards) sets out.
 - **Read only:** nothing on the board can be changed.
 - **Done and cancelled:** the board leaves out features whose status means Done or Cancelled, by months and by a schedule's cycles alike. **Show done and cancelled** in the Views menu, offered only on the board and counting them, adds them back; the address and a saved view keep it. The table shows every feature.
+  - **Metrics and Export:** like Show retired on a table, the choice sets the view's records, so the count, Metrics and Export cover only the features it leaves in. The Columns choice is the Board's layout, so it narrows none of them.
 - **One view:** table and board share the page's controls and view. A saved view keeps the Board's columns, card choices and whether it shows done and cancelled features, but not which shows or the month or cycle the Board starts from.
 - **Columns:** chosen in a Columns menu of two groups. Under Months: All schedules, the default, or one schedule, whose features alone then show. Under A schedule's cycles: each schedule. The button names the choice, such as Columns: Months, Field Apps or Columns: Platform cycles.
   - **Months:** one column a month, as many as fit, then No date. The months run from 12 months back to the latest month any feature shown is needed by, a year ahead at the least.
