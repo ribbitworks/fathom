@@ -11,6 +11,7 @@ import {
   type RecordKeyOf,
   type Show,
   type Tier,
+  sameName,
 } from "@fathom/shared";
 import { Menu } from "@mantine/core";
 import type { ReactNode } from "react";
@@ -35,7 +36,6 @@ import {
   listKindName,
   liveLists,
   nameProblem,
-  sameName,
   withRetiring,
 } from "./lists.ts";
 import { draftFieldsOf } from "./plan-table.tsx";
