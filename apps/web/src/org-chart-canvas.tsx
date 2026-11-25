@@ -472,7 +472,7 @@ export function Chart({
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
-          colorMode={colorScheme}
+          forceColorMode={colorScheme}
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable={false}
@@ -495,9 +495,9 @@ export function Chart({
           minZoom={0.1}
           fitView={fitOnOpen}
           fitViewOptions={fitOptions}
-          onMoveStart={(event) => {
-            // Only the reader's own moves have an event.
-            if (event !== null) centreOnSpace(false);
+          // React Flow reports only the reader's own moves, not those the chart makes itself.
+          onMoveStart={() => {
+            centreOnSpace(false);
           }}
           onInit={() => {
             setReady(true);
