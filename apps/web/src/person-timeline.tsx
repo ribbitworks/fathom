@@ -230,9 +230,9 @@ function PersonTimelinePanel({
   );
 }
 
-// A person's timeline on People: what its records open, which days move the page, the panel when
-// it is open, and what the person's details need to show its preview. None for a planned hire, or a
-// role that doesn't see start and end dates.
+// A person's timeline on People: what its records open, which days move the page, the stack with
+// its panel when it is open, and what the person's details need to show its preview. None for a
+// planned hire, or a role that doesn't see start and end dates.
 export function usePersonTimeline({
   people,
   shown,
@@ -263,14 +263,14 @@ export function usePersonTimeline({
   open: string | undefined;
   narrow: boolean;
 }): {
-  panel: SidePanel | undefined;
+  stacked: (panels: SidePanel[]) => SidePanel[];
   details:
     | (Omit<TimelineContext, "personId" | "shownOn"> & { onOpen: () => void })
     | undefined;
 } {
   const navigate = useNavigate();
   if (!showDates || shown === undefined || isHire(shown)) {
-    return { panel: undefined, details: undefined };
+    return { stacked: (panels) => panels, details: undefined };
   }
   const links: TimelineLinks = {
     person: ({ id }) => {
@@ -315,28 +315,35 @@ export function usePersonTimeline({
                   dates.onDay(day === today() ? undefined : day);
                 });
               };
+  const panel: SidePanel | undefined = opened
+    ? {
+        key: "person-timeline",
+        id: timelinePanelId,
+        name: "timeline",
+        node: (
+          <PersonTimelinePanel
+            personId={shown.id}
+            name={shown.preferredName}
+            shownOn={shownOn}
+            links={links}
+            dayLink={dayLink}
+            narrow={narrow}
+            onClose={() => {
+              onShow(false);
+              focusSoon(showButtonId);
+            }}
+          />
+        ),
+      }
+    : undefined;
   return {
-    panel: opened
-      ? {
-          key: "person-timeline",
-          id: timelinePanelId,
-          name: "timeline",
-          node: (
-            <PersonTimelinePanel
-              personId={shown.id}
-              name={shown.preferredName}
-              shownOn={shownOn}
-              links={links}
-              dayLink={dayLink}
-              narrow={narrow}
-              onClose={() => {
-                onShow(false);
-                focusSoon(showButtonId);
-              }}
-            />
-          ),
-        }
-      : undefined,
+    // Below the details it opens from, or on a narrow screen, where only the top panel shows, above.
+    stacked: (panels) =>
+      panel === undefined
+        ? panels
+        : narrow
+          ? [panel, ...panels]
+          : [...panels, panel],
     details: {
       links,
       dayLink,

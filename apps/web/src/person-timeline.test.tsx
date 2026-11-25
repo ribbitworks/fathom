@@ -74,6 +74,11 @@ describe("a timeline's change in words", () => {
       { field: "filled", value: { id: "h1", name: "HIRE-42" } },
       "Filled #HIRE-42",
     ],
+    [
+      "a record on a field that links nowhere, unlinked",
+      { field: "start", value: ana },
+      "Start Fictional Ana",
+    ],
   ])("reads %s", (_case, change, expected) => {
     expect(words(change)).toBe(expected);
   });

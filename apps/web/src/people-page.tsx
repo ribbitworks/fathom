@@ -404,7 +404,7 @@ export function PeoplePage({
             })
           }
           onFill={mayFill ? startFill : undefined}
-          panels={[
+          panels={personTimeline.stacked([
             ...(beingAdded === undefined
               ? []
               : [
@@ -580,10 +580,7 @@ export function PeoplePage({
                   },
                 ]),
             ...(note === undefined ? [] : [note]),
-            ...(personTimeline.panel === undefined
-              ? []
-              : [personTimeline.panel]),
-          ]}
+          ])}
           people={query.data.people}
           fields={query.data.fields}
           order={query.data.order}

@@ -967,6 +967,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The dialog closes.
   - **Notes:**
 
+- [ ] `E0D1` On **People**, select the name 'Carmine Labadie'.
+  - **Expected:** The details are dark, and their **Timeline** section at the end is easy to read.
+  - **Notes:**
+
+- [ ] `8013` Select **Show timeline**.
+  - **Expected:**
+    - The timeline is dark, its **Today** line red and easy to see.
+    - Its dates, changes and linked names are easy to read.
+  - **Notes:**
+
+- [ ] `2E72` Select the timeline's **×**.
+  - **Expected:** The timeline closes.
+  - **Notes:**
+
 - [ ] `6A94` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
   - **Expected:** The page is dark.
   - **Notes:**
@@ -979,17 +993,4 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu closes.
   - **Notes:**
 
-- [ ] `E0D1` On **People**, select the name 'Carmine Labadie'.
-  - **Expected:** His details are dark, and their **Timeline** section at the end is easy to read.
-  - **Notes:**
-
-- [ ] `8013` Select **Show timeline**.
-  - **Expected:**
-    - The timeline is dark, its **Today** line red and easy to see.
-    - Its dates, changes and linked names are easy to read.
-  - **Notes:**
-
-- [ ] `2E72` Select the timeline's **×**.
-  - **Expected:** The timeline closes.
-  - **Notes:**
 **Afterwards:** Choose **Light** in the Appearance menu, then run Restore the Seed Data.

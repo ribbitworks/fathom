@@ -272,12 +272,8 @@ export function createPeopleAccess(database: Database): PeopleAccess {
     readTimeline: async (actor, personId) => {
       requirePermission(actor, "people:view");
       if (!seesEmployment(actor)) throw new ForbiddenError();
-      const { timeline, includedHiringPlan } = await readPersonTimeline(
-        database,
-        actor,
-        personId,
-      );
-      const timeZone = await readTimeZone(database);
+      const { timeline, includedHiringPlan, timeZone } =
+        await readPersonTimeline(database, actor, personId);
       await recordPersonalView(database, actor.user.id, timeZone);
       if (includedHiringPlan) {
         await recordPersonalView(

@@ -111,8 +111,7 @@ describe("a person's timeline days", () => {
 });
 
 describe("the days someone began and stopped leading a team", () => {
-  const member = (fromDate: string, isMember = true, teamId = "t1") => ({
-    teamId,
+  const member = (fromDate: string, isMember = true) => ({
     member: isMember,
     fromDate,
   });
@@ -122,18 +121,16 @@ describe("the days someone began and stopped leading a team", () => {
       leadingDays(
         "p1",
         [
-          { teamId: "t1", leadId: "p2", fromDate: "2024-01-01" },
-          { teamId: "t1", leadId: "p1", fromDate: "2026-03-02" },
-          { teamId: "t1", leadId: null, fromDate: "2027-01-04" },
-          { teamId: "t1", leadId: "p3", fromDate: "2027-02-01" },
-          { teamId: "t2", leadId: "p1", fromDate: "2025-05-05" },
+          { leadId: "p3", fromDate: "2027-02-01" },
+          { leadId: "p2", fromDate: "2024-01-01" },
+          { leadId: "p1", fromDate: "2026-03-02" },
+          { leadId: null, fromDate: "2027-01-04" },
         ],
-        [member("2020-01-01"), member("2025-05-05", true, "t2")],
+        [member("2020-01-01")],
       ),
     ).toEqual([
-      { teamId: "t1", fromDate: "2026-03-02", leads: true },
-      { teamId: "t1", fromDate: "2027-01-04", leads: false },
-      { teamId: "t2", fromDate: "2025-05-05", leads: true },
+      { fromDate: "2026-03-02", leads: true },
+      { fromDate: "2027-01-04", leads: false },
     ]);
   });
 
@@ -141,12 +138,12 @@ describe("the days someone began and stopped leading a team", () => {
     expect(
       leadingDays(
         "p1",
-        [{ teamId: "t1", leadId: "p1", fromDate: "2026-01-05" }],
-        [member("2026-03-02"), member("2026-09-14", false)],
+        [{ leadId: "p1", fromDate: "2026-01-05" }],
+        [member("2026-09-14", false), member("2026-03-02")],
       ),
     ).toEqual([
-      { teamId: "t1", fromDate: "2026-03-02", leads: true },
-      { teamId: "t1", fromDate: "2026-09-14", leads: false },
+      { fromDate: "2026-03-02", leads: true },
+      { fromDate: "2026-09-14", leads: false },
     ]);
   });
 });
