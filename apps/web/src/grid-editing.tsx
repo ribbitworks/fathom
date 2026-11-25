@@ -41,7 +41,6 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     | "at"
     | "writingInPanel"
     | "setActive"
-    | "editing"
     | "setEditing"
     | "moveTo"
     | "valueAt"
@@ -76,7 +75,6 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     at,
     writingInPanel,
     setActive,
-    editing,
     setEditing,
     moveTo,
     valueAt,
@@ -303,7 +301,12 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
         editing.column === cell.column &&
         inPanel !== true
       ) {
-        setText((typed) => asTyped?.(typed + event.key) ?? typed + event.key);
+        const next = typed.current + event.key;
+        typed.current = asTyped?.({ text: next, cursor: null }).text ?? next;
+        // The editor, which keeps its own text once open, starts afresh from what is typed so far.
+        setOpenedWith(
+          (before) => before && { ...before, edit: before.edit + 1 },
+        );
         focusSoon(`${cellId(cell.row, cell.column)}-editor`);
       } else startEdit(cell, event.key);
     }
@@ -365,6 +368,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     if (Editor !== undefined) {
       return (
         <Editor
+          key={openedWith?.edit}
           id={id}
           column={column}
           value={value}
