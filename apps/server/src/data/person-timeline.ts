@@ -325,16 +325,14 @@ async function fillsOf(
     if (before === undefined || madeAt > before) latest.set(hireId, madeAt);
   }
   const keys = await readKeyNumbers(reader, "hire", ids);
-  return [...latest.entries()]
-    .map(([hireId, madeAt]) => ({
-      day: dayIn(timeZone, madeAt),
-      hire: {
-        id: hireId,
-        name: `HIRE-${String(keys.get(hireId))}`,
-        keyNumber: Number(keys.get(hireId)),
-      },
-    }))
-    .toSorted((first, second) => first.day.localeCompare(second.day));
+  return [...latest.entries()].map(([hireId, madeAt]) => ({
+    day: dayIn(timeZone, madeAt),
+    hire: {
+      id: hireId,
+      name: `HIRE-${String(keys.get(hireId))}`,
+      keyNumber: Number(keys.get(hireId)),
+    },
+  }));
 }
 
 // A person's timeline as the reader's role may see it, all read at one moment, and whether it named

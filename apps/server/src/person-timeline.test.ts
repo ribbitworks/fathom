@@ -137,6 +137,42 @@ describe("a person's timeline", () => {
     expect(last).toMatchObject({ value: null, was: { id: manager } });
   });
 
+  it("counts the others given the same new manager that day, leaving out those starting with them", async () => {
+    const first = await person();
+    const second = await person();
+    const [kai, lea, starter] = [
+      await person(),
+      await person(),
+      await person(),
+    ];
+    for (const report of [kai, lea]) {
+      await send(editor, "PATCH", `/api/people/${report}`, {
+        managerId: first,
+        managerFrom: "2021-01-04",
+      });
+      await approved({ people: [report] });
+      await send(editor, "PATCH", `/api/people/${report}`, {
+        managerId: second,
+        managerFrom: "2022-03-07",
+      });
+      await approved({ people: [report] });
+    }
+    await send(editor, "PATCH", `/api/people/${starter}`, {
+      managerId: second,
+      managerFrom: "2022-03-07",
+    });
+    await approved({ people: [starter] });
+
+    const { days } = (
+      await timelineOf(kai, await test.signedIn("engineering-director"))
+    ).json<Timeline>();
+
+    const moved = days
+      .flatMap(({ changes }) => changes)
+      .findLast(({ field }) => field === "manager");
+    expect(moved).toMatchObject({ value: { id: second }, others: 1 });
+  });
+
   it("is refused for someone who doesn't exist", async () => {
     const response = await timelineOf(randomUUID());
 

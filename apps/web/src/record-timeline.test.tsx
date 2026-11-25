@@ -130,4 +130,12 @@ describe("a record's timeline", () => {
       ),
     ).toBeNull();
   });
+
+  it("draws the day shown's line alone on a side with no days", () => {
+    renderTimeline("2026-06-15", undefined, [dayOf("2027-01-04")]);
+
+    expect(
+      screen.getByRole("separator", { name: "Jun 15, 2026" }),
+    ).toBeDefined();
+  });
 });
