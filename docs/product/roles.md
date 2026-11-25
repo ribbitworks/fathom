@@ -41,7 +41,8 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 | Administration: accounts, roles, settings and the access history | None | None | None | None | None | View | None | View | Edit |
 
 - **Edit includes View:** A role that may edit an area or class also views it, so nobody changes what they can't see.
-- **Drafts and history:** A role sees the drafts and the change history of the data it sees. A project's or proposal's scope history comes with seeing the plan.
+- **Drafts and history:** A role sees the drafts and the change history of the data it sees. A project's or proposal's scope history comes with seeing the plan and features, since it lists features.
+- **Records a change names:** The change history names a record a change links to, such as a project's feature, a feature's customer or the feature a proposal's removal reason is for, only to a role that sees its kind. Any other role is told only its kind, such as "A feature".
 - **Plan and features:** Those who see the plan see the names of approved feature teams, to give features to them, without their members or leads. Everyone who sees the plan or features reads the planning settings' hours a day and working days, as the conversions between units of effort.
 - **A feature's customers and commitments:** Which customers a feature is for, and which projects and proposals name it, are changed with Edit Plan, not Edit Features and releases, since they are the plan's call. So the Feature Lead sees them and doesn't change them.
 - **Choices:** Everyone who sees data drawn from a list sees the list's choices, without needing the Lists page.

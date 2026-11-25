@@ -15,12 +15,14 @@ import {
 } from "@fathom/db";
 import {
   builtInColumnNames,
+  capitalized,
   type ChangeValue,
   hireCalled,
   isLink,
   isNoteField,
   linkInWords,
   notePlainText,
+  type ClassAccess,
   temporaryId,
 } from "@fathom/shared";
 import { and, asc, desc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
@@ -87,10 +89,10 @@ export const strings = (value: unknown): string[] =>
 // The identifiers a change's values refer to, which are named in its place.
 export function referencedIds(row: StoredChange): string[] {
   const values = [row.oldValue, row.newValue];
-  const inValue = values.flatMap(
-    (value) =>
-      planKindOf.get(row.recordType)?.idsInValue?.(row.field, value) ?? [],
-  );
+  const named = new Map(
+    Object.entries(planKindOf.get(row.recordType)?.idsInValue ?? {}),
+  ).get(row.field);
+  const inValue = values.flatMap((value) => named?.ids(value) ?? []);
   if (inValue.length > 0) return inValue;
   if (fieldOfValue(row.field) !== null) {
     return [fieldOfValue(row.field) as string, ...values.flatMap(strings)];
@@ -291,6 +293,25 @@ export async function nameHires(
       );
     }
   }
+}
+
+// What a changed value of a kind the reader can't read is named, such as "A feature" in a project's
+// features or a proposal's removal reasons, when the field names records of such a kind.
+export function unseenValueName(
+  row: StoredChange,
+  access: ClassAccess,
+): string | undefined {
+  const kind = planKindOf.get(row.recordType);
+  const named = new Map([
+    ...Object.entries(kind?.links ?? {}),
+    ...Object.entries(kind?.idsInValue ?? {}).map(
+      ([field, { kind: linked }]) => [field, linked] as const,
+    ),
+  ]);
+  const linked = planKindOf.get(named.get(row.field) ?? "");
+  return linked !== undefined && !readsKind(linked, access)
+    ? capitalized(linked.unseenSubject)
+    : undefined;
 }
 
 // What a value shows: text, yes or no, or several names, with identifiers named, a note as its

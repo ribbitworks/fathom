@@ -367,6 +367,7 @@ export function ProjectsPage({
         view.show !== "live" &&
         (type === "feature" ? plan.canEditFeatures : plan.canEdit),
       approves,
+      seesFeatures,
       nodes,
       onClose: () => {
         onOpen?.(undefined);
