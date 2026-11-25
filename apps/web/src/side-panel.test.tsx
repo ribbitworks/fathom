@@ -707,6 +707,50 @@ describe("a side panel's frame", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it("stays open on an Esc that closes a dropdown inside it", () => {
+    const onClose = vi.fn();
+    render(
+      <MantineProvider theme={testTheme}>
+        <SidePanelFrame
+          id="frame"
+          titleId="frame-title"
+          title="Sites"
+          narrow={false}
+          close={{ label: "Close sites", onClose }}
+        >
+          <input aria-label="Site" data-mantine-stop-propagation="true" />
+        </SidePanelFrame>
+      </MantineProvider>,
+    );
+
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Site" }), {
+      key: "Escape",
+    });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("closes with Esc pressed on a non-HTML element inside it, such as a drawing", () => {
+    const onClose = vi.fn();
+    render(
+      <MantineProvider theme={testTheme}>
+        <SidePanelFrame
+          id="frame"
+          titleId="frame-title"
+          title="Sites"
+          narrow={false}
+          close={{ label: "Close sites", onClose }}
+        >
+          <svg data-testid="drawing" />
+        </SidePanelFrame>
+      </MantineProvider>,
+    );
+
+    fireEvent.keyDown(screen.getByTestId("drawing"), { key: "Escape" });
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it("stays open on an Esc that something inside it has used", async () => {
     const onClose = vi.fn();
     render(

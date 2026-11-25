@@ -80,7 +80,7 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **The same menu:** it opens the menu of the record's row on its table, less Show details: the same items, words and order, such as Copy link, Approve draft…, Reject draft…, Publish draft…, Resubmit and Discard draft.
   - **Acting:** each item does what it does from the row, and focus stays in the panel.
   - **A record that goes:** Discarding the draft that added the record takes it away, so focus goes to the table.
-  - **Esc:** Esc closes the menu alone, keeping the panel open, as in every ⋯ menu in a panel.
+  - **Esc:** Esc closes the menu alone, keeping the panel open, as it does any dropdown open in a panel, such as a select's choices; the next Esc closes the panel. `SidePanelFrame` in `apps/web/src/side-panel.tsx` leaves an Esc that closes a dropdown to it.
   - **Nothing to offer:** A panel whose record's row would offer only Show details has no ⋯.
   - **Panels with their own:** A list's panel on the Lists page keeps its own menu of the list's drafts, and a feature team's panel on the Org chart its buttons at its foot, since neither is a shared table's record. A person's details beside the Org chart, which has no table, have none.
   - **Drawn by:** `PanelMenu` in `apps/web/src/panel-menu.tsx`, on `PanelMoreMenu` there, which draws every ⋯ menu in a panel, placed by `RecordPanel` in `apps/web/src/record-details.tsx`, with the items from the table beside it, `RecordGrid`, by `panelMenuItems` in `apps/web/src/row-menus.tsx`, the one piece the row's menu draws.

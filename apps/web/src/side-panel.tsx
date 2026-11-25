@@ -522,12 +522,18 @@ export function PanelSubtitle({
   );
 }
 
+// Whether a dropdown is open from an element, such as a select's choices or a menu: Mantine marks
+// it, since its Esc closes the dropdown without stopping a dialog or panel around it hearing it.
+const hasOpenDropdown = (target: EventTarget) =>
+  target instanceof HTMLElement &&
+  target.getAttribute("data-mantine-stop-propagation") === "true";
+
 // A side panel's frame: its title, with any controls for the whole record beside it and a line
 // under it, a close button unless it closes only by its own buttons, what it holds, scrolling, and
 // a foot that stays in view, such as Save. What it holds scrolls in the frame, or in a box of
 // `sidePanelScroll` right inside it, for the edge drawn above it once scrolled. Esc closes it too,
-// unless something inside has used it already. Under another panel, it offers Maximize. Covering the content on a narrow screen, it holds
-// focus until it is closed.
+// unless something inside has used it already or it closes a dropdown. Under another panel, it
+// offers Maximize. Covering the content on a narrow screen, it holds focus until it is closed.
 export function SidePanelFrame({
   id,
   titleId,
@@ -568,6 +574,7 @@ export function SidePanelFrame({
           if (
             event.key !== "Escape" ||
             event.defaultPrevented ||
+            hasOpenDropdown(event.target) ||
             close === undefined ||
             close.byEscape === false
           ) {
