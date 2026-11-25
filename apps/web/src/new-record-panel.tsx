@@ -90,8 +90,6 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
     found: readonly { column: string; message: string }[],
   ) => readonly { column: string; message: string }[];
   onRefused: (found: readonly { column: string; message: string }[]) => void;
-  // Adds the record, given what to do with the server's refusal: name it under the first field, as a
-  // table names it in a new row's first cell.
   // Adds the record, given what to do with the server's refusal of a value: name it under its field,
   // saying whether the form, still shown, has that field.
   onAdd: (request: Request, refused: (refusal: Refusal) => boolean) => void;

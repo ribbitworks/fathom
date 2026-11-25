@@ -143,7 +143,8 @@ export function ValueField({
         if (event.key === "Escape" && onCancel !== undefined) {
           event.preventDefault();
           onCancel();
-        } else if (event.key === "Enter") {
+        } else if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+          // Enter that ends composing a word, as an input method does, isn't the reader's Enter.
           event.preventDefault();
           onEnter();
         }
@@ -168,7 +169,7 @@ function TextEditor({
   alwaysOpen = false,
 }: EditorProps & {
   // A New form's field, open from the start, with no earlier value for Esc to put back, so Esc
-  // closes the form instead.
+  // closes the form instead, and Enter, once the value is saved, does the form's own action.
   alwaysOpen?: boolean;
   hint?: string | undefined;
   asTyped?: ((typing: Typing) => Typing) | undefined;
