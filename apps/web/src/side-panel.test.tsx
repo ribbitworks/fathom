@@ -449,6 +449,7 @@ describe("a panel under another, maximized", () => {
     );
     expect(placeOf("middle").className).toMatch(/stackItemFolded/u);
     expect(placeOf("middle").className).not.toMatch(/stackItemFitted/u);
+    expect(stack().className).not.toMatch(/stackFitting/u);
   });
 
   it("folds away the panel above, kept as it was, and Restore unfolds it", async () => {
