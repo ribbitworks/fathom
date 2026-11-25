@@ -229,6 +229,7 @@ export function FeatureBoard({
         id,
         label: (
           <DraftedItem
+            slot
             draft={markedDraft(own?.draft, own?.retired)}
             heldBy={own?.heldBy}
           >
@@ -256,7 +257,12 @@ export function FeatureBoard({
             label={boardMenuWords.months}
             divided={false}
             choices={[
-              { value: monthsChoice, label: boardMenuWords.allSchedules },
+              {
+                value: monthsChoice,
+                label: (
+                  <DraftedItem slot>{boardMenuWords.allSchedules}</DraftedItem>
+                ),
+              },
               ...offered.map(({ id, label }) => ({ value: id, label })),
             ]}
             chosen={
