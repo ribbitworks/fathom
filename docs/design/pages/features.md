@@ -29,7 +29,7 @@ Features lists the plan's features in one table, with a board as a second way of
 
 - **Order:** Name, Status, Description, Notes, Customers, Projects, Proposals, Priority, Needed by, Effort, Size, Risk, Release, Target cycle, Feature team, Staffed, then added columns.
 - **Release:** read only, following from the target cycle; Later is its empty value. In the details, it links to the release's schedule on [Releases](releases.md).
-- **Feature team:** a Planned or In progress feature with none shows No team, as a [warning on a value](../../standards/ui-conventions/drafts-and-values.md#values). It is changed only by those who edit feature teams, who alone see it in New feature; the server refuses others' changes and their discarding of such a change.
+- **Feature team:** a Planned or In progress feature with none shows No feature team, as a [warning on a value](../../standards/ui-conventions/drafts-and-values.md#values). It is changed only by those who edit feature teams, who alone see it in New feature; the server refuses others' changes and their discarding of such a change.
 - **Staffed:** read only; for Planned or In progress features, Yes when any allocation gives them a month, a planned hire's included. It is empty for other statuses, so Not staffed is a plain filter.
 - **Customers:** changed only by those who change the plan, who alone see it in New feature; the server refuses others' changes and their discarding of such a change.
 - **Projects and Proposals:** changed only by those who change the plan; New feature doesn't offer them.

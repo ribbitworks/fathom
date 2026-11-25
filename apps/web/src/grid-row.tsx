@@ -39,6 +39,12 @@ const recordCellAttribute = "data-record-cell";
 const recordCellOf = (id: string, columnKey: string) => `${id} ${columnKey}`;
 
 // Every cell of a record in a column, one in each of its rows.
+
+// An empty value's stand-in, unless a warning in its place says the same, so the words show once.
+const unlessWarned = (
+  standIn: string | undefined,
+  warning: { words: string } | undefined,
+) => (standIn === warning?.words ? undefined : standIn);
 export const recordCellSelector = (id: string, columnKey: string) =>
   `[${recordCellAttribute}="${CSS.escape(recordCellOf(id, columnKey))}"]`;
 
@@ -358,7 +364,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
             record === undefined || editingHere
               ? undefined
               : column.status?.(record);
-          const standIn = standInAt(row, column);
+          const standIn = unlessWarned(standInAt(row, column), warning);
           // A list of records marks each record a change adds or takes away, so its cell is not
           // marked as changed as a whole; a new record's cells all are.
           const changes =
@@ -606,7 +612,10 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
             aria-hidden="true"
           >
             {columns.flatMap((column, columnIndex) => {
-              const standIn = liveStandIn(record, column);
+              const standIn = unlessWarned(
+                liveStandIn(record, column),
+                liveWarning(column),
+              );
               const liveShown = changedIn(draft, column)
                 ? column.live(draft)
                 : column.value(record);

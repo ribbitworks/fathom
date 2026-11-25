@@ -229,12 +229,12 @@ describe("the Features page", () => {
 
   it("marks a feature whose status means Planned and that has no feature team, in red words in place of the team, with no box", async () => {
     await open(featurePlan({ features: [{ ...first, statusId: plannedId }] }));
-    const words = await screen.findByText("No team");
+    const words = await screen.findByText("No feature team");
     expect(words.className).toContain("warningWords");
     expect(warningBox(words)).toBeNull();
   });
 
-  it("keeps the warning's box after the words a draft emptying the team shows", async () => {
+  it("shows the warning alone where a draft empties the team, rather than the same words twice", async () => {
     await open(
       featurePlan({
         features: [
@@ -249,8 +249,35 @@ describe("the Features page", () => {
         ],
       }),
     );
-    const [words] = await screen.findAllByText("No team");
-    expect(warningBox(words as HTMLElement)).not.toBeNull();
+    const [words, ...others] = await screen.findAllByText("No feature team");
+    expect(others).toEqual([]);
+    expect(words?.className).toContain("warningWords");
+    expect(warningBox(words as HTMLElement)).toBeNull();
+    expect(words?.closest("td")?.textContent).toContain(
+      "Draft: changed from “Fictional Team”",
+    );
+  });
+
+  it("shows the warning alone in the Live row of a draft giving a planned feature its team", async () => {
+    await open(
+      featurePlan({
+        features: [
+          {
+            ...first,
+            statusId: plannedId,
+            featureTeamId: teamId,
+            draft: featureDraft({
+              changed: ["featureTeamId"],
+              live: { featureTeamId: null },
+            }),
+          },
+        ],
+      }),
+    );
+    const [words, ...others] = await screen.findAllByText("No feature team");
+    expect(others).toEqual([]);
+    expect(words?.className).toContain("warningWords");
+    expect(warningBox(words as HTMLElement)).toBeNull();
   });
 
   it("follows a customer from a feature's details to the Customers tab", async () => {

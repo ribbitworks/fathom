@@ -73,7 +73,7 @@ Run the test cases in order, in about 30 minutes, straight after [Planning Proje
   - **Expected:**
     - Three rows are added, each with its description and a hollow yellow dot in its slot.
     - **Status** reads "Planned" for `Fictional Tide Tables` and `Fictional Gauge Alerts`, and "Possible" for `Fictional Lamp Schedule`.
-    - The **Feature team** cell of each "Planned" feature shows **No team** in red.
+    - The **Feature team** cell of each "Planned" feature shows **No feature team** in red.
     - The count reads "3 features".
   - **Notes:**
 

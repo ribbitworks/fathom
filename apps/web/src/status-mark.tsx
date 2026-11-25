@@ -483,9 +483,9 @@ export type OtherTone = "live" | "warning" | "planned";
 // as a draft's dot is, offering "Live" as its tip and read aloud. A warning, such as Left, or a
 // planned place is a fact about the item, not a draft's state, so it is a small box after the item,
 // as a draft's Moved or Retired is, outlined red or grey, never a dot: a dot always means a draft's
-// state. A warning with no value before it, such as No team in an empty cell, is its words in red in
-// the value's place, with no box. With no item, a planned place is the box alone, such as a line
-// saying a place is planned; with no tone, the item alone.
+// state. A warning with no value before it, such as No feature team in an empty cell, is its words
+// in red in the value's place, with no box. With no item, a planned place is the box alone, such
+// as a line saying a place is planned; with no tone, the item alone.
 export function MarkedItem({
   tone,
   words,

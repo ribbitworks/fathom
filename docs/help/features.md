@@ -190,7 +190,7 @@ You're done when the row is struck through. It's removed once the removal is app
 
 - **Later** heads the features that target no cycle yet.
 - **Not released yet**, after a schedule's name, such as **Platform: Not released yet**, means the feature's cycle isn't in any release.
-- **No team**, in red in the **Feature team** cell, marks a planned or in-progress feature that has no feature team yet.
+- **No feature team**, in red in the **Feature team** cell, marks a planned or in-progress feature that has no feature team yet.
 - **Needed by** is the month the feature is wanted. Type it as digits, such as `2027-03`, and it shows as Mar 2027. It's a rough wish; **Target cycle** is the commitment.
 - **Status** says how far along the feature is. Statuses are named on the **Lists** page, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
 - **Feature team** is changed only if your role edits feature teams, as the Feature Lead's does.

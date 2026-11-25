@@ -75,7 +75,7 @@ Run the test cases in order, in about 30 minutes, straight after [Reviewing the 
 **Preconditions:** STAFF-01 done.
 
 - [ ] `2C5A` Select the **Features** page in the left-hand menu.
-  - **Expected:** `Fictional Gauge Alerts` reads "Planned" in **Status**, with no dot, and its **Feature team** cell shows **No team** in red.
+  - **Expected:** `Fictional Gauge Alerts` reads "Planned" in **Status**, with no dot, and its **Feature team** cell shows **No feature team** in red.
   - **Notes:**
 
 - [ ] `6B1E` Select the **Feature team** cell of `Fictional Gauge Alerts`, press Enter, choose `Harbour team`, and press Enter.
@@ -223,7 +223,7 @@ Run the test cases in order, in about 30 minutes, straight after [Reviewing the 
 - [ ] `C3D8` Select the **Feature team** cell of `Fictional Lamp Schedule`, press Enter, choose `Tide team`, and press Enter.
   - **Expected:**
     - The cell reads `Tide team`, with a hollow yellow dot before it.
-    - No **Feature team** cell shows **No team**.
+    - No **Feature team** cell shows **No feature team**.
   - **Notes:**
 
 - [ ] `EC4D` Select the **Effort** cell of `Fictional Lamp Schedule`, type `80`, and press Enter.
