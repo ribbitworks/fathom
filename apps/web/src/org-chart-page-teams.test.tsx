@@ -74,6 +74,12 @@ describe("the org chart", () => {
       "var(--mantine-color-grape-filled)",
     );
     expect(colourOf("Uma Fictional")).toBe("var(--mantine-color-grape-filled)");
+    const squareOf = (name: string) =>
+      card(name).querySelector("[data-colour]")?.getAttribute("data-colour");
+    expect([squareOf("Robin Fictional"), squareOf("Tatum Fictional")]).toEqual([
+      "teal",
+      undefined,
+    ]);
     await userEvent.click(
       screen.getByRole("button", {
         name: "Show only the team of Tatum Fictional",

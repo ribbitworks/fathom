@@ -190,6 +190,7 @@ export function draftColumns(
     {
       ...column("record", "Record", "text"),
       required: true,
+      colour: ({ entry }) => entry.colour ?? null,
       mark: ({ facts }) =>
         facts.length > 0 &&
         facts.map((fact) => <FactBox key={fact}>{fact}</FactBox>),

@@ -45,7 +45,7 @@ import {
 import { planDraftFields } from "./project-grids.tsx";
 import { listedPlanRecords, planNodes, tableChoices } from "./projects.ts";
 import { recordKey } from "./record-drafts.ts";
-import { recordNodes } from "./releases.ts";
+import { recordNodes, shownColour } from "./releases.ts";
 import { formatDay } from "./day-formats.ts";
 
 interface Drafted {
@@ -75,6 +75,8 @@ export interface Entry {
   // The record's name, with what it belongs to where its name alone may not say, such as a choice's
   // list.
   name: string;
+  // The record's colour, for a team or release that has one.
+  colour?: string | null;
   details: Phrase[];
   // Why a rejected draft was rejected, when it says.
   reason: string | undefined;
@@ -387,7 +389,7 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
       of("release", release, release, `${release.name} in ${stream.name}`, {
         kind: "release",
         keyNumber: release.keyNumber,
-      }),
+      }).map((one) => ({ ...one, colour: shownColour(release.colour) })),
     ),
   ]);
 }
@@ -473,16 +475,19 @@ function teamEntries(
             ...(draft.leadDay === undefined ? [] : [changeLine("leadFrom")]),
           ];
     return [
-      entry(
-        `feature-team ${team.id}`,
-        draft,
-        "feature-team",
-        team.name,
-        details,
-        { featureTeams: [team.id] },
-        { kind: "team", keyNumber: team.keyNumber },
-        team.heldBy,
-      ),
+      {
+        ...entry(
+          `feature-team ${team.id}`,
+          draft,
+          "feature-team",
+          team.name,
+          details,
+          { featureTeams: [team.id] },
+          { kind: "team", keyNumber: team.keyNumber },
+          team.heldBy,
+        ),
+        colour: team.colour,
+      },
     ];
   });
 }
