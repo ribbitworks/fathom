@@ -1402,6 +1402,35 @@ th.liveColumn {
   line-height: 16px;
 }
 
+/* Today across a record's timeline of days, as a timeline's Today is drawn down its months: the
+   same line and word, with room above and below; the day the page shows, when it has no row, the
+   same in teal with the day as its word. */
+.timelineTodayAcross {
+  position: relative;
+  grid-column: 1 / -1;
+  margin: 22px 0 18px;
+  border-top: 2px solid var(--fathom-today);
+}
+
+.timelineTodayAcross .timelineTodayLabel {
+  top: -9px;
+  left: 0;
+  padding: 0 4px 0 0;
+}
+
+.timelineShownAcross {
+  border-top-color: var(--mantine-color-teal-6);
+}
+
+.timelineShownAcross .timelineTodayLabel {
+  color: var(--mantine-color-teal-7);
+}
+
+/* A planned day's row, which is yet to come, in grey. */
+.timelinePlanned {
+  color: var(--mantine-color-dimmed);
+}
+
 /* The Releases timeline, between the table's bar and the table: as tall as its rows need, up to
    about half the window, its rows scrolling under its axis beyond that, so the table keeps room. */
 .releasesTimeline {

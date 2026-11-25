@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A long list as a panel shows it, folded as a long note is, by one control in one place that
-// flips: from a starting item, such as the current cycle, its first few, with Show all under them,
-// which then reads Show less, or, where items before the start are folded above, Later and how many,
-// then Hide later; and the items before the start folded above, behind a control naming
-// how many there are, which then reads Hide. Each says whether it is open, and keeps focus, so
-// nothing moves under it.
+// A long list as a panel shows it, its first few from a starting item, the rest folded above and
+// below it.
 
+import { capitalized } from "@fathom/shared";
 import { Anchor } from "@mantine/core";
 import { type ReactNode, useState } from "react";
 import { foldControl } from "./folded-note.tsx";
@@ -42,6 +39,8 @@ export function FoldedList<Item>({
   start = 0,
   first,
   noun,
+  newestFirst = false,
+  keepShown,
   children,
 }: {
   items: readonly Item[];
@@ -51,11 +50,30 @@ export function FoldedList<Item>({
   first: number;
   // What the items are, such as "cycles", for the words of the controls.
   noun: string;
+  // Items newest first, as a timeline lists days, so those folded above are later and those below
+  // earlier.
+  newestFirst?: boolean;
+  // An item that starts shown, such as the day the page shows, opening the fold that holds it.
+  keepShown?: number | undefined;
   // Draws the items shown, such as the rows of a small table.
   children: (shown: readonly Item[]) => ReactNode;
 }) {
-  const [all, setAll] = useState(false);
-  const [showsEarlier, setShowsEarlier] = useState(false);
+  const [all, setAll] = useState(
+    keepShown !== undefined && keepShown >= start + first,
+  );
+  const [showsEarlier, setShowsEarlier] = useState(
+    keepShown !== undefined && keepShown < start,
+  );
+  // A later item to keep shown, such as another day chosen, opens its fold too.
+  const [keptBefore, setKeptBefore] = useState(keepShown);
+  if (keptBefore !== keepShown) {
+    setKeptBefore(keepShown);
+    if (keepShown !== undefined && keepShown < start) setShowsEarlier(true);
+    if (keepShown !== undefined && keepShown >= start + first) setAll(true);
+  }
+  const [above, below] = newestFirst
+    ? ["later", "earlier"]
+    : ["earlier", "later"];
   const before = items.slice(0, start);
   const after = items.slice(start);
   const shown = [
@@ -72,8 +90,8 @@ export function FoldedList<Item>({
           }}
         >
           {showsEarlier
-            ? `Hide earlier ${noun}`
-            : `Earlier ${noun} (${String(before.length)})`}
+            ? `Hide ${above} ${noun}`
+            : `${capitalized(above)} ${noun} (${String(before.length)})`}
         </FoldControl>
       )}
       {children(shown)}
@@ -84,10 +102,10 @@ export function FoldedList<Item>({
             setAll((open) => !open);
           }}
         >
-          {before.length > 0
+          {before.length > 0 || newestFirst
             ? all
-              ? `Hide later ${noun}`
-              : `Later ${noun} (${String(after.length - first)})`
+              ? `Hide ${below} ${noun}`
+              : `${capitalized(below)} ${noun} (${String(after.length - first)})`
             : all
               ? "Show less"
               : `Show all (${String(after.length)})`}

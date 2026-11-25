@@ -4,13 +4,14 @@
 // Level to Grade", so they stand out wherever a change is described: a record's menu, the Drafts
 // page, and the change history. Their plain text is what search matches.
 
+import { Anchor } from "@mantine/core";
 import { Fragment, type ReactNode } from "react";
 import classes from "./pages.module.css";
 
 // A part is plain words, a name to stand out, such as a field's, or a value, set apart as a value is
-// in code.
+// in code, which links to its record where it names one, as a timeline's do.
 export type Phrase = readonly (
-  string | { strong: string } | { value: string }
+  string | { strong: string } | { value: string; onShow?: () => void }
 )[];
 
 const partText = (part: Phrase[number]): string => {
@@ -53,7 +54,13 @@ export function PhraseText({ phrase }: { phrase: Phrase }): ReactNode {
       </strong>
     ) : (
       <span key={index} className={classes.phraseValue}>
-        {part.value}
+        {part.onShow === undefined ? (
+          part.value
+        ) : (
+          <Anchor component="button" type="button" onClick={part.onShow}>
+            {part.value}
+          </Anchor>
+        )}
       </span>
     );
   });

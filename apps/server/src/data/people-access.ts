@@ -23,8 +23,10 @@ import type {
   PersonRequest,
   TeamMonths,
 } from "@fathom/shared";
-import { seesField } from "@fathom/shared";
+import { seesEmployment, seesField, type Timeline } from "@fathom/shared";
 import { type Actor, requirePermission } from "../access.ts";
+import { ForbiddenError } from "../errors.ts";
+import { readPersonTimeline } from "./person-timeline.ts";
 import * as columnDrafts from "./column-drafts.ts";
 import * as peopleData from "./people.ts";
 import { readOrgChart, readOrgChartOn, setTeamColour } from "./org-chart.ts";
@@ -62,6 +64,9 @@ export interface PeopleAccess {
   // Telling anyone that a manager has left, or showing them a draft's Personal details, such as
   // its manager, its dates, or someone it adds, is recorded in the access history.
   readOrgChart(actor: Actor, on?: string): Promise<OrgChart>;
+  // A person's timeline, for a role that sees start and end dates; reading it is recorded in the
+  // access history, as it holds Personal details.
+  readTimeline(actor: Actor, personId: string): Promise<Timeline>;
   // The added columns as their drafts make them, and their order, as the actor may see them, with
   // none of anyone's values.
   readColumns(actor: Actor): Promise<{ fields: Field[]; order: string[] }>;
@@ -263,6 +268,26 @@ export function createPeopleAccess(database: Database): PeopleAccess {
         ...columns,
         ...(read.positionHidden ? { positionHidden: true as const } : {}),
       };
+    },
+    readTimeline: async (actor, personId) => {
+      requirePermission(actor, "people:view");
+      if (!seesEmployment(actor)) throw new ForbiddenError();
+      const { timeline, includedHiringPlan } = await readPersonTimeline(
+        database,
+        actor,
+        personId,
+      );
+      const timeZone = await readTimeZone(database);
+      await recordPersonalView(database, actor.user.id, timeZone);
+      if (includedHiringPlan) {
+        await recordPersonalView(
+          database,
+          actor.user.id,
+          timeZone,
+          "hiring-plan-viewed",
+        );
+      }
+      return timeline;
     },
     readOrgChart: async (actor, on) => {
       requirePermission(actor, "people:view");

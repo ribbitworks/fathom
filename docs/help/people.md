@@ -92,6 +92,16 @@ On a past day, you can change someone's manager in **Manager**, from the day sho
 
 You're done when the table shows the day you chose.
 
+### See Someone's Timeline
+
+A person's timeline lists the days something about them changed, or will: the planned hire they filled, their start, each new manager, the feature teams they joined, led and left, and their end. Your role needs to see start and end dates.
+
+1. Open the person's details. The **Timeline** section at the end shows the next change to come and the latest.
+1. Select **Show timeline**. The timeline opens under the details, newest first, with planned days above the red **Today** line.
+1. To see People on one of its days, select its date.
+
+You're done when the timeline shows the person's days.
+
 ### Fill a Planned Hire
 
 When you hire someone for a planned job, you fill the planned hire with them. **Fill** shows once the hire's **State** is approved, such as **Approved to hire**, and the hire has no rejected draft. It doesn't show while a draft that adds the hire, or changes its manager, is still waiting.

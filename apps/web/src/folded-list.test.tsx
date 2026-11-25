@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for a long list folded as a panel shows it: its first few from a starting item, the rest
-// behind one control in one place (Show all, or Later where earlier items fold above), and the items
-// before the start behind a control of their own, each
-// saying whether it is open and folding back to how the list first appeared.
+// Tests for a long list folded as a panel shows it.
 
 import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
@@ -14,10 +11,21 @@ import { testTheme } from "./test-support.tsx";
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
 
-function renderList(items: readonly string[], start: number, first: number) {
+function renderList(
+  items: readonly string[],
+  start: number,
+  first: number,
+  more: { newestFirst?: boolean; keepShown?: number } = {},
+) {
   render(
     <MantineProvider theme={testTheme}>
-      <FoldedList items={items} start={start} first={first} noun="months">
+      <FoldedList
+        items={items}
+        start={start}
+        first={first}
+        noun="months"
+        {...more}
+      >
         {(shown) => (
           <ul aria-label="Months">
             {shown.map((month) => (
@@ -89,5 +97,56 @@ describe("a folded list", () => {
       ["Jan", "Feb", "Mar"],
       [],
     ]);
+  });
+});
+
+describe("a folded list newest first, as a timeline's days", () => {
+  it("calls those folded above later and those below earlier, even with none above", async () => {
+    renderList([...months].reverse(), 2, 3, { newestFirst: true });
+
+    expect(control("Later months (2)")).toBeDefined();
+    await userEvent.click(control("Earlier months (2)"));
+    expect(control("Hide earlier months")).toBeDefined();
+    await userEvent.click(control("Later months (2)"));
+    expect(control("Hide later months")).toBeDefined();
+  });
+
+  it("opens the fold holding the item to keep shown", () => {
+    renderList(months, 2, 3, { keepShown: 0 });
+    expect(shown()).toContain("Jan");
+  });
+
+  it("opens the fold after the first few when the item to keep shown is there", () => {
+    renderList(months, 0, 3, { keepShown: 6 });
+    expect(shown()).toContain("Jul");
+  });
+});
+
+describe("an item to keep shown that changes", () => {
+  it("opens the fold holding the new one", () => {
+    const list = (keepShown?: number) => (
+      <MantineProvider theme={testTheme}>
+        <FoldedList
+          items={months}
+          start={2}
+          first={3}
+          noun="months"
+          keepShown={keepShown}
+        >
+          {(shownItems) => (
+            <ul aria-label="Months">
+              {shownItems.map((month) => (
+                <li key={month}>{month}</li>
+              ))}
+            </ul>
+          )}
+        </FoldedList>
+      </MantineProvider>
+    );
+    const { rerender } = render(list());
+    rerender(list(0));
+    expect(shown()).toContain("Jan");
+    rerender(list(6));
+    expect(shown()).toContain("Jul");
   });
 });

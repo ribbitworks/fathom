@@ -80,6 +80,7 @@ import type { ChangeView } from "./table-controls.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import { formatDay } from "./day-formats.ts";
 import type { View } from "./table-view.ts";
+import { usePersonTimeline } from "./person-timeline.tsx";
 import { today } from "./today.ts";
 import { changesFromDay } from "./people-live.ts";
 
@@ -109,8 +110,11 @@ export function PeoplePage({
   seesFeatureTeams = false,
   access = { permissions: [], dataClasses: defaultClasses },
   dates,
+  timeline,
   linkedColumn,
 }: {
+  // Whether the shown person's timeline is open under their details, and opening or closing it.
+  timeline?: { opened: boolean; onShow: (shown: boolean) => void } | undefined;
   // An added column a link opens, whose menu the table opens with open.
   linkedColumn?: LinkedColumn | undefined;
   // The day People is shown as of, and how to choose another, for a role that sees other dates.
@@ -257,6 +261,22 @@ export function PeoplePage({
       onOpen?.(employeeId, replace);
     });
   };
+  const personTimeline = usePersonTimeline({
+    people: query.data?.people,
+    shown: shownRecord,
+    shownOn: day,
+    opened: timeline?.opened === true,
+    onShow: (opened) => {
+      timeline?.onShow(opened);
+    },
+    showDates,
+    seesFeatureTeams,
+    dates,
+    leave,
+    showRecord,
+    open,
+    narrow,
+  });
   useEffect(() => {
     if (justAdded.current === undefined) return;
     const added = query.data?.people.find(
@@ -458,6 +478,7 @@ export function PeoplePage({
                     name: "details",
                     node: (
                       <PersonPanel
+                        timeline={personTimeline.details}
                         shownOn={day}
                         employeeId={open}
                         show={view.show}
@@ -559,6 +580,9 @@ export function PeoplePage({
                   },
                 ]),
             ...(note === undefined ? [] : [note]),
+            ...(personTimeline.panel === undefined
+              ? []
+              : [personTimeline.panel]),
           ]}
           people={query.data.people}
           fields={query.data.fields}

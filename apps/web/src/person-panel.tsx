@@ -15,7 +15,12 @@
 import { type Person, type Show } from "@fathom/shared";
 import { Alert, Button, Group, Loader, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { type ReactNode, useEffect, useEffectEvent } from "react";
+import {
+  type ComponentProps,
+  type ReactNode,
+  useEffect,
+  useEffectEvent,
+} from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { listsQuery } from "./lists.ts";
 import { PersonFeatureTeams } from "./person-feature-teams.tsx";
@@ -62,6 +67,7 @@ import {
 import type { DraftLike } from "./draft-marks.ts";
 import type { CellValue } from "./table-view.ts";
 import { formatDay, plannedWords } from "./day-formats.ts";
+import { TimelinePreview } from "./person-timeline.tsx";
 import { today } from "./today.ts";
 import { changesFromDay, livePeople, peopleAsShown } from "./people-live.ts";
 import { recordProblem } from "./people-requests.ts";
@@ -117,7 +123,12 @@ export function PersonPanel({
   notes,
   hireFill,
   shownOn,
+  timeline,
 }: {
+  // The person's timeline at the end of their details, for a role that sees start and end dates.
+  timeline?:
+    | Omit<ComponentProps<typeof TimelinePreview>, "personId" | "shownOn">
+    | undefined;
   // The day the page beside it shows, or none for today.
   shownOn?: string | undefined;
   // The earlier day the page beside shows, from which only a change of manager is made.
@@ -502,6 +513,13 @@ export function PersonPanel({
             <RecordSection id="person-columns" title="Columns">
               {added.map(rowOf)}
             </RecordSection>
+          )}
+          {timeline !== undefined && !isHire(person) && (
+            <TimelinePreview
+              personId={person.id}
+              shownOn={shownOn}
+              {...timeline}
+            />
           )}
         </>
       )}

@@ -202,3 +202,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Nothing says why it is missing.
     - The table starts right under the search box's row.
   - **Notes:**
+
+### PEOPLE-TIME-07: A Person's Timeline
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from PEOPLE-TIME-06.
+
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
+
+- [ ] `D9D4` Select Carmine Labadie's name, then scroll to the end of her details.
+  - **Expected:** A **Timeline** section lists her latest change, then **Show timeline**.
+  - **Notes:**
+
+- [ ] `6160` Select **Show timeline**.
+  - **Expected:**
+    - The timeline opens under her details, with a red **Today** line across it.
+    - Her days are listed newest first, each change on its own line, such as **Manager** and a name.
+  - **Notes:**
+
+- [ ] `4EC1` Select the oldest date in the timeline.
+  - **Expected:** The date row shows that day, and the timeline marks its row.
+  - **Notes:**
+
+- [ ] `EAA2` Select the timeline's **×**.
+  - **Expected:** The timeline closes, and her details stay open.
+  - **Notes:**

@@ -381,6 +381,8 @@ const peopleSearch = viewSearchSchema.extend({
   column: linkedColumnSearch,
   open: z.string().max(personLengths.employeeId).optional().catch(undefined),
   day: daySchema.optional().catch(undefined),
+  // Whether the shown person's timeline is open under their details.
+  timeline: z.literal(true).optional().catch(undefined),
 });
 
 const peopleRoute = createRoute({
@@ -400,6 +402,7 @@ const peopleRoute = createRoute({
       tableNote,
       day: asked,
       column,
+      timeline,
       ...search
     } = people.useSearch();
     const notes = { note, tableNote };
@@ -434,7 +437,9 @@ const peopleRoute = createRoute({
                 changes:
                   day !== undefined && changesLinesOn(access, day, today()),
                 onDay: (next) => {
-                  void navigate({ search: { ...search, open, day: next } });
+                  void navigate({
+                    search: { ...search, open, day: next, timeline },
+                  });
                 },
               }
             : undefined
@@ -442,9 +447,26 @@ const peopleRoute = createRoute({
         showDates={seesEmployment(access)}
         showHireDates={seesHiringPlan(access)}
         {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, open, ...notes, day }, replace });
+          void navigate({
+            search: { ...next, open, ...notes, day, timeline },
+            replace,
+          });
         })}
         open={open}
+        timeline={{
+          opened: timeline === true,
+          onShow: (shown) => {
+            void navigate({
+              search: {
+                ...search,
+                open,
+                ...notes,
+                day,
+                timeline: shown ? true : undefined,
+              },
+            });
+          },
+        }}
         seesFeatureTeams={permissions.includes("feature-teams:view")}
         access={access}
         onOpen={(next, replace = false) => {
