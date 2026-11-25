@@ -9,6 +9,10 @@ import { join } from "node:path";
 export const accounts = [
   { name: "productManager", email: "product.manager@fathom.test" },
   { name: "engineeringDirector", email: "engineering.director@fathom.test" },
+  {
+    name: "engineeringOperationsManager",
+    email: "engineering.operations.manager@fathom.test",
+  },
 ] as const;
 
 export type AccountName = (typeof accounts)[number]["name"];
