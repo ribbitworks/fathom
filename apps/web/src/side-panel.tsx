@@ -195,16 +195,23 @@ function useStackHeights(storageKey: string) {
   return { height, shareOf, share };
 }
 
-// The panel a narrow screen shows of a stack, where only one fits: the one opened last, or the top
-// one once that closes.
+// The panel a narrow screen shows of a stack, where only one fits: the one opened last, or, once it
+// closes, the one in front before it.
 function useFrontPanel(panels: readonly SidePanel[]): string | undefined {
   const keys = panels.map(({ key }) => key);
   const before = usePrevious(keys) ?? keys;
-  const [latest, setLatest] = useState<string>();
-  const opened = keys.filter((key) => !before.includes(key)).at(-1);
-  if (opened !== undefined && opened !== latest) setLatest(opened);
-  const front = opened ?? latest;
-  return front !== undefined && keys.includes(front) ? front : keys[0];
+  // Of panels open together as the page is drawn, the top one is in front.
+  const [order, setOrder] = useState<readonly string[]>(() =>
+    [...keys].reverse(),
+  );
+  const opened = keys.filter((key) => !before.includes(key));
+  const now = [
+    ...keys.filter((key) => !order.includes(key) && !opened.includes(key)),
+    ...order.filter((key) => keys.includes(key) && !opened.includes(key)),
+    ...opened,
+  ];
+  if (now.join("\n") !== order.join("\n")) setOrder(now);
+  return now.at(-1);
 }
 
 // The panel maximized in a stack, and its place for each panel under another; the stack folds the
