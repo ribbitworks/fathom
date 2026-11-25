@@ -52,7 +52,7 @@ import {
   rowName,
   type RowRequest,
   stateMeaning,
-  teamCalled,
+  reportingWords,
 } from "./people-rows.ts";
 import type { CellValue } from "./table-view.ts";
 import { formatMonth } from "./day-formats.ts";
@@ -142,7 +142,7 @@ function managerChoices(
       positionLabel(lists, positionId),
       // A team not sent to this reader is left out rather than named after its manager.
       manager && team !== undefined
-        ? teamCalled(team, manager.preferredName)
+        ? reportingWords(team, manager.preferredName)
         : undefined,
     );
   return byLabel([

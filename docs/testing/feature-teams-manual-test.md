@@ -196,7 +196,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - A list of people opens under the row.
     - The cursor is in a box above it.
-    - Each person has their position and reporting team in grey under their name.
+    - Each person has their position in grey under their name, then the name of the team they're on, or whom they report to where it has none.
     - Pointed at, a person is on a light grey background.
     - Pointed at, their name and the line under it are easy to read.
   - **Notes:**

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Managers and Teams on People
@@ -87,7 +87,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `D766` Type `Max`.
   - **Expected:**
     - 'Max Munk' is offered.
-    - Under 'Max Munk', in smaller, dimmed text: "Engineering Manager, Mateo Quintero Reynoso's team".
+    - Under 'Max Munk', in smaller, dimmed text: "Engineering Manager, reports to Mateo Quintero Reynoso".
   - **Notes:**
 
 - [ ] `69C3` Clear the text typed, and type `Lilian`.

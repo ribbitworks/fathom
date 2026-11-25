@@ -73,7 +73,7 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
 - **Colours:** Chosen for each feature team from the same palette, and shown only on this chart, so they never meet reporting teams' colours.
 - **Cards:** No Show only this team, and no naming or colouring of reporting teams.
 - **Feature teams menu:** Replaces Teams, ending with New feature team.
-- **Team panel:** Opens beside the chart, with Name, Colour, Feature lead and Members. Membership changes are drafts from the date shown.
+- **Team panel:** Opens beside the chart, with Name, Colour, Feature lead and Members. Membership changes are drafts from the date shown. Feature lead's picker describes each person as People's Manager picker does, as [A choice with a description](../../standards/ui-conventions/entering-and-saving.md#choices) sets out.
   - On any date but today, Name and Colour can't change and the team can't be removed, since they take no date.
   - A lead is chosen from anyone; someone not yet a member joins in the same draft.
   - Readers without Personal details plan by month, from its first day, and aren't told when that day falls outside someone's employment. The Approver is told.

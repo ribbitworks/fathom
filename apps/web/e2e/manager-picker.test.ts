@@ -8,7 +8,7 @@ import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("engineeringOperationsManager") });
 
-test("describes each manager in a Manager cell's picker by position and team, under the name", async ({
+test("describes each manager in a Manager cell's picker by position, then whom they report to or their team, under the name", async ({
   page,
 }) => {
   // Given the Engineering Operations Manager on People, with one person found
@@ -29,7 +29,7 @@ test("describes each manager in a Manager cell's picker by position and team, un
   await page.keyboard.press("Enter");
 
   // Then every manager offered has a description under their name, such as Max Munk's position and
-  // team
+  // whom he reports to
   const options = page.getByRole("option");
   await expect(options.first()).toHaveText("No manager");
   const managers = options.filter({ hasNot: page.getByText("No manager") });
@@ -39,7 +39,7 @@ test("describes each manager in a Manager cell's picker by position and team, un
   }
   await page.keyboard.type("Max");
   await expect(page.getByRole("option", { name: /^Max Munk/ })).toHaveText(
-    "Max MunkEngineering Manager, Mateo Quintero Reynoso's team",
+    "Max MunkEngineering Manager, reports to Mateo Quintero Reynoso",
   );
 
   // And Esc leaves the manager as it was, with nothing sent to be saved

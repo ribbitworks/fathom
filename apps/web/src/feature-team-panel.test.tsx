@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for a feature team's panel on its own, with what it asks to save recorded: adding a team with
-// its name, lead and members, renaming it, choosing its lead or none, changing its members from the
-// day the chart shows, each person offered with their position and reporting team, the team's
-// colour, a draft's marks, live values and when each change takes effect, its discard, resubmit and
-// removal, and what readers who may not change teams, or who see them as they are live, are shown.
+// Tests for a feature team's panel on its own, with what it asks to save recorded.
 
 import type { FeatureTeam, OrgChartPerson, Show } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
@@ -293,14 +289,14 @@ describe("a feature team's panel", () => {
     expect(asked.rename).not.toHaveBeenCalled();
   });
 
-  it("offers None first, then each person who may lead, with their position and reporting team", async () => {
+  it("offers None first, then each person who may lead, with their position and the team they are on or whom they report to", async () => {
     openPanel();
     await userEvent.click(changeButton("Feature lead") as HTMLElement);
     expect(optionNames()).toEqual([
       "None",
       "Avery FictionalFictional Engineer, Fictional Harbour Crew",
       "Blake FictionalFictional Designer, Fictional Harbour Crew",
-      "Casey FictionalFictional Engineer, Sasha Fictional's team",
+      "Casey FictionalFictional Engineer, reports to Sasha Fictional",
       "Drew Fictional",
       "Robin FictionalFictional Director",
       "Sasha FictionalFictional Manager",
@@ -319,7 +315,7 @@ describe("a feature team's panel", () => {
     expect(asked.lead).toHaveBeenCalledWith(team(), null, undefined);
   });
 
-  it("finds people by their position and reporting team", async () => {
+  it("finds people by their position and the team they are on", async () => {
     openPanel();
     await userEvent.click(changeButton("Members") as HTMLElement);
     await userEvent.keyboard("harbour");

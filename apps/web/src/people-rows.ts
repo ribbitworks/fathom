@@ -4,7 +4,7 @@
 // holds, and what a row is called in menus, notices, and the drafts it names: by its name, or, for
 // a planned hire with none, by its position and ID, such as "Software Engineer, TBD-7", or by its
 // ID alone to those who cannot see positions; and how someone is told apart from others with the
-// same name, by their position and the team they are on.
+// same name, by their position and the team they are on or whom they report to.
 
 import { count } from "./numbers.ts";
 import {
@@ -58,11 +58,12 @@ export const positionLabel = (
     .find(({ builtIn }) => builtIn === "positions")
     ?.choices.find(({ id }) => id === positionId)?.label;
 
-// What the team someone is on is called: its name, or its manager's while it has none.
-export const teamCalled = (
+// Which team someone is on, in words: its name, or whom they report to while it has none, never
+// "their manager's team", which reads as if that manager leads it.
+export const reportingWords = (
   teamName: string | null | undefined,
   managerName: string,
-): string => teamName ?? `${managerName}'s team`;
+): string => teamName ?? `reports to ${managerName}`;
 
 // What tells someone apart in a list of people to choose from: their position and the team they are
 // on, leaving out either one not known.
