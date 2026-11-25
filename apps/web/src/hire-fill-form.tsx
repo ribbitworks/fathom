@@ -341,11 +341,11 @@ export function HireFillForm({
     });
   };
 
-  const fillOnEnter = useAfterUpdate<void>(fill);
+  const fillOnEnter = useAfterUpdate<undefined>(fill);
   return (
     <NewFormEnter
       value={() => {
-        fillOnEnter();
+        fillOnEnter(undefined);
       }}
     >
       <section aria-labelledby="hire-fill-heading" inert={saving}>

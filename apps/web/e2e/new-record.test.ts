@@ -62,9 +62,7 @@ test("adds a new customer with Enter in its Name", async ({ page }) => {
 
   // Then the panel closes and the table counts one customer more
   await expect(panel).toHaveCount(0);
-  await expect(count).toHaveText(
-    new RegExp(`^${String(before + 1)} customers$`),
-  );
+  await expect(count).toHaveText(`${String(before + 1)} customers`);
 });
 
 test("opens the New project panel with the cursor in Name, ready to type into", async ({
