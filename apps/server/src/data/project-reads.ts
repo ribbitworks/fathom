@@ -268,6 +268,22 @@ function featureOut(
   };
 }
 
+// The plan's records a reader may see: features and their columns with features, and the rest with
+// the plan. Every read and every change's answer goes through it.
+export function seenRecords(reader: Actor, records: PlanRecords): PlanRecords {
+  const seesPlan = reader.permissions.includes("plan:view");
+  const seesFeatures = reader.permissions.includes("features:view");
+  return {
+    customers: seesPlan ? records.customers : [],
+    projects: seesPlan ? records.projects : [],
+    proposals: seesPlan ? records.proposals : [],
+    features: seesFeatures ? records.features : [],
+    featureColumns: seesFeatures
+      ? records.featureColumns
+      : { fields: [], order: [], lists: [] },
+  };
+}
+
 export async function planOut(
   transaction: Transaction,
   viewer: Actor,
@@ -276,7 +292,7 @@ export async function planOut(
 ): Promise<PlanRecords> {
   const makers = await readRecordMakers(transaction, state, viewer);
   const staffed = staffedFeatures(state);
-  return {
+  return seenRecords(viewer, {
     customers: inOrder(state, "customer").map((id): Customer => ({
       id,
       keyNumber: recordKeyNumber(state, "customer", id),
@@ -293,7 +309,7 @@ export async function planOut(
       .filter((id) => !isGeneralFeature(state, id))
       .map((id) => featureOut(state, makers, staffed, id)),
     featureColumns: await featureColumnsOut(transaction, viewer),
-  };
+  });
 }
 
 // Every customer, project, proposal, and feature as the viewer sees them.
