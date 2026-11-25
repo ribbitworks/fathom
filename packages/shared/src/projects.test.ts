@@ -394,20 +394,12 @@ describe("what keeps a customer from being removed", () => {
     features: [named("feature")],
   };
 
-  it("is its first project, before its proposals and features", () => {
-    expect(customerKeptBy(links, customer)?.id).toBe("project");
-  });
-
-  it("is its first proposal when no project names it", () => {
-    expect(customerKeptBy({ ...links, projects: [] }, customer)?.id).toBe(
+  it("are its projects, then its proposals, then the features naming it", () => {
+    expect(customerKeptBy(links, customer).map(({ id }) => id)).toEqual([
+      "project",
       "proposal",
-    );
-  });
-
-  it("is a feature naming it when nothing else does", () => {
-    expect(
-      customerKeptBy({ ...links, projects: [], proposals: [] }, customer)?.id,
-    ).toBe("feature");
+      "feature",
+    ]);
   });
 
   it("leaves out records drafted to be removed", () => {
@@ -420,7 +412,7 @@ describe("what keeps a customer from being removed", () => {
         },
         customer,
       ),
-    ).toBeUndefined();
+    ).toEqual([]);
   });
 
   it("keeps records a draft changes in other ways", () => {
@@ -432,11 +424,11 @@ describe("what keeps a customer from being removed", () => {
           features: [],
         },
         customer,
-      )?.id,
-    ).toBe("project");
+      ).map(({ id }) => id),
+    ).toEqual(["project"]);
   });
 
   it("is none when nothing names it", () => {
-    expect(customerKeptBy(links, "unnamed")).toBeUndefined();
+    expect(customerKeptBy(links, "unnamed")).toEqual([]);
   });
 });

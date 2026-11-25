@@ -263,7 +263,24 @@ describe("removing a customer", () => {
 
     expect(removeItem(menu).hasAttribute("data-disabled")).toBe(true);
     expect(
-      within(menu).getByText("FP-1 Fictional Project names this customer."),
+      within(menu).getByText(
+        "FP-1 Fictional Project and 2 others name this customer.",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("names the first record naming it and counts the others", async () => {
+    await openPage(
+      customersAt(),
+      plan({ features: [direct, { ...direct, id: crypto.randomUUID() }] }),
+    );
+
+    const menu = await rowMenu("Fictional Customer");
+
+    expect(
+      within(menu).getByText(
+        "FP-1 Fictional Project and 3 others name this customer.",
+      ),
     ).toBeTruthy();
   });
 
@@ -299,7 +316,9 @@ describe("removing a customer", () => {
 
     expect(removeItem(menu).hasAttribute("data-disabled")).toBe(true);
     expect(
-      within(menu).getByText("FP-1 Fictional Project names this customer."),
+      within(menu).getByText(
+        "FP-1 Fictional Project and 2 others name this customer.",
+      ),
     ).toBeTruthy();
   });
 
@@ -364,10 +383,7 @@ describe("showing all a customer's features", () => {
   it("opens Features with the customer's filter from its row's menu", async () => {
     const { history } = await openPage(customersAt(), linked, answers, editor);
 
-    await chooseFrom(
-      await rowMenu("Fictional Customer"),
-      "Show all features",
-    );
+    await chooseFrom(await rowMenu("Fictional Customer"), "Show all features");
 
     await waitFor(() => {
       expect(history.location.pathname).toBe("/features");

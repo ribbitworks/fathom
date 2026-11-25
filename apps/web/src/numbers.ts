@@ -44,3 +44,7 @@ function decimalsTo(places: number): Intl.NumberFormat {
   formatters.set(places, made);
   return made;
 }
+
+// The rest of a list after those named, such as and 2 others.
+export const andOthers = (rest: number): string =>
+  rest === 1 ? "and 1 other" : `and ${count(rest)} others`;

@@ -436,9 +436,9 @@ interface MaybeRemoved {
 const notRemoved = <Rec extends MaybeRemoved>(records: readonly Rec[]) =>
   records.filter(({ draft }) => draft?.action !== "deleted");
 
-// The record that keeps a customer from being removed, if any, as the server refuses its removal:
-// the first of its projects, then of its proposals, then of the features naming it directly.
-// Records drafted to be removed name it no more.
+// The records that keep a customer from being removed, as the server refuses its removal: its
+// projects, then its proposals, then the features naming it directly. Records drafted to be removed
+// name it no more.
 export function customerKeptBy<
   Project extends CustomerNamer & MaybeRemoved,
   Proposal extends CustomerNamer & MaybeRemoved,
@@ -446,7 +446,7 @@ export function customerKeptBy<
 >(
   { projects, proposals, features }: CustomerLinks<Project, Proposal, Feature>,
   customerId: string,
-): Project | Proposal | Feature | undefined {
+): (Project | Proposal | Feature)[] {
   const namers = customerNamers(
     {
       projects: notRemoved(projects),
@@ -455,5 +455,5 @@ export function customerKeptBy<
     },
     customerId,
   );
-  return [...namers.projects, ...namers.proposals, ...namers.features].at(0);
+  return [...namers.projects, ...namers.proposals, ...namers.features];
 }
