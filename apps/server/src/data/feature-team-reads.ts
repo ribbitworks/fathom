@@ -151,7 +151,7 @@ export async function readLiveTeams(
   };
 }
 
-// The live teams each person is on as of a day, by name, by person.
+// The live teams each person is on as of a day, by name, each with its colour, by person.
 export async function readTeamsOfPeople(
   reader: Reader,
   day: string,

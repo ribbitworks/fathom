@@ -176,10 +176,6 @@ export const rowKindSchema = z.enum(["person", "planned-hire"]);
 
 export type RowKind = z.infer<typeof rowKindSchema>;
 
-// A row of the People table as the user sees it: a person, or a planned hire, as its draft, if any,
-// makes it, with the draft beside, or, for a draft that removes it, as it is. A planned hire's
-// name, which may be empty, is its preferred name, its requisition or temporary ID its ID, and its
-// target date its start date.
 // A feature team someone is on, as People names it.
 export const personFeatureTeamSchema = z.object({
   id: z.string(),
@@ -189,6 +185,10 @@ export const personFeatureTeamSchema = z.object({
 
 export type PersonFeatureTeam = z.infer<typeof personFeatureTeamSchema>;
 
+// A row of the People table as the user sees it: a person, or a planned hire, as its draft, if any,
+// makes it, with the draft beside, or, for a draft that removes it, as it is. A planned hire's
+// name, which may be empty, is its preferred name, its requisition or temporary ID its ID, and its
+// target date its start date.
 export const personSchema = z.object({
   id: z.string(),
   // A person's key number, or a planned hire's for its row.

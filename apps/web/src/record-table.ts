@@ -215,9 +215,6 @@ export interface ColumnUnits {
   places: { offered: readonly number[]; starting: number };
 }
 
-// What is particular to a kind of record: what its table and rows are called, its columns, how its
-// records are as they are live, what adding one asks for, what is wrong with one taken whole, and
-// which drafts name it.
 // The colour a record's value is drawn in: the column's own for the record, or that of the one
 // choice the value holds.
 export const colourOf = <Rec extends GridRecord, Change>(
@@ -226,6 +223,9 @@ export const colourOf = <Rec extends GridRecord, Change>(
 ): string | null =>
   column.colour?.(record) ?? chosenColour(column, column.value(record));
 
+// What is particular to a kind of record: what its table and rows are called, its columns, how its
+// records are as they are live, what adding one asks for, what is wrong with one taken whole, and
+// which drafts name it.
 export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // The table's name, for assistive technology, such as "People".
   label: string;

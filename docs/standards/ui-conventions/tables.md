@@ -76,7 +76,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **The pill:** Every filter's pill names its column, a colon, then what it filters by, in the filter's own words for empty values, such as Onboarding: contains “plan” or Empty, and Start: from Mar 1, 2024 or No date.
   - **Not empty's pill:** Not empty shows every row with a value, whatever else the filter holds, so its pill names it alone, such as Onboarding: Not empty.
   - **Checkbox columns:** A checkbox column is never empty, so it offers none.
-  - **Drawn by:** `FilterForm` and `describeFilter` in `apps/web/src/table-controls.tsx`, with the match in `apps/web/src/table-rows.ts` and the filter's `notEmpty` in `packages/shared/src/views.ts`.
+  - **Drawn by:** `FilterForm` in `apps/web/src/table-controls.tsx` and `describeFilter` in `apps/web/src/filter-words.tsx`, with the match in `apps/web/src/table-rows.ts` and the filter's `notEmpty` in `packages/shared/src/views.ts`.
   - **Example:** On People, tick Not empty in the Onboarding column's filter.
 - **Filtering across a table:** A filter that is no one column's, such as a feature in any month of a grid of months, has a button of its own after the search field, named for what it filters by, such as Allocations on Capacity's Allocations.
   - **Opening:** it opens the same filter as a column's, beside the button, and focus goes back to the button when it closes.

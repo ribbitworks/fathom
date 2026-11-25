@@ -433,7 +433,10 @@ describe("Allocations kept to what someone is allocated to", () => {
     });
     expect(rowOf("Casey Fictional")).toBeDefined();
     expect(rowOf("Payments tester")).toBeDefined();
-    expect(screen.getByText("Allocated to: Checkout")).toBeDefined();
+    expect(
+      screen.getByText(/^Allocated to:/).closest(".mantine-Pill-root")
+        ?.textContent,
+    ).toBe("Allocated to: Checkout");
     expect(address(history)).toContain(anyMonthKey);
 
     // And Save view names the filter among what the view includes

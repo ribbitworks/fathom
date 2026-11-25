@@ -132,6 +132,7 @@ function groupedByFeatureTeam<Rec extends Pick<MonthRow, "group">>(
   const ranks = new Map(
     [...data.teams].sort(byName).map(({ id }, rank) => [id, rank]),
   );
+  const colours = new Map(data.teams.map(({ id, colour }) => [id, colour]));
   return {
     key: featureTeamGrouping,
     label: "Feature team",
@@ -144,6 +145,7 @@ function groupedByFeatureTeam<Rec extends Pick<MonthRow, "group">>(
             label: group.name,
             // Every team in the data is ranked above.
             rank: ranks.get(group.id) as number,
+            colour: colours.get(group.id) ?? null,
           },
     ],
   };
@@ -191,7 +193,7 @@ export function monthGridTable<
   months: readonly string[];
   currentMonth: string;
   label: string;
-  choices: readonly { id: string; name: string }[];
+  choices: readonly { id: string; name: string; colour?: string | null }[];
   // The filter across every month, by the choices: its button, the pill's name for a choice, and
   // its words for a row with none in any month.
   filter: { button: string; label: string; none: string };
@@ -212,6 +214,12 @@ export function monthGridTable<
         ]),
     ).values(),
   ];
+  const colours = new Map(
+    choices.map(({ id, colour }) => [choiceOf(id), colour]),
+  );
+  const choiceColour = choices.some(({ colour }) => colour !== undefined)
+    ? (id: string) => colours.get(id) ?? null
+    : undefined;
   const monthColumns = months.map((month): Column<Rec, CellChange> => {
     const cell = cellColumn<Rec, CellChange>(month, "choice", {
       label: formatMonth(month),
@@ -238,6 +246,7 @@ export function monthGridTable<
       headingCentred: true,
       current: month === currentMonth,
       readOnly: readOnly(month),
+      choiceColour,
     };
   });
   const columns = [
@@ -259,6 +268,7 @@ export function monthGridTable<
     label: filter.label,
     kind: "choice",
     choices: monthChoices,
+    choiceColour,
     multiple: true,
     emptyLabel: filter.none,
     value: (record) => [

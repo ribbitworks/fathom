@@ -41,6 +41,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+// The colour of the square drawn before a name, if any.
+const squareIn = (element: Element | null | undefined) =>
+  element?.querySelector("[data-colour]")?.getAttribute("data-colour") ??
+  undefined;
+
 describe("Capacity's Feature teams", () => {
   it("shows the strip of quarters the months fall in, marking the current one and month", async () => {
     const grid = await openPage();
@@ -287,6 +292,9 @@ describe("Capacity's Feature teams", () => {
     await openPage("?grouping=feature-team");
 
     expect(screen.getAllByText("Avery Fictional")).toHaveLength(2);
+    expect(
+      squareIn(screen.getByRole("rowheader", { name: /^Mobile apps/ })),
+    ).toBe("teal");
     expect(screen.getByText("No feature team")).toBeDefined();
     expect(screen.getByRole("status").textContent).toBe("3 people in Mar 2027");
   });
@@ -336,16 +344,23 @@ describe("Capacity's Feature teams", () => {
     const filter = await screen.findByRole("dialog", {
       name: "Filter Feature team",
     });
-    await userEvent.click(
-      within(filter).getByRole("checkbox", { name: mobile.name }),
-    );
+    const box = within(filter).getByRole("checkbox", { name: mobile.name });
+    expect(squareIn(box.closest(".mantine-Checkbox-root"))).toBe("teal");
+    await userEvent.click(box);
 
-    // Then Avery alone shows, the pill names the filter, and the button is marked
+    // Then Avery alone shows, the pill names the filter after the team's square, and the button is
+    // marked
     await waitFor(() => {
       expect(screen.queryByText("Casey Fictional")).toBeNull();
     });
     expect(rowOf("Avery Fictional")).toBeDefined();
-    expect(screen.getByText(`Feature team: ${mobile.name}`)).toBeDefined();
+    const pill = screen
+      .getByText(/^Feature team:/)
+      .closest(".mantine-Pill-root");
+    expect([pill?.textContent, squareIn(pill)]).toEqual([
+      `Feature team: ${mobile.name}`,
+      "teal",
+    ]);
 
     // And Esc closes the filter, back on its button, marked as filtering
     await userEvent.keyboard("{Escape}");

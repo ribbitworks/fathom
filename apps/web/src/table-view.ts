@@ -98,8 +98,7 @@ export interface TableColumn<Row> {
   // False for a column the search leaves out, such as the Key column, whose numbers would match
   // inside other words; a key typed whole finds its record.
   searched?: false | undefined;
-  // For choice columns whose choices have colours, such as teams: each choice's, drawn as its square
-  // wherever the choice is named, in cells, panels, pickers, filters and group headings.
+  // For a choice column whose choices have colours, such as teams.
   choiceColour?: ((choiceId: string) => string | null) | undefined;
 }
 

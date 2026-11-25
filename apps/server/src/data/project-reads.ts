@@ -402,7 +402,8 @@ export async function readPlanRecords(
 // People as owners, by name alone, those whose end date has passed retired, and those not yet
 // started only to a reader who sees start and end dates, as People lists them; the proposal and
 // feature statuses and features' priorities, sizes, with their weights, and risks, in their lists'
-// order, and the live feature teams by name, those drafted to be removed retired.
+// order, and the live feature teams by name, with their colours, those drafted to be removed
+// retired.
 export async function readPlanChoices(
   database: Database,
   reader: Actor,

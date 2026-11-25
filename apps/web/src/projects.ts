@@ -42,10 +42,10 @@ import {
   includesCycle,
   keptReleases,
   releaseDate,
+  shownColour,
   withSchedule,
 } from "./releases.ts";
 import { formatDay } from "./day-formats.ts";
-import { shownColour } from "./releases.ts";
 
 export const projectPlanQuery = queryOptions({
   queryKey: ["projects"],
@@ -609,7 +609,6 @@ export interface TableChoices {
   sizes: Choice[];
   risks: Choice[];
   featureTeams: Choice[];
-  // Each feature team's colour, by the team.
   featureTeamColours: ReadonlyMap<string, string | null>;
   // Every cycle a feature can target.
   cycles: Choice[];

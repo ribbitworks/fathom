@@ -664,10 +664,13 @@ describe("each person's feature teams on People", () => {
     const lead = await person();
     const name = unique("Fictional Coloured Team");
     const id = await liveTeam({ name, leadId: lead });
-    await test.connection
-      .update(featureTeams)
-      .set({ colour: "teal" })
-      .where(eq(featureTeams.id, id));
+    const coloured = await send(
+      editor,
+      "PUT",
+      `/api/feature-teams/${id}/colour`,
+      { colour: "teal" },
+    );
+    expect(coloured.statusCode).toBe(204);
     const everyone = await peopleSeen(editor);
     expect(everyone.find((one) => one.id === lead)?.featureTeams).toEqual([
       { id, name, colour: "teal" },
