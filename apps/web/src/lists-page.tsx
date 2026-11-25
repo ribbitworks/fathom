@@ -29,9 +29,9 @@ import { useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type MouseEvent, type ReactNode, useState } from "react";
-import { DecisionModal } from "./decision-dialog.tsx";
+import { useDecisionDialog } from "./decision-dialog.tsx";
 import { approvesAll, noDrafts, waitsForRejected } from "./drafts.ts";
-import { type Decision, decisionFor } from "./draft-decisions.ts";
+import { decisionFor } from "./draft-decisions.ts";
 import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
 import { useDialogState } from "./dialog-actions.tsx";
@@ -160,12 +160,11 @@ export function ListsPage({
   const [busy, setBusy] = useState(false);
   const classMove = useClassMove();
   // Approving or rejecting drafts, which asks first.
-  const [decision, setDecision] = useState<Decision>();
-  const [deciding, setDeciding] = useState(false);
+  const decisionDialog = useDecisionDialog();
   const { save, shown, undoable, done } = useSaving<List[]>({
     queryKey: listsQuery.queryKey,
     removed: "Someone else has removed this. The lists have been refreshed.",
-    blocked: opened || classMove.opened || deciding,
+    blocked: opened || classMove.opened || decisionDialog.opened,
   });
   const all = query.data ?? [];
   const lists =
@@ -428,10 +427,9 @@ export function ListsPage({
     decide: (asking, what) => {
       // Every list, with its rejected drafts, whatever is shown, so a draft that depends on one
       // waits.
-      setDecision(
+      decisionDialog.open(
         decisionFor(asking, selectionOf(what), approves, all, people.data),
       );
-      setDeciding(true);
     },
   };
 
@@ -512,10 +510,9 @@ export function ListsPage({
     ? draftsWaitingIn(shownLists.filter(({ id }) => !unchangeable.has(id)))
     : { selection: noDrafts(), total: 0 };
   const decideAll = (asking: "approve" | "reject") => {
-    setDecision(
+    decisionDialog.open(
       decisionFor(asking, waiting.selection, approves, all, people.data, true),
     );
-    setDeciding(true);
   };
 
   const openWhy = open === undefined ? undefined : unchangeable.get(open.id);
@@ -684,16 +681,7 @@ export function ListsPage({
           {content}
         </WithSidePanel>
       </DraftView>
-      <DecisionModal
-        decision={decision}
-        opened={deciding}
-        onClose={() => {
-          setDeciding(false);
-        }}
-        onDone={() => {
-          setDeciding(false);
-        }}
-      />
+      {decisionDialog.modal}
       <Modal
         opened={opened}
         onClose={closeDialog}

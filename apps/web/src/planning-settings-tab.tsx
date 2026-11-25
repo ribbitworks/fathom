@@ -25,11 +25,11 @@ import {
 } from "@fathom/shared";
 import { ActionIcon, Button, Group, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { type ReactNode, useState } from "react";
-import { DecisionModal } from "./decision-dialog.tsx";
+import { type ReactNode } from "react";
+import { useDecisionDialog } from "./decision-dialog.tsx";
 import { configDraftFields, draftLines } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
-import { type Decision, decisionFor } from "./draft-decisions.ts";
+import { decisionFor } from "./draft-decisions.ts";
 import { focusSoon } from "./focus.ts";
 import { Icon } from "./icons.tsx";
 import { LoadProblem } from "./load-problem.tsx";
@@ -203,12 +203,11 @@ export function PlanningSettingsTab({
   onShow: (show: Show) => void;
 }) {
   const settings = useQuery(planningSettingsQuery);
-  const [decision, setDecision] = useState<Decision>();
-  const [deciding, setDeciding] = useState(false);
+  const decisionDialog = useDecisionDialog();
   const { save, undoable, done } = useSaving<PlanningSettingsShown>({
     queryKey: planningSettingsQuery.queryKey,
     removed: "Fathom could not find the planning settings. Reload the page.",
-    blocked: deciding,
+    blocked: decisionDialog.opened,
   });
   const { editingOf } = useRecordEditing<Settings, PlanningSettingsChange>();
   if (settings.isError) {
@@ -268,13 +267,12 @@ export function PlanningSettingsTab({
     approves,
     nodes: [node],
     decide: (asking: Asking) => {
-      setDecision(
+      decisionDialog.open(
         decisionFor(asking, { ...noDrafts(), records: [ref] }, approves, [], {
           fields: [],
           records: [node],
         }),
       );
-      setDeciding(true);
     },
     resubmit: () => {
       run(
@@ -485,16 +483,7 @@ export function PlanningSettingsTab({
           )}
         </Stack>
       </Stack>
-      <DecisionModal
-        decision={decision}
-        opened={deciding}
-        onClose={() => {
-          setDeciding(false);
-        }}
-        onDone={() => {
-          setDeciding(false);
-        }}
-      />
+      {decisionDialog.modal}
     </DraftView>
   );
 }

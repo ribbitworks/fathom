@@ -308,7 +308,7 @@ export function DecisionModal({
   );
 }
 
-export function useDecisionDialog() {
+export function useDecisionDialog({ onDone }: { onDone?: () => void } = {}) {
   const { dialog, opened, open, close } = useDialogState<Decision>();
   return {
     open,
@@ -318,7 +318,10 @@ export function useDecisionDialog() {
         decision={dialog}
         opened={opened}
         onClose={close}
-        onDone={close}
+        onDone={() => {
+          close();
+          onDone?.();
+        }}
       />
     ),
   };

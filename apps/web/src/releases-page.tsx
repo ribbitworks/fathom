@@ -24,9 +24,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
 import { z } from "zod";
 import { describeProblem } from "./api.ts";
-import { DecisionModal } from "./decision-dialog.tsx";
+import { useDecisionDialog } from "./decision-dialog.tsx";
 import { type DraftSelection } from "./drafts.ts";
-import { type Decision, decisionFor } from "./draft-decisions.ts";
+import { decisionFor } from "./draft-decisions.ts";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -188,8 +188,11 @@ export function ReleasesPage({
   const narrow = useNarrow();
   const [dialog, setDialog] = useState<Dialog>();
   const [busy, setBusy] = useState(false);
-  const [decision, setDecision] = useState<Decision>();
-  const [deciding, setDeciding] = useState(false);
+  const decisionDialog = useDecisionDialog({
+    onDone: () => {
+      void refresh();
+    },
+  });
   // A release's note, written in a panel of its own beside its details, which closes once the
   // release is no longer shown; anything that would close it while it is changed asks first.
   const notes = useNoteEditing(releasePanelTitleId);
@@ -207,7 +210,7 @@ export function ReleasesPage({
     applied,
     onApply,
     canShare: canShareViews,
-    blocked: dialog !== undefined || deciding || question.asking,
+    blocked: dialog !== undefined || decisionDialog.opened || question.asking,
   });
   const refresh = async () => {
     await Promise.all([
@@ -272,7 +275,7 @@ export function ReleasesPage({
     ...(plan.data === undefined ? [] : planNodes(plan.data)),
   ];
   const decide = (asking: Asking, selection: DraftSelection, all?: boolean) => {
-    setDecision(
+    decisionDialog.open(
       decisionFor(
         asking,
         selection,
@@ -282,7 +285,6 @@ export function ReleasesPage({
         all,
       ),
     );
-    setDeciding(true);
   };
   const actions: ScheduleActions = {
     draftOf: (id) => drafts.get(id),
@@ -544,17 +546,7 @@ export function ReleasesPage({
           />
         )}
       </Modal>
-      <DecisionModal
-        decision={decision}
-        opened={deciding}
-        onClose={() => {
-          setDeciding(false);
-        }}
-        onDone={() => {
-          setDeciding(false);
-          void refresh();
-        }}
-      />
+      {decisionDialog.modal}
     </Stack>
   );
 }

@@ -34,9 +34,8 @@ import {
   ColumnModal,
   useColumnDialog,
 } from "./column-editing.tsx";
-import { DecisionModal } from "./decision-dialog.tsx";
+import { useDecisionDialog } from "./decision-dialog.tsx";
 import { noDrafts } from "./drafts.ts";
-import { type Decision } from "./draft-decisions.ts";
 import { listsQuery } from "./lists.ts";
 import { LoadProblem } from "./load-problem.tsx";
 import { HeadingTabPanel } from "./page-header.tsx";
@@ -245,8 +244,7 @@ export function ProjectsPage({
     openedAdded.current = justAdded;
     onOpen?.(justAdded);
   }, [justAdded, query.data, onOpen]);
-  const [decision, setDecision] = useState<Decision>();
-  const [deciding, setDeciding] = useState(false);
+  const decisionDialog = useDecisionDialog();
   // A milestone being added to a project, or changed, in the project's panel.
   const [milestoneDialog, setMilestoneDialog] = useState<
     { project: Project; milestone?: Milestone } | undefined
@@ -261,12 +259,16 @@ export function ProjectsPage({
     mode: board?.mode,
     onApply,
     canShare: canShareViews,
-    blocked: deciding || dialogOpened || columnDialog.opened,
+    blocked: decisionDialog.opened || dialogOpened || columnDialog.opened,
   });
   const changes = useSaving<ProjectPlan>({
     queryKey: projectPlanQuery.queryKey,
     removed: "Someone else has removed this. The plan has been refreshed.",
-    blocked: deciding || dialogOpened || columnDialog.opened || views.opened,
+    blocked:
+      decisionDialog.opened ||
+      dialogOpened ||
+      columnDialog.opened ||
+      views.opened,
   });
   const { shown, undoable } = changes;
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
@@ -276,10 +278,7 @@ export function ProjectsPage({
       changes,
       plan: query.data,
       approves,
-      onDecision: (decision) => {
-        setDecision(decision);
-        setDeciding(true);
-      },
+      onDecision: decisionDialog.open,
     });
 
   let content: ReactNode;
@@ -622,16 +621,7 @@ export function ProjectsPage({
       )}
       {question.dialog}
       {views.dialogs}
-      <DecisionModal
-        decision={decision}
-        opened={deciding}
-        onClose={() => {
-          setDeciding(false);
-        }}
-        onDone={() => {
-          setDeciding(false);
-        }}
-      />
+      {decisionDialog.modal}
       <Modal
         opened={dialogOpened}
         onClose={() => {

@@ -12,12 +12,12 @@ import {
 import { Button, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { DecisionModal, drafts } from "./decision-dialog.tsx";
+import { drafts, useDecisionDialog } from "./decision-dialog.tsx";
 import { type DraftsSeen, useDraftEntries } from "./draft-reading.ts";
 import { type DraftPlace, placeKey } from "./draft-places.ts";
 import { DraftPanel, draftPanelId } from "./drafts-panel.tsx";
 import { type DraftSelection, linkedGroups, mayDecide } from "./drafts.ts";
-import { type Decision, decisionFor } from "./draft-decisions.ts";
+import { decisionFor } from "./draft-decisions.ts";
 import {
   draftColumnOrder,
   draftColumns,
@@ -100,8 +100,11 @@ export function DraftsPage({
     permissions,
   });
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
-  const [decision, setDecision] = useState<Decision>();
-  const [opened, setOpened] = useState(false);
+  const decisionDialog = useDecisionDialog({
+    onDone: () => {
+      setTicked(new Set());
+    },
+  });
   // The changes chosen to discard, while asking first.
   const [discarding, setDiscarding] = useState<DraftRow[]>();
   // The reader's own changes as the server links them, grouped once for every row on the page.
@@ -132,7 +135,7 @@ export function DraftsPage({
     applied,
     onApply,
     canShare: canShareViews,
-    blocked: opened,
+    blocked: decisionDialog.opened,
   });
 
   let content: ReactNode;
@@ -173,7 +176,7 @@ export function DraftsPage({
       selection: DraftSelection,
       all?: boolean,
     ) => {
-      setDecision(
+      decisionDialog.open(
         decisionFor(
           asking,
           selection,
@@ -183,7 +186,6 @@ export function DraftsPage({
           all,
         ),
       );
-      setOpened(true);
     };
     // The reader's own changes that must go with each, as the server links them, which are
     // published or discarded only together, in the table's order, worked out once for every row. A
@@ -477,17 +479,7 @@ export function DraftsPage({
             : "The chosen changes are discarded. This cannot be undone."}
         </DiscardChangesModal>
       )}
-      <DecisionModal
-        decision={decision}
-        opened={opened}
-        onClose={() => {
-          setOpened(false);
-        }}
-        onDone={() => {
-          setOpened(false);
-          setTicked(new Set());
-        }}
-      />
+      {decisionDialog.modal}
     </Stack>
   );
 }
