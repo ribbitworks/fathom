@@ -587,6 +587,37 @@ export const gadget = (id: string, more: Partial<Gadget> = {}): Gadget => ({
 
 export const noop = () => undefined;
 
+// The built-in Positions list, with the one position the fictional people have.
+export const positions: List = {
+  id: "positions",
+  keyNumber: 1,
+  name: "Positions",
+  description: "",
+  visibility: "general",
+  retired: false,
+  builtIn: "positions",
+  choices: [
+    {
+      id: "position-1",
+      label: "Fictional Engineer",
+      description: "",
+      retired: false,
+    },
+  ],
+};
+
+// A note column on People.
+export const background = {
+  id: "f1",
+  keyNumber: 1,
+  name: "Background",
+  type: "note",
+  listId: null,
+  visibility: "general",
+  multiple: false,
+  required: false,
+};
+
 export function gadgetTable(
   recordProblem: RecordTable<
     Gadget,
@@ -611,9 +642,10 @@ export function gadgetTable(
   };
 }
 
-export const actions = (
-  more: Partial<RecordActions<Gadget, GadgetChange, GadgetChange>> = {},
-): RecordActions<Gadget, GadgetChange, GadgetChange> => ({
+// Every action a table takes doing nothing, with those given in its place.
+export const actions = <Row = Gadget, Change = GadgetChange, Request = Change>(
+  more: Partial<RecordActions<Row, Change, Request>> = {},
+): RecordActions<Row, Change, Request> => ({
   add: noop,
   update: noop,
   remove: noop,

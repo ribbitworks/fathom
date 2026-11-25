@@ -8,14 +8,8 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { columnsFor } from "./people-grid.tsx";
 import { emptyView } from "./table-view.ts";
-import {
-  positions,
-  person,
-  lead,
-  people,
-  grid,
-  text,
-} from "./test-people-grid.tsx";
+import { person, lead, people, grid, text } from "./test-people-grid.tsx";
+import { positions } from "./test-support.tsx";
 import { livePeople } from "./people-live.ts";
 
 describe("managers and teams", () => {

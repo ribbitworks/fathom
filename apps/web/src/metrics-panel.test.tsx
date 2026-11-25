@@ -22,6 +22,7 @@ import { panelWidth, panelWidths } from "./side-panel.tsx";
 import { PeopleGrid } from "./people-grid.tsx";
 import { emptyView, type View } from "./table-view.ts";
 import { chooseIn, optionsIn, testTheme } from "./test-support.tsx";
+import { peopleActions } from "./test-people-grid.tsx";
 
 const level: Field = {
   id: "f1",
@@ -95,19 +96,6 @@ const everyone = [
   person("d", [], ["test"]),
 ];
 
-const noop = () => undefined;
-const actions = {
-  add: noop,
-  update: noop,
-  remove: noop,
-  discard: noop,
-  resubmit: noop,
-  decide: noop,
-  editColumn: noop,
-  discardColumn: noop,
-  resubmitColumn: noop,
-};
-
 function Table({
   people = everyone,
   fields = [level, role],
@@ -143,7 +131,7 @@ function Table({
             }, laterMilliseconds);
           } else setView(next);
         }}
-        actions={actions}
+        actions={peopleActions()}
       />
     </MantineProvider>
   );

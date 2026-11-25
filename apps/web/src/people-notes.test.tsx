@@ -13,20 +13,20 @@ import {
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
+  background,
   bodyOf,
+  changesSent,
   chooseIn,
+  positions,
   renderApp,
   serverAnswers,
-  changesSent,
 } from "./test-support.tsx";
 import {
   avery,
   averyNote,
-  background,
   blake,
   editor,
   peopleAnswer,
-  positions,
   s1,
   saved,
   session,

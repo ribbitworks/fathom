@@ -122,6 +122,22 @@ export const requestedValuesSchema = z.record(
     .refine((ids) => new Set(ids).size === ids.length, "Each choice once"),
 );
 
+// A new record's values in the columns added to its table, each column named by its identifier.
+export const requestedColumnValues = {
+  values: requestedValuesSchema.default({}),
+  links: z.record(z.uuid(), linkValueSchema).default({}),
+  notes: requestedNotesSchema.optional(),
+  numbers: requestedNumbersSchema.optional(),
+};
+
+// A change to a record's values in the columns added to its table: each column named is replaced.
+export const changedColumnValues = {
+  values: requestedValuesSchema.optional(),
+  links: requestedLinksSchema.optional(),
+  notes: requestedNotesSchema.optional(),
+  numbers: requestedNumbersSchema.optional(),
+};
+
 // A person's draft, as the user may see it: whether it adds, changes, or removes them, the columns
 // it changes, by key, and their live values, which a draft that adds someone has none of. Columns
 // the user may not see are left out, and so is a draft that changes only those. A rejected draft's
@@ -282,10 +298,7 @@ export const personRequestSchema = z.object({
   // first state of their meaning.
   stateId: z.uuid().optional(),
   ...reporting,
-  values: requestedValuesSchema.default({}),
-  links: z.record(z.uuid(), linkValueSchema).default({}),
-  notes: requestedNotesSchema.optional(),
-  numbers: requestedNumbersSchema.optional(),
+  ...requestedColumnValues,
 });
 
 export type PersonRequest = z.infer<typeof personRequestSchema>;
@@ -305,10 +318,7 @@ export const personChangeSchema = z.object({
   endDate: day.nullable().optional(),
   stateId: z.uuid().optional(),
   ...reporting,
-  values: requestedValuesSchema.optional(),
-  links: requestedLinksSchema.optional(),
-  notes: requestedNotesSchema.optional(),
-  numbers: requestedNumbersSchema.optional(),
+  ...changedColumnValues,
 });
 
 export type PersonChange = z.infer<typeof personChangeSchema>;

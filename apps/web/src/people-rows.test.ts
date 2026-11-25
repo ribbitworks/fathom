@@ -3,28 +3,12 @@
 // Tests for the People table's two kinds of row: what a planned hire is called, and what a request
 // to add one or a change to one becomes for the server.
 
-import type { List, Person } from "@fathom/shared";
+import type { Person } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { hireChange, hireRequest } from "./hires.ts";
 import { addedNames, personOnly, rowName } from "./people-rows.ts";
+import { positions } from "./test-support.tsx";
 
-const positions: List = {
-  id: "positions",
-  keyNumber: 1,
-  name: "Positions",
-  description: "",
-  visibility: "general",
-  retired: false,
-  builtIn: "positions",
-  choices: [
-    {
-      id: "position-1",
-      label: "Fictional Engineer",
-      description: "",
-      retired: false,
-    },
-  ],
-};
 const hire: Person = {
   id: "h1",
   keyNumber: 1,

@@ -5,7 +5,12 @@
 import { screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { bodyOf, renderApp, serverAnswers } from "./test-support.tsx";
+import {
+  bodyOf,
+  positions,
+  renderApp,
+  serverAnswers,
+} from "./test-support.tsx";
 import {
   setUpEachTest,
   session,
@@ -14,7 +19,6 @@ import {
   sasha,
   uma,
   peopleAnswer,
-  positions,
   chart,
   panel,
 } from "./test-person-panel.tsx";

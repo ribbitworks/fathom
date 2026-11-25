@@ -6,7 +6,13 @@
 import type { OrgChartPerson } from "@fathom/shared";
 import { screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeAll, vi, expect } from "vitest";
-import { detailRow, fictionalUser, serverAnswers } from "./test-support.tsx";
+import {
+  background,
+  detailRow,
+  fictionalUser,
+  positions,
+  serverAnswers,
+} from "./test-support.tsx";
 import { userEvent } from "@testing-library/user-event";
 
 export function setUpEachTest() {
@@ -30,17 +36,6 @@ export const viewer = session([
   "plan:view",
   "features:view",
 ]);
-
-export const background = {
-  id: "f1",
-  keyNumber: 1,
-  name: "Background",
-  type: "note",
-  listId: null,
-  visibility: "general",
-  multiple: false,
-  required: false,
-};
 
 export const profile = {
   ...background,
@@ -107,24 +102,6 @@ export const peopleAnswer =
       fields: [background, profile],
       order: ["preferredName", "employeeId", "positionId", "f1", "f2"],
     });
-
-export const positions = {
-  id: "positions",
-  keyNumber: 1,
-  name: "Positions",
-  description: "",
-  visibility: "general",
-  retired: false,
-  builtIn: "positions",
-  choices: [
-    {
-      id: "position-1",
-      label: "Fictional Engineer",
-      description: "",
-      retired: false,
-    },
-  ],
-};
 
 const chartPerson = (
   id: string,
