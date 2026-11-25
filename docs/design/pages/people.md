@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/people.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Fathom: People Page
@@ -63,8 +63,10 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 - **Timeline:** Show timeline opens the person's timeline in its own panel under the details, as a note's does, kept in the address (`timeline`).
   - **Its days:** newest first, one row a day: planned days in grey above Today's line, drawn across as a timeline draws Today, then the past; six on each side, the rest under Later dates and Earlier dates.
   - **Its changes:** Filled and the hire, Start, Manager, Feature teams and Leads added or removed, and End, one to a line in that order, in one form: the field, the new value, then changed from the old; with how many others the same new manager came to that day. A manager links to their details, a team to the Org chart's feature teams.
-  - **Its dates:** each moves the page to that day, for readers who see other days; the day shown is marked, or, with no changes that day, drawn as a line where it falls, in teal.
-  - **Who sees what:** readers who see start and end dates; past managers with Past managers' class, feature teams with their dates' class, and the hire filled with the hiring plan. Reading it is recorded in the access history.
+  - **Its dates:** each moves the page to that day, for readers who see other days, and a later day only for those who see later days; the day shown is marked, or, with no changes that day, drawn as a line where it falls, in teal.
+  - **Who sees what:** readers who see start and end dates; managers until today with Past managers' class and later ones with Future reorganizations', feature teams with their dates' class, and the hire filled with the hiring plan. Reading it is recorded in the access history, and the hiring plan's view too when it names a hire.
+  - **Links:** a manager links to their details when People lists them on the day shown; a team to the Org chart's feature teams for readers who see feature teams; a filled hire to its key's link.
+  - **Following a link:** opening another person's details closes the timeline; moving to another day keeps it open.
 - **Notes:** A note opens in its own panel under the details, sharing the height, kept in the address as [Kept in the address](../../standards/ui-conventions/tables.md#the-address) sets out, and can be maximized, as [Maximizing](../../standards/ui-conventions/pages-and-panels.md#panels-and-focus) sets out.
 
 ### Planned Hires

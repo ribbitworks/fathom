@@ -2,7 +2,7 @@
 title: "Manual Test: People Over Time"
 category: "How-To"
 audience: "Contributors"
-applies_to: ["apps/web/src/people-page.tsx", "apps/web/src/people-actions.ts", "apps/web/src/people-grid.tsx", "apps/web/src/person-panel.tsx", "apps/web/src/date-control.tsx", "apps/server/src/data/people.ts", "apps/server/src/data/people-reads.ts", "apps/server/src/data/people-table-reads.ts", "apps/server/src/data/person-fields.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
+applies_to: ["apps/web/src/people-page.tsx", "apps/web/src/people-actions.ts", "apps/web/src/people-grid.tsx", "apps/web/src/person-panel.tsx", "apps/web/src/date-control.tsx", "apps/server/src/data/people.ts", "apps/server/src/data/people-reads.ts", "apps/server/src/data/people-table-reads.ts", "apps/server/src/data/person-fields.ts", "packages/seed/src/**", "packages/fixtures/src/**", "apps/web/src/person-timeline.tsx", "apps/web/src/record-timeline.tsx", "apps/server/src/data/person-timeline.ts"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/org-chart-manual-test.md"]
 last_updated: "2026-11-25"
 ---
@@ -11,7 +11,7 @@ last_updated: "2026-11-25"
 
 ## Scope
 
-Verifies reading the **People** page on another date: the date row above its table, who is listed on an earlier and a later date, planned hires on later dates, a person's details beside the table on that date, changing a manager from an earlier date in the table, and a role that sees no other dates.
+Verifies reading the **People** page on another date: the date row above its table, who is listed on an earlier and a later date, planned hires on later dates, a person's details beside the table on that date, changing a manager from an earlier date in the table, a role that sees no other dates, and a person's timeline: its preview, its panel, a day chosen from it and closing it.
 
 ## Test Environment
 
@@ -22,6 +22,7 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Engineering Manager:** `engineering.manager@fathom.test`
+- **Engineering Director:** `engineering.director@fathom.test`
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Feature Lead:** `feature.lead@fathom.test`
 
@@ -209,20 +210,33 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] `D9D4` Select Carmine Labadie's name, then scroll to the end of her details.
-  - **Expected:** A **Timeline** section lists her latest change, then **Show timeline**.
+- [ ] `D9D4` Select the name 'Carmine Labadie'.
+  - **Expected:** His details open beside the table.
+  - **Notes:**
+
+- [ ] `1EA4` Scroll to the end of his details.
+  - **Expected:** A **Timeline** section lists his latest change, then **Show timeline**.
   - **Notes:**
 
 - [ ] `6160` Select **Show timeline**.
   - **Expected:**
-    - The timeline opens under her details, with a red **Today** line across it.
-    - Her days are listed newest first, each change on its own line, such as **Manager** and a name.
+    - The timeline opens under his details, with the cursor on its title.
+    - A thin red line marked **Today** runs across it, with room above and below.
+    - His days are listed newest first, each change on its own line, such as **Manager** and a name.
   - **Notes:**
 
-- [ ] `4EC1` Select the oldest date in the timeline.
-  - **Expected:** The date row shows that day, and the timeline marks its row.
+- [ ] `4EC1` Select the date of the last day listed.
+  - **Expected:**
+    - The date row shows that day.
+    - The day's row is marked, grey with a coloured bar at its left.
+  - **Notes:**
+
+- [ ] `FE5C` Select **Today** in the date row.
+  - **Expected:** No row is marked.
   - **Notes:**
 
 - [ ] `EAA2` Select the timeline's **×**.
-  - **Expected:** The timeline closes, and her details stay open.
+  - **Expected:**
+    - The timeline closes, and his details stay open.
+    - The cursor is back on **Show timeline**.
   - **Notes:**

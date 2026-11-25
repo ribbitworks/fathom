@@ -98,7 +98,7 @@ A person's timeline lists the days something about them changed, or will: the pl
 
 1. Open the person's details. The **Timeline** section at the end shows the next change to come and the latest.
 1. Select **Show timeline**. The timeline opens under the details, newest first, with planned days above the red **Today** line.
-1. To see People on one of its days, select its date.
+1. To see People on one of its days, select its date. Your role needs to see other days, and later days for a date still to come.
 
 You're done when the timeline shows the person's days.
 
