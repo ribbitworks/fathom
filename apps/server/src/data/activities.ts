@@ -95,7 +95,7 @@ export async function removeActivity(
     if (allocated !== undefined) {
       throw new ConflictError(
         allocatedRefusal(
-          subjectFor(activityKind, state, id, maker.permissions),
+          subjectFor(activityKind, state, id, maker),
           "activity",
         ),
       );

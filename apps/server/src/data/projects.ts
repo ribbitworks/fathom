@@ -28,25 +28,11 @@ import {
   ForbiddenError,
   NotFoundError,
 } from "../errors.ts";
-import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
-import { type Recorded, tidy, unseenDraft } from "./draft-records.ts";
+import { type Recorded, unseenDraft } from "./draft-records.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
-import { checkTeamForFeature } from "./feature-team-removals.ts";
-import { typeOf } from "./column-types.ts";
-import {
-  checkedLinks,
-  checkedNotes,
-  checkedNumbers,
-  checkedValues,
-  choicesAskedFor,
-  valuesOf,
-} from "./person-fields.ts";
-import { columnsWithAdded } from "./added-columns.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import { text } from "./reporting.ts";
-import { fieldOfValue, valueField } from "./values.ts";
-import { refuseCustomersChange } from "./feature-customers.ts";
 import { planningRecord, statusFor } from "./planning-records.ts";
 import {
   addedOnly,
