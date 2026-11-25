@@ -160,10 +160,7 @@ describe("creating a role", () => {
       "GET /api/session": roleEditor,
       "GET /api/roles": roleList,
       "POST /api/roles": () =>
-        Response.json(
-          { error: "Another role has that name" },
-          { status: 409 },
-        ),
+        Response.json({ error: "Another role has that name" }, { status: 409 }),
     });
     renderApp("/roles");
     const dialog = await openDialog("New role", "New role");
@@ -345,10 +342,7 @@ describe("changing a role", () => {
           effects: [{ account: planner, before: ["plan:view"], after: [] }],
         }),
       "PUT /api/roles/00000000-0000-4000-8000-000000000002": () =>
-        Response.json(
-          { error: "Another role has that name" },
-          { status: 409 },
-        ),
+        Response.json({ error: "Another role has that name" }, { status: 409 }),
     });
     renderApp("/roles");
     const dialog = await openDialog(
