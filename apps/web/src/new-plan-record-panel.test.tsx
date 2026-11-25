@@ -250,16 +250,16 @@ describe("adding", () => {
     expect(onAdd).not.toHaveBeenCalled();
   });
 
-  it("finishes a field with Enter, without adding the record", async () => {
+  it("adds the record with Enter in a field, as Add does", async () => {
     const onAdd = vi.fn();
     renderPanel({ given: table([column("name", "text")]), onAdd });
     await userEvent.type(
       screen.getByRole("textbox", { name: "name" }),
       "Words{Enter}",
     );
-    expect(onAdd).not.toHaveBeenCalled();
-    await add();
-    expect(onAdd).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(onAdd).toHaveBeenCalledOnce();
+    });
   });
 
   it("does not close while saving", async () => {

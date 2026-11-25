@@ -5,11 +5,18 @@
 
 import type { Typing } from "@fathom/shared";
 import { Checkbox, Group, NativeSelect, Text } from "@mantine/core";
-import { type ReactNode, useEffect, useEffectEvent, useState } from "react";
+import {
+  type ReactNode,
+  useContext,
+  useEffect,
+  useEffectEvent,
+  useState,
+} from "react";
 import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
 import { focusSoon, selectSoon } from "./focus.ts";
+import { NewFormEnter } from "./new-form-enter.ts";
 import { readOnlyFor } from "./grid-columns.tsx";
 import { valueChange } from "./grid-saving.ts";
 import { noteOpenFor } from "./note-address.ts";
@@ -178,6 +185,7 @@ function TextEditor({
   const text = typed ?? opened;
   const given = (entered: string) => (entered === opened ? value : entered);
   const choosesUnit = units !== undefined && onUnit !== undefined;
+  const addForm = useContext(NewFormEnter);
   const leave = () => {
     onDone(given(text), "leave");
   };
@@ -193,6 +201,7 @@ function TextEditor({
       onText={setTyped}
       onEnter={() => {
         onDone(given(text), "enter");
+        if (alwaysOpen) addForm?.();
       }}
       // In a New form, with nothing typed to keep, Esc goes to the form, which closes; with something
       // typed, Esc first keeps it in the form, so closing it asks before discarding it.

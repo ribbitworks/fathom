@@ -22,6 +22,7 @@ import { firstTypedInto, useFocusOnOpen } from "./record-editing.tsx";
 import { columnsOn, onRow, readOnlyFor } from "./grid-columns.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { Column, GridRecord, RecordTable } from "./record-table.ts";
+import { NewFormEnter } from "./new-form-enter.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import type { CellValue } from "./table-view.ts";
 
@@ -184,21 +185,27 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
     </DetailSections>
   );
   return (
-    <SidePanelFrame
-      id={panelId}
-      titleId={titleId}
-      title={title}
-      narrow={narrow}
-      close={{
-        label: `Close ${title}`,
-        onClose: () => {
-          if (!saving) onCancel();
-        },
+    <NewFormEnter
+      value={() => {
+        setPressed({ act: "add" });
       }}
     >
-      <div className={sidePanelScroll} inert={saving}>
-        {body}
-      </div>
-    </SidePanelFrame>
+      <SidePanelFrame
+        id={panelId}
+        titleId={titleId}
+        title={title}
+        narrow={narrow}
+        close={{
+          label: `Close ${title}`,
+          onClose: () => {
+            if (!saving) onCancel();
+          },
+        }}
+      >
+        <div className={sidePanelScroll} inert={saving}>
+          {body}
+        </div>
+      </SidePanelFrame>
+    </NewFormEnter>
   );
 }
