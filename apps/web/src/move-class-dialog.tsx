@@ -12,10 +12,10 @@ import {
   tierSchema,
   whyNoMove,
 } from "@fathom/shared";
-import { Modal, Radio, Stack } from "@mantine/core";
+import { Radio, Stack } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { DialogActions, useDialogState } from "./dialog-actions.tsx";
+import { BusyModal, DialogActions, useDialogState } from "./dialog-actions.tsx";
 import type { useSaving } from "./saving.ts";
 
 // What is being moved: its name, as the dialog's title gives it, its class now, the request that
@@ -142,26 +142,24 @@ export function MoveClassModal({
   permissions: readonly Permission[];
   onClose: () => void;
 }) {
-  const [busy, setBusy] = useState(false);
   return (
-    <Modal
+    <BusyModal
       opened={opened}
       onClose={onClose}
-      closeOnEscape={!busy}
-      closeOnClickOutside={!busy}
-      withCloseButton={!busy}
       title={moving && `Change the class of ${moving.name}`}
     >
-      {moving && (
-        <MoveClassDialog
-          moving={moving}
-          permissions={permissions}
-          onDone={onClose}
-          onCancel={onClose}
-          onBusy={setBusy}
-        />
-      )}
-    </Modal>
+      {(onBusy) =>
+        moving && (
+          <MoveClassDialog
+            moving={moving}
+            permissions={permissions}
+            onDone={onClose}
+            onCancel={onClose}
+            onBusy={onBusy}
+          />
+        )
+      }
+    </BusyModal>
   );
 }
 

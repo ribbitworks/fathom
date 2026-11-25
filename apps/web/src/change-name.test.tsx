@@ -130,7 +130,9 @@ describe("changing one's own name", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     await userEvent.keyboard("{Escape}");
     expect(screen.getByRole("dialog", { name: "Change name" })).toBeDefined();
-    expect(within(dialog).queryByRole("button", { name: "Close" })).toBeNull();
+    expect(
+      within(dialog).queryByRole("button", { name: "Close dialog" }),
+    ).toBeNull();
     answer(new Response(null, { status: 204 }));
     expect(await screen.findByText("The name has been changed.")).toBeDefined();
   });

@@ -17,6 +17,7 @@ import {
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { type QueryKey, queryOptions, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
+import { BusyModal } from "./dialog-actions.tsx";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 import { useLastView } from "./last-views.ts";
@@ -130,7 +131,6 @@ export function useSavedViews({
   const listed = useQuery(query).data ?? [];
   const [naming, setNaming] = useState<Naming>();
   const [opened, setOpened] = useState(false);
-  const [busy, setBusy] = useState(false);
   // Like the naming dialog, the view being deleted stays set while its dialog closes.
   const [deleting, setDeleting] = useState<UnusableView>();
   const [deleteOpened, setDeleteOpened] = useState(false);
@@ -230,43 +230,42 @@ export function useSavedViews({
 
   const dialogs = (
     <>
-      <Modal
+      <BusyModal
         opened={opened}
         onClose={() => {
           setOpened(false);
         }}
-        closeOnEscape={!busy}
-        closeOnClickOutside={!busy}
-        withCloseButton={!busy}
         title={
           naming !== undefined && "renaming" in naming
             ? "Rename view"
             : "Save view"
         }
       >
-        {naming && (
-          <ViewDialog
-            {...("renaming" in naming
-              ? { view: nameable(naming.renaming) }
-              : { canSaveShared: canShare, saves: naming.parts })}
-            views={listed.map(nameable)}
-            save={(name, scope) =>
-              "renaming" in naming
-                ? updateView(table, naming.renaming.id, { name })
-                : createView(table, {
-                    name,
-                    scope,
-                    definition: savedFor(naming.view),
-                  })
-            }
-            onSaved={named}
-            onCancel={() => {
-              setOpened(false);
-            }}
-            onBusy={setBusy}
-          />
-        )}
-      </Modal>
+        {(onBusy) =>
+          naming && (
+            <ViewDialog
+              {...("renaming" in naming
+                ? { view: nameable(naming.renaming) }
+                : { canSaveShared: canShare, saves: naming.parts })}
+              views={listed.map(nameable)}
+              save={(name, scope) =>
+                "renaming" in naming
+                  ? updateView(table, naming.renaming.id, { name })
+                  : createView(table, {
+                      name,
+                      scope,
+                      definition: savedFor(naming.view),
+                    })
+              }
+              onSaved={named}
+              onCancel={() => {
+                setOpened(false);
+              }}
+              onBusy={onBusy}
+            />
+          )
+        }
+      </BusyModal>
       <Modal
         opened={deleteOpened}
         onClose={() => {

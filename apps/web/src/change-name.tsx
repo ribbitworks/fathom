@@ -5,14 +5,13 @@
 
 import { ownNameSchema } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Modal, Stack, TextInput } from "@mantine/core";
+import { Stack, TextInput } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { changeOwnName, nameProblem } from "./accounts.ts";
-import { DialogActions } from "./dialog-actions.tsx";
+import { BusyModal, DialogActions } from "./dialog-actions.tsx";
 import { notifySuccess } from "./notices.tsx";
 import { sessionQuery } from "./session.ts";
 
@@ -88,19 +87,11 @@ export function ChangeNameDialog({
   opened: boolean;
   onClose: () => void;
 }) {
-  // It cannot be closed while saving, so a refusal is always seen. Its form starts afresh each time
-  // it opens, since the dialog's content is removed once it has closed.
-  const [busy, setBusy] = useState(false);
+  // Its form starts afresh each time it opens, since the dialog's content is removed once it has
+  // closed.
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      closeOnEscape={!busy}
-      closeOnClickOutside={!busy}
-      withCloseButton={!busy}
-      title="Change name"
-    >
-      <NameForm name={name} onDone={onClose} onBusy={setBusy} />
-    </Modal>
+    <BusyModal opened={opened} onClose={onClose} title="Change name">
+      {(onBusy) => <NameForm name={name} onDone={onClose} onBusy={onBusy} />}
+    </BusyModal>
   );
 }

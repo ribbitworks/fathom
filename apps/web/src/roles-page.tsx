@@ -22,7 +22,6 @@ import {
   Button,
   Group,
   Loader,
-  Modal,
   Paper,
   SimpleGrid,
   Stack,
@@ -38,7 +37,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { accountsQuery, nameProblem } from "./accounts.ts";
-import { DialogActions, useDialogState } from "./dialog-actions.tsx";
+import { BusyModal, DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { notifySuccess } from "./notices.tsx";
 import { count } from "./numbers.ts";
 import { PageHeader } from "./page-header.tsx";
@@ -374,8 +373,6 @@ export function RolesPage({
     open({ kind: canEdit ? "edit" : "view", role });
     onLinkedOpened?.();
   }, [roles.data, linked, canEdit, open, onLinkedOpened]);
-  const [busy, setBusy] = useState(false);
-
   return (
     <Stack gap="md" className={classes.tablePage}>
       <PageHeader
@@ -466,33 +463,34 @@ export function RolesPage({
           </div>
         </Paper>
       )}
-      <Modal
+      <BusyModal
         opened={opened}
         size="70rem"
         onClose={close}
-        closeOnEscape={!busy}
-        closeOnClickOutside={!busy}
-        withCloseButton={!busy}
         title={dialog && dialogTitle(dialog)}
       >
-        {dialog?.kind === "view" && (
-          <RoleView
-            role={dialog.role}
-            dataClasses={dataClasses}
-            onDone={close}
-          />
+        {(onBusy) => (
+          <>
+            {dialog?.kind === "view" && (
+              <RoleView
+                role={dialog.role}
+                dataClasses={dataClasses}
+                onDone={close}
+              />
+            )}
+            {dialog !== undefined && dialog.kind !== "view" && (
+              <RoleForm
+                key={JSON.stringify(dialog)}
+                dialog={dialog}
+                userId={user.id}
+                dataClasses={dataClasses}
+                onDone={close}
+                onBusy={onBusy}
+              />
+            )}
+          </>
         )}
-        {dialog !== undefined && dialog.kind !== "view" && (
-          <RoleForm
-            key={JSON.stringify(dialog)}
-            dialog={dialog}
-            userId={user.id}
-            dataClasses={dataClasses}
-            onDone={close}
-            onBusy={setBusy}
-          />
-        )}
-      </Modal>
+      </BusyModal>
     </Stack>
   );
 }

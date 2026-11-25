@@ -19,7 +19,6 @@ import {
   Button,
   Group,
   Loader,
-  Modal,
   Paper,
   SegmentedControl,
   Stack,
@@ -28,13 +27,13 @@ import {
 import { useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { type MouseEvent, type ReactNode, useState } from "react";
+import { type MouseEvent, type ReactNode } from "react";
 import { useDecisionDialog } from "./decision-dialog.tsx";
 import { approvesAll, noDrafts, waitsForRejected } from "./drafts.ts";
 import { decisionFor } from "./draft-decisions.ts";
 import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
-import { useDialogState } from "./dialog-actions.tsx";
+import { BusyModal, useDialogState } from "./dialog-actions.tsx";
 import { moveListClass } from "./data-classes.ts";
 import {
   MoveClassModal,
@@ -157,7 +156,6 @@ export function ListsPage({
     open: openDialog,
     close: closeDialog,
   } = useDialogState<Dialog>();
-  const [busy, setBusy] = useState(false);
   const classMove = useClassMove();
   // Approving or rejecting drafts, which asks first.
   const decisionDialog = useDecisionDialog();
@@ -672,27 +670,26 @@ export function ListsPage({
         </WithSidePanel>
       </DraftView>
       {decisionDialog.modal}
-      <Modal
+      <BusyModal
         opened={opened}
         onClose={closeDialog}
-        closeOnEscape={!busy}
-        closeOnClickOutside={!busy}
-        withCloseButton={!busy}
         title={dialog?.kind === "edit" ? "Edit list" : "New list"}
       >
-        {dialog && (
-          <ListDialog
-            {...(dialog.kind === "edit" ? { list: dialog.list } : {})}
-            lists={lists}
-            onSaved={saved}
-            onRetire={retireList}
-            onDelete={removeList}
-            onCancel={closeDialog}
-            onBusy={setBusy}
-            permissions={permissions}
-          />
-        )}
-      </Modal>
+        {(onBusy) =>
+          dialog && (
+            <ListDialog
+              {...(dialog.kind === "edit" ? { list: dialog.list } : {})}
+              lists={lists}
+              onSaved={saved}
+              onRetire={retireList}
+              onDelete={removeList}
+              onCancel={closeDialog}
+              onBusy={onBusy}
+              permissions={permissions}
+            />
+          )
+        }
+      </BusyModal>
       <MoveClassModal
         moving={classMove.dialog}
         opened={classMove.opened}

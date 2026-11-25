@@ -4,20 +4,12 @@
 // saves the decision.
 
 import { type Asking, reasonLength } from "@fathom/shared";
-import {
-  Button,
-  Group,
-  List,
-  Modal,
-  Stack,
-  Text,
-  Textarea,
-} from "@mantine/core";
+import { Button, Group, List, Stack, Text, Textarea } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { planChoicesQuery, projectPlanQuery } from "./projects.ts";
 import { useState } from "react";
 import { CountedList } from "./counted-list.tsx";
-import { DialogActions, useDialogState } from "./dialog-actions.tsx";
+import { BusyModal, DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { waitingSentence } from "./draft-details.tsx";
 import { focusRefusedSoon } from "./focus.ts";
 import {
@@ -248,16 +240,12 @@ export function DecisionModal({
   onClose: () => void;
   onDone: () => void;
 }) {
-  const [busy, setBusy] = useState(false);
   const total = decision === undefined ? 0 : draftTotal(decision.selection);
   const verb = decision?.asking === "reject" ? "reject" : "approve";
   return (
-    <Modal
+    <BusyModal
       opened={opened}
       onClose={onClose}
-      closeOnEscape={!busy}
-      closeOnClickOutside={!busy}
-      withCloseButton={!busy}
       title={
         decision?.beyondRole || decision?.othersApprove
           ? "Another approver needed"
@@ -266,45 +254,51 @@ export function DecisionModal({
             : `${decision?.asking === "reject" ? "Reject" : "Approve"} ${drafts(total)}?`
       }
     >
-      {decision?.beyondRole && (
-        <Undecided
-          why={`This role can't ${verb} these drafts:`}
-          names={decision.beyondRole}
-          onClose={onClose}
-        />
+      {(onBusy) => (
+        <>
+          {decision?.beyondRole && (
+            <Undecided
+              why={`This role can't ${verb} these drafts:`}
+              names={decision.beyondRole}
+              onClose={onClose}
+            />
+          )}
+          {decision?.othersApprove && (
+            <Undecided
+              why="This account changed these drafts, so another approver must approve them:"
+              names={decision.othersApprove}
+              onClose={onClose}
+            />
+          )}
+          {decision?.waiting && (
+            <Stack gap="md">
+              <Text fz="sm">
+                {waitingSentence(draftTotal(decision.selection))}
+              </Text>
+              <Group justify="flex-end">
+                <Button onClick={onClose}>Close</Button>
+              </Group>
+            </Stack>
+          )}
+          {decision &&
+            !decision.waiting &&
+            !decision.othersApprove &&
+            !decision.beyondRole && (
+              <DecisionDialog
+                asking={decision.asking}
+                selection={decision.selection}
+                named={decision.named}
+                included={decision.included ?? []}
+                leftOut={decision.leftOut ?? 0}
+                othersLeft={decision.othersLeft ?? []}
+                onDone={onDone}
+                onCancel={onClose}
+                onBusy={onBusy}
+              />
+            )}
+        </>
       )}
-      {decision?.othersApprove && (
-        <Undecided
-          why="This account changed these drafts, so another approver must approve them:"
-          names={decision.othersApprove}
-          onClose={onClose}
-        />
-      )}
-      {decision?.waiting && (
-        <Stack gap="md">
-          <Text fz="sm">{waitingSentence(draftTotal(decision.selection))}</Text>
-          <Group justify="flex-end">
-            <Button onClick={onClose}>Close</Button>
-          </Group>
-        </Stack>
-      )}
-      {decision &&
-        !decision.waiting &&
-        !decision.othersApprove &&
-        !decision.beyondRole && (
-          <DecisionDialog
-            asking={decision.asking}
-            selection={decision.selection}
-            named={decision.named}
-            included={decision.included ?? []}
-            leftOut={decision.leftOut ?? 0}
-            othersLeft={decision.othersLeft ?? []}
-            onDone={onDone}
-            onCancel={onClose}
-            onBusy={setBusy}
-          />
-        )}
-    </Modal>
+    </BusyModal>
   );
 }
 

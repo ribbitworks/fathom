@@ -23,7 +23,6 @@ import {
   Button,
   Center,
   Group,
-  Modal,
   Paper,
   PasswordInput,
   Stack,
@@ -39,7 +38,7 @@ import { z } from "zod";
 import { ApiError, describeProblem } from "./api.ts";
 import { changePassword } from "./accounts.ts";
 import { Brand } from "./brand.tsx";
-import { DialogActions } from "./dialog-actions.tsx";
+import { BusyModal, DialogActions } from "./dialog-actions.tsx";
 import { useGuessableCheck } from "./guessable.ts";
 import { Icon } from "./icons.tsx";
 import { notifySuccess } from "./notices.tsx";
@@ -252,33 +251,27 @@ export function ChangePasswordDialog({
   opened: boolean;
   onClose: () => void;
 }) {
-  // It cannot be closed while saving, so the user always learns whether the password changed. Its
-  // form starts afresh each time it opens, since the dialog's content is removed once it has closed.
-  const [busy, setBusy] = useState(false);
+  // Its form starts afresh each time it opens, since the dialog's content is removed once it has
+  // closed.
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      closeOnEscape={!busy}
-      closeOnClickOutside={!busy}
-      withCloseButton={!busy}
-      title="Change password"
-    >
-      <PasswordForm
-        rules={rules}
-        owner={owner}
-        onDone={onClose}
-        onBusy={setBusy}
-        actions={({ pending, error }) => (
-          <DialogActions
-            error={error}
-            pending={pending}
-            label="Change password"
-            onCancel={onClose}
-          />
-        )}
-      />
-    </Modal>
+    <BusyModal opened={opened} onClose={onClose} title="Change password">
+      {(onBusy) => (
+        <PasswordForm
+          rules={rules}
+          owner={owner}
+          onDone={onClose}
+          onBusy={onBusy}
+          actions={({ pending, error }) => (
+            <DialogActions
+              error={error}
+              pending={pending}
+              label="Change password"
+              onCancel={onClose}
+            />
+          )}
+        />
+      )}
+    </BusyModal>
   );
 }
 

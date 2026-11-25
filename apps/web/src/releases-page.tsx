@@ -11,17 +11,10 @@ import type {
   ReleaseStream,
   ViewTable,
 } from "@fathom/shared";
-import {
-  Alert,
-  Button,
-  Group,
-  Loader,
-  Modal,
-  Stack,
-  Tooltip,
-} from "@mantine/core";
+import { Alert, Button, Group, Loader, Stack, Tooltip } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
+import { BusyModal } from "./dialog-actions.tsx";
 import { z } from "zod";
 import { describeProblem } from "./api.ts";
 import { useDecisionDialog } from "./decision-dialog.tsx";
@@ -187,7 +180,6 @@ export function ReleasesPage({
   );
   const narrow = useNarrow();
   const [dialog, setDialog] = useState<Dialog>();
-  const [busy, setBusy] = useState(false);
   const decisionDialog = useDecisionDialog({
     onDone: () => {
       void refresh();
@@ -328,12 +320,6 @@ export function ReleasesPage({
   );
   const newReleases = (stream: ReleaseStream) =>
     stream.releases.filter(({ id }) => !known.has(id));
-  const savingProps = {
-    onCancel: () => {
-      setDialog(undefined);
-    },
-    onBusy: setBusy,
-  };
 
   // Clicking the page outside the panel, the table's rows, and any control closes the panel, as on
   // the Lists page. Menus and dialogs are drawn outside the page, so clicks in them do not count.
@@ -480,72 +466,81 @@ export function ReleasesPage({
       </HeadingTabPanel>
       {views.dialogs}
       {question.dialog}
-      <Modal
+      <BusyModal
         opened={dialog !== undefined}
         onClose={() => {
           setDialog(undefined);
         }}
-        closeOnEscape={!busy}
-        closeOnClickOutside={!busy}
-        withCloseButton={!busy}
         title={dialog === undefined ? "" : dialogTitle(dialog)}
       >
-        {dialog?.kind === "stream" && (
-          <StreamDialog
-            stream={dialog.stream}
-            streams={all}
-            onSaved={
-              dialog.stream === undefined
-                ? saved("Drafted the new schedule.", (stream) => [stream])
-                : saved("Drafted the new name.")
-            }
-            {...savingProps}
-          />
-        )}
-        {dialog?.kind === "pattern" && (
-          <PatternDialog
-            stream={dialog.stream}
-            from={dialog.from}
-            onSaved={saved(
-              dialog.stream.patterns.length === 0
-                ? "Drafted the cycles."
-                : "Drafted the change to the cycles.",
-            )}
-            {...savingProps}
-          />
-        )}
-        {dialog?.kind === "ends" && (
-          <EndsDialog
-            stream={dialog.stream}
-            onSaved={saved("Drafted the change to the cycles.")}
-            {...savingProps}
-          />
-        )}
-        {dialog?.kind === "cycle-length" && (
-          <CycleLengthDialog
-            stream={dialog.stream}
-            cycle={dialog.cycle}
-            onSaved={saved("Drafted the new length.")}
-            {...savingProps}
-          />
-        )}
-        {dialog?.kind === "new-release" && (
-          <ReleaseDialog
-            streams={takers}
-            onSaved={saved("Drafted the new release.", newReleases)}
-            {...savingProps}
-          />
-        )}
-        {dialog?.kind === "release" && (
-          <ReleaseDialog
-            stream={dialog.stream}
-            release={dialog.release}
-            part={dialog.part}
-            onSaved={saved("Drafted the change to the release.")}
-            {...savingProps}
-          />
-        )}
-      </Modal>
+        {(onBusy) => {
+          const savingProps = {
+            onCancel: () => {
+              setDialog(undefined);
+            },
+            onBusy,
+          };
+          return (
+            <>
+              {dialog?.kind === "stream" && (
+                <StreamDialog
+                  stream={dialog.stream}
+                  streams={all}
+                  onSaved={
+                    dialog.stream === undefined
+                      ? saved("Drafted the new schedule.", (stream) => [stream])
+                      : saved("Drafted the new name.")
+                  }
+                  {...savingProps}
+                />
+              )}
+              {dialog?.kind === "pattern" && (
+                <PatternDialog
+                  stream={dialog.stream}
+                  from={dialog.from}
+                  onSaved={saved(
+                    dialog.stream.patterns.length === 0
+                      ? "Drafted the cycles."
+                      : "Drafted the change to the cycles.",
+                  )}
+                  {...savingProps}
+                />
+              )}
+              {dialog?.kind === "ends" && (
+                <EndsDialog
+                  stream={dialog.stream}
+                  onSaved={saved("Drafted the change to the cycles.")}
+                  {...savingProps}
+                />
+              )}
+              {dialog?.kind === "cycle-length" && (
+                <CycleLengthDialog
+                  stream={dialog.stream}
+                  cycle={dialog.cycle}
+                  onSaved={saved("Drafted the new length.")}
+                  {...savingProps}
+                />
+              )}
+              {dialog?.kind === "new-release" && (
+                <ReleaseDialog
+                  streams={takers}
+                  onSaved={saved("Drafted the new release.", newReleases)}
+                  {...savingProps}
+                />
+              )}
+              {dialog?.kind === "release" && (
+                <ReleaseDialog
+                  stream={dialog.stream}
+                  release={dialog.release}
+                  part={dialog.part}
+                  onSaved={saved("Drafted the change to the release.")}
+                  {...savingProps}
+                />
+              )}
+            </>
+          );
+        }}
+      </BusyModal>
       {decisionDialog.modal}
     </Stack>
   );

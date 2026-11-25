@@ -6,9 +6,9 @@
 // It can't be closed while the export is being recorded.
 
 import { type ClassifiedTier, classNames } from "@fathom/shared";
-import { Modal, Stack, Text } from "@mantine/core";
+import { Stack, Text } from "@mantine/core";
 import { Fragment, useState } from "react";
-import { DialogActions } from "./dialog-actions.tsx";
+import { BusyModal, DialogActions } from "./dialog-actions.tsx";
 import { type ExportQuestionWords, failedExport } from "./exports.ts";
 import questionClasses from "./export-question.module.css";
 
@@ -58,55 +58,56 @@ export function ExportQuestion({
   // Once it has closed, so the file's text it holds is let go of.
   onClosed: () => void;
 }) {
-  // Kept here rather than in a query client's mutation, since tables are drawn without one.
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   // A refusal shown last time is gone when it next opens.
   const close = () => {
     setError(null);
     onClose();
   };
-  const exportNow = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await onExport();
-      close();
-    } catch (failed) {
-      // Recording and saving fail only with errors.
-      setError(failed as Error);
-    } finally {
-      setBusy(false);
-    }
-  };
   return (
-    <Modal
+    <BusyModal
       opened={opened && question !== undefined}
       onClose={close}
       onExitTransitionEnd={onClosed}
-      closeOnEscape={!busy}
-      closeOnClickOutside={!busy}
-      withCloseButton={!busy}
       title={question?.title}
     >
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          void exportNow();
-        }}
-      >
-        <Stack>
-          <HeldData held={question?.held ?? []} />
-          <DialogActions
-            error={error}
-            pending={busy}
-            label="Export"
-            onCancel={close}
-            failure={failedExport}
-          />
-        </Stack>
-      </form>
-    </Modal>
+      {(onBusy, busy) => {
+        // Kept in the modal rather than in a query client's mutation, since tables are drawn
+        // without one.
+        const exportNow = async () => {
+          onBusy(true);
+          setError(null);
+          try {
+            await onExport();
+            close();
+          } catch (failed) {
+            // Recording and saving fail only with errors.
+            setError(failed as Error);
+          } finally {
+            onBusy(false);
+          }
+        };
+        return (
+          <form
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              void exportNow();
+            }}
+          >
+            <Stack>
+              <HeldData held={question?.held ?? []} />
+              <DialogActions
+                error={error}
+                pending={busy}
+                label="Export"
+                onCancel={close}
+                failure={failedExport}
+              />
+            </Stack>
+          </form>
+        );
+      }}
+    </BusyModal>
   );
 }

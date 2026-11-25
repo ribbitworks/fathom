@@ -13,11 +13,9 @@ import type {
   Permission,
   Tier,
 } from "@fathom/shared";
-import { Modal } from "@mantine/core";
-import { useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
 import { moveColumnClass } from "./data-classes.ts";
-import { useDialogState } from "./dialog-actions.tsx";
+import { BusyModal, useDialogState } from "./dialog-actions.tsx";
 import { MoveClassModal, showMoved } from "./move-class-dialog.tsx";
 import {
   deleteField,
@@ -107,7 +105,6 @@ export function ColumnModal<Data>({
   // The button focus returns to once a new column is saved.
   newColumnButton: string;
 }) {
-  const [busy, setBusy] = useState(false);
   const { dialog, opened, close } = state;
   // The dialog saved the column itself, so the page shows it at once, then reloads once no other
   // change is saving.
@@ -167,28 +164,28 @@ export function ColumnModal<Data>({
         permissions={permissions}
         onClose={close}
       />
-      <Modal
+      <BusyModal
         opened={opened && moving === undefined}
         onClose={close}
-        closeOnEscape={!busy}
-        closeOnClickOutside={!busy}
-        withCloseButton={!busy}
         title={dialog?.kind === "new" ? "New column" : "Edit column"}
       >
-        {dialog && dialog.kind !== "move" && (
-          <ColumnDialog
-            table={table}
-            {...(dialog.kind === "edit" ? { field: dialog.field } : {})}
-            fields={fields}
-            lists={lists}
-            onSaved={saved}
-            onDelete={remove}
-            onCancel={close}
-            onBusy={setBusy}
-            permissions={permissions}
-          />
-        )}
-      </Modal>
+        {(onBusy) =>
+          dialog &&
+          dialog.kind !== "move" && (
+            <ColumnDialog
+              table={table}
+              {...(dialog.kind === "edit" ? { field: dialog.field } : {})}
+              fields={fields}
+              lists={lists}
+              onSaved={saved}
+              onDelete={remove}
+              onCancel={close}
+              onBusy={onBusy}
+              permissions={permissions}
+            />
+          )
+        }
+      </BusyModal>
     </>
   );
 }

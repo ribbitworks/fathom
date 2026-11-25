@@ -2,10 +2,10 @@
 
 // The buttons at the foot of a dialog that changes something, with any other actions it offers on
 // the left or beside Cancel, and why the change it asked for was refused. Cancelling is not
-// possible while the change is being saved. Also, what a dialog is open for, which is kept while
-// its modal closes.
+// possible while the change is being saved. Also, the modal such a dialog is shown in, and what a
+// dialog is open for, which is kept while its modal closes.
 
-import { Alert, Button, Group } from "@mantine/core";
+import { Alert, Button, Group, Modal, type ModalProps } from "@mantine/core";
 import { type ReactNode, useState } from "react";
 import { describeProblem } from "./api.ts";
 
@@ -61,6 +61,28 @@ export function DialogActions({
         </Group>
       </Group>
     </>
+  );
+}
+
+// A modal that cannot be closed while its dialog is saving, so a refusal or the outcome is always
+// seen. Its content is given what to call as saving starts and ends, and whether it is saving.
+export function BusyModal({
+  children,
+  closeOnClickOutside = true,
+  ...modal
+}: Omit<ModalProps, "children" | "closeOnEscape" | "withCloseButton"> & {
+  children: (onBusy: (busy: boolean) => void, busy: boolean) => ReactNode;
+}) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Modal
+      {...modal}
+      closeOnEscape={!busy}
+      closeOnClickOutside={!busy && closeOnClickOutside}
+      withCloseButton={!busy}
+    >
+      {children(setBusy, busy)}
+    </Modal>
   );
 }
 

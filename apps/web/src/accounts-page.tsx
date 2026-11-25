@@ -18,7 +18,6 @@ import {
   CopyButton,
   Group,
   Loader,
-  Modal,
   PasswordInput,
   Radio,
   Stack,
@@ -27,7 +26,7 @@ import {
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { type ReactNode, type Ref, useState } from "react";
+import { type ReactNode, type Ref } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import {
@@ -40,7 +39,7 @@ import {
   setActive,
   updateAccount,
 } from "./accounts.ts";
-import { DialogActions, useDialogState } from "./dialog-actions.tsx";
+import { BusyModal, DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { notifySuccess } from "./notices.tsx";
 import { rolesQuery } from "./roles.ts";
 import { PageHeader } from "./page-header.tsx";
@@ -608,7 +607,6 @@ export function AccountsPage({
     close: closeDialog,
     forget,
   } = useDialogState<Dialog>();
-  const [busy, setBusy] = useState(false);
   const views = useSavedViews({
     table: "accounts",
     within: accountsQuery.queryKey,
@@ -729,7 +727,7 @@ export function AccountsPage({
         </TableTips>
       )}
       {views.dialogs}
-      <Modal
+      <BusyModal
         opened={opened}
         // The dialogs that list every role, with what each is for, have room for them.
         size={
@@ -743,20 +741,20 @@ export function AccountsPage({
         onExitTransitionEnd={() => {
           if (dialog?.kind === "generated") forget();
         }}
-        closeOnEscape={!busy}
-        closeOnClickOutside={!busy && dialog?.kind !== "generated"}
-        withCloseButton={!busy}
+        closeOnClickOutside={dialog?.kind !== "generated"}
         title={dialog && dialogTitle(dialog)}
       >
-        {dialog && (
-          <DialogContent
-            dialog={dialog}
-            onDone={close}
-            onBusy={setBusy}
-            onOpen={open}
-          />
-        )}
-      </Modal>
+        {(onBusy) =>
+          dialog && (
+            <DialogContent
+              dialog={dialog}
+              onDone={close}
+              onBusy={onBusy}
+              onOpen={open}
+            />
+          )
+        }
+      </BusyModal>
     </Stack>
   );
 }

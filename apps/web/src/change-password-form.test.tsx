@@ -300,7 +300,9 @@ describe("changing one's own password", () => {
     expect(
       screen.getByRole("dialog", { name: "Change password" }),
     ).toBeDefined();
-    expect(within(dialog).queryByRole("button", { name: "Close" })).toBeNull();
+    expect(
+      within(dialog).queryByRole("button", { name: "Close dialog" }),
+    ).toBeNull();
     answer(Response.json({}));
     expect(
       await screen.findByText(
