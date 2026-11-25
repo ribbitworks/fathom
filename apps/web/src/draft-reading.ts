@@ -202,7 +202,7 @@ function loadedEntries(
   const drafted = draftedOf(read);
   const { approves, permissions } = read;
   const listsData = drafted.lists;
-  const peopleData = drafted.columns.people ?? [];
+  const peopleData = read.people?.people ?? [];
   const unchangeable = unchangeableLists(listsData, permissions);
   const takesAlongOthers = new Map<string, boolean>();
   const unseen = ({ selects }: Entry) =>
