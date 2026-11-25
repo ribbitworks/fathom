@@ -89,6 +89,7 @@ Write the review to `.tmp/code-review/code-review_YYYY-MM-DD_HH-MM_{branch}.md`,
 - The simplest design that meets the need is preferred.
 - **Reuse across the codebase:** a diff does not show what already exists, so for each component, hook, helper or type a change adds, the reviewer searches the code for one that already does the same job, starting with [Visual Design § Shared Building Blocks](../design/visual-design.md#shared-building-blocks).
   - **A second one:** a second one doing the same job is HIGH unless the change unifies them.
+  - **Other kinds of record:** when a change adds or changes behaviour for one kind of record, the reviewer looks at how the other kinds already do the same thing. A new copy, in place of sharing what they use, is HIGH unless the change unifies them.
   - **Deferring:** a deferral follows the [Approval Criteria](#approval-criteria) and is debt to record.
 
 ### SOLID Principles

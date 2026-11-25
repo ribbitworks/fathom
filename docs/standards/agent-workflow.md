@@ -149,6 +149,10 @@ Complete these steps, in order, for every change:
    - **First, prove it:** drive the screens' basic paths as
      [Testing Standards § Proving a Screen](testing.md#proving-a-screen) sets
      out. Never call a screen ready without having seen it work.
+   - **Visual review:** then have a separate agent review screenshots of each
+     changed screen, light and dark, wide and narrow, against its mockup and
+     [UI Conventions](ui-conventions.md). Fix what it finds and repeat until it
+     finds nothing.
    - **What the owner gets:** the list in
      [A Screen Change's Pull Request](#a-screen-changes-pull-request).
 1. **Tests:** run the project's targeted tests, for the code the change

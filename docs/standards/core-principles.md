@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/code-review.md", "docs/standards/documentation.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Core Development Principles
@@ -51,6 +51,9 @@ separately. Violations are architectural defects, not style preferences.
 
 - **Centralize shared logic:** design constants and reusable logic live in one
   place. Never duplicate interactive or visual logic.
+  - **Rules across kinds of record:** a rule the server applies to records, such
+    as discarding a draft, is written once and shared by every kind of record,
+    never copied for each kind.
 - **Domain facts before presentation:** shared product rules live in neutral
   domain helpers. Presentation and execution code consume those answers; they
   do not re-derive them.
