@@ -27,19 +27,13 @@ import {
   underPlannedManager,
   wouldMove,
 } from "./hire-fill.ts";
-import {
-  byLabel,
-  chosen,
-  type Column,
-  newRecordRequest,
-  personKind,
-  recordProblem,
-} from "./people-grid.tsx";
+import { byLabel, chosen, type Column } from "./people-grid.tsx";
 import {
   isHire,
   positionLabel,
   rowName,
   type RowChange,
+  personKind,
 } from "./people-rows.ts";
 import type { NoteOpening } from "./note-editing.tsx";
 import { type EditingContext, usePersonEditing } from "./person-editing.tsx";
@@ -50,6 +44,7 @@ import { cellColumn, columnsOn, onRow } from "./grid-columns.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { CellValue } from "./table-view.ts";
 import { today } from "./today.ts";
+import { newRecordRequest, recordProblem } from "./people-requests.ts";
 
 export const fillButtonId = "hire-fill";
 

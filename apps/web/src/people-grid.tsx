@@ -2,7 +2,6 @@
 
 // The People table: the shared table with what is particular to people and planned hires.
 
-import { dayNeeded } from "./day-input.tsx";
 import { FillHireButton } from "./row-controls.tsx";
 import type {
   Choice,
@@ -11,7 +10,6 @@ import type {
   List,
   PaletteColour,
   Person,
-  Show,
 } from "@fathom/shared";
 import {
   classifiedFieldNames,
@@ -19,18 +17,16 @@ import {
   builtInColumnTiers,
   defaultClasses,
   personLengths,
-  sameName,
-  temporaryIdPrefix,
 } from "@fathom/shared";
-import { addedColumn, cellRequest } from "./added-columns.ts";
-import { notShown, personDraftFields } from "./draft-details.tsx";
+import { addedColumn } from "./added-columns.ts";
+import { personDraftFields } from "./draft-details.tsx";
 import { leftWarning } from "./status-mark.tsx";
 import { canFill } from "./hire-fill.ts";
 import { noDrafts } from "./drafts.ts";
 import { choice, offered } from "./lists.ts";
-import { cellColumn, columnsOn, inOrder } from "./grid-columns.tsx";
+import { cellColumn, inOrder } from "./grid-columns.tsx";
 import { isPending } from "./grid-drafts.ts";
-import { liveRecordsOf, recordsAsShown, shownSchema } from "./live-records.ts";
+import { shownSchema } from "./live-records.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import type {
   Column as RecordColumn,
@@ -38,7 +34,6 @@ import type {
   RecordGridProps,
   RecordTable,
   RowGrouping,
-  RowProblem,
 } from "./record-table.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import { flagChoice } from "./cell-kinds.tsx";
@@ -51,48 +46,30 @@ import {
   type RowChange,
   rowName,
   type RowRequest,
-  stateMeaning,
   reportingWords,
+  personKind,
+  hireKind,
+  type DetailKey,
 } from "./people-rows.ts";
 import type { CellValue } from "./table-view.ts";
 import { formatMonth } from "./day-formats.ts";
 import { today } from "./today.ts";
 import { type ChangesFrom, managerChangesFrom } from "./person-change.ts";
+import { managersNamed, livePeople } from "./people-live.ts";
+import {
+  recordProblem,
+  kindOfState,
+  requestFromChanges,
+  kindOfMeaning,
+} from "./people-requests.ts";
 
 export type PeopleActions = RecordActions<Person, RowChange, RowRequest>;
 
 export type Column = RecordColumn<Person, RowChange>;
 
-export const personKind = "person";
-export const hireKind = "planned-hire";
-
 // What a planned hire has but a person does not, and the other way round.
 const hiresOnly = (kind: string) => kind === hireKind;
 const peopleOnly = (kind: string) => kind !== hireKind;
-
-// The keys of a person's built-in details held as text.
-export type DetailKey =
-  | "preferredName"
-  | "employeeId"
-  | "positionId"
-  | "stateId"
-  | "startDate"
-  | "endDate"
-  | "managerFrom"
-  | "teamName"
-  | "isManager";
-
-const detailKeys: readonly DetailKey[] = [
-  "preferredName",
-  "employeeId",
-  "positionId",
-  "stateId",
-  "startDate",
-  "endDate",
-  "managerFrom",
-  "teamName",
-  "isManager",
-];
 
 const collator = new Intl.Collator(undefined, { sensitivity: "base" });
 
@@ -112,24 +89,13 @@ const mayManage = (person: Person, today: string) =>
   markedLive(person) &&
   (person.endDate == null || person.endDate >= today);
 
-// Who each person reports to, live or as drafted, whoever the people shown name as a manager.
-function managersNamed(people: readonly Person[]): Map<string, string> {
-  const named = new Map<string, string>();
-  for (const person of people) {
-    if (person.manager)
-      named.set(person.manager.id, person.manager.preferredName);
-    const live = person.draft?.live.managerId;
-    if (typeof live === "string" && !named.has(live)) named.set(live, notShown);
-  }
-  return named;
-}
-
 export const byLabel = (choices: Choice[]) =>
   choices.sort((a, b) => collator.compare(a.label, b.label));
 
 // The people and planned hires a row may report to, by name, each described by their position and
-// team, so two with the same name are told apart, and, no longer offered, those who have gone, or
-// are no longer marked as managers, while someone still reports to them.
+// the team they are on or whom they report to, so two with the same name are told apart, and, no
+// longer offered, those who have gone, or are no longer marked as managers, while someone still
+// reports to them.
 function managerChoices(
   people: readonly Person[],
   lists: readonly List[],
@@ -140,7 +106,7 @@ function managerChoices(
   const about = ({ positionId, manager, team }: Person) =>
     aboutPerson(
       positionLabel(lists, positionId),
-      // A team not sent to this reader is left out rather than named after its manager.
+      // A team not sent to this reader is left out rather than taken for a team with no name.
       manager && team !== undefined
         ? reportingWords(team, manager.preferredName)
         : undefined,
@@ -476,224 +442,6 @@ export function columnsFor(
     ],
     order,
   );
-}
-
-// Everyone as they are live, without drafts: those only drafted to be added are left out, and each
-// detail and column a draft changes has its live value back, with each person's manager, and their
-// team, named as the manager's live team name has it.
-const liveMade = new WeakMap<readonly Person[], Person[]>();
-
-// Changes made from a day, judged by today's people as they are live, before today's are read too.
-export const changesFromDay = (
-  day: string | undefined,
-  today: readonly Person[] | undefined,
-): ChangesFrom | undefined =>
-  day === undefined
-    ? undefined
-    : {
-        day,
-        today: new Map(livePeople(today ?? []).map((one) => [one.id, one])),
-      };
-
-export function livePeople(people: readonly Person[]): Person[] {
-  const made = liveMade.get(people);
-  if (made !== undefined) return made;
-  const live = makeLivePeople(people);
-  liveMade.set(people, live);
-  return live;
-}
-
-// Everyone as the Draft menu's choice shows them: as drafted, with the drafts applied, where a
-// rejected draft is taken back and someone drafted to be removed is gone, or as they are live.
-export const peopleAsShown = (
-  people: readonly Person[],
-  show: Show,
-): Person[] => recordsAsShown(show, people, livePeople);
-
-function makeLivePeople(people: readonly Person[]): Person[] {
-  const drafted = new Map(people.map((person) => [person.id, person.draft]));
-  const named = managersNamed(people);
-  const nameOf = new Map(
-    people.map(({ id, preferredName }) => [id, preferredName]),
-  );
-  const endOf = new Map(people.map(({ id, endDate }) => [id, endDate]));
-  const now = today();
-  const live = liveRecordsOf(people, detailKeys).map((person): Person => {
-    const draft = drafted.get(person.id);
-    if (draft?.action !== "changed" || !draft.changed.includes("managerId")) {
-      return person;
-    }
-    const id = draft.live.managerId;
-    // Whether the manager has left is sent of the drafted manager, so the live one's is worked out
-    // here, from their end date, which only those who see Personal details are sent.
-    const end = typeof id === "string" ? endOf.get(id) : undefined;
-    const livePerson: Person = {
-      ...person,
-      manager:
-        typeof id === "string"
-          ? // Every live manager is named, if only as not shown.
-            { id, preferredName: nameOf.get(id) ?? (named.get(id) as string) }
-          : null,
-    };
-    if (typeof end === "string" && end < now) livePerson.managerLeft = true;
-    else delete livePerson.managerLeft;
-    return livePerson;
-  });
-  const byId = new Map(live.map((person) => [person.id, person]));
-  return live.map((person) => {
-    const manager =
-      person.manager === undefined || person.manager === null
-        ? undefined
-        : byId.get(person.manager.id);
-    if (manager === undefined) return person;
-    // Only readers who see Personal details see when a line starts, and whether its manager left.
-    const withTeam = { ...person, team: manager.teamName ?? null };
-    if (person.managerFrom === undefined) return withTeam;
-    delete withTeam.managerLeft;
-    return typeof manager.endDate === "string" && manager.endDate < now
-      ? { ...withTeam, managerLeft: true }
-      : withTeam;
-  });
-}
-
-// What is wrong with a person's details taken together, if anything, and in which column: an
-// Employee ID someone else has, an end date before the start date, marked in the date changed, or
-// in the end date, or a manager without the date they are the person's manager from, or that date
-// given to someone with no manager and no line to move, such as someone added. The Employee ID is
-// checked when it is what changed, or when a person is added.
-export function recordProblem(
-  values: Record<string, CellValue>,
-  others: () => Record<string, CellValue>[],
-  changed?: string,
-  before?: Record<string, CellValue>,
-): RowProblem | undefined {
-  const employeeId = values.employeeId;
-  const checksId = changed === undefined || changed === "employeeId";
-  if (
-    checksId &&
-    typeof employeeId === "string" &&
-    employeeId.trim().toLowerCase().startsWith(temporaryIdPrefix.toLowerCase())
-  ) {
-    return {
-      message: `An ID cannot start with ${temporaryIdPrefix}, which temporary IDs use`,
-      column: "employeeId",
-    };
-  }
-  if (
-    checksId &&
-    typeof employeeId === "string" &&
-    employeeId.trim() !== "" &&
-    others().some(
-      (other) =>
-        typeof other.employeeId === "string" &&
-        sameName(other.employeeId, employeeId),
-    )
-  ) {
-    return {
-      message: "Someone already has that ID",
-      column: "employeeId",
-    };
-  }
-  const { startDate, endDate } = values;
-  if (
-    typeof startDate === "string" &&
-    typeof endDate === "string" &&
-    startDate !== "" &&
-    endDate !== "" &&
-    endDate < startDate
-  ) {
-    return {
-      message: "The end date cannot be before the start date",
-      column: changed === "startDate" ? "startDate" : "endDate",
-    };
-  }
-  const manager = values.managerId;
-  const from = values.managerFrom;
-  const managed = Array.isArray(manager) && manager.length > 0;
-  if (changed === "managerFrom" && managed && from === "") {
-    return { message: dayNeeded, column: "managerFrom" };
-  }
-  // A line with no manager may move, but someone with no line has none to move.
-  const noLine = changed === undefined || before?.managerFrom === "";
-  if (noLine && !managed && typeof from === "string" && from !== "") {
-    return {
-      message: "Choose a manager, or leave Manager assigned empty",
-      column: "managerFrom",
-    };
-  }
-  return undefined;
-}
-
-// The kind of record a state makes a new row: a planned hire for a state meaning Proposed or Open,
-// and a person for one meaning Hired or Left.
-export function kindOfState(
-  lists: readonly List[],
-  stateId: string | undefined,
-): string | undefined {
-  return kindOfMeaning(stateMeaning(lists, stateId));
-}
-
-// The kind of record a state's meaning is for: a planned hire is Proposed or Open, and a person
-// Hired or Left.
-function kindOfMeaning(meaning: string | null | undefined): string | undefined {
-  if (meaning === "proposed" || meaning === "open") return hireKind;
-  if (meaning === "hired" || meaning === "left") return personKind;
-  return undefined;
-}
-
-// The request that adds a record of a kind, from its value in each column the kind has.
-export function newRecordRequest(
-  columns: readonly Column[],
-  kind: string,
-  values: Readonly<Record<string, CellValue>>,
-): RowRequest {
-  return requestFromChanges(
-    columnsOn(columns, kind).map((column) =>
-      column.change(values[column.key] as CellValue),
-    ),
-    kind,
-  );
-}
-
-// The request that adds a record of a kind, from each column's change.
-export const requestFromChanges = (
-  changes: readonly RowChange[],
-  kind: string,
-): RowRequest => ({
-  ...requestFor(changes),
-  ...(kind === hireKind ? { kind } : {}),
-});
-
-// The request that adds a person or planned hire, from each column's value as its kind would save
-// it, with every choice column named and no link left empty.
-function requestFor(parts: readonly RowChange[]): RowRequest {
-  // Every table that adds people has its name, Employee ID, Position and Manager columns, since
-  // those who cannot see positions add none, and its dates together or not at all.
-  const {
-    preferredName,
-    employeeId,
-    positionId,
-    startDate,
-    endDate,
-    managerId,
-    managerFrom,
-    teamName,
-    isManager,
-    stateId,
-  } = Object.assign({}, ...parts) as RowRequest;
-  return {
-    preferredName,
-    employeeId,
-    positionId,
-    ...(stateId === undefined ? {} : { stateId }),
-    ...(startDate === undefined ? {} : { startDate, endDate }),
-    ...(managerId == null
-      ? {}
-      : { managerId, ...(managerFrom === undefined ? {} : { managerFrom }) }),
-    ...(teamName == null || teamName === "" ? {} : { teamName }),
-    ...(isManager === true ? { isManager } : {}),
-    ...cellRequest(parts),
-  };
 }
 
 // The only value changed from another day, since the rest take no date.

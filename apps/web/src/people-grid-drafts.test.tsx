@@ -5,7 +5,7 @@
 
 import type { Person } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { livePeople, peopleAsShown } from "./people-grid.tsx";
+import { livePeople, peopleAsShown } from "./people-live.ts";
 
 describe("the live people", () => {
   const draft = {

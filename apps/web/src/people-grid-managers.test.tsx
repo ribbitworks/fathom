@@ -6,7 +6,7 @@
 import type { Choice, Person } from "@fathom/shared";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { columnsFor, livePeople } from "./people-grid.tsx";
+import { columnsFor } from "./people-grid.tsx";
 import { emptyView } from "./table-view.ts";
 import {
   positions,
@@ -16,6 +16,7 @@ import {
   grid,
   text,
 } from "./test-people-grid.tsx";
+import { livePeople } from "./people-live.ts";
 
 describe("managers and teams", () => {
   const squareIn = (row: string, key: string) =>

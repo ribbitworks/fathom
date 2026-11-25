@@ -72,12 +72,7 @@ import {
   type HireFilling,
   newFilling,
 } from "./hire-fill.ts";
-import {
-  columnsFor,
-  changesFromDay,
-  type PeopleActions,
-  PeopleGrid,
-} from "./people-grid.tsx";
+import { columnsFor, type PeopleActions, PeopleGrid } from "./people-grid.tsx";
 import { isPending, pendingId } from "./grid-drafts.ts";
 import { focusRecordCell } from "./grid-row.tsx";
 import { withLiveValues } from "./live-records.ts";
@@ -113,6 +108,7 @@ import { useSavedViews } from "./saved-views.tsx";
 import { formatDay } from "./day-formats.ts";
 import type { View } from "./table-view.ts";
 import { today } from "./today.ts";
+import { changesFromDay } from "./people-live.ts";
 
 const newColumnId = "column-new";
 

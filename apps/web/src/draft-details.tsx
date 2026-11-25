@@ -19,11 +19,11 @@ import type { ReactNode } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { describeField } from "./changes.ts";
 import { nameAs } from "./names.ts";
-import type { DetailKey } from "./people-grid.tsx";
 import classes from "./pages.module.css";
 import { type Phrase, PhraseText, phraseText } from "./phrase.tsx";
 import { DraftDot } from "./status-mark.tsx";
 import { type DraftLike, draftWords } from "./draft-marks.ts";
+import { type DetailKey } from "./people-rows.ts";
 
 export interface DraftField {
   // The field's key, as the draft names it: a detail's name or a column's identifier.
