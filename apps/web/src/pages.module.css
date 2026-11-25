@@ -1446,9 +1446,21 @@ th.liveColumn {
   content: "";
 }
 
-/* A planned day's row, which is yet to come, in grey. */
-.timelinePlanned {
+/* A planned day's row, which is yet to come, in grey: its words, its values and its links, which
+   keep a faint underline so they still read as links. */
+.timelinePlanned,
+.timelinePlanned :is(.phraseStrong, .phraseValue) {
   color: var(--mantine-color-dimmed);
+}
+
+.timelinePlanned :is(a, button) {
+  color: var(--mantine-color-dimmed);
+  text-decoration: underline;
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--mantine-color-dimmed) 50%,
+    transparent
+  );
 }
 
 /* The Releases timeline, between the table's bar and the table: as tall as its rows need, up to
