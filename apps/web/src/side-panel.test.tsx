@@ -825,38 +825,35 @@ describe("a panel as tall as what it holds", () => {
     /stackItemFitted/u.test(
       (screen.getByText(text).parentElement as HTMLElement).className,
     );
-
-  it("fits what it holds under another until its edge is moved", async () => {
-    localStorage.clear();
-    render(
-      layout([
-        one("Details", "details"),
-        { ...one("Form", "form"), fits: true },
-      ]),
-    );
-    expect(["Details", "Form"].map(fitted)).toEqual([false, true]);
-
-    act(() => {
-      screen
-        .getByRole("separator", { name: "Resize heights of details and form" })
-        .focus();
-    });
-    await userEvent.keyboard("{ArrowDown}");
-
-    expect(fitted("Form")).toBe(false);
-  });
-
   const details = one("Details", "details");
   const form = { ...one("Form", "form"), fits: true };
 
-  it("fills the column alone, as any panel does", () => {
-    localStorage.clear();
-    render(layout([form]));
+  it("fits what it holds under another, with no edge beside it", () => {
+    render(layout([details, form, one("Note", "note")]));
+    expect(["Details", "Form", "Note"].map(fitted)).toEqual([
+      false,
+      true,
+      false,
+    ]);
+    expect(
+      screen.queryAllByRole("separator", { name: /^Resize heights .*form/u }),
+    ).toEqual([]);
+    const stack = (screen.getByText("Form").parentElement as HTMLElement)
+      .parentElement as HTMLElement;
+    expect(stack.style.getPropertyValue("--stack-most")).toBe(
+      `${String(100 - 2 * stackShares.least)}%`,
+    );
+  });
+
+  it("fills the column alone, or on a narrow screen, as any panel does", () => {
+    const { rerender } = render(layout([form]));
+    expect(fitted("Form")).toBe(false);
+    rerender(layout([details, form]));
+    narrowTo(true);
     expect(fitted("Form")).toBe(false);
   });
 
-  it("comes and goes at once, its height being nothing to move to", () => {
-    localStorage.clear();
+  it("comes and goes at once, its height being nothing to slide to", () => {
     const { rerender } = render(layout([details]));
     rerender(layout([details, form]));
     expect(
@@ -864,50 +861,5 @@ describe("a panel as tall as what it holds", () => {
     ).not.toMatch(/stackItemArriving/u);
     rerender(layout([details]));
     expect(screen.queryByText("Form")).toBeNull();
-  });
-
-  // Each stacked panel drawn as tall as given, by what it holds.
-  const drawnAs = (heights: Record<string, number>) => {
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
-      function (this: HTMLElement) {
-        return { height: heights[this.textContent] ?? 0 } as DOMRect;
-      },
-    );
-  };
-  const edgeOf = (name: string) =>
-    screen.getByRole("separator", { name: `Resize heights of ${name}` });
-
-  it("gives its edge the share it is drawn with, and the arrow keys move it from there", () => {
-    localStorage.clear();
-    drawnAs({ Details: 600, Form: 200 });
-    render(layout([details, form]));
-    const edge = edgeOf("details and form");
-    expect(edge.getAttribute("aria-valuenow")).toBe("75");
-    act(() => {
-      edge.focus();
-    });
-    fireEvent.keyDown(edge, { key: "ArrowUp" });
-    expect(edge.getAttribute("aria-valuenow")).toBe(
-      String(75 - stackShares.step),
-    );
-  });
-
-  it("gives its edge no share beyond the least the panel above may leave it", () => {
-    localStorage.clear();
-    drawnAs({ Details: 760, Form: 40 });
-    render(layout([details, form]));
-    expect(edgeOf("details and form").getAttribute("aria-valuenow")).toBe(
-      String(100 - stackShares.least),
-    );
-  });
-
-  it("leaves each other panel its least", () => {
-    localStorage.clear();
-    render(layout([details, form, one("Note", "note")]));
-    const stack = (screen.getByText("Form").parentElement as HTMLElement)
-      .parentElement as HTMLElement;
-    expect(stack.style.getPropertyValue("--stack-most")).toBe(
-      `${String(100 - 2 * stackShares.least)}%`,
-    );
   });
 });

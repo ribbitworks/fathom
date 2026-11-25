@@ -51,7 +51,7 @@ export interface SidePanel {
   // The panel's name in the names of those edges, such as "metrics".
   name: string;
   node: ReactNode;
-  // As tall as what it holds, leaving the rest to the panels beside it, until its edge is moved.
+  // As tall as what it holds, under another panel, leaving the rest to the panels beside it.
   fits?: boolean;
 }
 
@@ -124,7 +124,8 @@ function useMotionEnds(moving: boolean, ended: () => void, aim?: unknown) {
 function useStackChanges(
   panels: readonly SidePanel[],
   moves: boolean,
-  // Those that come and go at once, as one as tall as what it holds does.
+  // Those that come and go at once: a panel that may be as tall as what it holds, since its height
+  // can't be slid to, even where it fills the column instead.
   movesAtOnce: (panel: SidePanel) => boolean,
 ) {
   const [leaving, setLeaving] = useState<
@@ -191,9 +192,6 @@ function useStackHeights(storageKey: string) {
     defaultValue: {},
   });
   const height = (panel: SidePanel) => heights[panel.key] ?? 1;
-  // Whether a panel is as tall as what it holds, as it asks to be until its edge is moved.
-  const fits = (panel: SidePanel) =>
-    panel.fits === true && heights[panel.key] === undefined;
   // The share of the height of the panel above an edge, of it and the one below, in percent.
   const shareOf = (above: SidePanel, below: SidePanel) =>
     Math.round((100 * height(above)) / (height(above) + height(below)));
@@ -209,7 +207,7 @@ function useStackHeights(storageKey: string) {
       [below.key]: (both * (100 - kept)) / 100,
     }));
   };
-  return { height, fits, shareOf, share };
+  return { height, shareOf, share };
 }
 
 // The keys of a stack's panels open now and as it was last drawn.
@@ -217,6 +215,9 @@ interface StackKeys {
   keys: readonly string[];
   before: readonly string[];
 }
+
+// Whether a panel asks to be as tall as what it holds.
+const fits = (panel: SidePanel) => panel.fits === true;
 
 // The panel a narrow screen shows of a stack, where only one fits: the one opened last, or, once it
 // closes, the one in front before it. Of panels opened together, the top one is in front.
@@ -273,35 +274,6 @@ function useMaximized(
   return { maximized, folding: folding !== undefined, placeOf };
 }
 
-// The height each panel of a stack is drawn with, by its key, measured once drawn and whenever it
-// changes.
-function useDrawnHeights(
-  items: RefObject<Map<string, HTMLDivElement>>,
-  shownKeys: string,
-): Readonly<Record<string, number>> {
-  const [drawn, setDrawn] = useState<Readonly<Record<string, number>>>({});
-  useLayoutEffect(() => {
-    const measure = () => {
-      const now = Object.fromEntries(
-        [...items.current].map(([key, item]) => [
-          key,
-          item.getBoundingClientRect().height,
-        ]),
-      );
-      setDrawn((before) =>
-        JSON.stringify(before) === JSON.stringify(now) ? before : now,
-      );
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    for (const item of items.current.values()) observer.observe(item);
-    return () => {
-      observer.disconnect();
-    };
-  }, [items, shownKeys]);
-  return drawn;
-}
-
 // Not drawn again while only the panels' width changes, as while their edge is dragged.
 const PanelStack = memo(function PanelStack({
   panels,
@@ -314,7 +286,7 @@ const PanelStack = memo(function PanelStack({
   moves: boolean;
   narrow: boolean;
 }) {
-  const { height, fits, shareOf, share } = useStackHeights(storageKey);
+  const { height, shareOf, share } = useStackHeights(storageKey);
   const { shown, isLeaving, isArriving, settled } = useStackChanges(
     panels,
     moves,
@@ -344,22 +316,6 @@ const PanelStack = memo(function PanelStack({
     !narrow &&
     keys.indexOf(panel.key) > 0 &&
     maximized === undefined;
-  const drawn = useDrawnHeights(items, keys.join("\n"));
-  // The share of the height above an edge, as drawn where a panel beside it fits what it holds,
-  // within the least each may have.
-  const shownShare = (above: SidePanel, below: SidePanel) => {
-    const top = drawn[above.key] ?? 0;
-    const bottom = drawn[below.key] ?? 0;
-    if (!(fitted(above) || fitted(below)) || top + bottom === 0)
-      return shareOf(above, below);
-    return Math.max(
-      stackShares.least,
-      Math.min(
-        100 - stackShares.least,
-        Math.round((100 * top) / (top + bottom)),
-      ),
-    );
-  };
   return (
     <div
       className={joined(classes.stack, folding && classes.stackFolding)}
@@ -376,7 +332,8 @@ const PanelStack = memo(function PanelStack({
         const hidden = maximized !== undefined && maximized !== panel.key;
         return (
           <Fragment key={panel.key}>
-            {above !== undefined && (
+            {/* A panel as tall as what it holds has no height to move to. */}
+            {above !== undefined && !fitted(above) && !fitted(panel) && (
               <div
                 className={joined(
                   classes.stackEdge,
@@ -395,14 +352,14 @@ const PanelStack = memo(function PanelStack({
                     vertical: false,
                     label: `Resize heights of ${namesOf([above, panel])}`,
                     controls: `${above.id} ${panel.id}`,
-                    value: shownShare(above, panel),
+                    value: shareOf(above, panel),
                     least: stackShares.least,
                     most: 100 - stackShares.least,
                     onStep: (step) => {
                       share(
                         above,
                         panel,
-                        shownShare(above, panel) + step * stackShares.step,
+                        shareOf(above, panel) + step * stackShares.step,
                       );
                     },
                   }}
