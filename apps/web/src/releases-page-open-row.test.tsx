@@ -9,11 +9,10 @@ import { afterEach, beforeEach, describe, it, vi } from "vitest";
 import {
   fictionalRelease,
   fictionalStream,
-  renderApp,
-  serverAnswers,
-  signedIn,
   streamId,
-} from "./test-support.tsx";
+  streamsAnswer,
+} from "./test-releases.ts";
+import { renderApp, serverAnswers, signedIn } from "./test-support.tsx";
 import { markedUntilClosed } from "./test-open-row.tsx";
 
 // Which cycles the tables show depends on the day, here in Fictional Majors' second cycle, 27.2.
@@ -36,12 +35,7 @@ const release = fictionalRelease({
 async function openPage(path: string, table: string, shown: ReleaseStream[]) {
   serverAnswers({
     "GET /api/session": signedIn,
-    "GET /api/release-streams": () =>
-      Response.json({
-        streams: shown,
-        canEditStreams: false,
-        canEditReleases: false,
-      }),
+    "GET /api/release-streams": streamsAnswer(shown),
   });
   renderApp(path);
   await screen.findByRole("grid", { name: table });
