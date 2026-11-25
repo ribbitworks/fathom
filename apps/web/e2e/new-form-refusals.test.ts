@@ -19,8 +19,12 @@ function changesSent(page: Page): string[] {
 }
 
 // Opens Fleet Tracking Bid's details, then its Customers picker's New customer form, named by what
-// was typed.
-async function newCustomerFromBid(page: Page, typed: string) {
+// was typed. Panels are regions beside the page, and dialogs covering a narrow screen.
+async function newCustomerFromBid(
+  page: Page,
+  typed: string,
+  role: "region" | "dialog" = "region",
+) {
   await page.goto("/projects?tab=proposals");
   const bidId = await page.evaluate(async () => {
     const plan = (await (await fetch("/api/projects")).json()) as {
@@ -29,12 +33,12 @@ async function newCustomerFromBid(page: Page, typed: string) {
     return plan.proposals.find(({ name }) => name === "Fleet Tracking Bid")?.id;
   });
   await page.goto(`/projects?tab=proposals&open=${String(bidId)}`);
-  const details = page.getByRole("region", { name: /Fleet Tracking Bid/ });
+  const details = page.getByRole(role, { name: /Fleet Tracking Bid/ });
   await details.getByText("Customers", { exact: true }).click();
   await details.getByRole("textbox", { name: "Customers" }).fill(typed);
   await page.getByRole("option", { name: `New customer “${typed}”` }).click();
-  const form = page.getByRole("region", { name: "New customer" });
-  return { form, name: form.getByRole("textbox", { name: "Name" }) };
+  const form = page.getByRole(role, { name: "New customer" });
+  return { details, form, name: form.getByRole("textbox", { name: "Name" }) };
 }
 
 const customersNamed = (page: Page, name: string) =>
@@ -131,32 +135,28 @@ test.describe("on a narrow screen", () => {
   test("the stacked form covers the details, and adding the customer shows them again with it", async ({
     page,
   }) => {
-    // Given a proposal's details covering the screen, a new name typed into its Customers picker
-    await page.goto("/projects?tab=proposals");
-    const bidId = await page.evaluate(async () => {
-      const plan = (await (await fetch("/api/projects")).json()) as {
-        proposals: { id: string; name: string }[];
-      };
-      return plan.proposals.find(({ name }) => name === "Fleet Tracking Bid")
-        ?.id;
-    });
-    await page.goto(`/projects?tab=proposals&open=${String(bidId)}`);
-    const details = page.getByRole("dialog", { name: /Fleet Tracking Bid/ });
-    await details.getByText("Customers", { exact: true }).click();
-    const typed = `Fictional Quay ${Date.now().toString(36)}`;
-    await details.getByRole("textbox", { name: "Customers" }).fill(typed);
+    // Given a proposal's details covering the screen, New customer chosen from its Customers picker
+    const { details, form, name } = await newCustomerFromBid(
+      page,
+      "Fictional Quay",
+      "dialog",
+    );
 
-    // When New customer is chosen, the form covers the details, with the cursor in Name
-    await page.getByRole("option", { name: `New customer “${typed}”` }).click();
-    const form = page.getByRole("dialog", { name: "New customer" });
+    // Then the form covers the details, with the cursor in Name
     await expect(form).toBeVisible();
     await expect(details).toBeHidden();
-    await expect(form.getByRole("textbox", { name: "Name" })).toBeFocused();
+    await expect(name).toBeFocused();
 
-    // And when it is added, the details show again, the customer among their Customers
+    // And when it is added, the details show again, the customer among their Customers, with focus
+    // back on their Customers row
     await form.getByRole("button", { name: "Add", exact: true }).click();
     await expect(form).toHaveCount(0);
     await expect(details).toBeVisible();
-    await expect(details.getByText(typed, { exact: true })).toBeVisible();
+    await expect(
+      details.getByText("Fictional Quay", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      details.getByRole("button", { name: "Change Customers" }),
+    ).toBeFocused();
   });
 });
