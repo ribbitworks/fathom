@@ -42,7 +42,8 @@ export function panelWidth(wanted: number, room: number): number {
 export const useNarrow = () => useMediaQuery("(max-width: 48em)");
 
 // A panel beside the content. Several open at once are stacked, the first at the top, each taking a
-// share of the height that the edges between them move, kept for next time by the kind of panel.
+// share of the height that the edges between them move, kept for next time by the kind of panel, or
+// as tall as what it holds, with no edge beside it.
 export interface SidePanel {
   // The kind of panel, such as "metrics", by which its share of the height is kept.
   key: string;
@@ -318,11 +319,14 @@ const PanelStack = memo(function PanelStack({
     maximized === undefined;
   return (
     <div
-      className={joined(classes.stack, folding && classes.stackFolding)}
+      className={joined(
+        classes.stack,
+        folding && classes.stackFolding,
+        panels.some(fitted) && classes.stackFitting,
+      )}
       style={
         {
-          // Each other panel keeps its least.
-          "--stack-most": `${String(100 - stackShares.least * (keys.length - 1))}%`,
+          "--stack-least": `${String(stackShares.least)}%`,
         } as CSSProperties
       }
     >

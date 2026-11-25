@@ -423,14 +423,32 @@ describe("a panel under another, maximized", () => {
     expect(screen.queryByRole("button", { name: "Maximize above" })).toBeNull();
   });
 
-  it("fills the column, maximized, though it fits what it holds", async () => {
-    localStorage.clear();
+  it("fills the column, maximized, though it fits what it holds, and fits it again restored", async () => {
     render(layout([framed("above"), { ...framed("below"), fits: true }]));
     expect(placeOf("below").className).toMatch(/stackItemFitted/u);
     await userEvent.click(
       screen.getByRole("button", { name: "Maximize below" }),
     );
     expect(placeOf("below").className).not.toMatch(/stackItemFitted/u);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Restore below" }),
+    );
+    expect(placeOf("below").className).toMatch(/stackItemFitted/u);
+  });
+
+  it("folds away a panel fitting what it holds, as any panel above one maximized", async () => {
+    render(
+      layout([
+        framed("above"),
+        { ...framed("middle"), fits: true },
+        framed("below"),
+      ]),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Maximize below" }),
+    );
+    expect(placeOf("middle").className).toMatch(/stackItemFolded/u);
+    expect(placeOf("middle").className).not.toMatch(/stackItemFitted/u);
   });
 
   it("folds away the panel above, kept as it was, and Restore unfolds it", async () => {
@@ -840,8 +858,9 @@ describe("a panel as tall as what it holds", () => {
     ).toEqual([]);
     const stack = (screen.getByText("Form").parentElement as HTMLElement)
       .parentElement as HTMLElement;
-    expect(stack.style.getPropertyValue("--stack-most")).toBe(
-      `${String(100 - 2 * stackShares.least)}%`,
+    expect(stack.className).toMatch(/stackFitting/u);
+    expect(stack.style.getPropertyValue("--stack-least")).toBe(
+      `${String(stackShares.least)}%`,
     );
   });
 

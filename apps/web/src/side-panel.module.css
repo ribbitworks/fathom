@@ -139,7 +139,7 @@
 }
 
 /* Panels open at once, one above the other, each with its share of the height, and an edge between
-   each two that moves to share it differently. On a narrow screen, where a panel covers the screen,
+   each two that moves to share it differently, but beside one as tall as what it holds. On a narrow screen, where a panel covers the screen,
    only the one in front is shown. */
 .stack {
   --stack-motion: 240ms cubic-bezier(0.2, 0, 0, 1);
@@ -160,7 +160,12 @@
    has no room for it. */
 .stackItemFitted {
   flex: 0 1 auto;
-  max-height: var(--stack-most);
+}
+
+/* Beside a panel as tall as what it holds, which has no edge to give them room, the others keep
+   their least, the fitted one shrinking to scroll instead. */
+.stackFitting > .stackItem:not(.stackItemFitted) {
+  min-height: var(--stack-least);
 }
 
 .stackItemFitted .body {
