@@ -36,3 +36,9 @@
   margin-top: calc(var(--mantine-spacing-xs) / 2);
   color: var(--mantine-color-anchor);
 }
+
+/* Alone in the list, with nothing above it to set apart from. */
+.adding:first-child {
+  border-top: 0;
+  margin-top: 0;
+}

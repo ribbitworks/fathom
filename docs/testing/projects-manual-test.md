@@ -337,7 +337,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 - [ ] `4D97` Type `Testing Ferries`.
   - **Expected:**
-    - The list holds only "New customer “Testing Ferries”", with no "No matches" above it.
+    - The list holds only "New customer “Testing Ferries”".
   - **Notes:**
 
 - [ ] `E05A` Press Enter.
