@@ -18,48 +18,34 @@ Fathom's core entities, how they relate, and the rules that always hold for them
 
 ## Overview
 
-The diagram shows the core relationships only, and each schedule has its own cycles. Dashed lines are proposals or relationships whose cardinality is not yet confirmed. Access records and snapshots are described below but not drawn.
+Fathom in one picture: what's planned, when it ships, and who works on it. Each arrow runs from a thing to what it belongs to or serves. Dotted lines are Activities, approved but not built yet. Each area's entities, with their full relationships, follow below.
 
 ```mermaid
-erDiagram
-    PROJECT }o--o{ FEATURE : needs
-    PROJECT ||--|| FEATURE : "general feature"
-    PROJECT |o--o{ MILESTONE : has
-    FEATURE |o--o{ MILESTONE : has
-    PROJECT }o--o{ CUSTOMER : "driven by"
-    PROPOSAL }o--o{ FEATURE : proposes
-    PROJECT }o--o{ PROPOSAL : "links to"
-    PROPOSAL }o--o{ CUSTOMER : "made for"
-    PERSON |o--o{ PROPOSAL : owns
-    FEATURE }o..o{ PRODUCT : "part of"
-    PROJECT }o..o{ PRODUCT : "delivers requirements for"
-    FEATURE }o--o| CYCLE : targets
-    FEATURE }o--o{ CUSTOMER : "wanted by"
-    PERSON |o--o{ PROJECT : owns
-    PERSON ||--o| TEAM : manages
-    FEATURE_TEAM |o--o{ FEATURE : "owns and delivers"
-    FEATURE_TEAM ||--o{ MEMBERSHIP : has
-    PERSON ||--o{ MEMBERSHIP : holds
-    FEATURE_TEAM ||--o{ FEATURE_TEAM_LEAD : "is led through"
-    PERSON |o--o{ FEATURE_TEAM_LEAD : leads
-    PERSON ||--o{ REPORTING_LINE : "reports through"
-    PERSON ||--o{ REPORTING_LINE : manages
-    FEATURE ||--o{ ALLOCATION : receives
-    PERSON |o--o{ ALLOCATION : "is allocated"
-    PLANNED_HIRE |o--o{ ALLOCATION : "is allocated"
-    PLANNED_HIRE }o--o| PERSON : "reports to"
-    PLANNED_HIRE |o--o| PERSON : "is filled by"
-    USER }o--|| ROLE : holds
-    ROLE ||--o{ PERMISSION : grants
-    USER |o..o| PERSON : "may be"
-    CHANGE_SET ||--|{ CHANGE : groups
-    USER |o--o{ CHANGE_SET : makes
-    SCHEDULE ||--|{ CYCLE_PATTERN : "changes over time"
-    CYCLE_PATTERN ||--o{ CYCLE : makes
-    SCHEDULE ||--o{ CYCLE : defines
-    SCHEDULE ||--o{ RELEASE : contains
-    RELEASE |o--|{ CYCLE : includes
+flowchart LR
+    subgraph Plan
+      Feature -- "needed by" --> Project
+      Project -- for --> Customer
+      Feature -- "proposed in" --> Proposal
+      Proposal -- for --> Customer
+      Activity -. in .-> Project
+    end
+    subgraph Ship
+      Cycle -- in --> Release
+    end
+    subgraph People
+      Person -- on --> FT[Feature team]
+    end
+    Feature -- "ships in" --> Cycle
+    Activity -. in .-> Release
+    FT -- delivers --> Feature
+    FT -. does .-> Activity
+    Person -- "allocated to" --> Feature
+    Person -. "allocated to" .-> Activity
 ```
+
+- **Plan:** projects and proposals are for customers. A project is committed work, and a proposal is work offered to a customer that may or may not be won. Both name the features they need, and a feature ships in a cycle of a release.
+- **People:** people are on feature teams, which deliver features, and are allocated to features month by month.
+- **Activities:** approved, not built yet. They are work that isn't a feature, such as release testing, each in one release or one project, done by a feature team, with people allocated to it as to a feature.
 
 A feature needs none of these links: one with no project or proposal is an idea not yet committed to anything.
 
@@ -76,7 +62,7 @@ A feature needs none of these links: one with no project or proposal is an idea 
   - **Added and removed:** approving the project adds it, and approving the project's removal removes it. The change history records its project and leaves it out.
 - **Removing:** removes its milestones in the same draft, and is refused while its general feature has allocations.
 
-**Proposal:** Generalize the general feature into project activities, features linked to exactly one project for work that isn't a product feature, as [issue #207](https://github.com/ribbitworks/fathom/issues/207) sets out.
+**Approved, not built yet:** Activities replace the general feature: work that isn't a product feature, such as release testing, each in one project or one release, done by a feature team, as [issue #207](https://github.com/ribbitworks/fathom/issues/207) sets out.
 
 ### Proposal
 
@@ -112,10 +98,10 @@ A feature needs none of these links: one with no project or proposal is an idea 
 ### Allocation
 
 - **What it is:** one person or planned hire on one feature, never both, at a percentage of their month: 10%, 25%, 50%, 75%, 90% or 100%, starting at 100%. Each has at most one allocation to a feature.
-- **Records:** one for each month it changes: the percentage from that month, or none when it stops, each in force until the next, as reporting lines are kept. It may run with no end.
-  - **A range:** such as 50% from January to June, saves a record for January and one stopping it in July.
-  - **One month within a range:** changing it saves up to two records, so the months around it keep their percentage.
-- **One draft:** every change to an allocation, of any of its records, is one draft, approved or rejected whole, so an Approver never approves a range's start without its stop. A change that leaves no months drafts its removal, and allocating again changes that draft.
+- **Months:** one allocation holds its months: the percentage from each month it changes, or none when it stops, each in force until the next, as reporting lines are kept. It may run with no end.
+  - **A range:** such as 50% from January to June, holds 50% from January and none from July.
+  - **One month within a range:** changing it adds up to two months, so the months around it keep their percentage.
+- **One draft:** every change to an allocation, of any of its months, is one draft, approved or rejected whole, so an Approver never approves a range's start without its stop. A change that leaves no months drafts its removal, and allocating again changes that draft.
 - **Drafted features:** a feature only drafted to be added cannot be allocated until it is approved, so an allocation's draft never waits on a draft of the plan.
 - **Employment dates:** a person cannot be allocated before their start month or after their end month, nor a planned hire before its first month that can be allocated. Past months can be allocated, as corrections.
   - **A date moving later:** allocations left outside employment are kept rather than removed, so whoever allocates decides. They count in neither capacity nor demand.
@@ -253,7 +239,8 @@ Percentages are whole.
 - **User:** A local account holding one or more roles, one of them its default, and acting as one at a time. It signs in with a password.
   - **Name and email address:** it is identified by its name and email address, which is also its user name. Its name is plain text up to 100 characters, unique ignoring letter case.
   - **A generated password:** it is marked while its password is one Fathom generated, which its user must change before doing anything else.
-- **Session:** A signed-in user's visit, which records the network address and browser it started from, for investigating security problems, and ends as set in [ADR 0002](../adr/0002-libraries.md).
+  - **Deactivating:** an Administrator deactivates an account rather than removing it, so it can no longer sign in, and the changes it made still name it. Reactivating lets it sign in again.
+- **Session:** A signed-in user's visit, which records the network address and browser it started from, for investigating security problems, and the role the user is acting as. It ends as set in [ADR 0002](../adr/0002-libraries.md).
 - **Role:** A named set of permissions, kept in the database so it can be edited and copied, which grants view or edit access to data classes, and permissions such as approving plan changes.
   - **Starting roles:** the roles Fathom starts with keep a key, so setup and seed data find them whatever they are renamed.
   - **Deleting:** a role held by any account cannot be deleted.
@@ -345,8 +332,11 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 
 ## Change and History Entities
 
-- **Change set:** Changes saved together, with who made them and when, and what they did: saved changes, or approved, rejected, or discarded drafts.
+- **Change set:** Changes saved together, with who made them, the role they acted as, and when.
+  - **Kinds:** saved changes, approved, rejected or discarded drafts, rejected drafts sent again unchanged, and a user's unpublished changes discarded all at once.
+  - **Unpublished:** it is marked while it holds changes its maker hasn't published, which only they see; publishing clears the mark.
 - **Change:** One field of one record changed in a change set, with its class, its old and new values, and whether it changed the record's draft or the live record.
+- **Unpublished draft:** A user's change to a record not yet published, which only they see, as [ADR 0008](../adr/0008-unpublished-drafts.md) sets out. A record has at most one, and nobody else may change, approve or reject it until the user publishes or discards it. Publishing makes it a draft row.
 - **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason.
   - **What has drafts:** people, planned hires, feature teams, lists, choices, columns, schedules, cycle patterns, releases, features, customers, proposals, projects, milestones, allocations and the planning settings, and the order of each list's choices, held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
 - **Record key:** A record's number within its kind, such as 123 for #FEATURE-123, shown after a # so it isn't taken for another tool's key.
