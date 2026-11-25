@@ -50,7 +50,7 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Drafts and access:** every change is a draft, made with Edit Features and releases and approved with Approve Features, and activities are seen with View Features, whether an activity belongs to a release or a project.
 - **Moving:** an activity moves to another release or project as a draft, clearing the one it had; the server refuses one that names neither or both.
 - **Removing:** an activity someone is allocated to can't be removed, and a project or release with activities can't be removed yet ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
-- **Built so far:** activities are kept and drafted, and the [fictional data](development-setup.md#fictional-data) has some, with allocations. Capacity doesn't show or count allocations to activities yet; their pages and allocating to them follow in [issue #207](https://github.com/ribbitworks/fathom/issues/207).
+- **Built so far:** activities are kept, drafted and shown on the [Activities page](pages/activities.md), and the [fictional data](development-setup.md#fictional-data) has some, with allocations. Capacity doesn't show or count allocations to activities yet; releases' and projects' lists of them, and allocating to them, follow in [issue #207](https://github.com/ribbitworks/fathom/issues/207).
 
 ### Proposal
 

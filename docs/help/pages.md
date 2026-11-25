@@ -26,6 +26,9 @@ This page lists every page of Fathom. It says what each is for, where it is, and
 - [Features](features.md): It shows every feature planned, as a table or a board.
   - **Shown with:** **View Features and releases**
   - **Starting roles that see it:** Every role but Administrator
+- [Activities](activities.md): It shows the work releases and projects need that isn't a feature.
+  - **Shown with:** **View Features and releases**
+  - **Starting roles that see it:** Every role but Administrator
 - [Releases](releases.md): It holds schedules, their cycles and releases, and the timeline.
   - **Shown with:** **View Features and releases** or **View Configuration**
   - **Starting roles that see it:** Every role but Administrator

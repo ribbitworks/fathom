@@ -400,6 +400,7 @@ export {
   scheduleEndRequestSchema,
   type ReleaseStreams,
   releaseStreamsSchema,
+  withSchedule,
 } from "./releases.ts";
 export {
   cycleLengthMoves,

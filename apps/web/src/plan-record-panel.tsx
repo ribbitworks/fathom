@@ -3,6 +3,7 @@
 // The side panel that shows a plan record's details beside its table, and the form that adds a
 // milestone to a project or changes one.
 
+import { activityColumnGroups, activityColumns } from "./activity-table.tsx";
 import type {
   DraftKind,
   Milestone,
@@ -77,6 +78,7 @@ const columnGroupsOf: Record<
   proposal: undefined,
   milestone: undefined,
   feature: featureColumnGroups,
+  activity: activityColumnGroups,
 };
 
 // A milestone's name, date, and whether it is a delivery to customers, added to a project or
@@ -171,6 +173,7 @@ export const detailTabs: Readonly<Record<PlanTab, readonly DetailTab[]>> = {
   customers: ["customers"],
   milestones: [],
   features: ["features", "projects", "proposals"],
+  activities: ["activities"],
 };
 
 // The details of the record open beside the table, as the tab's table shows them, each value a
@@ -271,6 +274,10 @@ export function recordPanel({
           editsCommitments: editsKind("project"),
           editsFeatureTeams,
         }),
+      ),
+    activities: () =>
+      shownOf("activity", plan.activities, () =>
+        activityColumns(choices, { editsFeatureTeams }),
       ),
   };
   // The tab is always one of the fixed tabs.

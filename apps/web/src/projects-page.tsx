@@ -4,6 +4,7 @@
 // projects, proposals, customers and milestones, and the Features page, as a table or a board.
 
 import type {
+  Activity,
   Customer,
   DraftKind,
   Feature,
@@ -49,6 +50,7 @@ import { listsQuery } from "./lists.ts";
 import { LoadProblem } from "./load-problem.tsx";
 import { HeadingTabPanel } from "./page-header.tsx";
 import classes from "./pages.module.css";
+import { activityTable } from "./activity-table.tsx";
 import { featureTable } from "./feature-table.tsx";
 import { livePlanRecords, type PlanChange, wordsOf } from "./plan-table.tsx";
 import {
@@ -60,7 +62,6 @@ import {
 } from "./project-grids.tsx";
 import {
   allMilestones,
-  type FeatureFields,
   type FeatureNamer,
   type MilestoneAdding,
   listedPlanRecords,
@@ -73,7 +74,10 @@ import {
   projectTabs,
   tableChoices,
 } from "./projects.ts";
-import { withFeatureColumns } from "./plan-record-changes.ts";
+import {
+  withActivityColumns,
+  withFeatureColumns,
+} from "./plan-record-changes.ts";
 import {
   detailTabs,
   MilestoneForm,
@@ -95,6 +99,7 @@ import { RecordGrid } from "./record-grid.tsx";
 import type {
   LinkedColumn,
   RecordActions,
+  RecordGridProps,
   RecordTable,
 } from "./record-table.ts";
 import { newRecordQuestion, useDiscardQuestion } from "./discard-question.tsx";
@@ -128,7 +133,35 @@ const planPages = {
     loadsEffort: true,
     mayEdit: (plan: ProjectPlan) => plan.canEditFeatures,
   },
+  activities: {
+    title: "Activities",
+    tabbed: false,
+    loadsStreams: true,
+    loadsEffort: true,
+    mayEdit: (plan: ProjectPlan) => plan.canEditFeatures,
+  },
 };
+
+// The tables of planned work, whose columns can be added to, by the tab that shows each.
+const plannedTables = {
+  features: {
+    table: "features",
+    columns: (plan: ProjectPlan) => plan.featureColumns,
+    withColumns: withFeatureColumns,
+  },
+  activities: {
+    table: "activities",
+    columns: (plan: ProjectPlan) => plan.activityColumns,
+    withColumns: withActivityColumns,
+  },
+} as const;
+
+const plannedTableOf = (tab: PlanTab) =>
+  tab === "features" || tab === "activities"
+    ? // The tab is always one of the two fixed tabs here.
+      // eslint-disable-next-line security/detect-object-injection
+      plannedTables[tab]
+    : undefined;
 
 export function ProjectsPage({
   tab,
@@ -189,7 +222,9 @@ export function ProjectsPage({
     onPlace: (place: BoardPlace) => void;
   };
 }) {
-  const page = planPages[tab === "features" ? "features" : "projects"];
+  const page =
+    planPages[tab === "features" || tab === "activities" ? tab : "projects"];
+  const planned = plannedTableOf(tab);
   const query = useQuery(projectPlanQuery);
   const choicesQuery = useQuery(planChoicesQuery);
   const streamsQuery = useQuery({
@@ -206,7 +241,7 @@ export function ProjectsPage({
   const settingsPending =
     (page.loadsStreams && streamsQuery.isPending) ||
     (page.loadsEffort && effortQuery.isPending);
-  const editsFeatureColumns = tab === "features" && canEditColumns;
+  const editsFeatureColumns = planned !== undefined && canEditColumns;
   // Every list a new column could draw on; the plan holds only those columns already do.
   const listsToOffer = useQuery({
     ...listsQuery,
@@ -381,7 +416,9 @@ export function ProjectsPage({
       units: view,
       editsKind: (type) =>
         view.show !== "live" &&
-        (type === "feature" ? plan.canEditFeatures : plan.canEdit),
+        (type === "feature" || type === "activity"
+          ? plan.canEditFeatures
+          : plan.canEdit),
       editsFeatureTeams,
       approves,
       seesFeatures,
@@ -478,7 +515,9 @@ export function ProjectsPage({
               saving={form.saving === true}
               narrow={narrow}
               panelId={panelId}
-              {...(type === "feature" ? { added: plan.featureColumns } : {})}
+              {...(planned === undefined
+                ? {}
+                : { added: planned.columns(plan) })}
               notes={notes}
               units={view.units}
               onValue={(key, value) => {
@@ -539,18 +578,72 @@ export function ProjectsPage({
         </TableTips>
       );
     }
+    // A table of planned work, Features or Activities, with the columns added to it and the dialog
+    // that sets them up.
+    function plannedGrid<Rec extends Feature | Activity, Request>(
+      type: "feature" | "activity",
+      table: RecordTable<Rec, PlanChange, Request>,
+      records: Rec[],
+      extra: Partial<
+        Pick<
+          RecordGridProps<Rec, PlanChange, Request>,
+          "pageParts" | "pageFilter" | "body" | "viewChoices"
+        >
+      > & {
+        key?: string;
+        // The rows the table shows, when not every record, as the Board leaves out finished ones.
+        rows?: Rec[] | undefined;
+      } = {},
+    ): ReactElement {
+      const columnsOf = planned as NonNullable<typeof planned>;
+      const adding = addingTo(table, addsFor(type));
+      const actions: RecordActions<Rec, PlanChange, Request> = {
+        ...actionsFor<Rec, Request>(type),
+        ...columnDraftActions(columnsOf.table, changes),
+        editColumn: (field) => {
+          columnDialog.open({ kind: "edit", field });
+        },
+        removeColumn: columnRemover(
+          columnsOf.table,
+          changes,
+          columnsOf.withColumns,
+        ),
+      };
+      const { fields, order, lists } = columnsOf.columns(plan);
+      const { key, rows, ...parts } = extra;
+      return (
+        <>
+          <TableTips>
+            <RecordGrid
+              key={key}
+              {...shared}
+              {...parts}
+              linkedColumn={linkedColumn}
+              panels={panelsWith(type, adding, records, actions)}
+              records={rows ?? records}
+              table={adding}
+              actions={actions}
+              fields={fields}
+              order={order}
+              lists={lists}
+              canEditColumns={canEditColumns}
+            />
+          </TableTips>
+          <ColumnModal<ProjectPlan>
+            state={columnDialog}
+            table={columnsOf.table}
+            fields={fields}
+            lists={listsToOffer.data ?? lists}
+            saving={changes}
+            withColumns={columnsOf.withColumns}
+            newColumnButton={newColumnId}
+          />
+        </>
+      );
+    }
     const filteredTo = view.filters.projectId?.any?.at(0);
     const grids: Readonly<Record<PlanTab, () => ReactElement>> = {
       features: () => {
-        const table = addingTo(
-          featureTable(choices, {
-            onOpen: openRecord,
-            editsCommitments: plan.canEdit,
-            editsFeatureTeams,
-            board: onBoard,
-          }),
-          addsFor("feature"),
-        );
         const offeredParts = cardPartSchema.options;
         // The Board leaves out done and cancelled features unless its view shows them, each by its
         // status as the Draft view shows it; the table shows every feature.
@@ -574,65 +667,47 @@ export function ProjectsPage({
           records: finishedWords.records,
           view,
         });
-        const actions: RecordActions<Feature, PlanChange, FeatureFields> = {
-          ...actionsFor<Feature, FeatureFields>("feature"),
-          ...columnDraftActions("features", changes),
-          editColumn: (field) => {
-            columnDialog.open({ kind: "edit", field });
+        return plannedGrid(
+          "feature",
+          featureTable(choices, {
+            onOpen: openRecord,
+            editsCommitments: plan.canEdit,
+            editsFeatureTeams,
+            board: onBoard,
+          }),
+          plan.features,
+          {
+            // The table is drawn afresh in each mode, so it measures what it shows.
+            key: mode,
+            rows: onBoard ? finished.rows : undefined,
+            viewChoices: onBoard ? finished.choices : undefined,
+            pageParts: (shown) => boardParts(shown, streams, offeredParts),
+            pageFilter: customerFilter(view, customerLinks),
+            body:
+              onBoard && board !== undefined
+                ? (shown) => (
+                    <FeatureBoard
+                      shown={shown}
+                      streams={streams}
+                      choices={choicesQuery.data}
+                      place={board.place}
+                      onPlace={board.onPlace}
+                      offeredParts={offeredParts}
+                      open={open}
+                      onOpen={openRecord}
+                      today={now}
+                    />
+                  )
+                : undefined,
           },
-          removeColumn: columnRemover("features", changes, withFeatureColumns),
-        };
-        const { fields, order, lists } = plan.featureColumns;
-        return (
-          <>
-            <TableTips>
-              <RecordGrid
-                // The table is drawn afresh in each mode, so it measures what it shows.
-                key={mode}
-                {...shared}
-                linkedColumn={linkedColumn}
-                panels={panelsWith("feature", table, plan.features, actions)}
-                records={onBoard ? finished.rows : plan.features}
-                viewChoices={onBoard ? finished.choices : undefined}
-                table={table}
-                actions={actions}
-                fields={fields}
-                order={order}
-                lists={lists}
-                canEditColumns={canEditColumns}
-                pageParts={(shown) => boardParts(shown, streams, offeredParts)}
-                pageFilter={customerFilter(view, customerLinks)}
-                body={
-                  onBoard && board !== undefined
-                    ? (shown) => (
-                        <FeatureBoard
-                          shown={shown}
-                          streams={streams}
-                          choices={choicesQuery.data}
-                          place={board.place}
-                          onPlace={board.onPlace}
-                          offeredParts={offeredParts}
-                          open={open}
-                          onOpen={openRecord}
-                          today={now}
-                        />
-                      )
-                    : undefined
-                }
-              />
-            </TableTips>
-            <ColumnModal<ProjectPlan>
-              state={columnDialog}
-              table="features"
-              fields={fields}
-              lists={listsToOffer.data ?? lists}
-              saving={changes}
-              withColumns={withFeatureColumns}
-              newColumnButton={newColumnId}
-            />
-          </>
         );
       },
+      activities: () =>
+        plannedGrid(
+          "activity",
+          activityTable(choices, { onOpen: openRecord, editsFeatureTeams }),
+          plan.activities,
+        ),
       customers: () =>
         gridOf(
           "customer",

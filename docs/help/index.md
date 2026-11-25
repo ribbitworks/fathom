@@ -7,7 +7,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 - [How Fathom fits together](how-fathom-fits-together.md): what Fathom keeps track of, and how each record connects to the others.
 - [Pages](pages.md): every page of Fathom, where it is in the left-hand menu, and the permission that shows it.
 - [Keys and links](keys-and-links.md): each record's key, copying a link to it, and finding it by its key.
-- [Saved views](saved-views.md): saving, sharing and applying a table's views, on People, Features, Projects, Releases, Org chart, Capacity, Accounts and Drafts.
+- [Saved views](saved-views.md): saving, sharing and applying a table's views, on People, Features, Activities, Projects, Releases, Org chart, Capacity, Accounts and Drafts.
 
 ## Working in Fathom
 
@@ -28,6 +28,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 - [Overview](overview.md): the page Fathom opens on.
 - [Projects](projects.md): projects, proposals, customers and milestones.
 - [Features](features.md): every feature planned, as a table or a board.
+- [Activities](activities.md): the work releases and projects need that isn't a feature.
 - [Releases](releases.md): schedules, their cycles and releases, and the timeline.
 
 ## People

@@ -12,6 +12,7 @@ import type { ViewChoices } from "./views.ts";
 export const viewTableSchema = z.enum([
   "people",
   "features",
+  "activities",
   "projects",
   "proposals",
   "customers",
@@ -110,6 +111,7 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
       ({ stream, schedule }) => stream === undefined || schedule === undefined,
       "Columns of a schedule's cycles or of months, not both",
     ),
+  activities: noChoices,
   projects: noChoices,
   proposals: noChoices,
   customers: noChoices,
@@ -137,6 +139,7 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
 const viewSharers: Record<ViewTable, readonly Permission[]> = {
   people: ["people:edit"],
   features: recordEditors.feature,
+  activities: recordEditors.activity,
   projects: recordEditors.project,
   proposals: recordEditors.proposal,
   customers: recordEditors.customer,

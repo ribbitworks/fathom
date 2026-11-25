@@ -14,6 +14,7 @@ import { allOf } from "./words.ts";
 export const exportedTableSchema = z.enum([
   "people",
   "features",
+  "activities",
 ] as const satisfies readonly ColumnTable[]);
 
 export type ExportedTable = z.infer<typeof exportedTableSchema>;

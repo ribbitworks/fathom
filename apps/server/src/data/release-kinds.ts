@@ -11,6 +11,7 @@ import {
   planSubjects,
   projectSubjects,
   type RecordRef,
+  withSchedule,
 } from "@fathom/shared";
 import {
   type RecordKind,
@@ -176,10 +177,14 @@ export const featureNaming = (
   readsKind(featureKind, access)
     ? { name: featureCalled(state, id) }
     : { unseen: featureKind.unseenSubject };
-// A release as named beside records of other kinds, with its stream, such as Harbor 1 (Platform).
+
+// A release as named beside records of other kinds, with its stream, such as Platform: Harbor 1.
 export const releaseCalled = (state: RecordsState, id: string): string => {
   const release = shownVersion(state, "release", id);
-  return `${String(release?.name)} (${nameIn(state, String(release?.streamId))})`;
+  return withSchedule(
+    { name: nameIn(state, String(release?.streamId)) },
+    String(release?.name),
+  );
 };
 
 export const featureCalled = (state: RecordsState, id: string): string =>

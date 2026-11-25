@@ -326,7 +326,7 @@ describe("a release's activity", () => {
     });
     const response = await send("DELETE", `/api/activities/${activity.id}`);
     expect(errorOf(response)).toMatch(
-      /^The activity .+ of Fictional Release \d+ \(Fictional Stream \d+\) has allocations/u,
+      /^The activity .+ of Fictional Stream \d+: Fictional Release \d+ has allocations/u,
     );
   });
 });

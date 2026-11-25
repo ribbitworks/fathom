@@ -95,6 +95,7 @@ const recordWords: Readonly<
   customers: { label: "Customers", one: "customer", noun: "customers" },
   milestones: { label: "Milestones", one: "milestone", noun: "milestones" },
   features: { label: "Features", one: "feature", noun: "features" },
+  activities: { label: "Activities", one: "activity", noun: "activities" },
 };
 
 export const wordsOf = (tab: PlanTab) =>
@@ -184,7 +185,20 @@ export function draftFieldsOf<Rec extends GridRecord, Change>(
     }));
 }
 
-const drafts = (type: PlanRecordKind) => (ids: string[]) => ({
+// What an export of a table of planned work is recorded as, so its added columns' classes are
+// checked; the plan's other tables are General and record nothing.
+const plannedTableOf = (
+  type: PlanTableKind,
+): { recordedAs?: "features" | "activities" } => {
+  if (type === "feature") return { recordedAs: "features" };
+  if (type === "activity") return { recordedAs: "activities" };
+  return {};
+};
+
+// The kinds of the plan's records a table can show: those of Projects and Features, and activities.
+export type PlanTableKind = PlanRecordKind | "activity";
+
+const drafts = (type: PlanTableKind) => (ids: string[]) => ({
   ...noDrafts(),
   records: ids.map((id) => ({ type, id })),
 });
@@ -195,13 +209,14 @@ export const noRecordProblem = () => undefined;
 
 // Made once for each kind, so a table's Key column is made again only when its records change.
 const planKeyOf: Readonly<
-  Record<PlanRecordKind, (record: PlanRecord) => RecordKeyOf>
+  Record<PlanTableKind, (record: PlanRecord) => RecordKeyOf>
 > = {
   customer: ({ keyNumber }) => ({ kind: "customer", keyNumber }),
   project: ({ keyNumber }) => ({ kind: "project", keyNumber }),
   proposal: ({ keyNumber }) => ({ kind: "proposal", keyNumber }),
   milestone: ({ keyNumber }) => ({ kind: "milestone", keyNumber }),
   feature: ({ keyNumber }) => ({ kind: "feature", keyNumber }),
+  activity: ({ keyNumber }) => ({ kind: "activity", keyNumber }),
 };
 
 export function planTable<Rec extends PlanRecord, Request>({
@@ -218,7 +233,7 @@ export function planTable<Rec extends PlanRecord, Request>({
   groupings,
   nameOf = (record) => (record as { name: string }).name,
 }: {
-  type: PlanRecordKind;
+  type: PlanTableKind;
   label: string;
   one: string;
   noun: string;
@@ -237,7 +252,7 @@ export function planTable<Rec extends PlanRecord, Request>({
     noun,
     // The plan's records are General, and so are Features' added columns, so exporting them asks
     // nothing; Features is named for recording all the same, so no classified column escapes it.
-    exported: type === "feature" ? { recordedAs: "features" } : {},
+    exported: plannedTableOf(type),
     ...(kinds === undefined ? {} : { kinds, kindOf: () => savedKind }),
     ...(groupings === undefined ? {} : { groupings }),
     newRowLabel: () => `New ${one}`,

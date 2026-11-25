@@ -3,6 +3,7 @@
 // The Projects page's tables, customers, projects, proposals and milestones, each on the shared
 // table.
 
+import { activityColumns } from "./activity-table.tsx";
 import {
   type Customer,
   customerFeatures,
@@ -387,6 +388,7 @@ const draftColumns: Readonly<
   proposal: proposalColumns,
   milestone: (choices) => milestoneColumns(choices.projects),
   feature: (choices) => featureColumns(choices),
+  activity: (choices) => activityColumns(choices),
 };
 
 export function planDraftFields(

@@ -85,6 +85,7 @@ type Page =
   | "/capacity"
   | "/projects"
   | "/features"
+  | "/activities"
   | "/help";
 
 // A page, or a box opened over the current page instead of going to another.
@@ -127,6 +128,12 @@ const sections: { label: string; items: Item[] }[] = [
         icon: "features",
         to: "/features",
         page: "features",
+      },
+      {
+        label: "Activities",
+        icon: "activities",
+        to: "/activities",
+        page: "activities",
       },
       {
         label: "Releases",

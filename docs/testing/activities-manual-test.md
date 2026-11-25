@@ -1,0 +1,125 @@
+---
+title: "Manual Test: Activities"
+category: "How-To"
+audience: "Contributors"
+applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
+dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/pages/activities.md"]
+last_updated: "2026-11-25"
+---
+
+# Manual Test: Activities
+
+## Scope
+
+Verifies the Activities page: how its table and an activity's details look and read, adding an activity to a project, moving one to a release in its cell, grouping by project, and a reader who may not change activities.
+
+## Test Environment
+
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
+
+## Test Accounts
+
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
+
+- **Product Manager:** `product.manager@fathom.test`
+- **Team Member:** `team.member@fathom.test`
+
+## Common Procedures
+
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
+
+## Terms
+
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the Group by menu and group headings.
+
+## Test Cases
+
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
+
+### ACT-01: The Table and an Activity's Details Read Clearly
+
+**Account:** Product Manager, `product.manager@fathom.test`
+
+**Preconditions:** Signed in with this account.
+
+- [ ] `A54B` Select the **Activities** page in the left-hand menu.
+  - **Expected:**
+    - **Activities** is in the left-hand menu after **Features**, and is highlighted.
+    - The heading reads **Activities**, with **New column** and **New activity** at its right.
+    - The table's columns are **Name**, **Status**, **Description**, **Notes**, **Release**, **Project**, **Priority**, **Needed by**, **Effort**, **Size**, **Risk**, **Feature team** and **Staffed**, in that order.
+    - 'Data migration' shows 'P-2001 Crane Control' under **Project**, with **P-2001** dimmed, and **Release** empty.
+  - **Notes:**
+- [ ] `F46D` Point at the 'Data migration' row and select the details button at the right of its **Name** cell.
+  - **Expected:**
+    - The details open beside the table, titled 'Data migration', with **#ACTIVITY-** and a number under the title.
+    - Under **Details**: **Name**, **Status**, **Description**, **Notes**, **Release** reading **None**, and **Project** reading 'P-2001 Crane Control'.
+    - Under **Planning**: **Priority**, **Needed by**, **Effort**, **Size**, **Risk**, **Feature team** and **Staffed**.
+  - **Notes:**
+
+### ACT-02: An Activity Is Added to a Project
+
+**Account:** Product Manager, `product.manager@fathom.test`, as ACT-01 ended
+
+**Preconditions:** **Activities** page open, with the details closed.
+
+- [ ] `E8B5` Select **New activity**.
+  - **Expected:** The **New activity** form opens beside the table, with the cursor in **Name**.
+  - **Notes:**
+- [ ] `7DB5` Type `Cutover rehearsal` in **Name** and select **Add**.
+  - **Expected:**
+    - "Choose a release or a project" shows in red under **Release**.
+    - Nothing is added to the table.
+  - **Notes:**
+- [ ] `455C` Choose 'P-2001 Crane Control' in **Project** and select **Add**.
+  - **Expected:**
+    - The form closes, and 'Cutover rehearsal' shows in the table with a hollow dot before its name.
+    - Its **Project** reads 'P-2001 Crane Control', and its **Status** reads **Possible**.
+  - **Notes:**
+
+### ACT-03: An Activity Moves to a Release in Its Cell
+
+**Account:** Product Manager, `product.manager@fathom.test`, as ACT-02 ended
+
+**Preconditions:** **Activities** page open, with **Drafts & Live** chosen in the Draft menu.
+
+- [ ] `E450` Select the **Release** cell of 'Operator training', press Enter, choose 'Platform: Harbor 1' and press Enter.
+  - **Expected:**
+    - **Release** reads 'Platform: Harbor 1' after a hollow dot.
+    - **Project** reads **No project** in grey italics, after a hollow dot.
+    - A light green **Live** row under it shows **No release** under **Release** and 'P-2001 Crane Control' under **Project**.
+  - **Notes:**
+- [ ] `1D8D` Select the **Release** cell of 'Operator training', press Delete.
+  - **Expected:** "Choose a release or a project" shows under the row, and the cell still reads 'Platform: Harbor 1'.
+  - **Notes:**
+- [ ] `0372` Press Esc.
+  - **Expected:** The cell reads 'Platform: Harbor 1' as before.
+  - **Notes:**
+
+**Afterwards:** Discard the Unpublished Changes.
+
+### ACT-04: Activities Are Grouped by Project
+
+**Account:** Product Manager, `product.manager@fathom.test`, as ACT-03 ended
+
+**Preconditions:** **Activities** page open.
+
+- [ ] `AB99` Choose **Project** in the Group by menu.
+  - **Expected:**
+    - Each project with activities has a heading, such as 'P-2001 Crane Control', counting its activities.
+    - 'Data migration', 'General' and 'Operator training' are under 'P-2001 Crane Control'.
+  - **Notes:**
+
+### ACT-05: A Team Member Reads Activities Without Changing Them
+
+**Account:** Team Member, `team.member@fathom.test`, changed from ACT-04
+
+**Preconditions:** Signed in with this account.
+
+- [ ] `F57B` Select the **Activities** page in the left-hand menu.
+  - **Expected:**
+    - The table lists the activities.
+    - There is no **New activity** or **New column** at the heading's right.
+  - **Notes:**
+- [ ] `1A50` Point at the 'Data migration' row and select the details button at the right of its **Name** cell.
+  - **Expected:** The details show the activity's values, with no pencil on any row.
+  - **Notes:**

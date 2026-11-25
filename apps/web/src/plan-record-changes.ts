@@ -2,7 +2,7 @@
 
 // The plan as the Projects and Features pages show it while a change to its records is saved.
 
-import type { ProjectPlan } from "@fathom/shared";
+import type { FeatureColumns, ProjectPlan } from "@fathom/shared";
 import { withCellChange } from "./added-columns.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import { pendingDraft, unsavedKeyNumber } from "./drafts.ts";
@@ -16,15 +16,21 @@ import {
   withNamers,
 } from "./projects.ts";
 
-export const withFeatureColumns = (
-  plan: ProjectPlan,
-  change: (
-    columns: ProjectPlan["featureColumns"],
-  ) => Partial<ProjectPlan["featureColumns"]>,
-): ProjectPlan => ({
-  ...plan,
-  featureColumns: { ...plan.featureColumns, ...change(plan.featureColumns) },
-});
+// The plan with the columns of one of its tables of planned work changed.
+const withPlannedColumns =
+  (key: "featureColumns" | "activityColumns") =>
+  (
+    plan: ProjectPlan,
+    change: (columns: FeatureColumns) => Partial<FeatureColumns>,
+  ): ProjectPlan => ({
+    ...plan,
+    // The key is always one of the two fixed ones.
+    // eslint-disable-next-line security/detect-object-injection
+    [key]: { ...plan[key], ...change(plan[key]) },
+  });
+
+export const withFeatureColumns = withPlannedColumns("featureColumns");
+export const withActivityColumns = withPlannedColumns("activityColumns");
 
 // A record being added, as the table shows it before it is saved: a draft adding it.
 export function adding(

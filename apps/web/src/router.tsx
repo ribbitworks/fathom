@@ -67,6 +67,7 @@ import {
   capacityRoute,
   featureAssignmentsRoute,
   featuresRoute,
+  activitiesRoute,
   projectsRoute,
   releasesRoute,
 } from "./plan-routes.tsx";
@@ -597,6 +598,7 @@ const routeTree = rootRoute.addChildren([
     releasesRoute,
     projectsRoute,
     featuresRoute,
+    activitiesRoute,
     peopleRoute,
     orgChartRoute,
     capacityRoute,
