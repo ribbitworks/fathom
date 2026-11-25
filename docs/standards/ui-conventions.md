@@ -78,7 +78,10 @@ The rest follow from them:
   - **Asking only sometimes:** One that asks first only sometimes has one too, such as Publish draft…, which asks only when other changes go with the draft.
   - **No "…":** One that acts at once, even with Undo, or opens a side panel, has none, such as Delete view, Remove column or New feature team. The dialog's own title has none either, such as Edit column.
   - **"New":** A button or menu item starting with "New" never has one, whether it opens a dialog, a form or a panel, such as New list, New account, New column or New feature. "New" already says more is coming, and the buttons look alike side by side.
-  - **Drawn by:** The words themselves: the column menu in `apps/web/src/column-header.tsx` and `draftItemLabel`, for a row's Approve draft… and Reject draft…, in `apps/web/src/row-menus.tsx`, the account menu in `apps/web/src/layout.tsx`, and the buttons: Edit list… and Change class… in `apps/web/src/list-panel-head.tsx`, Edit… in `apps/web/src/accounts-panel.tsx`, Approve… and Reject… in `apps/web/src/drafts-panel.tsx`, New list in `apps/web/src/lists-page.tsx`, New account in `apps/web/src/accounts-page.tsx`, and New column and New feature in `apps/web/src/plan-page-heading.tsx`.
+  - **Drawn by:** The words themselves:
+    - **Menus:** the column menu in `apps/web/src/column-header.tsx`, `draftItemLabel` for a row's Approve draft… and Reject draft… in `apps/web/src/row-menus.tsx`, and the account menu in `apps/web/src/layout.tsx`.
+    - **Buttons:** Edit list… and Change class… in `apps/web/src/list-panel-head.tsx`, Edit… in `apps/web/src/accounts-panel.tsx`, and Approve… and Reject… in `apps/web/src/drafts-panel.tsx`.
+    - **New buttons:** New list in `apps/web/src/lists-page.tsx`, New account in `apps/web/src/accounts-page.tsx`, and New column and New feature in `apps/web/src/plan-page-heading.tsx`.
   - **Example:** On People, open the Site column's menu: Edit column… opens its dialog, and Remove column removes the column at once, as a draft.
 
 ## The Conventions

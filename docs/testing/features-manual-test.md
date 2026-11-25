@@ -4,14 +4,22 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Features
 
 ## Scope
 
-Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later, by release, by the month needed and by project, with a second level of grouping under the first and the +1 after a feature shown under two headings, the Release column, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page, columns added to Features, writing a note in New feature, a feature's effort, shown and typed in the unit chosen, its priority, size and risk, from their built-in lists, and moving any column. The projects and proposals that name a feature are verified in [Feature Links](feature-links-manual-test.md).
+Verifies the Features page:
+
+- How the table reads, grouped by cycle with Later, by release, by the month needed and by project, two levels deep, with the +1 after a feature shown under two headings.
+- Its columns: Release, a month, customers and a note, columns added to Features, and moving any column.
+- A feature's status, effort in the unit chosen, priority, size and risk, from their built-in lists.
+- Editing features as drafts, who may change them, and how their drafts show on the Drafts page.
+- Writing a note in New feature.
+
+[Feature Links](feature-links-manual-test.md) verifies the projects and proposals that name a feature.
 
 ## Test Environment
 

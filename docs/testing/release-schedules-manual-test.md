@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Schedules
@@ -38,7 +38,11 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From a
 - **Selecting a schedule in the table:** selecting the details button at the right of the first cell of the schedule's row, which opens the schedule in the side panel.
 - **A schedule's details:** the side panel for the selected schedule, with the sections **Details** and **Cycles**. **Details** has a row for each of the table's columns, then **Name pattern**. **Cycles** is a table with the columns **Cycle**, **Starts**, **Ends** and **Duration**.
 - **Pencil:** the change button at the right of a row of **Details**. In **Cycles**, the pencil in a cycle's **Duration** cell opens a menu of **This cycle only…** and **This and later cycles…**.
-- **A schedule's ⋯ menu:** the ⋯ menu of a schedule's row. It offers **Retire** or **Restore** to those who change schedules, **Publish draft…** for the account's own unpublished draft, **Discard draft** and **Resubmit** for the schedule's own draft, and **Approve draft…** and **Reject draft…** to an account whose role approves its drafts. The **⋯** at the top of the schedule's side panel opens the same menu.
+- **A schedule's ⋯ menu:** the ⋯ menu of a schedule's row. The **⋯** at the top of the schedule's side panel opens the same menu. The row's menu offers:
+  - **Retire** or **Restore** to those who change schedules.
+  - **Publish draft…** for the account's own unpublished draft.
+  - **Discard draft** and **Resubmit** for the schedule's own draft.
+  - **Approve draft…** and **Reject draft…** to an account whose role approves its drafts.
 - **Seeded dates in this test:** the cycle today is in, such as '26.4', is Platform's current cycle. The examples after "such as" are as the seed data is when added on 17 November 2026.
 
 ## Test Cases

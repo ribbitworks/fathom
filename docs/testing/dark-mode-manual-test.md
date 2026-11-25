@@ -11,7 +11,10 @@ last_updated: "2026-11-25"
 
 ## Scope
 
-Verifies that Fathom keeps the appearance chosen in each browser and follows the computer's on **System**, and that every page, with its main panels, dialogs and menus, its draft marks and its class marks, reads well in dark mode: words easy to read, marks and tints easy to see and tell apart, and nothing left light. It is the one manual test that checks dark mode, as [Testing Standards § Manual Tests](../standards/testing.md#manual-tests) sets out.
+Verifies dark mode, the one manual test that checks it, which [Testing Standards § Manual Tests](../standards/testing.md#manual-tests) sets out:
+
+- Fathom keeps the appearance chosen in each browser, and follows the computer's on **System**.
+- Every page, with its main panels, dialogs and menus, its draft marks and its class marks, reads well: words easy to read, marks and tints easy to see and tell apart, and nothing left light.
 
 ## Test Environment
 

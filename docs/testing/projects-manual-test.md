@@ -4,14 +4,22 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Projects, Proposals, Customers and Milestones
 
 ## Scope
 
-Verifies the Projects page: its four tabs and their tables as a Team Member sees them, moving across a new milestone row by keyboard, changing a proposal in its side panel, the features projects and proposals need, and a customer's description and notes. [Drafts of Projects, Proposals, Customers and Milestones](project-drafts-manual-test.md) verifies adding a customer, a proposal and a project with milestones, and approving, changing and removing them.
+Verifies the Projects page:
+
+- Its four tabs and their tables as a Team Member sees them.
+- Moving across a new milestone row by keyboard.
+- Changing a proposal in its side panel.
+- The features projects and proposals need.
+- A customer's description and notes.
+
+[Drafts of Projects, Proposals, Customers and Milestones](project-drafts-manual-test.md) verifies adding a customer, a proposal and a project with milestones, and approving, changing and removing them.
 
 ## Test Environment
 
@@ -36,7 +44,9 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. To run the test again, run Restore the Seed Data first.
+Run the test cases in order, starting with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
+
+To run the test again, run Restore the Seed Data first.
 
 ### PROJ-01: A Team Member Sees the Projects Read Only
 

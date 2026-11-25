@@ -4,14 +4,20 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Built-in Lists and Lists with Meanings
 
 ## Scope
 
-Verifies the Lists page's built-in lists, **Positions**, **Hiring states**, **Proposal statuses**, **Feature statuses**, **Feature priorities**, **Feature sizes** and **Feature risks**: their grey **Built in** box, the switch that narrows the table to built-in or custom lists, changing their class, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, the rules that keep a choice offered for every meaning, when drafting and when approving, and each size's weight.
+Verifies the Lists page's built-in lists, **Positions**, **Hiring states**, **Proposal statuses**, **Feature statuses**, **Feature priorities**, **Feature sizes** and **Feature risks**:
+
+- Their grey **Built in** box, and the switch that narrows the table to built-in or custom lists.
+- Changing their class, which sets who sees the Position column.
+- Each hiring state's meaning, and giving new choices a meaning.
+- The rules that keep a choice offered for every meaning, when drafting and when approving.
+- Each size's weight.
 
 ## Test Environment
 

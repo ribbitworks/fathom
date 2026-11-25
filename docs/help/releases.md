@@ -195,7 +195,13 @@ You're done when the schedule's row shows your draft: a **Retired** or **Restore
 
 ### Publish, Discard or Resubmit a Draft
 
-Each row's **⋯** menu, and the **⋯** at the top of its details, offers **Publish draft…** for your own change you haven't published, **Discard draft** for your own draft, and **Resubmit** once its draft is rejected. See [Drafts](drafts.md#publish-or-discard-one-change). On **Cycles**, a cycle's menu names the change behind it, such as a change to its schedule's cycles, and acts on that change.
+Each row's **⋯** menu, and the **⋯** at the top of its details, offers:
+
+- **Publish draft…** for your own change you haven't published.
+- **Discard draft** for your own draft.
+- **Resubmit** once its draft is rejected.
+
+On **Cycles**, a cycle's menu names the change behind it, such as a change to its schedule's cycles, and acts on that change. See [Drafts](drafts.md#publish-or-discard-one-change).
 
 Two drafts can change a cycle at once: a change to its schedule's cycles, and a draft of its release, such as a new name. Its menu then names both drafts, and who made each.
 
