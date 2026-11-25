@@ -358,10 +358,13 @@ export function createProjectAccess(database: Database): ProjectAccess {
           request,
         ),
       ),
-    // A project's or proposal's scope history is the plan's, removal reasons included.
+    // A project's or proposal's scope history is the plan's, removal reasons included. It names
+    // only features, so a role that doesn't see them, which the plan's read withholds, gets none.
     readScopeHistory: async (actor, type, id) => {
       requirePermission(actor, "plan:view");
-      return readScopeHistory(database, type, id);
+      return actor.permissions.includes("features:view")
+        ? readScopeHistory(database, type, id)
+        : { changes: [] };
     },
     changeRemovalReason: async (actor, featureId, proposalId, request) =>
       edited(

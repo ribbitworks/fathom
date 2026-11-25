@@ -21,6 +21,7 @@ import {
   answers,
   featureEditor,
   planEditor,
+  sidePanel,
 } from "./test-projects-page.tsx";
 
 afterEach(() => {
@@ -87,6 +88,21 @@ describe("the Features page", () => {
         expect(
           rows().getAllByRole("button", { name: "Fictional First" }),
         ).toHaveLength(2);
+      });
+
+      it("is left out for a role that doesn't see features, which it lists", async () => {
+        await openPage(
+          `/projects?tab=proposals&open=${proposalId}`,
+          removing(),
+          { ...answers, ...history() },
+          ["plan:view", "plan:edit"],
+        );
+        await waitFor(() => {
+          expect(sidePanel()).toBeDefined();
+        });
+        expect(
+          screen.queryByRole("heading", { name: "Scope history" }),
+        ).toBeNull();
       });
 
       const reasonPath = `/api/features/${first.id}/proposals/${proposalId}/removal-reason`;

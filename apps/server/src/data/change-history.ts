@@ -15,6 +15,7 @@ import {
 import {
   type ChangedField,
   type ChangedRecord,
+  type ClassAccess,
   type ChangeEntry,
   changeKindSchema,
   matchesWords,
@@ -49,6 +50,7 @@ import {
   partsOf,
   readFacts,
   referencedIds,
+  unseenValueName,
   seenSets,
   shown,
   strings,
@@ -112,18 +114,22 @@ function recordsOf(
   listOf: Map<string, string>,
   hidden: ReadonlySet<string>,
   seesPersonal: boolean,
+  access: ClassAccess,
 ): ChangedRecord[] {
   const name = (id: string) => names.get(id);
   // People the reader does not see are named nowhere, such as a hire's manager. Who fills a hire is
   // named only to readers who see Personal details, since it tells of their reporting line to
   // come.
-  const valueName = (row: StoredChange) => (id: string) =>
-    hidden.has(id) ||
-    (!seesPersonal &&
-      row.recordType === "planned-hire" &&
-      row.field === "filledBy")
-      ? undefined
-      : name(id);
+  const valueName = (row: StoredChange) => {
+    const unseen = unseenValueName(row, access);
+    return (id: string) =>
+      hidden.has(id) ||
+      (!seesPersonal &&
+        row.recordType === "planned-hire" &&
+        row.field === "filledBy")
+        ? undefined
+        : (unseen ?? name(id));
+  };
   const records = new Map<string, ChangedRecord>();
   for (const row of rows) {
     const key = `${row.recordType} ${row.recordId} ${String(row.draft)}`;
@@ -315,6 +321,7 @@ async function readBatch(
                   facts.lists,
                   hidden,
                   seesPersonal,
+                  actor,
                 ),
               },
               sensitive: held.sensitive,

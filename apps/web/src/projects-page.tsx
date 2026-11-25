@@ -371,6 +371,7 @@ export function ProjectsPage({
         (type === "feature" ? plan.canEditFeatures : plan.canEdit),
       editsFeatureTeams,
       approves,
+      seesFeatures,
       nodes,
       onClose: () => {
         onOpen?.(undefined);

@@ -184,6 +184,7 @@ export function recordPanel({
   editsKind,
   editsFeatureTeams,
   approves,
+  seesFeatures,
   nodes,
   onClose,
   menu,
@@ -205,6 +206,8 @@ export function recordPanel({
   editsKind: (type: PlanRecordKind) => boolean;
   editsFeatureTeams: boolean;
   approves: readonly DraftKind[];
+  // Whether the user's role sees features, which a scope history lists.
+  seesFeatures: boolean;
   nodes: readonly RecordNode[];
   onClose: () => void;
   menu: MilestoneMenu;
@@ -272,9 +275,9 @@ export function recordPanel({
   const { type, record: shown, ownDraft } = found;
   const columns = found.columns();
   const canEdit = editsKind(type);
-  // Projects and proposals, which name features, show their scope history.
+  // Projects and proposals, which name features, show their scope history to those who see them.
   const scope =
-    "featureIds" in shown ? (
+    "featureIds" in shown && seesFeatures ? (
       <ScopeHistory
         type={isProposal(shown) ? "proposal" : "project"}
         record={shown}

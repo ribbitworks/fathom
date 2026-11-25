@@ -81,8 +81,11 @@ export interface RecordKind {
     value: unknown,
     name: (id: string) => string | undefined,
   ) => string[] | undefined;
-  // The records a field's value names that valueInWords names, beyond the kind's links.
-  idsInValue?: (field: string, value: unknown) => string[];
+  // The records a field's value names that valueInWords names, beyond the kind's links, by field:
+  // their kind, and how the value holds them.
+  idsInValue?: Readonly<
+    Record<string, { kind: RecordType; ids: (value: unknown) => string[] }>
+  >;
   // What approving does beyond a record's own row, once the row is added and before it is removed.
   onAdded?: (transaction: Transaction, id: string) => Promise<void>;
   onRemoving?: (transaction: Transaction, id: string) => Promise<void>;

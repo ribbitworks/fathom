@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/projects.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Fathom: Projects Page
@@ -38,6 +38,7 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 ### Scope History
 
 - **Where:** at the end of a project's and a proposal's panel, as [History](../../standards/ui-conventions/pages-and-panels.md#history) sets out.
+- **Who sees it:** roles that see features, since it lists them; the server gives any other role none.
 - **A row:** the feature, Added or Removed with the day drafted, and a proposal removal's reason.
 - **Never undone:** a row is never struck through or removed.
 - **Reason:** nothing asks for one on removal; a drafted removal has a pencil to add it in place.

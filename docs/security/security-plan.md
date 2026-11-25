@@ -120,6 +120,7 @@ flowchart LR
 - **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks.
   - **A change's class:** a change is shown only to readers who see its data, at its class then or now, whichever is more sensitive, so its timing doesn't reveal a Personal change.
     - **Accepted:** a role that approves people's drafts is told when one holds details it can't see, so it leaves the draft to another approver. Trying to decide the draft would tell it as much.
+  - **Records a change links to:** named only to a role that reads their kind, as [Roles](../product/roles.md#what-each-role-can-do) sets out; a scope history, which lists only features, is empty to a role that doesn't see features.
   - **Who sees which changes:** changes to configuration are seen by those who may open its pages, changes to people by those who see people, a shared view's by those who open its table's page, and a personal saved view's by its maker alone. Something saved with no change a reader may see is left out for them.
   - **Unpublished changes:** seen only by their maker, who alone publishes or discards them.
     - **Others' changes:** asking to publish or discard someone else's is answered as if the change doesn't exist, and a change is linked only to its maker's other changes.

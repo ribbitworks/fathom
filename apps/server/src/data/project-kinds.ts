@@ -63,8 +63,8 @@ export const customerKind: RecordKind = {
     projectSubjects.customer(nameOf(state, "customer", id)),
 };
 
-const removalReasonsOf = (field: string, value: unknown) =>
-  field === "removalReasons" ? Object.entries(removalReasonsIn(value)) : [];
+const removalReasonsOf = (value: unknown) =>
+  Object.entries(removalReasonsIn(value));
 
 export const proposalKind: RecordKind = {
   type: "proposal",
@@ -93,11 +93,15 @@ export const proposalKind: RecordKind = {
   subject: (state, id) =>
     projectSubjects.proposal(nameOf(state, "proposal", id)),
   // Each reason for removing a feature, after the feature's name.
-  idsInValue: (field, value) =>
-    removalReasonsOf(field, value).map(([featureId]) => featureId),
+  idsInValue: {
+    removalReasons: {
+      kind: "feature",
+      ids: (value) => removalReasonsOf(value).map(([featureId]) => featureId),
+    },
+  },
   valueInWords: (field, value, name) =>
     field === "removalReasons"
-      ? removalReasonsOf(field, value).map(
+      ? removalReasonsOf(value).map(
           ([featureId, reason]) =>
             `${name(featureId) ?? "A removed feature"}: ${reason}`,
         )
