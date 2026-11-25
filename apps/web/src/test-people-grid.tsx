@@ -7,7 +7,7 @@ import type { Field, List, Person } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { PeopleGrid } from "./people-grid.tsx";
 import { emptyView } from "./table-view.ts";
-import { actions, noop, positions, testTheme } from "./test-support.tsx";
+import { noop, noopActions, positions, testTheme } from "./test-support.tsx";
 
 export const site: Field = {
   id: "f1",
@@ -63,7 +63,7 @@ type PeopleActions = Parameters<typeof PeopleGrid>[0]["actions"];
 // The People table's actions doing nothing, with those given in their place.
 export const peopleActions = (
   more: Partial<PeopleActions> = {},
-): PeopleActions => actions(more);
+): PeopleActions => noopActions(more);
 
 export const grid = (more: Partial<Parameters<typeof PeopleGrid>[0]> = {}) => (
   <MantineProvider theme={testTheme}>

@@ -43,6 +43,7 @@ import { RecordGrid } from "./record-grid.tsx";
 import type {
   CellRecord,
   Column,
+  GridRecord,
   RecordActions,
   RecordTable,
 } from "./record-table.ts";
@@ -643,7 +644,7 @@ export function gadgetTable(
 }
 
 // Every action a table takes doing nothing, with those given in its place.
-export const actions = <Row = Gadget, Change = GadgetChange, Request = Change>(
+export const noopActions = <Row extends GridRecord, Change, Request>(
   more: Partial<RecordActions<Row, Change, Request>> = {},
 ): RecordActions<Row, Change, Request> => ({
   add: noop,
@@ -657,6 +658,11 @@ export const actions = <Row = Gadget, Change = GadgetChange, Request = Change>(
   resubmitColumn: noop,
   ...more,
 });
+
+// The shared table's actions for gadgets, doing nothing but those given.
+export const actions = (
+  more: Partial<RecordActions<Gadget, GadgetChange, GadgetChange>> = {},
+): RecordActions<Gadget, GadgetChange, GadgetChange> => noopActions(more);
 
 export function renderGadgets({
   gadgets,
