@@ -18,6 +18,7 @@ import {
   personChangeSchema,
   savedSchema,
   teamColourRequestSchema,
+  timelineSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -45,6 +46,15 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
         },
       },
       async (request) => people.read(request.actor, request.query.on),
+    );
+
+    app.get(
+      "/api/people/:personId/timeline",
+      {
+        schema: { params: personParams, response: { 200: timelineSchema } },
+      },
+      async (request) =>
+        people.readTimeline(request.actor, request.params.personId),
     );
 
     app.get(

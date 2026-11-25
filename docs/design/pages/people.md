@@ -54,11 +54,17 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
   - Feature teams, for those who see them: Leads and Member of, each team with its lead
   - Details: Name, ID, Position, State, Start, End, Expected for planned hires, Manager?
   - Columns: every added column People shows the reader
+  - Timeline, for those who see start and end dates: the next day of changes after the day shown and the latest on or before it, then Show timeline
 - **Same as People:** The panel shows only what People shows the reader, and follows the Draft menu beside it. Personal details shown are recorded in the access history.
 - **Who gets it:** Readers who see the chart but not people have no panel.
 - **Following:** Choosing a manager or a report shows them in the panel.
 - **Editing:** A value the reader may change on People has a pencil opening its cell's editor. Reporting team and Direct reports have none.
 - **Another date:** The panel shows the person then, or says they aren't employed then. Only Manager has a pencil.
+- **Timeline:** Show timeline opens the person's timeline in its own panel under the details, as a note's does, kept in the address (`timeline`).
+  - **Its days:** newest first, one row a day: planned days in grey above Today's line, drawn across as a timeline draws Today, then the past; six on each side, the rest under Later dates and Earlier dates.
+  - **Its changes:** Filled and the hire, Start, Manager, Feature teams and Leads added or removed, and End, one to a line in that order, in one form: the field, the new value, then changed from the old; with how many others the same new manager came to that day. A manager links to their details, a team to the Org chart's feature teams.
+  - **Its dates:** each moves the page to that day, for readers who see other days; the day shown is marked, or, with no changes that day, drawn as a line where it falls, in teal.
+  - **Who sees what:** readers who see start and end dates; past managers with Past managers' class, feature teams with their dates' class, and the hire filled with the hiring plan. Reading it is recorded in the access history.
 - **Notes:** A note opens in its own panel under the details, sharing the height, kept in the address as [Kept in the address](../../standards/ui-conventions/tables.md#the-address) sets out, and can be maximized, as [Maximizing](../../standards/ui-conventions/pages-and-panels.md#panels-and-focus) sets out.
 
 ### Planned Hires

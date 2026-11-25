@@ -758,3 +758,15 @@ export {
   wholeMonth,
   withChange,
 } from "./allocations.ts";
+export {
+  type Timeline,
+  type TimelineChange,
+  type TimelineDay,
+  type TimelineField,
+  type TimelineRecord,
+  timelineChangeSchema,
+  timelineDaySchema,
+  timelineFieldSchema,
+  timelineRecordSchema,
+  timelineSchema,
+} from "./timeline.ts";
