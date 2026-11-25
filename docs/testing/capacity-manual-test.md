@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Capacity
@@ -25,7 +25,7 @@ Verifies the Capacity page's tabs, and switching between them:
   - The page left out of the menu for a role that sees no tab.
   - The count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to.
   - The rows kept to those over or under from the Views menu, and the rows kept to what someone is allocated to in any month.
-- Coverage, each feature's effort against the hours allocated to it: how it reads, the columns that stay at the left, and opening a feature from it.
+- Coverage, each feature's effort against the hours allocated to it: how it reads, the columns that stay at the left, and opening a feature or a project from it.
 - Feature teams, which has its own [Capacity's Feature Teams](capacity-feature-teams-manual-test.md) test.
 
 The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
@@ -746,23 +746,25 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Coverage** is chosen in the tabs.
     - Above the table, in order: a search box, a **Draft** button, **Metrics**, **Group by** and **Views**, then a count such as "22 features and 5 projects".
     - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
-    - The table's columns start with **Work**, **Effort**, **Allocated** and **Remaining**, then months; on a narrow window, **Remaining** may be scrolled out of view to the left.
+    - The table's columns start with **Work**, **Effort**, **Remaining** and **Allocated**, then months.
     - The current month's heading is underlined in red.
   - **Notes:**
 
 - [ ] `F7CE` Type `Mobile Approvals` in the search box.
   - **Expected:**
     - Only the 'Mobile Approvals' row shows.
-    - **Effort** and **Allocated** read hours, such as "720 h".
+    - **Effort** reads hours, such as "720 h".
     - The current month's cell reads hours allocated of hours needed, such as "64 of 80 h".
   - **Notes:**
 
 - [ ] `3B10` Scroll the table to its left end.
-  - **Expected:** **Remaining**, after **Allocated**, reads "Over" in red, then the hours past the effort, such as "+464 h".
+  - **Expected:**
+    - **Remaining**, after **Effort**, reads a minus figure in red, such as "−464 h".
+    - **Allocated**, after it, reads hours, such as "1,184 h".
   - **Notes:**
 
 - [ ] `5480` Scroll the table right, past the last month.
-  - **Expected:** **Work**, **Effort** and **Allocated** stay at the left, with **Remaining** after them where the window is wide enough.
+  - **Expected:** **Work**, **Effort** and **Remaining** stay at the left.
   - **Notes:**
 
 - [ ] `4C83` Open the 'Mobile Approvals' row's **⋯** menu, at the end of the row, and select **Show details**.
@@ -770,5 +772,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `8B5E` Select the browser's back button.
+  - **Expected:** **Capacity** shows again, with the **Coverage** tab chosen.
+  - **Notes:**
+
+- [ ] `2725` Type `Depot Operations` in the search box, in place of what it holds.
+  - **Expected:**
+    - Only the 'P-2017 Depot Operations' row shows, named with its Project ID first.
+    - Its **Effort** and **Remaining** read "None", in grey.
+  - **Notes:**
+
+- [ ] `53EB` Open the row's **⋯** menu, at the end of the row, and select **Show details**.
+  - **Expected:** The **Projects** page opens, with the details of 'Depot Operations' beside the table.
+  - **Notes:**
+
+- [ ] `5E45` Select the browser's back button.
   - **Expected:** **Capacity** shows again, with the **Coverage** tab chosen.
   - **Notes:**

@@ -13,10 +13,12 @@ import {
   type Meaning,
   neededByMonth,
   type PlanningSettings,
+  type Project,
   type ReleaseStreams,
   type Show,
   targetCycleMonths,
 } from "@fathom/shared";
+import { identifiedLabel } from "./projects.ts";
 import type { CellRecord } from "./record-table.ts";
 import {
   allocatableIn,
@@ -25,11 +27,13 @@ import {
 } from "./allocation-months.tsx";
 
 // A work Coverage shows: a feature, or work allocated to that the plan doesn't list, such as a
-// project's own work, named as allocations name it.
+// project's own work, named with its project's ID first.
 export interface CoverageRow extends CellRecord {
   id: string;
   name: string;
   feature?: Feature;
+  // For a project's own work, its project, where the reader sees Projects.
+  projectId?: string;
   // The effort needed, with the buffer; none for work with no estimate.
   effort?: number;
   allocated: number;
@@ -78,11 +82,12 @@ const total = (byMonth: ReadonlyMap<string, number>) =>
   [...byMonth.values()].reduce((sum, hours) => sum + hours, 0);
 
 // A row for each feature still to be done, and for each other work its allocations name, such as a
-// project's own.
+// project's own, named by its project.
 // The ramp-up counts from a first month among the grid's months only, so someone who started before
 // the grid's first month is taken as past their ramp-up.
 export function coverageRows({
   features,
+  projects,
   meanings,
   allocatedWork,
   streams,
@@ -91,19 +96,28 @@ export function coverageRows({
   currentMonth,
 }: {
   features: readonly Feature[];
+  projects: readonly Project[];
   // Each feature status's meaning, by status.
   meanings: ReadonlyMap<string, Meaning>;
-  allocatedWork: readonly { id: string; name: string }[];
+  allocatedWork: readonly {
+    id: string;
+    name: string;
+    projectId?: string | undefined;
+  }[];
   streams: ReleaseStreams["streams"];
   settings: PlanningSettings;
   delivered: ReadonlyMap<string, ReadonlyMap<string, number>>;
   currentMonth: string;
 }): CoverageRow[] {
   const listed = new Set(features.map(({ id }) => id));
+  const projectsById = new Map(
+    projects.map((project) => [project.id, project]),
+  );
   const row = (
     id: string,
     name: string,
     feature: Feature | undefined,
+    projectId?: string,
   ): CoverageRow => {
     const allocatedByMonth = delivered.get(id) ?? new Map<string, number>();
     const effort = effortNeeded(feature?.estimateHours, settings.bufferPercent);
@@ -114,6 +128,7 @@ export function coverageRows({
       values: {},
       links: {},
       ...(feature === undefined ? {} : { feature }),
+      ...(projectId === undefined ? {} : { projectId }),
       ...(effort === undefined
         ? {}
         : { effort, remaining: effort - allocated }),
@@ -138,6 +153,12 @@ export function coverageRows({
       .map((feature) => row(feature.id, feature.name, feature)),
     ...allocatedWork
       .filter(({ id }) => !listed.has(id) && delivered.has(id))
-      .map(({ id, name }) => row(id, name, undefined)),
+      .map(({ id, name, projectId }) => {
+        const project =
+          projectId === undefined ? undefined : projectsById.get(projectId);
+        return project === undefined
+          ? row(id, name, undefined)
+          : row(id, identifiedLabel(project), undefined, project.id);
+      }),
   ];
 }

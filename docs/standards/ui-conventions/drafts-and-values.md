@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Drafts, Values and Access
@@ -105,6 +105,9 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Example:** Release on Features, which follows from Target cycle.
 - **Empty values:** An empty cell is blank, unless a warning stands in its place, as [Warnings on a value](#values) sets out. A side a draft empties or fills shows as [A changed value](#drafts) sets out.
   - **In a details panel:** An empty value or list, such as a project with no milestones, reads None, dimmed, or the column's own word for empty.
+  - **A figure with nothing to measure:** A read-only figure column whose row has nothing to measure, such as a project's Effort on Coverage, reads None, dimmed, so a blank isn't taken for a figure still loading.
+    - **Drawn by:** `orNone` in `apps/web/src/capacity-coverage.tsx`.
+    - **Example:** On Capacity's Coverage, a project's Effort and Remaining.
   - **Drawn by:** `Row` in `apps/web/src/record-details.tsx`, with the column's `emptyLabel`.
   - **Example:** Voice Notes' Target cycle reads Later in its details.
 - **Values Fathom fills in:** An empty cell Fathom fills in from other values shows that text in grey italics, and editing it starts empty.

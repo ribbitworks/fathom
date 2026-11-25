@@ -167,6 +167,7 @@ export interface Column<
   // How many characters the column's cells fit, in place of what its kind works out.
   cellChars?: number;
   headingCentred?: boolean;
+  centred?: boolean;
   live: (draft: DraftOf<Rec>) => CellValue;
   change: (value: CellValue) => Change;
   // Shown after a record's value, such as a button that opens it.

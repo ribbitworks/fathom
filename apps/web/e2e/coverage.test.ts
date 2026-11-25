@@ -8,7 +8,7 @@ import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("engineeringDirector") });
 
-test("shows each work's effort, allocated hours and months as allocated of needed", async ({
+test("shows each work's effort, what is left, allocated hours and months as allocated of needed", async ({
   page,
 }) => {
   // Given the Engineering Director on Capacity
@@ -17,14 +17,17 @@ test("shows each work's effort, allocated hours and months as allocated of neede
   // When Coverage is opened
   await page.getByRole("tab", { name: "Coverage" }).click();
 
-  // Then the table names the work, its effort, allocated and remaining hours, and a month reads
-  // allocated of needed
+  // Then the table names the work, its effort and remaining hours, frozen at the left, then its
+  // allocated hours, and a month reads allocated of needed
   const table = page.getByRole("tabpanel", { name: "Coverage" });
-  for (const heading of ["Work", "Effort", "Allocated", "Remaining"]) {
+  for (const heading of ["Work", "Effort", "Remaining"]) {
     await expect(
       table.getByRole("columnheader", { name: `${heading} column` }),
     ).toBeVisible();
   }
+  await expect(
+    table.getByRole("columnheader", { name: "Allocated column" }),
+  ).toBeAttached();
   await expect(
     table.getByText(/^\d[\d,]* of \d[\d,]* h$/u).first(),
   ).toBeVisible();

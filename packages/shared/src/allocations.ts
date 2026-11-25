@@ -197,6 +197,8 @@ export const allocatedFeatureSchema = z.object({
   meaning: meaningSchema.nullable(),
   // Its feature team's, sent only to those who see feature teams.
   colour: paletteColourSchema.nullable(),
+  // For a project's general feature, its project.
+  projectId: z.string().optional(),
 });
 
 export type AllocatedFeature = z.infer<typeof allocatedFeatureSchema>;

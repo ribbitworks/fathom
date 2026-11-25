@@ -164,14 +164,23 @@ export const releaseKind: RecordKind = {
 const generalForProject = (state: RecordsState, id: string): unknown =>
   stateOf(state, "feature").rows.get(id)?.generalForProjectId;
 
+// The project a project's general feature is for; none for any other feature.
+export function projectOfFeature(
+  state: RecordsState,
+  id: string,
+): string | undefined {
+  const project = generalForProject(state, id);
+  return typeof project === "string" ? project : undefined;
+}
+
 export const isGeneralFeature = (state: RecordsState, id: string): boolean =>
-  typeof generalForProject(state, id) === "string";
+  projectOfFeature(state, id) !== undefined;
 
 // A feature's name as shown, a project's general feature taking its project's.
 export function featureCalled(state: RecordsState, id: string): string {
-  const project = generalForProject(state, id);
+  const project = projectOfFeature(state, id);
   return String(
-    typeof project === "string"
+    project !== undefined
       ? shownVersion(state, "project", project)?.name
       : shownVersion(state, "feature", id)?.name,
   );

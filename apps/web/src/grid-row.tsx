@@ -413,6 +413,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
               data-shaded={
                 (row.record && column.shaded?.(row.record)) || undefined
               }
+              data-centred={column.centred === true ? "" : undefined}
               aria-readonly={
                 readOnlyFor(column, rowKind(row)) ||
                 (row.record && table.readOnlyRecord?.(row.record)) ||

@@ -7,11 +7,9 @@ import { startingPlanningSettings } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import type { AllocationLine, AllocationRow } from "./allocation-months.tsx";
 import { coverageRows, deliveredByWork } from "./coverage-rows.ts";
-import {
-  fictionalFeature,
-  fictionalStream,
-  streamId,
-} from "./test-support.tsx";
+import { fictionalFeature } from "./test-support.tsx";
+import { project } from "./test-projects-page.tsx";
+import { fictionalStream, streamId } from "./test-releases.ts";
 
 const settings = { ...startingPlanningSettings, bufferPercent: 25 };
 
@@ -108,6 +106,7 @@ describe("coverageRows", () => {
           targetCycle: "2027-04-01",
         }),
       ],
+      projects: [],
       meanings: new Map(),
       allocatedWork: [],
       streams: [stream],
@@ -143,6 +142,7 @@ describe("coverageRows", () => {
         }),
         fictionalFeature({ id: "f-open", statusId: "s-planned", name: "Open" }),
       ],
+      projects: [],
       meanings: new Map([
         ["s-done", "done"],
         ["s-planned", "planned"],
@@ -159,6 +159,7 @@ describe("coverageRows", () => {
   it("gives a feature with no estimate, no cycle and no Needed by no effort, done Later", () => {
     const [row] = coverageRows({
       features: [fictionalFeature({ id: "f-idea", name: "Idea" })],
+      projects: [],
       meanings: new Map(),
       allocatedWork: [],
       streams: [stream],
@@ -171,21 +172,55 @@ describe("coverageRows", () => {
     expect(row?.remaining).toBeUndefined();
   });
 
-  it("adds a row for other allocated work, such as a project's own, and none for unallocated", () => {
+  it("adds a row for other allocated work, a project's own named with its ID first, and none for unallocated", () => {
+    const depot = project({
+      id: "p-depot",
+      name: "Depot Operations",
+      externalId: "P-2001",
+    });
     const rows = coverageRows({
       features: [],
+      projects: [depot],
       meanings: new Map(),
       allocatedWork: [
-        { id: "g-depot", name: "Depot Operations" },
+        { id: "g-depot", name: "Depot Operations", projectId: depot.id },
+        { id: "g-other", name: "Other Work" },
         { id: "g-idle", name: "Idle Project" },
+      ],
+      streams: [stream],
+      settings,
+      delivered: new Map([
+        ["g-depot", new Map([["2027-03", 40]])],
+        ["g-other", new Map([["2027-03", 8]])],
+      ]),
+      currentMonth: "2027-03",
+    });
+    expect(
+      rows.map(({ name, allocated, projectId }) => ({
+        name,
+        allocated,
+        projectId,
+      })),
+    ).toEqual([
+      { name: "P-2001 Depot Operations", allocated: 40, projectId: depot.id },
+      { name: "Other Work", allocated: 8, projectId: undefined },
+    ]);
+  });
+
+  it("names a project's own work as allocations do, with no project, for a role that doesn't see Projects", () => {
+    const [row] = coverageRows({
+      features: [],
+      projects: [],
+      meanings: new Map(),
+      allocatedWork: [
+        { id: "g-depot", name: "Depot Operations", projectId: "p-unseen" },
       ],
       streams: [stream],
       settings,
       delivered: new Map([["g-depot", new Map([["2027-03", 40]])]]),
       currentMonth: "2027-03",
     });
-    expect(rows.map(({ name, allocated }) => ({ name, allocated }))).toEqual([
-      { name: "Depot Operations", allocated: 40 },
-    ]);
+    expect(row?.name).toBe("Depot Operations");
+    expect(row?.projectId).toBeUndefined();
   });
 });

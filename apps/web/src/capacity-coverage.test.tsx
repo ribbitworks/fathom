@@ -15,7 +15,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   featureDraft,
   fictionalFeature,
-  fictionalStream,
   fictionalTeamMonths,
   fictionalUser,
   gridNow,
@@ -24,8 +23,15 @@ import {
   platform,
   renderApp,
   serverAnswers,
-  streamId,
 } from "./test-support.tsx";
+import { project } from "./test-projects-page.tsx";
+import { fictionalStream, streamId } from "./test-releases.ts";
+
+const depot = project({
+  id: "00000000-0000-4000-8000-0000000000d1",
+  name: "Depot Operations",
+  externalId: "P-2001",
+});
 
 const allocations: Allocations = {
   allocations: [
@@ -41,7 +47,12 @@ const allocations: Allocations = {
       personId: "p-avery",
       plannedHireId: null,
       featureId: "g-depot",
-      months: { "2027-03": 25, "2027-04": null },
+      months: {
+        "2027-01": 25,
+        "2027-02": null,
+        "2027-03": 25,
+        "2027-04": null,
+      },
     },
   ],
   features: [
@@ -51,7 +62,13 @@ const allocations: Allocations = {
       meaning: "in-progress",
       colour: null,
     },
-    { id: "g-depot", name: "Depot Operations", meaning: null, colour: null },
+    {
+      id: "g-depot",
+      name: "Depot Operations",
+      meaning: null,
+      colour: null,
+      projectId: depot.id,
+    },
   ],
 };
 
@@ -84,7 +101,7 @@ function openCoverage(
     [monthsUrl]: () => Response.json(fictionalTeamMonths),
     "GET /api/allocations": () => Response.json(allocations),
     "GET /api/org-chart": () => Response.json(chart),
-    ...planAnswers(features),
+    ...planAnswers(features, [depot]),
     "GET /api/release-streams": () =>
       Response.json({
         streams: [fictionalStream()],
@@ -133,10 +150,10 @@ describe("Capacity's Coverage", () => {
     openCoverage();
     const row = await rowOf("Checkout");
 
-    // Then it shows its effort, the 128 h allocated, and 32 h over it
+    // Then it shows its effort, the 128 h allocated, and 32 h over it, as a minus
     expect(row.getByText("96 h")).toBeDefined();
     expect(row.getByText("128 h")).toBeDefined();
-    expect(row.getByText("Over +32 h")).toBeDefined();
+    expect(row.getByText("−32 h")).toBeDefined();
     // And March and April each read their 64 h of the 96 h needed, spread over March to June
     expect(row.getAllByText("64 of 24 h")).toHaveLength(2);
     expect(row.getAllByText("0 of 24 h")).toHaveLength(2);
@@ -167,12 +184,65 @@ describe("Capacity's Coverage", () => {
     expect(row.getByText("272 h")).toBeDefined();
   });
 
-  it("shows work the plan doesn't list by its allocations' name, with no effort and no details", async () => {
-    openCoverage();
-    const row = await rowOf("Depot Operations");
-    expect(row.queryByRole("button", { name: /Show details/u })).toBeNull();
-    // Avery's quarter month in March: 32 h, allocated in all and in March
-    expect(row.getAllByText("32 h")).toHaveLength(2);
+  // A role that sees Projects, so it is sent Depot Operations' project.
+  const seesProjects = [...seesCoverage, "plan:view"];
+
+  it("names a project's own work with its Project ID first, and reads None for its effort", async () => {
+    // Given Avery on Depot Operations' own work, which has no effort
+    openCoverage(seesProjects);
+
+    // When its row shows
+    const row = await rowOf("P-2001 Depot Operations");
+
+    // Then its Effort and Remaining read None, and it has 64 h allocated
+    expect(row.getAllByText("None")).toHaveLength(2);
+    expect(row.getByText("64 h")).toBeDefined();
+  });
+
+  it("shows a past month's hours alone, in grey, and nothing in a month with none", async () => {
+    // Given Avery's quarter month in January and March on Depot Operations, none in February, seen
+    // in March
+    openCoverage(seesProjects);
+    const row = await rowOf("P-2001 Depot Operations");
+
+    // Then January and March each read 32 h, January's in grey, and February nothing
+    expect(row.queryByText("0 h")).toBeNull();
+    const months = row.getAllByText("32 h");
+    expect(months.map((month) => month.getAttribute("style") ?? "")).toEqual([
+      expect.stringContaining("dimmed"),
+      expect.not.stringContaining("dimmed"),
+    ]);
+  });
+
+  it("opens a project's own work on Projects from its details button", async () => {
+    // Given Depot Operations' row
+    const history = openCoverage(seesProjects);
+    const row = await rowOf("P-2001 Depot Operations");
+
+    // When its details button is selected
+    await userEvent.click(
+      row.getByRole("button", {
+        name: "Show details of P-2001 Depot Operations",
+      }),
+    );
+
+    // Then Projects opens on it
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/projects");
+    });
+    expect(history.location.search).toContain(depot.id);
+  });
+
+  it("reads a part of an hour over the effort as 0 h", async () => {
+    // Given Checkout's estimate 0.4 h under the 128 h allocated
+    openCoverage(seesCoverage, {
+      features: [{ ...checkout, estimateHours: 127.6 }],
+    });
+    const row = await rowOf("Checkout");
+
+    // Then Remaining reads 0 h, with no minus
+    expect(row.getByText("0 h")).toBeDefined();
+    expect(row.queryByText(/\u2212/u)).toBeNull();
   });
 
   it("isn't offered to a role that doesn't see the planning settings", async () => {

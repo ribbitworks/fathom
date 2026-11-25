@@ -164,14 +164,15 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 
 ### In Coverage
 
-- **A row** is a feature still to be done, or a project's own work that people are allocated to. Done and cancelled features aren't listed. A project's work has no effort, so its **Effort** and **Remaining** are blank.
+- **A row** is a feature still to be done, or a project's own work that people are allocated to. Done and cancelled features aren't listed. If you see **Projects**, a project's own work is named with its Project ID first. It has no effort, so its **Effort** and **Remaining** read **None**.
 - **Effort** is the feature's estimate with the default buffer added.
 - **Allocated** is the hours people's allocations deliver over the months shown. An allocation's hours are its share of the working month, at the default focus, and at the ramp-up for someone in their first months.
-- **Remaining** is the effort not yet allocated. **Over**, in red, shows how many hours the allocations go past the effort, such as **Over +32 h**.
-- **A month**, such as **64 of 24 h**, reads the hours allocated in it of the hours it needs.
+- **Remaining** is the effort not yet allocated. A minus figure in red, such as **−32 h**, shows how many hours the allocations go past the effort.
+- **A month**, such as **64 of 24 h**, reads the hours allocated in it of the hours it needs; **0 h** needed once earlier months cover the effort.
 - **The hours a month needs:** Fathom spreads the effort not covered by past months evenly over the months the feature is planned in. Those are its target cycle's months, or the months until **Needed by** when it has no cycle, and any month someone is allocated to it.
-- **Past months**, and months once the effort is covered, show the hours allocated alone.
-- **Group by** offers **Feature team**. **Show details** on a feature's row opens it on **Features**.
+- **Past months** show the hours allocated alone, in grey.
+- **Work with no effort** shows the hours allocated alone in every month.
+- **Group by** offers **Feature team**. **Show details** on a feature's row opens it on **Features**, and, if you see **Projects**, on a project's row opens the project there.
 - **Drafts:** with **Drafts applied** chosen in the **Draft** menu, the hours follow drafted allocations, features and settings. Otherwise they follow what's approved.
 - **Coverage** is read only. It needs the planning settings, so you see it only if you see **Settings** too.
 

@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/capacity.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Fathom: Capacity Page
@@ -81,17 +81,20 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 A month grid, as the grid tabs are: the same months, strip, current month and where the grid lands. Its rows are work, not people.
 
 - **Read only.**
-- **Rows:** one per feature still to be done, and one per project's general work that someone is allocated to, named as Allocations names it. Done and Cancelled features are left out, as `isForecast` in `packages/shared/src/forecast.ts` sets out.
-- **Frozen columns:** Work, Effort, Allocated and Remaining, frozen on the left until the view says otherwise, as far as the frozen columns' share of the table allows.
-- **Effort:** the estimate with the default buffer, as `effortNeeded` sets out; blank without an estimate, as empty values are.
+- **Rows:** one per feature still to be done, and one per project's general work that someone is allocated to, a project's named with its Project ID first, such as P-2001 Crane Control, as links to records are, for roles that see Projects; for others, by the project's name alone, as Allocations names it. Done and Cancelled features are left out, as `isForecast` in `packages/shared/src/forecast.ts` sets out.
+- **Columns:** Work, Effort and Remaining, frozen on the left until the view says otherwise, as far as the frozen columns' share of the table allows, then Allocated, then the months.
+  - **Widths:** Work starts wide enough for most names in full, and each figure column fits its heading and figures up to 99,999 h, so the three frozen columns fit at 1440 pixels with the navigation open. Allocated, which Effort and Remaining imply, has no room among them. On a narrow screen Work keeps its width, and Effort and Remaining give way first.
+  - **Months:** each month's figures are centred under its centred heading.
+- **Effort:** the estimate with the default buffer, as `effortNeeded` sets out; None without an estimate, as empty values read.
 - **Allocated:** the hours the allocations deliver over the grid's months, as `deliveredHours` sets out: the share of the month's working hours, at the default focus, and at the ramp-up from the first month someone is employed in, when that falls in the grid after its first month; someone employed from the grid's first month is taken as past their ramp-up. Allocations outside employment count for nothing.
-- **Remaining:** the effort less the hours allocated; Over and the hours past it, in red, as Allocations' Over reads; blank without an effort.
-- **A month's cell:** the hours allocated of the hours needed, such as 64 of 24 h. A past month, and a month once the effort is covered, show the hours allocated alone.
+- **Remaining:** the effort less the hours allocated; past the effort, a minus figure in red, such as −6 h, in Allocations' Over red; None without an effort.
+- **A month's cell:** one form for a row from the current month on: for work with an effort, the hours allocated of the hours needed, such as 64 of 24 h, or 64 of 0 h once the effort is covered; for work with none, the hours allocated alone, and blank where none are. A past month, which needs nothing more, shows the hours allocated alone, in grey.
+- **Colours:** a feature's name follows its feature team's colour square, as on Allocations.
 - **Hours needed:** `neededByMonth` spreads the effort left after past months' hours evenly over the work's window from the current month on: its target cycle's months, or from the current month to Needed by, widened to every month an allocation reaches. Work with none of these shows no months.
 - **Drafts:** as Allocations' totals: the allocations, the features and the planning settings as drafted with Drafts applied, and as live otherwise.
 - **The count:** the features and projects shown, such as 22 features and 5 projects.
 - **Group by:** None and Feature team.
-- **Details:** a feature's details button, and Show details in its menu, open it on Features, since Coverage has no details panel of its own. A project's work has no details.
+- **Details:** a feature's details button, and Show details in its menu, open it on Features, and a project's work opens its project on Projects, for roles that see Projects, since Coverage has no details panel of its own.
 
 ## Settings
 

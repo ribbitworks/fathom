@@ -48,11 +48,14 @@ import {
   stateOf,
   versionOf,
 } from "./record-state.ts";
-import { featureCalled } from "./release-kinds.ts";
+import { featureCalled, projectOfFeature } from "./release-kinds.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
 const type = "allocation";
+
+const withProject = (projectId: string | undefined) =>
+  projectId === undefined ? {} : { projectId };
 
 const monthsOf = (record: Recorded | undefined): AllocationMonths =>
   (record?.months ?? {}) as AllocationMonths;
@@ -313,6 +316,7 @@ export async function readAllocations(
         features: featureIds.map((id) => ({
           id,
           name: featureCalled(state, id),
+          ...withProject(projectOfFeature(state, id)),
           meaning: meaningSchema.nullable().parse(meanings.get(statusOf(id))),
           colour: colourOf(colours, teamOf(id)),
         })),

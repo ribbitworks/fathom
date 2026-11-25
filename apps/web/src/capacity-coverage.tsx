@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Capacity's Coverage: each work as a row, its effort needed, the hours allocated to it and what is
-// left, then each month's hours allocated of those needed, read only.
+// Capacity's Coverage: each work's effort against the hours allocated to it, by month.
 
 import { monthOf, monthsBetween } from "@fathom/shared";
+import { Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useMemo, useState } from "react";
 import {
@@ -29,7 +29,11 @@ import {
   planningSettingsQuery,
   shownSettings as shownSettingsAs,
 } from "./planning-settings.ts";
-import { planChoicesQuery, projectPlanQuery } from "./projects.ts";
+import {
+  type PlanTab,
+  planChoicesQuery,
+  projectPlanQuery,
+} from "./projects.ts";
 import { noDrafts } from "./drafts.ts";
 import {
   type Column,
@@ -53,28 +57,54 @@ const numberValue = (amount: number | undefined) =>
 
 const coverageActions = noRecordActions<CoverageRow, CellChange, CellChange>();
 
-// What is left of a work's effort, or Over, in red, and how far its allocations go past it.
+const dimmed = (words: string) => (
+  <Text component="span" inherit c="dimmed">
+    {words}
+  </Text>
+);
+
+// A work with no effort has no figure to show.
+const orNone = (
+  amount: number | undefined,
+  shown: (amount: number) => ReactNode,
+) => (amount === undefined ? dimmed("None") : shown(amount));
+
+// What is left of a work's effort, or, in red, how far its allocations go past it, rounded first
+// so a part of an hour over reads 0 h.
 function Remaining({ remaining }: { remaining: number }) {
-  return remaining < 0 ? (
-    <span className={styles.marked}>Over +{hours(-remaining)}</span>
+  const left = Math.round(remaining) || 0;
+  return left < 0 ? (
+    <Text component="span" inherit fw={600} className={styles.marked}>
+      {`\u2212${hours(-left)}`}
+    </Text>
   ) : (
-    hours(remaining)
+    hours(left)
   );
 }
 
-// A month's hours: allocated of needed, or allocated alone where nothing more is needed, as in a
-// past month, for work with no effort, or once earlier months have covered its effort.
-function monthCell(row: CoverageRow, month: string): ReactNode {
+// A month's hours: from the current month on, allocated of needed for a work with an effort, even
+// once earlier months have covered it; a past month, which needs nothing more, or a work with no
+// effort, the hours allocated alone, a past month's in grey, and none where none are.
+function monthCell(
+  row: CoverageRow,
+  month: string,
+  currentMonth: string,
+): ReactNode {
   const covered = row.coverage.months.find((one) => one.month === month);
   if (covered === undefined) return null;
-  return covered.needed === undefined || Math.round(covered.needed) === 0
-    ? hours(covered.allocated)
-    : `${count(Math.round(covered.allocated))} of ${hours(covered.needed)}`;
+  if (covered.needed !== undefined) {
+    return `${count(Math.round(covered.allocated))} of ${hours(covered.needed)}`;
+  }
+  if (Math.round(covered.allocated) === 0) return null;
+  return month < currentMonth
+    ? dimmed(hours(covered.allocated))
+    : hours(covered.allocated);
 }
 
 const numberColumn = (
   key: string,
   label: string,
+  chars: number,
   value: (row: CoverageRow) => number | undefined,
   content: (row: CoverageRow) => ReactNode,
 ): Column<CoverageRow, CellChange> => ({
@@ -86,24 +116,41 @@ const numberColumn = (
   }),
   value: (row) => numberValue(value(row)),
   content,
+  cellChars: chars,
   readOnly: true,
-  frozenAtFirst: true,
 });
+
+const frozen = (
+  column: Column<CoverageRow, CellChange>,
+): Column<CoverageRow, CellChange> => ({ ...column, frozenAtFirst: true });
 
 export const coverageTeamKey = "featureTeam";
 
-// The table: each work, frozen on the left with its effort, allocated hours and what is left, then a
-// column for each month the grid holds.
+export type CoverageDetails = (
+  tab: Extract<PlanTab, "features" | "projects">,
+  id: string,
+) => void;
+
+// Wide enough for most works' names in full, the months still in view, and each figure for its
+// heading and up to 99,999 h.
+const workChars = 22;
+const effortChars = 8;
+const allocatedChars = 9;
+const remainingChars = 10;
+
+// The table: each work, frozen on the left with its effort and what is left, then its allocated
+// hours, which the frozen columns have no room for beside a name in full, then a column for each
+// month the grid holds.
 export function coverageTable({
   months,
   currentMonth,
   teams,
-  onFeature,
+  onDetails,
 }: {
   months: readonly string[];
   currentMonth: string;
-  teams: readonly { id: string; name: string }[];
-  onFeature: (id: string) => void;
+  teams: readonly { id: string; name: string; colour: string | null }[];
+  onDetails: CoverageDetails;
 }): RecordTable<CoverageRow, CellChange, CellChange> {
   const team: Column<CoverageRow, CellChange> = {
     ...cellColumn<CoverageRow, CellChange>(coverageTeamKey, "choice", {
@@ -133,29 +180,40 @@ export function coverageTable({
         multiple: false,
       }),
       value: (row) => row.name,
+      cellChars: workChars,
+      colour: (row) =>
+        teams.find(({ id }) => id === row.feature?.featureTeamId)?.colour ??
+        null,
       readOnly: true,
       frozenAtFirst: true,
     },
-    numberColumn(
-      "effort",
-      "Effort",
-      (row) => row.effort,
-      (row) => (row.effort === undefined ? null : hours(row.effort)),
+    frozen(
+      numberColumn(
+        "effort",
+        "Effort",
+        8,
+        (row) => row.effort,
+        (row) => orNone(row.effort, hours),
+      ),
+    ),
+    frozen(
+      numberColumn(
+        "remaining",
+        "Remaining",
+        10,
+        (row) => row.remaining,
+        (row) =>
+          orNone(row.remaining, (remaining) => (
+            <Remaining remaining={remaining} />
+          )),
+      ),
     ),
     numberColumn(
       "allocated",
       "Allocated",
+      allocatedChars,
       (row) => row.allocated,
       (row) => hours(row.allocated),
-    ),
-    numberColumn(
-      "remaining",
-      "Remaining",
-      (row) => row.remaining,
-      (row) =>
-        row.remaining === undefined ? null : (
-          <Remaining remaining={row.remaining} />
-        ),
     ),
     team,
     ...months.map((month): Column<CoverageRow, CellChange> => ({
@@ -166,11 +224,12 @@ export function coverageTable({
         multiple: false,
       }),
       ...monthColumnLook(month, currentMonth),
+      centred: true,
       value: (row) =>
         numberValue(
           row.coverage.months.find((one) => one.month === month)?.allocated,
         ),
-      content: (row) => monthCell(row, month),
+      content: (row) => monthCell(row, month, currentMonth),
       readOnly: true,
     })),
   ];
@@ -190,9 +249,11 @@ export function coverageTable({
     liveRecords: (rows) => [...rows],
     drafts: () => noDrafts(),
     groupings: [byChoice(team, { holds: "names" })],
-    hasDetails: (row) => row.feature !== undefined,
+    hasDetails: (row) =>
+      row.feature !== undefined || row.projectId !== undefined,
     showDetails: (row) => {
-      onFeature(row.id);
+      if (row.projectId === undefined) onDetails("features", row.id);
+      else onDetails("projects", row.projectId);
     },
   };
 }
@@ -204,8 +265,8 @@ export function CapacityCoverage({
   applied,
   onApply,
   canShareViews,
-  onFeature,
-}: Omit<MonthGridProps, "byManager"> & { onFeature: (id: string) => void }) {
+  onDetails,
+}: Omit<MonthGridProps, "byManager"> & { onDetails: CoverageDetails }) {
   const [range] = useState(() => gridMonthsAround(now));
   const monthsRead = useQuery(teamMonthsQuery(range));
   const allocationsRead = useQuery(allocationsQuery);
@@ -233,9 +294,9 @@ export function CapacityCoverage({
             months,
             currentMonth,
             teams: teamMonths.teams,
-            onFeature,
+            onDetails,
           }),
-    [teamMonths, months, currentMonth, onFeature],
+    [teamMonths, months, currentMonth, onDetails],
   );
   const records = useMemo(() => {
     const allocations = allocationsRead.data;
@@ -271,6 +332,7 @@ export function CapacityCoverage({
       features: drafted
         ? plan.features
         : liveRecordsBy(plan.features, withLiveFields),
+      projects: plan.projects,
       meanings: new Map(
         choices.featureStatuses.map(({ id, meaning }) => [id, meaning]),
       ),

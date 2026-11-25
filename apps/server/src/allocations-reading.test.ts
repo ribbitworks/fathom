@@ -34,7 +34,7 @@ beforeAll(startAllocationTests);
 afterAll(closeAllocationTests);
 
 describe("reading", () => {
-  it("names each feature allocated, a general feature by its project, with its status's meaning", async () => {
+  it("names each feature allocated, a general feature by its project, with that project and its status's meaning", async () => {
     const personId = await addPerson();
     const possible = await addFeature("possible");
     const general = await addGeneralFeature();
@@ -61,7 +61,11 @@ describe("reading", () => {
       name: project?.name,
       meaning: "in-progress",
       colour: null,
+      projectId: general.projectId,
     });
+    expect(named.find(({ id }) => id === possible)).not.toHaveProperty(
+      "projectId",
+    );
   });
 
   // A feature of a teal team, and one of no team, each allocated.

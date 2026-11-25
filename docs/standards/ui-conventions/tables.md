@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Tables, Addresses and Search
@@ -45,9 +45,9 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **The menus:** Hide column is in the column's menu, with Freeze up to this column, the width items, and Move left and Move right. The table's Views menu shows the column again; a board's leaves out what only changes the table, as [Menus above a board](dates-timelines-and-boards.md#boards) sets out.
   - **What stays:** A hidden column keeps its filter, its place in the sort and its place in the order. Its filter's pill stays, so nothing narrows the rows unseen. Metrics still offer it.
   - **Frozen columns:** Hiding a frozen column leaves one fewer frozen.
-  - **Frozen at first:** A table freezes its first column until a view says otherwise, or its first few columns, where those columns read with every one, such as Coverage's Work, Effort, Allocated and Remaining beside its months. The frozen columns still take at most half the table's width.
+  - **Frozen at first:** A table freezes its first column until a view says otherwise, or its first few columns, where those columns read with every one, such as Coverage's Work, Effort and Remaining beside its months. The frozen columns still take at most half the table's width.
     - **Drawn by:** `frozenAtFirst` in `apps/web/src/table-view.ts`, from the columns marked `frozenAtFirst`.
-    - **Example:** On Capacity, choose Coverage: Work, Effort and Allocated stay at the left as the months scroll.
+    - **Example:** On Capacity, choose Coverage: Work, Effort and Remaining stay at the left as the months scroll.
   - **What leaves it out:** An export, and so the question before exporting Personal or Confidential data. The empty row skips it, but still names a required one it needs, such as Site needed. A new record's form shows every column.
   - **Shared views:** Hidden columns reveal no value, so they don't decide who sees a shared view.
   - **Drawn by:** The column menu in `apps/web/src/column-header.tsx`, with the view's hidden columns kept by `withHidden` in `apps/web/src/table-view.ts` and listed by `ViewsMenu` in `apps/web/src/table-controls.tsx`.

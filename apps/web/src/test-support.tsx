@@ -11,6 +11,7 @@ import type {
   FeatureDraft,
   Field,
   List,
+  Project,
   RecordDraft,
   TeamMonths,
 } from "@fathom/shared";
@@ -319,11 +320,14 @@ export const cycleChoice = (id: string, label: string) => ({
 });
 
 // The server's answer giving the plan's features.
-export const planAnswers = (features: readonly Feature[]) => ({
+export const planAnswers = (
+  features: readonly Feature[],
+  projects: readonly Project[] = [],
+) => ({
   "GET /api/projects": () =>
     Response.json({
       customers: [],
-      projects: [],
+      projects,
       proposals: [],
       features,
       featureColumns: noFeatureColumns,
