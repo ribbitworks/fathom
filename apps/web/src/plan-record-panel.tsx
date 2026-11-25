@@ -26,7 +26,7 @@ import {
 } from "./plan-table.tsx";
 import {
   customerColumnGroups,
-  customerOwnColumns,
+  customerColumns,
   milestoneColumns,
   projectColumns,
   projectDateColumns,
@@ -209,7 +209,8 @@ export function recordPanel({
   editsKind: (type: PlanRecordKind) => boolean;
   editsFeatureTeams: boolean;
   approves: readonly DraftKind[];
-  // Whether the user's role sees features, which a scope history lists.
+  // Whether the user's role sees features, which a scope history lists and a customer's details
+  // show a Features row for.
   seesFeatures: boolean;
   nodes: readonly RecordNode[];
   onClose: () => void;
@@ -261,7 +262,9 @@ export function recordPanel({
     proposals: () =>
       shownOf("proposal", plan.proposals, () => proposalColumns(choices)),
     customers: () =>
-      shownOf("customer", plan.customers, () => customerOwnColumns()),
+      shownOf("customer", plan.customers, () =>
+        customerColumns(choices, seesFeatures),
+      ),
     features: () =>
       shownOf("feature", plan.features, () =>
         featureColumns(choices, {

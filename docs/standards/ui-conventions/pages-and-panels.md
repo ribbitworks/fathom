@@ -113,8 +113,8 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **Drawn by:** `FoldedList` in `apps/web/src/folded-list.tsx`, with the controls' style `foldControl` from `apps/web/src/folded-note.tsx`.
   - **Example:** A schedule's Cycles in its details on Releases.
 - **Columns follow the panel's order:** A table's default column order and its details panel's sections and rows follow one shared definition.
-  - **Drawn by:** `featureColumnGroups` in `apps/web/src/feature-table.tsx`.
-  - **Example:** Features, whose columns start Name, Status, Description, Notes, as its details' Details section does.
+  - **Drawn by:** `inGroupOrder` in `apps/web/src/record-table.ts`, from `featureColumnGroups` in `apps/web/src/feature-table.tsx` and `customerColumnGroups` in `apps/web/src/project-grids.tsx`.
+  - **Example:** Features, whose columns start Name, Status, Description, Notes, as its details' Details section does; Projects' Customers tab, whose columns run Name, Description, Notes, Projects, Proposals, Features.
 - **Actions on a list in a panel:** Actions on a list inside a details panel sit under the list, at its left, as outlined buttons without an icon, the main one first. They sit where the next item would go, and the list's heading stays plain, like every other section's.
   - **Pickers:** A picker that adds to the list, such as a feature team's Add member, is such an action: an outlined button under the list that opens the picker.
   - **Drawn by:** Each panel draws its own.

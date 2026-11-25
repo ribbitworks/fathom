@@ -52,33 +52,26 @@ import {
 } from "./plan-table.tsx";
 import { andOthers } from "./numbers.ts";
 import { RecordGrid } from "./record-grid.tsx";
-import type {
-  Column,
-  ColumnGroup,
-  RecordGridProps,
-  RecordTable,
+import {
+  type Column,
+  type ColumnGroup,
+  inGroupOrder,
+  type RecordGridProps,
+  type RecordTable,
 } from "./record-table.ts";
 
 // A customer's columns in the headed groups its details show them in, as a feature's are.
 export const customerColumnGroups: readonly ColumnGroup[] = [
   { title: "Details", keys: ["name", "description", "note"] },
+  { title: "Commitments", keys: ["projectIds", "proposalIds", "featureIds"] },
 ];
 
-// A customer's Name and Description, which its table and details start with.
-const customerLeadingColumns = (): Column<Customer, PlanChange>[] => [
+export const customerOwnColumns = (): Column<Customer, PlanChange>[] => [
   nameColumn(),
   field<Customer>("description", planColumnNames.description, "text", {
     maxLength: projectLengths.customerDescription,
   }),
-];
-
-const customerNoteColumn = () =>
-  field<Customer>("note", planColumnNames.note, "note");
-
-// A customer's own columns, which its details show.
-export const customerOwnColumns = (): Column<Customer, PlanChange>[] => [
-  ...customerLeadingColumns(),
-  customerNoteColumn(),
+  field<Customer>("note", planColumnNames.note, "note"),
 ];
 
 // The plan's records as a customer's columns read them.
@@ -100,47 +93,50 @@ function customerFeaturesOf(choices: CustomerChoices) {
   };
 }
 
-// A customer's columns: its own, with the projects and proposals naming it, each marked with its
-// own draft, and the features it gets, worked out from their links, before Notes. Features shows only to those who see features.
-function customerColumns(
+// A customer's columns: its own, then the projects and proposals naming it, each marked with its own
+// draft, and the features it gets, worked out from their links, in its details' order. Features
+// shows only to those who see features.
+export function customerColumns(
   choices: CustomerChoices,
   seesFeatures: boolean,
 ): Column<Customer, PlanChange>[] {
   const featuresOf = customerFeaturesOf(choices);
-  return [
-    ...customerLeadingColumns(),
-    {
-      ...namersColumn<Customer>(
-        "projectIds",
-        planColumnNames.projectIds,
-        choices.projects,
-        choices.drafted.projects,
-        "customerIds",
-      ),
-      readOnly: true,
-    },
-    {
-      ...namersColumn<Customer>(
-        "proposalIds",
-        planColumnNames.proposalIds,
-        choices.proposals,
-        choices.drafted.proposals,
-        "customerIds",
-      ),
-      readOnly: true,
-    },
-    ...(seesFeatures
-      ? [
-          workedOutColumn<Customer>(
-            "featureIds",
-            planColumnNames.featureIds,
-            choices.features,
-            featuresOf,
-          ),
-        ]
-      : []),
-    customerNoteColumn(),
-  ];
+  return inGroupOrder(
+    [
+      ...customerOwnColumns(),
+      {
+        ...namersColumn<Customer>(
+          "projectIds",
+          planColumnNames.projectIds,
+          choices.projects,
+          choices.drafted.projects,
+          "customerIds",
+        ),
+        readOnly: true,
+      },
+      {
+        ...namersColumn<Customer>(
+          "proposalIds",
+          planColumnNames.proposalIds,
+          choices.proposals,
+          choices.drafted.proposals,
+          "customerIds",
+        ),
+        readOnly: true,
+      },
+      ...(seesFeatures
+        ? [
+            workedOutColumn<Customer>(
+              "featureIds",
+              planColumnNames.featureIds,
+              choices.features,
+              featuresOf,
+            ),
+          ]
+        : []),
+    ],
+    customerColumnGroups,
+  );
 }
 
 // Why a customer can't be removed while something names it, naming the first record that keeps it

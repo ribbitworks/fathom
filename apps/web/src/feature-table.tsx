@@ -55,11 +55,12 @@ import {
   savedKind,
   wordsOf,
 } from "./plan-table.tsx";
-import type {
-  Column,
-  ColumnGroup,
-  RecordTable,
-  RowGrouping,
+import {
+  type Column,
+  type ColumnGroup,
+  inGroupOrder,
+  type RecordTable,
+  type RowGrouping,
 } from "./record-table.ts";
 import type { ColumnUnit } from "./table-view.ts";
 import { formatMonth } from "./day-formats.ts";
@@ -270,8 +271,6 @@ export const featureColumnGroups: readonly ColumnGroup[] = [
 // The title of the group of columns an organization added, after the others, as on a person.
 export const addedColumnsTitle = "Columns";
 
-const featureColumnOrder = featureColumnGroups.flatMap(({ keys }) => keys);
-
 // The fields of a feature that another kind's editors decide, and whether they can be changed here.
 export interface FeatureEdits {
   // A feature's customers, and the projects and proposals that name it: by those who edit the plan.
@@ -364,10 +363,7 @@ export function featureColumns(
       readOnlyOn: () => !editsFeatureTeams,
     },
   ];
-  const inGroups = [...builtIn].sort(
-    (a, b) =>
-      featureColumnOrder.indexOf(a.key) - featureColumnOrder.indexOf(b.key),
-  );
+  const inGroups = inGroupOrder(builtIn, featureColumnGroups);
   // The built-in columns follow the details' groups; the server's order places the added ones.
   return [
     ...inGroups,

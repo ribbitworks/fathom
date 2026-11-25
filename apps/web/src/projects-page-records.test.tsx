@@ -623,23 +623,10 @@ describe("a customer's description and notes", () => {
     ],
   });
 
-  it("shows them in the table, Notes last", async () => {
+  it("shows the description in the table", async () => {
     await openPage("/projects?tab=customers", described);
 
     const grid = await screen.findByRole("grid", { name: "Customers" });
-    expect(
-      within(grid)
-        .getAllByRole("columnheader")
-        .map(({ textContent }) => textContent)
-        .filter((text) => text !== "" && text !== "Actions"),
-    ).toEqual([
-      "Name",
-      "Description",
-      "Projects",
-      "Proposals",
-      "Features",
-      "Notes",
-    ]);
     expect(within(grid).getByText("Island ferry line")).toBeDefined();
   });
 
@@ -648,14 +635,9 @@ describe("a customer's description and notes", () => {
     await screen.findByRole("heading", { name: /Fictional Customer/u });
 
     expect(
-      within(sidePanel())
-        .getAllByRole("heading", { level: 3 })
+      within(within(sidePanel()).getByRole("region", { name: "Details" }))
+        .getAllByRole("term")
         .map(({ textContent }) => textContent),
-    ).toEqual(["Details"]);
-    expect(
-      [...sidePanel().querySelectorAll("dt")].map(
-        ({ textContent }) => textContent,
-      ),
     ).toEqual(["Name", "Description", "Notes"]);
     expect(within(sidePanel()).getByText("Island ferry line")).toBeDefined();
     expect(within(sidePanel()).getByText("Pilot")).toBeDefined();

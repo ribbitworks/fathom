@@ -48,7 +48,7 @@ You can also right-click the row and select **Show details**. The details open b
 
 Each customer, proposal and feature named there is a link to its own details. Milestones have no details of their own.
 
-A customer's details show its **Name**, **Description** and **Notes** under **Details**. Select **Show more** under a long note to read all of it in a panel of its own.
+A customer's details show its **Name**, **Description** and **Notes** under **Details**. Select **Show more** under a long note to read all of it in a panel of its own. Under **Commitments** are the **Projects** and **Proposals** that name the customer, and its **Features**, each a link to its own details.
 
 The record's key is under its name, small and grey. Select it to copy a link to the record, or the key itself. See [Keys and links](keys-and-links.md) for more.
 

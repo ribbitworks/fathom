@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for what the Customers tab works out from the plan's links: the projects, proposals and
-// features naming each customer, sorted, filtered and exported; Show all features, opening
-// Features filtered to the customer; and Remove customer turned off while anything names it.
+// features naming each customer, sorted, filtered and exported, and listed in its details; Show all
+// features, opening Features filtered to the customer; and Remove customer turned off while
+// anything names it.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -21,6 +22,7 @@ import {
   project,
   proposal,
   rowMenu,
+  sidePanel,
 } from "./test-projects-page.tsx";
 
 afterEach(() => {
@@ -92,16 +94,16 @@ const rowOf = (name: string) => {
 };
 
 describe("the Customers tab's worked-out columns", () => {
-  it("list the projects, proposals and features naming each customer, before Notes", async () => {
+  it("list the projects, proposals and features naming each customer, after its own columns", async () => {
     await openPage(customersAt(), linked);
 
     expect(headers()).toEqual([
       "Name",
       "Description",
+      "Notes",
       "Projects",
       "Proposals",
       "Features",
-      "Notes",
     ]);
     const named = rowOf("Fictional Customer").textContent;
     expect(named).toContain("FP-1 Fictional Project");
@@ -228,10 +230,10 @@ describe("the Customers tab's worked-out columns", () => {
     });
     const lines = (await files[0]?.text())?.split("\r\n") ?? [];
     expect(lines[0]).toBe(
-      "Draft,Change,Name,Description,Projects,Proposals,Features,Notes",
+      "Draft,Change,Name,Description,Notes,Projects,Proposals,Features",
     );
     expect(lines).toContain(
-      ",,Fictional Customer,,FP-1 Fictional Project,Fictional Proposal,Fictional Proposed; Fictional Direct; Fictional Needed,",
+      ",,Fictional Customer,,,FP-1 Fictional Project,Fictional Proposal,Fictional Proposed; Fictional Direct; Fictional Needed",
     );
   });
 
@@ -241,14 +243,81 @@ describe("the Customers tab's worked-out columns", () => {
     expect(headers()).toEqual([
       "Name",
       "Description",
+      "Notes",
       "Projects",
       "Proposals",
-      "Notes",
     ]);
     const menu = await rowMenu("Fictional Customer");
     expect(
       within(menu).queryByRole("menuitem", { name: "Show all features" }),
     ).toBeNull();
+  });
+});
+
+describe("a customer's details", () => {
+  const rows = (title: string) =>
+    within(within(sidePanel()).getByRole("region", { name: title }))
+      .getAllByRole("term")
+      .map((term) => [
+        term.textContent,
+        term.nextElementSibling?.textContent ?? "",
+      ]);
+
+  it("list under Commitments the projects, proposals and features it gets, as a feature's details list its own", async () => {
+    await openPage(customersAt(`&open=${customerId}`), linked);
+    await screen.findByRole("heading", { name: /Fictional Customer/u });
+
+    expect(
+      within(sidePanel())
+        .getAllByRole("heading", { level: 3 })
+        .map(({ textContent }) => textContent),
+    ).toEqual(["Details", "Commitments"]);
+    expect(rows("Commitments")).toEqual([
+      ["Projects", "FP-1 Fictional Project"],
+      ["Proposals", "Fictional Proposal"],
+      ["Features", expect.stringContaining("Fictional Direct")],
+    ]);
+  });
+
+  it("read None in each empty row", async () => {
+    await openPage(customersAt(`&open=${unnamedCustomerId}`), linked);
+    await screen.findByRole("heading", { name: /Unnamed Customer/u });
+
+    expect(rows("Commitments")).toEqual([
+      ["Projects", "None"],
+      ["Proposals", "None"],
+      ["Features", "None"],
+    ]);
+  });
+
+  it("leave Features out for a reader who doesn't see features", async () => {
+    await openPage(customersAt(`&open=${customerId}`), linked, {}, [
+      "plan:view",
+      "plan:edit",
+    ]);
+    await screen.findByRole("heading", { name: /Fictional Customer/u });
+
+    expect(rows("Commitments").map(([label]) => label)).toEqual([
+      "Projects",
+      "Proposals",
+    ]);
+  });
+
+  it("open a project's details on its tab from its link", async () => {
+    await openPage(customersAt(`&open=${customerId}`), linked);
+
+    await userEvent.click(
+      await within(sidePanel()).findByRole("button", {
+        name: "FP-1 Fictional Project",
+      }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: /Fictional Project/u }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("tab", { name: "Projects", selected: true }),
+    ).toBeTruthy();
   });
 });
 
