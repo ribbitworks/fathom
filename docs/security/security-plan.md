@@ -113,6 +113,7 @@ flowchart LR
 - **Before sign-in:** Only the front end's files, sign-in, sign-out, changing a password and the session checks are served without a signed-in account. The front end's script names Fathom's release, and holds every Help page.
   - **Accepted:** anyone who reaches it can look up the release's known weaknesses, which are fixed by updating, not hidden, and the Help pages are public with Fathom's source, holding no organization's data.
 - **Data beyond a role:** One shared data access layer checks permissions and classifications for every page, export and search.
+  - **A change's answer:** a change answers with the records as the role's read would show them, never more; the plan's records pass through one filter on every read and every answer, which tests check for each way a role may hold only part of the plan.
   - **Pages, views and columns:** a page, view or column is shown only to roles that see every classification it needs, and a column that needs a permission as well, such as People's Feature teams, which needs View on Feature teams, only to roles that hold it.
 - **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks.
   - **A change's class:** a change is shown only to readers who see its data, at its class then or now, whichever is more sensitive, so its timing doesn't reveal a Personal change. Accepted: a role that approves people's drafts is told when one holds details it can't see, so it leaves the draft to another approver; trying to decide the draft would tell it as much.

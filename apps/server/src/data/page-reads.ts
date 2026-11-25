@@ -34,36 +34,13 @@ export function seenStreams(
 // to those who may read it.
 export const planOrFeatures = ["plan:view", "features:view"] as const;
 
-// The plan's records a reader may see: features and their columns with features, and the rest with
-// the plan.
-function seenRecords(
-  actor: Actor,
-  records: projectReads.PlanRecords,
-): projectReads.PlanRecords {
-  const seesPlan = actor.permissions.includes("plan:view");
-  const seesFeatures = actor.permissions.includes("features:view");
-  return {
-    ...records,
-    customers: seesPlan ? records.customers : [],
-    projects: seesPlan ? records.projects : [],
-    proposals: seesPlan ? records.proposals : [],
-    features: seesFeatures ? records.features : [],
-    featureColumns: seesFeatures
-      ? records.featureColumns
-      : { fields: [], order: [], lists: [] },
-  };
-}
-
 // The plan's records as the Projects and Features pages read them.
 export async function seenPlan(
   database: Database,
   actor: Actor,
 ): Promise<projectReads.PlanRecords> {
   requireAnyPermission(actor, planOrFeatures);
-  return seenRecords(
-    actor,
-    await projectReads.readPlanRecords(database, actor),
-  );
+  return projectReads.readPlanRecords(database, actor);
 }
 
 // The columns as their drafts make them, and their order, as the actor may see them, read as of one
