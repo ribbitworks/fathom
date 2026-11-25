@@ -156,6 +156,16 @@
   min-height: 0;
 }
 
+/* A panel as tall as what it holds, such as a short form, shrinking to scroll only where the stack
+   has no room for it. */
+.stackItemFitted {
+  flex: 0 1 auto;
+}
+
+.stackItemFitted .body {
+  flex-basis: auto;
+}
+
 /* A panel added to the stack grows into its share of the height, and one closed shrinks away, the
    others making room or taking it back. */
 .stackItemArriving,

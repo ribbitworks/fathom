@@ -161,6 +161,7 @@ export function useAddFromPanel({
       key: "linked",
       id: panelId,
       name: `new ${one}`,
+      fits: true,
       node: (
         <NewPlanRecordPanel
           key={forms}
