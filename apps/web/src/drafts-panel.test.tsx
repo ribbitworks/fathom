@@ -8,7 +8,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import type { Entry, NamedDraft } from "./draft-entries.ts";
+import type { Entry } from "./draft-entries.ts";
+import type { NamedDraft } from "./draft-reading.ts";
 import { noDrafts } from "./drafts.ts";
 import {
   DraftPanel,

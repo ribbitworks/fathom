@@ -13,7 +13,7 @@ import { Button, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { DecisionModal, drafts } from "./decision-dialog.tsx";
-import { type DraftsSeen, useDraftEntries } from "./draft-entries.ts";
+import { type DraftsSeen, useDraftEntries } from "./draft-reading.ts";
 import { type DraftPlace, placeKey } from "./draft-places.ts";
 import { DraftPanel, draftPanelId } from "./drafts-panel.tsx";
 import { type DraftSelection, linkedGroups, mayDecide } from "./drafts.ts";

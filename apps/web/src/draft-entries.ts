@@ -1,22 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The drafts a reader sees, as entries naming each one's record, kind, maker and changes, with
-// the reads that give them.
+// The drafts a reader sees, as entries naming each one's record, kind, maker and changes, built from
+// what the Drafts page reads.
 
 import {
   allOf,
-  approvableKinds,
   type ChangeValue,
   type Choice,
   type ColumnTable,
   type DraftKind,
-  draftKeysOf,
-  draftKinds,
   type DraftState,
-  draftingPermissions,
   type FeatureTeam,
   type FeatureTeamDraft,
-  holdsAny,
   type List,
   isNoteField,
   type LinkedRecord,
@@ -29,55 +24,28 @@ import {
   type PlanningSettingsShown,
   type ProjectPlan,
   type RecordDraft,
-  type RecordKeyOf,
   type RecordType,
   type ReleaseStream,
 } from "@fathom/shared";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 import { addedClass, describeField, describeValue } from "./changes.ts";
 import { personDraftFields } from "./draft-details.tsx";
-import { type DraftPlace, placeKey } from "./draft-places.ts";
-import {
-  type Columns,
-  decidable,
-  unseenPeople,
-  draftNames,
-  type DraftSelection,
-  mayDecide,
-  noDrafts,
-  waitsForRejected,
-  without,
-} from "./drafts.ts";
-import { decisionFor, needsOtherApproval } from "./draft-decisions.ts";
-import { featureTeamsQuery, teamPersonNamer } from "./feature-teams.ts";
-import {
-  listsQuery,
-  liveLists,
-  unchangeableLists,
-  unseenInDrafts,
-} from "./lists.ts";
+import type { DraftPlace } from "./draft-places.ts";
+import { type Columns, type DraftSelection, noDrafts } from "./drafts.ts";
+import { teamPersonNamer } from "./feature-teams.ts";
+import { liveLists } from "./lists.ts";
 import { makerNames } from "./names.ts";
-import { orgChartQuery } from "./org-chart.ts";
-import { type PeopleData, peopleQuery } from "./people.ts";
+import type { PeopleData } from "./people.ts";
 import { isHire, rowName } from "./people-rows.ts";
 import type { Phrase } from "./phrase.tsx";
 import {
   planningSettingsNode,
-  planningSettingsQuery,
   planningSettingsRef,
   settingsDraftWords,
 } from "./planning-settings.ts";
 import { planDraftFields } from "./project-grids.tsx";
-import {
-  listedPlanRecords,
-  planChoicesQuery,
-  planNodes,
-  projectPlanQuery,
-  tableChoices,
-} from "./projects.ts";
+import { listedPlanRecords, planNodes, tableChoices } from "./projects.ts";
 import { recordKey } from "./record-drafts.ts";
-import { recordNodes, releaseStreamsQuery } from "./releases.ts";
+import { recordNodes } from "./releases.ts";
 import { formatDay } from "./day-formats.ts";
 
 interface Drafted {
@@ -547,165 +515,8 @@ function planEntries(
   });
 }
 
-// What drafts a role sees, by the data it sees, and which kinds it approves.
-export interface DraftsSeen {
-  approves: readonly DraftKind[];
-  // Whether the reader makes drafts, so has changes of their own to publish.
-  makesDrafts: boolean;
-  // Whether the reader sees people, so their drafts; those who see only lists see only theirs.
-  seesPeople: boolean;
-  // Whether the reader sees lists, through people or planning configuration.
-  seesLists: boolean;
-  // Whether the reader sees the plan's records, such as release streams.
-  seesPlan: boolean;
-  seesTeams: boolean;
-  // Whether the reader sees the plan itself, so its customers, proposals, projects, and milestones.
-  seesProjects: boolean;
-  // Whether the reader sees configuration, so the planning settings.
-  seesSettings: boolean;
-  // The role's permissions, which decide the lists whose drafts it may decide, by their classes.
-  permissions: readonly Permission[];
-}
-
-export const draftsSeen = (permissions: readonly Permission[]): DraftsSeen => ({
-  approves: approvableKinds(permissions),
-  makesDrafts: holdsAny(permissions, draftingPermissions),
-  seesPeople: permissions.includes("people:view"),
-  seesLists:
-    permissions.includes("people:view") ||
-    permissions.includes("configuration:view"),
-  seesPlan:
-    permissions.includes("features:view") ||
-    permissions.includes("configuration:view"),
-  seesTeams:
-    permissions.includes("feature-teams:view") &&
-    permissions.includes("people:view"),
-  seesProjects: permissions.includes("plan:view"),
-  seesSettings: permissions.includes("configuration:view"),
-  permissions,
-});
-
-// What deciding drafts checks them against: the lists, and the columns, people and plan's records
-// they may use.
-export interface DraftedData {
-  lists: List[];
-  columns: Columns;
-}
-
-export type DraftEntries =
-  | { state: "loading" }
-  | { state: "failed"; retry: () => void }
-  | {
-      state: "loaded";
-      // Every draft seen, newest first.
-      all: Entry[];
-      // Whether a draft waits for a rejected draft it depends on to be resubmitted.
-      waits: (one: Entry) => boolean;
-      // Whether the reader's role decides a draft of its kind.
-      choosable: (one: Entry) => boolean;
-      // Whether the reader may decide a draft now, as toDecide keeps it.
-      decidesNow: (one: Entry) => boolean;
-      // Why another approver must decide a draft holding what the reader's role can't see: of a list
-      // of a class it can't see, or of a person, with details it can't see.
-      unseen: (one: Entry) => string | undefined;
-      // Whether approving a draft takes along drafts another approver must approve.
-      needsOtherApproval: (one: Entry) => boolean;
-      // The other drafts deciding a published draft takes with it, whatever the reader's role
-      // decides: those approved with it while it waits, or those waiting on it once rejected.
-      related: (one: Entry) => NamedDraft[];
-      drafted: DraftedData;
-    };
-
-// The drafts the reader sees, read with what names them; the reads a role doesn't make are left
-// out.
-export function useDraftEntries({
-  approves,
-  seesPeople,
-  seesLists,
-  seesPlan,
-  seesTeams,
-  seesProjects,
-  seesSettings,
-  permissions,
-}: Omit<DraftsSeen, "makesDrafts">): DraftEntries {
-  const people = useQuery({ ...peopleQuery, enabled: seesPeople });
-  const lists = useQuery({ ...listsQuery, enabled: seesLists });
-  const releases = useQuery({ ...releaseStreamsQuery, enabled: seesPlan });
-  const featureTeams = useQuery({ ...featureTeamsQuery, enabled: seesTeams });
-  const chart = useQuery({ ...orgChartQuery, enabled: seesTeams });
-  const plan = useQuery({ ...projectPlanQuery, enabled: seesProjects });
-  const choices = useQuery({ ...planChoicesQuery, enabled: seesProjects });
-  const settings = useQuery({
-    ...planningSettingsQuery,
-    enabled: seesSettings,
-  });
-  // The role's kinds and permissions, kept while they read the same, as a page passes new arrays each
-  // time it renders.
-  const approvesKey = approves.join(" ");
-  const permissionsKey = permissions.join(" ");
-  const kinds = useMemo(() => wordsOf<DraftKind>(approvesKey), [approvesKey]);
-  const held = useMemo(
-    () => wordsOf<Permission>(permissionsKey),
-    [permissionsKey],
-  );
-  // Worked out once for what was read, since a page renders far more often than its reads change.
-  const loaded = useMemo(
-    () =>
-      loadedEntries({
-        people: seesPeople ? people.data : undefined,
-        lists: seesLists ? lists.data : undefined,
-        streams: seesPlan ? releases.data?.streams : undefined,
-        plan: seesProjects ? plan.data : undefined,
-        choices: seesProjects ? choices.data : undefined,
-        settings: seesSettings ? settings.data : undefined,
-        teams: seesTeams ? featureTeams.data?.teams : undefined,
-        chartPeople: seesTeams ? chart.data?.people : undefined,
-        approves: kinds,
-        permissions: held,
-      }),
-    [
-      seesPeople,
-      people.data,
-      seesLists,
-      lists.data,
-      seesPlan,
-      releases.data,
-      seesProjects,
-      plan.data,
-      choices.data,
-      seesSettings,
-      settings.data,
-      seesTeams,
-      featureTeams.data,
-      chart.data,
-      kinds,
-      held,
-    ],
-  );
-  // Only the reads the role makes count: one it doesn't make may still hold an error from before its
-  // role changed.
-  const reads = [
-    ...(seesPeople ? [people] : []),
-    ...(seesLists ? [lists] : []),
-    ...(seesPlan ? [releases] : []),
-    ...(seesTeams ? [featureTeams, chart] : []),
-    ...(seesProjects ? [plan, choices] : []),
-    ...(seesSettings ? [settings] : []),
-  ];
-  if (reads.some(({ isPending }) => isPending)) return { state: "loading" };
-  if (reads.some(({ isError }) => isError)) {
-    return {
-      state: "failed",
-      retry: () => {
-        for (const read of reads) void read.refetch();
-      },
-    };
-  }
-  return loaded;
-}
-
 // What the drafts page reads, as the role reads it: a read it doesn't make is left out.
-interface DraftReads {
+export interface DraftReads {
   people: PeopleData | undefined;
   lists: List[] | undefined;
   streams: ReleaseStream[] | undefined;
@@ -718,27 +529,22 @@ interface DraftReads {
   permissions: readonly Permission[];
 }
 
-const wordsOf = <Word extends string>(joined: string): Word[] =>
-  joined === "" ? [] : (joined.split(" ") as Word[]);
+// What deciding drafts checks them against: the lists, and the columns, people and plan's records
+// they may use.
+export interface DraftedData {
+  lists: List[];
+  columns: Columns;
+}
 
-// The drafts read, with what decides each, each draft's taking along of others worked out once.
-function loadedEntries(
-  read: DraftReads,
-): Extract<DraftEntries, { state: "loaded" }> {
-  const peopleData: PeopleData = read.people ?? {
-    people: [],
-    fields: [],
-    order: [],
-  };
+const noPeople: PeopleData = { people: [], fields: [], order: [] };
+
+// Every draft read, newest first.
+export function entriesOf(read: DraftReads): Entry[] {
+  const peopleData = read.people ?? noPeople;
   const listsData = read.lists ?? [];
   const streams = read.streams ?? [];
-  const {
-    plan: planData,
-    settings: settingsData,
-    approves,
-    permissions,
-  } = read;
-  const all = [
+  const { plan: planData, settings: settingsData } = read;
+  return [
     ...personEntries(peopleData, listsData),
     ...columnEntries(peopleData, listsData),
     ...listEntries(listsData),
@@ -759,8 +565,15 @@ function loadedEntries(
       : planEntries(planData, read.choices, streams)),
     ...(settingsData === undefined ? [] : settingsEntries(settingsData)),
   ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
-  const drafted: DraftedData = {
-    lists: listsData,
+}
+
+// What deciding the drafts read checks them against.
+export function draftedOf(read: DraftReads): DraftedData {
+  const peopleData = read.people ?? noPeople;
+  const streams = read.streams ?? [];
+  const planData = read.plan;
+  return {
+    lists: read.lists ?? [],
     columns: {
       fields: [
         ...peopleData.fields,
@@ -770,114 +583,9 @@ function loadedEntries(
       records: [
         ...recordNodes(streams),
         ...(planData === undefined ? [] : planNodes(planData)),
-        ...settingsNodes(settingsData),
+        ...settingsNodes(read.settings),
       ],
       featureTeams: read.teams,
     },
   };
-  const unchangeable = unchangeableLists(listsData, permissions);
-  const takesAlongOthers = new Map<string, boolean>();
-  const unseen = ({ selects }: Entry) =>
-    unseenInDrafts(selects, listsData, unchangeable) ??
-    unseenPeople(selects, peopleData.people);
-  const reading = {
-    waits: ({ state, selects }: Entry) =>
-      state === "waiting" &&
-      waitsForRejected(selects, drafted.lists, drafted.columns),
-    choosable: ({ selects }: Entry) => mayDecide(approves, selects),
-    unseen,
-    needsOtherApproval: ({ key, selects }: Entry) => {
-      const known = takesAlongOthers.get(key);
-      if (known !== undefined) return known;
-      const needs = needsOtherApproval(
-        selects,
-        approves,
-        drafted.lists,
-        drafted.columns,
-      );
-      takesAlongOthers.set(key, needs);
-      return needs;
-    },
-  };
-  return {
-    state: "loaded",
-    all,
-    ...reading,
-    decidesNow: (one) => toDecide([one], reading).length > 0,
-    related: ({ unpublished, state, selects }) => {
-      if (unpublished) return [];
-      const decision = decisionFor(
-        state === "rejected" ? "reject" : "approve",
-        selects,
-        draftKinds,
-        drafted.lists,
-        drafted.columns,
-      );
-      return decision.included === undefined
-        ? []
-        : namedDrafts(without(decision.selection, selects), all, (rest) =>
-            draftNames(
-              rest,
-              drafted.lists,
-              drafted.columns.fields,
-              drafted.columns.people,
-              drafted.columns.records,
-              drafted.columns.featureTeams,
-            ),
-          );
-    },
-    drafted,
-  };
 }
-
-// A draft named in another's details, with its record's key where it has one.
-export interface NamedDraft {
-  name: string;
-  key: RecordKeyOf | undefined;
-}
-
-// The drafts in a selection, named as a decision names them, each after its record's key, taken
-// from its row; any the reader has no row for have no key.
-export function namedDrafts(
-  selection: DraftSelection,
-  entries: readonly Entry[],
-  namesOf: (drafts: DraftSelection) => string[],
-): NamedDraft[] {
-  const wanted = new Set(draftKeysOf(selection));
-  const found = entries.filter((one) =>
-    draftKeysOf(one.selects).some((key) => wanted.has(key)),
-  );
-  const rest = found.reduce(
-    (left, one) => without(left, one.selects),
-    selection,
-  );
-  return [
-    ...found.flatMap(({ selects, place }) =>
-      namesOf(without(selects, without(selects, selection))).map((name) => ({
-        name,
-        key: placeKey(place),
-      })),
-    ),
-    ...namesOf(rest).map((name) => ({ name, key: undefined })),
-  ];
-}
-
-// The drafts the reader may choose to decide now: of a kind their role decides, of lists whose
-// class it sees, not waiting on a rejected draft, and decidable as any record's draft is.
-export const toDecide = (
-  entries: readonly Entry[],
-  loaded: Pick<
-    Extract<DraftEntries, { state: "loaded" }>,
-    "waits" | "choosable" | "unseen"
-  >,
-): Entry[] =>
-  entries.filter(
-    (one) =>
-      loaded.choosable(one) &&
-      loaded.unseen(one) === undefined &&
-      !loaded.waits(one) &&
-      decidable({
-        draft: { state: one.state, unpublished: one.unpublished },
-        heldBy: one.heldBy,
-      }),
-  );

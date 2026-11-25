@@ -44,7 +44,7 @@ import { RecordNotShown } from "./go-page.tsx";
 import { HelpPageView } from "./help-page.tsx";
 import { helpIndexPage, shownHelpPage } from "./help-pages.ts";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
-import { draftsSeen } from "./draft-entries.ts";
+import { draftsSeen } from "./draft-reading.ts";
 import { shownPlace } from "./draft-places.ts";
 import { DraftsPage } from "./drafts-page.tsx";
 import { HistoryPage } from "./history-page.tsx";
