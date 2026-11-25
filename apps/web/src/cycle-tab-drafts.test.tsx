@@ -665,6 +665,7 @@ describe("a cycle's drafts", () => {
       screen.queryByRole("heading", { level: 2, name: /^Fictional Minors: / }),
     ).toBeNull();
   });
+
   describe("published as the change behind the cycle", () => {
     const schedulesEditor = () =>
       Response.json({
