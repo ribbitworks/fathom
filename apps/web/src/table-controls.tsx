@@ -37,6 +37,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { composingWord } from "./composing.ts";
 import { DayInput } from "./day-input.tsx";
 import { drafts as draftCount } from "./decision-dialog.tsx";
 import { FilterPill, type ShownPageFilter } from "./filter-pills.tsx";
@@ -433,7 +434,7 @@ export function TableSearch({
         change(event.currentTarget.value);
       }}
       onKeyDown={(event) => {
-        if (event.key !== "Escape") return;
+        if (event.key !== "Escape" || composingWord(event)) return;
         event.preventDefault();
         if (text === "") {
           if (onLeave === undefined) input.current?.blur();

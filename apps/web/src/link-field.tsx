@@ -28,6 +28,7 @@ import {
 } from "@mantine/core";
 import { type KeyboardEvent, type MouseEvent, useState } from "react";
 import { type Finish, useTypedBeforeFocus } from "./choice-picker.tsx";
+import { composingWord } from "./composing.ts";
 import { CountedInput } from "./counted-input.tsx";
 import classes from "./pages.module.css";
 
@@ -141,6 +142,7 @@ export function useLinkForm({
 
   // Tab past the last field, or Shift+Tab before the first, saves and moves on, as in other cells.
   const onKeyDown = (event: KeyboardEvent) => {
+    if (composingWord(event)) return;
     const field = (event.target as HTMLElement).id;
     if (event.key === "Escape") {
       event.preventDefault();

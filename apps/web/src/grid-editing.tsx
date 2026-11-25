@@ -7,7 +7,7 @@ import { type ComponentProps, type KeyboardEvent, useState } from "react";
 import type { Typing } from "@fathom/shared";
 import { startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
-import { heldForComposing } from "./composing.ts";
+import { composingWord } from "./composing.ts";
 import { focusSoon } from "./focus.ts";
 import { focusRecordCell } from "./grid-row.tsx";
 import { emptyValue, kindOf, readOnlyFor } from "./grid-columns.tsx";
@@ -203,7 +203,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
   };
 
   const onEditorKey = (event: KeyboardEvent, cell: Cell) => {
-    if (heldForComposing(event)) return;
+    if (composingWord(event)) return;
     if (event.key === "Escape") {
       event.preventDefault();
       setProblem(undefined);

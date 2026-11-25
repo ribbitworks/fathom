@@ -9,6 +9,7 @@ import { type KeyboardEvent, useState } from "react";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import { actionsId, rowId } from "./choice-ids.ts";
 import { lastKept, removedChoice } from "./choice-rules.ts";
+import { composingWord } from "./composing.ts";
 import {
   configDraftFields,
   draftLines,
@@ -38,6 +39,7 @@ export function useChoiceMenus() {
     if (
       event.key !== "Escape" ||
       event.defaultPrevented ||
+      composingWord(event) ||
       menuFor === undefined
     ) {
       return;

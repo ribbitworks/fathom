@@ -16,7 +16,7 @@ import {
 } from "react";
 import { ColouredName } from "./colour-swatch.tsx";
 import comboboxClasses from "./combobox.module.css";
-import { heldForComposing } from "./composing.ts";
+import { composingWord } from "./composing.ts";
 import classes from "./pages.module.css";
 
 // How editing a cell ended: Enter, Tab or Shift+Tab, or leaving the cell.
@@ -228,7 +228,7 @@ export function ChoicePicker({
     value === noneValue ? picked.length === 0 : picked.includes(value);
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (heldForComposing(event)) return;
+    if (composingWord(event)) return;
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       justPicked.current = false;
       // The combobox moves on after this, so Down from nothing passes over none to the first choice.
