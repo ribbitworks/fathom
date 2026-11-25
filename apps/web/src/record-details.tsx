@@ -5,14 +5,7 @@
 // shows it instead.
 
 import type { Link as WebLink } from "@fathom/shared";
-import {
-  ActionIcon,
-  Anchor,
-  Group,
-  Stack,
-  Text,
-  VisuallyHidden,
-} from "@mantine/core";
+import { ActionIcon, Anchor, Group, Stack, Text } from "@mantine/core";
 import {
   type MouseEvent,
   type ReactNode,
@@ -323,7 +316,6 @@ export function Row({
   colour = null,
   changed,
   editing,
-  labelHidden = false,
   children,
   action,
 }: {
@@ -346,8 +338,6 @@ export function Row({
       }
     | undefined;
   editing?: Editing | undefined;
-  // Whether its label is only read aloud, for the one row of a section its heading already names.
-  labelHidden?: boolean | undefined;
   children?: ReactNode;
   // A control of its own at the row's right, after the change button if there is one, such as a menu.
   action?: ReactNode;
@@ -372,20 +362,13 @@ export function Row({
       className={[
         classes.row,
         onClick === undefined ? "" : classes.editable,
-        labelHidden ? classes.labelHidden : "",
       ].join(" ")}
       data-field={editing?.open === true || undefined}
       onClick={onClick}
     >
-      {labelHidden ? (
-        <VisuallyHidden component="dt" id={labelId(column)}>
-          {column.label}
-        </VisuallyHidden>
-      ) : (
-        <dt id={labelId(column)} className={classes.label}>
-          {column.label}
-        </dt>
-      )}
+      <dt id={labelId(column)} className={classes.label}>
+        {column.label}
+      </dt>
       <dd className={classes.value}>
         {editing?.open === true ? (
           editing.editor

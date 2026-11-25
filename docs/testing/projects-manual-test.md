@@ -295,7 +295,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 - [ ] `8158` Select the ⋯ at the end of the row of 'Bluefin Harbour Authority', then **Show details**.
   - **Expected:**
-    - The details are headed **Details**, with **Name** and **Description**, then **Notes**, last.
+    - Under **Details**: **Name**, **Description** and **Notes**, in that order.
     - **Description** reads "Port operator running two container terminals and a ferry quay."
     - **Notes** shows the note folded, fading out, with **Show more** under it.
   - **Notes:**

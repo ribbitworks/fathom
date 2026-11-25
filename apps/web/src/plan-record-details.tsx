@@ -183,13 +183,9 @@ export function PlanRecordDetails({
   };
   closeStale(context);
   const editing = editingOf(context);
-  const rowOf = (
-    { column, edited }: (typeof rows)[number],
-    labelHidden = false,
-  ) => (
+  const rowOf = ({ column, edited }: (typeof rows)[number]) => (
     <DetailRow
       key={column.key}
-      labelHidden={labelHidden}
       column={column}
       units={units}
       record={record}
@@ -200,7 +196,7 @@ export function PlanRecordDetails({
     />
   );
   if (sections === undefined) {
-    return <dl className={details.list}>{rows.map((row) => rowOf(row))}</dl>;
+    return <dl className={details.list}>{rows.map(rowOf)}</dl>;
   }
   const named = new Set(sections.flatMap(({ keys }) => keys));
   const others = {
@@ -220,12 +216,7 @@ export function PlanRecordDetails({
             id={`record-section-${String(index)}`}
             title={section.title}
           >
-            {shown.map((row) =>
-              rowOf(
-                row,
-                shown.length === 1 && row.column.label === section.title,
-              ),
-            )}
+            {shown.map(rowOf)}
           </RecordSection>
         );
       })}
@@ -241,7 +232,6 @@ function DetailRow({
   ownDraft,
   editing,
   follow,
-  labelHidden,
 }: {
   column: Column<never, PlanChange>;
   // The units and decimal places the table shows its columns in.
@@ -251,7 +241,6 @@ function DetailRow({
   ownDraft: PlanRecord["draft"] | undefined;
   editing: Editing | undefined;
   follow: Follow;
-  labelHidden: boolean;
 }) {
   const draft =
     ownDraft?.action === "changed" &&
@@ -308,7 +297,6 @@ function DetailRow({
           : { live: column.live(draft as never), draft }
       }
       editing={editing}
-      labelHidden={labelHidden}
     >
       {shown}
     </Row>
