@@ -480,8 +480,6 @@ export {
   type Activity,
   activityColumnKeys,
   activityOwnerProblem,
-  type ActivityPlan,
-  activityPlanSchema,
   type ActivityRequest,
   activityRequestSchema,
   activitySchema,

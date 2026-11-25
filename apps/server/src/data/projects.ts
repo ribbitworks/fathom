@@ -72,7 +72,7 @@ import { readToday } from "./settings.ts";
 import { planOut, type PlanRecords, reasonsOf } from "./project-reads.ts";
 
 // Runs a change, and answers with every record as the editor now sees them.
-async function changingPlan(
+export async function changingPlan(
   database: Database,
   editor: Actor,
   change: (

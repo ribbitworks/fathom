@@ -5,7 +5,6 @@
 
 import { z } from "zod";
 import { planningRequestShape, planningShape } from "./features.ts";
-import { featureColumnsSchema } from "./projects.ts";
 
 // The keys of an activity's own fields, in the order its table and details show them.
 export const activityColumnKeys = [
@@ -55,13 +54,3 @@ export const activityOwnerProblem = (
   }
   return undefined;
 };
-
-// Every activity, the live ones by name, then those drafted to be added, in the order drafted, the
-// columns added to Activities, and whether the user may change them.
-export const activityPlanSchema = z.object({
-  activities: z.array(activitySchema),
-  columns: featureColumnsSchema,
-  canEdit: z.boolean(),
-});
-
-export type ActivityPlan = z.infer<typeof activityPlanSchema>;

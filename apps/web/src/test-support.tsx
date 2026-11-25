@@ -329,6 +329,8 @@ export const planAnswers = (features: readonly Feature[]) => ({
       proposals: [],
       features,
       featureColumns: noFeatureColumns,
+      activities: [],
+      activityColumns: noFeatureColumns,
       canEdit: false,
       canEditFeatures: false,
     }),

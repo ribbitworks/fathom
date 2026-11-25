@@ -2,6 +2,7 @@
 
 // Customers, projects with their milestones, and proposals, as records of the plan.
 
+import { activitySchema } from "./activities.ts";
 import { z } from "zod";
 import { daySchema } from "./days.ts";
 import { featureLengths, featureSchema } from "./features.ts";
@@ -182,15 +183,17 @@ export const featureColumnsSchema = z.object({
 
 export type FeatureColumns = z.infer<typeof featureColumnsSchema>;
 
-// Every customer, project, proposal, and feature, the live ones by name, then those drafted to be
-// added, in the order drafted, with whether the user may change them: features apart from the rest,
-// since Edit Features is a permission of its own.
+// Every customer, project, proposal, feature and activity, the live ones by name, then those drafted
+// to be added, in the order drafted, with whether the user may change them: features and activities
+// apart from the rest, since Edit Features is a permission of its own.
 export const projectPlanSchema = z.object({
   customers: z.array(customerSchema),
   projects: z.array(projectSchema),
   proposals: z.array(proposalSchema),
   features: z.array(featureSchema),
   featureColumns: featureColumnsSchema,
+  activities: z.array(activitySchema),
+  activityColumns: featureColumnsSchema,
   canEdit: z.boolean(),
   canEditFeatures: z.boolean(),
 });

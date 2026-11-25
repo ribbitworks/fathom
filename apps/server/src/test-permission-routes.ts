@@ -682,11 +682,6 @@ export const routes: Route[] = [
     pattern: "/api/projects/choices",
     needs: anyOf("plan:view", "features:view"),
   },
-  {
-    method: "GET",
-    pattern: "/api/activities",
-    needs: allOf("features:view"),
-  },
   // An activity names its project, which a random one isn't found as.
   ...(["POST", "PUT", "DELETE"] as const).map((method): Route => ({
     method,

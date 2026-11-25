@@ -489,6 +489,8 @@ describe("the dialog changing one cycle's length", () => {
           canEdit: false,
           canEditFeatures: false,
           featureColumns: noFeatureColumns,
+          activities: [],
+          activityColumns: noFeatureColumns,
         }),
     });
     show((handlers) => (

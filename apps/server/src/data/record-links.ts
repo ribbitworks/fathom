@@ -19,7 +19,6 @@ import { historyShowsRemoval } from "./change-history.ts";
 import { readFeatureTeams } from "./feature-team-reads.ts";
 import { readLiveHires } from "./hire-reads.ts";
 import {
-  seenActivities,
   seenLists,
   seenPeople,
   seenPeopleColumns,
@@ -82,16 +81,9 @@ export function createRecordFinders(database: Database): Finders {
   const onPeople = async (actor: Actor, id: string) =>
     (await seenPeople(database, actor)).people.find((row) => row.id === id);
   const roleAdministration = createRoleAdministration(database);
-  const activitiesSeen = async (actor: Actor) =>
-    unlessRefused(async () => seenActivities(database, actor));
   return {
     feature: inPlan("feature", (plan) => plan.features),
-    activity: async (actor, id) => {
-      const activities = await activitiesSeen(actor);
-      return activities !== undefined && among(activities.activities, id)
-        ? { kind: "activity", id }
-        : undefined;
-    },
+    activity: inPlan("activity", (plan) => plan.activities),
     project: inPlan("project", (plan) => plan.projects),
     proposal: inPlan("proposal", (plan) => plan.proposals),
     customer: inPlan("customer", (plan) => plan.customers),
@@ -131,8 +123,7 @@ export function createRecordFinders(database: Database): Finders {
       if (plan !== undefined && among(plan.featureColumns.fields, id)) {
         return { kind: "column", id, table: "features" };
       }
-      const activities = await activitiesSeen(actor);
-      if (activities !== undefined && among(activities.columns.fields, id)) {
+      if (plan !== undefined && among(plan.activityColumns.fields, id)) {
         return { kind: "column", id, table: "activities" };
       }
       const people = await seenPeopleColumns(database, actor);
