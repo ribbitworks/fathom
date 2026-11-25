@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for drafting releases: making one, and removing and deciding one from its row's menu.
+// Tests for drafting releases: making one, removing and deciding one from its row's menu, and
+// acting on its draft from its details or row.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -252,6 +253,7 @@ describe("making a release", () => {
     ).toBeDefined();
   });
 });
+
 describe("a release's draft from its details and its row", () => {
   const releasesEditor = () =>
     Response.json({
