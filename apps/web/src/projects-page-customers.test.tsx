@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for what the Customers tab works out from the plan's links: the projects, proposals and
-// features naming each customer, sorted, filtered and exported; Show all its features, opening
+// features naming each customer, sorted, filtered and exported; Show all features, opening
 // Features filtered to the customer; and Remove customer turned off while anything names it.
 
 import { screen, waitFor, within } from "@testing-library/react";
@@ -235,7 +235,7 @@ describe("the Customers tab's worked-out columns", () => {
     );
   });
 
-  it("leave Features out for a reader who doesn't see features, with Show all its features", async () => {
+  it("leave Features out for a reader who doesn't see features, with Show all features", async () => {
     await openPage(customersAt(), linked, {}, ["plan:view", "plan:edit"]);
 
     expect(headers()).toEqual([
@@ -247,7 +247,7 @@ describe("the Customers tab's worked-out columns", () => {
     ]);
     const menu = await rowMenu("Fictional Customer");
     expect(
-      within(menu).queryByRole("menuitem", { name: "Show all its features" }),
+      within(menu).queryByRole("menuitem", { name: "Show all features" }),
     ).toBeNull();
   });
 });
@@ -366,7 +366,7 @@ describe("showing all a customer's features", () => {
 
     await chooseFrom(
       await rowMenu("Fictional Customer"),
-      "Show all its features",
+      "Show all features",
     );
 
     await waitFor(() => {
