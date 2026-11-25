@@ -48,7 +48,7 @@ import {
   waitsForRejected,
   without,
 } from "./drafts.ts";
-import { decisionFor } from "./draft-decisions.ts";
+import { decisionFor, needsOtherApproval } from "./draft-decisions.ts";
 import { featureTeamsQuery, teamPersonNamer } from "./feature-teams.ts";
 import {
   listsQuery,
@@ -607,6 +607,8 @@ export type DraftEntries =
       // Why another approver must decide a draft holding what the reader's role can't see: of a list
       // of a class it can't see, or of a person, with details it can't see.
       unseen: (one: Entry) => string | undefined;
+      // Whether approving a draft takes along one another approver must approve.
+      othersApprove: (one: Entry) => boolean;
       // The other drafts deciding a published draft takes with it, whatever the reader's role
       // decides: those approved with it while it waits, or those waiting on it once rejected.
       related: (one: Entry) => NamedDraft[];
@@ -715,6 +717,8 @@ export function useDraftEntries({
       waitsForRejected(selects, drafted.lists, drafted.columns),
     choosable: ({ selects }: Entry) => mayDecide(approves, selects),
     unseen,
+    othersApprove: ({ selects }: Entry) =>
+      needsOtherApproval(selects, approves, drafted.lists, drafted.columns),
   };
   return {
     state: "loaded",

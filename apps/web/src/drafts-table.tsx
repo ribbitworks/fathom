@@ -114,7 +114,8 @@ export function draftRows(
     waits,
     choosable,
     unseen,
-  }: Record<"waits" | "choosable", (one: Entry) => boolean> & {
+    othersApprove,
+  }: Record<"waits" | "choosable" | "othersApprove", (one: Entry) => boolean> & {
     unseen: (one: Entry) => string | undefined;
   },
 ): DraftRow[] {
@@ -149,7 +150,9 @@ export function draftRows(
       one.state === "waiting" && !one.unpublished && choosable(one)
         ? [
             ...(waits(one) ? [waitsOnRejected] : []),
-            ...(one.needsOtherApprover || unseen(one) !== undefined
+            ...(one.needsOtherApprover ||
+            unseen(one) !== undefined ||
+            othersApprove(one)
               ? [needsAnotherApprover]
               : []),
           ]
