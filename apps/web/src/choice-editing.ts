@@ -24,6 +24,7 @@ import {
 import { focusSoon } from "./focus.ts";
 import type { ChoiceActions } from "./list-panel.tsx";
 import { opensMenu } from "./row-controls.tsx";
+import { composingWord } from "./composing.ts";
 
 const typedWeight = (weight: number | undefined) =>
   weight === undefined ? "" : String(weight);
@@ -278,7 +279,10 @@ export function useChoiceEditing({
     if (event.key === "Escape") {
       event.preventDefault();
       cancelEdit(choice);
-    } else if ((event.key === "Enter" && !event.shiftKey) || leaving) {
+    } else if (
+      (event.key === "Enter" && !event.shiftKey && !composingWord(event)) ||
+      leaving
+    ) {
       event.preventDefault();
       saveEdit(choice);
     }

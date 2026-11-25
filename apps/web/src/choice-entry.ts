@@ -20,6 +20,7 @@ import {
 } from "./choice-rules.ts";
 import { focusSoon } from "./focus.ts";
 import type { ChoiceActions } from "./list-panel.tsx";
+import { composingWord } from "./composing.ts";
 
 export function useChoiceEntry({
   list,
@@ -120,7 +121,7 @@ export function useChoiceEntry({
   };
 
   const onEntryKey = (event: KeyboardEvent, field: Field) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !composingWord(event)) {
       event.preventDefault();
       addEntry();
     } else if (event.key === "Escape") {
