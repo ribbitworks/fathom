@@ -52,7 +52,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `4CE3` Look at the page and the left-hand menu.
   - **Expected:**
     - The **Overview** page is open.
-    - The **Plan** section shows **Overview**, **Projects**, **Features** and **Releases**.
+    - The **Plan** section shows **Overview**, **Projects**, **Features**, **Activities** and **Releases**.
     - The **People** section shows **People**, **Org chart** and **Capacity**.
     - The **Administration** section shows **Accounts**, **Roles**, **Settings** and **Lists**.
     - The **History** section shows **Drafts**, **Change history** and **Access history**.

@@ -54,3 +54,48 @@ Choosing a release clears its project, and choosing a project clears its release
 - Choose **Release** or **Project** in **Group by** to see each one's activities together.
 
 See [Saved views](saved-views.md) to keep a view you use often.
+
+### Add a Column
+
+You can add your own columns to Activities if your role edits features and sees people, as the Product Manager's does. They're Activities' own, apart from the columns on Features.
+
+1. Select **New column**, at the right of the page's heading.
+1. Type the column's **Name**.
+1. Choose its **Type**: **Choice from a list**, **Web link**, **Note** or **Number**.
+1. If you chose **Choice from a list**, choose a list. Only lists whose class is **General** are offered, since everyone who sees activities sees these columns.
+1. Select **Add column**.
+
+You're done when the new column shows in the table, with a hollow dot until you publish it.
+
+### Count Activities
+
+1. Select **Metrics**. The **Metrics** panel opens beside the table.
+1. Under **Break down by**, choose the column to count by, such as **Release**.
+
+You're done when the panel shows how many activities hold each value of the column you chose.
+
+### Export Activities
+
+1. Select the **Export** button at the right of the page's heading. Its icon is an arrow pointing down to a line.
+1. Choose **CSV file** or **TSV file**.
+1. Choose where to save it, if your browser asks.
+
+The file holds what the table shows. You're done when the file is saved. See [People](people.md#export-people) for what the file holds.
+
+### Remove an Activity
+
+1. Open the activity's **⋯** menu.
+1. Select **Remove activity**.
+
+Fathom won't remove an activity once people are allocated to it, since that time was spent. Choose a status that means Cancelled instead.
+
+You're done when the row is struck through. It's removed once the removal is approved.
+
+## Marks and Terms
+
+- **Release** names a release with its schedule, such as **Platform: Harbor 1**.
+- **Project** names a project with its Project ID first, if it has one, such as **P-2001 Crane Control**.
+- **None**, in **Release** or **Project**, means the activity belongs to the other one.
+- **No team**, in red in the **Feature team** cell, marks a planned or in-progress activity that has no feature team yet.
+- **Status** says how far along the activity is, from the same statuses features use, which are named on the **Lists** page. A new activity starts on the first status that means Possible.
+- **Effort** is the work the activity needs, such as 2.5 PD for person-days. Point at it to see the hours.

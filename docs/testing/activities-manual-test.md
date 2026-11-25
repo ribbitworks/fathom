@@ -46,7 +46,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - **Activities** is in the left-hand menu after **Features**, and is highlighted.
     - The heading reads **Activities**, with **New column** and **New activity** at its right.
-    - The table's columns are **Name**, **Status**, **Description**, **Notes**, **Release**, **Project**, **Priority**, **Needed by**, **Effort**, **Size**, **Risk**, **Feature team** and **Staffed**, in that order.
+    - The table's columns, in this order:
+      - **Name**
+      - **Status**
+      - **Description**
+      - **Notes**
+      - **Release**
+      - **Project**
+      - **Priority**
+      - **Needed by**
+      - **Effort**
+      - **Size**
+      - **Risk**
+      - **Feature team**
+      - **Staffed**
     - 'Data migration' shows 'P-2001 Crane Control' under **Project**, with **P-2001** dimmed, and **Release** empty.
   - **Notes:**
 - [ ] `F46D` Point at the 'Data migration' row and select the details button at the right of its **Name** cell.
@@ -65,12 +78,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `E8B5` Select **New activity**.
   - **Expected:** The **New activity** form opens beside the table, with the cursor in **Name**.
   - **Notes:**
-- [ ] `7DB5` Type `Cutover rehearsal` in **Name** and select **Add**.
-  - **Expected:**
-    - "Choose a release or a project" shows in red under **Release**.
-    - Nothing is added to the table.
+- [ ] `7DB5` Type `Cutover rehearsal` in **Name**.
+  - **Expected:** **Name** reads `Cutover rehearsal`.
   - **Notes:**
-- [ ] `455C` Choose 'P-2001 Crane Control' in **Project** and select **Add**.
+- [ ] `455C` Choose 'P-2001 Crane Control' in **Project**.
+  - **Expected:** **Project** reads 'P-2001 Crane Control', with **P-2001** dimmed, and **Release** reads **None**.
+  - **Notes:**
+- [ ] `45A2` Select **Add**.
   - **Expected:**
     - The form closes, and 'Cutover rehearsal' shows in the table with a hollow dot before its name.
     - Its **Project** reads 'P-2001 Crane Control', and its **Status** reads **Possible**.
@@ -85,10 +99,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `E450` Select the **Release** cell of 'Operator training', press Enter, choose 'Platform: Harbor 1' and press Enter.
   - **Expected:**
     - **Release** reads 'Platform: Harbor 1' after a hollow dot.
-    - **Project** reads **No project** in grey italics, after a hollow dot.
-    - A light green **Live** row under it shows **No release** under **Release** and 'P-2001 Crane Control' under **Project**.
+    - **Project** reads **None** in grey italics, after a hollow dot.
+    - A light green **Live** row under it shows **None** under **Release** and 'P-2001 Crane Control' under **Project**.
   - **Notes:**
-- [ ] `1D8D` Select the **Release** cell of 'Operator training', press Delete.
+- [ ] `1D8D` Select the **Release** cell of 'Operator training'.
+  - **Expected:** The cell is outlined.
+  - **Notes:**
+- [ ] `532D` Press Delete.
   - **Expected:** "Choose a release or a project" shows under the row, and the cell still reads 'Platform: Harbor 1'.
   - **Notes:**
 - [ ] `0372` Press Esc.

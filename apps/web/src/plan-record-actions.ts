@@ -22,11 +22,11 @@ import { noColumnActions } from "./project-grids.tsx";
 import {
   changeRemovalReason,
   namesOf,
-  operationsOf,
   planNodes,
   type PlanRecord,
   type PlanRecordKind,
 } from "./projects.ts";
+import { operationsOf } from "./plan-record-operations.ts";
 import type { RecordActions } from "./record-table.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
 import type { RecordSaving } from "./saving.ts";

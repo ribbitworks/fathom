@@ -588,8 +588,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The table of features shows.
   - **Notes:**
 
-- [ ] `8F24` Select the **Activities** page in the left-hand menu, then **Show details** in the **⋯** menu of 'Data migration'.
-  - **Expected:** The text and marks in the table and the side panel are easy to read.
+- [ ] `8F24` Select the **Activities** page in the left-hand menu.
+  - **Expected:** The text and marks in the table are easy to read.
+  - **Notes:**
+
+- [ ] `E59B` Select **Show details** in the **⋯** menu of 'Data migration'.
+  - **Expected:** The text and marks in the side panel are easy to read.
   - **Notes:**
 
 - [ ] `37DA` Select the **Projects** page in the left-hand menu.

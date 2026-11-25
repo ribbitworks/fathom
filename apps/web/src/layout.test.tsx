@@ -557,4 +557,18 @@ describe("on a narrow screen", () => {
     expect(menu.getAttribute("aria-expanded")).toBe("false");
     expect(sidebar().hasAttribute("inert")).toBe(true);
   });
+
+  it("keeps the current page marked while its address shows more, such as a grouping", async () => {
+    serverAnswers({
+      "GET /api/session": administrator,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/?grouping=anything");
+    await screen.findByText("Hello, Fathom");
+    expect(
+      within(sidebar())
+        .getByRole("link", { name: "Overview" })
+        .getAttribute("aria-current"),
+    ).toBe("page");
+  });
 });

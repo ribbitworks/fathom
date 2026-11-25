@@ -9,26 +9,19 @@ import {
   type Project,
   type Proposal,
 } from "@fathom/shared";
-import {
-  addedColumn,
-  type AddedColumns,
-  cellRequest,
-} from "./added-columns.ts";
-import type { CellChange } from "./cell-kinds.tsx";
+import { type AddedColumns } from "./added-columns.ts";
 import { choice } from "./lists.ts";
 import {
   cycleChoiceId,
   type ReleaseGroup,
-  type FeatureFields,
   type TableChoices,
   targetOf,
 } from "./projects.ts";
+import { type FeatureFields } from "./plan-record-operations.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
-import { inOrder } from "./grid-columns.tsx";
 import {
   customersColumn,
   field,
-  merged,
   newKind,
   namersColumn,
   type PlanChange,
@@ -39,13 +32,14 @@ import {
 import {
   type Column,
   type ColumnGroup,
-  inGroupOrder,
   type RecordTable,
   type RowGrouping,
 } from "./record-table.ts";
 import { type RowGroup, rankOfNone } from "./row-groups.ts";
 import {
   byNeededBy,
+  inGroupsThenAdded,
+  plannedRequest,
   planningColumns,
   staffedColumnKey,
 } from "./planning-columns.tsx";
@@ -177,15 +171,11 @@ export function featureColumns(
     },
     releaseColumn(choices.releaseOfCycle),
   ];
-  const inGroups = inGroupOrder(builtIn, featureColumnGroups);
-  // The built-in columns follow the details' groups; the server's order places the added ones.
-  return [
-    ...inGroups,
-    ...inOrder(
-      fields.map((added) => addedColumn<Feature, CellChange>(added, lists)),
-      order,
-    ),
-  ];
+  return inGroupsThenAdded(builtIn, featureColumnGroups, {
+    fields,
+    lists,
+    order,
+  });
 }
 
 // After every group, for the features that target no cycle, or one no longer offered.
@@ -264,13 +254,7 @@ export function featureTable(
       byNeededBy,
       ...byListed,
     ],
-    request: (changes) => {
-      const request: PlanChange = {
-        ...merged(changes),
-        ...cellRequest(changes),
-      };
-      return request as FeatureFields;
-    },
+    request: (changes) => plannedRequest(changes) as FeatureFields,
     showDetails: onOpen,
   });
 }

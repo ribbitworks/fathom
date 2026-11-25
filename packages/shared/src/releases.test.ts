@@ -15,6 +15,7 @@ import {
   releaseStreamRequestSchema,
   scheduleEndRequestSchema,
   shipsBeforeStart,
+  withSchedule,
 } from "./releases.ts";
 import { knownColour } from "./palette.ts";
 
@@ -33,6 +34,14 @@ const release = {
   firstCycle: "2027-01-01",
   lastCycle: "2027-04-01",
 };
+
+describe("withSchedule", () => {
+  it("names a cycle or release with its schedule", () => {
+    expect(withSchedule({ name: "Fictional Majors" }, "Fictional One")).toBe(
+      "Fictional Majors: Fictional One",
+    );
+  });
+});
 
 describe("releaseStreamRequestSchema", () => {
   it("trims the name", () => {

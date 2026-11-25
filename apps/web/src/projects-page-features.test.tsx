@@ -16,7 +16,7 @@ import {
   serverAnswers,
 } from "./test-support.tsx";
 import { formatDay } from "./day-formats.ts";
-import { operationsOf } from "./projects.ts";
+import { operationsOf } from "./plan-record-operations.ts";
 import {
   projectId,
   changeSetId,

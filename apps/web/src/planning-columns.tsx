@@ -28,13 +28,26 @@ import { effortColumnUnits, hoursWords, unitLabel } from "./effort.ts";
 import { choice } from "./lists.ts";
 import { decimalUpTo } from "./numbers.ts";
 import {
+  addedColumn,
+  type AddedColumns,
+  cellRequest,
+} from "./added-columns.ts";
+import type { CellChange } from "./cell-kinds.tsx";
+import { inOrder } from "./grid-columns.tsx";
+import {
   field,
   firstStatus,
+  merged,
   nameColumn,
   type PlanChange,
 } from "./plan-table.tsx";
 import type { TableChoices } from "./projects.ts";
-import type { Column, RowGrouping } from "./record-table.ts";
+import {
+  type Column,
+  type ColumnGroup,
+  inGroupOrder,
+  type RowGrouping,
+} from "./record-table.ts";
 import { rankOfNone } from "./row-groups.ts";
 import type { ColumnUnit } from "./table-view.ts";
 
@@ -191,6 +204,7 @@ export function planningColumns<Rec extends Planned>(
     | "sizes"
     | "risks"
     | "featureTeams"
+    | "featureTeamColours"
     | "effortConversions"
   >,
   { editsFeatureTeams = false }: { editsFeatureTeams?: boolean } = {},
@@ -240,3 +254,25 @@ export function planningColumns<Rec extends Planned>(
     },
   ];
 }
+
+// A table of planned work's columns: its own in its details' groups' order, then those added to it
+// in the order the server keeps.
+export function inGroupsThenAdded<Rec extends Planned>(
+  builtIn: readonly Column<Rec, PlanChange>[],
+  groups: readonly ColumnGroup[],
+  { fields, lists, order }: AddedColumns,
+): Column<Rec, PlanChange>[] {
+  return [
+    ...inGroupOrder(builtIn, groups),
+    ...inOrder(
+      fields.map((added) => addedColumn<Rec, CellChange>(added, lists)),
+      order,
+    ),
+  ];
+}
+
+// The request a new row of planned work makes, from the changes its columns' values save.
+export const plannedRequest = (changes: PlanChange[]): PlanChange => ({
+  ...merged(changes),
+  ...cellRequest(changes),
+});

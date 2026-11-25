@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The plan's records, each a table edited like People's: the Projects page, with a tab each for
-// projects, proposals, customers and milestones, and the Features page, as a table or a board.
+// projects, proposals, customers and milestones, the Features page, as a table or a board, and the
+// Activities page.
 
 import type {
   Activity,
@@ -156,7 +157,9 @@ const plannedTables = {
   },
 } as const;
 
-const plannedTableOf = (tab: PlanTab) =>
+type PlannedTable = (typeof plannedTables)[keyof typeof plannedTables];
+
+const plannedTableOn = (tab: PlanTab): PlannedTable | undefined =>
   tab === "features" || tab === "activities"
     ? // The tab is always one of the two fixed tabs here.
       // eslint-disable-next-line security/detect-object-injection
@@ -224,7 +227,7 @@ export function ProjectsPage({
 }) {
   const page =
     planPages[tab === "features" || tab === "activities" ? tab : "projects"];
-  const planned = plannedTableOf(tab);
+  const planned = plannedTableOn(tab);
   const query = useQuery(projectPlanQuery);
   const choicesQuery = useQuery(planChoicesQuery);
   const streamsQuery = useQuery({
@@ -582,6 +585,7 @@ export function ProjectsPage({
     // that sets them up.
     function plannedGrid<Rec extends Feature | Activity, Request>(
       type: "feature" | "activity",
+      columnsOf: PlannedTable,
       table: RecordTable<Rec, PlanChange, Request>,
       records: Rec[],
       extra: Partial<
@@ -595,7 +599,6 @@ export function ProjectsPage({
         rows?: Rec[] | undefined;
       } = {},
     ): ReactElement {
-      const columnsOf = planned as NonNullable<typeof planned>;
       const adding = addingTo(table, addsFor(type));
       const actions: RecordActions<Rec, PlanChange, Request> = {
         ...actionsFor<Rec, Request>(type),
@@ -669,6 +672,7 @@ export function ProjectsPage({
         });
         return plannedGrid(
           "feature",
+          plannedTables.features,
           featureTable(choices, {
             onOpen: openRecord,
             editsCommitments: plan.canEdit,
@@ -705,6 +709,7 @@ export function ProjectsPage({
       activities: () =>
         plannedGrid(
           "activity",
+          plannedTables.activities,
           activityTable(choices, { onOpen: openRecord, editsFeatureTeams }),
           plan.activities,
         ),
