@@ -497,7 +497,7 @@ export function ReleasesTable({
 // A role's activities on Releases, for one that sees them.
 export type ReleaseActivities = Omit<
   ActivityRow<ReleaseRow>,
-  "owner" | "idOf" | "removing"
+  "owner" | "idOf" | "takesNoActivity"
 >;
 
 const releaseActivityRow = (
@@ -509,5 +509,7 @@ const releaseActivityRow = (
         ...activities,
         owner: "releaseId",
         idOf: ({ releaseId }) => releaseId,
-        removing: ({ release }) => release.draft?.action === "deleted",
+        // A retired schedule's release is no longer offered for an activity.
+        takesNoActivity: ({ release, stream }) =>
+          release.draft?.action === "deleted" || stream.retired,
       };

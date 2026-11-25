@@ -8,7 +8,7 @@ import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { activity } from "./test-projects-page.tsx";
-import { fictionalRelease } from "./test-releases.ts";
+import { fictionalRelease, fictionalStream } from "./test-releases.ts";
 import {
   detailRow,
   fictionalUser,
@@ -171,6 +171,21 @@ describe("a release's activities on Releases", () => {
     await openRelease(
       inStream(fictionalRelease({ draft: recordDraft({ action: "deleted" }) })),
       { answers: plan(twoAndAnother) },
+    );
+
+    expect(
+      within(await activitiesRow()).queryByRole("button", {
+        name: "Add activity",
+      }),
+    ).toBeNull();
+  });
+
+  it("offers no Add activity on a retired schedule's release", async () => {
+    await openRelease(
+      [fictionalStream({ releases: [release], retired: true })],
+      {
+        answers: plan(twoAndAnother),
+      },
     );
 
     expect(

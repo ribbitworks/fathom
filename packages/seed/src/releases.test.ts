@@ -343,6 +343,29 @@ describe("removing release streams", () => {
     ).toEqual([expect.objectContaining({ name: "Fictional Elsewhere" })]);
   });
 
+  it("discards the drafts of activities on a release only drafted to be added", async () => {
+    await seedReleases(connection, today);
+    const [patches] = await connection
+      .select({ id: releaseStreams.id })
+      .from(releaseStreams)
+      .where(eq(releaseStreams.name, "Patches"));
+    const drafted = randomUUID();
+    await connection.insert(drafts).values({
+      recordType: "release",
+      recordId: drafted,
+      action: "created",
+      fields: { streamId: String(patches?.id), name: "Fictional Drafted" },
+    });
+    await connection.insert(drafts).values({
+      recordType: "activity",
+      recordId: randomUUID(),
+      action: "created",
+      fields: { releaseId: drafted, name: "Fictional On A Draft" },
+    });
+    expect(await unseedReleases(connection)).toEqual([]);
+    expect(await connection.select().from(drafts)).toEqual([]);
+  });
+
   it("keeps the drafts of a stream it keeps", async () => {
     await seedReleases(connection, today);
     const [platform] = await connection
