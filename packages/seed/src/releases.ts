@@ -354,13 +354,28 @@ export async function seedReleases(
 }
 
 // Removes the drafts, published or not, of the records given, of patterns and releases in the
-// streams given, and of activities in the releases given.
+// streams given, and of activities in the releases given or drafted to be added to those streams.
 async function discardDraftsOf(
-  transaction: Pick<Database, "delete">,
+  transaction: Pick<Database, "delete" | "select">,
   recordIds: readonly string[],
   streamIds: readonly string[],
   releaseIds: readonly string[],
 ): Promise<void> {
+  const draftedReleases = [];
+  for (const table of [drafts, privateChanges]) {
+    draftedReleases.push(
+      ...(await transaction
+        .select({ id: table.recordId })
+        .from(table)
+        .where(
+          and(
+            eq(table.recordType, "release"),
+            inArray(sql`${table.fields}->>'streamId'`, [...streamIds]),
+          ),
+        )),
+    );
+  }
+  const inReleases = [...releaseIds, ...draftedReleases.map(({ id }) => id)];
   for (const table of [drafts, privateChanges]) {
     await transaction
       .delete(table)
@@ -375,11 +390,11 @@ async function discardDraftsOf(
             eq(table.recordType, "feature"),
             inArray(sql`${table.fields}->>'targetStreamId'`, [...streamIds]),
           ),
-          releaseIds.length === 0
+          inReleases.length === 0
             ? undefined
             : and(
                 eq(table.recordType, "activity"),
-                inArray(sql`${table.fields}->>'releaseId'`, [...releaseIds]),
+                inArray(sql`${table.fields}->>'releaseId'`, inReleases),
               ),
         ),
       );

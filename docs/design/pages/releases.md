@@ -51,7 +51,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 
 - **Activities:** for those who see features, an Activities row after Features lists the release's activities one to a line, each opening on [Activities](activities.md), folded past the first five, or None, as a project's details do on [Projects](projects.md#record-details).
   - **Show on Activities:** under the list whenever the release has an activity, opening Activities filtered to the release.
-  - **Add activity:** under the list for those who edit features, opening Activities filtered to the release with New activity open and the release set; not in the Live view, or on a release being removed.
+  - **Add activity:** under the list for those who edit features, opening Activities filtered to the release with New activity open and the release set; not in the Live view, on a release being removed, or on a retired schedule's release.
 - **Pencils:** Release, Ships on, Cycles and Colour, for those who change releases, as [Releases](../../product/roles.md#releases) in Roles sets out.
 - **No pencils:** On a release in a retired schedule, drafted to be removed, or held by another's unpublished changes.
 - **Note:** Each release has one built-in note, and schedules have none. Those who see releases read it, and those who change releases write it.
