@@ -6,6 +6,7 @@
 
 import {
   accessHistory,
+  dataClasses,
   featureTeamLeads,
   featureTeamMemberships,
   featureTeams,
@@ -173,6 +174,69 @@ describe("a person's timeline", () => {
     expect(moved).toMatchObject({ value: { id: second }, others: 1 });
   });
 
+  it("lists only their start and managers for someone with no feature teams or hires", async () => {
+    const { first } = await story();
+
+    const { days } = (await timelineOf(first)).json<Timeline>();
+
+    const fields = new Set(
+      days.flatMap(({ changes }) => changes.map(({ field }) => field)),
+    );
+    expect(
+      [...fields].every((field) => ["start", "manager"].includes(field)),
+    ).toBe(true);
+    expect(fields.has("start")).toBe(true);
+  });
+
+  it("leaves out feature teams for a role without them, and a later day's manager for one without Confidential", async () => {
+    const { report, first } = await story();
+    await test.connection
+      .insert(reportingLines)
+      .values({ personId: report, managerId: first, fromDate: "2099-01-04" });
+    const reader = await test.signedIn(["people:view", "personal:view"]);
+
+    const response = await timelineOf(report, reader);
+
+    expect(response.statusCode, response.body).toBe(200);
+    const fields = response
+      .json<Timeline>()
+      .days.flatMap(({ changes }) => changes.map(({ field }) => field));
+    expect(fields).toContain("start");
+    expect(fields).not.toContain("featureTeams");
+    expect(fields).not.toContain("leads");
+    expect(fields).not.toContain("filled");
+    expect(response.json<Timeline>().days.some(({ day }) => day > "2090")).toBe(
+      false,
+    );
+  });
+
+  it("leaves out past managers and feature teams once their classes are Confidential", async () => {
+    const { report } = await story();
+    const reader = await test.signedIn([
+      "people:view",
+      "personal:view",
+      "feature-teams:view",
+    ]);
+    await test.connection.insert(dataClasses).values([
+      { field: "managerHistory", dataClass: "confidential" },
+      { field: "featureTeamDates", dataClass: "confidential" },
+    ]);
+    try {
+      const response = await timelineOf(report, reader);
+
+      expect(response.statusCode, response.body).toBe(200);
+      const fields = response
+        .json<Timeline>()
+        .days.flatMap(({ changes }) => changes.map(({ field }) => field));
+      expect(fields).toContain("start");
+      expect(fields).not.toContain("manager");
+      expect(fields).not.toContain("featureTeams");
+      expect(fields).not.toContain("leads");
+    } finally {
+      await test.connection.delete(dataClasses);
+    }
+  });
+
   it("is refused for someone who doesn't exist", async () => {
     const response = await timelineOf(randomUUID());
 
@@ -215,7 +279,11 @@ describe("a person's timeline", () => {
         .select({ action: accessHistory.action })
         .from(accessHistory)
         .where(eq(accessHistory.actorId, reader.id));
-      expect(recorded.map(({ action }) => action)).toContain("personal-viewed");
+      const actions = recorded.map(({ action }) => action);
+      expect(actions).toContain("personal-viewed");
+      expect(actions.includes("hiring-plan-viewed")).toBe(
+        fields.includes("filled"),
+      );
     },
   );
 });

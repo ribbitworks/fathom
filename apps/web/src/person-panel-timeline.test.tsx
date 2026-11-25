@@ -5,7 +5,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { renderApp } from "./test-support.tsx";
+import { fictionalUser, onNarrowScreen, renderApp } from "./test-support.tsx";
 import {
   editAnswers,
   panel,
@@ -17,7 +17,10 @@ import {
   setUpEachTest,
   uma,
 } from "./test-person-panel.tsx";
+import { formatDay } from "./day-formats.ts";
+import { personPanelId } from "./person-editing.tsx";
 import { timelinePanelId } from "./person-timeline.tsx";
+import { today } from "./today.ts";
 
 setUpEachTest();
 
@@ -26,10 +29,19 @@ const team = {
   name: "Fictional Pier",
 };
 
-// Sasha's timeline: she started reporting to Robin, then to Uma, joined a team, and will lead it.
+// Sasha's timeline, earliest first: she filled a hire, started reporting to Robin, then to Uma, joined a team, and will lead it.
 const timeline = () =>
   Response.json({
     days: [
+      {
+        day: "2019-12-02",
+        changes: [
+          {
+            field: "filled",
+            value: { id: "h1", name: "HIRE-42", keyNumber: 42 },
+          },
+        ],
+      },
       {
         day: "2020-01-01",
         changes: [
@@ -46,15 +58,6 @@ const timeline = () =>
             was: { id: "1", name: "Robin Fictional" },
           },
           { field: "featureTeams", value: team, part: "added" },
-        ],
-      },
-      {
-        day: "2019-12-02",
-        changes: [
-          {
-            field: "filled",
-            value: { id: "h1", name: "HIRE-42", keyNumber: 42 },
-          },
         ],
       },
       {
@@ -126,13 +129,43 @@ describe("a person's timeline", () => {
 
   it("moves People to a day from its date, which a later day can't for a role that doesn't see later dates", async () => {
     const { history, inPanel } = await openedTimeline();
+    const past = await inPanel.findByRole("button", { name: "Mar 1, 2024" });
 
-    await userEvent.click(
-      await inPanel.findByRole("button", { name: "Mar 1, 2024" }),
-    );
+    expect(inPanel.getByText("Jan 4, 2099").closest("button")).toBeNull();
+    await userEvent.click(past);
 
     expect(history.location.search).toContain("day=2024-03-01");
-    expect(inPanel.queryByRole("button", { name: "Jan 4, 2099" })).toBeNull();
+  });
+
+  it("shows its dates as plain words for a role that doesn't see other days", async () => {
+    const { inPanel } = await openedTimeline({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "personal:view", "plan:view"],
+          settings: {
+            ...fictionalUser.settings,
+            dataClasses: {
+              ...fictionalUser.settings.dataClasses,
+              managerHistory: "confidential",
+            },
+          },
+        }),
+    });
+
+    await inPanel.findByText("Mar 1, 2024");
+    expect(inPanel.queryByRole("button", { name: "Mar 1, 2024" })).toBeNull();
+  });
+
+  it("covers the details on a narrow screen, where only the top panel shows", async () => {
+    onNarrowScreen();
+    await openedTimeline();
+
+    const details = document.getElementById(personPanelId) as HTMLElement;
+    expect(
+      (timelinePanel() as HTMLElement).compareDocumentPosition(details) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("opens a manager's details from the timeline", async () => {
@@ -186,18 +219,27 @@ describe("a person's timeline", () => {
   });
 
   it("says when it can't be read, offering Try again in the preview and the panel", async () => {
+    let failing = true;
     const { inPanel } = await openedTimeline({
       "GET /api/people/2/timeline": () =>
-        Response.json({ error: "Fictional failure" }, { status: 500 }),
+        failing
+          ? Response.json({ error: "Fictional failure" }, { status: 500 })
+          : timeline(),
     });
 
     await userEvent.click(
       await within(preview()).findByRole("button", { name: "Try again" }),
     );
+    await inPanel.findByRole("button", { name: "Try again" });
+    failing = false;
     await userEvent.click(
       await inPanel.findByRole("button", { name: "Try again" }),
     );
-    expect(inPanel.getByRole("button", { name: "Try again" })).toBeDefined();
+
+    expect(await inPanel.findByText("Mar 1, 2024")).toBeDefined();
+    expect(
+      within(preview()).queryByRole("button", { name: "Try again" }),
+    ).toBeNull();
   });
 
   it("opens a filled hire by its key", async () => {
@@ -212,6 +254,69 @@ describe("a person's timeline", () => {
 
     await waitFor(() => {
       expect(history.location.pathname).toBe("/go/hire/42");
+    });
+  });
+
+  it("shows as plain words the records the role can't open: someone not among the people, a team without feature teams, a hire without its key", async () => {
+    editAnswers({
+      "GET /api/session": session([
+        "people:view",
+        "personal:view",
+        "plan:view",
+      ]),
+      "GET /api/people/2/timeline": () =>
+        Response.json({
+          days: [
+            {
+              day: "2020-01-01",
+              changes: [
+                { field: "filled", value: { id: "h1", name: "HIRE-42" } },
+                {
+                  field: "manager",
+                  value: { id: "77", name: "Fictional Gone" },
+                },
+                { field: "featureTeams", value: team, part: "added" },
+              ],
+            },
+          ],
+        }),
+    });
+    renderApp("/people?open=E2&timeline=true");
+    await waitFor(() => {
+      expect(timelinePanel()).not.toBeNull();
+    });
+    const inPanel = within(timelinePanel() as HTMLElement);
+
+    await inPanel.findByText("Fictional Gone");
+    expect(
+      inPanel.queryByRole("button", { name: "Fictional Gone" }),
+    ).toBeNull();
+    expect(inPanel.queryByRole("button", { name: team.name })).toBeNull();
+    expect(inPanel.queryByRole("button", { name: "#HIRE-42" })).toBeNull();
+  });
+
+  it("moves People back to today from today's date", async () => {
+    editAnswers({
+      "GET /api/feature-teams": () => Response.json({ teams: [] }),
+      "GET /api/people/2/timeline": () =>
+        Response.json({
+          days: [{ day: today(), changes: [{ field: "start" }] }],
+        }),
+      "GET /api/people?on=2024-03-01": peopleAnswer(),
+    });
+    const history = renderApp("/people?open=E2&timeline=true&day=2024-03-01");
+    await waitFor(() => {
+      expect(timelinePanel()).not.toBeNull();
+    });
+
+    await userEvent.click(
+      await within(timelinePanel() as HTMLElement).findByRole("button", {
+        name: formatDay(today()),
+      }),
+    );
+
+    await waitFor(() => {
+      expect(history.location.search).not.toContain("day=");
     });
   });
 

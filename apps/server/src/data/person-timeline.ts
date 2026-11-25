@@ -23,17 +23,18 @@ import {
   featureTeams,
   people,
   plannedHires,
+  reportingLines,
 } from "@fathom/db";
 import { and, eq, inArray, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import type { Actor } from "../access.ts";
 import { NotFoundError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import { inForceOn } from "./in-force.ts";
 import { readKeyNumbers } from "./record-keys.ts";
-import { readLines } from "./reporting.ts";
 import { readTimeZone } from "./settings.ts";
 
-// What a person's timeline is made from, each part earliest first.
+// What a person's timeline is made from, each part but the fills earliest first.
 export interface TimelineSources {
   start: string | null;
   end: string | null;
@@ -109,44 +110,35 @@ export function timelineDays({
     }));
 }
 
-// The days someone began and stopped leading each team: they lead from a lead record naming them
-// while they are a member, as a team's lead is read on any day, until the team's next record or the
-// end of their membership.
+// The days someone began and stopped leading a team: they lead from a lead record naming them while
+// they are a member, as a team's lead is read on any day, until the team's next record or the end
+// of their membership.
 export function leadingDays(
   personId: string,
-  records: readonly {
-    teamId: string;
-    leadId: string | null;
-    fromDate: string;
-  }[],
-  memberships: readonly { teamId: string; member: boolean; fromDate: string }[],
-): { teamId: string; fromDate: string; leads: boolean }[] {
-  const teamIds = [...new Set(records.map(({ teamId }) => teamId))];
-  return teamIds.flatMap((teamId) => {
-    const byDay = <Row extends { teamId: string; fromDate: string }>(
-      rows: readonly Row[],
-    ) =>
-      rows
-        .filter((row) => row.teamId === teamId)
-        .toSorted((first, second) =>
-          first.fromDate.localeCompare(second.fromDate),
-        );
-    const teamLeads = byDay(records);
-    const teamMemberships = byDay(memberships);
-    const days = [
-      ...new Set(
-        [...teamLeads, ...teamMemberships].map(({ fromDate }) => fromDate),
-      ),
-    ].sort();
-    const leadsOn = (day: string) =>
-      inForceOn(teamLeads, day)?.leadId === personId &&
-      inForceOn(teamMemberships, day)?.member === true;
-    return days.flatMap((day, place) => {
-      const before = days[place - 1];
-      const leads = leadsOn(day);
-      const led = before !== undefined && leadsOn(before);
-      return leads === led ? [] : [{ teamId, fromDate: day, leads }];
-    });
+  records: readonly { leadId: string | null; fromDate: string }[],
+  memberships: readonly { member: boolean; fromDate: string }[],
+): { fromDate: string; leads: boolean }[] {
+  const earliestFirst = <Row extends { fromDate: string }>(
+    rows: readonly Row[],
+  ) =>
+    rows.toSorted((first, second) =>
+      first.fromDate.localeCompare(second.fromDate),
+    );
+  const teamLeads = earliestFirst(records);
+  const teamMemberships = earliestFirst(memberships);
+  const days = [
+    ...new Set(
+      [...teamLeads, ...teamMemberships].map(({ fromDate }) => fromDate),
+    ),
+  ].sort();
+  const leadsOn = (day: string) =>
+    inForceOn(teamLeads, day)?.leadId === personId &&
+    inForceOn(teamMemberships, day)?.member === true;
+  return days.flatMap((day, place) => {
+    const before = days[place - 1];
+    const leads = leadsOn(day);
+    const led = before !== undefined && leadsOn(before);
+    return leads === led ? [] : [{ fromDate: day, leads }];
   });
 }
 
@@ -162,19 +154,6 @@ export function seenLines<Line extends { fromDate: string }>(
   );
 }
 
-// Someone's preferred names, by their identifier.
-async function namesOf(
-  reader: Transaction,
-  ids: readonly string[],
-): Promise<Map<string, string>> {
-  if (ids.length === 0) return new Map();
-  const rows = await reader
-    .select({ id: people.id, name: people.preferredName })
-    .from(people)
-    .where(inArray(people.id, [...ids]));
-  return new Map(rows.map(({ id, name }) => [id, name]));
-}
-
 // A person's reporting lines, each with how many others were given the same manager that day,
 // leaving out those starting with them, as the reader sees them. A line's change from the one before
 // it is worked out from every line, so a later line seen alone still says what it changes from.
@@ -184,7 +163,17 @@ async function linesOf(
   personId: string,
   today: string,
 ): Promise<{ all: TimelineSources["lines"]; seen: ReadonlySet<string> }> {
-  const all = (await readLines(reader, [personId])).get(personId) ?? [];
+  const manager = alias(people, "manager");
+  const all = await reader
+    .select({
+      fromDate: reportingLines.fromDate,
+      managerId: reportingLines.managerId,
+      managerName: manager.preferredName,
+    })
+    .from(reportingLines)
+    .leftJoin(manager, eq(manager.id, reportingLines.managerId))
+    .where(eq(reportingLines.personId, personId))
+    .orderBy(reportingLines.fromDate);
   const shared = await reader.execute<{
     from_date: string;
     manager_id: string | null;
@@ -207,21 +196,18 @@ async function linesOf(
     shared.rows.find(
       (row) => row.from_date === fromDate && row.manager_id === managerId,
     )?.others ?? 0;
-  const names = await namesOf(
-    reader,
-    all.flatMap(({ managerId }) => (managerId === null ? [] : [managerId])),
-  );
   const seen = seenLines(all, today, {
     past: seesField(actor, "managerHistory"),
     later: seesField(actor, "futureReorganizations"),
   });
   return {
-    all: all.map(({ fromDate, managerId }) => ({
+    all: all.map(({ fromDate, managerId, managerName }) => ({
       fromDate,
+      // A line's manager is always someone People holds.
       manager:
         managerId === null
           ? null
-          : { id: managerId, name: names.get(managerId) ?? "" },
+          : { id: managerId, name: String(managerName) },
       others: othersOn(fromDate, managerId),
     })),
     seen: new Set(seen.map(({ fromDate }) => fromDate)),
@@ -244,13 +230,18 @@ async function teamsOf(
   const memberships = await reader
     .select({
       teamId: featureTeamMemberships.teamId,
+      name: featureTeams.name,
       member: featureTeamMemberships.member,
       fromDate: featureTeamMemberships.fromDate,
     })
     .from(featureTeamMemberships)
-    .where(eq(featureTeamMemberships.personId, personId));
-  const teamIds = [...new Set(memberships.map(({ teamId }) => teamId))];
-  if (teamIds.length === 0) return { memberships: [], leads: [] };
+    .innerJoin(featureTeams, eq(featureTeams.id, featureTeamMemberships.teamId))
+    .where(eq(featureTeamMemberships.personId, personId))
+    .orderBy(featureTeamMemberships.fromDate);
+  if (memberships.length === 0) return { memberships: [], leads: [] };
+  const teams = new Map(
+    memberships.map(({ teamId, name }) => [teamId, { id: teamId, name }]),
+  );
   const leadRecords = await reader
     .select({
       teamId: featureTeamLeads.teamId,
@@ -258,34 +249,23 @@ async function teamsOf(
       fromDate: featureTeamLeads.fromDate,
     })
     .from(featureTeamLeads)
-    .where(inArray(featureTeamLeads.teamId, teamIds));
-  const teams = await reader
-    .select({ id: featureTeams.id, name: featureTeams.name })
-    .from(featureTeams)
-    .where(inArray(featureTeams.id, teamIds));
-  const names = new Map(teams.map(({ id, name }) => [id, name]));
-  const team = (id: string): TimelineRecord => ({
-    id,
-    name: names.get(id) ?? "",
-  });
-  const earliestFirst = <Row extends { fromDate: string }>(rows: Row[]) =>
-    rows.toSorted((first, second) =>
-      first.fromDate.localeCompare(second.fromDate),
-    );
+    .where(inArray(featureTeamLeads.teamId, [...teams.keys()]));
+  const ofTeam = <Row extends { teamId: string }>(
+    rows: readonly Row[],
+    teamId: string,
+  ) => rows.filter((row) => row.teamId === teamId);
   return {
-    memberships: earliestFirst(memberships).map(
-      ({ teamId, member, fromDate }) => ({
-        fromDate,
-        team: team(teamId),
-        member,
-      }),
-    ),
-    leads: leadingDays(personId, leadRecords, memberships).map(
-      ({ teamId, leads, fromDate }) => ({
-        fromDate,
-        team: team(teamId),
-        leads,
-      }),
+    memberships: memberships.map(({ teamId, name, member, fromDate }) => ({
+      fromDate,
+      team: { id: teamId, name },
+      member,
+    })),
+    leads: [...teams.values()].flatMap((team) =>
+      leadingDays(
+        personId,
+        ofTeam(leadRecords, team.id),
+        ofTeam(memberships, team.id),
+      ).map(({ fromDate, leads }) => ({ fromDate, team, leads })),
     ),
   };
 }
@@ -318,12 +298,12 @@ async function fillsOf(
         eq(changeSets.kind, "approval"),
         sql`${changes.newValue} = ${JSON.stringify(personId)}::jsonb`,
       ),
-    );
-  const latest = new Map<string, Date>();
-  for (const { hireId, madeAt } of approvals) {
-    const before = latest.get(hireId);
-    if (before === undefined || madeAt > before) latest.set(hireId, madeAt);
-  }
+    )
+    .orderBy(changeSets.madeAt);
+  // Earliest first, so each hire is left with its latest.
+  const latest = new Map(
+    approvals.map(({ hireId, madeAt }) => [hireId, madeAt]),
+  );
   const keys = await readKeyNumbers(reader, "hire", ids);
   return [...latest.entries()].map(([hireId, madeAt]) => ({
     day: dayIn(timeZone, madeAt),
@@ -336,12 +316,16 @@ async function fillsOf(
 }
 
 // A person's timeline as the reader's role may see it, all read at one moment, and whether it named
-// a planned hire, which the access history records; refused for a person who doesn't exist.
+// a planned hire, which the access history records, with the time zone its days are in; refused for a person who doesn't exist.
 export async function readPersonTimeline(
   database: Database,
   actor: Actor,
   personId: string,
-): Promise<{ timeline: Timeline; includedHiringPlan: boolean }> {
+): Promise<{
+  timeline: Timeline;
+  includedHiringPlan: boolean;
+  timeZone: string;
+}> {
   return database.transaction(
     async (reader) => {
       const [person] = await reader
@@ -370,6 +354,7 @@ export async function readPersonTimeline(
       return {
         timeline: { days: shown },
         includedHiringPlan: fills.length > 0,
+        timeZone,
       };
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
