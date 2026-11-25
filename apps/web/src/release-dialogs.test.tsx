@@ -468,14 +468,14 @@ describe("the dialog making or changing a release", () => {
     expect(bodiesOf(fetch)).toMatchObject([{ colour: null }]);
   });
 
-  it("says the day a release ships at the end of its last cycle", async () => {
+  it("shows the day an empty Ships on falls back to, the end of the last cycle", async () => {
     show((handlers) => <ReleaseDialog stream={releasing} {...handlers} />);
+    expect(box("Ships on").placeholder).toBe("");
     await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
-    expect(
-      screen.getByText(
-        "Leave empty to ship at the end of its last cycle, on 2027-06-30",
-      ),
-    ).toBeDefined();
+    expect([
+      box("Ships on").placeholder,
+      screen.queryByText(/Leave empty/),
+    ]).toEqual(["2027-06-30 (end of the last cycle)", null]);
   });
 
   it("offers only the cycles no other release includes", async () => {
@@ -537,9 +537,9 @@ describe("the dialog making or changing a release", () => {
     await userEvent.click(screen.getByRole("button", { name: "Make release" }));
     expect([
       screen.getByText("Choose cycles no other release includes"),
-      screen.getByText("Leave empty to ship at the end of its last cycle"),
+      box("Ships on").placeholder,
       fetch.mock.calls,
-    ]).toEqual([expect.anything(), expect.anything(), []]);
+    ]).toEqual([expect.anything(), "", []]);
   });
 
   it("asks for the cycles again once both are deselected", async () => {
@@ -651,11 +651,7 @@ describe("the dialog making or changing a release", () => {
       />
     ));
     await userEvent.type(box("Ships on"), "20270331");
-    expect(
-      screen.getByText(
-        "Leave empty to ship at the end of its last cycle, on 2027-03-31",
-      ),
-    ).toBeDefined();
+    expect(screen.queryByText(/ (before|after) 27\.1 ends/)).toBeNull();
   });
 
   it("changes a release by its id, shipping on the day typed", async () => {

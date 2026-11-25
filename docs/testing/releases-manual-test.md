@@ -235,7 +235,7 @@ Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-cha
 - [ ] `DC88` Select the pencil at the right of the **Ships on** row.
   - **Expected:**
     - A dialog titled "Change when Lantern Three ships" opens, with only a **Ships on** field, which is empty.
-    - Under it, "Leave empty to ship at the end of its last cycle, on" and that cycle's last day, such as "2027-12-31".
+    - The field shows, in grey, that cycle's last day and "(end of the last cycle)", such as "2027-12-31 (end of the last cycle)".
   - **Notes:**
 
 - [ ] `DED5` Type the day a month after that one in **Ships on**, as its digits, such as `20280131`.
@@ -272,7 +272,6 @@ Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-cha
   - **Expected:**
     - A dialog titled "Change the colour of Lantern 3" opens.
     - Its one field, **Colour**, reads "Lime", with a lime square before it.
-    - "How the release is drawn on the timeline" is under its label.
   - **Notes:**
 
 - [ ] `2CB3` Open **Colour**.

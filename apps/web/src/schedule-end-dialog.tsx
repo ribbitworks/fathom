@@ -65,7 +65,7 @@ export function EndsDialog({
       <Stack gap="md">
         <DayInput
           label="Schedule ends"
-          description="Its last cycle ends on this day."
+          description="The last cycle ends on this day."
           placeholder="No end date"
           autoFocus
           required={false}

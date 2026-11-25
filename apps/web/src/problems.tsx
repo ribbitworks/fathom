@@ -38,7 +38,7 @@ export function PageNotFound() {
     <ProblemPage>
       <Text>There is no page at this address.</Text>
       <Anchor component={Link} to="/">
-        Go to Fathom's start page
+        Go to the start page
       </Anchor>
     </ProblemPage>
   );

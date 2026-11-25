@@ -54,7 +54,7 @@ Some records open in a particular place:
 - A role's link opens its dialog on **Roles**.
 - A column's link opens the column's menu on its table.
 
-If the record was removed, and your change history shows its removal, the page says so, with a link to **Show the change history**.
+If the record was removed, and your change history shows its removal, the page says so, with a link to **Show change history**.
 
 You're done when the record's details are open.
 

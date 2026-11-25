@@ -320,7 +320,7 @@ describe("the password settings", () => {
     await userEvent.click(box("A symbol"));
     expect(
       within(panel()).getByText(
-        "Generated passwords must have at least 24 characters to meet the minimum length.",
+        "Generated passwords must have at least 24 characters.",
       ),
     ).toBeDefined();
     expect(
@@ -333,9 +333,7 @@ describe("the password settings", () => {
       await userEvent.click(box(name));
     }
     expect(
-      within(panel()).getByText(
-        "Select at least one character type for generated passwords.",
-      ),
+      within(panel()).getByText("Choose at least one character type."),
     ).toBeDefined();
   });
 

@@ -67,7 +67,7 @@ export function TeamColourMenu({
       const done =
         colour === null
           ? `${team} no longer has a colour.`
-          : `${team} is now drawn in ${colourWords(colour)}.`;
+          : `${team}'s colour is now ${colourWords(colour)}.`;
       notifyUndoable(done, () => {
         change.mutate({ colour: previous });
       });

@@ -213,12 +213,12 @@ describe("recipeProblems", () => {
           { uppercase: false, lowercase: false, digits: false, symbols: false },
         ),
       ),
-    ).toEqual(["Select at least one character type for generated passwords."]);
+    ).toEqual(["Choose at least one character type."]);
   });
 
   it("refuses a recipe shorter than the rule's minimum", () => {
     expect(recipeProblems(settings({ minimumLength: 24 }))).toEqual([
-      "Generated passwords must have at least 24 characters to meet the minimum length.",
+      "Generated passwords must have at least 24 characters.",
     ]);
   });
 

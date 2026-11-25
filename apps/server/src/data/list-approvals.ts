@@ -288,7 +288,7 @@ export async function approveListDrafts(
       state.held.orders.has(id)
     ) {
       throw new ConflictError(
-        "A list drafted to be deleted has choices with drafts; approve or discard them first",
+        "A list drafted to be removed has choices with drafts; approve or discard them first",
       );
     }
     const choiceIdsNow = liveOrder(state, id).filter(
