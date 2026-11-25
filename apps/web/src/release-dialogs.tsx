@@ -45,7 +45,7 @@ import { Swatch } from "./colour-swatch.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
 import { focusRefusedSoon } from "./focus.ts";
 import { DayInput } from "./day-input.tsx";
-import { Count } from "./list-dialog.tsx";
+import { CountedInput } from "./counted-input.tsx";
 import { nameProblem } from "./lists.ts";
 import classes from "./pages.module.css";
 import {
@@ -131,15 +131,12 @@ export function StreamDialog({
       }}
     >
       <Stack gap="md">
-        <TextInput
+        <CountedInput
           label="Name"
           data-autofocus
           value={name}
+          maximum={releaseLengths.name}
           error={tried || name !== "" ? problem : undefined}
-          rightSection={
-            <Count length={name.trim().length} maximum={releaseLengths.name} />
-          }
-          rightSectionWidth={56}
           onChange={(event) => {
             setName(event.currentTarget.value);
           }}
@@ -667,18 +664,12 @@ export function ReleaseDialog({
           />
         )}
         {asks("name") && (
-          <TextInput
+          <CountedInput
             label="Name"
             data-autofocus={given !== undefined || undefined}
             value={name}
+            maximum={releaseLengths.name}
             error={tried || name !== "" ? problem : undefined}
-            rightSection={
-              <Count
-                length={name.trim().length}
-                maximum={releaseLengths.name}
-              />
-            }
-            rightSectionWidth={56}
             onChange={(event) => {
               setName(event.currentTarget.value);
             }}

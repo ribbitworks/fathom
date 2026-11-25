@@ -387,9 +387,7 @@ export function OrgChartPage({
                                     change,
                                     person.preferredName,
                                   ),
-                                  onSaved: (changeSetId, before) => {
-                                    undoable(changeSetId, before);
-                                  },
+                                  onSaved: undoable,
                                 });
                               }
                             : undefined

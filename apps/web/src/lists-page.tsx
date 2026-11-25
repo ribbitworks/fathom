@@ -420,9 +420,7 @@ export function ListsPage({
         next: (current) => current,
         save: () => resubmitListDraft(targetOf(what)),
         failure: `Fathom could not send the draft of ${draftName(what)} for approval again.`,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
+        onSaved: undoable,
       });
     },
     decide: (asking, what) => {

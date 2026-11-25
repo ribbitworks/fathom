@@ -18,7 +18,12 @@ import {
   unpublishedDrafts,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
-import { addDays, addMonths, type PaletteColour } from "@fathom/shared";
+import {
+  addDays,
+  addMonths,
+  type PaletteColour,
+  parseDay,
+} from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { fieldAppsKeys, fieldAppsStream } from "./field-apps.ts";
 import { recorded, type SeededChange } from "./recorded.ts";
@@ -171,11 +176,11 @@ function quarterStart(of: string): string {
 
 // The Monday on or before a day.
 const mondayOf = (of: string): string =>
-  addDays(of, -((new Date(`${of}T00:00:00Z`).getUTCDay() + 6) % 7));
+  addDays(of, -((parseDay(of).getUTCDay() + 6) % 7));
 
 const monthName = (of: string): string =>
   new Intl.DateTimeFormat("en", { month: "long", timeZone: "UTC" }).format(
-    new Date(`${of}T00:00:00Z`),
+    parseDay(of),
   );
 
 // The streams as seeded on a day, the same whatever the day: Platform, in quarters from three

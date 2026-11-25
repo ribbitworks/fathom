@@ -104,6 +104,65 @@ const inRange = (value: Typed, { minimum, maximum }: Range) =>
 const rangeProblem = ({ minimum, maximum }: Range) =>
   `Enter a number from ${String(minimum)} to ${String(maximum)}.`;
 
+// A whole number of characters in its range, refused under it when outside.
+function LengthInput({
+  label,
+  range,
+  readOnly,
+  value,
+  onChange,
+}: {
+  label: string;
+  range: Range;
+  readOnly: boolean;
+  value: Typed;
+  onChange: (value: Typed) => void;
+}) {
+  return (
+    <NumberInput
+      label={label}
+      min={range.minimum}
+      max={range.maximum}
+      allowDecimal={false}
+      allowNegative={false}
+      readOnly={readOnly}
+      value={value}
+      onChange={onChange}
+      error={!inRange(value, range) && rangeProblem(range)}
+    />
+  );
+}
+
+// A tick box for each kind of character, such as upper-case letters.
+function KindsChoice({
+  label,
+  kindLabel,
+  readOnly,
+  value,
+  onChange,
+}: {
+  label: string;
+  kindLabel: (kind: CharacterKind) => string;
+  readOnly: boolean;
+  value: CharacterType[];
+  onChange: (value: CharacterType[]) => void;
+}) {
+  return (
+    <Checkbox.Group
+      label={label}
+      readOnly={readOnly}
+      value={value}
+      onChange={onChange}
+    >
+      <Stack gap="xs" mt="xs">
+        {characterKinds.map((kind) => (
+          <Checkbox key={kind.type} value={kind.type} label={kindLabel(kind)} />
+        ))}
+      </Stack>
+    </Checkbox.Group>
+  );
+}
+
 export function PasswordSettingsPanel({
   passwords,
   canEdit,
@@ -144,80 +203,48 @@ export function PasswordSettingsPanel({
           <Title order={2} size="h4">
             Password requirements
           </Title>
-          <NumberInput
+          <LengthInput
             label="Minimum length"
-            min={passwordLength.minimum}
-            max={passwordLength.maximum}
-            allowDecimal={false}
-            allowNegative={false}
+            range={passwordLength}
             readOnly={!canEdit}
             value={draft.minimumLength}
             onChange={(minimumLength) => {
               change({ minimumLength });
             }}
-            error={
-              !inRange(draft.minimumLength, passwordLength) &&
-              rangeProblem(passwordLength)
-            }
           />
-          <Checkbox.Group
+          <KindsChoice
             label="Must have"
+            kindLabel={(kind) => capitalized(kind.one)}
             readOnly={!canEdit}
             value={draft.required}
             onChange={(required) => {
               change({ required });
             }}
-          >
-            <Stack gap="xs" mt="xs">
-              {characterKinds.map((kind) => (
-                <Checkbox
-                  key={kind.type}
-                  value={kind.type}
-                  label={capitalized(kind.one)}
-                />
-              ))}
-            </Stack>
-          </Checkbox.Group>
+          />
           <Text size="sm" c="dimmed">
             Changes apply the next time each person changes their password.
           </Text>
           <Title order={2} size="h4" mt="sm">
             Generated passwords
           </Title>
-          <NumberInput
+          <LengthInput
             label="Length"
-            min={generatedPasswordLength.minimum}
-            max={generatedPasswordLength.maximum}
-            allowDecimal={false}
-            allowNegative={false}
+            range={generatedPasswordLength}
             readOnly={!canEdit}
             value={draft.length}
             onChange={(length) => {
               change({ length });
             }}
-            error={
-              !inRange(draft.length, generatedPasswordLength) &&
-              rangeProblem(generatedPasswordLength)
-            }
           />
-          <Checkbox.Group
+          <KindsChoice
             label="Use"
+            kindLabel={recipeLabel}
             readOnly={!canEdit}
             value={draft.used}
             onChange={(used) => {
               change({ used });
             }}
-          >
-            <Stack gap="xs" mt="xs">
-              {characterKinds.map((kind) => (
-                <Checkbox
-                  key={kind.type}
-                  value={kind.type}
-                  label={recipeLabel(kind)}
-                />
-              ))}
-            </Stack>
-          </Checkbox.Group>
+          />
           <Checkbox
             label={`Leave out characters that look alike: ${spaced(lookAlikeCharacters)}`}
             readOnly={!canEdit}

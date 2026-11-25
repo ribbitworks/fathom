@@ -182,6 +182,7 @@ export {
   movedCycles,
   namingTokens,
   patternsForLength,
+  parseDay,
   pastAnyMove,
   patternStartFits,
   type ScheduleEnd,

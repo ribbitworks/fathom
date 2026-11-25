@@ -3,6 +3,7 @@
 // Builds a fictional organization of a given size: its people, with their values and notes, and
 // everything worked out from them.
 
+import { parseDay } from "@fathom/shared";
 import { base, en, Faker } from "@faker-js/faker";
 import { featureTeamsFor, growFeatureTeams } from "./feature-teams.ts";
 import { fictionalId } from "./fictional-id.ts";
@@ -82,7 +83,7 @@ export function fictionalOrganization({
     );
     return name(namer, source.order);
   };
-  const reference = new Date(`${referenceDate}T00:00:00Z`);
+  const reference = parseDay(referenceDate);
   const everyone = Array.from(
     { length: size + newcomerCount },
     (_, index): FictionalPerson => {

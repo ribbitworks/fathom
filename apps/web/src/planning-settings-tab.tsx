@@ -258,9 +258,7 @@ export function PlanningSettingsTab({
       next: (data) => data,
       save: work,
       failure,
-      onSaved: (changeSetId, before) => {
-        undoable(changeSetId, before);
-      },
+      onSaved: undoable,
     });
   };
   const node = planningSettingsNode(original);

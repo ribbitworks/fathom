@@ -5,6 +5,7 @@
 // them to the build, since the container build cannot see .git; a build without them shows them as
 // unknown.
 
+import { parseDay } from "@fathom/shared";
 import { Modal, Table } from "@mantine/core";
 import { Brand } from "./brand.tsx";
 import { count } from "./numbers.ts";
@@ -52,7 +53,7 @@ const day = new Intl.DateTimeFormat(undefined, {
 });
 
 export function describeDate(date: string): string {
-  const committed = new Date(`${date}T00:00:00Z`);
+  const committed = parseDay(date);
   return Number.isNaN(committed.getTime()) ? "Unknown" : day.format(committed);
 }
 

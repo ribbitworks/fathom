@@ -10,17 +10,16 @@ import {
   viewLengths,
   type ViewScope,
 } from "@fathom/shared";
-import { Button, Checkbox, Group, Stack, Text, TextInput } from "@mantine/core";
+import { Button, Checkbox, Group, Stack, Text } from "@mantine/core";
 import type { ViewPart } from "./table-controls.tsx";
 import classes from "./pages.module.css";
 import { useMutation } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
-import { ApiError, describeProblem } from "./api.ts";
+import { describeProblem, isConflict } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
-import { Count, nameTaken } from "./list-dialog.tsx";
-import { nameProblem } from "./lists.ts";
+import { CountedInput } from "./counted-input.tsx";
+import { takenNameProblem } from "./list-dialog.tsx";
 
-const conflict = 409;
 const includesId = "view-dialog-includes";
 
 export interface SavedViewResult {
@@ -78,15 +77,14 @@ export function ViewDialog({
       sameName(other.name, name),
   );
   const refusedAsTaken =
-    saving.error instanceof ApiError &&
-    saving.error.status === conflict &&
+    isConflict(saving.error) &&
     sent.scope === scope &&
     sameName(sent.name, name);
-  const problem = nameProblem(
+  const problem = takenNameProblem(
+    "view",
     name,
     viewLengths.name,
     taken || refusedAsTaken,
-    nameTaken("view"),
   );
 
   return (
@@ -109,15 +107,12 @@ export function ViewDialog({
       }}
     >
       <Stack gap="md">
-        <TextInput
+        <CountedInput
           label="Name"
           data-autofocus
           value={name}
+          maximum={viewLengths.name}
           error={tried || name !== "" ? problem : undefined}
-          rightSection={
-            <Count length={name.trim().length} maximum={viewLengths.name} />
-          }
-          rightSectionWidth={56}
           onChange={(event) => {
             setName(event.currentTarget.value);
           }}
@@ -146,17 +141,14 @@ export function ViewDialog({
             </dl>
           </div>
         )}
-        {saving.error &&
-          !(
-            saving.error instanceof ApiError && saving.error.status === conflict
-          ) && (
-            <Text fz="sm" c="red" role="alert">
-              {describeProblem(
-                saving.error,
-                "Fathom could not save the view. Try again in a moment.",
-              )}
-            </Text>
-          )}
+        {saving.error && !isConflict(saving.error) && (
+          <Text fz="sm" c="red" role="alert">
+            {describeProblem(
+              saving.error,
+              "Fathom could not save the view. Try again in a moment.",
+            )}
+          </Text>
+        )}
         <Group gap="xs" justify="flex-end" mt="xs">
           <Button
             variant="default"

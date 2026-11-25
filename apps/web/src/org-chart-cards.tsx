@@ -147,22 +147,22 @@ function TeamRow({
   );
 }
 
-// The dimmed copy of a person drafted to another manager, under the manager they report to now:
-// their name and position, marked Live, opening nothing.
-function LiveCopyCard({ data }: { data: CardData }) {
-  const { person, colour } = data;
+// A card in its team's colour, when its team has one.
+const teamColourProps = (colour: PaletteColour | undefined) =>
+  colour === undefined
+    ? {}
+    : {
+        "data-coloured": true,
+        style: {
+          "--team-colour": colourVariable(colour, "filled"),
+        } as CSSProperties,
+      };
+
+// Where the line from a person's manager arrives: at the top of a card in a row, and at the left of
+// one in a stack.
+function TargetHandles() {
   return (
-    <div
-      className={[classes.card, classes.liveCopy].join(" ")}
-      data-coloured={colour === undefined ? undefined : true}
-      style={
-        colour === undefined
-          ? undefined
-          : ({
-              "--team-colour": colourVariable(colour, "filled"),
-            } as CSSProperties)
-      }
-    >
+    <>
       <Handle
         id="row"
         type="target"
@@ -177,6 +177,20 @@ function LiveCopyCard({ data }: { data: CardData }) {
         isConnectable={false}
         className={classes.handle}
       />
+    </>
+  );
+}
+
+// The dimmed copy of a person drafted to another manager, under the manager they report to now:
+// their name and position, marked Live, opening nothing.
+function LiveCopyCard({ data }: { data: CardData }) {
+  const { person, colour } = data;
+  return (
+    <div
+      className={[classes.card, classes.liveCopy].join(" ")}
+      {...teamColourProps(colour)}
+    >
+      <TargetHandles />
       <div className={classes.name}>
         <MarkedItem tone="live">
           <span className={classes.label}>{person.preferredName}</span>
@@ -275,29 +289,9 @@ function PersonCard({ data }: NodeProps<CardNode>) {
             person.renamed !== undefined ||
             undefined
           }
-          data-coloured={colour === undefined ? undefined : true}
-          style={
-            colour === undefined
-              ? undefined
-              : ({
-                  "--team-colour": colourVariable(colour, "filled"),
-                } as CSSProperties)
-          }
+          {...teamColourProps(colour)}
         >
-          <Handle
-            id="row"
-            type="target"
-            position={Position.Top}
-            isConnectable={false}
-            className={classes.handle}
-          />
-          <Handle
-            id="stack"
-            type="target"
-            position={Position.Left}
-            isConnectable={false}
-            className={classes.handle}
-          />
+          <TargetHandles />
           <div className={classes.name}>
             <PersonMarks person={person}>
               <MarkedItem

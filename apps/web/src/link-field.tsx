@@ -28,7 +28,7 @@ import {
 } from "@mantine/core";
 import { type KeyboardEvent, type MouseEvent, useState } from "react";
 import type { Finish } from "./choice-picker.tsx";
-import { Count } from "./list-dialog.tsx";
+import { CountedInput } from "./counted-input.tsx";
 import classes from "./pages.module.css";
 
 // Clicking a link in a cell leaves focus on the cell, so the keys that move around the table still
@@ -186,17 +186,14 @@ export function useLinkForm({
             setLeftAddress(address.trim() !== "");
           }}
         />
-        <TextInput
+        <CountedInput
           id={textId}
           label="Text to show"
           description="Leave empty to show the address."
           autoComplete="off"
           value={text}
+          maximum={linkLengths.text}
           error={problems.text}
-          rightSection={
-            <Count length={link.text.length} maximum={linkLengths.text} />
-          }
-          rightSectionWidth={56}
           onChange={(event) => {
             setText(event.currentTarget.value);
           }}

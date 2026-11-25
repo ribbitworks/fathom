@@ -407,9 +407,7 @@ export function useTeamMonthActions(
         next: (data) => withMonthChange(data, record.personId, month, request),
         save: () => changeMemberTeams(record.personId, request),
         failure: `Fathom could not change the feature teams of ${record.name}.`,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
+        onSaved: undoable,
       });
     },
   };

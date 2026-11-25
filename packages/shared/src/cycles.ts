@@ -57,7 +57,8 @@ export const longestCycleIn = (unit: unknown): number =>
 // The most cycles one stream makes, so a pattern of one week from long ago cannot make too many.
 const mostCycles = 5000;
 
-const parseDay = (day: string): Date => new Date(`${day}T00:00:00Z`);
+// A day, such as 2026-11-25, at its start in UTC.
+export const parseDay = (day: string): Date => new Date(`${day}T00:00:00Z`);
 
 const formatDay = (date: Date): string => date.toISOString().slice(0, 10);
 
