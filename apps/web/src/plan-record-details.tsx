@@ -79,6 +79,7 @@ export interface MilestoneMenu {
 export interface Follow {
   showRecord: (tab: PlanTab, id: string) => void;
   showStream: (streamId: string) => void;
+  showRelease: (releaseId: string) => void;
 }
 
 const onTabOf =
@@ -88,12 +89,19 @@ const onTabOf =
   };
 
 // How each column's values are followed, for those that can be: to the records they name, or, for
-// a feature's release, to its stream.
+// a feature's or an activity's release, to its stream.
 const linkedPages = new Map<string, (follow: Follow, id: string) => void>([
   ["customerIds", onTabOf("customers")],
   ["projectIds", onTabOf("projects")],
   ["proposalIds", onTabOf("proposals")],
   ["featureIds", onTabOf("features")],
+  ["projectId", onTabOf("projects")],
+  [
+    "releaseId",
+    (follow, id) => {
+      follow.showRelease(id);
+    },
+  ],
   [
     releaseColumnKey,
     (follow, id) => {
@@ -116,7 +124,16 @@ function RecordLinks({
     <RecordLinkList
       links={named.map(({ id, label }) => ({
         id,
-        name: <RecordName record={{ id, name: label }} />,
+        name: (
+          <RecordName
+            record={
+              column.named?.find((record) => record.id === id) ?? {
+                id,
+                name: label,
+              }
+            }
+          />
+        ),
         onShow: () => {
           onShow(id);
         },

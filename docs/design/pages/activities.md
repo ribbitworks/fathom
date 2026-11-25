@@ -18,6 +18,7 @@ Activities lists the work releases and projects need that isn't a feature, such 
 - **Heading:** the title alone, with no Table or Board switch; at the right, New column for those who edit features and see people, then New activity.
 - **The table:** the shared table, edited as Features' is, with its search, Draft menu, Metrics, Group by, Views and Export.
 - **Details:** grouped under Details (Name to Notes, then Release and Project), Planning (Priority to Staffed), then Columns, the added ones. The table starts its columns in the details' order.
+  - **Release and Project:** links, with their pencils, as a feature's Release and Projects: the release, named with its schedule, opens its schedule on Releases; the project, its Project ID first and dimmed, opens its details on Projects.
 - **Built as Features is:** the page is Features' page with another tab of the plan, sharing its record actions, details and New form; activities come with the plan's read.
 
 ## Columns
@@ -38,7 +39,7 @@ Group by offers Needed by and each column of choices: Status, Release, Project, 
 
 ## Planned
 
-- **Releases and projects:** a release's or project's details listing its first five activities, with Show on Activities and Add activity, come with the Releases and Projects changes, with Release and Project as links in an activity's details ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
+- **Releases and projects:** a release's or project's details listing its first five activities, with Show on Activities and Add activity, come with the Releases and Projects changes ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
 - **Staffed:** No until allocating to activities is built ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
 - **Duplicate…:** in an activity's row menu and details, with duplicating features.
 - **Colour:** an activity's colour, saved at once with no draft, comes with feature colours.

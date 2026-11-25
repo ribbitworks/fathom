@@ -35,6 +35,7 @@ import { lastViewsQuery } from "./last-views.ts";
 import { customerChoiceKey } from "./customer-filter.ts";
 import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
 import { featureNamers, planAddress } from "./projects.ts";
+import { streamAddress } from "./record-links.ts";
 import {
   ReleasesPage,
   type ReleasesTab,
@@ -336,11 +337,7 @@ export const featuresRoute = createRoute({
           void navigate(planAddress(next, record));
         }}
         onReleaseStream={(streamId) => {
-          void navigate({
-            to: "/releases/{-$streamId}",
-            params: { streamId: undefined },
-            search: { tab: "schedules", open: streamId },
-          });
+          void navigate(streamAddress(streamId));
         }}
         approves={approvableKinds(permissions)}
         {...viewProps(
@@ -422,6 +419,12 @@ export const activitiesRoute = createRoute({
         open={open}
         onOpen={(next) => {
           void navigate({ search: { ...search, open: next, ...notes } });
+        }}
+        onTab={(next, record) => {
+          void navigate(planAddress(next, record));
+        }}
+        onReleaseStream={(streamId) => {
+          void navigate(streamAddress(streamId));
         }}
       />
     );

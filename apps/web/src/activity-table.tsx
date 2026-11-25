@@ -14,8 +14,7 @@ import type { CellValue } from "./table-view.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import {
   field,
-  identified,
-  namesCell,
+  projectColumn,
   newKind,
   type PlanChange,
   planTable,
@@ -80,14 +79,7 @@ export function activityColumns(
       choices: choices.releases,
       emptyLabel: noOwner,
     }),
-    {
-      ...field<Activity>("projectId", planColumnNames.projectId, "choice", {
-        choices: identified(choices.projects),
-        emptyLabel: noOwner,
-      }),
-      content: ({ projectId }) =>
-        projectId === null ? null : namesCell(choices.projects)([projectId]),
-    },
+    projectColumn<Activity>(choices.projects, { emptyLabel: noOwner }),
   ];
   return inGroupsThenAdded(builtIn, activityColumnGroups, {
     fields,

@@ -17,6 +17,7 @@ import {
   plan,
   project,
   projectId,
+  projectStreamId,
   rowMenu,
   saved,
   sent,
@@ -29,6 +30,7 @@ afterEach(() => {
 });
 
 const releaseId = "30000000-0000-4000-8000-000000000001";
+const releaseActivityId = "50000000-0000-4000-8000-000000000002";
 
 const activity = (more: Partial<Activity> = {}): Activity => ({
   id: "50000000-0000-4000-8000-000000000001",
@@ -58,7 +60,7 @@ const activityPlan = (more: Partial<ReturnType<typeof plan>> = {}) =>
     activities: [
       activity(),
       activity({
-        id: "50000000-0000-4000-8000-000000000002",
+        id: releaseActivityId,
         keyNumber: 8,
         name: "Fictional Testing",
         releaseId,
@@ -107,6 +109,52 @@ describe("the Activities page", () => {
         .getAllByRole("heading", { level: 3 })
         .map((heading) => heading.textContent),
     ).toEqual(["Details", "Planning"]);
+  });
+
+  it("links an activity's project to its details on Projects, its pencil kept", async () => {
+    const { history } = await open(
+      activityPlan(),
+      {},
+      `/activities?open=${activity().id}`,
+    );
+    const panel = sidePanel();
+    expect(
+      within(panel).getByRole("button", { name: "Change Project" }),
+    ).toBeDefined();
+    const link = within(panel).getByRole("button", {
+      name: "FP-1 Crane Control",
+    });
+    expect(within(link).getByText("FP-1")).toBeDefined();
+    await userEvent.click(link);
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/projects");
+    });
+    expect(new URLSearchParams(history.location.search).get("open")).toBe(
+      projectId,
+    );
+  });
+
+  it("links an activity's release to its schedule on Releases, its pencil kept", async () => {
+    const { history } = await open(
+      activityPlan(),
+      {},
+      `/activities?open=${releaseActivityId}`,
+    );
+    const panel = sidePanel();
+    expect(
+      within(panel).getByRole("button", { name: "Change Release" }),
+    ).toBeDefined();
+    await userEvent.click(
+      within(panel).getByRole("button", {
+        name: "Fictional Stream: Fictional Release",
+      }),
+    );
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/releases");
+    });
+    const search = new URLSearchParams(history.location.search);
+    expect(search.get("open")).toBe(projectStreamId);
+    expect(search.get("tab")).toBe("schedules");
   });
 
   it("adds an activity of a project, sending what it belongs to", async () => {

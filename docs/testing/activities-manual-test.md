@@ -11,7 +11,7 @@ last_updated: "2026-11-25"
 
 ## Scope
 
-Verifies the Activities page: how its table and an activity's details look and read, adding an activity to a project, moving one to a release in its cell, grouping by project, and a reader who may not change activities.
+Verifies the Activities page: how its table and an activity's details look and read, adding an activity to a project, moving one to a release in its cell, following an activity's release and project to their pages, grouping by project, and a reader who may not change activities.
 
 ## Test Environment
 
@@ -65,7 +65,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `F46D` Point at the 'Data migration' row and select the details button at the right of its **Name** cell.
   - **Expected:**
     - The details open beside the table, titled 'Data migration', with **#ACTIVITY-** and a number under the title.
-    - Under **Details**: **Name**, **Status**, **Description**, **Notes**, **Release** reading **None**, and **Project** reading 'P-2001 Crane Control'.
+    - Under **Details**: **Name**, **Status**, **Description**, **Notes**, **Release** reading **None**, and **Project** reading 'P-2001 Crane Control', with **P-2001** dimmed.
     - Under **Planning**: **Priority**, **Needed by**, **Effort**, **Size**, **Risk**, **Feature team** and **Staffed**.
   - **Notes:**
 
@@ -140,3 +140,32 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `1A50` Point at the 'Data migration' row and select the details button at the right of its **Name** cell.
   - **Expected:** The details show the activity's values, with no pencil on any row.
   - **Notes:**
+
+### ACT-06: An Activity's Release and Project Lead to Their Pages
+
+**Account:** Product Manager, `product.manager@fathom.test`
+
+**Preconditions:** Signed in with this account. **Activities** page open, with **Drafts & Live** chosen in the Draft menu.
+
+- [ ] `04AE` Point at the 'Data migration' row and select the details button at the right of its **Name** cell.
+  - **Expected:** **Project** reads 'P-2001 Crane Control' as a link, with **P-2001** dimmed.
+  - **Notes:**
+- [ ] `EF10` Point at **Project** in the details.
+  - **Expected:** A pencil shows at the right of the row.
+  - **Notes:**
+- [ ] `DB81` Select 'P-2001 Crane Control' under **Project**.
+  - **Expected:** The **Projects** page opens, with the details of 'Crane Control' beside the table.
+  - **Notes:**
+- [ ] `00C3` Select the browser's back button, then select the **Release** cell of 'Operator training', press Enter, choose 'Platform: Harbor 1' and press Enter.
+  - **Expected:** **Release** reads 'Platform: Harbor 1' after a hollow dot.
+  - **Notes:**
+- [ ] `694C` Point at the 'Operator training' row and select the details button at the right of its **Name** cell.
+  - **Expected:**
+    - **Release** reads 'Platform: Harbor 1' as a link, after a hollow dot.
+    - Under it, the live value reads **None**.
+  - **Notes:**
+- [ ] `1C2C` Select 'Platform: Harbor 1' under **Release**.
+  - **Expected:** The **Releases** page opens on **Schedules**, with the details of 'Platform' beside the table.
+  - **Notes:**
+
+**Afterwards:** Discard the Unpublished Changes.
