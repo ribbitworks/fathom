@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Entering and Saving Data
@@ -22,7 +22,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 
 - **A choice with a description:** In a picker, a choice's description shows dimmed under its name. Typing finds a choice by its description too, ignoring letter case and accents, as [Finding rows](tables.md#search) does.
   - **Drawn by:** `ChoicePicker` and `OptionWords` in `apps/web/src/choice-picker.tsx`.
-  - **Example:** On the Org chart, choose Feature teams, open Search's details and change its Lead: each person shows their position and reporting team under their name.
+  - **Example:** On the Org chart, choose Feature teams, open Search's details and change its Lead: under each person's name are their position and the name of the team they're on, or whom they report to where it has none, such as Engineering Manager, reports to Mateo Quintero Reynoso under Max Munk.
 - **Choosing none:** A picker for a value that takes one choice, and need not have one, offers the column's word for an empty value, such as None, No manager or Later, as its first option, with a line under it, until something is typed. Choosing it empties the value.
   - **Highlighting:** Nothing is highlighted until a key is pressed or an option pointed at; once something is typed, the first match is. So none is always in sight, but Enter never picks it unasked.
   - **Drawn by:** `ChoicePicker` in `apps/web/src/choice-picker.tsx`, given the word through `cellKinds` in `apps/web/src/cell-kinds.tsx` from the column's `emptyLabel`.

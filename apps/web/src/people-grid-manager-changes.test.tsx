@@ -53,7 +53,7 @@ describe("managers and teams", () => {
     );
   });
 
-  it("describes each manager offered by position and reporting team, so two with the same name are told apart", async () => {
+  it("describes each manager offered by position, then the team they are on or whom they report to, so two with the same name are told apart", async () => {
     // Given a second manager with the name of the one at the top
     const namesake = person("p6", {
       preferredName: "Fictional p1",
@@ -64,7 +64,7 @@ describe("managers and teams", () => {
     // When a person's Manager cell is opened
     focus("p2", "managerId");
     await userEvent.keyboard("{Enter}");
-    // Then each manager shows their position and the team they are on under their name
+    // Then each manager shows their position, then the team they are on or whom they report to
     const options = await screen.findAllByRole("option");
     expect(
       options.map((option) =>
@@ -75,9 +75,9 @@ describe("managers and teams", () => {
     ).toEqual([
       ["No manager"],
       ["Fictional p1", "Fictional Engineer"],
-      ["Fictional p1", "Fictional Engineer, Fictional p2's team"],
+      ["Fictional p1", "Fictional Engineer, reports to Fictional p2"],
       ["Fictional p2", "Fictional Engineer, Harbour Crew"],
-      ["Fictional p4", "Fictional Engineer, Fictional p3's team"],
+      ["Fictional p4", "Fictional Engineer, reports to Fictional p3"],
       // A team this reader isn't sent is left out.
       ["Fictional p5", "Fictional Engineer"],
     ]);

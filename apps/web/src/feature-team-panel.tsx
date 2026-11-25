@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A feature team's details, beside the org chart, laid out as a person's are: its name and colour,
-// then its lead and members, as its draft makes them, each drafted value with its live one under it
-// and members a draft adds or removes marked, with when each change takes effect, where that is not
-// the day shown. Those who edit feature teams rename the team on today's chart, and change its
-// lead and members from the day the chart shows, choosing each person in a picker that describes
-// them by their position and reporting team; those who edit them also remove the team. Each change
-// is a draft, saved at once, which Cmd+Z or Ctrl+Z undoes. A new team is given its name, lead and
-// members at once.
+// A feature team's details beside the org chart, and the form that adds one.
 
 import {
   type Choice,
@@ -32,7 +25,7 @@ import {
 import { noOthers } from "./new-plan-record-panel.tsx";
 import { NewRecordPanel, newRecordId } from "./new-record-panel.tsx";
 import { noRecordProblem } from "./plan-table.tsx";
-import { aboutPerson, teamCalled } from "./people-rows.ts";
+import { aboutPerson, reportingWords } from "./people-rows.ts";
 import classes from "./record-details.module.css";
 import { RecordSection, Row, DetailSections } from "./record-details.tsx";
 import {
@@ -101,7 +94,7 @@ const onlyKind = "";
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
 // Everyone who may be chosen as a team's lead or member, by name, each described by their position
-// and reporting team.
+// and the team they are on or whom they report to.
 function teamChoices(people: readonly OrgChartPerson[]): Choice[] {
   const byId = new Map(people.map((person) => [person.id, person]));
   const aboutOf = (person: OrgChartPerson) => {
@@ -109,7 +102,7 @@ function teamChoices(people: readonly OrgChartPerson[]): Choice[] {
       person.managerId === null ? undefined : byId.get(person.managerId);
     return aboutPerson(
       person.position,
-      manager && teamCalled(manager.teamName, manager.preferredName),
+      manager && reportingWords(manager.teamName, manager.preferredName),
     );
   };
   return people

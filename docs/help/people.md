@@ -69,7 +69,7 @@ First, make them a manager:
 Once it's approved, give the person their new manager:
 
 1. On the person's row, choose the manager in **Manager**.
-   - Each manager shows their position and team under their name, so you can tell apart two people with the same name.
+   - Each manager shows their position under their name, then the name of the team they're on, or who they report to if that team has no name. That way you can tell apart two people with the same name.
 1. If the change happened before today, type the day it took effect in **Manager assigned**.
 1. Select **Publish**, and ask your approver to approve it.
 
