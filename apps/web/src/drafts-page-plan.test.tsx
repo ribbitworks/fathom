@@ -7,16 +7,19 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  bodyOf,
-  featureDraft,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
+  streamId,
+  streamsAnswer,
+} from "./test-releases.ts";
+import {
+  bodyOf,
+  featureDraft,
   noFeatureColumns,
   recordDraft,
   renderApp,
   serverAnswers,
-  streamId,
 } from "./test-support.tsx";
 import {
   noStreams,
@@ -139,12 +142,7 @@ describe("the Drafts page", () => {
         "plan:view",
         "features:view",
       ]),
-      "GET /api/release-streams": () =>
-        Response.json({
-          streams: [],
-          canEditStreams: false,
-          canEditReleases: false,
-        }),
+      "GET /api/release-streams": streamsAnswer([]),
       "GET /api/people": peopleWith([]),
       "GET /api/lists": () => Response.json({ lists: [] }),
       "GET /api/projects/choices": noPlanChoices,
@@ -199,12 +197,7 @@ describe("the Drafts page", () => {
         "plan:view",
         "features:view",
       ]),
-      "GET /api/release-streams": () =>
-        Response.json({
-          streams: [streamOfCycles],
-          canEditStreams: false,
-          canEditReleases: false,
-        }),
+      "GET /api/release-streams": streamsAnswer([streamOfCycles]),
       "GET /api/people": peopleWith([]),
       "GET /api/lists": () => Response.json({ lists: [] }),
       "GET /api/projects/choices": noPlanChoices,
@@ -312,24 +305,19 @@ describe("the Drafts page", () => {
       ]),
       "GET /api/projects": noPlan,
       "GET /api/projects/choices": noPlanChoices,
-      "GET /api/release-streams": () =>
-        Response.json({
-          streams: [
-            fictionalStream({
-              releases: [
-                fictionalRelease({
-                  note: "Scope **frozen**",
-                  draft: recordDraft({
-                    changed: ["note"],
-                    live: { note: "Scope *open*" },
-                  }),
-                }),
-              ],
+      "GET /api/release-streams": streamsAnswer([
+        fictionalStream({
+          releases: [
+            fictionalRelease({
+              note: "Scope **frozen**",
+              draft: recordDraft({
+                changed: ["note"],
+                live: { note: "Scope *open*" },
+              }),
             }),
           ],
-          canEditStreams: false,
-          canEditReleases: false,
         }),
+      ]),
     });
     renderApp("/drafts");
     expect(await entries()).toEqual([
@@ -366,23 +354,18 @@ describe("the Drafts page", () => {
       ]),
       "GET /api/projects": noPlan,
       "GET /api/projects/choices": noPlanChoices,
-      "GET /api/release-streams": () =>
-        Response.json({
-          streams: [
-            fictionalStream({
-              id: "10000000-0000-4000-8000-000000000002",
-              name: "Fictional Minors",
-              patterns: [
-                fictionalPattern({
-                  id: "20000000-0000-4000-8000-000000000002",
-                }),
-              ],
+      "GET /api/release-streams": streamsAnswer([
+        fictionalStream({
+          id: "10000000-0000-4000-8000-000000000002",
+          name: "Fictional Minors",
+          patterns: [
+            fictionalPattern({
+              id: "20000000-0000-4000-8000-000000000002",
             }),
-            stream,
           ],
-          canEditStreams: false,
-          canEditReleases: false,
         }),
+        stream,
+      ]),
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
     renderApp("/drafts");
@@ -436,12 +419,9 @@ describe("the Drafts page", () => {
       ]),
       "GET /api/projects": noPlan,
       "GET /api/projects/choices": noPlanChoices,
-      "GET /api/release-streams": () =>
-        Response.json({
-          streams: [fictionalStream({ releases: [release] })],
-          canEditStreams: false,
-          canEditReleases: false,
-        }),
+      "GET /api/release-streams": streamsAnswer([
+        fictionalStream({ releases: [release] }),
+      ]),
     });
 
     expect(await showOn("Fictional One in Fictional Majors", "Releases")).toBe(
