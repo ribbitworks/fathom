@@ -83,9 +83,7 @@ describe("adding a feature team", () => {
     for (const name of [live.toUpperCase(), ` ${draftedName.toLowerCase()} `]) {
       const response = await create({ name });
       expect(response.statusCode).toBe(409);
-      expect(errorOf(response)).toBe(
-        "Another feature team already has that name",
-      );
+      expect(errorOf(response)).toBe("Another feature team has that name");
     }
   });
 

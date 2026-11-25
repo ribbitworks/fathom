@@ -54,9 +54,7 @@ export const customerKind: RecordKind = {
   table: customers,
   fields: ["name", "description", "note"],
   links: {},
-  unique: [
-    { field: "name", message: "There is already a customer with that name" },
-  ],
+  unique: [{ field: "name", message: "Another customer has that name" }],
   readWith: ["plan:view"],
   unseenSubject: "a customer",
   subject: (state, id) =>
@@ -82,10 +80,10 @@ export const proposalKind: RecordKind = {
   links: { customerIds: "customer", featureIds: "feature" },
   refers: { ownerId: "person", statusId: "choice" },
   unique: [
-    { field: "name", message: "There is already a proposal with that name" },
+    { field: "name", message: "Another proposal has that name" },
     {
       field: "externalId",
-      message: "There is already a proposal with that Proposal ID",
+      message: "Another proposal has that Proposal ID",
     },
   ],
   readWith: ["plan:view"],
@@ -129,10 +127,10 @@ export const projectKind: RecordKind = {
   },
   refers: { ownerId: "person" },
   unique: [
-    { field: "name", message: "There is already a project with that name" },
+    { field: "name", message: "Another project has that name" },
     {
       field: "externalId",
-      message: "There is already a project with that Project ID",
+      message: "Another project has that Project ID",
     },
   ],
   readWith: projectReaders,

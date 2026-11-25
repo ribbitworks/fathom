@@ -114,7 +114,7 @@ describe("saved views", () => {
     });
     expect(await viewsOf(cookie)).toContainEqual(view);
     expect((await save(cookie, "BY NAME", {})).json()).toEqual({
-      error: "There is already a view with that name",
+      error: "Another view has that name",
     });
 
     const renamed = await test.request(
@@ -698,7 +698,7 @@ describe("personal and shared views", () => {
   it("keeps names unique among shared views and among each maker's personal views", async () => {
     const first = await test.signedIn("workforce-administrator");
     const second = await test.signedIn("workforce-administrator");
-    const duplicate = { error: "There is already a view with that name" };
+    const duplicate = { error: "Another view has that name" };
 
     expect((await save(first.cookie, "Quarter", {})).statusCode).toBe(201);
     expect((await save(second.cookie, "QUARTER", {})).statusCode).toBe(201);
@@ -713,13 +713,13 @@ describe("personal and shared views", () => {
     expect((await share(first.cookie, "Half", {})).statusCode).toBe(201);
     expect(
       (await change(second.cookie, view.id, { scope: "shared" })).json(),
-    ).toEqual({ error: "There is already a shared view named Half" });
+    ).toEqual({ error: "Another shared view is named Half" });
 
     const own = (await share(second.cookie, "Whole", {})).json<Saved>().view;
     expect((await save(second.cookie, "Whole", {})).statusCode).toBe(201);
     expect(
       (await change(second.cookie, own.id, { scope: "personal" })).json(),
-    ).toEqual({ error: "There is already a personal view named Whole" });
+    ).toEqual({ error: "Another personal view is named Whole" });
 
     // A view renamed as it is shared is refused under its new name.
     await share(first.cookie, "Taken", {});
@@ -731,7 +731,7 @@ describe("personal and shared views", () => {
           scope: "shared",
         })
       ).json(),
-    ).toEqual({ error: "There is already a shared view named Taken" });
+    ).toEqual({ error: "Another shared view is named Taken" });
   });
 
   it("lets a maker who may share a view share it and take it back", async () => {
@@ -1138,7 +1138,7 @@ describe("views of every table", () => {
     expect((await features.save(cookie, name, {})).statusCode).toBe(201);
     expect(
       (await features.save(cookie, name.toUpperCase(), {})).json(),
-    ).toEqual({ error: "There is already a view with that name" });
+    ).toEqual({ error: "Another view has that name" });
   });
 
   it("keep their grouping and send it, and are kept from readers who can't see the column grouped by", async () => {

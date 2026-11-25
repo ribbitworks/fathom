@@ -24,8 +24,8 @@ const name = () =>
 
 describe("a value refused in a page's New form", () => {
   it.each([
-    ["customer", "customers", "There is already a customer with that name"],
-    ["project", "projects", "There is already a project with that name"],
+    ["customer", "customers", "Another customer has that name"],
+    ["project", "projects", "Another project has that name"],
   ])(
     "names the server's refusal of a new %s under Name, with focus in it, not in a notification",
     async (one, tab, reason) => {

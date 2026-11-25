@@ -1678,7 +1678,7 @@ describe("columns", () => {
     expect(within(dialog).getByText("List needed")).toBeDefined();
     await userEvent.type(within(dialog).getByLabelText("Name"), "site");
     expect(
-      within(dialog).getByText("Another column already has that name"),
+      within(dialog).getByText("Another column has that name"),
     ).toBeDefined();
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     await userEvent.type(within(dialog).getByLabelText("Name"), "Desk");
@@ -1687,7 +1687,7 @@ describe("columns", () => {
       within(dialog).getByRole("button", { name: "Add column" }),
     );
     expect(
-      await within(dialog).findByText("Another column already has that name"),
+      await within(dialog).findByText("Another column has that name"),
     ).toBeDefined();
     // A name the server says is taken must change before trying again.
     await userEvent.type(within(dialog).getByLabelText("Name"), "s");
@@ -2945,7 +2945,7 @@ describe("searching, sorting, and filtering", () => {
       await userEvent.clear(name);
       await userEvent.type(name, "theirs");
       expect(
-        within(dialog).getByText("Another view already has that name"),
+        within(dialog).getByText("Another view has that name"),
       ).toBeDefined();
       await userEvent.clear(name);
       await userEvent.type(name, "Home{Enter}");
@@ -3192,12 +3192,12 @@ describe("searching, sorting, and filtering", () => {
         "GET /api/views/people": withViews([mine]),
         [`PUT /api/views/people/${v1}`]: () =>
           Response.json(
-            { error: "There is already a shared view named Harbour" },
+            { error: "Another shared view is named Harbour" },
             { status: 409 },
           ),
       });
       await chooseView("Share current view");
-      await screen.findByText("There is already a shared view named Harbour");
+      await screen.findByText("Another shared view is named Harbour");
       expect(await viewsMenuLayout()).toContain("My views");
     });
 
@@ -3277,15 +3277,15 @@ describe("searching, sorting, and filtering", () => {
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("theirs");
       expect(
-        within(dialog).queryByText("Another view already has that name"),
+        within(dialog).queryByText("Another view has that name"),
       ).toBeNull();
       await userEvent.click(within(dialog).getByRole("checkbox"));
       expect(
-        within(dialog).getByText("Another view already has that name"),
+        within(dialog).getByText("Another view has that name"),
       ).toBeDefined();
       await userEvent.click(within(dialog).getByRole("checkbox"));
       expect(
-        within(dialog).queryByText("Another view already has that name"),
+        within(dialog).queryByText("Another view has that name"),
       ).toBeNull();
     });
 
@@ -3294,7 +3294,7 @@ describe("searching, sorting, and filtering", () => {
         "GET /api/views/people": withViews([]),
         "POST /api/views/people": () =>
           Response.json(
-            { error: "There is already a view with that name" },
+            { error: "Another view has that name" },
             { status: 409 },
           ),
       });
@@ -3302,11 +3302,11 @@ describe("searching, sorting, and filtering", () => {
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("Taken{Enter}");
       expect(
-        await within(dialog).findByText("Another view already has that name"),
+        await within(dialog).findByText("Another view has that name"),
       ).toBeDefined();
       await userEvent.click(within(dialog).getByRole("checkbox"));
       expect(
-        within(dialog).queryByText("Another view already has that name"),
+        within(dialog).queryByText("Another view has that name"),
       ).toBeNull();
     });
 
@@ -3375,7 +3375,7 @@ describe("searching, sorting, and filtering", () => {
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("harbour");
       expect(
-        within(dialog).queryByText("Another view already has that name"),
+        within(dialog).queryByText("Another view has that name"),
       ).toBeNull();
     });
 
@@ -3434,16 +3434,13 @@ describe("searching, sorting, and filtering", () => {
       await openAt("/people?search=avery", {
         "GET /api/views/people": withViews([]),
         "POST /api/views/people": () =>
-          Response.json(
-            { error: "There is already a view with that name" },
-            { status },
-          ),
+          Response.json({ error: "Another view has that name" }, { status }),
       });
       await chooseView("Save view…");
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("Taken{Enter}");
       expect(
-        await within(dialog).findByText("Another view already has that name"),
+        await within(dialog).findByText("Another view has that name"),
       ).toBeDefined();
       status = 500;
       await userEvent.keyboard("!{Enter}");

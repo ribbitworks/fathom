@@ -199,9 +199,7 @@ describe("customers", () => {
       name: customer.name.toUpperCase(),
     });
     expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe(
-      "There is already a customer with that name",
-    );
+    expect(errorOf(response)).toBe("Another customer has that name");
   });
 
   it("refuses changing one that does not exist", async () => {
@@ -365,13 +363,11 @@ describe("projects", () => {
       name: unique("Fictional Project"),
       externalId: externalId.toLowerCase(),
     });
-    expect(errorOf(sameId)).toBe(
-      "There is already a project with that Project ID",
-    );
+    expect(errorOf(sameId)).toBe("Another project has that Project ID");
     const sameName = await send("POST", "/api/projects", {
       name: project.name.toLowerCase(),
     });
-    expect(errorOf(sameName)).toBe("There is already a project with that name");
+    expect(errorOf(sameName)).toBe("Another project has that name");
     await addProject({ externalId: "" });
     expect((await addProject()).externalId).toBeNull();
   });
@@ -630,16 +626,12 @@ describe("proposals", () => {
     const sameName = await send("POST", "/api/proposals", {
       name: proposal.name.toUpperCase(),
     });
-    expect(errorOf(sameName)).toBe(
-      "There is already a proposal with that name",
-    );
+    expect(errorOf(sameName)).toBe("Another proposal has that name");
     const response = await send("POST", "/api/proposals", {
       name: unique("Fictional Proposal"),
       externalId: externalId.toUpperCase(),
     });
-    expect(errorOf(response)).toBe(
-      "There is already a proposal with that Proposal ID",
-    );
+    expect(errorOf(response)).toBe("Another proposal has that Proposal ID");
   });
 
   it("cannot be removed while a project links to them", async () => {

@@ -48,7 +48,7 @@ import {
 import { type ViewColumns, viewTables } from "./view-tables.ts";
 
 const noView = "There is no such view";
-const duplicateView = "There is already a view with that name";
+const duplicateView = "Another view has that name";
 const notYours =
   "Only the person who saved a view, or someone who may share views on its table, can change it";
 const notSharer =
@@ -504,7 +504,7 @@ export async function updateView(
         await refusingDuplicates(
           after.scope === before.scope
             ? duplicateView
-            : `There is already a ${after.scope} view named ${after.name}`,
+            : `Another ${after.scope} view is named ${after.name}`,
           async () =>
             transaction
               .update(savedViews)

@@ -357,7 +357,7 @@ describe("adding and changing", () => {
     const feature = await liveFeature();
     const response = await post({ name: feature.name.toUpperCase() });
     expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe("There is already a feature with that name");
+    expect(errorOf(response)).toBe("Another feature has that name");
   });
 
   it("rounds an estimate to two decimal places", async () => {

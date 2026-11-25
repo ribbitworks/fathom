@@ -164,10 +164,7 @@ describe("greeting", () => {
         ...realData,
         readGreeting: () =>
           Promise.reject(
-            new ConflictError(
-              "There is already a customer with that name",
-              "name",
-            ),
+            new ConflictError("Another customer has that name", "name"),
           ),
       },
     });
@@ -177,7 +174,7 @@ describe("greeting", () => {
     });
     expect([response.statusCode, response.json()]).toEqual([
       409,
-      { error: "There is already a customer with that name", field: "name" },
+      { error: "Another customer has that name", field: "name" },
     ]);
   });
 

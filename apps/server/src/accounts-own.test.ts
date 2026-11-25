@@ -408,7 +408,7 @@ describe("changing one's own name", () => {
     });
     expect(response.statusCode).toBe(409);
     expect(response.json()).toMatchObject({
-      error: "Another account already has that name; choose another",
+      error: "Another account has that name",
     });
   });
 

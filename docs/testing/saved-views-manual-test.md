@@ -302,7 +302,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `CCA5` Select **Share current view**.
-  - **Expected:** A notice says "There is already a shared view named Fictional team view".
+  - **Expected:** A notice says "Another shared view is named Fictional team view".
   - **Notes:**
 
 - [ ] `F098` Open the Views menu.

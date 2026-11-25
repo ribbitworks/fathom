@@ -148,7 +148,7 @@ describe("changing release streams", () => {
     );
     expect(response.statusCode).toBe(409);
     expect(response.json<{ error: string }>().error).toBe(
-      "There is already a schedule with that name",
+      "Another schedule has that name",
     );
   });
 

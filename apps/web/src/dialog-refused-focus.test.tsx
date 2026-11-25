@@ -78,9 +78,7 @@ describe("a refused Save puts focus in the field refused", () => {
     await press("Save view");
 
     // Then the reason is under Name, which has the focus
-    expect(
-      await screen.findByText("Another view already has that name"),
-    ).toBeDefined();
+    expect(await screen.findByText("Another view has that name")).toBeDefined();
     await expectFocusIn(box("Name"));
   });
 
@@ -116,9 +114,7 @@ describe("a refused Save puts focus in the field refused", () => {
     await press("Create list");
 
     // Then the reason is under Name, which has the focus
-    expect(
-      await screen.findByText("Another list already has that name"),
-    ).toBeDefined();
+    expect(await screen.findByText("Another list has that name")).toBeDefined();
     await expectFocusIn(box("Name"));
 
     // And once the name is changed, creating sends it
@@ -171,7 +167,7 @@ describe("a refused Save puts focus in the field refused", () => {
 
     // Then the reason is under Name, which has the focus
     expect(
-      await screen.findByText("Another column already has that name"),
+      await screen.findByText("Another column has that name"),
     ).toBeDefined();
     await expectFocusIn(box("Name"));
   });

@@ -620,7 +620,7 @@ export async function refuseTakenTeamNames(
     const drafted = await draftedPersonValues(reader, "teamName", chunk, ids);
     taken = live.length > 0 || drafted.length > 0;
   }
-  if (taken) throw new ConflictError("Another team already has that name");
+  if (taken) throw new ConflictError("Another team has that name");
 }
 
 // Refuses removing people who are, or were, anyone's manager, live or in anyone's draft, published

@@ -547,9 +547,7 @@ export function createAccountAdministration(
           )
           .limit(1);
         if (taken !== undefined) {
-          throw new ConflictError(
-            "Another account already has that name; choose another",
-          );
+          throw new ConflictError("Another account has that name");
         }
         await transaction
           .update(users)
