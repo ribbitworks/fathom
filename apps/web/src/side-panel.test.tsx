@@ -801,8 +801,11 @@ describe("the panel in front, which a narrow screen shows", () => {
     expect(["Details", "Form"].map(behind)).toEqual([true, false]);
   });
 
-  it("is the top one of those open together", () => {
-    render(layout([details, form]));
+  it("is the top one of those opened together, as the page is drawn or later", () => {
+    const { rerender } = render(layout([details, form]));
+    expect(["Details", "Form"].map(behind)).toEqual([false, true]);
+    rerender(layout([]));
+    rerender(layout([details, form]));
     expect(["Details", "Form"].map(behind)).toEqual([false, true]);
   });
 });

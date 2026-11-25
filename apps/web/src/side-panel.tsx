@@ -195,16 +195,19 @@ function useStackHeights(storageKey: string) {
   return { height, shareOf, share };
 }
 
+// The keys of a stack's panels open now and as it was last drawn.
+interface StackKeys {
+  keys: readonly string[];
+  before: readonly string[];
+}
+
 // The panel a narrow screen shows of a stack, where only one fits: the one opened last, or, once it
-// closes, the one in front before it.
-function useFrontPanel(panels: readonly SidePanel[]): string | undefined {
-  const keys = panels.map(({ key }) => key);
-  const before = usePrevious(keys) ?? keys;
-  // Of panels open together as the page is drawn, the top one is in front.
+// closes, the one in front before it. Of panels opened together, the top one is in front.
+function useFrontPanel({ keys, before }: StackKeys): string | undefined {
   const [order, setOrder] = useState<readonly string[]>(() =>
     [...keys].reverse(),
   );
-  const opened = keys.filter((key) => !before.includes(key));
+  const opened = keys.filter((key) => !before.includes(key)).reverse();
   const now = [
     ...keys.filter((key) => !order.includes(key) && !opened.includes(key)),
     ...order.filter((key) => keys.includes(key) && !opened.includes(key)),
@@ -217,14 +220,12 @@ function useFrontPanel(panels: readonly SidePanel[]): string | undefined {
 // The panel maximized in a stack, and its place for each panel under another; the stack folds the
 // panels above it away, or unfolds them, with motion where the stack moves.
 function useMaximized(
-  panels: readonly SidePanel[],
+  { keys, before }: StackKeys,
   narrow: boolean,
   moves: boolean,
 ) {
   const [asked, setAsked] = useState<string>();
-  const keys = panels.map(({ key }) => key);
-  const openBefore = usePrevious(keys) ?? keys;
-  const maximized = maximizedPanel(keys, openBefore, asked, narrow);
+  const maximized = maximizedPanel(keys, before, asked, narrow);
   if (asked !== undefined && maximized === undefined) setAsked(undefined);
   const [folding, setFolding] = useState<{ to: string | undefined }>();
   const wasMaximized = usePrevious(maximized);
@@ -272,8 +273,14 @@ const PanelStack = memo(function PanelStack({
     panels,
     moves,
   );
-  const { maximized, folding, placeOf } = useMaximized(panels, narrow, moves);
-  const front = useFrontPanel(panels);
+  const keys = panels.map(({ key }) => key);
+  const stackKeys = { keys, before: usePrevious(keys) ?? keys };
+  const { maximized, folding, placeOf } = useMaximized(
+    stackKeys,
+    narrow,
+    moves,
+  );
+  const front = useFrontPanel(stackKeys);
   const items = useRef(new Map<string, HTMLDivElement>());
   // Shares are kept as weights, scaled so the smallest open is 1: a flex item whose weights add up
   // to less than 1 takes only that part of the room, so a panel left alone after its neighbour
