@@ -432,9 +432,9 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - The side panel shows the details of 'Depot Operations'.
   - **Notes:**
 
-### PROJ-14: The Product Manager Adds a Project From a New Milestone's Row
+### PROJ-17: The Product Manager Adds a Project From a New Milestone's Row
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-13.
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-15.
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Milestones** tab chosen.
 
