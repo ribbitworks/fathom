@@ -51,8 +51,8 @@ describe("guessScore", () => {
 describe("isGuessable", () => {
   it("refuses a password scoring below 3, and accepts one scoring 3 or more", () => {
     expect(safeGuessScore).toBe(3);
-    expect(guessScore("FictionalChooser1", owner)).toBe(3);
-    expect(isGuessable("FictionalChooser1", owner)).toBe(false);
+    expect(guessScore("QuietMaple42", owner)).toBe(3);
+    expect(isGuessable("QuietMaple42", owner)).toBe(false);
     expect(guessScore("thirteen-char", owner)).toBe(2);
     expect(isGuessable("thirteen-char", owner)).toBe(true);
     expect(isGuessable("test12345678", owner)).toBe(true);
