@@ -46,7 +46,7 @@ export interface RoleAdministration {
   ): Promise<RoleEffects>;
 }
 
-const nameTaken = "A role with that name already exists";
+const nameTaken = "Another role has that name";
 
 // The permissions a role stores that the server knows, in the shared list's order.
 const known = (stored: readonly string[]): Permission[] =>
