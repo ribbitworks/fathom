@@ -322,10 +322,10 @@ export async function readAllocations(
         // Every feature has a status, a choice of the feature statuses list, read above.
         features: featureIds.map((id) => ({
           id,
-          ...namedInList(featureNaming(state, id, actor.permissions)),
+          ...namedInList(featureNaming(state, id, actor)),
           meaning: meaningSchema.nullable().parse(meanings.get(statusOf(id))),
           // A feature the reader can't read is told by no team's colour either.
-          colour: readsKind(featureKind, actor.permissions)
+          colour: readsKind(featureKind, actor)
             ? colourOf(colours, teamOf(id))
             : null,
         })),
@@ -489,11 +489,7 @@ export async function checkAllocationsAsked(
         approvingRefusal(
           outside,
           `${who} on ${inSentence(
-            featureNaming(
-              state,
-              String(record.featureId),
-              approver.permissions,
-            ),
+            featureNaming(state, String(record.featureId), approver),
           )}`,
           hire === undefined,
         ),

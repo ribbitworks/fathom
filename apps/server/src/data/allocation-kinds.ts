@@ -7,7 +7,7 @@ import { allocations } from "@fathom/db";
 import {
   type AllocationMonths,
   capitalized,
-  type Permission,
+  type ClassAccess,
 } from "@fathom/shared";
 import type { Recorded } from "./draft-records.ts";
 import {
@@ -71,13 +71,13 @@ export const allocationKind: RecordKind = {
   // Only a change shows its fields, and a change to an allocation always holds its months.
   valueInWords: (field, value) =>
     field === "months" ? monthsInWords(value as AllocationMonths) : undefined,
-  subject: (state, id, permissions) =>
+  subject: (state, id, access) =>
     `an allocation to ${subjectFor(
       featureKind,
       state,
       // A record named is always shown, live or as its draft makes it.
       String((shownVersion(state, "allocation", id) as Recorded).featureId),
-      permissions,
+      access,
     )}`,
 };
 
@@ -97,10 +97,10 @@ function removedProjectOf(state: State, featureId: string): string | undefined {
 export function allocationProblem(
   state: State,
   touched: readonly Touched[],
-  permissions: readonly Permission[],
+  access: ClassAccess,
 ): string | undefined {
   const named = (kind: RecordKind, id: string) =>
-    subjectFor(kind, state, id, permissions);
+    subjectFor(kind, state, id, access);
   for (const { type, id } of touched) {
     if (type === "allocation") {
       const featureId = versionOf(state, type, id)?.featureId;

@@ -9,7 +9,7 @@ import {
   endsTooEarly,
   namesPlannedWork,
   patternStartFits,
-  type Permission,
+  type ClassAccess,
   scheduleEndProblem,
 } from "@fathom/shared";
 import type { Recorded } from "./draft-records.ts";
@@ -73,10 +73,10 @@ const streamOf = ({ type, id, record }: Touched): string =>
 export function releaseProblem(
   state: RecordsState,
   touched: readonly Touched[],
-  permissions: readonly Permission[],
+  access: ClassAccess,
 ): string | undefined {
   const worded = (named: string, unnamed: string) =>
-    namesPlannedWork(permissions) ? named : unnamed;
+    namesPlannedWork(access.permissions) ? named : unnamed;
   const streams = new Set(touched.map(streamOf));
   for (const streamId of streams) {
     const patterns = streamPatterns(state, streamId);
@@ -105,7 +105,7 @@ export function releaseProblem(
         made,
         endsOn,
         planned(state, streamId),
-        permissions,
+        access.permissions,
       );
       if (problem !== undefined) return problem;
     } else if (patternTouched && endsTooEarly(made, endsOn)) {

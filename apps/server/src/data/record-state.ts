@@ -4,12 +4,14 @@
 // unique, and every record read together with its drafts. Part of the data access layer.
 
 import {
+  type ClassAccess,
   type ClassifiedView,
   type ColumnTable,
   holdsAny,
   type Permission,
   type RecordRef,
   type RecordType,
+  seesView,
 } from "@fathom/shared";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { Transaction } from "./changes.ts";
@@ -50,11 +52,7 @@ export interface RecordKind {
   addedColumns?: { owner: ValueOwner; table: ColumnTable };
   // The record as the Drafts page names it to a role, such as "the schedule Major", naming any record
   // it belongs to only as the role may read it.
-  subject: (
-    state: RecordsState,
-    id: string,
-    permissions: readonly Permission[],
-  ) => string;
+  subject: (state: RecordsState, id: string, access: ClassAccess) => string;
   // The record as named to a role that can't read the kind, such as "a release".
   unseenSubject: string;
   // The drafts the record's draft uses beyond the records it links to, such as the cycle patterns
@@ -138,11 +136,18 @@ export const shownVersion = (
   // eslint-disable-next-line security/detect-object-injection
   versionOf(state, type, id) ?? state[type].live.get(id);
 
-// Whether a role reads records of the kind, and so may be told their names.
-export const readsKind = (
+// Whether a role holds a permission records of the kind are read with, which an editor's refusal
+// tells apart from missing the classes of data the kind's view needs.
+export const holdsKindPermission = (
   kind: RecordKind,
   permissions: readonly Permission[],
 ): boolean => holdsAny(permissions, kind.readWith);
+
+// Whether a role reads records of the kind: with a permission the kind is read with, and, for a kind
+// that needs one, every class of data its view needs.
+export const readsKind = (kind: RecordKind, access: ClassAccess): boolean =>
+  holdsKindPermission(kind, access.permissions) &&
+  (kind.view === undefined || seesView(kind.view, access));
 
 // A record as refusals and the Drafts page name it to a role: by its own name only to a role that
 // reads its kind, and only when the record is shown to them, not held in someone else's
@@ -151,11 +156,10 @@ export const subjectFor = (
   kind: RecordKind,
   state: RecordsState,
   id: string,
-  permissions: readonly Permission[],
+  access: ClassAccess,
 ): string =>
-  readsKind(kind, permissions) &&
-  shownVersion(state, kind.type, id) !== undefined
-    ? kind.subject(state, id, permissions)
+  readsKind(kind, access) && shownVersion(state, kind.type, id) !== undefined
+    ? kind.subject(state, id, access)
     : kind.unseenSubject;
 
 // Whether a record is live, or drafted to be added.

@@ -3,7 +3,7 @@
 // Unit tests for the kinds on a release stream's cycles: which drafts a pattern's, release's or
 // feature's draft is decided and discarded with, where a stream added goes, and each kind's name.
 
-import type { RecordRef } from "@fathom/shared";
+import { defaultClasses, type RecordRef } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import type { Draft, Recorded } from "./draft-records.ts";
 import { type KindState, type RecordsState, usesOf } from "./record-state.ts";
@@ -393,6 +393,11 @@ describe("the name a record is given", () => {
     ],
     ["names a feature", featureKind, "record", "the feature Fictional Feature"],
   ])("%s", (_, kind, id, subject) => {
-    expect(kind.subject(state, id, ["features:view"])).toBe(subject);
+    expect(
+      kind.subject(state, id, {
+        permissions: ["features:view"],
+        dataClasses: defaultClasses,
+      }),
+    ).toBe(subject);
   });
 });

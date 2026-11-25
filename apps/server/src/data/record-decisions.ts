@@ -206,7 +206,7 @@ export async function discardRecordDraft(
           ...ref,
           record: stateOf(state, ref.type).live.get(ref.id) as Recorded,
         })),
-      maker.permissions,
+      maker,
     );
     if (problem !== undefined) throw new ConflictError(problem);
     const made: Change[] = [];
@@ -412,7 +412,7 @@ export async function approveRecordDrafts(
       liveOnly(await readRecordsState(transaction)),
     ),
     touched,
-    approver.permissions,
+    approver,
   );
   if (problem !== undefined) throw new ConflictError(problem);
   for (const { kind, id } of removed.reverse()) {

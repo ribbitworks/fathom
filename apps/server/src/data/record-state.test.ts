@@ -5,14 +5,18 @@
 // saved. A kind made up for the tests, with a link and no unique value, stands beside a real one.
 
 import { releases } from "@fathom/db";
+import { defaultClasses, type Permission } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   type RecordKind,
+  readsKind,
+  subjectFor,
   shownVersion,
   usesOf,
   valueTaken,
   withVersion,
 } from "./record-state.ts";
+import { allocationKind } from "./allocation-kinds.ts";
 import { releaseKind } from "./release-kinds.ts";
 import { draft, kindState, recordsState } from "./test-records-state.ts";
 
@@ -127,5 +131,41 @@ describe("a change considered before it is saved", () => {
     });
     const after = withVersion(state, "release", "r", { name: "Fictional" });
     expect(after.release.drafts.has("r")).toBe(false);
+  });
+});
+
+describe("whether a role reads a kind", () => {
+  const access = (permissions: Permission[]) => ({
+    permissions,
+    dataClasses: defaultClasses,
+  });
+
+  it("needs a permission the kind is read with", () => {
+    expect(readsKind(releaseKind, access(["features:view"]))).toBe(true);
+    expect(readsKind(releaseKind, access(["plan:view"]))).toBe(false);
+  });
+
+  it("needs every class of data the kind's view needs, for a kind that has one", () => {
+    expect(readsKind(allocationKind, access(["allocations:view"]))).toBe(false);
+    expect(
+      readsKind(allocationKind, access(["allocations:view", "personal:view"])),
+    ).toBe(true);
+  });
+
+  it("names an allocation only by its kind to a role without its view's classes", () => {
+    const state = recordsState({
+      feature: kindState([["f", { name: "Fictional Feature" }]]),
+      allocation: kindState([["a", { featureId: "f" }]]),
+    });
+    const named = (permissions: Permission[]) =>
+      subjectFor(allocationKind, state, "a", access(permissions));
+
+    expect(named(["allocations:view"])).toBe("an allocation");
+    expect(named(["allocations:view", "personal:view"])).toBe(
+      "an allocation to a feature",
+    );
+    expect(named(["allocations:view", "personal:view", "features:view"])).toBe(
+      "an allocation to the feature Fictional Feature",
+    );
   });
 });

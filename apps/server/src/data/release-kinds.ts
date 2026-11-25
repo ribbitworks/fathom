@@ -5,6 +5,7 @@
 
 import { cyclePatterns, features, releases, releaseStreams } from "@fathom/db";
 import {
+  type ClassAccess,
   cyclesOf,
   holdsAny,
   type Permission,
@@ -184,11 +185,11 @@ export const readsProjects = (permissions: readonly Permission[]) =>
 export function featureNaming(
   state: RecordsState,
   id: string,
-  permissions: readonly Permission[],
+  access: ClassAccess,
 ): { name: string } | { unseen: string } {
-  if (!readsKind(featureKind, permissions))
+  if (!readsKind(featureKind, access))
     return { unseen: featureKind.unseenSubject };
-  return isGeneralFeature(state, id) && !readsProjects(permissions)
+  return isGeneralFeature(state, id) && !readsProjects(access.permissions)
     ? { unseen: unseenProject }
     : { name: featureCalled(state, id) };
 }
@@ -241,8 +242,8 @@ export const featureKind: RecordKind = {
   ],
   readWith: ["features:view"],
   unseenSubject: "a feature",
-  subject: (state, id, permissions) => {
-    const naming = featureNaming(state, id, permissions);
+  subject: (state, id, access) => {
+    const naming = featureNaming(state, id, access);
     if (!("name" in naming)) return naming.unseen;
     return (
       isGeneralFeature(state, id)

@@ -7,7 +7,7 @@ import {
   cyclesOf,
   knownColour,
   type CyclePattern,
-  type Permission,
+  type ClassAccess,
   type Release,
   type ReleaseStream,
   type RecordType,
@@ -127,6 +127,6 @@ export function streamsOut(
 // A stream as a reader may see it, its releases only to those who may read releases, as the
 // release kind sets out.
 export const streamAsSeen =
-  (permissions: readonly Permission[]) =>
+  (access: ClassAccess) =>
   (stream: ReleaseStream): ReleaseStream =>
-    readsKind(releaseKind, permissions) ? stream : { ...stream, releases: [] };
+    readsKind(releaseKind, access) ? stream : { ...stream, releases: [] };

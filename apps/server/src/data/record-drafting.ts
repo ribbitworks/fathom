@@ -5,7 +5,11 @@
 // layer.
 
 import type { Database } from "@fathom/db";
-import type { Permission, RecordType } from "@fathom/shared";
+import {
+  type ClassAccess,
+  defaultClasses,
+  type RecordType,
+} from "@fathom/shared";
 import type { Actor } from "../access.ts";
 import { ConflictError, NotFoundError, type RequestError } from "../errors.ts";
 import {
@@ -159,7 +163,7 @@ function misfitOf(
   id: string,
   wanted: Recorded | undefined,
   before: Recorded,
-  permissions: readonly Permission[],
+  access: ClassAccess,
 ): RequestError | undefined {
   if (wanted !== undefined) {
     const taken = takenValue(kind, state, wanted, id);
@@ -171,7 +175,7 @@ function misfitOf(
         }
         if (versionOf(state, type, target) === undefined) {
           return new ConflictError(
-            `This links to ${subjectFor(kindOf(type), state, target, permissions)}, which is drafted to be removed; discard that draft first`,
+            `This links to ${subjectFor(kindOf(type), state, target, access)}, which is drafted to be removed; discard that draft first`,
           );
         }
       }
@@ -179,9 +183,9 @@ function misfitOf(
   }
   const touched = [{ type: kind.type, id, record: wanted ?? before }];
   const after = withVersion(state, kind.type, id, wanted);
-  const problem = ruleProblem(after, touched, permissions);
+  const problem = ruleProblem(after, touched, access);
   if (problem !== undefined) return new ConflictError(problem);
-  const holder = holderBreaking(kind, after, id, wanted, touched, permissions);
+  const holder = holderBreaking(kind, after, id, wanted, touched, access);
   return holder === undefined
     ? undefined
     : new ConflictError(heldConflictMessage(holder));
@@ -236,7 +240,7 @@ function holderBreaking(
   id: string,
   wanted: Recorded | undefined,
   touched: readonly Touched[],
-  permissions: readonly Permission[],
+  access: ClassAccess,
 ): string | undefined {
   for (const holding of holdings(state)) {
     const theirs = withHolding(state, holding);
@@ -247,7 +251,7 @@ function holderBreaking(
           (target) => versionOf(theirs, type, target) === undefined,
         ),
       );
-    if (linkGone || ruleProblem(theirs, touched, permissions) !== undefined) {
+    if (linkGone || ruleProblem(theirs, touched, access) !== undefined) {
       return holding.holder;
     }
   }
@@ -301,7 +305,7 @@ export async function saveRecordDrafts(
       id,
       record,
       (before ?? record) as Recorded,
-      maker.permissions,
+      maker,
     );
     if (misfit !== undefined) throw misfit;
     const changes = asDraft(kindChanges(kind, id, before, record));
@@ -331,7 +335,12 @@ export function recordFits(
   const version = versionOf(mine, type, id);
   const before = (version ?? stateOf(mine, type).live.get(id)) as Recorded;
   // Only whether it fits is asked, so whoever would read a refusal's words doesn't matter.
-  return misfitOf(kindOf(type), mine, id, version, before, []) === undefined;
+  return (
+    misfitOf(kindOf(type), mine, id, version, before, {
+      permissions: [],
+      dataClasses: defaultClasses,
+    }) === undefined
+  );
 }
 
 // The changes that take a record back from the user's draft to the published one, or the live
