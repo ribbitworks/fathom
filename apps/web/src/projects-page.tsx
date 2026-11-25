@@ -73,6 +73,7 @@ import {
   type PlanTab,
   projectPlanQuery,
   projectTabs,
+  streamsOfRelease,
   tableChoices,
 } from "./projects.ts";
 import {
@@ -368,7 +369,7 @@ export function ProjectsPage({
     );
   } else {
     const plan = query.data;
-    // The release streams, which only Features loads.
+    // The release streams, which only Features and Activities load.
     const streams = streamsQuery.data?.streams ?? [];
     const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
       recordsAsShown(view.show, records, livePlanRecords);
@@ -388,6 +389,9 @@ export function ProjectsPage({
       drafted: choices.drafted,
     };
     const nodes = planNodes(plan);
+    const showStream = (streamId: string) => {
+      onReleaseStream?.(streamId);
+    };
     const openRecord = (record: { id: string }) => {
       leave(() => {
         onOpen?.(record.id);
@@ -460,8 +464,9 @@ export function ProjectsPage({
             openRecord({ id });
           } else onTab?.(next, id);
         },
-        showStream: (streamId) => {
-          onReleaseStream?.(streamId);
+        showStream,
+        showRelease: (releaseId) => {
+          streamsOfRelease(streams, releaseId).forEach(showStream);
         },
       },
       onChange: (type, record, change) => {

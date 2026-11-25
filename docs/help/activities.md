@@ -36,7 +36,9 @@ You can also make changes in an activity's details, which open beside the table:
 
 1. Point at the activity's row.
 1. Select the details button: the small box at the right of its **Name** cell.
-1. Select the value you want to change.
+1. Select the value you want to change. For **Release** and **Project**, select the pencil at the right of the row.
+
+In the details, an activity's **Release** and **Project** are links. Select the release to open its schedule on **Releases**, or the project to open its details on **Projects**.
 
 ### Move an Activity
 

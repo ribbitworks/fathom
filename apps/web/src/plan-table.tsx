@@ -379,6 +379,25 @@ export function namesCell(records: readonly Identified[]) {
   };
 }
 
+// A column choosing one project, offered, named in its cell and linked in details by its Project ID
+// and name.
+export function projectColumn<
+  Rec extends PlanRecord & { projectId: string | null },
+>(
+  projects: readonly Identified[],
+  options: { required?: boolean; emptyLabel?: string } = {},
+): Column<Rec, PlanChange> {
+  return {
+    ...field<Rec>("projectId", planColumnNames.projectId, "choice", {
+      ...options,
+      choices: identified(projects),
+    }),
+    named: projects,
+    content: ({ projectId }) =>
+      projectId === null ? null : namesCell(projects)([projectId]),
+  };
+}
+
 // A link field by which a project or proposal names other records: features or customers.
 export type NamingLink = "featureIds" | "customerIds";
 

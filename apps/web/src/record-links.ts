@@ -36,6 +36,14 @@ const columnPages = {
   activities: "/activities",
 } as const satisfies Record<ColumnTable, string>;
 
+// A release stream's details on Releases.
+export const streamAddress = (streamId: string) =>
+  ({
+    to: "/releases/{-$streamId}",
+    params: { streamId: undefined },
+    search: { tab: "schedules", open: streamId },
+  }) as const;
+
 async function recordAddress(
   queryClient: QueryClient,
   found: FoundRecord,
@@ -55,11 +63,7 @@ async function recordAddress(
     case "milestone":
       return planAddress("milestones", id);
     case "schedule":
-      return {
-        to: "/releases/{-$streamId}",
-        params: { streamId: undefined },
-        search: { tab: "schedules", open: id },
-      };
+      return streamAddress(id);
     case "release":
       return {
         to: "/releases/{-$streamId}",

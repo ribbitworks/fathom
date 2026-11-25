@@ -458,6 +458,15 @@ export const releaseGroupKey = (streamId: string, releaseId: string | null) =>
   `${streamId} ${releaseId ?? "unreleased"}`;
 
 // The stream whose release, or cycles in none, a release group's key names.
+// The stream a release is in, as a list: empty for a release no stream holds.
+export const streamsOfRelease = (
+  streams: readonly ReleaseStream[],
+  releaseId: string,
+): string[] =>
+  streams
+    .filter(({ releases }) => releases.some(({ id }) => id === releaseId))
+    .map(({ id }) => id);
+
 export const streamOfReleaseGroup = (key: string): string =>
   key.slice(0, key.indexOf(" "));
 

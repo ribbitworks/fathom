@@ -152,6 +152,9 @@ export interface Column<
   // What a record's cell shows in place of its value in words, such as labels in a team's colours,
   // after its colour's square where it has one, in its Live row too, given the record as it is live.
   content?: (record: Rec) => ReactNode;
+  // The records a choice column offers, so a link to one names it in full, such as a project by its
+  // Project ID and name.
+  named?: readonly NamingPart["record"][];
   // For a column listing records, each of them, as drafted and as live, given the row's record, so a
   // details panel marks them as the cell does.
   parts?: (record: Rec) => readonly NamingPart[];
