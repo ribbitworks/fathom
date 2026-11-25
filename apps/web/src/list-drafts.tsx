@@ -17,6 +17,7 @@ import {
   WaitingNote,
 } from "./draft-details.tsx";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
+import { draftOffer, offersDraft } from "./menu-offer.ts";
 import { makerNames } from "./names.ts";
 import { withRetiring } from "./lists.ts";
 import classes from "./pages.module.css";
@@ -293,6 +294,29 @@ export const madeVerb = (action: "created" | "changed" | "deleted") => {
 export const makers = (draft: Parameters<typeof makerNames>[0]) =>
   allOf(makerNames(draft));
 
+// What a list's draft menu offers, by the shared rule: a rejected draft is back with its makers,
+// until they resubmit it, so it is not decided.
+export const draftItemsOffer = ({
+  canEdit,
+  canApprove,
+  rejected,
+  publishable,
+}: {
+  canEdit: boolean;
+  canApprove: boolean;
+  rejected: boolean;
+  // Whether it is the user's own unpublished draft, which can be published from the menu.
+  publishable: boolean;
+}) =>
+  draftOffer({
+    hasDraft: true,
+    rejected,
+    unpublished: publishable,
+    editsDraft: canEdit,
+    decides: canApprove && !rejected,
+    publishes: true,
+  });
+
 // What may be done with one draft, in a menu: deciding it, for Approvers, unless it waits for a
 // rejected draft it depends on, and resubmitting it once rejected, or discarding it, for those who
 // may edit lists.
@@ -323,12 +347,16 @@ export function DraftItems({
   onResubmit: () => void;
   onDiscard: () => void;
 }) {
-  const shown = (canApprove && !rejected) || canEdit;
+  const offer = draftItemsOffer({
+    canEdit,
+    canApprove,
+    rejected,
+    publishable: onPublish !== undefined,
+  });
   return (
     <>
-      {shown && <Menu.Divider />}
-      {/* A rejected draft is back with its makers, until they resubmit it. */}
-      {canApprove && !rejected && (
+      {offersDraft(offer) && <Menu.Divider />}
+      {offer.decide && (
         <>
           <Menu.Item disabled={waits || othersApprove} onClick={onApprove}>
             Approve…
@@ -338,13 +366,11 @@ export function DraftItems({
           <Menu.Item onClick={onReject}>Reject…</Menu.Item>
         </>
       )}
-      {canEdit && onPublish !== undefined && (
+      {offer.publish && (
         <Menu.Item onClick={onPublish}>Publish draft…</Menu.Item>
       )}
-      {canEdit && rejected && (
-        <Menu.Item onClick={onResubmit}>Resubmit</Menu.Item>
-      )}
-      {canEdit && <Menu.Item onClick={onDiscard}>{discard}</Menu.Item>}
+      {offer.resubmit && <Menu.Item onClick={onResubmit}>Resubmit</Menu.Item>}
+      {offer.discard && <Menu.Item onClick={onDiscard}>{discard}</Menu.Item>}
     </>
   );
 }

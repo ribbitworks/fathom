@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Which of a record's draft items its menu offers, the same in its row on a table and in its
-// details panel.
+// Which draft items a menu offers: a record's, the same in its row on a table and in its details
+// panel, and a list's.
 
 import type { GridDraft } from "./record-table.ts";
 
@@ -41,17 +41,53 @@ export interface RecordMenuFacts {
   publishes: boolean;
 }
 
-export interface RecordMenuOffer {
+// What a menu offers to do with one draft: deciding it, and publishing, resubmitting or discarding
+// it. A record's menu on a table and a list's menu both offer it by this rule.
+export interface DraftOffer {
   decide: boolean;
   publish: boolean;
   resubmit: boolean;
   discard: boolean;
+}
+
+export interface DraftOfferFacts {
+  hasDraft: boolean;
+  rejected: boolean;
+  // Whether the draft is the user's own, not yet published.
+  unpublished: boolean;
+  // Whether the user may publish, resubmit or discard it.
+  editsDraft: boolean;
+  // Whether the user's role approves or rejects it now.
+  decides: boolean;
+  // Whether the user's changes can be published from here.
+  publishes: boolean;
+}
+
+// A rejected draft is back with its makers, who resubmit or discard it, and their own unpublished
+// one is theirs to publish or discard.
+export const draftOffer = ({
+  hasDraft,
+  rejected,
+  unpublished,
+  editsDraft,
+  decides,
+  publishes,
+}: DraftOfferFacts): DraftOffer => {
+  const ownDraft = editsDraft && hasDraft;
+  return {
+    decide: decides,
+    publish: ownDraft && publishes && unpublished,
+    resubmit: ownDraft && rejected,
+    discard: ownDraft,
+  };
+};
+
+export interface RecordMenuOffer extends DraftOffer {
   remove: boolean;
 }
 
-// A rejected draft is back with its makers, who resubmit or discard it; their own unpublished one
-// is theirs to publish or discard; and a record neither added nor removed by its draft may be
-// removed by those who change it.
+// A record's own draft is offered as any draft is, and a record neither added nor removed by its
+// draft may be removed by those who change it.
 export function recordMenuOffer({
   ownDraft,
   shownAction,
@@ -60,12 +96,15 @@ export function recordMenuOffer({
   decides,
   publishes,
 }: RecordMenuFacts): RecordMenuOffer {
-  const ownDrafts = changes || editsOwnDraft;
   return {
-    decide: decides,
-    publish: ownDrafts && publishes && ownDraft?.unpublished === true,
-    resubmit: ownDrafts && ownDraft?.state === "rejected",
-    discard: ownDrafts && ownDraft !== undefined,
+    ...draftOffer({
+      hasDraft: ownDraft !== undefined,
+      rejected: ownDraft?.state === "rejected",
+      unpublished: ownDraft?.unpublished === true,
+      editsDraft: changes || editsOwnDraft,
+      decides,
+      publishes,
+    }),
     remove: changes && shownAction !== "created" && shownAction !== "deleted",
   };
 }
@@ -78,6 +117,14 @@ export const offersOwn = ({
   remove,
 }: RecordMenuOffer): boolean => publish || resubmit || discard || remove;
 
+// Whether a menu offers anything to do with a draft.
+export const offersDraft = ({
+  decide,
+  publish,
+  resubmit,
+  discard,
+}: DraftOffer): boolean => decide || publish || resubmit || discard;
+
 // Whether the menu offers anything to do with the record's draft, or removing the record.
 export const offersAny = (offer: RecordMenuOffer): boolean =>
-  offer.decide || offersOwn(offer);
+  offersDraft(offer) || offer.remove;

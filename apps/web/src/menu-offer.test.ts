@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for which of a record's draft items its menu offers, in its row and its details panel.
+// Tests for which draft items a menu offers: a record's, in its row and its details panel, and any
+// draft's.
 
 import { describe, expect, it } from "vitest";
 import {
+  type DraftOffer,
   type RecordMenuFacts,
+  draftOffer,
   offersAny,
+  offersDraft,
   offersOwn,
   recordMenuOffer,
 } from "./menu-offer.ts";
@@ -139,5 +143,66 @@ describe("whether a menu offers anything for the record's own draft", () => {
 
   it("counts nothing when nothing is offered", () => {
     expect(offersOwn(nothing)).toBe(false);
+  });
+});
+
+describe("a draft's offer", () => {
+  const facts = {
+    hasDraft: false,
+    rejected: false,
+    unpublished: false,
+    editsDraft: false,
+    decides: false,
+    publishes: true,
+  };
+  const offering = (...items: (keyof DraftOffer)[]): DraftOffer => ({
+    decide: items.includes("decide"),
+    publish: items.includes("publish"),
+    resubmit: items.includes("resubmit"),
+    discard: items.includes("discard"),
+  });
+
+  it.each([
+    ["nothing with no draft and no say", {}, offering()],
+    [
+      "deciding it to those who decide it",
+      { decides: true },
+      offering("decide"),
+    ],
+    [
+      "nothing of its own to those who edit drafts, with no draft",
+      { editsDraft: true, unpublished: true },
+      offering(),
+    ],
+    [
+      "discarding a waiting draft to those who edit it",
+      { hasDraft: true, editsDraft: true },
+      offering("discard"),
+    ],
+    [
+      "resubmitting and discarding a rejected draft to those who edit it",
+      { hasDraft: true, rejected: true, editsDraft: true },
+      offering("resubmit", "discard"),
+    ],
+    [
+      "publishing and discarding the user's unpublished draft",
+      { hasDraft: true, unpublished: true, editsDraft: true },
+      offering("publish", "discard"),
+    ],
+    [
+      "no publishing where changes can't be published from there",
+      { hasDraft: true, unpublished: true, editsDraft: true, publishes: false },
+      offering("discard"),
+    ],
+    [
+      "nothing of its own to those who don't edit it",
+      { hasDraft: true, rejected: true, unpublished: true },
+      offering(),
+    ],
+  ] as const)("offers %s", (_case, more, expected) => {
+    const offer = draftOffer({ ...facts, ...more });
+
+    expect(offer).toEqual(expected);
+    expect(offersDraft(offer)).toBe(Object.values(expected).some(Boolean));
   });
 });
