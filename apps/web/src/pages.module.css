@@ -1478,19 +1478,27 @@ th.liveColumn {
 /* The strip above a timeline: its periods side by side, each as wide as its share and never narrower
    than its name, those in view tinted with the accent, the one chosen filled with it, and the
    current one underlined. When the names don't all fit, it scrolls sideways, with the shared scroll
-   bars. */
+   bars, coming to rest with a whole name at its start. */
 .strip {
   display: flex;
   flex: 1;
   min-width: 0;
   overflow-x: auto;
+  scroll-snap-type: x mandatory;
   border: 1px solid var(--mantine-color-default-border);
   border-radius: var(--mantine-radius-sm);
+}
+
+/* The room after the last period that lets the rail end on a whole name. */
+.strip::after {
+  flex: 0 0 var(--strip-end, 0);
+  content: "";
 }
 
 /* Room either side of a name, so names side by side read apart. */
 .stripPeriod {
   flex: var(--strip-weight) 1 0;
+  scroll-snap-align: start;
   min-width: max-content;
   height: 28px;
   padding: 0 var(--mantine-spacing-xs);
@@ -1501,8 +1509,10 @@ th.liveColumn {
   white-space: nowrap;
 }
 
-.stripPeriod + .stripPeriod {
-  border-left: 1px solid var(--mantine-color-default-border);
+/* The line between two periods is the first one's, so a period resting at the rail's start brings
+   no line of its own against the rail's border. */
+.stripPeriod:not(:last-child) {
+  border-right: 1px solid var(--mantine-color-default-border);
 }
 
 /* The strip clips what is drawn outside a period, so its focus ring is drawn inside it, a full box
@@ -1519,6 +1529,17 @@ th.liveColumn {
 .stripPeriod[data-in-view] {
   background: var(--mantine-primary-color-light);
   color: var(--mantine-color-text);
+}
+
+/* The light tint is too faint to tell from the rest on the dark panel. The chosen period keeps its
+   fill. */
+:global([data-mantine-color-scheme="dark"])
+  .stripPeriod[data-in-view]:not([data-selected]) {
+  background: color-mix(
+    in srgb,
+    var(--mantine-primary-color-filled) 35%,
+    transparent
+  );
 }
 
 /* The current period, underlined in today's red, as today's line is on a timeline. */

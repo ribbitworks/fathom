@@ -4,7 +4,7 @@
 // is laid out, which the browser works out and these tests give.
 
 import { afterEach, describe, expect, it } from "vitest";
-import { showTinted } from "./timeline-strip.tsx";
+import { roomAtEnd, showTinted } from "./timeline-strip.tsx";
 
 afterEach(() => {
   document.body.replaceChildren();
@@ -39,10 +39,11 @@ describe("keeping the tinted periods in view", () => {
     expect(strip.scrollLeft).toBe(180);
   });
 
-  it("centres one tinted period", () => {
+  it("puts a whole name at the start, as near centred as it can, the earlier where two are", () => {
     const strip = rail(240, [4]);
     showTinted(strip);
-    expect(strip.scrollLeft).toBe(150);
+    // Centred, the rail would start at 150, a period's middle, as near 120 as 180; it takes 120.
+    expect(strip.scrollLeft).toBe(120);
   });
 
   it("starts from the first tinted period when they don't all fit", () => {
@@ -56,5 +57,43 @@ describe("keeping the tinted periods in view", () => {
     strip.scrollLeft = 50;
     showTinted(strip);
     expect(strip.scrollLeft).toBe(50);
+  });
+});
+
+describe("room after the last period", () => {
+  const roomOf = (strip: HTMLElement) =>
+    strip.style.getPropertyValue("--strip-end");
+
+  it("is just enough that the rail scrolled to its end starts with a whole name", () => {
+    // Ten periods of 60 pixels in 250 run 350 over; the next start, 360, is 10 further.
+    const strip = rail(250, []);
+    roomAtEnd(strip);
+    expect(roomOf(strip)).toBe("10px");
+  });
+
+  it("is none where the rail ends on a whole name, or doesn't scroll", () => {
+    const ending = rail(240, []);
+    roomAtEnd(ending);
+    const fitting = rail(700, []);
+    roomAtEnd(fitting);
+    expect([roomOf(ending), roomOf(fitting)]).toEqual(["0px", "0px"]);
+  });
+
+  it("is none where the periods run only a pixel over, as rounding to whole pixels leaves them", () => {
+    const strip = rail(599, []);
+    roomAtEnd(strip);
+    expect(roomOf(strip)).toBe("0px");
+  });
+
+  it("is none for a rail narrower than its last period, which no room can bring whole", () => {
+    const strip = rail(40, []);
+    roomAtEnd(strip);
+    expect(roomOf(strip)).toBe("0px");
+  });
+
+  it("is none for a rail with no periods", () => {
+    const strip = document.createElement("div");
+    roomAtEnd(strip);
+    expect(roomOf(strip)).toBe("0px");
   });
 });
