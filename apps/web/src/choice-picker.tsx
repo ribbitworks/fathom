@@ -277,7 +277,7 @@ export function ChoicePicker({
                 )}
               </Combobox.Option>
             ))}
-          {matching.length === 0 && !noneShown && (
+          {matching.length === 0 && !noneShown && adding === undefined && (
             <Combobox.Empty>No matches</Combobox.Empty>
           )}
           {adding !== undefined && (

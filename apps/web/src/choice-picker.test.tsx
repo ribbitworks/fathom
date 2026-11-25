@@ -265,7 +265,8 @@ describe("adding the record a picker names", () => {
     const onDone = renderAdding(onNew);
 
     await userEvent.type(screen.getByLabelText("Customers"), "Gamma");
-    expect(screen.getByText("No matches")).toBeDefined();
+    expect(screen.queryByText("No matches")).toBeNull();
+    expect(optionNames()).toEqual(["New customer “Gamma”"]);
     await userEvent.keyboard("{Enter}");
 
     expect([onDone.mock.calls, onNew.mock.calls]).toEqual([
