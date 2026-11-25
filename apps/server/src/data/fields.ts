@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The columns people add to People and Features: checking a column's settings against the records'
-// values, and deleting a live column with its values. Part of the data access layer.
+// The columns people add to People, Features and Activities: checking a column's settings against
+// the records' values, and deleting a live column with its values. Part of the data access layer.
 
 import {
+  activities,
   features,
   fields,
   fieldValues,
@@ -11,7 +12,11 @@ import {
   people,
   plannedHires,
 } from "@fathom/db";
-import type { FieldRequest } from "@fathom/shared";
+import {
+  type ColumnTable,
+  columnTableOf,
+  type FieldRequest,
+} from "@fathom/shared";
 import { and, asc, count, countDistinct, eq, gt, isNull } from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
@@ -20,9 +25,15 @@ import { hireChanges, readHireTier } from "./hire-fields.ts";
 import { personChanges } from "./person-fields.ts";
 import {
   type FieldRow,
+  ownerColumn,
+  ownerKey,
+  type PlanningOwner,
+  planningOwners,
+  planningTableOf,
   readColumns,
   readValues,
   valueField,
+  valueOwnersOf,
 } from "./values.ts";
 
 export const fieldFields = [
@@ -82,6 +93,29 @@ export const hiresHave = (total: number) =>
   have(total, "planned hire", "planned hires");
 export const featuresHave = (total: number) =>
   have(total, "feature", "features");
+const activitiesHave = (total: number) => have(total, "activity", "activities");
+
+// The record of planned work a value row is held by.
+const heldBy = (
+  row: Readonly<Record<ReturnType<typeof ownerKey>, string | null>>,
+  owner: PlanningOwner,
+) => row[ownerKey(owner)];
+
+// Each table's own records, which a required column needs a value from, and how many lack one is
+// said.
+const recordsOf: Readonly<
+  Record<
+    ColumnTable,
+    {
+      records: typeof people | typeof features | typeof activities;
+      have: (total: number) => string;
+    }
+  >
+> = {
+  people: { records: people, have: peopleHave },
+  features: { records: features, have: featuresHave },
+  activities: { records: activities, have: activitiesHave },
+};
 
 // Refuses settings that the people and planned hires already in Fathom, live or in drafts, do not
 // meet: a required column that someone has no value for, one choice where anyone has several, or a
@@ -132,25 +166,26 @@ export async function checkValuesFit(
     );
   }
   if (request.required && !field.required) {
-    const onFeatures = field.tableName === "features";
+    const table = columnTableOf(field.tableName);
+    // The table is always one of the fixed tables.
+    // eslint-disable-next-line security/detect-object-injection
+    const { records, have: haveNone } = recordsOf[table];
     const everyone = await totalOf(
-      onFeatures
-        ? transaction.select({ total: count() }).from(features)
-        : transaction.select({ total: count() }).from(people),
+      transaction.select({ total: count() }).from(records),
     );
     const filled = await totalOf(
       transaction
         .select({
-          total: countDistinct(
-            onFeatures ? fieldValues.featureId : fieldValues.personId,
-          ),
+          // The table is always one of the fixed tables.
+          // eslint-disable-next-line security/detect-object-injection
+          total: countDistinct(ownerColumn(valueOwnersOf[table][0])),
         })
         .from(fieldValues)
         .where(eq(fieldValues.fieldId, field.id)),
     );
     const missing = everyone - filled;
     if (missing > 0) {
-      const have = onFeatures ? featuresHave(missing) : peopleHave(missing);
+      const have = haveNone(missing);
       throw new ConflictError(
         `${have} no ${field.name}, so it cannot be required yet`,
       );
@@ -160,7 +195,9 @@ export async function checkValuesFit(
     const several = await transaction
       .select({
         personId: fieldValues.personId,
+        plannedHireId: fieldValues.plannedHireId,
         featureId: fieldValues.featureId,
+        activityId: fieldValues.activityId,
       })
       .from(fieldValues)
       .leftJoin(plannedHires, eq(plannedHires.id, fieldValues.plannedHireId))
@@ -171,6 +208,7 @@ export async function checkValuesFit(
         fieldValues.personId,
         fieldValues.plannedHireId,
         fieldValues.featureId,
+        fieldValues.activityId,
       )
       .having(gt(count(), 1));
     const people = several.filter(({ personId }) => personId !== null).length;
@@ -179,13 +217,15 @@ export async function checkValuesFit(
         `${peopleHave(people)} several choices for ${field.name}, so it cannot take only one yet`,
       );
     }
-    const featuresHolding = several.filter(
-      ({ featureId }) => featureId !== null,
-    ).length;
-    if (featuresHolding > 0) {
-      throw new ConflictError(
-        `${featuresHave(featuresHolding)} several choices for ${field.name}, so it cannot take only one yet`,
-      );
+    for (const owner of planningOwners) {
+      const holding = several.filter((row) => heldBy(row, owner) !== null);
+      if (holding.length > 0) {
+        throw new ConflictError(
+          // The owner is always one of the fixed kinds.
+          // eslint-disable-next-line security/detect-object-injection
+          `${recordsOf[planningTableOf[owner]].have(holding.length)} several choices for ${field.name}, so it cannot take only one yet`,
+        );
+      }
     }
     if (several.length > 0) {
       throw new ConflictError(
@@ -246,18 +286,30 @@ export async function deleteLiveField(
       personId: fieldValues.personId,
       plannedHireId: fieldValues.plannedHireId,
       featureId: fieldValues.featureId,
+      activityId: fieldValues.activityId,
     })
     .from(fieldValues)
     .where(eq(fieldValues.fieldId, id));
-  const featureIds = holders.flatMap(({ featureId }) =>
-    featureId === null ? [] : [featureId],
-  );
-  const featureValues = await readValues(
-    transaction,
-    featureIds,
-    [id],
-    "feature",
-  );
+  const planned: Change[] = [];
+  for (const owner of planningOwners) {
+    const ownerIds = holders.flatMap((holder) => {
+      const held = heldBy(holder, owner);
+      return held === null ? [] : [held];
+    });
+    const held = await readValues(transaction, ownerIds, [id], owner);
+    planned.push(
+      ...ownerIds.flatMap((ownerId) =>
+        changesBetween(
+          owner,
+          ownerId,
+          "changed",
+          { [valueField(id)]: held.get(ownerId)?.get(id) },
+          {},
+          [valueField(id)],
+        ),
+      ),
+    );
+  }
   const personIds = holders.flatMap(({ personId }) =>
     personId === null ? [] : [personId],
   );
@@ -273,16 +325,7 @@ export async function deleteLiveField(
   );
   const hireTier = await readHireTier(transaction, columns);
   const valueChanges = [
-    ...featureIds.flatMap((featureId) =>
-      changesBetween(
-        "feature",
-        featureId,
-        "changed",
-        { [valueField(id)]: featureValues.get(featureId)?.get(id) },
-        {},
-        [valueField(id)],
-      ),
-    ),
+    ...planned,
     ...personIds.flatMap((personId) =>
       personChanges(
         columns,

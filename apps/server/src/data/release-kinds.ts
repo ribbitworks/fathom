@@ -16,6 +16,7 @@ import {
   type RecordKind,
   type RecordsState,
   readsKind,
+  type Referred,
   shownVersion,
   stateOf,
   versionOf,
@@ -175,12 +176,26 @@ export const featureNaming = (
   readsKind(featureKind, access)
     ? { name: featureCalled(state, id) }
     : { unseen: featureKind.unseenSubject };
+// A release as named beside records of other kinds, with its stream, such as Harbor 1 (Platform).
+export const releaseCalled = (state: RecordsState, id: string): string => {
+  const release = shownVersion(state, "release", id);
+  return `${String(release?.name)} (${nameIn(state, String(release?.streamId))})`;
+};
 
 export const featureCalled = (state: RecordsState, id: string): string =>
   String(shownVersion(state, "feature", id)?.name);
 
 export const projectSubject = (state: RecordsState, id: string): string =>
   projectSubjects.project(String(shownVersion(state, "project", id)?.name));
+
+// The lists and feature team a feature's or an activity's planning fields name.
+export const planningRefers = {
+  featureTeamId: "feature-team",
+  statusId: "choice",
+  priorityId: "choice",
+  sizeId: "choice",
+  riskId: "choice",
+} as const satisfies Readonly<Record<string, Referred>>;
 
 // A feature's stream is the one it targets, so a target cycle's stream cannot be removed.
 export const featureKind: RecordKind = {
@@ -202,13 +217,7 @@ export const featureKind: RecordKind = {
     "note",
   ],
   links: { targetStreamId: "release-stream", customerIds: "customer" },
-  refers: {
-    featureTeamId: "feature-team",
-    statusId: "choice",
-    priorityId: "choice",
-    sizeId: "choice",
-    riskId: "choice",
-  },
+  refers: planningRefers,
   addedColumns: { owner: "feature", table: "features" },
   changedTogether: ["targetStreamId", "targetCycle"],
   unique: [{ field: "name", message: "Another feature has that name" }],

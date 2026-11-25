@@ -10,8 +10,6 @@ import {
   featureNamerKeys,
   type FeatureProjectsRequest,
   type FeatureRequest,
-  type BuiltInList,
-  type Meaning,
   type MilestoneRequest,
   type ProjectRequest,
   type ProposalRequest,
@@ -48,6 +46,8 @@ import { columnsWithAdded } from "./added-columns.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import { text } from "./reporting.ts";
 import { fieldOfValue, valueField } from "./values.ts";
+import { refuseCustomersChange } from "./feature-customers.ts";
+import { planningRecord, statusFor } from "./planning-records.ts";
 import {
   addedOnly,
   linkedIds,
@@ -254,43 +254,6 @@ export async function changeProject(
   });
 }
 
-type StatusList = Extract<
-  BuiltInList,
-  "proposal-statuses" | "feature-statuses"
->;
-
-// How a record with no status starts: in the first status offered, of a meaning when one is named.
-const startingStatus: Readonly<
-  Record<StatusList, { meaning?: Meaning; missing: string }>
-> = {
-  "proposal-statuses": {
-    missing: "No proposal status is offered. Add one to the list first.",
-  },
-  "feature-statuses": {
-    meaning: "possible",
-    missing: "No feature status means Possible. Add one to the list first.",
-  },
-};
-
-// The status a record is given: the one asked for, if it is offered or the record already has it,
-// or, for a record added without one, the first status it can start in.
-async function statusFor(
-  transaction: Transaction,
-  list: StatusList,
-  asked: string | undefined,
-  had: unknown,
-): Promise<string> {
-  if (asked !== undefined) {
-    await checkBuiltInChoice(transaction, list, asked, had);
-    return asked;
-  }
-  if (typeof had === "string") return had;
-  // The list is always one of the two above.
-  // eslint-disable-next-line security/detect-object-injection
-  const { meaning, missing } = startingStatus[list];
-  return firstOfferedOrRefused(transaction, list, meaning, missing);
-}
-
 // A proposal as a request makes it, from the version shown, if any.
 async function proposalRecord(
   transaction: Transaction,
@@ -362,98 +325,24 @@ export async function changeProposal(
   });
 }
 
-// A feature's values in the columns added to Features, live or drafted to be added as the editor sees
-// them: those a request names replace those it has, each checked against its column, and every
-// required column must then hold one.
-async function featureValues(
-  transaction: Transaction,
-  editor: string,
-  request: FeatureRequest,
-  current: Recorded | undefined,
-): Promise<Recorded> {
-  const columns = await columnsWithAdded(transaction, editor, true, "features");
-  const known = await choicesAskedFor(transaction, editor, [request]);
-  const had = current === undefined ? undefined : valuesOf(current);
-  const chosen = checkedValues(columns, known, request.values, had);
-  const kept = Object.fromEntries(
-    Object.entries(current ?? {}).filter(
-      ([field]) => fieldOfValue(field) !== null,
-    ),
-  );
-  const values: Recorded = {
-    ...kept,
-    ...Object.fromEntries(
-      [...chosen].map(([fieldId, ids]) => [valueField(fieldId), ids]),
-    ),
-    ...checkedLinks(columns, request.links),
-    ...checkedNotes(columns, request.notes),
-    ...checkedNumbers(columns, request.numbers),
-  };
-  for (const column of columns) {
-    if (
-      column.required &&
-      typeOf(column).count(values[valueField(column.id)]) === 0
-    ) {
-      throw new BadRequestError(`${column.name} must be filled in`);
-    }
-  }
-  return tidy(values);
-}
-
-// A choice of a built-in list a record need not have: none, or one offered or the record already has.
-async function optionalChoice(
-  transaction: Transaction,
-  list: BuiltInList,
-  asked: string | null,
-  had: unknown,
-): Promise<string | null> {
-  if (asked !== null) await checkBuiltInChoice(transaction, list, asked, had);
-  return asked;
-}
-
+// A feature as a request makes it: its planning fields, then its customers and target cycle.
 async function featureRecord(
   transaction: Transaction,
   editor: string,
   request: FeatureRequest,
   current?: Recorded,
 ) {
-  await checkTeamForFeature(transaction, request.featureTeamId);
-  const added = await featureValues(transaction, editor, request, current);
   return {
-    ...added,
-    name: request.name,
-    statusId: await statusFor(
+    ...(await planningRecord(
       transaction,
-      "feature-statuses",
-      request.statusId,
-      current?.statusId,
-    ),
-    priorityId: await optionalChoice(
-      transaction,
-      "feature-priorities",
-      request.priorityId,
-      current?.priorityId,
-    ),
-    sizeId: await optionalChoice(
-      transaction,
-      "feature-sizes",
-      request.sizeId,
-      current?.sizeId,
-    ),
-    riskId: await optionalChoice(
-      transaction,
-      "feature-risks",
-      request.riskId,
-      current?.riskId,
-    ),
-    neededBy: request.neededBy,
+      editor,
+      "features",
+      request,
+      current,
+    )),
     customerIds: request.customerIds,
     targetStreamId: request.target?.streamId ?? null,
     targetCycle: request.target?.cycle ?? null,
-    estimateHours: request.estimateHours,
-    featureTeamId: request.featureTeamId,
-    description: request.description,
-    note: keptNote(request.note),
   };
 }
 
@@ -662,7 +551,7 @@ export async function changeMilestone(
 // Drafts removing a record, refusing one another record still uses; removing one only drafted to
 // be added discards its draft, as records.ts discards drafts. A project is removed with its
 // milestones.
-async function removing(
+export async function removing(
   database: Database,
   maker: Actor,
   type: RecordType,

@@ -27,7 +27,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 | Area | Team Member | Product Manager | Feature Lead | Project Manager | Engineering Manager | Engineering Director | Workforce Administrator | Executive | Administrator |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Plan: projects, proposals, milestones and customers | View | Edit, Approve | View | Edit, Approve | Edit | Edit, Approve | View | View | None |
-| Features and releases, with estimates, the cycles each release includes, and the columns added to Features | View | Edit, Approve | Edit | Edit, Approve | Edit | Edit, Approve | View | View | None |
+| Features, activities and releases, with estimates, the cycles each release includes, and the columns added to Features and Activities | View | Edit, Approve | Edit | Edit, Approve | Edit | Edit, Approve | View | View | None |
 | Schedules and their cycles | View | Edit, Approve | View | Edit, Approve | Edit | Edit, Approve | Edit | View | None |
 | Allocations | View | View | None | View, Approve | Edit | Edit, Approve | View | View | None |
 | People, teams, reporting lines, the org chart and the columns added to People | View | View | View | View, Approve | View | Edit, Approve | Edit | View | None |
@@ -120,15 +120,16 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 ## Releases
 
 - **Releases:** Roles that edit features and releases make releases and choose which cycles each includes.
+- **Activities:** Roles that edit features and releases add, change and remove activities, whether an activity belongs to a release or a project, so the Feature Lead edits a project's activities as it edits the features the project needs.
 - **Schedules:** Roles with Edit Plan or Edit Configuration add, rename, retire, restore and end schedules, and change their cycle lengths and naming patterns.
 - **Moving with cycles:** Changing a cycle's length moves the releases and features on the cycles that move. A role that changes schedules may do this without edit rights on releases or features. Only a role that may change cycles discards those drafts.
 
 ## Columns and Saved Views
 
-- **A table's columns go with its records:** Whoever edits a table's records, and sees people, adds, changes and removes its columns: Edit Features and releases for Features' columns, Edit People for People's. Seeing people is what General lists and columns take, as Lists and columns sets out. Approve Configuration approves both, until approving moves to each table's area.
-- **Columns on Features:** Everyone who edits features adds them, the Product Manager included. Everyone who sees the plan gets the General lists these columns draw on, and sees drafts of the columns and who made them. Drafts of those lists are shown only to roles that see Lists or People.
-- **Filling a new column on Features:** Whoever edits features may give a feature a value in a column only drafted to be added, as on People.
-  - **Approving:** approving the feature approves the column with it, so it needs Approve Configuration as well as Approve Features.
+- **A table's columns go with its records:** Whoever edits a table's records, and sees people, adds, changes and removes its columns: Edit Features and releases for Features' and Activities' columns, Edit People for People's. Seeing people is what General lists and columns take, as Lists and columns sets out. Approve Configuration approves them all, until approving moves to each table's area.
+- **Columns on Features and Activities:** Everyone who edits features adds them, the Product Manager included. Everyone who sees the plan gets the General lists these columns draw on, and sees drafts of the columns and who made them. Drafts of those lists are shown only to roles that see Lists or People.
+- **Filling a new column on Features or Activities:** Whoever edits features may give a feature or an activity a value in a column only drafted to be added, as on People.
+  - **Approving:** approving the feature or activity approves the column with it, so it needs Approve Configuration as well as Approve Features.
   - **Holding one:** a role holding only one, such as the Product Manager, is refused, and another approver decides both.
 - **A new list with a Features column:** New list, in the column's dialog, drafts a General list and its choices with the column, so whoever sets up Features makes the lists its columns need, without Edit Configuration. The list is approved with the column, and undone with it; it is discarded with the last column drawing on it, whether the one it was made with or another since, unless anything changed it since it was made. Rejecting the column alone leaves the list waiting; discarding the rejected column discards the list with it. Lists for People's columns are made on Lists.
 - **Saved views:** Everyone who opens a table's page can save personal views.

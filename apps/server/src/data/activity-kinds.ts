@@ -1,0 +1,69 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Activities as a kind of the plan's records, each of one project or one release, drafted and read
+// with Features' permissions. Part of the data access layer.
+
+import { activities } from "@fathom/db";
+import { projectSubjects } from "@fathom/shared";
+import { planningRefers, releaseCalled } from "./release-kinds.ts";
+import type { Recorded } from "./draft-records.ts";
+import {
+  type RecordKind,
+  type RecordsState,
+  shownVersion,
+} from "./record-state.ts";
+
+// What an activity belongs to, as anyone who sees activities may read it: its release, with its
+// schedule, since releases are seen with Features; a project's name needs the plan, so only "a
+// project".
+const ownerCalled = (state: RecordsState, activity: Recorded) =>
+  typeof activity.projectId === "string"
+    ? "a project"
+    : releaseCalled(state, String(activity.releaseId));
+
+// An activity holds a feature's planning fields and refers to the same lists and feature teams; its
+// name is unique within its project or its release.
+export const activityKind: RecordKind = {
+  type: "activity",
+  table: activities,
+  fields: [
+    "projectId",
+    "releaseId",
+    "name",
+    "statusId",
+    "priorityId",
+    "sizeId",
+    "riskId",
+    "neededBy",
+    "estimateHours",
+    "featureTeamId",
+    "description",
+    "note",
+  ],
+  links: { projectId: "project", releaseId: "release" },
+  refers: planningRefers,
+  addedColumns: { owner: "activity", table: "activities" },
+  changedTogether: ["projectId", "releaseId"],
+  unique: [
+    {
+      field: "name",
+      within: "projectId",
+      message: "This project already has an activity with that name",
+    },
+    {
+      field: "name",
+      within: "releaseId",
+      message: "This release already has an activity with that name",
+    },
+  ],
+  readWith: ["features:view"],
+  unseenSubject: "an activity",
+  subject: (state, id) => {
+    // The activity is always shown when its draft or a rule names it.
+    const activity = shownVersion(state, "activity", id) as Recorded;
+    return projectSubjects.activity(
+      String(activity.name),
+      ownerCalled(state, activity),
+    );
+  },
+};

@@ -44,6 +44,7 @@ export const recordsState = (parts: Partial<RecordsState>): RecordsState => ({
   proposal: kindState(),
   project: kindState(),
   milestone: kindState(),
+  activity: kindState(),
   allocation: kindState(),
   "planning-settings": kindState(),
   ...parts,

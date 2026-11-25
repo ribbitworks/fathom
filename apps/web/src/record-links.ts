@@ -29,14 +29,18 @@ type RecordAddress =
   | { to: "/features" | "/people"; search: { column: string } }
   | { to: "/accounts" | "/roles"; search: { open: string } };
 
+// The address that shows the record, or none for a record with no page yet, which a link then
+// shows nothing for.
 async function recordAddress(
   queryClient: QueryClient,
   found: FoundRecord,
-): Promise<RecordAddress> {
+): Promise<RecordAddress | undefined> {
   const { kind, id } = found;
   switch (kind) {
     case "feature":
       return planAddress("features", id);
+    case "activity":
+      return undefined;
     case "project":
       return planAddress("projects", id);
     case "proposal":
@@ -72,10 +76,12 @@ async function recordAddress(
     case "list":
       return { to: "/lists/{-$listId}", params: { listId: id } };
     case "column":
-      return {
-        to: found.table === "features" ? "/features" : "/people",
-        search: { column: id },
-      };
+      return found.table === "activities"
+        ? undefined
+        : {
+            to: found.table === "features" ? "/features" : "/people",
+            search: { column: id },
+          };
     case "account":
       return { to: "/accounts", search: { open: id } };
     case "role":
@@ -95,12 +101,13 @@ export async function followLink(
     `/api/go/${parsed.kind}/${String(parsed.keyNumber)}`,
     recordLookupSchema,
   );
-  if (lookup.result === "found") {
+  const address =
+    lookup.result === "found"
+      ? await recordAddress(queryClient, lookup)
+      : undefined;
+  if (address !== undefined) {
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-    throw redirect({
-      ...(await recordAddress(queryClient, lookup)),
-      replace: true,
-    });
+    throw redirect({ ...address, replace: true });
   }
   return {
     shownKey: shownRecordKey(parsed.kind, parsed.keyNumber),

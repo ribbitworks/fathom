@@ -18,6 +18,7 @@ import { sendDeleteFor, sendJsonFor } from "./api.ts";
 const columnsPaths: Readonly<Record<ColumnTable, string>> = {
   people: "/api/people/columns",
   features: "/api/features/columns",
+  activities: "/api/activities/columns",
 };
 
 const columnPath = (id: string, table: ColumnTable) =>

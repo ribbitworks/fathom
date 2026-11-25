@@ -437,7 +437,7 @@ describe("the Data classes page", () => {
     ).toBe(true);
     expect(
       within(dialog).getAllByText(
-        "A column on Features uses this list, so it stays General",
+        "A column on Features or Activities uses this list, so it stays General",
       ),
     ).toHaveLength(1);
   });

@@ -16,6 +16,8 @@ import {
   type Reader,
 } from "@fathom/db";
 import {
+  columnTablePolicies,
+  columnTables,
   featuresListGeneral,
   featureBuiltInLists,
   builtInListUses,
@@ -503,14 +505,21 @@ export async function writePositions(
   }
 }
 
-// The lists a column on Features draws on, built in or added, live or in a draft, published or not.
-// Anyone's unpublished drafts count, since raising such a list is refused whoever's draft it is, so
-// telling readers says no more than the refusal would.
-export async function featureListIds(reader: Reader): Promise<Set<string>> {
+// The tables whose columns may draw only on General lists, as each table's policy says.
+const generalOnlyTables = columnTables.filter(
+  // The table is always one of the fixed tables.
+  // eslint-disable-next-line security/detect-object-injection
+  (table) => columnTablePolicies[table].generalOnly,
+);
+
+// The lists a column on Features or Activities draws on, built in or added, live or in a draft,
+// published or not. Anyone's unpublished drafts count, since raising such a list is refused whoever's
+// draft it is, so telling readers says no more than the refusal would.
+export async function generalOnlyListIds(reader: Reader): Promise<Set<string>> {
   const live = await reader
     .select({ listId: fields.listId })
     .from(fields)
-    .where(eq(fields.tableName, "features"));
+    .where(inArray(fields.tableName, [...generalOnlyTables]));
   const builtIn = await reader
     .select({ listId: lists.id })
     .from(lists)
@@ -525,7 +534,7 @@ export async function featureListIds(reader: Reader): Promise<Set<string>> {
         .where(
           and(
             eq(table.recordType, "field"),
-            sql`${table.fields}->>'tableName' = 'features'`,
+            inArray(sql`${table.fields}->>'tableName'`, [...generalOnlyTables]),
           ),
         )),
     );
@@ -537,21 +546,21 @@ export async function featureListIds(reader: Reader): Promise<Set<string>> {
   );
 }
 
-// Whether a column on Features draws on the list.
-export const featureColumnDrawsOn = async (
+// Whether a column on Features or Activities draws on the list.
+export const generalOnlyColumnDrawsOn = async (
   reader: Reader,
   listId: string,
-): Promise<boolean> => (await featureListIds(reader)).has(listId);
+): Promise<boolean> => (await generalOnlyListIds(reader)).has(listId);
 
-// Refuses a visibility other than General for a list a column on Features draws on.
-export async function refuseSensitiveFeatureList(
+// Refuses a visibility other than General for a list a column on Features or Activities draws on.
+export async function refuseSensitivePlanningList(
   reader: Reader,
   listId: string,
   visibility: string,
 ): Promise<void> {
   if (
     visibility !== "general" &&
-    (await featureColumnDrawsOn(reader, listId))
+    (await generalOnlyColumnDrawsOn(reader, listId))
   ) {
     throw new ConflictError(featuresListGeneral);
   }

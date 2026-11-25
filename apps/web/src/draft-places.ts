@@ -28,6 +28,7 @@ const pageNames: Record<RecordPage | "capacity", string> = {
   lists: "Lists",
   releases: "Releases",
   features: "Features",
+  activities: "Activities",
   projects: "Projects",
   "org-chart": "org chart",
   capacity: "Capacity",

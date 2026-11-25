@@ -1,20 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, projects with their milestones, proposals, and features: reading them all at once,
-// with what they can be given, and drafting each added, changed, and removed, and a feature's
-// projects and proposals, as drafts of those projects and proposals, with the reason for taking it
-// off a proposal, and each project's and proposal's scope history. Every change answers
-// with the change set it was saved in, and every change but a removal with every record as the
-// editor now sees them. Discarding and resubmitting their drafts goes through the routes for every
-// plan record's draft. The data access layer checks the actor's permissions.
+// The routes for customers, projects with their milestones, proposals and features, and a feature's
+// projects and proposals. The data access layer checks the actor's permissions.
 
 import {
   changeSetIdSchema,
   customerRequestSchema,
   featureProjectsRequestSchema,
   featureRequestSchema,
-  fieldRequestSchema,
-  fieldSchema,
   milestoneRequestSchema,
   planChoicesSchema,
   projectPlanSchema,
@@ -147,77 +140,6 @@ export function projectRoutes(
         );
         return { plan: result, changeSetId };
       },
-    );
-
-    // The columns added to Features.
-    const columnParams = z.object({ fieldId: z.uuid() });
-    const columnResponse = z.object({
-      field: fieldSchema,
-      changeSetId: z.string().nullable(),
-    });
-    app.post(
-      "/api/features/columns",
-      {
-        schema: {
-          body: fieldRequestSchema,
-          response: { [created]: columnResponse },
-        },
-      },
-      async (request, reply) => {
-        const { result, changeSetId } = await projects.createFeatureColumn(
-          request.actor,
-          request.body,
-        );
-        return reply.status(created).send({ field: result, changeSetId });
-      },
-    );
-    app.put(
-      "/api/features/columns/:fieldId",
-      {
-        schema: {
-          params: columnParams,
-          body: fieldRequestSchema,
-          response: { 200: columnResponse },
-        },
-      },
-      async (request) => {
-        const { result, changeSetId } = await projects.updateFeatureColumn(
-          request.actor,
-          request.params.fieldId,
-          request.body,
-        );
-        return { field: result, changeSetId };
-      },
-    );
-    app.delete(
-      "/api/features/columns/:fieldId",
-      { schema: { params: columnParams, response: saved } },
-      async (request) => ({
-        changeSetId: await projects.deleteFeatureColumn(
-          request.actor,
-          request.params.fieldId,
-        ),
-      }),
-    );
-    app.delete(
-      "/api/features/columns/:fieldId/draft",
-      { schema: { params: columnParams, response: saved } },
-      async (request) => ({
-        changeSetId: await projects.discardFeatureColumnDraft(
-          request.actor,
-          request.params.fieldId,
-        ),
-      }),
-    );
-    app.delete(
-      "/api/features/columns/:fieldId/draft/rejection",
-      { schema: { params: columnParams, response: saved } },
-      async (request) => ({
-        changeSetId: await projects.resubmitFeatureColumnDraft(
-          request.actor,
-          request.params.fieldId,
-        ),
-      }),
     );
 
     app.post(

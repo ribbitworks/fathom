@@ -41,7 +41,7 @@ export interface RecordKind {
   // history names it by.
   belongsTo?: string;
   // Fields whose value no other record has, ignoring letter case, among the records with the same
-  // value in another field, if one is named. A record with no value in such a field takes none.
+  // value in another field, if one is named. A record with no value in either field takes none.
   unique?: readonly UniqueValue[];
   // Fields naming something other than the plan's records: a person, a choice in a list, or a
   // feature team.
@@ -272,6 +272,9 @@ export function takenValue(
   return (kind.unique ?? []).find((unique) => {
     const wanted = uniqueKey(unique, record);
     if (wanted.value === undefined) return false;
+    if (unique.within !== undefined && (wanted.within ?? null) === null) {
+      return false;
+    }
     return versions.some(([id, version]) => {
       if (id === except || version === undefined) return false;
       const key = uniqueKey(unique, version);

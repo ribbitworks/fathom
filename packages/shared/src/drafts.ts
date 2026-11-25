@@ -58,6 +58,7 @@ export const recordTypeSchema = z.enum([
   "proposal",
   "project",
   "milestone",
+  "activity",
   "allocation",
   "planning-settings",
 ]);
@@ -202,6 +203,7 @@ export const recordEditors: Record<RecordType, readonly Permission[]> = {
   proposal: ["plan:edit"],
   project: ["plan:edit"],
   milestone: ["plan:edit"],
+  activity: ["features:edit"],
   allocation: ["allocations:edit"],
   "planning-settings": ["configuration:edit"],
 };
@@ -228,6 +230,7 @@ export const approvePermissions: Record<
   proposal: ["plan:approve"],
   project: ["plan:approve"],
   milestone: ["plan:approve"],
+  activity: ["features:approve"],
   allocation: ["allocations:approve"],
   "planning-settings": ["configuration:approve"],
 };
@@ -360,6 +363,7 @@ export function kindsAsked(asked: DraftsRequest): DraftKind[] {
     proposal: records.has("proposal"),
     project: records.has("project"),
     milestone: records.has("milestone"),
+    activity: records.has("activity"),
     allocation: records.has("allocation"),
     "planning-settings": records.has("planning-settings"),
   };

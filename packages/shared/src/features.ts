@@ -138,8 +138,8 @@ export const featureDraftSchema = recordDraftSchema.extend({
 
 export type FeatureDraft = z.infer<typeof featureDraftSchema>;
 
-// A feature as its draft makes it. A target cycle is known by its stream and the day it starts.
-export const featureSchema = z.object({
+// The planning fields a feature and an activity share, as a draft makes them.
+export const planningShape = {
   ...recordShape,
   draft: featureDraftSchema.optional(),
   name: z.string(),
@@ -148,9 +148,6 @@ export const featureSchema = z.object({
   sizeId: z.string().nullable(),
   riskId: z.string().nullable(),
   neededBy: z.string().nullable(),
-  customerIds: z.array(z.string()),
-  targetStreamId: z.string().nullable(),
-  targetCycle: z.string().nullable(),
   estimateHours: z.number().nullable(),
   featureTeamId: z.string().nullable(),
   description: z.string().nullable(),
@@ -159,30 +156,34 @@ export const featureSchema = z.object({
   links: linksSchema.default({}),
   notes: notesSchema.optional(),
   numbers: numbersSchema.optional(),
-  // Whether any allocation gives the feature a month, as drafts make the allocations, and as they
-  // are live: a fact about the feature, seen by all who see it, though the allocations aren't.
+  // Whether any allocation gives it a month, as drafts make the allocations, and as they are live:
+  // a fact about the work, seen by all who see it, though the allocations aren't.
   staffed: z.boolean(),
   staffedLive: z.boolean(),
+};
+
+// A feature as its draft makes it. A target cycle is known by its stream and the day it starts.
+export const featureSchema = z.object({
+  ...planningShape,
+  customerIds: z.array(z.string()),
+  targetStreamId: z.string().nullable(),
+  targetCycle: z.string().nullable(),
 });
 
 export type Feature = z.infer<typeof featureSchema>;
 
 const hundredths = 100;
 
-// A feature added without a status starts in the first status offered that means Possible, and one
-// changed without a status keeps its own. The note is checked by the server.
-export const featureRequestSchema = z.object({
+// The planning fields a feature and an activity are added and changed with. One added without a
+// status starts in the first status offered that means Possible, and one changed without a status
+// keeps its own. The note is checked by the server.
+export const planningRequestShape = {
   name: recordName,
   statusId: z.uuid().optional(),
   priorityId: z.uuid().nullable().default(null),
   sizeId: z.uuid().nullable().default(null),
   riskId: z.uuid().nullable().default(null),
   neededBy: monthSchema.nullable().default(null),
-  customerIds: picked,
-  target: z
-    .object({ streamId: z.uuid(), cycle: daySchema })
-    .nullable()
-    .default(null),
   estimateHours: z
     .number()
     .min(0)
@@ -199,6 +200,15 @@ export const featureRequestSchema = z.object({
   links: requestedLinksSchema.default({}),
   notes: requestedNotesSchema.default({}),
   numbers: requestedNumbersSchema.default({}),
+};
+
+export const featureRequestSchema = z.object({
+  ...planningRequestShape,
+  customerIds: picked,
+  target: z
+    .object({ streamId: z.uuid(), cycle: daySchema })
+    .nullable()
+    .default(null),
 });
 
 export type FeatureRequest = z.infer<typeof featureRequestSchema>;

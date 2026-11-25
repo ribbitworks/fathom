@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The values of columns on people, planned hires and features, and how they are recorded in the
-// change history. Part of the data access layer.
+// The values of columns on people, planned hires, features and activities, and how they are recorded
+// in the change history. Part of the data access layer.
 
 import { storedTier } from "../access.ts";
 import { isNote, isNumber, typeOf } from "./column-types.ts";
@@ -34,20 +34,40 @@ export { fieldOfValue, valueField } from "@fathom/db";
 export type FieldRow = typeof fields.$inferSelect;
 
 // The kinds of record that hold values in added columns, each in its own owner column.
-export type ValueOwner = "person" | "planned-hire" | "feature";
+export type ValueOwner = "person" | "planned-hire" | "feature" | "activity";
 
 const ownerColumns = {
   person: { column: fieldValues.personId, key: "personId" },
   "planned-hire": { column: fieldValues.plannedHireId, key: "plannedHireId" },
   feature: { column: fieldValues.featureId, key: "featureId" },
+  activity: { column: fieldValues.activityId, key: "activityId" },
 } as const;
 
-const ownerColumn = (owner: ValueOwner) =>
+// The kinds of record holding each table's added columns' values, the table's own records first.
+export const valueOwnersOf: Readonly<
+  Record<ColumnTable, readonly [ValueOwner, ...ValueOwner[]]>
+> = {
+  people: ["person", "planned-hire"],
+  features: ["feature"],
+  activities: ["activity"],
+};
+
+// The tables whose records are planned work, by the one kind that alone holds their values.
+export const planningTableOf = {
+  feature: "features",
+  activity: "activities",
+} as const satisfies Partial<Record<ValueOwner, ColumnTable>>;
+
+export type PlanningOwner = keyof typeof planningTableOf;
+
+export const planningOwners: readonly PlanningOwner[] = ["feature", "activity"];
+
+export const ownerColumn = (owner: ValueOwner) =>
   // The owner is always one of the fixed kinds above.
   // eslint-disable-next-line security/detect-object-injection
   ownerColumns[owner].column;
 
-const ownerKey = (owner: ValueOwner) =>
+export const ownerKey = (owner: ValueOwner) =>
   // The owner is always one of the fixed kinds above.
   // eslint-disable-next-line security/detect-object-injection
   ownerColumns[owner].key;
