@@ -27,9 +27,10 @@ import {
   type Recorded,
   refuseRejected,
   rejectedField,
+  rejectionChange,
   unseenDraft,
 } from "./draft-records.ts";
-import { refuseHeldDecision, setRejection, writeDraft } from "./drafts.ts";
+import { refuseHeldDecision, rejectedIn, writeDraft } from "./drafts.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
 import { reassignReports, text } from "./reporting.ts";
 import {
@@ -245,22 +246,17 @@ export async function rejectHiresIn(
   const made: Change[] = [];
   for (const id of ids) {
     const draft = found.get(id) as Draft;
-    if (draft.state === "rejected" && draft.reason === reason) continue;
-    made.push({
-      recordType,
-      recordId: id,
-      action: "changed",
-      field: rejectedField,
-      tier: draftTier(rejectionTier(tierOf), live.get(id), draft),
-      oldValue: draft.state === "rejected" ? draft.reason : null,
-      newValue: reason,
-      draft: true,
-    });
+    made.push(
+      ...rejectionChange(
+        recordType,
+        id,
+        draft,
+        reason,
+        draftTier(rejectionTier(tierOf), live.get(id), draft),
+      ),
+    );
   }
-  await setRejection(transaction, recordType, ids, {
-    state: "rejected",
-    reason,
-  });
+  await rejectedIn(transaction, recordType, ids, reason);
   return made;
 }
 

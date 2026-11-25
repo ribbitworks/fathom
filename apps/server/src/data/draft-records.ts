@@ -33,6 +33,15 @@ export interface Draft {
   unpublished?: boolean;
 }
 
+// Refuses sending a draft for approval again unless it was rejected.
+export function requireRejected(
+  draft: Draft | undefined,
+): asserts draft is Draft {
+  if (draft?.state !== "rejected") {
+    throw new ConflictError("Only a rejected draft can be resubmitted");
+  }
+}
+
 // A rejected draft is back with its makers until they send it again, so it is approved neither
 // itself nor with a draft that uses it.
 export function refuseRejected(found: Iterable<Draft | undefined>): void {
@@ -100,6 +109,15 @@ export const noDraft = { action: "changed", fields: {} } as const;
 
 export const wantsNoDraft = (row: { action: string; fields: Recorded }) =>
   row.action === "changed" && Object.keys(row.fields).length === 0;
+
+// The action that takes a record from one version to another.
+export function actionTo(
+  before: Recorded | undefined,
+  after: Recorded | undefined,
+): Change["action"] {
+  if (before === undefined) return "created";
+  return after === undefined ? "deleted" : "changed";
+}
 
 // The person as their draft makes them: undefined once removed, or before they are added.
 export function drafted(
@@ -182,6 +200,30 @@ export function clearedRejection(
         },
       ]
     : [];
+}
+
+// The change rejecting a draft for a reason, at its tier; none when it is already rejected for it.
+export function rejectionChange(
+  recordType: DraftKind,
+  id: string,
+  draft: Draft,
+  reason: string,
+  tier: Tier,
+): Change[] {
+  return draft.state === "rejected" && draft.reason === reason
+    ? []
+    : [
+        {
+          recordType,
+          recordId: id,
+          action: "changed",
+          field: rejectedField,
+          tier,
+          oldValue: draft.state === "rejected" ? draft.reason : null,
+          newValue: reason,
+          draft: true,
+        },
+      ];
 }
 
 // Changes marked as changes to drafts.

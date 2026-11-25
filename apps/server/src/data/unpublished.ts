@@ -42,6 +42,7 @@ import {
   readColumnsState,
 } from "./column-state.ts";
 import {
+  actionTo,
   asDraft,
   type Draft,
   drafted,
@@ -121,15 +122,6 @@ const idsOf = (rows: readonly Row[], recordType: DraftKind) =>
   rows
     .filter((row) => row.recordType === recordType)
     .map(({ recordId }) => recordId);
-
-// The action that takes a record from one version to another.
-function actionTo(
-  before: Recorded | undefined,
-  after: Recorded | undefined,
-): Change["action"] {
-  if (before === undefined) return "created";
-  return after === undefined ? "deleted" : "changed";
-}
 
 // Everything the user's unpublished drafts change, as the user sees it, and as everyone else does,
 // read together.

@@ -5,7 +5,6 @@
 
 import {
   type Database,
-  drafts,
   featureTeamLeads,
   featureTeamMemberships,
   featureTeams,
@@ -36,14 +35,22 @@ import {
   type Transaction,
 } from "./changes.ts";
 import {
+  actionTo,
   asDraft,
   clearedRejection,
   type Draft,
   drafted,
   type Recorded,
+  requireRejected,
   tidy,
 } from "./draft-records.ts";
-import { lockDrafts, readHeld, refuseHeld, writeDraft } from "./drafts.ts";
+import {
+  lockDrafts,
+  readHeld,
+  refuseHeld,
+  reopened,
+  writeDraft,
+} from "./drafts.ts";
 import {
   peopleOf,
   readLiveTeams,
@@ -293,6 +300,22 @@ export async function saved(
   return recordChanges(transaction, actor, made, kind);
 }
 
+// A change of feature teams by someone who may change them, on the day given or today, in a
+// transaction of its own with the drafts locked.
+export async function changingTeams<Result>(
+  database: Database,
+  actor: Actor,
+  asOf: string | undefined,
+  change: (transaction: Transaction, today: string) => Promise<Result>,
+): Promise<Result> {
+  requireChanging(actor);
+  const today = asOf ?? (await readToday(database));
+  return database.transaction(async (transaction) => {
+    await lockDrafts(transaction);
+    return change(transaction, today);
+  });
+}
+
 // Drafts adding a feature team, with its members and lead.
 export async function createFeatureTeam(
   database: Database,
@@ -300,11 +323,8 @@ export async function createFeatureTeam(
   request: FeatureTeamRequest,
   asOf?: string,
 ): Promise<{ id: string; changeSetId: string | null }> {
-  requireChanging(actor);
-  const today = asOf ?? (await readToday(database));
-  const from = fromDay(actor, request.from, today);
-  return database.transaction(async (transaction) => {
-    await lockDrafts(transaction);
+  return changingTeams(database, actor, asOf, async (transaction, today) => {
+    const from = fromDay(actor, request.from, today);
     const id = randomUUID();
     await refuseTakenName(transaction, request.name, id);
     // A lead who is not among the members asked for joins the team with them.
@@ -426,11 +446,8 @@ export async function updateFeatureTeam(
   change: FeatureTeamChange,
   asOf?: string,
 ): Promise<string | null> {
-  requireChanging(actor);
-  const today = asOf ?? (await readToday(database));
-  const from = fromDay(actor, change.from, today);
-  return database.transaction(async (transaction) => {
-    await lockDrafts(transaction);
+  return changingTeams(database, actor, asOf, async (transaction, today) => {
+    const from = fromDay(actor, change.from, today);
     const now = await draftedTeam(transaction, actor, id, today);
     const made = await draftTeamChange(
       transaction,
@@ -571,10 +588,7 @@ export async function deleteFeatureTeam(
   id: string,
   asOf?: string,
 ): Promise<string | null> {
-  requireChanging(actor);
-  const today = asOf ?? (await readToday(database));
-  return database.transaction(async (transaction) => {
-    await lockDrafts(transaction);
+  return changingTeams(database, actor, asOf, async (transaction, today) => {
     const { before, draft, team } = await draftedTeam(
       transaction,
       actor,
@@ -620,10 +634,7 @@ export async function discardFeatureTeamDraft(
   id: string,
   asOf?: string,
 ): Promise<string | null> {
-  requireChanging(actor);
-  const today = asOf ?? (await readToday(database));
-  return database.transaction(async (transaction) => {
-    await lockDrafts(transaction);
+  return changingTeams(database, actor, asOf, async (transaction, today) => {
     const { before, draft, team } = await draftedTeam(
       transaction,
       actor,
@@ -633,9 +644,7 @@ export async function discardFeatureTeamDraft(
     if (draft === undefined) {
       throw new NotFoundError("This feature team has no draft");
     }
-    let action: Change["action"] = "changed";
-    if (team === undefined) action = "created";
-    else if (before === undefined) action = "deleted";
+    const action = actionTo(team, before);
     const cleared = await clearedTeamRejection(
       transaction,
       id,
@@ -671,19 +680,14 @@ export async function resubmitFeatureTeamDraft(
   id: string,
   asOf?: string,
 ): Promise<string | null> {
-  requireChanging(actor);
-  const today = asOf ?? (await readToday(database));
-  return database.transaction(async (transaction) => {
-    await lockDrafts(transaction);
+  return changingTeams(database, actor, asOf, async (transaction, today) => {
     const { before, draft, team } = await draftedTeam(
       transaction,
       actor,
       id,
       today,
     );
-    if (draft?.state !== "rejected") {
-      throw new ConflictError("Only a rejected draft can be resubmitted");
-    }
+    requireRejected(draft);
     // A day before today needs the right to change Personal details, as choosing one does.
     if (
       [
@@ -701,10 +705,7 @@ export async function resubmitFeatureTeamDraft(
       today,
       actor.dataClasses,
     );
-    await transaction
-      .update(drafts)
-      .set({ state: "waiting", reason: null })
-      .where(and(eq(drafts.recordType, recordType), eq(drafts.recordId, id)));
+    await reopened(transaction, recordType, id);
     return saved(transaction, actor, made, "resubmission");
   });
 }

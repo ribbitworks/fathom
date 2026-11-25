@@ -43,14 +43,14 @@ import {
   fitsColumns,
   type Recorded,
   refuseRejected,
-  rejectedField,
+  rejectionChange,
   unseenDraft,
 } from "./draft-records.ts";
 import {
   lockDrafts,
   readPersonDrafts,
   refuseHeldDecision,
-  setRejection,
+  rejectedIn,
 } from "./drafts.ts";
 import { refuseOwnDrafts, draftKeys } from "./draft-makers.ts";
 import { currentOn, readLive } from "./people-reads.ts";
@@ -576,19 +576,16 @@ async function rejectPeopleIn(
   const made: Change[] = [];
   for (const id of ids) {
     const draft = found.get(id) as Draft;
-    const tier = draftTier(tierOf, live.get(id), draft);
-    if (draft.state === "rejected" && draft.reason === reason) continue;
-    made.push({
-      recordType: "person",
-      recordId: id,
-      action: "changed",
-      field: rejectedField,
-      tier,
-      oldValue: draft.state === "rejected" ? draft.reason : null,
-      newValue: reason,
-      draft: true,
-    });
+    made.push(
+      ...rejectionChange(
+        "person",
+        id,
+        draft,
+        reason,
+        draftTier(tierOf, live.get(id), draft),
+      ),
+    );
   }
-  await setRejection(transaction, "person", ids, { state: "rejected", reason });
+  await rejectedIn(transaction, "person", ids, reason);
   return made;
 }

@@ -21,10 +21,10 @@ import {
   draftFields,
   draftTier,
   refuseRejected,
-  rejectedField,
+  rejectionChange,
   unseenDraft,
 } from "./draft-records.ts";
-import { refuseHeldDecision, setRejection } from "./drafts.ts";
+import { refuseHeldDecision, rejectedIn } from "./drafts.ts";
 import {
   membershipChanges,
   peopleOf,
@@ -232,7 +232,6 @@ export async function rejectTeamsIn(
   const made: Change[] = [];
   for (const id of ids) {
     const draft = found.get(id) as Draft;
-    if (draft.state === "rejected" && draft.reason === reason) continue;
     const before = live.get(id);
     const tier = mostSensitive([
       draftTier(featureTeamTier(actor.dataClasses), before, draft),
@@ -240,20 +239,8 @@ export async function rejectTeamsIn(
         ? actor.dataClasses.startDate
         : "general",
     ]);
-    made.push({
-      recordType,
-      recordId: id,
-      action: "changed",
-      field: rejectedField,
-      tier,
-      oldValue: draft.state === "rejected" ? draft.reason : null,
-      newValue: reason,
-      draft: true,
-    });
+    made.push(...rejectionChange(recordType, id, draft, reason, tier));
   }
-  await setRejection(transaction, recordType, ids, {
-    state: "rejected",
-    reason,
-  });
+  await rejectedIn(transaction, recordType, ids, reason);
   return made;
 }

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Approving and rejecting drafts of the People table's columns. Part of the data access layer;
-// approvals.ts runs these with the drafts of lists and people approved or rejected at the same
-// time, in one change set. Approving checks again that each column's settings fit the people's
-// values, and approving a removal deletes the column's values, so the Approver must see them.
+// Approving and rejecting drafts of the tables' columns, run by approvals.ts in one change set with
+// the lists and people decided with them.
 
 import { fields, lists } from "@fathom/db";
 import type { DraftsRequest } from "@fathom/shared";
@@ -26,12 +24,12 @@ import {
 import { columnMoved } from "./column-drafts.ts";
 import { appendColumn } from "./column-order.ts";
 import { recordAddedClass } from "./data-classes.ts";
-import { deleteDrafts, refuseHeldDecision, setRejection } from "./drafts.ts";
+import { deleteDrafts, refuseHeldDecision, rejectedIn } from "./drafts.ts";
 import {
   type Draft,
   draftUnseen,
   refuseRejected,
-  rejectedField,
+  rejectionChange,
 } from "./draft-records.ts";
 import { draftsUse } from "./drafted-values.ts";
 import { checkValuesFit, deleteLiveField, fieldChanges } from "./fields.ts";
@@ -157,22 +155,8 @@ export async function rejectColumnDrafts(
   for (const id of asked.columns) {
     // Every draft asked for exists, as stateWithDrafts checks.
     const draft = state.fieldDrafts.get(id) as Draft;
-    if (!(draft.state === "rejected" && draft.reason === reason)) {
-      made.push({
-        recordType: "field",
-        recordId: id,
-        action: "changed",
-        field: rejectedField,
-        tier: "general",
-        oldValue: draft.state === "rejected" ? draft.reason : null,
-        newValue: reason,
-        draft: true,
-      });
-    }
-    await setRejection(transaction, "field", [id], {
-      state: "rejected",
-      reason,
-    });
+    made.push(...rejectionChange("field", id, draft, reason, "general"));
+    await rejectedIn(transaction, "field", [id], reason);
   }
   return made;
 }

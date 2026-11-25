@@ -10,13 +10,13 @@ import { type Actor, seesSensitivity, storedTier } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import { recordAddedClass } from "./data-classes.ts";
-import { deleteDrafts, refuseHeldDecision, setRejection } from "./drafts.ts";
+import { deleteDrafts, refuseHeldDecision, rejectedIn } from "./drafts.ts";
 import {
-  drafted,
   type Draft,
+  drafted,
   draftUnseen,
   refuseRejected,
-  rejectedField,
+  rejectionChange,
 } from "./draft-records.ts";
 import {
   refuseSensitiveFeatureList,
@@ -349,22 +349,9 @@ export async function rejectListDrafts(
   for (const [recordType, ids, found] of rejecting) {
     for (const id of ids) {
       const draft = found.get(id) as Draft;
-      if (draft.state === "rejected" && draft.reason === reason) continue;
-      made.push({
-        recordType,
-        recordId: id,
-        action: "changed",
-        field: rejectedField,
-        tier: "general",
-        oldValue: draft.state === "rejected" ? draft.reason : null,
-        newValue: reason,
-        draft: true,
-      });
+      made.push(...rejectionChange(recordType, id, draft, reason, "general"));
     }
-    await setRejection(transaction, recordType, ids, {
-      state: "rejected",
-      reason,
-    });
+    await rejectedIn(transaction, recordType, ids, reason);
   }
   return made;
 }
