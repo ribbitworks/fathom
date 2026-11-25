@@ -15,9 +15,9 @@ export const changesQuestion = (thing: string) => ({
   keep: "Keep editing",
 });
 
-// Asking whether to discard what is being written before showing another record or adding one: a
-// note changed, or a record being added that holds something. Discard goes on; Keep writing, or
-// closing the question, stays.
+// Asking whether to discard what is being written before leaving it: a note changed, a record being
+// added that holds something, or a dialog's changes. Discard goes on; the keep button, such as Keep
+// writing, or closing the question, stays.
 
 export function useDiscardQuestion() {
   const [asking, setAsking] = useState<{

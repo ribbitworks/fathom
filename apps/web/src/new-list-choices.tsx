@@ -84,6 +84,13 @@ export function NewListChoices({
   useEffect(() => {
     onTyping(typing);
   }, [typing, onTyping]);
+  // Typing left behind when the choices go, such as on choosing another list, no longer counts.
+  useEffect(
+    () => () => {
+      onTyping("");
+    },
+    [onTyping],
+  );
 
   return (
     <Input.Wrapper label="Choices" labelElement="div" id={labelId}>
