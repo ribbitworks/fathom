@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What opens each page: any one of some permissions, each with the other permissions and the
-// classified view it needs where the page shows nothing without them, so a page a role would find
-// empty or unable to load is left out rather than shown cut down. The sidebar and the pages'
-// addresses read each page's needs from here, so they give one answer.
+// What opens each page, as permissions and classified views, which the sidebar and the pages'
+// addresses both read.
 
 import { changeHistoryViews, type Permission } from "./access.ts";
 import {
@@ -74,6 +72,7 @@ export const pageNeeds = {
   overview: "plan:view",
   projects: "plan:view",
   features: "features:view",
+  activities: "features:view",
   releases: ["features:view", "configuration:view"],
   people: "people:view",
   "org-chart": "people:view",

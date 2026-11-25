@@ -342,14 +342,14 @@ const heldAlone = {
 };
 
 // The tables that can have columns added.
-export const columnTables = ["people", "features"] as const;
+export const columnTables = ["people", "features", "activities"] as const;
 
 export type ColumnTable = (typeof columnTables)[number];
 
 // The table a column is on, by the name its row records; one recorded before columns had tables is
 // on People.
 export const columnTableOf = (tableName: unknown): ColumnTable =>
-  tableName === "features" ? "features" : "people";
+  columnTables.find((table) => table === tableName) ?? "people";
 
 // What sets each table apart: its name, what reading it needs, what adding, changing and removing
 // its columns needs, which is editing its records and seeing people, whose sight General lists and
@@ -384,6 +384,14 @@ export const columnTablePolicies: Readonly<
     onPlannedHires: false,
     generalOnly: true,
     newLists: true,
+  },
+  activities: {
+    name: "Activities",
+    viewNeeds: "features:view",
+    editNeeds: ["features:edit", "people:view"],
+    onPlannedHires: false,
+    generalOnly: true,
+    newLists: false,
   },
 };
 

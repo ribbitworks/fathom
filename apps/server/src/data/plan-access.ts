@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The data access layer's interface to the plan: release streams and releases, customers, projects,
-// proposals and features, each bound to a database, and the interface to allocations.
+// proposals, features and activities, each bound to a database, and the interface to allocations.
 
 import type { Database } from "@fathom/db";
 import type {
+  ActivityPlan,
+  ActivityRequest,
   CycleLengthRequest,
   CyclePatternRequest,
-  Field,
-  FieldRequest,
   FeatureProjectsRequest,
   MilestoneRequest,
   PlanChoices,
@@ -29,7 +29,7 @@ import {
   requireAnyPermission,
   requirePermission,
 } from "../access.ts";
-import * as columnDrafts from "./column-drafts.ts";
+import * as activityData from "./activities.ts";
 import { editsKind, recordEditor } from "./draft-editors.ts";
 import * as projectData from "./projects.ts";
 import * as projectReads from "./project-reads.ts";
@@ -37,8 +37,12 @@ import { readScopeHistory } from "./scope-history.ts";
 import type { PlanKind, PlanRecordRequest } from "./projects.ts";
 import * as releases from "./releases.ts";
 import type { Saved, ChangeSetId } from "./changes.ts";
-import { planOrFeatures, seenPlan, seenStreams } from "./page-reads.ts";
-import { columnEditor } from "./column-state.ts";
+import {
+  planOrFeatures,
+  seenActivities,
+  seenPlan,
+  seenStreams,
+} from "./page-reads.ts";
 
 // Every change to release streams, patterns, and releases is a draft. Streams and their patterns
 // are planning configuration, edited by those who edit it; releases are part of the plan.
@@ -115,19 +119,6 @@ export interface ProjectAccess {
   // What the plan's records can be given, which everyone who sees the plan may read, though they
   // may not see People or Lists.
   readChoices(actor: Actor): Promise<PlanChoices>;
-  // Drafts adding, changing, and removing the columns added to Features.
-  createFeatureColumn(
-    actor: Actor,
-    request: FieldRequest,
-  ): Promise<Saved<Field>>;
-  updateFeatureColumn(
-    actor: Actor,
-    id: string,
-    request: FieldRequest,
-  ): Promise<Saved<Field>>;
-  deleteFeatureColumn(actor: Actor, id: string): Promise<ChangeSetId>;
-  discardFeatureColumnDraft(actor: Actor, id: string): Promise<ChangeSetId>;
-  resubmitFeatureColumnDraft(actor: Actor, id: string): Promise<ChangeSetId>;
   add(actor: Actor, added: PlanRecordRequest): Promise<Saved<ProjectPlan>>;
   change(
     actor: Actor,
@@ -283,46 +274,6 @@ export function createProjectAccess(database: Database): ProjectAccess {
       requireAnyPermission(actor, planOrFeatures);
       return projectReads.readPlanChoices(database, actor);
     },
-    createFeatureColumn: async (actor, request) =>
-      columnDrafts.createField(
-        database,
-        columnEditor(actor, "features"),
-        request,
-        "features",
-      ),
-    updateFeatureColumn: async (actor, id, request) =>
-      columnDrafts.updateField(
-        database,
-        columnEditor(actor, "features"),
-        id,
-        request,
-        "features",
-      ),
-    deleteFeatureColumn: async (actor, id) =>
-      columnDrafts.deleteField(
-        database,
-        columnEditor(actor, "features"),
-        id,
-        "features",
-      ),
-    discardFeatureColumnDraft: async (actor, id) =>
-      columnDrafts.discardColumnDraft(
-        database,
-        columnEditor(actor, "features"),
-        {
-          id,
-          table: "features",
-        },
-      ),
-    resubmitFeatureColumnDraft: async (actor, id) =>
-      columnDrafts.resubmitColumnDraft(
-        database,
-        columnEditor(actor, "features"),
-        {
-          id,
-          table: "features",
-        },
-      ),
     // The kind is one of the fixed kinds above, and the request the one it takes, as
     // PlanRecordRequest pairs them.
     add: async (actor, { type, request }) =>
@@ -403,6 +354,63 @@ export function createProjectAccess(database: Database): ProjectAccess {
         database,
         recordEditor(actor, "milestone"),
         projectId,
+        id,
+      ),
+  };
+}
+
+// Activities are drafted and read with Features' permissions, whichever release or project each
+// belongs to.
+export interface ActivityAccess {
+  read(actor: Actor): Promise<ActivityPlan>;
+  add(actor: Actor, request: ActivityRequest): Promise<Saved<ActivityPlan>>;
+  change(
+    actor: Actor,
+    id: string,
+    request: ActivityRequest,
+  ): Promise<Saved<ActivityPlan>>;
+  remove(actor: Actor, id: string): Promise<ChangeSetId>;
+}
+
+export function createActivityAccess(database: Database): ActivityAccess {
+  const withAbilities = async (
+    actor: Actor,
+    saved: Promise<Saved<activityData.ActivityRecords>>,
+  ): Promise<Saved<ActivityPlan>> => {
+    const { result, changeSetId } = await saved;
+    return {
+      result: { ...result, canEdit: editsKind(actor, "activity") },
+      changeSetId,
+    };
+  };
+  return {
+    read: async (actor) => ({
+      ...(await seenActivities(database, actor)),
+      canEdit: editsKind(actor, "activity"),
+    }),
+    add: async (actor, request) =>
+      withAbilities(
+        actor,
+        activityData.addActivity(
+          database,
+          recordEditor(actor, "activity"),
+          request,
+        ),
+      ),
+    change: async (actor, id, request) =>
+      withAbilities(
+        actor,
+        activityData.changeActivity(
+          database,
+          recordEditor(actor, "activity"),
+          id,
+          request,
+        ),
+      ),
+    remove: async (actor, id) =>
+      activityData.removeActivity(
+        database,
+        recordEditor(actor, "activity"),
         id,
       ),
   };

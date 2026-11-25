@@ -20,8 +20,9 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { isLink } from "@fathom/shared";
+import { columnTableOf, isLink } from "@fathom/shared";
 import { isNote, isNumber } from "./column-types.ts";
+import { planningOwners, valueOwnersOf } from "./values.ts";
 
 // The IDs asked for that another row of the ID column already has, ignoring letter case: a person's
 // Employee ID or a planned hire's requisition, live or as a draft makes it, published or not. A live
@@ -161,12 +162,14 @@ export async function draftsUse(
                   ? notReplacedBy("planned-hire", table.recordId, editor)
                   : undefined,
               ),
-              and(
-                eq(table.recordType, "feature"),
-                holdsChoice(table.fields, use.choice),
-                table === drafts && editor !== undefined
-                  ? notReplacedBy("feature", table.recordId, editor)
-                  : undefined,
+              ...planningOwners.map((recordType) =>
+                and(
+                  eq(table.recordType, recordType),
+                  holdsChoice(table.fields, use.choice),
+                  table === drafts && editor !== undefined
+                    ? notReplacedBy(recordType, table.recordId, editor)
+                    : undefined,
+                ),
               ),
             ),
       )
@@ -177,7 +180,7 @@ export async function draftsUse(
 }
 
 // The kinds of record whose drafts give values in added columns.
-const valueOwners = ["person", "planned-hire", "feature"] as const;
+const valueOwners = Object.values(valueOwnersOf).flat();
 
 // Whether a draft's fields give a column's value holding the choice.
 const holdsChoice = (fields: AnyColumn, choiceId: string) =>
@@ -220,10 +223,9 @@ export async function draftedValues(
         .from(table)
         .where(
           and(
-            inArray(
-              table.recordType,
-              onTable === "features" ? ["feature"] : ["person", "planned-hire"],
-            ),
+            inArray(table.recordType, [
+              ...valueOwnersOf[columnTableOf(onTable)],
+            ]),
             inArray(table.action, ["created", "changed"]),
           ),
         )),

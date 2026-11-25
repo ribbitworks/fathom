@@ -73,6 +73,8 @@ export const projectSubjects = {
     `the milestone ${milestone} of ${project}`,
   proposal: (proposal: string) => `the proposal ${proposal}`,
   feature: (feature: string) => `the feature ${feature}`,
+  activity: (activity: string, owner: string) =>
+    `the activity ${activity} of ${owner}`,
 };
 
 // The first and last days of a project's milestones, and the day of its next customer delivery

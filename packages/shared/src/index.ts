@@ -477,6 +477,16 @@ export {
   progressMeanings,
 } from "./features.ts";
 export {
+  type Activity,
+  activityColumnKeys,
+  activityOwnerProblem,
+  type ActivityPlan,
+  activityPlanSchema,
+  type ActivityRequest,
+  activityRequestSchema,
+  activitySchema,
+} from "./activities.ts";
+export {
   type OrgChart,
   type OrgChartDraft,
   orgChartDraftSchema,

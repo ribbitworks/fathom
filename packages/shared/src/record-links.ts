@@ -39,6 +39,7 @@ export type LinkedRecord =
 // The page each kind's link opens; an added column opens on the table it is on.
 const recordPages = {
   feature: "features",
+  activity: "activities",
   project: "projects",
   proposal: "projects",
   customer: "projects",

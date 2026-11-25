@@ -52,7 +52,7 @@ const monthsInWords = (months: AllocationMonths): string[] =>
 export const allocationKind: RecordKind = {
   type: "allocation",
   table: allocations,
-  // Activities aren't yet kinds of their own, so their allocations stay out of the plan's rules.
+  // Nothing drafts allocations to activities yet, so they stay out of the plan's rules.
   rowsWhere: isNotNull(allocations.featureId),
   fields: allocationFields,
   links: { featureId: "feature" },
@@ -96,5 +96,12 @@ export function allocationProblem(
   );
   return removed === undefined
     ? undefined
-    : `${capitalized(subjectFor(featureKind, state, removed.id, access))} has allocations, so it can't be removed. Allocations are time spent, so cancel the feature instead.`;
+    : allocatedRefusal(
+        subjectFor(featureKind, state, removed.id, access),
+        "feature",
+      );
 }
+
+// Why work with allocations can't be removed, naming it and the kind of work it is.
+export const allocatedRefusal = (subject: string, kind: string): string =>
+  `${capitalized(subject)} has allocations, so it can't be removed. Allocations are time spent, so cancel the ${kind} instead.`;

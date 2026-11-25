@@ -213,6 +213,7 @@ export const recordKinds: { type: string; needs: Needs; recordId?: string }[] =
     { type: "cycle-pattern", needs: changingSchedules },
     { type: "release", needs: allOf("features:edit") },
     { type: "feature", needs: allOf("features:edit") },
+    { type: "activity", needs: allOf("features:edit") },
     { type: "customer", needs: allOf("plan:edit") },
     { type: "proposal", needs: allOf("plan:edit") },
     { type: "project", needs: allOf("plan:edit") },

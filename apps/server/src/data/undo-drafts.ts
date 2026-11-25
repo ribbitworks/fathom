@@ -35,7 +35,7 @@ import {
   refuseIfChosen,
   refuseIfUsed,
   refuseLastKept,
-  refuseSensitiveFeatureList,
+  refuseSensitivePlanningList,
 } from "./list-rules.ts";
 import {
   draftedList,
@@ -337,7 +337,7 @@ export async function undoListDrafts(
       if (wanted !== undefined && live === undefined) {
         const to = storedTier(wanted.visibility);
         reclassifyDraft(actor, wanted, now?.visibility, to);
-        await refuseSensitiveFeatureList(transaction, record.id, to);
+        await refuseSensitivePlanningList(transaction, record.id, to);
       }
     } else if (wanted !== undefined) {
       // A choice always records its list.

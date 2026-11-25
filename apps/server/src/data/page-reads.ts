@@ -3,6 +3,7 @@
 // The reads the pages make, each behind the permission its page needs, as the data access layer's
 // interface serves them and as a link to a record finds it there. Part of the data access layer.
 
+import { type ActivityRecords, readActivities } from "./activities.ts";
 import type { Database } from "@fathom/db";
 import type { List, ReleaseStream } from "@fathom/shared";
 import {
@@ -41,6 +42,15 @@ export async function seenPlan(
 ): Promise<projectReads.PlanRecords> {
   requireAnyPermission(actor, planOrFeatures);
   return projectReads.readPlanRecords(database, actor);
+}
+
+// Every activity as the actor sees them, for those who see features.
+export async function seenActivities(
+  database: Database,
+  actor: Actor,
+): Promise<ActivityRecords> {
+  requirePermission(actor, "features:view");
+  return readActivities(database, actor);
 }
 
 // The columns as their drafts make them, and their order, as the actor may see them, read as of one

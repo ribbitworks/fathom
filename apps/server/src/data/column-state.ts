@@ -10,6 +10,7 @@ import {
   seesBuiltInColumn,
   type ColumnTable,
   columnTableOf,
+  activityColumnKeys,
   columnTablePolicies,
   editsColumnsOf,
   featureColumnKeys,
@@ -58,6 +59,14 @@ import { type FieldRow, readBuiltInTiers } from "./values.ts";
 // The table whose columns these are.
 export const table = "people";
 export const noField = "There is no such column";
+
+// The built-in columns of the tables of planned work, in the order the tables show them.
+const planningColumnKeys: Readonly<
+  Record<Exclude<ColumnTable, "people">, readonly string[]>
+> = {
+  features: featureColumnKeys,
+  activities: activityColumnKeys,
+};
 
 // What differs between the tables that can have columns added, for a column by its recorded table.
 export const policyOf = (tableName: unknown) =>
@@ -379,7 +388,7 @@ export async function readColumnsOut(
       columnTier(state, field),
       ...(live === undefined ? [] : [columnTier(state, live)]),
     ]);
-    // Columns on Features are General, and shown to everyone who sees the plan.
+    // Columns on Features and Activities are General, and shown to everyone who sees the table.
     if (!policyOf(tableName).generalOnly && !seesSensitivity(actor, tier)) {
       return [];
     }
@@ -393,12 +402,14 @@ export async function readColumnsOut(
       },
     ];
   });
-  if (tableName === "features") {
+  if (tableName !== "people") {
     const shownIds = new Set(shown.map(({ id }) => id));
     return {
       fields: shown,
       order: [
-        ...featureColumnKeys,
+        // The table is always one of the fixed tables.
+        // eslint-disable-next-line security/detect-object-injection
+        ...planningColumnKeys[tableName],
         ...(await columnsAsAdded(reader, [...shownIds])),
       ],
     };

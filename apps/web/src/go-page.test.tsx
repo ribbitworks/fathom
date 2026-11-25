@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for links to records by their keys, with the server's answers simulated: a link to a record
-// found gives way to the page of each kind of record, with the record open, so Back skips the link;
-// a link finding nothing, or a record removed, says so; and a link that names no key asks the
-// server nothing.
+// Tests for links to records by their keys, with the server's answers simulated.
 
 import type { RecordKeyKind, RecordLookup } from "@fathom/shared";
 import { act, screen, waitFor } from "@testing-library/react";
@@ -172,6 +169,32 @@ describe("a link to no record", () => {
       screen.queryByRole("link", { name: "Show change history" }),
     ).toBeNull();
   });
+
+  it.each([
+    ["an activity", "activity", { kind: "activity" } as const, "#ACTIVITY-9"],
+    [
+      "a column on Activities",
+      "column",
+      { kind: "column", table: "activities" } as const,
+      "#COLUMN-9",
+    ],
+  ])(
+    "says nothing was found for %s, which has no page to open",
+    async (_case, kind, found, key) => {
+      await follow(`/go/${kind}/9`, {
+        [`GET /api/go/${kind}/9`]: lookup({
+          result: "found",
+          id: recordId,
+          ...found,
+        }),
+      });
+      expect(
+        await screen.findByRole("heading", {
+          name: `Nothing found for ${key}`,
+        }),
+      ).toBeDefined();
+    },
+  );
 
   it("says a record was removed, linking to the change history", async () => {
     const { history } = await follow("/go/FEATURE-9", {

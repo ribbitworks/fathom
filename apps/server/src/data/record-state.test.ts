@@ -16,6 +16,7 @@ import {
   valueTaken,
   withVersion,
 } from "./record-state.ts";
+import { activityKind } from "./activity-kinds.ts";
 import { allocationKind } from "./allocation-kinds.ts";
 import { releaseKind } from "./release-kinds.ts";
 import { draft, kindState, recordsState } from "./test-records-state.ts";
@@ -80,6 +81,35 @@ describe("the drafts a draft uses", () => {
 });
 
 describe("a value taken", () => {
+  const activities = recordsState({
+    activity: kindState([
+      ["a", { projectId: "p", releaseId: null, name: "Release testing" }],
+      ["b", { projectId: null, releaseId: "r", name: "Release testing" }],
+    ]),
+  });
+
+  it("is so among the records with the same value in the field it is unique within", () => {
+    expect(
+      valueTaken(
+        activityKind,
+        activities,
+        { projectId: "p", releaseId: null, name: "release TESTING" },
+        "c",
+      ),
+    ).toBe(true);
+  });
+
+  it("is not so among records with another value, or none, in that field", () => {
+    expect(
+      valueTaken(
+        activityKind,
+        activities,
+        { projectId: null, releaseId: "s", name: "Release testing" },
+        "c",
+      ),
+    ).toBe(false);
+  });
+
   it("is never so for a kind with no unique value", () => {
     const state = recordsState({
       "cycle-pattern": kindState([["p", { streamId: "s", label: "A" }]]),

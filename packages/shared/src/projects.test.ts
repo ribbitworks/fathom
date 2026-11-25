@@ -222,6 +222,9 @@ describe("subjects", () => {
       "the customer Fictional",
     );
     expect(projectSubjects.project("Fictional")).toBe("the project Fictional");
+    expect(projectSubjects.activity("Testing", "Fictional")).toBe(
+      "the activity Testing of Fictional",
+    );
     expect(projectSubjects.milestone("Kickoff", "Fictional")).toBe(
       "the milestone Kickoff of Fictional",
     );

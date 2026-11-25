@@ -119,18 +119,15 @@ function withoutDrafts(list: List): List {
   return plain;
 }
 
-// The columns added to Features as the viewer sees them, and the lists they draw on. Those lists'
-// choices go to everyone who sees the plan, so only General ones are sent, as a column on Features
-// may draw only on those.
-async function featureColumnsOut(
+// The columns added to Features or Activities as the viewer sees them, and the lists they draw on.
+// Those lists' choices go to everyone who sees the table, so only General ones are sent, as a column
+// there may draw only on those.
+export async function planningColumnsOut(
   transaction: Transaction,
   viewer: Actor,
+  table: "features" | "activities",
 ): Promise<FeatureColumns> {
-  const { fields, order } = await readColumnsOut(
-    transaction,
-    viewer,
-    "features",
-  );
+  const { fields, order } = await readColumnsOut(transaction, viewer, table);
   const drawnOn = new Set(
     fields.flatMap((field) => [field.listId, field.draft?.live.listId]),
   );
@@ -147,7 +144,7 @@ async function featureColumnsOut(
 
 // The records of a kind shown: the live ones by name, then those drafted to be added, in the order
 // drafted.
-function inOrder(state: RecordsState, type: RecordType): string[] {
+export function inOrder(state: RecordsState, type: RecordType): string[] {
   const { live } = stateOf(state, type);
   const name = (id: string) => String(shownVersion(state, type, id)?.name);
   return [
@@ -243,6 +240,41 @@ function proposalOut(
   };
 }
 
+// The planning fields a feature and an activity share, as the viewer sees them.
+export function planningOut(
+  state: RecordsState,
+  makers: Makers,
+  staffed: ReturnType<typeof staffedFeatures>,
+  type: "feature" | "activity",
+  id: string,
+) {
+  const record = shownVersion(state, type, id) as Recorded;
+  const { draft, ...heldBy } = recordExtras(state, makers, type, id);
+  return {
+    id,
+    keyNumber: recordKeyNumber(state, type, id),
+    name: String(record.name),
+    statusId: String(record.statusId),
+    priorityId: text(record.priorityId),
+    sizeId: text(record.sizeId),
+    riskId: text(record.riskId),
+    neededBy: text(record.neededBy),
+    estimateHours:
+      typeof record.estimateHours === "number" ? record.estimateHours : null,
+    featureTeamId: text(record.featureTeamId),
+    description: text(record.description),
+    note: text(record.note),
+    values: Object.fromEntries(valuesOf(record)),
+    links: linksOf(record),
+    notes: notesOf(record),
+    numbers: numbersOf(record),
+    staffed: staffed.drafted.has(id),
+    staffedLive: staffed.live.has(id),
+    ...(draft === undefined ? {} : { draft: featureDraftOf(draft) }),
+    ...heldBy,
+  };
+}
+
 function featureOut(
   state: RecordsState,
   makers: Makers,
@@ -250,32 +282,11 @@ function featureOut(
   id: string,
 ): Feature {
   const feature = shownVersion(state, "feature", id) as Recorded;
-  const { draft, ...heldBy } = recordExtras(state, makers, "feature", id);
   return {
-    id,
-    keyNumber: recordKeyNumber(state, "feature", id),
-    name: String(feature.name),
-    statusId: String(feature.statusId),
-    priorityId: text(feature.priorityId),
-    sizeId: text(feature.sizeId),
-    riskId: text(feature.riskId),
-    neededBy: text(feature.neededBy),
+    ...planningOut(state, makers, staffed, "feature", id),
     customerIds: linkedIds(feature, "customerIds"),
     targetStreamId: text(feature.targetStreamId),
     targetCycle: text(feature.targetCycle),
-    estimateHours:
-      typeof feature.estimateHours === "number" ? feature.estimateHours : null,
-    featureTeamId: text(feature.featureTeamId),
-    description: text(feature.description),
-    note: text(feature.note),
-    values: Object.fromEntries(valuesOf(feature)),
-    links: linksOf(feature),
-    notes: notesOf(feature),
-    numbers: numbersOf(feature),
-    staffed: staffed.drafted.has(id),
-    staffedLive: staffed.live.has(id),
-    ...(draft === undefined ? {} : { draft: featureDraftOf(draft) }),
-    ...heldBy,
   };
 }
 
@@ -377,7 +388,7 @@ export async function planOut(
     features: inOrder(state, "feature").map((id) =>
       featureOut(state, makers, staffed, id),
     ),
-    featureColumns: await featureColumnsOut(transaction, viewer),
+    featureColumns: await planningColumnsOut(transaction, viewer, "features"),
   });
 }
 

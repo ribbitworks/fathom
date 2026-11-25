@@ -37,7 +37,7 @@ import {
   otherApprover,
 } from "./draft-makers.ts";
 import { keyNumberOf } from "./record-keys.ts";
-import { builtInKey, featureListIds } from "./list-rules.ts";
+import { builtInKey, generalOnlyListIds } from "./list-rules.ts";
 import {
   choicesOrderUses,
   draftedOrder,
@@ -286,7 +286,7 @@ export async function readListsWithin(
   return listsOut(
     state,
     await readMakers(transaction, state, viewer),
-    await featureListIds(transaction),
+    await generalOnlyListIds(transaction),
     await usesFor(transaction, viewer),
   );
 }

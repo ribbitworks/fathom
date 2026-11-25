@@ -62,7 +62,7 @@ import {
 import {
   choiceLabelTaken,
   choicesHaveDrafts,
-  featureListIds,
+  generalOnlyListIds,
   listNameTaken,
   lower,
   peoplesMeaning,
@@ -72,7 +72,7 @@ import {
   refuseLastKept,
   refuseMeaningMisfit,
   refusePeoplesMeaningWhileHeld,
-  refuseSensitiveFeatureList,
+  refuseSensitivePlanningList,
   refuseWeightMisfit,
 } from "./list-rules.ts";
 import {
@@ -114,7 +114,7 @@ async function listNow(
   return listsOut(
     state,
     await readMakers(transaction, state, editor),
-    await featureListIds(transaction),
+    await generalOnlyListIds(transaction),
     await usesFor(transaction, editor),
   ).find((other) => other.id === id) as List;
 }
@@ -316,7 +316,7 @@ export async function updateList(
 const listSettings =
   (actor: Actor, id: string, request: ListRequest): ListChange =>
   async (transaction, state, list) => {
-    await refuseSensitiveFeatureList(transaction, id, request.visibility);
+    await refuseSensitivePlanningList(transaction, id, request.visibility);
     refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
     if (listNameTaken(state, request.name, id)) {
       throw new ConflictError(duplicateList);
@@ -368,7 +368,7 @@ export async function moveListClass(
     const from = storedTier(row.visibility);
     requireMove(actor, from, to);
     if (from === to) return null;
-    await refuseSensitiveFeatureList(transaction, id, to);
+    await refuseSensitivePlanningList(transaction, id, to);
     await transaction
       .update(lists)
       .set({ visibility: to })

@@ -3,6 +3,7 @@
 // The data access layer's interface: functions bound to a database, which are all that the rest of
 // the server receives.
 
+import { type ColumnAccess, createColumnAccess } from "./column-access.ts";
 import type { Database } from "@fathom/db";
 import type {
   EffortConversions,
@@ -82,9 +83,11 @@ import { createRecordFinders, findKeyedRecord } from "./record-links.ts";
 import { recordEditor } from "./draft-editors.ts";
 import {
   createReleaseAccess,
+  createActivityAccess,
   createProjectAccess,
   type ReleaseAccess,
   type ProjectAccess,
+  type ActivityAccess,
   type AllocationAccess,
 } from "./plan-access.ts";
 import {
@@ -187,6 +190,9 @@ export interface DataAccess {
   // Customers, projects with their milestones, proposals, and features, which everyone who sees the
   // plan may read.
   projects: ProjectAccess;
+  featureColumns: ColumnAccess;
+  activities: ActivityAccess;
+  activityColumns: ColumnAccess;
   // Discarding and resubmitting drafts of the plan's records, whatever their kind.
   records: RecordAccess;
   // Who is put on which feature, month by month, seen by those who see allocations, and changed as
@@ -295,6 +301,9 @@ export function createDataAccess(database: Database): DataAccess {
     lists: createListAccess(database),
     releases: createReleaseAccess(database),
     projects: createProjectAccess(database),
+    featureColumns: createColumnAccess(database, "features"),
+    activities: createActivityAccess(database),
+    activityColumns: createColumnAccess(database, "activities"),
     allocations: {
       read: async (actor) => {
         const { includedPersonal, ...read } = await readAllocations(

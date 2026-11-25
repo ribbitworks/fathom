@@ -19,8 +19,9 @@ const messages = (result: { error?: { issues: { message: string }[] } }) =>
   result.error?.issues.map((issue) => issue.message) ?? [];
 
 describe("columnTableOf", () => {
-  it("names Features for a column on Features, and People for any other, older ones included", () => {
+  it("names Features or Activities for a column on either, and People for any other, older ones included", () => {
     expect(columnTableOf("features")).toBe("features");
+    expect(columnTableOf("activities")).toBe("activities");
     expect(columnTableOf("people")).toBe("people");
     expect(columnTableOf(null)).toBe("people");
   });

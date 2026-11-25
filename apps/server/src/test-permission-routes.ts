@@ -374,23 +374,26 @@ export const routes: Route[] = [
     needs: allOf("people:edit", "people:view"),
   })),
 
-  {
-    method: "POST",
-    pattern: "/api/features/columns",
-    needs: allOf("features:edit", "people:view"),
-    body: () => ({ ...named(), type: "link", visibility: "general" }),
-  },
-  {
-    method: "PUT",
-    pattern: "/api/features/columns/:fieldId",
-    needs: allOf("features:edit", "people:view"),
-    body: () => ({ ...named(), type: "link", visibility: "general" }),
-  },
-  ...["", "/draft", "/draft/rejection"].map((end): Route => ({
-    method: "DELETE",
-    pattern: `/api/features/columns/:fieldId${end}`,
-    needs: allOf("features:edit", "people:view"),
-  })),
+  // Features' and Activities' columns, set up by those who edit them and see people.
+  ...["features", "activities"].flatMap((table): Route[] => [
+    {
+      method: "POST",
+      pattern: `/api/${table}/columns`,
+      needs: allOf("features:edit", "people:view"),
+      body: () => ({ ...named(), type: "link", visibility: "general" }),
+    },
+    {
+      method: "PUT",
+      pattern: `/api/${table}/columns/:fieldId`,
+      needs: allOf("features:edit", "people:view"),
+      body: () => ({ ...named(), type: "link", visibility: "general" }),
+    },
+    ...["", "/draft", "/draft/rejection"].map((end): Route => ({
+      method: "DELETE",
+      pattern: `/api/${table}/columns/:fieldId${end}`,
+      needs: allOf("features:edit", "people:view"),
+    })),
+  ]),
 
   // Each table's views need what opens its page. Sharing, and changing or deleting someone else's
   // view, also need what shares views on the table, as the views tests check.
@@ -679,6 +682,20 @@ export const routes: Route[] = [
     pattern: "/api/projects/choices",
     needs: anyOf("plan:view", "features:view"),
   },
+  {
+    method: "GET",
+    pattern: "/api/activities",
+    needs: allOf("features:view"),
+  },
+  // An activity names its project, which a random one isn't found as.
+  ...(["POST", "PUT", "DELETE"] as const).map((method): Route => ({
+    method,
+    pattern: method === "POST" ? "/api/activities" : "/api/activities/:id",
+    needs: allOf("features:edit"),
+    ...(method === "DELETE"
+      ? {}
+      : { body: () => ({ ...named(), projectId: id() }) }),
+  })),
   ...(
     [
       ["customers", "plan:edit"],

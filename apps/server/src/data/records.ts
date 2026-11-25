@@ -24,6 +24,7 @@ import {
   otherApprover,
 } from "./draft-makers.ts";
 import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
+import { activityKind } from "./activity-kinds.ts";
 import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
 import { planningSettingsKind } from "./planning-settings-kind.ts";
 import { keyNumberOf, readKindsKeyNumbers } from "./record-keys.ts";
@@ -51,6 +52,7 @@ import { readValues, recordedValues, valueFieldsIn } from "./values.ts";
 export const recordKinds: readonly RecordKind[] = [
   ...releaseKinds,
   ...projectKinds,
+  activityKind,
   allocationKind,
   planningSettingsKind,
 ];

@@ -120,6 +120,7 @@ describe("approving by area", () => {
           "proposal",
           "project",
           "milestone",
+          "activity",
           "allocation",
         ] as const
       ).map((type) => ({ type, id: randomUUID() })),
@@ -170,6 +171,7 @@ describe("approving by area", () => {
       "person",
       "release",
       "feature",
+      "activity",
     ]);
     expect(approvableKinds(["plan:approve", "people:view"])).toEqual([
       "release-stream",

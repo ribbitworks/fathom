@@ -63,6 +63,7 @@ const typeNames: Record<DraftKind, string> = {
   proposal: "Proposal",
   project: "Project",
   milestone: "Milestone",
+  activity: "Activity",
   allocation: "Allocation",
   "planning-settings": "Planning settings",
 };
