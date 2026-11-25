@@ -26,21 +26,9 @@ export async function runPnpm(args, environment = process.env) {
 const packagesRunningLong = 4;
 const coresLeftFree = 2;
 
-// How many workers each package's Vitest may run, out of this computer's cores, when that many
-// checks share it.
-export function workersPerPackage(cores = availableParallelism(), shares = 1) {
-  return Math.max(
-    1,
-    Math.floor((cores - coresLeftFree) / shares / packagesRunningLong),
-  );
-}
-
-// How many checks share this computer, as the check that runs these tests was told, or one when no
-// check runs them.
-export function sharesOf(environment) {
-  const shares = Number.parseInt(environment.FATHOM_CHECK_SHARES ?? "", 10);
-  return Number.isInteger(shares) && shares > 0 ? shares : 1;
-}
+// How many workers each package's Vitest may run, out of this computer's cores.
+export const workersPerPackage = (cores = availableParallelism()) =>
+  Math.max(1, Math.floor((cores - coresLeftFree) / packagesRunningLong));
 
 // pnpm's options that choose packages and take a package after them, and those that take none.
 const selectorsWithPackage = new Set(["--filter", "-F"]);
@@ -66,9 +54,9 @@ export function selectorsFirst(args) {
   return [...selectors, ...rest];
 }
 
-// Runs pnpm with these arguments in a check's turn, as package tests use every core they are given,
-// with each package's workers limited to the check's share unless VITEST_MAX_WORKERS already says
-// how many, and says whether it passed.
+// Runs pnpm with these arguments in a check's turn, as package tests use every core, with each
+// package's workers limited unless VITEST_MAX_WORKERS already says how many, and says whether it
+// passed.
 export async function runPackageTests(
   args,
   { slots, run = runPnpm, environment = process.env } = {},
@@ -79,8 +67,7 @@ export async function runPackageTests(
       run(ordered, {
         ...given,
         VITEST_MAX_WORKERS:
-          given.VITEST_MAX_WORKERS ||
-          String(workersPerPackage(availableParallelism(), sharesOf(given))),
+          given.VITEST_MAX_WORKERS || String(workersPerPackage()),
       }),
     { slots, environment },
   );

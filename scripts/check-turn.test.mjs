@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of scripts/check-turn.mjs: a check waits its turn, saying so and how long it waited, is told
-// its share of the computer, the whole of it when it starts alone, and ends with its command,
-// passing on a request to stop.
+// Tests of scripts/check-turn.mjs: a check waits its turn, one at a time, saying so and how long it
+// waited, goes ahead within a check that holds the turn, and ends with its command, passing on a
+// request to stop.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -13,12 +13,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
-import {
-  checkRuns,
-  checksSharing,
-  inCheckTurn,
-  sharingEnvironment,
-} from "./check-turn.mjs";
+import { checkRuns, inCheckTurn } from "./check-turn.mjs";
 
 const script = fileURLToPath(new URL("check-turn.mjs", import.meta.url));
 
@@ -78,14 +73,10 @@ describe("running a check", () => {
     "waits while another copy runs one, saying so at once, then runs, saying how long it waited",
     testLimit,
     async () => {
-      // Given other running copies holding both slots
+      // Given another running copy holding the turn
       writeFileSync(
         join(folder, "slot-0"),
         `${String(process.pid)}:held:/work/fathom-1`,
-      );
-      writeFileSync(
-        join(folder, "slot-1"),
-        `${String(process.pid)}:held:/work/fathom-2`,
       );
       const slots = {
         ...checkRuns,
@@ -100,46 +91,31 @@ describe("running a check", () => {
 
       // Then it says what it waits for, and runs once the slot is free
       assert.deepEqual(reports, [
-        `Waiting to run a check; the slots in ${folder} are held by process ${String(process.pid)} (/work/fathom-1), process ${String(process.pid)} (/work/fathom-2)`,
+        `Waiting to run a check; the slots in ${folder} are held by process ${String(process.pid)} (/work/fathom-1)`,
       ]);
-      rmSync(join(folder, "slot-1"));
+      rmSync(join(folder, "slot-0"));
       assert.equal(await running, "passed");
       assert.match(reports[1] ?? "", /^Waited \d+s to run a check$/);
-      assert.deepEqual(readdirSync(folder), ["slot-0"]);
+      assert.deepEqual(readdirSync(folder), []);
     },
   );
 
-  it("gives a check that starts alone the whole computer", async () => {
-    const environment = await inCheckTurn((given) => given, {
-      slots: { ...checkRuns, folder },
-      environment: {},
-    });
-    assert.equal(environment.FATHOM_CHECK_SHARES, "1");
-  });
-
-  it("gives a check that starts beside another its share of the computer", async () => {
-    // Given another running copy holding one slot
+  it("runs a check started within one that holds the turn at once", async () => {
+    // Given another running copy holding the turn
     writeFileSync(
       join(folder, "slot-0"),
       `${String(process.pid)}:held:/work/fathom-1`,
     );
 
-    // When a check is asked for
-    const environment = await inCheckTurn((given) => given, {
-      slots: { ...checkRuns, folder },
-      environment: {},
-    });
-
-    // Then it is told it shares the computer with as many as check at once
-    assert.equal(environment.FATHOM_CHECK_SHARES, "2");
-  });
-
-  it("leaves the cores to a check run within one that has its turn", async () => {
-    const environment = await inCheckTurn((given) => given, {
+    // When a check is asked for from within a check that holds it
+    const ran = await inCheckTurn(() => "passed", {
       slots: { ...checkRuns, folder },
       environment: { FATHOM_CHECK_SLOT: "1" },
     });
-    assert.equal(environment.FATHOM_CHECK_SHARES, undefined);
+
+    // Then it runs without waiting
+    assert.equal(ran, "passed");
+    assert.deepEqual(reports, []);
   });
 
   it("ends with the command's exit code", testLimit, async (context) => {
@@ -182,37 +158,6 @@ describe("running a check", () => {
     assert.equal(
       output(),
       "error: Usage: check-turn.mjs <command> [arguments]\n",
-    );
-  });
-});
-
-describe("how many checks share the computer", () => {
-  it("is one for a check starting while no other runs or waits", () => {
-    assert.equal(checksSharing(0, 2), 1);
-  });
-
-  it("is as many as check at once for a check starting beside another", () => {
-    assert.equal(checksSharing(1, 2), 2);
-  });
-
-  it("is as many as check at once for a check starting while another waits", () => {
-    assert.equal(checksSharing(2, 2), 2);
-  });
-});
-
-describe("a check's share of the computer", () => {
-  it("is one of as many as check at once", () => {
-    assert.equal(sharingEnvironment({}, 2).FATHOM_CHECK_SHARES, "2");
-  });
-
-  it("is the whole computer for a check run alone, as on GitHub", () => {
-    assert.deepEqual(sharingEnvironment({ CI: "true" }, 2), { CI: "true" });
-  });
-
-  it("keeps a share already given", () => {
-    assert.equal(
-      sharingEnvironment({ FATHOM_CHECK_SHARES: "3" }, 2).FATHOM_CHECK_SHARES,
-      "3",
     );
   });
 });

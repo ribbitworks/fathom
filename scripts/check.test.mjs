@@ -434,10 +434,8 @@ describe("scripts/check.sh", () => {
     );
   });
 
-  it("runs every job side by side, whatever share of the cores the check has", () => {
-    const result = run(["--before-push"], {
-      environment: { FATHOM_CHECK_SHARES: "1000" },
-    });
+  it("runs every job side by side", () => {
+    const result = run(["--before-push"]);
     assert.equal(result.status, 0, result.stderr);
     assert.ok(
       result.stdout.includes("Running 6 jobs side by side"),
