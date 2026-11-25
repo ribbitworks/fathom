@@ -1,23 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Runs a check, such as 'pnpm check' or 'pnpm test:changed', in its turn on this computer, two copies
-// of the repository at a time, with every core when it starts alone and half of them beside another.
-// It ends as the command does.
+// Runs a check, such as 'pnpm check' or 'pnpm test:changed', in its turn on this computer, one copy
+// of the repository at a time, with every core. It ends as the command does.
 // Usage: node scripts/check-turn.mjs <command> [arguments], such as bash scripts/check.sh
 
 import { pathToFileURL } from "node:url";
 import {
-  holdsTurn,
   inTurn,
   machineSlots,
   millisecondsPerSecond,
 } from "../packages/test-utils/src/slots.ts";
 import { runCommand } from "./run-command.mjs";
 
-// A check's linters, type checks, scans and tests together can use every core, so more than two
-// checking at once slow each other until tests time out.
+// A check's linters, type checks, scans and tests together use every core, so two checking at once
+// each take more than twice as long as one alone.
 export const checkRuns = machineSlots("checks", {
-  atOnce: 2,
+  atOnce: 1,
   retryMilliseconds: millisecondsPerSecond,
   reportAfterMilliseconds: 0,
   waitingTo: "run a check",
@@ -25,43 +23,12 @@ export const checkRuns = machineSlots("checks", {
 
 const slotMarker = "FATHOM_CHECK_SLOT";
 
-// How many checks share the computer, for a check starting while this many others run or wait for
-// a turn: one that starts alone keeps every core for as long as it runs, even once another starts,
-// while one that starts beside another takes its share.
-export const checksSharing = (othersRunning, checksAtOnce) =>
-  othersRunning === 0 ? 1 : checksAtOnce;
-
-// The environment a check runs in once it has its turn: told how many checks share the computer, so
-// it uses only its share of the cores, unless it runs alone, as on GitHub, where CI is true.
-export function sharingEnvironment(environment, shares) {
-  if (environment.CI === "true" || environment.FATHOM_CHECK_SHARES)
-    return environment;
-  return { ...environment, FATHOM_CHECK_SHARES: String(shares) };
-}
-
 // Runs the work in its turn, and gives back what it gives. The work's environment is marked, so a
-// check started from within it goes ahead rather than waiting on the turn this one holds, and keeps
-// the share of the cores it was given, or every core for a run started already holding a turn.
-export function inCheckTurn(
+// check started from within it goes ahead rather than waiting on the turn this one holds.
+export const inCheckTurn = (
   work,
   { slots = checkRuns, environment = process.env } = {},
-) {
-  const alreadyHeld = holdsTurn(environment, slotMarker);
-  return inTurn(
-    (marked, othersRunning = 0) =>
-      work(
-        alreadyHeld
-          ? marked
-          : sharingEnvironment(
-              marked,
-              checksSharing(othersRunning, slots.atOnce),
-            ),
-      ),
-    slots,
-    slotMarker,
-    environment,
-  );
-}
+) => inTurn(work, slots, slotMarker, environment);
 
 if (
   process.argv[1] &&

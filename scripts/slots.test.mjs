@@ -102,43 +102,6 @@ describe("running in slots", () => {
     assert.deepEqual(readdirSync(folder), []);
   });
 
-  it("tells a run that starts alone that no other runs", async () => {
-    assert.equal(
-      await inSlot((others) => Promise.resolve(others), options()),
-      0,
-    );
-  });
-
-  it("tells a run how many others held a slot or waited for one as it started", async () => {
-    // Given another running process holding one slot, and another run waiting in line behind
-    writeFileSync(join(folder, "slot-0"), `${String(process.pid)}:held`);
-    writeFileSync(
-      join(folder, `ticket-${"9".repeat(15)}-${String(process.pid)}-later`),
-      `${String(process.pid)}:later`,
-    );
-
-    // When a run takes the free slot
-    const others = await inSlot((count) => Promise.resolve(count), options());
-
-    // Then it is told of both
-    assert.equal(others, 2);
-  });
-
-  it("counts no run whose process has ended among the others", async () => {
-    // Given a slot and a ticket left by runs whose processes have ended
-    writeFileSync(join(folder, "slot-0"), `${String(endedProcess)}:held`);
-    writeFileSync(
-      join(folder, `ticket-${"9".repeat(15)}-${String(endedProcess)}-ended`),
-      `${String(endedProcess)}:ended`,
-    );
-
-    // When a run takes its slot
-    const others = await inSlot((count) => Promise.resolve(count), options());
-
-    // Then it is told it runs alone
-    assert.equal(others, 0);
-  });
-
   it("frees the slot when the run fails", async () => {
     await assert.rejects(
       inSlot(() => Promise.reject(new Error("no port")), options()),
@@ -364,23 +327,6 @@ describe("running in turn", () => {
   it("says nothing of waiting when the slot is free", async () => {
     assert.equal(await inTurn(() => "ran", turnOptions(), marker, {}), "ran");
     assert.deepEqual(reports, []);
-  });
-
-  it("tells work that takes its turn how many others run, and work within a turn nothing", async () => {
-    const taken = await inTurn(
-      (_environment, others) => others,
-      turnOptions(),
-      marker,
-      {},
-    );
-    const within = await inTurn(
-      (_environment, others) => others,
-      turnOptions(),
-      marker,
-      { [marker]: "1" },
-    );
-    assert.equal(taken, 0);
-    assert.equal(within, undefined);
   });
 
   it("runs at once within a run holding the slot", async () => {

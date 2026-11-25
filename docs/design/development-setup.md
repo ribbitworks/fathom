@@ -4,7 +4,7 @@ category: "Guide"
 audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/**"]
 dependencies: ["docs/design/architecture.md", "docs/standards/testing.md", "docs/design/checks-and-ci.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Fathom: Development Setup
@@ -291,7 +291,7 @@ See [Releases](#releases) for the steps.
   - It's copied from a template that the package's run migrates once, in one throwaway PostgreSQL container.
   - It's dropped when the file finishes.
   - A test database server keeps its data in memory and doesn't wait for writes to reach the disk, since it's thrown away.
-- **Sharing the machine:** how checks take turns, share the cores and stop a step that hangs is in [Checks and CI § Sharing the Machine](checks-and-ci.md#sharing-the-machine).
+- **Sharing the machine:** how checks take turns and stop a step that hangs is in [Checks and CI § Sharing the Machine](checks-and-ci.md#sharing-the-machine).
 
 ### Working Offline
 

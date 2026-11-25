@@ -142,21 +142,17 @@ A branch checked offline still needs the Check workflow's full check to pass on 
 
 A check runs many linters, type checks, scans and tests side by side, and can use every core of the computer. Several copies of the repository on one computer, each running a check, would slow each other until tests time out.
 
-So checks take turns, two at a time, share the cores, and stop a step that hangs. A check of documentation alone before a push is quick, so it takes no turn.
+So checks take turns, one at a time with every core, and stop a step that hangs. Two side by side each took more than twice as long as one alone, so two in turn finish sooner. A check of documentation alone before a push is quick, so it takes no turn.
 
 A turn is held as a slot file, and a check waiting for one leaves a ticket, so copies take their turns in the order they asked.
 
 ```mermaid
 flowchart TD
-    Ticket["check-turn.mjs leaves a ticket in the checks' slot folder"] --> Free{"Is a slot free for this ticket, in the order the copies asked?"}
-    Free -- No --> Wait["Waiting to run a check, naming the slots' holders; it looks again each second"]
+    Ticket["check-turn.mjs leaves a ticket in the checks' slot folder"] --> Free{"Is the turn free for this ticket, in the order the copies asked?"}
+    Free -- No --> Wait["Waiting to run a check, naming the turn's holder; it looks again each second"]
     Wait --> Free
-    Free -- Yes --> OnGitHub{"Is CI true, as on GitHub, or FATHOM_CHECK_SHARES already set?"}
-    OnGitHub -- Yes --> WholeComputer["Its environment is kept: on GitHub, the whole computer, with FATHOM_CHECK_SHARES unset"]
-    OnGitHub -- No --> Alone{"Did any other copy hold or wait for a turn as this one took its own?"}
-    Alone -- Yes --> HalfComputer["Half the computer: FATHOM_CHECK_SHARES is 2"]
-    Alone -- No --> EveryCore["Every core, kept while it runs, even once another copy starts: FATHOM_CHECK_SHARES is 1"]
-    Run["Runs the jobs side by side"] --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
+    Free -- Yes --> Run["Runs the jobs side by side, with every core"]
+    Run --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
     Limit -- No --> Stopped["The job's process group is stopped, its output shown, and it counts as Stopped"]
     Limit -- Yes --> Results["Each job's output, then a table of each one's result and seconds"]
     Stopped --> Results
@@ -164,13 +160,11 @@ flowchart TD
 
 This chart is part of [The Local Check](#the-local-check), which also draws the checks a run makes before its turn.
 
-- **Taking turns:** `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before running their jobs, once their arguments and the connection are checked. Two copies hold a turn at most. `pnpm test` takes one for its package tests only, after the script tests, and they share the computer as a check does.
-- **Waiting:** copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the processes and folders that hold the turns, and how many copies asked first.
+- **Taking turns:** `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before running their jobs, once their arguments and the connection are checked. One copy holds the turn at a time. `pnpm test` takes one for its package tests only, after the script tests.
+- **Waiting:** copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the process and folder that holds the turn, and how many copies asked first.
 - **A check started by a check,** such as `pnpm test:changed` within `pnpm check:push`, uses the turn its check holds.
-- **Cores:** a copy that starts alone has every core, and keeps them while it runs. One that starts beside another takes half. On GitHub, where `CI` is `true`, a check has the whole computer.
-  - `FATHOM_CHECK_SHARES` carries the share: 1 alone, 2 beside another, and unset on GitHub. A check runs all its jobs side by side, whatever its share.
-  - Package tests get the same share of the workers: all of them alone, and half beside another.
-- **Workers:** each package's tests use a share of the check's cores, leaving two free for the development servers. `VITEST_MAX_WORKERS` sets the number instead.
+- **Cores:** the copy holding the turn has every core, as a check on GitHub does.
+- **Workers:** each package's tests use a share of the cores, leaving two free for the development servers. `VITEST_MAX_WORKERS` sets the number instead.
 - **Test databases:** no more than 8 test database servers start at once on one computer.
 - **Time limit:** a check stops a job still running after 15 minutes, shows its output up to then, and fails it as Stopped, so a hung job never holds a turn for long. `FATHOM_CHECK_JOB_SECONDS` sets another limit.
   - `pnpm test:changed`, `pnpm test:packages` and `pnpm test`, run alone or within a check, stop each pnpm step they run past the same limit, naming the step, and fail.
@@ -272,17 +266,10 @@ flowchart TD
     AnyLeft -- Yes --> Holds{"Started by a check that already holds a turn, or documentation alone before a push?"}
     Holds -- Yes --> Run
     Holds -- No --> Ticket["check-turn.mjs leaves a ticket in the checks' slot folder, then runs check.sh again in its turn"]
-    Ticket --> Free{"Is a slot free for this ticket, in the order the copies asked?"}
-    Free -- No --> Wait["Waiting to run a check, naming the slots' holders; it looks again each second"]
+    Ticket --> Free{"Is the turn free for this ticket, in the order the copies asked?"}
+    Free -- No --> Wait["Waiting to run a check, naming the turn's holder; it looks again each second"]
     Wait --> Free
-    Free -- Yes --> OnGitHub{"Is CI true, as on GitHub, or FATHOM_CHECK_SHARES already set?"}
-    OnGitHub -- Yes --> WholeComputer["Its environment is kept: on GitHub, the whole computer, with FATHOM_CHECK_SHARES unset"]
-    OnGitHub -- No --> Alone{"Did any other copy hold or wait for a turn as this one took its own?"}
-    Alone -- Yes --> HalfComputer["Half the computer: FATHOM_CHECK_SHARES is 2"]
-    Alone -- No --> EveryCore["Every core, kept while it runs, even once another copy starts: FATHOM_CHECK_SHARES is 1"]
-    WholeComputer --> Run
-    HalfComputer --> Run
-    EveryCore --> Run["Runs the jobs side by side"]
+    Free -- Yes --> Run["Runs the jobs side by side, with every core"]
     Run --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
     Limit -- No --> Stopped["The job's process group is stopped, its output shown, and it counts as Stopped"]
     Limit -- Yes --> Results["Each job's output, then a table of each one's result and seconds"]

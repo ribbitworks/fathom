@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of scripts/package-tests.mjs: waiting for a check's turn, workers per package and checks
-// sharing the computer, choosing packages, and pnpm failing to start.
+// Tests of scripts/package-tests.mjs: waiting for a check's turn, workers per package, choosing
+// packages, and pnpm failing to start.
 
 import assert from "node:assert/strict";
 import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -13,7 +13,6 @@ import { checkRuns } from "./check-turn.mjs";
 import {
   runPackageTests,
   runPnpm,
-  sharesOf,
   workersPerPackage,
 } from "./package-tests.mjs";
 
@@ -48,15 +47,11 @@ afterEach(() => {
 });
 
 describe("running package tests", () => {
-  it("waits while two other copies run checks, saying so at once, then runs, saying how long it waited", async () => {
-    // Given other running copies holding both turns
+  it("waits while another copy runs a check, saying so at once, then runs, saying how long it waited", async () => {
+    // Given another running copy holding the turn
     writeFileSync(
       join(folder, "slot-0"),
       `${String(process.pid)}:held:/work/fathom-3`,
-    );
-    writeFileSync(
-      join(folder, "slot-1"),
-      `${String(process.pid)}:held:/work/fathom-4`,
     );
 
     // When package tests are asked for
@@ -65,17 +60,17 @@ describe("running package tests", () => {
 
     // Then they say what they wait for, run once a turn is free, and free it after
     assert.deepEqual(reports, [
-      `Waiting to run a check; the slots in ${folder} are held by process ${String(process.pid)} (/work/fathom-3), process ${String(process.pid)} (/work/fathom-4)`,
+      `Waiting to run a check; the slots in ${folder} are held by process ${String(process.pid)} (/work/fathom-3)`,
     ]);
     assert.deepEqual(runs, []);
-    rmSync(join(folder, "slot-1"));
+    rmSync(join(folder, "slot-0"));
     assert.equal(await running, true);
     assert.deepEqual(
       runs.map(({ args }) => args),
       [["--recursive", "test"]],
     );
     assert.match(reports[1] ?? "", /^Waited \d+s to run a check$/);
-    assert.deepEqual(readdirSync(folder), ["slot-0"]);
+    assert.deepEqual(readdirSync(folder), []);
   });
 
   it("says when they fail, without a word of waiting when nobody else runs them", async () => {
@@ -83,7 +78,7 @@ describe("running package tests", () => {
     assert.deepEqual(reports, []);
   });
 
-  it("gives each package of a check running alone the whole computer's workers, unless told how many, an empty setting saying nothing", async () => {
+  it("gives each package its share of the computer's workers, unless told how many, an empty setting saying nothing", async () => {
     await runPackageTests(["test"], options());
     await runPackageTests(["test"], {
       ...options(),
@@ -93,42 +88,26 @@ describe("running package tests", () => {
       ...options(),
       environment: { VITEST_MAX_WORKERS: "" },
     });
-    const alone = String(workersPerPackage(undefined, 1));
+    const perPackage = String(workersPerPackage());
     assert.deepEqual(
       runs.map(({ environment }) => environment.VITEST_MAX_WORKERS),
-      [alone, "7", alone],
+      [perPackage, "7", perPackage],
     );
   });
 
-  it("runs at once within a check's turn, with the share that check was given", async () => {
-    // Given both turns held, one by the check that runs these tests
+  it("runs at once within a check's turn", async () => {
+    // Given the turn held by the check that runs these tests
     writeFileSync(join(folder, "slot-0"), `${String(process.pid)}:held`);
-    writeFileSync(join(folder, "slot-1"), `${String(process.pid)}:held`);
 
     // When that check runs package tests
     const passed = await runPackageTests(["test"], {
       ...options(),
-      environment: { FATHOM_CHECK_SLOT: "1", FATHOM_CHECK_SHARES: "2" },
+      environment: { FATHOM_CHECK_SLOT: "1" },
     });
 
-    // Then they run without waiting, with its share of the workers
+    // Then they run without waiting
     assert.equal(passed, true);
     assert.deepEqual(reports, []);
-    assert.equal(
-      runs[0]?.environment.VITEST_MAX_WORKERS,
-      String(workersPerPackage(undefined, 2)),
-    );
-  });
-
-  it("uses every core on GitHub, where CI is true", async () => {
-    await runPackageTests(["test"], {
-      ...options(),
-      environment: { CI: "true" },
-    });
-    assert.equal(
-      runs[0]?.environment.VITEST_MAX_WORKERS,
-      String(workersPerPackage()),
-    );
   });
 
   it("shares the cores but two among the four packages that run longest, giving each at least one", () => {
@@ -136,18 +115,6 @@ describe("running package tests", () => {
     assert.equal(workersPerPackage(10), 2);
     assert.equal(workersPerPackage(4), 1);
     assert.equal(workersPerPackage(1), 1);
-  });
-
-  it("gives each package its share of the workers when checks share the computer", () => {
-    assert.equal(workersPerPackage(18, 2), 2);
-    assert.equal(workersPerPackage(4, 2), 1);
-  });
-
-  it("counts one check sharing the computer unless told a whole number of them", () => {
-    assert.equal(sharesOf({ FATHOM_CHECK_SHARES: "2" }), 2);
-    assert.equal(sharesOf({}), 1);
-    assert.equal(sharesOf({ FATHOM_CHECK_SHARES: "0" }), 1);
-    assert.equal(sharesOf({ FATHOM_CHECK_SHARES: "many" }), 1);
   });
 
   it("chooses the packages given after the script's name", async () => {
