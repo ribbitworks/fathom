@@ -293,7 +293,7 @@ export function listTable({
   // The lists the role may not change, by identifier.
   unchangeable: ReadonlyMap<string, string>;
   onOpen: (list: List) => void;
-  // What else a list's menu offers, such as retiring or removing it.
+  // What else a list's menu offers, such as retiring it.
   menuItems: (row: ListRow) => ReactNode;
 }): RecordTable<ListRow, ListChange, undefined> {
   const describedColumns = (row: ListRow) => listColumns(withLiveCopies([row]));
@@ -323,6 +323,8 @@ export function listTable({
         ? undefined
         : { message: problem, column: "name" };
     },
+    removeLabel: () => actionLabels.remove,
+    removable: (row) => listActions(row.list).includes("remove"),
     ownDraft: (row) => (row.list.draft === undefined ? undefined : row.draft),
     menuDecides: (row) => ({ approved: approvableIn(chosen([row.id])) }),
     menuItems,
@@ -348,30 +350,28 @@ const actionLabels: Record<ListAction, string> = {
   remove: "Remove list",
 };
 
-// What a list's menu offers besides its drafts and its link, such as retiring or removing it.
+// What a list's menu offers besides its drafts, its link and removing it: retiring or restoring it.
 export function ListItems({
   list,
   onRetire,
-  onRemove,
 }: {
   list: List;
   onRetire: (list: List) => void;
-  onRemove: (list: List) => void;
 }) {
-  return listActions(list).map((action) => (
-    <Menu.Item
-      key={action}
-      {...(action === "remove" ? { color: "red" } : {})}
-      onClick={() => {
-        if (action === "remove") onRemove(list);
-        else onRetire(list);
-      }}
-    >
-      {
-        // The action is always one of those named above.
-        // eslint-disable-next-line security/detect-object-injection
-        actionLabels[action]
-      }
-    </Menu.Item>
-  ));
+  return listActions(list)
+    .filter((action) => action !== "remove")
+    .map((action) => (
+      <Menu.Item
+        key={action}
+        onClick={() => {
+          onRetire(list);
+        }}
+      >
+        {
+          // The action is always one of those named above.
+          // eslint-disable-next-line security/detect-object-injection
+          actionLabels[action]
+        }
+      </Menu.Item>
+    ));
 }

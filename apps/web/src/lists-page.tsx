@@ -521,13 +521,7 @@ export function ListsPage({
       canEdit &&
       !unchangeable.has(row.id) &&
       row.list.heldBy === undefined && (
-        <ListItems
-          list={row.list}
-          onRetire={retireList}
-          onRemove={(list) => {
-            removeList(list, true);
-          }}
-        />
+        <ListItems list={row.list} onRetire={retireList} />
       ),
   });
   const views = useSavedViews({
@@ -612,7 +606,6 @@ export function ListsPage({
           lists={[]}
           canEdit={canEdit}
           canAdd={false}
-          rowActions={false}
           canEditDrafts={(row) => canEdit && !unchangeable.has(row.id)}
           approves={canApprove ? approves : []}
           canEditColumns={false}
@@ -633,6 +626,9 @@ export function ListsPage({
               },
             ),
             update: renameList,
+            remove: (row) => {
+              removeList(row.list, true);
+            },
             discard: (row) => {
               draftActions.discard({ kind: "list", list: row.original });
             },

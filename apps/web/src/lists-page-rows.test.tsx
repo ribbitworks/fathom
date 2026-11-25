@@ -273,7 +273,7 @@ describe("a list's row menu", () => {
     });
   });
 
-  it("offers no retiring for a list only drafted to be added, and discards its draft", async () => {
+  it("offers no retiring or removing for a list only drafted to be added, but discards its draft", async () => {
     // Given a list only drafted to be added
     const { fetch } = await openLists({
       "GET /api/lists": () => Response.json({ lists: [locations, added] }),
@@ -283,10 +283,10 @@ describe("a list's row menu", () => {
     // When its row's menu is opened
     const menu = await rowMenu("Teams");
 
-    // Then it offers removing it but not retiring it, and discards its draft
+    // Then it offers neither retiring nor removing it, and discards its draft
     expect(
-      within(menu).getByRole("menuitem", { name: "Remove list" }),
-    ).toBeDefined();
+      within(menu).queryByRole("menuitem", { name: "Remove list" }),
+    ).toBeNull();
     expect(within(menu).queryByRole("menuitem", { name: "Retire" })).toBeNull();
     await userEvent.click(
       within(menu).getByRole("menuitem", { name: startsWith("Discard draft") }),
@@ -295,6 +295,37 @@ describe("a list's row menu", () => {
       await screen.findByText("Discarded the draft of Teams."),
     ).toBeDefined();
     expect(sent(fetch, "DELETE", "/api/lists/l5/draft")).toBe(true);
+  });
+
+  it("puts its draft's items before Remove list, as every table's menu does", async () => {
+    // Given Skills renamed by a draft of the editor's, waiting for approval
+    await openLists({
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...skills,
+              name: "Talents",
+              draft: {
+                ...removal,
+                action: "changed",
+                changed: ["name"],
+                live: { name: "Skills" },
+              },
+            },
+          ],
+        }),
+    });
+
+    // When its row's menu is opened
+    const names = itemNames(await rowMenu("Talents"));
+
+    // Then Discard draft comes before Remove list
+    const discard = names.findIndex(
+      (name) => name?.startsWith("Discard draft") === true,
+    );
+    expect(discard).not.toBe(-1);
+    expect(names.indexOf("Remove list")).toBeGreaterThan(discard);
   });
 
   it("resubmits a list's rejected draft from its menu, saying why it was rejected", async () => {

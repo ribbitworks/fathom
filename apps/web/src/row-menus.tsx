@@ -115,6 +115,7 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
       ownDraft: ownDraftOf(record),
       shownAction: record.draft?.action,
       changes: rowActions && mayChange(record) && record.heldBy === undefined,
+      removable: table.removable?.(record) ?? true,
       editsOwnDraft: decidesOwnDraft(record),
       decides: decidedInMenu(record) !== undefined,
       publishes: publishDraft !== undefined,

@@ -18,6 +18,7 @@ const facts = (more: Partial<RecordMenuFacts> = {}): RecordMenuFacts => ({
   ownDraft: undefined,
   shownAction: undefined,
   changes: false,
+  removable: true,
   editsOwnDraft: false,
   decides: false,
   publishes: true,
@@ -38,6 +39,12 @@ describe("a record's menu offer", () => {
       ...nothing,
       remove: true,
     });
+  });
+
+  it("offers no removing of a record that can never be removed", () => {
+    expect(recordMenuOffer(facts({ changes: true, removable: false }))).toEqual(
+      nothing,
+    );
   });
 
   it("offers nothing to a viewer", () => {
