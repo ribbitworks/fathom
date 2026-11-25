@@ -4,13 +4,14 @@
 // the buttons and menu that act on the whole list.
 
 import type { List } from "@fathom/shared";
-import { Button, Stack, Text } from "@mantine/core";
+import { Button, Stack } from "@mantine/core";
 import type { ReactNode } from "react";
 import { type DraftSelection, noDrafts } from "./drafts.ts";
 import { ListDraftMenu, type ListDraftActions } from "./list-drafts.tsx";
 import { ListFacts } from "./list-facts.tsx";
 import { liveLists, withRetiring } from "./lists.ts";
 import { RecordKey } from "./record-key.tsx";
+import { RightReasonLine, useTurnedOff } from "./turned-off.tsx";
 import { changedValue, emptiedWords, recordMark } from "./draft-marks.ts";
 import {
   DraftedItem,
@@ -18,8 +19,6 @@ import {
   LiveLine,
   MarkRow,
 } from "./status-mark.tsx";
-
-const classHeldId = "list-panel-class-held";
 
 // What a list's panel shows of the list, each marked before it where a draft changes it.
 const listFields = new Set(["name", "description"]);
@@ -59,6 +58,33 @@ export function ListHeading({
   );
 }
 
+// Change class…, turned off, saying who, while someone else is changing the list.
+function ChangeClass({
+  heldBy,
+  onMoveClass,
+}: {
+  heldBy: string | undefined;
+  onMoveClass: () => void;
+}) {
+  const { control, line } = useTurnedOff(
+    heldBy === undefined ? undefined : `${heldBy} is changing this list`,
+    RightReasonLine,
+  );
+  return (
+    <Stack gap={2} align="flex-end">
+      <Button
+        variant="default"
+        size="compact-sm"
+        {...control}
+        onClick={onMoveClass}
+      >
+        Change class…
+      </Button>
+      {line}
+    </Stack>
+  );
+}
+
 export function ListActions({
   list,
   canEdit,
@@ -88,24 +114,7 @@ export function ListActions({
       {onMoveClass &&
         (mayEdit || list.draft?.action !== "created") &&
         list.draft?.action !== "deleted" && (
-          <Stack gap={2} align="flex-end">
-            <Button
-              variant="default"
-              size="compact-sm"
-              disabled={list.heldBy !== undefined}
-              aria-describedby={
-                list.heldBy === undefined ? undefined : classHeldId
-              }
-              onClick={onMoveClass}
-            >
-              Change class…
-            </Button>
-            {list.heldBy !== undefined && (
-              <Text id={classHeldId} fz="xs" c="dimmed" ta="right">
-                {list.heldBy} is changing this list
-              </Text>
-            )}
-          </Stack>
+          <ChangeClass heldBy={list.heldBy} onMoveClass={onMoveClass} />
         )}
       {(list.draft ?? list.orderDraft) && (
         <ListDraftMenu

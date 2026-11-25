@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-24"
 ---
 
 # Fathom: Administration Pages
@@ -21,7 +21,7 @@ The Administration pages hold accounts, roles, settings, lists and data classes.
 - **The user's own row:** A grey "This account" box after the name.
 - **Details:** A [side panel](../../standards/ui-conventions/pages-and-panels.md#details-panels) ending in **Edit…**, **Reset password…** (not on the user's own account) and **Deactivate…** or **Reactivate…**, only for those who may edit administration.
 - **Edit dialog:** Every role is a tick box with its description. Once several are ticked, radio buttons choose the default.
-- **Refused changes:** Turned off, such as removing the last role able to manage accounts.
+- **Refused changes:** Turned off, with a dimmed line under each saying why, such as removing the last role able to manage accounts, or deactivating the last account able to.
 - **New accounts:** They start on Team Member, and no password is asked.
 - **Generated passwords:** Shown once after creating or resetting, hidden behind an eye button as on the [sign-in page](sign-in.md), with **Copy**. Only **Done** closes the dialog.
 

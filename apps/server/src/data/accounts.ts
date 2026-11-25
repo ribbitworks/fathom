@@ -16,6 +16,7 @@ import {
   type Account,
   type AccountRole,
   kindsIn,
+  lastAccountManagerWords,
   type PasswordRecipe,
   recipeCharacters,
 } from "@fathom/shared";
@@ -281,10 +282,7 @@ export async function setAccountActive(
       .set({ deactivatedAt: active ? null : new Date() })
       .where(eq(users.id, userId));
     if (guarded) {
-      await keepAccessManaged(
-        transaction,
-        "The last active account with Edit Administration cannot be deactivated",
-      );
+      await keepAccessManaged(transaction, lastAccountManagerWords);
     }
     await recordEvent(transaction, {
       actorId,
@@ -487,10 +485,7 @@ export function createAccountAdministration(
             roles.roleIds,
             roles.defaultRoleId,
           );
-          await keepAccessManaged(
-            transaction,
-            "The last active account with Edit Administration keeps it",
-          );
+          await keepAccessManaged(transaction, lastAccountManagerWords);
         }
         await recordEvents(transaction, events);
       });

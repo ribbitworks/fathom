@@ -2,7 +2,7 @@
 title: "Manual Test: Accounts"
 category: "How-To"
 audience: "Contributors"
-applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts-table.tsx", "apps/web/src/accounts-panel.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/web/src/layout.tsx", "apps/web/src/session.ts", "apps/web/src/names.ts", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts", "packages/seed/src/accounts.ts"]
+applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts-table.tsx", "apps/web/src/accounts-panel.tsx", "apps/web/src/accounts.ts", "apps/web/src/turned-off.tsx", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/web/src/layout.tsx", "apps/web/src/session.ts", "apps/web/src/names.ts", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts", "packages/seed/src/accounts.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
 last_updated: "2026-11-24"
 ---
@@ -466,18 +466,20 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - The account's side panel opens, headed "Fathom Administrator", followed by a grey "This account" box
     - Under the **Details** section, the buttons are **Edit…** and **Deactivate…**, with no **Reset password…**
     - **Deactivate…** is greyed out
+    - Under the buttons, a dimmed line says why **Deactivate…** is greyed out
   - **Notes:**
 
 - [ ] `1A99` Select **Edit…** in the side panel.
   - **Expected:**
     - A dialog titled "Edit Fathom Administrator" opens
     - In the role list, **Administrator** is ticked and greyed out
-    - Every other role can be ticked
+    - Under the description of **Administrator**, lined up with it, a dimmed line says why it is greyed out
+    - Every other role can be ticked, with no such line under it
   - **Notes:**
 
 - [ ] `DD84` Tick **Superuser** in the role list.
   - **Expected:**
-    - **Administrator** is no longer greyed out
+    - **Administrator** is no longer greyed out, and the dimmed line under it has gone
     - Under the role list, **Default role** shows **Administrator** and **Superuser**, with **Administrator** chosen
   - **Notes:**
 

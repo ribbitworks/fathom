@@ -102,6 +102,7 @@ export {
   reaches,
 } from "./page-access.ts";
 export {
+  lastAccountManagerWords,
   type RoleChange,
   roleChangeSchema,
   roleEffectsRequestSchema,

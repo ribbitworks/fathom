@@ -234,10 +234,17 @@ const describers = new Map<string, (field: ChangedField) => Phrase>([
   ["filledBy", describeFill],
 ]);
 
-// A line in a menu, such as why the item above it is turned off.
-export function MenuNote({ children }: { children: ReactNode }) {
+// A line in a menu, such as why the item above it is turned off, which describes that item when
+// given its identifier, as useTurnedOff gives it.
+export function MenuNote({
+  id,
+  children,
+}: {
+  id?: string;
+  children: ReactNode;
+}) {
   return (
-    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
+    <Text id={id} fz="xs" px="sm" pb={4} className={classes.draftLine}>
       {children}
     </Text>
   );
