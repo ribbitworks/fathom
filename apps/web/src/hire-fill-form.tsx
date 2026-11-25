@@ -17,6 +17,7 @@ import {
   allOf,
 } from "@fathom/shared";
 import { Button, Group, SegmentedControl, Stack, Text } from "@mantine/core";
+import { NewFormEnter, useAfterUpdate } from "./new-form-enter.ts";
 import { cellKinds } from "./cell-kinds.tsx";
 import { notShown } from "./draft-details.tsx";
 import { choice } from "./lists.ts";
@@ -345,47 +346,54 @@ export function HireFillForm({
     });
   };
 
+  const fillOnEnter = useAfterUpdate(fill);
   return (
-    <section aria-labelledby="hire-fill-heading" inert={saving}>
-      <Stack gap="md">
-        <h3 className={classes.heading} id="hire-fill-heading">
-          Fill this planned hire
-        </h3>
-        <SegmentedControl
-          aria-labelledby="hire-fill-heading"
-          value={filling.by}
-          onChange={(by) => {
-            refuse(formId, []);
-            onFilling((current) => ({ ...current, by }));
-          }}
-          data={[
-            { value: "new person", label: "New person" },
-            { value: "existing person", label: "Existing person" },
-          ]}
-          w="fit-content"
-        />
-        <dl className={classes.list}>
-          {fields.map((column) => (
-            <Row
-              key={column.key}
-              column={column}
-              value={values[column.key] as CellValue}
-              editing={editing(column)}
-            />
-          ))}
-          {reports.length > 0 && (
-            <Row column={reportsColumn} value={allOf(reports)} />
-          )}
-        </dl>
-        <Group justify="flex-end" gap="xs">
-          <Button variant="default" onClick={onCancel} disabled={saving}>
-            Cancel
-          </Button>
-          <Button onClick={fill} loading={saving}>
-            Fill
-          </Button>
-        </Group>
-      </Stack>
-    </section>
+    <NewFormEnter
+      value={() => {
+        fillOnEnter(undefined);
+      }}
+    >
+      <section aria-labelledby="hire-fill-heading" inert={saving}>
+        <Stack gap="md">
+          <h3 className={classes.heading} id="hire-fill-heading">
+            Fill this planned hire
+          </h3>
+          <SegmentedControl
+            aria-labelledby="hire-fill-heading"
+            value={filling.by}
+            onChange={(by) => {
+              refuse(formId, []);
+              onFilling((current) => ({ ...current, by }));
+            }}
+            data={[
+              { value: "new person", label: "New person" },
+              { value: "existing person", label: "Existing person" },
+            ]}
+            w="fit-content"
+          />
+          <dl className={classes.list}>
+            {fields.map((column) => (
+              <Row
+                key={column.key}
+                column={column}
+                value={values[column.key] as CellValue}
+                editing={editing(column)}
+              />
+            ))}
+            {reports.length > 0 && (
+              <Row column={reportsColumn} value={allOf(reports)} />
+            )}
+          </dl>
+          <Group justify="flex-end" gap="xs">
+            <Button variant="default" onClick={onCancel} disabled={saving}>
+              Cancel
+            </Button>
+            <Button onClick={fill} loading={saving}>
+              Fill
+            </Button>
+          </Group>
+        </Stack>
+      </section>
+    </NewFormEnter>
   );
 }

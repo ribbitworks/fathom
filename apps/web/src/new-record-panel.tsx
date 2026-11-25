@@ -7,14 +7,7 @@
 // before discarding it.
 
 import { Button, Group } from "@mantine/core";
-import {
-  type MouseEvent,
-  type ReactNode,
-  useEffect,
-  useEffectEvent,
-  useRef,
-  useState,
-} from "react";
+import { type MouseEvent, type ReactNode, useEffect, useRef } from "react";
 import type { Refusal } from "./api.ts";
 import { cellKinds } from "./cell-kinds.tsx";
 import { DetailSections } from "./record-details.tsx";
@@ -22,7 +15,7 @@ import { firstTypedInto, useFocusOnOpen } from "./record-editing.tsx";
 import { columnsOn, onRow, readOnlyFor } from "./grid-columns.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { Column, GridRecord, RecordTable } from "./record-table.ts";
-import { NewFormEnter } from "./new-form-enter.ts";
+import { NewFormEnter, useAfterUpdate } from "./new-form-enter.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import type { CellValue } from "./table-view.ts";
 
@@ -140,14 +133,10 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
   // Add and Cancel act once the field being typed in is left, and checked, so they act on its value
   // as given. Pressing them leaves focus where it is, since leaving the field can show or take away
   // the reason under it, which would move the button from under the pointer before the click.
-  const [pressed, setPressed] = useState<{ act: "add" | "cancel" }>();
-  const act = useEffectEvent((chosen: "add" | "cancel") => {
+  const press = useAfterUpdate((chosen: "add" | "cancel") => {
     if (chosen === "add") add();
     else onCancel();
   });
-  useEffect(() => {
-    if (pressed !== undefined) act(pressed.act);
-  }, [pressed]);
   const leavingFor =
     (chosen: "add" | "cancel") => (event: MouseEvent<HTMLButtonElement>) => {
       // Leaving the field checks it; focus then goes back to it, where the question Cancel may ask
@@ -157,7 +146,7 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
         typing.blur();
         typing.focus();
       }
-      setPressed({ act: chosen });
+      press(chosen);
     };
   const keepFocus = (event: MouseEvent) => {
     event.preventDefault();
@@ -187,7 +176,7 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
   return (
     <NewFormEnter
       value={() => {
-        setPressed({ act: "add" });
+        press("add");
       }}
     >
       <SidePanelFrame
