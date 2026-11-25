@@ -633,10 +633,10 @@ export function SidePanelFrame({
           onScrollCapture={(event) => {
             const box = event.target;
             if (
-              box === event.currentTarget ||
-              (box instanceof HTMLElement &&
-                box.parentElement === event.currentTarget &&
-                box.classList.contains(classes.scroll))
+              box instanceof HTMLElement &&
+              (box === event.currentTarget ||
+                (box.parentElement === event.currentTarget &&
+                  box.classList.contains(String(classes.scroll))))
             ) {
               setScrolled(box.scrollTop > 0);
             }
