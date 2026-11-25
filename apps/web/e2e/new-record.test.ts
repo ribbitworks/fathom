@@ -49,7 +49,9 @@ test("adds a new customer with Enter in its Name", async ({ page }) => {
   // Given the New customer panel open on Projects' Customers
   await page.goto("/projects?tab=customers");
   const count = page.getByRole("status").filter({ hasText: /customers?$/ });
-  const before = Number.parseInt(await count.innerText(), 10);
+  const counted = await count.innerText();
+  expect(counted).toMatch(/^\d+ customers?$/);
+  const before = Number.parseInt(counted, 10);
   await page.getByRole("button", { name: "New customer" }).click();
   const panel = page.getByRole("region", { name: "New customer" });
 

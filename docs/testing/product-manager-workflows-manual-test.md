@@ -238,11 +238,15 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** **Target cycle** shows the cycle chosen.
   - **Notes:**
 
-- [ ] `3C7F` Type `203003` in **Needed by**, and press Enter.
+- [ ] `EF83` Select the change button in the **Feature team** row, and choose 'Mobile apps'.
+  - **Expected:** **Feature team** shows 'Mobile apps'.
+  - **Notes:**
+
+- [ ] `3C7F` Type `203003` in **Needed by**.
   - **Expected:** **Needed by** shows `2030-03`.
   - **Notes:**
 
-- [ ] `D041` Select **Add** at the foot of the **New feature** panel.
+- [ ] `D041` Press Enter.
   - **Expected:** The feature's details show beside the table, headed with a hollow yellow dot before `Fictional Atlas`.
   - **Notes:**
 

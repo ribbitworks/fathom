@@ -237,6 +237,28 @@ describe("adding", () => {
     expect(onAdd).toHaveBeenCalledOnce();
   });
 
+  it("adds nothing with Enter on a value refused, though a good one was saved before", async () => {
+    const onAdd = vi.fn();
+    renderPanel({ given: table([column("when", "date")]), onAdd });
+    const box = screen.getByRole<HTMLInputElement>("textbox", { name: "when" });
+    await userEvent.type(box, "20300901");
+    await userEvent.tab();
+    await userEvent.clear(box);
+    await userEvent.type(box, "20{Enter}");
+    expect(await screen.findByText(/when: use/)).toBeTruthy();
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  it("picks with Enter in a picker, adding nothing", async () => {
+    const onAdd = vi.fn();
+    renderPanel({ given: table([column("owner", "choice")]), onAdd });
+    await change("owner");
+    await screen.findByRole("option", { name: "Alpha" });
+    await userEvent.keyboard("{ArrowDown}{Enter}");
+    expect(await screen.findByText("Alpha")).toBeTruthy();
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
   it("adds nothing while a web link it cannot keep is still being entered", async () => {
     const onAdd = vi.fn();
     renderPanel({ given: table([column("site", "link")]), onAdd });
