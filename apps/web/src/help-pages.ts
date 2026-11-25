@@ -6,23 +6,53 @@
 
 import type { HelpLink } from "@fathom/shared";
 
+export type HelpPart =
+  { kind: "text"; markdown: string } | { kind: "diagram"; drawing: string };
+
+// The page after its title: text in the note format, and diagrams.
 export interface HelpPage {
   name: string;
   title: string;
-  // The page after its title, in the note format.
-  body: string;
+  parts: HelpPart[];
 }
 
 export const helpIndex = "index";
 
 const titleLine = /^# (?<title>.+)\n+/u;
 
-// A page from its file's path and Markdown.
-export function readHelpPage(path: string, markdown: string): HelpPage {
-  const name = path.replace(/^.*\//u, "").replace(/\.md$/u, "");
+const diagramLine = /^!\[[^\]\n]*\]\(diagrams\/([\w-]+\.svg)\)$/mu;
+
+const fileName = (path: string) => path.replace(/^.*\//u, "");
+
+// A page from its file's path and Markdown, with the diagrams' drawings by file name. A drawing
+// missing stops the build as it starts, as a missing index does.
+export function readHelpPage(
+  path: string,
+  markdown: string,
+  drawings: ReadonlyMap<string, string> = new Map(),
+): HelpPage {
+  const name = fileName(path).replace(/\.md$/u, "");
   const title = titleLine.exec(markdown)?.groups?.title ?? name;
-  return { name, title, body: markdown.replace(titleLine, "") };
+  // Splitting by a pattern with one group leaves text and drawings' file names in turn.
+  const parts = markdown
+    .replace(titleLine, "")
+    .split(diagramLine)
+    .flatMap((piece, at): HelpPart[] => {
+      if (at % 2 === 0) {
+        return piece.trim() === "" ? [] : [{ kind: "text", markdown: piece }];
+      }
+      const drawing = drawings.get(piece);
+      if (drawing === undefined) {
+        throw new Error(`docs/help/diagrams/${piece} is missing.`);
+      }
+      return [{ kind: "diagram", drawing }];
+    });
+  return { name, title, parts };
 }
+
+// A drawing's own colours are for where it's shown as an image, such as on GitHub.
+export const withoutStyle = (drawing: string) =>
+  drawing.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gu, "");
 
 // Vitest caches no file it sees calling import.meta.glob, which a type argument would hide.
 const files: Record<string, string> = import.meta.glob(
@@ -34,9 +64,25 @@ const files: Record<string, string> = import.meta.glob(
   },
 );
 
+const drawingFiles: Record<string, string> = import.meta.glob(
+  "../../../docs/help/diagrams/*.svg",
+  {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  },
+);
+
+const drawings = new Map(
+  Object.entries(drawingFiles).map(([path, drawing]) => [
+    fileName(path),
+    withoutStyle(drawing),
+  ]),
+);
+
 const pages = new Map(
   Object.entries(files).map(([path, markdown]) => {
-    const page = readHelpPage(path, markdown);
+    const page = readHelpPage(path, markdown, drawings);
     return [page.name, page];
   }),
 );

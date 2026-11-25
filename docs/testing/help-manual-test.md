@@ -4,14 +4,14 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "docs/help/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Help
 
 ## Scope
 
-Verifies what only a person can judge of Help in Fathom: how a Help page reads, and following links between Help pages to a page and to a heading on it, from the mouse and the keyboard, and going back.
+Verifies what only a person can judge of Help in Fathom: how a Help page and its diagram read, in a wide and a narrow window, and following links between Help pages to a page and to a heading on it, from the mouse and the keyboard, and going back.
 
 ## Test Environment
 
@@ -84,4 +84,30 @@ Start with Start Fathom. Record each step's result as [Manual Test Basics](manua
   - **Expected:**
     - The page is headed **Pages**.
     - Each page listed is a link followed by what it's for, with two lines set in under it, easy to tell apart from the next page.
+  - **Notes:**
+
+### HELP-02: A Help Page's Diagram
+
+**Account:** Team Member, `team.member@fathom.test`, the account HELP-01 ended with.
+
+**Preconditions:** Signed in with this account, in a browser window at least 1,000 pixels wide. **Help** open, from **Help pages** under **Help** in the left-hand menu.
+
+- [ ] `7E9C` Select **How Fathom fits together**.
+  - **Expected:**
+    - Under the heading **How They Connect**, a diagram shows boxes grouped under **People**, **Plan** and **Ship**, joined by arrows.
+    - Each arrow's words, such as **needed by** and **ships in**, are easy to read and stand clear of the arrow.
+  - **Notes:**
+
+- [ ] `1722` Make the browser window narrower than 768 pixels.
+  - **Expected:**
+    - The diagram keeps its size, with its words as large as before.
+    - Its right-hand side is cut off, with a slim scroll bar under it.
+  - **Notes:**
+
+- [ ] `C7A9` Press Tab until the diagram shows a focus ring.
+  - **Expected:** The diagram shows a focus ring.
+  - **Notes:**
+
+- [ ] `FBA4` Press the right arrow key several times.
+  - **Expected:** The diagram scrolls to show **Customer** at its right.
   - **Notes:**

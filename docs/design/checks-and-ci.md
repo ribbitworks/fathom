@@ -4,7 +4,7 @@ category: "Guide"
 audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/workflows/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Checks and CI
@@ -33,7 +33,7 @@ flowchart TD
 
 - **Imports:** a source file's tests are those that import it, directly or through other files, in its package and every package that depends on it.
 - **A changed or removed test** counts as a change to the source file of the same name beside it. For a widely imported file, its importing tests can be most of a package's tests.
-- **A Help page** in `docs/help/` isn't documentation alone, since Help is built into the web app. It stands for `apps/web/src/help-pages.ts`, which gathers the Help pages.
+- **A Help page** in `docs/help/`, or a diagram in `docs/help/diagrams/`, isn't documentation alone, since Help is built into the web app. It stands for `apps/web/src/help-pages.ts`, which gathers the Help pages.
 - **Not by import:** tests that reach code other than by importing it, such as building the web app, run in `pnpm check`.
 - **The scripts' own code:** a change to the scripts' Node.js modules or a file in `.github/` runs the script tests alone, since no package reads them. Container tests run under `pnpm test:containers` instead.
 - **Still every test:** a shell script, since the packages' tests run some, such as `scripts/lib.sh`, and the scripts that start the package tests, such as `scripts/package-tests.mjs`.

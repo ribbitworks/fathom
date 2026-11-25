@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Dark Mode
@@ -894,6 +894,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `5985` Select the **Help pages** page under **Help** in the left-hand menu.
   - **Expected:** Every word, heading and link is easy to read.
+  - **Notes:**
+
+- [ ] `4FE2` Select **How Fathom fits together** in the list of pages.
+  - **Expected:**
+    - The diagram's boxes, words and arrows are easy to read.
+    - Each arrow's words stand clear of the arrow.
   - **Notes:**
 
 - [ ] `E5EF` Select **About Fathom** under **Help** in the left-hand menu.

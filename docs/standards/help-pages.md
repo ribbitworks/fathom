@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["docs/help/**"]
 dependencies: ["docs/standards/documentation.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Help Page Standards
@@ -22,6 +22,10 @@ How Fathom's Help pages in `docs/help/` are written, so they read the way a coll
 - **Must** end a guide by saying how the reader knows they're done.
 - **Must** check each fact against Fathom before writing it.
 - **Must** describe only what Fathom does now, never what is planned: no "for now", "later" or "to follow", since Help is shown in Fathom.
+- **Must** draw a diagram as an SVG file in `docs/help/diagrams/`, shown in the page as an image on a line of its own, such as `![How Fathom's records fit together](diagrams/how-fathom-fits-together.svg)`. Fathom draws it in the page, in its own colours.
+  - **Colours:** each shape and word carries a class Help colours, such as `box`, `name`, `line` and `label`, as `apps/web/src/help-page.module.css` sets out. The file's own `<style>` colours it only where it's shown as an image, such as on GitHub.
+  - **Alt text:** its `<title>` names it, and its `<desc>` names every box and arrow in sentences.
+  - **One copy:** another document shows the same file, never a copy of the diagram.
 - **Must** bring an existing Help page to these rules when it is next changed.
 
 ## Required Pages

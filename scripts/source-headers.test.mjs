@@ -36,7 +36,7 @@ const sourceCode = [
   { pattern: /(^|\/)(Dockerfile|Containerfile)[^/]*$/, comment: "#" },
   { pattern: /\.css$/, comment: "/*", close: "*/" },
   { pattern: /\.sql$/, comment: "--" },
-  { pattern: /\.html$/, comment: "<!--", close: "-->" },
+  { pattern: /\.(html|svg)$/, comment: "<!--", close: "-->" },
 ];
 const shebangScript = { comment: "#" };
 

@@ -2,20 +2,11 @@
 
 Fathom keeps track of three things: what's planned, when it ships, and who works on it. They're connected, so a change in one shows in the others. For example, a project needs a feature. That feature ships in a cycle of a release, and a feature team's people work on it.
 
-## The Overview
+## How They Connect
 
-Each line names a thing and what it belongs to or serves.
+Each arrow runs from a thing to what it belongs to or serves.
 
-- **Plan**
-  - A **feature** is needed by a **project**, or proposed in a **proposal**.
-  - A **project** or a **proposal** is for **customers**, or for none if it's internal.
-- **Ship**
-  - A **feature** ships in a **cycle**.
-  - A **cycle** is in a **release**.
-- **People**
-  - A **person** is on a **feature team**.
-  - A **feature team** delivers **features**.
-  - A **person** is allocated to **features**, month by month.
+![How Fathom's records fit together](diagrams/how-fathom-fits-together.svg)
 
 Projects and proposals are for customers. A project is committed work, and a proposal is work offered to a customer that may or may not be won. Both name the features they need.
 
@@ -83,13 +74,11 @@ A change waiting for approval. Nobody else sees it until you publish it, and it 
 
 ## Each Area
 
-The overview's lines hold for each area. These add to them.
+The arrows above hold for each area. These add to them.
 
 ### Planning
 
 - A **milestone** marks a date in a **project**.
-
-People are allocated to features as a share of each month.
 
 ### Releases
 
@@ -104,7 +93,7 @@ A schedule repeats cycles of a set length. A release gathers one or more cycles 
 - A **planned hire** reports to a **person**, or to another **planned hire**.
 - A **planned hire** is filled by a **person**.
 
-Reporting lines and team membership are dated, so past and planned changes are kept.
+Reporting lines and team membership are dated, so past and planned changes are kept. People are allocated to features as a share of each month.
 
 ### Access and Drafts
 
