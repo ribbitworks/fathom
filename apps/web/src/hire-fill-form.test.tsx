@@ -88,6 +88,24 @@ describe("filling a planned hire with a new person", () => {
     });
   });
 
+  it("fills with Enter in a field typed into, as Fill does", async () => {
+    const fetch = answers([robin, hire()]);
+    renderApp("/people");
+    await openForm();
+
+    await type("Name", "Fictional Starter");
+    await type("ID", "E9{Enter}");
+
+    expect(await sent(fetch)).toEqual({
+      by: "new person",
+      preferredName: "Fictional Starter",
+      employeeId: "E9",
+      startDate: "2030-03-01",
+      values: {},
+      links: {},
+    });
+  });
+
   it("keeps what is typed while a note is written", async () => {
     const fetch = answers([robin, hire()], {
       fields: [
