@@ -182,6 +182,7 @@ export function recordPanel({
   show,
   units,
   editsKind,
+  editsFeatureTeams,
   approves,
   nodes,
   onClose,
@@ -202,6 +203,7 @@ export function recordPanel({
   units: Pick<View, "units" | "places">;
   // Whether the user may change a kind of record here.
   editsKind: (type: PlanRecordKind) => boolean;
+  editsFeatureTeams: boolean;
   approves: readonly DraftKind[];
   nodes: readonly RecordNode[];
   onClose: () => void;
@@ -254,7 +256,10 @@ export function recordPanel({
       ),
     features: () =>
       shownOf("feature", plan.features, () =>
-        featureColumns(choices, { editsCommitments: editsKind("project") }),
+        featureColumns(choices, {
+          editsCommitments: editsKind("project"),
+          editsFeatureTeams,
+        }),
       ),
   };
   // The tab is always one of the fixed tabs.

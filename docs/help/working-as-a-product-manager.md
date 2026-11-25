@@ -13,9 +13,10 @@ As a Product Manager, you shape the plan. That's the projects customers need, th
 
 1. On **Features**, add the feature. See [Features](features.md#add-a-feature).
 1. Choose the cycle it's planned to ship in, in its **Target cycle**. See [Features](features.md#plan-when-a-feature-ships).
-1. Choose the team that builds it, in its **Feature team**.
 1. If it's wanted by a certain month, type that month in **Needed by**.
 1. Select **Publish** in the top bar.
+
+A Feature Lead or an Engineering Manager chooses the team that builds it, in its **Feature team**, since your role doesn't change a feature's team.
 
 ## Tie Features to Projects and Proposals
 

@@ -456,6 +456,13 @@
       "when": 1795506802110,
       "tag": "0064_customer_description_note",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1795625495459,
+      "tag": "0065_feature_team_setters",
+      "breakpoints": true
     }
   ]
 }

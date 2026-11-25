@@ -18,7 +18,6 @@ A Product Manager adds the feature and plans it, and adds the project that needs
 1. On **Features**, select **New feature**. A panel opens beside the table.
 1. Type the feature's **Name**.
 1. In **Target cycle**, choose the cycle it's planned to ship in.
-1. In **Feature team**, choose the team that builds it.
 1. Select **Add**.
 1. If the project is new, add it on **Projects**. See [Projects](projects.md#add-a-project-proposal-customer-or-milestone).
 1. On **Projects**, select the **Features** cell of the project that needs it.
@@ -46,8 +45,9 @@ An approved draft goes live straight away. A rejected draft goes back to the per
 
 ## Staff the Feature
 
-An Engineering Manager puts people on the feature team that builds it.
+An Engineering Manager gives the feature to the feature team that builds it, and puts people on that team. Only a role that edits feature teams, such as the Engineering Manager's or the Feature Lead's, chooses a feature's team.
 
+1. On **Features**, choose the team in the feature's **Feature team**. See [Features](features.md#give-a-feature-to-a-team).
 1. Select the **Capacity** page.
 1. Choose **Feature teams**.
 1. Select a person's cell in the month they start on the team, this month or later.
@@ -56,6 +56,6 @@ An Engineering Manager puts people on the feature team that builds it.
 1. Do the same for each person.
 1. Select **Publish** in the top bar.
 
-A Project Manager or the Engineering Director then approves the team's changes on the **Drafts** page, the same way as above. See [Capacity](capacity.md#put-someone-on-a-feature-team-from-a-month) for more.
+A Project Manager or the Engineering Director then approves the feature's and the team's changes on the **Drafts** page, the same way as above. See [Capacity](capacity.md#put-someone-on-a-feature-team-from-a-month) for more.
 
 You're done when the feature shows on **Features** with its cycle and team, and its team's members show on **Capacity**'s **Feature teams**, with no dots.

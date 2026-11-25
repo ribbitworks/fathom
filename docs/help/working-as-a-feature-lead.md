@@ -1,6 +1,6 @@
 # Working as a Feature Lead
 
-As a Feature Lead, you lead a feature team: a group that works on features together, whoever its members report to. You keep the team's features and estimates current, and you choose who is on the team.
+As a Feature Lead, you lead a feature team: a group that works on features together, whoever its members report to. You keep the team's features and estimates current, choose which features the team builds, and choose who is on the team.
 
 ## What to Know First
 
@@ -11,7 +11,8 @@ As a Feature Lead, you lead a feature team: a group that works on features toget
 
 ## Keep the Team's Features Current
 
-1. On **Features**, change each of your team's features' **Status** as the work moves along. See [Features](features.md#change-a-feature).
+1. On **Features**, give each feature your team builds your team, in its **Feature team**. See [Features](features.md#give-a-feature-to-a-team).
+1. Change each of your team's features' **Status** as the work moves along. See [Features](features.md#change-a-feature).
 1. Type or update each feature's estimate in **Effort**. See [Features](features.md#give-an-estimate).
 1. Select **Publish** in the top bar.
 

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-staffing-the-work-manual-test.md", "docs/help/how-work-moves-between-roles.md", "docs/help/working-as-a-product-manager.md", "docs/help/working-as-an-engineering-director.md", "docs/product/roles.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Acceptance, Deciding the Changes
@@ -140,9 +140,9 @@ Run the test cases in order, in about 30 minutes, straight after [Staffing the W
 - [ ] `B718` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
     - **To decide** is chosen beside the page's title.
-    - Five rows are shown, each with a tick box:
+    - Six rows are shown, each with a tick box:
       - `Fictional Gauge Alerts`, with **Type** "Feature" and **Made by** "Dara Finch as Feature Lead"
-      - `Fictional Lamp Schedule`, with **Type** "Feature" and **Made by** "Ada Quill as Engineering Manager"
+      - `Fictional Lamp Schedule` and `Fictional Tide Tables`, each with **Type** "Feature" and **Made by** "Ada Quill as Engineering Manager"
       - "Keepers trained of FLR-1 Fictional Lamp Room", with **Type** "Milestone" and **Made by** "Tomas Reed as Project Manager"
       - "Fictional Spring in Fictional Mainline" and `Fictional Harbour Bid`, each made by "Priya Lund as Product Manager" and followed by a grey **Needs another approver** box
   - **Notes:**
@@ -155,17 +155,21 @@ Run the test cases in order, in about 30 minutes, straight after [Staffing the W
   - **Expected:** The button reads **Approve 2 drafts…**.
   - **Notes:**
 
-- [ ] `7E6D` Tick the tick box of the row of "Keepers trained of FLR-1 Fictional Lamp Room".
+- [ ] `9E47` Tick the tick box of the row of `Fictional Tide Tables`.
   - **Expected:** The button reads **Approve 3 drafts…**.
   - **Notes:**
 
-- [ ] `B97E` Select **Approve 3 drafts…** at the right of the page's heading.
-  - **Expected:** A dialog titled "Approve 3 drafts?" opens.
+- [ ] `7E6D` Tick the tick box of the row of "Keepers trained of FLR-1 Fictional Lamp Room".
+  - **Expected:** The button reads **Approve 4 drafts…**.
+  - **Notes:**
+
+- [ ] `B97E` Select **Approve 4 drafts…** at the right of the page's heading.
+  - **Expected:** A dialog titled "Approve 4 drafts?" opens.
   - **Notes:**
 
 - [ ] `B7AC` Select **Approve** in the dialog.
   - **Expected:**
-    - A notification says "Approved 3 drafts."
+    - A notification says "Approved 4 drafts."
     - The two rows of the Product Manager's own drafts are left.
   - **Notes:**
 

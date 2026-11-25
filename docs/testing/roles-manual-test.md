@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Editing Roles
@@ -90,7 +90,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `DE52` Read the **Description** column.
   - **Expected:**
-    - **Engineering Manager** reads "Edits the plan and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and edits feature teams."
+    - **Engineering Manager** reads "Edits the plan and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and edits feature teams and which team each feature has."
     - **Personal** and **Confidential** are in the same plain text as the rest of the description, with no class mark.
   - **Notes:**
 
@@ -124,7 +124,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - **Sees:** **Overview**, **Projects**, **Features**, **Releases**, **People**, **People on other dates**, **People on future dates**, **Org chart**, **Org chart on other dates**, **Org chart on future dates**, **Capacity**, **Feature teams**, **Feature teams grouped by manager**, **Allocations grouped by manager**, **Allocations**, **Lists**, **Drafts** and **Change history**.
     - **Doesn't see:** **Accounts**, **Roles**, **Settings**, **Data classes** and **Access history**.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
-    - **Cannot** includes "Cannot change allocations.", "Cannot change feature teams.", "Cannot reclassify data." and "Cannot approve their own drafted changes."
+    - **Cannot** includes "Cannot change allocations.", "Cannot change feature teams or which team a feature has.", "Cannot reclassify data." and "Cannot approve their own drafted changes."
     - **Cannot** also includes "Cannot change Confidential data.", with the class mark before **Confidential**.
     - **Cannot** includes neither "Personal details are hidden wherever they appear, and people who haven't started yet aren't listed." nor "Confidential data is hidden wherever it appears."
   - **Notes:**

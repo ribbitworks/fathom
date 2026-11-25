@@ -10,6 +10,7 @@ As an Engineering Manager, you staff the work: who is on which feature team, mon
 
 ## Staff a Feature Team
 
+1. On **Features**, give each feature the team that builds it, in its **Feature team**. See [Features](features.md#give-a-feature-to-a-team).
 1. On **Capacity**, in **Feature teams**, put each person on the team from the month they start. See [Capacity](capacity.md#put-someone-on-a-feature-team-from-a-month).
 1. To change a team's lead, or several members at once, use the team's panel on the **Org chart**. See [Org chart](org-chart.md#change-a-feature-team).
 1. Select **Publish** in the top bar.

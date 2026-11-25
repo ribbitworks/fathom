@@ -13,7 +13,10 @@ import {
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { customersNeedPlan } from "./data/feature-customers.ts";
+import {
+  customersNeedPlan,
+  featureTeamNeedsTeamEditors,
+} from "./data/feature-field-editors.ts";
 import { builtInChoice, errorOf, missingRecord, unique } from "./test-app.ts";
 import {
   test,
@@ -462,8 +465,18 @@ describe("feature teams", () => {
 
   it("are given to a feature", async () => {
     const featureTeamId = await liveTeam();
-    expect((await draftFeature({ featureTeamId })).featureTeamId).toBe(
-      featureTeamId,
+    expect(
+      (await draftFeature({ featureTeamId }, featureLead.cookie)).featureTeamId,
+    ).toBe(featureTeamId);
+  });
+
+  it("are given only by a role that edits feature teams, so a new feature with one is refused to the Product Manager", async () => {
+    const name = unique("Fictional Feature");
+    const response = await post({ name, featureTeamId: await liveTeam() });
+    expect(response.statusCode).toBe(403);
+    expect(errorOf(response)).toBe(featureTeamNeedsTeamEditors);
+    expect((await readPlan()).features.map((one) => one.name)).not.toContain(
+      name,
     );
   });
 
@@ -496,7 +509,7 @@ describe("feature teams", () => {
 
   it("cannot be removed while a feature names them", async () => {
     const featureTeamId = await liveTeam();
-    const feature = await draftFeature({ featureTeamId });
+    const feature = await draftFeature({ featureTeamId }, featureLead.cookie);
     const response = await removeTeam(featureTeamId);
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toBe(
@@ -506,7 +519,7 @@ describe("feature teams", () => {
 
   it("are refused removal without naming the feature to a role that can't see features", async () => {
     const featureTeamId = await liveTeam();
-    await draftFeature({ featureTeamId });
+    await draftFeature({ featureTeamId }, featureLead.cookie);
     const editor = await test.signedIn(["people:view", "feature-teams:edit"]);
     const response = await removeTeam(featureTeamId, undefined, editor.cookie);
     expect(response.statusCode).toBe(409);
@@ -572,7 +585,11 @@ describe("drafts", () => {
       },
     ]);
     const feature = await liveFeature();
-    await put(feature.id, { name: feature.name, featureTeamId });
+    await put(
+      feature.id,
+      { name: feature.name, featureTeamId },
+      featureLead.cookie,
+    );
     const response = await test.request(planner.cookie, "GET", "/api/changes");
     const fields = response
       .json<ChangeHistory>()

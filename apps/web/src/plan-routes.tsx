@@ -323,6 +323,7 @@ export const featuresRoute = createRoute({
         linkedColumn={linkedColumn}
         tab="features"
         canEditColumns={editsColumnsOf(permissions, "features")}
+        editsFeatureTeams={editsFeatureTeams(permissions)}
         canShareViews={sharesViews("features", permissions)}
         onTab={(next, record) => {
           void navigate(planAddress(next, record));
@@ -400,6 +401,7 @@ export const projectsRoute = createRoute({
       <ProjectsPage
         tab={tab ?? "projects"}
         canShareViews={sharesViews(tab ?? "projects", permissions)}
+        editsFeatureTeams={editsFeatureTeams(permissions)}
         onTab={(next, record) => {
           void navigate(planAddress(next, record));
         }}

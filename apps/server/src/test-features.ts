@@ -82,10 +82,11 @@ const featureNamed = (features: readonly Feature[], name: string): Feature =>
 
 export async function draftFeature(
   body: Record<string, unknown> = {},
+  cookie = planner.cookie,
 ): Promise<Feature> {
   const name =
     typeof body.name === "string" ? body.name : unique("Fictional Feature");
-  const response = await post({ ...body, name });
+  const response = await post({ ...body, name }, cookie);
   expect(response.statusCode).toBe(201);
   return featureNamed(response.json<Saved>().plan.features, name);
 }

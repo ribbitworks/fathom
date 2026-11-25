@@ -108,8 +108,8 @@ export interface ReleaseAccess {
 
 // Every change to customers, projects, milestones, proposals, and features is a draft, made by those
 // who edit the plan, or, for features, those who edit features, though only those who edit the plan
-// change which customers a feature is for. Each answers with every record as the editor now sees
-// them.
+// change which customers a feature is for, and only those who edit feature teams its feature team.
+// Each answers with every record as the editor now sees them.
 export interface ProjectAccess {
   read(actor: Actor): Promise<ProjectPlan>;
   // What the plan's records can be given, which everyone who sees the plan may read, though they

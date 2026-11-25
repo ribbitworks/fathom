@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-planning-projects-manual-test.md", "docs/help/working-as-a-product-manager.md", "docs/help/features.md", "docs/help/releases.md", "docs/product/roles.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Acceptance, Planning Features and a Release
@@ -13,7 +13,7 @@ last_updated: "2026-11-24"
 
 Verifies that a Product Manager finishes a first plan, as [Working as a Product Manager](../../help/working-as-a-product-manager.md) describes, on the projects [Planning Projects](acceptance-planning-projects-manual-test.md) drafted:
 
-- Features pasted in from a file, each planned for a cycle, a team and a month.
+- Features pasted in from a file, each planned for a cycle and a month.
 - The features tied to the projects and the proposal that need them.
 - A release made with a note.
 
@@ -77,7 +77,7 @@ Run the test cases in order, in about 30 minutes, straight after [Planning Proje
     - The count reads "3 features".
   - **Notes:**
 
-### FEAT-02: Each Feature Is Planned for a Cycle, a Team and a Month
+### FEAT-02: Each Feature Is Planned for a Cycle and a Month
 
 **Account:** Product Manager, `priya.lund@fathom.test`, the same as FEAT-01.
 
@@ -89,12 +89,6 @@ Run the test cases in order, in about 30 minutes, straight after [Planning Proje
     - **Release** reads "Fictional Mainline: Not released yet".
   - **Notes:**
 
-- [ ] `40B9` Select the **Feature team** cell of `Fictional Tide Tables`, press Enter, choose `Tide team`, and press Enter.
-  - **Expected:**
-    - The cell reads `Tide team`, with a hollow yellow dot before it.
-    - The cell no longer shows **No team**.
-  - **Notes:**
-
 - [ ] `B7D5` Select the **Needed by** cell of `Fictional Tide Tables`, type March of next year, such as `202703`, and press Enter.
   - **Expected:** The cell reads that month, such as "Mar 2027", with a hollow yellow dot before it.
   - **Notes:**
@@ -103,18 +97,8 @@ Run the test cases in order, in about 30 minutes, straight after [Planning Proje
   - **Expected:** The cell reads the cycle chosen, with a hollow yellow dot before it.
   - **Notes:**
 
-- [ ] `97A5` Select the **Feature team** cell of `Fictional Lamp Schedule`, press Enter, choose `Tide team`, and press Enter.
-  - **Expected:** The cell reads `Tide team`, with a hollow yellow dot before it.
-  - **Notes:**
-
 - [ ] `73F0` Select the **Target cycle** cell of `Fictional Gauge Alerts`, press Enter, choose next year's first cycle, such as **Fictional Mainline: 27.1**, and press Enter.
   - **Expected:** The cell reads the cycle chosen, with a hollow yellow dot before it.
-  - **Notes:**
-
-- [ ] `3A6E` Select the **Feature team** cell of `Fictional Gauge Alerts`, press Enter, choose `Harbour team`, and press Enter.
-  - **Expected:**
-    - The cell reads `Harbour team`, with a hollow yellow dot before it.
-    - No **Feature team** cell shows **No team**.
   - **Notes:**
 
 ### FEAT-03: The Features Are Tied to the Projects and the Proposal

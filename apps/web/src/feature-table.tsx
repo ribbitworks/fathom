@@ -261,17 +261,21 @@ export const addedColumnsTitle = "Columns";
 
 const featureColumnOrder = featureColumnGroups.flatMap(({ keys }) => keys);
 
+// The fields of a feature that another kind's editors decide, and whether they can be changed here.
+export interface FeatureEdits {
+  // A feature's customers, and the projects and proposals that name it: by those who edit the plan.
+  editsCommitments?: boolean;
+  // A feature's feature team: by those who edit feature teams.
+  editsFeatureTeams?: boolean;
+}
+
 export function featureColumns(
   choices: TableChoices,
   {
     shown: { fields, lists, order } = choices.featureColumns,
     editsCommitments = false,
-  }: {
-    shown?: AddedColumns;
-    // Whether a feature's customers, and the projects and proposals that name it, can be changed
-    // here: by those who edit the plan.
-    editsCommitments?: boolean;
-  } = {},
+    editsFeatureTeams = false,
+  }: { shown?: AddedColumns } & FeatureEdits = {},
 ): Column<Feature, PlanChange>[] {
   const meaningOf = new Map(
     choices.featureStatuses.map(({ id, meaning }) => [id, meaning]),
@@ -343,6 +347,7 @@ export function featureColumns(
         needsFeatureTeam(meaningOf.get(feature.statusId), feature.featureTeamId)
           ? { words: "No team", spoken: "it needs a feature team to own it" }
           : undefined,
+      readOnlyOn: () => !editsFeatureTeams,
     },
   ];
   const inGroups = [...builtIn].sort(
@@ -427,18 +432,15 @@ export function featureTable(
   choices: TableChoices,
   {
     onOpen,
-    editsCommitments = false,
     board = false,
+    ...edits
   }: {
     onOpen?: (feature: Feature) => void;
-    // Whether a feature's customers, and the projects and proposals that name it, can be changed
-    // here: by those who edit the plan.
-    editsCommitments?: boolean;
     // Whether the rows are a board's, whose columns are cycles.
     board?: boolean;
-  } = {},
+  } & FeatureEdits = {},
 ): RecordTable<Feature, PlanChange, FeatureFields> {
-  const byListed = featureColumns(choices)
+  const byListed = featureColumns(choices, edits)
     .filter(groupedByChoice)
     .map((column) =>
       byChoice(column, groupedByName.has(column.key) ? { holds: "names" } : {}),
@@ -447,7 +449,7 @@ export function featureTable(
     type: "feature",
     ...wordsOf("features"),
     kinds: [newKind, savedKind],
-    columns: (shown) => featureColumns(choices, { shown, editsCommitments }),
+    columns: (shown) => featureColumns(choices, { shown, ...edits }),
     groupings: [
       ...(board ? [] : [byCycle(choices.cycles)]),
       byTarget("release", "Release", choices.releaseOfCycle),
