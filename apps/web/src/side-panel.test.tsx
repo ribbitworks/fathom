@@ -866,26 +866,48 @@ describe("a panel as tall as what it holds", () => {
     expect(screen.queryByText("Form")).toBeNull();
   });
 
-  it("gives its edge the share it is drawn with", () => {
+  // Each stacked panel drawn as tall as given, by what it holds.
+  const drawnAs = (heights: Record<string, number>) => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        return { height: heights[this.textContent] ?? 0 } as DOMRect;
+      },
+    );
+  };
+  const edgeOf = (name: string) =>
+    screen.getByRole("separator", { name: `Resize heights of ${name}` });
+
+  it("gives its edge the share it is drawn with, and the arrow keys move it from there", () => {
     localStorage.clear();
+    drawnAs({ Details: 600, Form: 200 });
     render(layout([details, form]));
-    const drawn = (text: string, height: number) => {
-      vi.spyOn(
-        screen.getByText(text).parentElement as HTMLElement,
-        "getBoundingClientRect",
-      ).mockReturnValue({ height } as DOMRect);
-    };
-    drawn("Details", 600);
-    drawn("Form", 200);
-    const edge = screen.getByRole("separator", {
-      name: "Resize heights of details and form",
-    });
+    const edge = edgeOf("details and form");
+    expect(edge.getAttribute("aria-valuenow")).toBe("75");
     act(() => {
       edge.focus();
     });
-    fireEvent.keyDown(edge, { key: "ArrowDown" });
+    fireEvent.keyDown(edge, { key: "ArrowUp" });
     expect(edge.getAttribute("aria-valuenow")).toBe(
-      String(75 + stackShares.step),
+      String(75 - stackShares.step),
+    );
+  });
+
+  it("gives its edge no share beyond the least the panel above may leave it", () => {
+    localStorage.clear();
+    drawnAs({ Details: 760, Form: 40 });
+    render(layout([details, form]));
+    expect(edgeOf("details and form").getAttribute("aria-valuenow")).toBe(
+      String(100 - stackShares.least),
+    );
+  });
+
+  it("leaves each other panel its least", () => {
+    localStorage.clear();
+    render(layout([details, form, one("Note", "note")]));
+    const stack = (screen.getByText("Form").parentElement as HTMLElement)
+      .parentElement as HTMLElement;
+    expect(stack.style.getPropertyValue("--stack-most")).toBe(
+      `${String(100 - 2 * stackShares.least)}%`,
     );
   });
 });
