@@ -11,10 +11,10 @@ import {
   renderApp,
   serverAnswers,
 } from "./test-support.tsx";
+import { streamsAnswer } from "./test-releases.ts";
 
 // No schedules, for drafts of other kinds.
-export const noStreams = () =>
-  Response.json({ streams: [], canEditStreams: false, canEditReleases: false });
+export const noStreams = streamsAnswer([]);
 
 export const s1 = "00000000-0000-4000-8000-000000000001";
 
