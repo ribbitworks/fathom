@@ -74,9 +74,9 @@ export function ColourMenu({
       if (previous === undefined) return;
       const done =
         colour !== null
-          ? `${name}'s colour is now ${colourWords(colour)}.`
+          ? `${name} now has the colour ${colourWords(colour)}.`
           : takesTeams
-            ? `${name}'s colour is now the team's.`
+            ? `${name} now has its team's colour.`
             : `${name} no longer has a colour.`;
       notifyUndoable(done, () => {
         change.mutate({ colour: previous });
