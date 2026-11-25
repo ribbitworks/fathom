@@ -204,7 +204,15 @@ export function ColumnModal<Data>({
           const inOpenList =
             event.target instanceof HTMLElement &&
             event.target.getAttribute("aria-expanded") === "true";
-          if (event.key !== "Escape" || busy || inOpenList) return;
+          // An Esc a field already used, such as emptying a choice being typed, isn't the dialog's.
+          if (
+            event.key !== "Escape" ||
+            busy ||
+            inOpenList ||
+            event.defaultPrevented
+          ) {
+            return;
+          }
           event.stopPropagation();
           leave();
         }}
