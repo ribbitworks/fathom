@@ -3,7 +3,7 @@
 // The cell of the shared table selected and the cell being edited, and what else the table keeps
 // while it is used.
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ScreenPoint } from "./app-menu.tsx";
 import { focusSoon } from "./focus.ts";
 import type { ShownGrid } from "./grid-groups.tsx";
@@ -35,12 +35,15 @@ export function useGridState<Rec extends GridRecord, Change>() {
   }>();
   // Whether something is being changed in the side panel, rather than only read there.
   const [panelWriting, setPanelWriting] = useState(false);
-  // What is typed in the cell being edited: its text, or what narrows its choices.
-  const [text, setText] = useState("");
-  // What the open editor started with: its text, and the value that text stands for.
+  // What is typed in the cell being edited so far, from what the editor first shows, such as a first
+  // key typed, read when it is saved.
+  const typed = useRef("");
+  // What the open editor started with: the value's text and the value it stands for, and which
+  // opening of an editor it is.
   const [openedWith, setOpenedWith] = useState<{
     text: string;
     value: CellValue;
+    edit: number;
   }>();
   const [problem, setProblem] = useState<ShownProblem>();
   const [menuFor, setMenuFor] = useState<OpenMenu>();
@@ -62,8 +65,7 @@ export function useGridState<Rec extends GridRecord, Change>() {
     setPanelOpen,
     panelWriting,
     setPanelWriting,
-    text,
-    setText,
+    typed,
     openedWith,
     setOpenedWith,
     problem,

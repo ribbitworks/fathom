@@ -3,7 +3,7 @@
 // Editing the shared table's cells like a spreadsheet's, from the keyboard and the pointer, with the
 // editor of the cell being edited.
 
-import type { KeyboardEvent } from "react";
+import { type ComponentProps, type KeyboardEvent, useState } from "react";
 import { startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { focusSoon } from "./focus.ts";
@@ -25,8 +25,8 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     | "shownIds"
     | "newRows"
     | "setPanelOpen"
-    | "text"
-    | "setText"
+    | "typed"
+    | "editing"
     | "openedWith"
     | "setOpenedWith"
     | "problem"
@@ -59,8 +59,8 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     shownIds,
     newRows,
     setPanelOpen,
-    text,
-    setText,
+    typed,
+    editing,
     openedWith,
     setOpenedWith,
     problem,
@@ -101,16 +101,19 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
 
   // Starts editing a cell, or, for a kind edited in one step, such as a checkbox, saves the value
   // editing gives, unless what started it was typing.
-  const startEdit = (cell: Cell, typed?: string) => {
+  const startEdit = (cell: Cell, typedFirst?: string) => {
+    // A cell already being edited keeps what is typed, such as when its editor is double-clicked.
+    if (editing?.row === cell.row && editing.column === cell.column) return;
     const { row, column } = at(cell);
     const { toggled, inPanel: opensPanel, asTyped } = kindOf(column);
     if (readOnlyAt(cell) && opensPanel !== true) return;
     // Typing does nothing in a cell edited in the side panel, as in a checkbox.
-    if (writingInPanel || (opensPanel === true && typed !== undefined)) return;
+    if (writingInPanel || (opensPanel === true && typedFirst !== undefined))
+      return;
     const value = valueAt(row, column);
     setActive(cell);
     if (toggled !== undefined) {
-      if (typed === undefined) save(cell, toggled(shownAt(row, column)));
+      if (typedFirst === undefined) save(cell, toggled(shownAt(row, column)));
       return;
     }
     setEditing(cell);
@@ -122,9 +125,14 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     setMenuFor(undefined);
     const opening =
       typeof value === "string" ? startingText(column, value) : "";
-    setOpenedWith({ text: opening, value });
-    const starting = typed ?? opening;
-    setText(asTyped?.(starting) ?? starting);
+    const given = typedFirst ?? opening;
+    const starting = asTyped?.(given) ?? given;
+    setOpenedWith((before) => ({
+      text: opening,
+      value,
+      edit: (before?.edit ?? 0) + 1,
+    }));
+    typed.current = starting;
     focusSoon(`${cellId(cell.row, cell.column)}-editor`);
   };
 
@@ -195,10 +203,10 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       stopEdit(cell);
     } else if (event.key === "Enter") {
       event.preventDefault();
-      finish(cell, text, "enter");
+      finish(cell, typed.current, "enter");
     } else if (event.key === "Tab") {
       event.preventDefault();
-      finish(cell, text, event.shiftKey ? "previous" : "next");
+      finish(cell, typed.current, event.shiftKey ? "previous" : "next");
     }
   };
 
@@ -336,7 +344,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
           id={id}
           column={column}
           value={value}
-          typed={text}
+          typed={typed.current}
           invalid={invalid}
           describedBy={describedBy}
           readOnly={readOnlyAt(cell)}
@@ -350,7 +358,8 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       );
     }
     const input = (
-      <input
+      <TypedInput
+        key={openedWith?.edit}
         id={id}
         className={[
           classes.recordEditor,
@@ -359,17 +368,16 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
         aria-label={fieldLabel(column)}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
-        value={text}
-        autoComplete="off"
-        onChange={(event) => {
-          const typedText = event.currentTarget.value;
-          setText(asTyped?.(typedText) ?? typedText);
+        starting={typed.current}
+        asTyped={asTyped}
+        onTyped={(next) => {
+          typed.current = next;
         }}
         onKeyDown={(event) => {
           onEditorKey(event, cell);
         }}
         onBlur={() => {
-          finish(cell, text, "leave");
+          finish(cell, typed.current, "leave");
         }}
       />
     );
@@ -397,3 +405,31 @@ export type EditingGrid<Rec extends GridRecord, Change, Request> = MenuGrid<
   Request
 > &
   ReturnType<typeof gridEditing<Rec, Change, Request>>;
+
+// A cell's text editor, which keeps what is typed itself and reports each change, so typing draws
+// only the editor rather than the whole table.
+function TypedInput({
+  starting,
+  asTyped,
+  onTyped,
+  ...input
+}: Omit<ComponentProps<"input">, "value" | "onChange"> & {
+  starting: string;
+  asTyped: ((typed: string) => string) | undefined;
+  onTyped: (typed: string) => void;
+}) {
+  const [value, setValue] = useState(starting);
+  return (
+    <input
+      {...input}
+      value={value}
+      autoComplete="off"
+      onChange={(event) => {
+        const typedText = event.currentTarget.value;
+        const next = asTyped?.(typedText) ?? typedText;
+        setValue(next);
+        onTyped(next);
+      }}
+    />
+  );
+}

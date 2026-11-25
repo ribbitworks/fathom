@@ -212,3 +212,103 @@ describe("a refused value", () => {
     expect(document.activeElement?.closest("tr")?.textContent).toContain("S1");
   });
 });
+
+describe("typing in a cell", () => {
+  it("draws only the cell being typed in, not the table's other rows", async () => {
+    // Given a table of two gadgets, watching when the second's name is read to be drawn
+    const otherRowReads = vi.fn();
+    const base = gadgetTable();
+    const table = {
+      ...base,
+      columnsFor: (...given: Parameters<typeof base.columnsFor>) =>
+        base.columnsFor(...given).map((column) =>
+          column.key === "name"
+            ? {
+                ...column,
+                value: (record: Gadget) => {
+                  if (record.id === "g2") otherRowReads();
+                  return column.value(record);
+                },
+              }
+            : column,
+        ),
+    };
+    renderGadgets({ gadgets: [gadget("g1"), gadget("g2")], fields: [], table });
+    act(() => {
+      document.getElementById("cell-g1-name")?.focus();
+    });
+    await userEvent.keyboard("{Enter}");
+    otherRowReads.mockClear();
+
+    // When several keys are typed into the first gadget's name
+    await userEvent.keyboard("abc");
+
+    // Then the second gadget's row isn't drawn again
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveProperty(
+      "value",
+      "Gadget g1abc",
+    );
+    expect(otherRowReads).not.toHaveBeenCalled();
+  });
+
+  it("keeps what is typed when the editor is double-clicked, and saves it", async () => {
+    // Given a gadget's name being typed
+    const update = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      fields: [],
+      given: actions({ update }),
+    });
+    act(() => {
+      document.getElementById("cell-g1-name")?.focus();
+    });
+    await userEvent.keyboard("{Enter}{Control>}a{/Control}Gizmo");
+
+    // When the editor is double-clicked, then Enter is pressed
+    await userEvent.dblClick(screen.getByRole("textbox", { name: "Name" }));
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveProperty(
+      "value",
+      "Gizmo",
+    );
+    await userEvent.keyboard("{Enter}");
+
+    // Then what was typed is saved
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: "g1" }), {
+      name: "Gizmo",
+    });
+  });
+
+  it("keeps what is typed in a refused value's editor, and saves it whole once more is typed", async () => {
+    // Given a code another gadget has typed and refused
+    const update = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1"), gadget("g2")],
+      fields: [],
+      table: gadgetTable((values, others, changed) =>
+        changed === "code" && others().some(({ code }) => code === values.code)
+          ? { message: "Another gadget has that code" }
+          : undefined,
+      ),
+      given: actions({ update }),
+    });
+    act(() => {
+      document.getElementById("cell-g1-code")?.focus();
+    });
+    await userEvent.keyboard("G2{Enter}");
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Another gadget has that code",
+    );
+    expect(screen.getByRole("textbox", { name: "Code" })).toHaveProperty(
+      "value",
+      "G2",
+    );
+
+    // When more is typed and Enter is pressed
+    await userEvent.keyboard("X{Enter}");
+
+    // Then the whole of it is saved
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: "g1" }), {
+      code: "G2X",
+    });
+  });
+});
