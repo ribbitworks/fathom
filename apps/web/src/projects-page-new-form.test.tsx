@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for a value refused in the Projects page's own New forms, against a simulated server: the
-// reason under the field it is about, focus in that field, and nothing added.
+// Tests for the Projects page's own New forms, against a simulated server: adding by Enter or Add,
+// and a value refused, with the reason under the field it is about, focus in it, and nothing added.
 
 import { screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -131,5 +131,36 @@ describe("a value refused in a page's New form", () => {
         { name: "Zeta Depot", description: "", note: null },
       ]);
     });
+  });
+});
+
+describe("Enter in a page's New form", () => {
+  it.each([
+    ["customer", "customers"],
+    ["proposal", "proposals"],
+  ])("adds the new %s from its Name", async (one, tab) => {
+    const { fetch } = await openPage(`/projects?tab=${tab}`, plan());
+    await userEvent.click(await newButton(one));
+    await userEvent.type(name(), "Zeta Depot{Enter}");
+    await waitFor(() => {
+      expect(sent(fetch, `POST /api/${tab}`)).toEqual([
+        expect.objectContaining({ name: "Zeta Depot" }),
+      ]);
+    });
+  });
+
+  it("refuses an emptied Name, as Add does, and adds nothing", async () => {
+    const { fetch } = await openPage("/projects?tab=customers", plan());
+    await userEvent.click(await newButton("customer"));
+    await userEvent.type(name(), "Zeta Depot");
+    await userEvent.click(screen.getByRole("button", { name: "Clear Name" }));
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => {
+      expect(saidUnder(name())).toContain("Name needed");
+    });
+    expect([
+      document.activeElement,
+      sent(fetch, "POST /api/customers"),
+    ]).toEqual([name(), []]);
   });
 });
