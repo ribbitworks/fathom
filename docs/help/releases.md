@@ -166,6 +166,8 @@ To end a schedule on a day:
 1. Type the schedule's last day in **Schedule ends**. The dialog shows how many cycles there are in all, and the last ones.
 1. Select **Save**.
 
+Fathom won't end a schedule before its first cycle starts, or where that would leave a release or feature on a cycle after that day. When you select **Save**, the reason shows under **Schedule ends**. It names the release or feature if your role can see features, so you can change that first.
+
 The panel then reads **Schedule ends** and the day, and the timeline's cycles stop there. To let the schedule keep going again, empty **Schedule ends** and save. The panel then reads **No end date**.
 
 You're done when the changed cycles show in the panel, with dots for your drafts.

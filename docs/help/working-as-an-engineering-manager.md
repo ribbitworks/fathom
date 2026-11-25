@@ -16,7 +16,7 @@ As an Engineering Manager, you staff the work: who is on which feature team, mon
 
 ## Check Who Is Over or Under Allocated
 
-1. On **Capacity**, choose **People**.
+1. On **Capacity**, choose **Allocations**.
 1. Group by **Feature team**. See [Capacity](capacity.md#group-the-rows).
 1. Look for **Over** and **Under** in each month. See [Capacity](capacity.md#in-allocations).
 

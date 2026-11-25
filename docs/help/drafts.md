@@ -40,6 +40,7 @@ You're done when the record's hollow dot turns yellow, once published, or is gon
 - **A hollow dot** marks a change you haven't published yet. Nobody else sees it.
 - **A yellow dot** marks a change waiting for approval. It comes before what changed: at the start of the row, for a record that's added, removed or moved, or before each value that changed. Point at the dot to see what the change is, and what the value was.
 - **A name struck through**, after its dot, is removed once the draft is approved.
+- **In a list of records**, such as a project's customers, each record is marked on its own: one the draft adds has a dot before it, one it takes away has a dot and is struck through, and the rest have no mark.
 - **A red dot in a ring** means the draft was rejected. Point at it to see what was rejected and why. The reason is in the record's menu too.
 - **A grey lock** means someone else has unpublished changes to this. Point at it to see who. You can't change it until they publish or discard their changes.
 - **Moved**, **Reordered**, **Retired** or **Restored**, in a yellow box after the name of a draft waiting for approval, says what a dot can't.

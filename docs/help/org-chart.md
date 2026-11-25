@@ -46,7 +46,7 @@ You're done when the **Views** button shows the view's name. See [Saved views](s
 
 ### See Someone's Details
 
-1. Select the person's name on their card. Their details open beside the chart.
+1. Select the person's name on their card. Their details open beside the chart. To see them on **People** instead, select **Show in People**, near the top of their details.
 1. To change a value, point at it. A pencil shows if you can change it. A note shows a button that opens it in its own panel instead, where you can read it, and change it if you can.
 1. Select the value, and make the change.
 
@@ -87,6 +87,8 @@ To add a feature team:
 1. Select **Add**.
 
 To remove a feature team, select **Remove feature team** at the foot of its panel.
+
+The foot of the panel also has **Discard draft** while the team has a draft you can change, and **Resubmit** once a draft is rejected.
 
 You're done when the change shows in the team's panel. A change of colour applies straight away; any other change is a draft until it's approved.
 

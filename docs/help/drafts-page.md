@@ -13,8 +13,12 @@ The **Drafts** page, under **History** in the left-hand menu, lists the drafts i
 - **Where it opens:** the page opens on the tab you last left it on, or the first time on the first tab your role has.
 - **Rows:** each row is one draft, with these columns:
   - **Record** names what it changes.
-  - **What changes** shows each value, such as a new site.
+  - **Change** says whether the draft adds, changes, removes or reorders it.
   - **State** reads **Waiting**, **Rejected** or **Not published**.
+  - **What changes** shows each value, such as a new site.
+  - **Type** and **Area** say what kind of record it is, and where in Fathom it lives.
+  - **Made by** names who made the draft. The **Not published** tab leaves it out, since those are all yours.
+  - **Drafted** is the day the draft was made.
   - **Reason** says why a rejected draft was rejected.
 - **Tick boxes:** you tick rows to act on several at once. The buttons for them show at the right of the page's heading, only while rows are ticked.
 
