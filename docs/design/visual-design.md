@@ -64,6 +64,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
   - **Width:** The edge drags, or moves with the arrow keys, and the width is kept, starting at 640 pixels. Lists' record panel keeps a width of its own.
   - **Stacking:** Panels open together, such as a note and Metrics, stack, each scrolling on its own, with at least a fifth of the height. Only the top one shows on a narrow screen. A panel under another can be maximized, as [Maximizing](../standards/ui-conventions/pages-and-panels.md#panels-and-focus) sets out, folding the panels above it away and back as a panel closing or opening does.
   - **Motion:** A panel slides in from the right, unless the computer asks for less motion.
+  - **Edge:** Once what a panel holds is scrolled, a thin line under its heading shows where it goes out of view, as the line over its foot does.
   - **Heading:** A panel's heading holds its title, then its buttons at the right: a record's ⋯ menu, as [A panel's menu](../standards/ui-conventions/pages-and-panels.md#details-panels) sets out, then Maximize on a panel stacked under another, then the close ×.
   - **Labels:** Beside their values while the panel is wide, over them once it is narrow, following the panel's width, not the window's. A record's details follow [Details Panels](../standards/ui-conventions/pages-and-panels.md#details-panels).
 - **Text fields:** As [Fields](../standards/ui-conventions/entering-and-saving.md#fields) sets out.
