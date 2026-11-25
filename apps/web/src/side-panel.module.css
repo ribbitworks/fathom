@@ -160,6 +160,7 @@
    has no room for it. */
 .stackItemFitted {
   flex: 0 1 auto;
+  max-height: var(--stack-most);
 }
 
 .stackItemFitted .body {
@@ -257,6 +258,15 @@
   .stackEdge,
   .stackItemBehind {
     display: none;
+  }
+
+  /* Covering the screen, a panel fills it, however little it holds. */
+  .stackItemFitted .body {
+    flex-basis: 0;
+  }
+
+  .stackItemFitted .scroll {
+    max-height: 100%;
   }
 }
 
