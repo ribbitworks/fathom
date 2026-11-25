@@ -138,6 +138,12 @@ describe("a drawing shown in Help", () => {
       ),
     ).toBe("<svg><g/></svg>");
   });
+
+  it("leaves out a style block that removing another inside it would join together", () => {
+    expect(withoutStyle("<svg><sty<style></style>le>a{}</style></svg>")).toBe(
+      "<svg></svg>",
+    );
+  });
 });
 
 describe("where a link to a Help page goes", () => {
