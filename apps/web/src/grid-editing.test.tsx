@@ -2,7 +2,6 @@
 
 // Tests for editing the shared table's cells, with a made-up kind of record, gadgets.
 
-import type { Field } from "@fathom/shared";
 import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
@@ -18,6 +17,7 @@ import {
   nextColumn,
   recordCell,
   renderGadgets,
+  site,
 } from "./test-support.tsx";
 
 describe("Tab across a new row", () => {
@@ -157,17 +157,6 @@ describe("a refused value", () => {
   });
 
   it("marks a web link's address when the link is refused, described by the problem under the row", async () => {
-    const site: Field = {
-      id: "f2",
-      keyNumber: 1,
-      name: "Site",
-      type: "link",
-      listId: null,
-      visibility: "general",
-      multiple: false,
-      required: false,
-      onPlannedHires: true,
-    };
     renderGadgets({
       gadgets: [gadget("g1")],
       fields: [site],

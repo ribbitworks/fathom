@@ -184,6 +184,8 @@ function LinkControl({ id, editor }: { id: string; editor: Editor }) {
       onDismiss={() => {
         setEditing(undefined);
       }}
+      // The form's own Esc cancels, so an Esc that belongs to a word being composed is left alone.
+      closeOnEscape={false}
       trapFocus
       position="bottom-start"
       width={360}

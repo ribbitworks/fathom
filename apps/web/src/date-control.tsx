@@ -11,6 +11,7 @@ import {
 } from "@fathom/shared";
 import { ActionIcon, Button, Group, Slider } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
+import { composingWord } from "./composing.ts";
 import { DayInput } from "./day-input.tsx";
 import { focusSoon } from "./focus.ts";
 import { formatMonth } from "./day-formats.ts";
@@ -133,7 +134,7 @@ export function DateControl({
           if (incomplete) restartBox();
         }}
         onKeyDown={(event) => {
-          if (event.key === "Escape") {
+          if (event.key === "Escape" && !composingWord(event)) {
             restartBox();
             focusSoon(dateBoxId);
           }

@@ -201,7 +201,6 @@ export const composingKeys = [
   ["as Safari sends it to end composing", { keyCode: 229 }],
 ] as const;
 
-// How a key pressed while composing is marked.
 export type ComposingMark = (typeof composingKeys)[number][1];
 
 // The simulated browser has no layout, so everything seems off screen, and a tooltip or menu would
@@ -536,6 +535,18 @@ export const colour: Field = {
   type: "choice" as const,
   listId: "l1",
   visibility: null,
+  multiple: false,
+  required: false,
+  onPlannedHires: true,
+};
+// A gadget's web link column.
+export const site: Field = {
+  id: "f2",
+  keyNumber: 1,
+  name: "Site",
+  type: "link",
+  listId: null,
+  visibility: "general",
   multiple: false,
   required: false,
   onPlannedHires: true,
