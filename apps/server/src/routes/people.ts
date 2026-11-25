@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// People and the columns on the People table: reading everyone the user may see, and the org
-// chart; drafting people added, one or several at once, changed, and removed, discarding drafts,
-// and sending rejected ones for approval again; adding, changing, and deleting columns; and moving
-// any column, built-in or added. Approving and rejecting drafts is in drafts.ts.
-// The data access layer checks the actor's permissions.
+// The routes for people, the org chart and People's columns; the data access layer checks
+// permissions.
 
 import {
   changeSetIdSchema,
