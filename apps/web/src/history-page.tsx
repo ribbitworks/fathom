@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Access history page, for users who may view it: the most recent changes to accounts, newest
-// first, each written as a sentence, with changes that deserve a second look marked.
+// first, each written as a sentence, with changes that need a second look marked.
 
 import { Alert, Loader, Paper, Stack, Text } from "@mantine/core";
 import { type HistoryEntry, matchesWords, searchWords } from "@fathom/shared";

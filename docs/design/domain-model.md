@@ -169,7 +169,7 @@ Percentages are whole.
   - **What moves:** releases on cycles that move, and features targeting them, move with them. A release's Ships on date stays as set, and a change that would put the release's first cycle after it is refused.
   - **Its drafts:** the new patterns and the moved releases and features are drafts approved, rejected and discarded only together. Only someone who may change cycles can discard them.
 - **Cycle:** A planning period in one schedule, with a name, a start date, and an end date, made ahead from the pattern in force.
-  - **Releases:** it is in at most one release. One in no release is simply not released yet, with no separate candidate state.
+  - **Releases:** it is in at most one release. One in no release is not released yet, with no separate candidate state.
   - **Not stored:** cycles are worked out from the patterns rather than stored, so a cycle is known by its schedule and start date, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out.
   - **Months:** a month in more than one cycle counts toward each in proportion to its days in it, for allocations, capacity and demand alone.
 - **Release:** A named delivery in one schedule, its name unique within the schedule, which includes one or more of its cycles, consecutive in the schedule.

@@ -41,7 +41,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 
 ## People Terms
 
-- **Resource:** Anything that can be allocated to work, currently people and planned hires.
+- **Resource:** Anything that can be allocated to work: people and planned hires.
 - **Planned hire:** A role to be filled, planned before anyone is hired for it, which is filled by a new or existing employee.
 - **Requisition:** The ID an organization's HR system gives an opening to be filled. A planned hire's ID is its requisition, or a temporary ID until it has one.
 - **Hiring plan:** The planned hires not yet filled, seen as rows of [People](../design/pages/people.md).
