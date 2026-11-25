@@ -6,7 +6,7 @@ import { Button, Group, Stack, Text } from "@mantine/core";
 import { useEffect } from "react";
 import { heldWords, unpublishedWords, waitingWords } from "./draft-details.tsx";
 import type { ReactNode } from "react";
-import type { NamedDraft } from "./draft-entries.ts";
+import type { NamedDraft } from "./draft-reading.ts";
 import { placeKey } from "./draft-places.ts";
 import { areaWords, type DraftRow } from "./drafts-table.tsx";
 import { focusSoon } from "./focus.ts";

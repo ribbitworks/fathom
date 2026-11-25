@@ -4,12 +4,8 @@
 // and how the drafts deciding one takes along are named.
 
 import { describe, expect, it } from "vitest";
-import {
-  draftsSeen,
-  type Entry,
-  namedDrafts,
-  toDecide,
-} from "./draft-entries.ts";
+import type { Entry } from "./draft-entries.ts";
+import { draftsSeen, namedDrafts, toDecide } from "./draft-reading.ts";
 import { type DraftSelection, noDrafts } from "./drafts.ts";
 
 const entry = (key: string, more: Partial<Entry> = {}): Entry => ({

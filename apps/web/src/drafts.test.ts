@@ -518,8 +518,14 @@ describe("drafts of features that use drafts of columns", () => {
       fields: [
         {
           ...score,
-          draft: { ...waiting, ...score.draft, needsOtherApprover: true },
-        } as Field,
+          draft: {
+            ...waiting,
+            action: "created" as const,
+            changed: [],
+            live: {},
+            needsOtherApprover: true as const,
+          },
+        },
       ],
     };
     expect(
