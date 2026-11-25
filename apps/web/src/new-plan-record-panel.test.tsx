@@ -5,7 +5,14 @@
 
 import { addressProblem } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -257,6 +264,11 @@ describe("adding", () => {
     await userEvent.keyboard("{ArrowDown}{Enter}");
     expect(await screen.findByText("Alpha")).toBeTruthy();
     expect(onAdd).not.toHaveBeenCalled();
+    await add();
+    expect(onAdd).toHaveBeenLastCalledWith(
+      { values: { owner: ["a"] } },
+      expect.any(Function),
+    );
   });
 
   it("adds nothing while a web link it cannot keep is still being entered", async () => {
@@ -282,6 +294,21 @@ describe("adding", () => {
     await waitFor(() => {
       expect(onAdd).toHaveBeenCalledOnce();
     });
+  });
+
+  it.each([
+    ["while composing", { isComposing: true }],
+    ["as Safari sends it to end composing", { keyCode: 229 }],
+  ])("adds nothing with Enter %s a word", async (_, composing) => {
+    const onAdd = vi.fn();
+    renderPanel({ given: table([column("name", "text")]), onAdd });
+    const field = screen.getByRole("textbox", { name: "name" });
+    await userEvent.type(field, "Words");
+    fireEvent.keyDown(field, { key: "Enter", ...composing });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(onAdd).not.toHaveBeenCalled();
   });
 
   it("does not close while saving", async () => {
