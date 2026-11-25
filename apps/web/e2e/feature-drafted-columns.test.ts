@@ -11,15 +11,56 @@ test.use({ storageState: signedInAs("featureLead") });
 const send = (page: Page, method: string, path: string, body?: object) =>
   page.evaluate(
     async ({ method, path, body }) => {
+      // The server refuses a JSON content type with no body, as a DELETE has.
       const response = await fetch(path, {
         method,
-        headers: { "content-type": "application/json" },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+        ...(body === undefined
+          ? {}
+          : {
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(body),
+            }),
       });
       return { ok: response.ok, body: await response.json() };
     },
     { method, path, body },
   );
+
+// What a run drafted, discarded so no run leaves a column behind: the feature's value first, since
+// its draft depends on the column's. A published draft taken back waits until its maker publishes
+// again, so each discard is published before the next.
+const made: { featureId?: string; fieldId?: string } = {};
+
+test.afterEach(async ({ page }) => {
+  const { featureId, fieldId } = made;
+  delete made.featureId;
+  delete made.fieldId;
+  if (fieldId === undefined) return;
+  const steps: { method: string; path: string }[] = [];
+  if (featureId !== undefined) {
+    steps.push({
+      method: "DELETE",
+      path: `/api/records/feature/${featureId}/draft`,
+    });
+  }
+  steps.push(
+    { method: "POST", path: "/api/unpublished/publish" },
+    { method: "DELETE", path: `/api/features/columns/${fieldId}/draft` },
+    { method: "POST", path: "/api/unpublished/publish" },
+  );
+  // Each step runs even when one before it is refused, such as a feature with no draft yet.
+  for (const { method, path } of steps) {
+    const answer = await send(
+      page,
+      method,
+      path,
+      method === "POST" ? {} : undefined,
+    );
+    expect
+      .soft(answer.ok, `${method} ${path}: ${JSON.stringify(answer.body)}`)
+      .toBe(true);
+  }
+});
 
 test("fills a column drafted to be added, and leaves approving it to a role that approves both", async ({
   page,
@@ -36,6 +77,7 @@ test("fills a column drafted to be added, and leaves approving it to a role that
   });
   expect(added.ok).toBe(true);
   const { field } = added.body as { field: { id: string } };
+  made.fieldId = field.id;
   await send(page, "POST", "/api/unpublished/publish", {});
   const plan = (await send(page, "GET", "/api/projects")).body as {
     features: { id: string; name: string; draft?: unknown }[];
@@ -50,6 +92,7 @@ test("fills a column drafted to be added, and leaves approving it to a role that
   await cell.dblclick();
   await page.keyboard.type("7");
   await page.keyboard.press("Enter");
+  made.featureId = id;
   await expect(cell).toContainText("7");
   await send(page, "POST", "/api/unpublished/publish", {});
   await page.reload();
