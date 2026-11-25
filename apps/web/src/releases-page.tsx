@@ -29,7 +29,7 @@ import { type DraftSelection } from "./drafts.ts";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
-import classes from "./pages.module.css";
+import { recordTableClasses } from "./page-styles.ts";
 import {
   CycleLengthDialog,
   PatternDialog,
@@ -451,7 +451,11 @@ export function ReleasesPage({
   };
 
   return (
-    <Stack gap="md" className={classes.tablePage} onClick={onPageClick}>
+    <Stack
+      gap="md"
+      className={recordTableClasses.tablePage}
+      onClick={onPageClick}
+    >
       <PageHeader
         title="Releases"
         beside={

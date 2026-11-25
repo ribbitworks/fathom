@@ -5,6 +5,7 @@
 
 import { Table, type TableTdProps, Text, VisuallyHidden } from "@mantine/core";
 import { useSyncExternalStore } from "react";
+import { recordTableClasses } from "./page-styles.ts";
 import { ColouredName } from "./colour-swatch.tsx";
 import { focusFoundSoon } from "./focus.ts";
 import {
@@ -29,7 +30,6 @@ import {
 import { NamedWithOthers } from "./grid-groups.tsx";
 import type { Place, PlaceStore } from "./grid-places.ts";
 import type { PanelGrid } from "./grid-panels.tsx";
-import classes from "./pages.module.css";
 import type { Column, DraftOf, GridRecord, RowTotals } from "./record-table.ts";
 import { RowTick } from "./row-ticks.tsx";
 import { DraftedItem, MarkedItem, besideLive } from "./status-mark.tsx";
@@ -92,7 +92,7 @@ function NewRowWrong({ wrong, id }: { wrong: string | undefined; id: string }) {
   return (
     <span aria-live="polite">
       {wrong !== undefined && (
-        <span id={id} className={classes.newMarkWrong}>
+        <span id={id} className={recordTableClasses.newMarkWrong}>
           {wrong}
         </span>
       )}
@@ -215,8 +215,8 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
           key={`${column.key}-live`}
           aria-hidden="true"
           className={[
-            classes.recordCell,
-            classes.liveColumn,
+            recordTableClasses.recordCell,
+            recordTableClasses.liveColumn,
             at.className,
           ].join(" ")}
           style={at.style}
@@ -233,10 +233,13 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     label: string,
     summed: readonly Rec[],
   ) => (
-    <Table.Tr key={key} className={classes.recordTotalRow}>
+    <Table.Tr key={key} className={recordTableClasses.recordTotalRow}>
       {columns.flatMap((column, columnIndex) => {
         const frozenAt = frozenCell(columnIndex);
-        const className = [classes.recordCell, frozenAt.className].join(" ");
+        const className = [
+          recordTableClasses.recordCell,
+          frozenAt.className,
+        ].join(" ");
         return [
           columnIndex === 0 ? (
             <Table.Th
@@ -259,7 +262,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
           liveCellBeside(undefined, column, columnIndex),
         ];
       })}
-      {withActions && <Table.Td className={classes.recordCell} />}
+      {withActions && <Table.Td className={recordTableClasses.recordCell} />}
     </Table.Tr>
   );
   const bodyRows = rows.map((row, rowIndex) => {
@@ -287,14 +290,14 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     let rowClass: string | undefined;
     const filling = row.newRow && !emptyNewRow(row.newRow);
     if (row.newRow) {
-      rowClass = filling ? classes.recordFillingRow : undefined;
+      rowClass = filling ? recordTableClasses.recordFillingRow : undefined;
     } else if (draft && marksRows) {
       rowClass = [
-        besideLive(view.show) ? classes.draftRow : "",
+        besideLive(view.show) ? recordTableClasses.draftRow : "",
         besideLive(view.show) && draft.state === "rejected"
-          ? classes.rejectedRow
+          ? recordTableClasses.rejectedRow
           : "",
-        draft.action === "deleted" ? classes.recordRemovedRow : "",
+        draft.action === "deleted" ? recordTableClasses.recordRemovedRow : "",
       ].join(" ");
     }
     const runEnded = runEnds.get(key);
@@ -305,10 +308,12 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
             scope="row"
             colSpan={columns.length + besides.length + Number(withActions)}
             className={
-              heading.nested ? classes.recordSubgroup : classes.recordGroup
+              heading.nested
+                ? recordTableClasses.recordSubgroup
+                : recordTableClasses.recordGroup
             }
           >
-            <span className={classes.recordGroupLabel}>
+            <span className={recordTableClasses.recordGroupLabel}>
               {heading.label}
               <Text component="span" fz="sm" c="dimmed" ml="xs">
                 {heading.records.length}
@@ -396,17 +401,17 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                   : undefined
               }
               className={[
-                classes.recordCell,
+                recordTableClasses.recordCell,
                 columnTint(column),
                 changes && besideLive(view.show) && marksRows
                   ? cellDraft?.state === "rejected"
-                    ? classes.rejectedCell
-                    : classes.draftCell
+                    ? recordTableClasses.rejectedCell
+                    : recordTableClasses.draftCell
                   : "",
                 // While edited, the editor is marked instead.
                 problemIn(cell) === undefined || editingHere
                   ? ""
-                  : classes.recordProblemCell,
+                  : recordTableClasses.recordProblemCell,
                 frozenAt.className,
               ].join(" ")}
               style={frozenAt.style}
@@ -568,7 +573,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
               {columnIndex === 0 && rowProblem !== undefined && (
                 <span
                   id={`${cellId(rowIndex, 0)}-problem`}
-                  className={classes.recordProblem}
+                  className={recordTableClasses.recordProblem}
                   role="alert"
                 >
                   {rowProblem}
@@ -580,9 +585,10 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
         })}
         {withActions && (
           <Table.Td
-            className={[classes.recordCell, classes.recordActionsCell].join(
-              " ",
-            )}
+            className={[
+              recordTableClasses.recordCell,
+              recordTableClasses.recordActionsCell,
+            ].join(" ")}
           >
             {hasRowMenu(row) &&
               rowMenu(
@@ -602,7 +608,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
         besideLive(view.show) && (
           <Table.Tr
             key={`${key}-live`}
-            className={classes.recordLiveRow}
+            className={recordTableClasses.recordLiveRow}
             aria-hidden="true"
           >
             {columns.flatMap((column, columnIndex) => {
@@ -614,7 +620,10 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
               return [
                 <Table.Td
                   key={column.key}
-                  className={[classes.recordCell, frozenAt.className].join(" ")}
+                  className={[
+                    recordTableClasses.recordCell,
+                    frozenAt.className,
+                  ].join(" ")}
                   style={frozenAt.style}
                 >
                   <MarkedItem
@@ -674,7 +683,9 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                 liveCellBeside(row.record, column, columnIndex),
               ];
             })}
-            {withActions && <Table.Td className={classes.recordCell} />}
+            {withActions && (
+              <Table.Td className={recordTableClasses.recordCell} />
+            )}
           </Table.Tr>
         ),
       table.totals !== undefined &&

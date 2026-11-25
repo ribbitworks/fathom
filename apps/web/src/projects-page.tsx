@@ -40,7 +40,7 @@ import { type Decision } from "./draft-decisions.ts";
 import { listsQuery } from "./lists.ts";
 import { LoadProblem } from "./load-problem.tsx";
 import { HeadingTabPanel } from "./page-header.tsx";
-import classes from "./pages.module.css";
+import { recordTableClasses } from "./page-styles.ts";
 import { featureTable } from "./feature-table.tsx";
 import { livePlanRecords, type PlanChange, wordsOf } from "./plan-table.tsx";
 import {
@@ -585,7 +585,7 @@ export function ProjectsPage({
   }
 
   return (
-    <Stack gap="md" className={classes.tablePage}>
+    <Stack gap="md" className={recordTableClasses.tablePage}>
       <PlanPageHeading
         title={page.title}
         tabbed={page.tabbed}

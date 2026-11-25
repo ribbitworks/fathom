@@ -4,7 +4,7 @@
 
 import type { Choice } from "@fathom/shared";
 import type { DropResult } from "@hello-pangea/dnd";
-import classes from "./pages.module.css";
+import { listClasses } from "./page-styles.ts";
 import { movedItem } from "./table-view.ts";
 
 // The choice a moved one should follow, or null for the top, once it moves from one place in the
@@ -31,5 +31,5 @@ export function droppedMove(
 
 // A row's classes, lifted while it is being dragged.
 export function liftedWhileDragging(base: string, dragging: boolean): string {
-  return dragging ? `${base} ${String(classes.choiceLifted)}` : base;
+  return dragging ? `${base} ${String(listClasses.choiceLifted)}` : base;
 }

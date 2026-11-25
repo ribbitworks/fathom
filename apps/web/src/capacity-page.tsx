@@ -5,11 +5,11 @@
 import type { CapacityMode, DraftKind } from "@fathom/shared";
 import { Stack } from "@mantine/core";
 import { type ReactNode, useState } from "react";
+import { recordTableClasses } from "./page-styles.ts";
 import { CapacityAllocations } from "./capacity-allocations.tsx";
 import { CapacityFeatureTeams } from "./capacity-feature-teams.tsx";
 import type { MonthGridProps } from "./month-grid.tsx";
 import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
-import classes from "./pages.module.css";
 import { PlanningSettingsTab } from "./planning-settings-tab.tsx";
 import { today } from "./today.ts";
 
@@ -75,7 +75,7 @@ export function CapacityPage({
   return (
     <Stack
       gap="md"
-      className={mode === "settings" ? undefined : classes.tablePage}
+      className={mode === "settings" ? undefined : recordTableClasses.tablePage}
     >
       <PageHeader
         title="Capacity"

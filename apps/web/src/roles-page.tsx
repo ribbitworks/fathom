@@ -42,7 +42,7 @@ import { DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { notifySuccess } from "./notices.tsx";
 import { count } from "./numbers.ts";
 import { PageHeader } from "./page-header.tsx";
-import classes from "./pages.module.css";
+import { recordTableClasses } from "./page-styles.ts";
 import { Effects, Summary } from "./roles-consequences.tsx";
 import { PermissionGrid } from "./roles-permission-grid.tsx";
 import {
@@ -377,7 +377,7 @@ export function RolesPage({
   const [busy, setBusy] = useState(false);
 
   return (
-    <Stack gap="md" className={classes.tablePage}>
+    <Stack gap="md" className={recordTableClasses.tablePage}>
       <PageHeader
         title="Roles"
         action={
@@ -399,8 +399,13 @@ export function RolesPage({
         </Alert>
       )}
       {roles.isSuccess && (
-        <Paper withBorder className={classes.tableScrollPanel}>
-          <div className={[classes.tableScroll, classes.scrollBars].join(" ")}>
+        <Paper withBorder className={recordTableClasses.tableScrollPanel}>
+          <div
+            className={[
+              recordTableClasses.tableScroll,
+              recordTableClasses.scrollBars,
+            ].join(" ")}
+          >
             <Table miw={640}>
               <Table.Thead>
                 <Table.Tr>

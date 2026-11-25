@@ -5,6 +5,7 @@
 
 import { Menu, Table } from "@mantine/core";
 import type { DragEvent } from "react";
+import { recordTableClasses } from "./page-styles.ts";
 import { AppMenu } from "./app-menu.tsx";
 import {
   HeldNote,
@@ -27,7 +28,6 @@ import { fieldDraftLines } from "./grid-drafts.ts";
 import type { EditingGrid } from "./grid-editing.tsx";
 import { Icon } from "./icons.tsx";
 import { shortcutsFor } from "./menu-shortcuts.ts";
-import classes from "./pages.module.css";
 import { CopyLinkItem } from "./record-key.tsx";
 import type { Column, GridRecord } from "./record-table.ts";
 import { ResizeEdge } from "./resize-edge.tsx";
@@ -247,7 +247,7 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
           <AppMenu.Target>
             <button
               type="button"
-              className={classes.recordHeadButton}
+              className={recordTableClasses.recordHeadButton}
               aria-label={`${column.label} column${headerState(column, view)}`}
               onKeyDown={(event) => {
                 const step = widthSteps[event.key];
@@ -266,8 +266,8 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
                 }
               }}
             >
-              <span className={classes.headerNames}>
-                <span className={classes.headerName}>
+              <span className={recordTableClasses.headerNames}>
+                <span className={recordTableClasses.headerName}>
                   <DraftedItem
                     slot={index === 0}
                     draft={
@@ -276,7 +276,9 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
                     heldBy={field?.heldBy}
                     dataClass={column.dataClass}
                   >
-                    <span className={classes.headerLabel}>{column.label}</span>
+                    <span className={recordTableClasses.headerLabel}>
+                      {column.label}
+                    </span>
                   </DraftedItem>
                 </span>
                 {renamedFrom(column) !== undefined && (
@@ -505,7 +507,7 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
         {...dragProps}
       >
         {index === 0 && ticks !== undefined && tickedShown !== undefined ? (
-          <span className={classes.tickedHead}>
+          <span className={recordTableClasses.tickedHead}>
             <AllTick
               label={ticks.allLabel}
               ticked={tickedShown.ticked.length}
@@ -523,7 +525,7 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
           headerMenu
         )}
         <ResizeEdge
-          className={classes.columnEdge}
+          className={recordTableClasses.columnEdge}
           {...widths.edge(column.key, index)}
         />
       </Table.Th>

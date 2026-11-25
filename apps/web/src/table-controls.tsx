@@ -77,6 +77,7 @@ import { formatDay, formatDayRange } from "./day-formats.ts";
 import { AppMenu, MenuChoices, MenuToggle, Tick } from "./app-menu.tsx";
 import type { ColumnUnits } from "./record-table.ts";
 import classes from "./pages.module.css";
+import { recordTableClasses } from "./page-styles.ts";
 import { ClearableInput } from "./clearable-input.tsx";
 import { classWords } from "./status-mark.tsx";
 import { count, decimal } from "./numbers.ts";
@@ -461,7 +462,7 @@ export function TableSearch({
   return (
     <TextInput
       ref={input}
-      className={classes.tableSearch}
+      className={recordTableClasses.tableSearch}
       aria-label={label}
       placeholder="Search"
       leftSection={<Icon name="search" />}
@@ -830,7 +831,7 @@ export function ViewsMenu({
         >
           {current?.name ?? "Views"}
           {changed && (
-            <span aria-hidden className={classes.changedMark}>
+            <span aria-hidden className={recordTableClasses.changedMark}>
               •
             </span>
           )}
@@ -998,7 +999,7 @@ export function DraftMenu({
         >
           {shown}
           {marked && (
-            <span aria-hidden="true" className={classes.changedMark}>
+            <span aria-hidden="true" className={recordTableClasses.changedMark}>
               •
             </span>
           )}
@@ -1449,7 +1450,7 @@ export function HeaderMarks({
 }) {
   const sort = view.sort.find((level) => level.key === column.key);
   return (
-    <span className={classes.headerMarks} aria-hidden="true">
+    <span className={recordTableClasses.headerMarks} aria-hidden="true">
       {sort && (
         <>
           <Icon name={sort.descending ? "descending" : "ascending"} size={12} />
@@ -1624,7 +1625,7 @@ function BarFilterButton({
       >
         {button}
         {marked && (
-          <span aria-hidden="true" className={classes.changedMark}>
+          <span aria-hidden="true" className={recordTableClasses.changedMark}>
             •
           </span>
         )}
@@ -1675,7 +1676,7 @@ export function FilterPopover({
       transitionProps={{ duration: 0 }}
     >
       <Popover.Target>
-        <div className={classes.filterTarget}>{children}</div>
+        <div className={recordTableClasses.filterTarget}>{children}</div>
       </Popover.Target>
       <Popover.Dropdown aria-labelledby={titleId} role="dialog">
         <VisuallyHidden id={titleId}>Filter {column.label}</VisuallyHidden>
@@ -1915,7 +1916,7 @@ function ChoiceFilter({
     />
   );
   return (
-    <Stack gap="xs" className={classes.choiceFilter}>
+    <Stack gap="xs" className={recordTableClasses.choiceFilter}>
       {many && (
         <TextInput
           aria-label={`Narrow ${column.label} choices`}

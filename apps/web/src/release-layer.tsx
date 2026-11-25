@@ -16,6 +16,7 @@ import { ColouredName, colouredNameChars } from "./colour-swatch.tsx";
 import { isCurrent } from "./feature-board.ts";
 import { cycleChoiceId } from "./projects.ts";
 import classes from "./pages.module.css";
+import { recordTableClasses, timelineClasses } from "./page-styles.ts";
 import {
   draftsById,
   liveStreams,
@@ -71,7 +72,7 @@ function MarkWords({
   return onOpen === undefined ? (
     hidden
   ) : (
-    <UnstyledButton className={classes.timelineMark} onClick={onOpen}>
+    <UnstyledButton className={timelineClasses.timelineMark} onClick={onOpen}>
       {hidden}
     </UnstyledButton>
   );
@@ -134,7 +135,7 @@ function ReleaseBar({
     .join(" ");
   return (
     <li
-      className={classes.timelineReleaseSlot}
+      className={timelineClasses.timelineReleaseSlot}
       style={{
         ...releaseColourStyle(release.colour),
         left: px(left),
@@ -144,9 +145,9 @@ function ReleaseBar({
     >
       <span
         className={[
-          classes.timelineRelease,
-          mark.live ? classes.timelineReleaseLive : "",
-          removed ? classes.struck : "",
+          timelineClasses.timelineRelease,
+          mark.live ? timelineClasses.timelineReleaseLive : "",
+          removed ? recordTableClasses.struck : "",
         ].join(" ")}
         style={{ left: from(at), width: px(days) }}
         aria-hidden
@@ -154,7 +155,7 @@ function ReleaseBar({
         {/* Its marks show with its name or not at all, so none is left without what it marks; its
             tip still says them. */}
         {name !== undefined && (
-          <span className={classes.timelineReleaseLabel}>
+          <span className={timelineClasses.timelineReleaseLabel}>
             {mark.live ? (
               <MarkedItem tone="live">{label}</MarkedItem>
             ) : (
@@ -167,7 +168,7 @@ function ReleaseBar({
       </span>
       {shipsAt !== end && (
         <span
-          className={classes.timelineShipsReach}
+          className={timelineClasses.timelineShipsReach}
           style={{
             left: from(Math.min(end, shipsAt)),
             width: px(Math.abs(shipsAt - end)),
@@ -176,7 +177,7 @@ function ReleaseBar({
         />
       )}
       <span
-        className={classes.timelineShips}
+        className={timelineClasses.timelineShips}
         style={{ left: from(shipsAt) }}
         aria-hidden
       />
@@ -200,14 +201,14 @@ export type ReleaseLayerForm = "releases" | "schedules" | "cycles";
 
 // Every other cycle is shaded apart from the one before, so each shows its own length unnamed.
 const blockShades = [
-  classes.timelineCycleBlock,
-  classes.timelineCycleAlternate,
+  timelineClasses.timelineCycleBlock,
+  timelineClasses.timelineCycleAlternate,
 ];
 // A cycle's block: shaded apart from the one before, and faded once it has ended.
 const blockClass = (index: number, cycle: { endsOn: string }, today: string) =>
   [
     blockShades[index % blockShades.length],
-    cycle.endsOn < today ? classes.timelineCyclePast : undefined,
+    cycle.endsOn < today ? timelineClasses.timelineCyclePast : undefined,
   ]
     .filter(Boolean)
     .join(" ");
@@ -235,9 +236,10 @@ function CycleBlock({
   const current = named && isCurrent(cycle, today);
   return (
     <li
-      className={[classes.timelineCycle, blockClass(index, cycle, today)].join(
-        " ",
-      )}
+      className={[
+        timelineClasses.timelineCycle,
+        blockClass(index, cycle, today),
+      ].join(" ")}
       style={{ left: px(cycle.at), width: px(cycle.days) }}
       aria-current={current ? "date" : undefined}
       {...{
@@ -245,7 +247,7 @@ function CycleBlock({
       }}
     >
       {named && fits(cycle.name, px.of(cycle.days)) && (
-        <span className={classes.timelineCycleName} aria-hidden>
+        <span className={timelineClasses.timelineCycleName} aria-hidden>
           {cycle.name}
         </span>
       )}
@@ -278,7 +280,7 @@ function ShipsMark({
   const words = `${span.release.name} ships ${formatDay(span.shipsOn)}`;
   return (
     <li
-      className={classes.timelineShips}
+      className={timelineClasses.timelineShips}
       style={{
         ...releaseColourStyle(span.release.colour),
         left: px(span.shipsAt),
@@ -317,12 +319,12 @@ function ReleaseLanes({
   const endLine = (named: boolean) =>
     end !== undefined && (
       <li
-        className={classes.timelineStreamEnd}
+        className={timelineClasses.timelineStreamEnd}
         style={{ left: px(end.at) }}
         aria-hidden={!named}
       >
         {named && (
-          <span className={classes.timelineStreamEndLabel}>
+          <span className={timelineClasses.timelineStreamEndLabel}>
             Ends {formatDay(end.day)}
           </span>
         )}
@@ -338,8 +340,8 @@ function ReleaseLanes({
     />
   ));
   const releaseLaneClass = [
-    classes.timelineLane,
-    classes.timelineReleaseLane,
+    timelineClasses.timelineLane,
+    timelineClasses.timelineReleaseLane,
   ].join(" ");
   const liveLane = live.length > 0 && (
     <ul
@@ -369,7 +371,7 @@ function ReleaseLanes({
               <li
                 key={cycle.startsOn}
                 className={[
-                  classes.timelineCycleFaint,
+                  timelineClasses.timelineCycleFaint,
                   blockClass(index, cycle, today),
                 ].join(" ")}
                 style={{ left: px(cycle.at), width: px(cycle.days) }}
@@ -386,7 +388,7 @@ function ReleaseLanes({
       return (
         <TableTips>
           <ul
-            className={classes.timelineLane}
+            className={timelineClasses.timelineLane}
             aria-label={`Cycles of ${stream.name}`}
           >
             {cycles.map((cycle, index) => (
@@ -409,9 +411,10 @@ function ReleaseLanes({
       return (
         <TableTips>
           <ul
-            className={[classes.timelineLane, classes.timelineCycleLane].join(
-              " ",
-            )}
+            className={[
+              timelineClasses.timelineLane,
+              timelineClasses.timelineCycleLane,
+            ].join(" ")}
             aria-label={`Cycles of ${stream.name}`}
           >
             {cycles.map((cycle, index) => (
@@ -494,13 +497,13 @@ export function useReleaseLayer(
             >
               <Tipped
                 tip={row.stream.name}
-                className={classes.timelineLabelName}
+                className={timelineClasses.timelineLabelName}
               >
                 {onOpen === undefined ? (
                   row.stream.name
                 ) : (
                   <UnstyledButton
-                    className={classes.timelineLabelButton}
+                    className={timelineClasses.timelineLabelButton}
                     onClick={() => {
                       onOpen({ kind: "schedule", id: row.stream.id });
                     }}

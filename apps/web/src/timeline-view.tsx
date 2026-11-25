@@ -24,6 +24,7 @@ import {
   useState,
 } from "react";
 import classes from "./pages.module.css";
+import { recordTableClasses, timelineClasses } from "./page-styles.ts";
 import { Icon } from "./icons.tsx";
 import {
   type LayerRecord,
@@ -261,7 +262,10 @@ export function TimelineView({
     anchor.current = middleDay(frame, view.scrollLeft, placed);
   };
   return (
-    <section aria-labelledby={titleId} className={classes.timelineSection}>
+    <section
+      aria-labelledby={titleId}
+      className={timelineClasses.timelineSection}
+    >
       <Group justify="space-between" mb="xs">
         <Text component="h2" id={titleId} fz="md" fw={600} my={0}>
           {title}
@@ -324,10 +328,13 @@ export function TimelineView({
           }
         />
       )}
-      <Paper withBorder className={classes.timelinePanel}>
+      <Paper withBorder className={timelineClasses.timelinePanel}>
         <div
           ref={scroller}
-          className={[classes.timelineScroll, classes.scrollBars].join(" ")}
+          className={[
+            timelineClasses.timelineScroll,
+            recordTableClasses.scrollBars,
+          ].join(" ")}
           // Focusable, so the keyboard scrolls it in every browser.
           tabIndex={0}
           role="group"
@@ -488,11 +495,11 @@ function Tracks({
       : undefined;
   const width = { width: px(frame.days) };
   const tier = (ticks: typeof axis.ticks, style?: CSSProperties) => (
-    <div className={classes.timelineTier} style={style} aria-hidden>
+    <div className={timelineClasses.timelineTier} style={style} aria-hidden>
       {ticks.map(({ day, label, short, at, days }) => (
         <span
           key={day}
-          className={classes.timelineTick}
+          className={timelineClasses.timelineTick}
           style={{ left: px(at), width: px(days) }}
         >
           {[label, short].find(
@@ -506,38 +513,42 @@ function Tracks({
   );
   return (
     <div
-      className={classes.timeline}
+      className={timelineClasses.timeline}
       style={{ "--timeline-label": `${String(namesWidth)}px` } as CSSProperties}
     >
-      <div className={classes.timelineHead}>
-        <div className={classes.timelineLabel} />
-        <div className={classes.timelineTrack} style={width}>
-          <div className={classes.timelineMarks} />
+      <div className={timelineClasses.timelineHead}>
+        <div className={timelineClasses.timelineLabel} />
+        <div className={timelineClasses.timelineTrack} style={width}>
+          <div className={timelineClasses.timelineMarks} />
           {axis.above.length > 0 && tier(axis.above)}
           {tier(axis.ticks, dayMarks)}
           {frame.today !== undefined && (
             <div
-              className={classes.timelineToday}
+              className={timelineClasses.timelineToday}
               style={{ left: px(frame.today) }}
             >
-              <span className={classes.timelineTodayLabel}>
+              <span className={timelineClasses.timelineTodayLabel}>
                 Today<span className={classes.visuallyHidden}>, {today}</span>
               </span>
             </div>
           )}
         </div>
       </div>
-      <div className={classes.timelineBody}>
+      <div className={timelineClasses.timelineBody}>
         {groups.map(({ name, rows }) => (
-          <ul key={name} className={classes.timelineRows} aria-label={name}>
+          <ul
+            key={name}
+            className={timelineClasses.timelineRows}
+            aria-label={name}
+          >
             {rows.map(({ id, label, lanes }) => (
-              <li key={id} className={classes.timelineRow}>
-                <div className={classes.timelineLabel}>
-                  <MarkRow className={classes.timelineLabelLine}>
+              <li key={id} className={timelineClasses.timelineRow}>
+                <div className={timelineClasses.timelineLabel}>
+                  <MarkRow className={timelineClasses.timelineLabelLine}>
                     {label}
                   </MarkRow>
                 </div>
-                <div className={classes.timelineTrack} style={width}>
+                <div className={timelineClasses.timelineTrack} style={width}>
                   {lanes(px)}
                 </div>
               </li>
@@ -546,7 +557,7 @@ function Tracks({
         ))}
         {frame.today !== undefined && (
           <div
-            className={classes.timelineToday}
+            className={timelineClasses.timelineToday}
             style={{
               left: `calc(var(--timeline-label) + ${px(frame.today)})`,
             }}

@@ -13,6 +13,7 @@ import {
 } from "@fathom/shared";
 import { Button, Group, Text } from "@mantine/core";
 import { Fragment, useEffect, useState } from "react";
+import { cellClasses, listClasses, recordTableClasses } from "./page-styles.ts";
 import { useChoiceEditing } from "./choice-editing.ts";
 import { useChoiceEntry } from "./choice-entry.ts";
 import { Fields } from "./choice-fields.tsx";
@@ -29,7 +30,6 @@ import { ListActions, ListHeading, ListSubtitle } from "./list-panel-head.tsx";
 import { retiredLive } from "./lists.ts";
 import { LiveChoiceRow, movedLiveAfter } from "./live-choice-row.tsx";
 import { count } from "./numbers.ts";
-import classes from "./pages.module.css";
 import { originalOf } from "./record-drafts.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 
@@ -280,7 +280,7 @@ export function ListPanel({
       narrow={narrow}
       close={{ label: "Close", onClose }}
       title={
-        <span className={listRemoved ? classes.struck : undefined}>
+        <span className={listRemoved ? recordTableClasses.struck : undefined}>
           {list.name}
         </span>
       }
@@ -355,7 +355,7 @@ export function ListPanel({
           {canEdit && (
             <div
               role="row"
-              className={[...shape, classes.entry].join(" ")}
+              className={[...shape, cellClasses.entry].join(" ")}
               // Leaving the empty row, by clicking or tabbing elsewhere, adds what was typed, as
               // leaving a choice being edited saves it.
               onBlur={(event) => {
@@ -363,7 +363,7 @@ export function ListPanel({
                 entry.addEntry(false);
               }}
             >
-              <span className={classes.plus} aria-hidden>
+              <span className={cellClasses.plus} aria-hidden>
                 <Icon name="plus" size={14} />
               </span>
               <Fields
@@ -385,12 +385,12 @@ export function ListPanel({
           )}
         </div>
         {unchangeable !== undefined && (
-          <Text fz="xs" c="dimmed" className={classes.builtInNote}>
+          <Text fz="xs" c="dimmed" className={listClasses.builtInNote}>
             {`${unchangeable}, so it can't change this list.`}
           </Text>
         )}
         {list.builtIn && (
-          <Text fz="xs" c="dimmed" className={classes.builtInNote}>
+          <Text fz="xs" c="dimmed" className={listClasses.builtInNote}>
             {builtInNote(list.builtIn, mayEdit)}
           </Text>
         )}
@@ -398,7 +398,7 @@ export function ListPanel({
           <>
             <Text
               id="list-panel-retired"
-              className={classes.retiredLabel}
+              className={cellClasses.retiredLabel}
               fz="xs"
               fw={600}
             >

@@ -27,9 +27,9 @@ import {
   TextInput,
 } from "@mantine/core";
 import { type KeyboardEvent, type MouseEvent, useState } from "react";
+import { cellClasses } from "./page-styles.ts";
 import type { Finish } from "./choice-picker.tsx";
 import { Count } from "./list-dialog.tsx";
-import classes from "./pages.module.css";
 
 // Clicking a link in a cell leaves focus on the cell, so the keys that move around the table still
 // work.
@@ -59,7 +59,7 @@ export function LinkCell({
       title={href}
       // Tab moves between cells; the row's menu opens the link from the keyboard.
       {...(inTable ? { tabIndex: -1, onClick: focusCell } : {})}
-      className={classes.cellLink}
+      className={cellClasses.cellLink}
     >
       {label}
     </a>
@@ -233,7 +233,7 @@ export function LinkEditor(props: Parameters<typeof useLinkForm>[0]) {
       hideDetached={false}
     >
       <Popover.Target>
-        <span className={classes.linkLabel}>
+        <span className={cellClasses.linkLabel}>
           {initial ? linkLabel(initial) : ""}
         </span>
       </Popover.Target>

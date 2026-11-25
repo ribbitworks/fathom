@@ -6,7 +6,7 @@
 // page offers what can be done with those ticked among its actions.
 
 import { Checkbox, VisuallyHidden } from "@mantine/core";
-import classes from "./pages.module.css";
+import { recordTableClasses } from "./page-styles.ts";
 import { Tipped } from "./table-tips.tsx";
 
 // Which rows are ticked, by record, which may be, among the rows in sight, by record, what each
@@ -86,9 +86,9 @@ export function RowTick({
     />
   );
   return tip === undefined ? (
-    <span className={classes.rowTick}>{box}</span>
+    <span className={recordTableClasses.rowTick}>{box}</span>
   ) : (
-    <Tipped tip={tip} className={classes.rowTick}>
+    <Tipped tip={tip} className={recordTableClasses.rowTick}>
       {box}
     </Tipped>
   );
@@ -106,7 +106,7 @@ export function AllTick({
   onChange: (on: boolean) => void;
 }) {
   return (
-    <span className={classes.rowTick}>
+    <span className={recordTableClasses.rowTick}>
       <Checkbox
         size="xs"
         aria-label={label}

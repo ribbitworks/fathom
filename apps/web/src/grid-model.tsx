@@ -29,10 +29,10 @@ import {
   isPending,
   liveName,
 } from "./grid-drafts.ts";
+import { recordTableClasses } from "./page-styles.ts";
 import type { Row } from "./grid-places.ts";
 import { liveLists } from "./lists.ts";
 import { liveFields, recordsAsShown, shownSchema } from "./live-records.ts";
-import classes from "./pages.module.css";
 import { CopyLinkItem } from "./record-key.tsx";
 import { type MenuPlace, menuPlace } from "./menu-offer.ts";
 import type {
@@ -378,9 +378,11 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     if (draft === undefined) return "";
     const tinted = besideLive(view.show);
     return [
-      tinted ? classes.draftColumn : "",
-      tinted && draft.state === "rejected" ? classes.rejectedColumn : "",
-      draft.action === "deleted" ? classes.removedColumn : "",
+      tinted ? recordTableClasses.draftColumn : "",
+      tinted && draft.state === "rejected"
+        ? recordTableClasses.rejectedColumn
+        : "",
+      draft.action === "deleted" ? recordTableClasses.removedColumn : "",
     ].join(" ");
   };
   // The actions column, for those who may edit records or approve drafts.

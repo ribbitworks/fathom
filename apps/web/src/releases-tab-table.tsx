@@ -6,7 +6,7 @@
 
 import type { ReleaseStream } from "@fathom/shared";
 import { Text } from "@mantine/core";
-import classes from "./pages.module.css";
+import { timelineClasses } from "./page-styles.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import type { GridRecord } from "./record-table.ts";
 import type { LayerRecord, ReleaseLayerForm } from "./release-layer.tsx";
@@ -49,7 +49,7 @@ export function ReleasesTabTable<Rec extends GridRecord>({
       <RecordGrid
         {...grid}
         above={(shown) => (
-          <div className={classes.releasesTimeline}>
+          <div className={timelineClasses.releasesTimeline}>
             <TimelineView
               title="Timeline"
               zoomKey={releasesTimelineZoomKey}

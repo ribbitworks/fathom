@@ -1,0 +1,108 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* Values edited in place in a table's cells and rows: their inputs, links and problems, and the empty
+   row that ends a list. */
+
+/* Fields edited in place line their text up with the text they replace. */
+.cellInput {
+  display: block;
+  width: calc(100% + 14px);
+  min-height: 28px;
+  margin: -4px -7px 0;
+  padding: 3px 6px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 5px;
+  background: var(--mantine-color-body);
+  color: inherit;
+  font: inherit;
+  line-height: 20px;
+  resize: none;
+  field-sizing: content;
+}
+
+/* A menu insets its text further than a text field, so it is pulled back to line up too. */
+select.cellInput {
+  padding-left: 2px;
+}
+
+.cellInput:focus {
+  outline: none;
+  border-color: var(--mantine-primary-color-filled);
+  box-shadow: 0 0 0 1px var(--mantine-primary-color-filled);
+}
+
+.cellInput[aria-invalid="true"] {
+  border-color: var(--mantine-color-error);
+  box-shadow: 0 0 0 1px var(--mantine-color-error);
+}
+
+.cellInput::placeholder {
+  color: var(--mantine-color-placeholder);
+  font-weight: 400;
+}
+
+/* A web link in a cell reads as a link, and is cut short like any other cell's text. */
+.cellLink {
+  color: var(--mantine-color-anchor);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cellLink,
+.linkLabel {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.cellBelow {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.problem {
+  color: var(--mantine-color-error);
+  font-weight: 500;
+}
+
+/* The empty row that ends the list stays in view. */
+.entry {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--mantine-color-body);
+  border-radius: 0;
+  box-shadow: 0 -1px 0 var(--mantine-color-default-border);
+}
+
+.entry:hover {
+  background: var(--mantine-color-body);
+}
+
+.entry .cellInput {
+  border-color: transparent;
+  background: transparent;
+}
+
+.entry .cellInput:focus,
+.entry .cellInput[aria-invalid="true"] {
+  background: var(--mantine-color-body);
+}
+
+.plus {
+  position: absolute;
+  top: 10px;
+  left: 8px;
+  color: var(--mantine-color-dimmed);
+}
+
+.retiredLabel {
+  padding: 16px 12px 6px;
+  color: var(--mantine-color-dimmed);
+}

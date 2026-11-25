@@ -5,7 +5,7 @@
 // page, and the change history. Their plain text is what search matches.
 
 import type { ReactNode } from "react";
-import classes from "./pages.module.css";
+import { changeWordClasses } from "./page-styles.ts";
 
 // A part is plain words, a name to stand out, such as a field's, or a value, set apart as a value is
 // in code.
@@ -26,11 +26,11 @@ export function PhraseText({ phrase }: { phrase: Phrase }): ReactNode {
   return phrase.map((part, index) => {
     if (typeof part === "string") return part;
     return "strong" in part ? (
-      <strong key={index} className={classes.phraseStrong}>
+      <strong key={index} className={changeWordClasses.phraseStrong}>
         {part.strong}
       </strong>
     ) : (
-      <span key={index} className={classes.phraseValue}>
+      <span key={index} className={changeWordClasses.phraseValue}>
         {part.value}
       </span>
     );
@@ -52,5 +52,9 @@ export function PhraseList({
       <PhraseText phrase={phrase} />
     </span>
   ));
-  return light ? <span className={classes.phrasesLight}>{list}</span> : list;
+  return light ? (
+    <span className={changeWordClasses.phrasesLight}>{list}</span>
+  ) : (
+    list
+  );
 }

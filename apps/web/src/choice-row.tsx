@@ -12,6 +12,7 @@ import {
 } from "@fathom/shared";
 import { VisuallyHidden } from "@mantine/core";
 import type { FocusEvent, KeyboardEvent, ReactNode } from "react";
+import { listClasses } from "./page-styles.ts";
 import { liftedWhileDragging } from "./choice-drag.ts";
 import type { Field } from "./choice-fields.tsx";
 import { rowId } from "./choice-ids.ts";
@@ -19,7 +20,6 @@ import { Icon } from "./icons.tsx";
 import { draftRowClass, ordinal } from "./list-drafts.tsx";
 import { withRetiring } from "./lists.ts";
 import { decimal } from "./numbers.ts";
-import classes from "./pages.module.css";
 import { recordMark } from "./draft-marks.ts";
 import { DraftedItem, DraftedValue } from "./status-mark.tsx";
 
@@ -35,9 +35,9 @@ export const weightText = (weight: number | undefined) =>
 export const choiceRowFields = new Set(["label", "description"]);
 
 export const choiceShape = (meanings: readonly Meaning[], weighed: boolean) => [
-  classes.choice,
-  meanings.length > 0 ? classes.choiceWithMeaning : "",
-  weighed ? classes.choiceWithWeight : "",
+  listClasses.choice,
+  meanings.length > 0 ? listClasses.choiceWithMeaning : "",
+  weighed ? listClasses.choiceWithWeight : "",
 ];
 
 export function ChoiceCells({
@@ -62,7 +62,11 @@ export function ChoiceCells({
 }) {
   return (
     <>
-      <span className={classes.choiceName} role={cellRole} data-field="label">
+      <span
+        className={listClasses.choiceName}
+        role={cellRole}
+        data-field="label"
+      >
         <DraftedItem
           // The choice's own draft where it changes what the row doesn't show; otherwise a
           // new order moving it, marked as the order's draft, whose state and reason it is.
@@ -86,7 +90,7 @@ export function ChoiceCells({
         )}
       </span>
       <span
-        className={classes.choiceDescription}
+        className={listClasses.choiceDescription}
         role={cellRole}
         data-field="description"
       >
@@ -101,7 +105,7 @@ export function ChoiceCells({
       </span>
       {meanings.length > 0 && (
         <span
-          className={classes.choiceMeaning}
+          className={listClasses.choiceMeaning}
           role={cellRole}
           data-field="meaning"
         >
@@ -110,7 +114,7 @@ export function ChoiceCells({
       )}
       {weighed && (
         <span
-          className={classes.choiceWeight}
+          className={listClasses.choiceWeight}
           role={cellRole}
           data-field="weight"
         >
@@ -161,7 +165,12 @@ export function ChoiceRow({
   const content = (handle?: object | null) => (
     <>
       {draggable && (
-        <span {...handle} className={classes.grip} tabIndex={-1} aria-hidden>
+        <span
+          {...handle}
+          className={listClasses.grip}
+          tabIndex={-1}
+          aria-hidden
+        >
           <Icon name="grip" size={14} />
         </span>
       )}
@@ -174,8 +183,8 @@ export function ChoiceRow({
     "aria-selected": canEdit ? selected : undefined,
     className: [
       ...shape,
-      choice.retired ? classes.choiceRetired : "",
-      selected || editing ? classes.selectedRow : "",
+      choice.retired ? listClasses.choiceRetired : "",
+      selected || editing ? listClasses.selectedRow : "",
       draftRowClass(
         choice.draft ?? (moved ? { action: "changed" } : undefined),
         showLive,

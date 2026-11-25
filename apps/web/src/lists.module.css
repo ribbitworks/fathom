@@ -1,0 +1,191 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The Lists page: its table of lists, the selected row its rows and others share, and the choices
+   of a list, with their grips, meanings and weights. */
+
+/* The Lists page's table of lists: one grid whose rows share its columns, using the full width. */
+.listTable {
+  display: grid;
+  grid-template-columns: minmax(7rem, max-content) minmax(8rem, 1fr) minmax(
+      12rem,
+      1.7fr
+    );
+  column-gap: 24px;
+}
+
+.listHead,
+.listRow,
+.listGroup {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.listHead {
+  min-height: 36px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mantine-color-dimmed);
+}
+
+.listRow {
+  min-height: 40px;
+  border-top: 1px solid var(--mantine-color-default-border);
+  cursor: pointer;
+}
+
+.listRow:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+/* Every selected row, in tables, on the Lists page and in list panels: the hover grey with the
+   accent's bar at its left edge, never the accent's fill, since a row's fill says its draft's state.
+   A draft's tint, in record-tables.module.css, which loads after this file, stays under the bar. */
+.selectedRow {
+  --selected-bar-colour: var(--mantine-primary-color-filled);
+
+  background: var(--mantine-color-default-hover);
+  box-shadow: inset var(--fathom-selected-bar-width) 0 0
+    var(--selected-bar-colour);
+}
+
+/* The filled shade is too dark to see on the dark panel. */
+:global([data-mantine-color-scheme="dark"]) .selectedRow {
+  --selected-bar-colour: var(--mantine-color-sea-4);
+}
+
+.listRowRetired .listCell,
+.listRowRetired .listLink {
+  color: var(--mantine-color-dimmed);
+}
+
+.listCell,
+.listCellDim,
+.listCellName {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.listCellDim,
+.listCount {
+  color: var(--mantine-color-dimmed);
+}
+
+.listLink {
+  color: inherit;
+  font-weight: 500;
+}
+
+.listGroup {
+  padding-top: 14px;
+  padding-bottom: 6px;
+  border-top: 1px solid var(--mantine-color-default-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mantine-color-dimmed);
+}
+
+.listFoot {
+  grid-column: 1 / -1;
+  padding: 8px 12px;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+/* Holds a record's panel in its place beside the table. */
+.panelSlot {
+  display: flex;
+  min-height: 0;
+}
+
+/* Choices: a row each, with the grip and actions showing on hover or when selected. */
+.choice {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(8rem, 13rem) 1fr 28px;
+  gap: 16px;
+  align-items: start;
+  padding: 6px 4px 6px 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+}
+
+.choice:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.choice:focus-visible {
+  box-shadow: inset var(--fathom-selected-bar-width) 0 0
+    var(--mantine-primary-color-filled);
+}
+
+.choiceLifted {
+  background: var(--mantine-color-body);
+  box-shadow: var(--mantine-shadow-md);
+}
+
+.choiceName {
+  min-width: 0;
+  padding-top: 4px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.choiceDescription {
+  min-width: 0;
+  padding-top: 4px;
+  color: var(--mantine-color-dimmed);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* Fathom's line on what a built-in list is for, lined up with its choices' names. */
+.builtInNote {
+  padding: 8px 4px 0 28px;
+  white-space: pre-line;
+}
+
+/* A list with meanings shows each choice's meaning between its description and its menu. */
+.choiceWithMeaning {
+  grid-template-columns: minmax(8rem, 13rem) 1fr 6.5rem 28px;
+}
+
+.choiceWithWeight {
+  grid-template-columns: minmax(8rem, 13rem) 1fr 5rem 28px;
+}
+
+.choiceWeight {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.choiceMeaning {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.choiceRetired .choiceName,
+.choiceRetired .choiceMeaning,
+.choiceRetired .choiceWeight,
+.choiceRetired .choiceDescription {
+  color: var(--mantine-color-dimmed);
+}
+
+.grip {
+  position: absolute;
+  top: 9px;
+  left: 6px;
+  color: var(--mantine-color-dimmed);
+  cursor: grab;
+  opacity: 0;
+}
+
+.choice:hover .grip,
+.choice.selectedRow .grip {
+  opacity: 1;
+}
