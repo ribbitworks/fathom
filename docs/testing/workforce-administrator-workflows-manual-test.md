@@ -231,9 +231,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
-- [ ] `04AC` Select the details button of **Feature statuses**.
+- [ ] `04AC` Select the details button of **Statuses**.
   - **Expected:**
-    - The panel opens with **Feature statuses** at the top.
+    - The panel opens with **Statuses** at the top.
     - A grey **Built in** box is after it.
     - Its choices are **Possible**, **Planned**, **In progress**, **Done** and **Cancelled**, each beside a meaning of the same name.
   - **Notes:**
@@ -260,8 +260,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Lists** page opens.
   - **Notes:**
 
-- [ ] `34EE` Select the details button of **Feature statuses**.
-  - **Expected:** The panel opens with **Feature statuses** at the top.
+- [ ] `34EE` Select the details button of **Statuses**.
+  - **Expected:** The panel opens with **Statuses** at the top.
   - **Notes:**
 
 - [ ] `DAC6` Select the **⋯** button at the end of the `Long shot` row, then **Approve…**.
@@ -278,7 +278,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from WORKFORCE-04.
 
-**Preconditions:** Signed in with this account. **Lists** page open, with the **Feature statuses** panel open.
+**Preconditions:** Signed in with this account. **Lists** page open, with the **Statuses** panel open.
 
 - [ ] `9D42` Select the **⋯** button at the end of the **Cancelled** row.
   - **Expected:**

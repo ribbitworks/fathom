@@ -12,6 +12,7 @@ import {
   customers,
   type Database,
   drafts,
+  featureTeams,
   listItems,
   lists,
   milestones,
@@ -43,6 +44,7 @@ let database: TestDatabase;
 let pool: ReturnType<typeof createPool>;
 let connection: Database;
 let owner: string;
+const teamIds = [randomUUID(), randomUUID(), randomUUID()];
 
 beforeAll(async () => {
   database = await startTestDatabase();
@@ -54,6 +56,12 @@ beforeAll(async () => {
     .innerJoin(lists, eq(lists.id, listItems.listId))
     .where(eq(lists.builtIn, "positions"));
   owner = randomUUID();
+  await connection.insert(featureTeams).values(
+    teamIds.map((id, place) => ({
+      id,
+      name: `Fictional Team ${String(place)}`,
+    })),
+  );
   await connection.insert(people).values({
     id: owner,
     preferredName: "Fictional Owner",
@@ -77,7 +85,8 @@ afterAll(async () => {
   await database.remove();
 });
 
-const seed = () => seedProjects(connection, today, [randomUUID(), owner]);
+const seed = () =>
+  seedProjects(connection, today, [randomUUID(), owner], teamIds);
 
 describe("seeding projects", () => {
   it("adds the records once, recorded as made by Fathom itself", async () => {
@@ -89,13 +98,7 @@ describe("seeding projects", () => {
       .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
       .where(isNull(changeSets.madeBy));
     expect(new Set(made.map(({ recordType }) => recordType))).toEqual(
-      new Set([
-        "customer",
-        "proposal",
-        "project",
-        "milestone",
-        "project-activity",
-      ]),
+      new Set(["customer", "proposal", "project", "milestone", "activity"]),
     );
     expect(await connection.select().from(customers)).toHaveLength(
       seededCustomers.length,
@@ -164,6 +167,60 @@ describe("seeding projects", () => {
       .where(eq(proposals.id, proposalId("cranes")));
     expect(cranes?.label).toBe("Open");
   });
+
+  it("adds each project's activities, and only theirs", async () => {
+    await seed();
+    const added = await connection
+      .select({
+        id: activities.id,
+        projectId: activities.projectId,
+        name: activities.name,
+      })
+      .from(activities);
+    expect(added.sort((one, other) => one.id.localeCompare(other.id))).toEqual(
+      seededActivities
+        .map(({ project, key, name }) => ({
+          id: activityId(project, key),
+          projectId: projectId(project),
+          name,
+        }))
+        .sort((one, other) => one.id.localeCompare(other.id)),
+    );
+  });
+
+  it("gives each activity its status, team and planning values", async () => {
+    await seed();
+    const [migration] = await connection
+      .select()
+      .from(activities)
+      .where(eq(activities.id, activityId("crane-control", "data-migration")));
+    const choiceOf = async (id: string | null | undefined) => {
+      const [choice] = await connection
+        .select({ label: listItems.label, meaning: listItems.meaning })
+        .from(listItems)
+        .where(eq(listItems.id, String(id)));
+      return choice;
+    };
+    expect(await choiceOf(migration?.statusId)).toMatchObject({
+      meaning: "in-progress",
+    });
+    expect(await choiceOf(migration?.priorityId)).toMatchObject({
+      label: "Critical",
+    });
+    expect(await choiceOf(migration?.sizeId)).toMatchObject({ label: "XL" });
+    expect(await choiceOf(migration?.riskId)).toMatchObject({ label: "High" });
+    expect(migration).toMatchObject({
+      featureTeamId: teamIds[1],
+      neededBy: "2027-01",
+    });
+    const [warranty] = await connection
+      .select({ featureTeamId: activities.featureTeamId })
+      .from(activities)
+      .where(
+        eq(activities.id, activityId("transit-displays", "warranty-support")),
+      );
+    expect(warranty).toEqual({ featureTeamId: null });
+  });
 });
 
 describe("removing projects", () => {
@@ -177,7 +234,7 @@ describe("removing projects", () => {
       fields: { projectId: projectId(String(project?.key)) },
     });
     await connection.insert(drafts).values({
-      recordType: "project-activity",
+      recordType: "activity",
       recordId: randomUUID(),
       action: "created",
       fields: { projectId: projectId(String(project?.key)) },
@@ -270,32 +327,18 @@ describe("removing projects", () => {
 
   it("keeps a project with an activity added by hand", async () => {
     await seed();
+    const [status] = await connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(eq(lists.builtIn, "feature-statuses"));
     await connection.insert(activities).values({
       projectId: projectId("depot-operations"),
       name: "Fictional Hand Activity",
+      statusId: String(status?.id),
     });
     expect(await unseedProjects(connection)).toContain(
       "The project Depot Operations, which has milestones or activities added by hand",
-    );
-  });
-
-  it("adds each project's activities, and only theirs", async () => {
-    await seed();
-    const added = await connection
-      .select({
-        id: activities.id,
-        projectId: activities.projectId,
-        name: activities.name,
-      })
-      .from(activities);
-    expect(added.sort((one, other) => one.id.localeCompare(other.id))).toEqual(
-      seededActivities
-        .map(({ project, key, name }) => ({
-          id: activityId(project, key),
-          projectId: projectId(project),
-          name,
-        }))
-        .sort((one, other) => one.id.localeCompare(other.id)),
     );
   });
 

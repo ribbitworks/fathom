@@ -40,6 +40,10 @@ async function addStreams(client: Client, ...names: string[]) {
   return ids;
 }
 
+const notNullViolation = "23502";
+const anyStatus =
+  "(SELECT i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'feature-statuses' LIMIT 1)";
+
 describe("release streams", () => {
   const { uniqueViolation, checkViolation, restrictViolation } = databaseCodes;
 
@@ -169,9 +173,6 @@ describe("release streams", () => {
 describe("features", () => {
   const { uniqueViolation, checkViolation, restrictViolation } = databaseCodes;
   const prefix = "Fictional Feature Test";
-  const notNullViolation = "23502";
-  const anyFeatureStatus =
-    "(SELECT i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'feature-statuses' LIMIT 1)";
 
   afterEach(async () => {
     await withClient(database.app, async (client) => {
@@ -207,14 +208,14 @@ describe("features", () => {
 
   const addFeature = (client: Client, name: string | null = `${prefix} One`) =>
     client.query(
-      `INSERT INTO features (status_id, name) VALUES (${anyFeatureStatus}, $1)`,
+      `INSERT INTO features (status_id, name) VALUES (${anyStatus}, $1)`,
       [name],
     );
 
   const addFeatureId = (client: Client) =>
     firstId(
       client,
-      `INSERT INTO features (status_id, name) VALUES (${anyFeatureStatus}, $1) RETURNING id`,
+      `INSERT INTO features (status_id, name) VALUES (${anyStatus}, $1) RETURNING id`,
       [`${prefix} One`],
     );
 
@@ -224,13 +225,13 @@ describe("features", () => {
     cycle: string | null,
   ) =>
     client.query(
-      `INSERT INTO features (status_id, name, target_stream_id, target_cycle) VALUES (${anyFeatureStatus}, $1, $2, $3)`,
+      `INSERT INTO features (status_id, name, target_stream_id, target_cycle) VALUES (${anyStatus}, $1, $2, $3)`,
       [`${prefix} One`, stream, cycle],
     );
 
   const addEstimate = (client: Client, hours: string) =>
     client.query(
-      `INSERT INTO features (status_id, name, estimate_hours) VALUES (${anyFeatureStatus}, $1, $2)`,
+      `INSERT INTO features (status_id, name, estimate_hours) VALUES (${anyStatus}, $1, $2)`,
       [`${prefix} One`, hours],
     );
 
@@ -327,7 +328,7 @@ describe("features", () => {
         expect(
           await errorCodeOf(
             client.query(
-              `INSERT INTO features (status_id, name, needed_by) VALUES (${anyFeatureStatus}, $1, $2)`,
+              `INSERT INTO features (status_id, name, needed_by) VALUES (${anyStatus}, $1, $2)`,
               [`${prefix} One`, month],
             ),
           ),
@@ -341,7 +342,7 @@ describe("features", () => {
       expect(
         await errorCodeOf(
           client.query(
-            `INSERT INTO features (status_id, name, note) VALUES (${anyFeatureStatus}, $1, '')`,
+            `INSERT INTO features (status_id, name, note) VALUES (${anyStatus}, $1, '')`,
             [`${prefix} One`],
           ),
         ),
@@ -410,7 +411,7 @@ describe("features", () => {
       expect(
         await errorCodeOf(
           client.query(
-            `INSERT INTO features (status_id, name, description) VALUES (${anyFeatureStatus}, $1, '')`,
+            `INSERT INTO features (status_id, name, description) VALUES (${anyStatus}, $1, '')`,
             [`${prefix} One`],
           ),
         ),
@@ -432,7 +433,7 @@ describe("features", () => {
     await withClient(database.app, async (client) => {
       const teamId = await addTeam(client);
       await client.query(
-        `INSERT INTO features (status_id, name, feature_team_id) VALUES (${anyFeatureStatus}, $1, $2)`,
+        `INSERT INTO features (status_id, name, feature_team_id) VALUES (${anyStatus}, $1, $2)`,
         [`${prefix} One`, teamId],
       );
       expect(
@@ -501,8 +502,6 @@ describe("features", () => {
 describe("activities", () => {
   const { uniqueViolation, checkViolation, restrictViolation } = databaseCodes;
   const prefix = "Fictional Activity Test";
-  const anyFeatureStatus =
-    "(SELECT i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'feature-statuses' LIMIT 1)";
 
   afterEach(async () => {
     await withClient(database.app, async (client) => {
@@ -519,6 +518,10 @@ describe("activities", () => {
         `DELETE FROM planned_hires WHERE requisition LIKE '${prefix}%'`,
       );
       await client.query(`DELETE FROM activities WHERE name LIKE '${prefix}%'`);
+      await client.query(`DELETE FROM fields WHERE name LIKE '${prefix}%'`);
+      await client.query(
+        `DELETE FROM feature_teams WHERE name LIKE '${prefix}%'`,
+      );
       await client.query(`DELETE FROM features WHERE name LIKE '${prefix}%'`);
       await client.query(`DELETE FROM projects WHERE name LIKE '${prefix}%'`);
       await client.query(`DELETE FROM releases WHERE name LIKE '${prefix}%'`);
@@ -549,7 +552,7 @@ describe("activities", () => {
   ) =>
     firstId(
       client,
-      "INSERT INTO activities (project_id, release_id, name, description, note, estimate_hours) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+      `INSERT INTO activities (project_id, release_id, name, status_id, description, note, estimate_hours, needed_by, feature_team_id) VALUES ($1, $2, $3, ${anyStatus}, $4, $5, $6, $7, $8) RETURNING id`,
       [
         owner.projectId ?? null,
         owner.releaseId ?? null,
@@ -557,6 +560,8 @@ describe("activities", () => {
         values.description ?? null,
         values.note ?? null,
         values.estimateHours ?? null,
+        values.neededBy ?? null,
+        values.featureTeamId ?? null,
       ],
     );
 
@@ -570,7 +575,7 @@ describe("activities", () => {
   const addFeature = (client: Client) =>
     firstId(
       client,
-      `INSERT INTO features (status_id, name) VALUES (${anyFeatureStatus}, $1) RETURNING id`,
+      `INSERT INTO features (status_id, name) VALUES (${anyStatus}, $1) RETURNING id`,
       [`${prefix} Feature`],
     );
 
@@ -649,6 +654,7 @@ describe("activities", () => {
     ["an empty description", { description: "" }],
     ["a negative estimate", { estimateHours: "-1" }],
     ["an estimate that is not a number", { estimateHours: "NaN" }],
+    ["a Needed by that isn't a month", { neededBy: "2027-13" }],
   ])("refuses %s", async (_case, values) => {
     await withClient(database.app, async (client) => {
       const projectId = await addProject(client);
@@ -671,24 +677,177 @@ describe("activities", () => {
     });
   });
 
-  it.each(["project-activity", "release-activity"])(
-    "numbers a %s drafted to be added as an activity",
-    async (recordType) => {
+  it("numbers an activity drafted to be added", async () => {
+    await withClient(database.app, async (client) => {
+      const id = randomUUID();
+      await client.query(
+        "INSERT INTO drafts (record_type, record_id, action) VALUES ('activity', $1, 'created')",
+        [id],
+      );
+      const keys = await client.query(
+        "SELECT kind FROM record_keys WHERE record_id = $1",
+        [id],
+      );
+      await client.query("DELETE FROM drafts WHERE record_id = $1", [id]);
+      expect(keys.rows).toEqual([{ kind: "activity" }]);
+    });
+  });
+
+  it("refuses an activity with no status", async () => {
+    await withClient(database.app, async (client) => {
+      const projectId = await addProject(client);
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO activities (project_id, name) VALUES ($1, $2)",
+            [projectId, `${prefix} One`],
+          ),
+        ),
+      ).toBe(notNullViolation);
+    });
+  });
+
+  it("keeps a status or feature team an activity uses from being deleted", async () => {
+    await withClient(database.app, async (client) => {
+      const featureTeamId = await firstId(
+        client,
+        "INSERT INTO feature_teams (name) VALUES ($1) RETURNING id",
+        [`${prefix} Team`],
+      );
+      const activityId = await addActivity(
+        client,
+        { projectId: await addProject(client) },
+        { featureTeamId },
+      );
+      expect(
+        await errorCodeOf(
+          client.query(
+            "DELETE FROM list_items WHERE id = (SELECT status_id FROM activities WHERE id = $1)",
+            [activityId],
+          ),
+        ),
+      ).toBe(restrictViolation);
+      expect(
+        await errorCodeOf(
+          client.query("DELETE FROM feature_teams WHERE id = $1", [
+            featureTeamId,
+          ]),
+        ),
+      ).toBe(restrictViolation);
+    });
+  });
+
+  const addColumn = (client: Client, type: "link" | "note" | "number") =>
+    firstId(
+      client,
+      "INSERT INTO fields (table_name, name, type, visibility) VALUES ('activities', $1, $2, 'general') RETURNING id",
+      [`${prefix} ${type}`, type],
+    );
+
+  const valueOf = new Map([
+    [
+      "link",
+      "link_address, link_text) VALUES ($1, $2, 'https://example.com/one', '')",
+    ],
+    ["note", "note) VALUES ($1, $2, 'One')"],
+    ["number", "number) VALUES ($1, $2, 1)"],
+  ]);
+
+  const addValue = (
+    client: Client,
+    type: "link" | "note" | "number",
+    fieldId: string,
+    activityId: string,
+  ) =>
+    client.query(
+      `INSERT INTO field_values (field_id, activity_id, ${String(valueOf.get(type))}`,
+      [fieldId, activityId],
+    );
+
+  it.each(["link", "note", "number"] as const)(
+    "keeps one %s value for each activity and column",
+    async (type) => {
       await withClient(database.app, async (client) => {
-        const id = randomUUID();
-        await client.query(
-          "INSERT INTO drafts (record_type, record_id, action) VALUES ($1, $2, 'created')",
-          [recordType, id],
-        );
-        const keys = await client.query(
-          "SELECT kind FROM record_keys WHERE record_id = $1",
-          [id],
-        );
-        await client.query("DELETE FROM drafts WHERE record_id = $1", [id]);
-        expect(keys.rows).toEqual([{ kind: "activity" }]);
+        const fieldId = await addColumn(client, type);
+        const activityId = await addActivity(client, {
+          projectId: await addProject(client),
+        });
+        await addValue(client, type, fieldId, activityId);
+        expect(
+          await errorCodeOf(addValue(client, type, fieldId, activityId)),
+        ).toBe(uniqueViolation);
       });
     },
   );
+
+  it("keeps each choice once for each activity and column", async () => {
+    await withClient(database.app, async (client) => {
+      const listId = await firstId(
+        client,
+        "INSERT INTO lists (name, visibility) VALUES ($1, 'general') RETURNING id",
+        [`${prefix} List`],
+      );
+      const choiceId = await firstId(
+        client,
+        "INSERT INTO list_items (list_id, label, position) VALUES ($1, 'One', 1) RETURNING id",
+        [listId],
+      );
+      const fieldId = await firstId(
+        client,
+        "INSERT INTO fields (table_name, name, list_id, multiple) VALUES ('activities', $1, $2, true) RETURNING id",
+        [`${prefix} Choice`, listId],
+      );
+      const activityId = await addActivity(client, {
+        projectId: await addProject(client),
+      });
+      const choose = () =>
+        client.query(
+          "INSERT INTO field_values (field_id, activity_id, choice_id) VALUES ($1, $2, $3)",
+          [fieldId, activityId, choiceId],
+        );
+      await choose();
+      const repeated = await errorCodeOf(choose());
+      await client.query("DELETE FROM field_values WHERE field_id = $1", [
+        fieldId,
+      ]);
+      await client.query("DELETE FROM fields WHERE id = $1", [fieldId]);
+      await client.query("DELETE FROM lists WHERE id = $1", [listId]);
+      expect(repeated).toBe(uniqueViolation);
+    });
+  });
+
+  it("refuses a value of both an activity and a feature", async () => {
+    await withClient(database.app, async (client) => {
+      const fieldId = await addColumn(client, "note");
+      const activityId = await addActivity(client, {
+        projectId: await addProject(client),
+      });
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO field_values (field_id, activity_id, feature_id, note) VALUES ($1, $2, $3, 'One')",
+            [fieldId, activityId, await addFeature(client)],
+          ),
+        ),
+      ).toBe(checkViolation);
+    });
+  });
+
+  it("removes an activity's values with it", async () => {
+    await withClient(database.app, async (client) => {
+      const fieldId = await addColumn(client, "note");
+      const activityId = await addActivity(client, {
+        projectId: await addProject(client),
+      });
+      await addValue(client, "note", fieldId, activityId);
+      await client.query("DELETE FROM activities WHERE id = $1", [activityId]);
+      const left = await client.query(
+        "SELECT count(*)::int AS count FROM field_values WHERE field_id = $1",
+        [fieldId],
+      );
+      expect(left.rows).toEqual([{ count: 0 }]);
+    });
+  });
 
   it("keeps a project or release with activities from being deleted", async () => {
     await withClient(database.app, async (client) => {

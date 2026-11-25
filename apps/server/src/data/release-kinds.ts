@@ -7,7 +7,6 @@ import { cyclePatterns, features, releases, releaseStreams } from "@fathom/db";
 import {
   type ClassAccess,
   cyclesOf,
-  holdsAny,
   type Permission,
   planSubjects,
   projectSubjects,
@@ -167,9 +166,6 @@ export const releaseKind: RecordKind = {
 export const projectReaders: readonly Permission[] = ["plan:view"];
 export const unseenProject = "a project";
 
-export const readsProjects = (permissions: readonly Permission[]) =>
-  holdsAny(permissions, projectReaders);
-
 // A feature's name as a role is told it, or only its kind to a role that doesn't read features.
 export const featureNaming = (
   state: RecordsState,
@@ -218,12 +214,8 @@ export const featureKind: RecordKind = {
   unique: [{ field: "name", message: "Another feature has that name" }],
   readWith: ["features:view"],
   unseenSubject: "a feature",
-  subject: (state, id, access) => {
-    const naming = featureNaming(state, id, access);
-    return "name" in naming
-      ? projectSubjects.feature(naming.name)
-      : naming.unseen;
-  },
+  // Asked only once a role reads features, so named in full.
+  subject: (state, id) => projectSubjects.feature(featureCalled(state, id)),
   // A feature drafted onto another cycle, or onto one only the stream's drafted patterns make, uses
   // those patterns' drafts, as a release does.
   alsoUses: (state, id) => {

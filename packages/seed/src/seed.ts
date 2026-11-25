@@ -845,6 +845,7 @@ export async function seedCommand(
           organization.people
             .filter(({ isManager, endDate }) => isManager && endDate === null)
             .map(({ id }) => id),
+          organization.featureTeams.map(({ id }) => id),
         )
       ) {
         console.log(

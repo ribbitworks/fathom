@@ -29,6 +29,7 @@ import {
   seededActivityIds,
 } from "./activities.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
+import { planningColumns } from "./seeded-planning.ts";
 
 // Each record has a key of its own, which its identifier is made from. One customer has neither a
 // description nor a note, and one a note long enough to fold.
@@ -330,6 +331,7 @@ export async function seedProjects(
   database: Database,
   today: string,
   managerIds: readonly string[],
+  teamIds: readonly string[],
 ): Promise<boolean> {
   return database.transaction(async (transaction) => {
     const [present] = await transaction
@@ -344,6 +346,7 @@ export async function seedProjects(
     if (present !== undefined) return false;
     const status = await readStatuses(transaction);
     const owner = await readOwners(transaction, managerIds);
+    const planningOf = await planningColumns(transaction, today, teamIds);
     const made: SeededChange[] = [];
     // Features removed from proposals, recorded after the proposals were added, as an edit is.
     const removals: ChangeRecord[] = [];
@@ -437,6 +440,7 @@ export async function seedProjects(
         const values = {
           projectId: id,
           name: activity.name,
+          ...planningOf(activity),
           description: activity.description,
           estimateHours: activity.estimateHours,
         };
@@ -444,12 +448,7 @@ export async function seedProjects(
           .insert(activities)
           .values({ id: recordId, ...values });
         made.push(
-          ...recorded(
-            "project-activity",
-            recordId,
-            "created",
-            filledIn(values),
-          ),
+          ...recorded("activity", recordId, "created", filledIn(values)),
         );
       }
     }
@@ -580,7 +579,7 @@ export async function unseedProjects(database: Database): Promise<string[]> {
           or(
             inArray(table.recordId, recordIds),
             and(
-              inArray(table.recordType, ["milestone", "project-activity"]),
+              inArray(table.recordType, ["milestone", "activity"]),
               inArray(sql`${table.fields}->>'projectId'`, projectIds),
             ),
             linking === undefined
@@ -595,7 +594,7 @@ export async function unseedProjects(database: Database): Promise<string[]> {
     const made: SeededChange[] = [];
     for (const [type, rows] of [
       ["milestone", milestoneRows],
-      ["project-activity", activityRows],
+      ["activity", activityRows],
       ["project", removingProjects],
       ["proposal", removingProposals],
       ["customer", removingCustomers],

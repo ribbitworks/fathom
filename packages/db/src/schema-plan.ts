@@ -231,7 +231,7 @@ export const milestones = fathomSchema.table(
 
 // Features: the planned work on the roadmap. A feature's name is unique, ignoring letter case. A
 // target cycle is known by its stream and start date, as cycles are worked out rather than stored;
-// a feature with none is in Later. Its status is a choice of the built-in list of feature statuses,
+// a feature with none is in Later. Its status is a choice of the built-in list of statuses,
 // and its priority, size and risk, each optional, choices of their built-in lists.
 // The month it is needed by is kept as text such as 2027-03. Its note is Markdown checked by the
 // server. The estimate is one value, in hours, whichever unit it is shown in; PostgreSQL ranks NaN
@@ -298,9 +298,10 @@ export const features = fathomSchema.table(
 
 // Activities: work a project or a release needs that isn't a feature, such as data migration or
 // release testing, each of exactly one project or one release. An activity's name is unique within
-// its project or release, ignoring letter case. Its note is Markdown checked by the server, and its
-// estimate is in hours, as a feature's are. Its colour is a palette name checked by the server, as a
-// release's is.
+// its project or release, ignoring letter case, since release work repeats in every release.
+// Otherwise it holds a feature's fields, from the same built-in lists, but none saying where it is
+// committed, since its project or release says when it happens. Its colour is a palette name
+// checked by the server, as a release's is.
 export const activities = fathomSchema.table(
   "activities",
   {
@@ -312,13 +313,29 @@ export const activities = fathomSchema.table(
       onDelete: "restrict",
     }),
     name: text("name").notNull(),
-    description: text("description"),
-    note: text("note"),
+    statusId: uuid("status_id")
+      .notNull()
+      .references(() => listItems.id, { onDelete: "restrict" }),
+    priorityId: uuid("priority_id").references(() => listItems.id, {
+      onDelete: "restrict",
+    }),
+    sizeId: uuid("size_id").references(() => listItems.id, {
+      onDelete: "restrict",
+    }),
+    riskId: uuid("risk_id").references(() => listItems.id, {
+      onDelete: "restrict",
+    }),
+    neededBy: text("needed_by"),
     estimateHours: numeric("estimate_hours", {
       mode: "number",
       precision: 12,
       scale: 2,
     }),
+    featureTeamId: uuid("feature_team_id").references(() => featureTeams.id, {
+      onDelete: "restrict",
+    }),
+    description: text("description"),
+    note: text("note"),
     colour: text("colour"),
   },
   (table) => [
@@ -328,9 +345,15 @@ export const activities = fathomSchema.table(
     uniqueIndex("activities_release_name_index")
       .on(table.releaseId, sql`lower(${table.name})`)
       .where(sql`${table.releaseId} IS NOT NULL`),
+    index("activities_feature_team_index").on(table.featureTeamId),
+    index("activities_status_index").on(table.statusId),
     check(
       "activities_one_owner",
       sql`num_nonnulls(${table.projectId}, ${table.releaseId}) = 1`,
+    ),
+    check(
+      "activities_needed_by_month",
+      sql`${table.neededBy} ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'`,
     ),
     check("activities_note_not_empty", sql`${table.note} <> ''`),
     check("activities_description_not_empty", sql`${table.description} <> ''`),
