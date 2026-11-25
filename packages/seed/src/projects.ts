@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The fictional organization's customers, proposals, and projects with their milestones and
-// activities, and removing them. A development-only package, never in the runtime image.
+// The fictional organization's customers, proposals, projects with their milestones, and the
+// projects' and releases' activities, and removing them. A development-only package, never in the
+// runtime image.
 
 import {
   activities,
@@ -19,16 +20,22 @@ import {
   proposals,
   type Reader,
   recordChanges,
+  releases,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
 import { addDays } from "@fathom/shared";
 import { and, asc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
 import {
   activityId,
+  releaseActivityId,
+  type SeededActivity,
+  type SeededReleaseActivity,
   seededActivities,
   seededActivityIds,
+  seededReleaseActivities,
 } from "./activities.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
+import { releaseId } from "./releases.ts";
 import { planningColumns } from "./seeded-planning.ts";
 
 // Each record has a key of its own, which its identifier is made from. One customer has neither a
@@ -348,6 +355,21 @@ export async function seedProjects(
     const owner = await readOwners(transaction, managerIds);
     const planningOf = await planningColumns(transaction, today, teamIds);
     const made: SeededChange[] = [];
+    const addActivity = async (
+      recordId: string,
+      activity: SeededActivity | SeededReleaseActivity,
+      belongsTo: { projectId: string } | { releaseId: string },
+    ) => {
+      const values = {
+        ...belongsTo,
+        name: activity.name,
+        ...planningOf(activity),
+        description: activity.description,
+        estimateHours: activity.estimateHours,
+      };
+      await transaction.insert(activities).values({ id: recordId, ...values });
+      made.push(...recorded("activity", recordId, "created", filledIn(values)));
+    };
     // Features removed from proposals, recorded after the proposals were added, as an edit is.
     const removals: ChangeRecord[] = [];
     for (const { key, name, description, note } of seededCustomers) {
@@ -436,20 +458,28 @@ export async function seedProjects(
       for (const activity of seededActivities.filter(
         (each) => each.project === project.key,
       )) {
-        const recordId = activityId(project.key, activity.key);
-        const values = {
+        await addActivity(activityId(project.key, activity.key), activity, {
           projectId: id,
-          name: activity.name,
-          ...planningOf(activity),
-          description: activity.description,
-          estimateHours: activity.estimateHours,
-        };
+        });
+      }
+    }
+    // The releases' activities, for those of the seeded releases that are there.
+    const releaseOf = (activity: SeededReleaseActivity) =>
+      releaseId({ name: activity.stream }, activity.release);
+    const releasesPresent = new Set(
+      (
         await transaction
-          .insert(activities)
-          .values({ id: recordId, ...values });
-        made.push(
-          ...recorded("activity", recordId, "created", filledIn(values)),
-        );
+          .select({ id: releases.id })
+          .from(releases)
+          .where(inArray(releases.id, seededReleaseActivities.map(releaseOf)))
+      ).map(({ id }) => id),
+    );
+    for (const activity of seededReleaseActivities) {
+      const release = releaseOf(activity);
+      if (releasesPresent.has(release)) {
+        await addActivity(releaseActivityId(activity), activity, {
+          releaseId: release,
+        });
       }
     }
     await recordChanges(transaction, null, made);
@@ -458,10 +488,10 @@ export async function seedProjects(
   });
 }
 
-// Removes the customers, proposals, projects, milestones, and activities seeding added, each with
-// every draft of it or linking to it, and returns those it kept because something added by hand uses
-// them: a project with milestones or activities added by hand, and the proposals and customers
-// records kept use.
+// Removes the customers, proposals, projects, milestones, and activities seeding added, releases'
+// activities included, each with every draft of it or linking to it, and returns those it kept
+// because something added by hand uses them: a project with milestones or activities added by hand,
+// and the proposals and customers records kept use.
 export async function unseedProjects(database: Database): Promise<string[]> {
   return database.transaction(async (transaction) => {
     const seededMilestoneIds = seededProjects.flatMap((project) =>
@@ -556,10 +586,15 @@ export async function unseedProjects(database: Database): Promise<string[]> {
       .select()
       .from(milestones)
       .where(inArray(milestones.projectId, projectIds));
+    // A project's activities go with it, and the releases' seeded with the projects go too.
+    const removingActivities = or(
+      inArray(activities.projectId, projectIds),
+      inArray(activities.id, seededReleaseActivities.map(releaseActivityId)),
+    );
     const activityRows = await transaction
       .select()
       .from(activities)
-      .where(inArray(activities.projectId, projectIds));
+      .where(removingActivities);
     const recordIds = [
       ...milestoneRows.map(({ id }) => id),
       ...activityRows.map(({ id }) => id),
@@ -606,9 +641,7 @@ export async function unseedProjects(database: Database): Promise<string[]> {
     await transaction
       .delete(milestones)
       .where(inArray(milestones.projectId, projectIds));
-    await transaction
-      .delete(activities)
-      .where(inArray(activities.projectId, projectIds));
+    await transaction.delete(activities).where(removingActivities);
     await transaction.delete(projects).where(inArray(projects.id, projectIds));
     await transaction
       .delete(proposals)

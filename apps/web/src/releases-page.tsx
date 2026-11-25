@@ -37,7 +37,17 @@ import {
   type ReleasePart,
   StreamDialog,
 } from "./release-dialogs.tsx";
-import { releasePanelTitleId, ReleasesTable } from "./release-tab.tsx";
+import {
+  type ReleaseActivities,
+  releasePanelTitleId,
+  ReleasesTable,
+} from "./release-tab.tsx";
+import {
+  type ActivitiesOf,
+  editsFeatureKinds,
+  leavingFor,
+} from "./activity-list.tsx";
+import { recordsAsShown } from "./live-records.ts";
 import { EndsDialog } from "./schedule-end-dialog.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
 import { afterNote, useNoteEditing } from "./note-editing.tsx";
@@ -56,6 +66,7 @@ import { useSavedViews } from "./saved-views.tsx";
 import type { View } from "./table-view.ts";
 import { type ScheduleActions, SchedulesTable } from "./schedule-tab.tsx";
 import { CyclesTable } from "./cycle-tab.tsx";
+import { livePlanRecords } from "./plan-table.tsx";
 import { planNodes, projectPlanQuery } from "./projects.ts";
 import {
   type FeaturesAt,
@@ -79,6 +90,11 @@ type Dialog =
     };
 
 const tabsId = "releases-tabs";
+// Also where one of a release's activities opens.
+export interface ReleaseActivitiesOf extends ActivitiesOf {
+  open: (id: string) => void;
+}
+
 export const releasesTabSchema = z.enum(["releases", "cycles", "schedules"]);
 
 export type ReleasesTab = z.infer<typeof releasesTabSchema>;
@@ -151,6 +167,7 @@ export function ReleasesPage({
   open: openId,
   onOpen,
   onFeatures,
+  activitiesOf,
   approves,
   view,
   onView,
@@ -166,6 +183,8 @@ export function ReleasesPage({
   open?: string | undefined;
   onOpen: (id: string | undefined) => void;
   onFeatures: (at: FeaturesAt) => void;
+  // Set for a role that sees activities.
+  activitiesOf?: ReleaseActivitiesOf | undefined;
   // The kinds of draft the user's role approves and rejects.
   approves: readonly DraftKind[];
   view: View;
@@ -231,6 +250,23 @@ export function ReleasesPage({
       onFeatures(at);
     });
   };
+  const activities: ReleaseActivities | undefined =
+    activitiesOf === undefined || plan.data === undefined
+      ? undefined
+      : {
+          activities: recordsAsShown(
+            show,
+            plan.data.activities,
+            livePlanRecords,
+          ),
+          of: leavingFor(activitiesOf, leave),
+          onShow: (id) => {
+            leave(() => {
+              activitiesOf.open(id);
+            });
+          },
+          mayAdd: editsFeatureKinds(plan.data.canEditFeatures, show),
+        };
   const openRecord = (record: { id: string }) => {
     leave(() => {
       onOpen(record.id);
@@ -397,6 +433,7 @@ export function ReleasesPage({
         }}
         onClose={closePanel}
         planned={planned}
+        activities={activities}
         onFeatures={showFeatures}
         showIn={showIn}
         notes={notes}

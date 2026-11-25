@@ -22,10 +22,16 @@ import {
   features,
 } from "@fathom/db";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNotNull, isNull } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { activityId, seededActivities } from "./activities.ts";
+import {
+  activityId,
+  releaseActivityId,
+  seededActivities,
+  seededReleaseActivities,
+} from "./activities.ts";
+import { seedReleases, unseedReleases } from "./releases.ts";
 import { seededFeatures } from "./features.ts";
 import {
   customerId,
@@ -186,6 +192,35 @@ describe("seeding projects", () => {
         }))
         .sort((one, other) => one.id.localeCompare(other.id)),
     );
+  });
+
+  it("adds the releases' activities once the releases are there, and removes them with the projects", async () => {
+    await seedReleases(connection, today);
+    await seed();
+    const releaseActivities = async () =>
+      (
+        await connection
+          .select({ id: activities.id })
+          .from(activities)
+          .where(isNotNull(activities.releaseId))
+      ).map(({ id }) => id);
+    expect((await releaseActivities()).sort()).toEqual(
+      seededReleaseActivities.map(releaseActivityId).sort(),
+    );
+
+    await unseedProjects(connection);
+    expect(await releaseActivities()).toEqual([]);
+    expect(await unseedReleases(connection)).toEqual([]);
+  });
+
+  it("adds no release's activities without the releases", async () => {
+    await seed();
+    expect(
+      await connection
+        .select({ id: activities.id })
+        .from(activities)
+        .where(isNotNull(activities.releaseId)),
+    ).toEqual([]);
   });
 
   it("gives each activity its status, team and planning values", async () => {

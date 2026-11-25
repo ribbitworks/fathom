@@ -33,8 +33,8 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button and the change button. This test adds:
 
 - **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**, or on the tab it last showed.
-- **Releases table:** the table on the **Releases** tab, under the timeline, with a row for each release. Its columns are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**. Releases that have shipped show only once **Show shipped** is chosen in the **Views** menu.
-- **A release's details:** the side panel for the selected release, headed with its name and, under it, its key. Its **Details** rows are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Status**, **Colour** and **Note**.
+- **Releases table:** the table on the **Releases** tab, under the timeline, with a row for each release. Its columns are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Activities** and **Status**. Releases that have shipped show only once **Show shipped** is chosen in the **Views** menu.
+- **A release's details:** the side panel for the selected release, headed with its name and, under it, its key. Its **Details** rows are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Activities**, **Status**, **Colour** and **Note**.
 - **Pencil:** the change button at the right of a row of **Details**, for **Release**, **Ships on**, **Cycles** and **Colour**.
 - **A release's ⋯ menu:** the ⋯ menu of a release's row. The **⋯** at the top of the release's side panel opens the same menu. The row's menu offers:
   - **Remove release**, and **Add note…** while the release has no note, to those who change releases.
@@ -62,7 +62,7 @@ To run the test again, start again from Restore the Seed Data.
 - [ ] `F2C3` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - **Releases** is the tab chosen, and the button at the top right reads **New release**.
-    - The table's columns are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**.
+    - The table's columns are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Activities** and **Status**.
     - The rows show as one list, with no headings.
   - **Notes:**
 
@@ -100,7 +100,7 @@ To run the test again, start again from Restore the Seed Data.
 - [ ] `EC21` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
   - **Expected:**
     - The side panel opens, headed 'Harbor 2 LTS'.
-    - Under **Details**, the rows are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Status**, **Colour** and **Note**.
+    - Under **Details**, the rows are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Activities**, **Status**, **Colour** and **Note**.
     - **Status** reads "Not shipped", and **Schedule** reads 'Platform'.
     - **Note** shows the release's whole note.
   - **Notes:**
@@ -150,13 +150,66 @@ To run the test again, start again from Restore the Seed Data.
 
 Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-change-schedules-sees-no-pencils), which checks that a role that can't change a record sees no pencils in its details.
 
+#### REL-50: A Release's Activities
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-39 ended with.
+
+**Preconditions:** Run after REL-39. **Releases** page open, **Releases** tab chosen, with no side panel open.
+
+- [ ] `8F80` Look at the **Activities** cell of the row for 'Harbor 2 LTS'.
+  - **Expected:** The cell reads 'Release testing'.
+  - **Notes:**
+
+- [ ] `7B18` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
+  - **Expected:**
+    - The side panel lists 'Release testing' under **Activities**, after **Features**.
+    - **Show on Activities** and **Add activity** are under the list.
+  - **Notes:**
+
+- [ ] `1C5F` Select 'Release testing' under **Activities**.
+  - **Expected:**
+    - The **Activities** page opens.
+    - The side panel of 'Release testing' is beside the table, its **Release** 'Platform: Harbor 2 LTS'.
+  - **Notes:**
+
+- [ ] `EEC1` Select the browser's back button.
+  - **Expected:** The details of 'Harbor 2 LTS' show on **Releases**.
+  - **Notes:**
+
+- [ ] `81B5` Select **Show on Activities**.
+  - **Expected:**
+    - The **Activities** page opens.
+    - The table shows only 'Release testing'.
+  - **Notes:**
+
+- [ ] `F5EC` Select the browser's back button.
+  - **Expected:** The details of 'Harbor 2 LTS' show on **Releases**.
+  - **Notes:**
+
+- [ ] `054A` Select **Add activity**.
+  - **Expected:**
+    - The **Activities** page opens, with the **New activity** form beside the table.
+    - **Release** reads 'Platform: Harbor 2 LTS'.
+    - **Project** reads **None**.
+  - **Notes:**
+
+- [ ] `FEB0` Type `Fictional Sign-off` in **Name**.
+  - **Expected:** The name is in the field.
+  - **Notes:**
+
+- [ ] `D559` Select **Add**.
+  - **Expected:** 'Fictional Sign-off' shows in the table with a hollow dot, its **Release** 'Platform: Harbor 2 LTS'.
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
+
 ### Part 2: Changing a Release
 
 #### REL-12: A Release Is Changed by a Draft
 
-**Account:** Product Manager, `product.manager@fathom.test`, the account REL-39 ended with.
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-50 ended with.
 
-**Preconditions:** Run after REL-39. **Releases** page selected again in the left-hand menu.
+**Preconditions:** Run after REL-50. **Releases** page selected again in the left-hand menu.
 
 - [ ] `285E` Select the details button at the right of the first cell of the row for 'Lantern 3'.
   - **Expected:**

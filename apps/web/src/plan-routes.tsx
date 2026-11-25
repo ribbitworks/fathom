@@ -34,6 +34,7 @@ import { oneBoardColumns } from "./feature-board.ts";
 import { lastViewsQuery } from "./last-views.ts";
 import { customerChoiceKey } from "./customer-filter.ts";
 import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
+import type { ActivitiesOf, ActivityOwner } from "./activity-list.tsx";
 import { featureNamers, planAddress } from "./projects.ts";
 import { streamAddress } from "./record-links.ts";
 import {
@@ -123,7 +124,8 @@ export const releasesRoute = createRoute({
     );
   },
   component: function Releases() {
-    const { permissions } = signedIn.useRouteContext();
+    const { permissions, access } = signedIn.useRouteContext();
+    const opensActivities = opensWith(pageNeeds.activities, access);
     const navigate = releasesRoute.useNavigate();
     const {
       tab = "releases",
@@ -169,6 +171,18 @@ export const releasesRoute = createRoute({
                 },
           );
         }}
+        {...(opensActivities
+          ? {
+              activitiesOf: {
+                ...showsActivitiesOf("releaseId", (to) => {
+                  void navigate(to);
+                }),
+                open: (id: string) => {
+                  void navigate(planAddress("activities", id));
+                },
+              },
+            }
+          : {})}
         approves={approvableKinds(permissions)}
         // The tab is always one of the fixed tabs.
         // eslint-disable-next-line security/detect-object-injection
@@ -386,6 +400,23 @@ const activitiesSearch = planRecordSearch.extend({
   column: linkedColumnSearch,
 });
 
+// Activities filtered to a project's or a release's.
+const activitiesAddress = (owner: ActivityOwner, id: string) =>
+  ({
+    to: "/activities",
+    search: { filters: { [owner]: { any: [id] } } },
+  }) as const;
+
+// Showing a project's or a release's activities on Activities.
+const showsActivitiesOf = (
+  owner: ActivityOwner,
+  go: (to: ReturnType<typeof activitiesAddress>) => void,
+): Pick<ActivitiesOf, "showAll"> => ({
+  showAll: (id) => {
+    go(activitiesAddress(owner, id));
+  },
+});
+
 export const activitiesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/activities",
@@ -485,14 +516,9 @@ export const projectsRoute = createRoute({
         }}
         activitiesOf={
           opensActivities
-            ? {
-                showAll: (projectId) => {
-                  void navigate({
-                    to: "/activities",
-                    search: { filters: { projectId: { any: [projectId] } } },
-                  });
-                },
-              }
+            ? showsActivitiesOf("projectId", (to) => {
+                void navigate(to);
+              })
             : undefined
         }
         onFeaturesOf={({ type, id }) => {
