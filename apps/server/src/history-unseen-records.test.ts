@@ -57,6 +57,44 @@ describe("records a change links to, in the history", () => {
     ).toContain(feature.name);
   });
 
+  it("name an activity's project only to a role that reads the plan, and the activity only to a reader of activities", async () => {
+    const first = await addProject();
+    const second = await addProject();
+    await approve([
+      { type: "project", id: first.id },
+      { type: "project", id: second.id },
+    ]);
+    const name = `Fictional Activity ${first.id.slice(0, 8)}`;
+    const added = await send("POST", "/api/activities", {
+      name,
+      projectId: first.id,
+    });
+    expect(added.statusCode, added.body).toBe(201);
+    const activityId = String(
+      added
+        .json<{ plan: { activities: { id: string; name: string }[] } }>()
+        .plan.activities.find((one) => one.name === name)?.id,
+    );
+    await approve([{ type: "activity", id: activityId }]);
+    const moved = await send("PUT", `/api/activities/${activityId}`, {
+      name,
+      projectId: second.id,
+    });
+    expect(moved.statusCode, moved.body).toBe(200);
+
+    const featuresOnly = await valuesIn(
+      ["features:view"],
+      "activity",
+      "projectId",
+    );
+    expect(featuresOnly).not.toContain(second.name);
+    expect(featuresOnly).toContain("A project");
+    expect(
+      await valuesIn(["plan:view", "features:view"], "activity", "projectId"),
+    ).toContain(second.name);
+    expect(await valuesIn(["plan:view"], "activity", "projectId")).toEqual([]);
+  });
+
   it("name a feature's customers only to a role that reads the plan", async () => {
     const customer = await addCustomer();
     const feature = await addFeature();

@@ -11,7 +11,7 @@ import {
   people,
   releases,
   releaseStreams,
-  unpublishedDrafts,
+  privateChanges,
 } from "@fathom/db";
 import { eq } from "drizzle-orm";
 import type { Activity, Field, ProjectPlan } from "@fathom/shared";
@@ -274,6 +274,38 @@ describe("removing an activity", () => {
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toContain(activity.name);
   });
+
+  it("names no activity keeping a project to a role that can't read activities", async () => {
+    const projectId = await liveProject();
+    const activity = await addActivity({ projectId });
+    await approve([{ type: "activity", id: activity.id }]);
+    const editor = await test.signedIn(["plan:edit"]);
+    const response = await test.request(
+      editor.cookie,
+      "DELETE",
+      `/api/projects/${projectId}`,
+    );
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      "This is used by an activity; change that first",
+    );
+  });
+
+  it("keeps a release with an activity from being removed", async () => {
+    const releaseId = await liveRelease();
+    const activity = await addActivity({ releaseId });
+    await approve([{ type: "activity", id: activity.id }]);
+    const [release] = await test.connection
+      .select({ streamId: releases.streamId })
+      .from(releases)
+      .where(eq(releases.id, releaseId));
+    const response = await send(
+      "DELETE",
+      `/api/release-streams/${String(release?.streamId)}/releases/${releaseId}`,
+    );
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toContain(activity.name);
+  });
 });
 
 describe("a release's activity", () => {
@@ -304,7 +336,7 @@ describe("a column on Activities", () => {
     // Given a live activity, and no drafts of activities, which are refused first
     const activity = await addActivity({ projectId: await liveProject() });
     await approve([{ type: "activity", id: activity.id }]);
-    for (const table of [drafts, unpublishedDrafts]) {
+    for (const table of [drafts, privateChanges]) {
       await test.connection
         .delete(table)
         .where(eq(table.recordType, "activity"));
@@ -367,11 +399,61 @@ describe("a link to an activity", () => {
 });
 
 describe("reading activities", () => {
-  it("sends them with the plan to roles that see features, and whether they may change them", async () => {
+  const noColumns = { fields: [], order: [], lists: [] };
+  const ids = (records: readonly { id: string }[]) =>
+    records.map(({ id }) => id);
+
+  it("sends them and Activities' columns only to those who see features", async () => {
     const activity = await addActivity({ projectId: await liveProject() });
+    const featuresOnly = await test.signedIn(["features:view"]);
+    const planOnly = await test.signedIn(["plan:view"]);
+    const seen = await readPlan(featuresOnly.cookie);
+    expect(ids(seen.activities)).toContain(activity.id);
+    expect(ids(seen.activityColumns.fields)).toEqual(
+      ids((await readPlan()).activityColumns.fields),
+    );
+    const unseen = await readPlan(planOnly.cookie);
+    expect(unseen.activities).toEqual([]);
+    expect(unseen.activityColumns).toEqual(noColumns);
+  });
+
+  it("answers a change to the plan with only what the role sees", async () => {
+    await addActivity({ projectId: await liveProject() });
+    const planEditor = await test.signedIn(["plan:view", "plan:edit"]);
+    const saved = await send(
+      "POST",
+      "/api/customers",
+      { name: unique("Fictional Customer") },
+      planEditor.cookie,
+    );
+    expect(saved.statusCode, saved.body).toBe(201);
+    const { plan } = saved.json<Saved>();
+    expect(plan.activities).toEqual([]);
+    expect(plan.activityColumns).toEqual(noColumns);
+    expect(plan.features).toEqual([]);
+  });
+
+  it("answers a change to an activity without the plan's other records to a role that sees only features", async () => {
+    await liveProject();
+    const featuresEditor = await test.signedIn([
+      "features:view",
+      "features:edit",
+    ]);
+    const saved = await send(
+      "POST",
+      "/api/activities",
+      { name: unique("Fictional Activity"), releaseId: await liveRelease() },
+      featuresEditor.cookie,
+    );
+    expect(saved.statusCode, saved.body).toBe(201);
+    const { plan } = saved.json<Saved>();
+    expect(plan.projects).toEqual([]);
+    expect(plan.customers).toEqual([]);
+    expect(plan.activities.length).toBeGreaterThan(0);
+  });
+
+  it("tells a role that sees features whether it may change them", async () => {
     const member = await test.signedIn("team-member");
-    const read = await readPlan(member.cookie);
-    expect(read.activities.map(({ id }) => id)).toContain(activity.id);
-    expect(read.canEditFeatures).toBe(false);
+    expect((await readPlan(member.cookie)).canEditFeatures).toBe(false);
   });
 });
