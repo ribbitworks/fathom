@@ -327,14 +327,14 @@ describe("the table of lists", () => {
             {
               ...locations,
               builtIn: "feature-statuses",
-              name: "Feature statuses",
+              name: "Statuses",
             },
           ],
         }),
     });
     renderApp("/lists/l1");
     await screen.findByRole("heading", {
-      name: "Feature statuses",
+      name: "Statuses",
       level: 2,
     });
     expect(

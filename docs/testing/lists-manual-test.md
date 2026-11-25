@@ -11,7 +11,7 @@ last_updated: "2026-11-25"
 
 ## Scope
 
-Verifies the Lists page's built-in lists, **Positions**, **Hiring states**, **Proposal statuses**, **Feature statuses**, **Feature priorities**, **Feature sizes** and **Feature risks**:
+Verifies the Lists page's built-in lists, **Positions**, **Hiring states**, **Proposal statuses**, **Statuses**, **Feature priorities**, **Feature sizes** and **Feature risks**:
 
 - Their grey **Built in** box, and the switch that narrows the table to built-in or custom lists.
 - Changing their class, which sets who sees the Position column.
@@ -57,7 +57,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
-- [ ] `97EB` Read the **Name** column of the **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses** rows.
+- [ ] `97EB` Read the **Name** column of the **Feature priorities**, **Feature risks**, **Feature sizes**, **Hiring states**, **Positions**, **Proposal statuses** and **Statuses** rows.
   - **Expected:**
     - Each name has a grey **Built in** box after it.
     - These seven rows are the first in the table, in this order.
@@ -237,7 +237,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `DB05` In the switch beside the page's title, select **Built in**.
   - **Expected:**
-    - The table shows only **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**.
+    - The table shows only **Feature priorities**, **Feature risks**, **Feature sizes**, **Hiring states**, **Positions**, **Proposal statuses** and **Statuses**.
     - The count reads "7 lists".
   - **Notes:**
 

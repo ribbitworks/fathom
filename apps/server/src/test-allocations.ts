@@ -169,7 +169,15 @@ export async function activityAllocation(): Promise<{
     .values({ id: projectId, name: unique("Fictional Project") });
   const [activity] = await test.connection
     .insert(activities)
-    .values({ projectId, name: "Fictional Activity" })
+    .values({
+      projectId,
+      name: "Fictional Activity",
+      statusId: await builtInChoice(
+        test.connection,
+        "feature-statuses",
+        "in-progress",
+      ),
+    })
     .returning({ id: activities.id });
   const id = randomUUID();
   await test.connection.insert(allocations).values({

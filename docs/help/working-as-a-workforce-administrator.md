@@ -105,7 +105,7 @@ To add many at once, paste one choice per line. See [Lists](lists.md#add-choices
 
 ### Rename the Statuses Fathom Starts With
 
-**Feature statuses**, **Proposal statuses** and **Hiring states** are built-in lists. Each choice has a meaning Fathom acts on, so you can call it whatever your organization does.
+**Statuses**, **Proposal statuses** and **Hiring states** are built-in lists. Each choice has a meaning Fathom acts on, so you can call it whatever your organization does.
 
 1. On **Lists**, open the list, such as **Hiring states**.
 1. Select a choice, such as **Request to hire**.

@@ -4,6 +4,7 @@
 // removing them. A development-only package, never in the runtime image.
 
 import {
+  activities,
   type ChangeRecord,
   type Database,
   drafts,
@@ -15,24 +16,16 @@ import {
   privateChanges,
   projects,
   proposals,
-  type Reader,
   recordChanges,
   releaseStreams,
   valueField,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
-import {
-  addMonths,
-  type Cycle,
-  cyclesOf,
-  featureBuiltInLists,
-  horizonFrom,
-  type Meaning,
-  monthOf,
-} from "@fathom/shared";
-import { and, arrayOverlaps, asc, eq, inArray, or, sql } from "drizzle-orm";
+import { type Cycle, cyclesOf, horizonFrom } from "@fathom/shared";
+import { and, arrayOverlaps, eq, inArray, or, sql } from "drizzle-orm";
 import { customerId, featureId, linksAny } from "./projects.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
+import { planningColumns, type SeededPlanning } from "./seeded-planning.ts";
 import { fieldAppsFeatures, fieldAppsKeys } from "./field-apps.ts";
 import { type SeededStream, seededStreams, streamId } from "./releases.ts";
 
@@ -46,25 +39,17 @@ const kindColumnId = fictionalId("field:kind");
 const kindId = (kind: string) => fictionalId(`list-item:kind:${kind}`);
 
 // Each feature's cycle is counted from the one the seed day falls in, before it when negative, or
-// null for Later, in Platform's cycles unless it names another schedule. Its feature team is by its
-// place among the organization's, if it has one. The month it is needed by is counted from the seed
-// day's. Its priority, size and risk are choices of their built-in lists as Fathom starts them, by
-// name.
-export interface SeededFeature {
+// null for Later, in Platform's cycles unless it names another schedule.
+export interface SeededFeature extends SeededPlanning {
   key: string;
   name: string;
-  status: Meaning;
-  priority: "Critical" | "High" | "Medium" | "Low";
-  size?: "XS" | "S" | "M" | "L" | "XL";
-  risk?: "Low" | "Medium" | "High";
-  neededIn?: number;
+  priority: NonNullable<SeededPlanning["priority"]>;
   customers?: readonly string[];
   note?: string;
   kind?: (typeof kinds)[number];
   stream?: StreamName;
   cycle: number | null;
   hours: number | null;
-  team: number | null;
   description: string | null;
 }
 
@@ -276,22 +261,6 @@ async function seedKind(
   return made;
 }
 
-// The choices of the lists the seeded features draw on, by list and name, as Fathom starts them.
-async function builtInChoiceIds(
-  reader: Reader,
-): Promise<(list: string, name: string | undefined) => string | null> {
-  const choices = await reader
-    .select({ id: listItems.id, label: listItems.label, list: lists.builtIn })
-    .from(listItems)
-    .innerJoin(lists, eq(lists.id, listItems.listId))
-    .where(inArray(lists.builtIn, [...featureBuiltInLists]));
-  const ids = new Map(
-    choices.map(({ id, label, list }) => [`${String(list)}:${label}`, id]),
-  );
-  return (list, name) =>
-    name === undefined ? null : (ids.get(`${list}:${name}`) ?? null);
-}
-
 // A schedule's id and cycles, and the place among them of the cycle the seed day falls in.
 interface StreamPlacing {
   id: string;
@@ -336,29 +305,10 @@ export async function seedFeatures(
     if (present !== undefined || streamRows.length < streamNames.length) {
       return false;
     }
-    const statuses = await transaction
-      .select({ id: listItems.id, meaning: listItems.meaning })
-      .from(listItems)
-      .innerJoin(lists, eq(lists.id, listItems.listId))
-      .where(
-        and(
-          eq(lists.builtIn, "feature-statuses"),
-          eq(listItems.retired, false),
-        ),
-      )
-      .orderBy(asc(listItems.position), asc(listItems.id));
-    const statusIdOf = new Map<string | null, string>();
-    for (const { id, meaning } of statuses) {
-      if (!statusIdOf.has(meaning)) statusIdOf.set(meaning, id);
-    }
-    const choiceIdOf = await builtInChoiceIds(transaction);
+    const planningOf = await planningColumns(transaction, today, teamIds);
     const made: SeededChange[] = await seedKind(transaction);
     for (const feature of seededFeatures) {
       const id = featureId(feature.key);
-      const statusId = statusIdOf.get(feature.status);
-      if (statusId === undefined) {
-        throw new Error(`No feature status means ${feature.status}`);
-      }
       const {
         id: targetStreamId,
         cycles,
@@ -368,20 +318,11 @@ export async function seedFeatures(
         feature.cycle === null ? undefined : cycles.at(current + feature.cycle);
       const row = {
         name: feature.name,
-        statusId,
-        priorityId: choiceIdOf("feature-priorities", feature.priority),
-        sizeId: choiceIdOf("feature-sizes", feature.size),
-        riskId: choiceIdOf("feature-risks", feature.risk),
-        neededBy:
-          feature.neededIn === undefined
-            ? null
-            : monthOf(addMonths(today, feature.neededIn)),
+        ...planningOf(feature),
         customerIds: (feature.customers ?? []).map(customerId).sort(),
         targetStreamId: cycle === undefined ? null : targetStreamId,
         targetCycle: cycle?.startsOn ?? null,
         estimateHours: feature.hours,
-        featureTeamId:
-          feature.team === null ? null : (teamIds.at(feature.team) ?? null),
         description: feature.description,
         note: feature.note ?? null,
       };
@@ -536,6 +477,32 @@ async function takeOffProjectsAndProposals(
 // feature teams, whose features added by hand then have no feature team, and every draft of a
 // project or proposal naming them, with the milestones of a project only drafted to be added; the
 // features are taken off every project and proposal.
+// Takes the seeded feature teams off every feature or activity, recording each, so the teams can go.
+async function takeOffTeams(
+  transaction: Parameters<Parameters<Database["transaction"]>[0]>[0],
+  recordType: "feature" | "activity",
+  teamIds: readonly string[],
+): Promise<ChangeRecord[]> {
+  const table = recordType === "feature" ? features : activities;
+  const unteamed = await transaction
+    .select({ id: table.id, teamId: table.featureTeamId })
+    .from(table)
+    .where(inArray(table.featureTeamId, [...teamIds]));
+  await transaction
+    .update(table)
+    .set({ featureTeamId: null })
+    .where(inArray(table.featureTeamId, [...teamIds]));
+  return unteamed.map(({ id, teamId }) => ({
+    recordType,
+    recordId: id,
+    action: "changed" as const,
+    field: "featureTeamId",
+    tier: "general",
+    oldValue: teamId,
+    newValue: null,
+  }));
+}
+
 export async function unseedFeatures(
   database: Database,
   teamIds: readonly string[],
@@ -566,7 +533,7 @@ export async function unseedFeatures(
         .where(
           or(
             and(
-              eq(table.recordType, "feature"),
+              inArray(table.recordType, ["feature", "activity"]),
               or(
                 inArray(table.recordId, ids),
                 inArray(sql`${table.fields}->>'featureTeamId'`, [...teamIds]),
@@ -581,14 +548,10 @@ export async function unseedFeatures(
         );
     }
     const unlinked = await takeOffProjectsAndProposals(transaction, ids);
-    const unteamed = await transaction
-      .select({ id: features.id, teamId: features.featureTeamId })
-      .from(features)
-      .where(inArray(features.featureTeamId, [...teamIds]));
-    await transaction
-      .update(features)
-      .set({ featureTeamId: null })
-      .where(inArray(features.featureTeamId, [...teamIds]));
+    const unteamed = [
+      ...(await takeOffTeams(transaction, "feature", teamIds)),
+      ...(await takeOffTeams(transaction, "activity", teamIds)),
+    ];
     const kindsOf = new Map(
       (
         await transaction
@@ -608,15 +571,7 @@ export async function unseedFeatures(
       .returning();
     await recordChanges(transaction, null, [
       ...unlinked,
-      ...unteamed.map(({ id, teamId }) => ({
-        recordType: "feature",
-        recordId: id,
-        action: "changed" as const,
-        field: "featureTeamId",
-        tier: "general",
-        oldValue: teamId,
-        newValue: null,
-      })),
+      ...unteamed,
       ...removed.flatMap(({ id, ...values }) =>
         recorded("feature", id, "deleted", {
           ...filledIn(values),

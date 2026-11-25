@@ -5,6 +5,7 @@
 // removing them with their drafts, leaving features added by hand.
 
 import {
+  activities,
   changes,
   changeSets,
   createDatabase,
@@ -45,6 +46,7 @@ beforeAll(async () => {
 
 afterEach(async () => {
   await connection.delete(drafts);
+  await connection.delete(activities);
   await connection.delete(projects);
   await connection.delete(proposals);
   await connection.delete(features);
@@ -346,7 +348,7 @@ describe("seeding features", () => {
       .set({ retired: true })
       .where(eq(listItems.meaning, "possible"));
     await expect(seedFeatures(connection, today, [])).rejects.toThrow(
-      "No feature status means possible",
+      "No status means possible",
     );
     await connection
       .update(listItems)
@@ -483,6 +485,49 @@ describe("removing features", () => {
       .from(features)
       .where(eq(features.id, hand));
     expect(kept?.featureTeamId).toBeNull();
+    expect(await connection.select().from(drafts)).toEqual([]);
+  });
+
+  it("takes the seeded feature teams off activities and out of their drafts", async () => {
+    // Given an activity of a project added by hand on a seeded team, and a draft naming it
+    const team = await addTeam();
+    const projectId = randomUUID();
+    await connection
+      .insert(projects)
+      .values({ id: projectId, name: `Fictional Project ${projectId}` });
+    const activityId = randomUUID();
+    await connection.insert(activities).values({
+      id: activityId,
+      projectId,
+      name: "Fictional Hand Activity",
+      statusId: await anyStatus(),
+      featureTeamId: team,
+    });
+    await connection.insert(drafts).values({
+      recordType: "activity",
+      recordId: randomUUID(),
+      action: "created",
+      fields: { projectId, featureTeamId: team },
+    });
+    // When the features are removed with their teams
+    await unseedFeatures(connection, [team]);
+    await connection.delete(featureTeams).where(eq(featureTeams.id, team));
+    // Then the activity has no team, the change is recorded, and the draft is gone
+    const [kept] = await connection
+      .select()
+      .from(activities)
+      .where(eq(activities.id, activityId));
+    expect(kept?.featureTeamId).toBeNull();
+    const recorded = await connection
+      .select({ field: changes.field, oldValue: changes.oldValue })
+      .from(changes)
+      .where(
+        and(
+          eq(changes.recordType, "activity"),
+          eq(changes.recordId, activityId),
+        ),
+      );
+    expect(recorded).toEqual([{ field: "featureTeamId", oldValue: team }]);
     expect(await connection.select().from(drafts)).toEqual([]);
   });
 

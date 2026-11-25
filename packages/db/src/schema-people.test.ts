@@ -96,7 +96,7 @@ describe("planned hires", () => {
           visibility: "general",
         },
         {
-          name: "Feature statuses",
+          name: "Statuses",
           built_in: "feature-statuses",
           visibility: "general",
         },

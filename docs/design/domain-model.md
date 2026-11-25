@@ -55,7 +55,7 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Fields:** a name, required and unique ignoring letter case, and a status, required.
   - **Optional:** a description, plain text up to 200 characters, its Needed by month, customers likely to want it, a note, a target cycle, an estimate, a size, a priority, a risk, a feature team, and the projects and proposals that name it.
   - **Added columns:** its values in the columns added to Features are part of its draft. Kind, product, initiative, theme and complexity are columns users add.
-- **Status:** a choice of the built-in feature statuses, a list with meanings. Fathom acts on the meaning, while each organization names and divides its statuses its own way.
+- **Status:** a choice of the built-in Statuses list, a list with meanings that activities share. Fathom acts on the meaning, while each organization names and divides its statuses its own way.
   - **Possible:** a new feature starts in the first status meaning Possible. A possible feature is the same record a planned one is, so it is planned, staffed and released without being copied.
   - **What counts:** possible features count toward the forecast but not toward over-allocation, and Done or Cancelled ones raise no warnings.
 - **Needed by:** a month and year, the Product Manager's rough wish. It is kept apart from the target cycle, the commitment made in planning, so a rough wish never reads as one.
@@ -66,6 +66,15 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Not staffed:** a feature whose status means Planned or In progress and has no allocations. A planned hire's allocation staffs a feature as a person's does. Whether a feature has allocations is a fact about the feature, not about anyone allocated, so [Roles](../product/roles.md#who-sees-which-people) shows it to everyone who sees features.
 - **Size, Priority and Risk:** each optional, and each a choice of a [built-in list](#built-in-lists). Size has no unit and is never converted to effort. Priority is how much the feature matters to the organization, not within a cycle, and is kept apart from status, so a Long shot can be Critical.
 - **Removing:** refused while a project or proposal names it, as for any record another links to, and while it has allocations, since allocations are time spent; it is cancelled instead.
+
+### Activity
+
+- **What it is:** work a release or a project needs that isn't a feature, such as release testing or data migration, in exactly one release or one project.
+- **Fields:** a name, required and unique ignoring letter case within its release or project, and a status, required, from the Statuses list features use.
+  - **Optional:** a description, a Needed by month, a note, an estimate, a size, a priority, a risk and a feature team, each as a feature has it.
+  - **Added columns:** its values in the columns added to Activities are part of its draft.
+- **Allocations:** people and planned hires are allocated to it month by month, as to a feature. An allocation names one feature or one activity, never both.
+- **Removing:** refused while it has allocations. A release or project with activities can't be removed yet ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
 
 ### Milestone
 
@@ -173,7 +182,7 @@ Percentages are whole.
 
 ### Feature Teams
 
-- **Feature team:** Links a set of features to its members. Membership is separate from reporting lines.
+- **Feature team:** Links a set of features and activities to its members. Membership is separate from reporting lines.
   - **Name:** required, up to 60 characters and unique ignoring letter case, since one person may lead several teams and leads change.
   - **Colour:** optional, from the palette, for the feature team chart. Its name and colour each keep one value, not dated.
   - **Disbanded:** from the first month with none of its members from then on, worked out from its membership records and not stored. A team that has never had a member has not disbanded, and one that disbanded comes back if someone joins it.
@@ -302,7 +311,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 | --- | --- | --- |
 | Positions | Employee, Manager | No meanings. The last position offered cannot be retired or removed, so everyone can be given one. |
 | Hiring states | Request to hire, Approved to hire, Hired, Left | Meanings Proposed, Open, Hired and Left, one choice each to start. |
-| Feature statuses | Possible, Planned, In progress, Done, Cancelled | Meanings Possible, Planned, In progress, Done and Cancelled, one choice each to start. |
+| Statuses | Possible, Planned, In progress, Done, Cancelled | Meanings Possible, Planned, In progress, Done and Cancelled, one choice each to start. Features and activities share it. |
 | Proposal statuses | Open, Won, Lost, Withdrawn | No meanings, since no rules are tied to them. |
 | Feature sizes | XS, S, M, L, XL | Each with a weight relative to S, starting at 0.5, 1, 2, 3 and 4: more than 0 and at most 9,999.99, to two decimal places. A changed weight is a draft of its choice. |
 | Feature priorities | Critical, High, Medium, Low | Ordered, no meanings. |

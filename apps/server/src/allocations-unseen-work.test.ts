@@ -12,7 +12,6 @@ import { errorOf, unique } from "./test-app.ts";
 import {
   type Account,
   addFeature,
-  addGeneralFeature,
   addPerson,
   change,
   changed,
@@ -105,20 +104,6 @@ describe("allocations to a feature a role can't read", () => {
       ({ id }) => id === featureId,
     );
     expect(feature?.colour).toBeNull();
-  });
-
-  it("name a project's general feature by its project only to a role that reads projects", async () => {
-    const personId = await addPerson();
-    const { featureId } = await addGeneralFeature();
-    await changed({ personId, featureId, percentage: 50, from: month(1) });
-    const featuresWithoutPlan = await test.signedIn([
-      ...allocationReader,
-      "features:view",
-    ]);
-    expect(await namedIn(featuresWithoutPlan, featureId)).toBe("A project");
-    expect(await historyNames(featuresWithoutPlan)).toContain(
-      `${await personName(personId)} on a project`,
-    );
   });
 
   it("name the feature in the user's unpublished changes only to a role that reads features", async () => {
