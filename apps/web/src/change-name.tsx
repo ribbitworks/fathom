@@ -65,7 +65,7 @@ function NameForm({
           description="How Fathom shows this account to others. Only an Administrator can change the email address."
           autoComplete="name"
           data-autofocus
-          error={nameProblem(errors.name, "Enter a name.")}
+          error={nameProblem(errors.name, "Name needed")}
           {...form.register("name")}
         />
         <DialogActions

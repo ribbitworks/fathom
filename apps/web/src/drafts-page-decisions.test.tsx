@@ -471,7 +471,7 @@ describe("the Drafts page", () => {
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Reject" }),
     );
-    expect(within(dialog).getByText("Give a reason")).toBeDefined();
+    expect(within(dialog).getByText("Reason needed")).toBeDefined();
     await userEvent.type(
       within(dialog).getByRole("textbox", { name: "Reason" }),
       "  Fictional reason ",

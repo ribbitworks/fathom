@@ -491,7 +491,7 @@ export async function approveDrafts(
       ].some((code) => hasDatabaseCode(error, code))
     ) {
       throw new ConflictError(
-        "A draft no longer fits the data as it is; refresh, change it, then approve it",
+        "A draft no longer fits the data; refresh, change it, then approve it",
       );
     }
     throw error;

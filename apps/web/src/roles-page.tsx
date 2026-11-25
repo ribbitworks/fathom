@@ -264,7 +264,7 @@ function RoleForm({
               label="Name"
               data-autofocus
               disabled={busy}
-              error={nameProblem(errors.name, "Enter a name for the role.")}
+              error={nameProblem(errors.name, "Name needed")}
               {...form.register("name")}
             />
             <Textarea

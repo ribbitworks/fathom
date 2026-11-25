@@ -397,7 +397,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `CD73` Select **Create role** with the name empty.
-  - **Expected:** "Enter a name for the role." shows under **Name**.
+  - **Expected:** "Name needed" shows under **Name**.
   - **Notes:**
 
 - [ ] `2E8E` Type `team member` in **Name**.

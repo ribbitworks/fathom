@@ -639,7 +639,7 @@ export async function publishUnpublished(
     const misfit = rows.find((row) => !fits(versions, row, taken));
     if (misfit !== undefined) {
       throw new ConflictError(
-        `The change to ${subjectOf(versions, misfit, actor)} no longer fits the data as it is now; change or discard it, then publish again`,
+        `The change to ${subjectOf(versions, misfit, actor)} no longer fits the data; change or discard it, then publish again`,
       );
     }
     for (const row of rows) {

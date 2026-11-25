@@ -470,7 +470,7 @@ describe("publishing and discarding", () => {
         "POST",
         "/api/unpublished/publish",
         undefined,
-        `The change to ${subject} no longer fits the data as it is now; change or discard it, then publish again`,
+        `The change to ${subject} no longer fits the data; change or discard it, then publish again`,
       );
       expect(await discard(bob)).toBeGreaterThan(0);
     };
