@@ -16,7 +16,7 @@ import { RecordSection, Row } from "./record-details.tsx";
 import { RecordKey } from "./record-key.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import { FactBox } from "./status-mark.tsx";
-import { useTurnedOff } from "./turned-off.tsx";
+import { useTurnedOff, WithReason } from "./turned-off.tsx";
 
 export const accountPanelId = "account-panel";
 const titleId = "account-panel-title";
@@ -30,7 +30,7 @@ export interface AccountActions {
   deactivateRefused: string | undefined;
 }
 
-// What can be done to the account, with why Deactivate… is turned off under the buttons.
+// What can be done to the account, with why Deactivate… is turned off under it.
 function AccountButtons({
   account,
   own,
@@ -42,16 +42,16 @@ function AccountButtons({
 }) {
   const { control, line } = useTurnedOff(actions.deactivateRefused);
   return (
-    <Stack gap="xs">
-      <Group gap="xs">
-        <Button variant="default" onClick={actions.edit}>
-          Edit…
+    <Group gap="xs" align="flex-start">
+      <Button variant="default" onClick={actions.edit}>
+        Edit…
+      </Button>
+      {!own && (
+        <Button variant="default" onClick={actions.resetPassword}>
+          Reset password…
         </Button>
-        {!own && (
-          <Button variant="default" onClick={actions.resetPassword}>
-            Reset password…
-          </Button>
-        )}
+      )}
+      <WithReason align="start">
         <Button
           {...(account.active
             ? { variant: "outline", color: "red" }
@@ -61,9 +61,9 @@ function AccountButtons({
         >
           {account.active ? "Deactivate…" : "Reactivate…"}
         </Button>
-      </Group>
-      {line}
-    </Stack>
+        {line}
+      </WithReason>
+    </Group>
   );
 }
 

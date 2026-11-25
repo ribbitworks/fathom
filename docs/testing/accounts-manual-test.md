@@ -466,20 +466,20 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - The account's side panel opens, headed "Fathom Administrator", followed by a grey "This account" box
     - Under the **Details** section, the buttons are **Edit…** and **Deactivate…**, with no **Reset password…**
     - **Deactivate…** is greyed out
-    - Under the buttons, a dimmed line says why **Deactivate…** is greyed out
+    - Under **Deactivate…**, a dimmed line reads "No other account can manage accounts."
   - **Notes:**
 
 - [ ] `1A99` Select **Edit…** in the side panel.
   - **Expected:**
     - A dialog titled "Edit Fathom Administrator" opens
     - In the role list, **Administrator** is ticked and greyed out
-    - Under the description of **Administrator**, lined up with it, a dimmed line says why it is greyed out
+    - Under **Administrator**, in place of its description, a dimmed line reads "No other account can manage accounts."
     - Every other role can be ticked, with no such line under it
   - **Notes:**
 
 - [ ] `DD84` Tick **Superuser** in the role list.
   - **Expected:**
-    - **Administrator** is no longer greyed out, and the dimmed line under it has gone
+    - **Administrator** is no longer greyed out, and its description shows under it again
     - Under the role list, **Default role** shows **Administrator** and **Superuser**, with **Administrator** chosen
   - **Notes:**
 

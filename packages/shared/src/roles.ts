@@ -114,8 +114,7 @@ export function staysManageable(accounts: Holders, roles: Grants): boolean {
 
 // Why an account can't give up the role that alone lets it manage accounts, or be deactivated, while
 // no other active account manages them, as the server refuses it and the page says it.
-export const lastAccountManagerWords =
-  "No other active account can manage accounts. Give another one a role with Edit Administration first.";
+export const lastAccountManagerWords = "No other account can manage accounts.";
 
 // The kept permissions a role granting these cannot give up, since without it no active account
 // would hold each.

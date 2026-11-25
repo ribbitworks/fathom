@@ -6,6 +6,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+// Setup signs each one in at once, and the server lets the development accounts sign in at most five
+// times a minute between them, so the list stays at five and nothing else signs in during setup.
 export const accounts = [
   { name: "productManager", email: "product.manager@fathom.test" },
   { name: "engineeringDirector", email: "engineering.director@fathom.test" },
@@ -14,6 +16,7 @@ export const accounts = [
     email: "engineering.operations.manager@fathom.test",
   },
   { name: "featureLead", email: "feature.lead@fathom.test" },
+  { name: "fathomAdministrator", email: "fathom.administrator@fathom.test" },
 ] as const;
 
 export type AccountName = (typeof accounts)[number]["name"];

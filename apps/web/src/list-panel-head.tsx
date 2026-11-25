@@ -4,14 +4,14 @@
 // the buttons and menu that act on the whole list.
 
 import type { List } from "@fathom/shared";
-import { Button, Stack } from "@mantine/core";
+import { Button } from "@mantine/core";
 import type { ReactNode } from "react";
 import { type DraftSelection, noDrafts } from "./drafts.ts";
 import { ListDraftMenu, type ListDraftActions } from "./list-drafts.tsx";
 import { ListFacts } from "./list-facts.tsx";
 import { liveLists, withRetiring } from "./lists.ts";
 import { RecordKey } from "./record-key.tsx";
-import { RightReasonLine, useTurnedOff } from "./turned-off.tsx";
+import { RightReasonLine, useTurnedOff, WithReason } from "./turned-off.tsx";
 import { changedValue, emptiedWords, recordMark } from "./draft-marks.ts";
 import {
   DraftedItem,
@@ -71,7 +71,7 @@ function ChangeClass({
     RightReasonLine,
   );
   return (
-    <Stack gap={2} align="flex-end">
+    <WithReason align="end">
       <Button
         variant="default"
         size="compact-sm"
@@ -81,7 +81,7 @@ function ChangeClass({
         Change class…
       </Button>
       {line}
-    </Stack>
+    </WithReason>
   );
 }
 

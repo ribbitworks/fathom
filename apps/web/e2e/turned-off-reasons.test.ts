@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// UI tests of a control turned off with a line under it saying why, which a screen reader hears with
-// the control.
+// UI tests of a control turned off with a line saying why, which a screen reader hears with the
+// control.
 
 import { expect, type Page, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
 
-const why =
-  "No other active account can manage accounts. Give another one a role with Edit Administration first.";
+test.use({ storageState: signedInAs("fathomAdministrator") });
+
+const why = "No other account can manage accounts.";
 
 // One's own account is headed with This account after the name.
 async function openAccount(page: Page, name: string, heading = name) {
@@ -30,7 +31,7 @@ test("says why the last account that manages accounts can't give up its role or 
 }) => {
   // Given the Fathom Administrator on Accounts, with Superuser, the other account that manages
   // accounts, deactivated
-  await signIn(page, "/accounts", "fathom.administrator@fathom.test");
+  await page.goto("/accounts");
   await changeActive(page, "Superuser", "Deactivate");
   try {
     const changes: string[] = [];
@@ -52,7 +53,8 @@ test("says why the last account that manages accounts can't give up its role or 
     await expect(deactivate).toHaveAccessibleDescription(why);
     await expect(panel.getByText(why)).toBeVisible();
 
-    // And in Edit, the Administrator role is ticked and turned off, with the reason under it
+    // And in Edit, the Administrator role is ticked and turned off, with the reason in place of its
+    // description
     await panel.getByRole("button", { name: "Edit…" }).click();
     const dialog = page.getByRole("dialog", {
       name: "Edit Fathom Administrator",
@@ -63,9 +65,7 @@ test("says why the last account that manages accounts can't give up its role or 
     });
     await expect(administrator).toBeChecked();
     await expect(administrator).toBeDisabled();
-    await expect(administrator).toHaveAccessibleDescription(
-      / No other active account can manage accounts\. Give another one a role with Edit Administration first\.$/,
-    );
+    await expect(administrator).toHaveAccessibleDescription(why);
     await expect(dialog.getByText(why)).toBeVisible();
 
     // And nothing was sent to be saved

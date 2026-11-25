@@ -4,9 +4,11 @@
 // which describes the control so a screen reader hears the reason with it. The page decides why; the
 // line is placed where the control's layout wants it.
 
-import { Text, type TextProps } from "@mantine/core";
+import { Stack, Text, type TextProps } from "@mantine/core";
 import { type ComponentType, type ReactNode, useId } from "react";
-import classes from "./turned-off.module.css";
+
+// The room between a control and its reason line, so the line reads as the control's.
+const reasonGap = 2;
 
 export interface ReasonLineProps {
   id: string;
@@ -18,7 +20,7 @@ export function ReasonLine({
   id,
   children,
   ...placed
-}: ReasonLineProps & Pick<TextProps, "ta" | "className">) {
+}: ReasonLineProps & Pick<TextProps, "ta">) {
   return (
     <Text id={id} size="xs" c="dimmed" {...placed}>
       {children}
@@ -26,14 +28,27 @@ export function ReasonLine({
   );
 }
 
-// The line under a tick box, lined up with its label and description.
-export function TickReasonLine(props: ReasonLineProps) {
-  return <ReasonLine {...props} className={classes.underTick} />;
-}
-
 // The line under a control at the right of a row, ending under it.
 export function RightReasonLine(props: ReasonLineProps) {
   return <ReasonLine {...props} ta="right" />;
+}
+
+// A control with its reason line under it, lined up at the start or the end of the control.
+export function WithReason({
+  align,
+  children,
+}: {
+  align: "start" | "end";
+  children: ReactNode;
+}) {
+  return (
+    <Stack
+      gap={reasonGap}
+      align={align === "start" ? "flex-start" : "flex-end"}
+    >
+      {children}
+    </Stack>
+  );
 }
 
 export interface TurnedOffControl {

@@ -61,7 +61,6 @@ import { useNarrow } from "./side-panel.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import { TableTips } from "./table-tips.tsx";
 import type { View } from "./table-view.ts";
-import { TickReasonLine, useTurnedOff } from "./turned-off.tsx";
 
 type Dialog =
   | { kind: "create" }
@@ -109,7 +108,8 @@ const accountFormSchema = newAccountSchema.extend({
 
 type AccountForm = z.infer<typeof accountFormSchema>;
 
-// One role's tick box, turned off, with why under it, while the server would refuse to take it away.
+// One role's tick box, turned off while the server would refuse to take it away, with why in place of
+// the role's description, so it reads as why the box is greyed.
 function RoleBox({
   role,
   refused,
@@ -119,21 +119,14 @@ function RoleBox({
   refused: boolean;
   inputRef: Ref<HTMLInputElement> | undefined;
 }) {
-  const { control, line } = useTurnedOff(
-    refused ? lastAccountManagerWords : undefined,
-    TickReasonLine,
-  );
   return (
-    <div>
-      <Checkbox
-        ref={inputRef}
-        value={role.id}
-        label={role.name}
-        description={role.description}
-        {...control}
-      />
-      {line}
-    </div>
+    <Checkbox
+      ref={inputRef}
+      value={role.id}
+      label={role.name}
+      description={refused ? lastAccountManagerWords : role.description}
+      disabled={refused}
+    />
   );
 }
 
