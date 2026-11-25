@@ -40,6 +40,7 @@ export const planColumnNames = {
   link: "Link",
   statusId: "Status",
   projectId: "Project",
+  releaseId: "Release",
   date: "Date",
   customerDelivery: "Customer delivery",
   estimateHours: "Effort",

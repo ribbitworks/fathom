@@ -1576,6 +1576,7 @@ describe("every starting role on every view table", () => {
   > = {
     people: { opens: everyoneButAdministrator, shares: peopleEditors },
     features: { opens: everyoneButAdministrator, shares: featureEditors },
+    activities: { opens: everyoneButAdministrator, shares: featureEditors },
     projects: { opens: everyoneButAdministrator, shares: planEditors },
     proposals: { opens: everyoneButAdministrator, shares: planEditors },
     customers: { opens: everyoneButAdministrator, shares: planEditors },

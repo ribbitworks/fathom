@@ -51,6 +51,7 @@ export const viewTables: Record<ViewTable, ViewTableRules> = {
     }),
   },
   features: generalTable(pageNeeds.features),
+  activities: generalTable(pageNeeds.activities),
   projects: generalTable(pageNeeds.projects),
   proposals: generalTable(pageNeeds.projects),
   customers: generalTable(pageNeeds.projects),

@@ -4,24 +4,10 @@
 
 import {
   type Choice,
-  type EffortConversions,
-  effortUnitSchema,
-  enteredHours,
-  exactEffort,
-  largestEstimateHours,
-  largestIn,
   type Feature,
-  featureLengths,
-  isCommitted,
-  type Meaning,
-  needsFeatureTeam,
   planColumnNames,
   type Project,
   type Proposal,
-  roundedUpTo,
-  shownEffort,
-  startingEffortConversions,
-  typedNumber,
 } from "@fathom/shared";
 import {
   addedColumn,
@@ -29,9 +15,6 @@ import {
   cellRequest,
 } from "./added-columns.ts";
 import type { CellChange } from "./cell-kinds.tsx";
-import { EffortCell } from "./effort-cell.tsx";
-import { effortColumnUnits, hoursWords, unitLabel } from "./effort.ts";
-import { decimalUpTo } from "./numbers.ts";
 import { choice } from "./lists.ts";
 import {
   cycleChoiceId,
@@ -45,9 +28,7 @@ import { inOrder } from "./grid-columns.tsx";
 import {
   customersColumn,
   field,
-  firstStatus,
   merged,
-  nameColumn,
   newKind,
   namersColumn,
   type PlanChange,
@@ -62,9 +43,12 @@ import {
   type RecordTable,
   type RowGrouping,
 } from "./record-table.ts";
-import type { ColumnUnit } from "./table-view.ts";
-import { formatMonth } from "./day-formats.ts";
 import { type RowGroup, rankOfNone } from "./row-groups.ts";
+import {
+  byNeededBy,
+  planningColumns,
+  staffedColumnKey,
+} from "./planning-columns.tsx";
 
 // A column of the projects or proposals that name a feature. It is set on a feature once it is added.
 function featureNamersColumn(
@@ -88,97 +72,6 @@ const cycleOf = (target: {
   typeof target.targetCycle === "string"
     ? [cycleChoiceId(target.targetStreamId, target.targetCycle)]
     : [];
-
-// Estimates are rough, so their amounts show no more than two decimal places, rounded up.
-const effortPlaces = [0, 1, 2];
-const effortPlacesAtFirst = 2;
-// What floating point leaves of an amount that was not rounded, far below any place shown.
-const roundingLeft = 1e-9;
-
-const labelled = (
-  unit: (typeof effortColumnUnits)[number],
-  conversions: EffortConversions,
-) => ({ ...unit, label: unitLabel(unit, conversions) });
-
-// A feature's estimate, kept in hours and shown in the unit the view names, in which it is typed.
-// Without the conversions, as for a draft's details, it is offered in hours alone, which need none.
-function effortColumn(
-  conversions: EffortConversions | undefined,
-): Column<Feature, PlanChange> {
-  const [hours, ...others] = effortColumnUnits;
-  const converting = conversions ?? startingEffortConversions;
-  const shownIn = (
-    unit: ColumnUnit,
-    places: number,
-  ): Column<Feature, PlanChange> => {
-    const effortUnit = effortUnitSchema.catch(hours.key).parse(unit.key);
-    const amountOf = (estimate: number) =>
-      shownEffort(estimate, effortUnit, converting);
-    const inUnit = (estimate: unknown) =>
-      typeof estimate === "number" ? String(amountOf(estimate)) : "";
-    return {
-      ...field<Feature>(
-        "estimateHours",
-        planColumnNames.estimateHours,
-        "number",
-      ),
-      unit,
-      least: 0,
-      most: largestIn(largestEstimateHours, effortUnit, converting),
-      // Hours add up, shown in the unit the column is, rounded up as its cells are. A feature's
-      // effort is what its rows are most often added up by.
-      sum: {
-        amount: (feature) => feature.estimateHours,
-        shown: (hours) =>
-          decimalUpTo(roundedUpTo(amountOf(hours), places), places),
-        atFirst: true,
-      },
-      value: (feature) => inUnit(feature.estimateHours),
-      live: (draft) => inUnit((draft.live as Partial<Feature>).estimateHours),
-      change: (value) => {
-        const typed = typedNumber(value as string);
-        return {
-          estimateHours:
-            typed === undefined
-              ? null
-              : enteredHours(typed, effortUnit, converting),
-        };
-      },
-      content: ({ estimateHours }) => {
-        if (estimateHours === null) return null;
-        const amount = roundedUpTo(amountOf(estimateHours), places);
-        const exact = exactEffort(estimateHours, effortUnit, converting);
-        return (
-          <EffortCell
-            shown={decimalUpTo(amount, places)}
-            amount={amount}
-            unit={unit}
-            hours={hoursWords(
-              estimateHours,
-              Math.abs(amount - exact) > roundingLeft,
-            )}
-          />
-        );
-      },
-    };
-  };
-  return {
-    ...shownIn(hours, effortPlacesAtFirst),
-    // Breaking down by effort counts only whether features have an estimate, which says little.
-    breaksDown: false,
-    units: {
-      offered:
-        conversions === undefined
-          ? [hours]
-          : [
-              labelled(hours, conversions),
-              ...others.map((unit) => labelled(unit, conversions)),
-            ],
-      places: { offered: effortPlaces, starting: effortPlacesAtFirst },
-      shownIn,
-    },
-  };
-}
 
 export const releaseColumnKey = "release";
 
@@ -206,41 +99,6 @@ function releaseColumn(
     choiceColour: (key) => groups.get(key)?.colour ?? null,
     value: releaseOf,
     live: (draft) => releaseOf(draft.live),
-    change: () => ({}),
-  };
-}
-
-// The words for a feature with no feature team, as its empty value and as the warning in its place.
-const noFeatureTeam = "No feature team";
-
-export const staffedColumnKey = "staffed";
-
-export const staffedChoices = { yes: "yes", no: "no" } as const;
-
-// Yes or No for a committed feature, whether any allocation gives it a month, and empty for others,
-// worked out rather than entered, so Not staffed is a plain filter.
-function staffedColumn(
-  meaningOf: ReadonlyMap<string, Meaning | null | undefined>,
-): Column<Feature, PlanChange> {
-  const staffedOf = ({
-    statusId,
-    staffed,
-  }: Pick<Feature, "statusId" | "staffed">) => {
-    if (!isCommitted(meaningOf.get(statusId))) return [];
-    return [staffed ? staffedChoices.yes : staffedChoices.no];
-  };
-  return {
-    ...field<Feature>(staffedColumnKey, "Staffed", "choice", {
-      readOnly: true,
-      emptyLabel: "Not committed",
-      choices: [
-        choice(staffedChoices.yes, "Yes", false),
-        choice(staffedChoices.no, "No", false),
-      ],
-    }),
-    value: staffedOf,
-    // Allocations' drafts change it, never the feature's own, so its draft never names it.
-    live: () => [],
     change: () => ({}),
   };
 }
@@ -288,28 +146,8 @@ export function featureColumns(
     editsFeatureTeams = false,
   }: { shown?: AddedColumns } & FeatureEdits = {},
 ): Column<Feature, PlanChange>[] {
-  const meaningOf = new Map(
-    choices.featureStatuses.map(({ id, meaning }) => [id, meaning]),
-  );
   const builtIn: Column<Feature, PlanChange>[] = [
-    nameColumn<Feature>(),
-    {
-      ...field<Feature>("statusId", planColumnNames.statusId, "choice", {
-        required: true,
-        choices: choices.featureStatuses,
-      }),
-      newRowValue: () => firstStatus(choices.featureStatuses, "possible"),
-    },
-    field<Feature>("priorityId", planColumnNames.priorityId, "choice", {
-      choices: choices.priorities,
-    }),
-    field<Feature>("sizeId", planColumnNames.sizeId, "choice", {
-      choices: choices.sizes,
-    }),
-    field<Feature>("riskId", planColumnNames.riskId, "choice", {
-      choices: choices.risks,
-    }),
-    field<Feature>("neededBy", planColumnNames.neededBy, "month"),
+    ...planningColumns<Feature>(choices, { editsFeatureTeams }),
     {
       ...customersColumn<Feature>(choices.customers, choices.drafted.features),
       readOnlyOn: () => !editsCommitments,
@@ -328,10 +166,6 @@ export function featureColumns(
       choices.drafted.proposals,
       editsCommitments,
     ),
-    field<Feature>("description", planColumnNames.description, "text", {
-      maxLength: featureLengths.description,
-    }),
-    field<Feature>("note", planColumnNames.note, "note"),
     {
       ...field<Feature>("targetCycle", planColumnNames.targetCycle, "choice", {
         choices: choices.cycles,
@@ -342,28 +176,6 @@ export function featureColumns(
       change: (value) => targetOf((value as string[]).at(0)),
     },
     releaseColumn(choices.releaseOfCycle),
-    effortColumn(choices.effortConversions),
-    staffedColumn(meaningOf),
-    {
-      ...field<Feature>(
-        "featureTeamId",
-        planColumnNames.featureTeamId,
-        "choice",
-        {
-          choices: choices.featureTeams,
-          emptyLabel: noFeatureTeam,
-        },
-      ),
-      choiceColour: (id) => choices.featureTeamColours.get(id) ?? null,
-      status: (feature) =>
-        needsFeatureTeam(meaningOf.get(feature.statusId), feature.featureTeamId)
-          ? {
-              words: noFeatureTeam,
-              spoken: "it needs a feature team to own it",
-            }
-          : undefined,
-      readOnlyOn: () => !editsFeatureTeams,
-    },
   ];
   const inGroups = inGroupOrder(builtIn, featureColumnGroups);
   // The built-in columns follow the details' groups; the server's order places the added ones.
@@ -407,22 +219,6 @@ const byCycle = (cycles: readonly Choice[]) =>
       cycles.map(({ id, label }, rank) => [id, { key: id, label, rank }]),
     ),
   );
-
-// The rows' groups: each month a feature is needed by, earliest first, then those with none.
-const byNeededBy: RowGrouping<Feature> = {
-  key: "neededBy",
-  label: "Needed by",
-  holds: "time",
-  of: ({ neededBy }) => [
-    neededBy === null
-      ? { key: "no-date", label: "No date", rank: rankOfNone }
-      : {
-          key: neededBy,
-          label: formatMonth(neededBy),
-          rank: Number(neededBy.replace("-", "")),
-        },
-  ],
-};
 
 // The columns whose choices the rows can be grouped by, a feature under each it holds, apart from
 // the target cycle and its release, grouped by their own.

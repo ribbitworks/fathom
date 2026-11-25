@@ -5,6 +5,7 @@
 // the plan's records or sending rejected ones for approval again; with each record as decisions on
 // its draft name it.
 
+import { withSchedule } from "@fathom/shared";
 import {
   type Feature,
   changeSetIdSchema,
@@ -446,8 +447,7 @@ export const releaseColourStyle = (
 
 // A cycle or release named with its schedule, such as "Platform: 27.1", where nothing around it says
 // which schedule it is in.
-export const withSchedule = (stream: { name: string }, name: string): string =>
-  `${stream.name}: ${name}`;
+export { withSchedule };
 
 // A run of cycles in words, from the first's name to the last's, such as "26.1 to 26.2", or the one
 // cycle's name.

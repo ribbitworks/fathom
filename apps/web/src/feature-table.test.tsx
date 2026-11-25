@@ -8,8 +8,8 @@ import {
   featureColumnGroups,
   featureColumns,
   featureTable,
-  staffedChoices,
 } from "./feature-table.tsx";
+import { staffedChoices } from "./planning-columns.tsx";
 import { livePlanRecords } from "./plan-table.tsx";
 import { planDraftFields } from "./project-grids.tsx";
 import { cycleChoices, releaseOfCycle } from "./projects.ts";

@@ -2,7 +2,7 @@
 
 // UI tests of adding a record from its New panel: the cursor starts in its first field typed into,
 // Enter adds the record or fills a planned hire, Esc reaches the panel, and a required value left
-// empty is refused.
+// empty, or an activity of no owner, is refused.
 
 import { expect, test } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";
@@ -124,4 +124,39 @@ test.describe("as the Engineering Director", () => {
       page.getByRole("heading", { name: /Fictional Starter/ }),
     ).toBeVisible();
   });
+});
+
+test("refuses a new activity of neither a release nor a project, naming why under Release and saving nothing", async ({
+  page,
+}) => {
+  // Given the Product Manager on Activities, with the New activity panel open
+  await page.goto("/activities");
+  const count = page.getByRole("status").filter({ hasText: /activit(y|ies)$/ });
+  const before = await count.innerText();
+  expect(before).toMatch(/^\d+ activit(y|ies)$/);
+  const changes: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() !== "GET" && request.url().includes("/api/"))
+      changes.push(`${request.method()} ${request.url()}`);
+  });
+  await page.getByRole("button", { name: "New activity" }).click();
+  const panel = page.getByRole("region", { name: "New activity" });
+
+  // When it is named, with no release or project, and added
+  await panel
+    .getByRole("textbox", { name: "Name" })
+    .fill("Fictional Rehearsal");
+  await panel.getByRole("button", { name: "Add", exact: true }).click();
+
+  // Then the reason shows under Release, which has the focus
+  const release = panel.getByRole("button", { name: "Change Release" });
+  await expect(panel.getByText("Choose a release or a project")).toBeVisible();
+  await expect(release).toBeFocused();
+  await expect(panel).toBeVisible();
+
+  // And nothing was sent to be saved, and the activities are as they were once the page is loaded
+  // again
+  expect(changes).toEqual([]);
+  await page.reload();
+  await expect(count).toHaveText(before);
 });

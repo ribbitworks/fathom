@@ -384,6 +384,50 @@ export const featuresRoute = createRoute({
   },
 });
 
+// Activities' address adds a column a link opens.
+const activitiesSearch = planRecordSearch.extend({
+  column: linkedColumnSearch,
+});
+
+export const activitiesRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/activities",
+  validateSearch: activitiesSearch,
+  beforeLoad: (match) => {
+    reaching("activities")(match);
+    openOnLastView(match, shownOn("activities", match.search));
+  },
+  component: function Activities() {
+    const { permissions } = signedIn.useRouteContext();
+    const navigate = activitiesRoute.useNavigate();
+    const { open, note, tableNote, column, ...search } =
+      activitiesRoute.useSearch();
+    const notes = { note, tableNote };
+    const linkedColumn = useLinkedColumn(column, () => {
+      void navigate({
+        search: (shown) => ({ ...shown, column: undefined }),
+        replace: true,
+      });
+    });
+    return (
+      <ProjectsPage
+        linkedColumn={linkedColumn}
+        tab="activities"
+        canEditColumns={editsColumnsOf(permissions, "activities")}
+        canShareViews={sharesViews("activities", permissions)}
+        approves={approvableKinds(permissions)}
+        {...viewProps(search, (next, replace) => {
+          void navigate({ search: { ...next, open, ...notes }, replace });
+        })}
+        open={open}
+        onOpen={(next) => {
+          void navigate({ search: { ...search, open: next, ...notes } });
+        }}
+      />
+    );
+  },
+});
+
 export const projectsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/projects",

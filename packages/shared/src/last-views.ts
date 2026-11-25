@@ -15,6 +15,7 @@ import { strictDefinitionSchema } from "./views.ts";
 export const viewPageSchema = z.enum([
   "people",
   "features",
+  "activities",
   "projects",
   "releases",
   "lists",
@@ -33,6 +34,7 @@ viewPageSchema.options satisfies readonly GuardedPage[];
 export const viewPageOf: Record<ViewTable, ViewPage> = {
   people: "people",
   features: "features",
+  activities: "activities",
   projects: "projects",
   proposals: "projects",
   customers: "projects",
@@ -52,6 +54,7 @@ export const viewPageOf: Record<ViewTable, ViewPage> = {
 export const firstTables: Record<ViewPage, ViewTable> = {
   people: "people",
   features: "features",
+  activities: "activities",
   projects: "projects",
   releases: "releases",
   lists: "lists",

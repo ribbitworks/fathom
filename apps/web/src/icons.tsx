@@ -54,6 +54,12 @@ const paths = {
       <path d="M2 8l6 3 6-3M2 11l6 3 6-3" />
     </>
   ),
+  activities: (
+    <>
+      <path d="M2.5 4.5l1.3 1.3L6.3 3.3M2.5 11l1.3 1.3 2.5-2.5" />
+      <path d="M8.5 4.5h5M8.5 11h5" />
+    </>
+  ),
   lists: (
     <>
       <path d="M6 4h8M6 8h8M6 12h8" />

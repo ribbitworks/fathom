@@ -58,6 +58,7 @@ export const changingSchedules: Needs = {
 export const viewTableNeeds: Record<ViewTable, Needs> = {
   people: allOf("people:view"),
   features: allOf("features:view"),
+  activities: allOf("features:view"),
   projects: allOf("plan:view"),
   proposals: allOf("plan:view"),
   customers: allOf("plan:view"),

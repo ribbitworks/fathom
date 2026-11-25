@@ -24,6 +24,10 @@ export const releaseLengths = {
 
 // How drafts and decisions name a stream, a change of its cycles, and a release, in the server and
 // the browser alike.
+// A schedule's cycle or release named with its schedule, such as Platform: Harbor 1.
+export const withSchedule = (stream: { name: string }, name: string): string =>
+  `${stream.name}: ${name}`;
+
 export const planSubjects = {
   stream: (stream: string) => `the schedule ${stream}`,
   pattern: (stream: string, startsOn: string) =>

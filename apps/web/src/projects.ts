@@ -6,6 +6,8 @@
 
 import {
   type Choice,
+  type Activity,
+  type ActivityRequest,
   type Customer,
   type CustomerRequest,
   type EffortConversions,
@@ -61,19 +63,22 @@ export const planChoicesQuery = queryOptions({
 export const asChoices = (choices: readonly PlanChoice[]): Choice[] =>
   choices.map(({ id, name, retired }) => choice(id, name, retired));
 
-export type PlanKind = "customer" | "project" | "proposal" | "feature";
+export type PlanKind =
+  "customer" | "project" | "proposal" | "feature" | "activity";
 
 export type PlanRequest =
   | { type: "customer"; request: CustomerRequest }
   | { type: "project"; request: ProjectRequest }
   | { type: "proposal"; request: ProposalRequest }
-  | { type: "feature"; request: FeatureRequest };
+  | { type: "feature"; request: FeatureRequest }
+  | { type: "activity"; request: ActivityRequest };
 
 const paths: Readonly<Record<PlanKind, string>> = {
   customer: "/api/customers",
   project: "/api/projects",
   proposal: "/api/proposals",
   feature: "/api/features",
+  activity: "/api/activities",
 };
 
 const savedPlan = z.object({
@@ -275,8 +280,8 @@ export const milestoneRequest = (milestone: Milestone): MilestoneRequest => ({
   customerDelivery: milestone.customerDelivery,
 });
 
-// The fields a feature's table edits, as the server shows them.
-export type FeatureFields = Pick<
+// The planning fields a feature's or an activity's table edits, as the server shows them.
+export type PlanningFields = Pick<
   Feature,
   | "name"
   | "statusId"
@@ -284,18 +289,19 @@ export type FeatureFields = Pick<
   | "sizeId"
   | "riskId"
   | "neededBy"
-  | "customerIds"
-  | "targetStreamId"
-  | "targetCycle"
   | "estimateHours"
   | "featureTeamId"
   | "description"
   | "note"
 >;
 
-// What saving a feature sends: its target as a stream and a cycle together, and only the added
-// columns' values it changes, since the server keeps those not named.
-export const featureRequest = (
+// The fields a feature's table edits, as the server shows them.
+export type FeatureFields = PlanningFields &
+  Pick<Feature, "customerIds" | "targetStreamId" | "targetCycle">;
+
+// What saving a feature's or an activity's planning fields sends: only the added columns' values it
+// changes, since the server keeps those not named.
+export const planningRequest = (
   {
     name,
     statusId,
@@ -303,23 +309,19 @@ export const featureRequest = (
     sizeId,
     riskId,
     neededBy,
-    customerIds,
     estimateHours,
     featureTeamId,
     description,
     note,
-    targetStreamId,
-    targetCycle,
-  }: FeatureFields,
+  }: PlanningFields,
   { values = {}, links = {}, notes = {}, numbers = {} }: CellChange = {},
-): FeatureRequest => ({
+) => ({
   name,
   ...(statusId === "" ? {} : { statusId }),
   priorityId,
   sizeId,
   riskId,
   neededBy,
-  customerIds,
   estimateHours,
   featureTeamId,
   description,
@@ -328,11 +330,49 @@ export const featureRequest = (
   links,
   notes,
   numbers,
-  target:
-    targetStreamId === null || targetCycle === null
-      ? null
-      : { streamId: targetStreamId, cycle: targetCycle },
 });
+
+// What saving a feature sends: its planning fields, its customers, and its target as a stream and
+// a cycle together.
+export const featureRequest = (
+  fields: FeatureFields,
+  change: CellChange = {},
+): FeatureRequest => ({
+  ...planningRequest(fields, change),
+  customerIds: fields.customerIds,
+  target:
+    fields.targetStreamId === null || fields.targetCycle === null
+      ? null
+      : { streamId: fields.targetStreamId, cycle: fields.targetCycle },
+});
+
+// The fields an activity's table edits, as the server shows them.
+export type ActivityFields = PlanningFields &
+  Pick<Activity, "releaseId" | "projectId">;
+
+// What saving an activity sends: its planning fields and what it belongs to.
+export const activityRequest = (
+  fields: ActivityFields,
+  change: CellChange = {},
+): ActivityRequest => ({
+  ...planningRequest(fields, change),
+  releaseId: fields.releaseId,
+  projectId: fields.projectId,
+});
+
+// An activity as a change makes it: choosing its release or its project moves it there, clearing
+// the other, since it belongs to exactly one.
+export const movedActivity = (
+  activity: ActivityFields,
+  change: Partial<ActivityFields>,
+): ActivityFields => {
+  const moved = { ...activity, ...change };
+  if (typeof change.releaseId === "string")
+    return { ...moved, projectId: null };
+  if (typeof change.projectId === "string")
+    return { ...moved, releaseId: null };
+  return moved;
+};
 
 // Every milestone of every project.
 export const allMilestones = (plan: Pick<ProjectPlan, "projects">) =>
@@ -412,7 +452,7 @@ export const projectTabs = [
 export type ProjectTab = (typeof projectTabs)[number];
 
 // What the plan's page shows: one of the Projects page's tabs, or the Features page.
-export type PlanTab = ProjectTab | "features";
+export type PlanTab = ProjectTab | "features" | "activities";
 
 // The Projects page's address for a tab, with a record's details open if one is named.
 const projectsTabSearch = (next: ProjectTab, record?: string) => ({
@@ -421,17 +461,23 @@ const projectsTabSearch = (next: ProjectTab, record?: string) => ({
 });
 
 // The address of one of the plan's pages or tabs, with a record's details open if one is named.
-export const planAddress = (next: PlanTab, record?: string) =>
-  next === "features"
-    ? { to: "/features" as const, search: { open: record } }
-    : { to: "/projects" as const, search: projectsTabSearch(next, record) };
+export const planAddress = (next: PlanTab, record?: string) => {
+  if (next === "features") {
+    return { to: "/features" as const, search: { open: record } };
+  }
+  if (next === "activities") {
+    return { to: "/activities" as const, search: { open: record } };
+  }
+  return { to: "/projects" as const, search: projectsTabSearch(next, record) };
+};
 
-export type PlanRecord = Customer | Project | Proposal | Milestone | Feature;
+export type PlanRecord =
+  Customer | Project | Proposal | Milestone | Feature | Activity;
 export const isFeature = (record: PlanRecord): record is Feature =>
-  "featureTeamId" in record;
+  "targetCycle" in record;
 
 export type PlanRecordKind =
-  "customer" | "project" | "proposal" | "milestone" | "feature";
+  "customer" | "project" | "proposal" | "milestone" | "feature" | "activity";
 
 // A milestone being added, with the project it is added to.
 export type MilestoneAdding = MilestoneRequest & { projectId: string };
@@ -447,7 +493,8 @@ interface PlanRecordOperations {
     | Blank<Project>
     | Blank<Proposal>
     | Blank<Milestone>
-    | Blank<Feature>;
+    | Blank<Feature>
+    | Blank<Activity>;
   all: (plan: ProjectPlan) => readonly PlanRecord[];
   withAll: (plan: ProjectPlan, records: readonly PlanRecord[]) => ProjectPlan;
   add: (request: unknown) => Promise<SavedPlan>;
@@ -470,6 +517,22 @@ const savedAs = (
     } as PlanRequest),
   remove: (record) => removeRecord(type, record.id),
 });
+
+// What a new feature or activity holds in its planning fields until the server has it.
+const planningBlank = {
+  name: "",
+  statusId: "",
+  priorityId: null,
+  sizeId: null,
+  riskId: null,
+  neededBy: null,
+  estimateHours: null,
+  featureTeamId: null,
+  description: null,
+  note: null,
+  values: {},
+  links: {},
+};
 
 const planRecordOperations: Readonly<
   Record<PlanRecordKind, PlanRecordOperations>
@@ -541,21 +604,10 @@ const planRecordOperations: Readonly<
   },
   feature: {
     blank: {
-      name: "",
-      statusId: "",
-      priorityId: null,
-      sizeId: null,
-      riskId: null,
-      neededBy: null,
+      ...planningBlank,
       customerIds: [],
       targetStreamId: null,
       targetCycle: null,
-      estimateHours: null,
-      featureTeamId: null,
-      description: null,
-      note: null,
-      values: {},
-      links: {},
     },
     all: (plan) => plan.features,
     withAll: (plan, records) => ({ ...plan, features: records as Feature[] }),
@@ -587,6 +639,34 @@ const planRecordOperations: Readonly<
     },
     remove: (record) => removeRecord("feature", record.id),
   },
+  activity: {
+    blank: { ...planningBlank, releaseId: null, projectId: null },
+    all: (plan) => plan.activities,
+    withAll: (plan, records) => ({
+      ...plan,
+      activities: records as Activity[],
+    }),
+    add: (request) =>
+      addRecord({
+        type: "activity",
+        request: activityRequest(
+          {
+            ...planRecordOperations.activity.blank,
+            ...(request as object),
+          } as ActivityFields,
+          request as CellChange,
+        ),
+      }),
+    change: (record, change) =>
+      changeRecord(record.id, {
+        type: "activity",
+        request: activityRequest(
+          movedActivity(record as Activity, change as Partial<ActivityFields>),
+          change,
+        ),
+      }),
+    remove: (record) => removeRecord("activity", record.id),
+  },
 };
 
 export const operationsOf = (kind: PlanRecordKind): PlanRecordOperations =>
@@ -614,7 +694,10 @@ export interface TableChoices {
   cycles: Choice[];
   // The release each of those cycles is in, by its choice.
   releaseOfCycle: Map<string, ReleaseGroup>;
+  // Every release an activity can belong to, each named with its schedule.
+  releases: Choice[];
   featureColumns: FeatureColumns;
+  activityColumns: FeatureColumns;
   // The records with their drafts, whatever the view, which mark the records each lists, or the
   // features a project or proposal names, as each draft adds or takes them away.
   drafted: {
@@ -752,7 +835,7 @@ export function releaseOfCycle(
 }
 
 export const tableChoices = (
-  plan: PlanLists & Pick<ProjectPlan, "featureColumns">,
+  plan: PlanLists & Pick<ProjectPlan, "featureColumns" | "activityColumns">,
   picks: PlanChoices,
   streams: readonly ReleaseStream[],
   effortConversions?: EffortConversions,
@@ -774,11 +857,17 @@ export const tableChoices = (
   ),
   cycles: cycleChoices(streams),
   releaseOfCycle: releaseOfCycle(streams),
+  releases: streams.flatMap((stream) =>
+    stream.releases.map(({ id, name }) =>
+      choice(id, withSchedule(stream, name), false),
+    ),
+  ),
   customers: plan.customers,
   proposals: plan.proposals,
   projects: plan.projects,
   features: plan.features,
   featureColumns: plan.featureColumns,
+  activityColumns: plan.activityColumns,
   drafted: {
     projects: plan.projects,
     proposals: plan.proposals,
