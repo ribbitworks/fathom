@@ -198,6 +198,17 @@ describe("a list's row menu", () => {
     ]);
   });
 
+  it("offers an editor only the details and link of a list Fathom builds in", async () => {
+    await openLists({
+      "GET /api/lists": () =>
+        Response.json({ lists: [{ ...locations, builtIn: "positions" }] }),
+    });
+    expect(itemNames(await rowMenu("Locations"))).toEqual([
+      expect.stringMatching(/^Show details/),
+      expect.stringMatching(/^Copy link/),
+    ]);
+  });
+
   it("offers a viewer only its details and its link", async () => {
     await openLists({ "GET /api/session": viewer });
     expect(itemNames(await rowMenu("Locations"))).toEqual([
@@ -249,13 +260,26 @@ describe("a list's row menu", () => {
     expect(cellText("l1", "name")).not.toContain("Retired");
   });
 
-  it("offers restoring a retired list", async () => {
-    await openLists({}, "/lists?retired=true");
-    expect(
+  it("drafts restoring a retired list from its menu", async () => {
+    // Given an editor on the table of lists, showing retired ones
+    const { fetch } = await openLists(
+      { "PUT /api/lists/l4/retired": savedAs() },
+      "/lists?retired=true",
+    );
+
+    // When Restore is chosen in Regions' menu
+    await userEvent.click(
       within(await rowMenu("Regions")).getByRole("menuitem", {
         name: "Restore",
       }),
-    ).toBeDefined();
+    );
+
+    // Then restoring it is drafted
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PUT", "/api/lists/l4/retired")).toEqual([
+        { retired: false },
+      ]);
+    });
   });
 
   it("drafts removing a list from its menu, keeping focus on its row", async () => {
@@ -321,9 +345,7 @@ describe("a list's row menu", () => {
     const names = itemNames(await rowMenu("Talents"));
 
     // Then Discard draft comes before Remove list
-    const discard = names.findIndex(
-      (name) => name?.startsWith("Discard draft") === true,
-    );
+    const discard = names.findIndex((name) => name.startsWith("Discard draft"));
     expect(discard).not.toBe(-1);
     expect(names.indexOf("Remove list")).toBeGreaterThan(discard);
   });

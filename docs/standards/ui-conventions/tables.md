@@ -34,7 +34,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
     - **Publish draft…:** For the user's own unpublished draft. It publishes the draft with the changes it must go with, as [Publishing](entering-and-saving.md#publishing) sets out.
     - **Resubmit:** For a rejected draft.
     - **Discard draft:** For any draft the user may change.
-    - **Remove:** Such as Remove person, for a record the user may change that its draft neither adds nor removes.
+    - **Remove:** Such as Remove person, for a record the user may change that its draft neither adds nor removes. A record that can never be removed, such as a list Fathom builds in, offers none.
   - **Focus after an item:** Once Publish draft…, Discard draft or Remove acts, or the question Publish draft… asks closes, focus goes back to the row's cell.
   - **In its details:** The same menu, less Show details, opens from the ⋯ at the top of the record's details panel, as [A panel's menu](pages-and-panels.md#details-panels) sets out.
   - **No row header:** There is no row header at the left: the slot before the first value keeps the draft's dot.
