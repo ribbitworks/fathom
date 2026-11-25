@@ -182,9 +182,14 @@ export function partsMark(
 
 // What an empty value says, in grey, where a draft's mark would otherwise mark nothing, as where a
 // draft empties a value, or fills one that was empty: a column's own words for none, or else "No"
-// and the value's name.
+// and the value's name. Its first letter is lower-cased for a name written as a phrase, as in "No
+// needed by" or "No proposal ID", and kept for an abbreviation, as in "No ID", or a name whose
+// later words are capitalized, as an added column's "No Fictional Score".
 export function emptiedWords(name: string, emptyLabel?: string): string {
   if (emptyLabel !== undefined) return emptyLabel;
-  const [first = "", second = ""] = name;
-  return `No ${second === second.toLowerCase() ? first.toLowerCase() + name.slice(1) : name}`;
+  const [first = "", ...later] = name.split(" ");
+  const asNamed =
+    first.slice(1) !== first.slice(1).toLowerCase() ||
+    later.some((word) => /^\p{Lu}\p{Ll}/u.test(word));
+  return `No ${asNamed ? name : name.charAt(0).toLowerCase() + name.slice(1)}`;
 }

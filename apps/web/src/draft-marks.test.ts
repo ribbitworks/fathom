@@ -88,6 +88,9 @@ describe("a draft's words", () => {
     expect(wasWords("x".repeat(50), "Name")).toBe(`“${"x".repeat(39)}…”`);
     expect(emptiedWords("ID")).toBe("No ID");
     expect(emptiedWords("Start")).toBe("No start");
+    expect(emptiedWords("Needed by")).toBe("No needed by");
+    expect(emptiedWords("Proposal ID")).toBe("No proposal ID");
+    expect(wasWords("", "Fictional Score")).toBe("no Fictional Score");
   });
 });
 
