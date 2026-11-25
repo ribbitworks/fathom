@@ -25,6 +25,7 @@ import {
 } from "react";
 import comboboxClasses from "./combobox.module.css";
 import classes from "./pages.module.css";
+import { recordTableClasses } from "./page-styles.ts";
 
 // How editing a cell ended: Enter, Tab or Shift+Tab, or leaving the cell.
 export type Finish = "enter" | "next" | "previous" | "leave";
@@ -208,8 +209,8 @@ export function ChoicePicker({
         <input
           id={id}
           className={[
-            classes.recordEditor,
-            invalid ? classes.recordEditorInvalid : "",
+            recordTableClasses.recordEditor,
+            invalid ? recordTableClasses.recordEditorInvalid : "",
           ].join(" ")}
           aria-label={label}
           aria-invalid={invalid || undefined}

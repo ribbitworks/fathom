@@ -1,0 +1,89 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The words of changes: a change in words in a table's cell, the draft at the top of a record's
+   menu, and what saving a view keeps. */
+
+/* The field a change names, such as "Name" in "Name from Level to Grade", in the text colour among
+   dimmed words, so it stands out. */
+.phraseStrong {
+  font-weight: 600;
+  color: var(--mantine-color-text);
+}
+
+/* A value a change names, such as "Level" and "Grade", set apart on a light ground as a value is in
+   code, and kept so on each line when it wraps. */
+.phraseValue {
+  padding: 0 0.25rem;
+  border-radius: var(--mantine-radius-xs);
+  background: var(--mantine-color-default-hover);
+  color: var(--mantine-color-text);
+  font-weight: 500;
+  box-decoration-break: clone;
+}
+
+/* A change in words in a table's cell, one of a column of them: the field in medium weight, and
+   each value on a fainter ground, so the column doesn't read as a block of values. */
+.phrasesLight .phraseStrong {
+  font-weight: 500;
+}
+
+.phrasesLight .phraseValue {
+  padding: 0 0.125rem;
+  background: color-mix(
+    in srgb,
+    var(--mantine-color-default-hover) 55%,
+    transparent
+  );
+  font-weight: 400;
+}
+
+/* The name at the top of a record's menu, in the text colour, since it says whose menu it is, with
+   a divider under it. */
+.menuTitle {
+  color: var(--mantine-color-text);
+  font-weight: 600;
+  cursor: default;
+}
+
+/* What a draft changes, at the top of a record's menu, wraps rather than widening the menu. */
+.draftLine {
+  max-width: 22rem;
+  white-space: normal;
+  color: var(--mantine-color-dimmed);
+}
+
+/* A rejection's reason, at the top of the person's menu, wraps rather than widening the menu. */
+.rejectedReason {
+  max-width: 20rem;
+  white-space: normal;
+  color: var(--mantine-color-text);
+}
+
+/* The heading of a draft's lines in a record's menu, its mark as the table shows it, in the text
+   colour, so it reads as a heading. */
+.draftHeading {
+  color: var(--mantine-color-text);
+  font-weight: 600;
+}
+
+/* What saving a view keeps, in the Save view dialog: each part's name beside its value, in a box
+   set apart from the name field. */
+.viewParts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-default);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.viewParts dt {
+  color: var(--mantine-color-dimmed);
+}
+
+.viewParts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

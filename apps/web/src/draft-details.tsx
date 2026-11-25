@@ -16,11 +16,11 @@ import {
 } from "@fathom/shared";
 import { Menu, Text } from "@mantine/core";
 import type { ReactNode } from "react";
+import { changeWordClasses } from "./page-styles.ts";
 import { cellKinds } from "./cell-kinds.tsx";
 import { describeField } from "./changes.ts";
 import { nameAs } from "./names.ts";
 import type { DetailKey } from "./people-grid.tsx";
-import classes from "./pages.module.css";
 import { type Phrase, PhraseText, phraseText } from "./phrase.tsx";
 import { DraftDot } from "./status-mark.tsx";
 import { type DraftLike, draftWords } from "./draft-marks.ts";
@@ -237,7 +237,7 @@ const describers = new Map<string, (field: ChangedField) => Phrase>([
 // A line in a menu, such as why the item above it is turned off.
 export function MenuNote({ children }: { children: ReactNode }) {
   return (
-    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
+    <Text fz="xs" px="sm" pb={4} className={changeWordClasses.draftLine}>
       {children}
     </Text>
   );
@@ -278,7 +278,9 @@ export function UnpublishedNote() {
 export function MenuTitle({ children }: { children: ReactNode }) {
   return (
     <>
-      <Menu.Label className={classes.menuTitle}>{children}</Menu.Label>
+      <Menu.Label className={changeWordClasses.menuTitle}>
+        {children}
+      </Menu.Label>
       <Menu.Divider />
     </>
   );
@@ -298,12 +300,17 @@ export function MenuDraftLines({
 }) {
   return (
     <>
-      <Menu.Label className={classes.draftHeading}>
+      <Menu.Label className={changeWordClasses.draftHeading}>
         <DraftDot draft={{ ...draft, reason: undefined }} />
         {draftWords({ ...draft, reason: undefined })}
       </Menu.Label>
       {draft.state === "rejected" && draft.reason !== undefined && (
-        <Text fz="xs" px="sm" pb={4} className={classes.rejectedReason}>
+        <Text
+          fz="xs"
+          px="sm"
+          pb={4}
+          className={changeWordClasses.rejectedReason}
+        >
           Reason: {draft.reason}
         </Text>
       )}
@@ -313,7 +320,7 @@ export function MenuDraftLines({
           fz="xs"
           px="sm"
           pb={4}
-          className={classes.draftLine}
+          className={changeWordClasses.draftLine}
         >
           <PhraseText phrase={line} />
         </Text>

@@ -13,6 +13,7 @@ import {
 import { Button, Group, Paper, Text } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import { type KeyboardEvent, useState } from "react";
+import { recordTableClasses } from "./page-styles.ts";
 import { AppMenu, MenuChoices, MenuToggle } from "./app-menu.tsx";
 import {
   type BoardColumn,
@@ -26,7 +27,6 @@ import {
 } from "./feature-board.ts";
 import { cardId, FeatureCard, LiveCard } from "./feature-card.tsx";
 import classes from "./feature-board-view.module.css";
-import pages from "./pages.module.css";
 import type { ShownRows } from "./record-table.ts";
 import {
   draftsById,
@@ -310,7 +310,7 @@ export function FeatureBoard({
       <Paper
         ref={gridRef}
         withBorder
-        className={[classes.panel, pages.scrollBars].join(" ")}
+        className={[classes.panel, recordTableClasses.scrollBars].join(" ")}
       >
         <div
           className={classes.grid}

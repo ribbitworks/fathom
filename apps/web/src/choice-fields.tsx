@@ -9,8 +9,8 @@ import {
   meaningSchema,
 } from "@fathom/shared";
 import type { ClipboardEvent, KeyboardEvent } from "react";
+import { cellClasses, listClasses } from "./page-styles.ts";
 import { Count } from "./list-dialog.tsx";
-import classes from "./pages.module.css";
 
 export interface Draft {
   label: string;
@@ -64,10 +64,10 @@ export function Fields({
   const shownProblem = problem ?? weightWrong;
   return (
     <>
-      <span className={classes.choiceName} role="gridcell">
+      <span className={listClasses.choiceName} role="gridcell">
         <input
           id={`${idPrefix}-name`}
-          className={classes.cellInput}
+          className={cellClasses.cellInput}
           value={draft.label}
           aria-label={`${label}name`}
           aria-invalid={problem !== undefined}
@@ -84,10 +84,10 @@ export function Fields({
           onPaste={onPaste}
         />
         {(shownProblem ?? draft.label.length >= listLengths.choice - 5) && (
-          <span className={classes.cellBelow}>
+          <span className={cellClasses.cellBelow}>
             {shownProblem && (
               <span
-                className={classes.problem}
+                className={cellClasses.problem}
                 id={`${idPrefix}-problem`}
                 role="alert"
               >
@@ -101,10 +101,10 @@ export function Fields({
           </span>
         )}
       </span>
-      <span className={classes.choiceDescription} role="gridcell">
+      <span className={listClasses.choiceDescription} role="gridcell">
         <textarea
           id={`${idPrefix}-description`}
-          className={classes.cellInput}
+          className={cellClasses.cellInput}
           rows={1}
           value={draft.description}
           aria-label={`${label}description`}
@@ -119,10 +119,10 @@ export function Fields({
         />
       </span>
       {meanings.length > 0 && (
-        <span className={classes.choiceMeaning} role="gridcell">
+        <span className={listClasses.choiceMeaning} role="gridcell">
           <select
             id={`${idPrefix}-meaning`}
-            className={classes.cellInput}
+            className={cellClasses.cellInput}
             value={draft.meaning ?? ""}
             aria-label={`${label}meaning`}
             aria-describedby={
@@ -153,17 +153,20 @@ export function Fields({
             ))}
           </select>
           {meaningKept !== undefined && (
-            <span className={classes.cellBelow} id={`${idPrefix}-meaning-kept`}>
+            <span
+              className={cellClasses.cellBelow}
+              id={`${idPrefix}-meaning-kept`}
+            >
               Needed for {meaningName(meaningKept)}
             </span>
           )}
         </span>
       )}
       {weighed && (
-        <span className={classes.choiceWeight} role="gridcell">
+        <span className={listClasses.choiceWeight} role="gridcell">
           <input
             id={`${idPrefix}-weight`}
-            className={classes.cellInput}
+            className={cellClasses.cellInput}
             value={draft.weight}
             inputMode="decimal"
             aria-label={`${label}weight`}

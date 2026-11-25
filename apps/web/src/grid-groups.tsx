@@ -5,9 +5,9 @@
 
 import { VisuallyHidden } from "@mantine/core";
 import { type ReactNode, useEffect, useState } from "react";
+import { recordTableClasses } from "./page-styles.ts";
 import { draftColumn } from "./grid-drafts.ts";
 import type { ModelGrid } from "./grid-model.tsx";
-import classes from "./pages.module.css";
 import type { GridRecord, RowGrouping } from "./record-table.ts";
 import { tickedOf } from "./row-ticks.tsx";
 import { Tipped } from "./table-tips.tsx";
@@ -119,7 +119,7 @@ export function AlsoUnder({ others }: { others: readonly OtherPlace[] }) {
     .join(", ");
   const tip = `Also under ${names}`;
   return (
-    <Tipped tip={tip} className={classes.alsoUnder}>
+    <Tipped tip={tip} className={recordTableClasses.alsoUnder}>
       <span aria-hidden="true">+{others.length}</span>
       <VisuallyHidden>{`, also under ${names}.`}</VisuallyHidden>
     </Tipped>
@@ -144,8 +144,8 @@ export function NamedWithOthers({
     return children;
   }
   return (
-    <span className={classes.namedWithOthers}>
-      <span className={classes.namedWithOthersName}>{children}</span>
+    <span className={recordTableClasses.namedWithOthers}>
+      <span className={recordTableClasses.namedWithOthersName}>{children}</span>
       <span>
         <AlsoUnder others={others} />
         {after}

@@ -3,6 +3,7 @@
 // The People page: everyone the user may see, and the planned hires, in a table edited like a
 // spreadsheet, with the columns people have added.
 
+import { recordTableClasses } from "./page-styles.ts";
 import { LoadProblem } from "./load-problem.tsx";
 import type {
   ClassAccess,
@@ -60,7 +61,6 @@ import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { useNarrow } from "./side-panel.tsx";
 import { draftSentAgain, pendingDraft, unsavedKeyNumber } from "./drafts.ts";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
-import classes from "./pages.module.css";
 import {
   fillButtonId,
   HireFillAction,
@@ -824,7 +824,7 @@ export function PeoplePage({
   }
 
   return (
-    <Stack gap="md" className={classes.tablePage}>
+    <Stack gap="md" className={recordTableClasses.tablePage}>
       <PageHeader
         title="People"
         action={

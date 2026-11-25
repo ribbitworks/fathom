@@ -8,8 +8,8 @@
 
 import { Group, SegmentedControl, Tabs, Title } from "@mantine/core";
 import type { ReactNode } from "react";
+import { recordTableClasses } from "./page-styles.ts";
 import { PageExportMenu } from "./page-export.tsx";
-import classes from "./pages.module.css";
 
 export function PageHeader({
   title,
@@ -82,7 +82,10 @@ export function HeadingTabs<Tab extends string>({
     <Tabs
       id={id}
       value={tab}
-      classNames={{ list: classes.headingTabs, tab: classes.headingTab }}
+      classNames={{
+        list: recordTableClasses.headingTabs,
+        tab: recordTableClasses.headingTab,
+      }}
       onChange={(next) => {
         // A tab can't be cleared, so one always matches; the filter types it with no check.
         for (const one of tabs.filter(({ value }) => value === next)) {
@@ -125,7 +128,7 @@ export function HeadingTabPanel({
       role="tabpanel"
       id={tabPanelId(id, tab)}
       aria-labelledby={`${id}-tab-${tab}`}
-      className={classes.tabPanel}
+      className={recordTableClasses.tabPanel}
     >
       {children}
     </div>

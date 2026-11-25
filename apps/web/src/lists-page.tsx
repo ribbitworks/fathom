@@ -2,6 +2,7 @@
 
 // The Lists page: every list in one table, and the selected list's choices in a side panel.
 
+import { listClasses, recordTableClasses } from "./page-styles.ts";
 import { LoadProblem } from "./load-problem.tsx";
 import {
   type Choice,
@@ -80,7 +81,6 @@ import {
 import { peopleQuery } from "./people.ts";
 import { PageHeader } from "./page-header.tsx";
 import { sidePanelScroll, WithSidePanel } from "./side-panel.tsx";
-import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
 import { count } from "./numbers.ts";
 import { besideLive, DraftView } from "./status-mark.tsx";
@@ -602,7 +602,11 @@ export function ListsPage({
   }
 
   return (
-    <Stack gap="md" className={classes.tablePage} onClick={onPageClick}>
+    <Stack
+      gap="md"
+      className={recordTableClasses.tablePage}
+      onClick={onPageClick}
+    >
       <PageHeader
         title="Lists"
         action={
@@ -634,7 +638,7 @@ export function ListsPage({
                       <div
                         data-list-panel
                         id={listPanelId}
-                        className={classes.panelSlot}
+                        className={listClasses.panelSlot}
                       >
                         <ListPanel
                           key={open.id}

@@ -44,6 +44,7 @@ import { notifySuccess } from "./notices.tsx";
 import { rolesQuery } from "./roles.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
+import { recordTableClasses } from "./page-styles.ts";
 import { type SignedInUser, sessionQuery } from "./session.ts";
 import {
   accountColumnOrder,
@@ -664,7 +665,7 @@ export function AccountsPage({
         ];
 
   return (
-    <Stack gap="md" className={classes.tablePage}>
+    <Stack gap="md" className={recordTableClasses.tablePage}>
       <PageHeader
         title="Accounts"
         action={

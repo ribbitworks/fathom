@@ -43,6 +43,7 @@ import {
 import { PageHeader } from "./page-header.tsx";
 import pageClasses from "./data-classes-page.module.css";
 import classes from "./pages.module.css";
+import { recordTableClasses } from "./page-styles.ts";
 import { peopleColumnsQuery, peopleQuery } from "./people.ts";
 import { sessionQuery } from "./session.ts";
 import { ClassName } from "./status-mark.tsx";
@@ -76,8 +77,13 @@ function ClassSection({
       <Title order={2} size="h4" id={id}>
         {title}
       </Title>
-      <Paper withBorder className={classes.tableScrollPanel}>
-        <div className={[classes.tableScroll, classes.scrollBars].join(" ")}>
+      <Paper withBorder className={recordTableClasses.tableScrollPanel}>
+        <div
+          className={[
+            recordTableClasses.tableScroll,
+            recordTableClasses.scrollBars,
+          ].join(" ")}
+        >
           <Table aria-labelledby={id} className={pageClasses.classTable}>
             <Table.Thead>
               <Table.Tr>

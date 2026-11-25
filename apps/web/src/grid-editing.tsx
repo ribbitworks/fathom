@@ -4,12 +4,12 @@
 // editor of the cell being edited.
 
 import type { KeyboardEvent } from "react";
+import { recordTableClasses } from "./page-styles.ts";
 import { startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { focusSoon } from "./focus.ts";
 import { emptyValue, kindOf, readOnlyFor } from "./grid-columns.tsx";
 import type { Cell, Row } from "./grid-places.ts";
-import classes from "./pages.module.css";
 import type { Column, GridRecord } from "./record-table.ts";
 import { opensMenu } from "./row-controls.tsx";
 import type { MenuGrid } from "./row-menus.tsx";
@@ -353,8 +353,8 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       <input
         id={id}
         className={[
-          classes.recordEditor,
-          invalid ? classes.recordEditorInvalid : "",
+          recordTableClasses.recordEditor,
+          invalid ? recordTableClasses.recordEditorInvalid : "",
         ].join(" ")}
         aria-label={fieldLabel(column)}
         aria-invalid={invalid || undefined}
@@ -377,9 +377,11 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     return column.unit === undefined ? (
       input
     ) : (
-      <span className={classes.recordUnitEditor}>
+      <span className={recordTableClasses.recordUnitEditor}>
         {input}
-        <span className={classes.recordUnitCode}>{column.unit.code}</span>
+        <span className={recordTableClasses.recordUnitCode}>
+          {column.unit.code}
+        </span>
       </span>
     );
   };

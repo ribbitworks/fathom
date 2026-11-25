@@ -12,7 +12,7 @@ import {
 } from "@fathom/shared";
 import { Text, VisuallyHidden } from "@mantine/core";
 import { createContext, type ReactNode, useContext } from "react";
-import classes from "./pages.module.css";
+import { recordTableClasses } from "./page-styles.ts";
 import marks from "./status-mark.module.css";
 import { Icon, type IconName } from "./icons.tsx";
 import { Tipped } from "./table-tips.tsx";
@@ -37,10 +37,10 @@ const kindBoxChars = 2;
 type Tone = "draft" | "rejected" | "live" | "unpublished";
 
 const toneClass = new Map<Tone, string | undefined>([
-  ["draft", classes.draftMark],
-  ["rejected", classes.draftRejected],
-  ["live", classes.liveMark],
-  ["unpublished", classes.unpublishedMark],
+  ["draft", recordTableClasses.draftMark],
+  ["rejected", recordTableClasses.draftRejected],
+  ["live", recordTableClasses.liveMark],
+  ["unpublished", recordTableClasses.unpublishedMark],
 ]);
 
 // A draft's tone: red once rejected, otherwise hollow while it holds the user's unpublished changes,
@@ -62,7 +62,7 @@ function Dot({ tone, tip }: { tone: Tone; tip: string }) {
     >
       <span
         className={[
-          classes.statusDot,
+          recordTableClasses.statusDot,
           tone === "rejected" ? marks.ringed : "",
         ].join(" ")}
         aria-hidden="true"
@@ -336,7 +336,9 @@ export function DraftedPartItem({
     part === "removed" && viewedDraft(marked, show).draft !== undefined;
   return (
     <DraftedItem draft={marked} part={part} from={from}>
-      <span className={struck ? classes.struck : undefined}>{children}</span>
+      <span className={struck ? recordTableClasses.struck : undefined}>
+        {children}
+      </span>
     </DraftedItem>
   );
 }

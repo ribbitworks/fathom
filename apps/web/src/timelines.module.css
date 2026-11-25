@@ -1,0 +1,433 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The shared timeline, its rows, axis, cycles and releases, and the strip of periods above every
+   timeline, board and month grid. */
+
+/* The shared timeline: a sticky column of row labels, as wide as the timeline's style sets, beside
+   tracks that scroll sideways, a day being the same width everywhere at each zoom, under an axis
+   that stays in view, with today's line under the labels. */
+/* The timeline takes the height its rows need, and, given less, scrolls its rows under its axis. */
+.timelineSection {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 12rem;
+}
+
+.timelinePanel {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Its scroll bar's room is kept while nothing is wider than the view, so the timeline keeps its
+   height, and nothing under it moves, when a panel beside it opens or closes. */
+.timelineScroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overflow-x: scroll;
+}
+
+.timeline {
+  position: relative;
+  width: max-content;
+}
+
+.timelineHead,
+.timelineRow {
+  display: flex;
+}
+
+.timelineHead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+}
+
+.timelineBody {
+  position: relative;
+}
+
+.timelineLabel {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  width: var(--timeline-label);
+  padding: 0 var(--mantine-spacing-sm);
+  background: var(--mantine-color-body);
+  border-right: 1px solid var(--mantine-color-default-border);
+  font-size: var(--mantine-font-size-sm);
+}
+
+/* A row's name that opens its record is drawn at the label's size, the table's text size, not at a
+   button's own larger size. */
+.timelineLabel button {
+  font-size: inherit;
+}
+
+/* A label stays on one line, its marks after its name. */
+.timelineLabelLine {
+  white-space: nowrap;
+}
+
+/* A row's name, cut short where the column is too narrow, so the marks after it stay whole. */
+.timelineLabelName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A row's name that opens its record, read as the name and cut short as it is, its focus ring drawn
+   inside it, since the name's box clips what is drawn outside it. */
+.timelineLabelButton {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timelineLabelButton:hover {
+  text-decoration: underline;
+}
+
+/* A button over a mark that opens its record, as large as the mark, drawing only its focus ring. */
+.timelineMark {
+  position: absolute;
+  inset: 0;
+}
+
+/* Inside the button, since the lane clips what is drawn outside it. */
+.timelineMark:focus-visible,
+.timelineLabelButton:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: -2px;
+}
+
+.timelineTrack {
+  position: relative;
+  flex: none;
+}
+
+/* A row above the axis for today's label, so it covers none of the axis's labels. */
+.timelineMarks {
+  height: 20px;
+}
+
+/* One tier of the axis, such as the years above the months. */
+.timelineTier {
+  position: relative;
+  height: 24px;
+}
+
+.timelineMarks + .timelineTier,
+.timelineTier + .timelineTier {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.timelineTick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding: 4px;
+  overflow: hidden;
+  border-left: 1px solid var(--mantine-color-default-border);
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+  white-space: nowrap;
+}
+
+.timelineRows,
+.timelineLane {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timelineRow:not(:last-child) {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.timelineRows + .timelineRows {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.timelineRow .timelineTrack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.timelineLane {
+  position: relative;
+  height: 24px;
+}
+
+/* A lane of releases: each release's bar, with a row under it for its Ships on diamond, so a
+   diamond never sits on the next release's bar. */
+.timelineReleaseLane {
+  --release-bar: 24px;
+  --release-span: 6px;
+  --release-ships-row: 14px;
+
+  height: calc(var(--release-bar) + var(--release-ships-row));
+}
+
+.timelineCycle,
+.timelineRelease {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 0 6px;
+  font-size: var(--mantine-font-size-xs);
+  line-height: 22px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* A line of the panel's colour between cycles, so each shows its own length. */
+.timelineCycle {
+  border-left: 1px solid var(--mantine-color-body);
+  background: var(--mantine-color-default-hover);
+}
+
+/* A stream's end: a short upright line where its last cycle ends, reaching a little past the lane. */
+.timelineStreamEnd {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  background: var(--mantine-color-dimmed);
+  transform: translateX(-50%);
+}
+
+/* A cycle drawn as a block, shaded apart from the one before, with a small gap between them, so each
+   shows its own length unnamed. */
+.timelineCycleBlock,
+.timelineCycleAlternate {
+  border-left: 3px solid var(--mantine-color-body);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--fathom-cycle);
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 1px var(--fathom-cycle-edge);
+}
+
+.timelineCycleAlternate {
+  background: var(--fathom-cycle-alternate);
+}
+
+/* A cycle that has ended, faded, so the cycles still to come stand out. */
+.timelineCyclePast {
+  opacity: 0.45;
+}
+
+/* A cycle's name inside its block, quiet beside the blocks' shades. */
+.timelineCycleName {
+  color: var(--mantine-color-dimmed);
+}
+
+/* A lane of named cycles, with each release's Ships on diamond on the lane's foot. */
+.timelineCycleLane {
+  --release-bar: 100%;
+  --release-ships-row: 0px;
+}
+
+/* A cycle drawn faint behind its schedule's releases, along the foot of their bars. */
+.timelineCycleFaint {
+  position: absolute;
+  top: calc(var(--release-bar) - var(--release-span));
+  height: var(--release-span);
+}
+
+/* What a stream's end says beside its line, such as its last day. */
+.timelineStreamEndLabel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 7px;
+  display: flex;
+  align-items: center;
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+  white-space: nowrap;
+}
+
+.timelineReleaseSlot {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+/* A release's span across its cycles is drawn in its colour along the bar's foot, and its name sits
+   over it in the body's text colour, after its colour's square, with no box, as every coloured name
+   is. */
+.timelineRelease {
+  bottom: auto;
+  height: var(--release-bar);
+  padding: 0;
+  color: var(--mantine-color-text);
+  font-weight: 500;
+}
+
+.timelineRelease::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--release-span);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--release-filled);
+  content: "";
+}
+
+.timelineReleaseLabel {
+  display: flex;
+  align-items: baseline;
+  line-height: calc(var(--release-bar) - var(--release-span));
+}
+
+/* A release as it is live, beside the draft that moves it, dimmed as a Live copy is. */
+.timelineReleaseLive {
+  opacity: 0.7;
+}
+
+/* The diamond's row, under the bar. */
+.timelineShipsReach {
+  position: absolute;
+  top: calc(var(--release-bar) + var(--release-ships-row) / 2);
+  border-top: 1px dashed var(--release-filled);
+}
+
+.timelineShips {
+  position: absolute;
+  top: calc(var(--release-bar) + var(--release-ships-row) / 2);
+  z-index: 1;
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--mantine-color-body);
+  background: var(--release-filled);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.timelineToday {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  border-left: 2px solid var(--fathom-today);
+  pointer-events: none;
+}
+
+.timelineTodayLabel {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  padding: 0 2px;
+  background: var(--mantine-color-body);
+  color: var(--mantine-color-red-7);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+
+  /* Short enough to stay inside its row, clear of the line under it. */
+  line-height: 16px;
+}
+
+/* The Releases timeline, between the table's bar and the table: as tall as its rows need, up to
+   about half the window, its rows scrolling under its axis beyond that, so the table keeps room. */
+.releasesTimeline {
+  display: flex;
+  flex-direction: column;
+  max-height: 45dvh;
+  margin-bottom: var(--mantine-spacing-sm);
+}
+
+/* The strip above a timeline: its periods side by side, each as wide as its share and never narrower
+   than its name, those in view tinted with the accent, the one chosen filled with it, and the
+   current one underlined. When the names don't all fit, it scrolls sideways, with the shared scroll
+   bars, coming to rest with a whole name at its start. */
+.strip {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+}
+
+/* The room after the last period that lets the rail end on a whole name. */
+.strip::after {
+  flex: 0 0 var(--strip-end, 0);
+  content: "";
+}
+
+/* Room either side of a name, so names side by side read apart. */
+.stripPeriod {
+  flex: var(--strip-weight) 1 0;
+  scroll-snap-align: start;
+  min-width: max-content;
+  height: 28px;
+  padding: 0 var(--mantine-spacing-xs);
+  overflow: hidden;
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* The line between two periods is the first one's, so a period resting at the rail's start brings
+   no line of its own against the rail's border. */
+.stripPeriod:not(:last-child) {
+  border-right: 1px solid var(--mantine-color-default-border);
+}
+
+/* The strip clips what is drawn outside a period, so its focus ring is drawn inside it, a full box
+   rather than a sliver at one edge. */
+.stripPeriod:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: -2px;
+}
+
+.stripPeriod[data-selected]:focus-visible {
+  outline-color: var(--mantine-primary-color-contrast);
+}
+
+.stripPeriod[data-in-view] {
+  background: var(--mantine-primary-color-light);
+  color: var(--mantine-color-text);
+}
+
+/* The light tint is too faint to tell from the rest on the dark panel. The chosen period keeps its
+   fill. */
+:global([data-mantine-color-scheme="dark"])
+  .stripPeriod[data-in-view]:not([data-selected]) {
+  background: color-mix(
+    in srgb,
+    var(--mantine-primary-color-filled) 35%,
+    transparent
+  );
+}
+
+/* The current period, underlined in today's red, as today's line is on a timeline. */
+.stripPeriod[aria-current] {
+  box-shadow: var(--fathom-today-underline);
+  font-weight: 600;
+}
+
+/* The cycle holding today on a timeline, named in bold: today's line already crosses it. */
+.timelineCycle[aria-current] {
+  font-weight: 600;
+}
+
+.stripPeriod[data-selected] {
+  background: var(--mantine-primary-color-filled);
+  color: var(--mantine-primary-color-contrast);
+}

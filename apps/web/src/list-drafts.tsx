@@ -16,10 +16,10 @@ import {
   OtherApproverNote,
   WaitingNote,
 } from "./draft-details.tsx";
+import { recordTableClasses } from "./page-styles.ts";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
 import { makerNames } from "./names.ts";
 import { withRetiring } from "./lists.ts";
-import classes from "./pages.module.css";
 import { PanelMoreMenu } from "./panel-menu.tsx";
 import { type DraftLike, partsMark } from "./draft-marks.ts";
 
@@ -64,9 +64,9 @@ export function draftRowClass(
 ): string {
   if (draft === undefined) return "";
   return [
-    tinted ? classes.draftRow : "",
-    tinted && draft.state === "rejected" ? classes.rejectedRow : "",
-    draft.action === "deleted" ? classes.removedRow : "",
+    tinted ? recordTableClasses.draftRow : "",
+    tinted && draft.state === "rejected" ? recordTableClasses.rejectedRow : "",
+    draft.action === "deleted" ? recordTableClasses.removedRow : "",
   ].join(" ");
 }
 

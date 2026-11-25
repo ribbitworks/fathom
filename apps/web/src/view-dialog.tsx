@@ -7,7 +7,7 @@
 import { type ListedView, viewLengths, type ViewScope } from "@fathom/shared";
 import { Button, Checkbox, Group, Stack, Text, TextInput } from "@mantine/core";
 import type { ViewPart } from "./table-controls.tsx";
-import classes from "./pages.module.css";
+import { changeWordClasses } from "./page-styles.ts";
 import { useMutation } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
@@ -131,7 +131,10 @@ export function ViewDialog({
             <Text id={includesId} fz="sm" fw={500} mb={4}>
               Includes
             </Text>
-            <dl className={classes.viewParts} aria-labelledby={includesId}>
+            <dl
+              className={changeWordClasses.viewParts}
+              aria-labelledby={includesId}
+            >
               {saves.map((part, at) => (
                 <Fragment key={at}>
                   <dt>{part.name}</dt>

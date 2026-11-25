@@ -13,6 +13,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { recordTableClasses } from "./page-styles.ts";
 import { useColumnWidths } from "./column-widths.ts";
 import {
   type ScrollEdges,
@@ -27,7 +28,6 @@ import {
 import { kindOf, shown } from "./grid-columns.tsx";
 import { cellDraft, liveName } from "./grid-drafts.ts";
 import type { SelectionGrid } from "./grid-selection.ts";
-import classes from "./pages.module.css";
 import type { AnyColumn, Column, GridRecord } from "./record-table.ts";
 import { classMarkChars, draftMarkChars } from "./status-mark.tsx";
 import { valueOrStandIn } from "./table-view.ts";
@@ -237,7 +237,7 @@ export function useGridLayout<Rec extends GridRecord, Change, Request>(
   const frozenCell = (index: number, copy = 0) =>
     index < frozen.frozen
       ? {
-          className: classes.frozen,
+          className: recordTableClasses.frozen,
           style: { left: `var(${frozenLeft(cellKey(index, copy))})` },
         }
       : { className: "", style: undefined };

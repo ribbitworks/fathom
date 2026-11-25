@@ -78,7 +78,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** `DraftView`, `DraftedItem` and `viewedDraft` in `apps/web/src/status-mark.tsx`, with `liveWaitingWords` in `apps/web/src/draft-marks.ts`; each page sets its view once.
   - **Example:** On People, choose Live only in the Draft menu: the Level column's name has a green dot.
 - **A selected row:** A selected row, such as the list whose panel is open, has the hover grey with a thin accent bar at its left edge. It never has the accent's fill, since a row's fill says its draft's state.
-  - **Drawn by:** `selectedRow` in `apps/web/src/pages.module.css`.
+  - **Drawn by:** `selectedRow` in `apps/web/src/lists.module.css`.
   - **Example:** Select Sites on the Lists page.
 - **Centring:** Every mark (dot, lock or box), and a colour's swatch beside text, is centred on the centreline of its text's capitals. A line holding them lines them up on its text's baseline, and the marks' own spacing is the only spacing. A swatch alone, such as a menu item's icon, is centred in its place instead.
   - **Drawn by:** `dotPlace`, `kind` and `swatchPlace` in `apps/web/src/status-mark.module.css`, `MarkRow` in `apps/web/src/status-mark.tsx`, and `Swatch` in `apps/web/src/colour-swatch.tsx`.

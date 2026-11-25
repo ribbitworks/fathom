@@ -12,6 +12,7 @@ import { listMark } from "./list-drafts.tsx";
 import { builtInFirst, liveLists, retiredLive } from "./lists.ts";
 import { count } from "./numbers.ts";
 import classes from "./pages.module.css";
+import { listClasses } from "./page-styles.ts";
 import { DraftedValue, LiveValue, useBesideLive } from "./status-mark.tsx";
 import {
   LivePartsCell,
@@ -106,7 +107,7 @@ export function ListsTable({
               >
                 {live.name}
               </LiveSummaryName>
-              <span role="cell" className={classes.listCellDim}>
+              <span role="cell" className={listClasses.listCellDim}>
                 <LiveValue
                   draft={list.draft}
                   fields={["description"]}
@@ -141,12 +142,12 @@ export function ListsTable({
             to="/lists/{-$listId}"
             params={{ listId: list.id }}
             search={address}
-            className={classes.listLink}
+            className={listClasses.listLink}
           >
             {list.name}
           </Link>
         </SummaryName>
-        <span role="cell" className={classes.listCellDim}>
+        <span role="cell" className={listClasses.listCellDim}>
           <DraftedValue
             draft={original.draft}
             fields={["description"]}
@@ -162,14 +163,14 @@ export function ListsTable({
   };
   return (
     <Paper withBorder className={classes.tablePanel}>
-      <div role="table" aria-label="Lists" className={classes.listTable}>
-        <div role="row" className={classes.listHead}>
+      <div role="table" aria-label="Lists" className={listClasses.listTable}>
+        <div role="row" className={listClasses.listHead}>
           <span role="columnheader">Name</span>
           <span role="columnheader">Description</span>
           <span role="columnheader">Choices</span>
         </div>
         {lists.length === 0 && (
-          <div role="row" className={classes.listGroup}>
+          <div role="row" className={listClasses.listGroup}>
             <span role="cell" aria-colspan={3}>
               No matching lists
             </span>
@@ -178,7 +179,7 @@ export function ListsTable({
         {current.map(row)}
         {showRetired && (
           <>
-            <div role="row" className={classes.listGroup}>
+            <div role="row" className={listClasses.listGroup}>
               <span role="cell" aria-colspan={3}>
                 Retired
               </span>
@@ -188,7 +189,7 @@ export function ListsTable({
         )}
       </div>
       {retired.length > 0 && (
-        <div className={classes.listFoot}>
+        <div className={listClasses.listFoot}>
           <Button
             variant={showRetired ? "light" : "default"}
             color="gray"

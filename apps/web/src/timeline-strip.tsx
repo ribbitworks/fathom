@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
-import classes from "./pages.module.css";
+import { recordTableClasses, timelineClasses } from "./page-styles.ts";
 
 // The strip's name and its arrows' names, such as Quarters and Previous quarter.
 export interface StripWords {
@@ -185,7 +185,9 @@ export function TimelineStrip({
       </ActionIcon>
       <div
         ref={strip}
-        className={[classes.strip, classes.scrollBars].join(" ")}
+        className={[timelineClasses.strip, recordTableClasses.scrollBars].join(
+          " ",
+        )}
         role="toolbar"
         aria-label={words.group}
         onBlur={(event) => {
@@ -200,7 +202,7 @@ export function TimelineStrip({
           return (
             <UnstyledButton
               key={key}
-              className={classes.stripPeriod}
+              className={timelineClasses.stripPeriod}
               style={{ "--strip-weight": weight }}
               tabIndex={index === tabStop ? 0 : -1}
               data-in-view={inView || undefined}

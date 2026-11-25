@@ -21,7 +21,7 @@ import { PanelMenusContext } from "./panel-menu.tsx";
 import { usePublishDraft } from "./publish-draft.tsx";
 import { gridSaving } from "./grid-saving.ts";
 import { gridSelection, useGridState } from "./grid-selection.ts";
-import classes from "./pages.module.css";
+import { recordTableClasses } from "./page-styles.ts";
 import type { GridRecord, RecordGridProps } from "./record-table.ts";
 import { rowMenus } from "./row-menus.tsx";
 import { WithSidePanel } from "./side-panel.tsx";
@@ -123,12 +123,15 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
           <Paper
             ref={panelRef}
             withBorder
-            className={classes.tableScrollPanel}
+            className={recordTableClasses.tableScrollPanel}
             style={frozenVariables(frozen)}
           >
             <div
               ref={scrollRef}
-              className={[classes.tableScroll, classes.scrollBars].join(" ")}
+              className={[
+                recordTableClasses.tableScroll,
+                recordTableClasses.scrollBars,
+              ].join(" ")}
               // Cells reached from the keyboard scroll clear of the header, with its second line when a
               // column's draft renames it, and of the frozen columns.
               style={{
@@ -146,8 +149,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                 role="grid"
                 aria-label={table.label}
                 className={[
-                  classes.recordTable,
-                  ticks === undefined ? "" : classes.tickingTable,
+                  recordTableClasses.recordTable,
+                  ticks === undefined ? "" : recordTableClasses.tickingTable,
                 ].join(" ")}
                 layout="fixed"
                 withColumnBorders={columnBorders}
@@ -162,8 +165,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                         data-column={column.key}
                         className={
                           columnIndex === 0
-                            ? classes.recordColFirst
-                            : classes.recordCol
+                            ? recordTableClasses.recordColFirst
+                            : recordTableClasses.recordCol
                         }
                         style={widthStyle(
                           columnWidth(column, longestText, table.nameColumn),
@@ -174,7 +177,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                         <col
                           key={`${column.key}-live`}
                           data-column={column.key}
-                          className={classes.recordCol}
+                          className={recordTableClasses.recordCol}
                           style={widthStyle(
                             columnWidth(live, longestText),
                             widths.setWidthOf(column.key),
@@ -183,7 +186,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                       ),
                     ];
                   })}
-                  {withActions && <col className={classes.recordColActions} />}
+                  {withActions && (
+                    <col className={recordTableClasses.recordColActions} />
+                  )}
                 </colgroup>
                 <Table.Thead>
                   <Table.Tr>
@@ -198,15 +203,19 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                             scope="col"
                             aria-hidden="true"
                             className={[
-                              classes.liveColumn,
+                              recordTableClasses.liveColumn,
                               liveAt.className,
                             ].join(" ")}
                             style={liveAt.style}
                           >
-                            <span className={classes.recordHeadButton}>
-                              <span className={classes.headerName}>
+                            <span
+                              className={recordTableClasses.recordHeadButton}
+                            >
+                              <span className={recordTableClasses.headerName}>
                                 <MarkedItem tone="live">
-                                  <span className={classes.headerLabel}>
+                                  <span
+                                    className={recordTableClasses.headerLabel}
+                                  >
                                     {live.label}
                                   </span>
                                 </MarkedItem>
@@ -233,7 +242,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                             besides.length +
                             Number(withActions)
                           }
-                          className={classes.recordNone}
+                          className={recordTableClasses.recordNone}
                         >
                           <Text component="span" fz="sm" c="dimmed">
                             {narrows(view)
@@ -246,7 +255,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                   {bodyRows}
                 </Table.Tbody>
                 {table.totals !== undefined && (
-                  <Table.Tfoot className={classes.recordTotalFoot}>
+                  <Table.Tfoot className={recordTableClasses.recordTotalFoot}>
                     {totalRow(
                       "total",
                       table.totals,
@@ -288,7 +297,7 @@ function EdgeMarks({
       {frozen && (
         <div
           aria-hidden="true"
-          className={classes.frozenEdge}
+          className={recordTableClasses.frozenEdge}
           data-scrolled={before || undefined}
           style={{ height }}
         />
@@ -296,7 +305,7 @@ function EdgeMarks({
       {!frozen && before && (
         <div
           aria-hidden="true"
-          className={classes.scrollFade}
+          className={recordTableClasses.scrollFade}
           data-side="before"
           style={{ height }}
         />
@@ -304,7 +313,7 @@ function EdgeMarks({
       {after && (
         <div
           aria-hidden="true"
-          className={classes.scrollFade}
+          className={recordTableClasses.scrollFade}
           data-side="after"
           style={{ height }}
         />

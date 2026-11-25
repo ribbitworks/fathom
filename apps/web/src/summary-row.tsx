@@ -8,7 +8,7 @@
 import type { Tier } from "@fathom/shared";
 import { Fragment, type ReactElement, type ReactNode } from "react";
 import { draftRowClass } from "./list-drafts.tsx";
-import classes from "./pages.module.css";
+import { listClasses, recordTableClasses } from "./page-styles.ts";
 import {
   DraftedItem,
   DraftedValue,
@@ -60,7 +60,7 @@ export function RowWithLive({
         <div
           {...(rowProps?.role === undefined ? {} : { role: rowProps.role })}
           aria-hidden="true"
-          className={[liveClassName, classes.listLiveRow].join(" ")}
+          className={[liveClassName, recordTableClasses.listLiveRow].join(" ")}
         >
           {liveCells}
         </div>
@@ -91,11 +91,11 @@ export function SummaryRow({
   return (
     <RowWithLive
       className={[
-        classes.listRow,
-        selected ? classes.selectedRow : "",
-        retired ? classes.listRowRetired : "",
+        listClasses.listRow,
+        selected ? listClasses.selectedRow : "",
+        retired ? listClasses.listRowRetired : "",
       ].join(" ")}
-      liveClassName={classes.listRow}
+      liveClassName={listClasses.listRow}
       tint={tint}
       liveCells={liveCells}
       rowProps={{
@@ -132,7 +132,7 @@ export function SummaryName({
   children: ReactNode;
 }) {
   return (
-    <span role="cell" className={classes.listCellName}>
+    <span role="cell" className={listClasses.listCellName}>
       <RowMarks
         mark={mark}
         heldBy={heldBy}
@@ -164,7 +164,7 @@ export function LiveSummaryName({
   children: ReactNode;
 }) {
   return (
-    <span role="cell" className={classes.listCellName}>
+    <span role="cell" className={listClasses.listCellName}>
       <LiveRowMarks marked={marked}>
         <LiveValue draft={draft} fields={["name"]}>
           {children}
@@ -195,13 +195,17 @@ export function Parts({
     <DraftedItem draft={mark}>
       {parts.length > 0 && (
         <>
-          <span className={classes.listCount}>
+          <span className={listClasses.listCount}>
             ({parts.filter(({ removed }) => !removed).length})
           </span>{" "}
           {parts.map(({ id, name, removed }, index) => (
             <Fragment key={id}>
               {index > 0 && ", "}
-              {removed ? <span className={classes.struck}>{name}</span> : name}
+              {removed ? (
+                <span className={recordTableClasses.struck}>{name}</span>
+              ) : (
+                name
+              )}
             </Fragment>
           ))}
         </>
@@ -215,7 +219,7 @@ export function PartsCell(props: {
   parts: readonly SummaryPart[];
 }) {
   return (
-    <span role="cell" className={classes.listCell}>
+    <span role="cell" className={listClasses.listCell}>
       <Parts {...props} />
     </span>
   );
@@ -233,7 +237,7 @@ export function LiveParts({
     <MarkedItem tone={marked ? "live" : undefined}>
       {names.length > 0 && (
         <>
-          <span className={classes.listCount}>({names.length})</span>{" "}
+          <span className={listClasses.listCount}>({names.length})</span>{" "}
           {names.join(", ")}
         </>
       )}
@@ -247,7 +251,7 @@ export function LivePartsCell(props: {
   names: readonly string[];
 }) {
   return (
-    <span role="cell" className={classes.listCell}>
+    <span role="cell" className={listClasses.listCell}>
       <LiveParts {...props} />
     </span>
   );

@@ -12,6 +12,7 @@ import {
 import { Button, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { recordTableClasses } from "./page-styles.ts";
 import { DecisionModal, drafts } from "./decision-dialog.tsx";
 import { type DraftsSeen, useDraftEntries } from "./draft-reading.ts";
 import { type DraftPlace, placeKey } from "./draft-places.ts";
@@ -34,7 +35,6 @@ import {
 import { LoadProblem } from "./load-problem.tsx";
 import { count } from "./numbers.ts";
 import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
-import classes from "./pages.module.css";
 import { focusRecordCell } from "./grid-row.tsx";
 import { RecordGrid } from "./record-grid.tsx";
 import { noRecordActions } from "./record-table.ts";
@@ -425,7 +425,7 @@ export function DraftsPage({
   }, [openGone, onOpen]);
 
   return (
-    <Stack gap="md" className={classes.tablePage}>
+    <Stack gap="md" className={recordTableClasses.tablePage}>
       <PageHeader
         title="Drafts"
         action={actions}

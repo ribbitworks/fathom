@@ -26,6 +26,7 @@ import {
 } from "@fathom/shared";
 import { VisuallyHidden } from "@mantine/core";
 import { queryOptions } from "@tanstack/react-query";
+import { recordTableClasses } from "./page-styles.ts";
 import styles from "./allocation-lines.module.css";
 import { groupedRows, type HeldRow } from "./allocation-groups.ts";
 import { getJson } from "./api.ts";
@@ -34,7 +35,6 @@ import { share } from "./metrics.ts";
 import { decimal } from "./numbers.ts";
 import { hireRows } from "./planned-hire-months.ts";
 import type { CellChange } from "./cell-kinds.tsx";
-import pages from "./pages.module.css";
 import type { RecordTable, RowTotals } from "./record-table.ts";
 import { ColouredName } from "./colour-swatch.tsx";
 import { DraftedPartItem, type DraftedPart } from "./status-mark.tsx";
@@ -186,7 +186,9 @@ export function AllocationLines({
             key={featureId}
             className={[
               styles.line,
-              drafted === "removed" && shownLive !== true ? pages.struck : "",
+              drafted === "removed" && shownLive !== true
+                ? recordTableClasses.struck
+                : "",
             ].join(" ")}
             {...{ [tipAttribute]: name }}
           >

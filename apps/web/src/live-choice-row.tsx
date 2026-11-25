@@ -4,8 +4,8 @@
 // choice as drafted.
 
 import type { Choice, Meaning } from "@fathom/shared";
+import { listClasses, recordTableClasses } from "./page-styles.ts";
 import { choiceRowFields, meaningText, weightText } from "./choice-row.tsx";
-import classes from "./pages.module.css";
 import { recordMark } from "./draft-marks.ts";
 import { LiveRowMarks, LiveValue } from "./status-mark.tsx";
 
@@ -44,10 +44,10 @@ export function LiveChoiceRow({
   const liveWeight = choice.draft?.live.weight ?? choice.weight;
   return (
     <div
-      className={[...shape, classes.choiceLive].join(" ")}
+      className={[...shape, recordTableClasses.choiceLive].join(" ")}
       aria-hidden="true"
     >
-      <span className={classes.choiceName}>
+      <span className={listClasses.choiceName}>
         <LiveRowMarks
           marked={
             moved || recordMark(choice.draft, choiceRowFields) !== undefined
@@ -58,7 +58,7 @@ export function LiveChoiceRow({
           </LiveValue>
         </LiveRowMarks>
       </span>
-      <span className={classes.choiceDescription}>
+      <span className={listClasses.choiceDescription}>
         <LiveValue
           draft={choice.draft}
           fields={["description"]}
@@ -72,12 +72,14 @@ export function LiveChoiceRow({
         </LiveValue>
       </span>
       {meanings.length > 0 && (
-        <span className={classes.choiceMeaning}>
+        <span className={listClasses.choiceMeaning}>
           {meaningText(liveMeaning)}
         </span>
       )}
       {weighed && (
-        <span className={classes.choiceWeight}>{weightText(liveWeight)}</span>
+        <span className={listClasses.choiceWeight}>
+          {weightText(liveWeight)}
+        </span>
       )}
     </div>
   );
