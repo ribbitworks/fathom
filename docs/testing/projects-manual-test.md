@@ -317,8 +317,9 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 - [ ] `71FC` Select the ⋯ at the end of the row of 'Kestrel Mining Cooperative', then **Show details**.
   - **Expected:** **Description** and **Notes** each read "None", dimmed.
+  - **Notes:**
 
-### PROJ-13: The Product Manager Adds a Customer From a Proposal's Customers
+### PROJ-16: The Product Manager Adds a Customer From a Proposal's Customers
 
 **Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-12.
 
