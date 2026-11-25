@@ -1,20 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Change history page: who changed what, and when, newest first, holding only
-// changes to data the user's roles let them see. Each change set saved is one entry, with a sentence
-// for each record it changed and what changed in it. Show more reads older entries.
+// The Change history page: who changed what, and when, in the data the user's roles let them see.
 
-import {
-  Alert,
-  Anchor,
-  Button,
-  Group,
-  Paper,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Anchor, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { type ChangeEntry, folded, searchWords } from "@fathom/shared";
-import { QueryState } from "./load-problem.tsx";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
@@ -26,6 +15,7 @@ import {
 } from "./changes.ts";
 import { EntryDetails, EntryList, EntryRow } from "./history-entries.tsx";
 import { HistorySearch } from "./history-search.tsx";
+import { LoadProblem, QueryState } from "./load-problem.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { PhraseList, phraseText } from "./phrase.tsx";
@@ -231,9 +221,10 @@ export function ChangeHistoryPage({
         </Paper>
       )}
       {changes.isFetchNextPageError && (
-        <Alert color="red" role="alert">
-          Fathom could not load older changes. Try again in a moment.
-        </Alert>
+        <LoadProblem
+          what="older changes"
+          onRetry={() => void changes.fetchNextPage()}
+        />
       )}
       {changes.hasNextPage && (
         <Group justify="center">

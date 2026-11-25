@@ -584,12 +584,18 @@ describe("the entries", () => {
     );
   });
 
-  it("say so when older ones cannot be loaded", async () => {
+  it("say so when older ones cannot be loaded, and read them again on Try again", async () => {
+    let olderReads = 0;
     serverAnswers({
       "GET /api/session": changesViewer,
       "GET /api/changes": page([], older),
-      [`GET /api/changes?before=${older}`]: () =>
-        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+      [`GET /api/changes?before=${older}`]: () => {
+        olderReads += 1;
+        return Response.json(
+          { error: "Internal Server Error" },
+          { status: 500 },
+        );
+      },
     });
     renderApp("/changes");
     expect(
@@ -598,9 +604,14 @@ describe("the entries", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Show more" }),
     );
-    expect((await screen.findByRole("alert")).textContent).toBe(
-      "Fathom could not load older changes. Try again in a moment.",
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Fathom could not load older changes.");
+    await userEvent.click(
+      within(alert).getByRole("button", { name: "Try again" }),
     );
+    await waitFor(() => {
+      expect(olderReads).toBe(2);
+    });
   });
 
   it("show a loading indicator until they arrive", async () => {

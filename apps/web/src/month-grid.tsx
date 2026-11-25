@@ -5,7 +5,7 @@
 // following the grid as it scrolls.
 
 import { type MonthRange, monthOf, monthsBetween } from "@fathom/shared";
-import { Center, Loader } from "@mantine/core";
+import { Center } from "@mantine/core";
 import type { UseQueryResult } from "@tanstack/react-query";
 import {
   memo,
@@ -18,7 +18,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import type { CellChange } from "./cell-kinds.tsx";
-import { LoadProblem } from "./load-problem.tsx";
+import { LoadProblem, Loading } from "./load-problem.tsx";
 import { peopleAndHires } from "./people-rows.ts";
 import { type TableScroll, useTableScroll } from "./grid-layout.ts";
 import { RecordGrid } from "./record-grid.tsx";
@@ -112,7 +112,7 @@ export function MonthGrid<Rec extends MonthRow>({
   if (table === undefined || countedTable === undefined) {
     return (
       <Center p="xl">
-        <Loader aria-label="Loading" />
+        <Loading />
       </Center>
     );
   }
