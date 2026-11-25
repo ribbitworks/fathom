@@ -31,11 +31,13 @@ import {
 import { RecordKey } from "./record-key.tsx";
 import { changedFrom, managerChangesFrom } from "./person-change.ts";
 import type { NoteOpening } from "./note-editing.tsx";
-import { peopleQuery, peopleQueryOn } from "./people.ts";
+import { peopleQueryOn } from "./people.ts";
 import {
   personPanelId,
   type EditingContext,
+  namedBy,
   usePersonEditing,
+  useTodaysPeople,
   useShownId,
 } from "./person-editing.tsx";
 import classes from "./record-details.module.css";
@@ -57,7 +59,7 @@ import {
 import type { DraftLike } from "./draft-marks.ts";
 import type { CellValue } from "./table-view.ts";
 import { formatDay, plannedWords } from "./day-formats.ts";
-import { TimelinePreview } from "./person-timeline.tsx";
+import { ShowTimeline, TimelinePreview } from "./person-timeline.tsx";
 import { today } from "./today.ts";
 import { changesFromDay, livePeople, peopleAsShown } from "./people-live.ts";
 import { recordProblem } from "./people-requests.ts";
@@ -91,9 +93,6 @@ export const detailKeys = [
   "expected",
   "isManager",
 ];
-
-const sameId = (person: Person, employeeId: string) =>
-  person.employeeId.toLowerCase() === employeeId.toLowerCase();
 
 export function PersonPanel({
   employeeId,
@@ -162,15 +161,12 @@ export function PersonPanel({
   const teamColourOf = useTeamColours();
   const { closeStale, editingOf } = usePersonEditing(notes);
   const people = query.data?.people ?? [];
-  const found = people.find((one) => sameId(one, employeeId));
-  // Today's people, while another day is shown: to judge a change from it by the line today, and
-  // to name someone not employed then.
-  const todays = useQuery({
-    ...peopleQuery,
-    enabled:
-      shownOn !== undefined &&
-      (changesFrom !== undefined ||
-        (query.data !== undefined && found === undefined)),
+  const found = namedBy(people, employeeId);
+  const todays = useTodaysPeople({
+    day: shownOn,
+    changesFrom,
+    people: query.data?.people,
+    open: employeeId,
   });
   const shownId = useShownId(employeeId, query.data?.people);
   const drafted = people.find(({ id }) => id === shownId);
@@ -228,13 +224,19 @@ export function PersonPanel({
   const person = asShown.find(({ id }) => id === drafted?.id);
   if (person === undefined) {
     if (drafted === undefined) {
-      const today = todays.data?.people.find((one) => sameId(one, employeeId));
+      const today = namedBy(todays.data?.people, employeeId);
       return frame(
         "Details",
         <Text>
           {shownOn === undefined
             ? `Nobody in People has the ID ${employeeId}.`
             : `${today === undefined ? employeeId : rowName(today, lists.data)} isn't employed on ${formatDay(shownOn)}.`}
+          {timeline !== undefined && shownOn !== undefined && (
+            <>
+              {" "}
+              <ShowTimeline onOpen={timeline.onOpen} />
+            </>
+          )}
         </Text>,
       );
     }

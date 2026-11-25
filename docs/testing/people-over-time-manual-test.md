@@ -11,7 +11,7 @@ last_updated: "2026-11-25"
 
 ## Scope
 
-Verifies reading the **People** page on another date: the date row above its table, who is listed on an earlier and a later date, planned hires on later dates, a person's details beside the table on that date, changing a manager from an earlier date in the table, a role that sees no other dates, and a person's timeline: its preview, its panel, a day chosen from it and closing it.
+Verifies reading the **People** page on another date: the date row above its table, who is listed on an earlier and a later date, planned hires on later dates, a person's details beside the table on that date, changing a manager from an earlier date in the table, a role that sees no other dates, and a person's timeline: its preview, its panel, a day chosen from it, closing it, and a leaver's timeline on a day they aren't employed.
 
 ## Test Environment
 
@@ -211,18 +211,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `D9D4` Select the name 'Carmine Labadie'.
-  - **Expected:** His details open beside the table.
+  - **Expected:** The details open beside the table.
   - **Notes:**
 
-- [ ] `1EA4` Scroll to the end of his details.
-  - **Expected:** A **Timeline** section lists his latest change, then **Show timeline**.
+- [ ] `1EA4` Scroll to the end of the details.
+  - **Expected:** A **Timeline** section lists the latest change, then **Show timeline**.
   - **Notes:**
 
 - [ ] `6160` Select **Show timeline**.
   - **Expected:**
-    - The timeline opens under his details, with the cursor on its title.
+    - The timeline opens under the details, with the cursor on its title.
     - A thin red line marked **Today** runs across it, with room above and below.
-    - His days are listed newest first, each change on its own line, such as **Manager** and a name.
+    - The days are listed newest first, each change on its own line, such as **Manager** and a name.
   - **Notes:**
 
 - [ ] `4EC1` Select the date of the last day listed.
@@ -237,6 +237,34 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `EAA2` Select the timeline's **×**.
   - **Expected:**
-    - The timeline closes, and his details stay open.
+    - The timeline closes, and the details stay open.
     - The cursor is back on **Show timeline**.
+  - **Notes:**
+
+- [ ] `CC3B` In the date row, select the left arrow once.
+  - **Expected:** The **Date** box shows the first day of last month.
+  - **Notes:**
+
+- [ ] `0055` Clear the search box, and type `Holmberg`.
+  - **Expected:** One row shows, 'Viktoria Holmberg'.
+  - **Notes:**
+
+- [ ] `51A7` Select the name 'Viktoria Holmberg'.
+  - **Expected:** The details open beside the table.
+  - **Notes:**
+
+- [ ] `FB7C` Select **Show timeline** at the end of the details.
+  - **Expected:** The timeline opens under the details, its latest day reading **End**.
+  - **Notes:**
+
+- [ ] `D63A` In the date row, select the right arrow once.
+  - **Expected:**
+    - The details read "Viktoria Holmberg isn't employed on" the first day of this month, then **Show timeline**.
+    - The timeline stays open beside them, its latest day still reading **End**.
+  - **Notes:**
+
+- [ ] `B7D5` Select the timeline's **×**.
+  - **Expected:**
+    - The timeline closes; the line saying Viktoria Holmberg isn't employed stays.
+    - The cursor is on that line's **Show timeline**.
   - **Notes:**

@@ -153,10 +153,10 @@ export function RecordTimeline({
     );
   };
   return (
-    <>
+    <div className={pages.timelineDays}>
       {side(planned, true)}
       <Line />
       {side(past, false)}
-    </>
+    </div>
   );
 }
