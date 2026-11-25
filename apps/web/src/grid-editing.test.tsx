@@ -3,7 +3,7 @@
 // Tests for editing the shared table's cells, with a made-up kind of record, gadgets.
 
 import type { Field } from "@fathom/shared";
-import { act, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { RecordActions } from "./record-table.ts";
@@ -349,4 +349,29 @@ describe("typing in a cell", () => {
       code: "G2X",
     });
   });
+
+describe("typing fast into a cell", () => {
+  it.each([
+    ["Name", "name", "Wid", "Wid"],
+    ["Next", "next", "203009", "2030-09"],
+  ])(
+    "keeps the keys typed into %s before its editor has focus, after the first",
+    async (name, key, typed, shown) => {
+      renderGadgets({
+        gadgets: [],
+        fields: [],
+        table: nameThen(nextColumn("date")),
+      });
+      const cell = document.getElementById(`cell-new-0-${key}`) as HTMLElement;
+      act(() => {
+        cell.focus();
+      });
+      for (const one of typed) fireEvent.keyDown(cell, { key: one });
+      await waitFor(() => {
+        expect(
+          screen.getByRole<HTMLInputElement>("textbox", { name }).value,
+        ).toBe(shown);
+      });
+    },
+  );
 });
