@@ -49,7 +49,7 @@ export const streamKind: RecordKind = {
   unique: [
     {
       field: "name",
-      message: "There is already a schedule with that name",
+      message: "Another schedule has that name",
     },
   ],
   readWith: featuresOrConfiguration,
@@ -237,9 +237,7 @@ export const featureKind: RecordKind = {
   keptByFathom: (state, id) => isGeneralFeature(state, id),
   addedColumns: { owner: "feature", table: "features" },
   changedTogether: ["targetStreamId", "targetCycle"],
-  unique: [
-    { field: "name", message: "There is already a feature with that name" },
-  ],
+  unique: [{ field: "name", message: "Another feature has that name" }],
   readWith: ["features:view"],
   unseenSubject: "a feature",
   subject: (state, id, access) => {

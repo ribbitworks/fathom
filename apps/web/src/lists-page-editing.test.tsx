@@ -136,7 +136,7 @@ describe("creating and editing lists", () => {
     expect(within(dialog).getByText("Name needed")).toBeDefined();
     await userEvent.type(within(dialog).getByLabelText("Name"), "skills");
     expect(
-      within(dialog).getByText("Another list already has that name"),
+      within(dialog).getByText("Another list has that name"),
     ).toBeDefined();
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     await userEvent.click(within(dialog).getByLabelText("Name"));
@@ -155,7 +155,7 @@ describe("creating and editing lists", () => {
   });
 
   it.each([
-    [409, "Another list already has that name"],
+    [409, "Another list has that name"],
     [500, "Fathom could not save the list. Try again in a moment."],
   ])("shows the server's refusal %i", async (status, message) => {
     serverAnswers({

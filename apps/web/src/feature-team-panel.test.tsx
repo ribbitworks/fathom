@@ -181,7 +181,7 @@ describe("a new feature team", () => {
   });
 
   it("names the server's refusal under Name, with focus in it", async () => {
-    const reason = "There is already a feature team with that name";
+    const reason = "Another feature team has that name";
     const { asked } = openPanel({ shown: null });
     vi.mocked(asked.create).mockImplementation(
       (

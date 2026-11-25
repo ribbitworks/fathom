@@ -103,7 +103,7 @@ describe("a change the server refuses", () => {
     });
     return onRefused;
   }
-  const taken = "There is already a customer with that name";
+  const taken = "Another customer has that name";
 
   it.each([400, 409])(
     "names a refused value (%i) under its field, with no notification",

@@ -88,7 +88,7 @@ import { refuseRemovingNamed } from "./records.ts";
 import { readToday } from "./settings.ts";
 
 const noTeam = "There is no such feature team";
-const nameTaken = "Another feature team already has that name";
+const nameTaken = "Another feature team has that name";
 
 // A team's fields as drafts and the change history hold them: its name, lead, members, by person,
 // sorted, the days the members a draft adds or removes join or leave, by person, when given, and

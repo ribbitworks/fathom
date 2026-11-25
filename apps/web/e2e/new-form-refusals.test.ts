@@ -74,7 +74,7 @@ test("the stacked form names a taken name under Name, with focus in it, and adds
 }) => {
   // Given the New customer form, named as a customer already is
   const { form, name } = await newCustomerFromBid(page, "Marlow City Transit");
-  const reason = "There is already a customer with that name";
+  const reason = "Another customer has that name";
 
   // When Add is selected, the server's refusal is under Name, not in a notification
   await form.getByRole("button", { name: "Add", exact: true }).click();
@@ -117,7 +117,7 @@ test("the page's own New proposal names a taken name under Name, with focus in i
   await form.getByRole("button", { name: "Add", exact: true }).click();
 
   // Then the server's refusal is under Name, with focus in it, and the form stays open
-  const reason = "There is already a proposal with that name";
+  const reason = "Another proposal has that name";
   await expect(name).toHaveAccessibleDescription(new RegExp(reason));
   await expect(name).toHaveAttribute("aria-invalid", "true");
   await expect(name).toBeFocused();

@@ -334,7 +334,7 @@ describe("a value refused in the new record's form", () => {
   });
 
   it("names a refusal from the server under Name, with focus in it, not in a notification", async () => {
-    const reason = "There is already a customer with that name";
+    const reason = "Another customer has that name";
     await typeInCustomers("Marlow City Transit", atProposal, {
       "POST /api/customers": () =>
         Response.json({ error: reason, field: "name" }, { status: 409 }),

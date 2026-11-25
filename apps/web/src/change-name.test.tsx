@@ -103,7 +103,7 @@ describe("changing one's own name", () => {
       "GET /api/greeting": greeting,
       "PUT /api/account/name": () =>
         Response.json(
-          { error: "Another account already has that name; choose another" },
+          { error: "Another account has that name" },
           { status: 409 },
         ),
     });
@@ -111,7 +111,7 @@ describe("changing one's own name", () => {
     const dialog = await openDialog();
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect((await within(dialog).findByRole("alert")).textContent).toBe(
-      "Another account already has that name; choose another",
+      "Another account has that name",
     );
   });
 

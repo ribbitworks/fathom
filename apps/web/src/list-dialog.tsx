@@ -25,8 +25,7 @@ import { ClassChoice } from "./move-class-dialog.tsx";
 import classes from "./pages.module.css";
 
 // What a name says when another of its kind, such as a view, already has it.
-export const nameTaken = (kind: string) =>
-  `Another ${kind} already has that name`;
+export const nameTaken = (kind: string) => `Another ${kind} has that name`;
 
 // A name's problem, if any, saying so when another of its kind already has it.
 export const takenNameProblem = (
