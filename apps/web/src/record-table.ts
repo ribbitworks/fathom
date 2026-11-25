@@ -337,6 +337,18 @@ export interface ColumnGroup {
   keys: readonly string[];
 }
 
+// Columns in the order their details' groups name them, so a table starts its columns as its
+// details list them.
+export function inGroupOrder<Col extends { key: string }>(
+  columns: readonly Col[],
+  groups: readonly ColumnGroup[],
+): Col[] {
+  const order = groups.flatMap(({ keys }) => keys);
+  return [...columns].sort(
+    (a, b) => order.indexOf(a.key) - order.indexOf(b.key),
+  );
+}
+
 export interface RowTotals<Rec> {
   label: string;
   overall: string;

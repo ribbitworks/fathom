@@ -18,7 +18,7 @@ Verifies the Projects page:
 - Changing a proposal in its side panel.
 - The features projects and proposals need.
 - A customer's description and notes.
-- The projects, proposals and features each customer's row lists.
+- The projects, proposals and features each customer's row and details list.
 
 [Drafts of Projects, Proposals, Customers and Milestones](project-drafts-manual-test.md) verifies adding a customer, a proposal and a project with milestones, and approving, changing and removing them.
 
@@ -409,4 +409,25 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Expected:**
     - The pill is gone.
     - The table shows every feature again.
+  - **Notes:**
+
+### PROJ-15: A Customer's Details
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-14.
+
+**Preconditions:** Signed in with this account. **Projects** page open, **Customers** tab chosen.
+
+- [ ] `4B55` Select the ⋯ at the end of the row of 'Kestrel Mining Cooperative', then **Show details**.
+  - **Expected:**
+    - The side panel's headings are **Details**, then **Commitments**.
+    - Under **Commitments**, one to a line:
+      - **Projects**: 'P-2017 Depot Operations', a link, with 'P-2017' dimmed.
+      - **Proposals**: 'Ore Sorting Study', a link.
+      - **Features**: 'Barcode Scanning', 'Partner Portal', 'Parts Lookup' and 'Work Order Sync', each a link on a line of its own.
+  - **Notes:**
+
+- [ ] `8251` Select 'P-2017 Depot Operations' under **Commitments**.
+  - **Expected:**
+    - The **Projects** tab is chosen.
+    - The side panel shows the details of 'Depot Operations'.
   - **Notes:**
