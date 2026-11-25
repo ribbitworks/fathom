@@ -22,8 +22,8 @@ flowchart TD
     AnyCode{"Is any path other than documentation alone?"}
     AnyCode -- No --> NoTests["No tests run, and it passes"]
     AnyCode -- Yes --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page, a script's Node.js module other than those that start the package tests, or a file in .github/?"}
-    Outside -- Yes --> Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
-    Outside -- No --> Scripts["pnpm test:scripts"]
+    Outside -- Yes --> Everything["pnpm test:scripts and pnpm typecheck, then every test of every package, with all their coverage"]
+    Outside -- No --> Scripts["pnpm test:scripts, and pnpm typecheck if any package's tests run"]
     Scripts --> Whole{"Is any path in a package but not a script in its src folder, such as its settings, stylesheets or migrations?"}
     Whole -- Yes --> WholePackages["Every test of those packages and of every package that depends on them, with all their coverage"]
     Whole -- No --> Imported
@@ -35,7 +35,7 @@ flowchart TD
 - **A changed or removed test** counts as a change to the source file of the same name beside it. For a widely imported file, its importing tests can be most of a package's tests.
 - **A Help page** in `docs/help/`, or a diagram in `docs/help/diagrams/`, isn't documentation alone, since Help is built into the web app. It stands for `apps/web/src/help-pages.ts`, which gathers the Help pages.
 - **Not by import:** tests that reach code other than by importing it, such as building the web app, run in `pnpm check`.
-- **The scripts' own code:** a change to the scripts' Node.js modules or a file in `.github/` runs the script tests alone, since no package reads them. Container tests run under `pnpm test:containers` instead.
+- **The scripts' own code:** a change to the scripts' Node.js modules or a file in `.github/` runs the script tests alone, with no type check, since no package reads them and the type check covers the packages alone. Container tests run under `pnpm test:containers` instead.
 - **Still every test:** a shell script, since the packages' tests run some, such as `scripts/lib.sh`, and the scripts that start the package tests, such as `scripts/package-tests.mjs`.
 
 ## Coverage of a Change
@@ -44,11 +44,11 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
+    Everything["pnpm test:scripts and pnpm typecheck, then every test of every package, with all their coverage"]
     WholePackages["Every test of those packages and of every package that depends on them, with all their coverage"] --> Imported{"Is any path a script in a package's src folder, or a Help page?"}
     Imported -- Yes --> Related["vitest related: the tests importing those files, in the packages that hold or depend on them and haven't run whole, measuring the coverage of the changed source files alone"]
     Imported -- No --> Outcome
-    Everything --> Outcome{"Did every run pass, coverage included?"}
+    Everything --> Outcome{"Did every run pass, coverage and the type check included?"}
     Related --> Outcome
     Outcome -- No --> TestsFailed["Fails"]
     Outcome -- Yes --> TestsPassed["Passes"]
@@ -239,7 +239,7 @@ Before a push, it runs only the jobs the change needs. Then, unless the change i
 ```mermaid
 flowchart TD
     Start["pnpm check or pnpm check:push"] --> Jobs{"--before-push?"}
-    Jobs -- Yes --> BeforePush["pnpm test:changed, and the linters: pnpm lint --no-cache, pnpm format:check, pnpm typecheck, pnpm lint:md and pnpm lint:shell"]
+    Jobs -- Yes --> BeforePush["pnpm test:changed --without-types, and the linters: pnpm lint --no-cache, pnpm format:check, pnpm typecheck, pnpm lint:md and pnpm lint:shell"]
     Jobs -- No --> FullCheck["pnpm test:packages, pnpm security, pnpm test:scripts, the same linters, pnpm lint:licences and pnpm lint:renovate"]
     BeforePush --> Skip{"Are the arguments known, and does each --skip name a job, leaving at least one?"}
     FullCheck --> Skip
@@ -299,7 +299,7 @@ flowchart TD
 
 ### The Changed Tests
 
-`pnpm test:changed`, run by `pnpm check:push` or on its own, chooses the tests in `scripts/test-changed.mjs`, and checks the coverage of what the change touches, as [Coverage of a Change](#coverage-of-a-change) sets out.
+`pnpm test:changed`, run by `pnpm check:push` or on its own, chooses the tests in `scripts/test-changed.mjs`, and checks the coverage of what the change touches, as [Coverage of a Change](#coverage-of-a-change) sets out. Whenever any package's tests run, it also runs `pnpm typecheck`, as GitHub's check does, since the tests compile without checking types; its build is incremental, so it checks again only what changed. `pnpm check:push` passes `--without-types`, since its own Types job checks them beside it.
 
 ```mermaid
 flowchart TD
@@ -329,7 +329,7 @@ flowchart TD
     Related --> InTime
     InTime -- No --> TooLong["The step and every process it started are stopped, naming it, and it fails"]
     TooLong --> Outcome
-    InTime -- Yes --> Outcome{"Did every run pass, coverage included?"}
+    InTime -- Yes --> Outcome{"Did every run pass, coverage and the type check included?"}
     Outcome -- No --> TestsFailed["Fails"]
     Outcome -- Yes --> TestsPassed["Passes"]
 ```

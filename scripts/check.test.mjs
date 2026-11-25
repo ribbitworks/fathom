@@ -506,7 +506,9 @@ describe("scripts/check.sh", () => {
     const result = run(["--before-push", "--offline"], { online: false });
     assert.equal(result.status, 0, result.stderr);
     assert.ok(
-      result.stdout.includes("ran test:changed offline, fixes from 2026-11-01"),
+      result.stdout.includes(
+        "ran test:changed --without-types offline, fixes from 2026-11-01",
+      ),
       result.stdout,
     );
     assert.ok(!result.stdout.includes("left out"), result.stdout);

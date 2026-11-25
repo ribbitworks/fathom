@@ -4,7 +4,7 @@ category: "Guide"
 audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/**"]
 dependencies: ["docs/design/architecture.md", "docs/standards/testing.md", "docs/design/checks-and-ci.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Fathom: Development Setup
@@ -229,7 +229,7 @@ The copy gets new names, and so a new, empty database.
 | `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests), which the Check workflow runs on every pull request, as [Checks and CI](checks-and-ci.md#the-check-on-github) sets out; its `--skip` and `--offline` options are described below the table |
 | `pnpm check:push` | The tests and linters a change needs, side by side, before a push, as [Checks and CI § The Local Check](checks-and-ci.md#the-local-check) draws. It lists each one's result and time, and names any that failed. `--skip` and `--offline` work as for `pnpm check` |
 | `pnpm test` | Every test: the script tests, then every package's |
-| `pnpm test:changed` | The tests a change can affect, failing when a changed source file, or a package running every test, falls short of its coverage, as on GitHub; with `--uncommitted`, only the work not yet committed |
+| `pnpm test:changed` | The tests a change can affect, and the type check, failing when a changed source file, or a package running every test, falls short of its coverage, as on GitHub; with `--uncommitted`, only the work not yet committed; with `--without-types`, no type check, as `pnpm check:push` runs its own |
 | `pnpm test:scripts` | The script tests alone |
 | `pnpm test:packages` | Every package's tests; with `--filter` and a package, such as `--filter @fathom/web`, only those packages, as pnpm chooses them |
 | `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, the application and database can't reach the internet, and the application image holds none of the tests or the files only they use |

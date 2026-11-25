@@ -382,11 +382,14 @@ describe("the command's arguments", () => {
   it("counts everything since the branch left main by default", () => {
     const { calls, listChanged } = lister(["apps/web/src/app.tsx"]);
     assert.deepEqual(testsForArguments([], listChanged, chooser), {
-      kind: "packages",
-      whole: [],
-      related: ["apps/web"],
-      files: ["apps/web/src/app.tsx"],
-      covered: ["apps/web/src/app.tsx"],
+      tests: {
+        kind: "packages",
+        whole: [],
+        related: ["apps/web"],
+        files: ["apps/web/src/app.tsx"],
+        covered: ["apps/web/src/app.tsx"],
+      },
+      checkTypes: true,
     });
     assert.deepEqual(calls, [{ uncommitted: false }]);
   });
@@ -396,14 +399,25 @@ describe("the command's arguments", () => {
     assert.deepEqual(
       testsForArguments(["--uncommitted"], listChanged, chooser),
       {
-        kind: "packages",
-        whole: ["apps/web"],
-        related: [],
-        files: [],
-        covered: [],
+        tests: {
+          kind: "packages",
+          whole: ["apps/web"],
+          related: [],
+          files: [],
+          covered: [],
+        },
+        checkTypes: true,
       },
     );
     assert.deepEqual(calls, [{ uncommitted: true }]);
+  });
+
+  it("leaves the types to another job with --without-types", () => {
+    const { listChanged } = lister(["apps/web/src/app.tsx"]);
+    assert.equal(
+      testsForArguments(["--without-types"], listChanged, chooser).checkTypes,
+      false,
+    );
   });
 
   it("refuses an unknown argument", () => {
@@ -467,6 +481,7 @@ describe("running the tests chosen", () => {
     assert.deepEqual(steps, [
       "turn",
       "pnpm test:scripts 1",
+      "pnpm typecheck 1",
       "packages --filter ./apps/server --filter ./packages/seed --parallel --no-bail exec vitest run --coverage --coverage.reporter=text --coverage.skipFull 1",
       "packages --filter ./apps/web --filter ./packages/shared --parallel --no-bail exec vitest related --run --passWithNoTests /fictional/fathom/packages/shared/src/views.ts /fictional/fathom/apps/web/src/app.tsx 1",
     ]);
@@ -492,6 +507,7 @@ describe("running the tests chosen", () => {
     assert.deepEqual(steps, [
       "turn",
       "pnpm test:scripts 1",
+      "pnpm typecheck 1",
       "packages --filter ./apps/server --filter ./packages/seed --parallel --no-bail exec vitest run --coverage --coverage.reporter=text --coverage.skipFull 1",
       `packages --filter ./apps/web --parallel --no-bail exec vitest related --run --passWithNoTests --coverage --coverage.reporter=text --coverage.skipFull --coverage.include=src/app.tsx --coverage.include=src/grid.tsx ${related} 1`,
       `packages --filter ./packages/shared --parallel --no-bail exec vitest related --run --passWithNoTests ${related} 1`,
@@ -504,7 +520,7 @@ describe("running the tests chosen", () => {
     assert.equal(await runTests(tests, failingCoverage), false);
   });
 
-  it("runs only the script tests when no package has tests to run", async (context) => {
+  it("runs only the script tests, checking no types, when no package has tests to run", async (context) => {
     context.mock.method(console, "log", () => undefined);
     const { steps, ...options } = recorder();
     assert.equal(
@@ -539,6 +555,86 @@ describe("running the tests chosen", () => {
         failing,
       );
     }
+  });
+
+  it("fails when the types don't check, as GitHub's check would, running the tests all the same", async (context) => {
+    context.mock.method(console, "log", () => undefined);
+    const { steps, ...options } = recorder({ packagesPass: true });
+    const failingTypes = {
+      ...options,
+      run: async (args, environment) => {
+        await options.run(args, environment);
+        return args[0] !== "typecheck";
+      },
+    };
+    assert.equal(
+      await runTests(
+        {
+          kind: "packages",
+          whole: [],
+          related: ["apps/web"],
+          files: ["apps/web/src/app.tsx"],
+          covered: [],
+        },
+        failingTypes,
+      ),
+      false,
+    );
+    assert.deepEqual(steps, [
+      "turn",
+      "pnpm test:scripts 1",
+      "pnpm typecheck 1",
+      "packages --filter ./apps/web --parallel --no-bail exec vitest related --run --passWithNoTests /fictional/fathom/apps/web/src/app.tsx 1",
+    ]);
+  });
+
+  it("leaves the types out when told another job checks them", async (context) => {
+    context.mock.method(console, "log", () => undefined);
+    const { steps, ...options } = recorder({ packagesPass: true });
+    assert.equal(
+      await runTests(
+        {
+          kind: "packages",
+          whole: ["apps/web"],
+          related: [],
+          files: [],
+          covered: [],
+        },
+        { ...options, checkTypes: false },
+      ),
+      true,
+    );
+    assert.deepEqual(steps, [
+      "turn",
+      "pnpm test:scripts 1",
+      "packages --filter ./apps/web --parallel --no-bail exec vitest run --coverage --coverage.reporter=text --coverage.skipFull 1",
+    ]);
+  });
+
+  it("checks the types even when the script tests fail", async (context) => {
+    context.mock.method(console, "log", () => undefined);
+    const { steps, ...options } = recorder({ packagesPass: true });
+    const failingScripts = {
+      ...options,
+      run: async (args, environment) => {
+        await options.run(args, environment);
+        return args[0] !== "test:scripts";
+      },
+    };
+    assert.equal(
+      await runTests(
+        {
+          kind: "packages",
+          whole: [],
+          related: ["apps/web"],
+          files: ["apps/web/src/app.tsx"],
+          covered: [],
+        },
+        failingScripts,
+      ),
+      false,
+    );
+    assert.ok(steps.includes("pnpm typecheck 1"), steps.join("\n"));
   });
 
   it("fails when the script tests fail", async (context) => {
@@ -581,6 +677,7 @@ describe("running the tests chosen", () => {
     assert.deepEqual(steps, [
       "turn",
       "pnpm test:scripts 1",
+      "pnpm typecheck 1",
       "packages --filter ./apps/server --filter ./apps/web --parallel --no-bail exec vitest run --coverage --coverage.reporter=text --coverage.skipFull 1",
     ]);
     assert.equal(
