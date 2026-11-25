@@ -779,3 +779,30 @@ describe("a side panel's frame", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 });
+
+describe("the panel in front, which a narrow screen shows", () => {
+  const behind = (text: string) =>
+    /stackItemBehind/u.test(
+      (screen.getByText(text).parentElement as HTMLElement).className,
+    );
+  const details = one("Details", "details");
+  const form = one("Form", "form");
+
+  it("is the one opened last, then, once it closes, the one in front before it", () => {
+    const { rerender } = render(layout([details]));
+    rerender(layout([details, form]));
+    rerender(layout([one("Note", "note"), details, form]));
+    expect(["Note", "Details", "Form"].map(behind)).toEqual([
+      false,
+      true,
+      true,
+    ]);
+    rerender(layout([details, form]));
+    expect(["Details", "Form"].map(behind)).toEqual([true, false]);
+  });
+
+  it("is the top one of those open together", () => {
+    render(layout([details, form]));
+    expect(["Details", "Form"].map(behind)).toEqual([false, true]);
+  });
+});
