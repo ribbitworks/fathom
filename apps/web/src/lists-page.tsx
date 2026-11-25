@@ -397,7 +397,7 @@ export function ListsPage({
         name: draftName(what),
         next: (current) => withoutDraft(current, what),
         save: () => discardListDraft(targetOf(what)),
-        notice: "of",
+        notice: "plain",
         onUndone: gone
           ? () => {
               openList(what.list);

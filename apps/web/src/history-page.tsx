@@ -5,7 +5,6 @@
 
 import { Paper, Stack, Text } from "@mantine/core";
 import { type HistoryEntry, matchesWords, searchWords } from "@fathom/shared";
-import { QueryState } from "./load-problem.tsx";
 import { useQuery } from "@tanstack/react-query";
 import {
   actorName,
@@ -22,6 +21,7 @@ import {
   WorthChecking,
 } from "./history-entries.tsx";
 import { HistorySearch } from "./history-search.tsx";
+import { QueryState } from "./load-problem.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 

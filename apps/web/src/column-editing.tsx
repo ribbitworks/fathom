@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Adding, changing, and deleting a table's added columns, as any page with such a table does: the
-// column dialog in its modal, each change shown at once and saved as a draft, and discarding or
-// sending again a column's draft. The modal cannot be closed while a change is being saved. Moving
-// a column to another class takes effect at once, never as a draft.
+// Adding, changing and deleting a table's added columns, and deciding their drafts, for any page
+// with such a table.
 
 import type {
   ColumnTable,
@@ -49,7 +47,7 @@ export function columnDraftActions<Data>(
       drafts.discard({
         name,
         save: () => discardColumnDraft(id, table),
-        notice: "of",
+        notice: "plain",
       });
     },
     resubmitColumn: (id: string) => {

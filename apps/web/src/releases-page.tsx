@@ -13,14 +13,14 @@ import type {
 } from "@fathom/shared";
 import { Button, Stack, Tooltip } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { QueryState } from "./load-problem.tsx";
 import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
-import { BusyModal } from "./dialog-actions.tsx";
 import { z } from "zod";
 import { describeProblem } from "./api.ts";
 import { useDecisionDialog } from "./decision-dialog.tsx";
+import { BusyModal } from "./dialog-actions.tsx";
 import { type DraftSelection } from "./drafts.ts";
 import { decisionFor } from "./draft-decisions.ts";
+import { QueryState } from "./load-problem.tsx";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";

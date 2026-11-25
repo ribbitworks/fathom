@@ -11,7 +11,6 @@ import {
 } from "@fathom/shared";
 import { Anchor, Box, Button, Group, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { Loading, LoadProblem } from "./load-problem.tsx";
 import { Link } from "@tanstack/react-router";
 import { ReactFlowProvider } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -25,6 +24,7 @@ import {
 } from "./feature-team-panel.tsx";
 import { FeatureTeamsList } from "./feature-teams-list.tsx";
 import { featureTeamPeople, featureTeamsQueryOn } from "./feature-teams.ts";
+import { Loading, LoadProblem } from "./load-problem.tsx";
 import { Chart } from "./org-chart-canvas.tsx";
 import { cardLinkId } from "./org-chart-cards.tsx";
 import { DateControl } from "./date-control.tsx";

@@ -219,7 +219,7 @@ export function peopleRecordActions({
           isHire(person)
             ? discardHireDraft(person.id)
             : discardDraft(person.id),
-        notice: gone ? "adding" : undefined,
+        notice: gone ? "created" : undefined,
       });
     },
   };

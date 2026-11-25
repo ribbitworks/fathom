@@ -4,12 +4,12 @@
 // changes that go with it.
 
 import type { DraftsAsked, Unpublished } from "@fathom/shared";
-import { Modal, Stack, Text } from "@mantine/core";
+import { Stack, Text } from "@mantine/core";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, createContext, useContext } from "react";
 import { describeProblem } from "./api.ts";
 import { CountedList } from "./counted-list.tsx";
-import { DialogActions, useDialogState } from "./dialog-actions.tsx";
+import { BusyModal, DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { notifyFailure } from "./notices.tsx";
 import { PhraseText } from "./phrase.tsx";
 import {
@@ -83,14 +83,12 @@ export function PublishDraftProvider({
   return (
     <PublishDraftContext.Provider value={publishes ? publishDraft : undefined}>
       {children}
-      <Modal
+      <BusyModal
         opened={question.opened}
         onClose={close}
         // It opens once the changes load, when focus may have moved on, such as to the row's ⋯.
         returnFocus={asking?.focusBack === undefined}
-        closeOnEscape={!publish.isPending}
-        closeOnClickOutside={!publish.isPending}
-        withCloseButton={!publish.isPending}
+        busy={publish.isPending}
         title={`Publish ${changeCount(along.length + 1)}?`}
       >
         {asking !== undefined && (
@@ -116,7 +114,7 @@ export function PublishDraftProvider({
             </Stack>
           </form>
         )}
-      </Modal>
+      </BusyModal>
     </PublishDraftContext.Provider>
   );
 }

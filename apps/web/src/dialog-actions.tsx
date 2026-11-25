@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The buttons at the foot of a dialog that changes something, with any other actions it offers on
-// the left or beside Cancel, and why the change it asked for was refused. Cancelling is not
-// possible while the change is being saved. Also, the modal such a dialog is shown in, and what a
-// dialog is open for, which is kept while its modal closes.
+// A dialog's buttons and refusal, the modal it is shown in while saving, and what it is open for.
 
 import { Alert, Button, Group, Modal, type ModalProps } from "@mantine/core";
 import { type ReactNode, useState } from "react";
@@ -65,15 +62,23 @@ export function DialogActions({
 }
 
 // A modal that cannot be closed while its dialog is saving, so a refusal or the outcome is always
-// seen. Its content is given what to call as saving starts and ends, and whether it is saving.
+// seen. Its content either reports when saving starts and ends, or its owner says whether it is
+// saving, such as from a mutation it already holds.
 export function BusyModal({
   children,
+  busy: given,
   closeOnClickOutside = true,
   ...modal
-}: Omit<ModalProps, "children" | "closeOnEscape" | "withCloseButton"> & {
-  children: (onBusy: (busy: boolean) => void, busy: boolean) => ReactNode;
-}) {
-  const [busy, setBusy] = useState(false);
+}: Omit<ModalProps, "children" | "closeOnEscape" | "withCloseButton"> &
+  (
+    | {
+        busy?: undefined;
+        children: (onBusy: (busy: boolean) => void, busy: boolean) => ReactNode;
+      }
+    | { busy: boolean; children: ReactNode }
+  )) {
+  const [reported, setReported] = useState(false);
+  const busy = given ?? reported;
   return (
     <Modal
       {...modal}
@@ -81,7 +86,7 @@ export function BusyModal({
       closeOnClickOutside={!busy && closeOnClickOutside}
       withCloseButton={!busy}
     >
-      {children(setBusy, busy)}
+      {typeof children === "function" ? children(setReported, busy) : children}
     </Modal>
   );
 }

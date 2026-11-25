@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Capacity page's Settings tab, for those who see configuration: the working time effort is
-// converted with, the defaults forecasts start from, and how new starters ramp up, month by month.
-// Those who change configuration change each setting in place, as a details panel's values are
-// changed, each change a draft of the settings, undone with Cmd+Z or Ctrl+Z and live once approved
-// with Approve Configuration; anyone else sees them read only. The Draft menu chooses how the draft
-// shows, and each changed row's menu offers what may be done with the draft as a whole.
+// The Capacity page's Settings tab: the working time, forecast defaults and ramp-up of new
+// starters.
 
 import {
   type Asking,

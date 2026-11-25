@@ -261,6 +261,36 @@ describe("the Drafts page", () => {
     ]);
   });
 
+  it("clears the ticks once the drafts are approved", async () => {
+    await openDrafts({
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+    });
+    const avery = await screen.findByRole("checkbox", {
+      name: "Select the draft of Avery Fictional",
+    });
+    await userEvent.click(avery);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
+    );
+    await userEvent.click(
+      within(
+        await screen.findByRole("dialog", { name: "Approve 1 draft?" }),
+      ).getByRole("button", { name: "Approve" }),
+    );
+    expect(await screen.findByText("Approved 1 draft.")).toBeDefined();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("checkbox", {
+          name: "Select the draft of Avery Fictional",
+          checked: true,
+        }),
+      ).toBeNull();
+    });
+    expect(
+      screen.queryByRole("button", { name: "Approve 1 draft…" }),
+    ).toBeNull();
+  });
+
   it("names a planned hire's draft by its position and ID, and approves it as a planned hire", async () => {
     const positions = {
       ...sites,

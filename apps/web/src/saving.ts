@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Saving changes on a page whose data is loaded as one query, such as the lists or the people. Every
-// change shows at once and saves in the background, one at a time in the order made. The latest
-// change can be undone with Cmd+Z or Ctrl+Z, or from its notification when it took something out of
-// view. Undoing asks the server to undo the change set the change was saved in, in one request, and
-// shows the data as it was just before the change straight away.
+// Saving and undoing changes on a page whose data is loaded as one query, such as the lists or the
+// people, and discarding or resubmitting a record's draft there.
 
 import type { QueryKey } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -260,8 +257,6 @@ export type RecordSaving<Data> = Pick<
   "save" | "undoable" | "done"
 >;
 
-// Discarding or resubmitting a record's draft: how to save it, how the data shows it at once, if it
-// changes, and the record's name for its notices.
 export interface DraftChange<Data> {
   name: string;
   save: () => Promise<string | null>;
@@ -269,9 +264,10 @@ export interface DraftChange<Data> {
 }
 
 // Discarding a draft that may take its record out of view says so, offering Undo there, and runs
-// onUndone once undone; any other discard is undone by Cmd+Z alone.
+// onUndone once undone; any other discard is undone by Cmd+Z alone. A discarded draft that created
+// its record is named as adding it.
 export interface DraftDiscard<Data> extends DraftChange<Data> {
-  notice?: "adding" | "of" | undefined;
+  notice?: "created" | "plain" | undefined;
   onUndone?: (() => void) | undefined;
 }
 
@@ -304,7 +300,7 @@ export function draftSaving<Data>({
             undoable(changeSetId, before);
           } else {
             done(
-              notice === "adding"
+              notice === "created"
                 ? `Discarded the draft adding ${name}.`
                 : `Discarded the draft of ${name}.`,
               changeSetId,

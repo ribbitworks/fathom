@@ -17,9 +17,9 @@ import {
 import { Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { type QueryKey, queryOptions, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
-import { BusyModal } from "./dialog-actions.tsx";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
+import { BusyModal } from "./dialog-actions.tsx";
 import { useLastView } from "./last-views.ts";
 import { notifySuccess } from "./notices.tsx";
 import { useSaving } from "./saving.ts";

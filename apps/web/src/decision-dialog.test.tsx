@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the dialog that asks before approving drafts: the drafts it names, and those approving
-// all leaves for another approver.
+// Tests for the dialog that asks before approving drafts: the drafts it names, those approving all
+// leaves for another approver, and what its page is told once a decision is saved.
 
-import { MantineProvider } from "@mantine/core";
+import { Button, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DecisionModal } from "./decision-dialog.tsx";
+import { DecisionModal, useDecisionDialog } from "./decision-dialog.tsx";
 import { noDrafts } from "./drafts.ts";
 import { type Decision } from "./draft-decisions.ts";
 import { serverAnswers, testTheme } from "./test-support.tsx";
@@ -143,5 +143,68 @@ describe("the dialog before approving", () => {
       );
     });
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("the decision dialog a page opens", () => {
+  function Page({ onDone }: { onDone: () => void }) {
+    const decisionDialog = useDecisionDialog({ onDone });
+    return (
+      <>
+        <Button
+          onClick={() => {
+            decisionDialog.open(approving(fictional(1), []));
+          }}
+        >
+          Decide
+        </Button>
+        {decisionDialog.modal}
+      </>
+    );
+  }
+
+  async function openFromPage() {
+    serverAnswers({
+      "POST /api/drafts/approval": () =>
+        Response.json({ changeSetId: "00000000-0000-4000-8000-000000000001" }),
+    });
+    const onDone = vi.fn();
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MantineProvider theme={testTheme}>
+          <Notifications />
+          <Page onDone={onDone} />
+        </MantineProvider>
+      </QueryClientProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Decide" }));
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 1 draft?",
+    });
+    return { dialog, onDone };
+  }
+
+  it("closes and tells the page once the decision is saved", async () => {
+    const { dialog, onDone } = await openFromPage();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(onDone).toHaveBeenCalledOnce();
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+  });
+
+  it("tells the page nothing when cancelled", async () => {
+    const { dialog, onDone } = await openFromPage();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    expect(onDone).not.toHaveBeenCalled();
   });
 });

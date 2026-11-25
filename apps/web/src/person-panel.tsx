@@ -1,24 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// One person's or planned hire's details in a side panel, beside People or the org chart, for those
-// who see people: their name and position, who they report to and who reports to them, their
-// details, and every added column People shows them, a planned hire's only where offered on hires.
-// It shows only what People sends the reader, so each tier is kept as there, and reading it is
-// recorded as reading People is. It follows the Draft menu of the page it is on: each drafted value
-// beside the live one, the drafts applied, or the record as it is live. Choosing their manager or a
-// report shows them instead. Those who may change people, and planned hires for a planned hire,
-// change each value there as in its People cell, with the same editors and checks, each change a
-// draft; the live values alone, and a record drafted to be removed or held by another's changes, are
-// only read. Beside the org chart on an earlier day, only a person's manager changes, from that day,
-// while their current line was already in force then.
+// One person's or planned hire's details in a side panel, beside People or the org chart.
 
 import { type Person, type Show } from "@fathom/shared";
 import { Group, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { Loading, LoadProblem } from "./load-problem.tsx";
 import { type ReactNode, useEffect, useEffectEvent } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { listsQuery } from "./lists.ts";
+import { Loading, LoadProblem } from "./load-problem.tsx";
 import { PersonFeatureTeams } from "./person-feature-teams.tsx";
 import { useTeamColours } from "./org-chart.ts";
 import {

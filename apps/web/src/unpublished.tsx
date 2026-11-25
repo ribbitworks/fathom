@@ -11,7 +11,7 @@ import {
   unpublishedPublishedSchema,
   unpublishedSchema,
 } from "@fathom/shared";
-import { Button, Group, Menu, Modal, Stack, Text } from "@mantine/core";
+import { Button, Group, Menu, Stack, Text } from "@mantine/core";
 import {
   queryOptions,
   useMutation,
@@ -21,6 +21,7 @@ import {
 import { type ReactNode, useState } from "react";
 import { describeProblem, getJson, sendJsonFor } from "./api.ts";
 import { AppMenu } from "./app-menu.tsx";
+import { BusyModal } from "./dialog-actions.tsx";
 import { MenuTitle, UnpublishedNote } from "./draft-details.tsx";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { count } from "./numbers.ts";
@@ -148,13 +149,11 @@ export function DiscardChangesModal({
   children: ReactNode;
 }) {
   return (
-    <Modal
+    <BusyModal
       opened={opened}
       onClose={onCancel}
       title={`Discard ${total}?`}
-      closeOnEscape={!pending}
-      closeOnClickOutside={!pending}
-      withCloseButton={!pending}
+      busy={pending}
     >
       <Stack gap="md">
         <Text fz="sm">{children}</Text>
@@ -167,7 +166,7 @@ export function DiscardChangesModal({
           </Button>
         </Group>
       </Stack>
-    </Modal>
+    </BusyModal>
   );
 }
 

@@ -68,7 +68,7 @@ export function planRecordActions({
       name: record.name,
       next: (plan) => withRecord(plan, type, record.id, discarded),
       save: () => discardRecordDraft({ type, id: record.id }),
-      notice: record.draft?.action === "created" ? "adding" : undefined,
+      notice: record.draft?.action === "created" ? "created" : undefined,
     });
   };
 

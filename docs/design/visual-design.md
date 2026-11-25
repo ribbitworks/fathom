@@ -219,7 +219,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **A record's details in a side panel:** `Row` for each value, `RecordLink` for a link to another record, `RecordLinkList` for several, one to a line, `RecordSection` for a headed group of rows, and `DetailSections` spacing the sections, in `record-details.tsx`, with `FoldedNote` in `folded-note.tsx` and `FoldedList` in `folded-list.tsx` for a long note or list.
 - **Changing a record's values in a side panel:** `useRecordEditing` in `record-editing.tsx`, with what a person's notes add in `person-editing.tsx`.
 - **A record's menu outside a table:** `RecordMenu` in `record-menu.tsx`, such as a milestone's in a project's details, offering Publish draft… where `usePublishDraft` in `publish-draft.tsx` gives it.
-- **Something that could not be loaded:** `LoadProblem` in `load-problem.tsx`.
+- **Something loading, or that could not be loaded:** `LoadProblem` and `Loading` in `load-problem.tsx`, with `QueryState` there showing either in place of one read.
 - **The buttons over a Name cell:** `RowControls` in `row-controls.tsx`, placed by `nameCellControls` in `row-menus.tsx` in the column its table names.
 - **Notes:** `NotePanel`, `NoteView`, and `NoteCell` in `note-editor.tsx`, with `useNoteEditing` in `note-editing.tsx` opening one from a record's details and keeping it in the address, through `note-address.ts`, and `useTableNoteAddress` in `grid-note-address.ts` keeping one opened from a table's cell.
 - **Links:** `LinkEditor`, `LinkCell`, and `LinkMenuItem` in `link-field.tsx`.
@@ -227,13 +227,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **Draft and status marks:** `DraftedItem`, `DraftedValue`, `RowMarks`, `MarkedItem`, `FactBox` and `LiveLine` in `status-mark.tsx`, under the page's `DraftView`, as [Drafts](../standards/ui-conventions/drafts-and-values.md#drafts) sets out.
 - **A page's title row:** `PageHeader` in `page-header.tsx`, with the Export icon from `PageExportMenu` in `page-export.tsx`, and the tabs beside it from `HeadingTabs` and `HeadingTabPanel` there.
 - **Exporting a table:** `useTableExport` in `table-export.tsx`, offering the export to the Export icon through `useOfferedExport` in `page-export.tsx`, the question in `export-question.tsx`, and the file, its name and saving it in `exports.ts`.
-- **A dialog's buttons:** `DialogActions` in `dialog-actions.tsx`.
+- **A dialog's buttons:** `DialogActions` in `dialog-actions.tsx`, and `BusyModal` there for a dialog that can't close while it saves.
 - **A column's filter:** `FilterPopover` in `table-controls.tsx`.
 - **A filter across a table, from the bar above it:** a table's `barFilters`, each drawn by `BarFilterButton` in `table-controls.tsx` with `FilterPopover`, and filtering the rows beside the draft filter through `filtersBesideColumns` in `table-view.ts`.
 - **Icons and colour swatches:** `Icon` in `icons.tsx` and `Swatch` in `colour-swatch.tsx`.
-
-## Planned
-
-Designs agreed but not built yet:
-
-- **A page that can't load:** every page and part of one that can't load its data showing `LoadProblem` ([issue #194](https://github.com/ribbitworks/fathom/issues/194)).

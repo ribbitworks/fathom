@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The question asked before an export holding Personal or Confidential data, naming each class
-// held in its own colour, with its columns, so nobody shares them by mistake. Exporting records it
-// in the access history, then saves the file; a refusal is shown in the dialog and saves nothing.
-// It can't be closed while the export is being recorded.
+// The question asked before exporting Personal or Confidential data.
 
 import { type ClassifiedTier, classNames } from "@fathom/shared";
 import { Stack, Text } from "@mantine/core";

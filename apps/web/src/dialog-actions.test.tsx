@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the modal a dialog that saves is shown in: closed by Escape, its close button or a
-// click outside while idle, and by none of them while its dialog is saving.
+// Tests for the modal a dialog that saves is shown in, while idle and while saving, whether its
+// content or its owner says it is saving.
 
 import { Button, MantineProvider } from "@mantine/core";
 import { fireEvent, render, screen, within } from "@testing-library/react";
@@ -37,6 +37,18 @@ function renderModal({
   return onClose;
 }
 
+function renderOwnedModal(busy: boolean) {
+  const onClose = vi.fn();
+  render(
+    <MantineProvider theme={testTheme}>
+      <BusyModal opened onClose={onClose} title="Fictional dialog" busy={busy}>
+        <Button>Save</Button>
+      </BusyModal>
+    </MantineProvider>,
+  );
+  return onClose;
+}
+
 const overlay = () => {
   const found = document.querySelector(".mantine-Modal-overlay");
   if (found === null) throw new Error("The modal has no overlay.");
@@ -44,17 +56,29 @@ const overlay = () => {
 };
 
 describe("BusyModal", () => {
-  it("closes by Escape, its close button or a click outside while idle", async () => {
+  it("closes by Escape while idle", async () => {
+    const onClose = renderModal();
+    await screen.findByRole("dialog", { name: "Fictional dialog" });
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("closes by its close button while idle", async () => {
     const onClose = renderModal();
     const dialog = await screen.findByRole("dialog", {
       name: "Fictional dialog",
     });
-    await userEvent.keyboard("{Escape}");
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Close dialog" }),
     );
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("closes by a click outside while idle", async () => {
+    const onClose = renderModal();
+    await screen.findByRole("dialog", { name: "Fictional dialog" });
     fireEvent.click(overlay());
-    expect(onClose).toHaveBeenCalledTimes(3);
+    expect(onClose).toHaveBeenCalledOnce();
   });
 
   it("can't be closed while its dialog is saving", async () => {
@@ -98,5 +122,25 @@ describe("BusyModal", () => {
     expect(
       within(dialog).getByRole("button", { name: "Close dialog" }),
     ).toBeDefined();
+  });
+
+  it("can't be closed while its owner says it is saving", async () => {
+    const onClose = renderOwnedModal(true);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Fictional dialog",
+    });
+    expect(
+      within(dialog).queryByRole("button", { name: "Close dialog" }),
+    ).toBeNull();
+    await userEvent.keyboard("{Escape}");
+    fireEvent.click(overlay());
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("closes while its owner says it is idle", async () => {
+    const onClose = renderOwnedModal(false);
+    await screen.findByRole("dialog", { name: "Fictional dialog" });
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });

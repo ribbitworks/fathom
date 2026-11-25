@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Users changing their own password, giving their current one: in a dialog opened from their
-// account's menu, and, while they still sign in with a password Fathom generated, on a page of its
-// own that is all they see until they change it, or sign out. The new password must differ from the
-// current one, meet the rules in the password settings, and not be too common or easy to guess. A
-// checklist under it shows each requirement met or not as they type. Changing it signs out their
-// other sessions, such as on another computer, which the notification says once it is done.
+// Users changing their own password, in a dialog from their account's menu or on the page shown
+// while they sign in with a password Fathom generated.
 
 import {
   chosenPasswordProblem,

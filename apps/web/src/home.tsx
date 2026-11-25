@@ -6,9 +6,9 @@
 
 import { Alert, Paper, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { Loading } from "./load-problem.tsx";
 import { describeProblem } from "./api.ts";
 import { fetchGreeting } from "./greeting.ts";
+import { Loading } from "./load-problem.tsx";
 import { PageHeader } from "./page-header.tsx";
 
 function Greeting() {

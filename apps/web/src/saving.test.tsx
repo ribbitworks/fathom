@@ -9,7 +9,13 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { changeMade, notifySuccess, notifyUndoable } from "./notices.tsx";
-import { type Change, draftSaving, isUndo, useSaving } from "./saving.ts";
+import {
+  type Change,
+  draftSaving,
+  isUndo,
+  type RecordSaving,
+  useSaving,
+} from "./saving.ts";
 
 // Semgrep can't parse typeof import() as a type argument.
 type Notices = typeof import("./notices.tsx");
@@ -146,15 +152,22 @@ describe("discarding and resubmitting a draft", () => {
   }
   const before: Data = { items: ["Atlas"] };
 
-  // A page's saving that keeps the change asked for, so its saving can be played out.
+  // A page's saving that keeps the change asked for, so its saving can be played out, and what each
+  // notice with Undo said and runs once undone.
   function pageSaving() {
     const saved: Change<Data>[] = [];
+    const notices: { message: string; onUndone: (() => void) | undefined }[] =
+      [];
     const saving = {
       save: vi.fn((change: Change<Data>) => {
         saved.push(change);
       }),
       undoable: vi.fn(),
-      done: vi.fn(),
+      done: vi.fn<RecordSaving<Data>["done"]>(
+        (message, _changeSetId, _before, _focus, onUndone) => {
+          notices.push({ message, onUndone });
+        },
+      ),
     };
     const savedAs = (changeSetId: string | null) => {
       saved[0]?.onSaved?.(changeSetId, before);
@@ -164,10 +177,12 @@ describe("discarding and resubmitting a draft", () => {
       saving,
       saved,
       savedAs,
+      notices,
     };
   }
 
   const discardSave = () => Promise.resolve("change-set-1");
+  const resubmitSave = () => Promise.resolve("change-set-1");
 
   it("names the record in a discard's failure, and leaves the data as it is unless told", () => {
     const { drafts, saved } = pageSaving();
@@ -187,60 +202,57 @@ describe("discarding and resubmitting a draft", () => {
   });
 
   it("offers Undo by Cmd+Z alone for a discard without a notice", () => {
-    const { drafts, saving, savedAs } = pageSaving();
+    const { drafts, saving, savedAs, notices } = pageSaving();
     drafts.discard({ name: "Atlas", save: discardSave, notice: undefined });
     savedAs("change-set-1");
     expect(saving.undoable).toHaveBeenCalledWith("change-set-1", before);
-    expect(saving.done).not.toHaveBeenCalled();
+    expect(notices).toEqual([]);
   });
 
   it.each([
-    ["adding", "Discarded the draft adding Atlas."],
-    ["of", "Discarded the draft of Atlas."],
+    ["created", "Discarded the draft adding Atlas."],
+    ["plain", "Discarded the draft of Atlas."],
   ] as const)(
-    "says what a discard with the %s notice did",
+    "says what a discard with the %s notice did, with Undo",
     (notice, message) => {
-      const { drafts, saving, savedAs } = pageSaving();
+      const { drafts, saving, savedAs, notices } = pageSaving();
       drafts.discard({ name: "Atlas", save: discardSave, notice });
       savedAs("change-set-1");
-      expect(saving.done).toHaveBeenCalledWith(
-        message,
-        "change-set-1",
-        before,
-        undefined,
-        undefined,
-      );
+      expect(notices.map((shown) => shown.message)).toEqual([message]);
       expect(saving.undoable).not.toHaveBeenCalled();
     },
   );
 
   it("runs what a discard gives once it is undone", () => {
-    const { drafts, saving, savedAs } = pageSaving();
+    const { drafts, savedAs, notices } = pageSaving();
     const onUndone = vi.fn();
     drafts.discard({
       name: "Atlas",
       save: discardSave,
-      notice: "of",
+      notice: "plain",
       onUndone,
     });
     savedAs("change-set-1");
-    expect(saving.done).toHaveBeenCalledWith(
-      "Discarded the draft of Atlas.",
-      "change-set-1",
-      before,
-      undefined,
-      onUndone,
-    );
+    notices[0]?.onUndone?.();
+    expect(onUndone).toHaveBeenCalledOnce();
   });
 
   it.each([
-    ["Atlas", "Fathom could not send the draft of Atlas for approval again."],
-    [undefined, "Fathom could not send the draft for approval again."],
-  ])("names %s in a resubmit's failure", (name, failure) => {
+    [
+      "the record",
+      "Atlas",
+      "Fathom could not send the draft of Atlas for approval again.",
+    ],
+    [
+      "no record",
+      undefined,
+      "Fathom could not send the draft for approval again.",
+    ],
+  ])("names %s in a resubmit's failure", (_named, name, failure) => {
     const { drafts, saved } = pageSaving();
     drafts.resubmit({
       ...(name === undefined ? {} : { name }),
-      save: discardSave,
+      save: resubmitSave,
     });
     expect(saved[0]?.failure).toBe(failure);
     expect(saved[0]?.next(before)).toBe(before);
@@ -249,7 +261,7 @@ describe("discarding and resubmitting a draft", () => {
   it("offers Undo for a resubmit once saved, and shows the data as the change given has it", () => {
     const { drafts, saving, saved, savedAs } = pageSaving();
     const next = (data: Data) => ({ items: [...data.items, "Beacon"] });
-    drafts.resubmit({ name: "Atlas", save: discardSave, next });
+    drafts.resubmit({ name: "Atlas", save: resubmitSave, next });
     savedAs(null);
     expect(saved[0]?.next).toBe(next);
     expect(saving.undoable).toHaveBeenCalledWith(null, before);

@@ -67,7 +67,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
     - **Sharing:** Sharing a view, or stopping sharing it, shows one too, since nothing changes in view and it affects others.
   - **Settings:** They change Fathom for everyone, so they keep a Save button. A saved change shows in place with no notification, and Cmd+Z or Ctrl+Z undoes it. Leaving with a change unsaved asks first.
   - **Saved from a pencil:** The planning settings on Capacity each save at once from their pencil, as a draft, as a details panel's values do. An account's name and email address do too, with no notification, and Cmd+Z or Ctrl+Z undoes them.
-  - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, and `notifyUndoable` in `apps/web/src/notices.tsx`.
+  - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, with `draftSaving` there for discarding and resubmitting a draft, and `notifyUndoable` in `apps/web/src/notices.tsx`.
   - **Example:** On People, save a view, then delete it.
 - **Asking first:** Of changes to data, only these ask first, since they can't be undone: approving drafts, rejecting them, Discard all…, discarding chosen changes on the Drafts page (such as Discard 2 changes…), publishing a draft from its menu when other changes go with it, and deleting a saved view its maker can no longer use.
   - **A saved view its maker can't use:** Deleting it can't be undone because its change history holds what the maker's role can't see.
@@ -78,13 +78,13 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
     - Changing an account's roles.
     - Resetting a password.
     - Deactivating or reactivating an account.
-  - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`, `DiscardChangesModal` in `apps/web/src/unpublished.tsx` for Discard all… and discarding chosen changes, and `PublishDraftProvider` in `apps/web/src/publish-draft.tsx` for publishing a draft from its menu. Their own dialogs draw the role's confirmation, in `apps/web/src/roles-page.tsx` with its accounts' changes in `apps/web/src/roles-consequences.tsx`, the account's, in `apps/web/src/accounts-page.tsx`, and deleting a saved view, in `apps/web/src/saved-views.tsx`.
+  - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`, opened by `useDecisionDialog` there, `DiscardChangesModal` in `apps/web/src/unpublished.tsx` for Discard all… and discarding chosen changes, and `PublishDraftProvider` in `apps/web/src/publish-draft.tsx` for publishing a draft from its menu. Their own dialogs draw the role's confirmation, in `apps/web/src/roles-page.tsx` with its accounts' changes in `apps/web/src/roles-consequences.tsx`, the account's, in `apps/web/src/accounts-page.tsx`, and deleting a saved view, in `apps/web/src/saved-views.tsx`.
   - **Example:** Approve draft… in a seeded person's draft menu on People.
 - **Failures:** A change that fails says so in plain words, never as a raw error, and says what to do next. Its notification stays until closed, and the record goes back to how it was.
   - **Drawn by:** `notifyFailure` in `apps/web/src/notices.tsx`, with the words from `describeProblem` in `apps/web/src/api.ts`.
   - **Example:** None in the seed data; a lost connection while saving shows one.
 - **A page that can't load:** A page, or part of one, whose data can't be loaded says so in plain words in its place, with Try again.
-  - **Drawn by:** `LoadProblem` in `apps/web/src/load-problem.tsx`.
+  - **Drawn by:** `LoadProblem` in `apps/web/src/load-problem.tsx`, with `Loading` there for the loader, and `QueryState` showing either in place of one read.
   - **Example:** None in the seed data; stopping the server while a page loads shows one.
 
 ## Leaving Unsaved Work
@@ -92,7 +92,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 - **Asking before discarding:** Leaving a form, a note or a Settings panel with anything changed asks first, whether by Cancel, the close button, another tab or another record. A dialog with anything typed in it counts as a form.
   - **The question:** The question always starts with Discard and names what is lost, such as Discard the new customer? with Keep adding and Discard, Discard changes to the note? with Keep writing and Discard, or Discard the fill of TBD-3?
   - **While saving:** A form can't be left while its record is being added, and a dialog can't be closed while a change is being saved.
-  - **Drawn by:** `useDiscardQuestion` and `newRecordQuestion` in `apps/web/src/discard-question.tsx`, and the note's question, `noteQuestion`, in `apps/web/src/note-editing.tsx`.
+  - **Drawn by:** `useDiscardQuestion` and `newRecordQuestion` in `apps/web/src/discard-question.tsx`, and the note's question, `noteQuestion`, in `apps/web/src/note-editing.tsx`. `BusyModal` in `apps/web/src/dialog-actions.tsx` keeps a dialog open while it saves.
   - **Example:** On Projects' Customers tab, select New customer, type a name, then Cancel.
 
 ## Refusals

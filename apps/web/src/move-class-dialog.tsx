@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Changing the class of data, for a role with Classify data: a built-in detail, a list, or a column
-// with a class of its own. Each class the data can't go to is turned off, with why. The dialog saves
-// the change itself, and cannot be closed while it saves: at once, or in the draft of a list or
-// column only drafted to be added. A new list or column is given its class with the same choice.
+// Changing the class of data: a built-in detail, a list, or a column with a class of its own.
 
 import {
   classNames,
