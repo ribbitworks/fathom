@@ -155,7 +155,7 @@ function chartOf(
       employeeId: seesPersonal || !gone ? record.employeeId : null,
       position: seesPositions ? record.position : null,
       teamName: record.teamName,
-      // A team whose name comes off loses its colour.
+      // A team whose name is removed loses its colour.
       teamColour:
         record.teamName === null ? null : knownColour(colours.get(id)),
       managerId: record.managerId,

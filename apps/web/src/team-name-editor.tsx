@@ -43,7 +43,7 @@ export function TeamNameEditor({
     onSuccess: (_, teamName) => {
       setOpened(false);
       notifySuccess(
-        `Draft saved. The team's name ${teamName === "" ? "comes off" : `becomes ${teamName}`} once approved.`,
+        `Draft saved. The team's name ${teamName === "" ? "is removed" : `becomes ${teamName}`} once approved.`,
       );
     },
     onError: (error) => {

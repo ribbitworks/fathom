@@ -189,7 +189,7 @@ describe("drafts of lists and choices, until published", () => {
       expect(response.statusCode).toBe(409);
       expect(response.json()).toEqual({
         error:
-          "A list drafted to be deleted has choices with drafts; approve or discard them first",
+          "A list drafted to be removed has choices with drafts; approve or discard them first",
       });
       await discard(bob);
       expect((await decide("approval", { lists: [list.id] })).statusCode).toBe(

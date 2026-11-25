@@ -425,7 +425,7 @@ Covered by [REL-28](#rel-28-schedules-are-grouped-by-status), which groups the s
 - [ ] `731E` Select the pencil.
   - **Expected:**
     - A dialog titled "Change when Field Apps ends" opens.
-    - Its **Schedule ends** field reads "No end date" in grey, with the line "Its last cycle ends on this day." under it.
+    - Its **Schedule ends** field reads "No end date" in grey, with the line "The last cycle ends on this day." under it.
   - **Notes:**
 
 - [ ] `C617` Type a day in the middle of the second cycle after the current one, as the **Cycles** table shows it, as its digits, such as `20270915`.

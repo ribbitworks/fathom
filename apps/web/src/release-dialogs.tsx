@@ -720,13 +720,13 @@ export function ReleaseDialog({
             label="Ships on"
             autoFocus={part === "shipsOn"}
             description={
-              (shipsOn !== null && consecutive && stream !== undefined
+              shipsOn !== null && consecutive && stream !== undefined
                 ? offCycleWords(shipsOffCycle(stream, { lastCycle, shipsOn }))
-                : undefined) ??
-              (end === undefined
-                ? "Leave empty to ship at the end of its last cycle"
-                : `Leave empty to ship at the end of its last cycle, on ${end}`)
+                : undefined
             }
+            {...(end === undefined
+              ? {}
+              : { placeholder: `${end} (end of the last cycle)` })}
             required={false}
             value={release?.shipsOn ?? undefined}
             problem={shipsProblem}
@@ -741,7 +741,6 @@ export function ReleaseDialog({
           <Select
             label="Colour"
             data-autofocus={part === "colour" || undefined}
-            description="How the release is drawn on the timeline"
             data={colourChoices}
             value={shownColour(colour)}
             allowDeselect={false}

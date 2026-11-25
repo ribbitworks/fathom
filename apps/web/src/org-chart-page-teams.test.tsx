@@ -121,7 +121,7 @@ describe("the org chart", () => {
       { colour: "grape" },
     ]);
     expect(
-      await screen.findByText("Fictional team is now drawn in Grape."),
+      await screen.findByText("Fictional team's colour is now Grape."),
     ).toBeDefined();
     expect(
       card("Tatum Fictional")
@@ -459,7 +459,7 @@ describe("the org chart", () => {
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(
       await screen.findByText(
-        "Draft saved. The team's name comes off once approved.",
+        "Draft saved. The team's name is removed once approved.",
       ),
     ).toBeDefined();
     const patch = fetch.mock.calls.find(([, init]) => init?.method === "PATCH");

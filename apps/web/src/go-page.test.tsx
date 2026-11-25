@@ -169,7 +169,7 @@ describe("a link to no record", () => {
       }),
     ).toBeDefined();
     expect(
-      screen.queryByRole("link", { name: "Show the change history" }),
+      screen.queryByRole("link", { name: "Show change history" }),
     ).toBeNull();
   });
 
@@ -185,7 +185,7 @@ describe("a link to no record", () => {
       await screen.findByRole("heading", { name: "#FEATURE-9 was removed" }),
     ).toBeDefined();
     act(() => {
-      screen.getByRole("link", { name: "Show the change history" }).click();
+      screen.getByRole("link", { name: "Show change history" }).click();
     });
     await waitFor(() => {
       expect(history.location.pathname).toBe("/changes");

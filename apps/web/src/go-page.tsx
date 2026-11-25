@@ -21,7 +21,7 @@ export function RecordNotShown({
       </Title>
       {removed && (
         <Anchor component={Link} to="/changes">
-          Show the change history
+          Show change history
         </Anchor>
       )}
     </Stack>

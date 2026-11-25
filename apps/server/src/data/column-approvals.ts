@@ -90,7 +90,7 @@ export async function approveColumnDrafts(
     if (field === undefined) {
       if (await draftsUse(transaction, { column: id })) {
         throw new ConflictError(
-          "Drafts change a column drafted to be deleted; approve or discard them first",
+          "Drafts change a column drafted to be removed; approve or discard them first",
         );
       }
       // The values deleted are as sensitive as the column, which the Approver sees, as checked above.
@@ -111,7 +111,7 @@ export async function approveColumnDrafts(
         (list.retired && live?.listId !== after.listId)
       ) {
         throw new ConflictError(
-          `The list the column ${after.name} draws on is no longer offered; change the column, then approve it`,
+          `The list the column ${after.name} uses is no longer offered; change the column, then approve it`,
         );
       }
     }

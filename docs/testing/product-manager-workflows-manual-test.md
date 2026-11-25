@@ -435,7 +435,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `D146` Choose the last cycle in the list in **Last cycle**.
-  - **Expected:** Under **Ships on**, the dialog reads "Leave empty to ship at the end of its last cycle, on" that cycle's last day.
+  - **Expected:** The empty **Ships on** field shows, in grey, that cycle's last day and "(end of the last cycle)".
   - **Notes:**
 
 - [ ] `C642` Select **Make release**.

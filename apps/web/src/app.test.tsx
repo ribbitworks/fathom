@@ -435,7 +435,7 @@ describe("when something goes wrong", () => {
       await screen.findByText("There is no page at this address."),
     ).toBeDefined();
     await userEvent.click(
-      screen.getByRole("link", { name: "Go to Fathom's start page" }),
+      screen.getByRole("link", { name: "Go to the start page" }),
     );
     expect(await screen.findByText("Hello, Fathom")).toBeDefined();
     expect(history.location.pathname).toBe("/");

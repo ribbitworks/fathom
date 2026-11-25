@@ -627,7 +627,7 @@ describe("feature teams on the org chart", () => {
       await screen.findByRole("menuitem", { name: "Grape" }),
     );
     expect(
-      await screen.findByText("Fictional Lighthouse is now drawn in Grape."),
+      await screen.findByText("Fictional Lighthouse's colour is now Grape."),
     ).toBeDefined();
     expect(changesSent(fetch, "PUT")).toEqual([
       [`/api/feature-teams/${lighthouse}/colour`, { colour: "grape" }],
