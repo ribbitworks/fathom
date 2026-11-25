@@ -4,6 +4,7 @@
 
 import { Button, Group, Modal } from "@mantine/core";
 import { useState } from "react";
+import classes from "./discard-question.module.css";
 
 export const newRecordQuestion = (thing: string) => ({
   title: `Discard the new ${thing}?`,
@@ -41,6 +42,7 @@ export function useDiscardQuestion() {
       onClose={close}
       title={asking?.title}
       size="sm"
+      classNames={{ body: classes.body }}
     >
       <Group justify="flex-end" gap="xs">
         <Button variant="default" onClick={close} data-autofocus>
