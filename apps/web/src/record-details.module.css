@@ -38,11 +38,6 @@
   align-items: center;
 }
 
-/* A row whose section's heading names it: its value takes the label's place too. */
-.labelHidden > .value {
-  grid-column: 1 / -1;
-}
-
 /* A page may give its labels more room than the shortest need. */
 .label {
   min-width: var(--fathom-record-label-width, 9rem);

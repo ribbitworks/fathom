@@ -27,7 +27,7 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 - **Milestones:** have no panel of their own; a project's panel lists them, with Add milestone.
 - **A project's dates:** come from its milestones, so they have no pencil.
 - **Linked records:** customers and proposals open in their own tab's panel; features open on [Features](features.md).
-- **A customer:** Name and Description under Details, then Notes last, under a heading of their own, as the Customers tab's columns run: Name, Description, then Notes.
+- **A customer:** Name, Description and Notes under Details, as a feature's Notes is, in the order the Customers tab's columns run.
 
 ### Scope History
 

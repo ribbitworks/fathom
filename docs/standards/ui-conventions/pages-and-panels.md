@@ -85,10 +85,9 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **Example:** On People, as the Engineering Operations Manager, open Mariana Metz's details and select its ⋯.
 - **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top, then headed sections of rows, then the columns an organization added, under Columns. A panel never mixes in another layout, such as labels over form fields.
   - **Labels:** A label sits beside its value while the panel is wide and over it once narrow. The labels form a column as wide as the section's longest, up to half the panel, so none wraps.
-  - **A section of one row:** Where a section holds one row its heading already names, such as a customer's Notes, the row shows no label of its own; it is only read aloud.
   - **Pencils:** Each value that can be changed has a pencil at its right, named Change and the label. The pencil shows while its row is pointed at or has focus, or always on a screen that can't be pointed at.
   - **Clicking the row:** Clicking anywhere on the row, label included, does the same as its pencil, and the row turns the hover grey while pointed at.
-  - **Drawn by:** `RecordSection`, `Row` (with `labelHidden` for a section of one row), `changeButton` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils, and `ValueField` there for a value typed in place, which a scope history's reason for a removal also uses.
+  - **Drawn by:** `RecordSection`, `Row`, `changeButton` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils, and `ValueField` there for a value typed in place, which a scope history's reason for a removal also uses.
   - **Example:** Any seeded person's details beside People.
 - **A draft's details:** A draft's details, beside the Drafts table, follow Person details. They show, in order:
   1. **The top:** The draft's record after its dot, with any fact boxes, and its record's key under it.

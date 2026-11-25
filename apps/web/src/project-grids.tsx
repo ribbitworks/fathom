@@ -52,11 +52,9 @@ import type {
   RecordTable,
 } from "./record-table.ts";
 
-// A customer's columns in the headed groups its details show them in, Notes last, as the table
-// ends with them.
+// A customer's columns in the headed groups its details show them in, as a feature's are.
 export const customerColumnGroups: readonly ColumnGroup[] = [
-  { title: "Details", keys: ["name", "description"] },
-  { title: "Notes", keys: ["note"] },
+  { title: "Details", keys: ["name", "description", "note"] },
 ];
 
 const customerColumns = (): Column<Customer, PlanChange>[] => [
