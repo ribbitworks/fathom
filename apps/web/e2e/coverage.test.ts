@@ -4,13 +4,15 @@
 // and each month's hours allocated of those needed.
 
 import { expect, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("engineeringDirector") });
 
 test("shows each work's effort, allocated hours and months as allocated of needed", async ({
   page,
 }) => {
-  // Given the Engineering Manager on Capacity
-  await signIn(page, "/capacity", "engineering.manager@fathom.test");
+  // Given the Engineering Director on Capacity
+  await page.goto("/capacity");
 
   // When Coverage is opened
   await page.getByRole("tab", { name: "Coverage" }).click();
