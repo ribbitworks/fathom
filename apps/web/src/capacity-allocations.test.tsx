@@ -25,6 +25,7 @@ import {
   serverAnswers,
 } from "./test-support.tsx";
 import { anyMonthKey } from "./team-months.tsx";
+import { unseenFeatureChoice } from "./allocation-months.tsx";
 
 const allocations: Allocations = {
   allocations: [
@@ -351,6 +352,67 @@ describe("Allocations kept to those over or under", () => {
 });
 
 describe("Allocations kept to what someone is allocated to", () => {
+  // Casey and the planned hire each on a feature the role can't read.
+  const onUnseen = (first: string, second: string) => () => {
+    const unseen = (id: string) => ({
+      id,
+      name: "A feature",
+      meaning: "in-progress" as const,
+      colour: null,
+      unseen: true as const,
+    });
+    return Response.json({
+      allocations: [
+        { ...allocations.allocations[0], featureId: first },
+        { ...allocations.allocations[1], featureId: second },
+      ],
+      features: [unseen(first), unseen(second)],
+    });
+  };
+
+  it("offers features the role can't read as one choice, keeping everyone on any of them", async () => {
+    const history = openAllocations("", {
+      allocationsAnswer: onUnseen("f-hidden-1", "f-hidden-2"),
+    });
+    await grid();
+
+    // When the one choice for them is chosen from the Allocations button
+    await userEvent.click(screen.getByRole("button", { name: "Allocations" }));
+    const filter = await screen.findByRole("dialog", {
+      name: "Filter Allocated to",
+    });
+    const choices = within(filter).getAllByRole("checkbox", {
+      name: "A feature",
+    });
+    expect(choices).toHaveLength(1);
+    await userEvent.click(choices[0] as HTMLElement);
+
+    // Then both stay, and nobody else, and the address keeps the one choice
+    await waitFor(() => {
+      expect(screen.queryByText("Avery Fictional")).toBeNull();
+    });
+    expect(rowOf("Casey Fictional")).toBeDefined();
+    expect(rowOf("Payments tester")).toBeDefined();
+    expect(address(history)).toContain(unseenFeatureChoice);
+  });
+
+  it("keeps a filter on features the role can't read, whichever such features there are", async () => {
+    // Given the one choice kept in the address, and other hidden features than when it was chosen
+    openAllocations(
+      `?filters=${JSON.stringify({ [anyMonthKey]: { any: [unseenFeatureChoice] } })}`,
+      { allocationsAnswer: onUnseen("f-hidden-3", "f-hidden-4") },
+    );
+    await grid();
+
+    // Then everyone on any of them stays, and nobody else
+    await waitFor(() => {
+      expect(screen.queryByText("Avery Fictional")).toBeNull();
+    });
+    expect(rowOf("Casey Fictional")).toBeDefined();
+    expect(rowOf("Payments tester")).toBeDefined();
+    expect(screen.getByText("Allocated to: A feature")).toBeDefined();
+  });
+
   it("keeps the rows on a feature chosen from the Allocations button, in any month, keeping it in the address", async () => {
     // Given Allocations, with Casey and the planned hire on Checkout
     const history = openAllocations();

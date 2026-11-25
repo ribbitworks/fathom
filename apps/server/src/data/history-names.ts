@@ -26,7 +26,8 @@ import {
 import { and, asc, desc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
 import { type Actor, seesSensitivity } from "../access.ts";
 import { builtInTier } from "./values.ts";
-import type { RecordKind } from "./record-state.ts";
+import { type RecordKind, readsKind } from "./record-state.ts";
+import { readsProjects, unseenProject } from "./release-kinds.ts";
 import { recordKinds } from "./records.ts";
 import type { StoredChange } from "./changes.ts";
 
@@ -417,15 +418,29 @@ export async function nameByParts(
     }
   }
   await readFacts(database, actor, [...generals.values()], facts);
+  // A part of a kind the actor doesn't read is named by its kind alone, and a general feature by its
+  // project only to one who reads projects.
+  const partNamed = (linkedType: string | undefined, partId: string) => {
+    const linked = planKindOf.get(linkedType ?? "");
+    if (linked !== undefined && !readsKind(linked, actor.permissions))
+      return linked.unseenSubject;
+    const project = generals.get(partId);
+    if (project !== undefined && !readsProjects(actor.permissions))
+      return unseenProject;
+    return facts.names.get(project ?? partId);
+  };
   for (const row of rows) {
-    const naming = planKindOf.get(row.recordType)?.historyName;
+    const kind = planKindOf.get(row.recordType);
+    const naming = kind?.historyName;
     const recorded = parts.get(row.recordId);
-    if (naming === undefined || recorded === undefined) continue;
+    if (kind === undefined || naming === undefined || recorded === undefined)
+      continue;
+    const links = new Map(Object.entries(kind.links));
     const name = naming.name(
       Object.fromEntries(
         Object.entries(recorded).map(([field, partId]) => [
           field,
-          facts.names.get(generals.get(partId) ?? partId),
+          partNamed(links.get(field), partId),
         ]),
       ),
     );

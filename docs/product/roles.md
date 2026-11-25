@@ -100,6 +100,7 @@ The classes, and each built-in detail's default class, are set out in the [Domai
   - **From an earlier date:** Changing feature teams and reporting lines from an earlier date also needs Edit on the class of what it changes (feature team dates or past managers), which is Personal unless moved.
 - **Positions:** A role that can't see the Positions list's class can't add people, since each needs one. Removing a person, or drafting a change to their position, needs the right to change their position.
 - **Not staffed:** Everyone who sees features sees whether one is [Not staffed](../design/domain-model.md#feature), though reading the allocations needs Personal data.
+- **The work an allocation names:** An allocation names its feature only to a role that sees features. A role that reads allocations but not features, which only an Administrator can make, is told only that it's a feature: on Capacity's Allocations, in drafts, in the change history and in a refusal. A project's general feature is named by its project only to a role that sees the plan, and to any other only as a project.
 
 ## Planned Hires in the Plan
 

@@ -393,6 +393,6 @@ describe("the name a record is given", () => {
     ],
     ["names a feature", featureKind, "record", "the feature Fictional Feature"],
   ])("%s", (_, kind, id, subject) => {
-    expect(kind.subject(state, id)).toBe(subject);
+    expect(kind.subject(state, id, ["features:view"])).toBe(subject);
   });
 });

@@ -15,6 +15,7 @@ import {
   unpublishedDrafts,
 } from "@fathom/db";
 import {
+  capitalized,
   type AllocationChange,
   type AllocationMonths,
   type Allocations,
@@ -42,13 +43,14 @@ import { readRecordsState, recordDraftOut, recordHeldBy } from "./records.ts";
 import {
   addedOnly,
   everyVersion,
+  readsKind,
   type RecordsState,
   shownIds,
   shownVersion,
   stateOf,
   versionOf,
 } from "./record-state.ts";
-import { featureCalled } from "./release-kinds.ts";
+import { featureKind, featureNaming } from "./release-kinds.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
@@ -205,6 +207,14 @@ async function hiresOf(
   );
 }
 
+// A feature as a list names it, and as a sentence does: by its name, or only by its kind.
+const namedInList = (naming: ReturnType<typeof featureNaming>) =>
+  "name" in naming
+    ? { name: naming.name }
+    : { name: capitalized(naming.unseen), unseen: true as const };
+const inSentence = (naming: ReturnType<typeof featureNaming>) =>
+  "name" in naming ? naming.name : naming.unseen;
+
 // Every allocation the actor sees, live and as drafts make them, and the features they name, and
 // whether any names someone not current today, which tells of their start or end date.
 export async function readAllocations(
@@ -312,9 +322,12 @@ export async function readAllocations(
         // Every feature has a status, a choice of the feature statuses list, read above.
         features: featureIds.map((id) => ({
           id,
-          name: featureCalled(state, id),
+          ...namedInList(featureNaming(state, id, actor.permissions)),
           meaning: meaningSchema.nullable().parse(meanings.get(statusOf(id))),
-          colour: colourOf(colours, teamOf(id)),
+          // A feature the reader can't read is told by no team's colour either.
+          colour: readsKind(featureKind, actor.permissions)
+            ? colourOf(colours, teamOf(id))
+            : null,
         })),
         includedPersonal: records.some(({ record }) => {
           const person = personOf(record);
@@ -475,7 +488,13 @@ export async function checkAllocationsAsked(
       throw new ConflictError(
         approvingRefusal(
           outside,
-          `${who} on ${featureCalled(state, String(record.featureId))}`,
+          `${who} on ${inSentence(
+            featureNaming(
+              state,
+              String(record.featureId),
+              approver.permissions,
+            ),
+          )}`,
           hire === undefined,
         ),
       );

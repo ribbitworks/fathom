@@ -71,11 +71,13 @@ export const allocationKind: RecordKind = {
   // Only a change shows its fields, and a change to an allocation always holds its months.
   valueInWords: (field, value) =>
     field === "months" ? monthsInWords(value as AllocationMonths) : undefined,
-  subject: (state, id) =>
-    `an allocation to ${featureKind.subject(
+  subject: (state, id, permissions) =>
+    `an allocation to ${subjectFor(
+      featureKind,
       state,
       // A record named is always shown, live or as its draft makes it.
       String((shownVersion(state, "allocation", id) as Recorded).featureId),
+      permissions,
     )}`,
 };
 
