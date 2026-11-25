@@ -18,7 +18,8 @@ import {
   StreamDialog,
 } from "./release-dialogs.tsx";
 import { bodiesOf, box, show, stream } from "./test-release-dialogs.tsx";
-import { fictionalPattern, serverAnswers } from "./test-support.tsx";
+import { fictionalPattern } from "./test-releases.ts";
+import { serverAnswers } from "./test-support.tsx";
 import { ViewDialog } from "./view-dialog.tsx";
 
 afterEach(() => {
