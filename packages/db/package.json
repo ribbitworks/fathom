@@ -21,8 +21,8 @@
     "@fathom/test-utils": "workspace:*",
     "@types/node": "26.6.6",
     "@types/pg": "8.23.1",
-    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/coverage-v8": "5.1.1",
     "drizzle-kit": "0.31.11",
-    "vitest": "5.0.5"
+    "vitest": "5.1.1"
   }
 }
