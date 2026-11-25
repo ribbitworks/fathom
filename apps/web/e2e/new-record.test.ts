@@ -103,4 +103,26 @@ test.describe("as the Engineering Director", () => {
     await page.keyboard.press("Escape");
     await expect(panel).toBeHidden();
   });
+
+  test("fills a planned hire with Enter in the Fill form's ID", async ({
+    page,
+  }) => {
+    // Given the Fill form of 'Backend engineer 2', a name typed
+    await page.goto("/people");
+    await page.getByPlaceholder("Search").fill("Backend engineer 2");
+    await page
+      .getByRole("button", { name: /^Fill Backend engineer 2/ })
+      .click();
+    await page.getByRole("textbox", { name: "Name" }).fill("Fictional Starter");
+
+    // When an ID is typed and Enter pressed
+    const id = page.getByRole("textbox", { name: "ID" });
+    await id.fill("EMP-9001");
+    await id.press("Enter");
+
+    // Then the hire is filled: the details are headed with the new person's name
+    await expect(
+      page.getByRole("heading", { name: /Fictional Starter/ }),
+    ).toBeVisible();
+  });
 });
