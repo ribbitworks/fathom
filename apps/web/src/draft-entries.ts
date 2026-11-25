@@ -34,6 +34,7 @@ import {
   type ReleaseStream,
 } from "@fathom/shared";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { addedClass, describeField, describeValue } from "./changes.ts";
 import { personDraftFields } from "./draft-details.tsx";
 import { type DraftPlace, placeKey } from "./draft-places.ts";
@@ -607,8 +608,8 @@ export type DraftEntries =
       // Why another approver must decide a draft holding what the reader's role can't see: of a list
       // of a class it can't see, or of a person, with details it can't see.
       unseen: (one: Entry) => string | undefined;
-      // Whether approving a draft takes along one another approver must approve.
-      othersApprove: (one: Entry) => boolean;
+      // Whether approving a draft takes along drafts another approver must approve.
+      needsOtherApproval: (one: Entry) => boolean;
       // The other drafts deciding a published draft takes with it, whatever the reader's role
       // decides: those approved with it while it waits, or those waiting on it once rejected.
       related: (one: Entry) => NamedDraft[];
@@ -638,6 +639,49 @@ export function useDraftEntries({
     ...planningSettingsQuery,
     enabled: seesSettings,
   });
+  // The role's kinds and permissions, kept while they read the same, as a page passes new arrays each
+  // time it renders.
+  const approvesKey = approves.join(" ");
+  const permissionsKey = permissions.join(" ");
+  const kinds = useMemo(() => wordsOf<DraftKind>(approvesKey), [approvesKey]);
+  const held = useMemo(
+    () => wordsOf<Permission>(permissionsKey),
+    [permissionsKey],
+  );
+  // Worked out once for what was read, since a page renders far more often than its reads change.
+  const loaded = useMemo(
+    () =>
+      loadedEntries({
+        people: seesPeople ? people.data : undefined,
+        lists: seesLists ? lists.data : undefined,
+        streams: seesPlan ? releases.data?.streams : undefined,
+        plan: seesProjects ? plan.data : undefined,
+        choices: seesProjects ? choices.data : undefined,
+        settings: seesSettings ? settings.data : undefined,
+        teams: seesTeams ? featureTeams.data?.teams : undefined,
+        chartPeople: seesTeams ? chart.data?.people : undefined,
+        approves: kinds,
+        permissions: held,
+      }),
+    [
+      seesPeople,
+      people.data,
+      seesLists,
+      lists.data,
+      seesPlan,
+      releases.data,
+      seesProjects,
+      plan.data,
+      choices.data,
+      seesSettings,
+      settings.data,
+      seesTeams,
+      featureTeams.data,
+      chart.data,
+      kinds,
+      held,
+    ],
+  );
   // Only the reads the role makes count: one it doesn't make may still hold an error from before its
   // role changed.
   const reads = [
@@ -657,27 +701,51 @@ export function useDraftEntries({
       },
     };
   }
-  const peopleData: PeopleData = (seesPeople ? people.data : undefined) ?? {
+  return loaded;
+}
+
+// What the drafts page reads, as the role reads it: a read it doesn't make is left out.
+interface DraftReads {
+  people: PeopleData | undefined;
+  lists: List[] | undefined;
+  streams: ReleaseStream[] | undefined;
+  plan: ProjectPlan | undefined;
+  choices: PlanChoices | undefined;
+  settings: PlanningSettingsShown | undefined;
+  teams: FeatureTeam[] | undefined;
+  chartPeople: OrgChartPerson[] | undefined;
+  approves: readonly DraftKind[];
+  permissions: readonly Permission[];
+}
+
+const wordsOf = <Word extends string>(joined: string): Word[] =>
+  joined === "" ? [] : (joined.split(" ") as Word[]);
+
+// The drafts read, with what decides each, each draft's taking along of others worked out once.
+function loadedEntries(
+  read: DraftReads,
+): Extract<DraftEntries, { state: "loaded" }> {
+  const peopleData: PeopleData = read.people ?? {
     people: [],
     fields: [],
     order: [],
   };
-  const listsData: List[] = (seesLists ? lists.data : undefined) ?? [];
-  const streams: ReleaseStream[] =
-    (seesPlan ? releases.data?.streams : undefined) ?? [];
-  const planData = seesProjects ? plan.data : undefined;
-  const settingsData = seesSettings ? settings.data : undefined;
-  const teamsData = seesTeams ? featureTeams.data : undefined;
-  const chartData = seesTeams ? chart.data : undefined;
-  const choicesData = seesProjects ? choices.data : undefined;
+  const listsData = read.lists ?? [];
+  const streams = read.streams ?? [];
+  const {
+    plan: planData,
+    settings: settingsData,
+    approves,
+    permissions,
+  } = read;
   const all = [
     ...personEntries(peopleData, listsData),
     ...columnEntries(peopleData, listsData),
     ...listEntries(listsData),
     ...recordEntries(streams),
-    ...(teamsData === undefined || chartData === undefined
+    ...(read.teams === undefined || read.chartPeople === undefined
       ? []
-      : teamEntries(teamsData.teams, chartData.people)),
+      : teamEntries(read.teams, read.chartPeople)),
     ...(planData === undefined
       ? []
       : columnEntries(
@@ -686,9 +754,9 @@ export function useDraftEntries({
           (name) => `${name} on Features`,
           "features",
         )),
-    ...(planData === undefined || choicesData === undefined
+    ...(planData === undefined || read.choices === undefined
       ? []
-      : planEntries(planData, choicesData, streams)),
+      : planEntries(planData, read.choices, streams)),
     ...(settingsData === undefined ? [] : settingsEntries(settingsData)),
   ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
   const drafted: DraftedData = {
@@ -704,10 +772,11 @@ export function useDraftEntries({
         ...(planData === undefined ? [] : planNodes(planData)),
         ...settingsNodes(settingsData),
       ],
-      featureTeams: teamsData?.teams,
+      featureTeams: read.teams,
     },
   };
   const unchangeable = unchangeableLists(listsData, permissions);
+  const takesAlongOthers = new Map<string, boolean>();
   const unseen = ({ selects }: Entry) =>
     unseenInDrafts(selects, listsData, unchangeable) ??
     unseenPeople(selects, peopleData.people);
@@ -717,8 +786,18 @@ export function useDraftEntries({
       waitsForRejected(selects, drafted.lists, drafted.columns),
     choosable: ({ selects }: Entry) => mayDecide(approves, selects),
     unseen,
-    othersApprove: ({ selects }: Entry) =>
-      needsOtherApproval(selects, approves, drafted.lists, drafted.columns),
+    needsOtherApproval: ({ key, selects }: Entry) => {
+      const known = takesAlongOthers.get(key);
+      if (known !== undefined) return known;
+      const needs = needsOtherApproval(
+        selects,
+        approves,
+        drafted.lists,
+        drafted.columns,
+      );
+      takesAlongOthers.set(key, needs);
+      return needs;
+    },
   };
   return {
     state: "loaded",

@@ -51,7 +51,7 @@ const reading = {
   choosable: ({ key }: Entry) => key !== "not-ours",
   unseen: ({ key }: Entry) =>
     key === "unseen" ? "This role can't see Personal data" : undefined,
-  othersApprove: ({ key }: Entry) => key === "takes-along",
+  needsOtherApproval: ({ key }: Entry) => key === "takes-along",
 };
 
 describe("a draft's row", () => {

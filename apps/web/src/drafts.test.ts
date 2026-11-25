@@ -511,6 +511,26 @@ describe("drafts of features that use drafts of columns", () => {
       needsOtherApproval(scoredOnly, ["feature", "field"], lists, columns),
     ).toBe(false);
   });
+
+  it("marks the feature for another approver when this account changed its column", () => {
+    const mineToo = {
+      ...columns,
+      fields: [
+        {
+          ...score,
+          draft: { ...waiting, ...score.draft, needsOtherApprover: true },
+        } as Field,
+      ],
+    };
+    expect(
+      needsOtherApproval(
+        { ...noDrafts(), records: records("scored") },
+        ["feature", "field"],
+        lists,
+        mineToo,
+      ),
+    ).toBe(true);
+  });
 });
 
 describe("a draft sent for approval again", () => {

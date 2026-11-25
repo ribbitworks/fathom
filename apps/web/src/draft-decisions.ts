@@ -277,16 +277,12 @@ export function decisionFor(
   };
 }
 
-// Whether approving drafts takes along any another approver must approve, as the drafts they use
-// of a kind the role doesn't approve, such as the new column a feature fills.
-export function needsOtherApproval(
+// Whether approving drafts takes along drafts another approver must approve, such as the new column
+// a feature fills, as approving them all leaves them for someone else.
+export const needsOtherApproval = (
   selection: DraftSelection,
   approves: readonly DraftKind[],
   lists: readonly List[],
   columns?: Columns,
-): boolean {
-  const decision = decisionFor("approve", selection, approves, lists, columns);
-  return (
-    decision.beyondRole !== undefined || decision.othersApprove !== undefined
-  );
-}
+): boolean =>
+  draftTotal(othersToApprove(selection, approves, lists, columns)) > 0;
