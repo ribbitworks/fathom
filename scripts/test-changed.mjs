@@ -2,6 +2,7 @@
 
 // Runs the tests a change can affect, checking the coverage of the source files changed, as the
 // Testing Standards' Running Tests sets out. Usage: node scripts/test-changed.mjs [--uncommitted]
+// [--without-types]
 
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -186,7 +187,8 @@ export function testsFor(
 }
 
 // The tests to run for the command's arguments, with --uncommitted counting only the work not yet
-// committed. Throws on an unknown argument.
+// committed, and whether to check the types too, unless --without-types says another job does, as
+// the check before a push's own does. Throws on an unknown argument.
 export function testsForArguments(
   args,
   listChanged = changedPaths,
@@ -194,9 +196,15 @@ export function testsForArguments(
 ) {
   const { values } = parseArgs({
     args,
-    options: { uncommitted: { type: "boolean", default: false } },
+    options: {
+      uncommitted: { type: "boolean", default: false },
+      "without-types": { type: "boolean", default: false },
+    },
   });
-  return choose(listChanged({ uncommitted: values.uncommitted }));
+  return {
+    tests: choose(listChanged({ uncommitted: values.uncommitted })),
+    checkTypes: !values["without-types"],
+  };
 }
 
 const filtersFor = (folders) =>
@@ -255,11 +263,12 @@ async function inPackages(
   return passed.every(Boolean);
 }
 
-// Runs the tests chosen, once no other copy of the repository is running a check, unless there are
-// none, and says whether they passed.
+// Runs the tests chosen, and the type check unless told not to, once no other copy of the repository is running a
+// check, unless there are none, and says whether they passed.
 export async function runTests(
   tests,
   {
+    checkTypes = true,
     inTurn = inCheckTurn,
     run = runPnpm,
     runPackages = runPackageTests,
@@ -277,6 +286,18 @@ export async function runTests(
         : "==> Testing the scripts and the packages a change can affect",
     );
     const scriptsPassed = await run(["test:scripts"], environment);
+    // The tests compile without checking types, so the type check GitHub's check runs is run too;
+    // its build is incremental, checking again only what changed.
+    // The type check covers the packages alone, not the scripts.
+    const packagesRun =
+      tests.kind === "everything" ||
+      tests.whole.length > 0 ||
+      tests.related.length > 0;
+    let typesPassed = true;
+    if (checkTypes && packagesRun) {
+      console.log("==> Checking the types");
+      typesPassed = await run(["typecheck"], environment);
+    }
     const covering = tests.covered.join(", ");
     if (covering !== "")
       console.log(`==> Checking the coverage of ${covering}`);
@@ -306,7 +327,7 @@ export async function runTests(
       });
       packagesPassed = packagesPassed && relatedPassed;
     }
-    return scriptsPassed && packagesPassed;
+    return scriptsPassed && typesPassed && packagesPassed;
   });
 }
 
@@ -314,9 +335,9 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-  let tests;
+  let chosen;
   try {
-    tests = testsForArguments(process.argv.slice(2));
+    chosen = testsForArguments(process.argv.slice(2));
   } catch (error) {
     console.error(
       `error: ${error instanceof Error ? error.message : String(error)}`,
@@ -324,7 +345,8 @@ if (
     process.exit(2);
   }
   try {
-    process.exit((await runTests(tests)) ? 0 : 1);
+    const { tests, checkTypes } = chosen;
+    process.exit((await runTests(tests, { checkTypes })) ? 0 : 1);
   } catch (error) {
     console.error(
       `error: ${error instanceof Error ? error.message : String(error)}`,

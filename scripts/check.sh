@@ -28,7 +28,7 @@ full_check=(
   "Renovate settings|pnpm lint:renovate"
 )
 before_push_jobs=(
-  "Changed tests|pnpm test:changed"
+  "Changed tests|pnpm test:changed --without-types"
   "${linters[@]}"
 )
 jobs=("${full_check[@]}")
