@@ -114,12 +114,12 @@ Record each step's result as [Manual Test Basics](manual-test-basics.md#recordin
     - A dialog titled "Change the length of" and the cycle's name opens, such as "Change the length of 27.1".
     - **Length** reads `3`, followed by "months", with the cycle's dates under its label.
     - Under **Later cycles**, **Move with it** is selected, and **Keep their dates** is offered.
-    - **New dates** lists that cycle and the next one, each a quarter long, and the first half, half a year long, such as `27.1`, `2027-01-01 to 2027-03-31`; `27.2`, `2027-04-01 to 2027-06-30`; and `27.3`, `2027-07-01 to 2027-12-31`.
+    - **New dates** lists that cycle and the next one, each a quarter long, and the first half, half a year long, such as `27.1`, `Jan 1 to Mar 31, 2027`; `27.2`, `Apr 1 to Jun 30, 2027`; and `27.3`, `Jul 1 to Dec 31, 2027`.
   - **Notes:**
 
 - [ ] `E427` Replace `3` in **Length** with `2`.
   - **Expected:**
-    - **New dates** lists the cycle two months long, then the next a quarter and the first half half a year, such as `27.1`, `2027-01-01 to 2027-02-28`; `27.2`, `2027-03-01 to 2027-05-31`; and `27.3`, `2027-06-01 to 2027-11-30`.
+    - **New dates** lists the cycle two months long, then the next a quarter and the first half half a year, such as `27.1`, `Jan 1 to Feb 28, 2027`; `27.2`, `Mar 1 to May 31, 2027`; and `27.3`, `Jun 1 to Nov 30, 2027`.
     - Under **Releases that move**: 'Harbor 3' and 'Harbor 4'.
     - Under **Features that move**: 'Data Retention Controls' and 'Report Builder'.
     - Below them, a line for each release that moves says the day it now ships, such as "Harbor 3 ships 2028-05-31." and "Harbor 4 ships 2028-11-30."

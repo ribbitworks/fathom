@@ -202,9 +202,9 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
 
 - [ ] `96B2` Type the first day of next year in **First cycle starts**, such as `20270101`, leaving **Each cycle lasts** at `3`, **Months**, and **Names** at `{YY}.{N}`.
   - **Expected:**
-    - Under **First cycles**, the first row reads next year's first cycle and its dates, January 1 to March 31, such as "27.1", "2027-01-01 to 2027-03-31".
-    - The second row reads its second cycle, April 1 to June 30, such as "27.2", "2027-04-01 to 2027-06-30".
-    - The third row reads its third cycle, July 1 to September 30, such as "27.3", "2027-07-01 to 2027-09-30".
+    - Under **First cycles**, the first row reads next year's first cycle and its dates, January 1 to March 31, such as "27.1", "Jan 1 to Mar 31, 2027".
+    - The second row reads its second cycle, April 1 to June 30, such as "27.2", "Apr 1 to Jun 30, 2027".
+    - The third row reads its third cycle, July 1 to September 30, such as "27.3", "Jul 1 to Sep 30, 2027".
   - **Notes:**
 
 - [ ] `06B8` Select **Set up cycles**.

@@ -54,7 +54,7 @@ describe("the dialog ending a schedule", () => {
       cyclesIn("Last cycles"),
     ]).toEqual([
       expect.anything(),
-      ["27.12027-01-01 to 2027-03-31", "27.22027-04-01 to 2027-05-15"],
+      ["27.1Jan 1 to Mar 31, 2027", "27.2Apr 1 to May 15, 2027"],
     ]);
   });
 

@@ -16,6 +16,9 @@ Part of [UI Conventions](../ui-conventions.md): how days and months are shown an
 - **Days:** A day shows a short month and its year in the reader's language, such as 31 Dec 2026 or Dec 31, 2026. Every date shown includes its year. The two exceptions are the About box's full date and Settings' day and time in a time zone ([Visual Design](../../design/visual-design.md#layout)).
   - **Drawn by:** `formatDay` in `apps/web/src/day-formats.ts`, which date cells use through `cellKinds` in `apps/web/src/cell-kinds.tsx`. `dayOf` in `apps/web/src/today.ts` first turns a moment into its day in Fathom's time zone, such as when an account was made in Accounts' Created column. `formatMomentDay` in `apps/web/src/day-formats.ts` shows a moment outside a date cell, such as a scope history's.
   - **Example:** Each release's heading on Features grouped by Release, such as Platform: Harbor 2 and the day it ships.
+- **Ranges of days:** Two days show as one range, such as Jan 1 to Mar 31, 2027, naming the year once when both days share it, the one exception to every date showing its year. "to" joins them, never a dash.
+  - **Drawn by:** `formatDayRange` in `apps/web/src/day-formats.ts`.
+  - **Example:** A cycle's choice in New release on Releases, such as 27.1 (Jan 1 to Mar 31, 2027).
 - **Months:** A month shows as a short month and its year, such as Mar 2027.
   - **Drawn by:** `formatMonth` in `apps/web/src/day-formats.ts`.
   - **Example:** Offline Sync's Needed by.

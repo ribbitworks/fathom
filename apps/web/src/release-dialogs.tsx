@@ -60,13 +60,14 @@ import {
   type SavedStream,
   shipsOffCycle,
   shownColour,
+  cycleNamed,
   savePattern,
   saveRelease,
 } from "./releases.ts";
 import { projectPlanQuery } from "./projects.ts";
 import { cycleUnitWords, patternOn } from "./schedules.ts";
 import { sessionQuery } from "./session.ts";
-import { formatDay } from "./day-formats.ts";
+import { formatDay, formatDayRange } from "./day-formats.ts";
 
 export interface Saving {
   onSaved: (saved: SavedStream) => void;
@@ -184,7 +185,7 @@ export function CyclesPreview({
             <Table.Tr key={startsOn}>
               <Table.Td fw={500}>{name}</Table.Td>
               <Table.Td className={classes.figures}>
-                {startsOn} to {endsOn}
+                {formatDayRange(startsOn, endsOn)}
               </Table.Td>
             </Table.Tr>
           ))}
@@ -221,7 +222,7 @@ function startChoices(
   }
   return cyclesOf(others, stream.cyclesUntil, stream.endsOn).map((cycle) => ({
     value: cycle.startsOn,
-    label: `${cycle.startsOn} (${cycle.name})`,
+    label: `${formatDay(cycle.startsOn)} (${cycle.name})`,
   }));
 }
 
@@ -470,7 +471,7 @@ export function CycleLengthDialog({
       <Stack gap="md">
         <NumberInput
           label="Length"
-          description={`${cycle.startsOn} to ${cycle.endsOn}`}
+          description={formatDayRange(cycle.startsOn, cycle.endsOn)}
           data-autofocus
           min={1}
           max={longest}
@@ -536,7 +537,7 @@ function freeCycles(stream: ReleaseStream, release: Release | undefined) {
     )
     .map((cycle) => ({
       value: cycle.startsOn,
-      label: `${cycle.name} (${cycle.startsOn} to ${cycle.endsOn})`,
+      label: `${cycle.name} (${formatDayRange(cycle.startsOn, cycle.endsOn)})`,
     }));
 }
 
@@ -725,9 +726,11 @@ export function ReleaseDialog({
                 ? offCycleWords(shipsOffCycle(stream, { lastCycle, shipsOn }))
                 : undefined
             }
-            {...(end === undefined
+            {...(end === undefined || stream === undefined
               ? {}
-              : { placeholder: `${formatDay(end)} (end of the last cycle)` })}
+              : {
+                  placeholder: `${formatDay(end)} (end of ${cycleNamed(stream, lastCycle)})`,
+                })}
             required={false}
             value={release?.shipsOn ?? undefined}
             problem={shipsProblem}

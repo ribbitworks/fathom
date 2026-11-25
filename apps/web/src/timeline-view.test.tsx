@@ -548,8 +548,8 @@ describe("the release layer's forms", () => {
     expect(majors.lastElementChild?.textContent).toBe("Ends Dec 31, 2027");
     const [first] = within(majors).getAllByRole("listitem");
     expect([first?.getAttribute("data-tip"), first?.textContent]).toEqual([
-      "27.1: Jan 1, 2027 to Mar 31, 2027",
-      "27.1, Jan 1, 2027 to Mar 31, 2027",
+      "27.1: Jan 1 to Mar 31, 2027",
+      "27.1, Jan 1 to Mar 31, 2027",
     ]);
     expect(
       within(timeline)

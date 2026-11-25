@@ -73,7 +73,7 @@ import {
   withUnit,
 } from "./table-view.ts";
 import type { GroupingChoice, GroupsHold } from "./row-groups.ts";
-import { formatDay } from "./day-formats.ts";
+import { formatDay, formatDayRange } from "./day-formats.ts";
 import { AppMenu, MenuChoices, MenuToggle, Tick } from "./app-menu.tsx";
 import type { ColumnUnits } from "./record-table.ts";
 import classes from "./pages.module.css";
@@ -336,7 +336,7 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
     case "date": {
       const { from, to } = filter;
       if (from !== undefined && to !== undefined) {
-        parts.push(`${formatDay(from)} to ${formatDay(to)}`);
+        parts.push(formatDayRange(from, to));
       } else if (from !== undefined) {
         parts.push(`from ${formatDay(from)}`);
       } else if (to !== undefined) {
