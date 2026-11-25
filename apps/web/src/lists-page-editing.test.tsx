@@ -191,7 +191,7 @@ describe("creating and editing lists", () => {
     });
     renderApp("/lists/l2");
     await userEvent.click(
-      await screen.findByRole("button", { name: "Edit list" }),
+      await screen.findByRole("button", { name: "Edit list…" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Edit list" });
     const name = within(dialog).getByLabelText("Name");
@@ -216,7 +216,7 @@ describe("creating and editing lists", () => {
     });
     renderApp("/lists/l2");
     await userEvent.click(
-      await screen.findByRole("button", { name: "Edit list" }),
+      await screen.findByRole("button", { name: "Edit list…" }),
     );
     await userEvent.click(
       await screen.findByRole("button", { name: "Retire list" }),
@@ -239,7 +239,7 @@ describe("creating and editing lists", () => {
     });
     renderApp("/lists/l4");
     await userEvent.click(
-      await screen.findByRole("button", { name: "Edit list" }),
+      await screen.findByRole("button", { name: "Edit list…" }),
     );
     await userEvent.click(
       await screen.findByRole("button", { name: "Restore list" }),
@@ -255,7 +255,7 @@ describe("creating and editing lists", () => {
     });
     renderApp("/lists/l2");
     await userEvent.click(
-      await screen.findByRole("button", { name: "Edit list" }),
+      await screen.findByRole("button", { name: "Edit list…" }),
     );
     await userEvent.click(
       await screen.findByRole("button", { name: "Retire list" }),
@@ -278,14 +278,14 @@ describe("creating and editing lists", () => {
     });
     renderApp("/lists/l4");
     await userEvent.click(
-      await screen.findByRole("button", { name: "Edit list" }),
+      await screen.findByRole("button", { name: "Edit list…" }),
     );
     await userEvent.click(
       await screen.findByRole("button", { name: "Remove list" }),
     );
     expect(await within(panel()).findByText(/Draft: removed/)).toBeDefined();
     expect(
-      within(panel()).queryByRole("button", { name: "Edit list" }),
+      within(panel()).queryByRole("button", { name: "Edit list…" }),
     ).toBeNull();
     await waitFor(() => {
       expect(document.activeElement).toBe(
@@ -325,7 +325,7 @@ describe("creating and editing lists", () => {
     });
     const history = renderApp("/lists/l4");
     await userEvent.click(
-      await screen.findByRole("button", { name: "Edit list" }),
+      await screen.findByRole("button", { name: "Edit list…" }),
     );
     await userEvent.click(
       await screen.findByRole("button", { name: "Remove list" }),
@@ -352,7 +352,7 @@ describe("creating and editing lists", () => {
     });
     renderApp("/lists/l2");
     await userEvent.click(
-      await screen.findByRole("button", { name: "Edit list" }),
+      await screen.findByRole("button", { name: "Edit list…" }),
     );
     await userEvent.click(
       await screen.findByRole("button", { name: "Retire list" }),
@@ -389,7 +389,7 @@ describe("creating and editing lists", () => {
     });
     renderApp("/lists/l2");
     await userEvent.click(
-      await screen.findByRole("button", { name: "Edit list" }),
+      await screen.findByRole("button", { name: "Edit list…" }),
     );
     await userEvent.click(
       await screen.findByRole("button", { name: "Remove list" }),
@@ -647,7 +647,7 @@ describe("only the latest change", () => {
         bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position"),
       ).toHaveLength(1);
     });
-    await userEvent.click(screen.getByRole("button", { name: "Edit list" }));
+    await userEvent.click(screen.getByRole("button", { name: "Edit list…" }));
     await screen.findByRole("dialog");
     await userEvent.keyboard("{Meta>}z{/Meta}");
     await act(async () => {

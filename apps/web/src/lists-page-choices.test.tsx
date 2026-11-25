@@ -97,7 +97,7 @@ describe("the side panel", () => {
     await screen.findByRole("heading", { name: "Locations", level: 2 });
     expect(screen.getByText("Head office.")).toBeDefined();
     expect(screen.queryByLabelText("New choice name")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Edit list" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit list…" })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Actions for/ })).toBeNull();
     await userEvent.click(row("c1"));
     expect(screen.queryByLabelText("name")).toBeNull();

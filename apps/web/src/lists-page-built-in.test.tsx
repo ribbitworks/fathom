@@ -89,7 +89,7 @@ describe("built-in lists and lists with meanings", () => {
         /Proposed: the request to hire is not yet approved\.\s+Open: the request to hire is approved\.\s+Hired: everyone in People who hasn't left\. A planned hire is hired when someone fills it\.\s+Left: everyone in People whose end date has passed\.\s+Keep at least one choice for each\./,
       ),
     ).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Edit list" }));
+    await userEvent.click(screen.getByRole("button", { name: "Edit list…" }));
     const dialog = await screen.findByRole("dialog", { name: "Edit list" });
     expect(within(dialog).queryByRole("button", { name: "Retire list" })).toBe(
       null,
@@ -112,7 +112,7 @@ describe("built-in lists and lists with meanings", () => {
     });
     renderApp("/lists/l2");
     await screen.findByRole("heading", { name: "Skills", level: 2 });
-    await userEvent.click(screen.getByRole("button", { name: "Edit list" }));
+    await userEvent.click(screen.getByRole("button", { name: "Edit list…" }));
     const edit = await screen.findByRole("dialog", { name: "Edit list" });
     expect(within(edit).queryByRole("radio")).toBe(null);
     await userEvent.click(within(edit).getByRole("button", { name: "Cancel" }));
@@ -174,7 +174,7 @@ describe("built-in lists and lists with meanings", () => {
     });
     renderApp("/lists/l3");
     await screen.findByRole("heading", { name: "Empty List", level: 2 });
-    await userEvent.click(screen.getByRole("button", { name: "Edit list" }));
+    await userEvent.click(screen.getByRole("button", { name: "Edit list…" }));
     const edit = await screen.findByRole("dialog", { name: "Edit list" });
     await userEvent.click(
       within(edit).getByRole("radio", { name: /^Personal/ }),

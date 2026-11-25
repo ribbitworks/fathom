@@ -744,7 +744,7 @@ describe("a list of a class the role can't see", () => {
     });
     renderApp("/lists/l2");
     expect(await screen.findByText(unseenLine)).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Edit list" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit list…" })).toBeNull();
     expect(screen.queryByLabelText("New choice name")).toBeNull();
   });
 
