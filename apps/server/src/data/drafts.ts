@@ -4,6 +4,7 @@
 // unpublished changes to them. Part of the data access layer.
 
 import {
+  type Database,
   drafts,
   inChunks,
   type Reader,
@@ -15,16 +16,16 @@ import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { ConflictError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import {
+  type Draft,
+  draftBetween,
+  noDraft,
+  type Recorded,
   same,
   tidy,
   toDraft,
   toUnpublished,
-  noDraft,
-  wantsNoDraft,
-  draftBetween,
-  type Recorded,
   type Viewer,
-  type Draft,
+  wantsNoDraft,
 } from "./draft-records.ts";
 
 // Changes to drafts of every kind wait for one another, as do approvals, rejections, undoing,
@@ -164,6 +165,44 @@ export async function readHeld(
 export const heldMessage = (holder: string) =>
   `${holder} is changing this; it can be changed once they publish or discard their changes`;
 
+// Rejects drafts for a reason.
+export const rejectedIn = (
+  transaction: Transaction,
+  recordType: DraftKind,
+  ids: readonly string[],
+  reason: string,
+) => setRejection(transaction, recordType, ids, { state: "rejected", reason });
+
+// Sends a rejected draft for approval again, its rejection cleared.
+export const reopened = (
+  transaction: Transaction,
+  recordType: DraftKind,
+  id: string,
+) =>
+  setRejection(transaction, recordType, [id], {
+    state: "waiting",
+    reason: null,
+  });
+
+// Refuses a change to a record someone holds.
+export function refuseHolder(holder: string | undefined): void {
+  if (holder !== undefined) throw new ConflictError(heldMessage(holder));
+}
+
+// A change of drafts in a transaction of its own, the drafts locked, given the state of the records
+// of its kind as the editor sees them.
+export async function draftingWith<State, Result>(
+  database: Database,
+  editor: string,
+  readState: (transaction: Transaction, editor: string) => Promise<State>,
+  change: (transaction: Transaction, state: State) => Promise<Result>,
+): Promise<Result> {
+  return database.transaction(async (transaction) => {
+    await lockDrafts(transaction);
+    return change(transaction, await readState(transaction, editor));
+  });
+}
+
 // Refuses a change to records someone other than the editor holds.
 export async function refuseHeld(
   reader: Reader,
@@ -172,7 +211,7 @@ export async function refuseHeld(
   ids: readonly string[],
 ): Promise<void> {
   const [held] = (await readHeld(reader, recordType, editor, ids)).values();
-  if (held !== undefined) throw new ConflictError(heldMessage(held.holder));
+  refuseHolder(held?.holder);
 }
 
 // Refuses approving or rejecting drafts of records anyone holds, the Approver included, since

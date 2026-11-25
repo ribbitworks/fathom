@@ -40,15 +40,18 @@ import {
   requireMove,
 } from "./data-classes.ts";
 import {
+  actionTo,
   asDraft,
   clearedRejection,
   type Draft,
   type Recorded,
+  requireRejected,
 } from "./draft-records.ts";
 import {
   discardDrafts,
+  draftingWith,
   lockDrafts,
-  setRejection,
+  reopened,
   writeDraft,
 } from "./drafts.ts";
 import { draftsUse } from "./drafted-values.ts";
@@ -79,16 +82,11 @@ import {
   toFieldOut,
 } from "./column-state.ts";
 
-async function drafting<Result>(
+const drafting = <Result>(
   database: Database,
   editor: string,
   change: (transaction: Transaction, state: ColumnsState) => Promise<Result>,
-): Promise<Result> {
-  return database.transaction(async (transaction) => {
-    await lockDrafts(transaction);
-    return change(transaction, await readColumnsState(transaction, editor));
-  });
-}
+) => draftingWith(database, editor, readColumnsState, change);
 
 // A column's settings as a request asks for them, as recorded.
 const requested = (request: FieldRequest, tableName: unknown): Recorded => ({
@@ -113,9 +111,7 @@ async function saveFieldDraft(
   before: Recorded | undefined,
   after: Recorded | undefined,
 ): Promise<string | null> {
-  let action: Change["action"] = "changed";
-  if (before === undefined) action = "created";
-  else if (after === undefined) action = "deleted";
+  const action = actionTo(before, after);
   const live = state.fields.get(id);
   const made = asDraft(
     fieldChanges(
@@ -389,9 +385,7 @@ function discardingField(state: ColumnsState, id: string): Change[] {
   const draft = state.fieldDrafts.get(id) as Draft;
   const live = state.fields.get(id);
   const field = draftedField(state, id);
-  let action: Change["action"] = "changed";
-  if (field === undefined) action = "created";
-  else if (live === undefined) action = "deleted";
+  const action = actionTo(field, live);
   return [
     ...asDraft(
       fieldChanges(
@@ -517,14 +511,9 @@ export async function resubmitColumnDraft(
   return drafting(database, maker.user.id, async (transaction, state) => {
     const { id } = target;
     const draft = draftOf(state, target);
-    if (draft.state !== "rejected") {
-      throw new ConflictError("Only a rejected draft can be resubmitted");
-    }
+    requireRejected(draft);
     refuseResubmitting(maker, state, id);
-    await setRejection(transaction, "field", [id], {
-      state: "waiting",
-      reason: null,
-    });
+    await reopened(transaction, "field", id);
     return recordChanges(
       transaction,
       maker,

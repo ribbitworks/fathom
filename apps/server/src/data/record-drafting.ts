@@ -19,13 +19,19 @@ import {
   type Transaction,
 } from "./changes.ts";
 import {
+  actionTo,
   asDraft,
   clearedRejection,
   type Draft,
   type Recorded,
   wantsNoDraft,
 } from "./draft-records.ts";
-import { heldMessage, lockDrafts, writeDraft } from "./drafts.ts";
+import {
+  draftingWith,
+  heldMessage,
+  refuseHolder,
+  writeDraft,
+} from "./drafts.ts";
 import {
   linkedIds,
   type RecordKind,
@@ -50,16 +56,11 @@ import {
 
 // Runs a change to the editor's drafts of the plan's records, after every other change to drafts,
 // with the records as they see them.
-export async function drafting<Result>(
+export const drafting = <Result>(
   database: Database,
   editor: string,
   change: (transaction: Transaction, state: RecordsState) => Promise<Result>,
-): Promise<Result> {
-  return database.transaction(async (transaction) => {
-    await lockDrafts(transaction);
-    return change(transaction, await readRecordsState(transaction, editor));
-  });
-}
+) => draftingWith(database, editor, readRecordsState, change);
 
 const holderOf = (
   state: RecordsState,
@@ -72,8 +73,7 @@ export function refuseHeldIn(
   type: RecordType,
   id: string,
 ) {
-  const holder = holderOf(state, type, id);
-  if (holder !== undefined) throw new ConflictError(heldMessage(holder));
+  refuseHolder(holderOf(state, type, id));
 }
 
 // Why a record can't be changed: it isn't there to change, someone else holds it, or its draft
@@ -131,15 +131,6 @@ export function changeableRecord(
   const found = recordToChange(state, type, id);
   if ("refusal" in found) throw refusalError(found.refusal);
   return found.record;
-}
-
-// The action that takes a record from one version to another.
-function actionTo(
-  before: Recorded | undefined,
-  after: Recorded | undefined,
-): Change["action"] {
-  if (before === undefined) return "created";
-  return after === undefined ? "deleted" : "changed";
 }
 
 export const kindChanges = (

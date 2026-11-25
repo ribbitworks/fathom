@@ -19,7 +19,7 @@ import {
 } from "@fathom/shared";
 import { and, asc, eq, inArray, min } from "drizzle-orm";
 import { type Actor, mostSensitive, seesSensitivity } from "../access.ts";
-import { BadRequestError, ConflictError, ForbiddenError } from "../errors.ts";
+import { BadRequestError, ForbiddenError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import { readColumnOrder } from "./column-order.ts";
 import {
@@ -38,9 +38,9 @@ import {
 import {
   type Held,
   heldByOf,
-  heldMessage,
   readDrafts,
   readHeld,
+  refuseHolder,
 } from "./drafts.ts";
 import { typeOf } from "./column-types.ts";
 import { fieldFields } from "./fields.ts";
@@ -190,7 +190,7 @@ export function nameTaken(
 
 // Refuses a change to a record someone else holds.
 export function refuseHeldIn(held: Held | undefined): void {
-  if (held !== undefined) throw new ConflictError(heldMessage(held.holder));
+  refuseHolder(held?.holder);
 }
 
 // The tier of a column's values, as its type sets it, with each list's tier live or as drafted,
@@ -230,7 +230,7 @@ export async function checkList(
   const held = state.lists.lists.has(listId)
     ? undefined
     : state.lists.held.lists.get(listId);
-  if (held !== undefined) throw new ConflictError(heldMessage(held.holder));
+  refuseHeldIn(held);
   // Locked shared, so the list cannot be approved as retired until this draft is saved. A list only
   // drafted to be added has no row yet; the drafts lock keeps its draft in place instead.
   await transaction

@@ -5,12 +5,11 @@
 
 import {
   type Database,
-  drafts,
   listItems,
   plannedHireTemporaryNumbers,
 } from "@fathom/db";
 import { type HireChange, type HireRequest } from "@fathom/shared";
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import {
   type Actor,
@@ -32,15 +31,18 @@ import {
   lockDrafts,
   readHeld,
   refuseHeld,
+  reopened,
   writeDraft,
 } from "./drafts.ts";
 import {
+  actionTo,
   asDraft,
   clearedRejection,
   type Draft,
   drafted,
   draftFields,
   type Recorded,
+  requireRejected,
   tidy,
 } from "./draft-records.ts";
 import {
@@ -537,9 +539,7 @@ export async function resubmitHireDraftIn(
 ): Promise<Change[]> {
   requireHiringEdit(actor);
   const { before, draft } = await lockDraftedHire(transaction, actor, id);
-  if (draft?.state !== "rejected") {
-    throw new ConflictError("Only a rejected draft can be resubmitted");
-  }
+  requireRejected(draft);
   const tierOf = await readHireTier(transaction);
   // Resubmitting sends every change the draft holds, so it needs the right to make each of them.
   for (const field of draftFields(before, draft)) {
@@ -554,10 +554,7 @@ export async function resubmitHireDraftIn(
     draft,
     recordType,
   );
-  await transaction
-    .update(drafts)
-    .set({ state: "waiting", reason: null })
-    .where(and(eq(drafts.recordType, recordType), eq(drafts.recordId, id)));
+  await reopened(transaction, recordType, id);
   return made;
 }
 
@@ -573,9 +570,7 @@ export async function discardHireDraftIn(
   if (draft === undefined) {
     throw new NotFoundError("This planned hire has no draft");
   }
-  let action: Change["action"] = "changed";
-  if (hire === undefined) action = "created";
-  else if (before === undefined) action = "deleted";
+  const action = actionTo(hire, before);
   const tierOf = await readHireTier(transaction);
   const made = [
     ...asDraft(hireChanges(id, action, hire, before, tierOf)),

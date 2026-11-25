@@ -3,13 +3,12 @@
 // Drafting people added, changed and removed, and resubmitting or discarding their drafts. Part of
 // the data access layer.
 
-import { type Database, drafts } from "@fathom/db";
+import { type Database } from "@fathom/db";
 import {
   type PersonChange,
   type PersonRequest,
   seesField,
 } from "@fathom/shared";
-import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import {
   type Actor,
@@ -24,15 +23,18 @@ import {
   lockDrafts,
   readPersonDrafts,
   refuseHeld,
+  reopened,
   writePersonDraft,
 } from "./drafts.ts";
 import {
+  actionTo,
   asDraft,
   clearedRejection,
   type Draft,
   drafted,
   draftFields,
   type Recorded,
+  requireRejected,
   tidy,
 } from "./draft-records.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
@@ -492,19 +494,14 @@ export async function resubmitPersonDraftIn(
   requirePermission(actor, "people:edit");
   const columns = await columnsWithAdded(transaction, actor.user.id, true);
   const { before, draft } = await lockDrafted(transaction, actor, columns, id);
-  if (draft?.state !== "rejected") {
-    throw new ConflictError("Only a rejected draft can be resubmitted");
-  }
+  requireRejected(draft);
   const tierOf = personTier(columns);
   // Resubmitting sends every change the draft holds, so it needs the right to make each of them.
   for (const field of draftFields(before, draft)) {
     requireSensitivityEdit(actor, tierOf(field));
   }
   const made = clearedRejection(id, tierOf, before, draft);
-  await transaction
-    .update(drafts)
-    .set({ state: "waiting", reason: null })
-    .where(and(eq(drafts.recordType, "person"), eq(drafts.recordId, id)));
+  await reopened(transaction, "person", id);
   return made;
 }
 
@@ -526,9 +523,7 @@ export async function discardPersonDraftIn(
   if (draft === undefined) {
     throw new NotFoundError("This person has no draft");
   }
-  let action: Change["action"] = "changed";
-  if (person === undefined) action = "created";
-  else if (before === undefined) action = "deleted";
+  const action = actionTo(person, before);
   const made = [
     ...asDraft(personChanges(columns, id, action, person, before)),
     ...clearedRejection(id, personTier(columns), before, draft),

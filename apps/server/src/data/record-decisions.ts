@@ -16,13 +16,15 @@ import {
   drafted,
   type Recorded,
   refuseRejected,
-  rejectedField,
+  rejectionChange,
+  requireRejected,
 } from "./draft-records.ts";
 import {
   deleteDrafts,
   discardDrafts,
   refuseHeldDecision,
-  setRejection,
+  rejectedIn,
+  reopened,
 } from "./drafts.ts";
 import {
   addedOnly,
@@ -243,9 +245,7 @@ export async function resubmitRecordDraft(
     refuseHeldIn(state, type, id);
     const draft = stateOf(state, type).drafts.get(id);
     if (draft === undefined) throw new NotFoundError(noDraft);
-    if (draft.state !== "rejected") {
-      throw new ConflictError("Only a rejected draft can be resubmitted");
-    }
+    requireRejected(draft);
     if (type === "feature") {
       refuseCustomersChange(
         maker,
@@ -253,10 +253,7 @@ export async function resubmitRecordDraft(
         versionOf(state, type, id),
       );
     }
-    await setRejection(transaction, type, [id], {
-      state: "waiting",
-      reason: null,
-    });
+    await reopened(transaction, type, id);
     return recordChanges(
       transaction,
       maker,
@@ -460,22 +457,9 @@ export async function rejectRecordDrafts(
       .map(({ id }) => id);
     for (const id of ids) {
       const draft = stateOf(state, kind.type).drafts.get(id) as Draft;
-      if (draft.state === "rejected" && draft.reason === reason) continue;
-      made.push({
-        recordType: kind.type,
-        recordId: id,
-        action: "changed",
-        field: rejectedField,
-        tier: "general",
-        oldValue: draft.state === "rejected" ? draft.reason : null,
-        newValue: reason,
-        draft: true,
-      });
+      made.push(...rejectionChange(kind.type, id, draft, reason, "general"));
     }
-    await setRejection(transaction, kind.type, ids, {
-      state: "rejected",
-      reason,
-    });
+    await rejectedIn(transaction, kind.type, ids, reason);
   }
   return made;
 }

@@ -8,17 +8,15 @@ import { type MemberTeamsChange } from "@fathom/shared";
 import { type Actor, requireView } from "../access.ts";
 import { BadRequestError, NotFoundError } from "../errors.ts";
 import { type Change } from "./changes.ts";
-import { lockDrafts } from "./drafts.ts";
 import { peopleOf, readLiveTeams } from "./feature-team-reads.ts";
 import { membersOf } from "./feature-team-rules.ts";
 import { heldTeamChange, monthRefusals } from "./feature-team-held-changes.ts";
 import { noPerson } from "./person-fields.ts";
-import { readToday } from "./settings.ts";
 import {
+  changingTeams,
   draftedTeam,
   draftTeamChange,
   fromDay,
-  requireChanging,
   saved,
 } from "./feature-teams.ts";
 
@@ -31,12 +29,9 @@ export async function changeMemberTeams(
   change: MemberTeamsChange,
   asOf?: string,
 ): Promise<string | null> {
-  requireChanging(actor);
-  requireView(actor, "featureAssignments");
-  const today = asOf ?? (await readToday(database));
-  const from = fromDay(actor, change.from, today);
-  return database.transaction(async (transaction) => {
-    await lockDrafts(transaction);
+  return changingTeams(database, actor, asOf, async (transaction, today) => {
+    requireView(actor, "featureAssignments");
+    const from = fromDay(actor, change.from, today);
     const person = (await peopleOf(transaction, [personId], today)).get(
       personId,
     );
