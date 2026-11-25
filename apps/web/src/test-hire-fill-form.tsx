@@ -73,6 +73,8 @@ export function answers(
     positionHidden?: boolean;
     fill?: () => Response;
     permissions?: string[];
+    // Further answers, such as a refusal, which take the place of those above.
+    more?: Parameters<typeof serverAnswers>[0];
   } = {},
 ) {
   return serverAnswers({
@@ -115,6 +117,7 @@ export function answers(
     "GET /api/unpublished": () => Response.json({ changes: [] }),
     "POST /api/planned-hires/h1/fill":
       options.fill ?? (() => Response.json({ changeSetId: null })),
+    ...options.more,
   });
 }
 

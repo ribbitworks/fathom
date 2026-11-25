@@ -17,7 +17,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { planChoicesQuery, projectPlanQuery } from "./projects.ts";
 import { useState } from "react";
 import { CountedList } from "./counted-list.tsx";
-import { DialogActions } from "./dialog-actions.tsx";
+import { DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { waitingSentence } from "./draft-details.tsx";
 import { focusRefusedSoon } from "./focus.ts";
 import {
@@ -306,4 +306,20 @@ export function DecisionModal({
         )}
     </Modal>
   );
+}
+
+export function useDecisionDialog() {
+  const { dialog, opened, open, close } = useDialogState<Decision>();
+  return {
+    open,
+    opened,
+    modal: (
+      <DecisionModal
+        decision={dialog}
+        opened={opened}
+        onClose={close}
+        onDone={close}
+      />
+    ),
+  };
 }

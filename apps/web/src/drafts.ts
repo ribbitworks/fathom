@@ -14,7 +14,7 @@ import {
   savedSchema,
 } from "@fathom/shared";
 import { sendJsonFor } from "./api.ts";
-import { rowName } from "./people-rows.ts";
+import { plannedHireName } from "./people-rows.ts";
 import {
   type RecordNode,
   recordKey,
@@ -397,7 +397,7 @@ export function draftNames(
       .map(({ preferredName }) => preferredName),
     ...people
       .filter(({ id }) => selection.plannedHires.includes(id))
-      .map((hire) => `the planned hire ${rowName(hire, lists)}`),
+      .map((hire) => plannedHireName(hire, lists)),
   ];
   names.push(
     ...fields

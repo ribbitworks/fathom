@@ -29,12 +29,7 @@ import {
 } from "./projects.ts";
 import type { RecordActions } from "./record-table.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
-import type { useSaving } from "./saving.ts";
-
-type PlanSaving = Pick<
-  ReturnType<typeof useSaving<ProjectPlan>>,
-  "save" | "undoable" | "done"
->;
+import type { RecordSaving } from "./saving.ts";
 
 export function planRecordActions({
   changes: { save, undoable, done },
@@ -42,7 +37,7 @@ export function planRecordActions({
   approves,
   onDecision,
 }: {
-  changes: PlanSaving;
+  changes: RecordSaving<ProjectPlan>;
   // The plan as last read, which each action reads only once the page has it.
   plan: ProjectPlan | undefined;
   // The kinds of draft the user's role approves and rejects.
