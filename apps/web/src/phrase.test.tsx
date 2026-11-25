@@ -27,6 +27,65 @@ describe("a phrase", () => {
     ).toEqual(["Level", "Grade"]);
   });
 
+  it("draws a mark of punctuation straight after a value against it, with nothing between", () => {
+    // Given a value followed by a comma, as a draft's line names who made it
+    const phrase: Phrase = [
+      { strong: "Name" },
+      " to ",
+      { value: "Spoken languages" },
+      ", by Fictional Editor",
+    ];
+
+    // When it is shown
+    const { container } = render(<PhraseText phrase={phrase} />);
+
+    // Then its text is unchanged, and the comma is drawn against the value
+    expect(container.textContent).toBe(
+      "Name to Spoken languages, by Fictional Editor",
+    );
+    const mark = container.querySelector('[class*="phraseMark"]');
+    expect(mark?.textContent).toBe(",");
+    expect(mark?.previousElementSibling?.textContent).toBe("Spoken languages");
+  });
+
+  it("marks punctuation only straight after a value, not after a field's name", () => {
+    // Given punctuation after a field's name, and words after a value that start with a space
+    const phrase: Phrase = [
+      { value: "P1" },
+      " and ",
+      { strong: "Grade" },
+      ", by Fictional Editor",
+    ];
+
+    // When it is shown
+    const { container } = render(<PhraseText phrase={phrase} />);
+
+    // Then nothing is marked
+    expect(container.querySelector('[class*="phraseMark"]')).toBeNull();
+  });
+
+  it("marks punctuation that is all of the words after a value", () => {
+    const { container } = render(
+      <PhraseText phrase={[{ value: "P1" }, "."]} />,
+    );
+    expect(container.textContent).toBe("P1.");
+    expect(container.querySelector('[class*="phraseMark"]')?.textContent).toBe(
+      ".",
+    );
+  });
+
+  it("marks punctuation after a value in the lighter form too", () => {
+    const { container } = render(
+      <PhraseList
+        phrases={[[{ value: "P1" }, ", by Fictional Editor"]]}
+        light
+      />,
+    );
+    expect(container.querySelector('[class*="phraseMark"]')?.textContent).toBe(
+      ",",
+    );
+  });
+
   it("sets several apart with semicolons", () => {
     const { container } = render(
       <PhraseList

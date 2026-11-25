@@ -797,6 +797,16 @@ th[data-centred] .recordHeadButton {
   font-weight: 400;
 }
 
+/* A value with punctuation straight after it keeps half its room at its end, so the mark isn't
+   set apart as if by a space. After the light form, so it holds there too. */
+.phraseValue:has(+ .phraseMark) {
+  padding-inline-end: 0.125rem;
+}
+
+.phrasesLight .phraseValue:has(+ .phraseMark) {
+  padding-inline-end: 0.0625rem;
+}
+
 /* The name at the top of a record's menu, in the text colour, since it says whose menu it is, with
    a divider under it. */
 .menuTitle {
