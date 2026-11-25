@@ -6,8 +6,8 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { renderApp, serverAnswers } from "./test-support.tsx";
-import { editor, peopleAnswer, positions } from "./people-note-fixtures.ts";
+import { positions, renderApp, serverAnswers } from "./test-support.tsx";
+import { editor, peopleAnswer } from "./people-note-fixtures.ts";
 
 afterEach(() => {
   vi.unstubAllGlobals();
