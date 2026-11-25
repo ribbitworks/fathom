@@ -298,7 +298,19 @@ export function ChoicePicker({
               value={addingValue}
               className={comboboxClasses.adding}
             >
-              {addingLabel(adding.one, search.trim())}
+              {multiple ? (
+                <Group gap="xs" wrap="nowrap">
+                  {/* Hidden, as on a choice not picked, so its words start in line with theirs. */}
+                  <CheckIcon size={12} aria-hidden visibility="hidden" />
+                  <span className={comboboxClasses.addingWords}>
+                    {addingLabel(adding.one, search.trim())}
+                  </span>
+                </Group>
+              ) : (
+                <span className={comboboxClasses.addingWords}>
+                  {addingLabel(adding.one, search.trim())}
+                </span>
+              )}
             </Combobox.Option>
           )}
         </Combobox.Options>

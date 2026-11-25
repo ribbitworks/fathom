@@ -37,6 +37,14 @@
   color: var(--mantine-color-anchor);
 }
 
+/* On one line, a long name typed cut short, since the field above holds it whole. */
+.addingWords {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Alone in the list, with nothing above it to set apart from. */
 .adding:first-child {
   border-top: 0;
