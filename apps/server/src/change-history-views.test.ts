@@ -4,7 +4,6 @@
 // table's page and see its columns, and a personal view's to its maker alone, shared or undone.
 
 import { savedViews } from "@fathom/db";
-import {} from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { generalReader } from "./test-app.ts";

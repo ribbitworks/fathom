@@ -4,7 +4,6 @@
 // what Semgrep and Trivy find by severity, and when each scan did not complete.
 
 import assert from "node:assert/strict";
-import {} from "node:fs";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { summarize } from "./security-summary.mjs";
 import {
