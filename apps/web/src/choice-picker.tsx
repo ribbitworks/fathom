@@ -17,6 +17,7 @@ import {
 import { ColouredName } from "./colour-swatch.tsx";
 import comboboxClasses from "./combobox.module.css";
 import classes from "./pages.module.css";
+import { composingWord } from "./composing.ts";
 
 // How editing a cell ended: Enter, Tab or Shift+Tab, or leaving the cell.
 export type Finish = "enter" | "next" | "previous" | "leave";
@@ -249,7 +250,11 @@ export function ChoicePicker({
         values = multiple ? toggled(value) : [value];
       }
       onDone(values, event.shiftKey ? "previous" : "next");
-    } else if (event.key === "Enter" && highlighted() === undefined) {
+    } else if (
+      event.key === "Enter" &&
+      highlighted() === undefined &&
+      !composingWord(event)
+    ) {
       // Nothing to pick: Enter finishes, as it does in other cells.
       event.preventDefault();
       onDone(picked, "enter");

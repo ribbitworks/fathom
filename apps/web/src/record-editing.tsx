@@ -35,6 +35,7 @@ import {
   withUnit,
 } from "./table-view.ts";
 import { typeIn } from "./type-in.ts";
+import { composingWord } from "./composing.ts";
 
 type Keyed = Pick<Column<never>, "key">;
 
@@ -93,12 +94,6 @@ export type SaveChange<Rec extends GridRecord, Change> = (
 
 // A panel's field for a value typed in place, which Enter or leaving it saves and Esc leaves as it
 // was, with an × to empty it. It names its own problem, which Mantine ties to the field.
-// Enter that ends composing a word with an input method isn't the reader's Enter. Safari sends it
-// with isComposing false, and only the old key code 229 marks it.
-const composing = (event: KeyboardEvent) =>
-  // eslint-disable-next-line @typescript-eslint/no-deprecated -- Safari marks composing only so
-  event.isComposing || event.keyCode === 229;
-
 export function ValueField({
   id,
   label,
@@ -149,7 +144,7 @@ export function ValueField({
         if (event.key === "Escape" && onCancel !== undefined) {
           event.preventDefault();
           onCancel();
-        } else if (event.key === "Enter" && !composing(event.nativeEvent)) {
+        } else if (event.key === "Enter" && !composingWord(event)) {
           event.preventDefault();
           onEnter();
         }

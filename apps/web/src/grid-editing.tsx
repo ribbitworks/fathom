@@ -17,6 +17,7 @@ import { opensMenu } from "./row-controls.tsx";
 import type { MenuGrid } from "./row-menus.tsx";
 import { type CellValue, fieldLabel } from "./table-view.ts";
 import { typeIn } from "./type-in.ts";
+import { composingWord } from "./composing.ts";
 
 export function gridEditing<Rec extends GridRecord, Change, Request>(
   grid: Pick<
@@ -206,7 +207,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       event.preventDefault();
       setProblem(undefined);
       stopEdit(cell);
-    } else if (event.key === "Enter") {
+    } else if (event.key === "Enter" && !composingWord(event)) {
       event.preventDefault();
       finish(cell, typed.current, "enter");
     } else if (event.key === "Tab") {
