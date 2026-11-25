@@ -101,7 +101,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
   - **Format:** GitHub-flavoured Markdown, so a note exports as it is: paragraphs, headings three levels deep (a deeper one becomes the third), line breaks, bold, italic, strikethrough, inline code, bullet, numbered and checkbox lists, and links.
   - **Lists:** A list's items all have checkboxes or none, a numbered list has none and counts from 1, lists hold no headings, and lists may hold one another.
   - **Not allowed:** Quotes, highlighting, images, code blocks, tables, and any HTML but the colour tag, `<span data-colour="…">`.
-  - **Links:** A web address under the [web link](#components) rules, or a Help page by its file name and, optionally, a heading, such as `lists.md#add-choices`. A link whose text only repeats its address shows its host.
+  - **Links:** A web address under the [web link](#components) rules, or a Help page by its file name and, optionally, a heading, such as `lists.md#add-choices`. A link whose text only repeats its address shows its host. Links read in Fathom's link colour, underlined, as a web link in a table's cell does, visited or not.
   - **Checks:** Typing and pasting clean to what notes allow; the server refuses anything else rather than removing it, so what is kept is exactly what was checked; and a sanitiser shows only the same. Each step uses an open-source library, never a parser of Fathom's own.
   - **Panel:** A click, Enter, or F2 opens the note in a side panel, titled with the column's name, stacked above Metrics if it is open.
   - **Modes:** For those who may change it, Note, Editor, and Markdown switch views. It opens on Note, or the Editor for an empty note. The Editor's toolbar stays in sight as a long note scrolls.
