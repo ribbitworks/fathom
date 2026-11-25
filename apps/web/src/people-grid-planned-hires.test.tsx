@@ -9,8 +9,8 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { type Column, columnsFor, PeopleGrid } from "./people-grid.tsx";
 import { emptyView } from "./table-view.ts";
-import { testTheme } from "./test-support.tsx";
-import { site, positions, noop, actions } from "./test-people-grid.tsx";
+import { noop, positions, testTheme } from "./test-support.tsx";
+import { peopleActions, site } from "./test-people-grid.tsx";
 
 describe("planned hires beside people", () => {
   const states: List = {
@@ -183,7 +183,7 @@ describe("planned hires beside people", () => {
           showDates
           view={emptyView}
           onView={noop}
-          actions={actions}
+          actions={peopleActions()}
         />
       </MantineProvider>,
     );
@@ -219,7 +219,7 @@ describe("planned hires beside people", () => {
             showDates
             view={{ ...emptyView, breakdown: ["positionId"] }}
             onView={noop}
-            actions={actions}
+            actions={peopleActions()}
           />
         </MantineProvider>,
       );
@@ -262,7 +262,7 @@ describe("planned hires beside people", () => {
           showDates
           view={emptyView}
           onView={noop}
-          actions={actions}
+          actions={peopleActions()}
         />
       </MantineProvider>,
     );
@@ -292,7 +292,7 @@ describe("planned hires beside people", () => {
             sort: [{ key: "preferredName", descending: true }],
           }}
           onView={noop}
-          actions={actions}
+          actions={peopleActions()}
         />
       </MantineProvider>,
     );

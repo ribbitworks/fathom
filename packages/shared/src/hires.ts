@@ -6,20 +6,17 @@ import { z } from "zod";
 import { daySchema, monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { meaningSchema } from "./lists.ts";
-import { linkValueSchema } from "./links.ts";
 import { keyNumberSchema } from "./record-keys.ts";
 import {
+  changedColumnValues,
   hireNameSchema,
   linksSchema,
   notesSchema,
   numbersSchema,
   preferredNameSchema,
   recordIdSchema,
-  requestedLinksSchema,
+  requestedColumnValues,
   temporaryIdPrefix,
-  requestedNotesSchema,
-  requestedNumbersSchema,
-  requestedValuesSchema,
   valuesSchema,
 } from "./people.ts";
 
@@ -136,10 +133,7 @@ export const hireRequestSchema = z.object({
   stateId: z.uuid().optional(),
   managerId: z.uuid().nullable().default(null),
   isManager: z.boolean().default(false),
-  values: requestedValuesSchema.default({}),
-  links: z.record(z.uuid(), linkValueSchema).default({}),
-  notes: requestedNotesSchema.optional(),
-  numbers: requestedNumbersSchema.optional(),
+  ...requestedColumnValues,
 });
 
 export type HireRequest = z.infer<typeof hireRequestSchema>;
@@ -161,10 +155,7 @@ export const hireChangeSchema = z.object({
   stateId: z.uuid().optional(),
   managerId: z.uuid().nullable().optional(),
   isManager: z.boolean().optional(),
-  values: requestedValuesSchema.optional(),
-  links: requestedLinksSchema.optional(),
-  notes: requestedNotesSchema.optional(),
-  numbers: requestedNumbersSchema.optional(),
+  ...changedColumnValues,
 });
 
 export type HireChange = z.infer<typeof hireChangeSchema>;
@@ -185,10 +176,7 @@ export const hireFillSchema = z.discriminatedUnion("by", [
     startDate: day.nullable(),
     managerId: fillManagerSchema,
     // What People requires that the hire has no value for.
-    values: requestedValuesSchema.default({}),
-    links: z.record(z.uuid(), linkValueSchema).default({}),
-    notes: requestedNotesSchema.optional(),
-    numbers: requestedNumbersSchema.optional(),
+    ...requestedColumnValues,
   }),
   z.object({
     by: z.literal("existing person"),

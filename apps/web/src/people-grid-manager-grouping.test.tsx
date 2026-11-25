@@ -9,14 +9,8 @@ import { describe, expect, it } from "vitest";
 import { countRows } from "./metrics.ts";
 import { type Column, columnsFor } from "./people-grid.tsx";
 import { emptyView } from "./table-view.ts";
-import {
-  site,
-  positions,
-  sites,
-  person,
-  people,
-  grid,
-} from "./test-people-grid.tsx";
+import { site, sites, person, people, grid } from "./test-people-grid.tsx";
+import { positions } from "./test-support.tsx";
 
 describe("managers and teams", () => {
   it("breaks people down by manager, counting each manager's direct reports", () => {

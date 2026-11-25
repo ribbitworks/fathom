@@ -12,11 +12,10 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { bodyOf, renderApp } from "./test-support.tsx";
+import { background, bodyOf, renderApp } from "./test-support.tsx";
 import {
   setUpEachTest,
   viewer,
-  background,
   robin,
   sasha,
   uma,

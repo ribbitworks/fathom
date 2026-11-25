@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Fictional people, a Note column and the server's answers, shared by the tests of notes on People.
+// Fictional people and the server's answers, shared by the tests of notes on People.
 
 import { colourTag } from "@fathom/shared";
-import { fictionalUser } from "./test-support.tsx";
+import { background, fictionalUser } from "./test-support.tsx";
 
 export const s1 = "00000000-0000-4000-8000-000000000001";
 
@@ -19,16 +19,6 @@ export const editor = session([
 ]);
 export const viewer = session(["people:view", "plan:view", "features:view"]);
 
-export const background = {
-  id: "f1",
-  keyNumber: 1,
-  name: "Background",
-  type: "note",
-  listId: null,
-  visibility: "general",
-  multiple: false,
-  required: false,
-};
 export const averyNote = `**Joined** from the ${colourTag("teal")}platform</span> team`;
 export const avery = {
   id: "p1",
@@ -58,20 +48,3 @@ export const peopleAnswer =
       order: ["preferredName", "employeeId", "f1"],
     });
 export const saved = () => Response.json({ changeSetId: s1 });
-export const positions = {
-  id: "positions",
-  keyNumber: 1,
-  name: "Positions",
-  description: "",
-  visibility: "general",
-  retired: false,
-  builtIn: "positions",
-  choices: [
-    {
-      id: "position-1",
-      label: "Fictional Engineer",
-      description: "",
-      retired: false,
-    },
-  ],
-};

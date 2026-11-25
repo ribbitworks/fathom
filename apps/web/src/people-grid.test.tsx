@@ -15,8 +15,8 @@ import { columnsFor, PeopleGrid } from "./people-grid.tsx";
 import { columnWidth } from "./grid-layout.ts";
 import { emptyView } from "./table-view.ts";
 import { formatDay } from "./day-formats.ts";
-import { testTheme } from "./test-support.tsx";
-import { site, positions, sites, noop, actions } from "./test-people-grid.tsx";
+import { noop, positions, testTheme } from "./test-support.tsx";
+import { peopleActions, site, sites } from "./test-people-grid.tsx";
 
 describe("the order of the columns", () => {
   it("follows the order given, putting columns it does not name at the end in their usual order", () => {
@@ -112,7 +112,7 @@ describe("how wide each column is", () => {
         showDates
         view={emptyView}
         onView={noop}
-        actions={actions}
+        actions={peopleActions()}
       />
     </MantineProvider>
   );
@@ -228,7 +228,6 @@ describe("how wide each column is", () => {
 describe("adding people without dates", () => {
   it("leaves dates out for a user who does not see them, and checks Employee IDs against every new row", async () => {
     const add = vi.fn();
-    const noop = () => undefined;
     render(
       <MantineProvider theme={testTheme}>
         <PeopleGrid
@@ -241,7 +240,7 @@ describe("adding people without dates", () => {
           showDates={false}
           view={emptyView}
           onView={noop}
-          actions={{ ...actions, add }}
+          actions={peopleActions({ add })}
         />
       </MantineProvider>,
     );
@@ -311,7 +310,7 @@ describe("adding someone with an Employee ID already taken", () => {
           showDates={false}
           view={emptyView}
           onView={noop}
-          actions={{ ...actions, add }}
+          actions={peopleActions({ add })}
         />
       </MantineProvider>,
     );
@@ -374,7 +373,7 @@ describe("a start date after the end date", () => {
           showDates
           view={emptyView}
           onView={noop}
-          actions={actions}
+          actions={peopleActions()}
         />
       </MantineProvider>,
     );

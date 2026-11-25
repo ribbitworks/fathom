@@ -8,11 +8,11 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { formatDay } from "./day-formats.ts";
 import {
-  actions,
-  lead,
-  person,
-  people,
   grid,
+  lead,
+  people,
+  peopleActions,
+  person,
   text,
 } from "./test-people-grid.tsx";
 
@@ -25,7 +25,7 @@ describe("managers and teams", () => {
 
   it("changes a person's manager, offering No manager first and only those still employed, and clears it with Delete", async () => {
     const update = vi.fn();
-    render(grid({ actions: { ...actions, update } }));
+    render(grid({ actions: peopleActions({ update }) }));
     focus("p2", "managerId");
     await userEvent.keyboard("{Enter}");
     const options = await screen.findAllByRole("option");
@@ -93,7 +93,7 @@ describe("managers and teams", () => {
     render(
       grid({
         people: [...people, namesake],
-        actions: { ...actions, add },
+        actions: peopleActions({ add }),
         order: ["preferredName", "employeeId", "positionId", "managerId"],
       }),
     );
@@ -116,7 +116,7 @@ describe("managers and teams", () => {
     render(
       grid({
         people: [...people, gone],
-        actions: { ...actions, add },
+        actions: peopleActions({ add }),
         order: ["preferredName", "employeeId", "positionId", "managerId"],
       }),
     );
@@ -128,7 +128,7 @@ describe("managers and teams", () => {
 
   it("keeps the Team column read only, since a team follows from its manager", async () => {
     const update = vi.fn();
-    render(grid({ actions: { ...actions, update } }));
+    render(grid({ actions: peopleActions({ update }) }));
     focus("p2", "team");
     await userEvent.keyboard("{Enter}x{Delete}");
     expect(screen.queryByRole("option")).toBeNull();
@@ -141,7 +141,7 @@ describe("managers and teams", () => {
 
   it("names a team, and moves the date a manager is someone's from, but never clears that date", async () => {
     const update = vi.fn();
-    render(grid({ actions: { ...actions, update } }));
+    render(grid({ actions: peopleActions({ update }) }));
     focus("p1", "teamName");
     await userEvent.keyboard("{Enter}{Control>}a{/Control}Quay Crew{Enter}");
     expect(update).toHaveBeenLastCalledWith(
@@ -169,7 +169,7 @@ describe("managers and teams", () => {
     render(
       grid({
         people: [person("p1", { isManager: false }), person("p2")],
-        actions: { ...actions, update },
+        actions: peopleActions({ update }),
       }),
     );
     await userEvent.click(
@@ -200,7 +200,7 @@ describe("managers and teams", () => {
     const add = vi.fn();
     render(
       grid({
-        actions: { ...actions, add },
+        actions: peopleActions({ add }),
         order: ["preferredName", "employeeId", "positionId", "isManager"],
       }),
     );
@@ -225,7 +225,7 @@ describe("managers and teams", () => {
     const add = vi.fn();
     render(
       grid({
-        actions: { ...actions, add },
+        actions: peopleActions({ add }),
         order: [
           "preferredName",
           "employeeId",
@@ -281,7 +281,7 @@ describe("managers and teams", () => {
     const update = vi.fn();
     render(
       grid({
-        actions: { ...actions, update },
+        actions: peopleActions({ update }),
         people: [
           ...people,
           person("p6", { manager: null, managerFrom: "2024-03-01" }),
@@ -306,7 +306,7 @@ describe("managers and teams", () => {
     const add = vi.fn();
     render(
       grid({
-        actions: { ...actions, add },
+        actions: peopleActions({ add }),
         order: ["preferredName", "employeeId", "managerFrom"],
       }),
     );

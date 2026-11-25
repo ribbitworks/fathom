@@ -16,14 +16,17 @@ import { cellOfNote } from "./grid-note-address.ts";
 import {
   avery,
   averyNote,
-  background,
   blake,
   editor,
   peopleAnswer,
-  positions,
   viewer,
 } from "./people-note-fixtures.ts";
-import { renderApp, serverAnswers } from "./test-support.tsx";
+import {
+  background,
+  positions,
+  renderApp,
+  serverAnswers,
+} from "./test-support.tsx";
 
 type Answers = Parameters<typeof serverAnswers>[0];
 

@@ -18,6 +18,7 @@ import {
   bodyOf,
   chooseIn,
   fictionalUser,
+  positions,
   renderApp,
   serverAnswers,
   undoWithKeys,
@@ -79,24 +80,6 @@ const peopleAnswer =
       order: ["preferredName", "employeeId", "f1"],
     });
 const saved = () => Response.json({ changeSetId: s1 });
-// The built-in Positions list, with the one position everyone here has.
-const positions = {
-  id: "positions",
-  keyNumber: 1,
-  name: "Positions",
-  description: "",
-  visibility: "general",
-  retired: false,
-  builtIn: "positions",
-  choices: [
-    {
-      id: "position-1",
-      label: "Fictional Engineer",
-      description: "",
-      retired: false,
-    },
-  ],
-};
 
 afterEach(() => {
   vi.unstubAllGlobals();

@@ -13,6 +13,7 @@ import {
   bodyOf,
   chooseIn,
   fictionalUser,
+  positions,
   renderApp,
   serverAnswers,
 } from "./test-support.tsx";
@@ -55,23 +56,6 @@ const personWith = (id: string, name: string, numbers: object) => ({
 const avery = personWith("p1", "Avery Fictional", { f1: 1234.5 });
 const blake = personWith("p2", "Blake Fictional", { f1: -7 });
 const casey = personWith("p3", "Casey Fictional", {});
-const positions = {
-  id: "positions",
-  keyNumber: 1,
-  name: "Positions",
-  description: "",
-  visibility: "general",
-  retired: false,
-  builtIn: "positions",
-  choices: [
-    {
-      id: "position-1",
-      label: "Fictional Engineer",
-      description: "",
-      retired: false,
-    },
-  ],
-};
 const peopleAnswer =
   (people: object[] = [avery, blake, casey]) =>
   () =>
