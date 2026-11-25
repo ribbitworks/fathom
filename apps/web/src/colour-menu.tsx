@@ -73,7 +73,7 @@ export function ColourMenu({
         colour !== null
           ? `${name}'s colour is now ${colourWords(colour)}.`
           : takesTeams
-            ? `${name}'s colour is now its team's.`
+            ? `${name}'s colour is now the team's.`
             : `${name} no longer has a colour.`;
       notifyUndoable(done, () => {
         change.mutate({ colour: previous });
@@ -88,7 +88,7 @@ export function ColourMenu({
   };
   const ticked = (colour: PaletteColour | null) =>
     colour === current ? <Icon name="check" /> : null;
-  const label = `Colour of ${name}: ${current === null ? (takesTeams ? "its team's colour" : "no colour") : colourWords(current)}`;
+  const label = `Colour of ${name}: ${current === null ? (takesTeams ? "the team's colour" : "no colour") : colourWords(current)}`;
   const dot =
     current === null ? (
       <span className={classes.noColour} />
