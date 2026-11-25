@@ -3,7 +3,8 @@
 /* What every drop-down list shares through the theme: the option the keyboard is on, which Enter
    would pick, is grey, as one pointed at is, rather than filled with the accent, so it never looks
    like a choice already made. In light mode both are a step darker than Mantine's hover, which is
-   too faint to see on white. */
+   too faint to see on white; in dark mode both are lighter than the list, where Mantine's is
+   almost the list's own colour. */
 
 :where([data-mantine-color-scheme="light"]) .option[data-combobox-selected],
 :where([data-mantine-color-scheme="light"]) .option:hover {
@@ -11,8 +12,9 @@
   color: inherit;
 }
 
-:where([data-mantine-color-scheme="dark"]) .option[data-combobox-selected] {
-  background-color: var(--mantine-color-dark-7);
+:where([data-mantine-color-scheme="dark"]) .option[data-combobox-selected],
+:where([data-mantine-color-scheme="dark"]) .option:hover {
+  background-color: var(--mantine-color-dark-4);
   color: inherit;
 }
 
