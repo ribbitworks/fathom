@@ -3,7 +3,9 @@
 // UI tests of a feature given a value in a Features column only drafted to be added.
 
 import { expect, type Page, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("featureLead") });
 
 // A request sent from the page, signed in as it is, answering its status and body.
 const send = (page: Page, method: string, path: string, body?: object) =>
@@ -24,7 +26,7 @@ test("fills a column drafted to be added, and leaves approving it to a role that
   browser,
 }) => {
   // Given the Feature Lead on Features, with a number column drafted and published
-  await signIn(page, "/features", "feature.lead@fathom.test");
+  await page.goto("/features");
   await expect(page.getByRole("grid")).toBeVisible();
   const name = `Fictional Score ${String(Date.now())}`;
   const added = await send(page, "POST", "/api/features/columns", {
@@ -55,9 +57,11 @@ test("fills a column drafted to be added, and leaves approving it to a role that
 
   // Then the Product Manager, who approves features but not configuration, is told another approver
   // must approve the new column with the feature, and approves nothing
-  const approverContext = await browser.newContext();
+  const approverContext = await browser.newContext({
+    storageState: signedInAs("productManager"),
+  });
   const approver = await approverContext.newPage();
-  await signIn(approver, "/features", "product.manager@fathom.test");
+  await approver.goto("/features");
   // The row's own ⋯, at its end, is always shown.
   await approver
     .getByRole("button", { name: `Actions for ${featureName}` })

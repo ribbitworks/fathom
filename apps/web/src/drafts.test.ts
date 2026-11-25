@@ -504,9 +504,9 @@ describe("drafts of features that use drafts of columns", () => {
 
   it("marks the feature for another approver only for a role that can't approve its column", () => {
     const scoredOnly = { ...noDrafts(), records: records("scored") };
-    expect(
-      needsOtherApproval(scoredOnly, ["feature"], lists, columns),
-    ).toBe(true);
+    expect(needsOtherApproval(scoredOnly, ["feature"], lists, columns)).toBe(
+      true,
+    );
     expect(
       needsOtherApproval(scoredOnly, ["feature", "field"], lists, columns),
     ).toBe(false);

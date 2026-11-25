@@ -95,7 +95,6 @@ import {
   insertValues,
   inListOrder,
   readColumns,
-  valueField,
   valueRows,
 } from "./values.ts";
 import { readToday } from "./settings.ts";
