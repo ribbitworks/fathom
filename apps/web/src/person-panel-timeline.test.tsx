@@ -49,6 +49,15 @@ const timeline = () =>
         ],
       },
       {
+        day: "2019-12-02",
+        changes: [
+          {
+            field: "filled",
+            value: { id: "h1", name: "HIRE-42", keyNumber: 42 },
+          },
+        ],
+      },
+      {
         day: "2099-01-04",
         changes: [{ field: "leads", value: team, part: "added" }],
       },
@@ -98,7 +107,7 @@ describe("a person's timeline", () => {
       within(timelinePanel() as HTMLElement)
         .getAllByRole("term")
         .map(({ textContent }) => textContent),
-    ).toEqual(["Jan 4, 2099", "Mar 1, 2024", "Jan 1, 2020"]);
+    ).toEqual(["Jan 4, 2099", "Mar 1, 2024", "Jan 1, 2020", "Dec 2, 2019"]);
   });
 
   // The timeline open beside Sasha's details, as its address keeps it.
@@ -176,15 +185,34 @@ describe("a person's timeline", () => {
     });
   });
 
-  it("says when it can't be read, offering Try again", async () => {
-    await openedTimeline({
+  it("says when it can't be read, offering Try again in the preview and the panel", async () => {
+    const { inPanel } = await openedTimeline({
       "GET /api/people/2/timeline": () =>
         Response.json({ error: "Fictional failure" }, { status: 500 }),
     });
 
-    expect(
+    await userEvent.click(
       await within(preview()).findByRole("button", { name: "Try again" }),
-    ).toBeDefined();
+    );
+    await userEvent.click(
+      await inPanel.findByRole("button", { name: "Try again" }),
+    );
+    expect(inPanel.getByRole("button", { name: "Try again" })).toBeDefined();
+  });
+
+  it("opens a filled hire by its key", async () => {
+    const { history, inPanel } = await openedTimeline({
+      "GET /api/go/hire/42": () =>
+        Response.json({ error: "Not found" }, { status: 404 }),
+    });
+
+    await userEvent.click(
+      await inPanel.findByRole("button", { name: "#HIRE-42" }),
+    );
+
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/go/hire/42");
+    });
   });
 
   it("isn't there for a planned hire", async () => {
