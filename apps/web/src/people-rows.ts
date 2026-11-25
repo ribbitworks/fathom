@@ -110,6 +110,13 @@ export function rowName(row: Person, lists: readonly List[]): string {
   return hireCalled(null, row.employeeId, positionLabel(lists, row.positionId));
 }
 
+export const plannedHireName = (hire: Person, lists: readonly List[]) =>
+  `the planned hire ${rowName(hire, lists)}`;
+
+// A row as a notice or menu names it, telling a planned hire from a person.
+export const noticeName = (row: Person, lists: readonly List[]) =>
+  isHire(row) ? plannedHireName(row, lists) : row.preferredName;
+
 // What a notice calls the rows being added: a person, a planned hire, people, planned hires, or
 // both.
 export function addedNames(requests: readonly RowRequest[]): string {

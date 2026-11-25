@@ -2,9 +2,9 @@
 title: "Manual Test: People Over Time"
 category: "How-To"
 audience: "Contributors"
-applies_to: ["apps/web/src/people-page.tsx", "apps/web/src/people-grid.tsx", "apps/web/src/person-panel.tsx", "apps/web/src/date-control.tsx", "apps/server/src/data/people.ts", "apps/server/src/data/people-reads.ts", "apps/server/src/data/people-table-reads.ts", "apps/server/src/data/person-fields.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
+applies_to: ["apps/web/src/people-page.tsx", "apps/web/src/people-actions.ts", "apps/web/src/people-grid.tsx", "apps/web/src/person-panel.tsx", "apps/web/src/date-control.tsx", "apps/server/src/data/people.ts", "apps/server/src/data/people-reads.ts", "apps/server/src/data/people-table-reads.ts", "apps/server/src/data/person-fields.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/org-chart-manual-test.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: People Over Time

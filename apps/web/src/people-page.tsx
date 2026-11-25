@@ -10,7 +10,6 @@ import type {
   HireFill,
   List,
   Person,
-  PersonDraft,
 } from "@fathom/shared";
 import { defaultClasses, sharesViews } from "@fathom/shared";
 import {
@@ -32,14 +31,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { kept } from "./added-columns.ts";
 import {
   columnDraftActions,
   columnRemover,
   ColumnModal,
   useColumnDialog,
 } from "./column-editing.tsx";
-import { DecisionModal } from "./decision-dialog.tsx";
+import { useDecisionDialog } from "./decision-dialog.tsx";
 import { listsQuery } from "./lists.ts";
 import { focusSoon } from "./focus.ts";
 import { DateControl } from "./date-control.tsx";
@@ -52,14 +50,11 @@ import {
   recordQuestion,
 } from "./new-person-panel.tsx";
 import { entered, newRecordId } from "./new-record-panel.tsx";
-import { changedFrom, personUpdate } from "./person-change.ts";
 import { afterNote, noteQuestion } from "./note-editing.tsx";
 import { usePersonNotes, useShownId } from "./person-editing.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { useNarrow } from "./side-panel.tsx";
-import { draftSentAgain, pendingDraft, unsavedKeyNumber } from "./drafts.ts";
-import { type Decision, decisionFor } from "./draft-decisions.ts";
 import classes from "./pages.module.css";
 import {
   fillButtonId,
@@ -75,33 +70,11 @@ import {
 import { columnsFor, type PeopleActions, PeopleGrid } from "./people-grid.tsx";
 import { isPending, pendingId } from "./grid-drafts.ts";
 import { focusRecordCell } from "./grid-row.tsx";
-import { withLiveValues } from "./live-records.ts";
 import type { LinkedColumn } from "./record-table.ts";
-import {
-  createHires,
-  deleteHire,
-  discardHireDraft,
-  fillHire,
-  hireRequest,
-  resubmitHireDraft,
-} from "./hires.ts";
-import {
-  addedNames,
-  isHire,
-  peopleAndHires,
-  personOnly,
-  rowName,
-  type RowRequest,
-} from "./people-rows.ts";
-import {
-  createPeople,
-  deletePerson,
-  discardDraft,
-  resubmitDraft,
-  type PeopleData,
-  peopleQuery,
-  peopleQueryOn,
-} from "./people.ts";
+import { fillHire } from "./hires.ts";
+import { isHire, noticeName, peopleAndHires } from "./people-rows.ts";
+import { type PeopleData, peopleQuery, peopleQueryOn } from "./people.ts";
+import { peopleRecordActions } from "./people-actions.ts";
 import { useSaving } from "./saving.ts";
 import type { ChangeView } from "./table-controls.tsx";
 import { useSavedViews } from "./saved-views.tsx";
@@ -116,47 +89,6 @@ const withPeopleColumns = (
   data: PeopleData,
   change: (columns: PeopleData) => Partial<PeopleData>,
 ): PeopleData => ({ ...data, ...change(data) });
-
-// Someone or a planned hire being added, as the table shows them before they are saved: a draft
-// adding them.
-function adding(id: string, request: RowRequest): Person {
-  const { values, links, notes, numbers, ...details } = request;
-  return {
-    id,
-    keyNumber: unsavedKeyNumber,
-    ...details,
-    values,
-    links: kept(links),
-    ...(notes === undefined ? {} : { notes: kept(notes) }),
-    ...(numbers === undefined ? {} : { numbers: kept(numbers) }),
-    // A draft adding someone changes everything, so names nothing in particular.
-    draft: pendingDraft("created", { values: {}, links: {} }),
-  };
-}
-
-// A person as they are live, without their draft. A web link column the draft changes that is not
-// in the live links had no link.
-function asLive(person: Person, draft: PersonDraft): Person {
-  const { values, links, notes, numbers, ...details } = draft.live;
-  const live: Person = {
-    ...person,
-    ...(details as Partial<Person>),
-    values: { ...person.values, ...values },
-    links: withLiveValues(person.links, draft.changed, links),
-    notes: withLiveValues(person.notes, draft.changed, notes),
-    numbers: withLiveValues(person.numbers, draft.changed, numbers),
-  };
-  delete live.draft;
-  return live;
-}
-
-// A person drafted to be removed, as the table shows it before it is saved.
-function drafted(person: Person): Person {
-  return {
-    ...person,
-    draft: pendingDraft("deleted", { values: {}, links: {} }),
-  };
-}
 
 const cannotAddId = "people-cannot-add";
 const newRecordButtonId = "people-new";
@@ -254,8 +186,7 @@ export function PeoplePage({
   };
   const columnDialog = useColumnDialog();
   // Approving or rejecting drafts, which asks first.
-  const [decision, setDecision] = useState<Decision>();
-  const [deciding, setDeciding] = useState(false);
+  const decisionDialog = useDecisionDialog();
   const views = useSavedViews({
     table: "people",
     within: peopleQuery.queryKey,
@@ -263,7 +194,7 @@ export function PeoplePage({
     applied,
     onApply,
     canShare: sharesViews("people", access.permissions),
-    blocked: columnDialog.opened || deciding,
+    blocked: columnDialog.opened || decisionDialog.opened,
   });
   // A record's details, or one being added, and a note of its being written, beside the table.
   const notes = usePersonNotes();
@@ -339,153 +270,20 @@ export function PeoplePage({
     queryKey: peopleQueryOn(day).queryKey,
     refreshes: day === undefined ? [] : [peopleQuery.queryKey],
     removed: "Someone else has removed this. The people have been refreshed.",
-    blocked: columnDialog.opened || views.opened || deciding,
+    blocked: columnDialog.opened || views.opened || decisionDialog.opened,
   });
-  const { save, undoable, done } = changes;
-
-  // A row by name, as menus and notices name it, once the lists, which a row's actions wait for,
-  // are loaded.
-  const nameOf = (row: Person) =>
-    isHire(row)
-      ? `the planned hire ${rowName(row, lists.data as List[])}`
-      : row.preferredName;
+  const { save, undoable } = changes;
 
   const actions: PeopleActions = {
-    decide: (asking, chosen, all) => {
-      // Approving names the drafts the choice uses, and rejecting those that use it.
-      // Drafts are only decided once the people and lists are loaded.
-      const { fields, people } = query.data as PeopleData;
-      setDecision(
-        decisionFor(
-          asking,
-          chosen,
-          approves,
-          lists.data as List[],
-          { fields, people },
-          all,
-        ),
-      );
-      setDeciding(true);
-    },
+    ...peopleRecordActions({
+      changes,
+      data: query.data,
+      lists: lists.data,
+      approves,
+      onDecision: decisionDialog.open,
+      from,
+    }),
     ...columnDraftActions("people", changes),
-    add: (added, onAdded, onFailed) => {
-      save({
-        next: (data) => ({
-          ...data,
-          people: [
-            ...data.people,
-            ...added.map(({ id, request }) => adding(id, request)),
-          ],
-        }),
-        save: async () => {
-          // People are added together, then planned hires together, each as one change.
-          const requests = added.map(({ request }) => request);
-          const people = requests.filter((request) => !isHire(request));
-          const hires = requests.filter(isHire);
-          const savedPeople =
-            people.length === 0
-              ? { ids: [], changeSetId: null }
-              : await createPeople(people.map(personOnly));
-          const savedHires =
-            hires.length === 0
-              ? { ids: [], changeSetId: null }
-              : await createHires(hires.map(hireRequest));
-          const ids = new Map([
-            ...people.map(
-              (request, index) => [request, savedPeople.ids.at(index)] as const,
-            ),
-            ...hires.map(
-              (request, index) => [request, savedHires.ids.at(index)] as const,
-            ),
-          ]);
-          const changeSetId = savedHires.changeSetId ?? savedPeople.changeSetId;
-          onAdded(requests.map((request) => String(ids.get(request))));
-          return changeSetId;
-        },
-        failure: `Fathom could not add ${addedNames(added.map(({ request }) => request))}. Try again in a moment.`,
-        onFailed,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
-      });
-    },
-    update: (person, given) => {
-      // From another day, a change of manager is dated from it, against the person's line today.
-      // The details panel dates its changes already, which dating again leaves as they are.
-      const change =
-        from === undefined ? given : changedFrom(given, person.id, from);
-      save({
-        ...personUpdate(person, change, nameOf(person)),
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
-      });
-    },
-    // Removing someone live is a draft, shown in place; removing someone only drafted to be added
-    // discards them, which takes them out of view.
-    remove: (person) => {
-      save({
-        next: (data) => ({
-          ...data,
-          people: data.people.map((other) =>
-            other.id === person.id ? drafted(other) : other,
-          ),
-        }),
-        save: () =>
-          isHire(person) ? deleteHire(person.id) : deletePerson(person.id),
-        failure: `Fathom could not remove ${nameOf(person)}.`,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
-      });
-    },
-    resubmit: (person) => {
-      save({
-        next: (data) => ({
-          ...data,
-          people: data.people.map((other) =>
-            other.id === person.id ? draftSentAgain(other) : other,
-          ),
-        }),
-        save: () =>
-          isHire(person)
-            ? resubmitHireDraft(person.id)
-            : resubmitDraft(person.id),
-        failure: `Fathom could not send the draft of ${nameOf(person)} for approval again.`,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
-      });
-    },
-    discard: (person, draft) => {
-      const gone = draft.action === "created";
-      save({
-        next: (data) => ({
-          ...data,
-          people: gone
-            ? data.people.filter((other) => other.id !== person.id)
-            : data.people.map((other) =>
-                other.id === person.id ? asLive(other, draft) : other,
-              ),
-        }),
-        save: () =>
-          isHire(person)
-            ? discardHireDraft(person.id)
-            : discardDraft(person.id),
-        failure: `Fathom could not discard the draft of ${nameOf(person)}.`,
-        onSaved: (changeSetId, before) => {
-          if (gone) {
-            done(
-              `Discarded the draft adding ${nameOf(person)}.`,
-              changeSetId,
-              before,
-            );
-          } else {
-            undoable(changeSetId, before);
-          }
-        },
-      });
-    },
     editColumn: (field) => {
       columnDialog.open({ kind: "edit", field });
     },
@@ -517,7 +315,7 @@ export function PeoplePage({
         ),
       }),
       save: () => fillHire(hire.id, request),
-      failure: `Fathom could not fill ${nameOf(hire)}.`,
+      failure: `Fathom could not fill ${noticeName(hire, lists.data as List[])}.`,
       onFailed: () => {
         setFilling((current) => current && { ...current, saving: false });
       },
@@ -794,16 +592,7 @@ export function PeoplePage({
           saved={views.saved}
         />
         {question.dialog}
-        <DecisionModal
-          decision={decision}
-          opened={deciding}
-          onClose={() => {
-            setDeciding(false);
-          }}
-          onDone={() => {
-            setDeciding(false);
-          }}
-        />
+        {decisionDialog.modal}
         {views.dialogs}
         <ColumnModal<PeopleData>
           state={columnDialog}
