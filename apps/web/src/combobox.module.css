@@ -37,8 +37,14 @@
   color: var(--mantine-color-anchor);
 }
 
+/* A picked option's tick, keeping its room beside words cut short. */
+.tick {
+  flex-shrink: 0;
+}
+
 /* On one line, a long name typed cut short, since the field above holds it whole. */
 .addingWords {
+  display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
