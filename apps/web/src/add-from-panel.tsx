@@ -125,8 +125,9 @@ interface Linking {
   kind: LinkedKind;
   linkedBy: LinkedBy;
   values: FormValues;
-  // What the form opened with, which leaving it unchanged discards without asking.
-  opened: FormValues;
+  // The form as it opens with nothing typed, which leaving it so discards without asking: a name typed
+  // into the picker counts as entered, what the picker fills in itself does not.
+  blank: FormValues;
   saving: boolean;
   // The kind of record the picker was for, and the record or new row it was in.
   type: PlanRecordKind;
@@ -164,13 +165,12 @@ export function useAddFromPanel({
     one: oneOf(kind),
     fillsNewRow: linkedBy === "fill",
     onNew: (to, typed, back) => {
-      const opened = opening(typed, to);
       setForms((count) => count + 1);
       setLinking({
         kind,
         linkedBy,
-        values: opened,
-        opened,
+        values: opening(typed, to),
+        blank: opening("", to),
         saving: false,
         type,
         to,
@@ -195,7 +195,7 @@ export function useAddFromPanel({
 
   const question =
     linking !== undefined &&
-    JSON.stringify(linking.values) !== JSON.stringify(linking.opened)
+    JSON.stringify(linking.values) !== JSON.stringify(linking.blank)
       ? newRecordQuestion(oneOf(linking.kind))
       : undefined;
 

@@ -179,9 +179,20 @@ describe("adding a record from a picker", () => {
     });
   });
 
-  it("closes a form left as it opened without asking", async () => {
+  it("asks before discarding the name typed into the picker, though left as it opened", async () => {
     await typeInCustomers("Harbour");
     await userEvent.keyboard("{Enter}");
+    await userEvent.click(
+      within(newForm() as HTMLElement).getByRole("button", { name: "Cancel" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Discard the new customer?" }),
+    ).toBeTruthy();
+  });
+
+  it("closes without asking a form opened with nothing typed and left so", async () => {
+    await typeInCustomers("");
+    await userEvent.click(screen.getByRole("option", { name: "New customer" }));
     await userEvent.click(
       within(newForm() as HTMLElement).getByRole("button", { name: "Cancel" }),
     );
@@ -488,8 +499,25 @@ describe("adding a record from a feature's picker", () => {
     ).toBeTruthy();
   });
 
-  it("closes a new project left as it opened, naming the feature, without asking", async () => {
+  it("asks before discarding a new project named in the picker, though left as it opened", async () => {
     await newFrom("Projects", "Harbour Survey");
+    await userEvent.click(
+      within(newForm() as HTMLElement).getByRole("button", { name: "Cancel" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Discard the new project?" }),
+    ).toBeTruthy();
+  });
+
+  it("closes without asking a new project opened with nothing typed, though it names the feature", async () => {
+    await open(start, {}, atFirst);
+    await screen.findByRole("heading", { name: /Fictional First/ });
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", { name: "Change Projects" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("option", { name: "New project" }),
+    );
     await userEvent.click(
       within(newForm() as HTMLElement).getByRole("button", { name: "Cancel" }),
     );
