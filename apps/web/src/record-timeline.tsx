@@ -51,12 +51,7 @@ export function TimelineDayRow({
         {onShow === undefined ? (
           date
         ) : (
-          <Anchor
-            component="button"
-            type="button"
-            {...(planned ? { c: "dimmed" } : {})}
-            onClick={onShow}
-          >
+          <Anchor component="button" type="button" onClick={onShow}>
             {date}
           </Anchor>
         )}
