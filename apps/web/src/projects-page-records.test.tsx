@@ -467,4 +467,19 @@ describe("a customer's description and notes", () => {
     expect(within(sidePanel()).getByText("Island ferry line")).toBeDefined();
     expect(within(sidePanel()).getByText("Pilot")).toBeDefined();
   });
+
+  it("names Notes once, in its heading, its row's label only read aloud", async () => {
+    await openPage(`/projects?tab=customers&open=${customerId}`, described);
+    await screen.findByRole("heading", { name: /Fictional Customer/u });
+
+    const labels = [...sidePanel().querySelectorAll("dt")];
+    const shown = labels.filter(
+      (label) => label.closest('[class*="VisuallyHidden"]') === null,
+    );
+    expect(shown.map(({ textContent }) => textContent)).toEqual([
+      "Name",
+      "Description",
+    ]);
+    expect(labels.map(({ textContent }) => textContent)).toContain("Notes");
+  });
 });
