@@ -11,13 +11,11 @@ import {
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Alert,
   Anchor,
   Button,
   Checkbox,
   CopyButton,
   Group,
-  Loader,
   PasswordInput,
   Radio,
   Stack,
@@ -25,6 +23,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QueryState } from "./load-problem.tsx";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { type ReactNode, type Ref } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -521,12 +520,14 @@ function RolesFor({
   children: (roles: readonly RoleSummary[]) => ReactNode;
 }) {
   const roles = useQuery(rolesQuery);
-  if (roles.isPending) return <Loader role="status" aria-label="Loading" />;
-  if (roles.isError) {
+  if (roles.isPending || roles.isError) {
     return (
-      <Alert color="red" role="alert">
-        Fathom could not load the roles. Try again in a moment.
-      </Alert>
+      <QueryState
+        pending={roles.isPending}
+        failed={roles.isError}
+        what="the roles"
+        onRetry={() => void roles.refetch()}
+      />
     );
   }
   return children(roles.data);
@@ -699,12 +700,12 @@ export function AccountsPage({
           )
         }
       />
-      {accounts.isPending && <Loader role="status" aria-label="Loading" />}
-      {accounts.isError && (
-        <Alert color="red" role="alert">
-          Fathom could not load the accounts. Try again in a moment.
-        </Alert>
-      )}
+      <QueryState
+        pending={accounts.isPending}
+        failed={accounts.isError}
+        what="the accounts"
+        onRetry={() => void accounts.refetch()}
+      />
       {accounts.isSuccess && (
         <TableTips>
           <RecordGrid

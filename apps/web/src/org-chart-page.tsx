@@ -9,8 +9,9 @@ import {
   mayDateLineChange,
   mayDateChange,
 } from "@fathom/shared";
-import { Alert, Anchor, Box, Button, Group, Loader, Text } from "@mantine/core";
+import { Anchor, Box, Button, Group, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { Loading, LoadProblem } from "./load-problem.tsx";
 import { Link } from "@tanstack/react-router";
 import { ReactFlowProvider } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -309,26 +310,17 @@ export function OrgChartPage({
         />
       </Box>
       {query.isPending || (featureView && teamsQuery.isPending) ? (
-        <Loader role="status" aria-label="Loading" />
+        <Loading />
       ) : query.isError || tree === undefined || everyone === undefined ? (
         <div>
           {dateRow}
-          <Alert color="red" role="alert">
-            <Group justify="space-between">
-              Fathom could not load the org chart.
-              <Button
-                variant="light"
-                color="red"
-                size="xs"
-                onClick={() => {
-                  void query.refetch();
-                  if (featureView) void teamsQuery.refetch();
-                }}
-              >
-                Try again
-              </Button>
-            </Group>
-          </Alert>
+          <LoadProblem
+            what="the org chart"
+            onRetry={() => {
+              void query.refetch();
+              if (featureView) void teamsQuery.refetch();
+            }}
+          />
         </div>
       ) : tree.people.size === 0 && !featureView ? (
         <div>

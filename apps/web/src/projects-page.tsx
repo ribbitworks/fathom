@@ -11,7 +11,7 @@ import type {
   ProjectPlan,
 } from "@fathom/shared";
 import { cardPartSchema, type PlanMode } from "@fathom/shared";
-import { Loader, Modal, Stack } from "@mantine/core";
+import { Modal, Stack } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { effortConversionsQuery } from "./effort.ts";
 import { type BoardPlace, FeatureBoard } from "./feature-board-view.tsx";
@@ -37,7 +37,7 @@ import {
 import { useDecisionDialog } from "./decision-dialog.tsx";
 import { noDrafts } from "./drafts.ts";
 import { listsQuery } from "./lists.ts";
-import { LoadProblem } from "./load-problem.tsx";
+import { Loading, LoadProblem } from "./load-problem.tsx";
 import { HeadingTabPanel } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { featureTable } from "./feature-table.tsx";
@@ -283,7 +283,7 @@ export function ProjectsPage({
 
   let content: ReactNode;
   if (query.isPending || choicesQuery.isPending || settingsPending) {
-    content = <Loader role="status" aria-label="Loading" />;
+    content = <Loading />;
   } else if (
     query.isError ||
     choicesQuery.isError ||

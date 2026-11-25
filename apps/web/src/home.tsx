@@ -4,15 +4,16 @@
 // when it cannot be loaded. The first stage's summary of the plan takes its place. Only those who
 // may see the plan reach it.
 
-import { Alert, Loader, Paper, Stack, Text } from "@mantine/core";
+import { Alert, Paper, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { Loading } from "./load-problem.tsx";
 import { describeProblem } from "./api.ts";
 import { fetchGreeting } from "./greeting.ts";
 import { PageHeader } from "./page-header.tsx";
 
 function Greeting() {
   const greeting = useQuery({ queryKey: ["greeting"], queryFn: fetchGreeting });
-  if (greeting.isPending) return <Loader role="status" aria-label="Loading" />;
+  if (greeting.isPending) return <Loading />;
   if (greeting.isError) {
     return (
       <Alert color="red" role="alert">

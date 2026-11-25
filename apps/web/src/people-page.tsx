@@ -3,7 +3,7 @@
 // The People page: everyone the user may see, and the planned hires, in a table edited like a
 // spreadsheet, with the columns people have added.
 
-import { LoadProblem } from "./load-problem.tsx";
+import { Loading, LoadProblem } from "./load-problem.tsx";
 import type {
   ClassAccess,
   DraftKind,
@@ -12,15 +12,7 @@ import type {
   Person,
 } from "@fathom/shared";
 import { defaultClasses, sharesViews } from "@fathom/shared";
-import {
-  Anchor,
-  Button,
-  Group,
-  Loader,
-  Paper,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Anchor, Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -343,7 +335,7 @@ export function PeoplePage({
   );
   let content: ReactNode;
   if (query.isPending || lists.isPending) {
-    content = <Loader role="status" aria-label="Loading" />;
+    content = <Loading />;
   } else if (query.isError || lists.isError) {
     content = (
       <LoadProblem

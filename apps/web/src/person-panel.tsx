@@ -13,8 +13,9 @@
 // while their current line was already in force then.
 
 import { type Person, type Show } from "@fathom/shared";
-import { Alert, Button, Group, Loader, Text } from "@mantine/core";
+import { Group, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { Loading, LoadProblem } from "./load-problem.tsx";
 import { type ReactNode, useEffect, useEffectEvent } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { listsQuery } from "./lists.ts";
@@ -200,27 +201,18 @@ export function PersonPanel({
     </RecordPanel>
   );
   if (query.isPending || lists.isPending) {
-    return frame("Details", <Loader role="status" aria-label="Loading" />);
+    return frame("Details", <Loading />);
   }
   if (query.isError || lists.isError) {
     return frame(
       "Details",
-      <Alert color="red" role="alert">
-        <Group justify="space-between">
-          Fathom could not load this person.
-          <Button
-            variant="light"
-            color="red"
-            size="xs"
-            onClick={() => {
-              void query.refetch();
-              void lists.refetch();
-            }}
-          >
-            Try again
-          </Button>
-        </Group>
-      </Alert>,
+      <LoadProblem
+        what="this person"
+        onRetry={() => {
+          void query.refetch();
+          void lists.refetch();
+        }}
+      />,
     );
   }
   const asShown = peopleAsShown(query.data.people, show);

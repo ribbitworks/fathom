@@ -9,7 +9,7 @@ import {
   draftKeysOf,
   type DraftsTab,
 } from "@fathom/shared";
-import { Button, Loader, Stack, Text } from "@mantine/core";
+import { Button, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { drafts, useDecisionDialog } from "./decision-dialog.tsx";
@@ -31,7 +31,7 @@ import {
   draftsTable,
   selectionOf,
 } from "./drafts-table.tsx";
-import { LoadProblem } from "./load-problem.tsx";
+import { Loading, LoadProblem } from "./load-problem.tsx";
 import { count } from "./numbers.ts";
 import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -146,7 +146,7 @@ export function DraftsPage({
   // Whether the draft the address opens is no longer listed, such as once decided.
   let openGone = false;
   if (entries.state === "loading") {
-    content = <Loader role="status" aria-label="Loading" />;
+    content = <Loading />;
   } else if (entries.state === "failed") {
     content = <LoadProblem what="the drafts" onRetry={entries.retry} />;
   } else {

@@ -18,10 +18,8 @@ import {
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Alert,
   Button,
   Group,
-  Loader,
   Paper,
   SimpleGrid,
   Stack,
@@ -32,6 +30,7 @@ import {
   VisuallyHidden,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QueryState } from "./load-problem.tsx";
 import { useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -389,12 +388,12 @@ export function RolesPage({
           )
         }
       />
-      {roles.isPending && <Loader role="status" aria-label="Loading" />}
-      {roles.isError && (
-        <Alert color="red" role="alert">
-          Fathom could not load the roles. Try again in a moment.
-        </Alert>
-      )}
+      <QueryState
+        pending={roles.isPending}
+        failed={roles.isError}
+        what="the roles"
+        onRetry={() => void roles.refetch()}
+      />
       {roles.isSuccess && (
         <Paper withBorder className={classes.tableScrollPanel}>
           <div className={[classes.tableScroll, classes.scrollBars].join(" ")}>

@@ -11,8 +11,9 @@ import type {
   ReleaseStream,
   ViewTable,
 } from "@fathom/shared";
-import { Alert, Button, Group, Loader, Stack, Tooltip } from "@mantine/core";
+import { Button, Stack, Tooltip } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { QueryState } from "./load-problem.tsx";
 import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
 import { BusyModal } from "./dialog-actions.tsx";
 import { z } from "zod";
@@ -238,24 +239,16 @@ export function ReleasesPage({
     });
   };
 
-  if (query.isPending) return <Loader role="status" aria-label="Loading" />;
-  if (query.isError) {
+  if (query.isPending || query.isError) {
     return (
-      <Alert color="red" role="alert">
-        <Group justify="space-between">
-          Fathom could not load the schedules.
-          <Button
-            variant="light"
-            color="red"
-            size="xs"
-            onClick={() => {
-              void query.refetch();
-            }}
-          >
-            Try again
-          </Button>
-        </Group>
-      </Alert>
+      <QueryState
+        pending={query.isPending}
+        failed={query.isError}
+        what="the schedules"
+        onRetry={() => {
+          void query.refetch();
+        }}
+      />
     );
   }
 

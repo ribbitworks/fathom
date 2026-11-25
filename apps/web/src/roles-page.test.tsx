@@ -117,9 +117,11 @@ describe("the list of roles", () => {
         Response.json({ error: "Internal Server Error" }, { status: 500 }),
     });
     renderApp("/roles");
-    expect((await screen.findByRole("alert")).textContent).toBe(
-      "Fathom could not load the roles. Try again in a moment.",
-    );
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("Fathom could not load the roles.");
+    expect(
+      within(alert).getByRole("button", { name: "Try again" }),
+    ).toBeDefined();
   });
 });
 

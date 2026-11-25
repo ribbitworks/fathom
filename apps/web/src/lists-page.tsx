@@ -2,7 +2,7 @@
 
 // The Lists page: every list in one table, and the selected list's choices in a side panel.
 
-import { LoadProblem } from "./load-problem.tsx";
+import { Loading, LoadProblem } from "./load-problem.tsx";
 import {
   type Choice,
   type ChoiceRequest,
@@ -18,7 +18,6 @@ import {
 import {
   Button,
   Group,
-  Loader,
   Paper,
   SegmentedControl,
   Stack,
@@ -507,7 +506,7 @@ export function ListsPage({
 
   let content: ReactNode;
   if (query.isPending) {
-    content = <Loader role="status" aria-label="Loading" />;
+    content = <Loading />;
   } else if (query.isError) {
     content = (
       <LoadProblem what="the lists" onRetry={() => void query.refetch()} />

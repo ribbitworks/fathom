@@ -272,9 +272,11 @@ describe("creating an account", () => {
     });
     renderApp("/accounts");
     const dialog = await openEditFor("Fictional Planner");
-    expect((await within(dialog).findByRole("alert")).textContent).toBe(
-      "Fathom could not load the roles. Try again in a moment.",
-    );
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.textContent).toContain("Fathom could not load the roles.");
+    expect(
+      within(alert).getByRole("button", { name: "Try again" }),
+    ).toBeDefined();
   });
 
   it("asks for a name and a valid email address", async () => {

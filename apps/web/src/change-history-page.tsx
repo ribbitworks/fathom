@@ -9,12 +9,12 @@ import {
   Anchor,
   Button,
   Group,
-  Loader,
   Paper,
   Stack,
   Text,
 } from "@mantine/core";
 import { type ChangeEntry, folded, searchWords } from "@fathom/shared";
+import { QueryState } from "./load-problem.tsx";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
@@ -206,22 +206,12 @@ export function ChangeHistoryPage({
         onSearch={onSearch}
         busy={search !== searched || changes.isPlaceholderData}
       />
-      {changes.isPending && <Loader role="status" aria-label="Loading" />}
-      {changes.isError && !changes.isFetchNextPageError && (
-        <Alert color="red" role="alert">
-          <Group justify="space-between">
-            Fathom could not load the change history.
-            <Button
-              variant="light"
-              color="red"
-              size="xs"
-              onClick={() => void changes.refetch()}
-            >
-              Try again
-            </Button>
-          </Group>
-        </Alert>
-      )}
+      <QueryState
+        pending={changes.isPending}
+        failed={changes.isError && !changes.isFetchNextPageError}
+        what="the change history"
+        onRetry={() => void changes.refetch()}
+      />
       {changes.isSuccess && (
         <Paper withBorder className={classes.tablePanel}>
           {entries.length === 0 && (

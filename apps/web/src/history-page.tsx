@@ -3,8 +3,9 @@
 // The Access history page, for users who may view it: the most recent changes to accounts, newest
 // first, each written as a sentence, with changes that need a second look marked.
 
-import { Alert, Loader, Paper, Stack, Text } from "@mantine/core";
+import { Paper, Stack, Text } from "@mantine/core";
 import { type HistoryEntry, matchesWords, searchWords } from "@fathom/shared";
+import { QueryState } from "./load-problem.tsx";
 import { useQuery } from "@tanstack/react-query";
 import {
   actorName,
@@ -71,12 +72,12 @@ export function HistoryPage({
         search={search}
         onSearch={onSearch}
       />
-      {history.isPending && <Loader role="status" aria-label="Loading" />}
-      {history.isError && (
-        <Alert color="red" role="alert">
-          Fathom could not load the access history. Try again in a moment.
-        </Alert>
-      )}
+      <QueryState
+        pending={history.isPending}
+        failed={history.isError}
+        what="the access history"
+        onRetry={() => void history.refetch()}
+      />
       {history.isSuccess && (
         <Paper withBorder className={classes.tablePanel}>
           {shown.length === 0 && (

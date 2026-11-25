@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What a page shows when what it needs could not be loaded, with a way to try again.
+// What a page shows while what it needs is loading, and when it could not be loaded, with a way to
+// try again.
 
-import { Alert, Button, Group, Text } from "@mantine/core";
+import { Alert, Button, Group, Loader, Text } from "@mantine/core";
 
 export function LoadProblem({
   what,
@@ -22,4 +23,26 @@ export function LoadProblem({
       </Group>
     </Alert>
   );
+}
+
+export function Loading() {
+  return <Loader role="status" aria-label="Loading" />;
+}
+
+// In place of what is read: the loader while it loads, then why it could not be loaded, and
+// nothing once it has.
+export function QueryState({
+  pending,
+  failed,
+  what,
+  onRetry,
+}: {
+  pending: boolean;
+  failed: boolean;
+  what: string;
+  onRetry: () => void;
+}) {
+  if (pending) return <Loading />;
+  if (failed) return <LoadProblem what={what} onRetry={onRetry} />;
+  return null;
 }
