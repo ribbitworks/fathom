@@ -344,7 +344,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Expected:**
     - The menu offers **Show all features**.
     - **Remove customer** is greyed out.
-    - Under it, a line reads "P-2017 Depot Operations names this customer."
+    - Under it, a line reads "P-2017 Depot Operations and 2 others name this customer."
   - **Notes:**
 
 - [ ] `22DB` Select **Show all features**.
