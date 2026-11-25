@@ -29,6 +29,7 @@ import {
   fictionalUser,
   recordCell,
   renderApp,
+  requestsTo,
   serverAnswers,
 } from "./test-support.tsx";
 
@@ -263,20 +264,36 @@ describe("creating an account", () => {
     expect(within(dialog).getByLabelText("Loading")).toBeDefined();
   });
 
-  it("says when the roles cannot be loaded", async () => {
-    serverAnswers({
+  it("says when the roles cannot be loaded, and reads them again on Try again", async () => {
+    // Given the roles failing to load, in an account's dialog
+    let rolesFail = true;
+    const fetch = serverAnswers({
       "GET /api/session": manager,
       "GET /api/roles": () =>
-        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+        rolesFail
+          ? Response.json({ error: "Internal Server Error" }, { status: 500 })
+          : roleList(),
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
     const dialog = await openEditFor("Fictional Planner");
     const alert = await within(dialog).findByRole("alert");
     expect(alert.textContent).toContain("Fathom could not load the roles.");
-    expect(
+    const reads = requestsTo(fetch, "/api/roles");
+
+    // When the roles can be read again, and Try again is chosen
+    rolesFail = false;
+    await userEvent.click(
       within(alert).getByRole("button", { name: "Try again" }),
-    ).toBeDefined();
+    );
+
+    // Then the roles are read again, and the message goes
+    await waitFor(() => {
+      expect(requestsTo(fetch, "/api/roles")).toBeGreaterThan(reads);
+    });
+    await waitFor(() => {
+      expect(within(dialog).queryByRole("alert")).toBeNull();
+    });
   });
 
   it("asks for a name and a valid email address", async () => {

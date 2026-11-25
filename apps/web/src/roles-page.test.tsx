@@ -7,9 +7,11 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import {
+  failOnce,
   fictionalUser,
   greeting,
   renderApp,
+  requestsTo,
   serverAnswers,
   signedIn,
 } from "./test-support.tsx";
@@ -110,18 +112,28 @@ describe("the list of roles", () => {
     expect(await screen.findByLabelText("Loading")).toBeDefined();
   });
 
-  it("shows a message when the roles cannot be loaded", async () => {
-    serverAnswers({
+  it("shows a message when the roles cannot be loaded, and reads them again on Try again", async () => {
+    // Given the roles failing to load once
+    const fetch = serverAnswers({
       "GET /api/session": roleEditor,
-      "GET /api/roles": () =>
-        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+      "GET /api/roles": failOnce(roleList),
     });
     renderApp("/roles");
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Fathom could not load the roles.");
-    expect(
+
+    // When Try again is chosen
+    await userEvent.click(
       within(alert).getByRole("button", { name: "Try again" }),
-    ).toBeDefined();
+    );
+
+    // Then the roles are read again, and the message goes
+    await waitFor(() => {
+      expect(requestsTo(fetch, "/api/roles")).toBe(2);
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).toBeNull();
+    });
   });
 });
 

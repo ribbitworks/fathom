@@ -3,13 +3,15 @@
 // Tests for the History page, with the server's responses simulated: who sees it, how each entry is
 // put in words, and the messages while the history loads or when it cannot be loaded.
 
-import { screen } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  failOnce,
   fictionalUser,
   greeting,
   renderApp,
+  requestsTo,
   serverAnswers,
   signedIn,
 } from "./test-support.tsx";
@@ -455,15 +457,27 @@ describe("the entries", () => {
     expect(await screen.findByLabelText("Loading")).toBeDefined();
   });
 
-  it("are replaced by a message when they cannot be loaded", async () => {
-    serverAnswers({
+  it("are replaced by a message when they cannot be loaded, and read again on Try again", async () => {
+    // Given the access history failing to load once
+    const fetch = serverAnswers({
       "GET /api/session": historyViewer,
-      "GET /api/access-history": () =>
-        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+      "GET /api/access-history": failOnce(() => Response.json({ entries: [] })),
     });
     renderApp("/history");
-    expect((await screen.findByRole("alert")).textContent).toMatch(
-      /could not load the access history/,
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toMatch(/could not load the access history/);
+
+    // When Try again is chosen
+    await userEvent.click(
+      within(alert).getByRole("button", { name: "Try again" }),
     );
+
+    // Then the history is read again, and the message goes
+    await waitFor(() => {
+      expect(requestsTo(fetch, "/api/access-history")).toBe(2);
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).toBeNull();
+    });
   });
 });

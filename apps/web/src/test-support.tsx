@@ -474,6 +474,26 @@ export async function chooseIn(
   await userEvent.click(await screen.findByRole("option", { name: option }));
 }
 
+// How many times a page read an address, as Try again reads it again.
+export const requestsTo = (
+  fetch: ReturnType<typeof serverAnswers>,
+  path: string,
+) =>
+  fetch.mock.calls.filter(
+    ([url, init]) =>
+      url === path && (init?.method === undefined || init.method === "GET"),
+  ).length;
+
+// A read that fails the first time and answers as given after that.
+export const failOnce = (answer: () => Response | Promise<Response>) => {
+  let failed = false;
+  return () => {
+    if (failed) return answer();
+    failed = true;
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  };
+};
+
 const undoRequests = (fetch: ReturnType<typeof serverAnswers>) =>
   fetch.mock.calls.filter(
     ([url, init]) => url.startsWith("/api/undo/") && init?.method === "POST",

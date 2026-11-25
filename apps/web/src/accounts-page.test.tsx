@@ -26,10 +26,12 @@ import {
   teamMemberRole,
 } from "./test-accounts-page.tsx";
 import {
+  failOnce,
   fictionalUser,
   greeting,
   recordCell,
   renderApp,
+  requestsTo,
   serverAnswers,
   signedIn,
 } from "./test-support.tsx";
@@ -245,17 +247,29 @@ describe("the list of accounts", () => {
     expect(await screen.findByLabelText("Loading")).toBeDefined();
   });
 
-  it("shows a message when the accounts cannot be loaded", async () => {
-    serverAnswers({
+  it("shows a message when the accounts cannot be loaded, and reads them again on Try again", async () => {
+    // Given the accounts failing to load once
+    const fetch = serverAnswers({
       "GET /api/session": manager,
       "GET /api/roles": roleList,
-      "GET /api/accounts": () =>
-        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+      "GET /api/accounts": failOnce(accountList),
     });
     renderApp("/accounts");
-    expect((await screen.findByRole("alert")).textContent).toMatch(
-      /could not load the accounts/,
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toMatch(/could not load the accounts/);
+
+    // When Try again is chosen
+    await userEvent.click(
+      within(alert).getByRole("button", { name: "Try again" }),
     );
+
+    // Then the accounts are read again, and the message goes
+    await waitFor(() => {
+      expect(requestsTo(fetch, "/api/accounts")).toBe(2);
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).toBeNull();
+    });
   });
 });
 
