@@ -83,7 +83,7 @@ describe("adding a record from a picker", () => {
       ]);
     });
     expect(sent(fetch, "POST /api/customers")).toEqual([
-      { name: "Harbour Ferries" },
+      { name: "Harbour Ferries", description: "", note: null },
     ]);
     await waitFor(() => {
       expect(newForm()).toBeNull();
