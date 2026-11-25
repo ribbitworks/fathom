@@ -65,7 +65,7 @@ async function historyNames(who: Account): Promise<string[]> {
     .json<ChangeHistory>()
     .entries.flatMap(({ records }) => records)
     .filter(({ kind }) => kind === "allocation")
-    .map(({ name }) => name);
+    .flatMap(({ name }) => name ?? []);
 }
 
 describe("allocations to a feature a role can't read", () => {
