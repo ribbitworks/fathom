@@ -613,6 +613,19 @@ export {
   startingEffortConversions,
 } from "./effort.ts";
 export {
+  type Coverage,
+  coverageByMonth,
+  type CoveredMonth,
+  deliveredHours,
+  effortNeeded,
+  firstMonthEmployed,
+  isForecast,
+  rampUpPercent,
+  targetCycleMonths,
+  plannedMonths,
+  type WorkPlan,
+} from "./forecast.ts";
+export {
   fullOutputPercent,
   percentSettingFields,
   planningSettingFields,
