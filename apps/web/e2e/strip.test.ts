@@ -48,11 +48,14 @@ const layout = (page: Page) =>
     };
   })()`);
 
-// Releases' Schedules tab afresh, at its first zoom, its strip of quarters.
+// Releases' Schedules tab afresh, at its first zoom, its strip of quarters. Opened by its address
+// and found in its own panel, since Releases reopens on the tab last shown, whose strip of quarters
+// would otherwise be found, then replaced, as Schedules opened.
 async function narrowSchedules(page: Page) {
-  await page.goto("/releases");
-  await page.getByRole("tab", { name: "Schedules" }).click();
-  const strip = page.getByRole("toolbar", { name: "Quarters" });
+  await page.goto("/releases?tab=schedules");
+  const strip = page
+    .getByRole("tabpanel", { name: "Schedules" })
+    .getByRole("toolbar", { name: "Quarters" });
   await expect(strip).toBeVisible();
   return strip;
 }
