@@ -163,10 +163,8 @@
 }
 
 /* Beside a panel as tall as what it holds, which has no edge to give them room, the others keep
-   their least once settled, the fitted one shrinking to scroll instead; while they slide, they
-   move freely. */
-.stackFitting:not(.stackFolding)
-  > .stackItem:not(.stackItemFitted, .stackItemArriving, .stackItemLeaving) {
+   their least, the fitted one shrinking to scroll instead. */
+.stackFitting > .stackItem:not(.stackItemFitted) {
   min-height: var(--stack-least);
 }
 
@@ -185,23 +183,32 @@
 .stackItemLeaving,
 .stackFolding .stackItem {
   overflow: hidden;
-  transition: flex-grow var(--stack-motion);
+  transition:
+    flex-grow var(--stack-motion),
+    min-height var(--stack-motion);
 }
 
+/* As specific as the least kept beside a fitted panel, so a panel slides from and to nothing. */
 @starting-style {
-  .stackItemArriving {
+  .stackItemArriving,
+  .stackFitting > .stackItem.stackItemArriving {
     flex-grow: 0;
+    min-height: 0;
   }
 }
 
+.stackFitting > .stackItem.stackItemLeaving,
 .stackItemLeaving {
   flex-grow: 0;
+  min-height: 0;
 }
 
 /* While a panel under another is maximized, the panels and edges beside it fold away, kept as they
    were, and Restore unfolds them; both move as a panel opening or closing does. */
+.stackFitting > .stackItem.stackItemFolded,
 .stackItemFolded {
   flex-grow: 0;
+  min-height: 0;
   overflow: hidden;
 }
 

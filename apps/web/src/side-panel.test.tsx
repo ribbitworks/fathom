@@ -847,7 +847,7 @@ describe("a panel as tall as what it holds", () => {
   const details = one("Details", "details");
   const form = { ...one("Form", "form"), fits: true };
 
-  it("fits what it holds under another, with no edge beside it", () => {
+  it("fits what it holds under another, with no edge beside it to move", () => {
     render(layout([details, form, one("Note", "note")]));
     expect(["Details", "Form", "Note"].map(fitted)).toEqual([
       false,
