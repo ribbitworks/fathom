@@ -16,8 +16,8 @@ import {
 } from "react";
 import { ColouredName } from "./colour-swatch.tsx";
 import comboboxClasses from "./combobox.module.css";
-import classes from "./pages.module.css";
 import { composingWord } from "./composing.ts";
+import classes from "./pages.module.css";
 
 // How editing a cell ended: Enter, Tab or Shift+Tab, or leaving the cell.
 export type Finish = "enter" | "next" | "previous" | "leave";

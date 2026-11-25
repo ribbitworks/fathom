@@ -7,6 +7,7 @@ import { type ComponentProps, type KeyboardEvent, useState } from "react";
 import type { Typing } from "@fathom/shared";
 import { startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
+import { composingWord } from "./composing.ts";
 import { focusSoon } from "./focus.ts";
 import { focusRecordCell } from "./grid-row.tsx";
 import { emptyValue, kindOf, readOnlyFor } from "./grid-columns.tsx";
@@ -17,7 +18,6 @@ import { opensMenu } from "./row-controls.tsx";
 import type { MenuGrid } from "./row-menus.tsx";
 import { type CellValue, fieldLabel } from "./table-view.ts";
 import { typeIn } from "./type-in.ts";
-import { composingWord } from "./composing.ts";
 
 export function gridEditing<Rec extends GridRecord, Change, Request>(
   grid: Pick<

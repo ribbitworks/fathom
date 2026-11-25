@@ -15,6 +15,7 @@ import {
 import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
+import { composingWord } from "./composing.ts";
 import { focusSoon, selectSoon } from "./focus.ts";
 import { NewFormEnter } from "./new-form-enter.ts";
 import { readOnlyFor } from "./grid-columns.tsx";
@@ -35,7 +36,6 @@ import {
   withUnit,
 } from "./table-view.ts";
 import { typeIn } from "./type-in.ts";
-import { composingWord } from "./composing.ts";
 
 type Keyed = Pick<Column<never>, "key">;
 

@@ -18,9 +18,9 @@ import {
   pastedChoices,
   pasteProblem,
 } from "./choice-rules.ts";
+import { composingWord } from "./composing.ts";
 import { focusSoon } from "./focus.ts";
 import type { ChoiceActions } from "./list-panel.tsx";
-import { composingWord } from "./composing.ts";
 
 export function useChoiceEntry({
   list,

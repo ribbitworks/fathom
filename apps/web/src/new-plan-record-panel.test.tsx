@@ -22,7 +22,7 @@ import { useNoteEditing } from "./note-editing.tsx";
 import type { PlanChange } from "./plan-table.tsx";
 import { cellColumn } from "./grid-columns.tsx";
 import type { CellRecord, RecordTable } from "./record-table.ts";
-import { testTheme } from "./test-support.tsx";
+import { composingEnters, testTheme } from "./test-support.tsx";
 
 const choice = (id: string, label: string, retired = false) => ({
   id,
@@ -296,20 +296,20 @@ describe("adding", () => {
     });
   });
 
-  it.each([
-    ["while composing", { isComposing: true }],
-    ["as Safari sends it to end composing", { keyCode: 229 }],
-  ])("adds nothing with Enter %s a word", async (_, composing) => {
-    const onAdd = vi.fn();
-    renderPanel({ given: table([column("name", "text")]), onAdd });
-    const field = screen.getByRole("textbox", { name: "name" });
-    await userEvent.type(field, "Words");
-    fireEvent.keyDown(field, { key: "Enter", ...composing });
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(onAdd).not.toHaveBeenCalled();
-  });
+  it.each(composingEnters)(
+    "adds only at the reader's Enter after Enter %s a word",
+    async (_, composing) => {
+      const onAdd = vi.fn();
+      renderPanel({ given: table([column("name", "text")]), onAdd });
+      const field = screen.getByRole("textbox", { name: "name" });
+      await userEvent.type(field, "Words");
+      fireEvent.keyDown(field, { key: "Enter", ...composing });
+      await userEvent.keyboard("{Enter}");
+      await waitFor(() => {
+        expect(onAdd).toHaveBeenCalledOnce();
+      });
+    },
+  );
 
   it("does not close while saving", async () => {
     const onCancel = vi.fn();
