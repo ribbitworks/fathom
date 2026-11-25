@@ -423,6 +423,16 @@ describe("a panel under another, maximized", () => {
     expect(screen.queryByRole("button", { name: "Maximize above" })).toBeNull();
   });
 
+  it("fills the column, maximized, though it fits what it holds", async () => {
+    localStorage.clear();
+    render(layout([framed("above"), { ...framed("below"), fits: true }]));
+    expect(placeOf("below").className).toMatch(/stackItemFitted/u);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Maximize below" }),
+    );
+    expect(placeOf("below").className).not.toMatch(/stackItemFitted/u);
+  });
+
   it("folds away the panel above, kept as it was, and Restore unfolds it", async () => {
     render(layout([framed("above"), framed("below")]));
     const above = screen.getByText("above holds");
@@ -834,5 +844,48 @@ describe("a panel as tall as what it holds", () => {
     await userEvent.keyboard("{ArrowDown}");
 
     expect(fitted("Form")).toBe(false);
+  });
+
+  const details = one("Details", "details");
+  const form = { ...one("Form", "form"), fits: true };
+
+  it("fills the column alone, as any panel does", () => {
+    localStorage.clear();
+    render(layout([form]));
+    expect(fitted("Form")).toBe(false);
+  });
+
+  it("comes and goes at once, its height being nothing to move to", () => {
+    localStorage.clear();
+    const { rerender } = render(layout([details]));
+    rerender(layout([details, form]));
+    expect(
+      (screen.getByText("Form").parentElement as HTMLElement).className,
+    ).not.toMatch(/stackItemArriving/u);
+    rerender(layout([details]));
+    expect(screen.queryByText("Form")).toBeNull();
+  });
+
+  it("gives its edge the share it is drawn with", () => {
+    localStorage.clear();
+    render(layout([details, form]));
+    const drawn = (text: string, height: number) => {
+      vi.spyOn(
+        screen.getByText(text).parentElement as HTMLElement,
+        "getBoundingClientRect",
+      ).mockReturnValue({ height } as DOMRect);
+    };
+    drawn("Details", 600);
+    drawn("Form", 200);
+    const edge = screen.getByRole("separator", {
+      name: "Resize heights of details and form",
+    });
+    act(() => {
+      edge.focus();
+    });
+    fireEvent.keyDown(edge, { key: "ArrowDown" });
+    expect(edge.getAttribute("aria-valuenow")).toBe(
+      String(75 + stackShares.step),
+    );
   });
 });
