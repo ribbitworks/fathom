@@ -32,6 +32,8 @@ export interface RecordMenuFacts {
   shownAction: GridDraft["action"] | undefined;
   // Whether the user may change the record from its table now, with nobody else holding it.
   changes: boolean;
+  // Whether the record can ever be removed, unlike, say, a list built into Fathom.
+  removable: boolean;
   // Whether the user may discard or resubmit its own draft, on a table whose records are changed
   // elsewhere.
   editsOwnDraft: boolean;
@@ -87,11 +89,12 @@ export interface RecordMenuOffer extends DraftOffer {
 }
 
 // A record's own draft is offered as any draft is, and a record neither added nor removed by its
-// draft may be removed by those who change it.
+// draft may be removed by those who change it, where it can ever be removed.
 export function recordMenuOffer({
   ownDraft,
   shownAction,
   changes,
+  removable,
   editsOwnDraft,
   decides,
   publishes,
@@ -105,7 +108,11 @@ export function recordMenuOffer({
       decides,
       publishes,
     }),
-    remove: changes && shownAction !== "created" && shownAction !== "deleted",
+    remove:
+      changes &&
+      removable &&
+      shownAction !== "created" &&
+      shownAction !== "deleted",
   };
 }
 

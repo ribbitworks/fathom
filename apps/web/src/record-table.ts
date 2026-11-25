@@ -228,6 +228,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // Why a record can't be removed now, such as another record naming it, said in a line under its
   // menu's Remove, which is turned off; none while it can be.
   removeTurnedOff?: (record: Rec) => string | undefined;
+  // Whether a record can ever be removed, such as a list Fathom builds in, which can't; every
+  // record can, where the table doesn't say.
+  removable?: (record: Rec) => boolean;
   nameOf: (record: Rec) => string;
   // The key of the column naming each record, whose cell holds the row's controls.
   nameColumn: string;
