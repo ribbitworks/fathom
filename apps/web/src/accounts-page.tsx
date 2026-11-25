@@ -5,6 +5,7 @@
 
 import {
   type Account,
+  lastAccountManagerWords,
   newAccountSchema,
   type RoleSummary,
 } from "@fathom/shared";
@@ -26,7 +27,7 @@ import {
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, type Ref, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import {
@@ -60,6 +61,7 @@ import { useNarrow } from "./side-panel.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import { TableTips } from "./table-tips.tsx";
 import type { View } from "./table-view.ts";
+import { TickReasonLine, useTurnedOff } from "./turned-off.tsx";
 
 type Dialog =
   | { kind: "create" }
@@ -107,6 +109,34 @@ const accountFormSchema = newAccountSchema.extend({
 
 type AccountForm = z.infer<typeof accountFormSchema>;
 
+// One role's tick box, turned off, with why under it, while the server would refuse to take it away.
+function RoleBox({
+  role,
+  refused,
+  inputRef,
+}: {
+  role: RoleSummary;
+  refused: boolean;
+  inputRef: Ref<HTMLInputElement> | undefined;
+}) {
+  const { control, line } = useTurnedOff(
+    refused ? lastAccountManagerWords : undefined,
+    TickReasonLine,
+  );
+  return (
+    <div>
+      <Checkbox
+        ref={inputRef}
+        value={role.id}
+        label={role.name}
+        description={role.description}
+        {...control}
+      />
+      {line}
+    </div>
+  );
+}
+
 // The account's roles, from every role, each with what it is for, and, with several picked, which
 // of them is the default.
 function RolesChoice({
@@ -142,14 +172,12 @@ function RolesChoice({
           >
             <Stack gap="sm" mt="xs">
               {roles.map((role) => (
-                <Checkbox
+                <RoleBox
                   key={role.id}
+                  role={role}
+                  refused={refused?.has(role.id) === true}
                   // A refused Save focuses the field's ref: the first role that can be chosen.
-                  ref={role.id === firstChoosable ? field.ref : undefined}
-                  value={role.id}
-                  label={role.name}
-                  description={role.description}
-                  disabled={refused?.has(role.id)}
+                  inputRef={role.id === firstChoosable ? field.ref : undefined}
                 />
               ))}
               <Text size="sm" c="dimmed">
@@ -625,7 +653,10 @@ export function AccountsPage({
       resetPassword: () => {
         open({ kind: "password", account });
       },
-      changeActive:
+      changeActive: () => {
+        open({ kind: "active", account, own });
+      },
+      deactivateRefused:
         roles.data !== undefined &&
         refusedChanges(
           account,
@@ -633,10 +664,8 @@ export function AccountsPage({
           all,
           roles.data,
         ).deactivating
-          ? undefined
-          : () => {
-              open({ kind: "active", account, own });
-            },
+          ? lastAccountManagerWords
+          : undefined,
     };
   };
   const panels =

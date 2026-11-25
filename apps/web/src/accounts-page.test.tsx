@@ -376,6 +376,12 @@ describe("the last active account with Edit Administration", () => {
     return { deactivate, choice };
   }
 
+  const described = (control: HTMLElement) =>
+    (control.getAttribute("aria-describedby") ?? "")
+      .split(" ")
+      .map((id) => document.getElementById(id)?.textContent)
+      .join(" ");
+
   it("leaves deactivating to the server's check until the roles have loaded", async () => {
     serverAnswers({
       "GET /api/session": manager,
@@ -397,6 +403,19 @@ describe("the last active account with Edit Administration", () => {
     expect(choice("Administrator").checked).toBe(true);
     expect(choice("Administrator").disabled).toBe(true);
     expect(choice("Team Member").disabled).toBe(false);
+  });
+
+  it("says why under the role and Deactivate…, each read with its control, and under nothing else", async () => {
+    const { deactivate, choice } = await controlsFor([own, planner, former]);
+    const why =
+      "No other active account can manage accounts. Give another one a role with Edit Administration first.";
+    expect(screen.getAllByText(why)).toHaveLength(2);
+    expect(within(deactivate).queryByText(why)).toBeNull();
+    expect(described(deactivate)).toBe(why);
+    expect(described(choice("Administrator"))).toBe(
+      `${administratorRole.description} ${why}`,
+    );
+    expect(described(choice("Team Member"))).toBe(teamMemberRole.description);
   });
 
   it("can do both once another active account's role grants it, even a role made later", async () => {

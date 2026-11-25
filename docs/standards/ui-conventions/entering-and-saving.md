@@ -108,8 +108,9 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Example:** With an account holding two roles, change a person on People, then switch to a role that doesn't see People: the Publish menu names the change to a person.
 - **Controls turned off:** A control for a change the server would refuse is turned off, with a line saying why wherever the reason isn't plain to see.
   - **Turned off, not hidden:** One the reader might expect is turned off with its reason, not hidden; a control is hidden only when the role can never use it, or, as New is under Live only, where nothing it made would show.
-  - **Drawn by:** Each page.
-  - **Example:** In a list with meanings, such as Feature statuses, Retire and Remove are greyed out on the only choice that means Possible, with a line saying why.
+  - **The line:** Short and dimmed, under the control, and tied to it with `aria-describedby`, so a screen reader hears the reason with the control.
+  - **Drawn by:** Each page decides which controls are turned off, and why. `useTurnedOff` in `apps/web/src/turned-off.tsx` turns the control off and draws its line; its `disabled` replaces the control's own. A menu's item passes `MenuNote`, in `apps/web/src/draft-details.tsx`, as the hook's second argument.
+  - **Example:** In a list with meanings, such as Feature statuses, Retire and Remove are greyed out on the only choice that means Possible, with a line saying why. On Accounts, with Superuser deactivated, the Fathom Administrator's Deactivate… has one.
 - **A record the role can't change:** Where a role may change records of a kind but not one record, such as a list of a class it can't see, the record's panel is read only, with one dimmed line saying why, rather than each control turned off.
   - **Drawn by:** `ListPanel`'s `unchangeable` in `apps/web/src/list-panel.tsx`, from `unchangeableLists` in `apps/web/src/lists.ts`.
   - **Example:** None in the seed data; a role with Edit Configuration but not Personal data, opening Work patterns on the Lists page.
