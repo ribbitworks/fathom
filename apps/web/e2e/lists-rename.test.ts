@@ -4,7 +4,9 @@
 // and a name too long are each refused in the row, saving nothing.
 
 import { expect, type Page, test } from "@playwright/test";
-import { signIn } from "./test-accounts.ts";
+import { signedInAs } from "./test-accounts.ts";
+
+test.use({ storageState: signedInAs("engineeringDirector") });
 
 // The changes the page sends to be saved, from when it starts watching.
 function changesSent(page: Page): string[] {
@@ -27,7 +29,7 @@ async function renameLevels(page: Page, name: string) {
 
 test.describe("renaming a list in its row", () => {
   test.beforeEach(async ({ page }) => {
-    await signIn(page, "/lists", "engineering.director@fathom.test");
+    await page.goto("/lists");
     await expect(page.getByRole("grid", { name: "Lists" })).toBeVisible();
   });
 
