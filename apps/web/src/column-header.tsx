@@ -26,6 +26,7 @@ import { breaksDown } from "./grid-columns.tsx";
 import { fieldDraftLines } from "./grid-drafts.ts";
 import type { EditingGrid } from "./grid-editing.tsx";
 import { Icon } from "./icons.tsx";
+import { draftOffer, offersDraft } from "./menu-offer.ts";
 import { shortcutsFor } from "./menu-shortcuts.ts";
 import classes from "./pages.module.css";
 import { CopyLinkItem } from "./record-key.tsx";
@@ -40,7 +41,6 @@ import {
   headerState,
 } from "./table-controls.tsx";
 import { type View, orderAfterMove, withHidden } from "./table-view.ts";
-import { draftOffer, offersDraft } from "./menu-offer.ts";
 
 const headerId = (column: { key: string }) => `${column.key}-heading`;
 
