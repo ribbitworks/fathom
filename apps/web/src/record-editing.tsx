@@ -15,7 +15,7 @@ import {
 import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
-import { composingWord } from "./composing.ts";
+import { heldForComposing } from "./composing.ts";
 import { focusSoon, selectSoon } from "./focus.ts";
 import { NewFormEnter } from "./new-form-enter.ts";
 import { readOnlyFor } from "./grid-columns.tsx";
@@ -141,10 +141,11 @@ export function ValueField({
         onText(asTyped === undefined ? box.value : typeIn(box, asTyped));
       }}
       onKeyDown={(event) => {
+        if (heldForComposing(event)) return;
         if (event.key === "Escape" && onCancel !== undefined) {
           event.preventDefault();
           onCancel();
-        } else if (event.key === "Enter" && !composingWord(event)) {
+        } else if (event.key === "Enter") {
           event.preventDefault();
           onEnter();
         }
