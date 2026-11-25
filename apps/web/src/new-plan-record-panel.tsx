@@ -103,6 +103,7 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
       key={column.key}
       column={column}
       value={valueOf(column)}
+      colour={column.valueColour?.(valueOf(column)) ?? null}
       editing={editing(column)}
     />
   );

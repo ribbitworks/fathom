@@ -88,6 +88,9 @@ export interface TableColumn<Row> {
   // False for a column the search leaves out, such as the Key column, whose numbers would match
   // inside other words; a key typed whole finds its record.
   searched?: false | undefined;
+  // The colour of a value as given, where no record holds it yet, such as a chosen team's: drawn in
+  // a New form's row and beside each of a picker's options.
+  valueColour?: ((value: CellValue) => string | null) | undefined;
 }
 
 // What a field editing a column's value is called: its label, and its unit's words, if any.

@@ -60,6 +60,7 @@ type AnyColumn = Pick<
   | "places"
   | "emptyLabel"
   | "choicesInWords"
+  | "valueColour"
 > & {
   choices: readonly Choice[];
   // Whether a choice may be put in a cell, apart from being offered in its list: any may, unless
@@ -322,6 +323,9 @@ const choicesFor = (column: AnyColumn, value: readonly string[]) =>
       value: option.id,
       label: option.label,
       ...(option.description === "" ? {} : { description: option.description }),
+      ...(column.valueColour === undefined
+        ? {}
+        : { colour: column.valueColour([option.id]) }),
     }));
 
 const chosen = (value: CellValue) => value as string[];

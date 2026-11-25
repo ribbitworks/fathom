@@ -350,6 +350,12 @@ export function featureColumns(
         featureTeamId === null
           ? null
           : (choices.teamColours.get(featureTeamId) ?? null),
+      valueColour: (value) => {
+        const team = chosenId(value);
+        return team === undefined
+          ? null
+          : (choices.teamColours.get(team) ?? null);
+      },
       status: (feature) =>
         needsFeatureTeam(meaningOf.get(feature.statusId), feature.featureTeamId)
           ? { words: "No team", spoken: "it needs a feature team to own it" }
@@ -480,19 +486,37 @@ export function featureTable(
   return colours
     ? {
         ...table,
-        formColumns: [{ after: "featureTeamId", column: colourColumn }],
+        formColumns: [
+          { after: "featureTeamId", column: colourColumn(choices.teamColours) },
+        ],
       }
     : table;
 }
 
 // A new feature's colour, one of the palette's, or none, so it shows its team's: once a team is
 // chosen, no colour reads as the team's, and before then as no value does.
-const colourColumn = (values: Readonly<Record<string, CellValue>>) =>
-  field<Feature>("colour", "Colour", "choice", {
-    choices: paletteColours.map((colour) =>
-      choice(colour, colourWords(colour), false),
-    ),
-    ...(isEmpty(values.featureTeamId ?? null)
-      ? {}
-      : { emptyLabel: teamsColourWords }),
-  });
+const colourColumn =
+  (teamColours: TableChoices["teamColours"]) =>
+  (
+    values: Readonly<Record<string, CellValue>>,
+  ): Column<Feature, PlanChange> => {
+    const team = chosenId(values.featureTeamId ?? null);
+    return {
+      ...field<Feature>("colour", "Colour", "choice", {
+        choices: paletteColours.map((colour) =>
+          choice(colour, colourWords(colour), false),
+        ),
+        ...(team === undefined ? {} : { emptyLabel: teamsColourWords }),
+      }),
+      valueColour: (value) =>
+        isEmpty(value)
+          ? team === undefined
+            ? null
+            : (teamColours.get(team) ?? null)
+          : (chosenId(value) ?? null),
+    };
+  };
+
+// The choice a value of a column of one choice holds, if any.
+const chosenId = (value: CellValue): string | undefined =>
+  Array.isArray(value) ? value[0] : undefined;

@@ -228,3 +228,34 @@ describe("finding a choice", () => {
     ).toEqual(["Élodie Marchand"]);
   });
 });
+
+describe("an option's colour", () => {
+  it("draws it as a square before the option's name, and none for an option without one", () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <ChoicePicker
+          id="picker"
+          label="Feature team"
+          options={[
+            { value: "t1", label: "Fictional Payments", colour: "grape" },
+            { value: "t2", label: "Fictional Platform", colour: null },
+          ]}
+          multiple={false}
+          initial={[]}
+          typed=""
+          onDone={() => undefined}
+          onCancel={() => undefined}
+        />
+      </MantineProvider>,
+    );
+    const squareIn = (name: string) =>
+      screen
+        .getByRole("option", { name: new RegExp(name) })
+        .querySelector("[data-colour]")
+        ?.getAttribute("data-colour");
+    expect([
+      squareIn("Fictional Payments"),
+      squareIn("Fictional Platform"),
+    ]).toEqual(["grape", undefined]);
+  });
+});

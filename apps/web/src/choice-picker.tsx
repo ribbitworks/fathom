@@ -23,6 +23,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { ColouredName } from "./colour-swatch.tsx";
 import comboboxClasses from "./combobox.module.css";
 import classes from "./pages.module.css";
 
@@ -33,6 +34,8 @@ export interface Option {
   value: string;
   label: string;
   description?: string | undefined;
+  // Its colour, such as a team's, drawn as a square before its name.
+  colour?: string | null | undefined;
 }
 
 const descriptionOpacity = 0.75;
@@ -64,11 +67,15 @@ export function OptionWords({
   option,
   name,
 }: {
-  option: Pick<Option, "label" | "description">;
+  option: Pick<Option, "label" | "description" | "colour">;
   // The option's label as drawn, where it carries marks, such as a draft's dot.
   name?: ReactNode;
 }) {
-  const label = name ?? option.label;
+  const label = (
+    <ColouredName colour={option.colour ?? null}>
+      {name ?? option.label}
+    </ColouredName>
+  );
   return option.description === undefined ? (
     <span>{label}</span>
   ) : (

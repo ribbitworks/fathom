@@ -26,7 +26,7 @@ type ColourMenuLook = "dot" | "square" | "change";
 
 // A record with no colour of its own that takes its team's, such as a feature, chooses its team's
 // by these words, rather than none.
-export const teamsColourWords = "Team's colour";
+export const teamsColourWords = "Team colour";
 
 export function ColourMenu({
   current,
@@ -38,9 +38,9 @@ export function ColourMenu({
   title = "Change the team's colour",
 }: {
   current: PaletteColour | null;
-  // The colour shown while the record has none of its own, its team's, for a record that takes
-  // one; undefined for a record that has none then.
-  inherited?: PaletteColour | null | undefined;
+  // For a record that takes its team's colour while it has none of its own: the team, by name, and
+  // its colour; undefined for a record that has none then.
+  inherited?: { colour: PaletteColour | null; from: string } | undefined;
   // The record's name, as the menu and its notifications name it.
   name: string;
   // What opens the menu: the bare dot, as on a card; the dot in a button's square, where a bare dot
@@ -76,7 +76,7 @@ export function ColourMenu({
         colour !== null
           ? `${name} now has the colour ${colourWords(colour)}.`
           : takesTeams
-            ? `${name} now has its team's colour.`
+            ? `${name} now has the colour of ${inherited.from}.`
             : `${name} no longer has a colour.`;
       notifyUndoable(done, () => {
         change.mutate({ colour: previous });
@@ -141,8 +141,8 @@ export function ColourMenu({
         <Menu.Divider />
         <Menu.Item
           leftSection={
-            takesTeams && inherited !== null ? (
-              <Swatch colour={inherited} size={14} alone />
+            takesTeams && inherited.colour !== null ? (
+              <Swatch colour={inherited.colour} size={14} alone />
             ) : undefined
           }
           rightSection={ticked(null)}

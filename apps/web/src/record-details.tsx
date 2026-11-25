@@ -393,8 +393,14 @@ export function Row({
                   editing.editor
                 ) : (
                   <ColouredName
+                    // An empty value shows a colour only beside its own words for none, such as
+                    // a feature's Team colour.
                     colour={
-                      children === undefined && isEmpty(value) ? null : colour
+                      children === undefined &&
+                      isEmpty(value) &&
+                      column.emptyLabel === undefined
+                        ? null
+                        : colour
                     }
                   >
                     {children ?? (

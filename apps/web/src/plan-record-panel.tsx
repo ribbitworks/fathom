@@ -298,6 +298,7 @@ export function recordPanel({
       <FeatureColourRow
         feature={shown as Feature}
         draft={ownDraft}
+        teams={choices.featureTeams}
         teamColours={choices.teamColours}
         chooses={plan.canColourFeatures}
       />
@@ -362,24 +363,27 @@ export function recordPanel({
 function FeatureColourRow({
   feature,
   draft,
+  teams,
   teamColours,
   chooses,
 }: {
   feature: Feature;
   draft: PlanRecord["draft"];
+  teams: readonly { id: string; label: string }[];
   teamColours: TableChoices["teamColours"];
   chooses: boolean;
 }) {
   // A feature with no team has no team's colour to take, so its menu offers none.
+  const team = teams.find(({ id }) => id === feature.featureTeamId);
   const inherited =
-    feature.featureTeamId === null
+    team === undefined
       ? undefined
-      : (teamColours.get(feature.featureTeamId) ?? null);
+      : { colour: teamColours.get(team.id) ?? null, from: team.label };
   const approved = draft?.action !== "created" && draft?.action !== "deleted";
   return (
     <ColourRow
       colour={feature.colour}
-      inherited={inherited}
+      inherited={inherited?.colour}
       menu={
         chooses &&
         approved && (
