@@ -115,7 +115,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
     - **A table row's Remove:** turned off by its table's `removeTurnedOff` in `apps/web/src/record-table.ts`.
     - **A menu's item:** passes `MenuNote`, in `apps/web/src/draft-details.tsx`, as the hook's second argument.
     - **A tick box:** passes the reason as its description instead.
-  - **Example:** In a list with meanings, such as Feature statuses, Retire and Remove are greyed out on the only choice that means Possible, with a line saying why. On Accounts, with Superuser deactivated, the Fathom Administrator's Deactivate… has one. On Projects' Customers tab, Remove customer is greyed out in Bluefin Harbour Authority's menu, with P-2001 Crane Control names this customer.
+  - **Example:** In a list with meanings, such as Feature statuses, Retire and Remove are greyed out on the only choice that means Possible, with a line saying why. On Accounts, with Superuser deactivated, the Fathom Administrator's Deactivate… has one. On Projects' Customers tab, Remove customer is greyed out in Bluefin Harbour Authority's menu, with P-2001 Crane Control and 2 others name this customer.
 - **A record the role can't change:** Where a role may change records of a kind but not one record, such as a list of a class it can't see, the record's panel is read only, with one dimmed line saying why, rather than each control turned off.
   - **Drawn by:** `ListPanel`'s `unchangeable` in `apps/web/src/list-panel.tsx`, from `unchangeableLists` in `apps/web/src/lists.ts`.
   - **Example:** None in the seed data; a role with Edit Configuration but not Personal data, opening Work patterns on the Lists page.
