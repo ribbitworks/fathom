@@ -164,7 +164,9 @@ This chart is part of [The Local Check](#the-local-check), which also draws the 
 - **Waiting:** copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the process and folder that holds the turn, and how many copies asked first.
 - **A check started by a check,** such as `pnpm test:changed` within `pnpm check:push`, uses the turn its check holds.
 - **Cores:** the copy holding the turn has every core, as a check on GitHub does.
-- **Workers:** each package's tests use a share of the cores, leaving two free for the development servers. `VITEST_MAX_WORKERS` sets the number instead.
+- **Workers:** each package's tests use a share of the cores, leaving two free for the development servers. Four packages have long-running tests: the web app, the server, the database and the seed data. The cores are shared among those of the four a run tests, so on 18 cores the web app's tests alone get 16 workers, and each of the four gets 4 when all run. A package that starts test databases gets at most 12, the most measured. `VITEST_MAX_WORKERS` sets the number instead.
+- **Side by side:** `pnpm test:changed` runs the script tests and the type check beside the package tests, and leaves them two more cores, so the web app's tests alone get 14 workers there.
+- **Measured:** the web app's tests took 106 seconds with 4 workers and 47 with 16. The server's took 224 seconds with 4 and 142 with 12, using about 2.5 cores at 4. The script tests took 29 seconds on about 1.3 cores, and the type check 5 on 1.7. Two copies running the server's and the web app's tests side by side slowed each by about a third, so turns stay one at a time.
 - **Test databases:** no more than 8 test database servers start at once on one computer.
 - **Time limit:** a check stops a job still running after 15 minutes, shows its output up to then, and fails it as Stopped, so a hung job never holds a turn for long. `FATHOM_CHECK_JOB_SECONDS` sets another limit.
   - `pnpm test:changed`, `pnpm test:packages` and `pnpm test`, run alone or within a check, stop each pnpm step they run past the same limit, naming the step, and fail.
@@ -288,6 +290,8 @@ flowchart TD
 
 `pnpm test:changed`, run by `pnpm check:push` or on its own, chooses the tests in `scripts/test-changed.mjs`, and checks the coverage of what the change touches, as [Coverage of a Change](#coverage-of-a-change) sets out. Whenever any package's tests run, it also runs `pnpm typecheck`, as GitHub's check does, since the tests compile without checking types; its build is incremental, so it checks again only what changed. `pnpm check:push` passes `--without-types`, since its own Types job checks them beside it.
 
+The script tests, the type check and the package tests run side by side, so a run holds its turn only as long as the longest of them takes.
+
 ```mermaid
 flowchart TD
     Start["pnpm test:changed"]
@@ -304,8 +308,8 @@ flowchart TD
     AnyCode -- No --> NoTests["No tests run, and it passes"]
     AnyCode -- Yes --> Turn["Takes a check's turn, unless the check that started it holds one"]
     Turn --> Outside{"Is any path outside a package's folder in apps/ or packages/, other than a Help page, a script's Node.js module other than those that start the package tests, or a file in .github/?"}
-    Outside -- Yes --> Everything["pnpm test:scripts, then every test of every package, with all their coverage"]
-    Outside -- No --> Scripts["pnpm test:scripts"]
+    Outside -- Yes --> Everything["pnpm test:scripts, beside every test of every package, with all their coverage"]
+    Outside -- No --> Scripts["pnpm test:scripts, beside the package tests chosen below"]
     Scripts --> Whole{"Is any path in a package but not a script in its src folder, such as its settings, stylesheets or migrations?"}
     Whole -- Yes --> WholePackages["Every test of those packages and of every package that depends on them, with all their coverage"]
     Whole -- No --> Imported

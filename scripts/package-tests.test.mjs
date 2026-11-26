@@ -12,6 +12,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { checkRuns } from "./check-turn.mjs";
 import {
   runPackageTests,
+  packagesChosen,
   runPnpm,
   workersPerPackage,
 } from "./package-tests.mjs";
@@ -19,6 +20,13 @@ import {
 let folder;
 let reports;
 let runs;
+
+// The workspace's packages, by folder and name, as package.json files give them.
+const manifests = [
+  { folder: "apps/server", manifest: { name: "@fathom/server" } },
+  { folder: "apps/web", manifest: { name: "@fathom/web" } },
+];
+const everyLong = ["apps/server", "apps/web", "packages/db", "packages/seed"];
 
 function options(passes = true) {
   return {
@@ -115,6 +123,55 @@ describe("running package tests", () => {
     assert.equal(workersPerPackage(10), 2);
     assert.equal(workersPerPackage(4), 1);
     assert.equal(workersPerPackage(1), 1);
+  });
+
+  it("shares them among fewer when fewer of those packages run, and all of them when none does", () => {
+    assert.equal(workersPerPackage(18, ["apps/web"]), 16);
+    assert.equal(workersPerPackage(18, ["apps/web", "packages/shared"]), 16);
+    assert.equal(workersPerPackage(18, ["apps/server", "apps/web"]), 8);
+    assert.equal(workersPerPackage(18, ["packages/shared"]), 16);
+  });
+
+  it("gives a package starting test databases no more workers than were measured", () => {
+    assert.equal(workersPerPackage(18, ["apps/server"]), 12);
+    assert.equal(workersPerPackage(18, ["packages/db", "packages/seed"]), 8);
+  });
+
+  it("reads the packages its options choose by folder, with or without a closing slash, or by name", () => {
+    assert.deepEqual(packagesChosen(["--filter", "./apps/web/"], manifests), [
+      "apps/web",
+    ]);
+    assert.deepEqual(
+      packagesChosen(
+        ["-F", "@fathom/server", "--filter=./apps/web", "test"],
+        manifests,
+      ),
+      ["apps/server", "apps/web"],
+    );
+  });
+
+  it("counts every package whose tests run long when its options choose none, or none it can name", () => {
+    for (const args of [
+      ["--recursive", "test"],
+      ["--filter=!@fathom/seed"],
+      ["--filter", "./apps/*"],
+      ["--filter", "@fathom/web..."],
+      ["--filter", "./apps/server..."],
+    ]) {
+      assert.deepEqual(
+        packagesChosen(args, manifests),
+        everyLong,
+        args.join(" "),
+      );
+    }
+  });
+
+  it("gives a run of the web app's tests alone the cores but two", async () => {
+    await runPackageTests(["--filter", "./apps/web", "test"], {
+      ...options(),
+      cores: 18,
+    });
+    assert.equal(runs.at(-1)?.environment.VITEST_MAX_WORKERS, "16");
   });
 
   it("chooses the packages given after the script's name", async () => {

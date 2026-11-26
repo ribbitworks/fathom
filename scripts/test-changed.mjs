@@ -5,6 +5,7 @@
 // [--without-types]
 
 import { existsSync } from "node:fs";
+import { availableParallelism } from "node:os";
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
@@ -232,7 +233,7 @@ function coverageArguments(folder, covered) {
 // whether all passed.
 async function inPackages(
   folders,
-  { command, files = [], coverageFor, runPackages, environment },
+  { command, files = [], coverageFor, runPackages, environment, sharing },
 ) {
   const runs = new Map();
   for (const folder of folders) {
@@ -243,7 +244,8 @@ async function inPackages(
       folders: [...(runs.get(key)?.folders ?? []), folder],
     });
   }
-  const passed = await Promise.all(
+  // Every run ends before the group does; one that threw throws for the group, once all have ended.
+  const ended = await Promise.allSettled(
     [...runs.values()].map(({ coverage: given, folders: some }) =>
       runPackages(
         [
@@ -256,15 +258,25 @@ async function inPackages(
           ...given,
           ...files,
         ],
-        { environment },
+        { environment, ...sharing },
       ),
     ),
   );
-  return passed.every(Boolean);
+  const thrown = ended.find((result) => result.status === "rejected");
+  if (thrown !== undefined) throw thrown.reason;
+  return ended.every(
+    (result) => result.status === "fulfilled" && result.value === true,
+  );
 }
 
-// Runs the tests chosen, and the type check unless told not to, once no other copy of the repository is running a
-// check, unless there are none, and says whether they passed.
+// The cores the script tests and the type check take beside the package tests: measured at 1.3 and
+// 1.7 on average, as Checks and CI's Sharing the Machine records.
+const coresBeside = 2;
+
+// Runs the tests chosen, and the type check unless told not to, once no other copy of the repository
+// is running a check, unless there are none, and says whether they passed, naming any part that
+// failed. The script tests, the type check and both groups of package tests run side by side, so the
+// turn is held only as long as the longest of them, with the cores left shared among the packages.
 export async function runTests(
   tests,
   {
@@ -273,6 +285,7 @@ export async function runTests(
     run = runPnpm,
     runPackages = runPackageTests,
     root = process.cwd(),
+    cores = availableParallelism(),
   } = {},
 ) {
   if (tests.kind === "none") {
@@ -285,49 +298,69 @@ export async function runTests(
         ? "==> Files outside the packages changed, so every test runs"
         : "==> Testing the scripts and the packages a change can affect",
     );
-    const scriptsPassed = await run(["test:scripts"], environment);
+    const parts = [["Script tests", run(["test:scripts"], environment)]];
     // The tests compile without checking types, so the type check GitHub's check runs is run too;
     // its build is incremental, checking again only what changed.
     // The type check covers the packages alone, not the scripts.
-    const packagesRun =
-      tests.kind === "everything" ||
-      tests.whole.length > 0 ||
-      tests.related.length > 0;
-    let typesPassed = true;
-    if (checkTypes && packagesRun) {
+    if (checkTypes && (tests.whole.length > 0 || tests.related.length > 0)) {
       console.log("==> Checking the types");
-      typesPassed = await run(["typecheck"], environment);
+      parts.push(["Types", run(["typecheck"], environment)]);
     }
+    const sharing = {
+      running: [...tests.whole, ...tests.related],
+      cores: cores - coresBeside,
+    };
     const covering = tests.covered.join(", ");
     if (covering !== "")
       console.log(`==> Checking the coverage of ${covering}`);
-    let packagesPassed = true;
     if (tests.whole.length > 0) {
       console.log(
         `==> Every test of ${tests.whole.join(", ")}, with all their coverage`,
       );
       // Settings, dependencies or files outside the source can change any file's coverage.
-      packagesPassed = await inPackages(tests.whole, {
-        command: ["run"],
-        coverageFor: () => coverage,
-        runPackages,
-        environment,
-      });
+      parts.push([
+        `Every test of ${tests.whole.join(", ")}`,
+        inPackages(tests.whole, {
+          command: ["run"],
+          coverageFor: () => coverage,
+          runPackages,
+          environment,
+          sharing,
+        }),
+      ]);
     }
     if (tests.related.length > 0) {
       console.log(
         `==> The tests of ${tests.related.join(", ")} that import ${tests.files.join(", ")}`,
       );
-      const relatedPassed = await inPackages(tests.related, {
-        command: ["related", "--run", "--passWithNoTests"],
-        files: tests.files.map((file) => resolve(root, file)),
-        coverageFor: (folder) => coverageArguments(folder, tests.covered),
-        runPackages,
-        environment,
-      });
-      packagesPassed = packagesPassed && relatedPassed;
+      parts.push([
+        `The importing tests of ${tests.related.join(", ")}`,
+        inPackages(tests.related, {
+          command: ["related", "--run", "--passWithNoTests"],
+          files: tests.files.map((file) => resolve(root, file)),
+          coverageFor: (folder) => coverageArguments(folder, tests.covered),
+          runPackages,
+          environment,
+          sharing,
+        }),
+      ]);
     }
-    return scriptsPassed && typesPassed && packagesPassed;
+    // Every part ends before the turn is freed, a part that threw counting as failed.
+    const ended = await Promise.allSettled(parts.map(([, part]) => part));
+    const failed = parts.flatMap(([name], index) => {
+      const result = ended.at(index);
+      if (result?.status === "rejected") {
+        const { reason } = result;
+        console.error(
+          `==> ${name}: ${reason instanceof Error ? reason.message : String(reason)}`,
+        );
+      }
+      return result?.status === "fulfilled" && result.value === true
+        ? []
+        : [name];
+    });
+    if (failed.length > 0) console.log(`==> Failed: ${failed.join("; ")}`);
+    return failed.length === 0;
   });
 }
 
