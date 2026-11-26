@@ -199,6 +199,7 @@ export function recordPanel({
   onClose,
   menu,
   showMilestones,
+  showFeatures,
   activitiesOf,
   follow,
   onChange,
@@ -225,6 +226,8 @@ export function recordPanel({
   onClose: () => void;
   menu: MilestoneMenu;
   showMilestones: (project: Project) => void;
+  // Shows Features with only those a proposal names.
+  showFeatures?: ((proposal: Proposal) => void) | undefined;
   // Set for a role that sees activities.
   activitiesOf?: ActivitiesOf | undefined;
   follow: Follow;
@@ -287,7 +290,9 @@ export function recordPanel({
         ),
       ),
     proposals: () =>
-      shownOf("proposal", plan.proposals, () => proposalColumns(choices)),
+      shownOf("proposal", plan.proposals, () =>
+        proposalColumns(choices, showFeatures),
+      ),
     customers: () =>
       shownOf("customer", plan.customers, () =>
         customerColumns(choices, seesFeatures),

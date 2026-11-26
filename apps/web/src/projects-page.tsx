@@ -412,6 +412,7 @@ export function ProjectsPage({
         },
       },
       showMilestones: showMilestonesOf,
+      showFeatures: showFeaturesOf("proposal"),
       activitiesOf: projectActivities?.of,
       follow: {
         showRecord: (next, id) => {

@@ -279,8 +279,10 @@ export function projectTable(
   });
 }
 
+// A proposal's columns; its Features shows on Features, filtered to it, while it names any.
 export function proposalColumns(
   choices: TableChoices,
+  onFeatures?: (proposal: Proposal) => void,
 ): Column<Proposal, PlanChange>[] {
   return [
     nameColumn(),
@@ -304,6 +306,19 @@ export function proposalColumns(
         choices.drafted.proposals,
       ),
       chooseWords: "Choose features",
+      ...(onFeatures === undefined
+        ? {}
+        : {
+            showOn: (proposal: Proposal): ShowOn | undefined =>
+              proposal.featureIds.length === 0
+                ? undefined
+                : {
+                    page: "Features",
+                    onShow: () => {
+                      onFeatures(proposal);
+                    },
+                  },
+          }),
     },
   ];
 }
@@ -315,7 +330,7 @@ export function proposalTable(
   return planTable<Proposal, ProposalRequest>({
     type: "proposal",
     ...wordsOf("proposals"),
-    columns: () => proposalColumns(choices),
+    columns: () => proposalColumns(choices, onFeatures),
     request: (changes) => merged(changes) as ProposalRequest,
     showDetails: onOpen,
     menuItems: recordMenu<Proposal>([["Show on Features", onFeatures]]),
