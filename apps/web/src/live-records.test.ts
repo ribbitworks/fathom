@@ -102,9 +102,9 @@ describe("the records the metrics count", () => {
       liveGadgets,
     );
     expect(ids(counted.rows)).toEqual(["g1", "g3"]);
-    expect(ids(counted.coming?.rows)).toEqual(["g1", "g2", "g4"]);
-    expect(ids(counted.comingPublished?.rows)).toEqual(["g1", "g2"]);
-    expect(counted.published).toBeUndefined();
+    expect(ids(counted.toCome?.coming.rows)).toEqual(["g1", "g2", "g4"]);
+    expect(ids(counted.toCome?.published.rows)).toEqual(["g1", "g2"]);
+    expect(counted.drafted).toBeUndefined();
   });
 
   it("are, with drafts applied, those shown, and as published and live with those drafted to be removed, but no live figures", () => {
@@ -118,7 +118,7 @@ describe("the records the metrics count", () => {
       liveGadgets,
     );
     expect(ids(counted.rows)).toEqual(["g1", "g2"]);
-    expect(ids(counted.published?.rows)).toEqual(["g1", "g2"]);
+    expect(ids(counted.drafted?.published.rows)).toEqual(["g1", "g2"]);
     expect(ids(counted.live?.rows)).toEqual(["g1", "g3"]);
     expect(counted.besideLive).toBe(false);
   });
@@ -142,8 +142,8 @@ describe("the records the metrics count", () => {
       liveGadgets,
     );
     expect(ids(counted.rows)).toEqual(["g1", "g4", "g6"]);
-    expect(ids(counted.published?.rows)).toEqual(["g1", "g5", "g6"]);
-    expect(firstValues(counted.published?.rows)?.at(-1)).toEqual({});
+    expect(ids(counted.drafted?.published.rows)).toEqual(["g1", "g5", "g6"]);
+    expect(firstValues(counted.drafted?.published.rows)?.at(-1)).toEqual({});
     expect(counted.besideLive).toBe(true);
   });
 
@@ -156,11 +156,14 @@ describe("the records the metrics count", () => {
       () => undefined,
       liveGadgets,
     );
-    expect(firstValues(counted.published?.rows)).toEqual([
+    expect(firstValues(counted.drafted?.published.rows)).toEqual([
       { f1: ["c1"] },
       { f1: ["c1"] },
     ]);
-    expect(firstValues(counted.waiting?.rows)).toEqual([{ f1: ["c1"] }, {}]);
+    expect(firstValues(counted.drafted?.waiting.rows)).toEqual([
+      { f1: ["c1"] },
+      {},
+    ]);
   });
 
   it("are, with drafts beside live, those not drafted to be removed, and as they are live by each column's live copy", () => {

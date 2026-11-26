@@ -132,20 +132,22 @@ export function countedRecords<
 ): CountedDrafts<Rec> {
   if (besides === undefined) return { rows: [...shown], besideLive: false };
   if (show === "live") {
-    const toCome = (records: readonly Rec[]) => ({
+    const asApplied = (records: readonly Rec[]) => ({
       rows: recordsAsShown("drafts", records, liveRecords),
       columns: [...columns],
     });
     return {
       rows: [...shown],
-      coming: toCome(besides),
-      comingPublished: toCome(
-        withDraftsUndone(
-          besides,
-          (draft) => draft.unpublished === true,
-          liveRecords,
+      toCome: {
+        coming: asApplied(besides),
+        published: asApplied(
+          withDraftsUndone(
+            besides,
+            (draft) => draft.unpublished === true,
+            liveRecords,
+          ),
         ),
-      ),
+      },
       besideLive: false,
     };
   }
@@ -164,8 +166,10 @@ export function countedRecords<
   );
   return {
     rows: kept(shown),
-    published: { rows: kept(published), columns: [...columns] },
-    waiting: { rows: kept(waiting), columns: [...columns] },
+    drafted: {
+      published: { rows: kept(published), columns: [...columns] },
+      waiting: { rows: kept(waiting), columns: [...columns] },
+    },
     live: {
       rows: liveRecords(drafted),
       columns: columns.flatMap((column) => liveOf(column) ?? []),
