@@ -13,13 +13,17 @@ import {
   draftShape,
   heldBySchema,
 } from "./drafts.ts";
-import { type Link, linkValueSchema } from "./links.ts";
+import {
+  changedColumnValues,
+  requestedColumnValues,
+  shownColumnValues,
+  valuesSchema,
+} from "./column-values.ts";
 import {
   choiceRequestSchema,
   listLengths,
   mostChoicesAtOnce,
 } from "./lists.ts";
-import { numberValueSchema } from "./numbers.ts";
 import { paletteColourSchema } from "./palette.ts";
 import { keyNumberSchema } from "./record-keys.ts";
 
@@ -97,86 +101,6 @@ export const fieldSchema = z.object({
 
 export type Field = z.infer<typeof fieldSchema>;
 
-// The most choices one column can hold for one person.
-const choicesLimit = 100;
-
-// The chosen choices of each column, by column, in the list's order. A column with nothing chosen
-// is left out.
-export const valuesSchema = z.record(z.string(), z.array(z.string()));
-
-// Each web link column's link, by column. A column with no link is left out.
-export const linksSchema = z.record(
-  z.string(),
-  z.object({ address: z.string(), text: z.string() }),
-);
-
-export type Links = Record<string, Link>;
-
-// Links asked for, by column; null removes a column's link.
-export const requestedLinksSchema = z.record(
-  z.uuid(),
-  linkValueSchema.nullable(),
-);
-
-// Each note column's note, as Markdown, by column. A column with no note is left out. The server
-// always names them, if only as none.
-export const notesSchema = z.record(z.string(), z.string());
-
-export type Notes = Record<string, string>;
-
-// Notes asked for, by column, as Markdown, which the server checks; null or an empty note removes a
-// column's note.
-export const requestedNotesSchema = z.record(z.uuid(), z.string().nullable());
-
-// Each number column's number, by column. A column with no number is left out.
-export const numbersSchema = z.record(z.string(), z.number());
-
-export type Numbers = Record<string, number>;
-
-// Numbers asked for, by column; null removes a column's number.
-export const requestedNumbersSchema = z.record(
-  z.uuid(),
-  numberValueSchema.nullable(),
-);
-
-// Each checkbox column whose box is ticked, by column. A column with its box unticked is left out.
-export const flagsSchema = z.record(z.string(), z.literal(true));
-
-export type Flags = Record<string, true>;
-
-// Boxes asked for, by column; null unticks a column's box.
-export const requestedFlagsSchema = z.record(
-  z.uuid(),
-  z.literal(true).nullable(),
-);
-
-// Choices asked for, by column: each a choice's identifier, at most once.
-export const requestedValuesSchema = z.record(
-  z.uuid(),
-  z
-    .array(z.uuid())
-    .max(choicesLimit)
-    .refine((ids) => new Set(ids).size === ids.length, "Each choice once"),
-);
-
-// A new record's values in the columns added to its table, each column named by its identifier.
-export const requestedColumnValues = {
-  values: requestedValuesSchema.default({}),
-  links: z.record(z.uuid(), linkValueSchema).default({}),
-  notes: requestedNotesSchema.optional(),
-  numbers: requestedNumbersSchema.optional(),
-  flags: requestedFlagsSchema.optional(),
-};
-
-// A change to a record's values in the columns added to its table: each column named is replaced.
-export const changedColumnValues = {
-  values: requestedValuesSchema.optional(),
-  links: requestedLinksSchema.optional(),
-  notes: requestedNotesSchema.optional(),
-  numbers: requestedNumbersSchema.optional(),
-  flags: requestedFlagsSchema.optional(),
-};
-
 // A person's draft, as the user may see it: whether it adds, changes, or removes them, the columns
 // it changes, by key, and their live values, which a draft that adds someone has none of. Columns
 // the user may not see are left out, and so is a draft that changes only those. A rejected draft's
@@ -197,10 +121,7 @@ export const personDraftSchema = z.object({
     isManager: z.boolean().optional(),
     stateId: z.string().optional(),
     values: valuesSchema,
-    links: linksSchema.default({}),
-    notes: notesSchema.optional(),
-    numbers: numbersSchema.optional(),
-    flags: flagsSchema.optional(),
+    ...shownColumnValues,
   }),
   // Set, for a role that approves people's or planned hires' drafts, on one holding details the role
   // can't see, such as a fill's, which another approver must decide; trying would tell the role as
@@ -270,10 +191,7 @@ export const personSchema = z.object({
   // users who cannot see feature teams.
   featureTeams: z.array(personFeatureTeamSchema).optional(),
   values: valuesSchema,
-  links: linksSchema.default({}),
-  notes: notesSchema.optional(),
-  numbers: numbersSchema.optional(),
-  flags: flagsSchema.optional(),
+  ...shownColumnValues,
   // For a planned hire, who its draft fills it with, as a planned hire has it.
   filler: z.string().nullable().optional(),
   draft: personDraftSchema.optional(),

@@ -9,16 +9,15 @@ import { meaningSchema } from "./lists.ts";
 import { keyNumberSchema } from "./record-keys.ts";
 import {
   changedColumnValues,
-  flagsSchema,
+  givenColumnValues,
+  requestedColumnValues,
+  valuesSchema,
+} from "./column-values.ts";
+import {
   hireNameSchema,
-  linksSchema,
-  notesSchema,
-  numbersSchema,
   preferredNameSchema,
   recordIdSchema,
-  requestedColumnValues,
   temporaryIdPrefix,
-  valuesSchema,
 } from "./people.ts";
 
 // The meanings a planned hire's state can have: Proposed, the headcount not yet approved, and Open,
@@ -63,10 +62,7 @@ export const hireDraftSchema = z.object({
     isManager: z.boolean().optional(),
     // The live values of the added columns the draft changes, as a person's draft has them.
     values: valuesSchema.default({}),
-    links: linksSchema.default({}),
-    notes: notesSchema.default({}),
-    numbers: numbersSchema.default({}),
-    flags: flagsSchema.default({}),
+    ...givenColumnValues,
   }),
   ...draftShape,
 });
@@ -101,10 +97,7 @@ export const hireSchema = z.object({
   // Its values in the added columns offered on planned hires, each at its column's visibility, as a
   // person's are.
   values: valuesSchema.default({}),
-  links: linksSchema.default({}),
-  notes: notesSchema.default({}),
-  numbers: numbersSchema.default({}),
-  flags: flagsSchema.default({}),
+  ...givenColumnValues,
   // Who the hire's draft fills it with, for those who see the hiring plan: the person, for those
   // who see Personal details, and otherwise null, since they may not have started.
   filler: z.string().nullable().optional(),

@@ -7,14 +7,14 @@ import { z } from "zod";
 import { type Permission, tierSchema } from "./access.ts";
 import {
   changedColumnValues,
+  givenColumnValues,
+  valuesSchema,
+} from "./column-values.ts";
+import {
   changeSetIdSchema,
   type FieldType,
   fieldRequestSchema,
   fieldTypeSchema,
-  linksSchema,
-  notesSchema,
-  numbersSchema,
-  valuesSchema,
 } from "./people.ts";
 
 export const privatePageLengths = { name: 60 } as const;
@@ -60,9 +60,7 @@ export const privateRowSchema = z.object({
   id: z.string(),
   key: keyCode,
   values: valuesSchema,
-  links: linksSchema,
-  notes: notesSchema,
-  numbers: numbersSchema,
+  ...givenColumnValues,
 });
 
 export type PrivateRow = z.infer<typeof privateRowSchema>;

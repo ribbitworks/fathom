@@ -14,6 +14,9 @@ import {
   type HireFill,
   holdsAny,
   type Permission,
+  eachColumnValueMap,
+  type ColumnValueMap,
+  type PersonRequest,
   seesEmployment,
   seesField,
 } from "@fathom/shared";
@@ -71,11 +74,8 @@ import {
   resubmitPersonDraftIn,
 } from "./people.ts";
 import {
-  flagsOf,
-  linksOf,
+  columnValuesOf,
   noPerson,
-  notesOf,
-  numbersOf,
   recordSensitiveChanges,
   valuesOf,
 } from "./person-fields.ts";
@@ -398,6 +398,7 @@ export async function fillHire(
     const made: Change[] = [];
     let personId: string;
     if (fill.by === "new person") {
+      const held = columnValuesOf(hire);
       const added = await draftNewPeople(
         transaction,
         actor,
@@ -410,10 +411,14 @@ export async function fillHire(
             managerId,
             isManager: plannedManager,
             values: { ...fill.values, ...Object.fromEntries(valuesOf(hire)) },
-            links: { ...fill.links, ...linksOf(hire) },
-            notes: { ...fill.notes, ...notesOf(hire) },
-            numbers: { ...fill.numbers, ...numbersOf(hire) },
-            flags: { ...fill.flags, ...flagsOf(hire) },
+            ...eachColumnValueMap<
+              Required<Pick<PersonRequest, ColumnValueMap>>
+            >((map) => ({
+              /* eslint-disable security/detect-object-injection -- the map is one of the fill's own */
+              ...fill[map],
+              ...held[map],
+              /* eslint-enable security/detect-object-injection */
+            })),
           },
         ],
         today,

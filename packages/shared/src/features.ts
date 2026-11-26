@@ -6,17 +6,11 @@ import { z } from "zod";
 import { daySchema, monthSchema } from "./days.ts";
 import { recordDraftSchema } from "./drafts.ts";
 import {
-  flagsSchema,
-  linksSchema,
-  notesSchema,
-  numbersSchema,
-  requestedLinksSchema,
-  requestedFlagsSchema,
-  requestedNotesSchema,
-  requestedNumbersSchema,
-  requestedValuesSchema,
+  plannedColumnValues,
+  givenColumnValues,
+  shownColumnValues,
   valuesSchema,
-} from "./people.ts";
+} from "./column-values.ts";
 import { byMeaning, type Meaning } from "./lists.ts";
 import {
   optionalText,
@@ -131,10 +125,7 @@ export const featureDraftSchema = recordDraftSchema.extend({
   live: z
     .object({
       values: valuesSchema,
-      links: linksSchema,
-      notes: notesSchema,
-      numbers: numbersSchema,
-      flags: flagsSchema.default({}),
+      ...givenColumnValues,
     })
     .loose(),
 });
@@ -156,10 +147,7 @@ export const planningShape = {
   description: z.string().nullable(),
   note: z.string().nullable(),
   values: valuesSchema,
-  links: linksSchema.default({}),
-  notes: notesSchema.optional(),
-  numbers: numbersSchema.optional(),
-  flags: flagsSchema.optional(),
+  ...shownColumnValues,
   // Whether any allocation gives it a month, as drafts make the allocations, and as they are live:
   // a fact about the work, seen by all who see it, though the allocations aren't.
   staffed: z.boolean(),
@@ -200,11 +188,7 @@ export const planningRequestShape = {
   featureTeamId: z.uuid().nullable().default(null),
   description: optionalText(featureLengths.description),
   note: z.string().nullable().default(null),
-  values: requestedValuesSchema.default({}),
-  links: requestedLinksSchema.default({}),
-  notes: requestedNotesSchema.default({}),
-  numbers: requestedNumbersSchema.default({}),
-  flags: requestedFlagsSchema.default({}),
+  ...plannedColumnValues,
 };
 
 export const featureRequestSchema = z.object({

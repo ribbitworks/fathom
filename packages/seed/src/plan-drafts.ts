@@ -17,6 +17,7 @@ import {
   type Feature,
   type FeatureRequest,
   monthSchema,
+  noColumnValues,
   type Project,
   type Proposal,
   type RecordType,
@@ -199,10 +200,7 @@ const featureRequest = (feature: Feature): FeatureRequest => ({
   description: feature.description,
   note: feature.note,
   values: {},
-  links: {},
-  notes: {},
-  numbers: {},
-  flags: {},
+  ...noColumnValues(),
 });
 
 // The start of the cycle some cycles after the one starting on a day.
@@ -356,10 +354,7 @@ async function draftFeatures(
         description: "Pass notes from one shift to the next.",
         note: null,
         values: {},
-        links: {},
-        notes: {},
-        numbers: {},
-        flags: {},
+        ...noColumnValues(),
       },
     ],
   });

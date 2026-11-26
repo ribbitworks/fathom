@@ -4,7 +4,19 @@
 // added columns treats alike: each column's cells, a change applied to a record as the table shows
 // it before it is saved, and the values a new record is given.
 
-import { columnClass, type Field, type List } from "@fathom/shared";
+import {
+  type ColumnValue,
+  type ColumnValueMap,
+  columnClass,
+  columnValueMaps,
+  columnValueMapsOf,
+  type Field,
+  type List,
+  optionalColumnValueMaps,
+  requestedColumnValueMapsOf,
+  type SomeColumnValues,
+  type SomeRequestedColumnValues,
+} from "@fathom/shared";
 import type { CellChange, CellSource } from "./cell-kinds.tsx";
 import { cellColumn } from "./grid-columns.tsx";
 import type { CellRecord, Column } from "./record-table.ts";
@@ -55,25 +67,29 @@ export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
 // A record's values in added columns with a change applied, as the table shows them before it is
 // saved.
 export const withCellChange = (
-  record: Pick<CellSource, "values" | "links" | "notes" | "numbers" | "flags">,
-  { values, links, notes, numbers, flags }: CellChange,
-) => ({
-  values: { ...record.values, ...values },
-  links: kept({ ...record.links, ...links }),
-  ...(record.notes === undefined && notes === undefined
-    ? {}
-    : { notes: kept({ ...record.notes, ...notes }) }),
-  ...(record.numbers === undefined && numbers === undefined
-    ? {}
-    : { numbers: kept({ ...record.numbers, ...numbers }) }),
-  ...(record.flags === undefined && flags === undefined
-    ? {}
-    : { flags: kept({ ...record.flags, ...flags }) }),
-});
+  record: Pick<CellSource, "values" | ColumnValueMap>,
+  change: CellChange,
+) => {
+  const shown: SomeColumnValues = record;
+  const changed: SomeRequestedColumnValues = change;
+  return {
+    values: { ...record.values, ...change.values },
+    links: kept({ ...record.links, ...change.links }),
+    ...columnValueMapsOf(
+      optionalColumnValueMaps,
+      <Name extends ColumnValueMap>(map: Name) =>
+        /* eslint-disable security/detect-object-injection -- the map is one of the record's own */
+        shown[map] === undefined && changed[map] === undefined
+          ? undefined
+          : kept<ColumnValue<Name>>({ ...shown[map], ...changed[map] }),
+      /* eslint-enable security/detect-object-injection */
+    ),
+  };
+};
 
 // What a new record is given in columns of one value, left out when it is given none.
 function askedOf<Held>(
-  parts: readonly (Record<string, Held> | undefined)[],
+  parts: readonly (Readonly<Record<string, Held>> | undefined)[],
 ): Record<string, Held> | undefined {
   const entries = parts.flatMap((part) => Object.entries(part ?? {}));
   return entries.length === 0 ? undefined : Object.fromEntries(entries);
@@ -81,9 +97,7 @@ function askedOf<Held>(
 
 // The values a new record is given, from each column's change, with no link left empty.
 export function cellRequest(parts: readonly CellChange[]) {
-  const notes = askedOf(parts.map((part) => part.notes));
-  const numbers = askedOf(parts.map((part) => part.numbers));
-  const flags = askedOf(parts.map((part) => part.flags));
+  const changes: readonly SomeRequestedColumnValues[] = parts;
   return {
     values: Object.assign({}, ...parts.map((part) => part.values)) as Record<
       string,
@@ -94,8 +108,24 @@ export function cellRequest(parts: readonly CellChange[]) {
         CellChange["links"]
       >,
     ),
-    ...(notes === undefined ? {} : { notes }),
-    ...(numbers === undefined ? {} : { numbers }),
-    ...(flags === undefined ? {} : { flags }),
+    ...requestedColumnValueMapsOf(
+      optionalColumnValueMaps,
+      <Name extends ColumnValueMap>(map: Name) =>
+        askedOf<ColumnValue<Name> | null>(
+          // The map is one of each change's own.
+          // eslint-disable-next-line security/detect-object-injection
+          changes.map((part) => part[map]),
+        ),
+    ),
   };
 }
+
+const columnValueFields = new Set<string>(["values", ...columnValueMaps]);
+
+// A record or change without its values in added columns.
+export const withoutColumnValues = <Rec extends object>(
+  record: Rec,
+): Omit<Rec, "values" | ColumnValueMap> =>
+  Object.fromEntries(
+    Object.entries(record).filter(([key]) => !columnValueFields.has(key)),
+  ) as Omit<Rec, "values" | ColumnValueMap>;

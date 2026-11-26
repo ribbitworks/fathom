@@ -4,7 +4,13 @@
 // to them are recorded. Part of the data access layer.
 
 import { type Database, plannedHires, type Reader } from "@fathom/db";
-import { hireCalled, monthOf, temporaryId, type Tier } from "@fathom/shared";
+import {
+  askedColumnIds,
+  hireCalled,
+  monthOf,
+  temporaryId,
+  type Tier,
+} from "@fathom/shared";
 import {
   type Actor,
   requireSensitivityEdit,
@@ -156,21 +162,9 @@ export async function fitOffered(
 // refused as people's are.
 export function refuseNotOffered(
   columns: readonly ColumnInfo[],
-  asked: {
-    values?: Readonly<Record<string, unknown>> | undefined;
-    links?: Readonly<Record<string, unknown>> | undefined;
-    notes?: Readonly<Record<string, unknown>> | undefined;
-    numbers?: Readonly<Record<string, unknown>> | undefined;
-    flags?: Readonly<Record<string, unknown>> | undefined;
-  },
+  asked: Parameters<typeof askedColumnIds>[0],
 ): void {
-  for (const fieldId of [
-    ...Object.keys(asked.values ?? {}),
-    ...Object.keys(asked.links ?? {}),
-    ...Object.keys(asked.notes ?? {}),
-    ...Object.keys(asked.numbers ?? {}),
-    ...Object.keys(asked.flags ?? {}),
-  ]) {
+  for (const fieldId of askedColumnIds(asked)) {
     const column = columns.find(({ id }) => id === fieldId);
     if (column !== undefined && !column.onPlannedHires) {
       throw new BadRequestError(

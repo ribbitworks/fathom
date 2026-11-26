@@ -6,7 +6,10 @@
 import {
   type HireFill,
   type List,
+  optionalColumnValueMaps,
   type Person,
+  requestedColumnValueMapsOf,
+  type SomeRequestedColumnValues,
   typedDay,
   defaultLineFrom,
   allOf,
@@ -313,13 +316,17 @@ export function HireFillForm({
     const manager = managerChange(hire, managerId);
     if (isNew) {
       const asked = newRecordRequest(missing, personKind, values);
+      const requested: SomeRequestedColumnValues = asked;
       onFill({
         ...manager,
         values: asked.values,
         links: asked.links,
-        notes: asked.notes,
-        numbers: asked.numbers,
-        flags: asked.flags,
+        ...requestedColumnValueMapsOf(
+          optionalColumnValueMaps,
+          // The map is one of the request's own.
+          // eslint-disable-next-line security/detect-object-injection
+          (map) => requested[map],
+        ),
         by: "new person",
         preferredName: (values.preferredName as string).trim(),
         employeeId: (values.employeeId as string).trim(),

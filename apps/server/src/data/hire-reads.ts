@@ -12,6 +12,7 @@ import {
 } from "@fathom/db";
 import {
   hireCalled,
+  columnValuesIn,
   type Hire,
   type HireDraft,
   type Hires,
@@ -430,10 +431,7 @@ export function hireRow(
       : { team: teamOf.get(hire.managerId) ?? null }),
     isManager: hire.isManager,
     values: hire.values,
-    links: hire.links,
-    notes: hire.notes,
-    numbers: hire.numbers,
-    flags: hire.flags,
+    ...columnValuesIn(hire),
     ...(draft === undefined || live === undefined
       ? {}
       : {
@@ -461,10 +459,7 @@ export function hireRow(
                 ? {}
                 : { isManager: live.isManager }),
               values: live.values,
-              links: live.links,
-              notes: live.notes,
-              numbers: live.numbers,
-              flags: live.flags,
+              ...columnValuesIn(live),
             },
           },
         }),

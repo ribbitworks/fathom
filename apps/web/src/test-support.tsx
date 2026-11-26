@@ -18,6 +18,7 @@ import {
   defaultClasses,
   defaultPasswordSettings,
   monthsBetween,
+  noColumnValues,
 } from "@fathom/shared";
 import { MantineProvider, mergeThemeOverrides } from "@mantine/core";
 import type { DraftLike } from "./draft-marks.ts";
@@ -286,7 +287,7 @@ export const featureDraft = ({
   live?: Record<string, unknown>;
 } = {}): FeatureDraft => ({
   ...recordDraft(fields),
-  live: { values: {}, links: {}, notes: {}, numbers: {}, flags: {}, ...live },
+  live: { values: {}, ...noColumnValues(), ...live },
 });
 
 export const fictionalFeature = (fields: Partial<Feature> = {}): Feature => ({

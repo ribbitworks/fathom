@@ -78,10 +78,7 @@ import {
   recordSensitiveChanges,
   choicesAskedFor,
   checkedValues,
-  checkedLinks,
-  checkedNotes,
-  checkedNumbers,
-  checkedFlags,
+  checkedColumnValues,
   checkComplete,
   type PersonRow,
 } from "./person-fields.ts";
@@ -164,10 +161,7 @@ export async function draftNewPeople(
   for (const request of requests) {
     const id = randomUUID();
     const values = checkedValues(columns, known, request.values, undefined);
-    const links = checkedLinks(columns, request.links);
-    const notes = checkedNotes(columns, request.notes ?? {});
-    const numbers = checkedNumbers(columns, request.numbers ?? {});
-    const flags = checkedFlags(columns, request.flags ?? {});
+    const columnValues = checkedColumnValues(columns, request);
     const row: PersonRow = {
       id,
       preferredName: request.preferredName,
@@ -181,10 +175,7 @@ export async function draftNewPeople(
     // Notes left empty are left out.
     const after = tidy({
       ...recorded(row, values),
-      ...links,
-      ...notes,
-      ...numbers,
-      ...flags,
+      ...columnValues,
       ...(request.managerId == null
         ? {}
         : {
@@ -335,10 +326,7 @@ export async function draftPersonChange(
           choiceIds,
         ]),
       ),
-      ...checkedLinks(columns, change.links ?? {}),
-      ...checkedNotes(columns, change.notes ?? {}),
-      ...checkedNumbers(columns, change.numbers ?? {}),
-      ...checkedFlags(columns, change.flags ?? {}),
+      ...checkedColumnValues(columns, change),
       ...changedReporting(person, change, today),
     }),
     before,

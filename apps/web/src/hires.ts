@@ -4,10 +4,14 @@
 
 import {
   changeSetIdSchema,
+  columnValueMaps,
   type HireChange,
   type HireFill,
   type HireRequest,
+  optionalColumnValueMaps,
+  requestedColumnValueMapsOf,
   savedSchema,
+  type SomeRequestedColumnValues,
 } from "@fathom/shared";
 import { z } from "zod";
 import { sendDeleteFor, sendJsonFor } from "./api.ts";
@@ -23,6 +27,7 @@ const nameOf = (name: string) => (name.trim() === "" ? null : name);
 
 // The request that adds a hire, from a new row of the People table.
 export function hireRequest(row: RowRequest): HireRequest {
+  const requested: SomeRequestedColumnValues = row;
   return {
     name: nameOf(row.preferredName),
     requisition: requisitionOf(row.employeeId),
@@ -33,14 +38,18 @@ export function hireRequest(row: RowRequest): HireRequest {
     ...(row.stateId === undefined ? {} : { stateId: row.stateId }),
     values: row.values,
     links: row.links,
-    ...(row.notes === undefined ? {} : { notes: row.notes }),
-    ...(row.numbers === undefined ? {} : { numbers: row.numbers }),
-    ...(row.flags === undefined ? {} : { flags: row.flags }),
+    ...requestedColumnValueMapsOf(
+      optionalColumnValueMaps,
+      // The map is one of the row's own.
+      // eslint-disable-next-line security/detect-object-injection
+      (map) => requested[map],
+    ),
   };
 }
 
 // The change to a hire that a change to its row makes.
 export function hireChange(change: RowChange): HireChange {
+  const changed: SomeRequestedColumnValues = change;
   return {
     ...(change.preferredName === undefined
       ? {}
@@ -56,10 +65,12 @@ export function hireChange(change: RowChange): HireChange {
     ...(change.managerId === undefined ? {} : { managerId: change.managerId }),
     ...(change.isManager === undefined ? {} : { isManager: change.isManager }),
     ...(change.values === undefined ? {} : { values: change.values }),
-    ...(change.links === undefined ? {} : { links: change.links }),
-    ...(change.notes === undefined ? {} : { notes: change.notes }),
-    ...(change.numbers === undefined ? {} : { numbers: change.numbers }),
-    ...(change.flags === undefined ? {} : { flags: change.flags }),
+    ...requestedColumnValueMapsOf(
+      columnValueMaps,
+      // The map is one of the change's own.
+      // eslint-disable-next-line security/detect-object-injection
+      (map) => changed[map],
+    ),
   };
 }
 
