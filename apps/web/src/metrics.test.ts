@@ -248,6 +248,9 @@ describe("what moves a figure", () => {
       figureMove({ now: "3", published: "3", waiting: "3", live: "3" }),
     ).toBeUndefined();
     expect(
+      figureMove({ now: "3", published: "3", waiting: "3", live: undefined }),
+    ).toBeUndefined();
+    expect(
       figureMove({ now: "3", coming: "3", comingPublished: "3" }),
     ).toBeUndefined();
   });

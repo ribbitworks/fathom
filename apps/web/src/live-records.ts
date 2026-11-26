@@ -130,8 +130,8 @@ export function countedRecords<
   liveOf: (column: Col) => Col | undefined,
   liveRecords: (records: readonly Rec[]) => Rec[],
 ): CountedDrafts<Rec> {
+  if (besides === undefined) return { rows: [...shown], besideLive: false };
   if (show === "live") {
-    if (besides === undefined) return { rows: [...shown], besideLive: false };
     const toCome = (records: readonly Rec[]) => ({
       rows: recordsAsShown("drafts", records, liveRecords),
       columns: [...columns],
@@ -151,7 +151,7 @@ export function countedRecords<
   }
   const kept = (records: readonly Rec[]) =>
     records.filter(({ draft }) => draft?.action !== "deleted");
-  const drafted = [...shown, ...(besides ?? [])];
+  const drafted = [...shown, ...besides];
   const published = withDraftsUndone(
     drafted,
     (draft) => draft.unpublished === true,
