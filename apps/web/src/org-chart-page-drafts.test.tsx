@@ -36,6 +36,37 @@ describe("the org chart", () => {
     return renderApp(path);
   }
 
+  it("draws a renamed team's Live line after its square, as its name is", async () => {
+    await openChart(() =>
+      chartJson({
+        people: people.map((one) =>
+          one.id === "p2"
+            ? {
+                ...one,
+                teamName: "Fictional crew",
+                teamColour: "teal",
+                draft: {
+                  teamName: "Fictional quay",
+                  state: "waiting",
+                  unpublished: false,
+                },
+              }
+            : one,
+        ),
+      }),
+    );
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    const squareBefore = (name: string) =>
+      within(card("Sasha Fictional"))
+        .getByText(name)
+        .parentElement?.querySelector("[data-colour]")
+        ?.getAttribute("data-colour");
+    expect([
+      squareBefore("Fictional quay"),
+      squareBefore("Fictional crew"),
+    ]).toEqual(["teal", "teal"]);
+  });
+
   it("offers no renaming, colouring or Teams panel with Live only", async () => {
     openEditableAt("/org-chart?show=live", chartAnswer);
     await screen.findByRole("link", { name: "Sasha Fictional" });
