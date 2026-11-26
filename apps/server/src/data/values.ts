@@ -64,6 +64,9 @@ export type PlanningOwner = keyof typeof planningTableOf;
 
 export const planningOwners: readonly PlanningOwner[] = ["feature", "activity"];
 
+// The table a private page's columns are on, each column naming its page.
+export const privateTable = "private";
+
 export const ownerColumn = (owner: ValueOwner) =>
   // The owner is always one of the fixed kinds above.
   // eslint-disable-next-line security/detect-object-injection

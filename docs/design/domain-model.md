@@ -321,7 +321,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 
 ## Private Pages
 
-A person's own pages, each a table of free rows that only they read, as [Roles](../product/roles.md#what-each-role-can-do) sets out. Saving pages through Fathom, and their screens, are not built yet; the entities and their reads are.
+A person's own pages, each a table of free rows that only they read and change, as [Roles](../product/roles.md#what-each-role-can-do) sets out. Their screens, and editing a page's columns once it is made, are not built yet; the entities, their reads and the rest of saving them are.
 
 ```mermaid
 erDiagram
@@ -343,6 +343,10 @@ erDiagram
   - **Codes:** four characters from 30 that can't be taken for one another, widening to five once a tenth of a kind's four-character codes are used.
   - **Kept:** made once for a record, held apart from it, and never given again, even once the record is removed.
 - **Who reads them:** only the page's maker, while their role may make private pages. A column of a class the maker's role no longer sees is left out, with its values.
+- **Saved at once:** making, renaming, moving and removing a page, and adding, changing and removing its rows and their values, save at once, with no drafts and no approval, since the data is one person's own.
+  - **Recorded:** every change is recorded in the change history with each field's class, a row's values each with its column's class.
+  - **Not shown yet:** the change history shows these changes to nobody, and Undo refuses them, until the maker's own history of their pages is built.
+- **Order:** a maker's pages keep the order they move them into, a new one going last; a page's rows keep the order they were added in.
 
 ## Change and History Entities
 

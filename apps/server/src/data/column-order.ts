@@ -110,3 +110,19 @@ export async function readPageColumnOrder(
   );
   return [...stored, ...columnIds.filter((key) => !stored.includes(key))];
 }
+
+export const writePageColumnOrder = (
+  transaction: Pick<Database, "insert">,
+  pageId: string,
+  keys: readonly string[],
+) => writeColumnOrder(transaction, keys, pageOrder(pageId));
+
+// Forgets a removed page's order.
+export async function deletePageColumnOrder(
+  transaction: Pick<Database, "delete">,
+  pageId: string,
+): Promise<void> {
+  await transaction
+    .delete(columnOrders)
+    .where(eq(columnOrders.tableName, pageOrder(pageId)));
+}

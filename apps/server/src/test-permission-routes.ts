@@ -6,10 +6,7 @@ import {
   changeHistoryViews,
   defaultPasswordSettings,
   defaultTimeZone,
-  firstTables,
   startingPlanningSettings,
-  viewPageSchema,
-  viewTableSchema,
 } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
 import { testPosition, unique } from "./test-app.ts";
@@ -34,8 +31,8 @@ import {
   type Route,
   signedIn,
   teamMember,
-  viewTableNeeds,
 } from "./test-permission-needs.ts";
+import { viewAndPageRoutes } from "./test-permission-views.ts";
 
 export const routes: Route[] = [
   { method: "POST", pattern: "/api/auth/sign-in/email", needs: open },
@@ -395,78 +392,7 @@ export const routes: Route[] = [
     })),
   ]),
 
-  // Each table's views need what opens its page. Sharing, and changing or deleting someone else's
-  // view, also need what shares views on the table, as the views tests check.
-  ...viewTableSchema.options.flatMap((table): Route[] => {
-    // The table is always one of the fixed tables.
-    // eslint-disable-next-line security/detect-object-injection
-    const needs = viewTableNeeds[table];
-    const view = `/api/views/${table}/${randomUUID()}`;
-    return [
-      {
-        method: "GET",
-        pattern: "/api/views/:table",
-        variant: table,
-        url: `/api/views/${table}`,
-        needs,
-      },
-      {
-        method: "POST",
-        pattern: "/api/views/:table",
-        variant: table,
-        url: `/api/views/${table}`,
-        needs,
-        body: () => ({ ...named(), scope: "personal", definition: {} }),
-      },
-      {
-        method: "PUT",
-        pattern: "/api/views/:table/:viewId",
-        variant: table,
-        url: view,
-        needs,
-        body: named,
-      },
-      {
-        method: "DELETE",
-        pattern: "/api/views/:table/:viewId",
-        variant: table,
-        url: view,
-        needs,
-      },
-    ];
-  }),
-
-  // Every signed-in account reads its own last views, only of the pages its role opens, which the
-  // last views tests check.
-  { method: "GET", pattern: "/api/last-views", needs: signedIn },
-  // Only a role that makes private pages has its own to list. A page, which a random ID never
-  // names, is not found for everyone, so the page's own tests check who reads one.
-  {
-    method: "GET",
-    pattern: "/api/private-pages",
-    needs: allOf("private-pages:make"),
-  },
-  { method: "GET", pattern: "/api/private-pages/:pageId", needs: signedIn },
-  // Keeping a page's last view needs what opens its tables, each of a page's tables opening alike.
-  ...viewPageSchema.options.flatMap((page): Route[] => {
-    // The page is always one of the fixed pages.
-    // eslint-disable-next-line security/detect-object-injection
-    const table = firstTables[page];
-    // The table is always one of the fixed tables.
-    // eslint-disable-next-line security/detect-object-injection
-    const needs = viewTableNeeds[table];
-    const url = `/api/last-views/${page}`;
-    return [
-      {
-        method: "PUT",
-        pattern: "/api/last-views/:page",
-        variant: page,
-        url,
-        needs,
-        body: () => ({ table, definition: {} }),
-      },
-    ];
-  }),
+  ...viewAndPageRoutes,
 
   // Those who see people see hires as placeholders; the hiring plan's details need
   // hiring-plan:view, as the hires tests check.

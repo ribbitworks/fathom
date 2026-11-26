@@ -20,7 +20,8 @@ export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 // The kinds of record whose changes are recorded. A person's column values are recorded on the
 // person, one field for each column, so the person's history holds all of their details. The plan's records, such as release streams,
-// are recorded field by field.
+// are recorded field by field. A private page's columns are kinds of their own, apart from other
+// tables' columns, since only the page's maker may see them, and so are its rows, with their values.
 export type RecordType =
   | "list"
   | "list-item"
@@ -30,7 +31,19 @@ export type RecordType =
   | "planned-hire"
   | "feature-team"
   | "saved-view"
+  | PrivateRecordType
   | PlanRecordType;
+
+export const privateRecordTypes = [
+  "private-page",
+  "private-column",
+  "private-row",
+] as const;
+
+export type PrivateRecordType = (typeof privateRecordTypes)[number];
+
+export const isPrivateRecordType = (type: string): type is PrivateRecordType =>
+  privateRecordTypes.some((privateType) => privateType === type);
 
 export interface Change {
   recordType: RecordType;

@@ -10,23 +10,13 @@ import type {
   FeatureRequest,
   Meaning,
 } from "@fathom/shared";
-import { BadRequestError } from "../errors.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Transaction } from "./changes.ts";
-import { typeOf } from "./column-types.ts";
-import { type Recorded, tidy } from "./draft-records.ts";
+import type { Recorded } from "./draft-records.ts";
 import { checkTeamForFeature } from "./feature-team-removals.ts";
-import {
-  checkedLinks,
-  checkedNotes,
-  checkedNumbers,
-  checkedValues,
-  choicesAskedFor,
-  valuesOf,
-} from "./person-fields.ts";
+import { askedColumnValues, choicesAskedFor } from "./person-fields.ts";
 import { keptNote } from "./records.ts";
-import { fieldOfValue, valueField } from "./values.ts";
 
 type PlanningTable = Exclude<ColumnTable, "people">;
 
@@ -81,31 +71,7 @@ async function addedValues(
 ): Promise<Recorded> {
   const columns = await columnsWithAdded(transaction, editor, true, table);
   const known = await choicesAskedFor(transaction, editor, [request]);
-  const had = current === undefined ? undefined : valuesOf(current);
-  const chosen = checkedValues(columns, known, request.values, had);
-  const kept = Object.fromEntries(
-    Object.entries(current ?? {}).filter(
-      ([field]) => fieldOfValue(field) !== null,
-    ),
-  );
-  const values: Recorded = {
-    ...kept,
-    ...Object.fromEntries(
-      [...chosen].map(([fieldId, ids]) => [valueField(fieldId), ids]),
-    ),
-    ...checkedLinks(columns, request.links),
-    ...checkedNotes(columns, request.notes),
-    ...checkedNumbers(columns, request.numbers),
-  };
-  for (const column of columns) {
-    if (
-      column.required &&
-      typeOf(column).count(values[valueField(column.id)]) === 0
-    ) {
-      throw new BadRequestError(`${column.name} must be filled in`);
-    }
-  }
-  return tidy(values);
+  return askedColumnValues(columns, known, request, current);
 }
 
 // A choice of a built-in list a record need not have: none, or one offered or the record already has.
