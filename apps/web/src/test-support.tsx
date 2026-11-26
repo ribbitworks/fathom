@@ -4,7 +4,6 @@
 // signed-in user, fictional records, gadgets for the shared table's own tests, and Fathom's front
 // end started on a page of the test's choosing.
 
-import type { RowTicks } from "./row-ticks.tsx";
 import type {
   Choice,
   DraftKind,
@@ -48,6 +47,7 @@ import type {
   RecordActions,
   RecordTable,
 } from "./record-table.ts";
+import type { RowTicks } from "./row-ticks.tsx";
 import { type View, emptyView } from "./table-view.ts";
 import { theme } from "./theme.ts";
 

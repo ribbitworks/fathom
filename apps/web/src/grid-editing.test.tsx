@@ -405,7 +405,8 @@ describe("typing fast into a cell", () => {
     // Then the space is in the name, and the row stays unticked
     await waitFor(() => {
       expect(
-        (document.querySelector('[id$="-editor"]') as HTMLInputElement).value,
+        (document.getElementById(`${cell.id}-editor`) as HTMLInputElement)
+          .value,
       ).toBe("Wi d");
     });
     expect(onTick).not.toHaveBeenCalled();
