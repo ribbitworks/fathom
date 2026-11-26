@@ -57,7 +57,8 @@ export function shownInView<Rec extends GridRecord, Change>(
       : places.starting;
   return {
     unit,
-    column: { ...shownIn(unit, shownTo), units, places: shownTo },
+    // The column keeps what it sets outside its unit, such as not breaking down in Metrics.
+    column: { ...column, ...shownIn(unit, shownTo), units, places: shownTo },
   };
 }
 

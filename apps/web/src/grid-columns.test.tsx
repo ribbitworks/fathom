@@ -7,15 +7,19 @@ import { describe, expect, it, vi } from "vitest";
 import { MantineProvider } from "@mantine/core";
 import { act, render, screen, within } from "@testing-library/react";
 import { choice } from "./lists.ts";
+import { startingEffortConversions } from "@fathom/shared";
+import { effortColumnUnits } from "./effort.ts";
 import {
   breaksDown,
   cellColumn,
   inOrder,
+  inViewUnits,
   keyColumn,
   keyColumnKey,
   liveContent,
   wordsColumn,
 } from "./grid-columns.tsx";
+import { effortColumn } from "./planning-columns.tsx";
 import type { GridDraft, RecordActions } from "./record-table.ts";
 import { type View, emptyView } from "./table-view.ts";
 import {
@@ -287,6 +291,28 @@ describe("which columns Metrics breaks rows down by", () => {
       breaksDown({ kind: "choice", required: true, breaksDown: false }),
     ).toBe(false);
   });
+});
+
+describe("a column shown in a unit", () => {
+  it.each([
+    ["with the conversions", startingEffortConversions],
+    ["without them", undefined],
+  ] as const)(
+    "keeps Effort out of Metrics' breakdown in every unit and decimal place, %s",
+    (_case, conversions) => {
+      const effort = effortColumn(conversions);
+      for (const { key } of effortColumnUnits) {
+        for (const places of [0, 1, 2]) {
+          const shown = inViewUnits(effort, {
+            units: { estimateHours: key },
+            places: { estimateHours: places },
+          });
+          expect(breaksDown(shown), `${key} to ${String(places)}`).toBe(false);
+        }
+      }
+      expect(breaksDown(inViewUnits(effort, emptyView))).toBe(false);
+    },
+  );
 });
 
 describe("a Live row's coloured choices", () => {
