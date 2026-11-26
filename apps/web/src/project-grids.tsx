@@ -279,6 +279,21 @@ export function projectTable(
   });
 }
 
+// Where a proposal's features show: on Features, filtered to it, while it names any, where the
+// page can show them.
+const featuresShowOn = (
+  onFeatures: ((proposal: Proposal) => void) | undefined,
+  proposal: Proposal,
+): ShowOn | undefined =>
+  onFeatures === undefined || proposal.featureIds.length === 0
+    ? undefined
+    : {
+        page: "Features",
+        onShow: () => {
+          onFeatures(proposal);
+        },
+      };
+
 // A proposal's columns; its Features shows on Features, filtered to it, while it names any.
 export function proposalColumns(
   choices: TableChoices,
@@ -306,19 +321,7 @@ export function proposalColumns(
         choices.drafted.proposals,
       ),
       chooseWords: "Choose features",
-      ...(onFeatures === undefined
-        ? {}
-        : {
-            showOn: (proposal: Proposal): ShowOn | undefined =>
-              proposal.featureIds.length === 0
-                ? undefined
-                : {
-                    page: "Features",
-                    onShow: () => {
-                      onFeatures(proposal);
-                    },
-                  },
-          }),
+      showOn: (proposal: Proposal) => featuresShowOn(onFeatures, proposal),
     },
   ];
 }
@@ -333,7 +336,10 @@ export function proposalTable(
     columns: () => proposalColumns(choices, onFeatures),
     request: (changes) => merged(changes) as ProposalRequest,
     showDetails: onOpen,
-    menuItems: recordMenu<Proposal>([["Show on Features", onFeatures]]),
+    menuItems: (proposal) =>
+      !isPending(proposal) && (
+        <ShowOnItem showOn={featuresShowOn(onFeatures, proposal)} />
+      ),
   });
 }
 
