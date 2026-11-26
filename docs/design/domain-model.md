@@ -57,6 +57,7 @@ A feature needs none of these links: one with no project or proposal is an idea 
 - **Fields:** a name, required and unique ignoring letter case, and a status, required, starting as the first status offered, Open to start. Optionally a Proposal ID, unique ignoring letter case when entered, a web link, an owner, who is a person, and customers, picked directly from Customers.
 - **Status:** a choice of the built-in Proposal statuses, with no rules tied to them, so any status may follow any other.
 - **Scope:** the features it proposes, which count toward the forecast by their own status. Each change, from either side, is a draft of the proposal. It keeps the reason given for each feature removed from it while that feature is not in it.
+- **A new feature from a proposal:** a feature added from a proposal's details is a draft of its own, and the proposal's link to it a draft of the proposal that uses it, so approving the proposal takes the feature along, which needs an approver of features too.
 
 ### Feature
 

@@ -8,6 +8,7 @@ import { missingRecord as missing, unique, errorOf } from "./test-app.ts";
 import {
   test,
   planner,
+  approver,
   viewer,
   type Saved,
   readPlan,
@@ -56,6 +57,55 @@ describe("the features projects and proposals name", () => {
       featureIds: [first.id],
     });
     expect(byName(plan.features, first.name).draft).toBeUndefined();
+  });
+
+  it("refuses an Approver of the plan alone a proposal that takes along a new feature, leaving both drafts", async () => {
+    // Given a proposal's draft naming a feature only drafted to be added, as New feature makes them
+    const feature = await addFeature();
+    const proposal = await addProposal({ featureIds: [feature.id] });
+    const decider = await test.signedIn(["plan:approve", "plan:view"]);
+
+    // When one who approves the plan but not features approves the proposal
+    const response = await test.request(
+      decider.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { records: [{ type: "proposal", id: proposal.id }] },
+    );
+
+    // Then it is refused, and both stay drafts
+    expect(response.statusCode).toBe(403);
+    const plan = await readPlan(viewer.cookie);
+    expect([
+      byName(plan.proposals, proposal.name).draft?.action,
+      byName(plan.features, feature.name).draft?.action,
+    ]).toEqual(["created", "created"]);
+  });
+
+  it("refuses rejecting a new feature alone while a proposal's draft uses it", async () => {
+    const feature = await addFeature();
+    const proposal = await addProposal({ featureIds: [feature.id] });
+
+    const alone = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/rejection",
+      { records: [{ type: "feature", id: feature.id }], reason: "Not now" },
+    );
+    const together = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/rejection",
+      {
+        records: [
+          { type: "feature", id: feature.id },
+          { type: "proposal", id: proposal.id },
+        ],
+        reason: "Not now",
+      },
+    );
+
+    expect([alone.statusCode, together.statusCode]).toEqual([409, 200]);
   });
 
   it("are changed as a draft of the project or proposal", async () => {
