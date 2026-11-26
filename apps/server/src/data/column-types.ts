@@ -25,7 +25,12 @@ export interface TypeSettings {
   listId: string | null;
   visibility: Tier | null;
   multiple: boolean;
+  // Settings of types not offered yet, which every type offered leaves unset.
+  multiline: false;
+  linkedTable: null;
 }
+
+const laterSettingsUnset = { multiline: false, linkedTable: null } as const;
 
 // A record's values as a draft shows them live: choices, links, notes, and numbers, by column.
 export interface LiveValues {
@@ -71,6 +76,7 @@ const choice: ColumnType = {
     listId: String(field.listId),
     visibility: null,
     multiple: field.multiple === true,
+    ...laterSettingsUnset,
   }),
   tier: ({ listId }, listTier) => listTier(String(listId)),
   count: (value) => choices(value).length,
@@ -97,6 +103,7 @@ const withOwnVisibility = (
     listId: null,
     visibility: storedTier(field.visibility),
     multiple: false,
+    ...laterSettingsUnset,
   }),
   tier: ({ visibility }) => storedTier(visibility),
 });

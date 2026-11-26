@@ -287,6 +287,7 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
 | Note | Rich text, as GitHub-flavoured Markdown | Up to 10,000 characters |
 | Number | A whole or decimal number, positive or negative | Up to 15 digits, at most 6 after the point; 0 is a value |
 
+- **Not built yet:** Checkbox, Text, Date and Link to another table. The database already holds their values and settings, such as a Text field's several lines and the table a Link field links to, as [ADR 0005](../adr/0005-flexible-data-model.md#what-is-built) records.
 - **Web link:** only http and https addresses, on the internet or a local network, by name or IP address. An address typed without a scheme is taken as https only when its host has a dot. What else is refused, and why, is in the [Security Plan](../security/security-plan.md#tampering).
 - **Note:** what a note may hold, including the one HTML tag it may hold for text colour, is in [Visual Design](visual-design.md#components) under Notes.
 - **Plain text:** built-in text, such as names and a feature's description, holds no control characters or marks that change which way text runs.

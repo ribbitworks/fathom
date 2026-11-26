@@ -3,7 +3,7 @@
 - **ADR:** 0005
 - **Status:** Accepted
 - **Date:** 2026-10-30
-- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields; 2026-11-08, to add Number fields; 2026-11-19, to say data classes, as Fathom does, rather than tiers
+- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields; 2026-11-08, to add Number fields; 2026-11-19, to say data classes, as Fathom does, rather than tiers; 2026-11-25, to add the value columns for Checkbox, Text, Date and Link to another table
 
 ## Context
 
@@ -34,7 +34,7 @@ Custom fields and tables use a values table.
 
 | Setting the user sees | How it is enforced |
 | --- | --- |
-| Field type: Text, Number, Date, Yes/No, Choice from a list, Web link, Note, Person, or Link to another table | A typed value column; Person and Link fields use the foreign key for that table, a Web link two text columns, its address and the text shown for it, and a Note one text column holding the note's Markdown |
+| Field type: Text, Number, Date, Checkbox, Choice from a list, Web link, Note, Person, or Link to another table | A typed value column; Person and Link fields use the foreign key for that table, a Web link two text columns, its address and the text shown for it, and a Note one text column holding the note's Markdown |
 | Must be filled in | The data access layer |
 | No two records can have the same value | The partial unique indexes |
 | Identifier | Not shown; every record gets one automatically, as its primary key |
@@ -43,13 +43,20 @@ Custom fields and tables use a values table.
 
 Columns on People, planned hires and features can be of four types, "Choice from a list", "Web link", "Note", and "Number", as the [Domain Model](../design/domain-model.md#configuration-entities) records:
 
-- **Storage:** field definitions, and a values table with an owner column each for people, planned hires and features, a link column for choices, a typed address column and text column for web links, a text column for a note's Markdown, which is never empty, and a numeric column for numbers.
+- **Storage:** field definitions, and a values table with an owner column each for people, planned hires, features and activities, and these value columns:
+  - **Built types:** a link column for choices, a typed address column and text column for web links, a text column for a note's Markdown, which is never empty, and a numeric column for numbers.
+  - **Types to come:** a boolean column for Checkbox, which holds only a ticked box, since an unticked one has no row; a text column, never empty, for Text; a date column for Date; and a link column each to people, planned hires, features, projects, proposals, customers, releases, feature teams and activities for Link to another table. No column uses them yet. Each table that becomes linkable later, such as private tables, adds its link column in its own migration.
+  - **Settings to come:** field definitions also hold whether a Text field takes several lines, and the table a Link field links to, with its one-or-several kept as a choice field's is. No field uses them yet.
 - **Checks:**
   - **One owner:** exactly one owner column is set.
-  - **One value:** each value row holds exactly one of a choice, a link, a note, or a number.
-  - **Rows per column:** each chosen choice has a row of its own, and an index allows one link, one note, and one number for each record and column.
-  - **Deleting:** a list or choice cannot be deleted while a column or value uses it.
+  - **One value:** each value row holds exactly one of a choice, a link, a note, a number, a ticked box, a text, a date, or one linked record.
+  - **Rows per column:** each chosen choice and each linked record has a row of its own, and an index allows one link, one note, one number, one ticked box, one text, and one date for each record and column.
+  - **Indexes:** each owner has a partial unique index for each kind of value, 78 in all, each holding only its own rows. Each table that becomes linkable adds five. Fewer, wider indexes would give the same guarantees, but these keep each one simple and small, at the cost of checking each one's condition when a value is saved.
+  - **Deleting:** a list or choice cannot be deleted while a column or value uses it, and a linked record cannot be deleted while a value links to it, so removing a record that others link to is refused as in use until their links are taken off, as a choice in use is. Deleting a Link column frees the records it linked.
+  - **When links are checked:** each link is checked when its change is saved, not statement by statement, so records that link themselves or each other are deleted with their own values. Drizzle can't say so, so the migration adding the link columns makes their keys deferred by hand, the one hand edit to a generated migration; `packages/db/src/field-values.test.ts` fails if a later migration drops it.
+  - **Settings:** a choice field names its list; every other field has a class of its own and no list. Only choice and Link fields take several values, only a Text field takes several lines, and a Link field, and only it, names the table it links to: People, Features, Projects, Proposals, Customers, Releases, Feature teams or Activities.
 - **Classes:** a web link, note, or number column has a class of its own, since it draws on no list.
+- **Links to People:** a Link field on People links to people and planned hires alike, each in its own link column. A link to a planned hire that is filled shows the person who filled it, through the link a filled hire already keeps to its person, so no value moves. A column holding both a person and the planned hire they filled would show that person twice; how it shows them is for the Link to another table column to settle.
 - **Column order:** the order of a table's columns, built-in and added alike, is kept as one list of column keys for each table.
 
 The other field types, uniqueness, and custom tables come later, in the Your Own Fields and Tables stage of the [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398).
