@@ -3,7 +3,7 @@
 // Integration tests for listing unpublished changes, against a PostgreSQL server of their own: the
 // list the top bar names, and the change history, which shows them only to their maker.
 
-import { unpublishedDrafts } from "@fathom/db";
+import { privateChanges, privateSetOf } from "@fathom/db";
 import {
   type ChangeHistory,
   type Choice,
@@ -135,10 +135,11 @@ describe("the list of unpublished changes", () => {
     const maker = await user("workforce-administrator");
     const name = unique("Fictional Beside Unknown");
     await draftPeople(maker, [name]);
-    await test.connection.insert(unpublishedDrafts).values({
+    await test.connection.insert(privateChanges).values({
       recordType: "fictional-retired-kind",
       recordId: randomUUID(),
       userId: maker.id,
+      setId: await privateSetOf(test.connection, maker.id),
       action: "created",
     });
 

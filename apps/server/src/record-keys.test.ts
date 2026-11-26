@@ -16,6 +16,8 @@ import {
   milestones,
   people,
   plannedHires,
+  privateChanges,
+  privateSetOf,
   projects,
   proposals,
   recordKeyCounters,
@@ -23,7 +25,6 @@ import {
   releases,
   releaseStreams,
   roles,
-  unpublishedDrafts,
   users,
 } from "@fathom/db";
 import {
@@ -159,10 +160,11 @@ describe("numbering records", () => {
       const recordId = randomUUID();
       const drafter = await test.signedIn([]);
       // When
-      await test.connection.insert(unpublishedDrafts).values({
+      await test.connection.insert(privateChanges).values({
         recordType: draftKind,
         recordId,
         userId: drafter.id,
+        setId: await privateSetOf(test.connection, drafter.id),
         action: "created",
       });
       // Then

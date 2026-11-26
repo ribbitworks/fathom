@@ -184,7 +184,7 @@ async function undoIn(
   // Unpublished changes are seen only by their maker, so for anyone else they are not there.
   if (
     changeSet === undefined ||
-    (changeSet.unpublished && changeSet.madeBy !== actor.user.id)
+    (changeSet.private && changeSet.madeBy !== actor.user.id)
   ) {
     throw new NotFoundError();
   }
@@ -347,10 +347,7 @@ async function undoIn(
     .where(
       and(
         gt(changes.id, Math.max(...rows.map(({ id }) => id))),
-        or(
-          eq(changeSets.unpublished, false),
-          eq(changeSets.madeBy, actor.user.id),
-        ),
+        or(eq(changeSets.private, false), eq(changeSets.madeBy, actor.user.id)),
         or(
           ...records.map((record) =>
             and(

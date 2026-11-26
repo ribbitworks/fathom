@@ -8,8 +8,8 @@ import {
   inChunks,
   people,
   plannedHires,
+  privateChanges,
   type Reader,
-  unpublishedDrafts,
 } from "@fathom/db";
 import { changesHiringPlan, type HireChange } from "@fathom/shared";
 import { and, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm";
@@ -53,7 +53,7 @@ async function draftedRemoval(
   type: "person" | typeof recordType,
   id: string,
 ): Promise<boolean> {
-  for (const table of [drafts, unpublishedDrafts]) {
+  for (const table of [drafts, privateChanges]) {
     const [found] = await transaction
       .select({ recordId: table.recordId })
       .from(table)
@@ -395,7 +395,7 @@ export async function hiresReportTo(
       )
       .limit(1);
     if (live !== undefined) return true;
-    for (const table of drafted ? [drafts, unpublishedDrafts] : []) {
+    for (const table of drafted ? [drafts, privateChanges] : []) {
       const [found] = await reader
         .select({ id: table.recordId })
         .from(table)
@@ -485,7 +485,7 @@ export async function hireDraftsNaming(
   }: { byRecord?: boolean; except?: readonly string[] } = {},
 ): Promise<boolean> {
   for (const chunk of inChunks([...ids])) {
-    for (const table of [drafts, unpublishedDrafts]) {
+    for (const table of [drafts, privateChanges]) {
       const [found] = await reader
         .select({ id: table.recordId })
         .from(table)
@@ -502,7 +502,7 @@ export async function hireDraftsNaming(
               ? undefined
               : notInArray(table.recordId, [...except]),
             table === drafts && editor !== undefined
-              ? sql`NOT EXISTS (SELECT 1 FROM ${unpublishedDrafts} WHERE ${unpublishedDrafts.userId} = ${editor} AND ${unpublishedDrafts.recordType} = ${recordType} AND ${unpublishedDrafts.recordId} = ${drafts.recordId})`
+              ? sql`NOT EXISTS (SELECT 1 FROM ${privateChanges} WHERE ${privateChanges.userId} = ${editor} AND ${privateChanges.recordType} = ${recordType} AND ${privateChanges.recordId} = ${drafts.recordId})`
               : undefined,
           ),
         )

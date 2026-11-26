@@ -15,8 +15,8 @@ import {
   type Database,
   drafts,
   features,
+  privateChanges,
   recordChanges,
-  unpublishedDrafts,
 } from "@fathom/db";
 import { fictionalId, type FictionalOrganization } from "@fathom/fixtures";
 import { addToMonth, type AllocationMonths, monthOf } from "@fathom/shared";
@@ -313,7 +313,7 @@ export async function unseedAllocations(
       )
       .returning();
     const ids = [...seededIds(), ...removed.map(({ id }) => id)];
-    for (const table of [drafts, unpublishedDrafts]) {
+    for (const table of [drafts, privateChanges]) {
       await transaction
         .delete(table)
         .where(

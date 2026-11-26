@@ -8,8 +8,8 @@ import {
   changeSets,
   type Database,
   drafts,
+  privateChanges,
   type Reader,
-  unpublishedDrafts,
 } from "@fathom/db";
 import {
   type DataClasses,
@@ -103,7 +103,7 @@ import {
 } from "./unpublished-uses.ts";
 import type { TableColumns } from "./values.ts";
 
-type Row = typeof unpublishedDrafts.$inferSelect;
+type Row = typeof privateChanges.$inferSelect;
 
 // Anyone who may make drafts may publish or discard their own changes.
 const requireDrafting = (actor: Actor) => {
@@ -114,9 +114,9 @@ const requireDrafting = (actor: Actor) => {
 const ownRows = (reader: Reader, userId: string): Promise<Row[]> =>
   reader
     .select()
-    .from(unpublishedDrafts)
-    .where(eq(unpublishedDrafts.userId, userId))
-    .orderBy(asc(unpublishedDrafts.sequence));
+    .from(privateChanges)
+    .where(eq(privateChanges.userId, userId))
+    .orderBy(asc(privateChanges.sequence));
 
 const idsOf = (rows: readonly Row[], recordType: DraftKind) =>
   rows
@@ -530,12 +530,12 @@ async function removeRows(
   for (const [recordType, chunks] of chunksByKind(rows)) {
     for (const chunk of chunks) {
       await transaction
-        .delete(unpublishedDrafts)
+        .delete(privateChanges)
         .where(
           and(
-            eq(unpublishedDrafts.userId, userId),
-            eq(unpublishedDrafts.recordType, recordType),
-            inArray(unpublishedDrafts.recordId, chunk),
+            eq(privateChanges.userId, userId),
+            eq(privateChanges.recordType, recordType),
+            inArray(privateChanges.recordId, chunk),
           ),
         );
     }
@@ -550,11 +550,11 @@ const noneStillUnpublished = (reader: Reader, userId: string) =>
       .select({ id: changes.id })
       .from(changes)
       .innerJoin(
-        unpublishedDrafts,
+        privateChanges,
         and(
-          eq(unpublishedDrafts.recordType, changes.recordType),
-          eq(unpublishedDrafts.recordId, changes.recordId),
-          eq(unpublishedDrafts.userId, userId),
+          eq(privateChanges.recordType, changes.recordType),
+          eq(privateChanges.recordId, changes.recordId),
+          eq(privateChanges.userId, userId),
         ),
       )
       .where(
@@ -659,7 +659,7 @@ export async function publishUnpublished(
     await removeRows(transaction, userId, rows);
     await transaction
       .update(changeSets)
-      .set({ unpublished: false })
+      .set({ private: false })
       .where(
         and(openChangeSets(userId), noneStillUnpublished(transaction, userId)),
       );

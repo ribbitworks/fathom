@@ -22,6 +22,7 @@ export {
   valueField,
 } from "./history.ts";
 export { runMigrations } from "./migrate.ts";
+export { privateSetOf } from "./private-sets.ts";
 export {
   accessHistory,
   accounts,
@@ -50,6 +51,8 @@ export {
   people,
   plannedHires,
   plannedHireTemporaryNumbers,
+  privateChanges,
+  privateSets,
   projects,
   proposals,
   rateLimits,
@@ -63,7 +66,6 @@ export {
   savedViews,
   sessions,
   teams,
-  unpublishedDrafts,
   userRoles,
   users,
   verifications,

@@ -3,7 +3,7 @@
 // A draft and the record it makes: the fields it changes, how sensitive it is, and the changes it
 // records when its rejection is cleared. Part of the data access layer.
 
-import { drafts, fieldOfValue, unpublishedDrafts } from "@fathom/db";
+import { drafts, fieldOfValue, privateChanges } from "@fathom/db";
 import { type DraftKind, type Tier } from "@fathom/shared";
 import { mostSensitive } from "../access.ts";
 import { ConflictError } from "../errors.ts";
@@ -16,7 +16,7 @@ import type { ColumnInfo } from "./values.ts";
 export type Recorded = Record<string, unknown>;
 
 export type DraftRow = typeof drafts.$inferSelect;
-type UnpublishedRow = typeof unpublishedDrafts.$inferSelect;
+type UnpublishedRow = typeof privateChanges.$inferSelect;
 
 // The user whose own unpublished drafts are read in place of the published ones, or undefined to
 // read the published drafts alone, as Approvers decide them.

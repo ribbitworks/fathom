@@ -16,10 +16,12 @@ import {
   lists,
   people,
   plannedHires,
+  privateChanges,
+  privateSetOf,
+  privateSets,
   projects,
   reportingLines,
   teams,
-  unpublishedDrafts,
   users,
 } from "@fathom/db";
 import { fictionalOrganization } from "@fathom/fixtures";
@@ -474,10 +476,11 @@ describe("seeding", () => {
       action: "created",
       fields: { name: "Fictional Drafted Team", members: [member?.id] },
     });
-    await connection.insert(unpublishedDrafts).values({
+    await connection.insert(privateChanges).values({
       recordType: "feature-team",
       recordId: handDraft,
       userId: account.id,
+      setId: await privateSetOf(connection, account.id),
       action: "created",
       fields: { name: "Fictional Unpublished Team" },
     });
@@ -500,13 +503,16 @@ describe("seeding", () => {
     ).toEqual([]);
     expect(
       await connection
-        .select({ id: unpublishedDrafts.recordId })
-        .from(unpublishedDrafts)
-        .where(eq(unpublishedDrafts.recordType, "feature-team")),
+        .select({ id: privateChanges.recordId })
+        .from(privateChanges)
+        .where(eq(privateChanges.recordType, "feature-team")),
     ).toEqual([]);
     await connection
       .delete(featureTeams)
       .where(eq(featureTeams.id, String(team?.id)));
+    await connection
+      .delete(privateSets)
+      .where(eq(privateSets.userId, account.id));
     await connection.delete(users).where(eq(users.id, account.id));
     expect(await unseed(connection, organization)).toEqual([]);
     expect(await seed(connection, organization)).toBe(true);

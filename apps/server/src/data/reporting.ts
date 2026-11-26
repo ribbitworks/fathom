@@ -8,10 +8,10 @@ import {
   drafts,
   inChunks,
   people,
+  privateChanges,
   type Reader,
   reportingLines,
   teams,
-  unpublishedDrafts,
 } from "@fathom/db";
 import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { ConflictError, BadRequestError } from "../errors.ts";
@@ -369,7 +369,7 @@ export async function readManagers(
   const found = new Map<string, Manager>();
   for (const chunk of inChunks(wanted)) {
     const removing = new Set<string>();
-    for (const table of [drafts, unpublishedDrafts]) {
+    for (const table of [drafts, privateChanges]) {
       for (const { recordId } of await reader
         .select({ recordId: table.recordId })
         .from(table)

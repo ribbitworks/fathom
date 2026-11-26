@@ -126,7 +126,7 @@ export interface Facts {
 
 // The change sets the actor may see: all but those holding other users' unpublished changes.
 export const seenSets = (actor: Actor) =>
-  or(eq(changeSets.unpublished, false), eq(changeSets.madeBy, actor.user.id));
+  or(eq(changeSets.private, false), eq(changeSets.madeBy, actor.user.id));
 
 // What the history the actor may see last recorded about each record: its name, its list, and a
 // list's visibility.

@@ -23,7 +23,7 @@ import {
   drafts,
   planningSettings,
   planningSettingsId as rowId,
-  unpublishedDrafts,
+  privateChanges,
 } from "@fathom/db";
 import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -71,8 +71,8 @@ afterAll(async () => {
 
 afterEach(async () => {
   await test.connection
-    .delete(unpublishedDrafts)
-    .where(eq(unpublishedDrafts.recordType, "planning-settings"));
+    .delete(privateChanges)
+    .where(eq(privateChanges.recordType, "planning-settings"));
   await test.connection
     .delete(drafts)
     .where(eq(drafts.recordType, "planning-settings"));

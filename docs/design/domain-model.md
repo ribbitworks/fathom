@@ -317,9 +317,10 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 
 - **Change set:** Changes saved together, with who made them, the role they acted as, and when.
   - **Kinds:** saved changes, approved, rejected or discarded drafts, rejected drafts sent again unchanged, and a user's unpublished changes discarded all at once.
-  - **Unpublished:** it is marked while it holds changes its maker hasn't published, which only they see; publishing clears the mark.
+  - **Private:** it is marked while it holds private changes, which only its maker sees; publishing clears the mark.
 - **Change:** One field of one record changed in a change set, with its class, its old and new values, and whether it changed the record's draft or the live record.
-- **Unpublished draft:** A user's change to a record not yet published, which only they see, as [ADR 0008](../adr/0008-unpublished-drafts.md) sets out. A record has at most one, and nobody else may change, approve or reject it until the user publishes or discards it. Publishing makes it a draft row.
+- **Private change:** A user's change to a record not yet published, which only they see, as [ADR 0008](../adr/0008-unpublished-drafts.md) sets out. It is kept for the record and the user, in the user's private set, with room for the value each field started from, empty for now. A record has at most one, and nobody else may change, approve or reject it until the user publishes or discards it. Publishing makes it a draft row.
+- **Private set:** A user's private changes, made with their first one.
 - **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason.
   - **What has drafts:** people, planned hires, feature teams, lists, choices, columns, schedules, cycle patterns, releases, features, customers, proposals, projects, milestones, allocations and the planning settings, and the order of each list's choices, held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
 - **Record key:** A record's number within its kind, such as 123 for #FEATURE-123, shown after a # so it isn't taken for another tool's key.

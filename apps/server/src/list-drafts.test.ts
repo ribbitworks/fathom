@@ -390,7 +390,7 @@ describe("drafts made under several roles", () => {
         })
         .from(changes)
         .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
-        .where(and(eq(changes.recordId, id), eq(changeSets.unpublished, false)))
+        .where(and(eq(changes.recordId, id), eq(changeSets.private, false)))
         .orderBy(asc(changeSets.madeAt))
     ).map(({ kind, roleId }) => ({ kind, roleId }));
 

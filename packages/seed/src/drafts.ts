@@ -18,7 +18,7 @@ import {
   changeSets,
   type Database,
   drafts,
-  unpublishedDrafts,
+  privateChanges,
   users,
   valueField,
 } from "@fathom/db";
@@ -462,9 +462,9 @@ export async function unseedUnpublished(
       discarded += await data.unpublished.discard(persona);
     }
   }
-  await database.delete(unpublishedDrafts).where(
+  await database.delete(privateChanges).where(
     inArray(
-      unpublishedDrafts.recordId,
+      privateChanges.recordId,
       organization.people.map(({ id }) => id),
     ),
   );

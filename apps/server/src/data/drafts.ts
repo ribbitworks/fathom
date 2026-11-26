@@ -7,8 +7,9 @@ import {
   type Database,
   drafts,
   inChunks,
+  privateChanges,
+  privateSetOf,
   type Reader,
-  unpublishedDrafts,
   users,
 } from "@fathom/db";
 import type { DraftKind } from "@fathom/shared";
@@ -85,14 +86,14 @@ export async function readDrafts(
   const own = await readRows(ids, (chunk) =>
     reader
       .select()
-      .from(unpublishedDrafts)
+      .from(privateChanges)
       .where(
         and(
-          eq(unpublishedDrafts.recordType, recordType),
-          eq(unpublishedDrafts.userId, viewer),
+          eq(privateChanges.recordType, recordType),
+          eq(privateChanges.userId, viewer),
           chunk === undefined
             ? undefined
-            : inArray(unpublishedDrafts.recordId, [...chunk]),
+            : inArray(privateChanges.recordId, [...chunk]),
         ),
       ),
   );
@@ -137,18 +138,16 @@ export async function readHeld(
 ): Promise<Map<string, Held>> {
   const rows = await readRows(ids, (chunk) =>
     reader
-      .select({ row: unpublishedDrafts, holder: users.name })
-      .from(unpublishedDrafts)
-      .innerJoin(users, eq(users.id, unpublishedDrafts.userId))
+      .select({ row: privateChanges, holder: users.name })
+      .from(privateChanges)
+      .innerJoin(users, eq(users.id, privateChanges.userId))
       .where(
         and(
-          eq(unpublishedDrafts.recordType, recordType),
-          viewer === undefined
-            ? undefined
-            : ne(unpublishedDrafts.userId, viewer),
+          eq(privateChanges.recordType, recordType),
+          viewer === undefined ? undefined : ne(privateChanges.userId, viewer),
           chunk === undefined
             ? undefined
-            : inArray(unpublishedDrafts.recordId, [...chunk]),
+            : inArray(privateChanges.recordId, [...chunk]),
         ),
       ),
   );
@@ -249,6 +248,18 @@ function sameDraft(
   );
 }
 
+// Each transaction's editors' sets, so a change of many records, such as several hires, looks
+// each up once.
+const setsIn = new WeakMap<Transaction, Map<string, Promise<string>>>();
+
+function editorSet(transaction: Transaction, editor: string): Promise<string> {
+  const sets = setsIn.get(transaction) ?? new Map<string, Promise<string>>();
+  setsIn.set(transaction, sets);
+  const set = sets.get(editor) ?? privateSetOf(transaction, editor);
+  sets.set(editor, set);
+  return set;
+}
+
 // Keeps the draft the editor intends for a record as their unpublished draft: none at all when it
 // is the published draft, so the record is no longer held, and one that wants no draft when the
 // editor wants none but there is a published one.
@@ -263,21 +274,27 @@ async function keepUnpublished(
   const published = (await readDrafts(transaction, recordType, [id])).get(id);
   if (sameDraft(draft, published)) {
     await transaction
-      .delete(unpublishedDrafts)
+      .delete(privateChanges)
       .where(
         and(
-          eq(unpublishedDrafts.recordType, recordType),
-          eq(unpublishedDrafts.recordId, id),
+          eq(privateChanges.recordType, recordType),
+          eq(privateChanges.recordId, id),
+          eq(privateChanges.userId, editor),
         ),
       );
     return;
   }
   const row = draft ?? noDraft;
+  const setId = await editorSet(transaction, editor);
   await transaction
-    .insert(unpublishedDrafts)
-    .values({ recordType, recordId: id, userId: editor, ...row })
+    .insert(privateChanges)
+    .values({ recordType, recordId: id, userId: editor, setId, ...row })
     .onConflictDoUpdate({
-      target: [unpublishedDrafts.recordType, unpublishedDrafts.recordId],
+      target: [
+        privateChanges.recordType,
+        privateChanges.recordId,
+        privateChanges.userId,
+      ],
       set: { action: row.action, fields: row.fields },
     });
 }
@@ -365,12 +382,14 @@ export async function addDrafts(
   recordType: DraftKind,
   added: readonly { id: string; fields: Recorded }[],
 ): Promise<void> {
+  const setId = await editorSet(transaction, editor);
   for (const chunk of inChunks([...added])) {
-    await transaction.insert(unpublishedDrafts).values(
+    await transaction.insert(privateChanges).values(
       chunk.map(({ id, fields }) => ({
         recordType,
         recordId: id,
         userId: editor,
+        setId,
         action: "created",
         fields,
       })),

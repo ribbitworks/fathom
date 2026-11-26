@@ -3,7 +3,7 @@
 - **ADR:** 0008
 - **Status:** Accepted
 - **Date:** 2026-11-03
-- **Revised:** 2026-11-17, to publish or discard chosen changes, and to mark a change set published once none of its changes is held; 2026-11-20, to publish only the changes the role in use may make
+- **Revised:** 2026-11-17, to publish or discard chosen changes, and to mark a change set published once none of its changes is held; 2026-11-20, to publish only the changes the role in use may make; 2026-11-25, to keep them as private changes, by record and user in each user's set
 
 ## Context
 
@@ -18,7 +18,7 @@ A user's changes are seen only by that user until they publish them:
 
 ## Decision
 
-- **A table of unpublished drafts:** A user's unpublished changes are kept in a second table, shaped as the table of drafts, keyed the same way, so a record has at most one, and naming the user whose changes they are.
+- **A table of private changes:** A user's unpublished changes are kept in a second table, shaped as the table of drafts, keyed by the record and the user whose changes they are, in that user's set. While records are held, a record still has at most one.
   - **Whole drafts:** Each row holds the whole draft the user intends, as a draft row does, not the difference from the published draft.
 - **Held by the row:** A record is held while it has an unpublished draft. Changing it, approving it, or rejecting it is refused for anyone but that user, and the user's own changes update their unpublished draft, starting from the published draft when there is one.
 - **Read per user:** Reading a table puts each user's own unpublished drafts over the published drafts, and marks the records others hold with who holds them. A record that exists only as someone else's unpublished draft is not shown at all.

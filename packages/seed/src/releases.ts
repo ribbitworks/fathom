@@ -12,10 +12,10 @@ import {
   type Database,
   features,
   drafts,
+  privateChanges,
   recordChanges,
   releases,
   releaseStreams,
-  unpublishedDrafts,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
 import {
@@ -362,7 +362,7 @@ async function discardDraftsOf(
   recordIds: readonly string[],
   streamIds: readonly string[],
 ): Promise<void> {
-  for (const table of [drafts, unpublishedDrafts]) {
+  for (const table of [drafts, privateChanges]) {
     await transaction
       .delete(table)
       .where(

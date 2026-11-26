@@ -38,12 +38,12 @@ import {
   loadDatabaseConfig,
   people,
   plannedHires,
+  privateChanges,
   projects,
   proposals,
   recordChanges,
   reportingLines,
   teams,
-  unpublishedDrafts,
   valueField,
 } from "@fathom/db";
 import {
@@ -438,7 +438,7 @@ async function removeFeatureTeams(
   organization: FictionalOrganization,
 ): Promise<SeededChange[]> {
   const ids = organization.featureTeams.map(({ id }) => id);
-  for (const table of [drafts, unpublishedDrafts]) {
+  for (const table of [drafts, privateChanges]) {
     await transaction.delete(table).where(eq(table.recordType, "feature-team"));
   }
   const removed = await transaction
@@ -612,7 +612,7 @@ export async function unseed(
       );
     }
     // Drafts made by hand that name a person removed as an owner go with them.
-    for (const table of [drafts, unpublishedDrafts]) {
+    for (const table of [drafts, privateChanges]) {
       await transaction
         .delete(table)
         .where(
@@ -731,10 +731,8 @@ export async function unseed(
       const unpublished = await total(
         transaction
           .select({ total: count() })
-          .from(unpublishedDrafts)
-          .where(
-            sql`${unpublishedDrafts.fields}->>'positionId' = ${choice.id}`,
-          ),
+          .from(privateChanges)
+          .where(sql`${privateChanges.fields}->>'positionId' = ${choice.id}`),
       );
       if (used + hired + drafted + unpublished > 0) {
         kept.push(

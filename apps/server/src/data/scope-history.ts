@@ -35,7 +35,7 @@ export async function readScopeHistory(
     .where(
       and(
         eq(changes.draft, false),
-        eq(changeSets.unpublished, false),
+        eq(changeSets.private, false),
         eq(changes.recordType, type),
         eq(changes.recordId, recordId),
         inArray(changes.field, ["featureIds", "removalReasons"]),
@@ -55,7 +55,7 @@ export async function readScopeHistory(
     .where(
       and(
         eq(changes.draft, true),
-        eq(changeSets.unpublished, false),
+        eq(changeSets.private, false),
         eq(changes.recordType, type),
         eq(changes.recordId, recordId),
         eq(changes.field, "featureIds"),
