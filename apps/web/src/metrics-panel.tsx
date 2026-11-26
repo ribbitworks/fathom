@@ -144,10 +144,10 @@ export function MetricsPanel<Row>({
       new Set([...counts.seen(index), ...(liveCounts?.seen(index) ?? [])]),
     );
 
-  // A total or an average shown, or a dash where no row has an amount.
+  // A total or an average shown, blank where no row has an amount, as an empty cell is.
   const amount = (summed: number | undefined) =>
     added === undefined || summed === undefined
-      ? "–"
+      ? ""
       : amountShown(added, summed);
 
   // A live share is of the live rows. A total adds the amounts of the rows that have one, an average
