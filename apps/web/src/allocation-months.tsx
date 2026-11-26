@@ -37,7 +37,14 @@ import type { CellChange } from "./cell-kinds.tsx";
 import pages from "./pages.module.css";
 import type { RecordTable, RowTotals } from "./record-table.ts";
 import { ColouredName } from "./colour-swatch.tsx";
-import { DraftedPartItem, type DraftedPart } from "./status-mark.tsx";
+import {
+  DraftedPartItem,
+  type DraftedPart,
+  besideLive,
+  DraftedValue,
+  LiveValue,
+  viewedDraft,
+} from "./status-mark.tsx";
 import type { DraftLike } from "./draft-marks.ts";
 import { tipAttribute } from "./table-tips.tsx";
 import {
@@ -86,8 +93,10 @@ export const allocatedWork = ({
 
 export interface AllocationLine {
   workId: string;
+  // The feature's or activity's name as the Draft view shows it.
   name: string;
   tip: string;
+  rename?: AllocatedFeature["rename"];
   meaning: Meaning | null;
   colour: PaletteColour | null;
   // The percentage shown: as drafted, or, for work a draft takes off, as approved.
@@ -98,6 +107,9 @@ export interface AllocationLine {
   draft?: DraftLike;
   // Set on a line as it is live, where draft changes it as drafted says, so it shows Live's dot.
   shownLive?: boolean;
+  // Set on every line of a Live row, which names the feature as it is live, with Live's dot where a
+  // draft renames it.
+  inLiveRow?: true;
 }
 
 export interface AllocationRow extends HeldRow {
@@ -209,11 +221,13 @@ export function AllocationLines({
           workId,
           name,
           tip,
+          rename,
           colour,
           percentage,
           drafted,
           draft,
           shownLive,
+          inLiveRow,
         }) => (
           <div
             key={workId}
@@ -223,9 +237,26 @@ export function AllocationLines({
             ].join(" ")}
             {...{ [tipAttribute]: tip }}
           >
-            <span className={styles.name}>
+            <span
+              className={[
+                styles.name,
+                inLiveRow !== true &&
+                besideLive(show) &&
+                viewedDraft(rename, show).draft !== undefined
+                  ? pages.changedValue
+                  : "",
+              ].join(" ")}
+            >
               <DraftedPartItem draft={draft} part={drafted} live={shownLive}>
-                <ColouredName colour={colour}>{name}</ColouredName>
+                {inLiveRow === true ? (
+                  <LiveValue draft={rename} fields={["name"]}>
+                    <ColouredName colour={colour}>{name}</ColouredName>
+                  </LiveValue>
+                ) : (
+                  <DraftedValue draft={rename} fields={["name"]} named="Name">
+                    <ColouredName colour={colour}>{name}</ColouredName>
+                  </DraftedValue>
+                )}
               </DraftedPartItem>
             </span>
             <span>{percentage}%</span>
@@ -257,11 +288,42 @@ export function AllocationLines({
 function workOf(
   works: ReadonlyMap<string, AllocatedWork>,
   { featureId, activityId }: Allocation,
-): Pick<AllocationLine, "workId" | "name" | "tip" | "meaning" | "colour"> {
+): Pick<
+  AllocationLine,
+  "workId" | "name" | "tip" | "rename" | "meaning" | "colour"
+> {
   // Every allocation names a feature or an activity, which the server lists.
   const workId = String(featureId ?? activityId);
-  const { name, tip, meaning, colour } = works.get(workId) as AllocatedWork;
-  return { workId, name, tip, meaning, colour };
+  const { name, tip, rename, meaning, colour } = works.get(
+    workId,
+  ) as AllocatedWork;
+  return {
+    workId,
+    name,
+    tip,
+    ...(rename === undefined ? {} : { rename }),
+    meaning,
+    colour,
+  };
+}
+
+const liveNameOf = (work: Pick<AllocatedFeature, "name" | "rename">) =>
+  typeof work.rename?.live.name === "string"
+    ? work.rename.live.name
+    : work.name;
+
+// The features and activities as the Draft view names them: as a rename makes one where the view
+// shows the rename, otherwise as it is live.
+export function namedIn(allocations: Allocations, show: Show): Allocations {
+  const named = <Work extends AllocatedFeature>(work: Work): Work =>
+    viewedDraft(work.rename, show).draft === undefined
+      ? { ...work, name: liveNameOf(work) }
+      : work;
+  return {
+    ...allocations,
+    features: allocations.features.map(named),
+    activities: allocations.activities.map(named),
+  };
 }
 
 // A month's allocations as approved, each feature or activity by name.
@@ -412,9 +474,14 @@ function withLiveMarks(
           month,
           lines.map((line) => {
             const change = changed.get(line.workId);
+            const asLive = {
+              ...line,
+              name: liveNameOf(line),
+              inLiveRow: true as const,
+            };
             return change === undefined
-              ? line
-              : { ...line, ...change, shownLive: true };
+              ? asLive
+              : { ...asLive, ...change, shownLive: true };
           }),
         ];
       }),

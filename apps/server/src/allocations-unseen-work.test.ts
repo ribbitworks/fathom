@@ -19,6 +19,7 @@ import {
   closeAllocationTests,
   dayIn,
   decide,
+  director,
   month,
   read,
   startAllocationTests,
@@ -85,6 +86,32 @@ describe("allocations to a feature a role can't read", () => {
       (await read(who)).features.find(({ id }) => id === featureId)?.unseen;
     expect(await marked(withFeatures)).toBeUndefined();
     expect(await marked(withoutFeatures)).toBe(true);
+  });
+
+  it("tell a feature's rename only to a role that reads features", async () => {
+    // Given a feature someone is allocated to, drafted to be renamed
+    const { featureId } = await allocated();
+    const drafted = await test.request(
+      director.cookie,
+      "PUT",
+      `/api/features/${featureId}`,
+      { name: unique("Fictional Renamed") },
+    );
+    expect(drafted.statusCode, drafted.body).toBe(200);
+    const withFeatures = await test.signedIn([
+      ...allocationReader,
+      "features:view",
+    ]);
+    const withoutFeatures = await test.signedIn([...allocationReader]);
+    const renameFor = async (who: Account) =>
+      (await read(who)).features.find(({ id }) => id === featureId)?.rename;
+
+    // Then only the role that reads features is told of the rename, and its live name
+    expect(await renameFor(withFeatures)).toMatchObject({
+      live: { name: await featureName(featureId) },
+      state: "waiting",
+    });
+    expect(await renameFor(withoutFeatures)).toBeUndefined();
   });
 
   it("give a feature the role can't read no feature team's colour", async () => {

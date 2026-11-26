@@ -627,6 +627,12 @@ th[data-centred] .recordHeadButton {
   line-height: var(--mantine-line-height);
 }
 
+/* A value a draft changes, outside a drafted row, semibold while drafts show beside live, as a
+   changed cell is in its row. */
+.changedValue {
+  font-weight: 600;
+}
+
 /* A row or column with a draft is tinted in its dot's colour, faintly: yellow, or red once
    rejected, as a live row is green. Each value the draft changes has its own dot and is in
    semibold, so it stands out in its row even where colour is not seen. A new row being filled in
