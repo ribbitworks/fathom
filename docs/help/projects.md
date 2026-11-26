@@ -67,9 +67,20 @@ You're done when the changed value shows a hollow dot.
 
 Esc closes the list and drops the features you picked.
 
-You choose a proposal's features the same way. The **Features** page shows the same links, in its **Projects** and **Proposals** columns.
+You choose a proposal's features the same way, or with **Choose features** under **Features** in its details. The **Features** page shows the same links, in its **Projects** and **Proposals** columns.
 
 You're done when the cell lists the features, with a hollow dot.
+
+### Add a New Feature to a Proposal
+
+1. Open the proposal's details.
+1. Select **New feature** under **Features**.
+1. In the **New feature** form that opens under the details, type the feature's name, and anything else you know.
+1. Select **Add**.
+
+The feature starts as Possible, as every new feature does. Fathom adds it and links it to the proposal, each as a draft of its own, and the two are approved together: an approver of the plan who may not approve features sees that another approver is needed.
+
+You're done when the proposal's **Features** names the new feature with a hollow dot.
 
 ### Give a Reason for Removing a Feature From a Proposal
 

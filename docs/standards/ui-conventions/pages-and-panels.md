@@ -118,7 +118,7 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
 - **Actions on a list in a panel:** Actions on a list inside a details panel sit under the list, at its left, as outlined buttons without an icon, the main one first. They sit where the next item would go, and the list's heading stays plain, like every other section's.
   - **Pickers:** A picker that adds to the list, such as a feature team's Add member, is such an action: an outlined button under the list that opens the picker.
   - **Drawn by:** Each panel draws its own.
-  - **Example:** Add member under a feature team's members, in its panel on the Org chart's Feature teams.
+  - **Example:** Add member under a feature team's members, in its panel on the Org chart's Feature teams, or Choose features and New feature under a proposal's Features, in its details on Projects.
 
 ## Panels and Focus
 
