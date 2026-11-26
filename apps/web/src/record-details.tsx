@@ -5,7 +5,7 @@
 // shows it instead.
 
 import type { Link as WebLink } from "@fathom/shared";
-import { ActionIcon, Anchor, Group, Stack, Text } from "@mantine/core";
+import { ActionIcon, Anchor, Group, Menu, Stack, Text } from "@mantine/core";
 import {
   type MouseEvent,
   type ReactNode,
@@ -30,7 +30,12 @@ import classes from "./record-details.module.css";
 import { roundedUpTo } from "@fathom/shared";
 import { isEmpty, shownInView } from "./grid-columns.tsx";
 import { cellDraftOf } from "./grid-drafts.ts";
-import { type Column, colourOf, type GridRecord } from "./record-table.ts";
+import {
+  type Column,
+  colourOf,
+  type GridRecord,
+  type ShowOn,
+} from "./record-table.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   DraftedItem,
@@ -341,6 +346,7 @@ export function Row({
   editing,
   children,
   action,
+  showOn,
 }: {
   column: DetailColumn;
   value: CellValue;
@@ -364,6 +370,8 @@ export function Row({
   children?: ReactNode;
   // A control of its own at the row's right, after the change button if there is one, such as a menu.
   action?: ReactNode;
+  // The page the row's name opens, showing the records the row lists, filtered to the record.
+  showOn?: ShowOn | undefined;
 }) {
   const draft = changed?.draft;
   // A value reads as drafted wherever the view marks its draft, as its cell does.
@@ -393,7 +401,21 @@ export function Row({
       onClick={onClick}
     >
       <dt id={labelId(column, scope)} className={classes.label}>
-        {column.label}
+        {showOn === undefined ? (
+          column.label
+        ) : (
+          <Anchor
+            component="button"
+            type="button"
+            ta="start"
+            fz="inherit"
+            lh="inherit"
+            aria-label={`${column.label}, show on ${showOn.page}`}
+            onClick={showOn.onShow}
+          >
+            {column.label}
+          </Anchor>
+        )}
       </dt>
       <dd className={classes.value}>
         {editing?.open === true ? (
@@ -492,6 +514,13 @@ export function Row({
   );
 }
 
+// A record's menu item showing the records it lists on their own page, where it has any.
+export function ShowOnItem({ showOn }: { showOn: ShowOn | undefined }) {
+  return showOn === undefined ? null : (
+    <Menu.Item onClick={showOn.onShow}>Show on {showOn.page}</Menu.Item>
+  );
+}
+
 // A record's details from its table's columns, in the table's order, each a row with the column's
 // label, the record's value, its colour and its draft's marks, and a pencil where it can be changed:
 // the record as the Draft view shows it, its draft whatever the view, which marks each value it
@@ -524,6 +553,7 @@ export function ColumnRows<Rec extends GridRecord, Change>({
             column={column}
             value={value}
             colour={colourOf(column, shown)}
+            showOn={column.showOn?.(shown)}
             changed={
               draft?.changed.includes(column.key) === true
                 ? {

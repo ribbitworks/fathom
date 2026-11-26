@@ -83,7 +83,6 @@ import {
   type ProjectsPageProps,
 } from "./plan-page-settings.ts";
 import {
-  type ActivitiesOf,
   detailTabs,
   MilestoneForm,
   panelId,
@@ -108,6 +107,13 @@ import type {
 } from "./record-table.ts";
 import { newRecordQuestion, useDiscardQuestion } from "./discard-question.tsx";
 import { entered, type FormValues, newRecordId } from "./new-record-panel.tsx";
+import {
+  type ActivitiesOf,
+  editsFeatureKinds,
+  leavingFor,
+  activitiesShowOn,
+  projectActivityFields,
+} from "./activity-list.tsx";
 import type { LinkedAsk } from "./signed-in-route.tsx";
 import { afterNote, noteQuestion, useNoteEditing } from "./note-editing.tsx";
 import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
@@ -312,14 +318,23 @@ export function ProjectsPage({
     const streams = streamsQuery.data?.streams ?? [];
     const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
       recordsAsShown(view.show, records, livePlanRecords);
+    // A role's activities, for one that sees them, as the view shows them.
+    const projectActivities =
+      activitiesOf === undefined
+        ? undefined
+        : {
+            ...projectActivityFields,
+            activities: asShown(plan.activities),
+            of: leavingFor(activitiesOf, leave),
+          };
     // Projects and proposals as the view shows them, so the features they name follow the view.
     const choices = {
       ...tableChoices(plan, choicesQuery.data, streams, effortQuery.data),
       projects: asShown(plan.projects),
       proposals: asShown(plan.proposals),
-      ...(activitiesOf === undefined
+      ...(projectActivities === undefined
         ? {}
-        : { activities: asShown(plan.activities) }),
+        : { activities: projectActivities.activities }),
     };
     // The records a customer's features are worked out from, as the view shows them. Every
     // customer follows those shown, so the pill still names one the Draft menu leaves out.
@@ -364,10 +379,9 @@ export function ProjectsPage({
       show: view.show,
       units: view,
       editsKind: (type) =>
-        view.show !== "live" &&
-        (type === "feature" || type === "activity"
-          ? plan.canEditFeatures
-          : plan.canEdit),
+        type === "feature" || type === "activity"
+          ? editsFeatureKinds(plan.canEditFeatures, view.show)
+          : view.show !== "live" && plan.canEdit,
       editsFeatureTeams,
       approves,
       seesFeatures,
@@ -398,21 +412,7 @@ export function ProjectsPage({
         },
       },
       showMilestones: showMilestonesOf,
-      activitiesOf:
-        activitiesOf === undefined
-          ? undefined
-          : {
-              showAll: (projectId) => {
-                leave(() => {
-                  activitiesOf.showAll(projectId);
-                });
-              },
-              add: (projectId) => {
-                leave(() => {
-                  activitiesOf.add(projectId);
-                });
-              },
-            },
+      activitiesOf: projectActivities?.of,
       follow: {
         showRecord: (next, id) => {
           // The tab is always one of the fixed tabs.
@@ -711,6 +711,9 @@ export function ProjectsPage({
             onOpen: openRecord,
             onMilestones: showMilestonesOf,
             onFeatures: showFeaturesOf("project"),
+            showOn:
+              projectActivities &&
+              ((project) => activitiesShowOn(projectActivities, project)),
           }),
           plan.projects,
         ),

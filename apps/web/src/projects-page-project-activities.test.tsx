@@ -6,7 +6,7 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { recordCell, recordDraft } from "./test-support.tsx";
+import { queryDetailRow, recordCell, recordDraft } from "./test-support.tsx";
 import {
   activity,
   answers,
@@ -78,7 +78,10 @@ const openProject = (
   );
 
 const activitiesRow = (panel: HTMLElement) =>
-  within(panel).queryByText("Activities", { selector: "dt" });
+  queryDetailRow("Activities", panel);
+
+// The Activities row's name, a link showing the project's activities on Activities.
+const showOnActivities = "Activities, show on Activities";
 
 describe("a project's activities on Projects", () => {
   it("lists the project's own activities in its details, folded past the first five", async () => {
@@ -113,10 +116,10 @@ describe("a project's activities on Projects", () => {
     expect(history.location.search).toContain(activity().id);
   });
 
-  it("shows the project's activities on Activities, filtered to it", async () => {
+  it("shows the project's activities on Activities, filtered to it, from the row's name", async () => {
     const { history } = await openProject();
     await userEvent.click(
-      within(sidePanel()).getByRole("button", { name: "Show on Activities" }),
+      within(sidePanel()).getByRole("button", { name: showOnActivities }),
     );
     await waitFor(() => {
       expect(history.location.pathname).toBe("/activities");
@@ -157,16 +160,39 @@ describe("a project's activities on Projects", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("offers Show on Activities in the project's menu, filtered to it", async () => {
+    const { history } = await openProject();
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", { name: /^Actions for/ }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Show on Activities" }),
+    );
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/activities");
+    });
+    expect(decodeURIComponent(history.location.search)).toContain(projectId);
+  });
+
+  it("offers no Show on Activities in the menu of a project with none", async () => {
+    await openProject(projectPlan({ activities: [] }));
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", { name: /^Actions for/ }),
+    );
+    await screen.findByRole("menuitem", { name: "Show on Milestones" });
+    expect(
+      screen.queryByRole("menuitem", { name: "Show on Activities" }),
+    ).toBeNull();
+  });
+
   it("says None for a project with no activities, still offering Add activity", async () => {
     await openProject(projectPlan({ activities: [] }));
     const panel = sidePanel();
     expect(
-      within(activitiesRow(panel)?.parentElement as HTMLElement).getByText(
-        "None",
-      ),
+      within(activitiesRow(panel) as HTMLElement).getByText("None"),
     ).toBeDefined();
     expect(
-      within(panel).queryByRole("button", { name: "Show on Activities" }),
+      within(panel).queryByRole("button", { name: showOnActivities }),
     ).toBeNull();
     expect(
       within(panel).getByRole("button", { name: "Add activity" }),
@@ -180,7 +206,7 @@ describe("a project's activities on Projects", () => {
     ]);
     const panel = sidePanel();
     expect(
-      within(panel).getByRole("button", { name: "Show on Activities" }),
+      within(panel).getByRole("button", { name: showOnActivities }),
     ).toBeDefined();
     expect(
       within(panel).queryByRole("button", { name: "Add activity" }),
@@ -213,7 +239,7 @@ describe("a project's activities on Projects", () => {
       }),
     );
     expect(
-      within(sidePanel()).getByRole("button", { name: "Show on Activities" }),
+      within(sidePanel()).getByRole("button", { name: showOnActivities }),
     ).toBeDefined();
     expect(
       within(sidePanel()).queryByRole("button", { name: "Add activity" }),

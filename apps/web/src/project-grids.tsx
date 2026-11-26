@@ -3,6 +3,7 @@
 // The Projects page's tables, customers, projects, proposals and milestones, each on the shared
 // table.
 
+import { activitiesColumn } from "./activity-list.tsx";
 import { activityColumns } from "./activity-table.tsx";
 import {
   type Activity,
@@ -34,7 +35,6 @@ import { isPending } from "./grid-drafts.ts";
 import {
   customersColumn,
   draftFieldsOf,
-  recordsColumn,
   field,
   firstStatus,
   idColumn,
@@ -54,12 +54,14 @@ import {
 } from "./plan-table.tsx";
 import { andOthers } from "./numbers.ts";
 import { RecordGrid } from "./record-grid.tsx";
+import { ShowOnItem } from "./record-details.tsx";
 import {
   type Column,
   type ColumnGroup,
   inGroupOrder,
   type RecordGridProps,
   type RecordTable,
+  type ShowOn,
 } from "./record-table.ts";
 
 // A customer's columns in the headed groups its details show them in, as a feature's are.
@@ -219,35 +221,22 @@ export function projectColumns(
       choices.features,
       choices.drafted.projects,
     ),
-    ...activitiesColumn(choices.activities),
+    ...projectActivitiesColumn(choices.activities),
     ...projectDateColumns.map(([key, label]) => projectDateColumn(key, label)),
   ];
 }
 
-export const activitiesColumnKey = "activityIds";
-
-export const activitiesOfProject = (
-  activities: readonly Activity[],
-  id: string,
-) => activities.filter(({ projectId }) => projectId === id);
-
-// A project's activities, on one line, for a role that sees them: read only, since an activity is
-// moved to another project on Activities.
-const activitiesColumn = (
+// A project's activities, for a role that sees them.
+const projectActivitiesColumn = (
   activities: readonly Activity[] | undefined,
 ): Column<Project, PlanChange>[] =>
   activities === undefined
     ? []
     : [
-        recordsColumn<Project, PlanChange>(
-          activitiesColumnKey,
-          "Activities",
+        activitiesColumn<Project, PlanChange>(
           activities,
-          {
-            namedBy: (project) =>
-              activitiesOfProject(activities, project.id).map(({ id }) => id),
-            readOnly: true,
-          },
+          "projectId",
+          ({ id }) => id,
         ),
       ];
 
@@ -263,18 +252,30 @@ export function projectTable(
     onOpen,
     onMilestones,
     onFeatures,
-  }: NamerMenu<Project> & { onMilestones?: (project: Project) => void } = {},
+    showOn,
+  }: NamerMenu<Project> & {
+    onMilestones?: (project: Project) => void;
+    // Where the project's activities show, for a role that sees them.
+    showOn?: ((project: Project) => ShowOn | undefined) | undefined;
+  } = {},
 ): RecordTable<Project, PlanChange, ProjectRequest> {
+  const listed = recordMenu<Project>([
+    ["Show on Milestones", onMilestones],
+    ["Show on Features", onFeatures],
+  ]);
   return planTable<Project, ProjectRequest>({
     type: "project",
     ...wordsOf("projects"),
     columns: () => projectColumns(choices),
     request: (changes) => merged(changes) as ProjectRequest,
     showDetails: onOpen,
-    menuItems: recordMenu<Project>([
-      ["Show on Milestones", onMilestones],
-      ["Show on Features", onFeatures],
-    ]),
+    menuItems: (project) =>
+      !isPending(project) && (
+        <>
+          {listed(project)}
+          <ShowOnItem showOn={showOn?.(project)} />
+        </>
+      ),
   });
 }
 

@@ -318,6 +318,7 @@ function DetailRow({
           : { live: column.live(draft as never), draft }
       }
       editing={editing}
+      showOn={column.showOn?.(record as never)}
     >
       {shown}
     </Row>
