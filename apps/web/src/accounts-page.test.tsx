@@ -489,6 +489,23 @@ describe("finding accounts", () => {
       ),
     ).toEqual(["Choose a column", "Roles", "Status"]);
   });
+
+  it("counts accounts by status with no draft's dot, as accounts have no drafts", async () => {
+    // Given the accounts broken down by status
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    renderApp(`/accounts?breakdown=${encodeURIComponent('["status"]')}`);
+
+    // Then each status has its figures, with no dot before any
+    const metrics = await screen.findByRole("region", { name: "Metrics" });
+    expect(
+      (await within(metrics).findAllByRole("rowheader")).length,
+    ).toBeGreaterThan(1);
+    expect(metrics.querySelector('td [class*="Mark"]')).toBeNull();
+  });
 });
 
 describe("the Accounts page's saved views", () => {
