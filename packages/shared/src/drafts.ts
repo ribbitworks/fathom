@@ -279,6 +279,14 @@ export const approvableKinds = (permissions: readonly string[]): DraftKind[] =>
 // A draft's key, its kind and its record's identifier, naming it alike on the server and the page.
 export const draftKey = (kind: string, id: string): string => `${kind} ${id}`;
 
+// The kind and record a draft's key names; a record's identifier may itself hold spaces.
+export const fromDraftKey = (
+  key: string,
+): { recordType: string; recordId: string } => {
+  const space = key.indexOf(" ");
+  return { recordType: key.slice(0, space), recordId: key.slice(space + 1) };
+};
+
 // The key of each draft asked for.
 export const draftKeysOf = (asked: DraftsAsked): string[] => {
   const of = (kind: DraftKind, ids: readonly string[] = []) =>

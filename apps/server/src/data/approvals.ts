@@ -21,7 +21,9 @@ import {
   approvesKind,
   type Asking,
   type DraftKind,
+  draftKeysOf,
   draftKinds,
+  fromDraftKey,
   type DraftsRequest,
   eitherOf,
   kindsAsked,
@@ -104,6 +106,11 @@ import {
   checkHiresAsked,
   rejectHiresIn,
 } from "./hire-approvals.ts";
+import {
+  discardPrivateOfGone,
+  publishedDraftsOf,
+  readPrivateBefore,
+} from "./private-gone.ts";
 
 const noDraft = "One of these people has no draft; refresh to see the latest";
 
@@ -434,6 +441,16 @@ export async function approveDrafts(
       const chosen = await withFills(transaction, actor, requested);
       const asked = await withUsedAcross(transaction, chosen);
       await refuseTakenAlongBeyondRole(transaction, actor, chosen, asked);
+      // Read before approving, so a record an approval removes can be taken back from everyone's
+      // private changes to it as they were.
+      const privateBefore = await readPrivateBefore(
+        transaction,
+        await publishedDraftsOf(
+          transaction,
+          "deleted",
+          draftKeysOf(asked).map(fromDraftKey),
+        ),
+      );
       const { made, values: unwritten } = await approveRecordDrafts(
         transaction,
         actor,
@@ -480,6 +497,8 @@ export async function approveDrafts(
         "approve",
       );
       await refuseOwnDrafts(transaction, actor, decided);
+      // An approval that removes a record leaves everyone's private changes to it nothing to change.
+      await discardPrivateOfGone(transaction, actor.dataClasses, privateBefore);
       await recordSensitiveChanges(transaction, actor.user.id, made);
       await recordHiringChanges(transaction, actor.user.id, made);
       await recordTeamDayChanges(transaction, actor.user.id, made);

@@ -1,22 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A user's private changes and the versions of the records they make, beside everyone else's: how
-// each is read, and what it is named. Part of the data access layer.
+// each is read, which go with those chosen, and what it is named. Part of the data access layer.
 
-import { privateChanges, type Reader } from "@fathom/db";
+import { changes, changeSets, privateChanges, type Reader } from "@fathom/db";
 import {
   type DraftKind,
+  draftKeysOf,
   draftingPermissions,
+  type DraftsRequest,
   hireCalled,
   type Permission,
   type RecordType,
+  withNeeded,
+  withUsers,
 } from "@fathom/shared";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import {
   type Actor,
   requireAnyPermission,
   seesSensitivity,
 } from "../access.ts";
+import { NotFoundError } from "../errors.ts";
 import {
   type ColumnsState,
   draftedField,
@@ -42,6 +47,15 @@ import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { readLiveTeams, readTeamDrafts } from "./feature-team-reads.ts";
 import { readToday } from "./settings.ts";
+import { type Transaction } from "./changes.ts";
+import { chunksByKind, openChangeSets } from "./draft-makers.ts";
+import { readFills } from "./fills.ts";
+import {
+  changeKey,
+  fillKeys,
+  type OwnDrafts,
+  usesAmong,
+} from "./unpublished-uses.ts";
 import type { TableColumns } from "./values.ts";
 
 export type Row = typeof privateChanges.$inferSelect;
@@ -257,3 +271,109 @@ export function subjectOf(versions: Versions, row: Row, actor: Actor): string {
 }
 
 export const orders = new Set(["choice-order"]);
+
+export async function removeRows(
+  transaction: Transaction,
+  userId: string,
+  rows: readonly Row[],
+): Promise<void> {
+  for (const [recordType, chunks] of chunksByKind(rows)) {
+    for (const chunk of chunks) {
+      await transaction
+        .delete(privateChanges)
+        .where(
+          and(
+            eq(privateChanges.userId, userId),
+            eq(privateChanges.recordType, recordType),
+            inArray(privateChanges.recordId, chunk),
+          ),
+        );
+    }
+  }
+}
+
+const notOwn =
+  "One of these changes is no longer unpublished; refresh to see the latest";
+
+// The user's changes to drafts in their open change sets, each with its change set and the role it
+// was made as.
+export const openDraftChanges = (reader: Reader, userId: string) =>
+  reader
+    .select({
+      changeSetId: changes.changeSetId,
+      recordType: changes.recordType,
+      recordId: changes.recordId,
+      madeAsRoleId: changeSets.madeAsRoleId,
+    })
+    .from(changes)
+    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+    .where(and(openChangeSets(userId), eq(changes.draft, true)))
+    .orderBy(asc(changes.id));
+
+export type OpenDraftChange = Awaited<
+  ReturnType<typeof openDraftChanges>
+>[number];
+
+// The records whose drafts each of the user's open change sets changes, by key, which are
+// published only together, since a change set is published whole.
+function savedTogether(rows: readonly OpenDraftChange[]): string[][] {
+  const sets = new Map<string, Set<string>>();
+  for (const row of rows) {
+    sets.set(
+      row.changeSetId,
+      (sets.get(row.changeSetId) ?? new Set()).add(changeKey(row)),
+    );
+  }
+  return [...sets.values()].map((keys) => [...keys]);
+}
+
+// The drafts as the user's own changes make them, with the changes that go together whole when
+// publishing, those of a fill and those saved together, or, when discarding, those of a fill.
+export async function ownDrafts(
+  reader: Reader,
+  userId: string,
+  versions: Versions,
+  sending: "publish" | "discard",
+  open?: readonly OpenDraftChange[],
+): Promise<OwnDrafts> {
+  const fills = fillKeys(await readFills(reader, userId));
+  return {
+    lists: versions.mine.lists,
+    columns: versions.mine.columns,
+    people: versions.people.mine,
+    hires: versions.hires.mine,
+    records: versions.records.mine,
+    together:
+      sending === "publish"
+        ? [
+            ...fills,
+            ...savedTogether(open ?? (await openDraftChanges(reader, userId))),
+          ]
+        : fills,
+  };
+}
+
+// The actor's unpublished drafts, with what they change, and those a request chooses, with those
+// that go with them, or all of them when it chooses none: those they use, and those that go together
+// with them, when publishing; those that use them, and the rest of a fill, when discarding. A change
+// that is not the user's own unpublished change is answered as one that does not exist, so asking
+// reveals nothing of anyone else's.
+export async function readGoing(
+  transaction: Transaction,
+  userId: string,
+  chosen: DraftsRequest | undefined,
+  sending: "publish" | "discard",
+) {
+  const all = await ownRows(transaction, userId);
+  const versions = await readVersions(transaction, userId, all);
+  if (chosen === undefined) return { versions, rows: all };
+  const asked = draftKeysOf(chosen);
+  const own = new Set(all.map(changeKey));
+  if (asked.some((key) => !own.has(key))) throw new NotFoundError(notOwn);
+  const uses = usesAmong(
+    await ownDrafts(transaction, userId, versions, sending),
+    all,
+  );
+  const going = (sending === "publish" ? withNeeded : withUsers)(uses, asked);
+  return { versions, rows: all.filter((row) => going.has(changeKey(row))) };
+}

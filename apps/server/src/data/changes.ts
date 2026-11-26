@@ -5,6 +5,7 @@
 // queries the database. Changes to people are recorded as changes to their drafts until approved.
 
 import {
+  type ChangeMaker,
   type ChangeSetKind,
   type changes,
   type Database,
@@ -144,14 +145,25 @@ export async function recordChanges(
   maker: Actor,
   made: readonly Change[],
   kind: ChangeSetKind = "edit",
-  unpublished = editing.includes(kind) &&
-    made.some(({ draft }) => draft === true),
+  unpublished?: boolean,
 ): Promise<string | null> {
-  return recordChangeSet(
+  return recordChangesAs(
     transaction,
     { userId: maker.user.id, roleId: maker.roleId },
     made,
     kind,
     unpublished,
   );
+}
+
+// Records changes as recordChanges does, for a user and role that need not be the actor's.
+export async function recordChangesAs(
+  transaction: Pick<Database, "insert">,
+  maker: ChangeMaker,
+  made: readonly Change[],
+  kind: ChangeSetKind,
+  unpublished = editing.includes(kind) &&
+    made.some(({ draft }) => draft === true),
+): Promise<string | null> {
+  return recordChangeSet(transaction, maker, made, kind, unpublished);
 }

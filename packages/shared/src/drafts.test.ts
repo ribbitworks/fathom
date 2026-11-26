@@ -19,6 +19,7 @@ import {
   recordRefSchema,
   rejectionRequestSchema,
   draftKeysOf,
+  fromDraftKey,
   withNeeded,
   withUsers,
   takenAlongRefusal,
@@ -258,6 +259,15 @@ describe("the keys of the drafts asked for", () => {
 
   it("names none of the kinds not asked for", () => {
     expect(draftKeysOf({ columns: ["f"] })).toEqual(["field f"]);
+  });
+});
+
+describe("the record a draft's key names", () => {
+  it("splits the key at its first space, keeping any later ones in the identifier", () => {
+    expect(fromDraftKey("choice-order list 1")).toEqual({
+      recordType: "choice-order",
+      recordId: "list 1",
+    });
   });
 });
 

@@ -17,6 +17,7 @@ import {
   draftsChangedBy,
   type DraftKind,
   draftKey,
+  fromDraftKey,
   type Tier,
 } from "@fathom/shared";
 import { and, eq, inArray, or, type SQL, sql } from "drizzle-orm";
@@ -201,13 +202,8 @@ export async function refuseOwnDrafts(
 ): Promise<void> {
   if (actor.permissions.includes("drafts:approve-own")) return;
   const byType = new Map<string, Set<string>>();
-  for (const key of decided) {
-    const space = key.indexOf(" ");
-    const recordType = key.slice(0, space);
-    byType.set(
-      recordType,
-      (byType.get(recordType) ?? new Set()).add(key.slice(space + 1)),
-    );
+  for (const { recordType, recordId } of decided.map(fromDraftKey)) {
+    byType.set(recordType, (byType.get(recordType) ?? new Set()).add(recordId));
   }
   for (const [recordType, ids] of byType) {
     for (const chunk of inChunks([...ids])) {

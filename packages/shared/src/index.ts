@@ -252,6 +252,7 @@ export {
   type DraftsRequest,
   draftKey,
   draftKeysOf,
+  fromDraftKey,
   draftsWhere,
   type DraftState,
   draftShape,

@@ -13,20 +13,17 @@ import {
 } from "@fathom/db";
 import {
   draftKey,
-  draftKeysOf,
   type DraftsRequest,
   type Unpublished,
   type UnpublishedPublished,
-  withNeeded,
-  withUsers,
 } from "@fathom/shared";
-import { and, eq, inArray, max, notExists } from "drizzle-orm";
+import { and, eq, max, notExists } from "drizzle-orm";
 import { type Actor } from "../access.ts";
-import { ConflictError, NotFoundError } from "../errors.ts";
+import { ConflictError } from "../errors.ts";
 import { type Change, type Transaction } from "./changes.ts";
 import { draftedField, nameTaken } from "./column-state.ts";
 import { drafted, wantsNoDraft } from "./draft-records.ts";
-import { chunksByKind, openChangeSets } from "./draft-makers.ts";
+import { openChangeSets } from "./draft-makers.ts";
 import { lockDrafts } from "./drafts.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
 import { typeOf } from "./column-types.ts";
@@ -40,27 +37,33 @@ import {
 import { removeEmptyOrders } from "./lists.ts";
 import { isRecordType } from "./records.ts";
 import { recordFits } from "./record-drafting.ts";
-import { readFills } from "./fills.ts";
 import { editsDraft } from "./draft-editors.ts";
 import {
   changeKey,
-  fillKeys,
   linksAmong,
-  type OwnDrafts,
   publishableAmong,
   usesAmong,
 } from "./unpublished-uses.ts";
 import {
   idsOf,
+  openDraftChanges,
   orders,
+  ownDrafts,
   ownRows,
+  readGoing,
   readVersions,
+  removeRows,
   requireDrafting,
   type Row,
   subjectOf,
   versionOf,
   type Versions,
 } from "./private-versions.ts";
+import {
+  discardPrivateOfGone,
+  publishedDraftsOf,
+  readPrivateBefore,
+} from "./private-gone.ts";
 
 // The user's unpublished changes, newest first: by the last change made to each record.
 export async function readUnpublished(
@@ -186,109 +189,6 @@ async function takenPeople(
   return taken;
 }
 
-const notOwn =
-  "One of these changes is no longer unpublished; refresh to see the latest";
-
-// The user's changes to drafts in their open change sets, each with its change set and the role it
-// was made as.
-const openDraftChanges = (reader: Reader, userId: string) =>
-  reader
-    .select({
-      changeSetId: changes.changeSetId,
-      recordType: changes.recordType,
-      recordId: changes.recordId,
-      madeAsRoleId: changeSets.madeAsRoleId,
-    })
-    .from(changes)
-    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
-    .where(and(openChangeSets(userId), eq(changes.draft, true)));
-
-type OpenDraftChange = Awaited<ReturnType<typeof openDraftChanges>>[number];
-
-// The records whose drafts each of the user's open change sets changes, by key, which are
-// published only together, since a change set is published whole.
-function savedTogether(rows: readonly OpenDraftChange[]): string[][] {
-  const sets = new Map<string, Set<string>>();
-  for (const row of rows) {
-    sets.set(
-      row.changeSetId,
-      (sets.get(row.changeSetId) ?? new Set()).add(changeKey(row)),
-    );
-  }
-  return [...sets.values()].map((keys) => [...keys]);
-}
-
-// The drafts as the user's own changes make them, with the changes that go together whole when
-// publishing, those of a fill and those saved together, or, when discarding, those of a fill.
-async function ownDrafts(
-  reader: Reader,
-  userId: string,
-  versions: Versions,
-  sending: "publish" | "discard",
-  open?: readonly OpenDraftChange[],
-): Promise<OwnDrafts> {
-  const fills = fillKeys(await readFills(reader, userId));
-  return {
-    lists: versions.mine.lists,
-    columns: versions.mine.columns,
-    people: versions.people.mine,
-    hires: versions.hires.mine,
-    records: versions.records.mine,
-    together:
-      sending === "publish"
-        ? [
-            ...fills,
-            ...savedTogether(open ?? (await openDraftChanges(reader, userId))),
-          ]
-        : fills,
-  };
-}
-
-// The actor's unpublished drafts, with what they change, and those a request chooses, with those
-// that go with them, or all of them when it chooses none: those they use, and those that go together
-// with them, when publishing; those that use them, and the rest of a fill, when discarding. A change
-// that is not the user's own unpublished change is answered as one that does not exist, so asking
-// reveals nothing of anyone else's.
-export async function readGoing(
-  transaction: Transaction,
-  userId: string,
-  chosen: DraftsRequest | undefined,
-  sending: "publish" | "discard",
-) {
-  const all = await ownRows(transaction, userId);
-  const versions = await readVersions(transaction, userId, all);
-  if (chosen === undefined) return { versions, rows: all };
-  const asked = draftKeysOf(chosen);
-  const own = new Set(all.map(changeKey));
-  if (asked.some((key) => !own.has(key))) throw new NotFoundError(notOwn);
-  const uses = usesAmong(
-    await ownDrafts(transaction, userId, versions, sending),
-    all,
-  );
-  const going = (sending === "publish" ? withNeeded : withUsers)(uses, asked);
-  return { versions, rows: all.filter((row) => going.has(changeKey(row))) };
-}
-
-export async function removeRows(
-  transaction: Transaction,
-  userId: string,
-  rows: readonly Row[],
-): Promise<void> {
-  for (const [recordType, chunks] of chunksByKind(rows)) {
-    for (const chunk of chunks) {
-      await transaction
-        .delete(privateChanges)
-        .where(
-          and(
-            eq(privateChanges.userId, userId),
-            eq(privateChanges.recordType, recordType),
-            inArray(privateChanges.recordId, chunk),
-          ),
-        );
-    }
-  }
-}
-
 // The user's open change sets with no change to a draft they still have unpublished changes to, so
 // a change set saved with changes to several records is published once all of them are.
 const noneStillUnpublished = (reader: Reader, userId: string) =>
@@ -376,6 +276,15 @@ export async function publishUnpublished(
         `The change to ${subjectOf(versions, misfit, actor)} no longer fits the data; change or discard it, then publish again`,
       );
     }
+    const privateBefore = await readPrivateBefore(
+      transaction,
+      await publishedDraftsOf(
+        transaction,
+        "created",
+        rows.filter(wantsNoDraft),
+      ),
+      userId,
+    );
     for (const row of rows) {
       const record = and(
         eq(drafts.recordType, row.recordType),
@@ -411,6 +320,8 @@ export async function publishUnpublished(
         and(openChangeSets(userId), noneStillUnpublished(transaction, userId)),
       );
     await removeEmptyOrders(transaction, undefined);
+    // Publishing the discard of a draft that added a record leaves it gone.
+    await discardPrivateOfGone(transaction, actor.dataClasses, privateBefore);
     return { total: rows.length, left };
   });
 }
