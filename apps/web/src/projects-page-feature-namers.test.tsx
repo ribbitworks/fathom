@@ -57,6 +57,19 @@ describe("the Features page", () => {
       expect(cell(second, "projectIds")?.textContent).toBe("");
     });
 
+    it("names each the same way in Metrics", async () => {
+      await openNamed(
+        `/features?breakdown=${encodeURIComponent(JSON.stringify(["projectIds"]))}`,
+      );
+      const metrics = await screen.findByRole("region", { name: "Metrics" });
+      const named = within(metrics).getByRole("rowheader", {
+        name: "FP-1 Fictional Project",
+      });
+      const id = within(named).getByText("FP-1");
+      expect(named.firstElementChild).toBe(id);
+      expect(id.getAttribute("style")).toContain("dimmed");
+    });
+
     it.each([
       [
         "marks a project a draft adds the feature to",

@@ -29,6 +29,7 @@ import {
   type PlanTab,
   identifiedLabel,
 } from "./projects.ts";
+import type { Identified, IdentifiedChoice } from "./identified.ts";
 import { tipAttribute } from "./table-tips.tsx";
 import {
   type DraftedPart,
@@ -129,23 +130,18 @@ export function field<Rec extends PlanRecord>(
   });
 }
 
-// A record that may have an ID of its own, such as a Project ID, beside its name.
-export interface Identified {
-  id: string;
-  name: string;
-  externalId?: string | null;
-  draft?: { action: string } | undefined;
-}
-
 // Records offered by their ID, if they have one, then their name, so similar names are told apart.
-export const identified = (records: readonly Identified[]): Choice[] =>
-  records.map((record) =>
-    choice(
+export const identified = (
+  records: readonly Identified[],
+): IdentifiedChoice[] =>
+  records.map((record) => ({
+    ...choice(
       record.id,
       identifiedLabel(record),
       record.draft?.action === "deleted",
     ),
-  );
+    record,
+  }));
 
 export function RecordName({ record }: { record: Identified }) {
   return (

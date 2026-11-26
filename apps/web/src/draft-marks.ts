@@ -56,6 +56,8 @@ export function waitingWords(draft: DraftLike): string {
   return `${waiting} is waiting for approval.`;
 }
 
+export const rejectedChangeWords = "A change was rejected.";
+
 // Live's words where the view shows only what is live.
 export const liveWaitingWords = (draft: DraftLike): string =>
   `Live. ${waitingWords(draft)}`;

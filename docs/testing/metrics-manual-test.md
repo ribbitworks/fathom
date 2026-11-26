@@ -103,7 +103,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - "Engineering Manager 17 (10.6%)"
       - "Architect 0 (0%)"
       - "All people and planned hires 160 (100%)", set apart under the rest
-    - No row shows a green dot and a second figure.
+    - A green dot is before the counts of 'Engineering Manager' and the **All** row, and before the shares of 'Software Engineer', 'Test Engineer', 'SDET' and 'Engineering Manager'.
+    - No other figure has a dot, and none has a second figure under it.
+  - **Notes:**
+
+- [ ] `A63D` Point at the green dot before the 'Engineering Manager' row's count.
+  - **Expected:** A tip reads "Live. A change is waiting for approval."
   - **Notes:**
 
 ### METRICS-03: Two Columns Are Crossed
@@ -197,9 +202,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `04C1` Set **and by** to **Nothing more**.
   - **Expected:**
-    - The 'P1' row shows a count.
+    - The 'P1' row's count is a semibold "20", after a yellow dot.
     - Under the count, a green dot before a dimmed "18".
-    - Rows whose count drafts do not change show no green dot.
+    - Rows whose figures drafts do not change, such as 'P5', show no dots.
+  - **Notes:**
+
+- [ ] `1CE8` Point at the yellow dot before the 'P1' row's count.
+  - **Expected:** A tip reads "A change is waiting for approval."
+  - **Notes:**
+
+- [ ] `A408` Open the Draft menu, and select **Drafts applied**.
+  - **Expected:** A tick is before **Drafts applied**.
+  - **Notes:**
+
+- [ ] `56FA` Press Esc.
+  - **Expected:**
+    - The 'P1' row's count is "20", after a yellow dot, not semibold.
+    - No figure has a second figure under it.
   - **Notes:**
 
 ### METRICS-06: The Panel Is Resized

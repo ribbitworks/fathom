@@ -11,7 +11,7 @@ import { breaksDown, kindOf } from "./grid-columns.tsx";
 import { draftTotal } from "./drafts.ts";
 import { draftColumn, waitingDrafts } from "./grid-drafts.ts";
 import { TableScrolling } from "./grid-layout.ts";
-import { countedRecords } from "./live-records.ts";
+import { countedRecords, removedWhenApplied } from "./live-records.ts";
 import { MetricsPanel } from "./metrics-panel.tsx";
 import { chosenSum, sumAtFirst } from "./table-view.ts";
 import { metricsButtonId, metricsPanelId } from "./metrics.ts";
@@ -52,6 +52,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     | "nests"
     | "laysOutColumns"
     | "countedOnce"
+    | "viewed"
     | "shownRecords"
     | "setPanelWriting"
     | "problem"
@@ -98,6 +99,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     nests,
     laysOutColumns,
     countedOnce,
+    viewed,
     shownRecords,
     setPanelWriting,
     problem,
@@ -140,6 +142,16 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     }
     return liveBeside(column) ?? liveColumn(column);
   };
+  // Drafts applied leaves out the records drafted to be removed, which count as published and live;
+  // Live only counts the records as drafted, to mark what the drafts will move. Worked out only
+  // while the metrics show.
+  const besides = () => {
+    if (!withDrafts) return undefined;
+    if (view.show === "drafts") {
+      return viewed(everyone.filter(removedWhenApplied));
+    }
+    return view.show === "live" ? viewed(everyone) : [];
+  };
   const metrics = view.breakdown !== undefined && (
     <MetricsPanel
       one={table.one}
@@ -148,6 +160,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
       {...countedRecords(
         withDrafts ? view.show : "live",
         countedOnce(shownRecords),
+        ((shown) => shown && countedOnce(shown))(besides()),
         allColumns,
         liveForMetrics,
         table.liveRecords,

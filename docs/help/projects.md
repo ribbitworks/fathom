@@ -120,7 +120,7 @@ You're done when the page shows what you chose.
 1. Under **Break down by**, choose the column to count by.
 1. To count by two columns at once, choose the second under **and by**.
 
-The counts include every row the table shows, so a search or a filter changes them. You're done when the panel shows how many records hold each value of the column you chose.
+The counts include every row the table shows, so a search or a filter changes them. A dot before a count marks a draft that changes it, as on [People](people.md#count-people). You're done when the panel shows how many records hold each value of the column you chose.
 
 See [Features](features.md#count-features) for more.
 

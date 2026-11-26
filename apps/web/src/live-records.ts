@@ -4,7 +4,7 @@
 
 import type { Field, List, Show } from "@fathom/shared";
 import { draftedLists, liveLists } from "./lists.ts";
-import type { CountedRows } from "./metrics-panel.tsx";
+import type { CountedDrafts } from "./metrics-panel.tsx";
 import type { CellRecord, GridRecord } from "./record-table.ts";
 import { besideLive } from "./status-mark.tsx";
 import type { TableColumn } from "./table-view.ts";
@@ -53,18 +53,15 @@ export const withLiveFields = <
 });
 
 // Records with the drafts chosen undone, each as it is live, and those the drafts add left out.
-export function undoDrafts<
-  Rec extends Undoable & { draft?: { live: object } | undefined },
+export const undoDrafts = <
+  Rec extends Undoable & { id: string; draft?: { live: object } | undefined },
 >(
   records: readonly Rec[],
   undone: (draft: NonNullable<Rec["draft"]>) => boolean,
-): Rec[] {
-  return records.flatMap((record) =>
-    record.draft !== undefined && undone(record.draft)
-      ? liveRecordsBy([record], withLiveFields)
-      : [record],
+): Rec[] =>
+  withDraftsUndone(records, undone, (each) =>
+    liveRecordsBy(each, withLiveFields),
   );
-}
 
 // A record's values of one sort, with those a draft changes put back as they are live.
 export const withLiveValues = <Held>(
@@ -115,26 +112,65 @@ export function liveRecordsOf<Rec extends CellRecord>(
   });
 }
 
-// The records the metrics count, as the Draft menu shows them. With drafts beside live, they count
-// as drafted, leaving out those drafted to be removed, and as they are live, which `liveRecords`
-// gives, by each column's live copy, which `liveOf` gives; otherwise they count as shown.
+// The records the metrics count, as the Draft menu shows them, leaving out those drafted to be
+// removed. While it shows drafts, they are counted too as published, without the user's own
+// unpublished changes; as waiting, without rejected drafts as well; and live, by each column's live
+// copy, which `liveOf` gives, so each figure tells what moves it. Live only counts them as the drafts
+// will make them too, with and without the user's own unpublished changes. `besides` are the records
+// the view would show that `shown` leaves out: with drafts applied, those drafted to be removed, and
+// live only, every record as drafted; undefined where nothing is drafted.
 export function countedRecords<
   Rec extends GridRecord,
   Col extends TableColumn<Rec>,
 >(
   show: Show,
   shown: readonly Rec[],
+  besides: readonly Rec[] | undefined,
   columns: readonly Col[],
   liveOf: (column: Col) => Col | undefined,
   liveRecords: (records: readonly Rec[]) => Rec[],
-): { rows: Rec[]; live?: CountedRows<Rec> } {
-  if (show !== "both") return { rows: [...shown] };
+): CountedDrafts<Rec> {
+  if (show === "live") {
+    if (besides === undefined) return { rows: [...shown], besideLive: false };
+    const toCome = (records: readonly Rec[]) => ({
+      rows: recordsAsShown("drafts", records, liveRecords),
+      columns: [...columns],
+    });
+    return {
+      rows: [...shown],
+      coming: toCome(besides),
+      comingPublished: toCome(
+        withDraftsUndone(
+          besides,
+          (draft) => draft.unpublished === true,
+          liveRecords,
+        ),
+      ),
+      besideLive: false,
+    };
+  }
+  const kept = (records: readonly Rec[]) =>
+    records.filter(({ draft }) => draft?.action !== "deleted");
+  const drafted = [...shown, ...(besides ?? [])];
+  const published = withDraftsUndone(
+    drafted,
+    (draft) => draft.unpublished === true,
+    liveRecords,
+  );
+  const waiting = withDraftsUndone(
+    published,
+    (draft) => draft.state === "rejected",
+    liveRecords,
+  );
   return {
-    rows: shown.filter(({ draft }) => draft?.action !== "deleted"),
+    rows: kept(shown),
+    published: { rows: kept(published), columns: [...columns] },
+    waiting: { rows: kept(waiting), columns: [...columns] },
     live: {
-      rows: liveRecords(shown),
+      rows: liveRecords(drafted),
       columns: columns.flatMap((column) => liveOf(column) ?? []),
     },
+    besideLive: besideLive(show),
   };
 }
 
@@ -200,17 +236,36 @@ export function recordsAsShown<Rec extends GridRecord>(
 ): Rec[] {
   if (show === "live") return liveRecords(records);
   if (besideLive(show)) return [...records];
-  // Made from every record, since a record's live form can depend on others, such as its live
-  // manager's end date.
+  return withDraftsUndone(
+    records,
+    (draft) => draft.state === "rejected",
+    liveRecords,
+  ).filter((record) => !removedWhenApplied(record));
+}
+
+// Whether Drafts applied leaves a record out: drafted to be removed, unless the removal was rejected.
+export const removedWhenApplied = ({ draft }: GridRecord): boolean =>
+  draft?.action === "deleted" && draft.state !== "rejected";
+
+// The records with the drafts chosen taken back, each as it is live, and those the drafts add left
+// out. Made from every record, since a record's live form can depend on others, such as its live
+// manager's end date.
+export function withDraftsUndone<
+  Rec extends { id: string; draft?: object | undefined },
+>(
+  records: readonly Rec[],
+  undone: (draft: NonNullable<Rec["draft"]>) => boolean,
+  liveRecords: (records: readonly Rec[]) => Rec[],
+): Rec[] {
+  const undoes = ({ draft }: Rec) => draft !== undefined && undone(draft);
+  if (!records.some(undoes)) return [...records];
   const live = new Map(
     liveRecords(records).map((record) => [record.id, record]),
   );
   return records.flatMap((record) => {
-    if (record.draft?.state === "rejected") {
-      const taken = live.get(record.id);
-      return taken === undefined ? [] : [taken];
-    }
-    return record.draft?.action === "deleted" ? [] : [record];
+    if (!undoes(record)) return [record];
+    const taken = live.get(record.id);
+    return taken === undefined ? [] : [taken];
   });
 }
 
