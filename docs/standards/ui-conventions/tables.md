@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Tables, Addresses and Search
@@ -187,13 +187,15 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Drafts:** As the Draft menu shows them: beside live, each drafted record's draft row, then its Live row; applied, the records as drafted; live only, the records as they are.
     - **The Draft column:** A Draft column says Yes on each row that differs from live, under every choice, and is empty on every other row, so a spreadsheet's filter can leave out either.
     - **The Change column:** A Change column says what the draft does, such as Added, Changed, not published, or Added, rejected. Under live only, it says what a waiting draft would change, as its green dot's tip says.
+  - **As on:** On a page with a date control, such as People, every row starts with an As on column, the day shown as 2027-03-31, so a file says when its data was true.
+  - **Fixed classes:** A table whose columns' classes are fixed rather than set on Data classes, such as Accounts', gives each column its class for the file. Accounts' Name and Email address are Personal, so the file asks and is recorded, but is never refused for the class, since everyone who sees accounts sees them.
   - **Rows:** Always flat, whatever the grouping, since spreadsheets filter and sort only rows without headings. Total rows are left out; a record under several headings is in the file once.
   - **Values:** Numbers without their unit, which the heading names, such as Effort (PD); days as 2027-03-31; several values joined by a semicolon and a space; notes as plain text in one cell; checkboxes as Yes or No; a link as its address, or its text and its address in brackets.
     - **Values a spreadsheet would run:** A value other than a number that starts with =, +, -, @, a tab or a carriage return gets an apostrophe before it, so a spreadsheet shows it rather than running it.
   - **The file:** UTF-8 with a byte order mark, so spreadsheets read names in any script, and lines ending in a carriage return and line feed. A value holding the separator, a quote or a line break is quoted per RFC 4180, in TSV as in CSV.
   - **The name:** Lower case, its parts joined by underscores and each part's words by hyphens: fathom, the page, the saved view if one is applied, the exporter's account name, drafts-and-live or drafts if it holds any, and the day shown, such as fathom_people_engineers_engineering-director_drafts-and-live_2027-03-31.csv.
   - **Saving:** The browser's Save dialog opens with the name filled in where the browser offers one, as Chromium browsers do; Safari and Firefox follow their download settings. Cancelling saves and records nothing.
-  - **Drawn by:** `PageExportMenu` and `useOfferedExport` in `apps/web/src/page-export.tsx`, offered for a table by `useTableExport` in `apps/web/src/table-export.tsx` from the table's `exported` in `apps/web/src/record-table.ts`, `ExportQuestion` in `apps/web/src/export-question.tsx`, and the file from `apps/web/src/exports.ts`.
+  - **Drawn by:** `PageExportMenu` and `useOfferedExport` in `apps/web/src/page-export.tsx`, offered for a table by `useTableExport` in `apps/web/src/table-export.tsx` from the table's `exported` in `apps/web/src/record-table.ts` (`generalExport` there for a table whose data is all General, `classOf` for fixed classes and `asOn` for the day shown), `ExportQuestion` in `apps/web/src/export-question.tsx`, and the file from `apps/web/src/exports.ts`.
   - **Example:** On People, as the Engineering Director, choose the Export icon, then CSV file.
 
 ## Search

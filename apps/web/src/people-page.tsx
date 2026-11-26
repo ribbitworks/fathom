@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The People page: everyone the user may see, and the planned hires, in a table edited like a
-// spreadsheet, with the columns people have added.
+// The People page.
 
 import { LoadProblem } from "./load-problem.tsx";
 import type {
@@ -410,6 +409,7 @@ export function PeoplePage({
           closeSelected={closeShown}
           linkedColumn={linkedColumn}
           teamColourOf={teamColourOf}
+          day={day ?? opened}
           count={countOn}
           dataClasses={access.dataClasses}
           // On a day where nothing can be changed, People is read as approved, as the Org chart is.

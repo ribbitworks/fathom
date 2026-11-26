@@ -10,6 +10,8 @@ A class decides who sees the data.
 - **Personal** data is people's private and HR details. Only roles given **Personal** see it.
 - **Confidential** data is business data not yet announced. Only roles given **Confidential** see it.
 
+Accounts' names and email addresses are the one exception. Every role that opens **Accounts** sees them, but exporting them asks first and is recorded, as exporting Personal data is.
+
 A page or view that needs a class opens only for roles that see that class. So when you change a class, you can change which pages each role has.
 
 Most changes in Fathom are drafts, which wait for someone to approve them before they go live. A change of class isn't: it takes effect straight away, and it has no **Undo**.

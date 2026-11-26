@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/releases.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Fathom: Releases Page
@@ -16,7 +16,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 ## Layout
 
 - **Tabs:** **Releases**, **Cycles** and **Schedules**, as [The Page Heading](../../standards/ui-conventions/pages-and-panels.md#the-page-heading) sets out, kept in the address.
-- **Tables:** Each tab is the shared table, read only, with its own saved views. Records change only in their side panel.
+- **Tables:** Each tab is the shared table, read only, with its own saved views and Export, as [Exporting](../../standards/ui-conventions/tables.md#exporting) sets out. Releases, cycles and schedules are General, so a file is saved at once. Records change only in their side panel.
 - **Timeline:** The [shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sits above the table and draws the schedules holding what it lists, in its order, apart from retired ones, so a search, filter or saved view narrows both.
 - **Scrolling:** The timeline and table scroll on their own; the timeline grows to about half the window.
 

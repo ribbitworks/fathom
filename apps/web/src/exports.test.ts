@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for exporting a table as a file: each kind of value as a file holds it, CSV and TSV quoting,
-// headings naming their unit, values a spreadsheet would run kept as text, the file's name, the
-// question asked before exporting Personal or Confidential data, what the server is told, and that
-// the file is saved only once the export is recorded.
+// Tests for exporting a table as a file, and for recording an export.
 
 import type { Choice, Link } from "@fathom/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -358,6 +355,12 @@ describe("recording an export", () => {
       columns: ["startDate", "estimate"],
       details: ["hiringPlan"],
     });
+  });
+
+  it("leaves out the Key column, which is General and not a column the server holds", () => {
+    expect(
+      exportRecordOf("accounts", [{ key: "recordKey" }, { key: "name" }]),
+    ).toEqual({ table: "accounts", columns: ["name"], details: [] });
   });
 
   it("names the details the rows hold before the columns", () => {

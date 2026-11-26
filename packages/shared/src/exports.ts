@@ -1,23 +1,68 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Exporting a table as a file: what the server is told of an export, so one holding Personal or
-// Confidential data is recorded in the access history, and the classified data an export holds in
-// words, which the question asked before exporting and the access history share.
+// What the server is told of an export, and the classified data an export holds, in words.
 
 import { z } from "zod";
-import { type Tier, tierSchema } from "./access.ts";
+import { type Permission, type Tier, tierSchema } from "./access.ts";
 import type { ColumnTable } from "./people.ts";
 import { classifiedFieldSchema, classNames } from "./data-classes.ts";
 import { allOf } from "./words.ts";
 
-// The tables whose columns carry classes the server can check: those that can have columns added.
-export const exportedTableSchema = z.enum([
+const columnTables = [
   "people",
   "features",
   "activities",
-] as const satisfies readonly ColumnTable[]);
+] as const satisfies readonly ColumnTable[];
+
+const fixedTables = ["accounts"] as const;
+
+export type FixedClassTable = (typeof fixedTables)[number];
+
+// The tables whose columns carry classes the server can check: those that can have columns added,
+// and those whose columns' classes are fixed.
+export const exportedTableSchema = z.enum([...columnTables, ...fixedTables]);
 
 export type ExportedTable = z.infer<typeof exportedTableSchema>;
+
+export const isFixedClassTable = (
+  table: ExportedTable,
+): table is FixedClassTable =>
+  (fixedTables as readonly string[]).includes(table);
+
+// A column by its heading and its class.
+export interface ClassedColumn {
+  name: string;
+  dataClass: Tier;
+}
+
+// Accounts' columns by key. An account's name and email address say who holds it, so they are
+// Personal.
+export const accountColumnClasses = {
+  name: { name: "Name", dataClass: "personal" },
+  email: { name: "Email address", dataClass: "personal" },
+  roles: { name: "Roles", dataClass: "general" },
+  status: { name: "Status", dataClass: "general" },
+  created: { name: "Created", dataClass: "general" },
+} as const satisfies Readonly<Record<string, ClassedColumn>>;
+
+// The tables whose columns' classes are fixed rather than set on Data classes: what an export of
+// each is recorded as, the permission that shows the table, and its columns by key.
+export const fixedClassTables: Readonly<
+  Record<
+    FixedClassTable,
+    {
+      name: string;
+      viewNeeds: Permission;
+      columns: ReadonlyMap<string, ClassedColumn>;
+    }
+  >
+> = {
+  accounts: {
+    name: "Accounts",
+    viewNeeds: "administration:view",
+    columns: new Map(Object.entries(accountColumnClasses)),
+  },
+};
 
 // The most columns an export names, well past any table's, so one entry stays small.
 const mostColumns = 200;

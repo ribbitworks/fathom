@@ -522,6 +522,7 @@ function peopleTable(
   dataClasses: DataClasses,
   changesFrom: ChangesFrom | undefined,
   teamColourOf: (personId: string) => PaletteColour | null,
+  asOn: string,
 ): RecordTable<Person, RowChange, RowRequest> {
   const kindOf = (row: Person) => row.kind ?? personKind;
   // Each built-in column's class, as the server decides who is sent it. A Start column showing
@@ -567,6 +568,7 @@ function peopleTable(
     ),
     exported: {
       recordedAs: "people",
+      asOn,
       // Planned hires' rows are the hiring plan, whatever columns are exported.
       held: (rows, show) => [
         ...(rows.some(isHire)
@@ -677,6 +679,8 @@ type PeopleGridProps = Omit<
   changesFrom?: ChangesFrom | undefined;
   // The colour of the team each person leads, which the team columns show.
   teamColourOf?: (personId: string) => PaletteColour | null;
+  // The day People shows, which an export says it is as on; today when not given.
+  day?: string | undefined;
 };
 
 export function PeopleGrid({
@@ -690,6 +694,7 @@ export function PeopleGrid({
   onFill,
   changesFrom,
   teamColourOf = noTeamColour,
+  day,
   ...props
 }: PeopleGridProps) {
   return (
@@ -712,6 +717,7 @@ export function PeopleGrid({
         dataClasses,
         changesFrom,
         teamColourOf,
+        day ?? today(),
       )}
       canAdd={showPosition && changesFrom === undefined}
       rowActions={changesFrom === undefined}

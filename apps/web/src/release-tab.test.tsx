@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Releases page's Releases tab as a whole: its table, views and address.
+// Tests for the Releases page's Releases tab as a whole.
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { cleanup, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import {
@@ -12,7 +12,14 @@ import {
   streamId,
   streamsAnswer,
 } from "./test-releases.ts";
-import { bodyOf, renderApp, serverAnswers, signedIn } from "./test-support.tsx";
+import {
+  bodyOf,
+  renderApp,
+  savedFiles,
+  serverAnswers,
+  signedIn,
+} from "./test-support.tsx";
+import { exportedCsv } from "./test-exports.tsx";
 import {
   setUpEachTest,
   release,
@@ -25,6 +32,7 @@ import {
   rowTexts,
   detailsOf,
 } from "./test-release-tab.tsx";
+import { plan } from "./test-projects-page.tsx";
 
 setUpEachTest();
 
@@ -243,5 +251,40 @@ describe("the Releases page's address", () => {
       "/releases",
       { grouping: "status", tab: "schedules", open: streamId },
     ]);
+  });
+});
+
+describe("exporting the Releases tab", () => {
+  it("saves what it shows at once, asking nothing, since releases are General", async () => {
+    // Given the Releases tab
+    const files = savedFiles();
+    await openPage(inStream(release));
+
+    // When it is exported as a CSV file
+    const { name, lines } = await exportedCsv(files);
+
+    // Then no question is asked, and the file holds the release
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(name).toMatch(/^fathom_releases_fictional-person_.*\.csv$/u);
+    expect(lines[0]).toMatch(/^Draft,Change,Release,/u);
+    expect(lines.some((line) => line.includes("Fictional One"))).toBe(true);
+  });
+
+  it("holds the Features column only for a role sent the plan's features", async () => {
+    // Given a role sent the plan's features, and one sent none
+    const sent = savedFiles();
+    await openPage(inStream(release), {
+      answers: { "GET /api/projects": () => Response.json(plan()) },
+    });
+    await screen.findByRole("columnheader", { name: /^Features/u });
+    const withFeatures = await exportedCsv(sent);
+    cleanup();
+    const unsent = savedFiles();
+    await openPage(inStream(release));
+    const withoutFeatures = await exportedCsv(unsent);
+
+    // Then only the first file has a Features column, as only its table does
+    expect(withFeatures.lines[0]?.split(",")).toContain("Features");
+    expect(withoutFeatures.lines[0]?.split(",")).not.toContain("Features");
   });
 });

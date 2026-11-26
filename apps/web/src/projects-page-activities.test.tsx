@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Activities page: its table and details, adding an activity, moving one to a
-// release in its cell, removing one, and who may change them.
+// Tests for the Activities page.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { recordCell } from "./test-support.tsx";
+import { exportedCsv } from "./test-exports.tsx";
+import { recordCell, savedFiles } from "./test-support.tsx";
 import {
   activity,
   answers,
@@ -245,5 +245,24 @@ describe("the Activities page", () => {
       ["plan:view", "features:view"],
     );
     expect(screen.queryByRole("button", { name: "New activity" })).toBeNull();
+  });
+});
+
+describe("exporting the Activities page", () => {
+  it("saves what it shows at once, asking nothing, while its columns are General", async () => {
+    // Given the Activities page
+    const files = savedFiles();
+    await open();
+
+    // When it is exported as a CSV file
+    const { name, lines } = await exportedCsv(files);
+
+    // Then no question is asked, and the file holds what the table shows
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(name).toMatch(/^fathom_activities_fictional-person_.*\.csv$/u);
+    expect(lines[0]).toMatch(/^Draft,Change,Name,/u);
+    expect(lines.some((line) => line.includes("Fictional Migration"))).toBe(
+      true,
+    );
   });
 });

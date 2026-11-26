@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Schedules table: its columns, cells, views, search and grouping, and the drafts it
-// shows in its rows.
+// Tests for the Releases page's Schedules table.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -23,11 +22,13 @@ import {
   recordCell,
   recordDraft,
   renderApp,
+  savedFiles,
   serverAnswers,
   signedIn,
   featuresAddress,
   openedIn,
 } from "./test-support.tsx";
+import { exportedCsv } from "./test-exports.tsx";
 import {
   setUpEachTest,
   approver,
@@ -756,5 +757,27 @@ describe("the Schedules table", () => {
     await waitFor(() => {
       expect(openIn(history)).toBe(streamId);
     });
+  });
+});
+
+describe("exporting the Schedules tab", () => {
+  it("saves what it shows at once, asking nothing, since schedules are General", async () => {
+    // Given the Schedules tab
+    const files = savedFiles();
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": streamsAnswer([fictionalStream()]),
+    });
+    renderApp("/releases?tab=schedules");
+    await streamsGrid();
+
+    // When it is exported as a CSV file
+    const { name, lines } = await exportedCsv(files);
+
+    // Then no question is asked, and the file holds what the table shows
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(name).toMatch(/^fathom_schedules_fictional-person_.*\.csv$/u);
+    expect(lines[0]).toMatch(/^Draft,Change,Schedule,/u);
+    expect(lines.some((line) => line.includes("Fictional Majors"))).toBe(true);
   });
 });

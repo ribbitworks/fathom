@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Exports
@@ -78,7 +78,8 @@ Run EXP-01 in Chrome or Edge, and EXP-02 in Safari or Firefox where one is at ha
 
 - [ ] `24E9` Open the file in the spreadsheet application.
   - **Expected:**
-    - The first row holds the column headings: **Draft**, **Change**, then the People table's columns, in the order it shows them.
+    - The first row holds the column headings: **As on**, **Draft**, **Change**, then the People table's columns, in the order it shows them.
+    - **As on** holds today's date on every row, such as "2027-03-31".
     - '西尾 亮', who has a draft, is on two rows: the first with "Yes" in **Draft** and "Changed" in **Change**, the second with **Draft** and **Change** empty.
     - A person without a draft is on one row, with **Draft** and **Change** empty.
     - Names in other scripts, such as '西尾 亮', read as they do in Fathom.

@@ -141,6 +141,7 @@ flowchart LR
   - **Recording:** the browser asks the server to record an export of Personal or Confidential data once it is confirmed and a place to save it chosen, then writes the file.
   - **Checked by the server:** it finds each column's class and name itself, and refuses an export naming a column the role can't see.
   - **Classified rows:** rows hold classified data apart from their columns: planned hires are recorded as the Hiring plan, and a drafted change of manager as Past managers.
+  - **Accounts:** an account's name and email address are Personal in an export, whose classes the server holds fixed, so it is recorded. It isn't refused for the class, since every role that sees accounts sees them.
   - **Accepted:** a changed browser or a script can save the data without the record, as it could copy it from the screen.
 - **Logs and errors:** Logs leave out database error messages and known sensitive fields, though a path can name a record's ID. Server errors shown to users are generic.
 - **Outside services:** Fathom calls no outside service and loads nothing from the internet, such as fonts or scripts, so it needs no internet access to run. The application and database containers have no route out.

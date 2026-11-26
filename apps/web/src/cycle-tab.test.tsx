@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Releases page's Cycles tab as a whole: its table, views and timeline.
+// Tests for the Releases page's Cycles tab as a whole.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -12,7 +12,14 @@ import {
   fictionalStream,
   streamsAnswer,
 } from "./test-releases.ts";
-import { bodyOf, renderApp, serverAnswers, signedIn } from "./test-support.tsx";
+import {
+  bodyOf,
+  renderApp,
+  savedFiles,
+  serverAnswers,
+  signedIn,
+} from "./test-support.tsx";
+import { exportedCsv } from "./test-exports.tsx";
 import {
   setUpEachTest,
   bySchedule,
@@ -285,5 +292,22 @@ describe("the Cycles timeline", () => {
       "27.2: Apr 1 to Jun 30, 2027, current",
       "27.3: Jul 1 to Sep 30, 2027",
     ]);
+  });
+});
+
+describe("exporting the Cycles tab", () => {
+  it("saves what it shows at once, asking nothing, since cycles are General", async () => {
+    // Given the Cycles tab
+    const files = savedFiles();
+    await openPage([fictionalStream()]);
+
+    // When it is exported as a CSV file
+    const { name, lines } = await exportedCsv(files);
+
+    // Then no question is asked, and the file holds what the table shows
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(name).toMatch(/^fathom_cycles_fictional-person_.*\.csv$/u);
+    expect(lines[0]).toMatch(/^Draft,Change,Cycle,/u);
+    expect(lines.some((line) => line.includes("Fictional Majors"))).toBe(true);
   });
 });
