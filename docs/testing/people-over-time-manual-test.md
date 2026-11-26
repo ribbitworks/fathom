@@ -221,7 +221,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `6160` Select **Show timeline**.
   - **Expected:**
     - The timeline opens under the details, with the cursor on its title.
-    - The details take only the height they need, scrolling if they're taller than the room above the timeline, and the timeline takes the rest.
+    - The details take at most half the column, and the timeline takes the rest.
     - A thin red line marked **Today** runs across it, with room above and below.
     - The days are listed newest first, each change on its own line, such as **Manager** and a name.
   - **Notes:**
@@ -261,7 +261,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `D63A` In the date row, select the right arrow once.
   - **Expected:**
     - The details read "Viktoria Holmberg isn't employed on" the first day of this month.
-    - They end with a **Timeline** section, its latest day reading **End**, then **Show timeline**, as anyone's details do.
+    - They end with a **Timeline** section, its latest day reading **End**, then **Show timeline**.
     - The timeline stays open beside them, its latest day still reading **End**.
   - **Notes:**
 

@@ -344,14 +344,12 @@ export function usePersonTimeline({
       }
     : undefined;
   return {
-    // Below the details it opens from, which then take only the height they need. A narrow
-    // screen shows the panel opened last, or the top one of those opened together, as from an
-    // address naming both, so there it goes above.
+    // The panels given are the details the timeline opens from. A narrow screen shows the panel
+    // opened last, or the top one of those opened together, as from an address naming both, so
+    // there it goes above.
     stacked: (panels) => {
       if (panel === undefined) return panels;
-      const fitted = panels.map((other) =>
-        other.key === "person" ? { ...other, fits: true } : other,
-      );
+      const fitted = panels.map((details) => ({ ...details, fits: true }));
       return narrow ? [panel, ...fitted] : [...fitted, panel];
     },
     details: {
