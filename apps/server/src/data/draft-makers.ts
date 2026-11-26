@@ -9,8 +9,8 @@ import {
   type Database,
   drafts,
   inChunks,
+  privateChanges,
   roles,
-  unpublishedDrafts,
   users,
 } from "@fathom/db";
 import {
@@ -45,7 +45,7 @@ export const everything = () => true;
 // publishing publishes; those before are discarded, so are never published.
 export function openChangeSets(userId: string): SQL {
   return and(
-    eq(changeSets.unpublished, true),
+    eq(changeSets.private, true),
     eq(changeSets.madeBy, userId),
     sql`${changeSets.madeAt} > coalesce((SELECT max(withdrawn.made_at) FROM fathom.change_sets AS withdrawn WHERE withdrawn.made_by = ${userId} AND withdrawn.kind = 'withdrawal'), '-infinity')`,
   ) as SQL;
@@ -70,13 +70,13 @@ export async function draftMakers(
   const approvesOwn = viewer.permissions.includes("drafts:approve-own");
   for (const chunk of inChunks([...ids])) {
     const ownRows = await reader
-      .select({ id: unpublishedDrafts.recordId })
-      .from(unpublishedDrafts)
+      .select({ id: privateChanges.recordId })
+      .from(privateChanges)
       .where(
         and(
-          eq(unpublishedDrafts.recordType, recordType),
-          eq(unpublishedDrafts.userId, viewer.user.id),
-          inArray(unpublishedDrafts.recordId, chunk),
+          eq(privateChanges.recordType, recordType),
+          eq(privateChanges.userId, viewer.user.id),
+          inArray(privateChanges.recordId, chunk),
         ),
       );
     const own = new Set(ownRows.map(({ id }) => id));
@@ -87,7 +87,7 @@ export async function draftMakers(
         tier: changes.tier,
         draft: changes.draft,
         kind: changeSets.kind,
-        unpublished: changeSets.unpublished,
+        unpublished: changeSets.private,
         madeBy: users.name,
         madeAs: roles.name,
         makerId: changeSets.madeBy,
@@ -105,7 +105,7 @@ export async function draftMakers(
             eq(changes.draft, true),
             inArray(changeSets.kind, ["approval", "discard"]),
           ),
-          or(eq(changeSets.unpublished, false), openChangeSets(viewer.user.id)),
+          or(eq(changeSets.private, false), openChangeSets(viewer.user.id)),
         ),
       )
       .orderBy(changes.id);
@@ -224,7 +224,7 @@ export async function refuseOwnDrafts(
           and(
             eq(changes.recordType, recordType),
             inArray(changes.recordId, chunk),
-            eq(changeSets.unpublished, false),
+            eq(changeSets.private, false),
             or(
               and(
                 eq(changes.draft, true),

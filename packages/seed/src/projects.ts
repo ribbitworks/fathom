@@ -13,11 +13,11 @@ import {
   lists,
   milestones,
   people,
+  privateChanges,
   projects,
   proposals,
   type Reader,
   recordChanges,
-  unpublishedDrafts,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
 import { firstOffered } from "@fathom/server/data";
@@ -539,7 +539,7 @@ export async function unseedProjects(database: Database): Promise<string[]> {
       ...customerIdsRemoved,
     ];
     // Drafts made by hand that link to a record removed go with it.
-    for (const table of [drafts, unpublishedDrafts]) {
+    for (const table of [drafts, privateChanges]) {
       const linking = or(
         linksAny(table.fields, "customerIds", customerIdsRemoved),
         linksAny(table.fields, "proposalIds", proposalIds),

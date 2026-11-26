@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The tables of the change history, drafts, unpublished drafts and record keys.
+// The tables of the change history, drafts, private changes and record keys.
 
 import {
   bigint,
@@ -30,7 +30,7 @@ export const changeSets = fathomSchema.table(
     id: uuid("id").primaryKey().defaultRandom(),
     // What the change set did, checked by the server: "edit" for changes saved, "approval" for drafts
     // approved, "rejection" for drafts rejected, "discard" for drafts discarded, "resubmission" for
-    // rejected drafts sent for approval again unchanged, and "withdrawal" for a user's unpublished
+    // rejected drafts sent for approval again unchanged, and "withdrawal" for a user's private
     // changes discarded all at once.
     kind: text("kind").notNull().default("edit"),
     // Null for Fathom itself, such as for data made by setup or seed scripts. Accounts are deactivated,
@@ -44,9 +44,9 @@ export const changeSets = fathomSchema.table(
     madeAt: timestamp("made_at", { withTimezone: true })
       .notNull()
       .default(sql`clock_timestamp()`),
-    // Whether the change set holds changes to drafts that its maker has not published, which only
-    // they see. Publishing clears it, the one change the change history allows.
-    unpublished: boolean("unpublished").notNull().default(false),
+    // Whether the change set holds private changes, which only its maker sees. Publishing them
+    // clears it, the one change the change history allows.
+    private: boolean("private").notNull().default(false),
   },
   (table) => [index("change_sets_made_at_index").on(table.madeAt)],
 );
@@ -90,7 +90,7 @@ export const changes = fathomSchema.table(
 // record, and none for a removal. A rejected draft keeps the Approver's reason until a change to it
 // is published, or it is discarded. Who made and changed each draft is read from the change
 // history. The kinds of record with drafts are listed in packages/shared/src/drafts.ts. These are
-// the published drafts; each user's unpublished ones are kept apart, as below.
+// the published drafts; each user's private changes are kept apart, as below.
 export const drafts = fathomSchema.table(
   "drafts",
   {
@@ -115,13 +115,29 @@ export const drafts = fathomSchema.table(
   (table) => [primaryKey({ columns: [table.recordType, table.recordId] })],
 );
 
-// Unpublished drafts: the changes a user has made to drafts and not yet published, which only they
-// see, as ADR 0008 sets out. Each holds the whole draft the user intends, shaped and keyed as a draft
-// row, so a record has at most one, and holds the record: no one else may change, approve, or reject
-// it until the user publishes or discards their changes. A draft that changes nothing, which
-// publishing makes into no draft at all, is a change with no fields.
-export const unpublishedDrafts = fathomSchema.table(
-  "unpublished_drafts",
+// Each user's sets of private changes: one, made with their first private change.
+export const privateSets = fathomSchema.table(
+  "private_sets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    madeAt: timestamp("made_at", { withTimezone: true })
+      .notNull()
+      .default(sql`clock_timestamp()`),
+  },
+  (table) => [index("private_sets_user_index").on(table.userId)],
+);
+
+// Private changes: the changes a user has made to drafts and not yet submitted, which only they
+// see, as ADR 0008 sets out. Each holds the whole draft the user intends, shaped as a draft row,
+// one for each record and user. Until records stop being held, a record has at most one, and no
+// one else may change, approve, or reject it until the user publishes or discards their changes. A
+// draft that changes nothing, which submitting makes into no draft at all, is a change with no
+// fields.
+export const privateChanges = fathomSchema.table(
+  "private_changes",
   {
     // The kind of record, such as "person", checked by the server.
     recordType: text("record_type").notNull(),
@@ -130,21 +146,31 @@ export const unpublishedDrafts = fathomSchema.table(
     userId: text("user_id")
       .notNull()
       .references(() => users.id),
+    setId: uuid("set_id")
+      .notNull()
+      .references(() => privateSets.id),
     // "created", "changed", or "deleted", checked by the server.
     action: text("action").notNull(),
     fields: jsonb("fields")
       .$type<Record<string, unknown>>()
       .notNull()
       .default({}),
-    // Rises with each unpublished draft made, so records the user drafts to be added keep the order
+    // Kept for a check, not yet made, that publishing overwrites no one else's change unasked: for
+    // each field the change sets, the value it started from. Empty until that check fills it.
+    startedFrom: jsonb("started_from")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    // Rises with each private change made, so records the user drafts to be added keep the order
     // they were drafted in when published.
     sequence: bigint("sequence", { mode: "number" })
       .notNull()
       .generatedAlwaysAsIdentity(),
   },
   (table) => [
-    primaryKey({ columns: [table.recordType, table.recordId] }),
-    index("unpublished_drafts_user_index").on(table.userId),
+    primaryKey({ columns: [table.recordType, table.recordId, table.userId] }),
+    index("private_changes_user_index").on(table.userId),
+    index("private_changes_set_index").on(table.setId),
   ],
 );
 

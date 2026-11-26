@@ -8,7 +8,7 @@ import {
   type Database,
   drafts,
   features,
-  unpublishedDrafts,
+  privateChanges,
   users,
 } from "@fathom/db";
 import { addToMonth } from "@fathom/shared";
@@ -76,12 +76,12 @@ const holders = async () =>
   (
     await connection
       .select({
-        recordType: unpublishedDrafts.recordType,
+        recordType: privateChanges.recordType,
         email: users.email,
       })
-      .from(unpublishedDrafts)
-      .innerJoin(users, eq(users.id, unpublishedDrafts.userId))
-      .where(inArray(unpublishedDrafts.recordType, [...seededDraftTypes]))
+      .from(privateChanges)
+      .innerJoin(users, eq(users.id, privateChanges.userId))
+      .where(inArray(privateChanges.recordType, [...seededDraftTypes]))
   )
     .map(({ recordType, email }) => `${recordType} ${email}`)
     .sort();

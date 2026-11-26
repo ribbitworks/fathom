@@ -409,39 +409,39 @@ describe("change history", () => {
     });
   });
 
-  it("lets a change set holding unpublished changes be published, and nothing else", async () => {
+  it("lets a change set holding private changes be published, and nothing else", async () => {
     await withClient(database.app, async (client) => {
       const added = await client.query<{ id: string }>(
-        "INSERT INTO change_sets (unpublished) VALUES (true) RETURNING id",
+        "INSERT INTO change_sets (private) VALUES (true) RETURNING id",
       );
       const setId = added.rows[0]?.id ?? "";
       const where = `WHERE id = '${setId}'`;
       expect(
         await errorCodeOf(
           client.query(
-            `UPDATE change_sets SET unpublished = false, made_at = now() ${where}`,
+            `UPDATE change_sets SET private = false, made_at = now() ${where}`,
           ),
         ),
       ).toBe(insufficientPrivilege);
-      await client.query(`UPDATE change_sets SET unpublished = false ${where}`);
+      await client.query(`UPDATE change_sets SET private = false ${where}`);
       const read = await client.query(
-        `SELECT unpublished FROM change_sets ${where}`,
+        `SELECT private FROM change_sets ${where}`,
       );
-      expect(read.rows).toEqual([{ unpublished: false }]);
+      expect(read.rows).toEqual([{ private: false }]);
       expect(
         await errorCodeOf(
-          client.query(`UPDATE change_sets SET unpublished = true ${where}`),
+          client.query(`UPDATE change_sets SET private = true ${where}`),
         ),
       ).toBe(raisedException);
     });
     await withClient(database.migrator, async (client) => {
       const added = await client.query<{ id: string }>(
-        "INSERT INTO fathom.change_sets (unpublished) VALUES (true) RETURNING id",
+        "INSERT INTO fathom.change_sets (private) VALUES (true) RETURNING id",
       );
       expect(
         await errorCodeOf(
           client.query(
-            `UPDATE fathom.change_sets SET unpublished = false, kind = 'approval' WHERE id = '${added.rows[0]?.id ?? ""}'`,
+            `UPDATE fathom.change_sets SET private = false, kind = 'approval' WHERE id = '${added.rows[0]?.id ?? ""}'`,
           ),
         ),
       ).toBe(raisedException);

@@ -7,8 +7,9 @@ import {
   listItems,
   lists,
   people,
+  privateChanges,
+  privateSetOf,
   recordChanges,
-  unpublishedDrafts,
   users,
 } from "@fathom/db";
 import { fictionalOrganization } from "@fathom/fixtures";
@@ -95,13 +96,13 @@ describe("the seed command", () => {
         (
           await connection
             .select({
-              recordType: unpublishedDrafts.recordType,
-              recordId: unpublishedDrafts.recordId,
+              recordType: privateChanges.recordType,
+              recordId: privateChanges.recordId,
               email: users.email,
             })
-            .from(unpublishedDrafts)
-            .innerJoin(users, eq(users.id, unpublishedDrafts.userId))
-            .where(inArray(unpublishedDrafts.recordType, peopleAndLists))
+            .from(privateChanges)
+            .innerJoin(users, eq(users.id, privateChanges.userId))
+            .where(inArray(privateChanges.recordType, peopleAndLists))
         )
           .map(({ recordType, email }) => `${recordType} ${email}`)
           .sort();
@@ -113,9 +114,9 @@ describe("the seed command", () => {
         "person engineering.operations.manager@fathom.test",
       ]);
       const heldPeople = await connection
-        .select({ id: unpublishedDrafts.recordId })
-        .from(unpublishedDrafts)
-        .where(eq(unpublishedDrafts.recordType, "person"));
+        .select({ id: privateChanges.recordId })
+        .from(privateChanges)
+        .where(eq(privateChanges.recordType, "person"));
       expect(heldPeople.map(({ id }) => id).sort()).toEqual(
         [String(seededPeople[0]?.id), String(seededPeople[5]?.id)].sort(),
       );
@@ -212,10 +213,11 @@ describe("the seed command", () => {
       };
       await connection.insert(drafts).values(handColumn);
       // An unpublished change made by hand to a seeded person goes with the person.
-      await connection.insert(unpublishedDrafts).values({
+      await connection.insert(privateChanges).values({
         recordType: "person",
         recordId: String(seeded.people[11]?.id),
         userId: String(director?.id),
+        setId: await privateSetOf(connection, String(director?.id)),
         action: "changed",
         fields: { preferredName: "Fictional Hand Change" },
       });

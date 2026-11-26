@@ -8,8 +8,8 @@ import {
   inChunks,
   people,
   plannedHires,
+  privateChanges,
   type Reader,
-  unpublishedDrafts,
 } from "@fathom/db";
 import {
   type AnyColumn,
@@ -93,7 +93,7 @@ async function draftedTexts(
   except: readonly string[],
 ): Promise<{ value: string }[]> {
   const found = [];
-  for (const table of [drafts, unpublishedDrafts]) {
+  for (const table of [drafts, privateChanges]) {
     found.push(
       ...(await reader
         .select({ value: sql<string>`${table.fields}->>${field}::text` })
@@ -121,7 +121,7 @@ export async function draftsUse(
   use: { column: string } | { choice: string },
   editor?: string,
 ): Promise<boolean> {
-  for (const table of [drafts, unpublishedDrafts]) {
+  for (const table of [drafts, privateChanges]) {
     const found = await reader
       .select({ one: sql`1` })
       .from(table)
@@ -189,7 +189,7 @@ const notReplacedBy = (
   recordId: AnyColumn,
   editor: string,
 ) =>
-  sql`NOT EXISTS (SELECT 1 FROM ${unpublishedDrafts} WHERE ${unpublishedDrafts.recordType} = ${recordType} AND ${unpublishedDrafts.recordId} = ${recordId} AND ${unpublishedDrafts.userId} = ${editor})`;
+  sql`NOT EXISTS (SELECT 1 FROM ${privateChanges} WHERE ${privateChanges.recordType} = ${recordType} AND ${privateChanges.recordId} = ${recordId} AND ${privateChanges.userId} = ${editor})`;
 
 // How many values a recorded value holds: its choices, or one link, note, or number, or undefined
 // when none is recorded.
@@ -209,7 +209,7 @@ export async function draftedValues(
   onTable: unknown,
 ): Promise<{ hire: boolean; adds: boolean; held: number | undefined }[]> {
   const rows = [];
-  for (const table of [drafts, unpublishedDrafts]) {
+  for (const table of [drafts, privateChanges]) {
     rows.push(
       ...(await reader
         .select({

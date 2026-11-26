@@ -12,8 +12,8 @@ import {
   lists,
   people,
   plannedHires,
+  privateChanges,
   type Reader,
-  unpublishedDrafts,
 } from "@fathom/db";
 import type {
   Choice,
@@ -483,7 +483,7 @@ export async function refuseIfUsed(
       .from(fields)
       .where(eq(fields.listId, id))),
   ];
-  const drafted = async (table: typeof drafts | typeof unpublishedDrafts) =>
+  const drafted = async (table: typeof drafts | typeof privateChanges) =>
     transaction
       .select({
         id: table.recordId,
@@ -502,12 +502,12 @@ export async function refuseIfUsed(
       : new Set(
           (
             await transaction
-              .select({ id: unpublishedDrafts.recordId })
-              .from(unpublishedDrafts)
+              .select({ id: privateChanges.recordId })
+              .from(privateChanges)
               .where(
                 and(
-                  eq(unpublishedDrafts.recordType, "field"),
-                  eq(unpublishedDrafts.userId, editor),
+                  eq(privateChanges.recordType, "field"),
+                  eq(privateChanges.userId, editor),
                 ),
               )
           ).map((row) => row.id),
@@ -519,7 +519,7 @@ export async function refuseIfUsed(
   const named = [...new Set(shown.map(({ name }) => name))].sort((a, b) =>
     a.toLowerCase().localeCompare(b.toLowerCase()),
   );
-  const unnamed = (await drafted(unpublishedDrafts)).filter(
+  const unnamed = (await drafted(privateChanges)).filter(
     (column) => !shown.some((other) => other.id === column.id),
   ).length;
   if (named.length === 0 && unnamed === 0) return;
@@ -583,7 +583,7 @@ export async function refusePeoplesMeaningWhileHeld(
     .from(plannedHires)
     .where(and(eq(plannedHires.stateId, id), isNull(plannedHires.filledBy)));
   let drafted = false;
-  for (const table of [drafts, unpublishedDrafts]) {
+  for (const table of [drafts, privateChanges]) {
     const [found] = await transaction
       .select({ total: count() })
       .from(table)
@@ -1269,7 +1269,7 @@ export async function featureListIds(reader: Reader): Promise<Set<string>> {
     .where(inArray(lists.builtIn, [...featureBuiltInLists]));
   const drafted: { listId: string | null }[] = [];
   // One after the other, since a transaction runs one query at a time.
-  for (const table of [drafts, unpublishedDrafts]) {
+  for (const table of [drafts, privateChanges]) {
     drafted.push(
       ...(await reader
         .select({ listId: sql<string | null>`${table.fields}->>'listId'` })

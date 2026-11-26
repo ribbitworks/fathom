@@ -23,7 +23,7 @@ export interface ChangeRecord {
 }
 
 // What a change set did: saved changes, or approved, rejected, discarded, or resubmitted drafts: rejected
-// drafts sent for approval again unchanged; or a user's unpublished changes all discarded at once.
+// drafts sent for approval again unchanged; or a user's private changes all discarded at once.
 export type ChangeSetKind =
   "edit" | "approval" | "rejection" | "discard" | "resubmission" | "withdrawal";
 
@@ -52,14 +52,14 @@ export interface ChangeMaker {
 
 // Records changes as one change set, in the transaction that makes them. The maker is null for
 // Fathom itself, such as for seed data. With no changes, nothing is recorded, so there is never an
-// empty change set, and the result is null; otherwise it is the change set's identifier. Changes
-// to drafts not yet published are seen only by their maker until published.
+// empty change set, and the result is null; otherwise it is the change set's identifier. Private
+// changes are seen only by their maker until submitted.
 export async function recordChanges(
   transaction: Pick<Database, "insert">,
   maker: ChangeMaker | null,
   made: readonly ChangeRecord[],
   kind: ChangeSetKind = "edit",
-  unpublished = false,
+  isPrivate = false,
 ): Promise<string | null> {
   if (made.length === 0) return null;
   const changeSetId = randomUUID();
@@ -68,7 +68,7 @@ export async function recordChanges(
     madeBy: maker?.userId ?? null,
     madeAsRoleId: maker?.roleId ?? null,
     kind,
-    unpublished,
+    private: isPrivate,
   });
   for (const chunk of inChunks(made)) {
     await transaction.insert(changes).values(

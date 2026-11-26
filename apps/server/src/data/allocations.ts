@@ -11,8 +11,8 @@ import {
   listItems,
   people,
   plannedHires,
+  privateChanges,
   type Reader,
-  unpublishedDrafts,
 } from "@fathom/db";
 import {
   capitalized,
@@ -515,7 +515,7 @@ async function allocationsOf(
       ]),
     );
   const liveIds = rows.map(({ id }) => id);
-  const naming = (table: typeof drafts | typeof unpublishedDrafts) =>
+  const naming = (table: typeof drafts | typeof privateChanges) =>
     and(
       eq(table.recordType, type),
       or(
@@ -529,9 +529,9 @@ async function allocationsOf(
     .where(naming(drafts))
     .limit(1);
   const [unpublished] = await reader
-    .select({ id: unpublishedDrafts.recordId })
-    .from(unpublishedDrafts)
-    .where(naming(unpublishedDrafts))
+    .select({ id: privateChanges.recordId })
+    .from(privateChanges)
+    .where(naming(privateChanges))
     .limit(1);
   return {
     rows,

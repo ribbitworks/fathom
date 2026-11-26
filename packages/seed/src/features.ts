@@ -12,12 +12,12 @@ import {
   fieldValues,
   listItems,
   lists,
+  privateChanges,
   projects,
   proposals,
   type Reader,
   recordChanges,
   releaseStreams,
-  unpublishedDrafts,
   valueField,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
@@ -433,7 +433,7 @@ async function unseedKind(
     oldValue: [choiceId],
     newValue: null,
   }));
-  for (const table of [drafts, unpublishedDrafts]) {
+  for (const table of [drafts, privateChanges]) {
     await transaction
       .delete(table)
       .where(
@@ -542,7 +542,7 @@ export async function unseedFeatures(
 ): Promise<string[]> {
   return database.transaction(async (transaction) => {
     const ids = seededIds();
-    for (const table of [drafts, unpublishedDrafts]) {
+    for (const table of [drafts, privateChanges]) {
       const naming = and(
         inArray(table.recordType, ["project", "proposal"]),
         linksAny(table.fields, "featureIds", ids),
