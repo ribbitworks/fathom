@@ -26,7 +26,7 @@ Select **Group by**, then **Cycle**. Each cycle's features show under its headin
 
 1. Open the **Staffed** column's menu, and select **Filter…**.
 1. Pick **No**. These are the planned or in-progress features nobody is allocated to.
-1. Where **Feature team** reads **No team** in red, choose the team that builds the feature.
+1. Where **Feature team** reads **No feature team** in red, choose the team that builds the feature.
 1. Select **Publish** in the top bar.
 
 See [Features](features.md#give-a-feature-to-a-team).
