@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/capacity.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Fathom: Capacity Page
@@ -70,7 +70,7 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
   - They don't depend on the months in view, so scrolling never changes the rows.
   - The view and the address keep them, as `over` and `under`.
 - **Capacity:** as the [Domain Model](../domain-model.md#allocation) sets out.
-- **Totals:** a Total, PM row per group and an Organization, PM row fixed at the foot, such as 7.5 of 9.
+- **Totals:** a Total, person-months row per group and an Organization, person-months row fixed at the foot, such as 7.5 of 9.
   - They count the rows shown, so a filter changes them.
   - The Organization row counts each person once; a person on two feature teams counts in both.
   - Drafts count only under Drafts applied.

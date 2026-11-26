@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Capacity
@@ -55,7 +55,7 @@ As [Manual Test Basics](manual-test-basics.md#terms) sets out, such as a page's 
 - **× button:** the small × after the change button of a month of ramp-up, which removes that month.
 - **Draft button:** the button above **Working time** on **Settings**, which opens a menu choosing how drafts show.
 - **Row menu:** the ⋯ button at the right of a setting's row that a draft changes, which opens a menu of the whole draft of the settings and what can be done with it.
-- **Total row:** in **Allocations**, a row in bold at the end of each group, headed **Total, PM** in the **Person** column, and one at the foot of the table, headed **Organization, PM**. PM stands for person-months.
+- **Total row:** in **Allocations**, a row in bold at the end of each group, headed **Total, person-months** in the **Person** column, and one at the foot of the table, headed **Organization, person-months**. PM stands for person-months.
 
 ## Test Cases
 
@@ -372,19 +372,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `7D6D` Scroll the table down.
   - **Expected:**
-    - A total row headed **Organization, PM** is at the foot of the table.
+    - A total row headed **Organization, person-months** is at the foot of the table.
     - It stays there as the rows scroll under it.
     - Nothing shows through it.
   - **Notes:**
 
 - [ ] `1E55` Scroll the table sideways.
-  - **Expected:** **Organization, PM** stays on the left while the months scroll sideways.
+  - **Expected:** **Organization, person-months** stays on the left while the months scroll sideways.
   - **Notes:**
 
 - [ ] `F4F7` Select **None** in the Group by menu.
   - **Expected:**
     - No group ends with a total row.
-    - The **Organization, PM** row is still at the foot.
+    - The **Organization, person-months** row is still at the foot.
   - **Notes:**
 
 ### CAP-11: The Totals Count Only the Rows Shown
@@ -404,12 +404,12 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `68AE` Type `Payments tester` in the search box.
   - **Expected:**
     - One row is listed, named 'Payments tester'.
-    - In the **Organization, PM** row, the cells before the month its allocations start are empty.
+    - In the **Organization, person-months** row, the cells before the month its allocations start are empty.
     - For six months from that month, each reads "1 of 1" and "100%".
     - After those six months, each reads "0 of 1" and "0%".
   - **Notes:**
 
-- [ ] `9D78` Hold the pointer over the cell of the **Organization, PM** row in the month the allocations of 'Payments tester' start.
+- [ ] `9D78` Hold the pointer over the cell of the **Organization, person-months** row in the month the allocations of 'Payments tester' start.
   - **Expected:** After a moment, a tooltip reads "1 of 1 person-month allocated: 100%".
   - **Notes:**
 

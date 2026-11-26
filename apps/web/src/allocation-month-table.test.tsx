@@ -296,8 +296,8 @@ describe("the table", () => {
     );
 
     expect(table.totals).toMatchObject({
-      label: "Total, PM",
-      overall: "Organization, PM",
+      label: "Total, person-months",
+      overall: "Organization, person-months",
     });
     expect(screen.getByText("0.5 of 1")).toBeTruthy();
     expect(screen.getByText("person-month allocated")).toBeTruthy();

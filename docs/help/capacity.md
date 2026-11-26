@@ -154,7 +154,7 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 - **Not allocated**, in red, ends a month with nothing allocated. A month at exactly 100% has no last line.
 - **Over**, **Under** and **Not allocated** show from the current month on, and features whose status means Possible don't count. Point at **Over** or **Under** to see the month's total.
 - **Planned hires** have rows of their own, under their manager and under **No feature team**. One with no name shows its position and ID in grey, such as **SDET, TBD-5**. Months before one is expected are shaded.
-- **Total, PM**, in bold, ends each group, and **Organization, PM** stays at the foot of the table. PM is person-months.
+- **Total, person-months**, in bold, ends each group, and **Organization, person-months** stays at the foot of the table.
 - **A total**, such as **7.5 of 9**, is the person-months allocated that month, out of those available. The share is under it.
 - Point at a total to see it in words. Totals count only the rows shown.
 - **Someone on a feature team with nothing allocated** reads **Not allocated**, and counts as **0 of 1** in the totals. Being on a team doesn't allocate anyone to its features.
