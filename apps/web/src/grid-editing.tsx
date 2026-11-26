@@ -259,8 +259,8 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     }
     if (!plain) return;
     const { asTyped, inPanel } = kindOf(column);
-    // Keys typed fast reach the cell until its editor has focus, and follow the first, a space
-    // among them.
+    // Keys typed fast reach the cell until its editor has focus, and follow the first. They come
+    // before every other key's meaning, so a space typed then is text, not a tick or a fresh start.
     if (
       event.key.length === 1 &&
       editing?.row === cell.row &&
@@ -288,10 +288,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       return;
     }
     if (row.record && locked(row.record)) {
-      if (
-        kindOf(column).inPanel === true &&
-        (event.key === "Enter" || event.key === "F2")
-      ) {
+      if (inPanel === true && (event.key === "Enter" || event.key === "F2")) {
         event.preventDefault();
         startEdit(cell);
       }
