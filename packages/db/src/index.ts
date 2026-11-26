@@ -55,6 +55,7 @@ export {
   privateChanges,
   privatePages,
   privateRows,
+  randomKeys,
   privateSets,
   projects,
   proposals,

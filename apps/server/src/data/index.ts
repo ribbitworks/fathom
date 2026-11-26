@@ -4,6 +4,7 @@
 // the server receives.
 
 import { type ColumnAccess, createColumnAccess } from "./column-access.ts";
+import { findPrivateRecord } from "./private-keys.ts";
 import {
   createPrivatePageAccess,
   type PrivatePageAccess,
@@ -36,6 +37,7 @@ import type {
   Settings,
   TimeZoneSetting,
   Unpublished,
+  CodedRecordKey,
   RecordKeyKind,
   RecordLookup,
 } from "@fathom/shared";
@@ -132,6 +134,8 @@ export interface DataAccess {
     kind: RecordKeyKind,
     keyNumber: number,
   ): Promise<RecordLookup>;
+  // The private page or row a random key names, to its maker alone, or nothing to anyone else.
+  findPrivateRecord(actor: Actor, key: CodedRecordKey): Promise<RecordLookup>;
   readGreeting(actor: Actor): Promise<string>;
   // Settings for the whole of Fathom, which every signed-in user's screens follow, so reading them
   // checks no permission.
@@ -282,6 +286,7 @@ export function createDataAccess(database: Database): DataAccess {
       readActorAccess(database, userId, sessionId, rememberedRoleId),
     findRecord: (actor, kind, keyNumber) =>
       findKeyedRecord(database, finders, actor, kind, keyNumber),
+    findPrivateRecord: (actor, key) => findPrivateRecord(database, actor, key),
     switchRole: (actor, sessionId, roleId) =>
       switchRole(database, actor.user.id, sessionId, roleId),
     keepSessionRole: (token, roleId) =>

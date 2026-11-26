@@ -7,6 +7,7 @@ import {
   type Database,
   privatePages,
   privateRows,
+  randomKeys,
   type Reader,
 } from "@fathom/db";
 import {
@@ -16,9 +17,10 @@ import {
   mayReadPrivatePage,
   type PrivateColumn,
   type PrivatePage,
+  type RandomKeyKind,
   seesClass,
 } from "@fathom/shared";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { type Actor, requirePermission } from "../access.ts";
 import { NotFoundError } from "../errors.ts";
 import { readPageColumnOrder } from "./column-order.ts";
@@ -45,7 +47,7 @@ const readerOf = (actor: Actor) => ({
   permissions: actor.permissions,
 });
 
-const mayRead = (actor: Actor, page: Pick<PageRow, "userId">) =>
+export const mayRead = (actor: Actor, page: Pick<PageRow, "userId">) =>
   mayReadPrivatePage(readerOf(actor), page);
 
 const mayEdit = (actor: Actor, page: Pick<PageRow, "userId">) =>
@@ -159,6 +161,24 @@ export async function pageRows(reader: Reader, pageId: string) {
     .orderBy(asc(privateRows.position), asc(privateRows.id));
 }
 
+// The keys of the records given, of one kind, by record.
+export async function readRandomKeys(
+  reader: Reader,
+  kind: RandomKeyKind,
+  recordIds: readonly string[],
+): Promise<Map<string, string>> {
+  const found = await reader
+    .select({ recordId: randomKeys.recordId, code: randomKeys.code })
+    .from(randomKeys)
+    .where(
+      and(
+        eq(randomKeys.kind, kind),
+        inArray(randomKeys.recordId, [...recordIds]),
+      ),
+    );
+  return new Map(found.map(({ recordId, code }) => [recordId, code]));
+}
+
 // A page as the actor sees it, and whether it showed them a column beyond General.
 export interface PageOut {
   page: PrivatePage;
@@ -177,18 +197,26 @@ export async function pageOut(
     rows.map(({ id }) => id),
     columns,
   );
+  const pageKeys = await readRandomKeys(reader, "page", [page.id]);
+  const rowKeys = await readRandomKeys(
+    reader,
+    "row",
+    rows.map(({ id }) => id),
+  );
   return {
     page: {
       id: page.id,
       name: page.name,
       position: page.position,
       // Rows are named by a column the reader is shown, or by none.
+      key: pageKeys.get(page.id) ?? null,
       firstFieldId: columns.some(({ id }) => id === page.firstFieldId)
         ? page.firstFieldId
         : null,
       columns: columns.map(columnOut),
       rows: rows.map(({ id }) => ({
         id,
+        key: rowKeys.get(id) ?? null,
         // Every row read has its values, if none.
         ...shownValuesOf(values.get(id) as Recorded, () => true),
       })),

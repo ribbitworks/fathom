@@ -162,7 +162,10 @@ export function FeatureCard({
           </Text>
           {parts.has("key") && isSaved(record) && (
             <Text component="span" size="xs" className={classes.key}>
-              {shownRecordKey("feature", feature.keyNumber)}
+              {shownRecordKey({
+                kind: "feature",
+                keyNumber: feature.keyNumber,
+              })}
             </Text>
           )}
           {(parts.has("status") || (parts.has("priority") && priority)) && (

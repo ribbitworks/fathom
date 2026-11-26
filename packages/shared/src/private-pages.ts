@@ -52,9 +52,13 @@ export const privateColumnSchema = z.object({
 
 export type PrivateColumn = z.infer<typeof privateColumnSchema>;
 
+// A random key's code, made with its page or row; null only for one made before keys were.
+const keyCode = z.string().nullable();
+
 // A row of a page with its values, by column, in only the columns its reader sees.
 export const privateRowSchema = z.object({
   id: z.string(),
+  key: keyCode,
   values: valuesSchema,
   links: linksSchema,
   notes: notesSchema,
@@ -74,6 +78,7 @@ export type ListedPrivatePage = z.infer<typeof listedPrivatePageSchema>;
 
 // A page with its columns, in order, and its rows, in the order they were added.
 export const privatePageSchema = listedPrivatePageSchema.extend({
+  key: keyCode,
   // The column naming each row, or null when the reader isn't shown it.
   firstFieldId: z.string().nullable(),
   columns: z.array(privateColumnSchema),

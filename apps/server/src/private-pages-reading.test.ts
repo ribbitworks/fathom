@@ -94,6 +94,8 @@ describe("reading a page", () => {
     expect(page.rows).toEqual([
       {
         id: rowIds[0],
+        // Stored straight in the database, so made without its key.
+        key: null,
         values: {},
         links: {},
         notes: { [note]: "First" },
@@ -101,6 +103,8 @@ describe("reading a page", () => {
       },
       {
         id: rowIds[1],
+        // Stored straight in the database, so made without its key.
+        key: null,
         values: {},
         links: {},
         notes: {},

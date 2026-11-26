@@ -4,6 +4,7 @@
 // for a row's or card's menu, and a name after its key.
 
 import {
+  isCodedKey,
   type RecordKeyOf,
   recordLinkPath,
   shownRecordKey,
@@ -15,12 +16,13 @@ import { unsavedKeyNumber } from "./drafts.ts";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import classes from "./record-key.module.css";
 
-export const isSaved = ({ keyNumber }: RecordKeyOf): boolean =>
-  keyNumber !== unsavedKeyNumber;
+// A random key is made with its record, so only a numbered one can stand for a record not yet saved.
+export const isSaved = (key: RecordKeyOf): boolean =>
+  isCodedKey(key) || key.keyNumber !== unsavedKeyNumber;
 
 // The whole link, with the address Fathom is open at, so it opens from anywhere.
-export const recordLink = ({ kind, keyNumber }: RecordKeyOf): string =>
-  new URL(recordLinkPath(kind, keyNumber), window.location.origin).href;
+export const recordLink = (key: RecordKeyOf): string =>
+  new URL(recordLinkPath(key), window.location.origin).href;
 
 async function copy(text: string, done: string, failed: string) {
   try {
@@ -34,12 +36,8 @@ async function copy(text: string, done: string, failed: string) {
 export const copyLink = (key: RecordKeyOf): Promise<void> =>
   copy(recordLink(key), "Link copied.", "The link couldn't be copied.");
 
-export const copyKey = ({ kind, keyNumber }: RecordKeyOf): Promise<void> =>
-  copy(
-    shownRecordKey(kind, keyNumber),
-    "Key copied.",
-    "The key couldn't be copied.",
-  );
+export const copyKey = (key: RecordKeyOf): Promise<void> =>
+  copy(shownRecordKey(key), "Key copied.", "The key couldn't be copied.");
 
 // Copy link, for a row's or card's menu; nothing for a record not yet saved, or with no key.
 export function CopyLinkItem({ record }: { record: RecordKeyOf | undefined }) {
@@ -49,7 +47,7 @@ export function CopyLinkItem({ record }: { record: RecordKeyOf | undefined }) {
 
 export function RecordKey({ record }: { record: RecordKeyOf }) {
   if (!isSaved(record)) return null;
-  const shown = shownRecordKey(record.kind, record.keyNumber);
+  const shown = shownRecordKey(record);
   return (
     <AppMenu position="bottom-start" withinPortal>
       <AppMenu.Target>
@@ -80,10 +78,7 @@ export function KeyedName({
   if (record === undefined || !isSaved(record)) return name;
   return (
     <>
-      <span className={classes.shown}>
-        {shownRecordKey(record.kind, record.keyNumber)}
-      </span>{" "}
-      {name}
+      <span className={classes.shown}>{shownRecordKey(record)}</span> {name}
     </>
   );
 }

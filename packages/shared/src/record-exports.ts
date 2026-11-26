@@ -4,7 +4,9 @@
 // private pages and views, gathered here so the package's index stays one file under the size limit.
 
 export {
+  type FoundPrivateRecord,
   type FoundRecord,
+  isFoundPrivate,
   type LinkedRecord,
   type RecordLookup,
   recordLookupSchema,

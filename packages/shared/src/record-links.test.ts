@@ -4,7 +4,11 @@
 // link may give.
 
 import { describe, expect, it } from "vitest";
-import { recordLookupSchema, recordPage } from "./record-links.ts";
+import {
+  isFoundPrivate,
+  recordLookupSchema,
+  recordPage,
+} from "./record-links.ts";
 
 describe("the page a record opens on", () => {
   it.each([
@@ -38,6 +42,7 @@ describe("the page a record opens on", () => {
 describe("a link's answer", () => {
   it.each([
     { result: "found", kind: "column", id: "c1", table: "people" },
+    { result: "found", kind: "row", id: "r1", pageId: "p1" },
     { result: "removed", kind: "feature", id: "f1" },
     { result: "nothing" },
   ])("reads %j", (answer) => {
@@ -52,6 +57,22 @@ describe("a link's answer", () => {
         id: "c1",
         table: "releases",
       }).success,
+    ).toBe(false);
+  });
+
+  it("tells a private page or row found from any other record found", () => {
+    expect(
+      isFoundPrivate({ result: "found", kind: "page", id: "p1", pageId: "p1" }),
+    ).toBe(true);
+    expect(isFoundPrivate({ result: "found", kind: "feature", id: "f1" })).toBe(
+      false,
+    );
+  });
+
+  it("refuses a private row found without its page", () => {
+    expect(
+      recordLookupSchema.safeParse({ result: "found", kind: "row", id: "r1" })
+        .success,
     ).toBe(false);
   });
 });
