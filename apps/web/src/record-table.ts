@@ -450,8 +450,10 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   body?: ((shown: ShownRows<Rec>) => ReactNode) | undefined;
   // Ticks for choosing rows to act on together, with the bar above the table that acts on them.
   ticks?: RowTicks<Rec> | undefined;
-  // The record whose details are open beside the table, whose row is marked as selected.
+  // The record whose details are open beside the table, whose row is marked as selected, and how
+  // the page closes them, as the panel's own close does, which its row's details button does too.
   selected?: string | undefined;
+  closeSelected?: ((id: string) => void) | undefined;
 }
 
 // The rows a view shows, for a page that draws them its own way: in the view's order, each with its

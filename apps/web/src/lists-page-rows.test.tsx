@@ -585,3 +585,34 @@ describe("the Lists page's saved views", () => {
     expect(history.location.search).toContain(`view=${view.id}`);
   });
 });
+
+describe("a list's details button", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("closes the list's open details, with focus back on its row", async () => {
+    // Given Skills' details, opened from its row's details button
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () => Response.json({ lists: [skills] }),
+    });
+    const history = renderApp("/lists");
+    await listsGrid();
+    await openList("Skills");
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/lists/l2");
+    });
+
+    // When the same button is selected again
+    await openList("Skills");
+
+    // Then the details close, and focus is on the list's row
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/lists");
+    });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(recordCell("l2", "name"));
+    });
+  });
+});

@@ -467,6 +467,7 @@ export function ReleasesTable({
       view={view}
       onView={onView}
       selected={open}
+      closeSelected={onClose}
       panels={panels}
       viewChoices={choices}
       saved={saved}

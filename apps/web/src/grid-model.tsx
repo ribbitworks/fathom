@@ -86,6 +86,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
   body,
   ticks,
   selected,
+  closeSelected,
 }: RecordGridProps<Rec, Change, Request>) {
   return {
     everyone,
@@ -117,6 +118,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
     body,
     ticks,
     selected,
+    closeSelected,
   };
 }
 

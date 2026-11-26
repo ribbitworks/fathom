@@ -26,10 +26,13 @@ const overCell = (onSelect: () => void) => ({
 export function OpenBesideButton({
   label,
   onOpen,
+  expanded,
   ...button
 }: {
   label: string;
   onOpen: () => void;
+  // Whether what it opens is open, for a button that closes it again.
+  expanded?: boolean;
   id?: string;
   className?: string | undefined;
   tabIndex?: number;
@@ -40,6 +43,7 @@ export function OpenBesideButton({
       color="gray"
       size="sm"
       aria-label={label}
+      {...(expanded === undefined ? {} : { "aria-expanded": expanded })}
       {...button}
       {...overCell(onOpen)}
     >
@@ -52,8 +56,9 @@ export function RowControls({
   details,
   menu,
 }: {
-  // The record named, and showing its details, for a record that has them.
-  details?: { name: string; onShow: () => void } | undefined;
+  // The record named, whether its details are open, and showing or closing them, for a record that
+  // has them.
+  details?: { name: string; open: boolean; onShow: () => void } | undefined;
   // The row's menu, opened from its ⋯.
   menu?: ReactNode;
 }) {
@@ -63,6 +68,7 @@ export function RowControls({
         <OpenBesideButton
           tabIndex={-1}
           label={`Show details of ${details.name}`}
+          expanded={details.open}
           onOpen={details.onShow}
         />
       )}

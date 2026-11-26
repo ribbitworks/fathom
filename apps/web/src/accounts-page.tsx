@@ -727,6 +727,7 @@ export function AccountsPage({
             saved={views.saved}
             panels={panels}
             selected={openId}
+            closeSelected={closePanel}
             withDrafts={false}
           />
         </TableTips>
