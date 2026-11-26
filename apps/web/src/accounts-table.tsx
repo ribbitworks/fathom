@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Accounts page's table on the shared table, read only, since accounts are changed in their
-// dialogs: each account's name, with This account after the reader's own, its email address, its
-// roles, the default first, whether it is active, and the day it was made, each account's details
-// opening beside it.
+// The Accounts page's table, on the shared table.
 
-import type { Account, RecordKeyOf } from "@fathom/shared";
+import {
+  type Account,
+  accountColumnClasses as headed,
+  fixedClassTables,
+  type RecordKeyOf,
+} from "@fathom/shared";
 import { noDrafts } from "./drafts.ts";
 import { rolesHeld } from "./names.ts";
 import { fieldColumn } from "./grid-columns.tsx";
@@ -105,21 +107,21 @@ export function accountColumns(
     });
   return [
     {
-      ...column("name", "Name", "text"),
+      ...column("name", headed.name.name, "text"),
       mark: (row) => row.id === ownId && <FactBox>This account</FactBox>,
     },
-    column("email", "Email address", "text"),
+    column("email", headed.email.name, "text"),
     // An account whose roles could not be read holds none, which Fathom never makes, but which is
     // shown as such.
     {
-      ...column("roles", "Roles", "choice", roles, true),
+      ...column("roles", headed.roles.name, "choice", roles, true),
       required: false,
       emptyLabel: "No role",
       standIn: () => "No role",
       content: ({ account }) => rolesText(account),
     },
-    column("status", "Status", "choice", statusChoices),
-    column("created", "Created", "date"),
+    column("status", headed.status.name, "choice", statusChoices),
+    column("created", headed.created.name, "date"),
   ];
 }
 
@@ -143,6 +145,10 @@ export function accountsTable({
   return {
     ...readOnlyTableParts,
     label: "Accounts",
+    exported: {
+      recordedAs: "accounts",
+      classOf: (key) => fixedClassTables.accounts.columns.get(key)?.dataClass,
+    },
     one: "account",
     noun: "accounts",
     nameOf: (row) => row.name,

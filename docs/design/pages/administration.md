@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-26"
 ---
 
 # Fathom: Administration Pages
@@ -18,6 +18,7 @@ The Administration pages hold accounts, roles, settings, lists and data classes.
 - **Table:** The shared table, read only: Name, Email address, Roles (the default first), Status and Created.
   - Status is filtered as any choice column is, rather than chosen in the Views menu.
 - **New account:** Shown only to those who may edit administration.
+- **Export:** As [Exporting](../../standards/ui-conventions/tables.md#exporting) sets out. Name and Email address are Personal, since they say who holds an account, so exporting asks first and is recorded in the access history. It is never refused for their class: everyone who sees accounts sees them.
 - **The user's own row:** A grey "This account" box after the name.
 - **Details:** A [side panel](../../standards/ui-conventions/pages-and-panels.md#details-panels) ending in **Edit…**, **Reset password…** (not on the user's own account) and **Deactivate…** or **Reactivate…**, only for those who may edit administration.
 - **Edit dialog:** Every role is a tick box with its description. Once several are ticked, radio buttons choose the default.
@@ -70,7 +71,7 @@ The Administration pages hold accounts, roles, settings, lists and data classes.
 
 - **Place:** In Administration, since lists hold choices for the plan and features as well as people.
 - **Switch:** **All**, **Built in** and **Custom** beside the page's title, as a page's switches are; changing it adds to Back's history. Kept in the address as `kind`, not in a saved view.
-- **The table:** The shared table, with saved views, as [Tables](../../standards/ui-conventions/tables.md#tables) sets out: Name, Class, Description, Choices and Used by. Built-in lists come first, then the organization's own, each by name. Group by offers Kind, which gives Built in and Custom headings. Show retired is in the Views menu.
+- **The table:** The shared table, with saved views, as [Tables](../../standards/ui-conventions/tables.md#tables) sets out: Name, Class, Description, Choices and Used by. Built-in lists come first, then the organization's own, each by name. Group by offers Kind, which gives Built in and Custom headings. Show retired is in the Views menu. Export saves it at once, since a list's name, choices and columns are configuration, General whatever the list's class.
   - **Name:** Renamed in the row, as a draft, by those who change configuration; a name another list has is refused. The description changes in Edit list…, a button that opens the Edit list dialog.
   - **Choices:** The count, then the names of the choices offered, with the mark of their drafts before them, as [A summary row](../../standards/ui-conventions/drafts-and-values.md#drafts) sets out.
   - **Used by:** Each column that picks from the list, as its page and name, such as People: Site: a built-in list's own columns and any added to People or Features, by page, then column. Every role that opens Lists sees them all, since columns are configuration; other readers of lists aren't sent them. Only live columns count.

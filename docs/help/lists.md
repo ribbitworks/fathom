@@ -111,6 +111,18 @@ See [Data classes](data-classes.md) for more.
 
 See [Saved views](saved-views.md) for more.
 
+### Export the Lists
+
+Exporting saves the table of lists as a file you can open in a spreadsheet.
+
+1. Select the **Export** button at the right of the page's heading. Its icon is an arrow pointing down to a line.
+1. Choose **CSV file** or **TSV file**.
+1. Choose where to save it, if your browser asks.
+
+The file holds the lists the table shows, with their choices and the columns that use them. You're done when the file is saved.
+
+See [People](people.md#export-people) for what the file holds.
+
 ## Marks and Terms
 
 - **Built in** marks a list Fathom needs.

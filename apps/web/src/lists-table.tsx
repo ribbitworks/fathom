@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Lists page's table of lists, on the shared table: each list's name, class, description,
-// choices and the columns that use it, its row marking its own draft and its choices' drafts.
+// The Lists page's table of lists, on the shared table.
 
 import {
   type Choice,
@@ -43,6 +42,7 @@ import {
   type Column,
   type GridDraft,
   type GridRecord,
+  generalExport,
   readOnlyTableParts,
   type RecordTable,
   type RowGrouping,
@@ -306,6 +306,7 @@ export function listTable({
   );
   return {
     label: "Lists",
+    exported: generalExport,
     one: "list",
     noun: "lists",
     groupings,

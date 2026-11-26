@@ -195,6 +195,18 @@ While a schedule is retired, or drafted to be, its panel has no pencils: the onl
 
 You're done when the schedule's row shows your draft: a **Retired** or **Restored** box.
 
+### Export a Tab
+
+Exporting saves the tab's table as a file you can open in a spreadsheet.
+
+1. Select the **Export** button at the right of the page's heading. Its icon is an arrow pointing down to a line.
+1. Choose **CSV file** or **TSV file**.
+1. Choose where to save it, if your browser asks.
+
+The file holds what the tab shows, and is named after the tab, such as **fathom_cycles_product-manager_2027-03-31.csv** for the **Cycles** tab. You're done when the file is saved.
+
+See [People](people.md#export-people) for what the file holds.
+
 ### Publish, Discard or Resubmit a Draft
 
 Each row's **⋯** menu, and the **⋯** at the top of its details, offers:

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Releases tab's table on the shared table, read only, with a release's row marked where its
-// draft changes it.
+// The Releases tab's table, on the shared table.
 
 import type {
   Activity,
@@ -27,6 +26,7 @@ import {
   type Column,
   type GridDraft,
   type GridRecord,
+  generalExport,
   readOnlyTableParts,
   type RecordTable,
 } from "./record-table.ts";
@@ -376,6 +376,7 @@ export function releaseTable({
   return {
     ...readOnlyTableParts,
     label: "Releases",
+    exported: generalExport,
     one: "release",
     noun: "releases",
     groupings: bySchedule(streams),

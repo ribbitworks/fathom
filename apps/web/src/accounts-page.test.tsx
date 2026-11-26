@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Accounts page, with the server's responses simulated: who sees it, the list of
-// accounts on the shared table, an account's details beside it, one's own account, the last active
-// account with Edit Administration, finding accounts, and saved views.
+// Tests for the Accounts page, with the server's responses simulated.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -26,10 +24,12 @@ import {
   teamMemberRole,
 } from "./test-accounts-page.tsx";
 import {
+  bodyOf,
   fictionalUser,
   greeting,
   recordCell,
   renderApp,
+  savedFiles,
   serverAnswers,
   signedIn,
 } from "./test-support.tsx";
@@ -539,5 +539,52 @@ describe("the Accounts page's saved views", () => {
     });
     expect(history.location.search).toContain(`view=${view.id}`);
     expect(history.location.search).toContain(`open=${former.id}`);
+  });
+});
+
+describe("exporting the Accounts page", () => {
+  it("asks before exporting accounts' names and email addresses as Personal data, then records the export", async () => {
+    // Given the Accounts page, read by an Administrator, who sees no one's Personal details on People
+    const files = savedFiles();
+    const fetch = serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+      "POST /api/exports": () => Response.json({ recorded: true }),
+    });
+    renderApp("/accounts");
+    await screen.findByRole("grid", { name: "Accounts" });
+
+    // When it is exported as a CSV file
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "CSV file" }),
+    );
+
+    // Then the question names the Personal columns
+    const dialog = await screen.findByRole("dialog", {
+      name: "Export Personal data?",
+    });
+    expect(dialog.textContent).toContain(
+      "This file holds Personal data (Name, Email address)",
+    );
+    expect(files).toHaveLength(0);
+
+    // When Export is chosen, the export is recorded as of Accounts, then the file saved
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Export" }),
+    );
+    await waitFor(() => {
+      expect(files).toHaveLength(1);
+    });
+    expect(bodyOf(fetch, "POST", "/api/exports")).toEqual([
+      {
+        table: "accounts",
+        columns: ["name", "email", "roles", "status", "created"],
+        details: [],
+      },
+    ]);
+    const text = (await files[0]?.text()) ?? "";
+    expect(text).toContain("planner@example.test");
   });
 });

@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for recording exports through the API, against a PostgreSQL server of their own: an export
-// holding Personal or Confidential columns is recorded in the access history, naming the table and
-// those columns by the classes the server finds; one holding none is not; who may record one; and
-// an export naming a column the role can't see is refused.
+// Tests for recording exports through the API, against a PostgreSQL server of their own.
 
 import { accessHistory, dataClasses } from "@fathom/db";
 import type { Field, Permission } from "@fathom/shared";
@@ -280,5 +277,79 @@ describe("who may record an export", () => {
     const response = await exported(reader.cookie, columns, table);
     expect(response.statusCode).toBe(400);
     expect(await exportsBy(reader.id)).toEqual([]);
+  });
+});
+
+describe("recording an export of Accounts", () => {
+  const accountsColumns = ["name", "email", "roles", "status", "created"];
+
+  it("records accounts' names and email addresses as Personal, for a role that sees no one's Personal details", async () => {
+    // Given an Administrator, who reads accounts but not people's Personal details
+    const administrator = await test.signedIn(["administration:view"]);
+
+    // When they export every column of Accounts
+    const response = await exported(
+      administrator.cookie,
+      accountsColumns,
+      "accounts",
+    );
+
+    // Then the export is recorded with its Personal columns, not refused for their class
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ recorded: true });
+    const [entry] = await exportsBy(administrator.id);
+    expect(entry?.details).toEqual({
+      exported: "Accounts",
+      personalColumns: ["Name", "Email address"],
+    });
+  });
+
+  it("refuses a role that doesn't see accounts", async () => {
+    const reader = await test.signedIn(seesBoth);
+
+    const response = await exported(reader.cookie, accountsColumns, "accounts");
+
+    expect(response.statusCode).toBe(403);
+    expect(await exportsBy(reader.id)).toEqual([]);
+  });
+
+  it("records nothing for one holding only General columns", async () => {
+    const administrator = await test.signedIn(["administration:view"]);
+
+    const response = await exported(
+      administrator.cookie,
+      ["roles", "status"],
+      "accounts",
+    );
+
+    expect(response.json()).toEqual({ recorded: false });
+    expect(await exportsBy(administrator.id)).toEqual([]);
+  });
+
+  it("refuses details, since accounts' rows hold none apart from their columns", async () => {
+    const administrator = await test.signedIn(["administration:view"]);
+
+    const response = await exported(
+      administrator.cookie,
+      accountsColumns,
+      "accounts",
+      ["hiringPlan"],
+    );
+
+    expect(response.statusCode).toBe(400);
+    expect(await exportsBy(administrator.id)).toEqual([]);
+  });
+
+  it("refuses a column Accounts doesn't have", async () => {
+    const administrator = await test.signedIn(["administration:view"]);
+
+    const response = await exported(
+      administrator.cookie,
+      ["name", "salary"],
+      "accounts",
+    );
+
+    expect(response.statusCode).toBe(409);
+    expect(await exportsBy(administrator.id)).toEqual([]);
   });
 });

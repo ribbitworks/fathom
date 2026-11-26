@@ -343,6 +343,13 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   exported?: {
     recordedAs?: ExportedTable;
     held?: (rows: readonly Rec[], show: Show) => readonly HeldDetail[];
+    // For a table whose columns' classes are fixed rather than set on Data classes, such as
+    // Accounts': each column's class in the file, by key. Not the column's own class, which would
+    // mark its heading, though every reader of the table sees the column.
+    classOf?: (key: string) => Tier | undefined;
+    // For a page with a date control: the day shown, as YYYY-MM-DD, which every row of the file
+    // starts with, so a file says when its data was true.
+    asOn?: string;
   };
   // For a table whose row stands for several records' drafts: whether the row has any that can be
   // decided now, in place of its own draft's state.
@@ -517,6 +524,9 @@ export const readOnlyTableParts = {
     throw new Error("A read-only table adds no records");
   },
 };
+
+// The export of a table whose data is all General: saved at once, asking and recording nothing.
+export const generalExport = {};
 
 // What a record added from a picker goes to: the saved record the picker was for, by its identifier,
 // or the new row it fills.

@@ -29,6 +29,7 @@ import {
   type Column,
   type GridDraft,
   type GridRecord,
+  generalExport,
   readOnlyTableParts,
   type RecordTable,
   type RowGrouping,
@@ -419,6 +420,7 @@ export function streamTable({
   return {
     ...readOnlyTableParts,
     label: capitalized(streamNames.noun),
+    exported: generalExport,
     one: streamNames.one,
     noun: streamNames.noun,
     groupings: groupings(day),

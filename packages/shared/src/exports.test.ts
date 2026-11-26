@@ -10,6 +10,7 @@ import {
   heldClassNames,
   heldData,
   heldTiers,
+  isFixedClassTable,
 } from "./exports.ts";
 
 describe("the classified data an export holds", () => {
@@ -96,5 +97,12 @@ describe("exportRequestSchema", () => {
     ],
   ])("refuses %s", (_case, request) => {
     expect(exportRequestSchema.safeParse(request).success).toBe(false);
+  });
+});
+
+describe("isFixedClassTable", () => {
+  it("is true only of a table whose columns' classes are fixed", () => {
+    expect(isFixedClassTable("accounts")).toBe(true);
+    expect(isFixedClassTable("people")).toBe(false);
   });
 });

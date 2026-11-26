@@ -82,6 +82,19 @@ You're done when its **Status** says **Active**.
 - To show only the accounts that hold a role, filter the **Roles** column the same way, and tick the role.
 - To keep a search, filter or sort and come back to it, save it as a view. See [Saved views](saved-views.md).
 
+## Export the Accounts
+
+Exporting saves the table of accounts as a file you can open in a spreadsheet.
+
+1. Select the **Export** button at the right of the page's heading. Its icon is an arrow pointing down to a line.
+1. Choose **CSV file** or **TSV file**.
+1. Fathom asks first, since accounts' names and email addresses are Personal data. Select **Export** to go ahead.
+1. Choose where to save it, if your browser asks.
+
+The export is recorded in the access history. You're done when the file is saved.
+
+See [People](people.md#export-people) for what the file holds.
+
 ## Marks on the Page
 
 - **This account** marks your own row.

@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Cycles tab's table on the shared table, read only: each cycle of every schedule, its schedule,
-// its first and last days, Current on the one holding today, and the release that includes it, after
-// its colour's square. The rows can be grouped by schedule. A cycle's row is marked where a
-// draft of its schedule's cycles changes it, adds it or removes it, and its menu decides, discards
-// or resubmits that draft, which may change other cycles too, deciding the release's own draft with
-// it where that changes the cycle as well, or alone where the change behind it can't be decided.
+// The Cycles tab's table, on the shared table.
 
 import {
   withSchedule,
@@ -39,6 +34,7 @@ import {
   type Column,
   type GridDraft,
   type GridRecord,
+  generalExport,
   readOnlyTableParts,
   type RecordTable,
 } from "./record-table.ts";
@@ -607,6 +603,7 @@ export function cycleTable({
   return {
     ...readOnlyTableParts,
     label: "Cycles",
+    exported: generalExport,
     one: "cycle",
     noun: "cycles",
     groupings: bySchedule(streams),

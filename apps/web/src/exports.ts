@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Exporting a table as a CSV or TSV file: the columns and rows the view shows, in its order, each
-// value in a form other programs read, with the unit of a column's amounts in its heading. An
-// export holding Personal or Confidential data asks first, naming the classes and their columns,
-// and is recorded in the access history before the file is saved.
-//
-// A file is always flat rows, whatever the view is grouped by, since spreadsheets filter and sort
-// only rows without headings. A table offers its export to the Export icon in its page's heading,
-// through useTableExport in table-export.tsx.
+// Exporting a table as a CSV or TSV file, and recording an export.
 
 import {
   capitalized,
@@ -41,6 +34,7 @@ import {
   type TableColumn,
   valueOrStandIn,
 } from "./table-view.ts";
+import { keyColumnKey } from "./grid-columns.tsx";
 import { asText } from "./table-rows.ts";
 
 export type ExportFormat = "csv" | "tsv";
@@ -342,23 +336,25 @@ export function draftInFile(draft: DraftLike | undefined): string {
   return draft.unpublished === true ? `${word}, not published` : word;
 }
 
+const wordsColumn = <Row>(
+  key: string,
+  label: string,
+  value: (row: Row) => string,
+): ExportColumn<Row> => ({
+  key,
+  label,
+  kind: "text",
+  choices: [],
+  multiple: false,
+  value,
+});
+
 // The columns a file holding drafts starts with: whether each row differs from live, the same under
 // every Draft choice, and what the draft does, so a spreadsheet's filters leave out either.
 function draftColumns<Rec extends GridRecord>(): ExportColumn<
   ExportRow<Rec>
 >[] {
-  const words = (
-    key: string,
-    label: string,
-    value: (row: ExportRow<Rec>) => string,
-  ): ExportColumn<ExportRow<Rec>> => ({
-    key,
-    label,
-    kind: "text",
-    choices: [],
-    multiple: false,
-    value,
-  });
+  const words = wordsColumn<ExportRow<Rec>>;
   return [
     words("exportDraft", "Draft", ({ version }) =>
       version === "draft" ? "Yes" : "",
@@ -395,7 +391,7 @@ function onRows<Rec extends GridRecord>(
 // drafts beside their live values, each drafted record's draft row, then its Live row; with the
 // drafts applied, the records as drafted; live only, the records as they are, none marked as a draft, with what
 // the draft waiting to change it does, as its green dot's tip says; each after the Draft and Change
-// columns.
+// columns, and those after the As on column, holding the day given, for a page with a date control.
 export function shownForExport<
   Rec extends GridRecord,
   Col extends ExportColumn<Rec>,
@@ -406,9 +402,16 @@ export function shownForExport<
   drafted: readonly Rec[],
   columns: readonly Col[],
   liveColumn: (column: Col) => Col,
+  asOn?: string,
 ): { rows: ExportRow<Rec>[]; columns: ExportColumn<ExportRow<Rec>>[] } {
   const ofRecords = columns.map((column) => onRows(column, liveColumn(column)));
-  const columnsWithDrafts = [...draftColumns<Rec>(), ...ofRecords];
+  const columnsWithDrafts = [
+    ...(asOn === undefined
+      ? []
+      : [wordsColumn<ExportRow<Rec>>("exportAsOn", "As on", () => asOn)]),
+    ...draftColumns<Rec>(),
+    ...ofRecords,
+  ];
   if (show === "live") {
     const waitingOf = new Map(
       drafted.flatMap((record) =>
@@ -481,7 +484,8 @@ export const exportRecordOf = (
   held: readonly Pick<HeldDetail, "field">[] = [],
 ): ExportRequest => ({
   table,
-  columns: columns.map((column) => column.key),
+  // A record's key is General, and the page makes it, so the server holds no such column.
+  columns: columns.map(({ key }) => key).filter((key) => key !== keyColumnKey),
   details: held.map(({ field }) => field),
 });
 

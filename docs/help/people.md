@@ -213,6 +213,8 @@ The file holds what the table shows, in the same order. Rows that your search or
 
 If the table shows **Drafts & Live**, each changed row comes twice, the draft first and then the live row. The **Draft** column says **Yes** on each draft row and is empty on the rest, so you can filter either out in a spreadsheet. The **Change** column says what each draft does.
 
+Since People can show another day, each of its rows starts with **As on**, the day the table shows, such as 2027-03-31, so the file says when its data was true.
+
 The file is named after the page, the saved view if you applied one, who exported it, the drafts it holds, if any, and the day the table shows, such as **fathom_people_engineering-director_drafts-and-live_2027-03-31.csv**.
 
 You're done when the file is saved.

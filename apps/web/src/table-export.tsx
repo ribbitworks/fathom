@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A table's export, offered to the Export icon in its page's heading: what the view shows, as a
-// file, saved at once when it holds only General data, or after the question, and recorded, when
-// it holds Personal or Confidential data. Returns the question, for the table to draw.
+// A table's export, offered to the Export icon in its page's heading.
 
 import type { ReactNode } from "react";
 import { useDialogState } from "./dialog-actions.tsx";
@@ -59,13 +57,18 @@ export function useTableExport<
   useOfferedExport(
     exported &&
       ((format) => {
+        const classed = (column: Col): Col => {
+          const dataClass = exported.classOf?.(column.key);
+          return dataClass === undefined ? column : { ...column, dataClass };
+        };
         const file = shownForExport(
           show,
           shown,
           table.liveRecords(everyone),
           everyone,
-          columns,
-          liveColumn,
+          columns.map(classed),
+          (column) => classed(liveColumn(column)),
+          exported.asOn,
         );
         const saving = {
           name: exportFileName({
@@ -73,7 +76,7 @@ export function useTableExport<
             view: appliedViewName(saved),
             person,
             show,
-            day: today(),
+            day: exported.asOn ?? today(),
             format,
           }),
           format,

@@ -599,6 +599,8 @@ export {
 } from "./last-views.ts";
 export { allOf, eitherOf } from "./words.ts";
 export {
+  accountColumnClasses,
+  type ClassedColumn,
   type ClassifiedColumns,
   type ClassifiedTier,
   classifiedData,
@@ -609,9 +611,12 @@ export {
   exportRecordedSchema,
   type ExportRequest,
   exportRequestSchema,
+  type FixedClassTable,
+  fixedClassTables,
   heldClassNames,
   heldData,
   heldTiers,
+  isFixedClassTable,
 } from "./exports.ts";
 export {
   isNumberValue,

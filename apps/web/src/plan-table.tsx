@@ -44,12 +44,13 @@ import {
   withLiveFields,
   liveRecordsOf,
 } from "./live-records.ts";
-import type {
-  Column,
-  GridRecord,
-  NamingPart,
-  RecordTable,
-  RowGrouping,
+import {
+  type Column,
+  generalExport,
+  type GridRecord,
+  type NamingPart,
+  type RecordTable,
+  type RowGrouping,
 } from "./record-table.ts";
 import type { CellValue } from "./table-view.ts";
 
@@ -191,10 +192,10 @@ export function draftFieldsOf<Rec extends GridRecord, Change>(
 const exportedAs: Readonly<
   Record<PlanRecordKind, { recordedAs?: "features" | "activities" }>
 > = {
-  customer: {},
-  project: {},
-  proposal: {},
-  milestone: {},
+  customer: generalExport,
+  project: generalExport,
+  proposal: generalExport,
+  milestone: generalExport,
   feature: { recordedAs: "features" },
   activity: { recordedAs: "activities" },
 };

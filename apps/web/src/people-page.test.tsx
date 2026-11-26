@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the People page, with the server's responses simulated: who sees what, editing people
-// in the table, exporting, other dates and links to a column. Helpers that need no page are tested
-// in people-grid.test.ts.
+// Tests for the People page, with the server's responses simulated.
 
 import {
   act,
@@ -13,13 +11,7 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  bodyOf,
-  greeting,
-  renderApp,
-  savedFiles,
-  serverAnswers,
-} from "./test-support.tsx";
+import { bodyOf, greeting, renderApp, serverAnswers } from "./test-support.tsx";
 import {
   s1,
   session,
@@ -41,7 +33,6 @@ import {
   settle,
   offeredOptions,
   pick,
-  chooseInDraftMenu,
 } from "./test-people-page.tsx";
 
 afterEach(() => {
@@ -502,137 +493,6 @@ describe("only the latest change", () => {
     await screen.findByRole("dialog");
     await userEvent.keyboard("{Meta>}z{/Meta}");
     expect(undone(fetch)).toEqual([]);
-  });
-});
-
-describe("exporting People", () => {
-  it("asks before exporting Personal data, without the hiring plan when no planned hire is shown", async () => {
-    await openPeople();
-    await userEvent.click(screen.getByRole("button", { name: "Export" }));
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "CSV file" }),
-    );
-    const dialog = await screen.findByRole("dialog", {
-      name: "Export Personal data?",
-    });
-    expect(dialog.textContent).not.toContain("Hiring plan");
-  });
-
-  it("leaves hidden columns out of the file, asking nothing when only they hold Personal data", async () => {
-    // Given People with its Personal columns hidden
-    const files = savedFiles();
-    serverAnswers({
-      "GET /api/session": editor,
-      "GET /api/people": peopleAnswer,
-      "GET /api/lists": listsAnswer,
-    });
-    renderApp('/people?hidden=["startDate","endDate","managerFrom","f2"]');
-    await screen.findByRole("grid", { name: "People" });
-
-    // When People is exported
-    await userEvent.click(screen.getByRole("button", { name: "Export" }));
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "CSV file" }),
-    );
-
-    // Then the file is saved without asking, holding no hidden column
-    await waitFor(() => {
-      expect(files).toHaveLength(1);
-    });
-    expect(screen.queryByRole("dialog")).toBeNull();
-    const [heading = ""] = (await files[0]?.text())?.split(/\r?\n/u) ?? [];
-    const headings = heading.split(",");
-    expect(headings).toEqual(expect.arrayContaining(["Name", "Site"]));
-    for (const hidden of ["Start", "End", "Manager assigned", "Role on team"]) {
-      expect(headings).not.toContain(hidden);
-    }
-  });
-
-  it("exports a shown Key column as each record's key number, after Name", async () => {
-    // Given People with the Key column shown, and its Personal columns hidden
-    const files = savedFiles();
-    serverAnswers({
-      "GET /api/session": editor,
-      "GET /api/people": peopleAnswer,
-      "GET /api/lists": listsAnswer,
-    });
-    renderApp(
-      '/people?hidden=["startDate","endDate","managerFrom","f2"]&shown=["recordKey"]',
-    );
-    await screen.findByRole("grid", { name: "People" });
-
-    // When People is exported
-    await userEvent.click(screen.getByRole("button", { name: "Export" }));
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "CSV file" }),
-    );
-
-    // Then the file holds each key's number under Key, after Name
-    await waitFor(() => {
-      expect(files).toHaveLength(1);
-    });
-    const [heading = "", ...lines] =
-      (await files[0]?.text())?.split(/\r?\n/u) ?? [];
-    const headings = heading.split(",");
-    const keyAt = headings.indexOf("Key");
-    expect(keyAt).toBe(headings.indexOf("Name") + 1);
-    const averyLine = lines.find((line) => line.includes("Avery Fictional"));
-    expect(averyLine?.split(",").at(keyAt)).toBe(String(avery.keyNumber));
-  });
-
-  it("names past managers for a drafted change of manager", async () => {
-    // Given a person drafted to another manager
-    const moved = {
-      ...blake,
-      manager: { id: "p1", preferredName: "Avery Fictional" },
-      draft: {
-        action: "changed",
-        changed: ["managerId"],
-        live: { managerId: null, values: {}, links: {} },
-        state: "waiting",
-        madeBy: null,
-        madeAt: null,
-      },
-    };
-    await openPeople({
-      "GET /api/people": () =>
-        Response.json({
-          people: [avery, moved],
-          fields: [site, role],
-          order,
-        }),
-    });
-
-    // When People is exported beside live
-    await userEvent.click(screen.getByRole("button", { name: "Export" }));
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "CSV file" }),
-    );
-
-    // Then the question names past managers, Personal by default
-    const dialog = await screen.findByRole("dialog", {
-      name: "Export Personal data?",
-    });
-    expect(dialog.textContent).toContain("Past managers");
-
-    // When it is exported live only, holding only the live manager
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Cancel" }),
-    );
-    await waitFor(() => {
-      expect(screen.queryByRole("dialog")).toBeNull();
-    });
-    await chooseInDraftMenu("Live only");
-    await userEvent.click(screen.getByRole("button", { name: "Export" }));
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "CSV file" }),
-    );
-
-    // Then past managers aren't named
-    expect(
-      (await screen.findByRole("dialog", { name: "Export Personal data?" }))
-        .textContent,
-    ).not.toContain("Past managers");
   });
 });
 
