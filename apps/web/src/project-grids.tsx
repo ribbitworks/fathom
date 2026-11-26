@@ -246,8 +246,8 @@ export function projectTable(
     request: (changes) => merged(changes) as ProjectRequest,
     showDetails: onOpen,
     menuItems: recordMenu<Project>([
-      ["Show milestones", onMilestones],
-      ["Show features", onFeatures],
+      ["Show on Milestones", onMilestones],
+      ["Show on Features", onFeatures],
     ]),
   });
 }
@@ -288,7 +288,7 @@ export function proposalTable(
     columns: () => proposalColumns(choices),
     request: (changes) => merged(changes) as ProposalRequest,
     showDetails: onOpen,
-    menuItems: recordMenu<Proposal>([["Show features", onFeatures]]),
+    menuItems: recordMenu<Proposal>([["Show on Features", onFeatures]]),
   });
 }
 

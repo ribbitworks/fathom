@@ -4,14 +4,14 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Feature Links
 
 ## Scope
 
-Verifies the projects and proposals that name a feature on the Features page: how they read, following them to their details beside Features, changing them as drafts of each project and proposal, Show features in a project's and a proposal's menu, filtering by them, and who may change them. The rest of the Features page is verified in [Features](features-manual-test.md).
+Verifies the projects and proposals that name a feature on the Features page: how they read, following them to their details beside Features, changing them as drafts of each project and proposal, Show on Features in a project's and a proposal's menu, filtering by them, and who may change them. The rest of the Features page is verified in [Features](features-manual-test.md).
 
 ## Test Environment
 
@@ -182,13 +182,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Afterwards:** Run Restore the Seed Data.
 
-### LINK-04: Show Features Opens Features Filtered
+### LINK-04: Show on Features Opens Features Filtered
 
 **Account:** Product Manager, `product.manager@fathom.test`, the same as LINK-03.
 
 **Preconditions:** Restore the Seed Data run after LINK-03. **Projects** page open, **Projects** tab chosen.
 
-- [ ] `865B` In the **⋯** menu of 'Crane Control', select **Show features**.
+- [ ] `865B` In the **⋯** menu of 'Crane Control', select **Show on Features**.
   - **Expected:**
     - The **Features** page opens.
     - Only 'Audit Export' and 'Offline Sync' show.
@@ -209,7 +209,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Ore Sorting Study' is among them.
   - **Notes:**
 
-- [ ] `E2BD` In the **⋯** menu of 'Ore Sorting Study', select **Show features**.
+- [ ] `E2BD` In the **⋯** menu of 'Ore Sorting Study', select **Show on Features**.
   - **Expected:**
     - The **Features** page opens.
     - Only 'Partner Portal' shows.

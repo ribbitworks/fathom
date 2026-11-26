@@ -529,7 +529,7 @@ describe("the Features page", () => {
       "opens Features filtered to a %s's features from its menu",
       async (_kind, path, name) => {
         const { history } = await openNamed(path);
-        await chooseFrom(await rowMenu(name), "Show features");
+        await chooseFrom(await rowMenu(name), "Show on Features");
         await waitFor(() => {
           expect(history.location.pathname).toBe("/features");
         });

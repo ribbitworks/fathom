@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-project-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Project Manager Workflows
@@ -80,7 +80,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - Each is followed in grey by "Added" and a date.
   - **Notes:**
 
-- [ ] `34CA` Open the **⋯** menu of 'Depot Operations' in the table, and select **Show features**.
+- [ ] `34CA` Open the **⋯** menu of 'Depot Operations' in the table, and select **Show on Features**.
   - **Expected:**
     - The **Features** page opens, showing only 'Parts Lookup', 'Barcode Scanning' and 'Work Order Sync'.
     - A pill above the table reads "Projects: P-2017 Depot Operations".

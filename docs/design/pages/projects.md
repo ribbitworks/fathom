@@ -18,14 +18,14 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 - **Tabs:** Projects, Proposals, Customers and Milestones, on the heading's line and kept in the address. Each tab keeps saved views of its own.
 - **Each tab:** a table edited like People's, as [People](people.md) sets out.
 - **Names:** projects and proposals follow [Links to Records](../../standards/ui-conventions/pages-and-panels.md#links-to-records).
-- **Show features:** a project's or proposal's row menu opens [Features](features.md) filtered to its features.
+- **Show on Features:** a project's or proposal's row menu opens [Features](features.md) filtered to its features.
 - **Customers' columns:** Name, Description, then Projects, Proposals and Features, then Notes last.
   - Projects, Proposals and Features are read only, worked out from the links the other way: the projects and proposals naming the customer, and every feature it gets or asks for, naming it directly, needed by one of its projects or proposed by one of its proposals.
   - Each lists records as [Several records in a cell](../../standards/ui-conventions/pages-and-panels.md#links-to-records) sets out, and is searched, sorted, filtered, broken down by Metrics and exported as any such column, drafts included as the Draft menu shows them.
   - Features shows only to those who see features.
 - **Show all features:** a customer's row menu opens [Features](features.md) with its `customer` filter, for those who see features.
 - **Remove customer:** turned off while a project, proposal or feature names the customer, with a line naming the first and counting the others, such as "P-2001 Crane Control names this customer." or "P-2017 Depot Operations and 1 other name this customer.", as [Controls turned off](../../standards/ui-conventions/entering-and-saving.md#refusals) sets out. One drafted to be removed no longer counts. The server still refuses a removal another draft makes untrue meanwhile.
-- **Show milestones:** a project's row menu opens the Milestones tab filtered to it.
+- **Show on Milestones:** a project's row menu opens the Milestones tab filtered to it.
 - **New:** a form in the side panel; Project starts as the one the table is filtered to.
 
 ## Record Details

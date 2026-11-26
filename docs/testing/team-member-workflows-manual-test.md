@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-team-member.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Team Member Workflows
@@ -161,7 +161,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
     - The panel shows no change buttons.
   - **Notes:**
 
-- [ ] `60C5` Open the **⋯** menu of 'Crane Control' in the table, and select **Show milestones**.
+- [ ] `60C5` Open the **⋯** menu of 'Crane Control' in the table, and select **Show on Milestones**.
   - **Expected:**
     - The **Milestones** tab opens, showing only the milestones of 'Crane Control'.
     - A pill above the table reads "Project: P-2001 Crane Control".
