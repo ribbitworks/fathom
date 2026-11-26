@@ -2,7 +2,17 @@
 
 // Records and columns as they are live, or as a choice of the Draft menu shows them.
 
-import type { Field, List, Show } from "@fathom/shared";
+import {
+  type ColumnValue,
+  type ColumnValueMap,
+  columnValueMapsOf,
+  type Field,
+  type List,
+  optionalColumnValueMaps,
+  type SomeColumnValues,
+  type Show,
+} from "@fathom/shared";
+import { withoutColumnValues } from "./added-columns.ts";
 import { draftedLists, liveLists } from "./lists.ts";
 import type { CountedDrafts } from "./metrics-panel.tsx";
 import type { CellRecord, GridRecord } from "./record-table.ts";
@@ -91,10 +101,6 @@ export function liveRecordsOf<Rec extends CellRecord>(
         return live.length === 0 ? [] : [[key, live]];
       }),
     ]);
-    const links = withLiveValues(record.links, columns, draft.live.links);
-    const notes = withLiveValues(record.notes, columns, draft.live.notes);
-    const numbers = withLiveValues(record.numbers, columns, draft.live.numbers);
-    const flags = withLiveValues(record.flags, columns, draft.live.flags);
     const details = Object.fromEntries(
       draft.changed
         .filter((key) => detailKeys.includes(key))
@@ -102,20 +108,27 @@ export function liveRecordsOf<Rec extends CellRecord>(
         // eslint-disable-next-line security/detect-object-injection
         .map((key) => [key, draft.live[key] ?? null]),
     );
+    const held: SomeColumnValues = record;
+    const drafted: SomeColumnValues = draft.live;
     // The record's own maps go, so one a draft empties isn't kept from before it.
-    const unmapped = Object.fromEntries(
-      Object.entries(rest).filter(
-        ([key]) => !["notes", "numbers", "flags"].includes(key),
-      ),
-    );
     return {
-      ...(unmapped as Rec),
+      ...(withoutColumnValues(rest) as Rec),
       ...details,
       values,
-      links,
-      ...(Object.keys(notes).length === 0 ? {} : { notes }),
-      ...(Object.keys(numbers).length === 0 ? {} : { numbers }),
-      ...(Object.keys(flags).length === 0 ? {} : { flags }),
+      links: withLiveValues(record.links, columns, draft.live.links),
+      ...columnValueMapsOf(
+        optionalColumnValueMaps,
+        <Name extends ColumnValueMap>(map: Name) => {
+          /* eslint-disable security/detect-object-injection -- the map is one of the record's own */
+          const live = withLiveValues<ColumnValue<Name>>(
+            held[map],
+            columns,
+            drafted[map],
+          );
+          /* eslint-enable security/detect-object-injection */
+          return Object.keys(live).length === 0 ? undefined : live;
+        },
+      ),
     };
   });
 }

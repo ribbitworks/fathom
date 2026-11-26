@@ -5,6 +5,7 @@
 
 import { type Database, privateRows } from "@fathom/db";
 import {
+  askedColumnIds,
   type PrivatePage,
   type PrivateRowRequest,
   seesClass,
@@ -100,13 +101,11 @@ function refuseUnseen(
   seen: readonly ColumnInfo[],
   request: PrivateRowRequest,
 ): void {
-  const named = [
-    request.values,
-    request.links,
-    request.notes,
-    request.numbers,
-  ].flatMap((byColumn) => Object.keys(byColumn ?? {}));
-  if (named.some((id) => !seen.some((column) => column.id === id))) {
+  if (
+    askedColumnIds(request).some(
+      (id) => !seen.some((column) => column.id === id),
+    )
+  ) {
     throw new BadRequestError(noColumn);
   }
 }

@@ -50,10 +50,7 @@ import {
   tidy,
 } from "./draft-records.ts";
 import {
-  checkedFlags,
-  checkedLinks,
-  checkedNotes,
-  checkedNumbers,
+  checkedColumnValues,
   checkedValues,
   choicesAskedFor,
   valuesOf,
@@ -180,10 +177,7 @@ export async function createHires(
         ...recordedValues(
           checkedValues(offered, known, request.values, undefined),
         ),
-        ...checkedLinks(offered, request.links),
-        ...checkedNotes(offered, request.notes ?? {}),
-        ...checkedNumbers(offered, request.numbers ?? {}),
-        ...checkedFlags(offered, request.flags ?? {}),
+        ...checkedColumnValues(offered, request),
       });
       if (newlyManaged(undefined, after)) {
         await refuseUnmarked(
@@ -308,10 +302,7 @@ export async function updateHire(
           choiceIds,
         ]),
       ),
-      ...checkedLinks(offered, change.links ?? {}),
-      ...checkedNotes(offered, change.notes ?? {}),
-      ...checkedNumbers(offered, change.numbers ?? {}),
-      ...checkedFlags(offered, change.flags ?? {}),
+      ...checkedColumnValues(offered, change),
     });
     const tierOf = await readHireTier(transaction, columns);
     if (newlyManaged(hire, after)) {

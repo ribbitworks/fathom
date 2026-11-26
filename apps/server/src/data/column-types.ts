@@ -4,14 +4,12 @@
 // data access layer.
 
 import {
+  type ColumnValues,
   type FieldType,
-  type Flags,
   fieldTypeSchema,
   isLink,
   isNumberValue,
-  type Links,
-  type Notes,
-  type Numbers,
+  noColumnValues,
   type Tier,
 } from "@fathom/shared";
 import type { fieldValues } from "@fathom/db";
@@ -30,22 +28,14 @@ export interface TypeSettings {
 
 const laterSettingsUnset = { multiline: false, linkedTable: null } as const;
 
-// A record's values as a draft shows them live: choices, links, notes, numbers, and ticked boxes,
-// by column.
-export interface LiveValues {
+// A record's values as a draft shows them live: choices, and each map's values, by column.
+export interface LiveValues extends ColumnValues {
   values: Record<string, string[]>;
-  links: Links;
-  notes: Notes;
-  numbers: Numbers;
-  flags: Flags;
 }
 
 export const noLiveValues = (): LiveValues => ({
   values: {},
-  links: {},
-  notes: {},
-  numbers: {},
-  flags: {},
+  ...noColumnValues(),
 });
 
 export interface ColumnType {

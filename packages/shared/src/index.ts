@@ -335,6 +335,31 @@ export {
   shownRecordKey,
 } from "./record-keys.ts";
 export * from "./record-exports.ts";
+export {
+  askedColumnIds,
+  type ColumnValue,
+  type ColumnValueMap,
+  columnValueMaps,
+  columnValueMapsOf,
+  type ColumnValues,
+  columnValuesIn,
+  eachColumnValueMap,
+  type Flags,
+  flagsSchema,
+  type Links,
+  type Notes,
+  noColumnValues,
+  type Numbers,
+  numbersSchema,
+  type OptionalColumnValueMap,
+  optionalColumnValueMaps,
+  type RequestedColumnValues,
+  requestedColumnValueMapsOf,
+  requestedFlagsSchema,
+  requestedNumbersSchema,
+  type SomeColumnValues,
+  type SomeRequestedColumnValues,
+} from "./column-values.ts";
 export { allOf, eitherOf } from "./words.ts";
 export {
   accountColumnClasses,

@@ -3,8 +3,20 @@
 // What People's table and details panel do to its rows: add, change, remove, discard and resubmit
 // people and planned hires, and ask to decide their drafts.
 
-import type { DecidedKind, List, Person, PersonDraft } from "@fathom/shared";
-import { kept } from "./added-columns.ts";
+import {
+  type ColumnValue,
+  type ColumnValueMap,
+  columnValueMaps,
+  columnValueMapsOf,
+  type DecidedKind,
+  type List,
+  optionalColumnValueMaps,
+  type Person,
+  type PersonDraft,
+  type SomeColumnValues,
+  type SomeRequestedColumnValues,
+} from "@fathom/shared";
+import { kept, withoutColumnValues } from "./added-columns.ts";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
 import { draftSentAgain, pendingDraft, unsavedKeyNumber } from "./drafts.ts";
 import {
@@ -40,16 +52,22 @@ import type { RecordSaving } from "./saving.ts";
 // Someone or a planned hire being added, as the table shows them before they are saved: a draft
 // adding them.
 function adding(id: string, request: RowRequest): Person {
-  const { values, links, notes, numbers, flags, ...details } = request;
+  const requested: SomeRequestedColumnValues = request;
   return {
     id,
     keyNumber: unsavedKeyNumber,
-    ...details,
-    values,
-    links: kept(links),
-    ...(notes === undefined ? {} : { notes: kept(notes) }),
-    ...(numbers === undefined ? {} : { numbers: kept(numbers) }),
-    ...(flags === undefined ? {} : { flags: kept(flags) }),
+    ...withoutColumnValues(request),
+    values: request.values,
+    links: kept(request.links),
+    ...columnValueMapsOf(
+      optionalColumnValueMaps,
+      <Name extends ColumnValueMap>(map: Name) => {
+        // The map is one of the request's own.
+        // eslint-disable-next-line security/detect-object-injection
+        const asked = requested[map];
+        return asked === undefined ? undefined : kept<ColumnValue<Name>>(asked);
+      },
+    ),
     // A draft adding someone changes everything, so names nothing in particular.
     draft: pendingDraft("created", { values: {}, links: {} }),
   };
@@ -58,15 +76,23 @@ function adding(id: string, request: RowRequest): Person {
 // A person as they are live, without their draft. A web link column the draft changes that is not
 // in the live links had no link.
 function asLive(person: Person, draft: PersonDraft): Person {
-  const { values, links, notes, numbers, flags, ...details } = draft.live;
+  const held: SomeColumnValues = person;
+  const drafted: SomeColumnValues = draft.live;
   const live: Person = {
     ...person,
-    ...(details as Partial<Person>),
-    values: { ...person.values, ...values },
-    links: withLiveValues(person.links, draft.changed, links),
-    notes: withLiveValues(person.notes, draft.changed, notes),
-    numbers: withLiveValues(person.numbers, draft.changed, numbers),
-    flags: withLiveValues(person.flags, draft.changed, flags),
+    ...(withoutColumnValues(draft.live) as Partial<Person>),
+    values: { ...person.values, ...draft.live.values },
+    ...columnValueMapsOf(
+      columnValueMaps,
+      <Name extends ColumnValueMap>(map: Name) =>
+        /* eslint-disable security/detect-object-injection -- the map is one of the person's own */
+        withLiveValues<ColumnValue<Name>>(
+          held[map],
+          draft.changed,
+          drafted[map],
+        ),
+      /* eslint-enable security/detect-object-injection */
+    ),
   };
   delete live.draft;
   return live;

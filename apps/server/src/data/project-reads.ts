@@ -36,13 +36,7 @@ import { readTeamDrafts } from "./feature-team-reads.ts";
 import { readColumnsOut } from "./column-state.ts";
 import { liveValuesOf } from "./column-types.ts";
 import { readListsWithin } from "./list-reads.ts";
-import {
-  flagsOf,
-  linksOf,
-  notesOf,
-  numbersOf,
-  valuesOf,
-} from "./person-fields.ts";
+import { columnValuesOf, valuesOf } from "./person-fields.ts";
 import { milestoneDays, milestonesOf } from "./project-kinds.ts";
 import { text } from "./reporting.ts";
 import { fieldOfValue } from "./values.ts";
@@ -260,10 +254,7 @@ export function planningOut(
     description: text(record.description),
     note: text(record.note),
     values: Object.fromEntries(valuesOf(record)),
-    links: linksOf(record),
-    notes: notesOf(record),
-    numbers: numbersOf(record),
-    flags: flagsOf(record),
+    ...columnValuesOf(record),
     staffed: staffed.drafted.has(id),
     staffedLive: staffed.live.has(id),
     ...(draft === undefined ? {} : { draft: featureDraftOf(draft) }),

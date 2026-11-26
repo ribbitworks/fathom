@@ -7,6 +7,7 @@ import {
   type ChangeValue,
   type Choice,
   choiceNamed,
+  type ColumnValues,
   isDay,
   layOutDropsDigits,
   isLink,
@@ -24,6 +25,8 @@ import {
   typedInPlace,
   typedMonth,
   typedNumber,
+  type OptionalColumnValueMap,
+  type SomeRequestedColumnValues,
   type Typing,
   webAddress,
   webAddressSample,
@@ -81,24 +84,21 @@ type Choices = Pick<
   "choices" | "unit" | "places" | "choicesInWords"
 >;
 
+type OptionalMaps = {
+  [Name in OptionalColumnValueMap]?: Readonly<ColumnValues[Name]> | undefined;
+};
+
 // A record's details and its values in added columns, as it is or as its draft shows it live.
-export interface CellSource {
+export interface CellSource extends OptionalMaps {
   [detail: string]: unknown;
   values: Readonly<Record<string, string[]>>;
-  links: Readonly<Record<string, Link>>;
-  notes?: Readonly<Record<string, string>> | undefined;
-  numbers?: Readonly<Record<string, number>> | undefined;
-  flags?: Readonly<Record<string, true>> | undefined;
+  links: Readonly<ColumnValues["links"]>;
 }
 
 // The change that saves a value: a detail by its key, or an added column's choices or link.
-export interface CellChange {
+export interface CellChange extends SomeRequestedColumnValues {
   [detail: string]: unknown;
   values?: Record<string, string[]> | undefined;
-  links?: Record<string, Link | null> | undefined;
-  notes?: Record<string, string | null> | undefined;
-  numbers?: Record<string, number | null> | undefined;
-  flags?: Record<string, true | null> | undefined;
 }
 
 export interface EditorProps {

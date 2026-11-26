@@ -5,6 +5,11 @@
 
 import { type Database, fieldOfValue, people, type Reader } from "@fathom/db";
 import {
+  askedColumnIds,
+  type ColumnValueMap,
+  type ColumnValues,
+  columnValueMaps,
+  eachColumnValueMap,
   isLink,
   type FieldType,
   type Flags,
@@ -12,6 +17,7 @@ import {
   type Links,
   type Notes,
   type Numbers,
+  type SomeRequestedColumnValues,
   type Tier,
 } from "@fathom/shared";
 import { inArray } from "drizzle-orm";
@@ -165,55 +171,68 @@ export function valuesOf(person: Recorded): Map<string, string[]> {
   );
 }
 
-// A person's or planned hire's links, by column, as recorded.
-export function linksOf(person: Recorded): Links {
-  return Object.fromEntries(
-    Object.entries(person).flatMap(([field, value]) => {
-      const fieldId = fieldOfValue(field);
-      return fieldId === null || !isLink(value)
-        ? []
-        : [[fieldId, { address: value.address, text: value.text }]];
-    }),
-  );
-}
+type Shows = (columnId: string) => boolean;
 
-// What a column of one value holds for a person or planned hire, by column, as recorded.
+const showsAll: Shows = () => true;
+
+// What a column of one value holds for a person or planned hire, by column, as recorded, in only
+// the columns shown.
 const valuesHolding = <Held>(
   person: Recorded,
   holds: (value: unknown) => value is Held,
+  shows: Shows,
+  copied: (held: Held) => Held = (held) => held,
 ): Record<string, Held> =>
   Object.fromEntries(
     Object.entries(person).flatMap(([field, value]) => {
       const fieldId = fieldOfValue(field);
-      return fieldId === null || !holds(value) ? [] : [[fieldId, value]];
+      return fieldId === null || !shows(fieldId) || !holds(value)
+        ? []
+        : [[fieldId, copied(value)]];
     }),
   );
 
-export const notesOf = (person: Recorded): Notes =>
-  valuesHolding(person, isNote);
+// A person's or planned hire's links, by column, as recorded.
+const linksOf = (person: Recorded, shows: Shows): Links =>
+  valuesHolding(person, isLink, shows, ({ address, text }) => ({
+    address,
+    text,
+  }));
 
-export const numbersOf = (person: Recorded): Numbers =>
-  valuesHolding(person, isNumber);
+const notesOf = (person: Recorded, shows: Shows): Notes =>
+  valuesHolding(person, isNote, shows);
 
-export const flagsOf = (person: Recorded): Flags =>
-  valuesHolding(person, isFlag);
+const numbersOf = (person: Recorded, shows: Shows): Numbers =>
+  valuesHolding(person, isNumber, shows);
 
-const shownOnly = <Value>(
-  byColumn: Iterable<[string, Value]>,
-  shows: (columnId: string) => boolean,
-): Record<string, Value> =>
-  Object.fromEntries([...byColumn].filter(([columnId]) => shows(columnId)));
+const flagsOf = (person: Recorded, shows: Shows): Flags =>
+  valuesHolding(person, isFlag, shows);
+
+const columnValueReaders: {
+  [Kind in ColumnValueMap]: (
+    person: Recorded,
+    shows: Shows,
+  ) => ColumnValues[Kind];
+} = { links: linksOf, notes: notesOf, numbers: numbersOf, flags: flagsOf };
+
+// A person's or planned hire's values in each map, by column, as recorded, in only the columns
+// shown.
+export const columnValuesOf = (
+  record: Recorded,
+  shows = showsAll,
+): ColumnValues =>
+  eachColumnValueMap<ColumnValues>((map) =>
+    // The map is one of the readers' own.
+    // eslint-disable-next-line security/detect-object-injection
+    columnValueReaders[map](record, shows),
+  );
 
 // A person's or planned hire's values, by column, in only the columns the reader is shown.
-export const shownValuesOf = (
-  record: Recorded,
-  shows: (columnId: string) => boolean,
-) => ({
-  values: shownOnly(valuesOf(record), shows),
-  links: shownOnly(Object.entries(linksOf(record)), shows),
-  notes: shownOnly(Object.entries(notesOf(record)), shows),
-  numbers: shownOnly(Object.entries(numbersOf(record)), shows),
-  flags: shownOnly(Object.entries(flagsOf(record)), shows),
+export const shownValuesOf = (record: Recorded, shows: Shows) => ({
+  values: Object.fromEntries(
+    [...valuesOf(record)].filter(([columnId]) => shows(columnId)),
+  ),
+  ...columnValuesOf(record, shows),
 });
 
 // The changes between two versions of a person, with each field's tier.
@@ -271,24 +290,14 @@ type ChoiceRow = Awaited<ReturnType<typeof inListOrder>>[number];
 export async function choicesAskedFor(
   transaction: Transaction,
   editor: string,
-  requests: readonly {
+  requests: readonly (Parameters<typeof askedColumnIds>[0] & {
     values?: Readonly<Record<string, readonly string[]>> | undefined;
-    links?: Readonly<Record<string, Link | null>> | undefined;
-    notes?: Readonly<Record<string, string | null>> | undefined;
-    numbers?: Readonly<Record<string, number | null>> | undefined;
-    flags?: Readonly<Record<string, true | null>> | undefined;
-  }[],
+  })[],
 ): Promise<ChoiceRow[]> {
   await refuseHeldColumns(
     transaction,
     editor,
-    requests.flatMap((request) => [
-      ...Object.keys(request.values ?? {}),
-      ...Object.keys(request.links ?? {}),
-      ...Object.keys(request.notes ?? {}),
-      ...Object.keys(request.numbers ?? {}),
-      ...Object.keys(request.flags ?? {}),
-    ]),
+    requests.flatMap(askedColumnIds),
   );
   return choicesWithAdded(
     transaction,
@@ -341,26 +350,28 @@ export function checkedValues(
 // What is asked for columns of one type, as recorded, refusing any column not of that type.
 function checkedOfType<Asked>(
   columns: readonly ColumnInfo[],
-  requested: Readonly<Record<string, Asked>>,
+  requested: Readonly<Record<string, Asked>> | undefined,
   type: FieldType,
   recorded: (asked: Asked) => unknown,
 ): Recorded {
   return Object.fromEntries(
-    Object.entries(requested).map(([fieldId, asked]): [string, unknown] => {
-      const column = columns.find(({ id }) => id === fieldId);
-      if (column?.type !== type) {
-        throw new BadRequestError("There is no such column");
-      }
-      return [valueField(fieldId), recorded(asked)];
-    }),
+    Object.entries(requested ?? {}).map(
+      ([fieldId, asked]): [string, unknown] => {
+        const column = columns.find(({ id }) => id === fieldId);
+        if (column?.type !== type) {
+          throw new BadRequestError("There is no such column");
+        }
+        return [valueField(fieldId), recorded(asked)];
+      },
+    ),
   );
 }
 
 // The links asked for each column, as recorded: a link, or no choices for a link removed. The
 // shared schema has already checked and normalized each link.
-export const checkedLinks = (
+const checkedLinks = (
   columns: readonly ColumnInfo[],
-  requested: Readonly<Record<string, Link | null>>,
+  requested: Readonly<Record<string, Link | null>> | undefined,
 ): Recorded =>
   checkedOfType(columns, requested, "link", (link) =>
     link === null ? [] : { ...link },
@@ -369,17 +380,17 @@ export const checkedLinks = (
 // The notes asked for each column, as recorded: a note kept exactly as sent, or no choices for a
 // note removed, as an empty note also is. A note holding anything notes do not allow is refused
 // rather than cleaned, so what is kept is what the editor showed.
-export const checkedNotes = (
+const checkedNotes = (
   columns: readonly ColumnInfo[],
-  requested: Readonly<Record<string, string | null>>,
+  requested: Readonly<Record<string, string | null>> | undefined,
 ): Recorded =>
   checkedOfType(columns, requested, "note", (note) => keptNote(note) ?? []);
 
 // The numbers asked for each column, as recorded, or no choices for a number removed. The shared
 // schema has already checked each number.
-export const checkedNumbers = (
+const checkedNumbers = (
   columns: readonly ColumnInfo[],
-  requested: Readonly<Record<string, number | null>>,
+  requested: Readonly<Record<string, number | null>> | undefined,
 ): Recorded =>
   checkedOfType(columns, requested, "number", (number) => number ?? []);
 
@@ -388,12 +399,8 @@ export const checkedNumbers = (
 export function askedColumnValues(
   columns: readonly ColumnInfo[],
   known: readonly ChoiceRow[],
-  request: {
+  request: Parameters<typeof checkedColumnValues>[1] & {
     values?: Readonly<Record<string, readonly string[]>> | undefined;
-    links?: Readonly<Record<string, Link | null>> | undefined;
-    notes?: Readonly<Record<string, string | null>> | undefined;
-    numbers?: Readonly<Record<string, number | null>> | undefined;
-    flags?: Readonly<Record<string, true | null>> | undefined;
   },
   current: Recorded | undefined,
 ): Recorded {
@@ -409,10 +416,7 @@ export function askedColumnValues(
     ...Object.fromEntries(
       [...chosen].map(([fieldId, ids]) => [valueField(fieldId), ids]),
     ),
-    ...checkedLinks(columns, request.links ?? {}),
-    ...checkedNotes(columns, request.notes ?? {}),
-    ...checkedNumbers(columns, request.numbers ?? {}),
-    ...checkedFlags(columns, request.flags ?? {}),
+    ...checkedColumnValues(columns, request),
   };
   for (const column of columns) {
     if (
@@ -426,10 +430,38 @@ export function askedColumnValues(
 }
 
 // The boxes asked for each column, as recorded: a ticked box, or no choices for one unticked.
-export const checkedFlags = (
+const checkedFlags = (
   columns: readonly ColumnInfo[],
-  requested: Readonly<Record<string, true | null>>,
+  requested: Readonly<Record<string, true | null>> | undefined,
 ): Recorded => checkedOfType(columns, requested, "flag", (box) => box ?? []);
+
+const columnValueCheckers: {
+  [Kind in ColumnValueMap]: (
+    columns: readonly ColumnInfo[],
+    requested: SomeRequestedColumnValues[Kind],
+  ) => Recorded;
+} = {
+  links: checkedLinks,
+  notes: checkedNotes,
+  numbers: checkedNumbers,
+  flags: checkedFlags,
+};
+
+// The values asked for in each map, as recorded, checked in turn.
+export function checkedColumnValues(
+  columns: readonly ColumnInfo[],
+  requested: SomeRequestedColumnValues,
+): Recorded {
+  // Only a type parameter lets the compiler match each map's checker to the values asked for in it.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
+  const checkedIn = <Kind extends ColumnValueMap>(map: Kind) =>
+    // The map is one of the checkers' own.
+    // eslint-disable-next-line security/detect-object-injection
+    columnValueCheckers[map](columns, requested[map]);
+  return Object.fromEntries(
+    columnValueMaps.flatMap((map) => Object.entries(checkedIn(map))),
+  );
+}
 
 // Whether the live people given, as they are now, fit their columns, as fitsColumns sets out. Used
 // after an undo or an approval puts people's values in place, since the columns may have changed

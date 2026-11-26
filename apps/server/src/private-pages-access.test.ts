@@ -183,4 +183,40 @@ describe("who reaches a page", () => {
     expect(written.statusCode).toBe(400);
     expect(errorOf(written)).toBe("There is no such column");
   });
+
+  it("reads a ticked box back, and once its class is no longer seen, leaves it out and refuses ticking it", async () => {
+    // Given a page with a Personal checkbox column, and a row whose box is ticked
+    const lead = await test.signedIn("engineering-manager");
+    const { page } = await makePage(lead, [
+      numberColumn("Pages"),
+      { name: "Checked", type: "flag", visibility: "personal" },
+    ]);
+    const url = `/api/private-pages/${page.id}`;
+    const box = String(page.columns[1]?.id);
+    const added = await ok<SavedPage>(
+      await test.request(lead.cookie, "POST", `${url}/rows`, {
+        numbers: { [String(page.firstFieldId)]: 1 },
+        flags: { [box]: true },
+      }),
+      201,
+    );
+    expect(added.page.rows[0]?.flags).toEqual({ [box]: true });
+
+    // When the role no longer sees Personal details
+    await test.holdOnly(lead.id, ["private-pages:make"]);
+
+    // Then the box is left out, and can't be ticked
+    const read = await ok<PrivatePage>(
+      await test.request(lead.cookie, "GET", url),
+    );
+    expect(read.rows[0]?.flags).toEqual({});
+    const written = await test.request(
+      lead.cookie,
+      "PATCH",
+      `${url}/rows/${String(read.rows[0]?.id)}`,
+      { flags: { [box]: true } },
+    );
+    expect(written.statusCode).toBe(400);
+    expect(errorOf(written)).toBe("There is no such column");
+  });
 });

@@ -9,6 +9,7 @@ import {
   type ActivityRequest,
   type Customer,
   type CustomerRequest,
+  eachColumnValueMap,
   type Feature,
   type FeatureRequest,
   type Milestone,
@@ -21,6 +22,7 @@ import {
   type ProjectRequest,
   type Proposal,
   type ProposalRequest,
+  type RequestedColumnValues,
 } from "@fathom/shared";
 import type { CellChange } from "./cell-kinds.tsx";
 import {
@@ -106,13 +108,7 @@ export const planningRequest = (
     description,
     note,
   }: PlanningFields,
-  {
-    values = {},
-    links = {},
-    notes = {},
-    numbers = {},
-    flags = {},
-  }: CellChange = {},
+  change: CellChange = {},
 ) => ({
   name,
   ...(statusId === "" ? {} : { statusId }),
@@ -124,11 +120,12 @@ export const planningRequest = (
   featureTeamId,
   description,
   note,
-  values,
-  links,
-  notes,
-  numbers,
-  flags,
+  values: change.values ?? {},
+  ...eachColumnValueMap<RequestedColumnValues>(
+    // The map is one of the change's own.
+    // eslint-disable-next-line security/detect-object-injection
+    (map) => change[map] ?? {},
+  ),
 });
 
 // What saving a feature sends: its planning fields, its customers, and its target as a stream and

@@ -4,7 +4,7 @@
 // do: shown at once, then saved as a draft, and dating a change of manager made from an earlier day.
 
 import { lineChangesFrom, type Person } from "@fathom/shared";
-import { withCellChange } from "./added-columns.ts";
+import { withCellChange, withoutColumnValues } from "./added-columns.ts";
 import { hireChange, updateHire } from "./hires.ts";
 import { isHire, personOnly, type RowChange } from "./people-rows.ts";
 import { type PeopleData, updatePerson } from "./people.ts";
@@ -13,22 +13,11 @@ import type { Change } from "./saving.ts";
 // A row with a change applied, as the table shows it before it is saved. A planned hire's ID
 // cleared shows empty until the server gives it a temporary one.
 function changed(person: Person, change: RowChange): Person {
-  const {
-    values,
-    links,
-    notes,
-    numbers,
-    flags,
-    preferredName,
-    employeeId,
-    positionId,
-    stateId,
-    ...dates
-  } = change;
+  const { preferredName, employeeId, positionId, stateId, ...dates } = change;
   return {
     ...person,
-    ...dates,
-    ...withCellChange(person, { values, links, notes, numbers, flags }),
+    ...withoutColumnValues(dates),
+    ...withCellChange(person, change),
     preferredName: preferredName ?? person.preferredName,
     employeeId: employeeId ?? person.employeeId,
     positionId: positionId ?? person.positionId,
