@@ -14,6 +14,7 @@ import {
   plan,
   proposal,
   proposalId,
+  rowMenu,
   saved,
   sent,
   sidePanel,
@@ -160,11 +161,16 @@ describe("a proposal's Features in its details", () => {
     expect(decodeURIComponent(history.location.search)).toContain(proposalId);
   });
 
-  it("offers no link on the Features row's name while the proposal names no feature", async () => {
+  it("offers no link on the Features row's name, nor Show on Features in its menu, while the proposal names no feature", async () => {
     await openProposal();
     expect(
       within(sidePanel()).queryByRole("button", {
         name: "Features, show on Features",
+      }),
+    ).toBeNull();
+    expect(
+      within(await rowMenu("Fictional Proposal")).queryByRole("menuitem", {
+        name: "Show on Features",
       }),
     ).toBeNull();
   });

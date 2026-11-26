@@ -138,6 +138,16 @@ describe("the columns' values", () => {
     expect(link.change(null)).toEqual({ link: null });
   });
 
+  it("shows a proposal's features nowhere where the page can't show them", () => {
+    expect(
+      proposalColumn("featureIds").showOn?.({
+        ...proposal,
+        link: null,
+        featureIds: ["f1"],
+      }),
+    ).toBeUndefined();
+  });
+
   it("starts a proposal with no status when none is offered", () => {
     expect(proposalColumn("statusId").newRowValue?.("")).toEqual([]);
   });
