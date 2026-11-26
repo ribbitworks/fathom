@@ -16,6 +16,7 @@ import {
   namedIn,
   marksFrom,
 } from "./allocation-months.tsx";
+import { allocatedToGrouping } from "./allocation-groups.ts";
 import { MonthGrid, type MonthGridProps } from "./month-grid.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import { orgChartQuery } from "./org-chart.ts";
@@ -48,6 +49,7 @@ const loadChoices = (
 
 export function CapacityAllocations({
   byManager,
+  groupsByWork = false,
   now,
   view,
   onView,
@@ -71,6 +73,8 @@ export function CapacityAllocations({
   const allocations = allocationsRead.data;
   const chart = chartRead.data;
   const currentMonth = monthOf(now);
+  // Grouped by what each is allocated to, which only a reader offered it can be.
+  const byWork = groupsByWork && view.grouping === allocatedToGrouping;
   const show = view.show;
   // The work named as the Draft view shows it, for the rows and the filter alike.
   const sources = useMemo(
@@ -93,13 +97,16 @@ export function CapacityAllocations({
         : allocationMonthsTable({
             teamMonths: sources.teamMonths,
             works: allocatedWork(sources.allocations),
+            allocations: sources.allocations.allocations,
             managers: byManager
               ? monthManagers(sources.teamMonths, sources.chart)
               : undefined,
             currentMonth,
             show: view.show,
+            byWork,
+            offersWork: groupsByWork,
           }),
-    [sources, byManager, currentMonth, view.show],
+    [sources, byManager, currentMonth, view.show, byWork, groupsByWork],
   );
   const grouping = activeGrouping(view, table?.groupings)?.key;
   const records = useMemo(
@@ -110,23 +117,30 @@ export function CapacityAllocations({
     [sources, grouping, view.show],
   );
   // Each row's marks, worked out once for both choices and kept while the view changes otherwise.
-  const marks = useMemo(
-    () =>
-      new Map(
-        sources === undefined
-          ? []
-          : records.map((row) => [
-              row,
-              marksFrom(
-                row,
-                sources.teamMonths.months,
-                currentMonth,
-                view.show,
-              ),
-            ]),
-      ),
-    [sources, records, currentMonth, view.show],
-  );
+  // A row for one feature holds part of someone's month, so it takes the marks of their whole row.
+  const marks = useMemo(() => {
+    if (sources === undefined) return new Map<AllocationRow, Set<LoadMark>>();
+    const marksOf = (row: AllocationRow) =>
+      marksFrom(row, sources.teamMonths.months, currentMonth, view.show);
+    const wholeRows = byWork
+      ? new Map(
+          allocationMonthRecords({
+            ...sources,
+            grouping: undefined,
+            show: view.show,
+          }).map((row) => [row.personId, marksOf(row)]),
+        )
+      : undefined;
+    return new Map(
+      records.map((row) => [
+        row,
+        wholeRows === undefined
+          ? marksOf(row)
+          : // Everyone with a row has a whole row too.
+            (wholeRows.get(row.personId) as ReadonlySet<LoadMark>),
+      ]),
+    );
+  }, [sources, records, currentMonth, view.show, byWork]);
   const overOn = overChoice.on(view);
   const underOn = underChoice.on(view);
   const kept = useMemo(

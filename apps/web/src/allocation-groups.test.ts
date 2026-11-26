@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for someone's rows in the Allocations grid when grouped by feature team or by manager, and
-// the months each row holds.
+// Tests for someone's rows in the Allocations grid when grouped by feature team, by manager or by
+// what they're allocated to, and the months each row holds.
 
 import type { TeamMonths } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { groupedRows, type HeldRow } from "./allocation-groups.ts";
+import { groupedRows, type HeldRow, rowsByWork } from "./allocation-groups.ts";
 import {
   featureTeamGrouping,
   managerGrouping,
@@ -116,5 +116,36 @@ describe("groupedRows", () => {
     it("keeps one row under today's manager when the months' managers are not sent", () => {
       expect(rowsOf({ grouping: managerGrouping })).toEqual([base]);
     });
+  });
+});
+
+describe("rowsByWork", () => {
+  const on = (id: string, featureId: string) => ({
+    id,
+    featureId,
+    activityId: null,
+  });
+
+  it("gives someone a row under each feature they're allocated to, holding that feature's allocations alone", () => {
+    const rows = rowsByWork(base, [
+      on("a1", "f-search"),
+      on("a2", "f-billing"),
+      on("a3", "f-search"),
+    ]);
+
+    expect(
+      rows.map(({ row, allocations }) => [
+        row.id,
+        row.work,
+        allocations.map(({ id }) => id),
+      ]),
+    ).toEqual([
+      ["f-search p-casey", "f-search", ["a1", "a3"]],
+      ["f-billing p-casey", "f-billing", ["a2"]],
+    ]);
+  });
+
+  it("gives someone allocated to nothing one row, under none", () => {
+    expect(rowsByWork(base, [])).toEqual([{ row: base, allocations: [] }]);
   });
 });

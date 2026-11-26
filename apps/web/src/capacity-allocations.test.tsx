@@ -480,6 +480,18 @@ describe("Allocations kept to those over or under", () => {
     expect(address(history)).toContain("over=shown");
   });
 
+  it("keeps each feature's row of someone over in all, though no one feature takes them over, grouped by what each is allocated to", async () => {
+    // Given Avery over in April on two features, three quarters on each, grouped by feature
+    openAllocations("?grouping=allocated-to&over=shown", {
+      allocationsAnswer: loads,
+    });
+    await grid();
+
+    // Then each of Avery's rows stays, and no one else's
+    expect(screen.getAllByText("Avery Fictional")).toHaveLength(2);
+    expect(screen.queryByText("Casey Fictional")).toBeNull();
+  });
+
   it("opens on the rows under or not allocated, as the address keeps them, leaving out a whole month", async () => {
     openAllocations("?under=shown", { allocationsAnswer: loads });
     await grid();

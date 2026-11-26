@@ -201,6 +201,22 @@ export const summedCapacity = (capacities: readonly Capacity[]): Capacity =>
     noCapacity,
   );
 
+export const workEffortSchema = z.object({
+  estimate: z.number().nullable(),
+  needed: z.number().nullable(),
+});
+
+export type WorkEffort = z.infer<typeof workEffortSchema>;
+
+// The hours a whole month of someone's time gives, after the planning settings' focus: at full
+// output, and in each month of their ramp-up, as the settings set it.
+export const allocationHoursSchema = z.object({
+  full: z.number(),
+  rampUp: z.record(monthSchema, z.number()),
+});
+
+export type AllocationHours = z.infer<typeof allocationHoursSchema>;
+
 // A feature as allocations name it, with the meaning of its status, which decides whether it counts
 // toward over-allocation.
 export const allocatedFeatureSchema = z.object({
@@ -221,6 +237,13 @@ export const allocatedFeatureSchema = z.object({
       reason: true,
       unpublished: true,
     })
+    .optional(),
+  // Its estimate, and the hours it needs, the estimate with the planning settings' buffer, as
+  // approved and as its draft makes them, but for a rejected draft. Sent only for a feature or
+  // activity the reader reads, to a reader who sees the planning settings, since the hours tell
+  // the buffer.
+  effort: z
+    .object({ live: workEffortSchema, drafted: workEffortSchema.optional() })
     .optional(),
 });
 
@@ -253,6 +276,9 @@ export const allocationSchema = z.object({
   featureId: z.string().nullable(),
   activityId: z.string().nullable(),
   months: allocationMonthsSchema,
+  // The hours a whole month of its person's or planned hire's time gives, sent only to a reader who
+  // sees the planning settings, since the hours tell focus and ramp-up.
+  hours: allocationHoursSchema.optional(),
   draft: allocationDraftSchema.optional(),
   heldBy: heldBySchema,
 });

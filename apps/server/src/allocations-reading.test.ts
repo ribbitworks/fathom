@@ -3,11 +3,17 @@
 // Integration tests for reading allocations, against a PostgreSQL server of their own: each
 // allocation as each reader may see it, and a feature's staffing on the plan.
 
-import { accessHistory, activities, featureTeams, features } from "@fathom/db";
-import { type ProjectPlan } from "@fathom/shared";
+import {
+  accessHistory,
+  activities,
+  featureTeams,
+  features,
+  planningSettings,
+} from "@fathom/db";
+import { allocationHours, type ProjectPlan } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { unique } from "./test-app.ts";
+import { generalReader, unique } from "./test-app.ts";
 import {
   test,
   type Account,
@@ -18,6 +24,7 @@ import {
   month,
   dayIn,
   addPerson,
+  addHire,
   addFeature,
   activityAllocation,
   director,
@@ -154,6 +161,116 @@ describe("reading", () => {
     const { features: named } = await read(viewer);
 
     expect(named.find(({ id }) => id === featureId)?.rename).toBeUndefined();
+  });
+
+  // The planning settings as approved, which the hours are worked out from.
+  async function settings() {
+    const [row] = await test.connection.select().from(planningSettings);
+    return row as NonNullable<typeof row>;
+  }
+
+  // A reader who sees the planning settings.
+  const settingsReader = () =>
+    test.signedIn([...generalReader, "personal:view", "configuration:view"]);
+
+  it("gives a reader who sees the planning settings each feature's estimate and the hours it needs with the buffer", async () => {
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    await test.connection
+      .update(features)
+      .set({ estimateHours: 50 })
+      .where(eq(features.id, featureId));
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    const { features: named } = await read(await settingsReader());
+    const { bufferPercent } = await settings();
+    expect(named.find(({ id }) => id === featureId)?.effort).toEqual({
+      live: { estimate: 50, needed: 50 + (50 * bufferPercent) / 100 },
+    });
+  });
+
+  it("gives the estimate and hours as a waiting draft makes them, beside the approved ones", async () => {
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    const editor = await test.signedIn([
+      ...generalReader,
+      "personal:view",
+      "configuration:view",
+      "features:edit",
+    ]);
+    const [feature] = await test.connection
+      .select({ name: features.name })
+      .from(features)
+      .where(eq(features.id, featureId));
+    const drafting = await test.request(
+      editor.cookie,
+      "PUT",
+      `/api/features/${featureId}`,
+      { name: feature?.name, estimateHours: 80 },
+    );
+    expect(drafting.statusCode).toBe(200);
+    const { features: named } = await read(editor);
+    const { bufferPercent } = await settings();
+    expect(named.find(({ id }) => id === featureId)?.effort).toEqual({
+      live: { estimate: null, needed: null },
+      drafted: { estimate: 80, needed: 80 + (80 * bufferPercent) / 100 },
+    });
+  });
+
+  it("gives each activity its estimate and the hours it needs, as a feature's", async () => {
+    const { activityId } = await activityAllocation();
+    await test.connection
+      .update(activities)
+      .set({ estimateHours: 40 })
+      .where(eq(activities.id, activityId));
+    const { activities: named } = await read(await settingsReader());
+    const { bufferPercent } = await settings();
+    expect(named.find(({ id }) => id === activityId)?.effort).toEqual({
+      live: { estimate: 40, needed: 40 + (40 * bufferPercent) / 100 },
+    });
+  });
+
+  it("gives a reader who sees the planning settings each allocation's hours, its person ramping up from their start", async () => {
+    const personId = await addPerson({ startDate: dayIn(-1) });
+    const featureId = await addFeature();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    const allocated = (await read(await settingsReader())).allocations.find(
+      (one) => one.personId === personId,
+    );
+    expect(allocated?.hours).toEqual(
+      allocationHours(month(-1), await settings()),
+    );
+  });
+
+  it("gives a reader who doesn't see the planning settings no hours and no effort, which tell them", async () => {
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    const answer = await read(viewer);
+    expect([
+      answer.allocations.find((one) => one.personId === personId)?.hours,
+      answer.features.find(({ id }) => id === featureId)?.effort,
+    ]).toEqual([undefined, undefined]);
+  });
+
+  it("ramps an undated planned hire up from no month, its expected month only standing in for today", async () => {
+    const plannedHireId = await addHire();
+    const featureId = await addFeature();
+    await changed({ plannedHireId, featureId, percentage: 50, from: month(0) });
+    const hours = (await read(await settingsReader())).allocations.find(
+      (one) => one.plannedHireId === plannedHireId,
+    )?.hours;
+    expect(hours).toEqual(allocationHours(undefined, await settings()));
+  });
+
+  it("ramps a planned hire up from its expected month, a month every reader of the hire sees", async () => {
+    const plannedHireId = await addHire({ targetDate: dayIn(2) });
+    const featureId = await addFeature();
+    await changed({ plannedHireId, featureId, percentage: 50, from: month(2) });
+    const hours = (await read(await settingsReader())).allocations.find(
+      (one) => one.plannedHireId === plannedHireId,
+    )?.hours;
+    expect(hours).toEqual(allocationHours(month(2), await settings()));
   });
 
   it("reads allocations to activities beside a feature's, naming each activity with its project", async () => {

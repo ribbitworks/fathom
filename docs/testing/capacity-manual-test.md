@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Capacity
@@ -22,6 +22,7 @@ Verifies the Capacity page's tabs, and switching between them:
 - Allocations, the table of allocations by month:
   - Its over- and under-allocated months, planned hires, and the capacity totals of each group and of everyone.
   - Rows for someone who changed team or manager.
+  - Grouping by what each is allocated to: each feature's and activity's heading with its hours, its Allocated row, and no load marks on its rows.
   - The page left out of the menu for a role that sees no tab.
   - The count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to.
   - The rows kept to those over or under from the Views menu, and the rows kept to what someone is allocated to in any month.
@@ -732,4 +733,41 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `AED6` Select the **×** on the "Allocated to: Not allocated" pill.
   - **Expected:** The table lists every row again.
+  - **Notes:**
+
+### CAP-19: Allocations Grouped by What Each Is Allocated To
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-18.
+
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] `144C` Select **Group by**, and choose **Allocated to**.
+  - **Expected:**
+    - Each feature or activity someone is allocated to is a heading, after its feature team's colour square, with its count of people.
+    - An activity's heading names its project or release in brackets, such as "General (Crane Control)".
+    - After the count, the heading reads "· Effort", the feature's estimate in hours or "None", "· Allocated" and its hours, and "· Remaining" and its hours, or "None" for a done or cancelled feature or one with no estimate.
+    - The last heading is **Not allocated**.
+  - **Notes:**
+
+- [ ] `8E98` Find a heading whose Remaining has a minus sign.
+  - **Expected:**
+    - Its Remaining reads in red, such as "−6 h".
+    - Every other figure in the heading is grey.
+  - **Notes:**
+
+- [ ] `1172` Look at the rows under a heading.
+  - **Expected:**
+    - Each row's months show that heading's feature alone, with its percentage.
+    - No month reads "Over", "Under" or "Not allocated".
+    - The group ends with a row named **Allocated**, reading the feature's hours each month, such as "48 h".
+  - **Notes:**
+
+- [ ] `48C3` Scroll the table sideways, keeping a long heading in view.
+  - **Expected:** The heading reads whole; the frozen **Person** column's edge doesn't cross it.
+  - **Notes:**
+
+- [ ] `DBC0` Choose **None** in the Group by menu.
+  - **Expected:**
+    - The table is one list again, each row showing all of a person's features.
+    - The total rows read "Total, person-months" and "Organization, person-months" again.
   - **Notes:**

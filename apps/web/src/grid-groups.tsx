@@ -73,6 +73,7 @@ interface GroupRun<Rec> {
   last: string;
   label: string;
   colour: string | null;
+  facts: ReactNode;
   nested: boolean;
   records: Rec[];
 }
@@ -100,6 +101,7 @@ function runsOf<Rec>(
         last: row.key,
         label: group.label,
         colour: group.colour ?? null,
+        facts: group.facts,
         nested,
         records: [row.record],
       });

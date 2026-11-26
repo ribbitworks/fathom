@@ -11,6 +11,7 @@ import {
   type Database,
   planningSettings,
   planningSettingsId,
+  type Reader,
 } from "@fathom/db";
 import {
   type EffortConversions,
@@ -80,22 +81,44 @@ export async function readPlanningSettings(
   );
 }
 
+// The approved settings' one row, the migrations having made it.
+async function settingsRow(reader: Reader) {
+  const [row] = await reader
+    .select()
+    .from(planningSettings)
+    .where(eq(planningSettings.id, planningSettingsId));
+  if (row === undefined) throw new Error(missing);
+  return row;
+}
+
+// The settings the hours an allocation gives are worked out from, as approved, for the server's own
+// use: the page is sent the hours, never the settings.
+export async function readHourSettings(reader: Reader) {
+  const {
+    hoursPerDay,
+    daysPerMonth,
+    focusPercent,
+    bufferPercent,
+    rampUpPercents,
+  } = await settingsRow(reader);
+  return {
+    hoursPerDay,
+    daysPerMonth,
+    focusPercent,
+    bufferPercent,
+    rampUpPercents,
+  };
+}
+
 export async function readEffortConversions(
   database: Database,
   actor: Actor,
 ): Promise<EffortConversions> {
   // Estimates on features and projects alike are read in these units.
   requireAnyPermission(actor, ["plan:view", "features:view"]);
-  const [row] = await database
-    .select({
-      hoursPerDay: planningSettings.hoursPerDay,
-      daysPerWeek: planningSettings.daysPerWeek,
-      daysPerMonth: planningSettings.daysPerMonth,
-    })
-    .from(planningSettings)
-    .where(eq(planningSettings.id, planningSettingsId));
-  if (row === undefined) throw new Error(missing);
-  return row;
+  const { hoursPerDay, daysPerWeek, daysPerMonth } =
+    await settingsRow(database);
+  return { hoursPerDay, daysPerWeek, daysPerMonth };
 }
 
 // Drafts the settings given, leaving the others as the editor's draft has them, so two people

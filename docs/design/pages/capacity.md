@@ -24,10 +24,10 @@ Capacity shows who is on which feature team and who is allocated to what, month 
 
 ## The Grid Tabs
 
-Feature teams and Allocations are one month grid, on the shared table, with the same rows, months, strip and Group by; only what a cell says differs.
+Feature teams and Allocations are one month grid, on the shared table, with the same rows, months, strip and Group by; only what a cell says differs, but for Allocations' Allocated to, which also changes the total rows and leaves out the load marks.
 
 - **Shared table:** grouped one level deep, since each row is made for its group.
-- **Rows:** one per person and planned hire, frozen on the left, in one list at first; Group by offers None, Manager and Feature team.
+- **Rows:** one per person and planned hire, frozen on the left, in one list at first; Group by offers None, Manager and Feature team, and Allocated to on Allocations.
   - Planned hires are read only, named by their position and ID in grey when they have no name, and their months before the one they're expected in are shaded.
   - Planned hires sit under their manager by Manager, and under No feature team by Feature team. They have no feature teams yet ([issue #395](https://github.com/ribbitworks/fathom/issues/395)), so their cells on Feature teams are blank.
   - A role that doesn't see People has no planned hires' rows.
@@ -61,6 +61,15 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 
 - **Read only:** allocating from the grid is planned, below.
 - **Rows:** someone under several managers or feature teams in the months shown has a row under each, holding only that group's months and blank in the rest. Under No feature team, a row holds the months they were employed on none.
+- **Allocated to:** Group by offers it on Allocations alone, beside Manager and Feature team, to roles with Configuration View: a heading per feature or activity, by name, an activity's naming its project or release, then Not allocated.
+  - Someone has a row under each feature or activity they're allocated to, in any month, holding every month but showing its line alone. Features, or activities, the reader can't read are one heading of their kind, with no Effort, Allocated or Remaining.
+  - **Effort:** the work's estimate, as the Draft menu shows it; None without one.
+  - **Allocated:** the hours its allocations give it over the grid's months, after the settings' focus and ramp-up. An allocation may run with no end, so it counts only the months the grid shows, as its tip says.
+  - **Remaining:** the estimate with the settings' buffer, less Allocated; below zero in red with a minus sign, such as −6 h. It reads None without an estimate, or for done or cancelled work.
+  - **Ramp-up:** from a person's start, or a planned hire's expected month, which is General, being a month, though the target date it comes from is the hiring plan's; an undated hire, whose expected month only stands in for today, at full output.
+  - **Only with Configuration View:** the server sends each allocation the hours a whole month of its person's time gives, at full output and in each ramp-up month, and each feature and activity its estimate and the hours it needs, only to roles with Configuration View, since the focus, buffer and ramp-up percentages can be worked out from them.
+  - **Load:** a row for one feature or activity holds part of someone's month, so its cells mark no Over, Under or Not allocated; the Over and Under choices keep someone's rows by their whole row's marks.
+  - **Totals:** an Allocated row per feature or activity, its hours each month, and an Allocated, all work row at the foot, in place of the person-month rows.
 - **A month's cell:** each feature or activity, after its feature team's colour square, with its percentage at the right. An activity's tooltip names its project or release, such as General (Crane Control), since activities of different projects and releases can share a name.
   - **A renamed feature or activity:** named as the Draft view shows its rename, and marked as a table marks a changed name: beside live, the rename's dot, a red ring once rejected; with drafts applied, a rejected rename taken back; live only, the live name, with Live's dot while the rename waits. Semibold beside live, as a changed cell is. A Live row names it as it is live. A rename alone gives a person's row no tint or Live row, since a row's draft is the person's allocations. The filter's choices follow the same names.
   - From the current month on, a month off a whole month has a last line, in red and bold, over a faint rule: Over or Under, with how far off at the right, such as +25% or −90%, and the month's total in its tooltip, such as Total 125%. A month with nothing allocated shows Not allocated alone instead.
@@ -84,7 +93,7 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 - **Ramp-up:** a row per month, up to 12, then a fixed From month N row at 100%.
 - **Drafts:** the settings are one draft, approved whole with Approve Configuration, so each changed row's menu lists every change.
   - Approval is needed since a change alters every estimate's units. Effort uses the settings as approved, so a draft changes no estimate until then.
-- **Forecasts and Ramp-up:** kept for demand forecasting; nothing uses them yet.
+- **Forecasts and Ramp-up:** focus, buffer and ramp-up set the hours on Allocations grouped by Allocated to; demand forecasting will use them too.
 
 ## Planned
 

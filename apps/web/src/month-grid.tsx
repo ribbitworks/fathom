@@ -44,6 +44,9 @@ import { quarterWords, stillChosen, TimelineStrip } from "./timeline-strip.tsx";
 export interface MonthGridProps {
   // Whether the reader may group rows by manager, which shows later months' managers.
   byManager: boolean;
+  // Whether the reader may group Allocations by what each is allocated to, whose hours tell the
+  // planning settings, and so only with them.
+  groupsByWork?: boolean;
   now: string;
   view: View;
   onView: (view: View, replace?: boolean) => void;

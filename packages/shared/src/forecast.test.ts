@@ -13,6 +13,10 @@ import {
   plannedMonths,
   rampUpPercent,
   targetCycleMonths,
+  allocationHours,
+  hoursAllocated,
+  remainingHours,
+  wholeMonthHoursIn,
 } from "./forecast.ts";
 
 const settings = {
@@ -318,5 +322,53 @@ describe("coverageByMonth", () => {
         currentMonth: "2026-11",
       }),
     ).toEqual({ months: [] });
+  });
+});
+
+describe("allocationHours", () => {
+  it("gives a whole month's hours after focus, and each ramp-up month's from the first month", () => {
+    expect(allocationHours("2027-03", settings)).toEqual({
+      full: 128,
+      rampUp: { "2027-03": 64, "2027-04": 96 },
+    });
+  });
+
+  it("gives no ramp-up without a first month", () => {
+    expect(allocationHours(undefined, settings)).toEqual({
+      full: 128,
+      rampUp: {},
+    });
+  });
+});
+
+describe("hoursAllocated", () => {
+  const hours = { full: 128, rampUp: { "2027-03": 64 } };
+
+  it("counts every month at the percentage in force, between the months it changes in, and none after it stops", () => {
+    expect(
+      hoursAllocated({ "2027-03": 50, "2027-05": null }, hours, [
+        "2027-02",
+        "2027-03",
+        "2027-04",
+        "2027-05",
+      ]),
+    ).toBe(32 + 64);
+  });
+
+  it("reads a ramp-up month's hours, then full output", () => {
+    expect([
+      wholeMonthHoursIn(hours, "2027-03"),
+      wholeMonthHoursIn(hours, "2027-04"),
+    ]).toEqual([64, 128]);
+  });
+});
+
+describe("remainingHours", () => {
+  it("takes the hours allocated off those needed, below zero once over, and none without an estimate", () => {
+    expect([
+      remainingHours(384, 256),
+      remainingHours(144, 150),
+      remainingHours(null, 40),
+    ]).toEqual([128, -6, undefined]);
   });
 });

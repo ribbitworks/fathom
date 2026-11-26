@@ -381,6 +381,8 @@ select.cellInput {
    stays within the table's panel, so the page never scrolls while a side panel opens. */
 .scrollFade {
   position: absolute;
+  /* Over the group headings, which paint over the frozen columns' edge. */
+  z-index: 1;
   top: 0;
   max-height: 100%;
   width: var(--fathom-scroll-fade-width);
@@ -501,7 +503,10 @@ th[data-centred] .recordHeadButton {
   text-align: center;
 }
 
+/* A group's heading spans the row, over the frozen column's edge, so a long heading reads unbroken. */
 .recordGroup {
+  position: relative;
+  z-index: 1;
   background: var(--mantine-color-default-hover);
   font-weight: 600;
 }

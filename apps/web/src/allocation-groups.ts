@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The rows someone has in the allocations grid when it is grouped by manager or by feature team.
+// The rows someone has in the allocations grid when it is grouped by manager, by feature team or by
+// what they're allocated to.
 
 import type { TeamMonths } from "@fathom/shared";
 import { groupedRowId } from "./row-groups.ts";
@@ -12,9 +13,14 @@ import {
   teamsAcross,
 } from "./team-months.tsx";
 
+// Grouped by the feature or activity someone is allocated to, with a row under each.
+export const allocatedToGrouping = "allocated-to";
+
 export interface HeldRow extends MonthRow {
   // The months this row holds, when someone has a row under each of several groups.
   holds?: ReadonlySet<string>;
+  // The feature or activity this row is for, when grouped by what someone is allocated to.
+  work?: string;
 }
 
 type MonthManagers = TeamMonths["people"][number]["managers"] | undefined;
@@ -110,4 +116,30 @@ export function groupedRows<Row extends HeldRow>(
   if (grouping === managerGrouping) return byManager(base, managers);
   if (grouping === featureTeamGrouping) return byTeam(base, teamsIn, months);
   return [base];
+}
+
+// Someone's row under each feature or activity they're allocated to, each with its allocations
+// alone, so its cells show its line; one row under none when they're allocated to nothing.
+export function rowsByWork<
+  Row extends HeldRow,
+  Allocated extends { featureId: string | null; activityId: string | null },
+>(
+  base: Row,
+  allocations: readonly Allocated[],
+): { row: Row; allocations: Allocated[] }[] {
+  const byWork = new Map<string, Allocated[]>();
+  for (const allocation of allocations) {
+    // Every allocation names a feature or an activity.
+    const work = String(allocation.featureId ?? allocation.activityId);
+    byWork.set(work, [...(byWork.get(work) ?? []), allocation]);
+  }
+  if (byWork.size === 0) return [{ row: base, allocations: [] }];
+  return [...byWork].map(([featureId, ofFeature]) => ({
+    row: {
+      ...base,
+      id: groupedRowId(featureId, base.personId),
+      work: featureId,
+    },
+    allocations: ofFeature,
+  }));
 }

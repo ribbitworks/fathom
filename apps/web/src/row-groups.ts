@@ -2,6 +2,8 @@
 
 // The groups a table's rows are shown under, and each row's place among them.
 
+import type { ReactNode } from "react";
+
 // The group a row is in: the groups follow in order of rank, and each is headed with its label.
 export interface RowGroup {
   key: string;
@@ -9,6 +11,8 @@ export interface RowGroup {
   rank: number;
   // The colour of what the group is for, such as a team, drawn as its square before the label.
   colour?: string | null | undefined;
+  // What the heading reads after the group's count, such as a feature's hours.
+  facts?: ReactNode;
 }
 
 // What a grouping's groups are, which names the two orders they can run in.

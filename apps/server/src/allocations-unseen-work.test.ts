@@ -134,6 +134,18 @@ describe("allocations to a feature a role can't read", () => {
     expect(feature?.colour).toBeNull();
   });
 
+  it("give a feature the role can't read no effort, though the role sees the planning settings", async () => {
+    const { featureId } = await allocated();
+    const settingsWithoutFeatures = await test.signedIn([
+      ...allocationReader,
+      "configuration:view",
+    ]);
+    const feature = (await read(settingsWithoutFeatures)).features.find(
+      ({ id }) => id === featureId,
+    );
+    expect([feature?.unseen, feature?.effort]).toEqual([true, undefined]);
+  });
+
   it("name the feature in the user's unpublished changes only to a role that reads features", async () => {
     const editor = await test.signedIn([...allocationEditor]);
     const personId = await addPerson();
@@ -223,6 +235,22 @@ describe("allocations to an activity a role can't read", () => {
       colour: null,
       unseen: true,
     });
+  });
+
+  it("give an activity the role can't read no effort, though the role sees the planning settings", async () => {
+    const { activityId } = await onActivity();
+    await test.connection
+      .update(activities)
+      .set({ estimateHours: 40 })
+      .where(eq(activities.id, activityId));
+    const settingsWithoutActivities = await test.signedIn([
+      ...allocationReader,
+      "configuration:view",
+    ]);
+    const activity = (await read(settingsWithoutActivities)).activities.find(
+      ({ id }) => id === activityId,
+    );
+    expect([activity?.unseen, activity?.effort]).toEqual([true, undefined]);
   });
 
   it("refuse one to an activity drafted to be removed, naming it only to a role that reads activities", async () => {

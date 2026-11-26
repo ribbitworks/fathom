@@ -3,13 +3,25 @@
 // The forecast of work: the hours an allocation delivers in a month, the effort a work needs, and
 // how what is left of it spreads over the months it is done in.
 
-import { wholeMonth } from "./allocations.ts";
+import {
+  type AllocationHours,
+  type AllocationMonths,
+  percentageIn,
+  wholeMonth,
+} from "./allocations.ts";
+import { addToMonth } from "./cycles.ts";
 import type { Feature } from "./features.ts";
 import { byMeaning } from "./lists.ts";
 import { monthsBetween } from "./monthly-grid.ts";
 import type { PlanningSettings } from "./planning-settings.ts";
 import { fullOutputPercent } from "./planning-settings.ts";
 import type { ReleaseStream } from "./releases.ts";
+
+// The settings the hours someone's time gives are worked out from.
+export type HourSettings = Pick<
+  PlanningSettings,
+  "hoursPerDay" | "daysPerMonth" | "focusPercent" | "rampUpPercents"
+>;
 
 // The share of full output someone gives in a month, from their first month: the ramp-up's
 // percentages, one a month, then full output. Before the first month, or with none known, full.
@@ -35,10 +47,7 @@ export function deliveredHours({
   percentage: number;
   month: string;
   firstMonth?: string | undefined;
-  settings: Pick<
-    PlanningSettings,
-    "hoursPerDay" | "daysPerMonth" | "focusPercent" | "rampUpPercents"
-  >;
+  settings: HourSettings;
 }): number {
   return (
     (settings.hoursPerDay *
@@ -49,6 +58,59 @@ export function deliveredHours({
     (wholeMonth * fullOutputPercent * fullOutputPercent)
   );
 }
+
+const anyMonth = "2000-01";
+
+// The hours a whole month of someone's time gives: at full output, and in each month of their
+// ramp-up from their first month, when it is known.
+export function allocationHours(
+  firstMonth: string | undefined,
+  settings: HourSettings,
+): AllocationHours {
+  const whole = (month: string) =>
+    deliveredHours({ percentage: wholeMonth, month, firstMonth, settings });
+  return {
+    // With no first month, every month is at full output, so any month gives it.
+    full: deliveredHours({ percentage: wholeMonth, month: anyMonth, settings }),
+    rampUp:
+      firstMonth === undefined
+        ? {}
+        : Object.fromEntries(
+            settings.rampUpPercents.map((_, into) => {
+              const month = addToMonth(firstMonth, into);
+              return [month, whole(month)];
+            }),
+          ),
+  };
+}
+
+// The hours a whole month of someone's time gives in a month.
+export const wholeMonthHoursIn = (
+  hours: AllocationHours,
+  month: string,
+): number => new Map(Object.entries(hours.rampUp)).get(month) ?? hours.full;
+
+// The hours an allocation's percentages give over some months, at each month's percentage in force.
+export const hoursAllocated = (
+  percentages: AllocationMonths,
+  hours: AllocationHours,
+  months: readonly string[],
+): number =>
+  months.reduce(
+    (total, month) =>
+      total +
+      ((percentageIn(percentages, month) ?? 0) *
+        wholeMonthHoursIn(hours, month)) /
+        wholeMonth,
+    0,
+  );
+
+// What remains of the hours a work needs once its allocations' hours are taken off: below zero
+// once they give it more, and none without an estimate.
+export const remainingHours = (
+  needed: number | null,
+  allocated: number,
+): number | undefined => (needed === null ? undefined : needed - allocated);
 
 // The month someone starts, or comes back, among the months given after the first, so their
 // ramp-up counts from it; none when they were employed from the first month given.

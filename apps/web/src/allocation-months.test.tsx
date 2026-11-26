@@ -18,6 +18,7 @@ import {
   marksFrom,
   monthTotal,
 } from "./allocation-months.tsx";
+import { allocatedToGrouping } from "./allocation-groups.ts";
 import { monthManagers } from "./planned-hire-months.ts";
 import {
   activities,
@@ -78,6 +79,25 @@ describe("a person's allocations", () => {
     expect(onNone?.holds).toEqual(new Set(["2027-04", "2027-02"]));
     expect(linesIn(onNone as AllocationRow, "2027-03")).toEqual([]);
     expect(new Set(rows.map(({ id }) => id)).size).toBe(2);
+  });
+
+  it("gives someone a row under each feature they're allocated to, each showing that feature's lines alone, grouped by what they're allocated to", () => {
+    const rows = rowsOf(
+      [
+        allocation({ months: { "2027-03": 50 } }),
+        allocation({
+          id: "a-2",
+          featureId: "f-billing",
+          months: { "2027-03": 25 },
+        }),
+      ],
+      { grouping: allocatedToGrouping },
+    );
+
+    expect(rows.map((row) => [row.work, linesIn(row, "2027-03")])).toEqual([
+      ["f-checkout", ["Checkout 50%"]],
+      ["f-billing", ["Billing 25%"]],
+    ]);
   });
 
   describe("grouped by manager", () => {
@@ -417,6 +437,7 @@ describe("monthTotal", () => {
     name: "Checkout",
     tip: "Checkout",
     meaning: "in-progress",
+    monthHours: 0,
     colour: null,
     percentage: 50,
     live: 50,
