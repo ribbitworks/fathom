@@ -206,7 +206,6 @@ describe("a planned hire's numbers", () => {
 });
 
 describe("a month's count of people and planned hires", () => {
-  // Rows of people and planned hires, as many of each as given.
   const rows = (people: number, hires: number) => [
     ...Array.from({ length: people }, () => ({ hire: false })),
     ...Array.from({ length: hires }, () => ({ hire: true })),
@@ -252,5 +251,11 @@ describe("a month's count of people and planned hires", () => {
     ["people, when no one is shown", rows(0, 0), "Nov 2026: 0 of 14 people"],
   ])("counts %s while something narrows the rows", (_, shown, words) => {
     expect(counted(rows(14, 1), shown)).toBe(words);
+  });
+
+  it("names planned hires when a month has no people and none of its rows are shown", () => {
+    expect(counted(rows(0, 2), rows(0, 0))).toBe(
+      "Nov 2026: 0 of 2 planned hires",
+    );
   });
 });

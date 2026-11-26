@@ -162,7 +162,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 - [ ] `40E2` Type `Search` in the search box.
   - **Expected:**
     - Only people with 'Search' in some month are listed.
-    - The count above the table names the month, then how many of its people are shown, such as "Nov 2026: 2 of 40 people".
+    - The count above the table names the month, then how many of its people are shown out of all.
   - **Notes:**
 
 ### FA-07: A Month Can Be Filtered by Team

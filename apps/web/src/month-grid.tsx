@@ -94,11 +94,7 @@ export function MonthGrid<Rec extends MonthRow>({
     [table],
   );
   const count = useCallback(
-    (rows: readonly Rec[]) => <CountInView rows={rows} month={countedMonth} />,
-    [countedMonth],
-  );
-  const countNarrowed = useCallback(
-    (rows: readonly Rec[], shown: readonly Rec[]) => (
+    (rows: readonly Rec[], shown?: readonly Rec[]) => (
       <CountInView rows={rows} shown={shown} month={countedMonth} />
     ),
     [countedMonth],
@@ -128,7 +124,7 @@ export function MonthGrid<Rec extends MonthRow>({
         records={records}
         table={countedTable}
         count={count}
-        countNarrowed={countNarrowed}
+        countNarrowed={count}
         fields={[]}
         order={[]}
         lists={[]}
@@ -193,7 +189,7 @@ function CountInView({
   month,
 }: {
   rows: readonly MonthRow[];
-  shown?: readonly MonthRow[];
+  shown?: readonly MonthRow[] | undefined;
   month: ValueStore<string, string>;
 }) {
   const counted = useSyncExternalStore(month.subscribe, month.get);
