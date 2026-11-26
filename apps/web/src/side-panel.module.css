@@ -174,6 +174,11 @@
   min-height: var(--stack-least);
 }
 
+/* At the top, it keeps at most half the column, so what opened under it has room to read. */
+.stackItemFittedTop {
+  max-height: 50%;
+}
+
 .stackItemFitted .body {
   flex-basis: auto;
 }

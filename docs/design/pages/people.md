@@ -60,7 +60,7 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 - **Following:** Choosing a manager or a report shows them in the panel.
 - **Editing:** A value the reader may change on People has a pencil opening its cell's editor. Reporting team and Direct reports have none.
 - **Another date:** The panel shows the person then, or says they aren't employed then. Only Manager has a pencil.
-- **Timeline:** Show timeline opens the person's timeline in its own panel under the details, as a note's does, kept in the address (`timeline`). On a narrow screen, where only the top panel shows, it covers the details instead.
+- **Timeline:** Show timeline opens the person's timeline in its own panel under the details, as a note's does, kept in the address (`timeline`). The details then take only the height they need, and the timeline the rest. On a narrow screen it covers the details, opened from them or from an address naming both.
   - **Its days:** newest first, one row a day: planned days in grey above Today's line, drawn across as a timeline draws Today, then the past; six on each side, the rest under Later dates and Earlier dates.
   - **Its changes:** Filled and the hire, Start, Manager, Feature teams and Leads added or removed, and End, one to a line in that order, in one form: the field, the new value, then changed from the old; with how many others the same new manager came to that day.
   - **Its dates:** each moves the page to that day, for readers who see other days, and a later day only for those who see later days; the day shown is marked, or, with no changes that day, drawn as a line where it falls, in teal.

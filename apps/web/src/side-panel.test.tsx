@@ -847,6 +847,14 @@ describe("a panel as tall as what it holds", () => {
   const details = one("Details", "details");
   const form = { ...one("Form", "form"), fits: true };
 
+  it("fits what it holds above another too, keeping at most half the column", () => {
+    render(layout([form, details]));
+    expect(["Form", "Details"].map(fitted)).toEqual([true, false]);
+    expect(
+      (screen.getByText("Form").parentElement as HTMLElement).className,
+    ).toMatch(/stackItemFittedTop/u);
+  });
+
   it("fits what it holds under another, with no edge beside it to move", () => {
     render(layout([details, form, one("Note", "note")]));
     expect(["Details", "Form", "Note"].map(fitted)).toEqual([
