@@ -59,11 +59,13 @@ import {
   refuseWith,
 } from "./feature-team-days.ts";
 import {
-  datesOf,
+  datesOnlyHires,
+  dayFields,
   type DayRefusals,
+  daysIn,
   draftingRefusals,
   type Everyone,
-  leadDatesOf,
+  isPlannedHire,
   type MemberDay,
   membersOf,
   membersRefusal,
@@ -87,13 +89,15 @@ const nameTaken = "Another feature team has that name";
 // A team's fields as drafts and the change history hold them: its name, lead, members, by person or
 // planned hire, sorted, the days the members a draft adds or removes join or leave, by member, when
 // given, and the day a draft's change of lead takes effect, under the new lead, or the old one if
-// none replaces them, when given.
+// none replaces them, when given. People's days and planned hires' are held apart, in their classes.
 export const featureTeamFields = [
   "name",
   "leadId",
   "members",
   "memberFrom",
+  "hireFrom",
   "leadFrom",
+  "hireLeadFrom",
 ] as const;
 
 export function teamChanges(
@@ -196,7 +200,6 @@ export async function createFeatureTeam(
   asOf?: string,
 ): Promise<{ id: string; changeSetId: string | null }> {
   return changingTeams(database, actor, asOf, async (transaction, today) => {
-    const from = fromDay(actor, request.from, today);
     const id = randomUUID();
     // A lead who is not among the members asked for joins the team with them.
     const members = [
@@ -205,8 +208,14 @@ export async function createFeatureTeam(
         ...(request.leadId === null ? [] : [request.leadId]),
       ]),
     ].sort();
-    await refuseTakenName(transaction, request.name, id);
     const everyone = await readMembers(transaction, members, today);
+    const onlyHires = datesOnlyHires(members, [request.leadId], (memberId) =>
+      isPlannedHire(everyone, memberId),
+    );
+    const from = fromDay(actor, request.from, today, {
+      datesOnlyHires: onlyHires,
+    });
+    await refuseTakenName(transaction, request.name, id);
     checkMembers(actor, members, members, request.leadId, everyone);
     const days = members.map((memberId) => ({
       teamId: id,
@@ -222,15 +231,14 @@ export async function createFeatureTeam(
     const after = tidy({
       name: request.name,
       leadId: request.leadId,
-      ...(from === undefined || request.leadId === null
-        ? {}
-        : { leadFrom: { [request.leadId]: from } }),
       ...(members.length === 0 ? {} : { members }),
-      ...(from === undefined || members.length === 0
+      ...(from === undefined
         ? {}
-        : {
-            memberFrom: Object.fromEntries(members.map((one) => [one, from])),
-          }),
+        : dayFields(
+            members.map((one): [string, string] => [one, from]),
+            request.leadId === null ? undefined : [request.leadId, from],
+            onlyHires,
+          )),
     });
     await writeDraft(
       transaction,
@@ -321,9 +329,18 @@ export async function updateFeatureTeam(
   asOf?: string,
 ): Promise<string | null> {
   return changingTeams(database, actor, asOf, async (transaction, today) => {
-    const from = fromDay(actor, change.from, today);
     const now = await draftedTeam(transaction, actor, id, today);
     const everyone = await readNamedIn(transaction, now, change, today);
+    const from = fromDay(
+      actor,
+      change.from,
+      today,
+      nextTeamDraft({ before: now.before, team: teamToChange(now) }, change, {
+        from: change.from,
+        today,
+        isHire: (memberId) => isPlannedHire(everyone, memberId),
+      }),
+    );
     const made = await draftTeamChange(
       transaction,
       actor,
@@ -359,7 +376,7 @@ export function teamToChange({ team }: DraftedTeamNow): Recorded {
   return team;
 }
 
-// Everyone a team, its draft and a change to it name, read once for every check of the change.
+// Everyone a team, its draft and a change to it name, so each day is held in its member's class.
 export const readNamedIn = (
   transaction: Transaction,
   { before, team }: DraftedTeamNow,
@@ -414,7 +431,11 @@ export async function draftTeamChange(
     dated,
     leadChanges,
     leadJoinsOn,
-  } = nextTeamDraft({ before, team }, change, { from, today });
+  } = nextTeamDraft({ before, team }, change, {
+    from,
+    today,
+    isHire: (memberId) => isPlannedHire(everyone, memberId),
+  });
   checkMembers(actor, added, members, leadId, everyone);
   const dayOf = (memberId: string, day: string): MemberDay => ({
     teamId: id,
@@ -603,11 +624,11 @@ export async function resubmitFeatureTeamDraft(
       today,
     );
     requireRejected(draft);
-    // A day before today needs the right to change Personal details, as choosing one does.
+    // A person's day before today needs the right to change Personal details, as choosing one does.
     if (
       [
-        ...Object.values(datesOf(team)),
-        ...Object.values(leadDatesOf(team)),
+        ...Object.values(daysIn(team?.memberFrom)),
+        ...Object.values(daysIn(team?.leadFrom)),
       ].some((day) => day < today)
     ) {
       requireFieldEdit(actor, "featureTeamDates");

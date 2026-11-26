@@ -151,14 +151,13 @@ export function takesEffect(
   personId: string | undefined,
   shown: string,
 ): string | undefined {
-  const heldFor = (
-    held: Record<string, string> | undefined,
-    lead: string | undefined,
-  ) =>
-    personId === undefined
-      ? lead
-      : new Map(Object.entries(held ?? {})).get(personId);
-  const day = heldFor(draft.days, draft.leadDay);
+  const heldFor = (held: Record<string, string>, lead: string | undefined) =>
+    personId === undefined ? lead : new Map(Object.entries(held)).get(personId);
+  // A planned hire's days are held apart from people's.
+  const day = heldFor(
+    { ...draft.days, ...draft.hireDays },
+    draft.leadDay ?? draft.hireLeadDay,
+  );
   if (day !== undefined) return dayUnlessShown(day, shown);
   const now = today();
   return shown === now ? undefined : formatDay(now);

@@ -9,7 +9,12 @@ import { type Actor, requireView } from "../access.ts";
 import { BadRequestError, NotFoundError } from "../errors.ts";
 import { type Change } from "./changes.ts";
 import { readLiveTeams, readMembers } from "./feature-team-reads.ts";
-import { hasLeft, membersOf } from "./feature-team-rules.ts";
+import {
+  hasLeft,
+  isPlannedHire,
+  membersOf,
+  nextTeamDraft,
+} from "./feature-team-rules.ts";
 import { fromDay } from "./feature-team-days.ts";
 import { heldTeamChange, monthRefusals } from "./feature-team-held-changes.ts";
 import { noPerson } from "./person-fields.ts";
@@ -33,7 +38,6 @@ export async function changeMemberTeams(
 ): Promise<string | null> {
   return changingTeams(database, actor, asOf, async (transaction, today) => {
     requireView(actor, "featureAssignments");
-    const from = fromDay(actor, change.from, today);
     const person = (await readMembers(transaction, [personId], today)).get(
       personId,
     );
@@ -56,6 +60,22 @@ export async function changeMemberTeams(
           ? { add: [personId] }
           : { remove: [personId] };
         const everyone = await readNamedIn(transaction, now, teamChange, today);
+        // Whether the day needs Personal details is judged team by team, since one may hold its
+        // lead's day with the change, as drafting does.
+        const from = fromDay(
+          actor,
+          change.from,
+          today,
+          nextTeamDraft(
+            { before: now.before, team: teamToChange(now) },
+            teamChange,
+            {
+              from: change.from,
+              today,
+              isHire: (memberId) => isPlannedHire(everyone, memberId),
+            },
+          ),
+        );
         const names = {
           personName: person.preferredName,
           teamName: String(teamToChange(now).name),

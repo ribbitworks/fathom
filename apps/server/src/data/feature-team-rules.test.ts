@@ -695,6 +695,136 @@ describe("a new lead on the team", () => {
   });
 });
 
+describe("a planned hire's days in a team's draft", () => {
+  const live = { name: "Fictional Team", leadId: lead, members: [lead] };
+  const otherHire = "hire-other";
+  const isHire = (id: string) => id === hire || id === otherHire;
+  const next = (
+    change: Parameters<typeof nextTeamDraft>[1],
+    {
+      before = live,
+      team = before,
+      from = "2026-08-01",
+    }: {
+      before?: Record<string, unknown>;
+      team?: Record<string, unknown>;
+      // Null for no day chosen.
+      from?: string | null;
+    } = {},
+  ) =>
+    nextTeamDraft({ before, team }, change, {
+      from: from ?? undefined,
+      today,
+      isHire,
+    });
+
+  it("holds a change dating only planned hires as General", () => {
+    const made = next({ add: [hire, otherHire] });
+
+    expect(made.after.hireFrom).toEqual({
+      [hire]: "2026-08-01",
+      [otherHire]: "2026-08-01",
+    });
+    expect(made.after.memberFrom).toBeUndefined();
+    expect(made.datesOnlyHires).toBe(true);
+  });
+
+  it("holds a planned hire's day with people's when the same change dates a person", () => {
+    const made = next({ add: [hire, joining] });
+
+    expect(made.after.memberFrom).toEqual({
+      [hire]: "2026-08-01",
+      [joining]: "2026-08-01",
+    });
+    expect(made.after.hireFrom).toBeUndefined();
+    expect(made.datesOnlyHires).toBe(false);
+  });
+
+  it("holds the day a planned hire takes over from a person as the lead with people's", () => {
+    const made = next({ leadId: hire });
+
+    expect(made.after.leadFrom).toEqual({ [hire]: "2026-08-01" });
+    expect(made.after.hireLeadFrom).toBeUndefined();
+    expect(made.datesOnlyHires).toBe(false);
+  });
+
+  it("judges a change of lead by the live lead, a person, though the draft has a planned hire leading", () => {
+    // Given a live team a person leads, whose draft makes a planned hire its lead
+    const drafted = next({ leadId: hire }, { from: null }).after;
+
+    // When another planned hire is made its lead from a later day
+    const made = next({ leadId: otherHire }, { team: drafted });
+
+    // Then the day is the day the person stops leading, held with people's
+    expect(made.after.leadFrom).toEqual({ [otherHire]: "2026-08-01" });
+    expect(made.datesOnlyHires).toBe(false);
+  });
+
+  it("holds the day one planned hire takes over from another as the lead as General", () => {
+    const hireLed = { ...live, leadId: hire, members: [lead, hire, otherHire] };
+
+    const made = next({ leadId: otherHire }, { before: hireLed });
+
+    expect(made.after.hireLeadFrom).toEqual({ [otherHire]: "2026-08-01" });
+    expect(made.datesOnlyHires).toBe(true);
+  });
+
+  it("judges a change dating no one, such as a rename, as a person's, as before planned hires", () => {
+    expect(next({ name: "Fictional Renamed" }).datesOnlyHires).toBe(false);
+  });
+
+  it("keeps each day where an earlier change held it", () => {
+    // Given a draft holding a planned hire's day as General
+    const drafted = next({ add: [hire] }).after;
+
+    // When a person is added from another day, and the planned hire is kept
+    const made = next(
+      { add: [joining] },
+      { team: drafted, from: "2026-09-01" },
+    );
+
+    // Then each day stays where its change held it
+    expect(made.after.hireFrom).toEqual({ [hire]: "2026-08-01" });
+    expect(made.after.memberFrom).toEqual({ [joining]: "2026-09-01" });
+  });
+
+  it("keeps a planned hire's day when a later change gives none", () => {
+    const drafted = next({ add: [hire] }).after;
+
+    const made = next({ add: [joining] }, { team: drafted, from: null });
+
+    expect(made.after.hireFrom).toEqual({ [hire]: "2026-08-01" });
+    expect(made.after.memberFrom).toBeUndefined();
+  });
+
+  it("moves a planned hire's day with people's when a change dating a person moves it", () => {
+    const drafted = next({ add: [hire] }).after;
+
+    const made = next(
+      { add: [hire, joining] },
+      { team: drafted, from: "2026-09-01" },
+    );
+
+    expect(made.after.memberFrom).toEqual({
+      [hire]: "2026-09-01",
+      [joining]: "2026-09-01",
+    });
+    expect(made.after.hireFrom).toBeUndefined();
+  });
+
+  it("keeps a lead day where the change of lead held it when a later change leaves the lead", () => {
+    const hireLed = { ...live, leadId: hire, members: [lead, hire, otherHire] };
+    const drafted = next({ leadId: otherHire }, { before: hireLed }).after;
+
+    const made = next(
+      { add: [joining] },
+      { before: hireLed, team: drafted, from: null },
+    );
+
+    expect(made.after.hireLeadFrom).toEqual({ [otherHire]: "2026-08-01" });
+  });
+});
+
 describe("whether a planned hire is on a team today or later", () => {
   const joins = (fromDate: string) => ({ member: true, fromDate });
   const leaves = (fromDate: string) => ({ member: false, fromDate });

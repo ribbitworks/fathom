@@ -464,8 +464,16 @@ function teamEntries(
       }
       if (key === "members") return (source.members ?? []).map(nameOf);
       if (key === "memberFrom" && from === "now") return dayText(draft.days);
+      if (key === "hireFrom" && from === "now") return dayText(draft.hireDays);
       if (key === "leadFrom" && from === "now" && draft.leadDay !== undefined) {
         return formatDay(draft.leadDay);
+      }
+      if (
+        key === "hireLeadFrom" &&
+        from === "now" &&
+        draft.hireLeadDay !== undefined
+      ) {
+        return formatDay(draft.hireLeadDay);
       }
       return null;
     };
@@ -491,7 +499,13 @@ function teamEntries(
               return line === undefined ? [] : [credited(line, key, draft)];
             }),
             ...(dayText(draft.days) === null ? [] : [changeLine("memberFrom")]),
+            ...(dayText(draft.hireDays) === null
+              ? []
+              : [changeLine("hireFrom")]),
             ...(draft.leadDay === undefined ? [] : [changeLine("leadFrom")]),
+            ...(draft.hireLeadDay === undefined
+              ? []
+              : [changeLine("hireLeadFrom")]),
           ];
     return [
       {

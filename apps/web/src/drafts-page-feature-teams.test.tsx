@@ -164,6 +164,50 @@ describe("drafts of feature teams on the Drafts page", () => {
     );
   });
 
+  it("says the days planned hires join and the day one becomes the lead, held apart from people's", async () => {
+    await open([
+      featureTeam("Fictional Pier", {
+        leadId: "h1",
+        members: ["m1", "h1"],
+        names: { h1: "REQ-FICTIONAL-1" },
+        draft: draft({
+          action: "changed",
+          changed: ["leadId", "members", "hireFrom", "hireLeadFrom"],
+          live: { leadId: "m1", members: ["m1"] },
+          hireDays: { h1: "2026-01-05" },
+          hireLeadDay: "2026-01-06",
+        }),
+      }),
+    ]);
+    const [entry] = await entries();
+    expect(entry).toContain(
+      "Joining and leaving dates set to REQ-FICTIONAL-1, Jan 5, 2026",
+    );
+    expect(entry).toContain("Date the feature lead changes set to Jan 6, 2026");
+  });
+
+  it("says the days planned hires join a team added", async () => {
+    await open([
+      featureTeam("Fictional Pier", {
+        leadId: "h1",
+        members: ["h1"],
+        names: { h1: "REQ-FICTIONAL-1" },
+        draft: draft({
+          action: "created",
+          changed: ["leadId", "members", "hireFrom", "hireLeadFrom"],
+          live: {},
+          hireDays: { h1: "2026-01-05" },
+          hireLeadDay: "2026-01-05",
+        }),
+      }),
+    ]);
+    const [entry] = await entries();
+    expect(entry).toContain(
+      "Joining and leaving dates set to REQ-FICTIONAL-1, Jan 5, 2026",
+    );
+    expect(entry).toContain("Date the feature lead changes set to Jan 5, 2026");
+  });
+
   it("says when nothing is left to change in a draft", async () => {
     await open([
       featureTeam("Fictional Pier", {

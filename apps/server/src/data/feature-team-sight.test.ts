@@ -48,6 +48,18 @@ describe("a team field's class", () => {
     expect(featureTeamTier(defaultClasses)(field)).toBe(tier);
   });
 
+  it.each([
+    ["the days planned hires join", "hireFrom"],
+    ["the days a planned hire becomes lead", "hireLeadFrom"],
+  ])("puts %s in General, whatever class people's days are in", (_, field) => {
+    const classes = {
+      ...defaultClasses,
+      featureTeamDates: "confidential" as const,
+    };
+
+    expect(featureTeamTier(classes)(field)).toBe("general");
+  });
+
   it("puts the days in the class Feature team dates is moved to", () => {
     const classes = { ...defaultClasses, featureTeamDates: "general" as const };
 
@@ -103,6 +115,18 @@ describe("a draft dated from another day", () => {
     expect(
       draftShownTo(access, draftOf({ leadFrom: { [member]: "2026-08-01" } })),
     ).toBe(shown);
+  });
+
+  it("is shown to every reader when it dates only planned hires", () => {
+    expect(
+      draftShownTo(
+        teamMember,
+        draftOf({
+          hireFrom: { [hire]: "2026-08-01" },
+          hireLeadFrom: { [hire]: "2026-08-01" },
+        }),
+      ),
+    ).toBe(true);
   });
 
   it("is told apart from an undated draft, which every reader is shown", () => {
@@ -177,21 +201,22 @@ describe("a team without those who have left", () => {
     expect(withoutLeavers(team, everyone)).toEqual(team);
   });
 
-  it("keeps planned hires and their days, since a planned hire never leaves", () => {
+  it("keeps planned hires' days apart from people's", () => {
     const team = {
       name: "Fictional Team",
       leadId: hire,
       members: [hire, leaver],
-      memberFrom: { [hire]: "2026-08-01", [leaver]: "2026-08-01" },
-      leadFrom: { [hire]: "2026-08-01" },
+      memberFrom: { [leaver]: "2026-08-01" },
+      hireFrom: { [hire]: "2026-08-01" },
+      hireLeadFrom: { [hire]: "2026-08-01" },
     };
 
     expect(withoutLeavers(team, everyone)).toEqual({
       name: "Fictional Team",
       leadId: hire,
       members: [hire],
-      memberFrom: { [hire]: "2026-08-01" },
-      leadFrom: { [hire]: "2026-08-01" },
+      hireFrom: { [hire]: "2026-08-01" },
+      hireLeadFrom: { [hire]: "2026-08-01" },
     });
   });
 

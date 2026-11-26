@@ -97,11 +97,13 @@ const fieldNames = new Map([
   ["temporaryNumber", "ID"],
   ["targetDate", "Start"],
   ["filledBy", "Filled by"],
-  // A feature team's lead and members, and the days members join or leave.
+  // A feature team's lead and members, and the days people and planned hires join or leave.
   ["leadId", "Feature lead"],
   ["members", "Members"],
   ["memberFrom", "Joining and leaving dates"],
+  ["hireFrom", "Joining and leaving dates"],
   ["leadFrom", "Date the feature lead changes"],
+  ["hireLeadFrom", "Date the feature lead changes"],
   ...Object.entries(planningSettingNames),
   ["removalReasons", "Reasons for removing features"],
   ["externalId", "ID"],

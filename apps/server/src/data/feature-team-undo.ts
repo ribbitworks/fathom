@@ -21,8 +21,7 @@ import {
 } from "./feature-team-reads.ts";
 import { recordType } from "./feature-team-records.ts";
 import {
-  datesOf,
-  leadDatesOf,
+  daysIn,
   membersOf,
   membersRefusal,
   nameIsTaken,
@@ -33,8 +32,9 @@ import { readToday } from "./settings.ts";
 import { changesDates } from "./feature-team-days.ts";
 import { readTeamNames, requireChanging } from "./feature-teams.ts";
 
-// Refuses putting back a joining, leaving or lead day the actor could not choose today. Those who
-// do not see the days are refused any, since which they could choose would say what the day is.
+// Refuses putting back a person's joining, leaving or lead day the actor could not choose today.
+// Those who do not see the days are refused any, since which they could choose would say what the
+// day is. Planned hires' days are General, so any may be put back.
 function refuseDaysPutBack(
   actor: Actor,
   wanted: Recorded | undefined,
@@ -42,7 +42,10 @@ function refuseDaysPutBack(
   today: string,
 ): void {
   const seesDays = seesField(actor, "featureTeamDates");
-  for (const days of [datesOf, leadDatesOf]) {
+  for (const days of [
+    (team: Recorded | undefined) => daysIn(team?.memberFrom),
+    (team: Recorded | undefined) => daysIn(team?.leadFrom),
+  ]) {
     const before = new Map(Object.entries(days(now)));
     for (const [personId, day] of Object.entries(days(wanted))) {
       if (
