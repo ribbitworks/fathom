@@ -287,6 +287,7 @@ export function ProjectsPage({
   const linked = useAddFromPanel({
     canAdd:
       query.data !== undefined && query.data.canEdit && form === undefined,
+    canAddFeatures: query.data?.canEditFeatures === true,
     actionsFor,
   });
   // Anything that would close a form asks first, while it holds something.
@@ -440,6 +441,8 @@ export function ProjectsPage({
       saved: views.saved,
       selected: open,
     };
+    // What the role may change on a feature beyond its own fields, here and in a New feature form.
+    const featureEdits = { editsCommitments: plan.canEdit, editsFeatureTeams };
     // The form takes the panel's place while a record is being added.
     function panelsWith<Rec extends PlanRecord, Request>(
       type: PlanRecordKind,
@@ -452,7 +455,7 @@ export function ProjectsPage({
         const adding = linked.panel({
           plan,
           choices,
-          featureEdits: { editsCommitments: plan.canEdit, editsFeatureTeams },
+          featureEdits,
           narrow,
           notes,
           units: view.units,
@@ -546,8 +549,7 @@ export function ProjectsPage({
         const table = addingTo(
           featureTable(choices, {
             onOpen: openRecord,
-            editsCommitments: plan.canEdit,
-            editsFeatureTeams,
+            ...featureEdits,
             board: onBoard,
           }),
           addsFor("feature"),

@@ -265,12 +265,15 @@ export function proposalColumns(
       // A new proposal starts in the first status offered.
       newRowValue: () => firstStatus(choices.statuses),
     },
-    pickedColumn<Proposal>(
-      "featureIds",
-      planColumnNames.featureIds,
-      choices.features,
-      choices.drafted.proposals,
-    ),
+    {
+      ...pickedColumn<Proposal>(
+        "featureIds",
+        planColumnNames.featureIds,
+        choices.features,
+        choices.drafted.proposals,
+      ),
+      chooseWords: "Choose features",
+    },
   ];
 }
 

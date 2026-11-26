@@ -78,7 +78,9 @@ You're done when the cell lists the features, with a hollow dot.
 1. In the **New feature** form that opens under the details, type the feature's name, and anything else you know.
 1. Select **Add**.
 
-The feature starts as Possible, as every new feature does. Fathom adds it and links it to the proposal, each as a draft of its own, and the two are approved together: an approver of the plan who may not approve features sees that another approver is needed.
+The feature starts in the first status that means Possible, as every new feature does. Fathom adds it and links it to the proposal, each as a draft of its own, and the two are approved together: an approver of the plan who may not approve features sees that another approver is needed.
+
+You can start from the proposal's **Features** cell in the table too: select it, press Enter and select **New feature**. The form then opens beside the table.
 
 You're done when the proposal's **Features** names the new feature with a hollow dot.
 

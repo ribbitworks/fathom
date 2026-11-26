@@ -25,14 +25,20 @@ afterEach(() => {
 
 const atProposal = `/projects?tab=proposals&open=${proposalId}`;
 const added = { ...feature("Fictional Dock Lights", null), id: newId };
-const withAdded = plan({ features: [added] });
-const linked = plan({
+// The plan for a role that may change proposals and add features.
+const editing = (more = {}) => plan({ canEditFeatures: true, ...more });
+const withAdded = editing({ features: [added] });
+const linked = editing({
   features: [added],
   proposals: [proposal({ featureIds: [newId] })],
 });
 const newForm = () => document.getElementById("linked-record-panel");
 
-async function openProposal(more = {}, permissions?: string[], start = plan()) {
+async function openProposal(
+  more = {},
+  permissions?: string[],
+  start = editing(),
+) {
   const opened = await openPage(
     atProposal,
     start,
@@ -98,16 +104,47 @@ describe("a proposal's Features in its details", () => {
     });
   });
 
-  it("offers neither button to a role that may only read the plan", async () => {
-    await openProposal(
-      {},
-      ["plan:view", "features:view"],
-      plan({ canEdit: false }),
-    );
+  it("offers Choose features alone to a role that may change proposals but not add features", async () => {
+    await openProposal({}, undefined, plan({ canEditFeatures: false }));
     const panel = sidePanel();
     expect([
       within(panel).queryByRole("button", { name: "Choose features" }),
       within(panel).queryByRole("button", { name: "New feature" }),
-    ]).toEqual([null, null]);
+      within(panel).queryByRole("button", { name: "Change Features" }),
+    ]).toEqual([expect.anything(), null, null]);
+  });
+
+  it("puts focus back on Choose features once its picker closes with Esc", async () => {
+    await openProposal();
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", { name: "Choose features" }),
+    );
+    await within(sidePanel()).findByRole("textbox", { name: "Features" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe("Choose features");
+    });
+  });
+
+  it("puts focus back on New feature once its form is cancelled", async () => {
+    await openProposal();
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", { name: "New feature" }),
+    );
+    await userEvent.click(
+      within(newForm() as HTMLElement).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(newForm()).toBeNull();
+    });
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe("New feature");
+    });
+  });
+
+  it("reads None under an empty list, above the buttons", async () => {
+    await openProposal();
+    const features = within(sidePanel()).getByText("Features").closest("div");
+    expect(features?.textContent).toContain("None");
   });
 });

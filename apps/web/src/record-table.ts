@@ -188,6 +188,9 @@ export interface Column<
     fillsNewRow?: boolean;
     onNew: (to: AddedTo, typed: string, back: () => void) => void;
   };
+  // For a column listing records: in a record's details, the words of the button under the list
+  // that opens its picker, in place of the row's pencil, beside New where the column offers it.
+  chooseWords?: string;
   // A warning about a record's value, its dot before the value and its words after it.
   status?: (record: Rec) => { words: string; spoken?: string } | undefined;
   // For a table with several kinds of record: whether a kind has the column, which is otherwise
