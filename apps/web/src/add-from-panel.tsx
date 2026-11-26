@@ -4,7 +4,7 @@
 // records, linked to the record the picker was for, or an activity of a project or release, with it
 // set.
 
-import type { ProjectPlan } from "@fathom/shared";
+import type { Feature, Project, ProjectPlan, Proposal } from "@fathom/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import type { ActivityOwner } from "./activity-list.tsx";
@@ -55,13 +55,21 @@ const tabOf = {
 type LinkedBy = "after" | "within" | "fill";
 
 // A picker that may add a record: its column's key, the kind it adds, what the form opens with, given
-// what was typed and what the picker is for, and how the new record is linked.
+// what was typed and the record the picker is for, and how the new record is linked.
+// The columns a picker links its added records through.
+type LinkKey = "customerIds" | "featureIds";
+
+// The records a picker's column names, as the record holds them.
+const linkedIn = (record: PlanRecord, key: LinkKey): readonly string[] =>
+  key === "customerIds"
+    ? (record as Project | Proposal | Feature).customerIds
+    : (record as Project | Proposal).featureIds;
+
 interface AddingPicker {
-  key: string;
+  key: LinkKey | "projectIds" | "proposalIds" | "projectId";
   kind: LinkedKind;
   opening: (typed: string, to: AddedTo) => FormValues;
   linkedBy: LinkedBy;
-  chooseWords?: string;
 }
 
 const named = (typed: string): FormValues => ({ name: typed });
@@ -78,7 +86,7 @@ const customersPicker: AddingPicker = {
 
 // A project or proposal added from a feature opens naming the feature.
 const featureNamer = (
-  key: string,
+  key: "projectIds" | "proposalIds",
   kind: "project" | "proposal",
 ): AddingPicker => ({
   key,
@@ -94,7 +102,6 @@ const proposalFeaturesPicker: AddingPicker = {
   kind: "feature",
   opening: (typed) => ({ name: typed }),
   linkedBy: "after",
-  chooseWords: "Choose features",
 };
 
 const pickersOf: Readonly<Record<PlanRecordKind, readonly AddingPicker[]>> = {
@@ -143,7 +150,7 @@ export const addingTo = <Rec extends PlanRecord, Request>(
 interface Linking {
   kind: LinkedKind;
   // The picker's column, which the record added is linked through.
-  key: string;
+  key: AddingPicker["key"];
   linkedBy: LinkedBy;
   values: FormValues;
   // The form as it opens with nothing typed: a name typed into the picker counts as entered, what
@@ -175,10 +182,13 @@ const oneOf = (kind: LinkedKind): string =>
 
 export function useAddFromPanel({
   canAdd,
+  canAddFeatures,
   actionsFor,
 }: {
   // Whether the role may add the plan's records here, and a picker may offer New now.
   canAdd: boolean;
+  // Whether it may add features too, which their own role gives.
+  canAddFeatures: boolean;
   actionsFor: <Rec extends PlanRecord, Request>(
     type: PlanRecordKind,
   ) => RecordActions<Rec, PlanChange, Request>;
@@ -216,7 +226,9 @@ export function useAddFromPanel({
       canAdd
         ? // The type is always one of the fixed kinds.
           // eslint-disable-next-line security/detect-object-injection
-          pickersOf[type].map((picker) => [picker.key, addsOf(picker, type)])
+          pickersOf[type]
+            .filter(({ kind }) => kind !== "feature" || canAddFeatures)
+            .map((picker) => [picker.key, addsOf(picker, type)])
         : [],
     );
 
@@ -256,11 +268,10 @@ export function useAddFromPanel({
     for (const record of operationsOf(current.type)
       .all(plan)
       .filter((holder) => holder.id === id)) {
-      // A picker's column holds the identifiers of the records it names.
-      const linked = new Map(Object.entries(record)).get(current.key) as
-        readonly string[] | undefined;
+      // Only pickers that link after adding, through a column the record holds, come here.
+      const key = current.key as LinkKey;
       actionsFor(current.type).update(record, {
-        [current.key]: [...(linked ?? []), ...added],
+        [key]: [...linkedIn(record, key), ...added],
       });
     }
   };
