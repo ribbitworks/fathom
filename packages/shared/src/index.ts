@@ -648,6 +648,10 @@ export {
   targetCycleMonths,
   plannedMonths,
   type WorkPlan,
+  allocationHours,
+  hoursAllocated,
+  remainingHours,
+  wholeMonthHoursIn,
 } from "./forecast.ts";
 export {
   fullOutputPercent,
@@ -754,6 +758,10 @@ export {
   allocatedActivitySchema,
   type AllocatedFeature,
   allocatedFeatureSchema,
+  type AllocationHours,
+  allocationHoursSchema,
+  type WorkEffort,
+  workEffortSchema,
   type Allocation,
   type AllocationChange,
   allocationChangeSchema,

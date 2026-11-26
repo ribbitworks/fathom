@@ -13,10 +13,12 @@ import {
   allocationMonthRecords,
   allocationMonthsTable,
   type AllocationRow,
+  monthHoursOf,
   unseenActivityChoice,
   unseenFeatureChoice,
 } from "./allocation-months.tsx";
 
+import { allocatedToGrouping } from "./allocation-groups.ts";
 import { anyMonthKey, featureTeamGrouping } from "./team-months.tsx";
 import { testTheme } from "./test-support.tsx";
 import {
@@ -139,6 +141,7 @@ describe("a month's cell", () => {
               name: "Checkout",
               tip: "Checkout",
               meaning: "in-progress",
+              monthHours: 0,
               colour: "teal",
               percentage: 100,
               live: 100,
@@ -207,9 +210,12 @@ describe("the table", () => {
   const table = allocationMonthsTable({
     teamMonths,
     works: allocatedWork({ allocations: [], features, activities }),
+    allocations: [allocation()],
     managers: [{ id: "p-blair", name: "Blair Fictional" }],
     currentMonth: "2027-03",
     show: "both",
+    byWork: false,
+    offersWork: true,
   });
 
   it("is read only, offering the allocated features and activities to filter a month by", () => {
@@ -259,9 +265,12 @@ describe("the table", () => {
         features: unseen,
         activities: [],
       }),
+      allocations: [],
       managers: undefined,
       currentMonth: "2027-03",
       show: "both",
+      byWork: false,
+      offersWork: true,
     })
       .columnsFor([], [], [], [])
       .find(({ key }) => key === "2027-03");
@@ -310,9 +319,12 @@ describe("the table", () => {
         features: [],
         activities: unseen,
       }),
+      allocations: [],
       managers: undefined,
       currentMonth: "2027-03",
       show: "both",
+      byWork: false,
+      offersWork: true,
     })
       .columnsFor([], [], [], [])
       .find(({ key }) => key === "2027-03");
@@ -362,10 +374,11 @@ describe("the table", () => {
     expect(filter?.column.value(casey(rowsOf([])))).toEqual([]);
   });
 
-  it("groups by manager or feature team", () => {
+  it("groups by manager, feature team or what each is allocated to", () => {
     expect(table.groupings?.map(({ label }) => label)).toEqual([
       "Manager",
       "Feature team",
+      "Allocated to",
     ]);
   });
 
@@ -395,5 +408,224 @@ describe("the table", () => {
     expect(
       table.nameOf({ ...casey(rows), name: "", madeName: "SDET, TBD-7" }),
     ).toBe("SDET, TBD-7");
+  });
+});
+
+describe("the table grouped by what each is allocated to", () => {
+  // Casey on Checkout at half from March, whose whole month gives 80 hours, and Checkout's
+  // estimate, needing 120 hours with the buffer.
+  const onCheckout = allocation({ hours: { full: 80, rampUp: {} } });
+  const withEffort = features.map((feature) =>
+    feature.id === "f-checkout"
+      ? { ...feature, effort: { live: { estimate: 100, needed: 120 } } }
+      : feature,
+  );
+  const tableBy = (byWork: boolean) =>
+    allocationMonthsTable({
+      teamMonths,
+      works: allocatedWork({
+        allocations: [],
+        features: withEffort,
+        activities: [],
+      }),
+      allocations: [onCheckout],
+      managers: undefined,
+      currentMonth: "2027-03",
+      show: "both",
+      byWork,
+      offersWork: true,
+    });
+  const rows = rowsOf([onCheckout], { grouping: allocatedToGrouping });
+
+  it("totals each feature's hours each month as Allocated", () => {
+    const { totals } = tableBy(true);
+
+    expect([totals?.label, totals?.cell(rows, "2027-03")]).toEqual([
+      "Allocated",
+      "40 h",
+    ]);
+  });
+
+  it("heads each feature with its Effort, Allocated and Remaining", () => {
+    const grouping = tableBy(true).groupings?.find(
+      ({ key }) => key === allocatedToGrouping,
+    );
+    const [group] = grouping?.of(rows[0] as AllocationRow) ?? [];
+    render(
+      <MantineProvider theme={testTheme}>
+        <p data-testid="heading">
+          {group?.label}
+          {group?.facts}
+        </p>
+      </MantineProvider>,
+    );
+
+    expect(screen.getByTestId("heading").textContent).toBe(
+      "Checkout · Effort 100 h · Allocated 80 h · Remaining 40 h",
+    );
+  });
+
+  it("totals a month before the allocation, or past the grid's, as none", () => {
+    const { totals } = tableBy(true);
+    expect([
+      totals?.cell(rows, "2027-02"),
+      totals?.cell(rows, "2030-01"),
+    ]).toEqual(["0 h", "0 h"]);
+  });
+
+  it("heads those allocated to nothing as Not allocated", () => {
+    const grouping = tableBy(true).groupings?.find(
+      ({ key }) => key === allocatedToGrouping,
+    );
+    const [none] = rowsOf([], { grouping: allocatedToGrouping });
+
+    expect(grouping?.of(none as AllocationRow)[0]?.label).toBe("Not allocated");
+  });
+
+  it("marks no one's load on a row for one feature, which holds only part of their month", () => {
+    const [march] = tableBy(true)
+      .columnsFor([], [], [], rows)
+      .filter(({ key }) => key === "2027-03");
+    render(
+      <MantineProvider theme={testTheme}>
+        <p data-testid="cell">{march?.content?.(rows[0] as AllocationRow)}</p>
+      </MantineProvider>,
+    );
+
+    expect(screen.getByTestId("cell").textContent).toBe("Checkout50%");
+  });
+
+  // Casey on the General activity at half from March too, its estimate needing 48 hours.
+  const onGeneral = allocation({
+    id: "a-2",
+    featureId: null,
+    activityId: "a-general",
+    hours: { full: 80, rampUp: {} },
+  });
+  const withActivityEffort = activities.map((activity) => ({
+    ...activity,
+    effort: { live: { estimate: 40, needed: 48 } },
+  }));
+  const tableOfWork = (
+    works: Parameters<typeof allocatedWork>[0],
+    allocated: readonly Allocation[],
+  ) =>
+    allocationMonthsTable({
+      teamMonths,
+      works: allocatedWork(works),
+      allocations: allocated,
+      managers: undefined,
+      currentMonth: "2027-03",
+      show: "both",
+      byWork: true,
+      offersWork: true,
+    });
+  const groupingOf = (table: ReturnType<typeof tableOfWork>) =>
+    table.groupings?.find(({ key }) => key === allocatedToGrouping);
+
+  it("heads an activity by its name and its project, with its hours, and totals them", () => {
+    const table = tableOfWork(
+      { allocations: [], features: withEffort, activities: withActivityEffort },
+      [onCheckout, onGeneral],
+    );
+    const grouped = rowsOf([onCheckout, onGeneral], {
+      grouping: allocatedToGrouping,
+    });
+    const onActivity = grouped.filter(({ work }) => work === "a-general");
+    const [group] = groupingOf(table)?.of(onActivity[0] as AllocationRow) ?? [];
+    render(
+      <MantineProvider theme={testTheme}>
+        <p data-testid="heading">
+          {group?.label}
+          {group?.facts}
+        </p>
+      </MantineProvider>,
+    );
+
+    expect([
+      screen.getByTestId("heading").textContent,
+      table.totals?.cell(onActivity, "2027-03"),
+    ]).toEqual([
+      "General (Crane Control) · Effort 40 h · Allocated 80 h · Remaining \u221232 h",
+      "40 h",
+    ]);
+  });
+
+  it("heads every feature, and every activity, the reader can't read under one heading of its kind, with no hours", () => {
+    const hidden = (id: string, name: string) => ({
+      id,
+      name,
+      meaning: "in-progress" as const,
+      colour: null,
+      unseen: true as const,
+    });
+    const table = tableOfWork(
+      {
+        allocations: [],
+        features: [
+          hidden("f-hidden-1", "A feature"),
+          hidden("f-hidden-2", "A feature"),
+        ],
+        activities: [hidden("a-hidden-1", "An activity")],
+      },
+      [],
+    );
+    const groupOf = (work: string) =>
+      groupingOf(table)?.of({ ...(rowsOf([])[0] as AllocationRow), work })[0];
+
+    expect(
+      ["f-hidden-1", "f-hidden-2", "a-hidden-1"].map((work) => {
+        const group = groupOf(work);
+        return [group?.key, group?.label, group?.facts];
+      }),
+    ).toEqual([
+      [unseenFeatureChoice, "A feature", undefined],
+      [unseenFeatureChoice, "A feature", undefined],
+      [unseenActivityChoice, "An activity", undefined],
+    ]);
+  });
+
+  it("is not offered to a reader who doesn't see the planning settings, which its hours tell", () => {
+    const groupings = allocationMonthsTable({
+      teamMonths,
+      works: allocatedWork({
+        allocations: [],
+        features: withEffort,
+        activities: [],
+      }),
+      allocations: [onCheckout],
+      managers: undefined,
+      currentMonth: "2027-03",
+      show: "both",
+      byWork: false,
+      offersWork: false,
+    }).groupings?.map(({ label }) => label);
+
+    expect(groupings).toEqual(["Feature team"]);
+  });
+
+  it("totals in person-months under any other grouping", () => {
+    expect(tableBy(false).totals?.label).not.toBe("Allocated");
+  });
+});
+
+describe("monthHoursOf", () => {
+  const line = (percentage: number, live: number | null) => ({
+    workId: "f-checkout",
+    name: "Checkout",
+    tip: "Checkout",
+    meaning: "in-progress" as const,
+    colour: null,
+    monthHours: 80,
+    percentage,
+    live,
+  });
+
+  it("gives the hours at the drafted percentage while drafts show, and at the approved one otherwise, none for a line a draft adds", () => {
+    const lines = [line(100, 50), line(25, null)];
+    expect([
+      monthHoursOf(lines, "drafts"),
+      monthHoursOf(lines, "live"),
+    ]).toEqual([100, 40]);
   });
 });

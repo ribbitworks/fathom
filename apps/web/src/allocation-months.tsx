@@ -23,11 +23,18 @@ import {
   summedCapacity,
   type TeamMonths,
   wholeMonth,
+  wholeMonthHoursIn,
 } from "@fathom/shared";
 import { VisuallyHidden } from "@mantine/core";
 import { queryOptions } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import styles from "./allocation-lines.module.css";
-import { groupedRows, type HeldRow } from "./allocation-groups.ts";
+import {
+  allocatedToGrouping,
+  groupedRows,
+  type HeldRow,
+  rowsByWork,
+} from "./allocation-groups.ts";
 import { getJson } from "./api.ts";
 import { unitWords } from "./effort.ts";
 import { share } from "./metrics.ts";
@@ -35,7 +42,9 @@ import { decimal } from "./numbers.ts";
 import { hireRows } from "./planned-hire-months.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import pages from "./pages.module.css";
-import type { RecordTable, RowTotals } from "./record-table.ts";
+import type { RecordTable, RowGrouping, RowTotals } from "./record-table.ts";
+import { rankOfNone } from "./row-groups.ts";
+import { allocatedHours, WorkFacts } from "./allocated-work.tsx";
 import { ColouredName } from "./colour-swatch.tsx";
 import {
   DraftedPartItem,
@@ -103,6 +112,8 @@ export interface AllocationLine {
   percentage: number;
   // The percentage as approved; null for work a draft adds.
   live: number | null;
+  // The hours a whole month of the row's time gives in the month, after focus and ramp-up.
+  monthHours: number;
   drafted?: DraftedPart;
   draft?: DraftLike;
   // Set on a line as it is live, where draft changes it as drafted says, so it shows Live's dot.
@@ -285,15 +296,18 @@ export function AllocationLines({
   );
 }
 
+// What a line of an allocation's names, with the hours a whole month of its person's time gives in
+// the month.
 function workOf(
   works: ReadonlyMap<string, AllocatedWork>,
-  { featureId, activityId }: Allocation,
+  allocation: Allocation,
+  month: string,
 ): Pick<
   AllocationLine,
-  "workId" | "name" | "tip" | "rename" | "meaning" | "colour"
+  "workId" | "name" | "tip" | "rename" | "meaning" | "colour" | "monthHours"
 > {
   // Every allocation names a feature or an activity, which the server lists.
-  const workId = String(featureId ?? activityId);
+  const workId = String(allocation.featureId ?? allocation.activityId);
   const { name, tip, rename, meaning, colour } = works.get(
     workId,
   ) as AllocatedWork;
@@ -304,6 +318,7 @@ function workOf(
     ...(rename === undefined ? {} : { rename }),
     meaning,
     colour,
+    monthHours: hoursIn(allocation, month),
   };
 }
 
@@ -326,6 +341,25 @@ export function namedIn(allocations: Allocations, show: Show): Allocations {
   };
 }
 
+// The hours a whole month of an allocation's person's time gives, none for a reader not sent them.
+const hoursIn = (allocation: Allocation, month: string): number =>
+  allocation.hours === undefined
+    ? 0
+    : wholeMonthHoursIn(allocation.hours, month);
+
+// The hours some lines deliver in their month, at the percentages the Draft menu shows.
+export const monthHoursOf = (
+  lines: readonly AllocationLine[],
+  show: Show,
+): number =>
+  lines.reduce(
+    (total, { percentage, live, monthHours }) =>
+      total +
+      ((show === "drafts" ? percentage : (live ?? 0)) * monthHours) /
+        wholeMonth,
+    0,
+  );
+
 // A month's allocations as approved, each feature or activity by name.
 function liveLines(
   allocations: readonly Allocation[],
@@ -336,7 +370,7 @@ function liveLines(
     const percentage = percentageIn(allocation.months, month);
     return percentage === null
       ? []
-      : [{ ...workOf(works, allocation), percentage, live: percentage }];
+      : [{ ...workOf(works, allocation, month), percentage, live: percentage }];
   });
 }
 
@@ -360,7 +394,7 @@ function draftedLines(
     const live = percentageIn(allocation.months, month);
     const { draft } = allocation;
     const drafted = draftedPercentage(allocation, month);
-    const work = workOf(works, allocation);
+    const work = workOf(works, allocation, month);
     if (drafted === null) {
       return live === null || show === "drafts"
         ? []
@@ -551,29 +585,80 @@ export function allocationMonthRecords({
       );
     },
   );
-  const row = (base: BaseRow, of: ReadonlyMap<string, Allocation[]>) =>
-    withAllocations(
-      base,
-      of.get(base.personId) ?? [],
-      works,
-      teamMonths.months,
-      show,
+  const rows = (base: BaseRow, of: ReadonlyMap<string, Allocation[]>) => {
+    const theirs = of.get(base.personId) ?? [];
+    return (
+      grouping === allocatedToGrouping
+        ? rowsByWork(base, theirs)
+        : [{ row: base, allocations: theirs }]
+    ).map(({ row, allocations: own }) =>
+      withAllocations(row, own, works, teamMonths.months, show),
     );
+  };
   return [
-    ...people.map((person) => row(person, ofPeople)),
-    ...hireRows(chart, teamMonths.months).map((hire) => row(hire, ofHires)),
+    ...people.flatMap((person) => rows(person, ofPeople)),
+    ...hireRows(chart, teamMonths.months).flatMap((hire) =>
+      rows(hire, ofHires),
+    ),
   ];
+}
+
+// Grouped by the feature or activity each row is for, by name, then those allocated to nothing.
+// Work the reader can't read is one group of its kind, named only by its kind, as its filter's
+// choice is.
+function groupedByWork(
+  works: readonly AllocatedWork[],
+  factsOf: (work: AllocatedWork) => ReactNode,
+): RowGrouping<AllocationRow> {
+  const groups = new Map(
+    [...works]
+      .sort((first, second) =>
+        byName({ name: first.tip }, { name: second.tip }),
+      )
+      .map((work, rank) => [
+        work.id,
+        work.unseen === true
+          ? { key: work.choice, label: work.name, rank }
+          : {
+              key: work.id,
+              label: work.tip,
+              rank,
+              colour: work.colour,
+              facts: factsOf(work),
+            },
+      ]),
+  );
+  return {
+    key: allocatedToGrouping,
+    label: "Allocated to",
+    holds: "names",
+    of: ({ work }) => [
+      (work === undefined ? undefined : groups.get(work)) ?? {
+        key: "not-allocated",
+        label: "Not allocated",
+        rank: rankOfNone,
+      },
+    ],
+  };
 }
 
 export function allocationMonthsTable({
   teamMonths,
   works,
+  allocations,
   managers,
   currentMonth,
   show,
+  byWork,
+  offersWork,
 }: {
   teamMonths: TeamMonths;
   works: readonly AllocatedWork[];
+  allocations: readonly Allocation[];
+  // Whether the rows are grouped by what each is allocated to, whose totals are hours.
+  byWork: boolean;
+  // Whether it may be, for a reader who sees the planning settings, since its hours tell them.
+  offersWork: boolean;
   // The managers to group by, for roles that may group by manager.
   managers: readonly { id: string; name: string }[] | undefined;
   currentMonth: string;
@@ -601,14 +686,33 @@ export function allocationMonthsTable({
             lines={row.allocated.get(month) ?? []}
             month={month}
             currentMonth={currentMonth}
-            allocatable={allocatableIn(row, month)}
+            // A row for one feature holds part of someone's month, so their load isn't marked on it.
+            allocatable={!byWork && allocatableIn(row, month)}
             show={show}
           />
         ),
       readOnly: () => true,
-      groupings: monthGroupings(managers, teamMonths),
+      groupings: [
+        ...monthGroupings<AllocationRow>(managers, teamMonths),
+        ...(offersWork
+          ? [
+              groupedByWork(works, (work) => (
+                <WorkFacts
+                  work={work}
+                  allocated={allocatedHours(
+                    allocations,
+                    work.id,
+                    teamMonths.months,
+                    show,
+                  )}
+                  show={show}
+                />
+              )),
+            ]
+          : []),
+      ],
     }),
-    totals: capacityTotals(show),
+    totals: byWork ? workTotals(show) : capacityTotals(show),
   };
 }
 
@@ -656,6 +760,23 @@ export function CapacityTotal({ allocated, available }: Capacity) {
       <span>{shared}</span>
     </div>
   );
+}
+
+// Under each feature, the hours its allocations give it each month, and those of every feature.
+function workTotals(show: Show): RowTotals<AllocationRow> {
+  return {
+    label: "Allocated",
+    overall: "Allocated, all work",
+    cell: (rows, month) =>
+      `${decimal(
+        rows.reduce(
+          // Rows under what someone is allocated to hold every month.
+          (total, row) =>
+            total + monthHoursOf(row.allocated.get(month) ?? [], show),
+          0,
+        ),
+      )} h`,
+  };
 }
 
 function capacityTotals(show: Show): RowTotals<AllocationRow> {

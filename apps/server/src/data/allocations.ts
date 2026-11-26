@@ -23,9 +23,12 @@ import {
   type Allocations,
   type Asking,
   changedSpans,
+  allocationHours,
+  effortNeeded,
   hireCalled,
   knownColour,
   meaningSchema,
+  monthOf,
   type PaletteColour,
   type MonthSpan,
   withChange,
@@ -42,8 +45,9 @@ import {
   allocationKind,
   workOf,
 } from "./allocation-kinds.ts";
-import { expectedMonth, hireIdOf } from "./hire-fields.ts";
+import { expectedMonth, hireIdOf, undatedMark } from "./hire-fields.ts";
 import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
+import { readHourSettings } from "./planning-settings.ts";
 import { drafting, saveRecordDraft } from "./record-drafting.ts";
 import { readRecordsState, recordDraftOut, recordHeldBy } from "./records.ts";
 import {
@@ -175,6 +179,8 @@ async function employmentOf(
 
 interface HireFacts {
   expected: string;
+  // Whether a date gives the month it is expected, rather than its standing in for today.
+  dated: boolean;
   filledBy: string | null;
   called: string;
 }
@@ -207,6 +213,7 @@ async function hiresOf(
         hire.id,
         {
           expected: expectedMonth(hire, today),
+          dated: undatedMark(hire).undated !== true,
           filledBy: hire.filledBy,
           called: hireCalled(
             hire.name,
@@ -277,6 +284,63 @@ export async function readAllocations(
       );
       const personOf = (record: Recorded) =>
         employment.get(String(record.personId));
+      // The hours, which tell the planning settings, go only to a reader who sees them.
+      const settings = actor.permissions.includes("configuration:view")
+        ? await readHourSettings(transaction)
+        : undefined;
+      const estimateIn = (version: Recorded | undefined) =>
+        typeof version?.estimateHours === "number"
+          ? version.estimateHours
+          : null;
+      // A feature's estimate and the hours it needs, as a version of it holds them.
+      const effortIn = (
+        version: Recorded | undefined,
+        bufferPercent: number,
+      ) => {
+        const estimate = estimateIn(version);
+        return {
+          estimate,
+          needed: effortNeeded(estimate, bufferPercent) ?? null,
+        };
+      };
+      // A work's estimate and the hours it needs, approved and as a waiting draft makes them, for a
+      // reader who sees the planning settings.
+      const effortOf = (type: "feature" | "activity", id: string) =>
+        settings === undefined
+          ? {}
+          : {
+              effort: {
+                live: effortIn(
+                  stateOf(state, type).live.get(id),
+                  settings.bufferPercent,
+                ),
+                ...(stateOf(state, type).drafts.get(id)?.state === "waiting"
+                  ? {
+                      drafted: effortIn(
+                        versionOf(state, type, id),
+                        settings.bufferPercent,
+                      ),
+                    }
+                  : {}),
+              },
+            };
+      // The month someone's ramp-up counts from: a person's start, or a planned hire's expected
+      // month. That month is General, though the target date it may come from is the hiring plan's.
+      const hires =
+        settings !== undefined
+          ? await hiresOf(
+              transaction,
+              records.flatMap(({ record }) => text(record.plannedHireId) ?? []),
+              today,
+            )
+          : new Map<string, HireFacts>();
+      // An undated hire has no month of its own to ramp up from.
+      const firstMonthOf = (record: Recorded) => {
+        const start = personOf(record)?.startDate;
+        if (start !== undefined && start !== null) return monthOf(start);
+        const hire = hires.get(String(record.plannedHireId));
+        return hire?.dated === true ? hire.expected : undefined;
+      };
       const makers = new Map([
         [
           type,
@@ -349,6 +413,9 @@ export async function readAllocations(
             featureId: text(record.featureId),
             activityId: text(record.activityId),
             months: monthsOf(stateOf(state, type).live.get(id)),
+            ...(settings === undefined
+              ? {}
+              : { hours: allocationHours(firstMonthOf(record), settings) }),
             ...(draft === undefined
               ? {}
               : {
@@ -374,7 +441,8 @@ export async function readAllocations(
             ...recordHeldBy(state, type, id),
           };
         }),
-        // A feature or activity the reader can't read is told by no team's colour either.
+        // A feature or activity the reader can't read is told by no team's colour either, nor its
+        // effort.
         features: work
           .filter(({ type }) => type === "feature")
           .map((one) => {
@@ -384,6 +452,7 @@ export async function readAllocations(
               ...namedInList(featureNaming(state, one.id, actor)),
               ...(seen ? renameOf(featureKind, state, one.id) : {}),
               colour: seen ? planned(one).colour : null,
+              ...(seen ? effortOf("feature", one.id) : {}),
             };
           }),
         activities: work
@@ -408,6 +477,7 @@ export async function readAllocations(
               name: String(activity.name),
               ...renameOf(activityKind, state, one.id),
               owner: activityOwnerCalled(state, activity, readsPlan),
+              ...effortOf("activity", one.id),
             };
           }),
         includedPersonal: records.some(({ record }) => {

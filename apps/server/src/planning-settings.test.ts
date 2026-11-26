@@ -30,6 +30,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { actorFor, rolesGranting } from "./access.ts";
 import {
   readEffortConversions,
+  readHourSettings,
   readPlanningSettings,
 } from "./data/planning-settings.ts";
 import { startTestApp, type TestApp } from "./test-app.ts";
@@ -494,6 +495,10 @@ describe("a database the migrations have not given settings", () => {
   it.each([
     ["the settings", readPlanningSettings],
     ["the conversions", readEffortConversions],
+    [
+      "the hours' settings",
+      (database: typeof test.connection) => readHourSettings(database),
+    ],
   ])("fails clearly to read %s", async (_case, reading) => {
     await test.connection.delete(planningSettings);
     try {

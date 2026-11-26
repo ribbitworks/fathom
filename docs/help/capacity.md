@@ -42,13 +42,23 @@ While a filter, a search or a month's own filter narrows the rows, the count say
 The table starts as one list. To put the rows under headings:
 
 1. Select **Group by**.
-1. Choose **Manager** or **Feature team**.
+1. Choose **Manager** or **Feature team**, or, on **Allocations**, **Allocated to**.
 
 To turn the headings round, select **Group by** again, and choose **Z to A**. The heading for none, such as **No manager**, then comes first.
 
 To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**.
 
 On **Allocations**, grouped by **Manager**, someone who changed manager has a row under each one, holding only the months they reported to them. Grouped by **Feature team**, someone has a row under each team they're on, and one under **No feature team** for any months they're on none. Each group ends with a total row.
+
+Grouped by **Allocated to**, each feature or activity is a heading, an activity's naming its project or release, and someone has a row under each one they're allocated to, showing it alone; those allocated to nothing come last, under **Not allocated**. The heading reads its hours:
+
+- **Effort:** its estimate.
+- **Allocated:** the hours its allocations give it over the months the grid shows, after focus and ramp-up.
+- **Remaining:** Effort with the buffer the planning settings add, less Allocated. Past what it needs, it reads in red with a minus sign, such as **−6 h**. It reads **None** for done or cancelled work, or work with no estimate.
+
+**Allocated to** is offered to roles that see the planning settings, since the hours follow from them.
+
+Each group ends with an **Allocated** row, the hours it's given each month. A row for one feature or activity holds part of someone's month, so it marks no **Over** or **Under**; the **Over** and **Under** choices still keep someone's rows by their whole month.
 
 On **Feature teams**, someone on two feature teams has a row under each team. Grouped by **Manager**, each person is under the manager they report to today. **Manager** is offered only to roles that see Confidential data, since a later month's manager can be a reorganization not yet announced.
 
@@ -170,11 +180,11 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 - **Default focus** is the share of a person's time that goes to feature work at all, after meetings, support and the like.
 - **Default buffer** is a percentage added to a feature's effort before forecasting. The effort entered stays as it is.
 - **Ramp-up for new starters** is the share of full output a new starter delivers in each of their first months. The last row, such as **From month 3**, shows that they deliver **100%** from then on.
-- Focus, buffer and ramp-up don't change any figure Fathom shows.
+- Focus, buffer and ramp-up set the hours on **Allocations** grouped by **Allocated to**, and change no other figure.
 - **A yellow dot** marks a setting a draft changes, with the live value under it after a green dot. **No month 3**, or the like, marks a month the draft adds or removes. **Draft**, above **Working time**, chooses how drafts show.
 
 ## Where Changes Go
 
 A change to someone's teams is a draft of the team, and it's approved with the team's other changes. Each month the draft changes has the draft's dot before the team. See [Drafts](drafts.md).
 
-Until a change to a setting is approved, the **Effort** column on **Features** keeps using the approved settings, which **Show in** names, such as **Person-days (8 hours)**. Every change is recorded in the change history.
+Until a change to a setting is approved, the **Effort** column on **Features** and the hours on **Allocations** keep using the approved settings, which **Show in** names, such as **Person-days (8 hours)**. Every change is recorded in the change history.

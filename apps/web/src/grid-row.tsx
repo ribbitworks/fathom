@@ -333,6 +333,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                   {` ${heading.records.length === 1 ? table.one : table.noun}`}
                 </VisuallyHidden>
               </Text>
+              {heading.facts}
             </span>
           </Table.Th>
         </Table.Tr>

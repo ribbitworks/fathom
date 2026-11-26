@@ -256,6 +256,7 @@ export const capacityRoute = createRoute({
           void navigate({ search: { mode: next } });
         }}
         byManager={seesView("groupingByManager", access)}
+        groupsByWork={permissions.includes("configuration:view")}
         seesHires={opensWith(pageNeeds["org-chart"], access)}
         editsTeams={editsFeatureTeams(permissions)}
         changesDates={editsField(access, "featureTeamDates")}
