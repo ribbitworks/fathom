@@ -10,6 +10,8 @@ import {
   type Customer,
   customerFeatures,
   customerKeptBy,
+  projectKeptBy,
+  proposalKeptBy,
   type CustomerRequest,
   type Feature,
   type Milestone,
@@ -25,7 +27,6 @@ import { Menu } from "@mantine/core";
 import type { DraftField } from "./draft-details.tsx";
 import { featureColumns } from "./feature-table.tsx";
 import {
-  identifiedLabel,
   type MilestoneAdding,
   type PlanRecord,
   type PlanRecordKind,
@@ -40,19 +41,19 @@ import {
   idColumn,
   merged,
   nameColumn,
-  projectColumn,
+  namersColumn,
   newKind,
   ownerColumn,
   pickedColumn,
   type PlanChange,
   planTable,
+  projectColumn,
   recordMenu,
+  removeTurnedOffBy,
   savedKind,
   wordsOf,
-  namersColumn,
   workedOutColumn,
 } from "./plan-table.tsx";
-import { andOthers } from "./numbers.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import { ShowOnItem } from "./record-details.tsx";
 import {
@@ -143,19 +144,6 @@ export function customerColumns(
   );
 }
 
-// Why a customer can't be removed while something names it, naming the first record that keeps it
-// and counting the others.
-function customerRemoveTurnedOff(
-  choices: CustomerChoices,
-  customer: Customer,
-): string | undefined {
-  const [first, ...others] = customerKeptBy(choices, customer.id);
-  if (first === undefined) return undefined;
-  return others.length === 0
-    ? `${identifiedLabel(first)} names this customer.`
-    : `${identifiedLabel(first)} ${andOthers(others.length)} name this customer.`;
-}
-
 export function customerTable(
   choices: CustomerChoices,
   {
@@ -176,7 +164,8 @@ export function customerTable(
     request: (changes) => merged(changes) as CustomerRequest,
     showDetails: onOpen,
     menuItems: recordMenu<Customer>([["Show all features", onFeatures]]),
-    removeTurnedOff: (customer) => customerRemoveTurnedOff(choices, customer),
+    removeTurnedOff: (customer) =>
+      removeTurnedOffBy(customerKeptBy(choices, customer.id), "customer"),
   });
 }
 
@@ -269,6 +258,11 @@ export function projectTable(
     columns: () => projectColumns(choices),
     request: (changes) => merged(changes) as ProjectRequest,
     showDetails: onOpen,
+    removeTurnedOff: (project) =>
+      removeTurnedOffBy(
+        projectKeptBy({ activities: choices.activities ?? [] }, project.id),
+        "project",
+      ),
     menuItems: (project) =>
       !isPending(project) && (
         <>
@@ -336,6 +330,8 @@ export function proposalTable(
     columns: () => proposalColumns(choices, onFeatures),
     request: (changes) => merged(changes) as ProposalRequest,
     showDetails: onOpen,
+    removeTurnedOff: (proposal) =>
+      removeTurnedOffBy(proposalKeptBy(choices, proposal.id), "proposal"),
     menuItems: (proposal) =>
       !isPending(proposal) && (
         <ShowOnItem showOn={featuresShowOn(onFeatures, proposal)} />

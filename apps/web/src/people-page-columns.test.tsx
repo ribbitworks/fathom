@@ -12,6 +12,7 @@ import {
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { bodyOf, chooseIn, optionsIn } from "./test-support.tsx";
+import { turnedOffItem } from "./test-menus.tsx";
 import {
   s1,
   session,
@@ -229,11 +230,12 @@ describe("columns", () => {
       screen.getByRole("button", { name: "Role on team column, Personal" }),
     );
     expect(
-      (
-        await screen.findByRole("menuitem", { name: "Change class…" })
-      ).hasAttribute("data-disabled"),
-    ).toBe(true);
-    expect(screen.getByText("This column takes its list's class")).toBeTruthy();
+      turnedOffItem(
+        await screen.findByRole("menu"),
+        "Change class…",
+        "This column takes its list's class",
+      ),
+    ).toBeDefined();
   });
 
   it("changes a column from its header's menu, and deletes it with Undo", async () => {

@@ -24,6 +24,7 @@ import {
   recordDraft,
   serverAnswers,
 } from "./test-support.tsx";
+import { turnedOffItem } from "./test-menus.tsx";
 import {
   setUpEachTest,
   changeSetId,
@@ -436,11 +437,8 @@ describe("a cycle's drafts", () => {
       const menu = screen.getByRole("menu");
 
       expect(
-        within(menu)
-          .getByRole("menuitem", { name: "Approve draft…" })
-          .hasAttribute("data-disabled"),
-      ).toBe(true);
-      expect(within(menu).getByText("Needs another approver")).toBeDefined();
+        turnedOffItem(menu, "Approve draft…", "Needs another approver"),
+      ).toBeDefined();
     });
 
     it("are both approved from the row's menu", async () => {

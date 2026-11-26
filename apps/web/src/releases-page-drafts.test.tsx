@@ -22,6 +22,7 @@ import {
   serverAnswers,
   signedIn,
 } from "./test-support.tsx";
+import { turnedOffItem } from "./test-menus.tsx";
 import {
   setUpEachTest,
   editsAll,
@@ -418,14 +419,9 @@ describe("a schedule's draft in its row's menu", () => {
     });
     await openStream([stream], { answers: { "GET /api/session": approver } });
     const menu = await openRowMenu();
-    const approve = within(menu).getByRole("menuitem", {
-      name: "Approve draft…",
-    });
     expect(
-      approve.hasAttribute("disabled") ||
-        approve.getAttribute("data-disabled") === "true",
-    ).toBe(true);
-    expect(within(menu).getByText("Needs another approver")).toBeDefined();
+      turnedOffItem(menu, "Approve draft…", "Needs another approver"),
+    ).toBeDefined();
     expect(
       within(menu)
         .getByRole("menuitem", { name: "Reject draft…" })

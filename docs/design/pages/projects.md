@@ -24,7 +24,11 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
   - Each lists records as [Several records in a cell](../../standards/ui-conventions/pages-and-panels.md#links-to-records) sets out, and is searched, sorted, filtered, broken down by Metrics and exported as any such column, drafts included as the Draft menu shows them.
   - Features shows only to those who see features.
 - **Show all features:** a customer's row menu opens [Features](features.md) with its `customer` filter, for those who see features.
-- **Remove customer:** turned off while a project, proposal or feature names the customer, with a line naming the first and counting the others, such as "P-2001 Crane Control names this customer." or "P-2017 Depot Operations and 1 other name this customer.", as [Controls turned off](../../standards/ui-conventions/entering-and-saving.md#refusals) sets out. One drafted to be removed no longer counts. The server still refuses a removal another draft makes untrue meanwhile.
+- **Remove:** turned off while another record names the one in the row, with a line naming the first and counting the others, such as "P-2001 Crane Control names this customer." or "P-2017 Depot Operations and 1 other name this customer.", as [Controls turned off](../../standards/ui-conventions/entering-and-saving.md#refusals) sets out:
+  - **A customer:** while a project, proposal or feature names it.
+  - **A proposal:** while a project names it.
+  - **A project:** while an activity names it. Its milestones are its own, and go with it.
+  - **Drafts:** one drafted to be removed no longer counts. The server still refuses a removal another draft makes untrue meanwhile, or one a record the role can't see makes, naming only what the role sees.
 - **Show on Milestones:** a project's row menu opens the Milestones tab filtered to it.
 - **Activities column:** for those who see features, names each project's activities on one line, cut short, every name in its tip; read only, since an activity moves on [Activities](activities.md).
 - **New:** a form in the side panel; Project starts as the one the table is filtered to.

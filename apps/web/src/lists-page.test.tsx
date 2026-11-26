@@ -14,6 +14,7 @@ import {
   serverAnswers,
   signedIn,
 } from "./test-support.tsx";
+import { turnedOffItem } from "./test-menus.tsx";
 import {
   viewer,
   editor,
@@ -117,16 +118,11 @@ describe("the table of lists", () => {
     await userEvent.keyboard("{ContextMenu}");
     const menu = await screen.findByRole("menu");
     expect(
-      within(menu)
-        .getByRole("menuitem", { name: startsWith("Retire") })
-        .hasAttribute("data-disabled"),
-    ).toBe(true);
+      turnedOffItem(menu, startsWith("Retire"), "Positions needs a choice"),
+    ).toBeDefined();
     expect(
-      within(menu)
-        .getByRole("menuitem", { name: startsWith("Remove") })
-        .hasAttribute("data-disabled"),
-    ).toBe(true);
-    expect(within(menu).getByText("Positions needs a choice")).toBeTruthy();
+      turnedOffItem(menu, startsWith("Remove"), "Positions needs a choice"),
+    ).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();

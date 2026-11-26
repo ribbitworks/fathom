@@ -14,6 +14,7 @@ import {
   serverAnswers,
   undoWithKeys,
 } from "./test-support.tsx";
+import { turnedOffItem } from "./test-menus.tsx";
 import {
   viewer,
   editor,
@@ -524,16 +525,11 @@ describe("built-in lists and lists with meanings", () => {
     await userEvent.keyboard("{ContextMenu}");
     const menu = await screen.findByRole("menu");
     expect(
-      within(menu)
-        .getByRole("menuitem", { name: startsWith("Retire") })
-        .hasAttribute("data-disabled"),
-    ).toBe(true);
+      turnedOffItem(menu, startsWith("Retire"), "Needed for Proposed"),
+    ).toBeDefined();
     expect(
-      within(menu)
-        .getByRole("menuitem", { name: startsWith("Remove") })
-        .hasAttribute("data-disabled"),
-    ).toBe(true);
-    expect(within(menu).getByText("Needed for Proposed")).toBeTruthy();
+      turnedOffItem(menu, startsWith("Remove"), "Needed for Proposed"),
+    ).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();

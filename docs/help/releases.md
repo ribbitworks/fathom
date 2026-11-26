@@ -94,6 +94,8 @@ To remove a release:
 1. Select the **⋯** at the end of the release's row.
 1. Select **Remove release**.
 
+While an activity names the release, **Remove release** is greyed out, with a line under it naming the first of them. Move the activity to another release or a project first.
+
 You're done when the release's row shows a dot for your draft.
 
 ### Write a Release's Note

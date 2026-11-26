@@ -17,6 +17,8 @@ import {
   fictionalUser,
   recordDraft,
 } from "./test-support.tsx";
+import { turnedOffItem } from "./test-menus.tsx";
+import { activity, plan } from "./test-projects-page.tsx";
 import {
   setUpEachTest,
   changeSetId,
@@ -62,6 +64,36 @@ describe("a release's row menu", () => {
         .filter(([, init]) => init?.method === "DELETE")
         .map(([url]) => url),
     ).toEqual([releasePath]);
+  });
+
+  it("turns Remove release off while an activity names it, saying which", async () => {
+    await openPage(inStream(release), {
+      can: editsReleases,
+      answers: {
+        "GET /api/projects": () =>
+          Response.json(
+            plan({
+              activities: [
+                activity({ releaseId: release.id, projectId: null }),
+              ],
+            }),
+          ),
+      },
+    });
+    const [more] = within(
+      screen.getByRole("grid", { name: "Releases" }),
+    ).getAllByRole("button", { name: "Actions for Fictional One" });
+    await userEvent.click(more as HTMLElement);
+    const menu = await screen.findByRole("menu");
+    await waitFor(() => {
+      expect(
+        turnedOffItem(
+          menu,
+          "Remove release",
+          "Fictional Migration names this release.",
+        ),
+      ).toBeDefined();
+    });
   });
 
   const draftPath = `/api/records/release/${release.id}/draft`;

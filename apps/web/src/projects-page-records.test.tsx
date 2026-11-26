@@ -438,11 +438,15 @@ describe("changing a record from its row", () => {
     });
   });
 
-  it("removes a project and a proposal", async () => {
-    const { fetch } = await openPage("/projects", plan(), {
-      [`DELETE /api/projects/${projectId}`]: deleted,
-      [`DELETE /api/proposals/${proposalId}`]: deleted,
-    });
+  it("removes a project and a proposal no project names", async () => {
+    const { fetch } = await openPage(
+      "/projects",
+      plan({ projects: [project({ proposalIds: [] })] }),
+      {
+        [`DELETE /api/projects/${projectId}`]: deleted,
+        [`DELETE /api/proposals/${proposalId}`]: deleted,
+      },
+    );
     await chooseFrom(await rowMenu("Fictional Project"), "Remove project");
     await waitFor(() => {
       expect(sentTo(fetch)).toContain(`DELETE /api/projects/${projectId}`);

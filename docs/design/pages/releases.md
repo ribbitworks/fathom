@@ -46,6 +46,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 - **Columns:** Release, Schedule, Ships on, Cycles, Features, Activities and Status. Features and Activities show only to those who see features; Activities names each release's activities on one line, read only, since an activity moves on [Activities](activities.md).
 - **Rows:** One list at first, or grouped by schedule; shipped releases show only with **Show shipped**.
 - **New release:** For those who change releases. It asks for the schedule first, and is greyed out while no schedule takes new releases.
+- **Remove release:** Turned off while an activity names the release, with a line naming the first, as [Projects § Layout](projects.md#layout) sets out for every record others name. Activities come with the plan, sent only to those who see features; for others the server's refusal stays.
 
 ## Release Details
 

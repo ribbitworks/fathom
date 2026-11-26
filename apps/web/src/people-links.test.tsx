@@ -23,6 +23,8 @@ import {
   serverAnswers,
   undoWithKeys,
 } from "./test-support.tsx";
+import { turnedOffItem } from "./test-menus.tsx";
+import { heldWords } from "./draft-details.tsx";
 
 const s1 = "00000000-0000-4000-8000-000000000001";
 
@@ -559,10 +561,12 @@ describe("a web link column", () => {
       await screen.findByRole("button", { name: /^Profile column/ }),
     );
     expect(
-      (
-        await screen.findByRole("menuitem", { name: "Change class…" })
-      ).hasAttribute("data-disabled"),
-    ).toBe(true);
+      turnedOffItem(
+        await screen.findByRole("menu"),
+        "Change class…",
+        heldWords("Fictional Editor"),
+      ),
+    ).toBeDefined();
   });
 
   it("changes the class of a column only drafted to be added in its draft, from its dialog or its menu", async () => {

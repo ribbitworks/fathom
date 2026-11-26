@@ -31,6 +31,7 @@ import {
   identifiedLabel,
 } from "./projects.ts";
 import type { Identified, IdentifiedChoice } from "./identified.ts";
+import { andOthers } from "./numbers.ts";
 import { tipAttribute } from "./table-tips.tsx";
 import {
   type DraftedPart,
@@ -158,6 +159,19 @@ export function RecordName({ record }: { record: Identified }) {
       {record.name}
     </>
   );
+}
+
+// Why a record can't be removed while others name it, naming the first that does and counting the
+// others, as the server refuses its removal.
+export function removeTurnedOffBy(
+  namers: readonly Identified[],
+  one: string,
+): string | undefined {
+  const [first, ...others] = namers;
+  if (first === undefined) return undefined;
+  return others.length === 0
+    ? `${identifiedLabel(first)} names this ${one}.`
+    : `${identifiedLabel(first)} ${andOthers(others.length)} name this ${one}.`;
 }
 
 // A new row is of its own kind, so what is set only on a saved record, such as a milestone's

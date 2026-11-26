@@ -202,7 +202,9 @@ See [People](people.md#export-people) for what the file holds.
 1. Open the feature's **⋯** menu.
 1. Select **Remove feature**.
 
-Fathom won't remove a feature while a project or proposal names it. It also won't once people are allocated to it, since that time was spent. Choose a status that means Cancelled instead.
+While a project or proposal names a feature, **Remove feature** is greyed out, with a line under it naming the first of them, such as "P-2017 Depot Operations names this feature." Take the feature off that record first.
+
+Once people are allocated to a feature, **Remove feature** is greyed out too, since that time was spent. Choose a status that means Cancelled instead.
 
 You're done when the row is struck through. It's removed once the removal is approved.
 
