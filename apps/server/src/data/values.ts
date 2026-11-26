@@ -140,6 +140,12 @@ export const readPageColumns = (
   pageId: string,
 ): Promise<ColumnInfo[]> => columnsWhere(reader, eq(fields.pageId, pageId));
 
+// The columns given, with the tier of their values, as they are now.
+export const readColumnsById = (
+  reader: Reader,
+  ids: readonly string[],
+): Promise<ColumnInfo[]> => columnsWhere(reader, inArray(fields.id, [...ids]));
+
 async function columnsWhere(
   reader: Reader,
   condition: SQL,

@@ -18,7 +18,7 @@ import {
   refusingDuplicates,
   type Saved,
 } from "./changes.ts";
-import { deletePageColumnOrder } from "./column-order.ts";
+import { deletePageColumnOrder, readPageColumnOrder } from "./column-order.ts";
 import { addColumns, columnsAsked, columnsRemoved } from "./private-columns.ts";
 import {
   changingPage,
@@ -142,8 +142,23 @@ export async function removePage(
     id,
     async (transaction, page) => {
       const columns = await readPageColumns(transaction, id);
+      // The page's order of its columns goes with it, kept in its history so undoing puts it back.
+      const columnOrder: Change = {
+        recordType: "private-page",
+        recordId: id,
+        action: "deleted",
+        field: "columnOrder",
+        tier: "general",
+        oldValue: await readPageColumnOrder(
+          transaction,
+          id,
+          columns.map((column) => column.id),
+        ),
+        newValue: null,
+      };
       const made = [
         ...pageChanges(id, "deleted", page, undefined),
+        columnOrder,
         ...columnsRemoved(columns),
         ...(await rowsRemoved(
           transaction,

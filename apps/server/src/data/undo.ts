@@ -35,7 +35,6 @@ import {
 import { columnsWithAdded } from "./added-columns.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import {
-  isPrivateRecordType,
   type RecordType,
   recordChanges,
   type StoredChange,
@@ -54,6 +53,11 @@ import {
 } from "./person-fields.ts";
 import { requireViewUndo, type ViewNow, viewNow } from "./views.ts";
 import { undoTeamDrafts } from "./feature-team-undo.ts";
+import {
+  changesPrivatePage,
+  requirePrivateUndo,
+  undoPrivateChanges,
+} from "./private-undo.ts";
 import { recordTeamDayChanges } from "./feature-team-days.ts";
 import {
   hireSensitivities,
@@ -218,6 +222,8 @@ async function undoIn(
   ) {
     throw new NotFoundError();
   }
+  const privatePage = await changesPrivatePage(transaction, changeSetId);
+  if (privatePage) requirePrivateUndo(actor, changeSet.madeBy);
   if (changeSet.madeBy !== actor.user.id) {
     throw new ForbiddenError("Only the person who made a change can undo it");
   }
@@ -241,8 +247,8 @@ async function undoIn(
       "A change of class can't be undone; change it back instead",
     );
   }
-  if (records.some(({ recordType }) => isPrivateRecordType(recordType))) {
-    throw new ConflictError("Changes to private pages can't be undone yet");
+  if (privatePage) {
+    return undoPrivateChanges(transaction, actor, rows, records);
   }
   if (records.some(({ recordType }) => planRecordTypes.has(recordType))) {
     throw new ConflictError(

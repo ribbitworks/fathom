@@ -26,7 +26,7 @@ import type {
 import { draftsUse, takenEmployeeIds } from "./drafted-values.ts";
 import { checkLiveList, checkValuesFit, lockFields } from "./fields.ts";
 import { lockChoices, placeChoice, refuseIfUsed } from "./list-rules.ts";
-import { fieldOfValue, writeValues } from "./values.ts";
+import { type FieldRow, fieldOfValue, writeValues } from "./values.ts";
 
 export const changedSince =
   "This has been changed since, so it can no longer be undone";
@@ -199,13 +199,22 @@ async function checkFits(
   if (record.recordType === "field") {
     for (const current of await lockFields(transaction)) {
       if (current.id === record.id) {
-        const wanted = { ...current, ...values };
-        await checkValuesFit(transaction, current, wanted);
-        if (wanted.listId !== null && wanted.listId !== current.listId) {
-          await checkLiveList(transaction, wanted.listId);
-        }
+        await checkColumnFits(transaction, current, { ...current, ...values });
       }
     }
+  }
+}
+
+// Checks that a column's settings, put back by an undo, fit the values it holds now, and that a
+// list it is put back on is still live: a column on any table, or on a private page.
+export async function checkColumnFits(
+  transaction: Transaction,
+  current: FieldRow,
+  wanted: FieldRow,
+): Promise<void> {
+  await checkValuesFit(transaction, current, wanted);
+  if (wanted.listId !== null && wanted.listId !== current.listId) {
+    await checkLiveList(transaction, wanted.listId);
   }
 }
 

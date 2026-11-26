@@ -54,11 +54,15 @@ async function makePage(
 // Every request changing a page, a column or a row on it, as anyone may send it.
 function requestsOn(page: PrivatePage) {
   const url = `/api/private-pages/${page.id}`;
+  const column = page.columns[1]?.id ?? "";
   const row = page.rows[0]?.id ?? "";
   return [
     ["PATCH", url, { name: "Taken over" }],
     ["PUT", `${url}/position`, { position: 0 }],
     ["DELETE", url, undefined],
+    ["POST", `${url}/columns`, numberColumn("Added")],
+    ["PUT", `${url}/columns/${column}`, numberColumn("Renamed")],
+    ["DELETE", `${url}/columns/${column}`, undefined],
     ["POST", `${url}/rows`, { numbers: { [String(page.firstFieldId)]: 1 } }],
     [
       "PATCH",

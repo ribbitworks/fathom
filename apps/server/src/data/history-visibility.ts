@@ -27,7 +27,11 @@ import {
   storedTier,
   tierOfSensitivity,
 } from "../access.ts";
-import type { RecordType, StoredChange } from "./changes.ts";
+import {
+  isPrivateRecordType,
+  type RecordType,
+  type StoredChange,
+} from "./changes.ts";
 import { featureTeamTier } from "./feature-team-sight.ts";
 import {
   hireSensitivities,
@@ -45,6 +49,7 @@ import {
   viewsNow,
 } from "./views.ts";
 import { type Facts, strings } from "./history-names.ts";
+import { ownPrivateChanges } from "./private-history.ts";
 
 // Configuration is seen by those who may open the configuration pages, and people by those who may
 // see people. Saved views are seen by those who open their table's page.
@@ -101,6 +106,13 @@ function seesRowOfKind(
   sensitivities: readonly Sensitivity[],
   seenPlan: readonly RecordType[],
 ): boolean {
+  // Only the changes to the actor's own pages are read at all; each is seen in every class it was
+  // made in and is in now.
+  if (isPrivateRecordType(row.recordType)) {
+    return sensitivities.every((each) =>
+      seesClass(actor.permissions, tierOfSensitivity(actor.dataClasses)(each)),
+    );
+  }
   if (row.recordType === "feature-team") {
     return (
       (!row.draft || actor.permissions.includes("people:view")) &&
@@ -131,7 +143,8 @@ export async function visibleRows(
   // A person's details are as sensitive as they are now, such as a position as its list, their
   // choices, and a planned hire's, as the lists they come from, and as their column's list, even
   // once the column is deleted or draws on another list, and their links as the web link column's
-  // visibility last recorded, even once the column is deleted.
+  // visibility last recorded, even once the column is deleted. A private row's values are judged
+  // the same way, by their column's class and list now.
   const valueTiers = (row: StoredChange): Tier[] => {
     const columnId = fieldOfValue(row.field);
     if (columnId === null) return [tierNow(row.field)];
@@ -187,7 +200,9 @@ export async function visibleRows(
     // sensitive.
     const tiers = [
       recorded,
-      ...(row.recordType === "person" ? valueTiers(row) : []),
+      ...(row.recordType === "person" || row.recordType === "private-row"
+        ? valueTiers(row)
+        : []),
       ...(row.recordType === "feature-team"
         ? [featureTeamTier(actor.dataClasses)(row.field)]
         : []),
@@ -372,5 +387,6 @@ export function changesShownTo(actor: Actor): SQL | undefined {
           ),
         )
       : undefined,
+    ownPrivateChanges(actor),
   );
 }

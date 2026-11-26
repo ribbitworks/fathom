@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A person's own pages under Mine: listing and reading them, making, renaming, moving and removing
-// one, and adding, changing and removing its rows, each saved at once. The data access layer checks
-// that only the page's maker reaches it.
+// one, and adding, changing and removing its columns and rows, each saved at once. The data access
+// layer checks that only the page's maker reaches it.
 
 import {
   listedPrivatePageSchema,
+  privateColumnRequestSchema,
   privatePagePositionSchema,
   privatePageRenameSchema,
   privatePageRequestSchema,
@@ -21,6 +22,7 @@ import type { PrivatePageAccess } from "../data/private-page-access.ts";
 const created = 201;
 
 const pageParams = z.object({ pageId: z.uuid() });
+const columnParams = pageParams.extend({ columnId: z.uuid() });
 const rowParams = pageParams.extend({ rowId: z.uuid() });
 
 const page = "/api/private-pages/:pageId";
@@ -101,6 +103,63 @@ export function privatePageRoutes(
       async (request) => ({
         changeSetId: await pages.remove(request.actor, request.params.pageId),
       }),
+    );
+
+    app.post(
+      `${page}/columns`,
+      {
+        schema: {
+          params: pageParams,
+          body: privateColumnRequestSchema,
+          response: { [created]: savedPrivatePageSchema },
+        },
+      },
+      async (request, reply) => {
+        const { result, changeSetId } = await pages.addColumn(
+          request.actor,
+          request.params.pageId,
+          request.body,
+        );
+        return reply.status(created).send({ page: result, changeSetId });
+      },
+    );
+
+    app.put(
+      `${page}/columns/:columnId`,
+      {
+        schema: {
+          params: columnParams,
+          body: privateColumnRequestSchema,
+          response: { 200: savedPrivatePageSchema },
+        },
+      },
+      async (request) => {
+        const { result, changeSetId } = await pages.changeColumn(
+          request.actor,
+          request.params.pageId,
+          request.params.columnId,
+          request.body,
+        );
+        return { page: result, changeSetId };
+      },
+    );
+
+    app.delete(
+      `${page}/columns/:columnId`,
+      {
+        schema: {
+          params: columnParams,
+          response: { 200: savedPrivatePageSchema },
+        },
+      },
+      async (request) => {
+        const { result, changeSetId } = await pages.removeColumn(
+          request.actor,
+          request.params.pageId,
+          request.params.columnId,
+        );
+        return { page: result, changeSetId };
+      },
     );
 
     app.post(
