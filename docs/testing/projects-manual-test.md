@@ -542,7 +542,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 **Afterwards:** Run Discard the Unpublished Changes.
 
-### PROJ-18: The Product Manager Adds a New Feature to a Proposal
+### PROJ-20: The Product Manager Adds a New Feature to a Proposal
 
 **Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-15.
 
@@ -562,10 +562,10 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - Its **Status** reads 'Possible'.
   - **Notes:**
 
-- [ ] `0E93` Type `Testing Quay Lights` in **Name**, and select **Add**.
+- [ ] `0E93` Type `Fictional Quay Lights` in **Name**, and select **Add**.
   - **Expected:**
     - The **New feature** panel closes.
-    - **Features** names 'Testing Quay Lights' last, with a hollow yellow dot before it.
+    - **Features** names 'Fictional Quay Lights' last, with a hollow yellow dot before it.
     - The header's 'Harbour Cranes Upgrade' has a hollow yellow dot before it.
     - Focus is on **New feature**.
   - **Notes:**
