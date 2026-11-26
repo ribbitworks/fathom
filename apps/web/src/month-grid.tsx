@@ -19,7 +19,7 @@ import {
 import { flushSync } from "react-dom";
 import type { CellChange } from "./cell-kinds.tsx";
 import { LoadProblem } from "./load-problem.tsx";
-import { peopleAndHires } from "./people-rows.ts";
+import { monthCount, peopleAndHires } from "./people-rows.ts";
 import { type TableScroll, useTableScroll } from "./grid-layout.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import type { RecordActions, RecordTable } from "./record-table.ts";
@@ -97,6 +97,12 @@ export function MonthGrid<Rec extends MonthRow>({
     (rows: readonly Rec[]) => <CountInView rows={rows} month={countedMonth} />,
     [countedMonth],
   );
+  const countNarrowed = useCallback(
+    (rows: readonly Rec[], shown: readonly Rec[]) => (
+      <CountInView rows={rows} shown={shown} month={countedMonth} />
+    ),
+    [countedMonth],
+  );
   if (reads.some(({ isError }) => isError)) {
     return (
       <LoadProblem
@@ -122,6 +128,7 @@ export function MonthGrid<Rec extends MonthRow>({
         records={records}
         table={countedTable}
         count={count}
+        countNarrowed={countNarrowed}
         fields={[]}
         order={[]}
         lists={[]}
@@ -160,20 +167,37 @@ function countedAsPeople<Rec extends MonthRow>(
   };
 }
 
-// The rows both grids count: the people employed in the month the count is for, and the planned
-// hires expected by then, naming that month.
+type Counted = Pick<MonthRow, "outside" | "plannedHire">;
+
+// What both grids count in a month: the people employed then and the planned hires expected by
+// then, of all the rows and, while something narrows them, of those shown, as the rows stay put
+// while the month changes.
+export function monthGridCount(
+  month: string,
+  rows: readonly Counted[],
+  shown?: readonly Counted[],
+): string {
+  const inMonth = (some: readonly Counted[]) =>
+    some.filter((row) => !row.outside.has(month));
+  return monthCount(
+    formatMonth(month),
+    (row: Counted) => row.plannedHire === true,
+    inMonth(rows),
+    shown === undefined ? undefined : inMonth(shown),
+  );
+}
+
 function CountInView({
   rows,
+  shown,
   month,
 }: {
   rows: readonly MonthRow[];
+  shown?: readonly MonthRow[];
   month: ValueStore<string, string>;
 }) {
-  const shown = useSyncExternalStore(month.subscribe, month.get);
-  const { counted } = peopleAndHires(
-    (row: MonthRow) => row.plannedHire === true,
-  );
-  return `${counted(rows.filter((row) => !row.outside.has(shown)))} in ${formatMonth(shown)}`;
+  const counted = useSyncExternalStore(month.subscribe, month.get);
+  return monthGridCount(counted, rows, shown);
 }
 
 // Where each month's column is in the table, from its heading.

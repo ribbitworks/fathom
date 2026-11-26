@@ -451,6 +451,10 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // them, such as People's day or a month grid's month, which may change with what is in view
   // without redrawing the table.
   count?: ((records: readonly Rec[]) => ReactNode) | undefined;
+  // The same count while something narrows the rows, given the records shown too, for a page that
+  // words it its own way rather than as how many of all are shown.
+  countNarrowed?:
+    ((records: readonly Rec[], shown: readonly Rec[]) => ReactNode) | undefined;
   // How Save view names the page's own choices kept outside the Views menu, such as Features' Board.
   pageParts?: PageParts | undefined;
   // A filter of the page's own, kept among its choices, while it is in use.

@@ -288,6 +288,14 @@ describe("Capacity's Feature teams", () => {
     expect(screen.getByText("No manager")).toBeDefined();
   });
 
+  it("counts how many of the month's people a search shows, the month first", async () => {
+    await openPage("?search=Avery");
+
+    expect(screen.getByRole("status").textContent).toBe(
+      "Mar 2027: 1 of 3 people",
+    );
+  });
+
   it("groups by feature team, listing someone under each team and counting them once", async () => {
     await openPage("?grouping=feature-team");
 
@@ -296,7 +304,7 @@ describe("Capacity's Feature teams", () => {
       squareIn(screen.getByRole("rowheader", { name: /^Mobile apps/ })),
     ).toBe("teal");
     expect(screen.getByText("No feature team")).toBeDefined();
-    expect(screen.getByRole("status").textContent).toBe("3 people in Mar 2027");
+    expect(screen.getByRole("status").textContent).toBe("Mar 2027: 3 people");
   });
 
   it("puts the heading for none first once the headings run Z to A", async () => {
@@ -530,7 +538,7 @@ describe("planned hires on Feature teams", () => {
     await screen.findByText("Payments tester");
 
     expect(screen.getByRole("status").textContent).toMatch(
-      /and 2 planned hires in Mar 2027$/u,
+      /^Mar 2027: \d+ people, 2 planned hires$/u,
     );
   });
 

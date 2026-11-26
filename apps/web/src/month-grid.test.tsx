@@ -13,7 +13,7 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MonthGrid } from "./month-grid.tsx";
+import { MonthGrid, monthGridCount } from "./month-grid.tsx";
 import { emptyView } from "./table-view.ts";
 import {
   readOnlyMonthActions,
@@ -124,7 +124,7 @@ describe("the strip of quarters", () => {
       ).toBe(true);
     });
     expect(screen.getByRole("status").textContent).toMatch(
-      /^\d+ (person|people) in Mar 2027$/u,
+      /^Mar 2027: \d+ (person|people)$/u,
     );
     expect(grid.querySelectorAll("th[data-counted]")).toHaveLength(1);
   });
@@ -136,7 +136,7 @@ describe("the strip of quarters", () => {
     scrolled(grid);
 
     await waitFor(() => {
-      expect(screen.getByRole("status").textContent).toMatch(/in Nov 2026$/u);
+      expect(screen.getByRole("status").textContent).toMatch(/^Nov 2026: /u);
     });
     expect(
       grid.querySelector("th[data-counted]")?.getAttribute("data-column"),
@@ -269,7 +269,7 @@ describe("the strip of quarters", () => {
 
     // Then its first month is the one counted, and its heading the one filled
     await waitFor(() => {
-      expect(screen.getByRole("status").textContent).toMatch(/in Jan 2028$/u);
+      expect(screen.getByRole("status").textContent).toMatch(/^Jan 2028: /u);
     });
     expect(
       grid.querySelector("th[data-counted]")?.getAttribute("data-column"),
@@ -288,7 +288,7 @@ describe("the strip of quarters", () => {
         "selected",
       );
     });
-    expect(screen.getByRole("status").textContent).toMatch(/in Mar 2027$/u);
+    expect(screen.getByRole("status").textContent).toMatch(/^Mar 2027: /u);
     expect(grid.querySelector("th[data-counted]")).toBeNull();
   });
 });
@@ -344,6 +344,28 @@ describe("a grid of months that doesn't hold today", () => {
           quarter.getAttribute("aria-label")?.includes("selected"),
         ),
     ).toEqual([]);
-    expect(screen.getByRole("status").textContent).toMatch(/in Mar 2027$/u);
+    expect(screen.getByRole("status").textContent).toMatch(/^Mar 2027: /u);
+  });
+});
+
+describe("a month grid's count", () => {
+  // Someone who leaves after Dec 2026, someone staying, and a planned hire expected from Jan 2027.
+  const leaving = { outside: new Set(["2027-01"]) };
+  const staying = { outside: new Set<string>() };
+  const hire = { outside: new Set(["2026-12"]), plannedHire: true as const };
+  const rows = [leaving, staying, hire];
+
+  it("counts only the people employed in the month and the planned hires expected by then", () => {
+    expect([
+      monthGridCount("2026-12", rows),
+      monthGridCount("2027-01", rows),
+    ]).toEqual(["Dec 2026: 2 people", "Jan 2027: 1 person, 1 planned hire"]);
+  });
+
+  it("keeps a row the filter shows out of a month it isn't employed in", () => {
+    expect([
+      monthGridCount("2026-12", rows, [leaving]),
+      monthGridCount("2027-01", rows, [leaving]),
+    ]).toEqual(["Dec 2026: 1 of 2 people", "Jan 2027: 0 of 1 person"]);
   });
 });
