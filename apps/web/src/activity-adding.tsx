@@ -48,7 +48,11 @@ export function useActivityAdding({
     onDecision,
   });
   // No picker here offers New, so the form opens only from Add activity.
-  const linked = useAddFromPanel({ canAdd: false, actionsFor });
+  const linked = useAddFromPanel({
+    canAdd: false,
+    canAddFeatures: false,
+    actionsFor,
+  });
   const choices =
     plan === undefined || choicesQuery.data === undefined
       ? undefined
