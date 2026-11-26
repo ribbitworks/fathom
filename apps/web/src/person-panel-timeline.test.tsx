@@ -85,6 +85,9 @@ const plannedHire = person("9", "Fictional Engineer", {
 const preview = () =>
   document.getElementById("person-timeline")?.closest("section") as HTMLElement;
 const timelinePanel = () => document.getElementById(timelinePanelId);
+// The place in the stack of panels that holds a panel.
+const stackItemOf = (panel: HTMLElement | null) =>
+  (panel as HTMLElement).closest("[class*='stackItem']") as HTMLElement;
 
 describe("a person's timeline", () => {
   it("ends their details with the next day to come and the latest, and opens its own panel, kept in the address", async () => {
@@ -160,15 +163,27 @@ describe("a person's timeline", () => {
     expect(inPanel.queryByRole("button", { name: "Mar 1, 2024" })).toBeNull();
   });
 
-  it("covers the details on a narrow screen, where only the top panel shows", async () => {
+  it("takes the rest of the column under the details, which take only the height they need", async () => {
+    await openedTimeline();
+
+    expect(
+      stackItemOf(document.getElementById(personPanelId)).className,
+    ).toMatch(/stackItemFitted/u);
+    expect(stackItemOf(timelinePanel()).className).not.toMatch(
+      /stackItemFitted/u,
+    );
+  });
+
+  it("covers the details on a narrow screen, opened from an address naming both", async () => {
     onNarrowScreen();
     await openedTimeline();
 
-    const details = document.getElementById(personPanelId) as HTMLElement;
     expect(
-      (timelinePanel() as HTMLElement).compareDocumentPosition(details) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+      stackItemOf(document.getElementById(personPanelId)).className,
+    ).toMatch(/stackItemBehind/u);
+    expect(stackItemOf(timelinePanel()).className).not.toMatch(
+      /stackItemBehind/u,
+    );
   });
 
   it("opens a manager's details from the timeline", async () => {

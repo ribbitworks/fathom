@@ -52,7 +52,7 @@ export interface SidePanel {
   // The panel's name in the names of those edges, such as "metrics".
   name: string;
   node: ReactNode;
-  // As tall as what it holds, under another panel, leaving the rest to the panels beside it.
+  // As tall as what it holds, beside another panel, leaving the rest to the panels beside it.
   fits?: boolean;
 }
 
@@ -309,14 +309,11 @@ const PanelStack = memo(function PanelStack({
   // Where each panel is drawn, by the time an edge beside it is moved.
   const box = (panel: SidePanel) =>
     (items.current.get(panel.key) as HTMLDivElement).getBoundingClientRect();
-  // A panel is as tall as what it holds only under another, with none maximized; alone or
+  // A panel is as tall as what it holds only beside another, with none maximized; alone or
   // maximized, it fills the column as any panel does.
   // A narrow screen shows one panel, covering it.
   const fitted = (panel: SidePanel) =>
-    fits(panel) &&
-    !narrow &&
-    keys.indexOf(panel.key) > 0 &&
-    maximized === undefined;
+    fits(panel) && !narrow && keys.length > 1 && maximized === undefined;
   return (
     <div
       className={joined(
@@ -393,6 +390,9 @@ const PanelStack = memo(function PanelStack({
                 hidden && classes.stackItemFolded,
                 panel.key !== front && classes.stackItemBehind,
                 fitted(panel) && classes.stackItemFitted,
+                fitted(panel) &&
+                  keys.indexOf(panel.key) === 0 &&
+                  classes.stackItemFittedTop,
               )}
               style={
                 { "--stack-share": height(panel) / smallest } as CSSProperties

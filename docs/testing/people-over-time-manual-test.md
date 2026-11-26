@@ -221,6 +221,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `6160` Select **Show timeline**.
   - **Expected:**
     - The timeline opens under the details, with the cursor on its title.
+    - The details take only the height they need, scrolling if they're taller than the room above the timeline, and the timeline takes the rest.
     - A thin red line marked **Today** runs across it, with room above and below.
     - The days are listed newest first, each change on its own line, such as **Manager** and a name.
   - **Notes:**
