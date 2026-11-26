@@ -82,6 +82,7 @@ flowchart LR
 - **The audit log:** The database refuses the application's role any change to or deletion of the access history. The change history can only be added to, apart from marking a change published. The migration role, used only for upgrades, owns both.
 - **The schema:** The application's database role can only read and write data, and a separate role changes the schema.
 - **Record keys:** The database numbers each record itself, as it's added or drafted, and the application's role can only read key numbers, so a key is never changed or given again.
+- **Random keys:** A private page's and a private row's keys are made only by a database function, as [ADR 0014](../adr/0014-random-keys.md) sets out. The application's role may call it but can't write, change or remove a key, so a key is never changed or given again.
 - **Undoing:** Only the user who made a change can undo it, and not once anything it would change has changed again.
 - **Dependencies:** Packages are installed from the lockfile exactly, and base images are pinned by digest and GitHub Actions by commit.
   - **Security fixes in images:** image builds also install the operating system's security fixes released by `FATHOM_SECURITY_FIXES_DATE`.
@@ -134,6 +135,12 @@ flowchart LR
   - **Reading:** reading it leaves out the filters, sorts, breakdowns, groupings and columns on what the role can no longer see, the whole view once the role no longer opens its page, and a saved view the account may no longer apply.
   - **History:** neither history records it.
   - **Accepted:** its search is kept as typed, so it may name something the role no longer sees, though only to the account that typed it.
+- **Private pages:** A page a person makes, with its columns, rows and values, is read only by its maker, while their role holds Make private pages.
+  - **Anyone else:** another user, an Administrator included, is answered "There is no such page", exactly as for a page nobody made, so a page's existence never shows. A maker who loses the permission is answered the same, and their pages come back with it.
+  - **Elsewhere in Fathom:** a private column is never named outside its page. Moving a column's class answers that it isn't there, a list's refusals count private columns without naming them, and the other tables' columns leave them out.
+  - **Classes:** a column of a class the maker's role no longer sees is left out, with its values, and seeing one beyond General is recorded in the access history.
+  - **Keys:** a page's and a row's keys are random, not counted, so they don't show how many pages or rows exist.
+  - **Accepted:** anyone with direct access to the database can read every page, as with every table; [Securing Your Environment](../operations/securing-your-environment.md) covers that access.
 - **Links to records:** A link by a record's key finds the record only through the read of the page that shows it, for a role that opens that page, and says it was removed only to a role whose History shows the removal.
   - **Otherwise:** it answers "Nothing found", the same whether no record has the key or the role may not see it.
   - **Accepted:** key numbers count up, so their gaps show that records exist that a role doesn't see, such as drafts and removed records, though nothing about them.
@@ -159,6 +166,7 @@ flowchart LR
 
 - **Granting oneself access:** Anyone who manages accounts could give themselves any role, or reset a user's password and sign in as them. Every change to accounts and roles is recorded in the access history, and accounts created, changes to roles, and changes to which roles an account holds are marked for review.
 - **Acting with several roles:** A session acts as one role at a time, with only that role's permissions.
+- **Reading another's private pages:** No permission reads another person's page. Whoever manages roles could give themselves Make private pages, but it reaches only the pages they make, since every read checks the page's maker as well as the permission.
 - **Approving one's own change:** Nobody approves their own change, made under any of their roles, unless the role they act as is given that permission.
 - **Approving under either of two areas:** Drafts of schedules and their cycles are changed with Edit on the plan or on configuration, and approved with Approve on either one, so a role granted either reaches them.
   - **One shared rule:** one shared rule on the server checks either permission, together with seeing schedules, for every change and decision on them, and tests cover each role allowed and denied.

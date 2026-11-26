@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The values of columns on people, planned hires, features and activities, and how they are recorded
-// in the change history. Part of the data access layer.
+// The values of columns on people, planned hires, features, activities and private rows, and how
+// they are recorded in the change history. Part of the data access layer.
 
 import { storedTier } from "../access.ts";
 import { isNote, isNumber, typeOf } from "./column-types.ts";
@@ -26,7 +26,7 @@ import {
   type Link,
   type Tier,
 } from "@fathom/shared";
-import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, type SQL } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 
 export { fieldOfValue, valueField } from "@fathom/db";
@@ -34,13 +34,15 @@ export { fieldOfValue, valueField } from "@fathom/db";
 export type FieldRow = typeof fields.$inferSelect;
 
 // The kinds of record that hold values in added columns, each in its own owner column.
-export type ValueOwner = "person" | "planned-hire" | "feature" | "activity";
+export type ValueOwner =
+  "person" | "planned-hire" | "feature" | "activity" | "private-row";
 
 const ownerColumns = {
   person: { column: fieldValues.personId, key: "personId" },
   "planned-hire": { column: fieldValues.plannedHireId, key: "plannedHireId" },
   feature: { column: fieldValues.featureId, key: "featureId" },
   activity: { column: fieldValues.activityId, key: "activityId" },
+  "private-row": { column: fieldValues.privateRowId, key: "privateRowId" },
 } as const;
 
 // The kinds of record holding each table's added columns' values, the table's own records first.
@@ -67,7 +69,9 @@ export const ownerColumn = (owner: ValueOwner) =>
   // eslint-disable-next-line security/detect-object-injection
   ownerColumns[owner].column;
 
-export const ownerKey = (owner: ValueOwner) =>
+export const ownerKey = <Owner extends ValueOwner>(
+  owner: Owner,
+): (typeof ownerColumns)[Owner]["key"] =>
   // The owner is always one of the fixed kinds above.
   // eslint-disable-next-line security/detect-object-injection
   ownerColumns[owner].key;
@@ -123,6 +127,20 @@ export async function readColumns(
       .where(eq(fields.tableName, table))
       .for("share");
   }
+  const columns = await columnsWhere(reader, eq(fields.tableName, table));
+  return Object.assign(columns, await readBuiltInTiers(reader));
+}
+
+// A private page's columns, with the tier of their values.
+export const readPageColumns = (
+  reader: Reader,
+  pageId: string,
+): Promise<ColumnInfo[]> => columnsWhere(reader, eq(fields.pageId, pageId));
+
+async function columnsWhere(
+  reader: Reader,
+  condition: SQL,
+): Promise<ColumnInfo[]> {
   const rows = await reader
     .select({
       field: fields,
@@ -131,14 +149,13 @@ export async function readColumns(
     })
     .from(fields)
     .leftJoin(lists, eq(lists.id, fields.listId))
-    .where(eq(fields.tableName, table))
+    .where(condition)
     .orderBy(asc(fields.id));
-  const columns = rows.map(({ field, visibility, retired }) => ({
+  return rows.map(({ field, visibility, retired }) => ({
     ...field,
     tier: valuesTier(field, visibility),
     listRetired: retired ?? false,
   }));
-  return Object.assign(columns, await readBuiltInTiers(reader));
 }
 
 // Each of People's columns, built-in and added, by key, with its name and the class of its values.
