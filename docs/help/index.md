@@ -14,9 +14,9 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 - [Setting up Fathom](setting-up-fathom.md): a brand-new Fathom, made ready to plan with.
 - [How work moves between roles](how-work-moves-between-roles.md): a change drafted, approved, and staffed.
 - [Working as a Team Member](working-as-a-team-member.md): the plan, projects and people, to read.
-- [Working as a Product Manager](working-as-a-product-manager.md): features, projects, proposals and releases.
+- [Working as a Product Manager](working-as-a-product-manager.md): features, projects and proposals, and approving drafts.
 - [Working as a Feature Lead](working-as-a-feature-lead.md): a feature team's features, estimates and members.
-- [Working as a Project Manager](working-as-a-project-manager.md): projects to delivery, and approving drafts.
+- [Working as a Project Manager](working-as-a-project-manager.md): projects to delivery, releases, and approving drafts.
 - [Working as an Engineering Manager](working-as-an-engineering-manager.md): feature teams, allocations and estimates.
 - [Working as an Engineering Director](working-as-an-engineering-director.md): approving, reporting lines, hiring and data classes.
 - [Working as a Workforce Administrator](working-as-a-workforce-administrator.md): people, the hiring plan, lists, feature teams, planning settings and data classes.

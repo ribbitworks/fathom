@@ -79,6 +79,7 @@ You're done when its **Status** says **Active**.
 
 - Type part of a name or an email address in the search box.
 - To show only active or deactivated accounts, filter the **Status** column. Open its menu, and select **Filter…**. Then tick **Active** or **Deactivated**.
+- To show only the accounts that hold a role, filter the **Roles** column the same way, and tick the role.
 - To keep a search, filter or sort and come back to it, save it as a view. See [Saved views](saved-views.md).
 
 ## Marks on the Page

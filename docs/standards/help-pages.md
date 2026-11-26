@@ -35,7 +35,9 @@ Besides a page for each page of Fathom, listed in `docs/help/index.md`, Help hol
 - **Pages:** `docs/help/pages.md`, linked from the index under How Fathom fits together, lists every page of Fathom: what it's for, where it is in the sidebar, and which permission shows it, with the starting roles that hold it.
   - It exists because a page a role can't see is left out of its sidebar with nothing said.
   - Every change to a page's place in the sidebar, or to the permission that shows it, updates it.
-- **Role tutorials:** a page for each starting role, such as `docs/help/working-as-a-product-manager.md`, with the three to five workflows the role does most, each a few steps that link to the Help pages for the details rather than repeat them.
+- **Role tutorials:** a page for each starting role, such as `docs/help/working-as-a-product-manager.md`, holding the jobs the role does, in the order the role does them.
+  - **Jobs and tasks:** each job is a `##` heading, and each finer task under it a `###` heading, with a few steps that link to the Help pages for the details rather than repeat them. What to Know First is the one `##` that isn't a job.
+  - **The Overview:** the Overview lists each role's jobs and tasks from these headings, so a heading changes only with the Overview's design.
   - They are led by `docs/help/setting-up-fathom.md`, for the Workforce Administrator from an empty database, and `docs/help/how-work-moves-between-roles.md`, from a Product Manager's draft to the Engineering Director's approval and an Engineering Manager's staffing.
 
 ## Before and After
