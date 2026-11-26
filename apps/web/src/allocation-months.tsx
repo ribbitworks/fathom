@@ -564,8 +564,8 @@ export function CapacityTotal({ allocated, available }: Capacity) {
 
 function capacityTotals(show: Show): RowTotals<AllocationRow> {
   return {
-    label: `Total, ${personMonths.code}`,
-    overall: `Organization, ${personMonths.code}`,
+    label: `Total, ${personMonths.name}`,
+    overall: `Organization, ${personMonths.name}`,
     cell: (rows, month) => <CapacityTotal {...capacityOf(rows, month, show)} />,
   };
 }

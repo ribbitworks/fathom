@@ -165,7 +165,7 @@ describe("Capacity's Allocations", () => {
     await grid();
 
     expect(
-      screen.getByRole("rowheader", { name: "Organization, PM" }),
+      screen.getByRole("rowheader", { name: "Organization, person-months" }),
     ).toBeDefined();
   });
 

@@ -819,7 +819,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `6D09` Scroll the table to the bottom.
-  - **Expected:** The total rows, headed **Total, PM**, and the **Organization, PM** row at the foot are easy to read and to tell apart from the rows above them.
+  - **Expected:** The total rows, headed **Total, person-months**, and the **Organization, person-months** row at the foot are easy to read and to tell apart from the rows above them.
   - **Notes:**
 
 - [ ] `04E5` Select the **Settings** tab.

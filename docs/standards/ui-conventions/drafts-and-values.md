@@ -118,7 +118,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
     - **How it shows:** In words, in red with no box, with how far it is from what is expected beside it, such as Over +25%, and its figures, such as Total 125%, in a tooltip.
   - **Drawn by:** `MarkedItem` with the `warning` tone, in `apps/web/src/status-mark.tsx`, with `empty` for a warning in an empty value's place.
   - **Example:** No feature team, in Scheduler API's Feature team cell.
-- **Values in units:** An amount shows its unit's code in a table, such as 2.5 PD, and spells the unit out in a panel, such as 2.5 person-days (20 hours). Totals of one unit, such as the capacity totals on Capacity's Allocations, name it once, by its code, in their heading, such as Total, PM.
+- **Values in units:** An amount shows its unit's code in a table, such as 2.5 PD, and spells the unit out in a panel, such as 2.5 person-days (20 hours). Totals of one unit, such as the capacity totals on Capacity's Allocations, name it once in their heading, spelled out, such as Total, person-months, while their cells keep the numbers alone.
   - **Drawn by:** `EffortCell` in `apps/web/src/effort-cell.tsx`, and `inUnitsWords` in `apps/web/src/record-details.tsx`; the capacity totals by `CapacityTotal` in `apps/web/src/allocation-months.tsx`, with the units' words from `unitWords` in `apps/web/src/effort.ts`.
   - **Example:** Audit Export's Effort.
 - **A size:** A feature's [Size](../../design/domain-model.md#built-in-lists) is the word Size and a block for each S it weighs. It is never a bar on a track, which reads as progress, nor green to red, which borrows red's meaning of a problem.
