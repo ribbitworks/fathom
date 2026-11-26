@@ -139,33 +139,53 @@ export function peopleAndHires<Row>(isPlanned: (row: Row) => boolean): {
   return {
     noun: "people and planned hires",
     counted: (rows) => {
-      const { people, hires } = kindsOf(rows, isPlanned);
-      return [
-        ...(people > 0 || hires === 0
-          ? [`${count(people)} ${peopleNoun(people)}`]
-          : []),
-        ...(hires > 0 ? [`${count(hires)} ${hiresNoun(hires)}`] : []),
-      ].join(" and ");
+      const counts = kindsOf(rows, isPlanned);
+      return named(counts, counts)
+        .map(
+          (kind) => `${count(kind.of(counts))} ${kind.noun(kind.of(counts))}`,
+        )
+        .join(" and ");
     },
   };
 }
 
-const peopleNoun = (total: number) => (total === 1 ? "person" : "people");
-const hiresNoun = (total: number) =>
-  total === 1 ? "planned hire" : "planned hires";
+interface Counts {
+  people: number;
+  hires: number;
+}
+
+// A kind of row: how many of it some counts hold, and what so many are called.
+interface Kind {
+  of: (counts: Counts) => number;
+  noun: (total: number) => string;
+}
+const people: Kind = {
+  of: (counts) => counts.people,
+  noun: (total) => (total === 1 ? "person" : "people"),
+};
+const hires: Kind = {
+  of: (counts) => counts.hires,
+  noun: (total) => (total === 1 ? "planned hire" : "planned hires"),
+};
 
 const kindsOf = <Row>(
   rows: readonly Row[],
   isPlanned: (row: Row) => boolean,
-) => {
+): Counts => {
   const hires = rows.filter(isPlanned).length;
   return { people: rows.length - hires, hires };
 };
 
-// How many people and planned hires a month counts, month first: "Nov 2026: 14 people, 1 planned
-// hire", or, while something narrows the rows, how many of each are shown, "Nov 2026: 6 of 14
-// people". A kind none of is counted, or none shown, is left out, but people are named when
-// nothing else is.
+// The kinds to name: those some rows are, and, when none is, the one there is any of in all,
+// people when there are either or neither.
+const named = (shown: Counts, all: Counts): Kind[] => {
+  const kept = [people, hires].filter((kind) => kind.of(shown) > 0);
+  if (kept.length > 0) return kept;
+  return all.people === 0 && all.hires > 0 ? [hires] : [people];
+};
+
+// The month first, then how many of each kind it counts, or, while something narrows the rows, how
+// many of each are shown out of all.
 export function monthCount<Row>(
   month: string,
   isPlanned: (row: Row) => boolean,
@@ -173,18 +193,10 @@ export function monthCount<Row>(
   shown?: readonly Row[],
 ): string {
   const total = kindsOf(all, isPlanned);
-  const seen = kindsOf(shown ?? all, isPlanned);
-  const part = (kept: number, of: number, noun: string) =>
-    shown === undefined
-      ? `${count(of)} ${noun}`
-      : `${count(kept)} of ${count(of)} ${noun}`;
-  const parts = [
-    ...(seen.people > 0 || seen.hires === 0
-      ? [part(seen.people, total.people, peopleNoun(total.people))]
-      : []),
-    ...(seen.hires > 0
-      ? [part(seen.hires, total.hires, hiresNoun(total.hires))]
-      : []),
-  ];
+  const seen = shown === undefined ? total : kindsOf(shown, isPlanned);
+  const parts = named(seen, total).map((kind) => {
+    const of = `${count(kind.of(total))} ${kind.noun(kind.of(total))}`;
+    return shown === undefined ? of : `${count(kind.of(seen))} of ${of}`;
+  });
   return `${month}: ${parts.join(", ")}`;
 }
