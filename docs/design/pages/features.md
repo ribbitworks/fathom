@@ -21,6 +21,8 @@ Features lists the plan's features in one table, with a board as a second way of
   - Save view names it under Filter. A customer the reader isn't sent is left out, and the page shows every feature.
   - A customer's Show all features, on Projects' Customers tab, opens it.
 - **The table:** edited like People's, as [People](people.md) sets out.
+- **Remove feature:** turned off while a project needs the feature or a proposal proposes it, with a line naming the first, such as "P-2001 Crane Control names this feature.", as [Projects § Layout](projects.md#layout) sets out for every record others name.
+  - **Allocations:** turned off first while the feature has any, with "This feature has allocations, so cancel it instead.", as the server checks them first. Staffed, sent to all who see the feature, stands for them.
 - **Details:** grouped under Details (Name to Notes), Customers and commitments (Customers, Projects, Proposals), Planning (Priority to Staffed), then Columns, the added ones.
   - The table starts its columns in the details' order, so the two read alike.
   - Customers are the feature's own; its projects' and proposals' customers are reached through their links, not repeated.

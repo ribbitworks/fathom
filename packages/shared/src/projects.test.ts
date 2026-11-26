@@ -9,15 +9,19 @@ import {
   customerFeatures,
   customerKeptBy,
   customerNamers,
+  featureKeptBy,
   customerRequestSchema,
   featureProjectsRequestSchema,
   milestoneRequestSchema,
   namedBy,
   projectDates,
+  projectKeptBy,
   projectRequestSchema,
   projectLengths,
   projectSubjects,
+  proposalKeptBy,
   proposalRequestSchema,
+  releaseKeptBy,
   removalReasonRequestSchema,
   removalReasonsAfter,
   removalReasonsIn,
@@ -433,5 +437,73 @@ describe("what keeps a customer from being removed", () => {
 
   it("is none when nothing names it", () => {
     expect(customerKeptBy(links, "unnamed")).toEqual([]);
+  });
+});
+
+describe("what keeps a proposal, a feature, a project or a release from being removed", () => {
+  const removed = { draft: { action: "deleted" } };
+  const namer = (
+    id: string,
+    { proposalIds = [] as string[], featureIds = [] as string[] } = {},
+  ) => ({ id, proposalIds, featureIds });
+
+  it("is, for a proposal, the projects naming it, leaving out those drafted to be removed", () => {
+    expect(
+      proposalKeptBy(
+        {
+          projects: [
+            namer("other", { proposalIds: ["elsewhere"] }),
+            namer("project", { proposalIds: ["proposal"] }),
+            { ...namer("gone", { proposalIds: ["proposal"] }), ...removed },
+          ],
+        },
+        "proposal",
+      ).map(({ id }) => id),
+    ).toEqual(["project"]);
+  });
+
+  it("is, for a feature, the projects needing it, then the proposals proposing it", () => {
+    expect(
+      featureKeptBy(
+        {
+          projects: [namer("project", { featureIds: ["feature"] })],
+          proposals: [
+            namer("proposal", { featureIds: ["feature"] }),
+            { ...namer("gone", { featureIds: ["feature"] }), ...removed },
+          ],
+        },
+        "feature",
+      ).map(({ id }) => id),
+    ).toEqual(["project", "proposal"]);
+  });
+
+  it("is, for a project, the activities naming it", () => {
+    expect(
+      projectKeptBy(
+        {
+          activities: [
+            { id: "activity", projectId: "project" },
+            { id: "other", projectId: null },
+            { id: "gone", projectId: "project", ...removed },
+          ],
+        },
+        "project",
+      ).map(({ id }) => id),
+    ).toEqual(["activity"]);
+  });
+
+  it("is, for a release, the activities naming it", () => {
+    expect(
+      releaseKeptBy(
+        {
+          activities: [
+            { id: "activity", releaseId: "release" },
+            { id: "other", releaseId: null },
+            { id: "gone", releaseId: "release", ...removed },
+          ],
+        },
+        "release",
+      ).map(({ id }) => id),
+    ).toEqual(["activity"]);
   });
 });

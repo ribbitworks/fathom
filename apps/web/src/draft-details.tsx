@@ -14,7 +14,7 @@ import {
   type Person,
   type PersonDraft,
 } from "@fathom/shared";
-import { Menu, Text } from "@mantine/core";
+import { Menu, type MenuItemProps, Text } from "@mantine/core";
 import type { ReactNode } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { describeField } from "./changes.ts";
@@ -22,6 +22,7 @@ import { nameAs } from "./names.ts";
 import classes from "./pages.module.css";
 import { type Phrase, PhraseText, phraseText } from "./phrase.tsx";
 import { DraftDot } from "./status-mark.tsx";
+import { useTurnedOff } from "./turned-off.tsx";
 import { type DraftLike, draftWords } from "./draft-marks.ts";
 import { type DetailKey } from "./people-rows.ts";
 
@@ -235,12 +236,12 @@ const describers = new Map<string, (field: ChangedField) => Phrase>([
 ]);
 
 // A line in a menu, such as why the item above it is turned off, which describes that item when
-// given its identifier, as useTurnedOff gives it.
+// given its identifier, as ReasonedItem gives it.
 export function MenuNote({
   id,
   children,
 }: {
-  id?: string;
+  id?: string | undefined;
   children: ReactNode;
 }) {
   return (
@@ -262,21 +263,62 @@ export const heldWords = (by: string) =>
 export const unpublishedWords =
   "Nobody else sees these changes until they're published.";
 
-// Under Approve, greyed out, for a draft this account changed when its role does not let it approve
-// its own.
-export function OtherApproverNote() {
-  return <MenuNote>{otherApproverWords}</MenuNote>;
+// A menu's item, turned off while it has a reason, with the reason in a line under it that describes
+// it, or while a line elsewhere in the menu, with the identifier given, says why. It is marked turned
+// off rather than disabled, since the menu's arrow keys skip disabled items, and a screen reader
+// would never reach it to hear why.
+export function ReasonedItem({
+  reason,
+  describedBy,
+  onClick,
+  className,
+  children,
+  ...item
+}: {
+  reason?: string | undefined;
+  describedBy?: string | undefined;
+  onClick?: () => void;
+  children: ReactNode;
+} & Omit<MenuItemProps, "children" | "disabled">) {
+  const { line, control } = useTurnedOff(reason, MenuNote);
+  const reasonId = control["aria-describedby"] ?? describedBy;
+  return (
+    <>
+      <Menu.Item
+        {...item}
+        {...(reasonId === undefined
+          ? { onClick, className }
+          : {
+              "aria-disabled": true,
+              "aria-describedby": reasonId,
+              closeMenuOnClick: false,
+              className: [classes.turnedOffItem, className]
+                .filter(Boolean)
+                .join(" "),
+            })}
+      >
+        {children}
+      </Menu.Item>
+      {line}
+    </>
+  );
 }
 
-// Under an Approve item that is disabled because the draft depends on a rejected one.
-export function WaitingNote() {
-  return <MenuNote>{waitingWords}</MenuNote>;
-}
+// Why Approve is turned off: the draft waits on a rejected one, or this account changed it and its
+// role does not let it approve its own.
+export const approveTurnedOff = ({
+  waits = false,
+  othersApprove = false,
+}: {
+  waits?: boolean;
+  othersApprove?: boolean;
+}): string | undefined =>
+  waits ? waitingWords : othersApprove ? otherApproverWords : undefined;
 
 // In the menu of a record someone else has unpublished changes to, which nobody else may change,
 // approve, or reject until they publish or discard them.
-export function HeldNote({ by }: { by: string }) {
-  return <MenuNote>{heldWords(by)}</MenuNote>;
+export function HeldNote({ by, id }: { by: string; id?: string | undefined }) {
+  return <MenuNote id={id}>{heldWords(by)}</MenuNote>;
 }
 
 // In the menu of a record whose draft holds the user's own unpublished changes, which nobody can

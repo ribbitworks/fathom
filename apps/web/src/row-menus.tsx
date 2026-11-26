@@ -12,13 +12,13 @@ import {
   noPoint,
 } from "./app-menu.tsx";
 import {
+  approveTurnedOff,
+  draftLines,
   HeldNote,
   MenuDraftLines,
-  MenuNote,
   MenuTitle,
-  OtherApproverNote,
+  ReasonedItem,
   UnpublishedNote,
-  draftLines,
 } from "./draft-details.tsx";
 import { type DraftSelection, draftTotal, noDrafts } from "./drafts.ts";
 import { kindOf } from "./grid-columns.tsx";
@@ -181,15 +181,14 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
         {deciding !== undefined && (
           <>
             {ownItems.length > 0 && <Menu.Divider />}
-            <Menu.Item
-              disabled={othersApprove}
+            <ReasonedItem
+              reason={approveTurnedOff({ othersApprove })}
               onClick={() => {
                 actions.decide("approve", decides?.approved ?? deciding);
               }}
             >
               {draftItemLabel("Approve", decides?.approvedOf)}
-            </Menu.Item>
-            {othersApprove && <OtherApproverNote />}
+            </ReasonedItem>
             <Menu.Item
               onClick={() => {
                 actions.decide("reject", deciding);
@@ -240,19 +239,16 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
             )}
             {offer.remove && (
               <>
-                <Menu.Item
+                <ReasonedItem
                   color="red"
-                  disabled={removeTurnedOff !== undefined}
+                  reason={removeTurnedOff}
                   onClick={() => {
                     actions.remove(record);
                     backToTable();
                   }}
                 >
                   {table.removeLabel(record)}
-                </Menu.Item>
-                {removeTurnedOff !== undefined && (
-                  <MenuNote>{removeTurnedOff}</MenuNote>
-                )}
+                </ReasonedItem>
               </>
             )}
           </>

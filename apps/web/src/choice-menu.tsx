@@ -4,20 +4,21 @@
 // retire, remove or decide it.
 
 import { type Choice, type List, meaningName } from "@fathom/shared";
-import { Menu, Text } from "@mantine/core";
-import { type KeyboardEvent, useState } from "react";
+import { Menu } from "@mantine/core";
+import { type KeyboardEvent, useId, useState } from "react";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import { actionsId, rowId } from "./choice-ids.ts";
 import { lastKept, removedChoice } from "./choice-rules.ts";
 import {
+  approveTurnedOff,
   configDraftFields,
   draftLines,
   HeldNote,
   MenuDraftLines,
+  MenuNote,
   MenuTitle,
-  OtherApproverNote,
+  ReasonedItem,
   UnpublishedNote,
-  WaitingNote,
 } from "./draft-details.tsx";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
@@ -102,6 +103,7 @@ export function ChoiceMenu({
   const editable =
     canEdit && !removedChoice(choice) && choice.heldBy === undefined;
   const keptFor = lastKept(list, choice);
+  const keptLineId = useId();
   const choiceOffer = draftOffer({
     hasDraft: choiceDraft !== undefined,
     rejected: choiceDraft?.state === "rejected",
@@ -196,27 +198,27 @@ export function ChoiceMenu({
               </>
             )}
             <Menu.Divider />
-            <Menu.Item
-              disabled={keptFor !== undefined}
+            <ReasonedItem
+              describedBy={keptFor === undefined ? undefined : keptLineId}
               rightSection={<kbd>{shortcuts.retire}</kbd>}
               onClick={act(actions.retireOrRestore)}
             >
               {choice.retired ? "Restore" : "Retire"}
-            </Menu.Item>
-            <Menu.Item
+            </ReasonedItem>
+            <ReasonedItem
               color="red"
-              disabled={keptFor !== undefined}
+              describedBy={keptFor === undefined ? undefined : keptLineId}
               rightSection={<kbd>{shortcuts.remove}</kbd>}
               onClick={act(actions.remove)}
             >
               Remove
-            </Menu.Item>
+            </ReasonedItem>
             {keptFor !== undefined && (
-              <Text fz="xs" c="dimmed" px="sm" py={4}>
+              <MenuNote id={keptLineId}>
                 {keptFor === "any"
                   ? `${list.name} needs a choice`
                   : `Needed for ${meaningName(keptFor)}`}
-              </Text>
+              </MenuNote>
             )}
           </>
         )}
@@ -243,20 +245,17 @@ export function ChoiceMenu({
             )}
             {choiceOffer.decide && (
               <>
-                <Menu.Item
-                  disabled={
-                    choiceWaits || choice.draft?.needsOtherApprover === true
-                  }
+                <ReasonedItem
+                  reason={approveTurnedOff({
+                    waits: choiceWaits,
+                    othersApprove: choice.draft?.needsOtherApprover === true,
+                  })}
                   onClick={act(() => {
                     draftActions.decide("approve", on);
                   })}
                 >
                   Approve…
-                </Menu.Item>
-                {choiceWaits && <WaitingNote />}
-                {!choiceWaits && choice.draft?.needsOtherApprover === true && (
-                  <OtherApproverNote />
-                )}
+                </ReasonedItem>
                 <Menu.Item
                   onClick={act(() => {
                     draftActions.decide("reject", on);

@@ -445,9 +445,25 @@ interface MaybeRemoved {
 const notRemoved = <Rec extends MaybeRemoved>(records: readonly Rec[]) =>
   records.filter(({ draft }) => draft?.action !== "deleted");
 
-// The records that keep a customer from being removed, as the server refuses its removal: its
-// projects, then its proposals, then the features naming it directly. Records drafted to be removed
-// name it no more.
+// One kind of record that names others, and the ids each record of it names.
+interface Naming<Namer> {
+  records: readonly Namer[];
+  names: (namer: Namer) => readonly (string | null)[];
+}
+
+// The records naming a record, kind by kind in the order given, as the server refuses its removal
+// while any does. Records drafted to be removed name it no more.
+function keptBy<Namer extends MaybeRemoved>(
+  id: string,
+  namings: readonly Naming<Namer>[],
+): Namer[] {
+  return namings.flatMap(({ records, names }) =>
+    notRemoved(records).filter((record) => names(record).includes(id)),
+  );
+}
+
+// What keeps a customer from being removed: its projects, then its proposals, then the features
+// naming it directly.
 export function customerKeptBy<
   Project extends CustomerNamer & MaybeRemoved,
   Proposal extends CustomerNamer & MaybeRemoved,
@@ -456,13 +472,60 @@ export function customerKeptBy<
   { projects, proposals, features }: CustomerLinks<Project, Proposal, Feature>,
   customerId: string,
 ): (Project | Proposal | Feature)[] {
-  const namers = customerNamers(
-    {
-      projects: notRemoved(projects),
-      proposals: notRemoved(proposals),
-      features: notRemoved(features),
-    },
-    customerId,
-  );
-  return [...namers.projects, ...namers.proposals, ...namers.features];
+  return keptBy<Project | Proposal | Feature>(customerId, [
+    { records: projects, names: ({ customerIds }) => customerIds },
+    { records: proposals, names: ({ customerIds }) => customerIds },
+    { records: features, names: ({ customerIds }) => customerIds },
+  ]);
 }
+
+// What keeps a proposal from being removed: the projects it became, or that name it.
+export const proposalKeptBy = <
+  Project extends { proposalIds: readonly string[] } & MaybeRemoved,
+>(
+  { projects }: { projects: readonly Project[] },
+  proposalId: string,
+): Project[] =>
+  keptBy(proposalId, [
+    { records: projects, names: ({ proposalIds }) => proposalIds },
+  ]);
+
+// What keeps a feature from being removed: the projects needing it, then the proposals proposing
+// it.
+export const featureKeptBy = <
+  Project extends { featureIds: readonly string[] } & MaybeRemoved,
+  Proposal extends { featureIds: readonly string[] } & MaybeRemoved,
+>(
+  {
+    projects,
+    proposals,
+  }: { projects: readonly Project[]; proposals: readonly Proposal[] },
+  featureId: string,
+): (Project | Proposal)[] =>
+  keptBy<Project | Proposal>(featureId, [
+    { records: projects, names: ({ featureIds }) => featureIds },
+    { records: proposals, names: ({ featureIds }) => featureIds },
+  ]);
+
+// What keeps a project from being removed: the activities naming it. Its milestones are its own,
+// and go with it.
+export const projectKeptBy = <
+  Activity extends { projectId: string | null } & MaybeRemoved,
+>(
+  { activities }: { activities: readonly Activity[] },
+  projectId: string,
+): Activity[] =>
+  keptBy(projectId, [
+    { records: activities, names: ({ projectId: named }) => [named] },
+  ]);
+
+// What keeps a release from being removed: the activities naming it.
+export const releaseKeptBy = <
+  Activity extends { releaseId: string | null } & MaybeRemoved,
+>(
+  { activities }: { activities: readonly Activity[] },
+  releaseId: string,
+): Activity[] =>
+  keptBy(releaseId, [
+    { records: activities, names: ({ releaseId: named }) => [named] },
+  ]);

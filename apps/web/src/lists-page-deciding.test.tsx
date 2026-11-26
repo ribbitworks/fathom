@@ -7,6 +7,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { bodyOf, renderApp, serverAnswers } from "./test-support.tsx";
+import { turnedOffItem } from "./test-menus.tsx";
 import {
   editor,
   choice,
@@ -95,10 +96,8 @@ describe("drafts on the Lists page", () => {
     );
     const own = await screen.findByRole("menu");
     expect(
-      within(own)
-        .getByRole("menuitem", { name: "Approve…" })
-        .hasAttribute("data-disabled"),
-    ).toBe(true);
+      turnedOffItem(own, "Approve…", "Needs another approver"),
+    ).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
@@ -108,11 +107,8 @@ describe("drafts on the Lists page", () => {
     );
     const menu = await screen.findByRole("menu");
     expect(
-      within(menu)
-        .getByRole("menuitem", { name: "Approve…" })
-        .hasAttribute("data-disabled"),
-    ).toBe(true);
-    expect(within(menu).getByText("Needs another approver")).toBeDefined();
+      turnedOffItem(menu, "Approve…", "Needs another approver"),
+    ).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
@@ -159,9 +155,11 @@ describe("drafts on the Lists page", () => {
       screen.getByRole("button", { name: "Actions for Platform" }),
     );
     const menu = await screen.findByRole("menu");
-    const approve = within(menu).getByRole("menuitem", { name: "Approve…" });
-    expect(approve.hasAttribute("data-disabled")).toBe(true);
-    expect(within(menu).getByText("Waits on a rejected draft")).toBeDefined();
+    const approve = turnedOffItem(
+      menu,
+      "Approve…",
+      "Waits on a rejected draft",
+    );
     await userEvent.click(approve);
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(sent(fetch, "POST", "/api/drafts/approval")).toBe(false);
@@ -202,12 +200,9 @@ describe("drafts on the Lists page", () => {
     renderApp("/lists/l1");
     await screen.findByRole("heading", { name: "Locations", level: 2 });
     const menu = await listMenu("Locations");
-    expect(
-      within(menu)
-        .getAllByRole("menuitem", { name: "Approve…" })
-        .map((item) => item.hasAttribute("data-disabled")),
-    ).toEqual([true]);
-    expect(within(menu).getByText("Waits on a rejected draft")).toBeDefined();
+    expect(within(menu).getAllByRole("menuitem", { name: "Approve…" })).toEqual(
+      [turnedOffItem(menu, "Approve…", "Waits on a rejected draft")],
+    );
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
@@ -340,11 +335,8 @@ describe("drafts on the Lists page", () => {
     await screen.findByRole("heading", { name: "Locations", level: 2 });
     const menu = await listMenu("Locations");
     expect(
-      within(menu)
-        .getByRole("menuitem", { name: "Approve…" })
-        .hasAttribute("data-disabled"),
-    ).toBe(true);
-    expect(within(menu).getByText("Waits on a rejected draft")).toBeDefined();
+      turnedOffItem(menu, "Approve…", "Waits on a rejected draft"),
+    ).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();

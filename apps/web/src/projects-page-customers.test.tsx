@@ -330,7 +330,7 @@ describe("removing a customer", () => {
 
     const menu = await rowMenu("Fictional Customer");
 
-    expect(removeItem(menu).hasAttribute("data-disabled")).toBe(true);
+    expect(removeItem(menu).hasAttribute("aria-disabled")).toBe(true);
     expect(
       within(menu).getByText(
         "FP-1 Fictional Project and 2 others name this customer.",
@@ -361,7 +361,7 @@ describe("removing a customer", () => {
 
     const menu = await rowMenu("Fictional Customer");
 
-    expect(removeItem(menu).hasAttribute("data-disabled")).toBe(true);
+    expect(removeItem(menu).hasAttribute("aria-disabled")).toBe(true);
     expect(
       within(menu).getByText("Fictional Direct names this customer."),
     ).toBeTruthy();
@@ -372,7 +372,7 @@ describe("removing a customer", () => {
 
     const menu = await rowMenu("Fictional Customer");
 
-    expect(removeItem(menu).hasAttribute("data-disabled")).toBe(true);
+    expect(removeItem(menu).hasAttribute("aria-disabled")).toBe(true);
     expect(
       within(menu).getByText("Fictional Proposal names this customer."),
     ).toBeTruthy();
@@ -383,7 +383,7 @@ describe("removing a customer", () => {
 
     const menu = await rowMenu("Fictional Customer");
 
-    expect(removeItem(menu).hasAttribute("data-disabled")).toBe(true);
+    expect(removeItem(menu).hasAttribute("aria-disabled")).toBe(true);
     expect(
       within(menu).getByText(
         "FP-1 Fictional Project and 2 others name this customer.",
@@ -410,7 +410,7 @@ describe("removing a customer", () => {
 
     const menu = await rowMenu("Fictional Customer");
 
-    expect(removeItem(menu).hasAttribute("data-disabled")).toBe(false);
+    expect(removeItem(menu).hasAttribute("aria-disabled")).toBe(false);
   });
 
   it("is offered once the only project naming it is drafted to be removed", async () => {
@@ -424,7 +424,7 @@ describe("removing a customer", () => {
 
     const menu = await rowMenu("Fictional Customer");
 
-    expect(removeItem(menu).hasAttribute("data-disabled")).toBe(false);
+    expect(removeItem(menu).hasAttribute("aria-disabled")).toBe(false);
     expect(within(menu).queryByText(/names this customer/u)).toBeNull();
   });
 });

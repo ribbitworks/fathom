@@ -9,12 +9,12 @@ import { allOf } from "@fathom/shared";
 import type { Choice, List } from "@fathom/shared";
 import { Menu } from "@mantine/core";
 import {
+  approveTurnedOff,
   HeldNote,
   MenuDraftLines,
   MenuTitle,
+  ReasonedItem,
   UnpublishedNote,
-  OtherApproverNote,
-  WaitingNote,
 } from "./draft-details.tsx";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
 import { draftOffer, offersDraft } from "./menu-offer.ts";
@@ -358,11 +358,12 @@ export function DraftItems({
       {offersDraft(offer) && <Menu.Divider />}
       {offer.decide && (
         <>
-          <Menu.Item disabled={waits || othersApprove} onClick={onApprove}>
+          <ReasonedItem
+            reason={approveTurnedOff({ waits, othersApprove })}
+            onClick={onApprove}
+          >
             Approve…
-          </Menu.Item>
-          {waits && <WaitingNote />}
-          {othersApprove && !waits && <OtherApproverNote />}
+          </ReasonedItem>
           <Menu.Item onClick={onReject}>Reject…</Menu.Item>
         </>
       )}

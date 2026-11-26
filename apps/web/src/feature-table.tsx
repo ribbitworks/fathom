@@ -5,6 +5,7 @@
 import {
   type Choice,
   type Feature,
+  featureKeptBy,
   planColumnNames,
   type Project,
   type Proposal,
@@ -22,10 +23,11 @@ import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import {
   customersColumn,
   field,
-  newKind,
   namersColumn,
+  newKind,
   type PlanChange,
   planTable,
+  removeTurnedOffBy,
   savedKind,
   wordsOf,
 } from "./plan-table.tsx";
@@ -225,6 +227,11 @@ const groupedByChoice = (column: Column<Feature, PlanChange>) =>
   column.key !== "targetCycle" &&
   column.key !== releaseColumnKey;
 
+// Why a feature with allocations can't be removed. Being staffed, an allocation giving it a month,
+// stands for having allocations, which the plan doesn't send.
+export const allocatedFeatureWords =
+  "This feature has allocations, so cancel it instead.";
+
 // Features' table, or, for the board, whose columns are cycles, its rows grouped by anything else.
 export function featureTable(
   choices: TableChoices,
@@ -256,5 +263,10 @@ export function featureTable(
     ],
     request: (changes) => plannedRequest(changes) as FeatureFields,
     showDetails: onOpen,
+    // Allocations keep a feature first, as the server checks them first.
+    removeTurnedOff: (feature) =>
+      feature.staffed
+        ? allocatedFeatureWords
+        : removeTurnedOffBy(featureKeptBy(choices, feature.id), "feature"),
   });
 }

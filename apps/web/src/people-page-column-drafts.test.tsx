@@ -11,6 +11,7 @@ import {
   serverAnswers,
   wholeText,
 } from "./test-support.tsx";
+import { turnedOffItem } from "./test-menus.tsx";
 import {
   session,
   sites,
@@ -276,10 +277,6 @@ describe("drafts of columns", () => {
 
   it("offers no approval of a person's or a column's draft this account changed", async () => {
     const note = "Needs another approver";
-    const disabled = (menu: HTMLElement, name: string) =>
-      within(menu)
-        .getByRole("menuitem", { name })
-        .hasAttribute("data-disabled");
     await openPeople({
       "GET /api/session": approverEditor,
       "GET /api/people": () =>
@@ -313,8 +310,7 @@ describe("drafts of columns", () => {
     });
     await userEvent.click(await findRowActions("Avery Fictional"));
     const row = await screen.findByRole("menu");
-    expect(disabled(row, "Approve draft…")).toBe(true);
-    expect(within(row).getByText(note)).toBeDefined();
+    expect(turnedOffItem(row, "Approve draft…", note)).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
@@ -325,8 +321,7 @@ describe("drafts of columns", () => {
       }),
     );
     const column = await screen.findByRole("menu");
-    expect(disabled(column, "Approve…")).toBe(true);
-    expect(within(column).getAllByText(note).length).toBeGreaterThan(0);
+    expect(turnedOffItem(column, "Approve…", note)).toBeDefined();
   });
 
   it("leaves out people and columns drafted to be removed with Drafts applied", async () => {

@@ -751,6 +751,23 @@ th[data-centred] .recordHeadButton {
   cursor: default;
 }
 
+/* A menu's item turned off, looking as a disabled one does, though the arrow keys still reach it so
+   a screen reader hears why. */
+.turnedOffItem[aria-disabled="true"] {
+  color: var(--mantine-color-disabled-color);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.turnedOffItem[aria-disabled="true"]:hover:not(:focus) {
+  background-color: transparent;
+}
+
+/* Focused, it is marked in grey, never in a red item's tint, which would offer it. */
+.turnedOffItem[aria-disabled="true"]:focus {
+  background-color: var(--mantine-color-default-hover);
+}
+
 /* What a draft changes, at the top of a record's menu, wraps rather than widening the menu. */
 .draftLine {
   max-width: 22rem;

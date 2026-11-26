@@ -2,19 +2,20 @@
 
 // The Releases tab's table, on the shared table.
 
-import type {
-  Activity,
-  Choice,
-  RecordKeyOf,
-  Release,
-  ReleaseStream,
-  Show,
+import {
+  type Activity,
+  type Choice,
+  type RecordKeyOf,
+  type Release,
+  releaseKeptBy,
+  type ReleaseStream,
+  type Show,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import { activitiesColumn, activitiesColumnKey } from "./activity-list.tsx";
 import { differingKeys, type DraftSelection, noDrafts } from "./drafts.ts";
 import { choice } from "./lists.ts";
-import { draftFieldsOf } from "./plan-table.tsx";
+import { draftFieldsOf, removeTurnedOffBy } from "./plan-table.tsx";
 import { cycleChoiceId, cycleChoices, cycleNames } from "./projects.ts";
 import {
   choicesNamed,
@@ -383,6 +384,11 @@ export function releaseTable({
     menuItems,
     newRowLabel: () => "New release",
     removeLabel: () => "Remove release",
+    removeTurnedOff: (row) =>
+      removeTurnedOffBy(
+        releaseKeptBy({ activities: activities ?? [] }, row.releaseId),
+        "release",
+      ),
     nameOf: (row) => row.name,
     nameColumn: "name",
     keyOf: releaseKeyOf,

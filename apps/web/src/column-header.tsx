@@ -7,11 +7,11 @@ import { Menu, Table } from "@mantine/core";
 import type { DragEvent } from "react";
 import { AppMenu } from "./app-menu.tsx";
 import {
+  approveTurnedOff,
   HeldNote,
   MenuDraftLines,
-  MenuNote,
   MenuTitle,
-  OtherApproverNote,
+  ReasonedItem,
   UnpublishedNote,
 } from "./draft-details.tsx";
 import {
@@ -43,6 +43,8 @@ import {
 import { type View, orderAfterMove, withHidden } from "./table-view.ts";
 
 const headerId = (column: { key: string }) => `${column.key}-heading`;
+// The line saying who holds a column, which describes the items it turns off.
+const heldNoteId = (fieldId: string) => `${fieldId}-held`;
 
 const shortcuts = shortcutsFor(navigator.userAgent);
 
@@ -307,7 +309,7 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
               </>
             )}
             {field?.heldBy !== undefined && !liveOnly && (
-              <HeldNote by={field.heldBy} />
+              <HeldNote by={field.heldBy} id={heldNoteId(field.id)} />
             )}
             {field?.draft?.unpublished === true && !liveOnly && (
               <UnpublishedNote />
@@ -321,17 +323,16 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
                 />
                 {columnOffer.decide && (
                   <>
-                    <Menu.Item
-                      disabled={field.draft.needsOtherApprover === true}
+                    <ReasonedItem
+                      reason={approveTurnedOff({
+                        othersApprove: field.draft.needsOtherApprover === true,
+                      })}
                       onClick={() => {
                         actions.decide("approve", deciding);
                       }}
                     >
                       Approve…
-                    </Menu.Item>
-                    {field.draft.needsOtherApprover === true && (
-                      <OtherApproverNote />
-                    )}
+                    </ReasonedItem>
                     <Menu.Item
                       onClick={() => {
                         actions.decide("reject", deciding);
@@ -476,20 +477,22 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
                 <>
                   <Menu.Divider />
                   {ownClass === null ? (
-                    <>
-                      <Menu.Item disabled>Change class…</Menu.Item>
-                      <MenuNote>This column takes its list's class</MenuNote>
-                    </>
+                    <ReasonedItem reason="This column takes its list's class">
+                      Change class…
+                    </ReasonedItem>
                   ) : (
-                    <Menu.Item
-                      // Until someone else publishes or discards their changes, as the menu says.
-                      disabled={field.heldBy !== undefined}
+                    <ReasonedItem
+                      describedBy={
+                        field.heldBy === undefined
+                          ? undefined
+                          : heldNoteId(field.id)
+                      }
                       onClick={() => {
                         actions.moveColumnClass?.(field, ownClass);
                       }}
                     >
                       Change class…
-                    </Menu.Item>
+                    </ReasonedItem>
                   )}
                 </>
               )}
