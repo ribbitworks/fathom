@@ -244,7 +244,7 @@ describe("the Metrics panel", () => {
         within(panel()).getByRole("columnheader", { name: "Hours" }),
       ).toBeTruthy();
       expect(figures("P4")).toEqual(["2", share(2, 4), "16", "8", ""]);
-      expect(figures("P3")).toEqual(["1", share(1, 4), "–", "–", "1"]);
+      expect(figures("P3")).toEqual(["1", share(1, 4), "", "", "1"]);
       expect(figures("Empty")).toEqual(["1", share(1, 4), "2", "2", ""]);
       const all = within(panel()).getByRole("rowheader", { name: /^All / });
       expect(
@@ -259,7 +259,7 @@ describe("the Metrics panel", () => {
       render(summing({ ...emptyView, breakdown: ["f1", "f2"], sum: "f3" }));
       await user.click(within(panel()).getByRole("radio", { name: "Hours" }));
       expect(figures("P4")).toEqual(["10", "6", "16"]);
-      expect(figures("P3")).toEqual(["–", "–", "–"]);
+      expect(figures("P3")).toEqual(["", "", ""]);
     });
 
     it("gives each total as drafted, with the live total under it where it differs", () => {
