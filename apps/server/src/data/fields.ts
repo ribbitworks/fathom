@@ -97,7 +97,7 @@ const activitiesHave = (total: number) => have(total, "activity", "activities");
 
 // The record of planned work a value row is held by.
 const heldBy = (
-  row: Readonly<Record<ReturnType<typeof ownerKey>, string | null>>,
+  row: Readonly<Record<"featureId" | "activityId", string | null>>,
   owner: PlanningOwner,
 ) => row[ownerKey(owner)];
 

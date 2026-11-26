@@ -439,6 +439,14 @@ export const routes: Route[] = [
   // Every signed-in account reads its own last views, only of the pages its role opens, which the
   // last views tests check.
   { method: "GET", pattern: "/api/last-views", needs: signedIn },
+  // Only a role that makes private pages has its own to list. A page, which a random ID never
+  // names, is not found for everyone, so the page's own tests check who reads one.
+  {
+    method: "GET",
+    pattern: "/api/private-pages",
+    needs: allOf("private-pages:make"),
+  },
+  { method: "GET", pattern: "/api/private-pages/:pageId", needs: signedIn },
   // Keeping a page's last view needs what opens its tables, each of a page's tables opening alike.
   ...viewPageSchema.options.flatMap((page): Route[] => {
     // The page is always one of the fixed pages.

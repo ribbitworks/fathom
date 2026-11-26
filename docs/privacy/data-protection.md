@@ -1,11 +1,12 @@
 # Fathom: How Data Is Safeguarded
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-26
 
 - **Classification:** All data has one of three classifications: General, Personal or Confidential.
 - **Permissions:** Permissions control which classifications a user can see and change.
 - **Roles:** A role is a set of permissions. Each user is given one or more roles.
 - **Enforcement:** The server checks permissions on every request, and never sends data a user's role can't see.
+- **Private pages:** A page a person makes for themselves is read only by them, never by anyone else through Fathom, an Administrator included.
 - **Histories:** The change history records every change, with who made it and when. The access history records sign-ins, changes to accounts and roles, and views of Personal or Confidential data, at most once a day for each user. Neither can be changed through Fathom.
 - **Approval:** Changes to the plan and to people's details stay drafts until a role allowed to approve them approves them.
 - **Exports:** Exporting Personal or Confidential data asks for confirmation, and the export is recorded in the access history. Accounts' names and email addresses are treated as Personal when exported, though every role that sees accounts sees them.

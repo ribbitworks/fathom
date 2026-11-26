@@ -4,6 +4,10 @@
 // the server receives.
 
 import { type ColumnAccess, createColumnAccess } from "./column-access.ts";
+import {
+  createPrivatePageAccess,
+  type PrivatePageAccess,
+} from "./private-page-access.ts";
 import type { Database } from "@fathom/db";
 import type {
   EffortConversions,
@@ -178,6 +182,8 @@ export interface DataAccess {
   // People, and the columns on the People table.
   people: PeopleAccess;
   views: ViewAccess;
+  // Each person's own pages under Mine, which only their maker reads and changes.
+  privatePages: PrivatePageAccess;
   // Planned hires: the hiring plan, or its placeholders.
   hires: HireAccess;
   // Feature teams, drafted by those who edit them.
@@ -348,6 +354,7 @@ export function createDataAccess(database: Database): DataAccess {
       saveLast: async (actor, page, request) =>
         saveLastView(database, actor, page, request),
     },
+    privatePages: createPrivatePageAccess(database),
     hires: createHireAccess(database),
     featureTeams: createFeatureTeamAccess(database),
     unpublished: {
