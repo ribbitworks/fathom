@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Drafts of Projects, Proposals, Customers and Milestones
@@ -278,7 +278,7 @@ To run the test again after finishing it, start from Reset the Database, since t
   - **Expected:** The table of projects shows.
   - **Notes:**
 
-- [ ] `47EF` In the ⋯ menu of `Testing Project`, select **Show milestones**.
+- [ ] `47EF` In the ⋯ menu of `Testing Project`, select **Show on Milestones**.
   - **Expected:**
     - The **Milestones** tab opens.
     - It shows only `Pilot` and `Go live`.

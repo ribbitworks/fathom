@@ -382,7 +382,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The table lists the projects.
   - **Notes:**
 
-- [ ] `8A70` Select **Show features** in the ⋯ menu of `Fictional Harbour Lights`.
+- [ ] `8A70` Select **Show on Features** in the ⋯ menu of `Fictional Harbour Lights`.
   - **Expected:**
     - The **Features** page opens showing only `Fictional Atlas`.
     - A pill above the table reads "Projects: FHL-1 Fictional Harbour Lights".

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-planning-features-and-a-release-manual-test.md", "docs/help/working-as-a-project-manager.md", "docs/help/drafts-page.md", "docs/product/roles.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Acceptance, Reviewing the Plan
@@ -159,7 +159,7 @@ Run the test cases in order, in about 20 minutes, straight after [Planning Featu
 
 **Preconditions:** REVIEW-03 done. **Projects** page open, on the **Projects** tab.
 
-- [ ] `EBBA` Select **Show features** in the ⋯ menu of `Fictional Lamp Room`.
+- [ ] `EBBA` Select **Show on Features** in the ⋯ menu of `Fictional Lamp Room`.
   - **Expected:**
     - The **Features** page opens showing only `Fictional Tide Tables` and `Fictional Lamp Schedule`.
     - A pill above the table reads "Projects: FLR-1 Fictional Lamp Room".

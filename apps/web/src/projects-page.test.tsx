@@ -256,7 +256,7 @@ describe("adding a record in the side panel", () => {
       [`POST /api/projects/${projectId}/milestones`]: saved(() => after),
     });
     const menu = await rowMenu("Fictional Project");
-    await chooseFrom(menu, "Show milestones");
+    await chooseFrom(menu, "Show on Milestones");
     await screen.findByRole("grid", { name: "Milestones" });
     await userEvent.click(await newButton("milestone"));
     await userEvent.type(

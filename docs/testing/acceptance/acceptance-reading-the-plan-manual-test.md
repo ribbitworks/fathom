@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-deciding-the-changes-manual-test.md", "docs/help/working-as-a-team-member.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Acceptance, Reading the Plan
@@ -131,7 +131,7 @@ Run the test cases in order, in about 30 minutes, straight after [Deciding the C
   - **Expected:** The **Projects** tab lists the three projects, with no empty row.
   - **Notes:**
 
-- [ ] `577C` Select **Show milestones** in the ⋯ menu of `Fictional Lamp Room`.
+- [ ] `577C` Select **Show on Milestones** in the ⋯ menu of `Fictional Lamp Room`.
   - **Expected:**
     - The **Milestones** tab opens, showing only `Fictional Lamp Room`'s milestones.
     - They are `Lamp trial`, `Lamps lit` and `Keepers trained`, with no dots.

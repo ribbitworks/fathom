@@ -105,8 +105,8 @@ To change a milestone there, select **Edit…** in its **⋯** menu. To remove i
 
 ### Go From a Project to Its Milestones or Features
 
-- To see a project's milestones, select **Show milestones** in the project's **⋯** menu, or beside the **Milestones** heading in its details. **Milestones** opens, showing only that project's.
-- To see the features a project or proposal names, select **Show features** in its **⋯** menu. **Features** opens, showing only those features.
+- To see a project's milestones, select **Show on Milestones** in the project's **⋯** menu, or **Show milestones** beside the **Milestones** heading in its details. **Milestones** opens, showing only that project's.
+- To see the features a project or proposal names, select **Show on Features** in its **⋯** menu. **Features** opens, showing only those features.
 - To see every feature a customer gets or asks for, select **Show all features** in the customer's **⋯** menu. **Features** opens with a filter named for the customer, such as **For Bluefin Harbour Authority**. See [Features](features.md#see-a-customers-features) for more.
 - To go from a milestone to its project, select **Show project** in the milestone's **⋯** menu. The project's details open.
 
