@@ -29,7 +29,7 @@ import {
 import { draftMakers, otherApprover } from "./draft-makers.ts";
 import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
 import { columnsWithAdded } from "./added-columns.ts";
-import { type LiveValues, typeOf } from "./column-types.ts";
+import { type LiveValues, noLiveValues, typeOf } from "./column-types.ts";
 import { readToday } from "./settings.ts";
 import { readTeamsOfPeople } from "./feature-team-reads.ts";
 import { hireRow, readHiresIn } from "./hire-reads.ts";
@@ -41,11 +41,8 @@ import {
   personalDetailFields,
   personTier,
   meaningOn,
-  valuesOf,
-  linksOf,
-  notesOf,
-  numbersOf,
   seesPersonField,
+  shownValuesOf,
 } from "./person-fields.ts";
 import { currentOn, readLive } from "./people-reads.ts";
 
@@ -287,25 +284,8 @@ async function readPeopleIn(
           seesPersonal: seesPersonal && seesField(access, "managerHistory"),
           today: day,
         }),
-        values: Object.fromEntries(
-          [...valuesOf(person)].filter(([fieldId]) =>
-            shownFields.has(valueField(fieldId)),
-          ),
-        ),
-        links: Object.fromEntries(
-          Object.entries(linksOf(person)).filter(([fieldId]) =>
-            shownFields.has(valueField(fieldId)),
-          ),
-        ),
-        notes: Object.fromEntries(
-          Object.entries(notesOf(person)).filter(([fieldId]) =>
-            shownFields.has(valueField(fieldId)),
-          ),
-        ),
-        numbers: Object.fromEntries(
-          Object.entries(numbersOf(person)).filter(([fieldId]) =>
-            shownFields.has(valueField(fieldId)),
-          ),
+        ...shownValuesOf(person, (columnId) =>
+          shownFields.has(valueField(columnId)),
         ),
         ...(seen ? { draft: seen } : {}),
         ...heldByOf(held, id),
@@ -329,12 +309,7 @@ async function readPeopleIn(
       .filter((field) => shownFields.has(field))
       .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
     if (fields.length === 0) return undefined;
-    const liveValues: PersonDraft["live"] & LiveValues = {
-      values: {},
-      links: {},
-      notes: {},
-      numbers: {},
-    };
+    const liveValues: PersonDraft["live"] & LiveValues = noLiveValues();
     if (before !== undefined) {
       for (const field of fields) {
         const fieldId = fieldOfValue(field);

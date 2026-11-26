@@ -4,7 +4,7 @@
 // settings, tier, values, and live values of choice, web link, note, and number columns.
 
 import { describe, expect, it } from "vitest";
-import { columnTypes, type LiveValues, typeOf } from "./data/column-types.ts";
+import { columnTypes, noLiveValues, typeOf } from "./data/column-types.ts";
 
 const link = { address: "https://example.test/", text: "Example" };
 const listOf = new Map([
@@ -73,7 +73,7 @@ describe("choice columns", () => {
   });
 
   it("show their live choices beside a draft, or none", () => {
-    const live: LiveValues = { values: {}, links: {}, notes: {}, numbers: {} };
+    const live = noLiveValues();
     choice.showLive(live, "f1", ["c1"]);
     choice.showLive(live, "f2", undefined);
     expect(live).toEqual({
@@ -129,7 +129,7 @@ describe("web link columns", () => {
   });
 
   it("show their live link beside a draft, or nothing when there is none", () => {
-    const live: LiveValues = { values: {}, links: {}, notes: {}, numbers: {} };
+    const live = noLiveValues();
     linkType.showLive(live, "f1", link);
     linkType.showLive(live, "f2", []);
     expect(live).toEqual({
@@ -180,7 +180,7 @@ describe("note columns", () => {
   });
 
   it("show their live note beside a draft, or nothing when there is none", () => {
-    const live: LiveValues = { values: {}, links: {}, notes: {}, numbers: {} };
+    const live = noLiveValues();
     note.showLive(live, "f1", "*Kind*");
     note.showLive(live, "f2", []);
     expect(live).toEqual({
@@ -225,7 +225,7 @@ describe("number columns", () => {
   });
 
   it("show their live number beside a draft, 0 included, or nothing when there is none", () => {
-    const live: LiveValues = { values: {}, links: {}, notes: {}, numbers: {} };
+    const live = noLiveValues();
     number.showLive(live, "f1", 0);
     number.showLive(live, "f2", []);
     expect(live.numbers).toEqual({ f1: 0 });

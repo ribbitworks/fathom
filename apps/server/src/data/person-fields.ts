@@ -194,6 +194,23 @@ export const notesOf = (person: Recorded): Notes =>
 export const numbersOf = (person: Recorded): Numbers =>
   valuesHolding(person, isNumber);
 
+const shownOnly = <Value>(
+  byColumn: Iterable<[string, Value]>,
+  shows: (columnId: string) => boolean,
+): Record<string, Value> =>
+  Object.fromEntries([...byColumn].filter(([columnId]) => shows(columnId)));
+
+// A person's or planned hire's values, by column, in only the columns the reader is shown.
+export const shownValuesOf = (
+  record: Recorded,
+  shows: (columnId: string) => boolean,
+) => ({
+  values: shownOnly(valuesOf(record), shows),
+  links: shownOnly(Object.entries(linksOf(record)), shows),
+  notes: shownOnly(Object.entries(notesOf(record)), shows),
+  numbers: shownOnly(Object.entries(numbersOf(record)), shows),
+});
+
 // The changes between two versions of a person, with each field's tier.
 export function personChanges(
   columns: TableColumns,

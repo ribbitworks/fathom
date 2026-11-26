@@ -18,7 +18,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      exclude: ["src/**/*.test.ts", "src/index.ts"],
+      // Files named test-*.ts, such as test-clients.ts, only serve the tests.
+      exclude: ["src/**/*.test.ts", "src/**/test-*.ts", "src/index.ts"],
       thresholds: {
         branches: 100,
         functions: 100,

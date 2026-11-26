@@ -2,29 +2,11 @@
 
 // UI tests of a feature given a value in a Features column only drafted to be added.
 
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";
+import { send } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("featureLead") });
-
-// A request sent from the page, signed in as it is, answering its status and body.
-const send = (page: Page, method: string, path: string, body?: object) =>
-  page.evaluate(
-    async ({ method, path, body }) => {
-      // The server refuses a JSON content type with no body, as a DELETE has.
-      const response = await fetch(path, {
-        method,
-        ...(body === undefined
-          ? {}
-          : {
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify(body),
-            }),
-      });
-      return { ok: response.ok, body: await response.json() };
-    },
-    { method, path, body },
-  );
 
 // What a run drafted, discarded so no run leaves a column behind: the feature's value first, since
 // its draft depends on the column's. A published draft taken back waits until its maker publishes

@@ -20,7 +20,7 @@ import {
 import { inArray } from "drizzle-orm";
 import { type Actor, requirePermission, seesSensitivity } from "../access.ts";
 import { columnsWithAdded } from "./added-columns.ts";
-import { type LiveValues, typeOf } from "./column-types.ts";
+import { type LiveValues, noLiveValues, typeOf } from "./column-types.ts";
 import {
   choiceLabels,
   type ColumnInfo,
@@ -39,7 +39,7 @@ import { draftMakers, otherApprover } from "./draft-makers.ts";
 import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { notStarted } from "./people-reads.ts";
-import { linksOf, notesOf, numbersOf, valuesOf } from "./person-fields.ts";
+import { shownValuesOf } from "./person-fields.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 import {
@@ -174,10 +174,6 @@ export async function readHiresIn(
     seesSensitivity(actor, column.tier),
   );
   const shownValue = new Set(shownColumns.map(({ id }) => id));
-  const shownValues = <Value>(byColumn: Iterable<[string, Value]>) =>
-    Object.fromEntries(
-      [...byColumn].filter(([fieldId]) => shownValue.has(fieldId)),
-    );
   // A draft's makers are named only for the changes the reader sees.
   const makers = await draftMakers(
     transaction,
@@ -276,10 +272,7 @@ export async function readHiresIn(
         ),
         ...undatedMark({ fillerStart: filler?.startDate ?? null, targetDate }),
         ...(seesStates ? { stateId: String(hire.stateId) } : {}),
-        values: shownValues(valuesOf(hire)),
-        links: shownValues(Object.entries(linksOf(hire))),
-        notes: shownValues(Object.entries(notesOf(hire))),
-        numbers: shownValues(Object.entries(numbersOf(hire))),
+        ...shownValuesOf(hire, (columnId) => shownValue.has(columnId)),
         ...(wholePlan
           ? {
               targetDate,
@@ -326,12 +319,7 @@ export async function readHiresIn(
           ),
       ),
     ];
-    const liveValues: HireDraft["live"] & LiveValues = {
-      values: {},
-      links: {},
-      notes: {},
-      numbers: {},
-    };
+    const liveValues: HireDraft["live"] & LiveValues = noLiveValues();
     if (before !== undefined) {
       for (const field of fields) {
         const fieldId = fieldOfValue(field);
