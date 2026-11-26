@@ -24,6 +24,7 @@ import {
   chartOnly,
   draftOf,
   everyone,
+  hire,
   lead,
   leaver,
   member,
@@ -129,6 +130,20 @@ describe("people on a later day", () => {
 });
 
 describe("a team without those who have left", () => {
+  it("keeps a planned hire as a member and as the lead, since a planned hire never leaves", () => {
+    const team = {
+      name: "Fictional Team",
+      leadId: hire,
+      members: [hire, leaver],
+    };
+
+    expect(withoutLeavers(team, everyone)).toEqual({
+      name: "Fictional Team",
+      leadId: hire,
+      members: [hire],
+    });
+  });
+
   it("leaves them out as members, as lead, and from the days given", () => {
     // Given a team led by someone who has left, with days for them and for another member
     const team = {
@@ -201,6 +216,16 @@ describe("the people a draft changes", () => {
     ).toBe(true);
   });
 
+  it("hold no one who has not started when it changes only a planned hire", () => {
+    expect(
+      draftHoldsNotStarted(
+        live,
+        { ...live, members: [lead, member, hire] },
+        everyone,
+      ),
+    ).toBe(false);
+  });
+
   it("hold no one who has not started when it changes only those who have", () => {
     expect(
       draftHoldsNotStarted(live, { ...live, members: [lead] }, everyone),
@@ -237,6 +262,7 @@ describe("whether a reader sees someone on a team", () => {
       false,
     ],
     ["someone who has left, with Personal data", leaver, true, false],
+    ["a planned hire, without Personal data", hire, false, true],
     ["someone not read", unknown, true, false],
     ["no one", null, true, false],
   ])("decides for %s", (_, personId, seesPersonal, seen) => {

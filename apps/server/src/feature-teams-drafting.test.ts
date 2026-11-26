@@ -294,8 +294,8 @@ describe("changing a feature team", () => {
     await approved(id);
 
     expect(await leads(id)).toEqual([
-      { leadId: first, fromDate: today },
-      { leadId: second, fromDate: "2099-03-01" },
+      { leadId: first, leadPlannedHireId: null, fromDate: today },
+      { leadId: second, leadPlannedHireId: null, fromDate: "2099-03-01" },
     ]);
     expect((await teamSeen(id))?.leadId).toBe(first);
   });
@@ -414,8 +414,8 @@ describe("changing a feature team", () => {
     await approved(id);
 
     expect(await leads(id)).toEqual([
-      { leadId: lead, fromDate: today },
-      { leadId: null, fromDate: "2099-03-01" },
+      { leadId: lead, leadPlannedHireId: null, fromDate: today },
+      { leadId: null, leadPlannedHireId: null, fromDate: "2099-03-01" },
     ]);
     expect((await memberships(id)).at(-1)?.member).toBe(true);
   });

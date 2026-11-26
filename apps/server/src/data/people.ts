@@ -41,7 +41,10 @@ import { takenEmployeeIds } from "./drafted-values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
 import { readToday } from "./settings.ts";
-import { refuseRemovingPeopleOnTeams } from "./feature-team-removals.ts";
+import {
+  onTeamsRefusals,
+  refuseRemovingOnTeams,
+} from "./feature-team-removals.ts";
 import {
   hireDraftsNaming,
   partOfFill,
@@ -467,7 +470,7 @@ export async function deletePerson(
     }
     await refuseRemovingHiresPeople(transaction, [id]);
     await refuseRemovingNamed(transaction, "person", [id], actor);
-    await refuseRemovingPeopleOnTeams(transaction, [id]);
+    await refuseRemovingOnTeams(transaction, [id], onTeamsRefusals.person);
     const made = [
       ...asDraft(personChanges(columns, id, "deleted", person, undefined)),
       ...clearedRejection(id, personTier(columns), before, draft),

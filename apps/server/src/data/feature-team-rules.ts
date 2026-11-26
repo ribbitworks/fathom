@@ -9,27 +9,38 @@ import {
   seesEmployment,
 } from "@fathom/shared";
 import { type Recorded, tidy } from "./draft-records.ts";
-import { inForceOn } from "./in-force.ts";
+import { inForceOn, inForceOrLater } from "./in-force.ts";
 import { currentOn, notStarted } from "./people-reads.ts";
 import { text } from "./reporting.ts";
 
 const chooseFromPeople = "Choose members from People";
 
-// People's membership rows, leaving out planned hires', which these reads and rules don't take.
-export const peopleRows = <Row extends { personId: string | null }>(
-  rows: readonly Row[],
-): (Row & { personId: string })[] =>
-  rows.filter(
-    (row): row is Row & { personId: string } => row.personId !== null,
-  );
-
 export type Person = Recorded & {
+  kind: "person";
   preferredName: string;
   started: boolean;
   left: boolean;
 };
 
-export type Everyone = ReadonlyMap<string, Person>;
+// A planned hire on feature teams, named as allocations name it. It has no start or end date, so it
+// is never hidden as not started or left.
+export interface PlannedHire {
+  kind: "planned-hire";
+  preferredName: string;
+}
+
+export type Member = Person | PlannedHire;
+
+// Everyone a team names, by identifier: people and planned hires, whose identifiers never collide.
+export type Everyone = ReadonlyMap<string, Member>;
+
+// Whether a member is a person whose end date has passed.
+export const hasLeft = (member: Member | undefined): boolean =>
+  member?.kind === "person" && member.left;
+
+// Whether a member is a person whose start date is still to come.
+export const notYetStarted = (member: Member | undefined): boolean =>
+  member?.kind === "person" && !member.started;
 
 export const membersOf = (team: Recorded | undefined): string[] =>
   Array.isArray(team?.members) ? team.members.map(String) : [];
@@ -63,6 +74,20 @@ export function memberChanges(
 export const leftBy = (person: Recorded, day: string): boolean =>
   !notStarted(person, day) && !currentOn(person, day);
 
+// Whether someone is on a team today or will be, by their records on it: the one in force today
+// has them on it, or a later one does.
+export function onTeamTodayOrLater(
+  records: readonly { member: boolean; fromDate: string }[],
+  today: string,
+): boolean {
+  const earliestFirst = [...records].sort((one, other) =>
+    one.fromDate.localeCompare(other.fromDate),
+  );
+  return earliestFirst.some(
+    (record) => record.member && inForceOrLater(record, earliestFirst, today),
+  );
+}
+
 // Whether another team has a name, ignoring letter case.
 export function nameIsTaken(
   names: readonly [string, string][],
@@ -86,32 +111,33 @@ export function membersRefusal(
   everyone: Everyone,
 ): string | undefined {
   const seesPeople = seesEmployment(access);
-  for (const personId of added) {
-    const person = everyone.get(personId);
+  for (const memberId of added) {
+    const member = everyone.get(memberId);
     // Someone hidden from the actor is not there for them, as People hides them.
     if (
-      person === undefined ||
-      (!seesPeople && (!person.started || person.left))
+      member === undefined ||
+      (!seesPeople && (notYetStarted(member) || hasLeft(member)))
     ) {
       return chooseFromPeople;
     }
-    if (person.left) return "Someone who has left can't join a team";
+    if (hasLeft(member)) return "Someone who has left can't join a team";
   }
   return typeof leadId === "string" && !members.includes(leadId)
     ? "The feature lead must be one of the members"
     : undefined;
 }
 
+// A person or planned hire joining or leaving a team from a day, or becoming its lead.
 export interface MemberDay {
   teamId: string;
-  personId: string;
+  memberId: string;
   from: string;
 }
 
-// A record of someone joining or leaving a team from a day.
+// A record of a person or planned hire joining or leaving a team from a day.
 export interface MemberRecord {
   teamId: string;
-  personId: string;
+  memberId: string;
   fromDate: string;
 }
 
@@ -139,7 +165,7 @@ export function employmentDayRefusal(
   everyone: Everyone,
   refusals: DayRefusals,
 ): string | undefined {
-  const person = { ...everyone.get(day.personId) };
+  const person = { ...everyone.get(day.memberId) };
   if (notStarted(person, day.from)) return refusals.beforeStart(day);
   if (leftBy(person, day.from)) return refusals.afterEnd(day);
   return undefined;
@@ -153,16 +179,16 @@ export function daysRefusal(
   everyone: Everyone,
   refusals: DayRefusals,
 ): string | undefined {
-  const key = (teamId: string, personId: string) => `${teamId} ${personId}`;
+  const key = (teamId: string, memberId: string) => `${teamId} ${memberId}`;
   const latest = new Map<string, string>();
-  for (const { teamId, personId, fromDate } of records) {
-    const last = latest.get(key(teamId, personId));
+  for (const { teamId, memberId, fromDate } of records) {
+    const last = latest.get(key(teamId, memberId));
     if (last === undefined || fromDate > last) {
-      latest.set(key(teamId, personId), fromDate);
+      latest.set(key(teamId, memberId), fromDate);
     }
   }
   for (const day of days) {
-    const last = latest.get(key(day.teamId, day.personId));
+    const last = latest.get(key(day.teamId, day.memberId));
     if (last !== undefined && day.from <= last) {
       return refusals.outOfOrder(day, last);
     }
@@ -255,14 +281,14 @@ export function nextTeamDraft(
   // A day is kept for each member a draft adds or removes, so approving it records when; a change
   // taken back leaves none.
   const days = new Map(Object.entries(datesOf(team)));
-  for (const personId of dayPeople) {
-    if (from === undefined) days.delete(personId);
-    else days.set(personId, from);
+  for (const memberId of dayPeople) {
+    if (from === undefined) days.delete(memberId);
+    else days.set(memberId, from);
   }
   const dates = new Map(
     [...days].filter(
-      ([personId]) =>
-        members.includes(personId) !== wasMembers.includes(personId),
+      ([memberId]) =>
+        members.includes(memberId) !== wasMembers.includes(memberId),
     ),
   );
   // A change of lead keeps its own day, set only by the edit that changes the lead, and held
@@ -285,7 +311,7 @@ export function nextTeamDraft(
     members,
     leadId,
     dayPeople,
-    dated: dayPeople.filter((personId) => dates.has(personId)),
+    dated: dayPeople.filter((memberId) => dates.has(memberId)),
     leadChanges: setsLead && leadId !== wasLead,
     leadJoinsOn:
       leadId === null || wasMembers.includes(leadId)

@@ -25,9 +25,11 @@ import { type Maker, otherApprover } from "./draft-makers.ts";
 import {
   datesOf,
   type Everyone,
+  hasLeft,
   leadDatesOf,
   memberChanges,
   membersOf,
+  notYetStarted,
 } from "./feature-team-rules.ts";
 import { text } from "./reporting.ts";
 
@@ -65,7 +67,7 @@ export const peopleAsTodayOn = (
 // A team without those who have left, whether as members, as its lead, or as members given a day.
 export function withoutLeavers(team: Recorded, everyone: Everyone): Recorded {
   const gone = (id: unknown) =>
-    typeof id === "string" && everyone.get(id)?.left === true;
+    typeof id === "string" && hasLeft(everyone.get(id));
   const days = Object.entries(datesOf(team)).filter(([id]) => !gone(id));
   const leadDays = Object.entries(leadDatesOf(team)).filter(
     ([id]) => !gone(id),
@@ -111,8 +113,8 @@ export const draftHoldsNotStarted = (
   after: Recorded | undefined,
   everyone: Everyone,
 ): boolean =>
-  peopleDraftChanges(before, after).some(
-    (one) => everyone.get(one)?.started === false,
+  peopleDraftChanges(before, after).some((one) =>
+    notYetStarted(everyone.get(one)),
   );
 
 // Everyone a team and its draft name.
@@ -127,10 +129,14 @@ export const peopleNamed = (team: Recorded | undefined): string[] => [
 // only with Personal details.
 export const seenBy =
   (everyone: Everyone, seesPersonal: boolean) =>
-  (personId: unknown): personId is string => {
-    const person =
-      typeof personId === "string" ? everyone.get(personId) : undefined;
-    return person?.left === false && (seesPersonal || person.started);
+  (memberId: unknown): memberId is string => {
+    const member =
+      typeof memberId === "string" ? everyone.get(memberId) : undefined;
+    return (
+      member !== undefined &&
+      !hasLeft(member) &&
+      (seesPersonal || !notYetStarted(member))
+    );
   };
 
 // A team on a day, with its draft's changes, judged against the team today, laid over it: those the

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Reading planned hires and their drafts as each reader may see them, and a hire as a row of the
-// People table. Part of the data access layer.
+// Reading planned hires and their drafts as each reader may see them, a hire as a row of the People
+// table, and the facts other records read of hires. Part of the data access layer.
 
 import {
   type Database,
@@ -11,13 +11,14 @@ import {
   type Reader,
 } from "@fathom/db";
 import {
+  hireCalled,
   type Hire,
   type HireDraft,
   type Hires,
   type Person,
   seesEmployment,
 } from "@fathom/shared";
-import { inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { type Actor, requirePermission, seesSensitivity } from "../access.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { type LiveValues, noLiveValues, typeOf } from "./column-types.ts";
@@ -468,4 +469,57 @@ export function hireRow(
     ...(hire.filler === undefined ? {} : { filler: hire.filler }),
     ...(hire.heldBy === undefined ? {} : { heldBy: hire.heldBy }),
   };
+}
+
+export interface HireFacts {
+  expected: string;
+  // Whether a date gives the month it is expected, rather than its standing in for today.
+  dated: boolean;
+  filledBy: string | null;
+  called: string;
+}
+
+// The planned hires given, with what the rules need: the month each is expected, whether it is
+// filled, and what it is called where its position is not shown.
+export async function hiresOf(
+  reader: Reader,
+  ids: readonly string[],
+  today: string,
+): Promise<Map<string, HireFacts>> {
+  const rows = [];
+  for (const chunk of inChunks([...new Set(ids)])) {
+    rows.push(
+      ...(await reader
+        .select({
+          id: plannedHires.id,
+          name: plannedHires.name,
+          requisition: plannedHires.requisition,
+          temporaryNumber: plannedHires.temporaryNumber,
+          targetDate: plannedHires.targetDate,
+          filledBy: plannedHires.filledBy,
+          fillerStart: people.startDate,
+        })
+        .from(plannedHires)
+        .leftJoin(people, eq(people.id, plannedHires.filledBy))
+        .where(inArray(plannedHires.id, chunk))),
+    );
+  }
+  return new Map(
+    rows.map((hire) => {
+      const { requisition, temporaryId } = hireIdOf(hire);
+      return [
+        hire.id,
+        {
+          expected: expectedMonth(hire, today),
+          dated: undatedMark(hire).undated !== true,
+          filledBy: hire.filledBy,
+          called: hireCalled(
+            hire.name,
+            String(requisition ?? temporaryId),
+            undefined,
+          ),
+        },
+      ];
+    }),
+  );
 }

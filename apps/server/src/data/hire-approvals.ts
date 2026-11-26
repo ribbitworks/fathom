@@ -5,6 +5,12 @@
 
 import { refuseFillingAllocated, removeAllocationsOf } from "./allocations.ts";
 import {
+  onTeamsRefusals,
+  refuseFillingOnTeams,
+  refuseRemovingOnTeams,
+  teamChangesRemoving,
+} from "./feature-team-removals.ts";
+import {
   drafts,
   fieldValues,
   inChunks,
@@ -150,6 +156,7 @@ export async function approveHiresIn(
     // and the hire allocations since, which filling can't move yet.
     if (unfilled(before ?? {}) && typeof hire.filledBy === "string") {
       await refuseFillingAllocated(transaction, id);
+      await refuseFillingOnTeams(transaction, id);
       const [left] = await transaction
         .select({ name: people.preferredName })
         .from(people)
@@ -209,6 +216,12 @@ export async function approveHiresIn(
   made.push(
     ...(await removeAllocationsOf(transaction, "plannedHireId", removed)),
   );
+  await refuseRemovingOnTeams(
+    transaction,
+    removed,
+    onTeamsRefusals.plannedHire,
+  );
+  made.push(...(await teamChangesRemoving(transaction, actor, removed, today)));
   for (const chunk of inChunks(removed)) {
     await transaction
       .delete(plannedHires)

@@ -77,7 +77,10 @@ import {
   checkTeamsAsked,
   rejectTeamsIn,
 } from "./feature-team-decisions.ts";
-import { refuseRemovingPeopleOnTeams } from "./feature-team-removals.ts";
+import {
+  onTeamsRefusals,
+  refuseRemovingOnTeams,
+} from "./feature-team-removals.ts";
 import { recordTeamDayChanges } from "./feature-team-days.ts";
 import {
   applyReporting,
@@ -322,7 +325,7 @@ async function approvePeopleIn(
   await refuseRemovingManagers(transaction, removed);
   await refuseRemovingHiresPeople(transaction, removed);
   await refuseRemovingNamed(transaction, "person", removed, actor);
-  await refuseRemovingPeopleOnTeams(transaction, removed);
+  await refuseRemovingOnTeams(transaction, removed, onTeamsRefusals.person);
   made.push(...(await removeAllocationsOf(transaction, "personId", removed)));
   await apply(transaction, wanted);
   await applyReporting(transaction, wanted, today);

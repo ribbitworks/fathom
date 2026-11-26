@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Reading feature teams: the live teams on a day, each person's teams, the records their drafts
-// would make, and every team as a reader sees it. Part of the data access layer.
+// Reading feature teams: the live teams on a day, each person's and planned hire's teams, the records
+// their drafts would make, and every team as a reader sees it. Part of the data access layer.
 
 import {
   type Database,
@@ -28,11 +28,11 @@ import { type Held, heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import {
   datesOf,
   leftBy,
+  type Member,
+  type Person,
   memberChanges,
   type MemberDay,
   membersOf,
-  type Person,
-  peopleRows,
 } from "./feature-team-rules.ts";
 import {
   draftAsSeen,
@@ -45,11 +45,20 @@ import {
   teamSight,
   withoutLeavers,
 } from "./feature-team-sight.ts";
+import { hiresOf } from "./hire-reads.ts";
 import { bySubject, inForceOn } from "./in-force.ts";
 import { notStarted } from "./people-reads.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { readToday } from "./settings.ts";
 import { recordType } from "./feature-team-records.ts";
+
+// Whom a membership record is of: its person or its planned hire, since it names exactly one.
+export const memberColumn = sql<string>`coalesce(${featureTeamMemberships.personId}, ${featureTeamMemberships.plannedHireId})`;
+
+// Whom a lead record names: its person or its planned hire, or null for no lead.
+export const leadColumn = sql<
+  string | null
+>`coalesce(${featureTeamLeads.leadId}, ${featureTeamLeads.leadPlannedHireId})`;
 
 interface LiveTeams {
   // Each team as recorded: its name, lead, and members on the day asked for.
@@ -69,14 +78,24 @@ export async function readLiveTeams(
   }: { ids?: readonly string[]; employmentDay?: string } = {},
 ): Promise<LiveTeams> {
   const rows: (typeof featureTeams.$inferSelect)[] = [];
-  const memberships: (typeof featureTeamMemberships.$inferSelect & {
-    personId: string;
-  })[] = [];
-  const leadRecords: (typeof featureTeamLeads.$inferSelect)[] = [];
+  const memberships: {
+    teamId: string;
+    memberId: string;
+    member: boolean;
+  }[] = [];
+  const leadRecords: {
+    teamId: string;
+    leadId: string | null;
+    fromDate: string;
+  }[] = [];
   const read = async (chunk?: readonly string[]) => {
     leadRecords.push(
       ...(await reader
-        .select()
+        .select({
+          teamId: featureTeamLeads.teamId,
+          leadId: leadColumn,
+          fromDate: featureTeamLeads.fromDate,
+        })
         .from(featureTeamLeads)
         .where(
           and(
@@ -98,36 +117,38 @@ export async function readLiveTeams(
         )),
     );
     memberships.push(
-      ...peopleRows(
-        await reader
-          .select()
-          .from(featureTeamMemberships)
-          .where(
-            and(
-              chunk === undefined
-                ? undefined
-                : inArray(featureTeamMemberships.teamId, [...chunk]),
-              sql`${featureTeamMemberships.fromDate} <= ${day}`,
-            ),
-          )
-          .orderBy(asc(featureTeamMemberships.fromDate)),
-      ),
+      ...(await reader
+        .select({
+          teamId: featureTeamMemberships.teamId,
+          memberId: memberColumn,
+          member: featureTeamMemberships.member,
+        })
+        .from(featureTeamMemberships)
+        .where(
+          and(
+            chunk === undefined
+              ? undefined
+              : inArray(featureTeamMemberships.teamId, [...chunk]),
+            sql`${featureTeamMemberships.fromDate} <= ${day}`,
+          ),
+        )
+        .orderBy(asc(featureTeamMemberships.fromDate))),
     );
   };
   if (ids === undefined) await read();
   else for (const chunk of inChunks([...ids])) await read(chunk);
-  // Each person's latest record for a team, as of the day, says whether they are on it.
+  // Each member's latest record for a team, as of the day, says whether they are on it.
   const latest = new Map<string, Map<string, boolean>>();
-  for (const { teamId, personId, member } of memberships) {
+  for (const { teamId, memberId, member } of memberships) {
     const team = latest.get(teamId) ?? new Map<string, boolean>();
-    team.set(personId, member);
+    team.set(memberId, member);
     latest.set(teamId, team);
   }
   const leads = bySubject(leadRecords, ({ teamId }) => teamId);
-  const everyone = await peopleOf(
+  const everyone = await readMembers(
     reader,
     [
-      ...memberships.map(({ personId }) => personId),
+      ...memberships.map(({ memberId }) => memberId),
       ...leadRecords.flatMap(({ leadId }) => leadId ?? []),
     ],
     employmentDay,
@@ -136,7 +157,7 @@ export async function readLiveTeams(
   for (const row of rows) {
     const onTeam = [...(latest.get(row.id) ?? new Map<string, boolean>())]
       .filter(([, member]) => member)
-      .map(([personId]) => personId);
+      .map(([memberId]) => memberId);
     const leadId = inForceOn(leads.get(row.id) ?? [], day)?.leadId ?? null;
     teams.set(
       row.id,
@@ -156,17 +177,18 @@ export async function readLiveTeams(
   };
 }
 
-// The live teams each person is on as of a day, by name, each with its colour, by person.
-export async function readTeamsOfPeople(
+// The live teams each person and planned hire is on as of a day, by name, each with its colour, by
+// person or planned hire.
+export async function readTeamsOfMembers(
   reader: Reader,
   day: string,
 ): Promise<Map<string, PersonFeatureTeam[]>> {
   const { teams, colours } = await readLiveTeams(reader, day);
   const teamsOf = new Map<string, PersonFeatureTeam[]>();
   for (const [id, team] of teams) {
-    for (const personId of membersOf(team)) {
-      teamsOf.set(personId, [
-        ...(teamsOf.get(personId) ?? []),
+    for (const memberId of membersOf(team)) {
+      teamsOf.set(memberId, [
+        ...(teamsOf.get(memberId) ?? []),
         { id, name: String(team.name), colour: knownColour(colours.get(id)) },
       ]);
     }
@@ -181,11 +203,11 @@ export const readTeamDrafts = (
   viewer?: string,
 ) => readDrafts(reader, recordType, ids, viewer);
 
-// A record approving a team's draft would make: someone joining or leaving the team from the day the
-// draft gives them, or from today.
+// A record approving a team's draft would make: a person or planned hire joining or leaving the team
+// from the day the draft gives them, or from today.
 export interface DraftedMembership {
   teamId: string;
-  personId: string;
+  memberId: string;
   member: boolean;
   fromDate: string;
 }
@@ -214,7 +236,7 @@ export async function readDraftedMemberships(
     const before = live.teams.get(teamId);
     return { teamId, draft, before, after: drafted(before, draft) };
   });
-  const everyone = await peopleOf(
+  const everyone = await readMembers(
     reader,
     versions.flatMap(({ after }) => peopleNamed(after)),
     today,
@@ -256,14 +278,14 @@ export function membershipChanges(
   const dates = new Map(Object.entries(datesOf(team)));
   const records: DraftedMembership[] = [];
   const days: MemberDay[] = [];
-  for (const [personIds, member] of [
+  for (const [memberIds, member] of [
     [added, true],
     [removed, false],
   ] as const) {
-    for (const personId of personIds) {
-      const from = dates.get(personId);
-      records.push({ teamId, personId, member, fromDate: from ?? today });
-      if (from !== undefined) days.push({ teamId, personId, from });
+    for (const memberId of memberIds) {
+      const from = dates.get(memberId);
+      records.push({ teamId, memberId, member, fromDate: from ?? today });
+      if (from !== undefined) days.push({ teamId, memberId, from });
     }
   }
   return { records, days };
@@ -287,6 +309,7 @@ export async function peopleOf(
       .from(people)
       .where(inArray(people.id, chunk))) {
       found.set(person.id, {
+        kind: "person",
         preferredName: person.preferredName,
         startDate: person.startDate,
         endDate: person.endDate,
@@ -298,28 +321,45 @@ export async function peopleOf(
   return found;
 }
 
-// The month each team disbands from, which depends on when people join and leave teams and on end
-// dates, so only those who see Personal details are told it.
+// The people who are live, as peopleOf reads them, and the planned hires given, each named as
+// allocations name it.
+export async function readMembers(
+  reader: Reader,
+  ids: readonly string[],
+  day: string,
+): Promise<Map<string, Member>> {
+  const found = new Map<string, Member>(await peopleOf(reader, ids, day));
+  const hires = await hiresOf(
+    reader,
+    ids.filter((id) => !found.has(id)),
+    day,
+  );
+  for (const [id, hire] of hires) {
+    found.set(id, { kind: "planned-hire", preferredName: hire.called });
+  }
+  return found;
+}
+
+// The month each team disbands from, which depends on when people and planned hires join and leave
+// teams and on people's end dates, so only those who see Personal details are told it. A planned
+// hire has no end date.
 async function readDisbandedMonths(
   reader: Reader,
 ): Promise<Map<string, string>> {
-  const records = peopleRows(
-    await reader
-      .select({
-        teamId: featureTeamMemberships.teamId,
-        personId: featureTeamMemberships.personId,
-        member: featureTeamMemberships.member,
-        fromDate: featureTeamMemberships.fromDate,
-        startDate: people.startDate,
-        endDate: people.endDate,
-      })
-      .from(featureTeamMemberships)
-      .innerJoin(people, eq(people.id, featureTeamMemberships.personId)),
-  );
+  const records = await reader
+    .select({
+      teamId: featureTeamMemberships.teamId,
+      memberId: memberColumn,
+      member: featureTeamMemberships.member,
+      fromDate: featureTeamMemberships.fromDate,
+      endDate: people.endDate,
+    })
+    .from(featureTeamMemberships)
+    .leftJoin(people, eq(people.id, featureTeamMemberships.personId));
   const disbanded = new Map<string, string>();
   for (const [teamId, rows] of bySubject(records, ({ teamId }) => teamId)) {
     const month = disbandedMonth([
-      ...bySubject(rows, ({ personId }) => personId).values(),
+      ...bySubject(rows, ({ memberId }) => memberId).values(),
     ]);
     if (month !== undefined) disbanded.set(teamId, month);
   }
@@ -327,11 +367,12 @@ async function readDisbandedMonths(
 }
 
 // Every feature team on a day, today unless another is given, as the reader's drafts make it, with
-// its draft beside, for those who see feature teams. Members and a lead who have not started are
-// left out for readers who do not see Personal details, and those who have left for everyone.
-// Those who do not see people get teams as approved, with no drafts. Another day needs every class
-// of data other dates need. On another day, only teams with members then, or with a draft, are
-// listed.
+// its draft beside, for those who see feature teams. Planned hires on a team are shown to all of
+// them, by their placeholder names, as allocations name them. Members and a lead who have not
+// started are left out for readers who do not see Personal details, and those who have left for
+// everyone. Those who do not see people get teams as approved, with no drafts. Another day needs
+// every class of data other dates need. On another day, only teams with members then, or with a
+// draft, are listed.
 export async function readFeatureTeams(
   database: Database,
   actor: Actor,
@@ -382,7 +423,7 @@ export async function readFeatureTeams(
         const after = draftedOn(before, teamToday, draft);
         return { id, before, teamToday, draft, after, team: after ?? before };
       });
-      const everyone = await peopleOf(
+      const everyone = await readMembers(
         transaction,
         versions.flatMap(({ team, before, teamToday }) => [
           ...peopleNamed(team),

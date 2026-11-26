@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Feature teams: the people working on a set of related features, apart from reporting lines.
+// Feature teams: the people and planned hires working on a set of related features, apart from
+// reporting lines.
 
 import { z } from "zod";
 import { addDays, addMonths } from "./cycles.ts";
@@ -18,7 +19,7 @@ import { keyNumberSchema } from "./record-keys.ts";
 export const featureTeamLengths = { name: 60, members: 500 } as const;
 
 const name = z.string().trim().min(1).max(featureTeamLengths.name);
-// Members are named by their person's identifier.
+// Members are named by their person's or planned hire's identifier, which never collide.
 const members = z
   .array(z.uuid())
   .max(featureTeamLengths.members)
@@ -52,9 +53,10 @@ export const featureTeamSchema = z.object({
   leadId: z.string().nullable(),
   // The colour of its cards on the feature team chart; null unless it has one the palette has.
   colour: paletteColourSchema.nullable(),
-  // Its members the reader sees, by person.
+  // Its members the reader sees, people and planned hires, by identifier.
   members: z.array(z.string()),
-  // The name of each person on the team, drafted or live, whom the reader sees, by person.
+  // The name of each person and planned hire on the team, drafted or live, whom the reader sees, by
+  // identifier: a planned hire's placeholder name.
   names: z.record(z.string(), z.string()),
   // The month from which it has no members, past or planned, if there is one.
   disbandedFrom: monthSchema.optional(),
@@ -72,9 +74,18 @@ export type FeatureTeams = z.infer<typeof featureTeamsSchema>;
 
 const managerSchema = z.object({ id: z.string(), name: z.string() });
 
-// Who was on which team, month by month, as approved. Which teams someone was on in a month is
-// General; the months outside someone's employment are given only to readers who see Personal
-// details.
+// Each month with a team, and the teams then, by identifier.
+const monthTeams = z.record(monthSchema, z.array(z.string()));
+
+// Each month whose teams a draft changes, with the teams then, and the teams whose drafts change
+// those months.
+const draftedMonths = z
+  .object({ teams: monthTeams, by: z.array(z.string()) })
+  .optional();
+
+// Who was on which team, month by month, as approved, people and planned hires. Which teams someone
+// was on in a month is General; the months outside someone's employment are given only to readers
+// who see Personal details.
 export const teamMonthsSchema = z.object({
   months: z.array(monthSchema),
   teams: z.array(
@@ -91,19 +102,24 @@ export const teamMonthsSchema = z.object({
       manager: managerSchema.nullable(),
       // Whom the person reported to each month, for roles that group by manager.
       managers: z.record(monthSchema, managerSchema.nullable()).optional(),
-      // Each month with a team, and the teams then, by identifier.
-      teams: z.record(monthSchema, z.array(z.string())),
+      teams: monthTeams,
       outside: z.array(monthSchema).optional(),
-      // Each month whose teams a draft changes, with the teams then, and the teams whose drafts
-      // change those months.
-      drafted: z
-        .object({
-          teams: z.record(monthSchema, z.array(z.string())),
-          by: z.array(z.string()),
-        })
-        .optional(),
+      drafted: draftedMonths,
     }),
   ),
+  // Each planned hire not yet filled, on teams from the month it's expected: every one for readers
+  // who see people, and only those on a team or drafted onto one for others. Its name, manager and
+  // months come with the hire itself. Always sent; optional while the grid builds hires' rows from
+  // the org chart alone.
+  hires: z
+    .array(
+      z.object({
+        id: z.string(),
+        teams: monthTeams,
+        drafted: draftedMonths,
+      }),
+    )
+    .optional(),
   // Each team draft changing someone's months: whether it adds or removes the team, whether it waits
   // or was rejected, and whether it holds the reader's own changes, not yet published.
   drafts: z.array(

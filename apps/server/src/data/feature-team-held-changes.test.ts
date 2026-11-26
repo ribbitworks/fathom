@@ -25,7 +25,7 @@ describe("the refusals of a change of someone's teams from a month", () => {
   it("name the person, the team and the month when a later approved change holds it", () => {
     expect(
       refusals.outOfOrder(
-        { teamId: team, personId: member, from: "2026-08-01" },
+        { teamId: team, memberId: member, from: "2026-08-01" },
         "2026-09-01",
       ),
     ).toBe(
@@ -34,7 +34,7 @@ describe("the refusals of a change of someone's teams from a month", () => {
   });
 
   it("refuse a month outside someone's employment as drafting does", () => {
-    const day = { teamId: team, personId: member, from: "2026-08-01" };
+    const day = { teamId: team, memberId: member, from: "2026-08-01" };
 
     expect(refusals.beforeStart(day)).toBe(draftingRefusals.beforeStart(day));
     expect(refusals.afterEnd(day)).toBe(draftingRefusals.afterEnd(day));

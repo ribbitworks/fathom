@@ -31,7 +31,7 @@ import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { type LiveValues, noLiveValues, typeOf } from "./column-types.ts";
 import { readToday } from "./settings.ts";
-import { readTeamsOfPeople } from "./feature-team-reads.ts";
+import { readTeamsOfMembers } from "./feature-team-reads.ts";
 import { hireRow, readHiresIn } from "./hire-reads.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { draftedLineOn, readLines, shownReporting, text } from "./reporting.ts";
@@ -379,7 +379,7 @@ async function readPeopleIn(
   );
   // Feature teams are General, and sent to those who see feature teams, as their page is.
   const featureTeamsOf = seesBuiltInColumn(actor.permissions, "featureTeams")
-    ? await readTeamsOfPeople(database, day)
+    ? await readTeamsOfMembers(database, day)
     : undefined;
   const withFeatureTeams = (row: Person): Person =>
     featureTeamsOf === undefined

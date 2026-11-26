@@ -184,8 +184,8 @@ describe("a team's lead", () => {
     );
 
     expect(await leads(id)).toEqual([
-      { leadId: null, fromDate: "2025-01-01" },
-      { leadId: next, fromDate: "2025-06-01" },
+      { leadId: null, leadPlannedHireId: null, fromDate: "2025-01-01" },
+      { leadId: next, leadPlannedHireId: null, fromDate: "2025-06-01" },
     ]);
   });
 });
