@@ -13,6 +13,7 @@ import {
   allocationMonthsTable,
   allocationsQuery,
   type AllocationRow,
+  namedIn,
   marksFrom,
 } from "./allocation-months.tsx";
 import { MonthGrid, type MonthGridProps } from "./month-grid.tsx";
@@ -70,14 +71,20 @@ export function CapacityAllocations({
   const allocations = allocationsRead.data;
   const chart = chartRead.data;
   const currentMonth = monthOf(now);
+  const show = view.show;
+  // The work named as the Draft view shows it, for the rows and the filter alike.
   const sources = useMemo(
     () =>
       teamMonths === undefined ||
       allocations === undefined ||
       chart === undefined
         ? undefined
-        : { teamMonths, allocations, chart },
-    [teamMonths, allocations, chart],
+        : {
+            teamMonths,
+            allocations: namedIn(allocations, show),
+            chart,
+          },
+    [teamMonths, allocations, chart, show],
   );
   const table = useMemo(
     () =>

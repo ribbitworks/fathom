@@ -6,7 +6,12 @@
 import { z } from "zod";
 import { addToMonth } from "./cycles.ts";
 import { monthSchema } from "./days.ts";
-import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
+import {
+  draftActionSchema,
+  draftShape,
+  heldBySchema,
+  recordDraftSchema,
+} from "./drafts.ts";
 import { type Meaning, meaningSchema } from "./lists.ts";
 import { paletteColourSchema } from "./palette.ts";
 
@@ -206,6 +211,17 @@ export const allocatedFeatureSchema = z.object({
   colour: paletteColourSchema.nullable(),
   // Set for a feature the reader can't read, named only by its kind.
   unseen: z.literal(true).optional(),
+  // The feature's draft, where it renames the feature, with its live name.
+  rename: recordDraftSchema
+    .pick({
+      action: true,
+      changed: true,
+      live: true,
+      state: true,
+      reason: true,
+      unpublished: true,
+    })
+    .optional(),
 });
 
 export type AllocatedFeature = z.infer<typeof allocatedFeatureSchema>;

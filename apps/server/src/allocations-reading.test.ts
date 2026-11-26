@@ -3,7 +3,7 @@
 // Integration tests for reading allocations, against a PostgreSQL server of their own: each
 // allocation as each reader may see it, and a feature's staffing on the plan.
 
-import { accessHistory, featureTeams, features } from "@fathom/db";
+import { accessHistory, activities, featureTeams, features } from "@fathom/db";
 import { type ProjectPlan } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -20,6 +20,8 @@ import {
   addPerson,
   addFeature,
   activityAllocation,
+  director,
+  nameOfFeature,
   change,
   changed,
   read,
@@ -45,6 +47,113 @@ describe("reading", () => {
     });
     const { features: named } = await read(viewer);
     expect(named.find(({ id }) => id === possible)?.meaning).toBe("possible");
+  });
+
+  it("names a feature as its draft renames it, with its live name and the rename's state", async () => {
+    // Given a feature someone is allocated to, whose rename was rejected
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    const live = await nameOfFeature(featureId);
+    const renamed = unique("Fictional Renamed");
+    const drafted = await test.request(
+      director.cookie,
+      "PUT",
+      `/api/features/${featureId}`,
+      { name: renamed },
+    );
+    expect(drafted.statusCode, drafted.body).toBe(200);
+    const featureApprover = await test.signedIn([
+      "plan:view",
+      "features:view",
+      "features:approve",
+    ]);
+    const rejected = await test.request(
+      featureApprover.cookie,
+      "POST",
+      "/api/drafts/rejection",
+      {
+        records: [{ type: "feature", id: featureId }],
+        reason: "Fictional reason",
+      },
+    );
+    expect(rejected.statusCode, rejected.body).toBe(200);
+
+    // When the allocations are read
+    const { features: named } = await read(viewer);
+
+    // Then the feature is named as drafted, with its live name and the rejection beside it
+    expect(named.find(({ id }) => id === featureId)).toMatchObject({
+      name: renamed,
+      rename: {
+        action: "changed",
+        changed: ["name"],
+        live: { name: live },
+        state: "rejected",
+        reason: "Fictional reason",
+      },
+    });
+  });
+
+  it("marks the reader's own rename, not yet published, as unpublished", async () => {
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    const drafted = await test.request(
+      director.cookie,
+      "PUT",
+      `/api/features/${featureId}`,
+      { name: unique("Fictional Renamed") },
+      { publish: false },
+    );
+    expect(drafted.statusCode, drafted.body).toBe(200);
+
+    const { features: named } = await read(director);
+
+    expect(named.find(({ id }) => id === featureId)?.rename).toMatchObject({
+      state: "waiting",
+      unpublished: true,
+    });
+  });
+
+  it("names an activity as its draft renames it, with its live name", async () => {
+    // Given an activity someone is allocated to, drafted to be renamed
+    const { activityId } = await activityAllocation();
+    const projectId = String(
+      (
+        await test.connection
+          .select({ projectId: activities.projectId })
+          .from(activities)
+          .where(eq(activities.id, activityId))
+      )[0]?.projectId,
+    );
+    const renamed = unique("Fictional Renamed");
+    const drafted = await test.request(
+      director.cookie,
+      "PUT",
+      `/api/activities/${activityId}`,
+      { name: renamed, projectId, releaseId: null },
+    );
+    expect(drafted.statusCode, drafted.body).toBe(200);
+
+    // When the allocations are read
+    const { activities: named } = await read(director);
+
+    // Then the activity is named as drafted, with its live name beside it
+    expect(named.find(({ id }) => id === activityId)).toMatchObject({
+      name: renamed,
+      rename: { live: { name: "Fictional Activity" }, state: "waiting" },
+    });
+  });
+
+  it("gives a feature no rename while its draft keeps its name", async () => {
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+
+    const { features: named } = await read(viewer);
+
+    expect(named.find(({ id }) => id === featureId)?.rename).toBeUndefined();
   });
 
   it("reads allocations to activities beside a feature's, naming each activity with its project", async () => {

@@ -161,6 +161,7 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 - Point at a total to see it in words. Totals count only the rows shown.
 - **Someone on a feature team with nothing allocated** reads **Not allocated**, and counts as **0 of 1** in the totals. Being on a team doesn't allocate anyone to its features.
 - **A green dot inside a line**, in the light green Live row under a drafted row, marks a feature the draft takes off or changes. With **Live only** chosen in the **Draft** menu, it marks each one a waiting draft would change.
+- **A dot before a feature's name** marks a draft renaming the feature, red once the rename is rejected. With **Drafts applied** chosen in the **Draft** menu, a rejected rename shows the feature's name as it is. With **Live only**, every feature shows its name as it is.
 - **Allocations** is read only.
 
 ### In Settings

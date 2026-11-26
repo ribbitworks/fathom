@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Capacity page's Allocations tab and the page's tabs: each person's and planned hire's
-// features with their percentages, grouping, the tabs a role sees and the tab in the address, the
-// old addresses of Allocations, what it shows when it cannot load, its cells read only, the rows it
-// keeps to those over or under, its filter by what someone is allocated to in any month, and its saved
-// views.
+// Tests for the Capacity page's Allocations tab and the page's tabs.
 
 import {
   type Allocations,
@@ -267,6 +263,159 @@ describe("Capacity's Allocations", () => {
     expect(
       recordCell("p-casey", "2027-03")?.getAttribute("aria-readonly"),
     ).toBe("true");
+  });
+});
+
+describe("a feature's rename on Capacity's Allocations", () => {
+  const renamed =
+    (state: "waiting" | "rejected", drafted = allocations.allocations) =>
+    () =>
+      Response.json({
+        allocations: drafted,
+        activities: [],
+        features: [
+          {
+            id: "f-checkout",
+            name: "Checkout Phase 2",
+            meaning: "in-progress",
+            colour: null,
+            rename: {
+              action: "changed",
+              changed: ["name"],
+              live: { name: "Checkout" },
+              state,
+            },
+          },
+        ],
+      });
+
+  it("shows a rejected rename beside live marked rejected, as the tables do", async () => {
+    // Given Checkout's rename rejected, with Drafts & Live, the Draft view to start
+    openAllocations("", { allocationsAnswer: renamed("rejected") });
+    await grid();
+
+    // Then Casey's months name the draft's name, marked rejected
+    const casey = within(rowOf("Casey Fictional"));
+    expect(casey.getAllByText("Checkout Phase 2")).toHaveLength(2);
+    expect(casey.getAllByText(/Rejected/u)).toHaveLength(2);
+    for (const name of casey.getAllByText("Checkout Phase 2")) {
+      expect(name.closest("[class*=changedValue]")).not.toBeNull();
+    }
+  });
+
+  it.each([["drafts"], ["live"]])(
+    "shows the live name for a rejected rename with Draft view %s",
+    async (show) => {
+      openAllocations(`?show=${show}`, {
+        allocationsAnswer: renamed("rejected"),
+      });
+      await grid();
+
+      const casey = within(rowOf("Casey Fictional"));
+      expect(casey.getAllByText("Checkout")).toHaveLength(2);
+      expect(casey.queryByText("Checkout Phase 2")).toBeNull();
+      for (const name of casey.getAllByText("Checkout")) {
+        expect(name.closest("[class*=changedValue]")).toBeNull();
+      }
+    },
+  );
+
+  it("offers the feature in the filter by its live name where the view shows it live", async () => {
+    // Given Checkout's rename rejected, with Live only
+    openAllocations("?show=live", { allocationsAnswer: renamed("rejected") });
+    await grid();
+
+    // When the Allocations filter opens
+    await userEvent.click(screen.getByRole("button", { name: "Allocations" }));
+    const filter = await screen.findByRole("dialog", {
+      name: "Filter Allocated to",
+    });
+
+    // Then it offers Checkout by its live name
+    expect(
+      within(filter).getByRole("checkbox", { name: "Checkout" }),
+    ).toBeDefined();
+    expect(
+      within(filter).queryByRole("checkbox", { name: "Checkout Phase 2" }),
+    ).toBeNull();
+  });
+
+  it("names the feature as it is live in a person's Live row, beside the draft row", async () => {
+    // Given Casey's allocation drafted to change, and Checkout's rename waiting
+    const [casey, ...others] = allocations.allocations;
+    const drafted = [
+      {
+        ...(casey as (typeof allocations.allocations)[number]),
+        draft: {
+          action: "changed" as const,
+          months: { "2027-03": 100, "2027-05": null },
+          state: "waiting" as const,
+          madeBy: "Fictional Editor",
+          madeAt: null,
+        },
+      },
+      ...others,
+    ];
+    openAllocations("", { allocationsAnswer: renamed("waiting", drafted) });
+    await grid();
+
+    // Then the Live row under Casey's draft row names Checkout as it is live
+    const liveRow = screen
+      .getAllByText("Casey Fictional")
+      .map((name) => name.closest("tr") as HTMLElement)
+      .find((row) => row.getAttribute("aria-hidden") === "true");
+    expect(liveRow?.textContent).toContain("Checkout");
+    expect(liveRow?.textContent).not.toContain("Checkout Phase 2");
+  });
+
+  it("takes back an activity's rejected rename with drafts applied, as a feature's", async () => {
+    // Given Casey on an activity whose rename was rejected
+    openAllocations("?show=drafts", {
+      allocationsAnswer: () =>
+        Response.json({
+          allocations: [
+            {
+              id: "a-activity",
+              personId: "p-casey",
+              plannedHireId: null,
+              featureId: null,
+              activityId: "act-rehearsal",
+              months: { "2027-03": 50, "2027-05": null },
+            },
+          ],
+          features: [],
+          activities: [
+            {
+              id: "act-rehearsal",
+              name: "Fictional Rehearsal Phase 2",
+              meaning: "in-progress",
+              colour: null,
+              owner: "FP-1 Fictional Project",
+              rename: {
+                action: "changed",
+                changed: ["name"],
+                live: { name: "Fictional Rehearsal" },
+                state: "rejected",
+              },
+            },
+          ],
+        }),
+    });
+    await grid();
+
+    // Then Casey's months name the activity as it is live
+    const casey = within(rowOf("Casey Fictional"));
+    expect(casey.getAllByText("Fictional Rehearsal")).toHaveLength(2);
+    expect(casey.queryByText("Fictional Rehearsal Phase 2")).toBeNull();
+  });
+
+  it("shows a waiting rename with drafts applied", async () => {
+    openAllocations("?show=drafts", { allocationsAnswer: renamed("waiting") });
+    await grid();
+
+    expect(
+      within(rowOf("Casey Fictional")).getAllByText("Checkout Phase 2"),
+    ).toHaveLength(2);
   });
 });
 

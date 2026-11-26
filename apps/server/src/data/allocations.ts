@@ -16,6 +16,7 @@ import {
 } from "@fathom/db";
 import {
   capitalized,
+  type AllocatedFeature,
   type ClassAccess,
   type AllocationChange,
   type AllocationMonths,
@@ -49,6 +50,7 @@ import {
   addedOnly,
   everyVersion,
   readsKind,
+  type RecordKind,
   type RecordsState,
   shownIds,
   shownVersion,
@@ -222,6 +224,33 @@ const namedInList = (naming: ReturnType<typeof featureNaming>) =>
   "name" in naming
     ? { name: naming.name }
     : { name: capitalized(naming.unseen), unseen: true as const };
+
+// Only the name, of all a feature's or activity's draft may change, since the grid shows no other
+// field.
+function renameOf(
+  kind: RecordKind,
+  state: RecordsState,
+  id: string,
+): Pick<AllocatedFeature, "rename"> {
+  const draft = recordDraftOut(kind, state, new Map(), id);
+  if (draft?.action !== "changed" || !draft.changed.includes("name")) {
+    return {};
+  }
+  const { action, live, state: drafted, reason, unpublished } = draft;
+  return {
+    rename: {
+      action,
+      changed: ["name"],
+      live: Object.fromEntries(
+        Object.entries(live).filter(([field]) => field === "name"),
+      ),
+      state: drafted,
+      ...(reason === undefined ? {} : { reason }),
+      ...(unpublished === true ? { unpublished } : {}),
+    },
+  };
+}
+
 const inSentence = (naming: ReturnType<typeof featureNaming>) =>
   "name" in naming ? naming.name : naming.unseen;
 
@@ -353,6 +382,7 @@ export async function readAllocations(
             return {
               ...planned(one),
               ...namedInList(featureNaming(state, one.id, actor)),
+              ...(seen ? renameOf(featureKind, state, one.id) : {}),
               colour: seen ? planned(one).colour : null,
             };
           }),
@@ -376,6 +406,7 @@ export async function readAllocations(
             return {
               ...planned(one),
               name: String(activity.name),
+              ...renameOf(activityKind, state, one.id),
               owner: activityOwnerCalled(state, activity, readsPlan),
             };
           }),

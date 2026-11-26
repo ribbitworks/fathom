@@ -27,6 +27,7 @@ import {
   problemId,
 } from "./record-editing.tsx";
 import classes from "./record-details.module.css";
+import pages from "./pages.module.css";
 import { roundedUpTo } from "@fathom/shared";
 import { isEmpty, shownInView } from "./grid-columns.tsx";
 import { cellDraftOf } from "./grid-drafts.ts";
@@ -429,9 +430,7 @@ export function Row({
             align="flex-start"
           >
             <MarkRow
-              className={
-                besideLive && drafted ? classes.changedValue : undefined
-              }
+              className={besideLive && drafted ? pages.changedValue : undefined}
             >
               <DraftedItem
                 draft={draft}

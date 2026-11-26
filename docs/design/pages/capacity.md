@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/capacity.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Fathom: Capacity Page
@@ -62,6 +62,7 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 - **Read only:** allocating from the grid is planned, below.
 - **Rows:** someone under several managers or feature teams in the months shown has a row under each, holding only that group's months and blank in the rest. Under No feature team, a row holds the months they were employed on none.
 - **A month's cell:** each feature or activity, after its feature team's colour square, with its percentage at the right. An activity's tooltip names its project or release, such as General (Crane Control), since activities of different projects and releases can share a name.
+  - **A renamed feature or activity:** named as the Draft view shows its rename, and marked as a table marks a changed name: beside live, the rename's dot, a red ring once rejected; with drafts applied, a rejected rename taken back; live only, the live name, with Live's dot while the rename waits. Semibold beside live, as a changed cell is. A Live row names it as it is live. A rename alone gives a person's row no tint or Live row, since a row's draft is the person's allocations. The filter's choices follow the same names.
   - From the current month on, a month off a whole month has a last line, in red and bold, over a faint rule: Over or Under, with how far off at the right, such as +25% or −90%, and the month's total in its tooltip, such as Total 125%. A month with nothing allocated shows Not allocated alone instead.
   - A whole month, and every past month, has no last line.
   - These are a status, not a [warning](../../standards/ui-conventions/drafts-and-values.md#values).
