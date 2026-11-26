@@ -6,7 +6,11 @@
 import type { Asking, DraftKind, Release, ReleaseStream } from "@fathom/shared";
 import { Menu } from "@mantine/core";
 import { useEffect, useEffectEvent, useRef } from "react";
-import { type ActivityRow, listingActivities } from "./activity-list.tsx";
+import {
+  type ActivityRow,
+  activitiesShowOn,
+  listingActivities,
+} from "./activity-list.tsx";
 import { noteOf } from "./cell-kinds.tsx";
 import type { DraftSelection } from "./drafts.ts";
 import { noOthers } from "./new-plan-record-panel.tsx";
@@ -18,6 +22,7 @@ import {
   RecordPanel,
   RecordSection,
   Row,
+  ShowOnItem,
 } from "./record-details.tsx";
 import { useRecordEditing } from "./record-editing.tsx";
 import { noRecordActions } from "./record-table.ts";
@@ -352,27 +357,39 @@ export function ReleasesTable({
     onOpen: (release) => {
       onOpen(release.id);
     },
-    menuItems: (row) =>
-      !row.live &&
-      changeable(row.stream, row.release) &&
-      row.release.note === null && (
-        <Menu.Item
-          onClick={() => {
-            if (open === row.id) {
-              notes.start(
-                noteContextOf(row.stream, row.release, ""),
-                releaseNoteColumn,
-              );
-            } else {
-              onOpen(row.id, () => {
-                noteAsked.current = row.id;
-              });
-            }
-          }}
-        >
-          Add note…
-        </Menu.Item>
-      ),
+    menuItems: (row) => {
+      const addsNote =
+        !row.live &&
+        changeable(row.stream, row.release) &&
+        row.release.note === null;
+      const activityRow = releaseActivityRow(activities);
+      const showOn = activityRow && activitiesShowOn(activityRow, row);
+      return (
+        (addsNote || showOn !== undefined) && (
+          <>
+            {addsNote && (
+              <Menu.Item
+                onClick={() => {
+                  if (open === row.id) {
+                    notes.start(
+                      noteContextOf(row.stream, row.release, ""),
+                      releaseNoteColumn,
+                    );
+                  } else {
+                    onOpen(row.id, () => {
+                      noteAsked.current = row.id;
+                    });
+                  }
+                }}
+              >
+                Add note…
+              </Menu.Item>
+            )}
+            <ShowOnItem showOn={showOn} />
+          </>
+        )
+      );
+    },
   });
   const gridActions = {
     ...noRecordActions<ReleaseRow, never, undefined>(decide),

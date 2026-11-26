@@ -89,9 +89,9 @@ describe("a release's activities on Releases", () => {
         .getAllByRole("button")
         .map(({ textContent }) => textContent),
     ).toEqual([
+      "Activities",
       "Fictional Testing",
       "Fictional Notes",
-      "Show on Activities",
       "Add activity",
     ]);
     expect(recordCell(release.id, "activityIds")?.textContent).toBe(
@@ -118,7 +118,7 @@ describe("a release's activities on Releases", () => {
     );
   });
 
-  it("shows them on Activities, filtered to the release", async () => {
+  it("shows them on Activities, filtered to the release, from the row's name", async () => {
     const user = userEvent.setup();
     const { history } = await openRelease(inStream(release), {
       answers: plan(twoAndAnother),
@@ -126,13 +126,71 @@ describe("a release's activities on Releases", () => {
 
     await user.click(
       within(await activitiesRow()).getByRole("button", {
-        name: "Show on Activities",
+        name: "Activities, show on Activities",
       }),
     );
     await waitFor(() => {
       expect(history.location.pathname).toBe("/activities");
     });
     expect(searchOf(history).get("filters")).toContain(release.id);
+  });
+
+  it("offers Show on Activities in the release's menu, filtered to it", async () => {
+    const user = userEvent.setup();
+    const { history } = await openRelease(inStream(release), {
+      answers: plan(twoAndAnother),
+    });
+
+    await activitiesRow();
+    await user.click(
+      within(releasePanel()).getByRole("button", { name: /^Actions for/ }),
+    );
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Show on Activities" }),
+    );
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/activities");
+    });
+    expect(searchOf(history).get("filters")).toContain(release.id);
+  });
+
+  it("offers Show on Activities in the release's menu in the Live view too", async () => {
+    const user = userEvent.setup();
+    await openRelease(inStream(release), {
+      answers: plan(twoAndAnother),
+      path: `/releases?open=${release.id}&show=live`,
+    });
+
+    await activitiesRow();
+    await user.click(
+      within(releasePanel()).getByRole("button", { name: /^Actions for/ }),
+    );
+    expect(
+      await screen.findByRole("menuitem", { name: "Show on Activities" }),
+    ).toBeDefined();
+  });
+
+  it("offers no Show on Activities for a release with none", async () => {
+    await openRelease(inStream(release), {
+      answers: plan([
+        releaseActivity(3, "Fictional Elsewhere", { releaseId: otherRelease }),
+      ]),
+    });
+
+    const row = await waitFor(() => detailRow("Activities", releasePanel()));
+    expect(within(row).getByText("None")).toBeDefined();
+    await userEvent.click(
+      within(releasePanel()).getByRole("button", { name: /^Actions for/ }),
+    );
+    await screen.findByRole("menuitem", { name: "Copy link" });
+    expect(
+      screen.queryByRole("menuitem", { name: "Show on Activities" }),
+    ).toBeNull();
+    expect(
+      within(releasePanel()).queryByRole("button", {
+        name: "Activities, show on Activities",
+      }),
+    ).toBeNull();
   });
 
   it("adds one on Activities filtered to the release, with the release set", async () => {

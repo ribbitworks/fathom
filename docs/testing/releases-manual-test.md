@@ -37,6 +37,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 - **A release's details:** the side panel for the selected release, headed with its name and, under it, its key. Its **Details** rows are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Activities**, **Status**, **Colour** and **Note**.
 - **Pencil:** the change button at the right of a row of **Details**, for **Release**, **Ships on**, **Cycles** and **Colour**.
 - **A release's ⋯ menu:** the ⋯ menu of a release's row. The **⋯** at the top of the release's side panel opens the same menu. The row's menu offers:
+  - **Show on Activities** to those who see features, while the release has activities.
   - **Remove release**, and **Add note…** while the release has no note, to those who change releases.
   - **Publish draft…** for the account's own unpublished draft.
   - **Discard draft** and **Resubmit** for the release's draft.
@@ -163,7 +164,7 @@ Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-cha
 - [ ] `7B18` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
   - **Expected:**
     - The side panel lists 'Release testing' under **Activities**, after **Features**.
-    - **Show on Activities** and **Add activity** are under the list.
+    - **Activities**, the row's name, is a link, and **Add activity** is under the list.
   - **Notes:**
 
 - [ ] `1C5F` Select 'Release testing' under **Activities**.
@@ -176,13 +177,23 @@ Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-cha
   - **Expected:** The details of 'Harbor 2 LTS' show on **Releases**.
   - **Notes:**
 
-- [ ] `81B5` Select **Show on Activities**.
+- [ ] `81B5` Select **Activities**, the row's name.
   - **Expected:**
     - The **Activities** page opens.
     - The table shows only 'Release testing'.
   - **Notes:**
 
 - [ ] `F5EC` Select the browser's back button.
+  - **Expected:** The details of 'Harbor 2 LTS' show on **Releases**.
+  - **Notes:**
+
+- [ ] `69B7` Open the **⋯** at the top of the details and select **Show on Activities**.
+  - **Expected:**
+    - The **Activities** page opens.
+    - The table shows only 'Release testing'.
+  - **Notes:**
+
+- [ ] `B709` Select the browser's back button.
   - **Expected:** The details of 'Harbor 2 LTS' show on **Releases**.
   - **Notes:**
 
