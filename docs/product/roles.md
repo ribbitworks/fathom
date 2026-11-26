@@ -73,7 +73,8 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 ## Approving
 
 - **By area:** Each area with drafts has its own Approve. Rejecting a draft needs the same permission as approving it.
-- **Seeing what a draft holds:** Approving never grants seeing. An Approver's role must see every detail a draft holds, so a draft with an end date needs a role that sees Personal data, and drafts of People's columns need one that sees people.
+- **Columns:** A column's drafts are approved in its table's area, with the lists made with it, as [Columns and Saved Views](#columns-and-saved-views) sets out.
+- **Seeing what a draft holds:** Approving never grants seeing. An Approver's role must see every detail a draft holds, so a draft with an end date needs a role that sees Personal data, and drafts of any column or list need one that sees people, since General values are people's details.
 - **Drafts that use other drafts:** A draft may use drafts of another area. Approving a draft approves the drafts it uses, so it needs Approve on every area involved. A draft other drafts use is rejected only together with them, since rejecting it alone would leave them using a change that is going back to its maker.
 - **Your own drafts:** Someone else approves a user's drafts, unless the role holds Approve own drafts. That is one permission for every area, and it applies only where the role also holds Approve.
 - **Schedules and cycle patterns:** Edited with Edit Plan or Edit Configuration, and approved with Approve Plan or Approve Configuration, so either Approver may decide them.
@@ -89,7 +90,7 @@ The classes, and each built-in detail's default class, are set out in the [Domai
   - **General versions:** Demand, the Plan, and On track or Late will have a General version for roles without Personal data, such as Product Managers and Team Members. It shows totals, with no names and no Personal details. Not built yet ([#209](https://github.com/ribbitworks/fathom/issues/209), [#204](https://github.com/ribbitworks/fathom/issues/204)).
 - **Classify data:** Moves built-in details, lists and columns between classes, the hiring plan included. It is one permission across every class, and a move needs View on both the class left and the class entered.
 - **Lists and columns:** Making or changing a list or column, a list's choices and their order included, and approving or rejecting their drafts, need sight of its class besides the permission that changes or approves it.
-  - **The permission that changes or approves:** Edit or Approve Configuration for a list; for a column, Edit on its table's area, and Approve Configuration. A new list drafted with a Features or Activities column takes only what the column takes, as [A new list with a column](#columns-and-saved-views) sets out.
+  - **The permission that changes or approves:** Edit or Approve Configuration for a list; for a column, Edit or Approve on its table's area. A new list drafted with a Features or Activities column takes only what the column takes, as [A new list with a column](#columns-and-saved-views) sets out.
   - **Sight of the class:** View People for General (General values are people's details), View Personal details for Personal, and View Confidential data for Confidential.
 - **New lists and columns:** They start General; giving one another class needs Classify data.
 
@@ -128,12 +129,16 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 
 ## Columns and Saved Views
 
-- **A table's columns go with its records:** Whoever edits a table's records, and sees people, adds, changes and removes its columns: Edit Features and releases for Features' and Activities' columns, Edit People for People's. Seeing people is what General lists and columns take, as Lists and columns sets out. Approve Configuration approves them all, until approving moves to each table's area.
+- **A table's columns go with its records:** Whoever edits a table's records, and sees people, adds, changes and removes its columns: Edit Features and releases for Features' and Activities' columns, Edit People for People's. Seeing people is what General lists and columns take, as Lists and columns sets out.
+- **A table's columns are approved in its area:** Approve Features and releases approves Features' and Activities' columns, and Approve People approves People's. Approve Configuration approves none.
 - **Columns on Features and Activities:** Everyone who edits features adds them, the Product Manager included. Everyone who sees the plan gets the General lists these columns draw on, and sees drafts of the columns and who made them. Drafts of those lists are shown only to roles that see Lists or People.
 - **Filling a new column on Features or Activities:** Whoever edits features may give a feature or an activity a value in a column only drafted to be added, as on People.
-  - **Approving:** approving the feature or activity approves the column with it, so it needs Approve Configuration as well as Approve Features.
-  - **Holding one:** a role holding only one, such as the Product Manager, is refused, and another approver decides both.
-- **A new list with a column:** New list, in a Features or Activities column's dialog, drafts a General list and its choices with the column, so whoever sets up those columns makes the lists they need, without Edit Configuration. The list is approved with the column, and undone with it; it is discarded with the last column drawing on it, whether the one it was made with or another since, unless anything changed it since it was made. Rejecting the column alone leaves the list waiting; discarding the rejected column discards the list with it. Lists for People's columns are made on Lists.
+  - **Approving:** approving the feature or activity approves the column with it, which Approve Features and releases decides too.
+  - **A new choice made on Lists:** a feature or activity given a choice only drafted to be added on Lists also needs Approve Configuration for it. A role holding only one, such as the Product Manager, is refused, and another approver decides both.
+- **A new list with a column:** New list, in a Features or Activities column's dialog, drafts a General list and its choices with the column, so whoever sets up those columns makes the lists they need, without Edit Configuration.
+  - **Deciding:** whoever decides the column decides the list and its choices, alone or with it, while the list is only drafted to be added. A choice added to it on Lists, or a change to it there, is decided the same way, so one list has one Approver.
+  - **Undoing and discarding:** the list is undone with the column, and discarded with the last column drawing on it, whether the one it was made with or another since, unless anything changed it since it was made. Rejecting the column alone leaves the list waiting; discarding the rejected column discards the list with it.
+  - **Lists made on Lists:** Lists for People's columns are made on Lists. A list made on Lists stays with Approve Configuration, even when a Features column draws on it.
 - **Saved views:** Everyone who opens a table's page can save personal views.
   - **Sharing:** Sharing a view on a table needs Edit on the area whose records the table holds:
     - **People and the Org chart:** Edit People.
@@ -147,9 +152,8 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 
 ## Setting Up the Plan's Tables
 
-Whoever edits a table's records sets the table up (owner, 2026-11-23), so there is no permission of its own; [Columns and Saved Views](#columns-and-saved-views) sets out what is built. The rest is not built yet ([#13](https://github.com/ribbitworks/fathom/issues/13)). Until it is, the rules for schedules under [Approving](#approving) and [Releases](#releases), and for approving columns under [Columns and Saved Views](#columns-and-saved-views), hold. Then:
+Whoever edits a table's records sets the table up, and whoever approves them approves its columns (owner, 2026-11-23), so there is no permission of its own; [Columns and Saved Views](#columns-and-saved-views) sets out what is built. The rest is not built yet ([#13](https://github.com/ribbitworks/fathom/issues/13)). Until it is, the rules for schedules under [Approving](#approving) and [Releases](#releases) hold. Then:
 
-- **Approving:** A column is approved in its table's own area, so anyone holding Approve Features approves Features' columns. The Project Manager keeps every Approve it holds, Approve Configuration included.
 - **Schedules:** Schedules and cycle lengths become the plan's alone, edited with Edit Plan and approved with Approve Plan, so Edit Configuration and Approve Configuration no longer change them.
 
 ## Safeguards for Administrators

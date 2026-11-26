@@ -67,6 +67,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
   rowActions = true,
   canEditDrafts: mayEditDrafts = false,
   approves: mayApprove = [],
+  decidedBy: givenDecidedBy,
   saving = false,
   canEditColumns,
   actions,
@@ -100,6 +101,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
     rowActions,
     mayEditDrafts,
     mayApprove,
+    givenDecidedBy,
     saving,
     canEditColumns,
     actions,
@@ -140,6 +142,7 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     | "rowActions"
     | "mayEditDrafts"
     | "mayApprove"
+    | "givenDecidedBy"
     | "given"
     | "withDrafts"
   >,
@@ -154,6 +157,7 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     rowActions,
     mayEditDrafts,
     mayApprove,
+    givenDecidedBy,
     given,
     withDrafts,
   } = grid;
@@ -272,9 +276,10 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     canEditDrafts &&
     (typeof mayEditDrafts === "function" ? mayEditDrafts(record) : true);
   const approves = liveOnly ? [] : mayApprove;
+  const decidedBy = givenDecidedBy ?? { lists, fields: draftedFields };
   // Whether the user's role approves a record's draft, and those it decides with it.
   const approvesRecord = (record: Rec) =>
-    mayDecide(approves, table.drafts([record.id]));
+    mayDecide(approves, table.drafts([record.id]), decidedBy);
   const decidableRow = (record: Rec) =>
     table.decidable?.(record) ?? decidable(record);
   // The drafts that make a record's own draft, as approving or publishing it names them: on a table
@@ -325,12 +330,14 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
   // Whether the user's role approves the drafts a record's menu decides.
   const approvesInMenu = (record: Rec) => {
     const { selection } = menuDraftOf(record);
-    return selection !== undefined && mayDecide(approves, selection);
+    return selection !== undefined && mayDecide(approves, selection, decidedBy);
   };
   // What a record's menu offers the user's role to approve or reject, if anything.
   const decidedInMenu = (record: Rec): DraftSelection | undefined => {
     const { selection, decidable: now } = menuDraftOf(record);
-    return now && selection !== undefined && mayDecide(approves, selection)
+    return now &&
+      selection !== undefined &&
+      mayDecide(approves, selection, decidedBy)
       ? selection
       : undefined;
   };
@@ -475,6 +482,7 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     cellDraftsById,
     canEdit,
     approves,
+    decidedBy,
     approvesRecord,
     decidableRow,
     ownDraftOf,

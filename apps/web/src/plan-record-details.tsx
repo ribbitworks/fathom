@@ -4,7 +4,7 @@
 
 import type {
   Asking,
-  DraftKind,
+  DecidedKind,
   Milestone,
   Project,
   RecordRef,
@@ -375,7 +375,7 @@ export function ProjectExtras({
   project: Project;
   show: Show;
   canEdit: boolean;
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   nodes: readonly RecordNode[];
   menu: MilestoneMenu;
   showMilestones: (project: Project) => void;

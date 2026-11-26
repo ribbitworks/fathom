@@ -108,8 +108,10 @@ export const permissionDescriptions: Record<
     without: "Cannot change features, estimates, or the columns on Features.",
   },
   "features:approve": {
-    allows: "Approves or rejects drafts of features and releases.",
-    without: "Cannot approve drafts of features or releases.",
+    allows:
+      "Approves or rejects drafts of features, activities, and releases, and of the columns on Features and Activities, with the lists made with them.",
+    without:
+      "Cannot approve drafts of features, activities, releases, or their columns.",
     needs: ["features:view"],
   },
   "allocations:view": {
@@ -138,8 +140,8 @@ export const permissionDescriptions: Record<
   },
   "people:approve": {
     allows:
-      "Approves or rejects drafts of people, with their teams and reporting lines.",
-    without: "Cannot approve drafts of people.",
+      "Approves or rejects drafts of people, with their teams, reporting lines, and the columns on People.",
+    without: "Cannot approve drafts of people or the columns on People.",
     needs: ["people:view"],
   },
   "feature-teams:view": {
@@ -186,7 +188,7 @@ export const permissionDescriptions: Record<
   },
   "configuration:approve": {
     allows:
-      "Approves or rejects drafts of configuration, such as lists of choices, the columns on People and Features, and, with View Features and releases or View Configuration, schedules and their cycles.",
+      "Approves or rejects drafts of configuration, such as lists of choices, and, with View Features and releases or View Configuration, schedules and their cycles.",
     without: "Cannot approve drafts of configuration.",
     needs: ["configuration:view", "people:view"],
   },

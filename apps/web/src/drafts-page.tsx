@@ -16,7 +16,7 @@ import { DecisionModal, drafts } from "./decision-dialog.tsx";
 import { type DraftsSeen, useDraftEntries } from "./draft-reading.ts";
 import { type DraftPlace, placeKey } from "./draft-places.ts";
 import { DraftPanel, draftPanelId } from "./drafts-panel.tsx";
-import { type DraftSelection, linkedGroups, mayDecide } from "./drafts.ts";
+import { type DraftSelection, linkedGroups } from "./drafts.ts";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
 import {
   draftColumnOrder,
@@ -241,7 +241,7 @@ export function DraftsPage({
                       : []
                   }
                   waits={entries.waits(openRow.entry)}
-                  approves={mayDecide(approves, openRow.entry.selects)}
+                  approves={entries.choosable(openRow.entry)}
                   unseen={entries.unseen(openRow.entry)}
                   actions={
                     decidable(openRow)

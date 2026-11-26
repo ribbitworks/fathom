@@ -21,7 +21,7 @@ import { entryNameId, rowId } from "./choice-ids.ts";
 import { ChoiceMenu, useChoiceMenus } from "./choice-menu.tsx";
 import { ChoiceCells, ChoiceRow, choiceShape } from "./choice-row.tsx";
 import { meaningKeptBy, removedChoice as removed } from "./choice-rules.ts";
-import type { DraftSelection } from "./drafts.ts";
+import { type DraftSelection, noDrafts } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import { builtInNote } from "./list-facts.tsx";
 import { type ListDraftActions, movedChoices } from "./list-drafts.tsx";
@@ -49,7 +49,7 @@ const listFrameId = "list-panel-frame";
 export function ListPanel({
   list,
   canEdit: mayEdit,
-  canApprove,
+  decides,
   showLive = true,
   drafted,
   waits,
@@ -63,7 +63,8 @@ export function ListPanel({
 }: {
   list: List;
   canEdit: boolean;
-  canApprove: boolean;
+  // Whether the user may approve and reject the drafts given here.
+  decides: (selection: DraftSelection) => boolean;
   // Why the role, which changes or decides lists, may not change this one or decide its drafts.
   unchangeable?: string | undefined;
   // Whether a choice a draft changes or moves shows its live row too.
@@ -89,6 +90,8 @@ export function ListPanel({
   // changes to it.
   const canEdit = mayEdit && !listRemoved && list.heldBy === undefined;
   const canMove = canEdit && list.orderHeldBy === undefined;
+  const decidesChoice = (choice: Choice) =>
+    decides({ ...noDrafts(), choices: [choice.id] });
   const meanings = meaningsOf(list.builtIn);
   const weighed = weighs(list.builtIn);
   const shape = choiceShape(meanings, weighed);
@@ -215,7 +218,8 @@ export function ListPanel({
           />
         )}
         {(canEdit ||
-          (choice.draft !== undefined && (canApprove || mayEdit))) && (
+          (choice.draft !== undefined &&
+            (decidesChoice(choice) || mayEdit))) && (
           <span role={cellRole}>
             <ChoiceMenu
               list={list}
@@ -228,7 +232,7 @@ export function ListPanel({
               mayEdit={mayEdit}
               canEdit={canEdit}
               canMove={canMove}
-              canApprove={canApprove}
+              canApprove={decidesChoice(choice)}
               waits={waits}
               setOpened={(opened) => {
                 menus.setMenuFor(opened ? choice.id : undefined);
@@ -294,7 +298,7 @@ export function ListPanel({
           list={list}
           canEdit={canEdit}
           mayEdit={mayEdit}
-          canApprove={canApprove}
+          decides={decides}
           waits={waits}
           draftActions={draftActions}
           onEditList={onEditList}

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for drafts that use other drafts of another kind, against a PostgreSQL server of their own:
-// people and planned hires given values in columns, and choices, drafted to be added, read with the tier of their
-// column, and kept from losing what they use by discarding or undoing; approving a draft with those
-// it uses, and rejecting a draft only with those that use it.
+// Tests for drafts that use drafts of another kind, against a PostgreSQL server of their own: people
+// and planned hires given new columns and choices, approved with what they use, and rejected only
+// with what uses them.
 
 import {
   drafts,
@@ -486,7 +485,7 @@ describe("approving a draft with the drafts it uses", () => {
     );
     expect(refused.statusCode).toBe(403);
     expect(refused.json()).toEqual({
-      error: `Approving this also approves the new column ${field.name}, which needs Approve Configuration.`,
+      error: `Approving this also approves the new list ${list.name}, which needs Approve Configuration.`,
     });
     expect(await isLive(lists, list.id)).toBe(false);
     expect(await isLive(fields, field.id)).toBe(false);

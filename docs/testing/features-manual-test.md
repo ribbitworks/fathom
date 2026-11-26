@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Features
@@ -14,7 +14,7 @@ last_updated: "2026-11-25"
 Verifies the Features page:
 
 - How the table reads, grouped by cycle with Later, by release, by the month needed and by project, two levels deep, with the +1 after a feature shown under two headings.
-- Its columns: Release, a month, customers and a note, columns added to Features, with a new list made in the column's dialog, and moving any column.
+- Its columns: Release, a month, customers and a note, columns added to Features, with a new list made in the column's dialog, approved by whoever approves features, and moving any column.
 - A feature's status, effort in the unit chosen, priority, size and risk, from their built-in lists.
 - Editing features as drafts, who may change them, and how their drafts show on the Drafts page.
 - Writing a note in New feature.
@@ -1006,3 +1006,55 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
   - **Notes:**
 
 **Afterwards:** Run Discard the Unpublished Changes.
+
+### FEAT-33: The Product Manager Approves a Column on Features
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from FEAT-32.
+
+**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
+
+- [ ] `A107` Select **New column**.
+  - **Expected:** The **New column** dialog opens.
+  - **Notes:**
+
+- [ ] `D6B4` Type `Fictional Rank` in **Name**.
+  - **Expected:** **Name** holds `Fictional Rank`.
+  - **Notes:**
+
+- [ ] `A859` Choose **Number** under **Type**.
+  - **Expected:** **Type** reads **Number**.
+  - **Notes:**
+
+- [ ] `C139` Select **Add column**.
+  - **Expected:**
+    - The dialog closes.
+    - A `Fictional Rank` column is added at the right end of the table, with a hollow yellow dot before its name in its header.
+  - **Notes:**
+
+- [ ] `5F52` Select **Publish** in the top bar.
+  - **Expected:** The dot before `Fictional Rank` is now solid yellow.
+  - **Notes:**
+
+- [ ] `0A6F` Sign out, then sign in as the Product Manager, `product.manager@fathom.test`.
+  - **Expected:** Fathom opens, signed in as the Product Manager.
+  - **Notes:**
+
+- [ ] `180A` Select the **Features** page in the left-hand menu.
+  - **Expected:** `Fictional Rank` is the last column, with a solid yellow dot before its name.
+  - **Notes:**
+
+- [ ] `6D6D` Open the `Fictional Rank` column menu.
+  - **Expected:** The menu offers **Approve…** and **Reject…**.
+  - **Notes:**
+
+- [ ] `7F45` Select **Approve…**.
+  - **Expected:** A dialog opens, with an **Approve** button.
+  - **Notes:**
+
+- [ ] `0A45` Select **Approve**.
+  - **Expected:**
+    - The dialog closes.
+    - The `Fictional Rank` header has no dot.
+  - **Notes:**
+
+**Afterwards:** Run Restore the Seed Data.

@@ -46,6 +46,7 @@ export const size = {
   multiple: false,
   required: false,
   onPlannedHires: false,
+  table: "features" as const,
 };
 export const columnsOf = (fields: Plan["featureColumns"]["fields"] = [size]) =>
   ({

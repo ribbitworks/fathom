@@ -93,7 +93,7 @@ See [Org chart](org-chart.md#change-a-feature-team).
 
 ## Set Up the Choices People Pick From
 
-Every change to a list is a draft, which goes live once someone whose role approves configuration approves it.
+Every change to a list is a draft, which goes live once someone whose role approves configuration approves it. A new list made with **New list** in a column's dialog on **Features** or **Activities**, and any change to it before it's approved, is approved by whoever approves features instead.
 
 ### Add Choices to a List
 

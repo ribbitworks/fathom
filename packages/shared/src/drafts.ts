@@ -5,8 +5,7 @@
 
 import { z } from "zod";
 import { linkShape } from "./links.ts";
-import { holdsAny, type Permission, permissionLabel } from "./access.ts";
-import { eitherOf } from "./words.ts";
+import { type Permission } from "./access.ts";
 
 // A draft waits for approval until an Approver approves or rejects it; a rejected draft keeps its
 // reason until it is changed again or discarded.
@@ -210,9 +209,10 @@ export const recordEditors: Record<RecordType, readonly Permission[]> = {
 
 // The permissions that approve or reject each kind's drafts, any one of them sufficing: that of the
 // area it belongs to, and, for schedules and their cycles, which are part of both the plan and
-// planning configuration, either's. Every kind must be listed, which the compiler checks.
+// planning configuration, either's. A column's table decides its drafts instead, as decidersOf sets
+// out. Every other kind must be listed, which the compiler checks.
 export const approvePermissions: Record<
-  DraftKind,
+  Exclude<DraftKind, "field">,
   readonly [ApprovePermission, ...ApprovePermission[]]
 > = {
   person: ["people:approve"],
@@ -221,7 +221,6 @@ export const approvePermissions: Record<
   list: ["configuration:approve"],
   "list-item": ["configuration:approve"],
   "choice-order": ["configuration:approve"],
-  field: ["configuration:approve"],
   "release-stream": ["plan:approve", "configuration:approve"],
   "cycle-pattern": ["plan:approve", "configuration:approve"],
   release: ["features:approve"],
@@ -248,33 +247,6 @@ export const approvedAreaNames: Record<ApprovePermission, string> = {
 
 // Whether drafts are being approved or rejected.
 export type Asking = "approve" | "reject";
-
-// Whether some permissions let a user approve and reject a kind's drafts.
-export const approvesKind = (
-  permissions: readonly string[],
-  kind: DraftKind,
-): boolean =>
-  // The kind is always one of the fixed list above.
-  // eslint-disable-next-line security/detect-object-injection
-  holdsAny(permissions, approvePermissions[kind]);
-
-// Why a role may not approve a draft that takes along another of a kind it does not approve, such
-// as a column only drafted to be added that a feature is given a value in, naming that one, since
-// approving one approves both; undefined when it may.
-export const takenAlongRefusal = (
-  permissions: readonly string[],
-  kind: DraftKind,
-  name: string,
-): string | undefined =>
-  approvesKind(permissions, kind)
-    ? undefined
-    : // The kind is always one of the fixed list above.
-      // eslint-disable-next-line security/detect-object-injection
-      `Approving this also approves ${name}, which needs ${eitherOf(approvePermissions[kind].map(permissionLabel))}.`;
-
-// The kinds of draft some permissions let a user approve and reject.
-export const approvableKinds = (permissions: readonly string[]): DraftKind[] =>
-  draftKinds.filter((kind) => approvesKind(permissions, kind));
 
 // A draft's key, its kind and its record's identifier, naming it alike on the server and the page.
 export const draftKey = (kind: string, id: string): string => `${kind} ${id}`;
@@ -342,34 +314,6 @@ export function draftsWhere(
     columns: kept("field") ? asked.columns : [],
     records: asked.records.filter(({ type }) => kept(type)),
   };
-}
-
-// The kinds there are drafts of among those asked for.
-export function kindsAsked(asked: DraftsRequest): DraftKind[] {
-  const records = new Set(asked.records.map(({ type }) => type));
-  const asks: Record<DraftKind, boolean> = {
-    person: asked.people.length > 0,
-    "planned-hire": asked.plannedHires.length > 0,
-    "feature-team": asked.featureTeams.length > 0,
-    list: asked.lists.length > 0,
-    "list-item": asked.choices.length > 0,
-    "choice-order": asked.orders.length > 0,
-    field: asked.columns.length > 0,
-    "release-stream": records.has("release-stream"),
-    "cycle-pattern": records.has("cycle-pattern"),
-    release: records.has("release"),
-    feature: records.has("feature"),
-    customer: records.has("customer"),
-    proposal: records.has("proposal"),
-    project: records.has("project"),
-    milestone: records.has("milestone"),
-    activity: records.has("activity"),
-    allocation: records.has("allocation"),
-    "planning-settings": records.has("planning-settings"),
-  };
-  // The kind is always one of the fixed list above.
-  // eslint-disable-next-line security/detect-object-injection
-  return draftKinds.filter((kind) => asks[kind]);
 }
 
 export const rejectionRequestSchema = draftsAsked

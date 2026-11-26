@@ -3,10 +3,10 @@
 // The Drafts page's table, on the shared table: a row for each draft the reader sees.
 
 import {
-  approvedAreaNames,
-  eitherOf,
-  approvePermissions,
+  areaWords,
   capitalized,
+  type Decided,
+  type DecidedKind,
   type DraftKind,
   type DraftsTab,
   draftsTabSchema,
@@ -68,19 +68,9 @@ const typeNames: Record<DraftKind, string> = {
   "planning-settings": "Planning settings",
 };
 
-// The areas whose Approvers decide a kind's drafts, either being enough, in a sentence, such as
-// "features and releases", or "the plan or configuration", and as the Area column names them.
-export const areaWords = (kind: DraftKind): string =>
-  eitherOf(
-    // The kind, and each Approve permission that decides it, always come from the fixed lists.
-    // eslint-disable-next-line security/detect-object-injection
-    approvePermissions[kind].map(
-      // eslint-disable-next-line security/detect-object-injection
-      (permission) => approvedAreaNames[permission],
-    ),
-  );
-
-export const areaOf = (kind: DraftKind): string => capitalized(areaWords(kind));
+// The areas whose Approvers decide a draft, as the Area column names them.
+export const areaOf = (decided: Decided): string =>
+  capitalized(areaWords(decided));
 
 const changeNames = {
   created: "Added",
@@ -142,7 +132,7 @@ export function draftRows(
         : changeNames[one.action],
     changes: one.details.map(phraseText).join("; "),
     type: typeNames[one.kind],
-    area: areaOf(one.kind),
+    area: areaOf(one.decided),
     madeBy: one.who,
     drafted: one.madeAt === null ? "" : dayOf(one.madeAt),
     reason: one.reason ?? "",
@@ -181,12 +171,11 @@ export function draftColumns(
       multiple: false,
       choices: choicesOf(choices),
     });
-  const kindsShown = (pick: (kind: DraftKind) => string) =>
-    inOrderSeen(
-      (Object.keys(typeNames) as DraftKind[])
-        .filter((kind) => rows.some(({ entry }) => entry.kind === kind))
-        .map(pick),
-    );
+  const entriesShown = (Object.keys(typeNames) as DraftKind[]).flatMap((kind) =>
+    rows.flatMap(({ entry }) => (entry.kind === kind ? [entry] : [])),
+  );
+  const kindsShown = (pick: (entry: Entry) => string) =>
+    inOrderSeen(entriesShown.map(pick));
   return [
     {
       ...column("record", "Record", "text"),
@@ -208,9 +197,14 @@ export function draftColumns(
       "choice",
       // The kind is always one of the fixed kinds.
       // eslint-disable-next-line security/detect-object-injection
-      kindsShown((kind) => typeNames[kind]),
+      kindsShown(({ kind }) => typeNames[kind]),
     ),
-    column("area", "Area", "choice", kindsShown(areaOf)),
+    column(
+      "area",
+      "Area",
+      "choice",
+      kindsShown(({ decided }) => areaOf(decided)),
+    ),
     // One's own changes are always one's own.
     ...(tab === "unpublished"
       ? []
@@ -247,7 +241,7 @@ export const draftsTabNames: Record<DraftsTab, string> = {
 // The tabs a role sees, in order: To decide for a role that approves drafts, Not published for one
 // that makes them, and All drafts for all; the first opens when the view names none.
 export const tabsFor = (
-  approves: readonly DraftKind[],
+  approves: readonly DecidedKind[],
   makesDrafts: boolean,
 ): DraftsTab[] =>
   draftsTabSchema.options.filter(

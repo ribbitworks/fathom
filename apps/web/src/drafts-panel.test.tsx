@@ -35,6 +35,7 @@ const entry = (more: Partial<Entry> = {}): Entry => ({
   selects: { ...noDrafts(), people: ["p1"] },
   place: { kind: "person", keyNumber: 1 },
   ...more,
+  decided: more.decided ?? { kind: more.kind ?? "person" },
 });
 
 function show({

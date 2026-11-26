@@ -8,6 +8,11 @@ import {
   type ChangeValue,
   type Choice,
   type ColumnTable,
+  columnTablePolicies,
+  columnTables,
+  type Decided,
+  type FeatureColumns,
+  type DecidedKind,
   type DraftKind,
   type DraftState,
   type FeatureTeam,
@@ -72,6 +77,8 @@ export interface Entry {
   state: DraftState;
   who: string;
   kind: DraftKind;
+  // What deciding it needs: its kind, with the table of its column, or of the column it was made with.
+  decided: Decided;
   // The record's name, with what it belongs to where its name alone may not say, such as a choice's
   // list.
   name: string;
@@ -102,6 +109,7 @@ function entry(
     editors?: (string | null)[] | undefined;
     unpublished?: boolean | undefined;
     needsOtherApprover?: boolean | undefined;
+    madeWith?: ColumnTable | undefined;
   },
   kind: DraftKind,
   name: string,
@@ -118,6 +126,13 @@ function entry(
     // Everyone who changed the draft, since several people's changes to one record make one draft.
     who: allOf(makerNames(draft)),
     kind,
+    decided: {
+      kind,
+      table:
+        typeof place === "object" && place.kind === "column"
+          ? place.table
+          : draft.madeWith,
+    },
     name,
     details,
     reason: draft.state === "rejected" ? draft.reason : undefined,
@@ -301,7 +316,11 @@ function columnEntries(
                     { ...field, listId: listName(field.listId) },
                   ),
               { columns: [field.id] },
-              { kind: "column", keyNumber: field.keyNumber, table },
+              {
+                kind: "column",
+                keyNumber: field.keyNumber,
+                table: field.table ?? table,
+              },
               field.heldBy,
             ),
           ]
@@ -530,7 +549,7 @@ export interface DraftReads {
   settings: PlanningSettingsShown | undefined;
   teams: FeatureTeam[] | undefined;
   chartPeople: OrgChartPerson[] | undefined;
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   permissions: readonly Permission[];
 }
 
@@ -542,6 +561,18 @@ export interface DraftedData {
 }
 
 const noPeople: PeopleData = { people: [], fields: [], order: [] };
+
+type PlanTable = Exclude<ColumnTable, "people">;
+
+// The columns of each table the plan holds, as the plan sends them.
+const planColumns: Record<PlanTable, (plan: ProjectPlan) => FeatureColumns> = {
+  features: (plan) => plan.featureColumns,
+  activities: (plan) => plan.activityColumns,
+};
+
+const planTables = columnTables.filter(
+  (table): table is PlanTable => table !== "people",
+);
 
 // Every draft read, newest first.
 export function entriesOf(read: DraftReads): Entry[] {
@@ -559,12 +590,18 @@ export function entriesOf(read: DraftReads): Entry[] {
       : teamEntries(read.teams, read.chartPeople)),
     ...(planData === undefined
       ? []
-      : columnEntries(
-          planData.featureColumns,
-          planData.featureColumns.lists,
-          (name) => `${name} on Features`,
-          "features",
-        )),
+      : planTables.flatMap((table) => {
+          // The table is always one of the fixed tables.
+          // eslint-disable-next-line security/detect-object-injection
+          const columns = planColumns[table](planData);
+          return columnEntries(
+            columns,
+            columns.lists,
+            // eslint-disable-next-line security/detect-object-injection
+            (name) => `${name} on ${columnTablePolicies[table].name}`,
+            table,
+          );
+        })),
     ...(planData === undefined || read.choices === undefined
       ? []
       : planEntries(planData, read.choices, streams)),
@@ -582,7 +619,13 @@ export function draftedOf(read: DraftReads): DraftedData {
     columns: {
       fields: [
         ...peopleData.fields,
-        ...(planData === undefined ? [] : planData.featureColumns.fields),
+        ...(planData === undefined
+          ? []
+          : planTables.flatMap(
+              // The table is always one of the fixed tables.
+              // eslint-disable-next-line security/detect-object-injection
+              (table) => planColumns[table](planData).fields,
+            )),
       ],
       people: peopleData.people,
       records: [

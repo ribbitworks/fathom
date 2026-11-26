@@ -7,6 +7,7 @@ import { type Database, type Reader } from "@fathom/db";
 import type {
   Choice,
   ChoiceDraft,
+  ColumnTable,
   List,
   ListDraft,
   OrderDraft,
@@ -37,6 +38,7 @@ import {
   otherApprover,
 } from "./draft-makers.ts";
 import { keyNumberOf } from "./record-keys.ts";
+import { tablesMadeWith } from "./lists-made-with.ts";
 import { builtInKey, generalOnlyListIds } from "./list-rules.ts";
 import {
   choicesOrderUses,
@@ -53,6 +55,7 @@ function draftOut<Live extends Record<string, unknown>>(
   live: Recorded | undefined,
   draft: Draft,
   maker: Maker | undefined,
+  madeWith: ColumnTable | undefined,
 ) {
   // In the record's own order, since drafts are stored without one.
   const touched = draftFields(live, draft);
@@ -67,6 +70,7 @@ function draftOut<Live extends Record<string, unknown>>(
           // eslint-disable-next-line security/detect-object-injection
           changed.map((field) => [field, live[field]]),
         )) as Partial<Live>,
+    ...(madeWith === undefined ? {} : { madeWith }),
     state: draft.state,
     ...(draft.state === "rejected" && draft.reason !== null
       ? { reason: draft.reason }
@@ -112,10 +116,15 @@ export const weightOf = (choice: Recorded): number | null =>
 const withWeight = (weight: number | null) =>
   weight === null ? {} : { weight };
 
+// Who made each draft, and the table of the column each new list or choice was made with.
 interface Makers {
   list: Map<string, Maker>;
   choice: Map<string, Maker>;
   order: Map<string, Maker>;
+  madeWith: {
+    list: ReadonlyMap<string, ColumnTable>;
+    choice: ReadonlyMap<string, ColumnTable>;
+  };
 }
 
 function choiceOut(state: ListsState, makers: Makers, id: string): Choice {
@@ -139,6 +148,7 @@ function choiceOut(state: ListsState, makers: Makers, id: string): Choice {
             live,
             draft,
             makers.choice.get(id),
+            makers.madeWith.choice.get(id),
           ),
         }),
     ...heldByOf(state.held.choices, id),
@@ -215,6 +225,7 @@ export function listsOut(
                 live,
                 draft,
                 makers.list.get(id),
+                makers.madeWith.list.get(id),
               ),
             }),
         ...heldByOf(state.held.lists, id),
@@ -257,6 +268,20 @@ export async function readMakers(
       everything,
       viewer,
     ),
+    madeWith: {
+      list: await tablesMadeWith(
+        reader,
+        state,
+        "list",
+        state.listDrafts.keys(),
+      ),
+      choice: await tablesMadeWith(
+        reader,
+        state,
+        "list-item",
+        state.choiceDrafts.keys(),
+      ),
+    },
   };
 }
 

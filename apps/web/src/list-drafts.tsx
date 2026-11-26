@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Drafts on the Lists page: the tint of a row with a draft, a draft shown before the server has
-// saved it, and the menu of a list's drafts, its own and that of its choices' order, with what can
-// be done with each: discarding it or resubmitting it, for those who may edit lists, and approving
-// or rejecting it, for Approvers.
+// saved it, and the menu of a list's drafts, its own and that of its choices' order.
 
 import { allOf } from "@fathom/shared";
 import type { Choice, List } from "@fathom/shared";
@@ -202,13 +200,16 @@ export function ListDraftMenu({
   orderWaits,
   canEdit,
   canApprove,
+  canApproveOrder,
   actions,
 }: {
   list: List;
   // Whether the new order waits for a rejected draft it depends on, so cannot be approved yet.
   orderWaits: boolean;
   canEdit: boolean;
+  // Whether the user may decide the list's own draft, and the new order of its choices.
   canApprove: boolean;
+  canApproveOrder: boolean;
   actions: ListDraftActions;
 }) {
   const { draft, orderDraft } = list;
@@ -259,7 +260,7 @@ export function ListDraftMenu({
           <DraftItems
             canEdit={canEdit && list.orderHeldBy === undefined}
             canApprove={
-              canApprove &&
+              canApproveOrder &&
               decidable({ draft: orderDraft, heldBy: list.orderHeldBy })
             }
             othersApprove={orderDraft.needsOtherApprover === true}

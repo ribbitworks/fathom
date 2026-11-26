@@ -277,6 +277,7 @@ export const toFieldOut = (
     multiple,
     required: field.required === true,
     onPlannedHires: field.onPlannedHires === true,
+    table: columnTableOf(field.tableName),
   };
 };
 

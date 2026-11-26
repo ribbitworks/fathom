@@ -5,9 +5,9 @@
 
 import {
   approvableKinds,
-  type DraftKind,
+  type DecidedKind,
   draftKeysOf,
-  draftKinds,
+  decidedKinds,
   draftingPermissions,
   holdsAny,
   type Permission,
@@ -43,7 +43,7 @@ import { releaseStreamsQuery } from "./releases.ts";
 
 // What drafts a role sees, by the data it sees, and which kinds it approves.
 export interface DraftsSeen {
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   // Whether the reader makes drafts, so has changes of their own to publish.
   makesDrafts: boolean;
   // Whether the reader sees people, so their drafts; those who see only lists see only theirs.
@@ -128,9 +128,9 @@ export function useDraftEntries({
   });
   // The role's kinds and permissions, kept while they read the same, as a page passes new arrays each
   // time it renders.
-  const approvesKey = approves.join(" ");
-  const permissionsKey = permissions.join(" ");
-  const kinds = useMemo(() => wordsOf<DraftKind>(approvesKey), [approvesKey]);
+  const approvesKey = approves.join(",");
+  const permissionsKey = permissions.join(",");
+  const kinds = useMemo(() => wordsOf<DecidedKind>(approvesKey), [approvesKey]);
   const held = useMemo(
     () => wordsOf<Permission>(permissionsKey),
     [permissionsKey],
@@ -192,7 +192,7 @@ export function useDraftEntries({
 }
 
 const wordsOf = <Word extends string>(joined: string): Word[] =>
-  joined === "" ? [] : (joined.split(" ") as Word[]);
+  joined === "" ? [] : (joined.split(",") as Word[]);
 
 // The drafts read, with what decides each, each draft's taking along of others worked out once.
 function loadedEntries(
@@ -212,7 +212,11 @@ function loadedEntries(
     waits: ({ state, selects }: Entry) =>
       state === "waiting" &&
       waitsForRejected(selects, drafted.lists, drafted.columns),
-    choosable: ({ selects }: Entry) => mayDecide(approves, selects),
+    choosable: ({ selects }: Entry) =>
+      mayDecide(approves, selects, {
+        lists: listsData,
+        fields: drafted.columns.fields,
+      }),
     unseen,
     needsOtherApproval: ({ key, selects }: Entry) => {
       const known = takesAlongOthers.get(key);
@@ -237,7 +241,7 @@ function loadedEntries(
       const decision = decisionFor(
         state === "rejected" ? "reject" : "approve",
         selects,
-        draftKinds,
+        decidedKinds,
         drafted.lists,
         drafted.columns,
       );

@@ -1,6 +1,6 @@
 # Working as a Product Manager
 
-As a Product Manager, you shape the plan: the features to build, the projects customers need, and the proposals that may become projects. You also add columns to Features, and approve other people's drafts of the plan, features and releases.
+As a Product Manager, you shape the plan: the features to build, the projects customers need, and the proposals that may become projects. You also add columns to Features, and approve other people's drafts of the plan, features and releases, and the columns on Features.
 
 Your pages are **Features** and **Projects**, under **Plan** in the left-hand menu, and **Drafts**, under **History**.
 
@@ -95,7 +95,7 @@ Open a project's or proposal's details. **Scope history**, at the end, lists eac
 
 ## Approve or Reject Drafts
 
-You approve or reject drafts of projects, proposals, features, releases and schedules. Drafts you changed yourself stay waiting for another approver.
+You approve or reject drafts of projects, proposals, features, releases and schedules, and of the columns on Features and Activities with the lists made with them. Drafts you changed yourself stay waiting for another approver.
 
 ### Approve on the Drafts Page
 

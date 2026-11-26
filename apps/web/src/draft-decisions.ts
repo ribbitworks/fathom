@@ -5,12 +5,12 @@
 
 import {
   type Asking,
-  type DraftKind,
+  type DecidedKind,
   type List,
   type Person,
-  draftsWhere,
 } from "@fathom/shared";
 import {
+  beyondRole,
   type Columns,
   type DraftSelection,
   choicesOf,
@@ -182,12 +182,17 @@ function takenAlong(
     : takenAlong(more, lists, columns);
 }
 
+const decidedByOf = (lists: readonly List[], columns?: Columns) => ({
+  lists,
+  fields: columns?.fields ?? [],
+});
+
 // The drafts in the selection another approver must approve: those whose kind the user's role does
 // not approve, those the user changed and may not approve themselves, and those taking either along,
 // which can't be approved without them.
 function othersToApprove(
   selection: DraftSelection,
-  approves: readonly DraftKind[],
+  approves: readonly DecidedKind[],
   lists: readonly List[],
   columns?: Columns,
 ): DraftSelection {
@@ -195,7 +200,7 @@ function othersToApprove(
     .filter((one) => {
       const whole = takenAlong(one, lists, columns);
       return (
-        draftTotal(draftsWhere(whole, (kind) => !approves.includes(kind))) +
+        draftTotal(beyondRole(whole, approves, decidedByOf(lists, columns))) +
           draftTotal(needingOthers(whole, lists, columns)) >
         0
       );
@@ -210,7 +215,7 @@ function othersToApprove(
 export function decisionFor(
   asking: Asking,
   chosen: DraftSelection,
-  approves: readonly DraftKind[],
+  approves: readonly DecidedKind[],
   lists: readonly List[],
   columns?: Columns,
   all = false,
@@ -226,7 +231,7 @@ export function decisionFor(
       columns?.featureTeams,
     );
   const beyond = (selection: DraftSelection) =>
-    draftsWhere(selection, (kind) => !approves.includes(kind));
+    beyondRole(selection, approves, decidedByOf(lists, columns));
   if (asking === "reject") {
     const dependents = joined(
       usingDrafts(chosen, lists, columns),
@@ -281,7 +286,7 @@ export function decisionFor(
 // a feature fills, as approving them all leaves them for someone else.
 export const needsOtherApproval = (
   selection: DraftSelection,
-  approves: readonly DraftKind[],
+  approves: readonly DecidedKind[],
   lists: readonly List[],
   columns?: Columns,
 ): boolean =>

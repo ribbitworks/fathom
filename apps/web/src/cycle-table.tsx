@@ -7,7 +7,7 @@ import {
   type Choice,
   type Cycle,
   draftKey,
-  type DraftKind,
+  type DecidedKind,
   type RecordRef,
   type ReleaseStream,
   type Show,
@@ -587,12 +587,18 @@ export function cycleTable({
   planned?: PlannedFeatures | undefined;
   onOpen: (row: CycleRow) => void;
   // The kinds of draft the user's role approves.
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
 }): RecordTable<CycleRow, never, undefined> {
   const decidedBy = (row: CycleRow) =>
     waitingOf(row).filter(
       ({ ref, decidable }) =>
-        decidable && mayDecide(approves, { ...noDrafts(), records: [ref] }),
+        decidable &&
+        // A schedule's records name no column or list.
+        mayDecide(
+          approves,
+          { ...noDrafts(), records: [ref] },
+          { lists: [], fields: [] },
+        ),
     );
   const refsOf = (waiting: readonly Waiting[]) => waiting.map(({ ref }) => ref);
   // A draft's menu names every value it changes, the Duration only the details show included.

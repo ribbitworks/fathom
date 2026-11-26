@@ -7,21 +7,17 @@ import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { permissionGrid } from "./access.ts";
 import {
-  approvableKinds,
   draftsChangedBy,
   approvePermissions,
-  draftKinds,
   draftsAtOnce,
   draftsRequestSchema,
   draftsWhere,
-  kindsAsked,
   planningSettingsId,
   recordRefSchema,
   rejectionRequestSchema,
   draftKeysOf,
   withNeeded,
   withUsers,
-  takenAlongRefusal,
 } from "./drafts.ts";
 
 const message = (result: { error?: { issues: { message: string }[] } }) =>
@@ -134,20 +130,11 @@ describe("approving by area", () => {
         actions.approve === undefined ? [] : [actions.approve],
       ),
     );
-    for (const kind of draftKinds) {
-      // The kind is always one of the fixed list.
-      // eslint-disable-next-line security/detect-object-injection
-      for (const permission of approvePermissions[kind]) {
+    for (const permissions of Object.values(approvePermissions)) {
+      for (const permission of permissions) {
         expect(approving).toContain(permission);
       }
     }
-  });
-
-  it("finds every kind asked for, and none when nothing is", () => {
-    expect(kindsAsked(everyKind)).toEqual([...draftKinds]);
-    expect(
-      kindsAsked(draftsRequestSchema.parse({ records: [release] })),
-    ).toEqual(["release"]);
   });
 
   it("keeps only the drafts of the kinds wanted", () => {
@@ -164,54 +151,6 @@ describe("approving by area", () => {
       },
     );
     expect(draftsWhere(everyKind, () => true)).toEqual(everyKind);
-  });
-
-  it("names the kinds some permissions approve", () => {
-    expect(approvableKinds(["people:approve", "features:approve"])).toEqual([
-      "person",
-      "release",
-      "feature",
-      "activity",
-    ]);
-    expect(approvableKinds(["plan:approve", "people:view"])).toEqual([
-      "release-stream",
-      "cycle-pattern",
-      "customer",
-      "proposal",
-      "project",
-      "milestone",
-    ]);
-    expect(approvableKinds(["features:edit", "people:view"])).toEqual([]);
-  });
-
-  it("refuses taking along a draft the role does not approve, naming it and the permission it needs", () => {
-    expect(
-      takenAlongRefusal(
-        ["features:approve"],
-        "field",
-        "the new column Fictional Score",
-      ),
-    ).toBe(
-      "Approving this also approves the new column Fictional Score, which needs Approve Configuration.",
-    );
-  });
-
-  it("names each permission that would do, when any of several approves the kind", () => {
-    expect(
-      takenAlongRefusal([], "release-stream", "the schedule Fictional"),
-    ).toBe(
-      "Approving this also approves the schedule Fictional, which needs Approve Plan or Approve Configuration.",
-    );
-  });
-
-  it("lets a role that approves the kind take it along", () => {
-    expect(
-      takenAlongRefusal(
-        ["features:approve", "configuration:approve"],
-        "field",
-        "the new column Fictional Score",
-      ),
-    ).toBeUndefined();
   });
 });
 

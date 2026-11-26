@@ -2,7 +2,7 @@
 
 // Tests for the shared table on its own, with a made-up kind of record, gadgets.
 
-import { draftFilterKey, draftKinds } from "@fathom/shared";
+import { draftFilterKey, decidedKinds } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import type { ReactNode } from "react";
 import { act, render, screen, within } from "@testing-library/react";
@@ -101,7 +101,7 @@ describe("a table of another kind of record", () => {
         gadget("g2", { draft: { ...waiting, action: "created" } }),
       ],
       given: actions({ remove, decide }),
-      approves: draftKinds,
+      approves: decidedKinds,
     });
     await userEvent.click(rowActions("Gadget g1"));
     await userEvent.click(

@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/ui-conventions.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Fathom: Visual Design
@@ -163,7 +163,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
     - **Dialog:** Names the drafts it decides, up to five, then "and n others", lists the related drafts it includes, and says how many it skips because they depend on a rejected draft.
     - **Approving:** Leaves waiting, and names, the drafts another approver must approve, as [Approving several](../standards/ui-conventions/drafts-and-values.md#drafts) sets out; only when every one is does the dialog decide none.
     - **Deciding none:** When every draft needs another approver, the dialog is titled Another approver needed, says why, names them, and offers only Close.
-    - **Why:** Such as "This account changed these drafts, so another approver must approve them:" or, for an area the user's role does not approve, such as the new column a person's draft uses, "This role can't approve these drafts:", or "This role can't reject these drafts:" when rejecting.
+    - **Why:** Such as "This account changed these drafts, so another approver must approve them:" or, for an area the user's role does not approve, such as the new list made on Lists a person's draft uses, "This role can't approve these drafts:", or "This role can't reject these drafts:" when rejecting.
   - **Draft menu:** The Draft button above the table names the choice shown, such as Drafts & Live, with a dot while its filter is in use.
     - **Filter:** Filters to records whose drafts are waiting or rejected, or that have no draft, shown in a pill such as "Draft: Waiting".
     - **Showing:** Chooses what to show: Drafts & Live, the default; Drafts applied; or Live only.
@@ -181,7 +181,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
       - **Record:** The record's name, with what it belongs to where its name alone may not say, such as Harbourside in Sites, and a project's or proposal's ID first, after the draft's dot, any lock, and the grey boxes.
       - **Record's grey boxes:** Waits on a rejected draft and Needs another approver, shown only to a role that could otherwise decide it.
         - **Unseen details:** Needs another approver also marks a draft of a list, a list's choice or its order whose class the role can't see, and a person's draft holding details the role can't see. Each stays off To decide, its details saying why.
-        - **Taken along:** it also marks a draft whose approval takes along one another approver must approve, such as a feature filled in a column still drafted to be added that the role can't approve or this account changed. It stays on To decide, since it can still be rejected.
+        - **Taken along:** it also marks a draft whose approval takes along one another approver must approve, such as a feature given a new choice made on Lists that the role can't approve, or filled in a column still drafted to be added that this account changed. It stays on To decide, since it can still be rejected.
       - **Change:** Added, Changed, Removed or Reordered.
       - **State:** Waiting, Rejected or Not published, shown from the start so it can be filtered by.
       - **What changes:** In the lighter form of [A change in words](../standards/ui-conventions/pages-and-panels.md#history).

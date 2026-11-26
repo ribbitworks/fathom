@@ -3,7 +3,12 @@
 // What the plan's tables and details panels do to their records: add, change, remove, discard and
 // resubmit them, and ask to decide their drafts.
 
-import type { Asking, DraftKind, Proposal, ProjectPlan } from "@fathom/shared";
+import type {
+  Asking,
+  DecidedKind,
+  Proposal,
+  ProjectPlan,
+} from "@fathom/shared";
 import { allOf, withRemovalReason } from "@fathom/shared";
 import type { CellChange } from "./cell-kinds.tsx";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
@@ -41,7 +46,7 @@ export function planRecordActions({
   // The plan as last read, which each action reads only once the page has it.
   plan: ProjectPlan | undefined;
   // The kinds of draft the user's role approves and rejects.
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   onDecision: (decision: Decision) => void;
 }) {
   const decide = (asking: Asking, chosen: DraftSelection, all?: boolean) => {

@@ -3,7 +3,7 @@
 // What People's table and details panel do to its rows: add, change, remove, discard and resubmit
 // people and planned hires, and ask to decide their drafts.
 
-import type { DraftKind, List, Person, PersonDraft } from "@fathom/shared";
+import type { DecidedKind, List, Person, PersonDraft } from "@fathom/shared";
 import { kept } from "./added-columns.ts";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
 import { draftSentAgain, pendingDraft, unsavedKeyNumber } from "./drafts.ts";
@@ -91,7 +91,7 @@ export function peopleRecordActions({
   data: PeopleData | undefined;
   lists: List[] | undefined;
   // The kinds of draft the user's role approves and rejects.
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   onDecision: (decision: Decision) => void;
   from: ChangesFrom | undefined;
 }): Pick<

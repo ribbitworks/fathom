@@ -6,7 +6,7 @@
 
 import type {
   Choice,
-  DraftKind,
+  DecidedKind,
   Feature,
   FeatureDraft,
   Field,
@@ -721,7 +721,7 @@ export function renderGadgets({
   given?: RecordActions<Gadget, GadgetChange, GadgetChange>;
   view?: View;
   onView?: (view: View) => void;
-  approves?: readonly DraftKind[];
+  approves?: readonly DecidedKind[];
   canEditColumns?: boolean;
   order?: string[];
   ticks?: RowTicks<Gadget>;
@@ -759,53 +759,3 @@ export const nextColumn = (
     choices: [],
     multiple: false,
   });
-
-// A waiting draft with no maker, the base of the drafts in the tests of deciding drafts.
-export const draftToDecide = {
-  state: "waiting" as const,
-  madeBy: null,
-  madeAt: null,
-};
-
-export const addedChoice = (id: string): Choice => ({
-  id,
-  label: id.toUpperCase(),
-  description: "",
-  retired: false,
-  draft: { ...draftToDecide, action: "created", changed: [], live: {} },
-});
-
-export const liveChoice = (id: string): Choice => ({
-  id,
-  label: id.toUpperCase(),
-  description: "",
-  retired: false,
-});
-
-// A list drafted to be added, whose order places one choice drafted to be added before a live one,
-// and leaves another at the end, where it would go anyway.
-export const teamsList: List = {
-  id: "l1",
-  keyNumber: 1,
-  name: "Teams",
-  description: "",
-  visibility: "general",
-  retired: false,
-  choices: [addedChoice("b"), liveChoice("a"), addedChoice("c")],
-  draft: { ...draftToDecide, action: "created", changed: [], live: {} },
-  orderDraft: { ...draftToDecide, live: ["a"], uses: ["b"] },
-};
-
-// A live list whose order puts a choice drafted to be added first.
-export const sitesList: List = {
-  id: "l2",
-  keyNumber: 1,
-  name: "Sites",
-  description: "",
-  visibility: "general",
-  retired: false,
-  choices: [addedChoice("f"), liveChoice("d"), addedChoice("e")],
-  orderDraft: { ...draftToDecide, live: ["d"], uses: ["f"] },
-};
-
-export const bothLists = [teamsList, sitesList];

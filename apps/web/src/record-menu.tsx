@@ -4,7 +4,7 @@
 // done to the record, given as its children, then its draft, with who made it and what may be done
 // with it.
 
-import type { Asking, DraftKind, RecordRef } from "@fathom/shared";
+import type { Asking, DecidedKind, RecordRef } from "@fathom/shared";
 import { Menu } from "@mantine/core";
 import type { ReactNode } from "react";
 import {
@@ -22,7 +22,7 @@ import { actionsFor } from "./row-controls.tsx";
 
 export interface RecordMenuActions {
   // The kinds of draft the user's role approves and rejects.
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   nodes: readonly RecordNode[];
   decide: (asking: Asking, ref: RecordRef) => void;
   resubmit: (ref: RecordRef) => void;

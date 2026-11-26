@@ -6,7 +6,9 @@ import { LoadProblem } from "./load-problem.tsx";
 import {
   type Choice,
   type ChoiceRequest,
-  type DraftKind,
+  columnTables,
+  type DecidedKind,
+  decidedKindOf,
   type List,
   type Permission,
   type Tier,
@@ -17,7 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { type MouseEvent, type ReactNode, useState } from "react";
 import { DecisionModal } from "./decision-dialog.tsx";
-import { approvesAll, waitsForRejected } from "./drafts.ts";
+import { type DraftSelection, mayDecide, waitsForRejected } from "./drafts.ts";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
 import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
@@ -94,8 +96,13 @@ type Dialog = { kind: "new" } | { kind: "edit"; list: List };
 // finds the option chosen.
 const kindName = "list-kind";
 
-// The kinds of draft decided on the page: lists, their choices, and the order of their choices.
-const listKinds: readonly DraftKind[] = ["list", "list-item", "choice-order"];
+// The kinds of draft decided on the page: lists, their choices, and the order of their choices,
+// whether made on Lists or with a column.
+const listKinds: readonly DecidedKind[] = (
+  ["list", "list-item", "choice-order"] as const
+).flatMap((kind) =>
+  [undefined, ...columnTables].map((table) => decidedKindOf({ kind, table })),
+);
 const kindOptionId = (kind: ListKind) => `${kindName}-${kind}`;
 
 export function ListsPage({
@@ -115,7 +122,7 @@ export function ListsPage({
   listId: string | undefined;
   canEdit: boolean;
   // The kinds of draft the user's role approves and rejects.
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   // Whether the user sees people, whose columns and drafts may use drafts of lists and choices, so
   // deciding those here includes them as the Drafts page does.
   seesPeople?: boolean;
@@ -141,13 +148,18 @@ export function ListsPage({
     ...(kind === "all" ? {} : { kind }),
   };
   const query = useQuery(listsQuery);
-  const mayApprove = approvesAll(approves, listKinds);
+  const mayApprove = listKinds.some((kind) => approves.includes(kind));
   const readsPeople = seesPeople && mayApprove;
   const people = useQuery({ ...peopleQuery, enabled: readsPeople });
   // Deciding waits for the people, since rejecting must include the drafts of people that use a
   // list.
   const canApprove =
     mayApprove && show !== "live" && (!readsPeople || people.isSuccess);
+  const all = query.data ?? [];
+  // Who decides a list or choice made with a column is told by the list's own draft.
+  const decidedBy = { lists: all, fields: [] };
+  const decides = (selection: DraftSelection) =>
+    canApprove && mayDecide(approves, selection, decidedBy);
   const narrow = useMediaQuery("(max-width: 48em)");
   const navigate = useNavigate();
   const {
@@ -166,7 +178,6 @@ export function ListsPage({
     removed: "Someone else has removed this. The lists have been refreshed.",
     blocked: opened || classMove.opened || deciding,
   });
-  const all = query.data ?? [];
   const lists =
     show === "live"
       ? liveLists(all)
@@ -551,7 +562,9 @@ export function ListsPage({
                   key={open.id}
                   list={open}
                   canEdit={canEdit && openWhy === undefined}
-                  canApprove={canApprove && openWhy === undefined}
+                  decides={(selection) =>
+                    openWhy === undefined && decides(selection)
+                  }
                   unchangeable={mayEdit || mayApprove ? openWhy : undefined}
                   showLive={besideLive(show)}
                   drafted={originalOf(drafted, open)}
@@ -608,6 +621,7 @@ export function ListsPage({
           canAdd={false}
           canEditDrafts={(row) => canEdit && !unchangeable.has(row.id)}
           approves={canApprove ? approves : []}
+          decidedBy={decidedBy}
           canEditColumns={false}
           actions={{
             ...noRecordActions<ListRow, ListChange, undefined>(

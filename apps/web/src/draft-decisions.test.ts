@@ -8,7 +8,7 @@ import {
   type Field,
   type List,
   type Person,
-  draftKinds,
+  decidedKinds,
 } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { decisionFor } from "./draft-decisions.ts";
@@ -20,14 +20,14 @@ import {
   liveChoice as live,
   sitesList as sites,
   teamsList as teams,
-} from "./test-support.tsx";
+} from "./test-draft-lists.ts";
 
 describe("drafts of lists alone", () => {
   it("are decided with no columns or people given, as on the Lists page before people load", () => {
     const decision = decisionFor(
       "approve",
       { ...noDrafts(), lists: [teams.id] },
-      draftKinds,
+      decidedKinds,
       lists,
     );
     expect(decision.named).toEqual(["the list Teams"]);
@@ -57,13 +57,13 @@ describe("drafts the approver changed", () => {
     const people = [person("p1", true), person("p2")];
     const chosen = { ...noDrafts(), people: ["p1", "p2"] };
     expect(
-      decisionFor("approve", chosen, draftKinds, lists, {
+      decisionFor("approve", chosen, decidedKinds, lists, {
         fields: [],
         people,
       }),
     ).toMatchObject({ othersApprove: ["Fictional p1"] });
     expect(
-      decisionFor("reject", chosen, draftKinds, lists, {
+      decisionFor("reject", chosen, decidedKinds, lists, {
         fields: [],
         people,
       }).othersApprove,
@@ -72,7 +72,7 @@ describe("drafts the approver changed", () => {
       decisionFor(
         "approve",
         { ...noDrafts(), people: ["p2"] },
-        draftKinds,
+        decidedKinds,
         lists,
         { fields: [], people },
       ).othersApprove,
@@ -142,7 +142,7 @@ describe("drafts the approver changed", () => {
       records: [ref],
     };
     expect(
-      decisionFor("approve", chosen, draftKinds, [ownList], columns)
+      decisionFor("approve", chosen, decidedKinds, [ownList], columns)
         .othersApprove,
     ).toEqual([
       "the planned hire Fictional h9",
@@ -211,7 +211,7 @@ describe("the drafts of a fill", () => {
     const decision = decisionFor(
       "approve",
       { ...noDrafts(), plannedHires: ["filled", "other"] },
-      draftKinds,
+      decidedKinds,
       [],
       { fields: [], people: own },
       true,
@@ -230,7 +230,7 @@ describe("the drafts of a fill", () => {
       decisionFor(
         "approve",
         { ...noDrafts(), plannedHires: ["filled"] },
-        draftKinds,
+        decidedKinds,
         [],
         columns,
       ).selection,
@@ -241,7 +241,7 @@ describe("the drafts of a fill", () => {
     const decision = decisionFor(
       "reject",
       { ...noDrafts(), people: ["starter"] },
-      draftKinds,
+      decidedKinds,
       [],
       columns,
     );
@@ -265,7 +265,7 @@ describe("the drafts of a fill", () => {
       decisionFor(
         "approve",
         { ...noDrafts(), plannedHires: ["filled"] },
-        draftKinds,
+        decidedKinds,
         [],
         { fields: [], people: withOther },
       ).selection.plannedHires,
@@ -282,7 +282,7 @@ describe("the drafts of a fill", () => {
       decisionFor(
         "approve",
         { ...noDrafts(), plannedHires: ["filled"] },
-        draftKinds,
+        decidedKinds,
         [],
         { fields: [], people: own },
       ).selection.people,
@@ -294,7 +294,7 @@ describe("the drafts of a fill", () => {
       decisionFor(
         "approve",
         { ...noDrafts(), plannedHires: ["other"] },
-        draftKinds,
+        decidedKinds,
         [],
         columns,
       ).selection,
@@ -346,7 +346,7 @@ describe("approving all the drafts waiting", () => {
     const decision = decisionFor(
       "approve",
       chosen,
-      draftKinds,
+      decidedKinds,
       lists,
       columns,
       true,
@@ -365,7 +365,7 @@ describe("approving all the drafts waiting", () => {
     const decision = decisionFor(
       "approve",
       { ...noDrafts(), people: ["p2"], lists: ["l1"] },
-      draftKinds.filter((kind) => kind !== "list"),
+      decidedKinds.filter((kind) => kind !== "list"),
       [{ ...teams, orderDraft: undefined }],
       columns,
       true,
@@ -392,7 +392,7 @@ describe("approving all the drafts waiting", () => {
     const decision = decisionFor(
       "approve",
       { ...noDrafts(), people: ["p2"], orders: ["l2"] },
-      draftKinds,
+      decidedKinds,
       [ownSites],
       columns,
       true,
@@ -407,7 +407,7 @@ describe("approving all the drafts waiting", () => {
     const decision = decisionFor(
       "approve",
       { ...noDrafts(), people: ["p1"] },
-      draftKinds,
+      decidedKinds,
       lists,
       columns,
       true,
@@ -420,7 +420,7 @@ describe("approving all the drafts waiting", () => {
     const decision = decisionFor(
       "approve",
       { ...noDrafts(), featureTeams: ["t1", "t2"] },
-      draftKinds,
+      decidedKinds,
       lists,
       { fields: [], featureTeams: [team("t1", true), team("t2")] },
       true,
@@ -436,7 +436,7 @@ describe("approving all the drafts waiting", () => {
       decisionFor(
         "reject",
         { ...noDrafts(), people: ["p1", "p2"] },
-        draftKinds,
+        decidedKinds,
         lists,
         columns,
       ).named,
@@ -464,7 +464,7 @@ describe("approving all the drafts waiting", () => {
     const decision = decisionFor(
       "approve",
       { ...noDrafts(), people: ["p2"], records: [ref(1)] },
-      draftKinds,
+      decidedKinds,
       lists,
       {
         fields: [],
@@ -484,7 +484,7 @@ describe("approving all the drafts waiting", () => {
       decisionFor(
         "approve",
         { ...noDrafts(), people: ["p1", "p2"] },
-        draftKinds,
+        decidedKinds,
         lists,
         columns,
       ),

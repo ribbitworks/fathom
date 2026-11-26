@@ -156,8 +156,9 @@ export const draftKinds: {
     needs: allOf("configuration:approve", "people:view"),
   })),
   {
+    // A column no table names, as a made-up one, is on People, whose Approvers decide it.
     variant: "columns",
-    needs: allOf("configuration:approve", "people:view"),
+    needs: allOf("people:approve", "people:view"),
     asked: () => ({ columns: [id()] }),
   },
   {

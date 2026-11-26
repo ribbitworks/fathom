@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for features given values in columns only drafted to be added to Features, against a
-// PostgreSQL server of their own: drafting them, approving the column with the feature only for a
-// role that approves both, rejecting them together, and refusing a column someone else holds.
+// PostgreSQL server of their own: drafting them, approving the column with the feature for a role
+// that approves features, rejecting them together, and refusing a column someone else holds.
 
 import {
   drafts,
@@ -99,9 +99,6 @@ const draftState = async (recordType: string, recordId: string) =>
         and(eq(drafts.recordType, recordType), eq(drafts.recordId, recordId)),
       )
   ).at(0)?.state;
-
-const refusalFor = (column: Field) =>
-  `Approving this also approves the new column ${column.name}, which needs Approve Configuration.`;
 
 const choiceLabel = "Fictional Gold";
 
@@ -235,23 +232,23 @@ describe("a feature given a value in a column drafted to be added", () => {
     expect(await isLive(listItems, choiceId)).toBe(false);
   });
 
-  it("refuses an approver with Approve Features alone, naming the column, and approves nothing", async () => {
+  it("approves the column with the feature for an approver with Approve Features alone", async () => {
     const { column, feature } = await scoredDrafts();
     const featuresApprover = await test.signedIn([
       "features:approve",
       "features:view",
+      "people:view",
     ]);
 
-    const refused = await decide(
+    const approved = await decide(
       "approval",
       { records: featureRecords(feature) },
       featuresApprover.cookie,
     );
 
-    expect(refused.statusCode).toBe(403);
-    expect(errorOf(refused)).toBe(refusalFor(column));
-    expect(await isLive(features, feature.id)).toBe(false);
-    expect(await isLive(fields, column.id)).toBe(false);
+    expect(approved.statusCode, approved.body).toBe(200);
+    expect(await isLive(features, feature.id)).toBe(true);
+    expect(await isLive(fields, column.id)).toBe(true);
   });
 
   it("refuses an approver with Approve Features alone, naming a new choice, and approves nothing", async () => {
@@ -390,11 +387,11 @@ describe("a feature given a value in a column drafted to be added", () => {
   });
 });
 
-// Who may approve a feature with a column drafted to be added that it is given a value in: only a
-// role that approves features and configuration both.
+// Who may approve a feature with a column drafted to be added that it is given a value in: a role
+// that approves features, which approves their columns.
 const mayApproveBoth: Readonly<Record<Role, boolean>> = {
   "team-member": false,
-  "product-manager": false,
+  "product-manager": true,
   "feature-lead": false,
   "project-manager": true,
   "engineering-manager": false,
@@ -420,8 +417,5 @@ describe("each starting role approving a feature with the column it uses", () =>
     expect(response.statusCode, response.body).toBe(allowed ? 200 : 403);
     expect(await isLive(features, feature.id)).toBe(allowed);
     expect(await isLive(fields, column.id)).toBe(allowed);
-    if (role === "product-manager") {
-      expect(errorOf(response)).toBe(refusalFor(column));
-    }
   });
 });

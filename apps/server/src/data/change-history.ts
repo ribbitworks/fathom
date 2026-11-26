@@ -71,7 +71,7 @@ const shownChangeSets = 200;
 const searchedChangeSets = 2000;
 
 // Fields that only tie a record to where it belongs, which the history does not show.
-const unshownFields = new Set(["tableName", "createdBy"]);
+const unshownFields = new Set(["tableName", "createdBy", "madeWith"]);
 
 export interface ReadChangeHistory {
   entries: ChangeEntry[];

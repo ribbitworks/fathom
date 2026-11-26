@@ -6,7 +6,13 @@
 import { z } from "zod";
 import { type Permission, tierSchema } from "./access.ts";
 import { daySchema, monthSchema } from "./days.ts";
-import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
+import { type ColumnTable, columnTableSchema } from "./column-tables.ts";
+import {
+  type ApprovePermission,
+  draftActionSchema,
+  draftShape,
+  heldBySchema,
+} from "./drafts.ts";
 import { type Link, linkValueSchema } from "./links.ts";
 import {
   choiceRequestSchema,
@@ -16,6 +22,13 @@ import {
 import { numberValueSchema } from "./numbers.ts";
 import { paletteColourSchema } from "./palette.ts";
 import { keyNumberSchema } from "./record-keys.ts";
+
+export {
+  type ColumnTable,
+  columnTableOf,
+  columnTables,
+  columnTableSchema,
+} from "./column-tables.ts";
 
 export const personLengths = {
   preferredName: 100,
@@ -70,6 +83,8 @@ export const fieldSchema = z.object({
   multiple: z.boolean(),
   required: z.boolean(),
   onPlannedHires: z.boolean().default(true),
+  // The table it is on, whose Approvers decide its drafts; one read without it is on People.
+  table: columnTableSchema.optional(),
   draft: fieldDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -341,28 +356,11 @@ const heldAlone = {
   number: { kind: "number", value: "number" },
 };
 
-// The tables that can have columns added.
-export const columnTables = ["people", "features", "activities"] as const;
-
-export type ColumnTable = (typeof columnTables)[number];
-
-// The table a column is on, by the name its row records; one recorded before columns had tables is
-// on People. Any other table, such as a private page's, is refused rather than taken for People,
-// whose rules would then reach it.
-export function columnTableOf(tableName: unknown): ColumnTable {
-  if (tableName === null || tableName === undefined) return "people";
-  const table = columnTables.find((known) => known === tableName);
-  if (table === undefined) {
-    throw new Error("A column is on a table that takes no added columns");
-  }
-  return table;
-}
-
 // What sets each table apart: its name, what reading it needs, what adding, changing and removing
 // its columns needs, which is editing its records and seeing people, whose sight General lists and
-// columns take, whether planned hires are offered its added columns, whether they must be General,
-// and whether a column may draft a new General list with it, for a table whose editors don't make
-// lists on Lists.
+// columns take, which Approve decides its columns' drafts, that of its records' area, whether
+// planned hires are offered its added columns, whether they must be General, and whether a column
+// may draft a new General list with it, for a table whose editors don't make lists on Lists.
 export const columnTablePolicies: Readonly<
   Record<
     ColumnTable,
@@ -370,6 +368,7 @@ export const columnTablePolicies: Readonly<
       name: string;
       viewNeeds: Permission;
       editNeeds: readonly Permission[];
+      approveNeeds: ApprovePermission;
       onPlannedHires: boolean;
       generalOnly: boolean;
       newLists: boolean;
@@ -380,6 +379,7 @@ export const columnTablePolicies: Readonly<
     name: "People",
     viewNeeds: "people:view",
     editNeeds: ["people:edit", "people:view"],
+    approveNeeds: "people:approve",
     onPlannedHires: true,
     generalOnly: false,
     newLists: false,
@@ -388,6 +388,7 @@ export const columnTablePolicies: Readonly<
     name: "Features",
     viewNeeds: "features:view",
     editNeeds: ["features:edit", "people:view"],
+    approveNeeds: "features:approve",
     onPlannedHires: false,
     generalOnly: true,
     newLists: true,
@@ -396,6 +397,7 @@ export const columnTablePolicies: Readonly<
     name: "Activities",
     viewNeeds: "features:view",
     editNeeds: ["features:edit", "people:view"],
+    approveNeeds: "features:approve",
     onPlannedHires: false,
     generalOnly: true,
     newLists: true,

@@ -24,6 +24,7 @@ const entry = (key: string, more: Partial<Entry> = {}): Entry => ({
   place: { kind: "person", keyNumber: 1 },
   selects: noDrafts(),
   ...more,
+  decided: more.decided ?? { kind: more.kind ?? "person" },
 });
 
 describe("the drafts a role sees", () => {
@@ -77,6 +78,10 @@ describe("the drafts a role sees", () => {
 
   it("approves the kinds its permissions approve", () => {
     expect(draftsSeen(["people:approve"]).approves).toEqual(["person"]);
+    expect(draftsSeen(["people:approve", "people:view"]).approves).toEqual([
+      "person",
+      "field on people",
+    ]);
   });
 });
 

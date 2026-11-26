@@ -5,7 +5,7 @@
 import { LoadProblem } from "./load-problem.tsx";
 import type {
   ClassAccess,
-  DraftKind,
+  DecidedKind,
   HireFill,
   List,
   Person,
@@ -136,7 +136,7 @@ export function PeoplePage({
   // Whether the user may change planned hires too.
   canEditHires?: boolean;
   // The kinds of draft the user's role approves and rejects.
-  approves?: readonly DraftKind[];
+  approves?: readonly DecidedKind[];
   canEditColumns: boolean;
   showDates: boolean;
   // Whether the user is sent the hiring plan: planned hires' target dates, drafts and history.
