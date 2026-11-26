@@ -303,6 +303,7 @@ describe("signing in", () => {
         "plan:approve",
         "plan:edit",
         "plan:view",
+        "private-pages:make",
       ],
     });
   });

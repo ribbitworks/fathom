@@ -319,6 +319,31 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 | Feature priorities | Critical, High, Medium, Low | Ordered, no meanings. |
 | Feature risks | Low, Medium, High | Ordered, no meanings. |
 
+## Private Pages
+
+A person's own pages, each a table of free rows that only they read, as [Roles](../product/roles.md#what-each-role-can-do) sets out. Saving pages through Fathom, and their screens, are not built yet; the entities and their reads are.
+
+```mermaid
+erDiagram
+  ACCOUNT ||--o{ PRIVATE_PAGE : makes
+  PRIVATE_PAGE ||--|{ FIELD_DEFINITION : "has columns"
+  PRIVATE_PAGE ||--o{ PRIVATE_ROW : holds
+  PRIVATE_ROW ||--o{ CUSTOM_VALUE : owns
+  FIELD_DEFINITION ||--o{ CUSTOM_VALUE : "of column"
+  RANDOM_KEY |o--|| PRIVATE_PAGE : names
+  RANDOM_KEY |o--|| PRIVATE_ROW : names
+```
+
+- **Private page:** A page under its maker's Mine, with its maker, a name unique among their pages ignoring letter case, its place in their order, and its first column.
+  - **Its columns:** [field definitions](#tables-and-columns) on the private table, each naming its page, with every field type's settings and class. A column's name is unique within its page, ignoring letter case, and it has no record key.
+  - **First column:** always first and always required, since its value names each row.
+  - **Removing:** removes its columns, rows and values with it.
+- **Private row:** A row of a page, with its place in the order rows were added. Its values are custom values it owns, as a person owns theirs; it has no name of its own.
+- **Random key:** A page's or a row's short code, such as K7QM in #PAGE-K7QM, as [ADR 0014](../adr/0014-random-keys.md) sets out.
+  - **Codes:** four characters from 30 that can't be taken for one another, widening to five once a tenth of a kind's four-character codes are used.
+  - **Kept:** made once for a record, held apart from it, and never given again, even once the record is removed.
+- **Who reads them:** only the page's maker, while their role may make private pages. A column of a class the maker's role no longer sees is left out, with its values.
+
 ## Change and History Entities
 
 - **Change set:** Changes saved together, with who made them, the role they acted as, and when.
@@ -334,6 +359,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
   - **Numbers:** they count up from 1 for each kind and are never reused, even when a draft is discarded. Each kind keeps the last number it gave.
   - **Kinds:** FEATURE, ACTIVITY, PROJECT, PROPOSAL, CUSTOMER, MILESTONE, RELEASE, SCHEDULE, PERSON, HIRE, TEAM (a feature team), LIST, COLUMN, ACCOUNT and ROLE, each whole, never shortened. Cycles have none, since they are named with their schedule.
   - **Reading:** a key is read in any letter case, with or without the #. It is General data, telling nothing about its record, and stands beside an organization's own IDs rather than replacing them.
+  - **Private records:** pages and rows have [random keys](#private-pages) instead, so their keys don't count them.
 - **Snapshot:** A point-in-time copy of the plan, taken by hand or on a schedule, holding projects, features, and allocations only, with their custom field values. Not built yet.
 
 ### Drafts and Approval

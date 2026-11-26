@@ -30,7 +30,17 @@ import {
   weighs,
   eitherOf,
 } from "@fathom/shared";
-import { and, asc, count, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  or,
+  sql,
+} from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { type Transaction } from "./changes.ts";
 import { type Held } from "./drafts.ts";
@@ -137,13 +147,14 @@ export const choicesHaveDrafts = (state: ListsState, listId: string) =>
 
 // The columns that draw on a list, live or in a draft: those others may see by name, live ones and
 // published drafts, and how many more are only in someone's unpublished draft, unnamed, since only
-// its maker sees it. The editor's unpublished drafts of columns stand in for the published drafts
-// of the same columns. A built-in list's built-in column always draws on it.
+// its maker sees it, and how many are on private pages, also unnamed. The editor's unpublished
+// drafts of columns stand in for the published drafts of the same columns. A built-in list's
+// built-in column always draws on it.
 export async function columnsDrawingOn(
   transaction: Reader,
   id: string,
   editor?: string,
-): Promise<{ named: string[]; unnamed: number }> {
+): Promise<{ named: string[]; unnamed: number; onPrivatePages: number }> {
   const builtIn = await transaction
     .select({ key: lists.builtIn })
     .from(lists)
@@ -160,8 +171,12 @@ export async function columnsDrawingOn(
     ...(await transaction
       .select({ id: fields.id, name: fields.name })
       .from(fields)
-      .where(eq(fields.listId, id))),
+      .where(and(eq(fields.listId, id), isNull(fields.pageId)))),
   ];
+  const [onPrivatePages] = await transaction
+    .select({ total: count() })
+    .from(fields)
+    .where(and(eq(fields.listId, id), isNotNull(fields.pageId)));
   const drafted = async (table: typeof drafts | typeof privateChanges) =>
     transaction
       .select({
@@ -201,7 +216,7 @@ export async function columnsDrawingOn(
   const unnamed = (await drafted(privateChanges)).filter(
     (column) => !shown.some((other) => other.id === column.id),
   ).length;
-  return { named, unnamed };
+  return { named, unnamed, onPrivatePages: Number(onPrivatePages?.total) };
 }
 
 // Refuses a change to a list while a column draws on it, naming those others may see.
@@ -211,16 +226,28 @@ export async function refuseIfUsed(
   change: string,
   editor?: string,
 ): Promise<void> {
-  const { named, unnamed } = await columnsDrawingOn(transaction, id, editor);
-  if (named.length === 0 && unnamed === 0) return;
+  const { named, unnamed, onPrivatePages } = await columnsDrawingOn(
+    transaction,
+    id,
+    editor,
+  );
   const users = [
     ...named,
     ...(unnamed === 0
       ? []
       : [unnamed === 1 ? "a column being drafted" : "columns being drafted"]),
+    ...(onPrivatePages === 0
+      ? []
+      : [
+          onPrivatePages === 1
+            ? "a column on a private page"
+            : "columns on private pages",
+        ]),
   ];
+  if (users.length === 0) return;
+  const total = named.length + unnamed + onPrivatePages;
   throw new ConflictError(
-    `This list cannot be ${change} while ${named.length + unnamed === 1 ? "a column draws" : "columns draw"} on it: ${users.join(", ")}`,
+    `This list cannot be ${change} while ${total === 1 ? "a column draws" : "columns draw"} on it: ${users.join(", ")}`,
   );
 }
 

@@ -347,9 +347,16 @@ export const columnTables = ["people", "features", "activities"] as const;
 export type ColumnTable = (typeof columnTables)[number];
 
 // The table a column is on, by the name its row records; one recorded before columns had tables is
-// on People.
-export const columnTableOf = (tableName: unknown): ColumnTable =>
-  columnTables.find((table) => table === tableName) ?? "people";
+// on People. Any other table, such as a private page's, is refused rather than taken for People,
+// whose rules would then reach it.
+export function columnTableOf(tableName: unknown): ColumnTable {
+  if (tableName === null || tableName === undefined) return "people";
+  const table = columnTables.find((known) => known === tableName);
+  if (table === undefined) {
+    throw new Error("A column is on a table that takes no added columns");
+  }
+  return table;
+}
 
 // What sets each table apart: its name, what reading it needs, what adding, changing and removing
 // its columns needs, which is editing its records and seeing people, whose sight General lists and

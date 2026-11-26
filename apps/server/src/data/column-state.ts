@@ -253,6 +253,8 @@ export async function checkList(
 export const columnRow = (id: string, field: Recorded): FieldRow => ({
   id,
   tableName: String(field.tableName),
+  // Only drafted columns are approved, never a private page's.
+  pageId: null,
   name: String(field.name),
   ...typeOf(field).settings(field),
   required: field.required === true,

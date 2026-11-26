@@ -19,12 +19,22 @@ const messages = (result: { error?: { issues: { message: string }[] } }) =>
   result.error?.issues.map((issue) => issue.message) ?? [];
 
 describe("columnTableOf", () => {
-  it("names Features or Activities for a column on either, and People for any other, older ones included", () => {
+  it("names the table a column is on, and People for one recorded before columns had tables", () => {
     expect(columnTableOf("features")).toBe("features");
     expect(columnTableOf("activities")).toBe("activities");
     expect(columnTableOf("people")).toBe("people");
     expect(columnTableOf(null)).toBe("people");
+    expect(columnTableOf(undefined)).toBe("people");
   });
+
+  it.each(["private", "planets"])(
+    "refuses a column on %s rather than taking it for People",
+    (tableName) => {
+      expect(() => columnTableOf(tableName)).toThrow(
+        "A column is on a table that takes no added columns",
+      );
+    },
+  );
 });
 
 describe("editsColumnsOf", () => {

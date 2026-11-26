@@ -53,6 +53,8 @@ export {
   plannedHires,
   plannedHireTemporaryNumbers,
   privateChanges,
+  privatePages,
+  privateRows,
   privateSets,
   projects,
   proposals,

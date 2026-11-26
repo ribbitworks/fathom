@@ -175,12 +175,12 @@ export async function discardingNewList(
   ) {
     return [];
   }
-  const { named, unnamed } = await columnsDrawingOn(
+  const { named, unnamed, onPrivatePages } = await columnsDrawingOn(
     transaction,
     listId,
     maker.user.id,
   );
-  if (named.length > 0 || unnamed > 0) return [];
+  if (named.length > 0 || unnamed > 0 || onPrivatePages > 0) return [];
   const made = discardingList(state, listId);
   await removeDiscarded(transaction, maker.user.id, made);
   return made;

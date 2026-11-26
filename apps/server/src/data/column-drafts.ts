@@ -382,6 +382,10 @@ export async function moveColumnClass(
       .from(fields)
       .where(eq(fields.id, id))
       .for("update");
+    // A private page's column is its maker's alone, so for everyone else it is not there.
+    if (row !== undefined && row.pageId !== null) {
+      throw new NotFoundError(noField);
+    }
     const state = await readColumnsState(transaction, actor.user.id);
     if (row === undefined) {
       return classifyAddedField(transaction, actor, state, id, to);

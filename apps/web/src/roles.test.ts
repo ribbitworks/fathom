@@ -370,4 +370,17 @@ describe("what a change to an account's permissions does", () => {
       losses: [],
     });
   });
+
+  it("says nothing of a permission not shown on Roles yet", () => {
+    const plan: Permission[] = ["plan:view"];
+    const making: Permission[] = ["plan:view", "private-pages:make"];
+    expect(difference(plan, making, defaultClasses)).toEqual({
+      gains: [],
+      losses: [],
+    });
+    expect(difference(making, plan, defaultClasses)).toEqual({
+      gains: [],
+      losses: [],
+    });
+  });
 });

@@ -61,6 +61,8 @@ export const permissionSchema = z.enum([
   // Approving drafts the approver changed themselves, in the areas they approve, which nobody may
   // do without it.
   "drafts:approve-own",
+  // Making pages of one's own, under Mine, private to their maker.
+  "private-pages:make",
 ]);
 
 export type Permission = z.infer<typeof permissionSchema>;
@@ -239,6 +241,11 @@ export const permissionDescriptions: Record<
       "configuration:approve",
     ],
   },
+  "private-pages:make": {
+    allows:
+      "Makes pages of their own, under Mine, each a table nobody else sees, and opens the pages they made.",
+    without: "Cannot make private pages, and doesn't see the ones they made.",
+  },
 };
 
 // The permissions that keep Fathom manageable: without an active account holding each, nobody could
@@ -322,7 +329,8 @@ export const gridActions = ["view", "approve", "edit"] as const;
 export type GridAction = (typeof gridActions)[number];
 
 // The areas a role grants actions on, as the rows of the grid that sets them, with the permission
-// each action on the area is. Every permission is in exactly one place, which a test checks.
+// each action on the area is. Every permission shown on Roles is in exactly one place, which a test
+// checks.
 // A row of the grid, in the part it belongs to: an area a role reaches; a class of data it sees and
 // changes within them; or a permission of its own, named, since its action and area together do
 // not read as one.
@@ -430,6 +438,13 @@ export const permissionGrid: readonly GridRow[] = [
   },
 ];
 
+// Permissions kept and granted, but not yet shown on Roles, since no page uses them yet; each joins
+// the grid with the pages it opens.
+export const unshownPermissions: readonly Permission[] = ["private-pages:make"];
+
+export const shownOnRoles = (permission: Permission): boolean =>
+  !unshownPermissions.includes(permission);
+
 const actionNames: Record<GridAction, string> = {
   view: "View",
   approve: "Approve",
@@ -482,6 +497,7 @@ export const startingRoles: Record<
       "people:view",
       "feature-teams:view",
       "configuration:view",
+      "private-pages:make",
     ],
   },
   "feature-lead": {
@@ -493,6 +509,7 @@ export const startingRoles: Record<
       "features:edit",
       "people:view",
       "feature-teams:edit",
+      "private-pages:make",
     ],
   },
   // Project Managers approve drafts, so they see lists, people, and the hiring plan, and can judge
@@ -518,6 +535,7 @@ export const startingRoles: Record<
       "configuration:approve",
       "personal:view",
       "confidential:view",
+      "private-pages:make",
     ],
   },
   "engineering-manager": {
@@ -534,6 +552,7 @@ export const startingRoles: Record<
       "configuration:view",
       "personal:view",
       "confidential:view",
+      "private-pages:make",
     ],
   },
   "engineering-director": {
@@ -560,6 +579,7 @@ export const startingRoles: Record<
       "confidential:edit",
       "data:classify",
       "drafts:approve-own",
+      "private-pages:make",
     ],
   },
   "workforce-administrator": {
@@ -577,6 +597,7 @@ export const startingRoles: Record<
       "personal:edit",
       "confidential:edit",
       "data:classify",
+      "private-pages:make",
     ],
   },
   executive: {
