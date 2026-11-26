@@ -199,7 +199,7 @@ Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-cha
 
 - [ ] `054A` Select **Add activity**.
   - **Expected:**
-    - The **Activities** page opens, with the **New activity** form beside the table.
+    - A second panel, headed **New activity**, opens under the details of 'Harbor 2 LTS', on **Releases**.
     - **Release** reads 'Platform: Harbor 2 LTS'.
     - **Project** reads **None**.
   - **Notes:**
@@ -209,7 +209,9 @@ Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-cha
   - **Notes:**
 
 - [ ] `D559` Select **Add**.
-  - **Expected:** 'Fictional Sign-off' shows in the table with a hollow dot, its **Release** 'Platform: Harbor 2 LTS'.
+  - **Expected:**
+    - The **New activity** panel closes, and focus is on **Add activity**.
+    - 'Fictional Sign-off' is listed under **Activities** in the details of 'Harbor 2 LTS'.
   - **Notes:**
 
 **Afterwards:** Run Discard the Unpublished Changes.

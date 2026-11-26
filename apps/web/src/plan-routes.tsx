@@ -139,6 +139,7 @@ export const releasesRoute = createRoute({
     return (
       <ReleasesPage
         tab={tab}
+        editsFeatureTeams={editsFeatureTeams(permissions)}
         onTab={(next, { open: record, schedule } = {}) => {
           void navigate({
             search: {
