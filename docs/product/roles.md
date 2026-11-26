@@ -47,7 +47,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 - **A feature's customers and commitments:** Which customers a feature is for, and which projects and proposals name it, are changed with Edit Plan, not Edit Features and releases, since they are the plan's call. So the Feature Lead sees them and doesn't change them.
 - **A feature's feature team:** Which feature team a feature has is changed with Edit Feature teams, not Edit Features and releases alone, since those who edit feature teams decide who builds what. So the Product Manager and the Project Manager see it and don't change it.
 - **Choices:** Everyone who sees data drawn from a list sees the list's choices, without needing the Lists page.
-- **Lists made with a column:** Whoever sets up Features' columns also drafts a new General list with a column, without Edit Configuration, as [A new list with a Features column](#columns-and-saved-views) sets out.
+- **Lists made with a column:** Whoever sets up Features' or Activities' columns also drafts a new General list with a column, without Edit Configuration, as [A new list with a column](#columns-and-saved-views) sets out.
 - **Team colours:** Edit People sets each reporting team's colour, and Edit Feature teams sets each feature team's.
 - **Exports:** Exporting needs no permission of its own: whoever opens a page exports what its table shows, so Product Managers export Features, and the [Plan](domain.md#planning-terms) once it is built.
 
@@ -87,7 +87,7 @@ The classes, and each built-in detail's default class, are set out in the [Domai
   - **General versions:** Demand, the Plan, and On track or Late will have a General version for roles without Personal data, such as Product Managers and Team Members. It shows totals, with no names and no Personal details. Not built yet ([#209](https://github.com/ribbitworks/fathom/issues/209), [#204](https://github.com/ribbitworks/fathom/issues/204)).
 - **Classify data:** Moves built-in details, lists and columns between classes, the hiring plan included. It is one permission across every class, and a move needs View on both the class left and the class entered.
 - **Lists and columns:** Making or changing a list or column, a list's choices and their order included, and approving or rejecting their drafts, need sight of its class besides the permission that changes or approves it.
-  - **The permission that changes or approves:** Edit or Approve Configuration for a list; for a column, Edit on its table's area, and Approve Configuration. A new list drafted with a Features column takes only what the column takes, as [A new list with a Features column](#columns-and-saved-views) sets out.
+  - **The permission that changes or approves:** Edit or Approve Configuration for a list; for a column, Edit on its table's area, and Approve Configuration. A new list drafted with a Features or Activities column takes only what the column takes, as [A new list with a column](#columns-and-saved-views) sets out.
   - **Sight of the class:** View People for General (General values are people's details), View Personal details for Personal, and View Confidential data for Confidential.
 - **New lists and columns:** They start General; giving one another class needs Classify data.
 
@@ -131,7 +131,7 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 - **Filling a new column on Features or Activities:** Whoever edits features may give a feature or an activity a value in a column only drafted to be added, as on People.
   - **Approving:** approving the feature or activity approves the column with it, so it needs Approve Configuration as well as Approve Features.
   - **Holding one:** a role holding only one, such as the Product Manager, is refused, and another approver decides both.
-- **A new list with a Features column:** New list, in the column's dialog, drafts a General list and its choices with the column, so whoever sets up Features makes the lists its columns need, without Edit Configuration. The list is approved with the column, and undone with it; it is discarded with the last column drawing on it, whether the one it was made with or another since, unless anything changed it since it was made. Rejecting the column alone leaves the list waiting; discarding the rejected column discards the list with it. Lists for People's columns are made on Lists.
+- **A new list with a column:** New list, in a Features or Activities column's dialog, drafts a General list and its choices with the column, so whoever sets up those columns makes the lists they need, without Edit Configuration. The list is approved with the column, and undone with it; it is discarded with the last column drawing on it, whether the one it was made with or another since, unless anything changed it since it was made. Rejecting the column alone leaves the list waiting; discarding the rejected column discards the list with it. Lists for People's columns are made on Lists.
 - **Saved views:** Everyone who opens a table's page can save personal views.
   - **Sharing:** Sharing a view on a table needs Edit on the area whose records the table holds:
     - **People and the Org chart:** Edit People.

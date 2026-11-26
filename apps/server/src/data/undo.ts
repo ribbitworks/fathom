@@ -114,8 +114,8 @@ const editPermissions = {
   "planning-settings": ["configuration:edit"],
 } as const;
 
-// Whether a change set adds or discards a column only drafted to be added, as Features' column
-// dialog does with a new list.
+// Whether a change set adds or discards a column only drafted to be added, as Features' and
+// Activities' column dialogs do with a new list.
 const addsOrDiscardsColumn = (records: readonly Undone[]): boolean =>
   records.some(
     ({ recordType, action, draft }) =>

@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// UI tests of a new list made with a column on Features: its name and choices are needed, and the
-// column is drafted drawing on it.
+// UI tests of a new list made with a column on Features or Activities: its name and choices are
+// needed, and the column is drafted drawing on it.
 
 import { expect, type Page, test } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("productManager") });
 
-async function openNewColumn(page: Page) {
-  await page.goto("/features");
+async function openNewColumn(page: Page, path = "/features") {
+  await page.goto(path);
   await page.getByRole("button", { name: "New column" }).click();
   const dialog = page.getByRole("dialog", { name: "New column" });
   await dialog
@@ -87,4 +87,35 @@ test("adds a choice column drawing on a new list, made with it", async ({
   await expect(
     editing.getByRole("combobox", { name: "List", exact: true }),
   ).toHaveValue("Fictional Tiers (new)");
+});
+
+test("adds a choice column on Activities drawing on a new list, as on Features", async ({
+  page,
+}) => {
+  // Given the Product Manager's New column dialog on Activities, with New list chosen
+  const dialog = await openNewColumn(page, "/activities");
+
+  // When the list is named, given a choice, and the column added
+  await dialog
+    .getByRole("textbox", { name: "List name" })
+    .fill("Fictional Grades");
+  const choice = dialog.getByRole("textbox", { name: "New choice name" });
+  await choice.fill("Fictional Bronze");
+  await choice.press("Enter");
+  const saved = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      response.url().endsWith("/api/activities/columns"),
+  );
+  await dialog.getByRole("button", { name: "Add column" }).click();
+
+  // Then the column is drafted on Activities, drawing on the new list
+  expect((await saved).status()).toBe(201);
+  await expect(dialog).toBeHidden();
+  await page.getByRole("button", { name: /^Fictional Tier column/u }).click();
+  await page.getByRole("menuitem", { name: "Edit column…" }).click();
+  const editing = page.getByRole("dialog", { name: "Edit column" });
+  await expect(
+    editing.getByRole("combobox", { name: "List", exact: true }),
+  ).toHaveValue("Fictional Grades (new)");
 });

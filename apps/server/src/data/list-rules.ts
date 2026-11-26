@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The rules lists and choices keep: names taken, choices and lists in use, meanings and the
-// choices kept, choices' positions, and the lists a Features column draws on. Part of the data
-// access layer.
+// choices kept, choices' positions, and the lists a Features or Activities column draws on. Part of
+// the data access layer.
 
 import {
   drafts,

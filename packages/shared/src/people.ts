@@ -391,7 +391,7 @@ export const columnTablePolicies: Readonly<
     editNeeds: ["features:edit", "people:view"],
     onPlannedHires: false,
     generalOnly: true,
-    newLists: false,
+    newLists: true,
   },
 };
 

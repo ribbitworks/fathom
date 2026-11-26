@@ -363,6 +363,19 @@ describe("a release's activity", () => {
 });
 
 describe("a column on Activities", () => {
+  it("is refused a class other than General, naming Activities", async () => {
+    const response = await send("POST", "/api/activities/columns", {
+      name: unique("Fictional Private Note"),
+      type: "note",
+      visibility: "personal",
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(errorOf(response)).toBe(
+      "Everyone who sees the plan sees columns on Activities, so choose a General list or visibility",
+    );
+  });
+
   it("cannot be required while activities have no value in it", async () => {
     // Given a live activity, and no drafts of activities, which are refused first
     const activity = await addActivity({ projectId: await liveProject() });

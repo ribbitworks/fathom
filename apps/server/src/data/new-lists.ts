@@ -80,7 +80,7 @@ async function changeSetsOf(
 }
 
 // Whether a list's or choice's draft was added in one change with a column and a list, as only New
-// list in a Features column's dialog does, so it goes with the column.
+// list in a Features or Activities column's dialog does, so it goes with the column.
 export async function madeWithColumn(
   reader: Reader,
   recordType: "list" | "list-item",

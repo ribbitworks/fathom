@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for a new list drafted with a column on Features, against a PostgreSQL server of their own:
-// who drafts one, approving the list with the column, undoing and discarding them together, and
-// People's columns, whose lists are made on Lists.
+// Tests for a new list drafted with a column on Features or Activities, against a PostgreSQL server
+// of their own: who drafts one, approving the list with the column, undoing and discarding them
+// together, and People's columns, whose lists are made on Lists.
 
 import {
   changeSets,
@@ -12,7 +12,7 @@ import {
   lists,
   privateChanges,
 } from "@fathom/db";
-import type { Field, Role } from "@fathom/shared";
+import type { ColumnTable, Field, Role } from "@fathom/shared";
 import { startingRoles } from "@fathom/shared";
 import { desc, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -38,15 +38,19 @@ const tierChoices = [
   { label: "Fictional Silver" },
 ];
 
+// The tables whose columns may make a new list: all but People, whose lists are made on Lists.
+type ListMaking = Exclude<ColumnTable, "people">;
+
 const addColumn = (
   cookie: string,
   more: object = {},
   options?: { publish: boolean },
+  table: ListMaking = "features",
 ) =>
   test.request(
     cookie,
     "POST",
-    "/api/features/columns",
+    `/api/${table}/columns`,
     {
       name: unique("Fictional Tier"),
       type: "choice",
@@ -57,8 +61,16 @@ const addColumn = (
   );
 
 // The column added, with the change set that added it.
-async function addedColumn(options?: { publish: boolean }) {
-  const response = await addColumn(planner.cookie, {}, options);
+async function addedColumn({
+  publish,
+  table = "features",
+}: { publish?: boolean; table?: ListMaking } = {}) {
+  const response = await addColumn(
+    planner.cookie,
+    {},
+    publish === undefined ? undefined : { publish },
+    table,
+  );
   expect(response.statusCode, response.body).toBe(201);
   return response.json<{ field: Field; changeSetId: string }>();
 }
@@ -526,7 +538,77 @@ describe("a new list drafted with a column on Features", () => {
   });
 });
 
-// The starting roles that set up Features' columns: those that edit features and see people.
+describe("a new list drafted with a column on Activities, as on Features", () => {
+  it("is drafted General with its choices, and the column draws on it", async () => {
+    const { field } = await addedColumn({ table: "activities" });
+
+    const listId = String(field.listId);
+    expect(
+      (await draftsOf("field")).find(({ recordId }) => recordId === field.id)
+        ?.fields,
+    ).toMatchObject({ tableName: "activities", listId });
+    expect(await listDraftOf(listId)).toMatchObject({
+      fields: { visibility: "general", retired: false },
+    });
+    expect(
+      (await choiceDraftsOf(listId)).map(
+        ({ fields: choice }) => (choice as { label: string }).label,
+      ),
+    ).toEqual(tiers);
+  });
+
+  it("is approved with the column, with its choices", async () => {
+    // Given a column on Activities drafted with a new list
+    const { field } = await addedColumn({ table: "activities" });
+    const listId = String(field.listId);
+
+    // When an approver approves the column alone
+    const approved = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { columns: [field.id] },
+    );
+
+    // Then the column, the list and its choices are live
+    expect(approved.statusCode, approved.body).toBe(200);
+    expect(
+      await test.connection
+        .select()
+        .from(fields)
+        .where(eq(fields.id, field.id)),
+    ).toHaveLength(1);
+    expect(
+      (
+        await test.connection
+          .select({ label: listItems.label })
+          .from(listItems)
+          .where(eq(listItems.listId, listId))
+      ).map(({ label }) => label),
+    ).toEqual(tiers);
+  });
+
+  it("is discarded with the column's draft", async () => {
+    // Given a column on Activities drafted with a new list
+    const { field } = await addedColumn({ table: "activities" });
+    const listId = String(field.listId);
+
+    // When the column's draft is discarded
+    const discarded = await test.request(
+      planner.cookie,
+      "DELETE",
+      `/api/activities/columns/${field.id}/draft`,
+    );
+
+    // Then the list and its choices go with it
+    expect(discarded.statusCode, discarded.body).toBe(200);
+    expect(await listDraftOf(listId)).toBeUndefined();
+    expect(await choiceDraftsOf(listId)).toEqual([]);
+  });
+});
+
+// The starting roles that set up Features' and Activities' columns: those that edit features and
+// see people.
 const setsUpFeatures: Readonly<Record<Role, boolean>> = {
   "team-member": false,
   "product-manager": true,
@@ -539,14 +621,22 @@ const setsUpFeatures: Readonly<Record<Role, boolean>> = {
   administrator: false,
 };
 
-describe("each starting role adding a column on Features with a new list", () => {
-  it.each(Object.keys(startingRoles) as Role[])("%s", async (role) => {
+describe("each starting role adding a column with a new list", () => {
+  const cases = (Object.keys(startingRoles) as Role[]).flatMap((role) =>
+    (["features", "activities"] as const).map(
+      (table) => [table, role] as const,
+    ),
+  );
+  it.each(cases)("on %s, as %s", async (table, role) => {
     const signedIn = await test.signedIn(role);
     const listName = unique("Fictional Tiers");
 
-    const response = await addColumn(signedIn.cookie, {
-      newList: { name: listName, choices: tierChoices },
-    });
+    const response = await addColumn(
+      signedIn.cookie,
+      { newList: { name: listName, choices: tierChoices } },
+      undefined,
+      table,
+    );
 
     // eslint-disable-next-line security/detect-object-injection
     const allowed = setsUpFeatures[role];
