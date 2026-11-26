@@ -336,6 +336,33 @@ describe("the Metrics panel's drafts", () => {
     ).toBeNull();
   });
 
+  it("sets a figure a draft moves in semibold beside live, in a column only drafted to be added too", () => {
+    const unpublished = { ...waiting, unpublished: true };
+    const added: Field = {
+      ...level,
+      draft: { ...unpublished, action: "created", changed: [], live: {} },
+    };
+    const people = [
+      ...everyone.filter(({ id }) => id !== "a"),
+      person("a", ["p4"], ["test"], {
+        ...unpublished,
+        action: "changed",
+        changed: ["f1"],
+        live: { values: { f1: [] }, links: {} },
+      }),
+    ];
+    render(
+      <Table
+        people={people}
+        fields={[added, role]}
+        start={{ ...emptyView, breakdown: ["f1"] }}
+      />,
+    );
+    expect([marksOf("P4", "unpublishedMark"), marksOf("P4", "moved")]).toEqual([
+      2, 2,
+    ]);
+  });
+
   it("gives no live figures for a column only drafted to be added, or to draw on another list", () => {
     const waiting = { state: "waiting" as const, madeBy: null, madeAt: null };
     const people = [

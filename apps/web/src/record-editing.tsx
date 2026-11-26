@@ -27,6 +27,7 @@ import {
   type GridRecord,
   type RecordTable,
 } from "./record-table.ts";
+import flagClasses from "./flag-field.module.css";
 import classes from "./record-details.module.css";
 import {
   type CellValue,
@@ -485,15 +486,21 @@ export function useRecordEditing<
           open: false,
           editor: (
             <Group gap={8} wrap="nowrap">
-              <Checkbox
-                id={changeId(column, scope)}
-                aria-labelledby={`${labelId(column, scope)} ${wordsId(column, scope)}`}
-                checked={(value as readonly string[]).length > 0}
-                onChange={() => {
-                  saved(context, column, toggled(value), save);
-                }}
-              />
-              <Text id={wordsId(column, scope)}>
+              <span
+                className={[flagClasses.flag, flagClasses.textBaseline].join(
+                  " ",
+                )}
+              >
+                <Checkbox
+                  id={changeId(column, scope)}
+                  aria-labelledby={`${labelId(column, scope)} ${wordsId(column, scope)}`}
+                  checked={(value as readonly string[]).length > 0}
+                  onChange={() => {
+                    saved(context, column, toggled(value), save);
+                  }}
+                />
+              </span>
+              <Text id={wordsId(column, scope)} inherit>
                 {kind.inWords(column, value)}
               </Text>
             </Group>

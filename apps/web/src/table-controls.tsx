@@ -773,7 +773,14 @@ export function ViewsMenu({
     return null;
   }
   return (
-    <AppMenu position="bottom-start" hideDetached={false}>
+    // Its unusable views' menus open beside it, inside its dropdown, so the dropdown doesn't scroll
+    // or clip them, nor is it held to the window's room, as other menus are; it sits at the page's
+    // top and is short.
+    <AppMenu
+      position="bottom-start"
+      hideDetached={false}
+      middlewares={{ flip: true, shift: true }}
+    >
       <AppMenu.Target>
         <Button
           variant="default"
@@ -787,7 +794,7 @@ export function ViewsMenu({
           )}
         </Button>
       </AppMenu.Target>
-      <AppMenu.Dropdown>
+      <AppMenu.Dropdown style={{ overflow: "visible" }}>
         <ChoiceItems choices={choices} view={view} onView={onView} />
         {hasChoices && (listed || sections.length > 0 || actions) && (
           <Menu.Divider />

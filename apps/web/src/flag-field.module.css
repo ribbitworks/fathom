@@ -8,6 +8,13 @@
   height: 100%;
 }
 
+/* A character of no width gives a box, in a table's cell or a panel's row, a line of text centred
+   as the box is, so a draft's dot before the box, which sits on the text's baseline, lines up with
+   the box rather than with its foot. */
+.textBaseline::before {
+  content: "\200b";
+}
+
 .box {
   width: 1rem;
   height: 1rem;

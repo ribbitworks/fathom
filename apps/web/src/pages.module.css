@@ -443,6 +443,12 @@ select.cellInput {
   cursor: pointer;
 }
 
+/* Its focus ring stands off the heading, so it goes round a draft's dot at the heading's start rather
+   than through it. */
+.recordHeadButton:focus-visible {
+  outline-offset: var(--fathom-ring-room);
+}
+
 .headerLabel {
   overflow: hidden;
   text-overflow: ellipsis;

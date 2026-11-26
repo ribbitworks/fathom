@@ -53,7 +53,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 
 ## Components
 
-- **Menus and popovers:** Every menu, popover and drop-down list stands out from the page, and from a tinted row or a panel beneath it, by a darker edge and a clear shadow, in light and dark mode alike, from the theme's `--fathom-overlay-edge` and `--fathom-overlay-shadow`. A new menu or popover uses Mantine's, with no shadow or edge of its own.
+- **Menus and popovers:** Every menu, popover and drop-down list stands out from the page, and from a tinted row or a panel beneath it, by a darker edge and a clear shadow, in light and dark mode alike, from the theme's `--fathom-overlay-edge` and `--fathom-overlay-shadow`. A new menu or popover uses Mantine's, with no shadow or edge of its own. A menu taller than the room left in the window is held to it and scrolls inside itself.
 - **Tables:** Lists of records are tables in a panel, using the full width, as [Tables](../standards/ui-conventions/tables.md#tables) sets out.
   - **Cells and headers:** Each cell is one line, cut short when it doesn't fit. Headers are small, semibold, and dimmed, and stay in view while the rows scroll.
   - **Lines:** The lines between rows and columns are a shade darker than Mantine's, from the theme's `--fathom-row-line`, so rows stand apart. A line within a cell over a sum, such as a month's Over on Capacity's Allocations, is fainter, from `--fathom-sum-line`, so it never reads as another row.
