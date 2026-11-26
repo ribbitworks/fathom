@@ -14,11 +14,14 @@ export const someone = (details: Partial<Person> = {}): Person => ({
   ...details,
 });
 
-// A planned hire, as the feature team rules read it.
+// An open planned hire, expected from June 2026 unless told otherwise.
 export const plannedHire = (
   details: Partial<PlannedHire> = {},
 ): PlannedHire => ({
   kind: "planned-hire",
   preferredName: "Fictional Planned Hire",
+  firstDay: "2026-06-01",
+  filled: false,
+  removing: false,
   ...details,
 });

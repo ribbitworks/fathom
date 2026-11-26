@@ -1,23 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Changing the teams someone is on from a month, as a cell of the monthly grid does, on each team's
-// draft. Part of the data access layer.
+// Changing the teams someone, a person or a planned hire, is on from a month, as a cell of the monthly
+// grid does, on each team's draft. Part of the data access layer.
 
 import { type Database } from "@fathom/db";
 import { type MemberTeamsChange } from "@fathom/shared";
 import { type Actor, requireView } from "../access.ts";
 import { BadRequestError, NotFoundError } from "../errors.ts";
 import { type Change } from "./changes.ts";
-import { peopleOf, readLiveTeams } from "./feature-team-reads.ts";
-import { membersOf } from "./feature-team-rules.ts";
+import { readLiveTeams, readMembers } from "./feature-team-reads.ts";
+import { hasLeft, membersOf } from "./feature-team-rules.ts";
+import { fromDay } from "./feature-team-days.ts";
 import { heldTeamChange, monthRefusals } from "./feature-team-held-changes.ts";
 import { noPerson } from "./person-fields.ts";
-import { fromDay } from "./feature-team-days.ts";
 import {
   changingTeams,
   draftedTeam,
   draftTeamChange,
+  readNamedIn,
   saved,
+  teamToChange,
 } from "./feature-teams.ts";
 
 // Drafts someone joining the teams added and leaving those removed, from the day given, or from
@@ -32,13 +34,13 @@ export async function changeMemberTeams(
   return changingTeams(database, actor, asOf, async (transaction, today) => {
     requireView(actor, "featureAssignments");
     const from = fromDay(actor, change.from, today);
-    const person = (await peopleOf(transaction, [personId], today)).get(
+    const person = (await readMembers(transaction, [personId], today)).get(
       personId,
     );
     if (person === undefined) {
       throw new NotFoundError(noPerson);
     }
-    if (person.left) {
+    if (hasLeft(person)) {
       throw new BadRequestError(
         "Someone who has left can't join or leave a team",
       );
@@ -50,9 +52,13 @@ export async function changeMemberTeams(
     ] as const) {
       for (const id of teamIds) {
         const now = await draftedTeam(transaction, actor, id, today);
+        const teamChange = member
+          ? { add: [personId] }
+          : { remove: [personId] };
+        const everyone = await readNamedIn(transaction, now, teamChange, today);
         const names = {
           personName: person.preferredName,
-          teamName: String((now.team ?? now.before)?.name),
+          teamName: String(teamToChange(now).name),
         };
         const day = from ?? today;
         const onDay = (await readLiveTeams(transaction, day, { ids: [id] }))
@@ -71,14 +77,12 @@ export async function changeMemberTeams(
           ...(await draftTeamChange(
             transaction,
             actor,
-            {
-              id,
-              change: member ? { add: [personId] } : { remove: [personId] },
-              from,
-              today,
-            },
+            { id, change: teamChange, from, today },
             now,
-            monthRefusals(names.personName, names.teamName),
+            {
+              refusals: monthRefusals(names.personName, names.teamName),
+              everyone,
+            },
           )),
         );
       }

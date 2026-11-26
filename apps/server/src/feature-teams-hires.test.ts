@@ -2,7 +2,7 @@
 
 // Integration tests for planned hires on feature teams: reading them on teams, in People and by
 // month, for every role, naming them in the change history, and removing and filling a hire that is
-// on a team. Drafts don't put planned hires on teams yet, so the tests record them there directly.
+// on a team. Most tests record a hire on a team straight into its table, to reach each state at once.
 
 import { featureTeamLeads } from "@fathom/db";
 import {
@@ -26,6 +26,7 @@ import {
   send,
   person,
   plannedHire,
+  drafted,
   liveTeam,
   changed,
   teamSeen,
@@ -80,6 +81,32 @@ describe("a planned hire on a team", () => {
         [unnamed]: "REQ-FICTIONAL-71",
       });
     }
+  });
+
+  it("names a planned hire in a team's change history", async () => {
+    const hire = await plannedHire({ name: "Fictional Historic Hire" });
+    const id = await liveTeam();
+    const changeSetId = await changed(id, { leadId: hire });
+
+    const { entries } = await ok<ChangeHistory>(
+      await send(planner, "GET", "/api/changes"),
+    );
+    const record = entries
+      .find((entry) => entry.id === changeSetId)
+      ?.records.find((one) => one.kind === "feature-team");
+
+    expect(record?.fields).toContainEqual(
+      expect.objectContaining({
+        field: "members",
+        newValue: ["Fictional Historic Hire"],
+      }),
+    );
+    expect(record?.fields).toContainEqual(
+      expect.objectContaining({
+        field: "leadId",
+        newValue: "Fictional Historic Hire",
+      }),
+    );
   });
 
   it("is in its People row's feature teams", async () => {
@@ -295,6 +322,19 @@ describe("removing a planned hire on a team", () => {
     );
   });
 
+  it("is refused while a team's draft makes it the lead", async () => {
+    const hire = await plannedHire();
+    const id = await liveTeam({ members: [hire] });
+    await changed(id, { leadId: hire });
+
+    const response = await removeHire(hire);
+
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      "This planned hire leads a feature team; choose another lead first",
+    );
+  });
+
   it("is refused while it leads a team only later", async () => {
     const hire = await plannedHire();
     const id = await liveTeam();
@@ -468,5 +508,23 @@ describe("filling a planned hire on a team", () => {
     // Then it is refused
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toBe(onTeamRefusal);
+  });
+
+  it("is refused when approved once a team's draft names it", async () => {
+    const hire = await openHire();
+    await ok(
+      await send(editor, "POST", `/api/planned-hires/${hire}/fill`, {
+        by: "existing person",
+        personId: await person(),
+      }),
+    );
+    await drafted({ members: [hire] });
+
+    const response = await approveHire(hire);
+
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      "This planned hire is on a feature team now or later, or in a team's draft. Take it off its teams before filling it.",
+    );
   });
 });

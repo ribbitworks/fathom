@@ -26,9 +26,10 @@ import {
 } from "./draft-records.ts";
 import { refuseHeldDecision, rejectedIn } from "./drafts.ts";
 import {
+  type DraftedMembership,
   membershipChanges,
-  peopleOf,
   readLiveTeams,
+  readMembers,
   readTeamDrafts,
 } from "./feature-team-reads.ts";
 import { recordType } from "./feature-team-records.ts";
@@ -36,6 +37,7 @@ import {
   type DayRefusal,
   type DayRefusals,
   type Everyone,
+  isPlannedHire,
   leadDatesOf,
   type MemberDay,
 } from "./feature-team-rules.ts";
@@ -50,6 +52,7 @@ import { text } from "./reporting.ts";
 import {
   refuseDaysOutOfOrder,
   refuseOutsideEmployment,
+  refusePlannedHireDays,
 } from "./feature-team-days.ts";
 import { teamChanges } from "./feature-teams.ts";
 
@@ -58,17 +61,75 @@ function refusalsWhenApproving(
   teamNames: ReadonlyMap<string, string>,
   everyone: Everyone,
 ): DayRefusals {
+  const nameOf = (memberId: string) =>
+    String(everyone.get(memberId)?.preferredName);
   const refusal =
     (fact: string): DayRefusal =>
     ({ teamId, memberId }) =>
-      `${String(everyone.get(memberId)?.preferredName)}'s day in the draft of ${String(teamNames.get(teamId))} ${fact}; reject the draft so it can be changed`;
+      `${nameOf(memberId)}'s day in the draft of ${String(teamNames.get(teamId))} ${fact}; reject the draft so it can be changed`;
   return {
     outOfOrder: refusal(
       "no longer comes after the last time they joined or left it",
     ),
     beforeStart: refusal("is now before their start date"),
     afterEnd: refusal("is now after their end date"),
+    beforeExpected: (day, month) =>
+      refusal(
+        `is now before ${month}, the month ${nameOf(day.memberId)} is expected`,
+      )(day),
   };
+}
+
+// The columns a lead record names its lead in: a person's, a planned hire's, or neither for none.
+const leadColumns = (leadId: string | null, everyone: Everyone) =>
+  leadId !== null && isPlannedHire(everyone, leadId)
+    ? { leadId: null, leadPlannedHireId: leadId }
+    : { leadId, leadPlannedHireId: null };
+
+// Writes the records joining and leaving teams, each replacing any its member has on that team from
+// the same day, a person's by person and a planned hire's by planned hire.
+async function writeMemberships(
+  transaction: Transaction,
+  records: readonly DraftedMembership[],
+  everyone: Everyone,
+): Promise<void> {
+  const ofHires = records.filter(({ memberId }) =>
+    isPlannedHire(everyone, memberId),
+  );
+  const ofPeople = records.filter((record) => !ofHires.includes(record));
+  for (const [held, column, memberOf] of [
+    [
+      ofPeople,
+      featureTeamMemberships.personId,
+      (memberId: string) => ({ personId: memberId }),
+    ],
+    [
+      ofHires,
+      featureTeamMemberships.plannedHireId,
+      (memberId: string) => ({ plannedHireId: memberId }),
+    ],
+  ] as const) {
+    for (const chunk of inChunks(held)) {
+      await transaction
+        .insert(featureTeamMemberships)
+        .values(
+          chunk.map(({ teamId, memberId, member, fromDate }) => ({
+            teamId,
+            member,
+            fromDate,
+            ...memberOf(memberId),
+          })),
+        )
+        .onConflictDoUpdate({
+          target: [
+            featureTeamMemberships.teamId,
+            column,
+            featureTeamMemberships.fromDate,
+          ],
+          set: { member: sql`excluded.member` },
+        });
+    }
+  }
 }
 
 // Checks the actor may approve or reject the drafts of the teams asked for, and reads them with the
@@ -88,7 +149,7 @@ async function seenTeams(
     );
   }
   const live = (await readLiveTeams(transaction, today, { ids })).teams;
-  const everyone = await peopleOf(
+  const everyone = await readMembers(
     transaction,
     [...found].flatMap(([id, draft]) => [
       ...peopleNamed(live.get(id)),
@@ -139,7 +200,7 @@ export async function approveTeamsIn(
   );
   refuseRejected(found.values());
   const made: Change[] = [];
-  const records: (typeof featureTeamMemberships.$inferInsert)[] = [];
+  const records: DraftedMembership[] = [];
   const leadRecords: (typeof featureTeamLeads.$inferInsert)[] = [];
   const leadDays: MemberDay[] = [];
   const days: MemberDay[] = [];
@@ -170,41 +231,32 @@ export async function approveTeamsIn(
     const wasLead = text(before?.leadId);
     if (leadId !== wasLead) {
       const [leadDay] = Object.values(leadDatesOf(team));
-      leadRecords.push({ teamId: id, leadId, fromDate: leadDay ?? today });
+      leadRecords.push({
+        teamId: id,
+        ...leadColumns(leadId, everyone),
+        fromDate: leadDay ?? today,
+      });
       if (leadId !== null && leadDay !== undefined) {
         leadDays.push({ teamId: id, memberId: leadId, from: leadDay });
       }
     }
     const joiningAndLeaving = membershipChanges(id, before, team, today);
-    // Only people are drafted onto teams yet.
-    records.push(
-      ...joiningAndLeaving.records.map(
-        ({ teamId, memberId, member, fromDate }) => ({
-          teamId,
-          personId: memberId,
-          member,
-          fromDate,
-        }),
-      ),
-    );
+    records.push(...joiningAndLeaving.records);
     days.push(...joiningAndLeaving.days);
   }
   const refusals = refusalsWhenApproving(teamNames, everyone);
   await refuseDaysOutOfOrder(transaction, days, everyone, refusals);
+  // A planned hire's day given none in the draft is today, which may now be before the month it's
+  // expected, as its target date may have moved.
+  refusePlannedHireDays(
+    records.flatMap(({ teamId, memberId, member, fromDate }) =>
+      member ? [{ teamId, memberId, from: fromDate }] : [],
+    ),
+    everyone,
+    refusals,
+  );
   for (const day of leadDays) refuseOutsideEmployment(day, everyone, refusals);
-  for (const chunk of inChunks(records)) {
-    await transaction
-      .insert(featureTeamMemberships)
-      .values(chunk)
-      .onConflictDoUpdate({
-        target: [
-          featureTeamMemberships.teamId,
-          featureTeamMemberships.personId,
-          featureTeamMemberships.fromDate,
-        ],
-        set: { member: sql`excluded.member` },
-      });
-  }
+  await writeMemberships(transaction, records, everyone);
   for (const chunk of inChunks(leadRecords)) {
     await transaction
       .insert(featureTeamLeads)

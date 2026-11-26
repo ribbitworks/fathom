@@ -8,10 +8,11 @@ import {
   featureTeamLeads,
   featureTeamMemberships,
   inChunks,
+  people,
   type Reader,
 } from "@fathom/db";
 import { editsField, mayDateChange } from "@fathom/shared";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { type Actor, requireView } from "../access.ts";
 import { BadRequestError, ForbiddenError } from "../errors.ts";
 import type { Change } from "./changes.ts";
@@ -27,6 +28,7 @@ import {
   leadOffTeamRefusal,
   type MemberDay,
   type MemberRecord,
+  plannedHireDaysRefusal,
 } from "./feature-team-rules.ts";
 import { recordEvents } from "./history.ts";
 
@@ -38,7 +40,8 @@ export const changesDates = (actor: Actor) =>
   editsField(actor, "featureTeamDates");
 
 // The day members join or leave from: today, or another day for those who see the classes of data
-// other dates need, an earlier day needing the right to change feature team dates' class too.
+// other dates need, an earlier day needing the right to change feature team dates' class too. A
+// planned hire's day is a person's in this.
 export function fromDay(actor: Actor, from: string | undefined, today: string) {
   if (from === undefined || from === today) return undefined;
   requireView(actor, "orgChartOtherDates");
@@ -86,19 +89,32 @@ export async function refuseLeadOffTeam(
     .where(
       and(
         eq(featureTeamMemberships.teamId, teamId),
-        eq(featureTeamMemberships.personId, leadId),
+        or(
+          eq(featureTeamMemberships.personId, leadId),
+          eq(featureTeamMemberships.plannedHireId, leadId),
+        ),
       ),
     );
   refuseWith(leadOffTeamRefusal(records, from, joinsOn));
 }
 
-// Refuses a day outside someone's employment.
+// Refuses a day outside someone's employment, or before the month a planned hire is expected.
 export function refuseOutsideEmployment(
   day: MemberDay,
   everyone: Everyone,
   refusals: DayRefusals,
 ): void {
   refuseWith(employmentDayRefusal(day, everyone, refusals));
+}
+
+// Refuses a planned hire's joining day before the month it's expected, among days given, as
+// plannedHireDaysRefusal sets out.
+export function refusePlannedHireDays(
+  days: readonly MemberDay[],
+  everyone: Everyone,
+  refusals: DayRefusals,
+): void {
+  refuseWith(plannedHireDaysRefusal(days, everyone, refusals));
 }
 
 // Refuses days that would never take effect, as daysRefusal sets out.
@@ -124,27 +140,39 @@ export async function refuseDaysOutOfOrder(
   refuseWith(daysRefusal(days, records, everyone, refusals));
 }
 
-// Records, in the access history, the people whose Personal joining or leaving days changed.
+// Records, in the access history, the people whose Personal joining or leaving days changed. A
+// planned hire is no person, so its days are recorded only in the change history.
 export async function recordTeamDayChanges(
-  transaction: Pick<Database, "insert">,
+  transaction: Pick<Database, "insert" | "select">,
   actorId: string,
   made: readonly Change[],
 ): Promise<void> {
-  const subjects = new Set(
-    made
-      .filter(
-        (change) =>
-          change.recordType === recordType &&
-          (change.field === "memberFrom" || change.field === "leadFrom"),
-      )
-      .flatMap((change) => [
-        ...Object.keys(daysIn(change.oldValue)),
-        ...Object.keys(daysIn(change.newValue)),
-      ]),
-  );
+  const named = [
+    ...new Set(
+      made
+        .filter(
+          (change) =>
+            change.recordType === recordType &&
+            (change.field === "memberFrom" || change.field === "leadFrom"),
+        )
+        .flatMap((change) => [
+          ...Object.keys(daysIn(change.oldValue)),
+          ...Object.keys(daysIn(change.newValue)),
+        ]),
+    ),
+  ];
+  const subjects: string[] = [];
+  for (const chunk of inChunks(named)) {
+    for (const { id } of await transaction
+      .select({ id: people.id })
+      .from(people)
+      .where(inArray(people.id, chunk))) {
+      subjects.push(id);
+    }
+  }
   await recordEvents(
     transaction,
-    [...subjects].map((subjectId) => ({
+    subjects.map((subjectId) => ({
       actorId,
       action: "personal-changed" as const,
       subjectId,

@@ -35,8 +35,8 @@ export const featureTeamDraftSchema = z.object({
     leadId: z.string().nullable().optional(),
     members: z.array(z.string()).optional(),
   }),
-  // The days the draft gives members joining or leaving, by person, for readers who see Personal
-  // details.
+  // The days the draft gives members joining or leaving, by person or planned hire, for readers who
+  // see Personal details.
   days: z.record(z.string(), daySchema).optional(),
   // The day the draft's change of lead takes effect, for readers who see Personal details.
   leadDay: daySchema.optional(),
@@ -169,8 +169,9 @@ export function disbandedMonth(
   return monthOf(isFirstOfMonth(lastOff) ? lastOff : addMonths(lastOff, 1));
 }
 
-// Adds a feature team, with its members and lead, who is one of them; members join from the day
-// given, today or later, or earlier for those who may change Personal details, or from today.
+// Adds a feature team, with its members, people and planned hires, and lead, who is one of them;
+// members join from the day given, today or later, or earlier for those who may change Personal
+// details, or from today. A planned hire joins from the month it's expected, never before.
 export const featureTeamRequestSchema = z.object({
   name,
   leadId: z.uuid().nullable().default(null),
@@ -180,9 +181,9 @@ export const featureTeamRequestSchema = z.object({
 
 export type FeatureTeamRequest = z.infer<typeof featureTeamRequestSchema>;
 
-// Changes a feature team: renames it, chooses its lead or none, and adds and removes members, who
-// join or leave, and the lead changes, from the day given, today or later, or earlier for those who
-// may change Personal details, or from today.
+// Changes a feature team: renames it, chooses its lead or none, and adds and removes members, people
+// and planned hires, who join or leave, and the lead changes, from the day given, today or later, or
+// earlier for those who may change Personal details, or from today.
 export const featureTeamChangeSchema = z.object({
   name: name.optional(),
   leadId: z.uuid().nullable().optional(),
@@ -201,9 +202,9 @@ const teamIds = z
   .max(maxTeamsChanged)
   .refine((ids) => new Set(ids).size === ids.length, "Each team once");
 
-// Changes the teams someone is on from a day, as a cell of the monthly grid does: they join the
-// teams added and leave those removed, each change drafted on its team, from the day given, as for
-// featureTeamChangeSchema, or from today.
+// Changes the teams someone, a person or a planned hire, is on from a day, as a cell of the monthly
+// grid does: they join the teams added and leave those removed, each change drafted on its team, from
+// the day given, as for featureTeamChangeSchema, or from today.
 export const memberTeamsChangeSchema = z
   .object({
     add: teamIds.default([]),

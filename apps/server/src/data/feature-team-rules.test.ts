@@ -12,6 +12,7 @@ import {
   type Everyone,
   leadDayRefusal,
   leadOffTeamRefusal,
+  type Member,
   type MemberDay,
   membersRefusal,
   nameIsTaken,
@@ -19,6 +20,7 @@ import {
   nextTeamDraft,
   notYetStarted,
   onTeamTodayOrLater,
+  plannedHireDaysRefusal,
 } from "./feature-team-rules.ts";
 import { plannedHire, someone } from "./test-feature-team-people.ts";
 
@@ -29,6 +31,7 @@ const lead = "person-lead";
 const member = "person-member";
 const joining = "person-joining";
 const outsider = "person-outsider";
+const hire = "hire-open";
 
 describe("a team's draft with a change made", () => {
   const live = {
@@ -346,10 +349,15 @@ describe("a team's members and lead", () => {
     permissions: withImplied(startingRoles["feature-lead"].permissions),
     dataClasses: defaultClasses,
   };
-  const everyone: Everyone = new Map([
+  const filledHire = "hire-filled";
+  const removedHire = "hire-removed";
+  const everyone: Everyone = new Map<string, Member>([
     [member, someone()],
     [joining, someone({ started: false, startDate: "2099-01-01" })],
     [outsider, someone({ left: true, endDate: "2021-06-30" })],
+    [hire, plannedHire()],
+    [filledHire, plannedHire({ filled: true })],
+    [removedHire, plannedHire({ removing: true })],
   ]);
   const refusal = (
     access: typeof seesPeople,
@@ -410,6 +418,37 @@ describe("a team's members and lead", () => {
 
   it("takes a team with no lead", () => {
     expect(refusal(seesPeople, [], null)).toBeUndefined();
+  });
+
+  it.each([
+    ["a role that sees employment dates", seesPeople],
+    ["a role that doesn't", seesNoEmployment],
+  ])("takes a planned hire, as member and lead, from %s", (_, access) => {
+    expect(refusal(access, [hire], hire)).toBeUndefined();
+  });
+
+  it("refuses a filled planned hire as a member", () => {
+    expect(refusal(seesNoEmployment, [filledHire])).toBe(
+      "A filled planned hire can't join or lead a team; choose its person",
+    );
+  });
+
+  it("refuses a planned hire drafted to be removed as a member", () => {
+    expect(refusal(seesPeople, [member, removedHire])).toBe(
+      "A planned hire drafted to be removed can't join or lead a team",
+    );
+  });
+
+  it("refuses a planned hire that can't lead as the lead, though already a member", () => {
+    expect(refusal(seesPeople, [], removedHire, [removedHire])).toBe(
+      "A planned hire drafted to be removed can't join or lead a team",
+    );
+  });
+
+  it("refuses a planned hire as lead unless it is one of the members", () => {
+    expect(refusal(seesPeople, [member], hire)).toBe(
+      "The feature lead must be one of the members",
+    );
   });
 });
 
@@ -491,6 +530,97 @@ describe("the day someone joins or leaves a team", () => {
     // Then the first is named
     expect(found).toBe(
       "Someone can't join or leave a team after their end date",
+    );
+  });
+
+  describe("for a planned hire", () => {
+    const hires: Everyone = new Map([[hire, plannedHire()]]);
+    const hireDay = (from: string): MemberDay => ({
+      teamId: team,
+      memberId: hire,
+      from,
+    });
+    const tooEarly =
+      "This planned hire is expected in 2026-06. Choose a day from then on.";
+
+    it("is refused for joining before the month it's expected, naming the month", () => {
+      expect(
+        daysRefusal([hireDay("2026-05-31")], [], hires, draftingRefusals),
+      ).toBe(tooEarly);
+    });
+
+    it.each(["2026-06-01", "2099-01-01"])(
+      "is accepted from the month it's expected, as on %s, since a planned hire never leaves",
+      (from) => {
+        expect(
+          daysRefusal([hireDay(from)], [], hires, draftingRefusals),
+        ).toBeUndefined();
+      },
+    );
+
+    it("is refused on the day of its latest record on that team, as a person's is", () => {
+      expect(
+        daysRefusal(
+          [hireDay("2026-07-01")],
+          [record("2026-07-01", team, hire)],
+          hires,
+          draftingRefusals,
+        ),
+      ).toBe(
+        "This planned hire last joined or left this team on 2026-07-01. Choose a later date.",
+      );
+    });
+
+    it("is accepted for leaving before the month it's expected, as when its target date moved later", () => {
+      expect(
+        daysRefusal(
+          [{ ...hireDay("2026-05-01"), leaves: true }],
+          [],
+          hires,
+          draftingRefusals,
+        ),
+      ).toBeUndefined();
+    });
+
+    it("is checked alone among days given with no day chosen, leaving people's alone", () => {
+      // Given a person not yet started and a planned hire not yet expected, both joining today
+      const both: Everyone = new Map<string, Member>([
+        [joining, someone({ started: false, startDate: "2099-01-01" })],
+        [hire, plannedHire({ firstDay: "2026-06-01" })],
+      ]);
+      const days = [joining, hire].map((memberId) => ({
+        teamId: team,
+        memberId,
+        from: "2026-05-15",
+      }));
+
+      // When their days are checked
+      const found = plannedHireDaysRefusal(days, both, draftingRefusals);
+
+      // Then only the planned hire's is refused
+      expect(found).toBe(tooEarly);
+      expect(
+        plannedHireDaysRefusal(days.slice(0, 1), both, draftingRefusals),
+      ).toBeUndefined();
+    });
+
+    it("is accepted from today once it's expected", () => {
+      expect(
+        plannedHireDaysRefusal([hireDay(today)], hires, draftingRefusals),
+      ).toBeUndefined();
+    });
+  });
+
+  it("names someone not read as a person when their day comes too early", () => {
+    expect(
+      daysRefusal(
+        [{ teamId: team, memberId: "person-unknown", from: "2025-06-01" }],
+        [record("2025-06-01", team, "person-unknown")],
+        everyone,
+        draftingRefusals,
+      ),
+    ).toBe(
+      "This person last joined or left this team on 2025-06-01. Choose a later date.",
     );
   });
 
