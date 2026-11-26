@@ -9,6 +9,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { databaseCodes } from "./errors.ts";
 import {
+  addPlannedHire,
   addPosition,
   aPosition,
   errorCodeOf,
@@ -883,11 +884,7 @@ describe("activities", () => {
 
   it("allocates a planned hire to an activity, once", async () => {
     await withClient(database.app, async (client) => {
-      const hireId = await firstId(
-        client,
-        `INSERT INTO planned_hires (requisition, position_id, state_id) VALUES ($1, ${aPosition}, (SELECT i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'hiring-states' AND i.meaning = 'open')) RETURNING id`,
-        [`${prefix} REQ`],
-      );
+      const hireId = await addPlannedHire(client, `${prefix} REQ`);
       const activityId = await addActivity(client, {
         projectId: await addProject(client),
       });

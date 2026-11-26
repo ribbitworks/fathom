@@ -22,6 +22,7 @@ import {
   type DraftedTeam,
   readDraftedMemberships,
 } from "./feature-team-reads.ts";
+import { peopleRows } from "./feature-team-rules.ts";
 import { bySubject, currentRecordOn, inForceOn } from "./in-force.ts";
 import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
 import { type LineRow, readLines } from "./reporting.ts";
@@ -142,14 +143,16 @@ export async function readTeamMonths(
           colour: featureTeams.colour,
         })
         .from(featureTeams),
-      memberships: await transaction
-        .select({
-          teamId: featureTeamMemberships.teamId,
-          personId: featureTeamMemberships.personId,
-          member: featureTeamMemberships.member,
-          fromDate: featureTeamMemberships.fromDate,
-        })
-        .from(featureTeamMemberships),
+      memberships: peopleRows(
+        await transaction
+          .select({
+            teamId: featureTeamMemberships.teamId,
+            personId: featureTeamMemberships.personId,
+            member: featureTeamMemberships.member,
+            fromDate: featureTeamMemberships.fromDate,
+          })
+          .from(featureTeamMemberships),
+      ),
     }),
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );

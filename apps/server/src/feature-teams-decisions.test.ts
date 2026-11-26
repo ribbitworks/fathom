@@ -3,9 +3,18 @@
 // Integration tests for deciding feature teams' drafts: approving, rejecting, discarding and
 // resubmitting them, and publishing and discarding unpublished changes.
 
+import { featureTeamLeads, plannedHires } from "@fathom/db";
 import { type Unpublished } from "@fathom/shared";
+import { eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { errorOf, ok, unique } from "./test-app.ts";
+import {
+  builtInChoice,
+  errorOf,
+  ok,
+  testPosition,
+  unique,
+} from "./test-app.ts";
 import {
   test,
   editor,
@@ -166,6 +175,40 @@ describe("approving a team's draft", () => {
 
     expect(await liveRow(id)).toMatchObject({ name });
     expect(await leads(id)).toEqual([{ leadId: lead, fromDate: today }]);
+  });
+
+  it("replaces a planned hire leading the team from the same day with the person approved", async () => {
+    // Given a team a planned hire leads from today
+    const lead = await person();
+    const id = await liveTeam();
+    const hire = randomUUID();
+    await test.connection.insert(plannedHires).values({
+      id: hire,
+      temporaryNumber: 960_001,
+      positionId: testPosition,
+      stateId: await builtInChoice(test.connection, "hiring-states", "open"),
+    });
+    await test.connection
+      .delete(featureTeamLeads)
+      .where(eq(featureTeamLeads.teamId, id));
+    await test.connection
+      .insert(featureTeamLeads)
+      .values({ teamId: id, leadPlannedHireId: hire, fromDate: today });
+
+    // When a person is approved as its lead from today
+    await changed(id, { leadId: lead });
+    await approved(id);
+
+    // Then the person alone leads it from today
+    expect(
+      await test.connection
+        .select({
+          leadId: featureTeamLeads.leadId,
+          leadPlannedHireId: featureTeamLeads.leadPlannedHireId,
+        })
+        .from(featureTeamLeads)
+        .where(eq(featureTeamLeads.teamId, id)),
+    ).toEqual([{ leadId: lead, leadPlannedHireId: null }]);
   });
 
   it("records someone joining and leaving on the same day as not a member", async () => {

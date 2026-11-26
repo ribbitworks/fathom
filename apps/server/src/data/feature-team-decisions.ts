@@ -201,7 +201,10 @@ export async function approveTeamsIn(
       .values(chunk)
       .onConflictDoUpdate({
         target: [featureTeamLeads.teamId, featureTeamLeads.fromDate],
-        set: { leadId: sql`excluded.lead_id` },
+        set: {
+          leadId: sql`excluded.lead_id`,
+          leadPlannedHireId: sql`excluded.lead_planned_hire_id`,
+        },
       });
   }
   for (const chunk of inChunks([...ids])) {

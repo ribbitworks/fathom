@@ -74,6 +74,7 @@ import {
   membersRefusal,
   nameIsTaken,
   nextTeamDraft,
+  peopleRows,
 } from "./feature-team-rules.ts";
 import { heldChange } from "./feature-team-held-changes.ts";
 import {
@@ -249,14 +250,16 @@ export async function refuseDaysOutOfOrder(
   const records: MemberRecord[] = [];
   for (const chunk of inChunks([...new Set(days.map((day) => day.teamId))])) {
     records.push(
-      ...(await reader
-        .select({
-          teamId: featureTeamMemberships.teamId,
-          personId: featureTeamMemberships.personId,
-          fromDate: featureTeamMemberships.fromDate,
-        })
-        .from(featureTeamMemberships)
-        .where(inArray(featureTeamMemberships.teamId, chunk))),
+      ...peopleRows(
+        await reader
+          .select({
+            teamId: featureTeamMemberships.teamId,
+            personId: featureTeamMemberships.personId,
+            fromDate: featureTeamMemberships.fromDate,
+          })
+          .from(featureTeamMemberships)
+          .where(inArray(featureTeamMemberships.teamId, chunk)),
+      ),
     );
   }
   refuseWith(daysRefusal(days, records, everyone, refusals));
