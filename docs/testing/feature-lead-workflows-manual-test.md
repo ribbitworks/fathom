@@ -58,7 +58,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The team panel opens, titled 'Platform reliability', with a grey lock before it.
     - Pointing at the lock shows "Being changed by Second Engineering Operations Manager".
-    - No row has a change button.
+    - No row but **Colour** has a change button.
   - **Notes:**
 
 - [ ] `76A1` In the second browser, sign in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`.

@@ -316,7 +316,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `7E49` Press Enter.
-  - **Expected:** The **Features** cell names 'Offline Sync' alone.
+  - **Expected:** The **Features** cell names, from left to right:
+    - a hollow yellow dot, then 'Audit Export', struck through
+    - 'Offline Sync'
   - **Notes:**
 
 - [ ] `28F2` Select **Show details** in the **⋯** menu of 'Harbour Cranes Upgrade'.
