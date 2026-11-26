@@ -41,6 +41,7 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
   - **Show on Activities:** whenever the project has an activity, the row's name, Activities, is a link opening Activities filtered to the project, read as "Activities, show on Activities"; the project's ⋯ menu, on its row and in its details, offers Show on Activities too, whenever the link shows.
   - **Add activity:** under the list for those who edit features, opening New activity stacked under the project's details, on Projects, with the project set, as [Adding from a record's details](../../standards/ui-conventions/entering-and-saving.md#choices) sets out; once added, the details list it, and focus goes back to Add activity.
 - **A proposal's Features:** in its details, Choose features and New feature sit under the list, in place of the row's pencil, as [Actions on a list in a panel](../../standards/ui-conventions/pages-and-panels.md#panels) sets out. Choose features opens the picker the pencil opened. New feature, shown only to a role that may add features, opens the New feature form stacked under the details; the feature is added as a draft and linked as a draft of the proposal that uses it, so the two are approved together. The proposal's Features cell offers New feature in its picker too.
+  - **Show on Features:** whenever the proposal names a feature, the row's name, Features, is a link opening Features filtered to the proposal, read as "Features, show on Features", as the proposal's ⋯ menu's Show on Features does.
 
 ### Scope History
 

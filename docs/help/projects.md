@@ -85,6 +85,8 @@ You can start from the proposal's **Features** cell in the table too: select it,
 
 You're done when the proposal's **Features** names the new feature with a hollow dot.
 
+To see a proposal's features on the **Features** page, select **Features**, the row's name, in its details.
+
 ### Give a Reason for Removing a Feature From a Proposal
 
 When you take a feature off a proposal, here or on **Features**, it happens straight away, as a draft. You can say why while the removal is still a draft.

@@ -142,6 +142,33 @@ describe("a proposal's Features in its details", () => {
     });
   });
 
+  it("opens Features filtered to the proposal from the Features row's name", async () => {
+    // Given a proposal naming a feature
+    const { history } = await openProposal({}, undefined, linked);
+
+    // When the Features row's name is selected
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", {
+        name: "Features, show on Features",
+      }),
+    );
+
+    // Then Features opens, filtered to the proposal
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/features");
+    });
+    expect(decodeURIComponent(history.location.search)).toContain(proposalId);
+  });
+
+  it("offers no link on the Features row's name while the proposal names no feature", async () => {
+    await openProposal();
+    expect(
+      within(sidePanel()).queryByRole("button", {
+        name: "Features, show on Features",
+      }),
+    ).toBeNull();
+  });
+
   it("reads None under an empty list, above the buttons", async () => {
     await openProposal();
     const features = within(sidePanel()).getByText("Features").closest("div");

@@ -569,3 +569,9 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - The header's 'Harbour Cranes Upgrade' has a hollow yellow dot before it.
     - Focus is on **New feature**.
   - **Notes:**
+
+- [ ] `4F1D` Select **Features**, the name of the row listing the features.
+  - **Expected:**
+    - The **Features** page opens.
+    - It lists only the features 'Harbour Cranes Upgrade' names, 'Fictional Quay Lights' among them.
+  - **Notes:**
