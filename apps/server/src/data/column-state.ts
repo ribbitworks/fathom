@@ -44,14 +44,14 @@ import {
 } from "./drafts.ts";
 import { typeOf } from "./column-types.ts";
 import { fieldFields } from "./fields.ts";
+import { unpublishedMark } from "./list-reads.ts";
 import {
   draftedList,
   listExists,
   type ListsState,
   listTier,
   readState,
-  unpublishedMark,
-} from "./lists.ts";
+} from "./list-state.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { type FieldRow, readBuiltInTiers } from "./values.ts";
 

@@ -10,7 +10,7 @@ import { mostSensitive } from "../access.ts";
 import type { Draft, Viewer } from "./draft-records.ts";
 import { readDrafts, refuseHeld } from "./drafts.ts";
 import { typeOf } from "./column-types.ts";
-import { draftedList, listTier, readState } from "./lists.ts";
+import { draftedList, listTier, readState } from "./list-state.ts";
 import {
   builtInTiersOf,
   type ColumnInfo,

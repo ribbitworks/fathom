@@ -16,7 +16,7 @@ import { and, eq, inArray, lt } from "drizzle-orm";
 import { type Actor, seesSensitivity } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import { columnsWithAdded } from "./added-columns.ts";
-import { peoplesMeaning } from "./lists.ts";
+import { peoplesMeaning } from "./list-rules.ts";
 import { fieldOfValue, readColumns, valueRows } from "./values.ts";
 import { type Change, type Transaction } from "./changes.ts";
 import {

@@ -15,7 +15,7 @@ import { changesHiringPlan, type HireChange } from "@fathom/shared";
 import { and, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm";
 import { type Actor } from "../access.ts";
 import { BadRequestError, ConflictError, ForbiddenError } from "../errors.ts";
-import { peoplesMeaning } from "./lists.ts";
+import { peoplesMeaning } from "./list-rules.ts";
 import { choiceLabels } from "./values.ts";
 import { type Transaction } from "./changes.ts";
 import { drafted, type Recorded } from "./draft-records.ts";
