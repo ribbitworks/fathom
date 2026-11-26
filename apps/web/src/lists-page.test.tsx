@@ -8,7 +8,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fictionalUser,
-  greeting,
+  overviewGreeting,
   recordCell,
   renderApp,
   serverAnswers,
@@ -47,7 +47,6 @@ describe("who sees the Lists page", () => {
   it("links to it for users who may see planning configuration", async () => {
     serverAnswers({
       "GET /api/session": viewer,
-      "GET /api/greeting": greeting,
       "GET /api/lists": listsAnswer,
     });
     renderApp("/");
@@ -69,7 +68,6 @@ describe("who sees the Lists page", () => {
             "features:view",
           ],
         }),
-      "GET /api/greeting": greeting,
       "GET /api/lists": listsAnswer,
     });
     renderApp("/lists");
@@ -82,10 +80,9 @@ describe("who sees the Lists page", () => {
   it("is not linked or shown for anyone else", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     const history = renderApp("/");
-    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
     expect(screen.queryByRole("link", { name: "Lists" })).toBeNull();
     for (const path of ["/lists", "/lists/l1"]) {
       history.push(path);

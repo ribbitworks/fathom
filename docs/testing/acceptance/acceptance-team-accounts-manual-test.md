@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-installing-fathom-manual-test.md", "docs/help/working-as-an-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Acceptance, The Team's Accounts
@@ -76,7 +76,7 @@ Run the test cases in order, in about 30 minutes, straight after [Installing Fat
   - **Expected:**
     - The **Administration** section shows **Accounts**, **Roles** and **Settings**.
     - The **History** section shows **Access history**.
-    - It shows no page of the plan or of people.
+    - The **Plan** section shows **Overview** alone, and the menu shows no page of people.
   - **Notes:**
 
 - [ ] `A95D` Select the **Settings** page in the left-hand menu.

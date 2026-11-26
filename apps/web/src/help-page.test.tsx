@@ -7,12 +7,9 @@
 import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  fictionalUser,
-  greeting,
-  renderApp,
-  serverAnswers,
-} from "./test-support.tsx";
+import { helpPage, helpPageNames } from "./help-pages.ts";
+import { headingsOf } from "./test-help-pages.ts";
+import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -44,7 +41,6 @@ describe("Help", () => {
   it("shows a page's title as its heading, and its headings as anchors", async () => {
     serverAnswers({
       "GET /api/session": () => Response.json(fictionalUser),
-      "GET /api/greeting": greeting,
     });
     renderApp("/help/features");
     expect(
@@ -58,7 +54,6 @@ describe("Help", () => {
   it("draws a page's diagram, named by its title", async () => {
     serverAnswers({
       "GET /api/session": () => Response.json(fictionalUser),
-      "GET /api/greeting": greeting,
     });
     renderApp("/help/how-fathom-fits-together");
     await screen.findByRole("heading", {
@@ -75,7 +70,6 @@ describe("Help", () => {
   it("follows a link to another Help page in the same tab, to the heading named", async () => {
     serverAnswers({
       "GET /api/session": () => Response.json(fictionalUser),
-      "GET /api/greeting": greeting,
     });
     const history = renderApp("/help/working-as-a-team-member");
     await screen.findByRole("heading", {
@@ -102,7 +96,6 @@ describe("Help", () => {
   it("names the page in the top bar, after a link back to the index", async () => {
     serverAnswers({
       "GET /api/session": () => Response.json(fictionalUser),
-      "GET /api/greeting": greeting,
     });
     const history = renderApp("/help/pages");
     await screen.findByRole("heading", { name: "Pages", level: 1 });
@@ -122,6 +115,21 @@ describe("Help", () => {
       expect(
         await screen.findByText("There is no page at this address."),
       ).toBeDefined();
+    },
+  );
+});
+
+describe("a Help page's headings", () => {
+  it.each(helpPageNames().filter((name) => name.startsWith("working-as-")))(
+    "are drawn with the anchors the Overview links to, on %s",
+    async (name) => {
+      serverAnswers({ "GET /api/session": withNoPages });
+      renderApp(`/help/${name}`);
+      const page = helpPage(name);
+      await screen.findByRole("heading", { name: page?.title ?? "", level: 1 });
+      expect(
+        [...document.querySelectorAll("h2[id], h3[id]")].map(({ id }) => id),
+      ).toEqual(page && headingsOf(page).map(({ anchor }) => anchor));
     },
   );
 });

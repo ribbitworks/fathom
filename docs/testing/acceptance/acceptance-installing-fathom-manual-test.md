@@ -163,8 +163,11 @@ Run the test cases in order, in about 30 minutes, plus the time the images take 
 - [ ] `E7BC` Select **Change password**.
   - **Expected:**
     - A notification says "The password has been changed, and every other session has been signed out."
-    - Fathom opens on the **Accounts** page, with the left-hand menu.
-    - The table lists one account, "Fathom Administrator", with the email address `install.administrator@fathom.test` and **Status** "Active".
+    - Fathom opens on the **Overview**, with the left-hand menu.
+  - **Notes:**
+
+- [ ] `C2D0` Select the **Accounts** page in the left-hand menu.
+  - **Expected:** The table lists one account, "Fathom Administrator", with the email address `install.administrator@fathom.test` and **Status** "Active".
   - **Notes:**
 
 ### INSTALL-04: The Data Stays When Fathom Stops and Starts

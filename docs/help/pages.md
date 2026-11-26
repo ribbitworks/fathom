@@ -17,9 +17,9 @@ This page lists every page of Fathom. It says what each is for, where it is, and
 
 ## Plan
 
-- [Overview](overview.md): Fathom opens on it.
-  - **Shown with:** **View Plan**
-  - **Starting roles that see it:** Every role but Administrator
+- [Overview](overview.md): Fathom opens on it, with your role's jobs.
+  - **Shown with:** no permission needed
+  - **Starting roles that see it:** Every role
 - [Projects](projects.md): It holds projects, proposals, customers and milestones.
   - **Shown with:** **View Plan**
   - **Starting roles that see it:** Every role but Administrator
@@ -89,8 +89,6 @@ Everyone sees the **Help** section, whatever their role.
 
 ## Where Fathom Opens
 
-Fathom opens on the **Overview**. If your role doesn't see the plan, it opens on the first page your role sees instead, in the order of the left-hand menu. The Administrator, for example, opens on **Accounts**.
-
-A role that sees no page opens on Help's list of pages.
+Fathom opens on the **Overview**, whatever your role. It lists your role's jobs, each linking to the page where you do it. See [Overview](overview.md).
 
 You're done when you've found the page you need, and know which permission shows it.

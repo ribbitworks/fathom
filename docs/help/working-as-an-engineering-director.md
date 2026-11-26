@@ -39,7 +39,7 @@ See [People](people.md#change-a-person).
 
 If the hire has allocations, remove them first, since Fathom doesn't move them to the person. See [People](people.md#fill-a-planned-hire).
 
-## Change Reporting Lines
+## Keep People Current
 
 ### Give Someone a New Manager
 
@@ -58,14 +58,15 @@ See [People](people.md#give-someone-a-new-manager).
 
 Once that day has passed, they show as having left. See [People](people.md#remove-a-person-or-planned-hire).
 
-### Check the Org Chart
+### See Another Date
 
 1. Select the **Org chart** page.
+1. Type a day in **Date**, or select an arrow to move a month.
 1. Type a name in **Find a person or team**.
-1. Choose the person.
-1. Check that they're under the right manager.
+1. Choose the person, and check they're under the right manager.
+1. To come back to today, select **Today**.
 
-To see the chart on another day, type it in **Date**. On an earlier day, you can also change someone's manager from that day. See [Org chart](org-chart.md#see-another-date).
+On an earlier day, you can also change someone's manager from that day. See [Org chart](org-chart.md#see-another-date).
 
 ## Choose Who Sees Personal and Confidential Data
 

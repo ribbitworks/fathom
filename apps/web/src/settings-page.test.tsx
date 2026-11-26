@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { notAllowedMessage } from "./api.ts";
 import {
   fictionalUser,
-  greeting,
+  overviewGreeting,
   renderApp,
   serverAnswers,
   signedIn,
@@ -59,11 +59,15 @@ describe("who sees the Settings page", () => {
   it("links to it under Administration for users who may edit settings", async () => {
     serverAnswers({
       "GET /api/session": settingsEditor(),
-      "GET /api/greeting": greeting,
     });
     const history = renderApp("/");
-    await screen.findByText("Hello, Fathom");
-    await userEvent.click(screen.getByRole("link", { name: "Settings" }));
+    await screen.findByText(overviewGreeting);
+    await userEvent.click(
+      within(screen.getByRole("navigation", { name: "Sections" })).getByRole(
+        "link",
+        { name: "Settings" },
+      ),
+    );
     expect(
       await screen.findByRole("heading", { name: "Settings" }),
     ).toBeDefined();
@@ -84,7 +88,12 @@ describe("who sees the Settings page", () => {
     // Then
     const passwords = await screen.findByRole("region", { name: "Passwords" });
     expect(history.location.pathname).toBe("/settings");
-    expect(screen.getByRole("link", { name: "Settings" })).toBeDefined();
+    expect(
+      within(screen.getByRole("navigation", { name: "Sections" })).getByRole(
+        "link",
+        { name: "Settings" },
+      ),
+    ).toBeDefined();
     expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
     expect(picker().readOnly).toBe(true);
     submitFormOf(picker());

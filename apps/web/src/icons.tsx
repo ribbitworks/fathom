@@ -157,6 +157,7 @@ const paths = {
   ),
   plus: <path d="M8 3v10M3 8h10" />,
   minus: <path d="M3 8h10" />,
+  chevron: <path d="M6 3.5 10.5 8 6 12.5" />,
   export: <path d="M8 2.5v8M4.5 7L8 10.5 11.5 7M2.5 13.5h11" />,
   check: <path d="M3 8.5l3.2 3L13 4.5" />,
   pending: <circle cx="8" cy="8" r="3" />,

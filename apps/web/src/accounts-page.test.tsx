@@ -26,11 +26,13 @@ import {
 import {
   bodyOf,
   fictionalUser,
-  greeting,
+  findSidebar,
+  overviewGreeting,
   recordCell,
   renderApp,
   savedFiles,
   serverAnswers,
+  sidebar,
   signedIn,
 } from "./test-support.tsx";
 
@@ -42,13 +44,14 @@ describe("who sees the Accounts page", () => {
   it("links to it for users who may manage accounts", async () => {
     serverAnswers({
       "GET /api/session": manager,
-      "GET /api/greeting": greeting,
       "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/");
     await userEvent.click(
-      await screen.findByRole("link", { name: "Accounts" }),
+      await within(await findSidebar()).findByRole("link", {
+        name: "Accounts",
+      }),
     );
     expect(
       await screen.findByRole("heading", { name: "Accounts" }),
@@ -58,11 +61,12 @@ describe("who sees the Accounts page", () => {
   it("is not linked for anyone else", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
-    expect(screen.queryByRole("link", { name: "Accounts" })).toBeNull();
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
+    expect(
+      within(sidebar()).queryByRole("link", { name: "Accounts" }),
+    ).toBeNull();
   });
 
   it("shows every account, without changing any, to users who may only see accounts", async () => {
@@ -76,11 +80,12 @@ describe("who sees the Accounts page", () => {
       "GET /api/accounts": accountList,
     });
     // When
-    const history = renderApp("/");
+    renderApp("/accounts");
     // Then
     expect(await screen.findByText("Fictional Planner")).toBeDefined();
-    expect(history.location.pathname).toBe("/accounts");
-    expect(screen.getByRole("link", { name: "Accounts" })).toBeDefined();
+    expect(
+      within(sidebar()).getByRole("link", { name: "Accounts" }),
+    ).toBeDefined();
     expect(screen.queryByRole("button", { name: "New account" })).toBeNull();
     const panel = await openPanelFor("Fictional Planner");
     expect(
@@ -294,12 +299,11 @@ describe("changing one's own account", () => {
     ).toBeDefined();
   });
 
-  it("leaves Accounts for the first page the user may still open once their role no longer manages accounts", async () => {
+  it("leaves Accounts for the Overview once the user's role no longer manages accounts", async () => {
     let session = manager;
     let refusedLists = 0;
     serverAnswers({
       "GET /api/session": () => session(),
-      "GET /api/greeting": greeting,
       "GET /api/roles": roleList,
       "GET /api/accounts": () => {
         if (session === signedIn) {
@@ -329,7 +333,9 @@ describe("changing one's own account", () => {
     await waitFor(() => {
       expect(history.location.pathname).toBe("/");
     });
-    expect(screen.queryByRole("link", { name: "Accounts" })).toBeNull();
+    expect(
+      within(sidebar()).queryByRole("link", { name: "Accounts" }),
+    ).toBeNull();
     // The list is not asked for again, so the page never says it could not load it.
     expect(refusedLists).toBe(0);
   });

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Administrator Workflows
@@ -57,7 +57,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The **Administration** section shows **Accounts**, **Roles** and **Settings**.
     - The **History** section shows **Access history**.
     - The menu shows the **Help** section.
-    - It shows no page of the plan or of people.
+    - The **Plan** section shows **Overview** alone, and the menu shows no page of people.
   - **Notes:**
 
 - [ ] `A38F` Select the **Accounts** page in the left-hand menu.

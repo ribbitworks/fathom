@@ -5,25 +5,22 @@
 // says the user is, how each person chooses light or dark mode, and how the sidebar opens and closes
 // on narrow screens.
 
-import {
-  defaultClasses,
-  type Permission,
-  permissionSchema,
-} from "@fathom/shared";
+import { defaultClasses, type Permission } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fictionalUser,
-  greeting,
   onNarrowScreen,
+  overviewGreeting,
   renderApp,
   sectionsButton,
   serverAnswers,
+  sidebar,
   signedIn,
   signedOut,
 } from "./test-support.tsx";
-import { firstPage, pagesOpened, pagesReached } from "./layout.tsx";
+import { pagesOpened, pagesReached } from "./layout.tsx";
 
 // An administrator who also sees the plan, as through the Viewer role.
 const administrator = () =>
@@ -37,28 +34,8 @@ const administrator = () =>
     ],
   });
 
-const sidebar = () => screen.getByRole("navigation", { name: "Sections" });
-
 afterEach(() => {
   vi.unstubAllGlobals();
-});
-
-describe("the first page a user may open", () => {
-  const access = (permissions: readonly Permission[]) => ({
-    permissions,
-    dataClasses: defaultClasses,
-  });
-
-  it("is never the Overview, so someone sent there from it cannot be sent back", () => {
-    expect(firstPage(access(permissionSchema.options))).toBe("/projects");
-    expect(firstPage(access(["people:view"]))).toBe("/people");
-    expect(firstPage(access([]))).toBeUndefined();
-  });
-
-  it("leaves out a page that would show none of its data", () => {
-    // Allocations need Personal details, so without them Capacity is left out for the change history.
-    expect(firstPage(access(["allocations:view"]))).toBe("/changes");
-  });
 });
 
 describe("the pages a role opens", () => {
@@ -90,10 +67,9 @@ describe("the sidebar", () => {
           ...fictionalUser,
           permissions: ["plan:view", "configuration:view"],
         }),
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     expect(
       within(sidebar())
         .getByRole("link", { name: "Capacity" })
@@ -108,14 +84,13 @@ describe("the sidebar", () => {
           ...fictionalUser,
           permissions: ["plan:view", "allocations:view"],
         }),
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     expect(within(sidebar()).queryByText("Capacity")).toBeNull();
   });
 
-  it("shows no plan or people pages, current or to come, to those who may not see them", async () => {
+  it("shows only the Overview of the plan, and no people pages, current or to come, to those who may not see them", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
@@ -126,9 +101,8 @@ describe("the sidebar", () => {
     });
     renderApp("/accounts");
     await screen.findByRole("heading", { name: "Accounts" });
+    expect(within(sidebar()).getByText("Overview")).toBeDefined();
     for (const name of [
-      "Plan",
-      "Overview",
       "Projects",
       "Releases",
       "People",
@@ -143,10 +117,9 @@ describe("the sidebar", () => {
   it("shows administration only to those who may use it", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     expect(within(sidebar()).queryByText("Administration")).toBeNull();
     expect(
       within(sidebar()).queryByRole("link", { name: "Accounts" }),
@@ -186,10 +159,9 @@ describe("the sidebar", () => {
   it("marks the current page", async () => {
     serverAnswers({
       "GET /api/session": administrator,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     expect(
       within(sidebar())
         .getByRole("link", { name: "Overview" })
@@ -215,7 +187,6 @@ describe("the sidebar's sections", () => {
             "administration:edit",
           ],
         }),
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const nav = await screen.findByRole("navigation", { name: "Sections" });
@@ -238,10 +209,9 @@ describe("the collapsed sidebar", () => {
   it("collapses to a rail of icons that keeps every page's name, remembers it, and expands again", async () => {
     serverAnswers({
       "GET /api/session": administrator,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     await userEvent.click(
       within(sidebar()).getByRole("button", { name: "Collapse sidebar" }),
     );
@@ -271,10 +241,9 @@ describe("the collapsed sidebar", () => {
     localStorage.setItem("fathom-sidebar-collapsed", "true");
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     expect(
       within(sidebar()).getByRole("button", { name: "Expand sidebar" }),
     ).toBeDefined();
@@ -289,7 +258,6 @@ describe("the top bar", () => {
   ])("names where the user is on %s", async (path, place) => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp(path);
     const breadcrumbs = await screen.findByText(place.split("/")[1] ?? "", {
@@ -321,10 +289,9 @@ describe("choosing light or dark mode", () => {
   async function openSignedIn() {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
   }
 
   it("offers System, Light, and Dark under Appearance, with System chosen at first", async () => {
@@ -410,10 +377,9 @@ describe("switching role", () => {
   it("names the one role an account holds, with nothing to switch to", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     await userEvent.click(accountMenu());
     await screen.findByRole("group", { name: "Appearance" });
     expect(screen.getByText("Team Member")).toBeDefined();
@@ -426,10 +392,9 @@ describe("switching role", () => {
   it("offers every role held, the one acted as chosen", async () => {
     serverAnswers({
       "GET /api/session": actingAs(teamMember),
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     await userEvent.click(accountMenu());
     const group = await screen.findByRole("group", { name: "Role" });
     expect(
@@ -443,7 +408,6 @@ describe("switching role", () => {
     let session = actingAs(keepers);
     const fetch = serverAnswers({
       "GET /api/session": () => session(),
-      "GET /api/greeting": greeting,
       "GET /api/accounts": () => Response.json({ accounts: [] }),
       "PUT /api/session/role": () => {
         session = actingAs(teamMember);
@@ -456,7 +420,7 @@ describe("switching role", () => {
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Team Member" }),
     );
-    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
     expect(history.location.pathname).toBe("/");
     expect(fetch).toHaveBeenCalledWith(
       "/api/session/role",
@@ -476,7 +440,6 @@ describe("switching role", () => {
     let session = actingAs(teamMember);
     serverAnswers({
       "GET /api/session": () => session(),
-      "GET /api/greeting": greeting,
       "PUT /api/session/role": () => {
         session = actingAs(keepers);
         return new Response(null, { status: 204 });
@@ -497,10 +460,9 @@ describe("switching role", () => {
   it("sends nothing when the role acted as is chosen again", async () => {
     const fetch = serverAnswers({
       "GET /api/session": actingAs(teamMember),
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     await userEvent.click(accountMenu());
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Team Member, chosen" }),
@@ -514,12 +476,11 @@ describe("switching role", () => {
   it("says when the switch fails, and keeps the role", async () => {
     serverAnswers({
       "GET /api/session": actingAs(teamMember),
-      "GET /api/greeting": greeting,
       "PUT /api/session/role": () =>
         Response.json({ error: "Internal Server Error" }, { status: 500 }),
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     await userEvent.click(accountMenu());
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Fictional Keepers" }),
@@ -536,11 +497,10 @@ describe("on a narrow screen", () => {
     onNarrowScreen();
     serverAnswers({
       "GET /api/session": administrator,
-      "GET /api/greeting": greeting,
       "GET /api/access-history": () => Response.json({ entries: [] }),
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     const menu = await sectionsButton();
     expect(menu.getAttribute("aria-expanded")).toBe("false");
     expect(menu.getAttribute("aria-controls")).toBe(sidebar().id);
@@ -559,12 +519,9 @@ describe("on a narrow screen", () => {
   });
 
   it("keeps the current page marked while its address shows more, such as a grouping", async () => {
-    serverAnswers({
-      "GET /api/session": administrator,
-      "GET /api/greeting": greeting,
-    });
+    serverAnswers({ "GET /api/session": administrator });
     renderApp("/?grouping=anything");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     expect(
       within(sidebar())
         .getByRole("link", { name: "Overview" })

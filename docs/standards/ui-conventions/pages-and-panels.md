@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Pages and Panels
@@ -143,7 +143,7 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
 
 ## Help
 
-- **A Help page:** A Help page is drawn as [Visual Design](../../design/visual-design.md#layout) sets out, its text through the one rendering every note uses, never its own renderer, and its diagrams as [Help Page Standards](../help-pages.md#rules) sets out. Help is reached only from the sidebar's Help section, with no button on each page.
+- **A Help page:** A Help page is drawn as [Visual Design](../../design/visual-design.md#layout) sets out, its text through the one rendering every note uses, never its own renderer, and its diagrams as [Help Page Standards](../help-pages.md#rules) sets out. Help is reached only from the sidebar's Help section, with no button on each page. The Overview is the one exception: each job and task on it links to its section of a starting role's Help page.
   - **Links:** A link to a Help page, in a Help page or any note, stays in Fathom. A link whose text only repeats its address reads the page's title.
   - **Drawn by:** `HelpPageView` in `apps/web/src/help-page.tsx`, its text through `NoteView` in `apps/web/src/note-editor.tsx` with `anchors`, its links by `NoteLink` there, its diagrams coloured by `apps/web/src/help-page.module.css`, and the pages from `apps/web/src/help-pages.ts`.
   - **Example:** Select Help pages, then Pages, then the link to Lists.

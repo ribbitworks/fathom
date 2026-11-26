@@ -14,7 +14,7 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import {
   fictionalUser,
-  greeting,
+  findSidebar,
   renderApp,
   serverAnswers,
   signedIn,
@@ -74,12 +74,13 @@ describe("who sees the Org chart page", () => {
   it("links to it under People for users who see people", async () => {
     serverAnswers({
       "GET /api/session": viewer,
-      "GET /api/greeting": greeting,
       "GET /api/org-chart": chartAnswer,
     });
     const history = renderApp("/");
     await userEvent.click(
-      await screen.findByRole("link", { name: "Org chart" }),
+      await within(await findSidebar()).findByRole("link", {
+        name: "Org chart",
+      }),
     );
     expect(
       await screen.findByRole("heading", { name: "Org chart" }),

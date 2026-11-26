@@ -43,7 +43,7 @@ Once you've made your changes, select **Publish** in the top bar.
 
 To take someone off a team from a month on, select their cell in that month, and press Delete. See [Capacity](capacity.md#put-someone-on-a-feature-team-from-a-month).
 
-### Change a Team's Lead or Several Members
+### Change a Team's Lead or Members
 
 1. On the **Org chart**, choose **Feature teams** in the switch.
 1. Select the **Feature teams** button, and choose the team. Its panel opens beside the chart.
@@ -64,9 +64,9 @@ Select **Views**, then **Over** or **Under**, or both. They keep the people who 
 
 ## Look at the Teams
 
-### Find a Team
+### Find a Person or Team
 
-On the **Org chart**, type part of the team's name in **Find a person or team**, and choose the team. See [Org chart](org-chart.md#find-a-person-or-team).
+On the **Org chart**, type part of a person's or team's name in **Find a person or team**, and choose them. See [Org chart](org-chart.md#find-a-person-or-team).
 
 ### Show One Team Alone
 
@@ -75,7 +75,7 @@ On the **Org chart**, type part of the team's name in **Find a person or team**,
 
 See [Org chart](org-chart.md#show-one-team-alone).
 
-### See an Earlier Date
+### See Another Date
 
 1. In the date row under **Find a person or team**, type a day in **Date**, or select an arrow to move a month.
 1. To come back to today, select **Today**.

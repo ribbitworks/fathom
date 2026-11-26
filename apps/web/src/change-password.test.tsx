@@ -7,12 +7,7 @@
 import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import {
-  greeting,
-  renderApp,
-  serverAnswers,
-  signedIn,
-} from "./test-support.tsx";
+import { renderApp, serverAnswers, signedIn } from "./test-support.tsx";
 
 vi.mock("./guessable.ts", () => ({ useGuessableCheck: () => undefined }));
 
@@ -32,7 +27,6 @@ describe("before the check for guessable passwords has loaded", () => {
   it("does not mark that requirement met, and leaves the check to the server", async () => {
     const fetch = serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       "POST /api/auth/change-password": () =>
         Response.json(
           { error: "This password is too common or easy to guess." },

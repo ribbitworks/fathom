@@ -7,7 +7,7 @@ import { act, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fictionalUser,
-  greeting,
+  overviewGreeting,
   renderApp,
   serverAnswers,
 } from "./test-support.tsx";
@@ -49,11 +49,10 @@ async function follow(
   const fetch = serverAnswers({
     "GET /api/session": () =>
       Response.json({ ...fictionalUser, permissions: ["plan:view"] }),
-    "GET /api/greeting": greeting,
     ...answers,
   });
   const history = renderApp("/");
-  await screen.findByText("Hello, Fathom");
+  await screen.findByText(overviewGreeting);
   act(() => {
     history.push(link);
   });

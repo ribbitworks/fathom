@@ -22,7 +22,7 @@ Your team's features are those whose **Feature team** names your team. To give a
 
 See [Features](features.md#change-a-feature).
 
-### Update an Estimate
+### Give an Estimate
 
 1. Select the feature's **Effort** cell.
 1. Type a number, in the unit the column shows.
@@ -41,9 +41,9 @@ To show another unit, open the **Effort** column's menu, and choose one under **
 
 See [Features](features.md#write-a-note).
 
-## See What a Cycle or Release Holds
+## See What's Planned
 
-### Group by Cycle or Release
+### See What Each Cycle or Release Holds
 
 1. On **Features**, select **Group by**.
 1. Choose **Cycle** or **Release**. The features show under a heading for each.
@@ -58,28 +58,22 @@ See [Features](features.md#group-the-table).
 
 See [Features](features.md#see-features-as-a-board).
 
-## Change the Feature Team
+## Staff the Feature Teams
 
-### Add or Remove Members
+### Change a Team's Lead or Members
 
 1. On the **Org chart**, choose **Feature teams** in the switch.
 1. Select the **Feature teams** button, and choose your team. Its panel opens beside the chart.
 1. Point at **Members**, and select the pencil at its right.
 1. Pick each person to add, or a ticked member to take off. The list stays open after each one.
 1. Press Enter to finish.
-1. Select **Publish** in the top bar.
-
-See [Org chart](org-chart.md#change-a-feature-team).
-
-### Change the Lead
-
-1. In your team's panel, point at **Feature lead**, and select the pencil at its right.
+1. To change the lead, point at **Feature lead** in the panel, and select the pencil at its right.
 1. Choose the new lead.
 1. Select **Publish** in the top bar.
 
 See [Org chart](org-chart.md#change-a-feature-team).
 
-## Find Someone on the Org Chart
+## Find Someone
 
 ### Find a Person or Team
 

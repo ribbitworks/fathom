@@ -10,7 +10,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { generated } from "./test-accounts-page.tsx";
 import {
   fictionalUser,
-  greeting,
   renderApp,
   serverAnswers,
   signedIn,
@@ -64,7 +63,6 @@ describe("changing one's own password", () => {
   it("is offered to every user, and confirms the change like other changes", async () => {
     const fetch = serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       "POST /api/auth/change-password": () => Response.json({}),
     });
     renderApp("/");
@@ -97,7 +95,6 @@ describe("changing one's own password", () => {
   it("asks for the new password twice, the same each time", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();
@@ -115,7 +112,6 @@ describe("changing one's own password", () => {
   it("shows the rules from the start, and asks for the current password and a long enough new one", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();
@@ -155,7 +151,6 @@ describe("changing one's own password", () => {
             },
           },
         }),
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();
@@ -184,7 +179,6 @@ describe("changing one's own password", () => {
   it("puts the server's refusal of a new password plainly", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       "POST /api/auth/change-password": () =>
         Response.json(
           { error: "The password must include a symbol." },
@@ -206,7 +200,6 @@ describe("changing one's own password", () => {
   it("asks for a new password that differs from the current one", async () => {
     const fetch = serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();
@@ -229,7 +222,6 @@ describe("changing one's own password", () => {
   it("names a wrong current password beside it, keeping the dialog open", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       "POST /api/auth/change-password": () =>
         Response.json({ code: "INVALID_PASSWORD" }, { status: 400 }),
     });
@@ -248,7 +240,6 @@ describe("changing one's own password", () => {
   it("starts afresh when opened again", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       "POST /api/auth/change-password": () =>
         Response.json({ code: "INVALID_PASSWORD" }, { status: 400 }),
     });
@@ -283,7 +274,6 @@ describe("changing one's own password", () => {
     let answer: (response: Response) => void = () => undefined;
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       "POST /api/auth/change-password": () =>
         new Promise<Response>((resolve) => {
           answer = resolve;
@@ -312,7 +302,6 @@ describe("changing one's own password", () => {
   it("explains another refusal plainly", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       "POST /api/auth/change-password": () =>
         Response.json({ error: "Fictional" }, { status: 500 }),
     });
@@ -394,7 +383,6 @@ describe("the checklist for a new password", () => {
   it("is read with the field, and turns what is not met red only once the field is left", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();
@@ -418,7 +406,6 @@ describe("the checklist for a new password", () => {
   it("turns what is not met red once the form is sent, though the field is not left", async () => {
     const fetch = serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();
@@ -444,7 +431,6 @@ describe("the checklist for a new password", () => {
   ])("refuses %s before sending it", async (_, password) => {
     const fetch = serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();
@@ -555,7 +541,6 @@ describe("changing a generated password first", () => {
     let session = mustChange;
     const fetch = serverAnswers({
       "GET /api/session": () => session(),
-      "GET /api/greeting": greeting,
       "POST /api/auth/change-password": () => {
         session = signedIn;
         return Response.json({});

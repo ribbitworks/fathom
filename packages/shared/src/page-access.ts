@@ -69,7 +69,6 @@ export const capacityModeNeeds: Record<CapacityMode, PageNeed> = {
 
 // The pages that need a permission; every other page, such as Help, is open to everyone signed in.
 export const pageNeeds = {
-  overview: "plan:view",
   projects: "plan:view",
   features: "features:view",
   activities: "features:view",

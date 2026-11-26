@@ -8,12 +8,12 @@ As an Executive, you see the whole plan and everyone in it, with every person's 
 - **Feature teams:** a feature team is a group that works on features together, whoever its members report to.
 - **Allocations:** an allocation is the share of someone's month planned for one feature, such as 50%.
 
-## Read the Plan
+## See What's Planned
 
-### See What Each Release Ships
+### See What Each Cycle or Release Holds
 
 1. On **Features**, select **Group by**.
-1. Choose **Release**. The features show under a heading for each release.
+1. Choose **Cycle** or **Release**. The features show under a heading for each.
 
 See [Features](features.md#group-the-table).
 
@@ -50,7 +50,7 @@ See [Capacity](capacity.md#group-the-rows).
 
 **Over**, **Under** or **Not allocated**, in red, ends a month whose allocations don't add up to 100%. See [Capacity](capacity.md#in-allocations).
 
-## Look at People
+## Find Someone
 
 ### Find a Person or Team
 
@@ -82,13 +82,6 @@ A search or a filter changes the counts. See [People](people.md#count-people).
 
 See [Change history](change-history.md#find-a-change).
 
-### See Who Changed Access
-
-1. On **Access history**, type a name, an email address or a word in the **Search** box.
-1. Look for the entries ending in a grey **Worth checking** box. They mark changes that could give someone access or take it away.
-
-See [Access history](access-history.md#check-the-marked-entries).
-
 ### Look at Accounts, Roles and Settings
 
 These pages are under **Administration**. You see them, but you can't change them.
@@ -98,5 +91,14 @@ These pages are under **Administration**. You see them, but you can't change the
 1. On **Settings**, see the time zone and the rules for passwords.
 
 See [Roles](roles.md#see-what-a-role-gives).
+
+## Check the Access History
+
+### Find an Entry
+
+1. Select the **Access history** page, under **History**.
+1. Type a name, an email address or a word such as `switched` in the **Search** box.
+
+Entries ending in a grey **Worth checking** box mark changes that could give someone access or take it away. See [Access history](access-history.md#find-an-entry).
 
 You're done when you've found what you came for.

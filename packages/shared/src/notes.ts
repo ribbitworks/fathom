@@ -358,6 +358,22 @@ export function toggleCheckbox(markdown: string, at: number): string {
 const plainTexts = new Map<string, string>();
 const plainTextsKept = 2_000;
 
+// A piece of a note's words without their formatting, colour tags left out and a line break as a
+// space. A link shows its text, or, with hosts, its host where its text only repeats its address.
+export function markdownWords(node: Nodes, hosts = false): string {
+  if (node.type === "html") return "";
+  if ("value" in node) return node.value;
+  if (node.type === "link" && hosts) {
+    return shownLinkText(
+      node.url,
+      node.children.map((child) => markdownWords(child, hosts)).join(""),
+    );
+  }
+  return hasChildren(node)
+    ? node.children.map((child) => markdownWords(child, hosts)).join("")
+    : " ";
+}
+
 // A note's words without their formatting, each paragraph, heading, and list item on its own line.
 // Links show their text, so search and the change history find every word of an address written
 // out; a short preview shows a link whose text only repeats its address as its host instead.
@@ -366,15 +382,7 @@ export function notePlainText(markdown: string, hosts = false): string {
   const known = plainTexts.get(cacheKey);
   if (known !== undefined) return known;
   const lines: string[] = [];
-  // A kept note holds only text, its formatting, colour tags, and line breaks.
-  const words = (node: Nodes): string => {
-    if (node.type === "html") return "";
-    if ("value" in node) return node.value;
-    if (node.type === "link" && hosts) {
-      return shownLinkText(node.url, node.children.map(words).join(""));
-    }
-    return hasChildren(node) ? node.children.map(words).join("") : " ";
-  };
+  const words = (node: Nodes) => markdownWords(node, hosts);
   // Above paragraphs and headings are only the root, lists, and list items.
   const visit = (node: Nodes) => {
     if (node.type === "paragraph" || node.type === "heading") {

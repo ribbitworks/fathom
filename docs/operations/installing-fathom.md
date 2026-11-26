@@ -84,7 +84,7 @@ The host holds only the release's two settings files, never Fathom's source, so 
 ## Verification
 
 - The address in `FATHOM_PUBLIC_URL` opens the **Sign in** page, with no warning about the certificate.
-- The Administrator signs in, changes the password, and Fathom opens on the **Accounts** page.
+- The Administrator signs in, changes the password, and Fathom opens on the **Overview**, listing the Administrator's jobs.
 
 ## Stopping and Updating
 

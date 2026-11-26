@@ -16,11 +16,9 @@ import {
   editsField,
   historySearchLength,
   opensWith,
-  pageNeeds,
   parseRecordKey,
   parseRecordLink,
   personLengths,
-  reaches,
   seesEmployment,
   seesHiringPlan,
   seesView,
@@ -35,7 +33,6 @@ import {
   Link,
   notFound,
   type RouterHistory,
-  redirect,
 } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { z } from "zod";
@@ -49,7 +46,6 @@ import { shownPlace } from "./draft-places.ts";
 import { DraftsPage } from "./drafts-page.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
-import { firstPage } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
 import { listKindSchema } from "./lists.ts";
 import { OrgChartPage } from "./org-chart-page.tsx";
@@ -133,20 +129,10 @@ const chartSearch = z
     view: view === oldFeatureTeams ? undefined : view,
   }));
 
-// The Overview, for those who may see the plan. Anyone else is sent to the first page their role
-// lets them open, or, with none, to Help's index.
+// The Overview, where every role starts.
 const homeRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/",
-  beforeLoad: ({ context }) => {
-    if (
-      context.mustChangePassword ||
-      reaches(pageNeeds.overview, context.permissions)
-    )
-      return;
-    // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-    throw redirect({ to: firstPage(context.access) ?? "/help", replace: true });
-  },
   component: Home,
 });
 

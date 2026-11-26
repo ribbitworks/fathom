@@ -5,7 +5,6 @@
 // the note format or safe to draw, with each link leading to a page and heading that exist.
 
 import { helpLink, noteFormatProblem, parseNote } from "@fathom/shared";
-import GithubSlugger from "github-slugger";
 import type { Nodes } from "mdast";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -21,13 +20,7 @@ import {
   shownHelpPage,
   withoutStyle,
 } from "./help-pages.ts";
-
-const words = (node: Nodes): string =>
-  "value" in node
-    ? node.value
-    : "children" in node
-      ? node.children.map(words).join("")
-      : "";
+import { headingsOf } from "./test-help-pages.ts";
 
 const linksIn = (node: Nodes): string[] =>
   node.type === "link"
@@ -46,14 +39,10 @@ const drawingsOf = (name: string) =>
     part.kind === "diagram" ? [part.drawing] : [],
   );
 
-// Each heading's anchor on a page, as it is shown: each text between diagrams is drawn on its own.
-const anchorsOf = (name: string): string[] =>
-  textsOf(name).flatMap((text) => {
-    const slugger = new GithubSlugger();
-    return parseNote(text)
-      .children.filter((node) => node.type === "heading")
-      .map((heading) => slugger.slug(words(heading)));
-  });
+const anchorsOf = (name: string): string[] => {
+  const page = helpPage(name);
+  return page === undefined ? [] : headingsOf(page).map(({ anchor }) => anchor);
+};
 
 const drawingsFolder = join(import.meta.dirname, "../../../docs/help/diagrams");
 

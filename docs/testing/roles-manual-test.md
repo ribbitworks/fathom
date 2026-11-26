@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Editing Roles
@@ -121,7 +121,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `3DFA` Read the summary.
   - **Expected:**
-    - **Sees:** **Overview**, **Projects**, **Features**, **Activities**, **Releases**, **People**, **People on other dates**, **People on future dates**, **Org chart**, **Org chart on other dates**, **Org chart on future dates**, **Capacity**, **Feature teams**, **Feature teams grouped by manager**, **Allocations grouped by manager**, **Allocations**, **Lists**, **Drafts** and **Change history**.
+    - **Sees:** **Projects**, **Features**, **Activities**, **Releases**, **People**, **People on other dates**, **People on future dates**, **Org chart**, **Org chart on other dates**, **Org chart on future dates**, **Capacity**, **Feature teams**, **Feature teams grouped by manager**, **Allocations grouped by manager**, **Allocations**, **Lists**, **Drafts** and **Change history**.
     - **Doesn't see:** **Accounts**, **Roles**, **Settings**, **Data classes** and **Access history**.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
     - **Cannot** includes "Cannot change allocations.", "Cannot change feature teams or which team a feature has.", "Cannot reclassify data." and "Cannot approve their own drafted changes."

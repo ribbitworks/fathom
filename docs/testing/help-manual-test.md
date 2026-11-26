@@ -4,14 +4,14 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "docs/help/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Help
 
 ## Scope
 
-Verifies what only a person can judge of Help in Fathom: how a Help page and its diagram read, in a wide and a narrow window, and following links between Help pages to a page and to a heading on it, from the mouse and the keyboard, and going back.
+Verifies what only a person can judge of Help in Fathom: how a Help page and its diagram read, in a wide and a narrow window, following links between Help pages to a page and to a heading on it, from the mouse and the keyboard, and going back, and the role's jobs on the Overview, taken from its Help page.
 
 ## Test Environment
 
@@ -110,4 +110,51 @@ Start with Start Fathom. Record each step's result as [Manual Test Basics](manua
 
 - [ ] `FBA4` Press the right arrow key several times.
   - **Expected:** The diagram scrolls to show **Customer** at its right.
+  - **Notes:**
+
+### HELP-03: The Overview's Jobs
+
+**Account:** Team Member, `team.member@fathom.test`, the account HELP-02 ended with.
+
+**Preconditions:** Signed in with this account, in a browser window at least 1,000 pixels wide.
+
+- [ ] `23BA` Select **Overview** under **Plan** in the left-hand menu.
+  - **Expected:**
+    - A greeting such as "Good morning, Team Member", with "Acting as Team Member" under it, dimmed.
+    - Under it, a bordered section shows **Plan**, listing **See What's Planned** and **Look at a Project**, then **People**, listing **Find Someone** and **Look at the Teams**, then **History**, listing **Follow What Changed**.
+    - Each job's row shows, on one line, a chevron pointing right, its name, the page where it's done, such as **Features**, and **Help** at the right.
+    - No finer tasks show.
+  - **Notes:**
+
+- [ ] `0A44` Select **See What's Planned**.
+  - **Expected:**
+    - Its chevron points down.
+    - **See What Each Cycle or Release Holds**, **See Features as a Board**, **See When Each Release Ships** and **See Only What's Approved** show under it, in that order, each name lined up under the job's name.
+    - Each shows **Features**, but **See When Each Release Ships**, which shows **Releases**.
+  - **Notes:**
+
+- [ ] `6F4D` Select **See What's Planned** again.
+  - **Expected:** Its tasks are hidden, and its chevron points right.
+  - **Notes:**
+
+- [ ] `4F04` Select **Projects** on the **Look at a Project** row.
+  - **Expected:** The **Projects** page opens.
+  - **Notes:**
+
+- [ ] `14C8` Go back.
+  - **Expected:** The **Overview** shows again.
+  - **Notes:**
+
+- [ ] `77D8` Select **Help** on the **Find Someone** row.
+  - **Expected:** The **Working as a Team Member** Help page opens, with the heading **Find Someone** at the top of the window.
+  - **Notes:**
+
+- [ ] `2F29` Go back.
+  - **Expected:** The **Overview** shows again.
+  - **Notes:**
+
+- [ ] `D49E` Make the browser window narrower than 760 pixels.
+  - **Expected:**
+    - Each job's page link moves under its name, lined up with it.
+    - **Help** stays at the right of each name, and nothing is cut off.
   - **Notes:**

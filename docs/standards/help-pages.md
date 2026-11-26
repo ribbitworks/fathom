@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["docs/help/**"]
 dependencies: ["docs/standards/documentation.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Help Page Standards
@@ -37,7 +37,8 @@ Besides a page for each page of Fathom, listed in `docs/help/index.md`, Help hol
   - Every change to a page's place in the sidebar, or to the permission that shows it, updates it.
 - **Role tutorials:** a page for each starting role, such as `docs/help/working-as-a-product-manager.md`, holding the jobs the role does, in the order the role does them.
   - **Jobs and tasks:** each job is a `##` heading, and each finer task under it a `###` heading, with a few steps that link to the Help pages for the details rather than repeat them. What to Know First is the one `##` that isn't a job.
-  - **The Overview:** the Overview lists each role's jobs and tasks from these headings, so a heading changes only with the Overview's design.
+  - **The Overview:** the Overview lists every job and task from these pages that the acting role's permissions allow, by heading, so a heading changes only with the Overview's design. A job or task on several role pages has the same heading on each, and shows once.
+  - **Tags:** each heading's area, the permissions it needs and where it's done are tagged in `apps/web/src/overview-jobs.ts`, beside the pages, not read from their text. `overview-jobs.test.ts` checks that every `##` and `###` heading on the role pages has a tag, and that each tag names exactly the role pages holding its heading, so adding, renaming or moving a heading fails it until the tag follows.
   - They are led by `docs/help/setting-up-fathom.md`, for the Workforce Administrator from an empty database, and `docs/help/how-work-moves-between-roles.md`, from a Product Manager's draft to the Engineering Director's approval and an Engineering Manager's staffing.
 
 ## Before and After

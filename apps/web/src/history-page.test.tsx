@@ -3,12 +3,11 @@
 // Tests for the History page, with the server's responses simulated: who sees it, how each entry is
 // put in words, and the messages while the history loads or when it cannot be loaded.
 
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fictionalUser,
-  greeting,
   renderApp,
   serverAnswers,
   signedIn,
@@ -71,12 +70,13 @@ describe("who sees the History page", () => {
   it("links to it for users who may view the access history", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,
-      "GET /api/greeting": greeting,
       "GET /api/access-history": () => Response.json({ entries: [] }),
     });
     renderApp("/");
     await userEvent.click(
-      await screen.findByRole("link", { name: "Access history" }),
+      within(
+        await screen.findByRole("navigation", { name: "Sections" }),
+      ).getByRole("link", { name: "Access history" }),
     );
     expect(
       await screen.findByRole("heading", { name: "Access history" }),
@@ -86,7 +86,6 @@ describe("who sees the History page", () => {
   it("neither links to it nor shows it to anyone else", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/history");
     expect(

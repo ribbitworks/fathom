@@ -1,0 +1,127 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The Overview's jobs, by area: each a row of its name, where it's done and its Help, opening to its
+   tasks, laid out the same and indented to line up under its name. On a narrow screen where it's
+   done goes under the name. */
+
+.greeting {
+  padding: 20px;
+}
+
+.heading {
+  padding: 12px 20px 8px;
+  font-size: var(--mantine-font-size-md);
+  font-weight: 600;
+}
+
+/* Each area's jobs under its name, a little apart from the area before. */
+.area + .area {
+  margin-top: 6px;
+}
+
+.empty {
+  padding: 16px 20px;
+}
+
+.jobs,
+.tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.job {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.row,
+.task {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 16px;
+}
+
+/* The toggle's padding, chevron and gap put a job's name 32px in from the row's own padding. */
+.row {
+  padding: 5px 20px 5px 12px;
+}
+
+.task {
+  padding: 5px 20px 5px 44px;
+}
+
+.row:hover,
+.task:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: var(--mantine-radius-sm);
+  font-weight: 500;
+}
+
+.chevron {
+  display: inline-flex;
+  color: var(--mantine-color-dimmed);
+}
+
+.chevron[data-open] {
+  transform: rotate(90deg);
+}
+
+.name {
+  min-width: 0;
+}
+
+.place,
+.help {
+  white-space: nowrap;
+}
+
+.tasks {
+  padding-bottom: 6px;
+}
+
+@media (max-width: 47.5em) {
+  .greeting {
+    padding: 16px;
+  }
+
+  .heading {
+    padding: 12px 16px 8px;
+  }
+
+  .row,
+  .task {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 2px;
+  }
+
+  .row {
+    padding: 6px 16px 6px 8px;
+  }
+
+  .task {
+    padding: 6px 16px 6px 40px;
+  }
+
+  .help {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .place {
+    grid-row: 2;
+    grid-column: 1;
+  }
+
+  .row .place {
+    padding-left: 32px;
+  }
+}
