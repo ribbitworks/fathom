@@ -213,3 +213,13 @@ export function recordsAsShown<Rec extends GridRecord>(
     return record.draft?.action === "deleted" ? [] : [record];
   });
 }
+
+// The records as a view shows them, each keeping its own draft whatever the view, since a draft
+// locks its record and marks what it changes, and the view decides how the marks show.
+export const withOwnDrafts = <Rec extends { id: string; draft?: unknown }>(
+  shown: readonly Rec[],
+  records: readonly Rec[],
+): Rec[] => {
+  const drafts = new Map(records.map(({ id, draft }) => [id, draft]));
+  return shown.map((record) => ({ ...record, draft: drafts.get(record.id) }));
+};
