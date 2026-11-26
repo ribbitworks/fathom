@@ -401,28 +401,33 @@ export function projectColumn<
 // A link field by which a project or proposal names other records: features or customers.
 export type NamingLink = "featureIds" | "customerIds";
 
-// The projects or proposals naming a record through a link field, as drafted and as live: one a
-// draft adds it to, or that is only drafted to be added, adds it; one a draft takes it from, or
-// removes, takes it away.
-export function namingParts(
-  records: readonly (Project | Proposal)[],
-  link: NamingLink,
-  id: string,
-): (NamingPart & { record: Project | Proposal })[] {
+// The records a list holds, as drafted and as live, by whether a record as drafted or as live
+// belongs in it: one a draft adds to the list, or that is only drafted to be added, adds it; one a
+// draft takes from it, or removes, takes it away.
+export function listParts<Rec extends PlanRecord>(
+  records: readonly Rec[],
+  holds: (record: Rec) => boolean,
+): (NamingPart & { record: Rec })[] {
   return records.flatMap((record) => {
-    // The link is one of two fixed field names, on the record as drafted and as live.
-    // eslint-disable-next-line security/detect-object-injection
-    const named = record[link];
-    // eslint-disable-next-line security/detect-object-injection
-    const liveNamed = livePlanRecords([record]).at(0)?.[link] ?? [];
-    const drafted = record.draft?.action !== "deleted" && named.includes(id);
-    const live = liveNamed.includes(id);
+    const drafted = record.draft?.action !== "deleted" && holds(record);
+    const liveRecord = livePlanRecords([record]).at(0);
+    const live = liveRecord !== undefined && holds(liveRecord);
     if (!drafted && !live) return [];
     const part: DraftedPart | undefined =
       drafted === live ? undefined : drafted ? "added" : "removed";
     return [{ record, part, live, draft: record.draft }];
   });
 }
+
+// The projects or proposals naming a record through a link field, as drafted and as live.
+export const namingParts = (
+  records: readonly (Project | Proposal)[],
+  link: NamingLink,
+  id: string,
+) =>
+  // The link is one of two fixed field names.
+  // eslint-disable-next-line security/detect-object-injection
+  listParts(records, (record) => record[link].includes(id));
 
 // The records in a list that a Draft view shows, those naming a row's record or those its own field
 // lists: as they are live under Live only; as drafted once drafts are applied, which leaves out an

@@ -1,12 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for a project's activities on Projects: its details' Activities row, showing them on
-// Activities, adding one there with the project set, and the table's Activities column.
+// Activities, adding one in a form stacked under the details with the project set, and the table's
+// Activities column.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { queryDetailRow, recordCell, recordDraft } from "./test-support.tsx";
+import { fictionalRelease } from "./test-releases.ts";
+import {
+  featureDraft,
+  queryDetailRow,
+  recordCell,
+  recordDraft,
+} from "./test-support.tsx";
 import {
   activity,
   answers,
@@ -14,6 +21,8 @@ import {
   plan,
   project,
   projectId,
+  saved,
+  sent,
   sidePanel,
   withRelease,
 } from "./test-projects-page.tsx";
@@ -105,6 +114,26 @@ describe("a project's activities on Projects", () => {
     ).toBeDefined();
   });
 
+  it("marks an activity a waiting draft adds with the draft's dot", async () => {
+    await openProject(
+      projectPlan({
+        activities: [
+          activity({
+            id: "50000000-0000-4000-8000-0000000000aa",
+            name: "Fictional Rehearsal",
+            draft: featureDraft({ action: "created" }),
+          }),
+        ],
+      }),
+    );
+
+    const added = within(activitiesRow(sidePanel()) as HTMLElement).getByText(
+      ", added",
+    ).parentElement as HTMLElement;
+    expect(added.textContent).toContain("Fictional Rehearsal");
+    expect(added.querySelector("[class*=draftMark]")).not.toBeNull();
+  });
+
   it("opens an activity's details on Activities", async () => {
     const { history } = await openProject();
     await userEvent.click(
@@ -133,17 +162,83 @@ describe("a project's activities on Projects", () => {
     ).toBeUndefined();
   });
 
-  it("adds an activity on Activities filtered to the project, with the project set", async () => {
-    const { history } = await openProject();
+  it("adds an activity in a form stacked under the project's details, with the project set", async () => {
+    const withAdded = projectPlan({
+      activities: [
+        ...projectPlan().activities,
+        activity({
+          id: "50000000-0000-4000-8000-0000000000aa",
+          keyNumber: 99,
+          name: "Fictional Rehearsal",
+          projectId,
+        }),
+      ],
+    });
+    const holding: { plan?: { plan: ReturnType<typeof projectPlan> } } = {};
+    const { fetch, history, held } = await openPage(
+      `/projects?open=${projectId}`,
+      projectPlan(),
+      {
+        ...answers,
+        ...withRelease,
+        "POST /api/activities": () => {
+          if (holding.plan !== undefined) holding.plan.plan = withAdded;
+          return saved(() => withAdded)();
+        },
+      },
+      featuresEditor,
+    );
+    holding.plan = held;
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", { name: "Add activity" }),
+    );
+
+    // New activity opens under the details, on Projects, with the project set
+    const form = await screen.findByRole("region", { name: "New activity" });
+    expect(history.location.pathname).toBe("/projects");
+    expect(sidePanel()).toBeDefined();
+    expect(form.textContent).toContain("Crane Control");
+
+    // Adding sends it with the project, closes the form and puts focus back on Add activity
+    await userEvent.type(
+      within(form).getByRole("textbox", { name: "Name" }),
+      "Fictional Rehearsal",
+    );
+    await userEvent.click(within(form).getByRole("button", { name: "Add" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: "New activity" })).toBeNull();
+    });
+    expect(sent(fetch, "POST /api/activities")).toEqual([
+      expect.objectContaining({ name: "Fictional Rehearsal", projectId }),
+    ]);
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe("Add activity");
+    });
+    const row = activitiesRow(sidePanel()) as HTMLElement;
+    await userEvent.click(
+      within(row).getByRole("button", { name: /Show all/ }),
+    );
+    expect(
+      await within(row).findByRole("button", { name: "Fictional Rehearsal" }),
+    ).toBeDefined();
+  });
+
+  it("asks before leaving the stacked form with a name typed", async () => {
+    await openProject();
     await userEvent.click(
       within(sidePanel()).getByRole("button", { name: "Add activity" }),
     );
     const form = await screen.findByRole("region", { name: "New activity" });
-    expect(form.textContent).toContain("Crane Control");
-    expect(decodeURIComponent(history.location.search)).toContain(projectId);
-    await waitFor(() => {
-      expect(history.location.search).not.toContain("adding");
-    });
+    await userEvent.type(
+      within(form).getByRole("textbox", { name: "Name" }),
+      "Fictional Rehearsal",
+    );
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", { name: "Close details" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Discard the new activity?" }),
+    ).toBeDefined();
   });
 
   it("closes the form Add activity opened on Cancel without asking, the project not being anything entered", async () => {
@@ -253,35 +348,42 @@ describe("a project's activities on Projects", () => {
   });
 });
 
-describe("a New activity a link asks for", () => {
-  const asking = `adding=${encodeURIComponent(JSON.stringify({ projectId }))}`;
-
-  it.each([
-    [
-      "in the Live view",
-      `/activities?show=live&${asking}`,
+describe("New activity on Activities filtered to one project or release", () => {
+  it("starts with that project, which isn't anything entered", async () => {
+    await openPage(
+      `/activities?filters=${encodeURIComponent(
+        JSON.stringify({ projectId: { any: [projectId] } }),
+      )}`,
       projectPlan(),
+      { ...answers, ...withRelease },
       featuresEditor,
-    ],
-    [
-      "to a role that may not change activities",
-      `/activities?${asking}`,
-      projectPlan({ canEditFeatures: false }),
-      ["plan:view", "features:view"],
-    ],
-  ])(
-    "doesn't open %s, and leaves the address",
-    async (_, path, start, permissions) => {
-      const { history } = await openPage(
-        path,
-        start,
-        { ...answers, ...withRelease },
-        permissions,
-      );
-      await waitFor(() => {
-        expect(history.location.search).not.toContain("adding");
-      });
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "New activity" }),
+    );
+    const form = await screen.findByRole("region", { name: "New activity" });
+    expect(form.textContent).toContain("Crane Control");
+
+    await userEvent.click(within(form).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => {
       expect(screen.queryByRole("region", { name: "New activity" })).toBeNull();
-    },
-  );
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("starts with that release", async () => {
+    await openPage(
+      `/activities?filters=${encodeURIComponent(
+        JSON.stringify({ releaseId: { any: [fictionalRelease().id] } }),
+      )}`,
+      projectPlan(),
+      { ...answers, ...withRelease },
+      featuresEditor,
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "New activity" }),
+    );
+    const form = await screen.findByRole("region", { name: "New activity" });
+    expect(form.textContent).toContain("Fictional Release");
+  });
 });

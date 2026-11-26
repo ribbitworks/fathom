@@ -218,6 +218,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **A text field with an × to empty it:** `ClearableInput` in `clearable-input.tsx`.
 - **Choosing from a list:** `ChoicePicker` in `choice-picker.tsx`, with its New option given by a column's `adds`, and the plan's New form it opens, stacked under the picker's panel, from `useAddFromPanel` in `add-from-panel.tsx`.
 - **Typing a list's choices:** `ChoiceEntryRow` in `choice-entry-row.tsx`, the empty row starting with + where a choice is typed or several pasted, with `useChoiceEntry` in `choice-entry.ts` and the refusals in `choice-rules.ts`, on a list's panel and in a column's dialog for a new list, through `NewListChoices` in `new-list-choices.tsx`.
+- **Adding another kind of record from a record's details:** the same stacked New form, from `useAddFromPanel`'s `addActivity`, wired to Add activity by `addingActivity` in `activity-list.tsx`.
 - **A group of choices in a menu, the chosen one ticked:** `MenuChoices` in `app-menu.tsx`.
 - **A menu beside the pointer:** `MenuAtPoint` in `app-menu.tsx`, for a right-click on a table's row or a card, and a card's menu opened from its keys or its ⋯.
 - **A column in units:** a column's `units` in `record-table.ts`, resolved into the unit and decimal places the view names by `inViewUnits` in `grid-columns.tsx`, with `useChosenUnits` in `record-editing.tsx` for a form or panel's own choice, and an estimate's cell in `EffortCell` in `effort-cell.tsx`.

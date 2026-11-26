@@ -52,7 +52,6 @@ import {
   shownOn,
   signedIn,
   signedInRoute,
-  useLinkedAsk,
   useLinkedColumn,
 } from "./signed-in-route.tsx";
 import { viewProps, viewSearchSchema } from "./table-view.ts";
@@ -382,10 +381,9 @@ export const featuresRoute = createRoute({
   },
 });
 
-// Activities' address adds a column a link opens, and the project of a New activity a link opens.
+// Activities' address adds a column a link opens.
 const activitiesSearch = planRecordSearch.extend({
   column: linkedColumnSearch,
-  adding: z.object({ projectId: z.uuid() }).optional().catch(undefined),
 });
 
 export const activitiesRoute = createRoute({
@@ -399,18 +397,9 @@ export const activitiesRoute = createRoute({
   component: function Activities() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = activitiesRoute.useNavigate();
-    const { open, note, tableNote, column, adding, ...search } =
+    const { open, note, tableNote, column, ...search } =
       activitiesRoute.useSearch();
     const notes = { note, tableNote };
-    const linkedAdding = useLinkedAsk(
-      adding === undefined ? undefined : { projectId: [adding.projectId] },
-      () => {
-        void navigate({
-          search: (shown) => ({ ...shown, adding: undefined }),
-          replace: true,
-        });
-      },
-    );
     const linkedColumn = useLinkedColumn(column, () => {
       void navigate({
         search: (shown) => ({ ...shown, column: undefined }),
@@ -437,7 +426,6 @@ export const activitiesRoute = createRoute({
         onReleaseStream={(streamId) => {
           void navigate(streamAddress(streamId));
         }}
-        adding={linkedAdding}
       />
     );
   },
@@ -502,15 +490,6 @@ export const projectsRoute = createRoute({
                   void navigate({
                     to: "/activities",
                     search: { filters: { projectId: { any: [projectId] } } },
-                  });
-                },
-                add: (projectId) => {
-                  void navigate({
-                    to: "/activities",
-                    search: {
-                      filters: { projectId: { any: [projectId] } },
-                      adding: { projectId },
-                    },
                   });
                 },
               }

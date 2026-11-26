@@ -11,14 +11,12 @@ import type {
 } from "@fathom/shared";
 import type { ActivitiesOf } from "./activity-list.tsx";
 import type { BoardPlace } from "./feature-board-view.tsx";
-import type { FormValues } from "./new-record-panel.tsx";
 import {
   withActivityColumns,
   withFeatureColumns,
 } from "./plan-record-changes.ts";
 import type { FeatureNamer, PlanTab } from "./projects.ts";
 import type { LinkedColumn } from "./record-table.ts";
-import type { LinkedAsk } from "./signed-in-route.tsx";
 import type { ChangeView } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
 
@@ -102,10 +100,8 @@ export interface ProjectsPageProps {
   seesFeatures?: boolean;
   // Shows a release stream on Releases, with its releases and cycles.
   onReleaseStream?: (streamId: string) => void;
-  // Set for a role that sees activities: shows a project's on Activities, or adds one there.
-  activitiesOf?: ActivitiesOf | undefined;
-  // A New form a link asks for, with what the record starts with, such as an activity's project.
-  adding?: LinkedAsk<FormValues> | undefined;
+  // Set for a role that sees activities: shows a project's on Activities.
+  activitiesOf?: Pick<ActivitiesOf, "showAll"> | undefined;
   // How Features shows its features, as a table or a board, and where the board is.
   board?: {
     mode: PlanMode | undefined;

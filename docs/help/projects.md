@@ -112,8 +112,8 @@ You can also type a new milestone in the empty row at the end of the **Milestone
 - To see the features a project or proposal names, select **Show on Features** in its **⋯** menu. **Features** opens, showing only those features.
 - To see every feature a customer gets or asks for, select **Show all features** in the customer's **⋯** menu. **Features** opens with a filter named for the customer, such as **For Bluefin Harbour Authority**. See [Features](features.md#see-a-customers-features) for more.
 - To see a project's activities, select **Show on Activities** in the project's **⋯** menu, or select **Activities**, the row's name, in its details. **Activities** opens, showing only that project's.
-- To open one of a project's activities, select its name under **Activities** in the project's details. Its details open on **Activities**.
-- To add an activity to a project, select **Add activity** in the project's details. **Activities** opens, showing only that project's, with **New activity** beside them and the project chosen.
+- To open one of a project's activities, select its name under **Activities** in the project's details. Its details open on **Activities**. An activity a draft adds or takes away is marked with the draft's dot, as a milestone is.
+- To add an activity to a project, select **Add activity** in the project's details. **New activity** opens under the details, with the project chosen. Once you select **Add**, the details list it.
 - To go from a milestone to its project, select **Show project** in the milestone's **⋯** menu. The project's details open.
 
 You're done when the page shows what you chose.

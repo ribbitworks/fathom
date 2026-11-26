@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Adding a record from a picker of the plan's records, in a New form stacked under the picker's
-// panel, and linking it to the record the picker was for.
+// Adding a record in a New form stacked under a record's details: from a picker of the plan's
+// records, linked to the record the picker was for, or an activity of a project or release, with it
+// set.
 
 import type { Feature, Project, ProjectPlan, Proposal } from "@fathom/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
+import type { ActivityOwner } from "./activity-list.tsx";
+import { activityTable } from "./activity-table.tsx";
 import { newRecordQuestion } from "./discard-question.tsx";
 import { differingKeys } from "./drafts.ts";
 import { pendingId } from "./grid-drafts.ts";
@@ -34,13 +37,14 @@ import type {
 import type { SidePanel } from "./side-panel.tsx";
 import type { View } from "./table-view.ts";
 
-// The kinds of record a picker may add.
-type LinkedKind = "customer" | "project" | "proposal";
+// The kinds of record a picker, or Add activity in a record's details, may add.
+type LinkedKind = "customer" | "project" | "proposal" | "activity";
 
 const tabOf = {
   customer: "customers",
   project: "projects",
   proposal: "proposals",
+  activity: "activities",
 } as const satisfies Record<LinkedKind, string>;
 
 // How a record added from a picker is linked: after it is added, as a draft of the record the
@@ -131,7 +135,8 @@ interface Linking {
   // the picker fills in itself does not.
   blank: FormValues;
   saving: boolean;
-  // The kind of record the picker was for, and the record or new row it was in.
+  // The kind of record the picker was for, and the record or new row it was in, or the activity's
+  // own kind when it was opened from a record's details.
   type: PlanRecordKind;
   to: AddedTo;
   back: () => void;
@@ -206,6 +211,23 @@ export function useAddFromPanel({
     setLinking(undefined);
   };
 
+  // New activity, with the project or release set, as Add activity in its details opens it; its own
+  // draft names the record.
+  const addActivity = (owner: ActivityOwner, id: string, back: () => void) => {
+    const blank = { [owner]: [id] };
+    setForms((count) => count + 1);
+    setLinking({
+      kind: "activity",
+      linkedBy: "within",
+      values: blank,
+      blank,
+      saving: false,
+      type: "activity",
+      to: { id },
+      back,
+    });
+  };
+
   const question =
     linking !== undefined && enteredSinceBlank(linking)
       ? newRecordQuestion(oneOf(linking.kind))
@@ -237,10 +259,11 @@ export function useAddFromPanel({
     },
   };
 
-  // The form, stacked under the panel the picker is in, or beside the table when it was a cell's.
+  // The form, stacked under the panel it was opened from, or beside the table when it was a cell's.
   const panel = ({
     plan,
     choices,
+    editsFeatureTeams = false,
     narrow,
     notes,
     units,
@@ -248,6 +271,7 @@ export function useAddFromPanel({
   }: {
     plan: ProjectPlan;
     choices: TableChoices;
+    editsFeatureTeams?: boolean;
     narrow: boolean;
     notes: NoteOpening;
     units: View["units"];
@@ -263,6 +287,7 @@ export function useAddFromPanel({
     function form<Rec extends PlanRecord, Request>(
       table: RecordTable<Rec, PlanChange, Request>,
       records: readonly Rec[],
+      added?: ProjectPlan["activityColumns"],
     ) {
       const actions = actionsFor<Rec, Request>(current.kind);
       return (
@@ -271,6 +296,7 @@ export function useAddFromPanel({
           title={`New ${one}`}
           table={table}
           records={records}
+          {...(added === undefined ? {} : { added })}
           values={current.values}
           saving={current.saving}
           narrow={narrow}
@@ -313,6 +339,12 @@ export function useAddFromPanel({
         form(customerTable(choices, { seesFeatures: false }), plan.customers),
       project: () => form(projectTable(choices), plan.projects),
       proposal: () => form(proposalTable(choices), plan.proposals),
+      activity: () =>
+        form(
+          activityTable(choices, { editsFeatureTeams }),
+          plan.activities,
+          plan.activityColumns,
+        ),
     };
     return {
       key: "linked",
@@ -325,6 +357,7 @@ export function useAddFromPanel({
 
   return {
     addsFor,
+    addActivity,
     panel,
     question,
     close,
