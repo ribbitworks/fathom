@@ -370,13 +370,13 @@ scan_image() {
   return "$status"
 }
 
-# Runs Docker Compose for linux/amd64, with images tagged separately, so the development images
-# built for this machine are untouched. Each copy of the repository tags and caches its own. The
-# images are built without the release, commit and commit date Help's About box shows, which change
-# nothing a scan finds, so an image whose sources have not changed is built the same, and its scan
-# can be reused.
+# Runs Docker Compose for linux/amd64, with images tagged separately and named without a registry,
+# so neither the development images built for this machine nor a release's are touched. Each copy of
+# the repository tags and caches its own. The images are built without the release, commit and
+# commit date Help's About box shows, which change nothing a scan finds, so an image whose sources
+# have not changed is built the same, and its scan can be reused.
 compose_for_scan() {
-  DOCKER_DEFAULT_PLATFORM=linux/amd64 FATHOM_IMAGE_TAG="$(clone_name security-scan)" \
+  DOCKER_DEFAULT_PLATFORM=linux/amd64 FATHOM_REGISTRY="" FATHOM_IMAGE_TAG="$(clone_name security-scan)" \
     FATHOM_VERSION="" FATHOM_COMMIT="" FATHOM_COMMIT_DATE="" docker compose "$@"
 }
 

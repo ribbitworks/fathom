@@ -41,7 +41,9 @@ case " $* " in
         printf '{"services":{"app":{"image":"fathom-app:latest","build":{"context":"."}},"migrate":{"image":"fathom-app:latest","build":{"context":"."}},"proxy":{"image":"fathom-proxy:latest","build":{"context":"."}}}}\\n'
         ;;
       *" pull "*) [[ " $* " != *"$STUB_FAIL_PULL"* ]] ;;
-      *" build "*) [[ " $* " != *"$STUB_FAIL_BUILD"* ]] ;;
+      *" build "*)
+        printf 'build registry=%s\\n' "\${FATHOM_REGISTRY-unset}" >>"$STUB_LOG"
+        [[ " $* " != *"$STUB_FAIL_BUILD"* ]] ;;
       *" config "*)
         case " $* " in
           *compose.dev.yaml*) printf 'example/postgres:scan\\n' ;;
@@ -293,6 +295,14 @@ describe("the daily image scan", () => {
     git("config", "user.name", "Fictional Tester");
     git("add", ".");
     git("commit", "--quiet", "-m", "start");
+  });
+
+  it("builds the images under local names, never the registry's, though it is set", () => {
+    const result = scanImages();
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const builds = logged(/^build registry=/);
+    assert.ok(builds.length > 0);
+    assert.deepEqual([...new Set(builds)], ["build registry="]);
   });
 
   it("scans the built images only, saying so, before the first release", () => {

@@ -66,6 +66,8 @@ function compose(...args) {
         FATHOM_TLS_KEY: join(folder, "key.pem"),
         FATHOM_HTTPS_PORT: String(port),
         FATHOM_PUBLIC_URL: `https://localhost:${String(port)}`,
+        // Built here, so named without a registry, never as a published release's.
+        FATHOM_REGISTRY: "",
         FATHOM_IMAGE_TAG:
           process.env.FATHOM_IMAGE_TAG ?? cloneName("latest", repositoryRoot),
         FATHOM_SECURITY_FIXES_DATE:

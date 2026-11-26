@@ -32,7 +32,8 @@ if [ "${#FATHOM_HTTPS_PORT}" -gt 5 ] || [ "${FATHOM_HTTPS_PORT:-0}" -lt 1 ] ||
 fi
 export FATHOM_PUBLIC_URL="https://localhost:$FATHOM_HTTPS_PORT"
 FATHOM_IMAGE_TAG="${FATHOM_IMAGE_TAG:-$(clone_name latest)}"
-export FATHOM_IMAGE_TAG
+# The images it builds are named without a registry, so they never take a published release's name.
+export FATHOM_IMAGE_TAG FATHOM_REGISTRY=""
 compose=(docker compose --project-name "$(clone_name fathom-stack)" --file deploy/compose.yaml)
 
 require_container_runtime

@@ -46,6 +46,33 @@ describe("releaseCompose", () => {
     assert.deepEqual(services.other, config.services.other);
   });
 
+  it("renames images already named for a registry, with a port or without, as the release's", () => {
+    const named = {
+      services: {
+        app: {
+          image: "localhost:5000/team/fathom-app:0.0.9",
+          build: { context: "/src" },
+        },
+        proxy: {
+          image: "ghcr.io/ribbitworks/fathom-proxy:0.0.9",
+          build: { context: "/src" },
+        },
+      },
+    };
+    const { services } = releaseCompose(named, release);
+    assert.deepEqual(
+      [services.app.image, services.proxy.image],
+      [
+        "registry.example.com/team/fathom-app:0.1.0",
+        "registry.example.com/team/fathom-proxy:0.1.0",
+      ],
+    );
+    assert.deepEqual(releaseImages(named, release.registry, release.version), [
+      "registry.example.com/team/fathom-app:0.1.0",
+      "registry.example.com/team/fathom-proxy:0.1.0",
+    ]);
+  });
+
   it("labels each built image and dates it by the commit, keeping its build arguments", () => {
     const { build } = releaseCompose(config, release).services.app;
     assert.deepEqual(build.args, {

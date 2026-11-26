@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Checks the production Compose file's settings: deploy/compose.env.example lists every setting it
-// reads on the host, and no others, only the proxy publishes a port or has a route out, and the
-// database's network is shared only with the application and the migration run. The running
-// containers are tested by 'pnpm test:containers'.
+// Checks the production Compose file's settings: the example lists each it reads, a server runs a
+// release's published images, and the networks keep the database apart. The running containers are
+// tested by 'pnpm test:containers'.
 
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { devNull } from "node:os";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -16,20 +16,44 @@ const read = (path) =>
 const names = (text, pattern) =>
   new Set([...text.matchAll(pattern)].map((match) => match[1]));
 
-const { services, networks } = JSON.parse(
-  execFileSync(
-    "docker",
-    [
-      "compose",
-      "--file",
-      fileURLToPath(new URL("../deploy/compose.yaml", import.meta.url)),
-      "config",
-      "--format",
-      "json",
-    ],
-    { encoding: "utf8" },
-  ),
-);
+// The production Compose file as Compose reads it with these settings alone, neither the shell's
+// nor a deploy/.env file's.
+const configWith = (settings = {}) =>
+  JSON.parse(
+    execFileSync(
+      "docker",
+      [
+        "compose",
+        "--file",
+        fileURLToPath(new URL("../deploy/compose.yaml", import.meta.url)),
+        "--env-file",
+        devNull,
+        "config",
+        "--format",
+        "json",
+      ],
+      {
+        encoding: "utf8",
+        env: {
+          ...Object.fromEntries(
+            Object.entries(process.env).filter(
+              ([name]) => !name.startsWith("FATHOM_"),
+            ),
+          ),
+          ...settings,
+        },
+      },
+    ),
+  );
+
+const { services, networks } = configWith();
+const imagesOf = (config) =>
+  Object.fromEntries(
+    Object.entries(config.services).map(([name, service]) => [
+      name,
+      service.image,
+    ]),
+  );
 
 const servicesWhere = (predicate) =>
   Object.entries(services)
@@ -49,6 +73,32 @@ describe("Compose settings", () => {
     );
     assert.ok(readByCompose.size > 0);
     assert.deepEqual(listed, readByCompose);
+  });
+
+  it("runs a release's published images, by its registry and version", () => {
+    assert.deepEqual(
+      imagesOf(
+        configWith({
+          FATHOM_REGISTRY: "registry.example.test/team",
+          FATHOM_IMAGE_TAG: "0.2.0",
+        }),
+      ),
+      {
+        app: "registry.example.test/team/fathom-app:0.2.0",
+        migrate: "registry.example.test/team/fathom-app:0.2.0",
+        postgres: "registry.example.test/team/fathom-postgres:0.2.0",
+        proxy: "registry.example.test/team/fathom-proxy:0.2.0",
+      },
+    );
+  });
+
+  it("names the images built on this machine without a registry", () => {
+    assert.deepEqual(imagesOf(configWith()), {
+      app: "fathom-app:latest",
+      migrate: "fathom-app:latest",
+      postgres: "fathom-postgres:latest",
+      proxy: "fathom-proxy:latest",
+    });
   });
 
   it("publishes only the proxy's port", () => {

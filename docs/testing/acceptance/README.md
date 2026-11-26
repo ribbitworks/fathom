@@ -6,7 +6,7 @@ The acceptance tests install Fathom, set it up, and follow work as it passes bet
 
 | Order | Test | Starts from | Cases | Time |
 | --- | --- | --- | --- | --- |
-| 1 | [Installing Fathom](acceptance-installing-fathom-manual-test.md) | Its own [Prepare the Installation](acceptance-installing-fathom-manual-test.md#prepare-the-installation), on a machine with no earlier installation | 4 | 30 minutes, plus the first build |
+| 1 | [Installing Fathom](acceptance-installing-fathom-manual-test.md) | Its own [Prepare the Installation](acceptance-installing-fathom-manual-test.md#prepare-the-installation), on a machine with no earlier installation | 4 | 30 minutes, plus the images' download |
 | 2 | [The Team's Accounts](acceptance-team-accounts-manual-test.md) | What Installing Fathom leaves | 5 | 30 minutes |
 | 3 | [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) | What The Team's Accounts leaves | 12 | 30 minutes |
 | 4 | [Reporting Lines](acceptance-reporting-lines-manual-test.md) | What Setting Up Fathom leaves | 4 | 20 minutes |
@@ -18,9 +18,9 @@ The acceptance tests install Fathom, set it up, and follow work as it passes bet
 | 10 | [Staffing the Work](acceptance-staffing-the-work-manual-test.md) | What Reviewing the Plan leaves | 9 | 30 minutes |
 | 11 | [Deciding the Changes](acceptance-deciding-the-changes-manual-test.md) | What Staffing the Work leaves | 5 | 30 minutes |
 | 12 | [Reading the Plan](acceptance-reading-the-plan-manual-test.md) | What Deciding the Changes leaves | 9 | 30 minutes |
-| | **Total** | | **73** | **About 5 hours 35 minutes, plus the first build** |
+| | **Total** | | **73** | **About 5 hours 35 minutes, plus the images' download** |
 
-Installing Fathom builds Fathom from the clone and installs it, with its own secrets, containers and database. Every later test runs on that installation, straight after the one before, using only what the run has made: no seed data and no development accounts.
+Installing Fathom installs a release's published images, with their own secrets, containers and database, in a folder of their own. Every later test runs on that installation, straight after the one before, using only what the run has made: no seed data and no development accounts.
 
 [Start Again](../manual-test-basics.md#start-again) removes the installation, for a fresh run or before other manual tests in the clone.
 
