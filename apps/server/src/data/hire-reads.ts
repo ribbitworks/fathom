@@ -36,7 +36,7 @@ import {
   type Viewer,
 } from "./draft-records.ts";
 import { draftMakers, otherApprover } from "./draft-makers.ts";
-import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
+import { readDrafts } from "./drafts.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { notStarted } from "./people-reads.ts";
 import { shownValuesOf } from "./person-fields.ts";
@@ -158,9 +158,6 @@ export async function readHiresIn(
   const draftsNow = withDrafts
     ? await readHireDrafts(transaction, undefined, actor.user.id)
     : new Map<string, Draft>();
-  const held = approvedOnly
-    ? new Map()
-    : await readHeld(transaction, recordType, actor.user.id);
   // Columns drafted to be added are seen only by those who see the whole plan's drafts.
   const columns = withDrafts
     ? await columnsWithAdded(transaction, actor.user.id)
@@ -278,7 +275,6 @@ export async function readHiresIn(
               targetDate,
               ...draftedFiller(hire, filledBy),
               ...shownDraft(id, before, draft),
-              ...heldByOf(held, id),
             }
           : {}),
       },
@@ -466,6 +462,5 @@ export function hireRow(
           },
         }),
     ...(hire.filler === undefined ? {} : { filler: hire.filler }),
-    ...(hire.heldBy === undefined ? {} : { heldBy: hire.heldBy }),
   };
 }

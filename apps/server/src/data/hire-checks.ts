@@ -20,6 +20,7 @@ import { choiceLabels } from "./values.ts";
 import { type Transaction } from "./changes.ts";
 import { drafted, type Recorded } from "./draft-records.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
+import { asSeenBy, readDrafts } from "./drafts.ts";
 import { notMarked, readManagers, reassignReports } from "./reporting.ts";
 import {
   type HireRow,
@@ -47,31 +48,18 @@ export function refuseHired(meaning: string | null): void {
   if (peoplesMeaning(meaning)) throw new BadRequestError(hiredState);
 }
 
-// Whether any draft, published or not, removes the record given.
-async function draftedRemoval(
+// Whether a draft, as the editor sees the drafts, removes the record given.
+const draftedRemoval = async (
   transaction: Transaction,
   type: "person" | typeof recordType,
   id: string,
-): Promise<boolean> {
-  for (const table of [drafts, privateChanges]) {
-    const [found] = await transaction
-      .select({ recordId: table.recordId })
-      .from(table)
-      .where(
-        and(
-          eq(table.recordType, type),
-          eq(table.recordId, id),
-          eq(table.action, "deleted"),
-        ),
-      )
-      .limit(1);
-    if (found !== undefined) return true;
-  }
-  return false;
-}
+  editor: string,
+): Promise<boolean> =>
+  (await readDrafts(transaction, type, [id], editor)).get(id)?.action ===
+  "deleted";
 
 // Whether a hire may have the manager given: none, a live person, or a live planned hire not yet
-// filled, whom no draft removes, published or not.
+// filled, whom no draft the editor sees removes.
 export async function managerAllowed(
   transaction: Transaction,
   managerId: unknown,
@@ -84,7 +72,7 @@ export async function managerAllowed(
     .where(eq(people.id, managerId))
     .for("share");
   if (person !== undefined) {
-    return !(await draftedRemoval(transaction, "person", managerId));
+    return !(await draftedRemoval(transaction, "person", managerId, editor));
   }
   const [hire] = await transaction
     .select({ filledBy: plannedHires.filledBy })
@@ -94,7 +82,7 @@ export async function managerAllowed(
   return (
     hire !== undefined &&
     hire.filledBy === null &&
-    !(await draftedRemoval(transaction, recordType, managerId)) &&
+    !(await draftedRemoval(transaction, recordType, managerId, editor)) &&
     !(await hireDraftsNaming(transaction, "filledBy", [managerId], editor, {
       byRecord: true,
     }))
@@ -296,8 +284,9 @@ export async function checkManager(
 export async function requirePersonManager(
   transaction: Transaction,
   managerId: string,
+  editor: string,
 ): Promise<void> {
-  const managers = await readManagers(transaction, [managerId]);
+  const managers = await readManagers(transaction, [managerId], editor);
   if (!managers.has(managerId)) throw new ConflictError(chooseManager);
 }
 
@@ -309,7 +298,9 @@ export async function checkFillManager(
   editor: string,
 ): Promise<void> {
   await refuseHireBeingFilled(transaction, managerId, editor);
-  const manager = (await readManagers(transaction, [managerId])).get(managerId);
+  const manager = (await readManagers(transaction, [managerId], editor)).get(
+    managerId,
+  );
   if (manager === undefined || manager.removing) {
     throw new BadRequestError(chooseManager);
   }
@@ -322,10 +313,12 @@ export async function checkRequisition(
   transaction: Transaction,
   requisition: string | null,
   id: string,
+  editor: string,
 ): Promise<void> {
   if (
     requisition !== null &&
-    (await takenEmployeeIds(transaction, [requisition], [id])).length > 0
+    (await takenEmployeeIds(transaction, [requisition], [id], editor)).length >
+      0
   ) {
     throw new ConflictError(duplicateId);
   }
@@ -377,11 +370,11 @@ export async function refuseUnmarked(
 }
 
 // Whether a hire not yet filled names any of the planned hires given as its manager, live, or, when
-// asked, in a draft, published or not.
+// asked, in a draft as the editor, when given, sees the drafts.
 export async function hiresReportTo(
   reader: Reader,
   ids: readonly string[],
-  { drafted }: { drafted: boolean },
+  { drafted, editor }: { drafted: boolean; editor: string | undefined },
 ): Promise<boolean> {
   for (const chunk of inChunks([...ids])) {
     const [live] = await reader
@@ -403,6 +396,7 @@ export async function hiresReportTo(
           and(
             eq(table.recordType, recordType),
             inArray(sql`${table.fields}->>'managerId'`, chunk),
+            asSeenBy(table, editor, "managerId"),
           ),
         )
         .limit(1);
@@ -414,11 +408,12 @@ export async function hiresReportTo(
 
 const chooseManager = "Choose a manager from People";
 
-// Refuses removing people whom any hire, live or in a draft, published or not, names as its manager
+// Refuses removing people whom any hire, live or in a published draft, names as its manager
 // or as the person who filled it.
 export async function refuseRemovingHiresPeople(
   reader: Reader,
   ids: readonly string[],
+  editor: string | undefined,
 ): Promise<void> {
   for (const chunk of inChunks([...ids])) {
     const [live] = await reader
@@ -433,8 +428,8 @@ export async function refuseRemovingHiresPeople(
       .limit(1);
     if (
       live !== undefined ||
-      (await hireDraftsNaming(reader, "managerId", chunk)) ||
-      (await hireDraftsNaming(reader, "filledBy", chunk))
+      (await hireDraftsNaming(reader, "managerId", chunk, editor)) ||
+      (await hireDraftsNaming(reader, "filledBy", chunk, editor))
     ) {
       throw new ConflictError(
         "A planned hire names this person; change the hire first",
@@ -444,11 +439,11 @@ export async function refuseRemovingHiresPeople(
 }
 
 // Refuses clearing the Manager? mark of people a hire not yet filled names as its manager, live or,
-// when drafting, in a hire's draft, published or not, as the editor, when given, sees them.
+// when drafting, in a hire's draft as the editor, when given, sees them.
 export async function refuseUnmarkingHireManagers(
   reader: Reader,
   ids: readonly string[],
-  { drafted, editor }: { drafted: boolean; editor?: string },
+  { drafted, editor }: { drafted: boolean; editor: string | undefined },
 ): Promise<void> {
   for (const chunk of inChunks([...ids])) {
     const [live] = await reader
@@ -470,7 +465,7 @@ export async function refuseUnmarkingHireManagers(
   }
 }
 
-// Whether any hire's draft, published or not, by anyone, names any of the people given in the field
+// Whether any hire's draft, as the editor sees the drafts, names any of the people given in the field
 // given, as its manager or as who fills it, or, asked by record, whether any of the hires given has a
 // draft naming anyone in it. With an editor, their own unpublished changes stand in for the published
 // drafts they replace.
@@ -478,7 +473,7 @@ export async function hireDraftsNaming(
   reader: Reader,
   field: "managerId" | "filledBy",
   ids: readonly string[],
-  editor?: string,
+  editor: string | undefined,
   {
     byRecord = false,
     except = [],
@@ -501,9 +496,7 @@ export async function hireDraftsNaming(
             except.length === 0
               ? undefined
               : notInArray(table.recordId, [...except]),
-            table === drafts && editor !== undefined
-              ? sql`NOT EXISTS (SELECT 1 FROM ${privateChanges} WHERE ${privateChanges.userId} = ${editor} AND ${privateChanges.recordType} = ${recordType} AND ${privateChanges.recordId} = ${drafts.recordId})`
-              : undefined,
+            asSeenBy(table, editor, field),
           ),
         )
         .limit(1);

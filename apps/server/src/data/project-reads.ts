@@ -109,14 +109,11 @@ function withoutDrafts(list: List): List {
     choices: list.choices.map((listed) => {
       const choice = { ...listed };
       delete choice.draft;
-      delete choice.heldBy;
       return choice;
     }),
   };
   delete plain.draft;
   delete plain.orderDraft;
-  delete plain.heldBy;
-  delete plain.orderHeldBy;
   return plain;
 }
 
@@ -250,7 +247,7 @@ export function planningOut(
   id: string,
 ) {
   const record = shownVersion(state, type, id) as Recorded;
-  const { draft, ...heldBy } = recordExtras(state, makers, type, id);
+  const { draft } = recordExtras(state, makers, type, id);
   return {
     id,
     keyNumber: recordKeyNumber(state, type, id),
@@ -272,7 +269,6 @@ export function planningOut(
     staffed: staffed.drafted.has(id),
     staffedLive: staffed.live.has(id),
     ...(draft === undefined ? {} : { draft: featureDraftOf(draft) }),
-    ...heldBy,
   };
 }
 

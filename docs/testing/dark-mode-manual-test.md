@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Dark Mode
@@ -130,10 +130,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `E2C9` Clear the search box, and type `우아현`.
   - **Expected:** The red **Left** box and its word are easy to read.
-  - **Notes:**
-
-- [ ] `8A53` Clear the search box, and type `Viktoria Holmberg`.
-  - **Expected:** The grey lock is easy to see.
   - **Notes:**
 
 - [ ] `95C2` Clear the search box.
@@ -668,7 +664,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `36A8` Select the details button at the right of the first cell of the row for 'Platform'.
   - **Expected:**
     - The panel of 'Platform' opens.
-    - The grey lock before 'Platform' in the panel's heading is easy to see.
     - The **Details** rows and the **Cycles** table are easy to read.
   - **Notes:**
 
@@ -763,14 +758,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `4D57` Clear the search box, and type `Viktoria Holmberg`.
-  - **Expected:** The yellow dot and the grey lock before her name are easy to see.
+  - **Expected:** The yellow dot before her name is easy to see.
   - **Notes:**
 
 - [ ] `F7EB` Select the details button at the right of her **Record** cell.
   - **Expected:**
-    - The side panel opens, headed by the yellow dot, the grey lock and her name, each easy to see.
+    - The side panel opens, headed by the yellow dot and her name, each easy to see.
     - Every label and value under **Details** is easy to read.
-    - The dimmed line saying who is changing her, and **Show on People**, are easy to read.
+    - **Show on People** is easy to read.
   - **Notes:**
 
 - [ ] `102D` Close the side panel with the **×** at its top right.

@@ -18,7 +18,7 @@ import { ConflictError, BadRequestError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import type { Draft, Recorded } from "./draft-records.ts";
 import { draftedPersonValues } from "./drafted-values.ts";
-import { readPersonDrafts } from "./drafts.ts";
+import { asSeenBy, readPersonDrafts } from "./drafts.ts";
 import {
   bySubject,
   currentRecordOn,
@@ -293,13 +293,13 @@ export const notMarked = ({ preferredName }: { preferredName: string }) =>
 export const reassignReports = "Reassign direct reports first";
 
 // Refuses clearing the Manager? mark of people anyone still employed reports to, by a line in force
-// or yet to start. When drafting, drafts naming them as a manager, published or not, count too; on
+// or yet to start. When drafting, published drafts naming them as a manager count too; on
 // approval, each drafted line is checked against its manager when it is approved instead.
 export async function refuseUnmarkingManagers(
   reader: Reader,
   ids: readonly string[],
   today: string,
-  { drafted }: { drafted: boolean },
+  { drafted, editor }: { drafted: boolean; editor: string | undefined },
 ): Promise<void> {
   for (const chunk of inChunks([...ids])) {
     const named = await reader
@@ -335,7 +335,8 @@ export async function refuseUnmarkingManagers(
     if (
       reporting ||
       (drafted &&
-        (await draftedPersonValues(reader, "managerId", chunk, [])).length > 0)
+        (await draftedPersonValues(reader, "managerId", chunk, [], editor))
+          .length > 0)
     ) {
       throw new ConflictError(reassignReports);
     }
@@ -356,7 +357,7 @@ export interface Manager {
   startDate: string | null;
   endDate: string | null;
   isManager: boolean;
-  // Drafted to be removed, published or not.
+  // Drafted to be removed, as the editor, when given, sees the drafts.
   removing: boolean;
 }
 
@@ -364,6 +365,7 @@ export interface Manager {
 export async function readManagers(
   reader: Reader,
   ids: readonly (string | null)[],
+  editor: string | undefined,
 ): Promise<Map<string, Manager>> {
   const wanted = [...new Set(ids.filter((id) => id !== null))];
   const found = new Map<string, Manager>();
@@ -378,6 +380,7 @@ export async function readManagers(
             eq(table.recordType, "person"),
             eq(table.action, "deleted"),
             inArray(table.recordId, chunk),
+            asSeenBy(table, editor),
           ),
         )) {
         removing.add(recordId);
@@ -411,6 +414,7 @@ export async function checkLine(
   person: Recorded,
   lines: readonly LineRow[],
   today: string,
+  editor: string | undefined,
   known?: ReadonlyMap<string, Manager>,
 ): Promise<void> {
   const start = text(person.startDate);
@@ -460,9 +464,9 @@ export async function checkLine(
   if (managerId === id) {
     throw new BadRequestError("Nobody can report to themselves");
   }
-  const manager = (known ?? (await readManagers(reader, [managerId]))).get(
-    managerId,
-  );
+  const manager = (
+    known ?? (await readManagers(reader, [managerId], editor))
+  ).get(managerId);
   if (manager === undefined) {
     throw new BadRequestError(
       "Choose a manager from People who has been approved",
@@ -597,11 +601,12 @@ export async function refuseLoopsLive(
   }
 }
 
-// Refuses team names that another manager's team has, ignoring letter case, live or in a draft,
-// published or not, as Employee IDs are, or that two of the people given share.
+// Refuses team names that another manager's team has, ignoring letter case, live or in a published
+// draft, as Employee IDs are, or that two of the people given share.
 export async function refuseTakenTeamNames(
   reader: Reader,
   named: readonly { id: string; name: string }[],
+  editor: string | undefined,
 ): Promise<void> {
   const lowered = named.map(({ name }) => name.toLowerCase());
   const ids = named.map(({ id }) => id);
@@ -617,17 +622,24 @@ export async function refuseTakenTeamNames(
           notInArray(teams.managerId, ids),
         ),
       );
-    const drafted = await draftedPersonValues(reader, "teamName", chunk, ids);
+    const drafted = await draftedPersonValues(
+      reader,
+      "teamName",
+      chunk,
+      ids,
+      editor,
+    );
     taken = live.length > 0 || drafted.length > 0;
   }
   if (taken) throw new ConflictError("Another team has that name");
 }
 
-// Refuses removing people who are, or were, anyone's manager, live or in anyone's draft, published
-// or not, since past lines are kept. Checked when drafted and again when approved.
+// Refuses removing people who are, or were, anyone's manager, live or in a published draft, since
+// past lines are kept. Checked when drafted and again when approved.
 export async function refuseRemovingManagers(
   reader: Reader,
   ids: readonly string[],
+  editor: string | undefined,
 ): Promise<void> {
   for (const chunk of inChunks([...ids])) {
     const named = await reader
@@ -635,7 +647,13 @@ export async function refuseRemovingManagers(
       .from(reportingLines)
       .where(inArray(reportingLines.managerId, chunk))
       .limit(1);
-    const drafted = await draftedPersonValues(reader, "managerId", chunk, []);
+    const drafted = await draftedPersonValues(
+      reader,
+      "managerId",
+      chunk,
+      [],
+      editor,
+    );
     if (named.length > 0 || drafted.length > 0) {
       throw new ConflictError(
         "People report, have reported, or are drafted to report to this person, so they cannot be removed",
@@ -653,7 +671,7 @@ export async function refuseReportsOutside(
   reader: Reader,
   changed: readonly { id: string; person: Recorded }[],
   today: string,
-  { editor }: { editor?: string | undefined } = {},
+  { editor }: { editor: string | undefined },
 ): Promise<void> {
   const dated = changed.filter(
     ({ person }) =>
@@ -712,6 +730,7 @@ export async function applyReporting(
   const managers = await readManagers(
     transaction,
     changed.map(([, { person }]) => text((person as Recorded).managerId)),
+    undefined,
   );
   const moved: { id: string; from: string }[] = [];
   const added: {
@@ -725,7 +744,7 @@ export async function applyReporting(
     if (from === null) continue;
     const managerId = text(recorded.managerId);
     const own = lines.get(id) ?? [];
-    await checkLine(transaction, id, recorded, own, today, managers);
+    await checkLine(transaction, id, recorded, own, today, undefined, managers);
     const replaced = replacedLine(own, managerId, from, today);
     moved.push({ id, from: earlier(own, managerId, from, today) });
     if (replaced === undefined) {
@@ -750,6 +769,7 @@ export async function applyReporting(
         : [],
     ),
     today,
+    { editor: undefined },
   );
   const named = [...wanted].flatMap(([id, { draft, person }]) =>
     person !== undefined &&

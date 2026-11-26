@@ -110,7 +110,7 @@ export async function undoTeamDrafts(
       .map(({ id }) => id),
     actor,
   );
-  const names = await readTeamNames(transaction);
+  const names = await readTeamNames(transaction, actor.user.id);
   const everyone = await peopleOf(
     transaction,
     undone.flatMap(({ team }) => peopleNamed(team)),

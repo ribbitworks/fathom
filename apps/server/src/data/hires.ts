@@ -26,14 +26,7 @@ import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice, firstChoiceMeaning } from "./built-in-lists.ts";
 import { valueField, recordedValues } from "./values.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
-import {
-  addDrafts,
-  lockDrafts,
-  readHeld,
-  refuseHeld,
-  reopened,
-  writeDraft,
-} from "./drafts.ts";
+import { addDrafts, lockDrafts, reopened, writeDraft } from "./drafts.ts";
 import {
   actionTo,
   asDraft,
@@ -155,7 +148,12 @@ export async function createHires(
       );
       const id = randomUUID();
       // Each hire is drafted before the next is checked, so two asked for cannot share an ID.
-      await checkRequisition(transaction, request.requisition, id);
+      await checkRequisition(
+        transaction,
+        request.requisition,
+        id,
+        actor.user.id,
+      );
       // Notes left empty are left out.
       const after: Recorded = tidy({
         name: request.name,
@@ -204,7 +202,7 @@ export async function createHires(
 }
 
 // A hire as it is and as the actor's draft makes it, locked for a change, refusing one that is
-// neither live nor in a draft the actor sees, or that someone else is changing.
+// neither live nor in a draft the actor sees.
 async function lockDraftedHire(
   transaction: Transaction,
   actor: Actor,
@@ -221,7 +219,6 @@ async function lockDraftedHire(
   if (before === undefined && draft === undefined) {
     throw new NotFoundError(noHire);
   }
-  await refuseHeld(transaction, actor.user.id, recordType, [id]);
   return { before, draft, hire: drafted(before, draft) };
 }
 
@@ -273,7 +270,12 @@ export async function updateHire(
       );
     }
     if (typeof change.requisition === "string") {
-      await checkRequisition(transaction, change.requisition, id);
+      await checkRequisition(
+        transaction,
+        change.requisition,
+        id,
+        actor.user.id,
+      );
     }
     const unmarked = Object.fromEntries(
       Object.entries(hire).filter(([field]) => field !== "isManager"),
@@ -320,7 +322,10 @@ export async function updateHire(
     if (
       hire.isManager === true &&
       after.isManager !== true &&
-      (await hiresReportTo(transaction, [id], { drafted: true }))
+      (await hiresReportTo(transaction, [id], {
+        drafted: true,
+        editor: actor.user.id,
+      }))
     ) {
       throw new ConflictError(reassignReports);
     }
@@ -417,15 +422,10 @@ export async function draftReportsMoved(
 ): Promise<Change[]> {
   const live = await readLiveHires(transaction);
   const draftsNow = await readHireDrafts(transaction, undefined, actor.user.id);
-  const held = await readHeld(transaction, recordType, actor.user.id);
-  // A hire reporting to the planned manager, live or in anyone's draft, that has a draft of its own
-  // is refused, so every draft the fill writes holds only the fill.
-  const drafting = [
-    ...draftsNow,
-    ...[...held].map(([id, { draft }]) => [id, draft] as const),
-  ];
+  // A hire reporting to the planned manager, live or in a draft the actor sees, that has a draft of
+  // its own is refused, so every draft the fill writes holds only the fill.
   if (
-    drafting.some(
+    [...draftsNow].some(
       ([id, draft]) =>
         live.get(id)?.managerId === managerId ||
         drafted(live.get(id), draft)?.managerId === managerId,
@@ -503,7 +503,12 @@ export async function deleteHire(
     if (await movedByFill(transaction, actor, before, hire)) {
       throw new ConflictError(partOfFill);
     }
-    if (await hiresReportTo(transaction, [id], { drafted: true })) {
+    if (
+      await hiresReportTo(transaction, [id], {
+        drafted: true,
+        editor: actor.user.id,
+      })
+    ) {
       throw new ConflictError(reassignReports);
     }
     const tierOf = await readHireTier(transaction);

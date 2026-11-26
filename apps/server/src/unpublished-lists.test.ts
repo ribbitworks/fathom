@@ -5,16 +5,15 @@
 
 import { type Choice, type Field, type List } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type Method, unique } from "./test-app.ts";
+import { unique } from "./test-app.ts";
 import {
   test,
   alice,
   bob,
+  approver,
   send,
   saved,
   refused,
-  held,
-  heldDecision,
   readPeople,
   listOf,
   unpublished,
@@ -31,7 +30,7 @@ beforeAll(startUnpublishedTests);
 afterAll(closeUnpublishedTests);
 
 describe("drafts of lists and choices, until published", () => {
-  it("hold the list, its choices, and its order, and hide lists only drafted", async () => {
+  it("hold nothing of the list, its choices, or its order, and hide lists only drafted", async () => {
     const { list, choices } = await liveList(["First", "Second"]);
     const [first, second] = choices as [Choice, Choice];
     const renamed = unique("Fictional Renamed List");
@@ -65,15 +64,12 @@ describe("drafts of lists and choices, until published", () => {
     const theirs = await listOf(bob, list.id);
     expect(theirs).toMatchObject({
       name: list.name,
-      heldBy: alice.name,
-      orderHeldBy: alice.name,
-      choices: [
-        { id: first.id, label: "First", heldBy: alice.name },
-        { id: second.id },
-      ],
+      choices: [{ id: first.id, label: "First" }, { id: second.id }],
     });
-    expect(theirs).not.toHaveProperty("draft");
-    expect(theirs).not.toHaveProperty("orderDraft");
+    for (const property of ["draft", "orderDraft", "heldBy", "orderHeldBy"]) {
+      expect(theirs).not.toHaveProperty(property);
+    }
+    expect(theirs?.choices[0]).not.toHaveProperty("heldBy");
     expect(await listOf(bob, hidden.id)).toBeUndefined();
     expect(await unpublished(alice)).toEqual([
       { subject: `the list ${hidden.name}`, action: "created" },
@@ -85,19 +81,15 @@ describe("drafts of lists and choices, until published", () => {
       { subject: `the list ${renamed}`, action: "changed" },
     ]);
 
+    // Others change the same list, choice, and order, unpublished, as theirs alone.
     const base = `/api/lists/${list.id}`;
-    for (const [method, url, payload] of [
-      ["PUT", base, { name: "Fictional" }],
-      ["PUT", `${base}/retired`, { retired: true }],
-      ["DELETE", base, undefined],
-      ["DELETE", `${base}/draft`, undefined],
-      ["DELETE", `${base}/order/draft`, undefined],
-      ["PUT", `${base}/choices/${first.id}`, { label: "Fictional" }],
-      ["DELETE", `${base}/choices/${first.id}/draft`, undefined],
-      ["PUT", `${base}/choices/${second.id}/position`, { after: null }],
-    ] as [Method, string, object | undefined][]) {
-      await refused(bob, method, url, payload, held(alice));
-    }
+    await saved(bob, "PUT", base, { name: unique("Fictional Bob's List") });
+    await saved(bob, "PUT", `${base}/choices/${first.id}`, {
+      label: "Fictional Bob's First",
+    });
+    await saved(bob, "PUT", `${base}/choices/${second.id}/position`, {
+      after: null,
+    });
     expect(
       (await send(bob, "PUT", `/api/lists/${hidden.id}`, { name: "Fictional" }))
         .statusCode,
@@ -107,46 +99,28 @@ describe("drafts of lists and choices, until published", () => {
     );
 
     expect(await publish(alice)).toBe(4);
-    expect(await listOf(bob, hidden.id)).toBeDefined();
-    expect(await listOf(bob, list.id)).toMatchObject({ name: renamed });
+    expect(await listOf(approver, hidden.id)).toBeDefined();
+    expect(await listOf(approver, list.id)).toMatchObject({ name: renamed });
 
-    // Once published, others may change the drafts, which only they decide when published.
-    await saved(bob, "PUT", base, { name: unique("Fictional Bob's List") });
-    await saved(bob, "PUT", `${base}/choices/${first.id}`, {
-      label: "Fictional Bob's First",
-    });
-    await saved(bob, "PUT", `${base}/choices/${first.id}/position`, {
-      after: null,
-    });
-    for (const asked of [
-      { lists: [list.id] },
-      { choices: [first.id] },
-      { orders: [list.id] },
-    ]) {
-      for (const asking of ["approval", "rejection"] as const) {
-        const response = await decide(asking, {
-          ...asked,
-          reason: "Fictional reason",
-        });
-        expect(response.statusCode).toBe(409);
-        expect(response.json()).toEqual({ error: heldDecision(bob) });
-      }
+    // The published drafts are decided while others are still changing them.
+    for (const [asking, asked] of [
+      ["rejection", { lists: [list.id] }],
+      ["approval", { choices: [first.id] }],
+      ["approval", { orders: [list.id] }],
+    ] as const) {
+      const response = await decide(asking, {
+        ...asked,
+        reason: "Fictional reason",
+      });
+      expect(response.statusCode, response.body).toBe(200);
     }
-    expect(await discard(bob)).toBe(3);
-    expect(
-      (
-        await decide("rejection", {
-          lists: [list.id],
-          reason: "Fictional reason",
-        })
-      ).statusCode,
-    ).toBe(200);
     expect(
       (await send(alice, "DELETE", `${base}/draft/rejection`)).statusCode,
     ).toBe(200);
+    expect(await discard(bob)).toBe(3);
   });
 
-  it("refuse deleting a list whose choices someone is changing", async () => {
+  it("delete a list whose choices only someone else is changing, unpublished", async () => {
     const { list, choices } = await liveList(["Only"]);
     await saved(
       bob,
@@ -156,17 +130,12 @@ describe("drafts of lists and choices, until published", () => {
         label: "Fictional Only",
       },
     );
-    await refused(
-      alice,
-      "DELETE",
-      `/api/lists/${list.id}`,
-      undefined,
-      "This list's choices have drafts; approve or discard them before deleting the list",
-    );
-    await discard(bob);
+    await saved(alice, "DELETE", `/api/lists/${list.id}`);
+    expect(await discard(alice)).toBe(1);
+    expect(await discard(bob)).toBe(1);
   });
 
-  it("keep a list from being deleted while someone changes its choices or their order", async () => {
+  it("approve deleting a list while someone else changes its choices or their order, unpublished", async () => {
     for (const change of ["choice", "order"] as const) {
       const { list, choices } = await liveList(["Kept", "Other"]);
       const [kept, other] = choices as [Choice, Choice];
@@ -186,15 +155,8 @@ describe("drafts of lists and choices, until published", () => {
       }
       await publish(alice);
       const response = await decide("approval", { lists: [list.id] });
-      expect(response.statusCode).toBe(409);
-      expect(response.json()).toEqual({
-        error:
-          "A list drafted to be removed has choices with drafts; approve or discard them first",
-      });
+      expect(response.statusCode, response.body).toBe(200);
       await discard(bob);
-      expect((await decide("approval", { lists: [list.id] })).statusCode).toBe(
-        200,
-      );
     }
   });
 
@@ -226,7 +188,7 @@ describe("drafts of lists and choices, until published", () => {
 });
 
 describe("drafts of People's columns, until published", () => {
-  it("hold the column, and hide columns only drafted", async () => {
+  it("hold nothing of the column, and hide columns only drafted", async () => {
     const { list } = await liveList(["Fictional Level"]);
     const column = (
       await saved<{ field: Field }>(alice, "POST", "/api/people/columns", {
@@ -254,44 +216,29 @@ describe("drafts of People's columns, until published", () => {
       draft: { unpublished: true },
     });
     const theirs = await readPeople(bob);
-    expect(theirs.fields.find(({ id }) => id === column.id)).toMatchObject({
-      name: column.name,
-      heldBy: alice.name,
-    });
+    const theirColumn = theirs.fields.find(({ id }) => id === column.id);
+    expect(theirColumn).toMatchObject({ name: column.name });
+    expect(theirColumn).not.toHaveProperty("heldBy");
     expect(theirs.fields.some(({ id }) => id === hidden.id)).toBe(false);
     expect(await unpublished(alice)).toEqual([
       { subject: `the column ${hidden.name}`, action: "created" },
       { subject: `the column ${renamed}`, action: "changed" },
     ]);
-    const base = `/api/people/columns/${column.id}`;
-    for (const [method, url, payload] of [
-      ["PUT", base, { name: "Fictional", listId: list.id }],
-      ["DELETE", base, undefined],
-      ["DELETE", `${base}/draft`, undefined],
-    ] as [Method, string, object | undefined][]) {
-      await refused(bob, method, url, payload, held(alice));
-    }
-
-    expect(await publish(alice)).toBe(2);
-    await saved(bob, "PUT", base, {
+    await saved(bob, "PUT", `/api/people/columns/${column.id}`, {
       name: unique("Fictional Bob's"),
       listId: list.id,
     });
-    for (const asking of ["approval", "rejection"] as const) {
-      const response = await decide(asking, {
-        columns: [column.id],
-        reason: "Fictional reason",
-      });
-      expect(response.statusCode).toBe(409);
-      expect(response.json()).toEqual({ error: heldDecision(bob) });
-    }
+
+    expect(await publish(alice)).toBe(2);
+    const response = await decide("approval", { columns: [column.id] });
+    expect(response.statusCode, response.body).toBe(200);
     expect(await discard(bob)).toBe(1);
     await test.approveLists();
   });
 });
 
 describe("a list a column only drafted draws on", () => {
-  it("cannot be removed or retired, without naming the column to anyone", async () => {
+  it("cannot be removed or retired, counting and naming only the user's own unpublished columns", async () => {
     const { list } = await liveList(["Fictional Grade"]);
     const live = (
       await saved<{ field: Field }>(alice, "POST", "/api/people/columns", {
@@ -306,37 +253,72 @@ describe("a list a column only drafted draws on", () => {
       name: renamed,
       listId: list.id,
     });
+    const hidden = unique("Fictional Hidden Column");
     await saved(bob, "POST", "/api/people/columns", {
-      name: unique("Fictional Hidden Column"),
+      name: hidden,
       listId: list.id,
     });
-    // Alice's renaming is not counted twice, nor named, and Bob's added column is not named.
-    for (const who of [alice, bob]) {
-      await refused(
-        who,
-        "DELETE",
-        `/api/lists/${list.id}`,
-        undefined,
-        `This list cannot be deleted while columns draw on it: ${live.name}, a column being drafted`,
-      );
+    // Alice's renaming is counted once, by her name for it, and Bob's added column counts only for
+    // him.
+    await refused(
+      alice,
+      "DELETE",
+      `/api/lists/${list.id}`,
+      undefined,
+      `This list cannot be deleted while a column draws on it: ${renamed}`,
+    );
+    await refused(
+      bob,
+      "DELETE",
+      `/api/lists/${list.id}`,
+      undefined,
+      `This list cannot be deleted while columns draw on it: ${hidden}, ${live.name}`,
+    );
+    const others = ["Fictional Other Hidden", "Fictional Third Hidden"].map(
+      unique,
+    );
+    for (const name of others) {
+      await saved(alice, "POST", "/api/people/columns", {
+        name,
+        listId: list.id,
+      });
     }
-    await discard(bob);
-    await saved(bob, "POST", "/api/people/columns", {
-      name: unique("Fictional Hidden Column"),
-      listId: list.id,
-    });
-    await saved(alice, "POST", "/api/people/columns", {
-      name: unique("Fictional Other Hidden Column"),
-      listId: list.id,
-    });
     await refused(
       alice,
       "PUT",
       `/api/lists/${list.id}/retired`,
       { retired: true },
-      `This list cannot be retired while columns draw on it: ${live.name}, columns being drafted`,
+      `This list cannot be retired while columns draw on it: ${String(others[0])}, ${renamed}, ${String(others[1])}`,
     );
     await discard(alice);
     await discard(bob);
+  });
+
+  it("cannot be removed while the user's own unpublished change moves a live column onto it, named as it is", async () => {
+    const { list } = await liveList(["Fictional Band"]);
+    const { list: other } = await liveList(["Fictional Tier"]);
+    const column = (
+      await saved<{ field: Field }>(alice, "POST", "/api/people/columns", {
+        name: unique("Fictional Moved Column"),
+        listId: other.id,
+      })
+    ).field;
+    await publish(alice);
+    await test.approveLists();
+    await saved(alice, "PUT", `/api/people/columns/${column.id}`, {
+      name: column.name,
+      listId: list.id,
+    });
+
+    await refused(
+      alice,
+      "DELETE",
+      `/api/lists/${list.id}`,
+      undefined,
+      `This list cannot be deleted while a column draws on it: ${column.name}`,
+    );
+    // The list it moves off is free for her.
+    await saved(alice, "DELETE", `/api/lists/${other.id}`);
+    await discard(alice);
   });
 });

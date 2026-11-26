@@ -7,8 +7,8 @@
 // publishes them, a second Engineering Operations Manager changes another detail in one of those
 // drafts, so one draft holds two people's changes, and publishes it, and the Engineering Director
 // rejects two of the drafts with a reason. Each case a draft can be in is there to try: waiting to
-// add, change, or remove someone, and rejected. Then come changes left unpublished, which hold
-// their records: the Engineering Operations Manager's change to another person's site, and the
+// add, change, or remove someone, and rejected. Then come changes left unpublished: the
+// Engineering Operations Manager's change to another person's site, and the
 // second Engineering Operations Manager's change to a published draft. Removing the seed data
 // discards the drafts first, unpublished ones included. A development-only package, never included
 // in the runtime image.

@@ -35,8 +35,6 @@ import {
   addDrafts,
   deleteDrafts,
   discardDrafts,
-  type Held,
-  heldMessage,
   lockDrafts,
   writeDraft,
 } from "./drafts.ts";
@@ -114,7 +112,7 @@ async function listNow(
   return listsOut(
     state,
     await readMakers(transaction, state, editor),
-    await generalOnlyListIds(transaction),
+    await generalOnlyListIds(transaction, editor.user.id),
     await usesFor(transaction, editor),
   ).find((other) => other.id === id) as List;
 }
@@ -132,15 +130,6 @@ export async function drafting<Result>(
   });
 }
 
-// Refuses a change to a record someone else holds.
-export function refuseHeldIn(
-  held: ReadonlyMap<string, Held>,
-  id: string,
-): void {
-  const holder = held.get(id)?.holder;
-  if (holder !== undefined) throw new ConflictError(heldMessage(holder));
-}
-
 // A list that exists, as its draft makes it, refusing one drafted to be removed.
 function usableList(state: ListsState, id: string): Recorded {
   const list = draftedList(state, id);
@@ -148,16 +137,15 @@ function usableList(state: ListsState, id: string): Recorded {
   return list;
 }
 
-// A list to change, refusing one that cannot be used, or that someone else holds.
+// A list to change, refusing one that cannot be used.
 function changeableList(actor: Actor, state: ListsState, id: string): Recorded {
   if (!listExists(state, id)) throw new NotFoundError(noList);
   refuseUnseenList(actor, state, id);
-  refuseHeldIn(state.held.lists, id);
   return usableList(state, id);
 }
 
-// A choice in the list as its draft makes it, refusing one that does not exist, that it, or its
-// list, is drafted to remove, or that someone else holds.
+// A choice in the list as its draft makes it, refusing one that does not exist, or that it, or its
+// list, is drafted to remove.
 function changeableChoice(
   actor: Actor,
   state: ListsState,
@@ -170,7 +158,6 @@ function changeableChoice(
   if (!choiceExists(state, id) || listOfChoice(state, id) !== listId) {
     throw new NotFoundError(noChoice);
   }
-  refuseHeldIn(state.held.choices, id);
   const choice = draftedChoice(state, id);
   if (choice === undefined) throw new ConflictError(choiceToBeRemoved);
   return choice;
@@ -316,7 +303,12 @@ export async function updateList(
 const listSettings =
   (actor: Actor, id: string, request: ListRequest): ListChange =>
   async (transaction, state, list) => {
-    await refuseSensitivePlanningList(transaction, id, request.visibility);
+    await refuseSensitivePlanningList(
+      transaction,
+      id,
+      request.visibility,
+      actor.user.id,
+    );
     refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
     if (listNameTaken(state, request.name, id)) {
       throw new ConflictError(duplicateList);
@@ -368,7 +360,7 @@ export async function moveListClass(
     const from = storedTier(row.visibility);
     requireMove(actor, from, to);
     if (from === to) return null;
-    await refuseSensitivePlanningList(transaction, id, to);
+    await refuseSensitivePlanningList(transaction, id, to, actor.user.id);
     await transaction
       .update(lists)
       .set({ visibility: to })
@@ -476,7 +468,7 @@ export async function removeDiscarded(
 // nothing is recorded.
 export async function removeEmptyOrders(
   transaction: Transaction,
-  editor?: string,
+  editor: string | undefined,
 ): Promise<void> {
   const state = await readState(transaction, editor);
   const empty = [...state.orderDrafts].filter(
@@ -601,7 +593,12 @@ async function changeChoice(
     const after = change(state, choice);
     refuseLastKept(state, listId, id, after);
     if (peoplesMeaning(after.meaning) && !peoplesMeaning(choice.meaning)) {
-      await refusePeoplesMeaningWhileHeld(transaction, id, after.meaning);
+      await refusePeoplesMeaningWhileHeld(
+        transaction,
+        id,
+        after.meaning,
+        maker.user.id,
+      );
     }
     const changeSetId = await saveDraft(
       transaction,
@@ -671,7 +668,6 @@ export async function moveChoice(
   }
   return drafting(database, maker.user.id, async (transaction, state) => {
     changeableChoice(maker, state, listId, id);
-    refuseHeldIn(state.held.orders, listId);
     const before = draftedOrder(state, listId);
     const others = before.filter((other) => other !== id);
     const at = after === null ? 0 : others.indexOf(after) + 1;

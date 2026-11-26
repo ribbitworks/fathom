@@ -11,17 +11,17 @@ import {
 } from "@fathom/db";
 import { eq, inArray } from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
-import { readHeld } from "./drafts.ts";
 import { readTeamDrafts } from "./feature-team-reads.ts";
-import { recordType } from "./feature-team-records.ts";
 import { membersOf } from "./feature-team-rules.ts";
 import { bySubject, inForceOrLater } from "./in-force.ts";
 import { readToday } from "./settings.ts";
 
-// Refuses a feature team for a feature unless it is live and no draft, published or not, removes it.
+// Refuses a feature team for a feature unless it is live and no draft the editor, when given, sees
+// removes it.
 export async function checkTeamForFeature(
   reader: Reader,
   id: string | null,
+  editor: string | undefined,
 ): Promise<void> {
   if (id === null) return;
   const [team] = await reader
@@ -31,11 +31,9 @@ export async function checkTeamForFeature(
   if (team === undefined) {
     throw new BadRequestError("Choose a feature team that has been approved");
   }
-  const removals = [
-    (await readTeamDrafts(reader, [id])).get(id),
-    (await readHeld(reader, recordType, undefined, [id])).get(id)?.draft,
-  ];
-  if (removals.some((draft) => draft?.action === "deleted")) {
+  if (
+    (await readTeamDrafts(reader, [id], editor)).get(id)?.action === "deleted"
+  ) {
     throw new ConflictError(
       "This feature team is drafted to be removed; choose another",
     );
@@ -72,17 +70,15 @@ async function leadTodayOrLater(
 }
 
 // Refuses removing people who lead a feature team, today, later, or in a draft, or whom a team's
-// draft names as a member, published or not.
+// draft, as the editor, when given, sees the drafts, names as a member.
 export async function refuseRemovingPeopleOnTeams(
   reader: Reader,
   ids: readonly string[],
+  editor: string | undefined,
 ): Promise<void> {
   const today = await readToday(reader);
   const inDrafts = [
-    ...(await readTeamDrafts(reader)).values(),
-    ...[...(await readHeld(reader, recordType, undefined)).values()].map(
-      ({ draft }) => draft,
-    ),
+    ...(await readTeamDrafts(reader, undefined, editor)).values(),
   ].map(({ fields }) => fields);
   for (const chunk of inChunks([...ids])) {
     if (

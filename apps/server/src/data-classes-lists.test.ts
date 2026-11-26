@@ -97,18 +97,19 @@ describe("a list's class", () => {
     );
   });
 
-  it("waits while someone else has unpublished changes to the list", async () => {
+  it("is moved while someone else has unpublished changes to the list", async () => {
     const id = await liveList();
     const other = await test.signedIn("workforce-administrator");
     await test.request(
       other.cookie,
       "PUT",
       `/api/lists/${id}`,
-      { name: unique("Fictional held"), visibility: "general" },
+      { name: unique("Fictional private"), visibility: "general" },
       { publish: false },
     );
     const response = await move(`/api/lists/${id}/class`, "personal");
-    expect(response.statusCode).toBe(409);
+    await test.request(other.cookie, "POST", "/api/unpublished/discard");
+    expect(response.statusCode, response.body).toBe(200);
   });
 
   it("is moved back rather than undone", async () => {
@@ -278,19 +279,19 @@ describe("a list's class", () => {
     expect(response.statusCode).toBe(403);
   });
 
-  it("is not changed in a draft someone else is changing", async () => {
+  it("is changed in a draft someone else is changing, unpublished", async () => {
     const { id } = await addedList();
     const other = await test.signedIn("workforce-administrator");
     await test.request(
       other.cookie,
       "PUT",
       `/api/lists/${id}`,
-      { name: unique("Fictional held"), visibility: "general" },
+      { name: unique("Fictional private"), visibility: "general" },
       { publish: false },
     );
     const response = await move(`/api/lists/${id}/class`, "personal");
     await test.request(other.cookie, "POST", "/api/unpublished/discard");
-    expect(response.statusCode).toBe(409);
+    expect(response.statusCode, response.body).toBe(200);
   });
 
   it("is not put back above General by undoing once a column on Features draws on it", async () => {
@@ -392,7 +393,7 @@ describe("a column's class", () => {
     });
   });
 
-  it("waits while someone else has unpublished changes to the column", async () => {
+  it("is moved while someone else has unpublished changes to the column", async () => {
     const id = await liveColumn("link");
     const other = await test.signedIn("workforce-administrator");
     await test.request(
@@ -400,7 +401,7 @@ describe("a column's class", () => {
       "PUT",
       `/api/people/columns/${id}`,
       {
-        name: unique("Fictional held"),
+        name: unique("Fictional private"),
         type: "link",
         visibility: "general",
         multiple: false,
@@ -410,7 +411,8 @@ describe("a column's class", () => {
       { publish: false },
     );
     const response = await move(`/api/columns/${id}/class`, "personal");
-    expect(response.statusCode).toBe(409);
+    await test.request(other.cookie, "POST", "/api/unpublished/discard");
+    expect(response.statusCode, response.body).toBe(200);
   });
 
   it("is not moved for a column drafted to be removed", async () => {

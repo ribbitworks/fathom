@@ -352,7 +352,7 @@ describe("a new list drafted with a column on Features", () => {
     expect(await choiceDraftsOf(listId)).toHaveLength(tiers.length + 1);
   });
 
-  it("stays while someone else is adding a choice to it, unpublished", async () => {
+  it("is discarded with the column while only someone else is adding a choice to it, unpublished", async () => {
     const { field } = await addedColumn();
     const listId = String(field.listId);
     const configurer = await test.signedIn("workforce-administrator");
@@ -370,7 +370,8 @@ describe("a new list drafted with a column on Features", () => {
       `/api/features/columns/${field.id}/draft`,
     );
 
-    expect(await listDraftOf(listId)).toBeDefined();
+    expect(await listDraftOf(listId)).toBeUndefined();
+    await test.request(configurer.cookie, "POST", "/api/unpublished/discard");
   });
 
   it("stays when the column's draft is discarded while another column draws on it", async () => {

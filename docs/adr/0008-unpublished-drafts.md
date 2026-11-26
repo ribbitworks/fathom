@@ -3,14 +3,14 @@
 - **ADR:** 0008
 - **Status:** Accepted
 - **Date:** 2026-11-03
-- **Revised:** 2026-11-17, to publish or discard chosen changes, and to mark a change set published once none of its changes is held; 2026-11-20, to publish only the changes the role in use may make; 2026-11-25, to keep them as private changes, by record and user in each user's set, each standing over the published draft with its maker's own fields
+- **Revised:** 2026-11-17, to publish or discard chosen changes, and to mark a change set published once none of its changes is held; 2026-11-20, to publish only the changes the role in use may make; 2026-11-25, to keep them as private changes, by record and user in each user's set, each standing over the published draft with its maker's own fields; 2026-11-26, so changes no longer hold their record, and count in no other user's checks
 
 ## Context
 
 A user's changes are seen only by that user until they publish them:
 
 - **Publishing and discarding:** They publish or discard them all at once, or chosen changes with those they must go with.
-- **Held records:** A record someone has unpublished changes to is held: others see it as it was, marked as being changed, and cannot change, approve, or reject it.
+- **Nothing held:** Others see a record without anyone else's unpublished changes, and may change, approve, reject, discard or resubmit it meanwhile.
 - **Published drafts:** Changing a published draft makes the change the editor's alone until they publish it, while others keep seeing the published draft.
 - **The change history:** It shows unpublished edits only to their maker until they are published.
 
@@ -18,11 +18,11 @@ A user's changes are seen only by that user until they publish them:
 
 ## Decision
 
-- **A table of private changes:** A user's unpublished changes are kept in a second table, shaped as the table of drafts, keyed by the record and the user whose changes they are, in that user's set. While records are held, a record still has at most one.
+- **A table of private changes:** A user's unpublished changes are kept in a second table, shaped as the table of drafts, keyed by the record and the user whose changes they are, in that user's set. Several users may each have one for the same record.
   - **Whole drafts:** Each row holds the whole draft the user intends, as a draft row does, not the difference from the published draft.
-  - **Own fields:** Each row records, for each field its maker changed, the value it started from. Read and published, it puts those fields over whatever the published draft holds then, so once records stop being held, a change made by another meanwhile to other fields stays; a row naming no field of its own, such as a record its maker adds, or changing the action, such as a removal, holds the whole draft.
-- **Held by the row:** A record is held while it has an unpublished draft. Changing it, approving it, or rejecting it is refused for anyone but that user, and the user's own changes update their unpublished draft, starting from the published draft when there is one.
-- **Read per user:** Reading a table puts each user's own unpublished drafts over the published drafts, and marks the records others hold with who holds them. A record that exists only as someone else's unpublished draft is not shown at all.
+  - **Own fields:** Each row records, for each field its maker changed, the value it started from. Read and published, it puts those fields over whatever the published draft holds then, so a change made by another meanwhile to other fields stays; a row naming no field of its own, such as a record its maker adds, or changing the action, such as a removal, keeps the whole draft.
+- **Nothing held:** An unpublished draft holds nothing. Anyone may change, approve, reject, discard or resubmit the record meanwhile, and the user's own changes update their unpublished draft, starting from the published draft when there is one.
+- **Read per user:** Reading a table puts each user's own unpublished drafts over the published drafts, and never reads anyone else's, nor says who has them. A record that exists only as someone else's unpublished draft is not shown at all.
 - **Publishing moves the rows:** Publishing writes each of the user's unpublished drafts, its own fields over the published draft for the same record, waiting for approval, and removes them, all in one transaction.
   - **No change left:** An unpublished draft that no longer changes anything removes the published draft.
   - **Discarding:** Discarding removes them.
@@ -34,18 +34,22 @@ A user's changes are seen only by that user until they publish them:
 - **Publishing as the role in use:** A row changed in a change set made as another of the user's roles is published only when the role in use may make its kind of change.
   - **Rows made as the role in use:** A row changed in a change set made as the role in use is published whatever its kind, since a change may move records of other kinds with it, such as the releases a cycle's new length moves.
   - **Rows left:** A row that can't be published stays, with every row that uses it or was saved with it, and publishing answers how many it left.
-  - **Discarding:** Discarding takes back any of the user's rows, whichever role made them, so nothing they made stays held.
+  - **Discarding:** Discarding takes back any of the user's rows, whichever role made them.
 - **Private change sets:** Each change set records whether it was saved as unpublished changes.
   - **In the change history:** The change history shows such change sets only to their maker until publishing marks them published.
-  - **Marked published:** A change set is marked published once none of its changes is to a record its maker still holds, so a change set saved with changes to several records is published once all of them are.
+  - **Marked published:** A change set is marked published once its maker has no unpublished draft left of any record it changed, so a change set saved with changes to several records is published once all of them are.
   - **Undo:** Undo works on them as on any change set, putting back the unpublished draft.
-- **Checks see everything:** Checks for values that must be unique, such as an Employee ID, count unpublished drafts as they count drafts, so publishing never finds a value taken.
+- **Checks see only the user's own:** Another user's unpublished drafts count in no check.
+  - **Taken values:** a name, Employee ID or requisition in someone else's unpublished draft isn't taken.
+  - **In use:** a choice, column, list, manager, team lead or state used only in someone else's unpublished draft isn't in use.
+  - **The user's own:** a user's own unpublished drafts still count for them, and publishing checks again.
 
 ## Consequences
 
-- **Every write path changes once:** The functions that write drafts write unpublished drafts instead, and every read goes through the per-user overlay, so pages need no changes beyond showing who holds a record.
+- **Every write path changes once:** The functions that write drafts write unpublished drafts instead, and every read goes through the per-user overlay, so pages need no changes.
 - **One schema change:** A new table and a new column on change sets, added by a reviewed migration.
-- **A held record waits:** A record stays held until its holder publishes or discards, so the holder's unpublished changes can block others; the top bar's count keeps them in view.
-- **Holds are seen by everyone:** A held record is marked as being changed, with who, even for a viewer who may not see the values being changed, since the hold stops them changing it and must be explained. The values stay hidden.
+- **Nobody waits:** One user's unpublished changes never block another's work; the top bar's count keeps them in view for their maker.
+- **Nothing seen by others:** Nobody else is shown that a record has unpublished changes, or whose, and no refusal tells them.
+- **The later publish wins:** Two users may change the same field, and whoever publishes later replaces the other's value without being asked.
 - **Reverted edits are published later:** Edits a user takes back by hand before publishing leave nothing to publish, so their change sets stay unpublished until the user next publishes, when they appear in the history with the rest.
 - **One exception to an append-only history:** Marking change sets published is the only update the change history allows, limited by the database to that mark, from unpublished to published.

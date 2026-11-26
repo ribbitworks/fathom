@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Drafts, Values and Access
@@ -14,7 +14,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 ## Drafts
 
 - **A draft's dot:** A draft is marked by its dot alone, always before the record, value or part it marks. No words such as Draft or Draft: added sit beside it.
-  - **Its states:** The dot is yellow while waiting for approval, hollow while it holds the user's own unpublished changes, and red in a ring once rejected, so shape tells it apart as well as colour.
+  - **Its states:** The dot is yellow while waiting for approval, hollow while it holds the user's own unpublished changes, and red in a ring once rejected, so shape tells it apart as well as colour. Someone else's unpublished changes are never marked.
   - **Its tip:** Its tip, also read aloud, says what the draft does, such as Draft: added. Where known, it also says what a value was, when the draft takes effect and who made it. A rejection's reason comes last, such as Rejected, added: and the reason.
   - **In a record's menu:** Only in a record's menu do the draft's words follow its dot, as the heading of the draft's details.
   - **Drawn by:** `DraftedItem` in `apps/web/src/status-mark.tsx`, with the words from `draftWords` and `draftTip` in `apps/web/src/draft-marks.ts`, and the menu's heading from `apps/web/src/draft-details.tsx`.
@@ -24,9 +24,6 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Their order:** Facts come before the draft's box: a fact says what the item is, the draft's box what is about to happen to it.
   - **Drawn by:** `DraftedItem`, `FactBox` and `MarkedItem` in `apps/web/src/status-mark.tsx`; a schedule's Ended by `EndedBox` there too.
   - **Example:** Languages on the Lists page, then its Retired box; Viktoria Holmberg's Left on People.
-- **The lock:** A record someone else has unpublished changes to has a grey lock before it, its tip Being changed by and their name. It is read only until they publish or discard them. Its menu says the same, and that it can be changed once they do.
-  - **Drawn by:** `DraftedItem`'s `heldBy` in `apps/web/src/status-mark.tsx`, with the menu's words from `apps/web/src/draft-details.tsx`.
-  - **Example:** Viktoria Holmberg on People, held by the second Engineering Operations Manager.
 - **A summary row:** A table of records with few columns, such as the Lists page's lists, names each record's parts, such as a list's choices, in one cell: how many, then their names, after the mark of their drafts, and the same as they are live in the record's Live row.
   - **Drawn by:** `Parts` and `LiveParts` in `apps/web/src/summary-row.tsx`, as a column's `content` on the shared table, which then marks each part itself.
   - **Example:** Sites on the Lists page.
@@ -71,7 +68,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 - **A table of drafts:** On the Drafts page, where every row is a draft, the dot in a row's slot is the row's only mark: no tints, semibold, strike-through or Live rows. The row isn't read aloud as a draft, since every row is one. This is a recorded exception to Tints and A removal.
   - **Drawn by:** A table's `slotMarksOnly` in `apps/web/src/record-table.ts`.
   - **Example:** Salvador Quiñones Méndez's removal on the Drafts page's All drafts tab, its name not struck through.
-- **The three Draft views:** The Draft menu's choice decides every mark on the page, in one place. Locks and warnings show in every view. Each mark is given its item's own draft, whatever the view.
+- **The three Draft views:** The Draft menu's choice decides every mark on the page, in one place. Warnings show in every view. Each mark is given its item's own draft, whatever the view.
   - **Drafts & Live:** Shows everything above.
   - **Drafts applied:** Shows the dots and strike-throughs, with no tints, semibold or Live rows. It leaves out rejected drafts, showing them taken back.
   - **Live only:** Shows no draft dots or tints. Instead, each record, value or part a waiting draft would change has a green dot, its tip naming the change, such as "Live. A change is waiting for approval." A rejected draft gets none.
@@ -80,7 +77,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 - **A selected row:** A selected row, such as the record whose details are open beside its table, has the hover grey with a thin accent bar at its left edge. It never has the accent's fill, since a row's fill says its draft's state.
   - **Drawn by:** `selectedRow` in `apps/web/src/pages.module.css`, given on the shared table by `RecordGrid`'s `selected` in `apps/web/src/record-table.ts`, which every page passes the record whose details are open: People, Features, Projects' Projects, Proposals and Customers tabs, Releases' Releases, Cycles and Schedules tabs, Lists, Accounts and Drafts.
   - **Example:** On People, select the details button of any row.
-- **Centring:** Every mark (dot, lock or box), and a colour's swatch beside text, is centred on the centreline of its text's capitals. A line holding them lines them up on its text's baseline, and the marks' own spacing is the only spacing. A swatch alone, such as a menu item's icon, is centred in its place instead.
+- **Centring:** Every mark (dot or box), and a colour's swatch beside text, is centred on the centreline of its text's capitals. A line holding them lines them up on its text's baseline, and the marks' own spacing is the only spacing. A swatch alone, such as a menu item's icon, is centred in its place instead.
   - **Drawn by:** `dotPlace`, `kind` and `swatchPlace` in `apps/web/src/status-mark.module.css`, `MarkRow` in `apps/web/src/status-mark.tsx`, and `Swatch` in `apps/web/src/colour-swatch.tsx`.
   - **Example:** Any dot before a name on People.
 - **A draft from another day:** Where a draft takes effect from a day other than the one shown, the item is followed in grey by from and the day, such as from Dec 1, 2026.
@@ -152,7 +149,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** A column's `dataClass` in `apps/web/src/table-view.ts`, read by `useGridModel` in `apps/web/src/grid-model.tsx`.
   - **Example:** The Feature Lead's People has no Start or End.
 - **A class's mark:** A column or list whose values belong to a class beyond General has its class's symbol in grey before its name, after a draft's dot if there is one. A General item has no symbol.
-  - **The symbols:** Personal is an eye with a line through it. Confidential is a lock with a keyhole, unlike the plain lock of a record someone else is changing.
+  - **The symbols:** Personal is an eye with a line through it. Confidential is a lock with a keyhole.
   - **Its tip:** Its tip is the class's name, read aloud after the item's name.
   - **A class named in words:** Where a class is named in words, such as in the Data classes page's Class column or a line of a role's summary, the symbol comes before the name, and General's is an open eye. Only class names Fathom writes are marked, never words someone typed, such as a role's description.
   - **Drawn by:** `ClassMark` and `ClassName` in `apps/web/src/status-mark.tsx`, placed by `DraftedItem`'s `dataClass`, with the symbols from `apps/web/src/icons.tsx`.
@@ -160,6 +157,6 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 - **Changing a class:** Wherever it starts, Change class… opens one dialog, as [Data Classes](../../design/pages/administration.md#data-classes) sets out.
   - **Takes effect at once:** Never as a draft, and is changed back rather than undone. A move is recorded in the access history and marked worth checking. A list's or column's move is recorded in the change history too.
   - **A list or column only drafted to be added:** The same dialog changes its draft instead, which can be undone. Drafts and the change history name a class beyond General with the addition, such as Class Confidential. Once approved, it is recorded as a move, naming the Approver.
-  - **Turned off:** The dialog turns off each class the data can't go to, and says why. The button itself is turned off, with why, for a role that can't see the data's current class, or while someone else has unpublished changes to the record.
+  - **Turned off:** The dialog turns off each class the data can't go to, and says why. The button itself is turned off, with why, for a role that can't see the data's current class.
   - **Drawn by:** `MoveClassModal`, `ClassChoice` and `showMoved` in `apps/web/src/move-class-dialog.tsx`.
   - **Example:** Change class… in the panel of Sites on the Lists page, as the Engineering Director.

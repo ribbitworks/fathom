@@ -22,7 +22,6 @@ import {
   addPersonDrafts,
   lockDrafts,
   readPersonDrafts,
-  refuseHeld,
   reopened,
   writePersonDraft,
 } from "./drafts.ts";
@@ -99,11 +98,13 @@ async function refuseTakenIds(
   transaction: Transaction,
   employeeIds: readonly string[],
   except: readonly string[],
+  editor: string,
 ): Promise<void> {
   const lowered = employeeIds.map((id) => id.toLowerCase());
   if (
     new Set(lowered).size !== lowered.length ||
-    (await takenEmployeeIds(transaction, employeeIds, except)).length > 0
+    (await takenEmployeeIds(transaction, employeeIds, except, editor)).length >
+      0
   ) {
     throw new ConflictError(duplicateEmployeeId, "employeeId");
   }
@@ -197,14 +198,24 @@ export async function draftNewPeople(
   const managers = await readManagers(
     transaction,
     requests.map(({ managerId }) => managerId ?? null),
+    actor.user.id,
   );
   for (const { id, fields } of added) {
-    await checkLine(transaction, id, fields, [], today, managers);
+    await checkLine(
+      transaction,
+      id,
+      fields,
+      [],
+      today,
+      actor.user.id,
+      managers,
+    );
   }
   await refuseTakenIds(
     transaction,
     requests.map(({ employeeId }) => employeeId),
     [],
+    actor.user.id,
   );
   await refuseTakenTeamNames(
     transaction,
@@ -213,13 +224,14 @@ export async function draftNewPeople(
         ? [{ id, name: fields.teamName }]
         : [],
     ),
+    actor.user.id,
   );
   await addPersonDrafts(transaction, actor.user.id, added);
   return { ids: added.map(({ id }) => id), made: asDraft(made) };
 }
 
 // A person as they are and as the actor's draft makes them, locked for a change, refusing someone
-// who is neither live nor in a draft the actor sees, or whom someone else is changing.
+// who is neither live nor in a draft the actor sees.
 async function lockDrafted(
   transaction: Transaction,
   actor: Actor,
@@ -240,7 +252,6 @@ async function lockDrafted(
   if (before === undefined && draft === undefined) {
     throw new NotFoundError(noPerson);
   }
-  await refuseHeld(transaction, actor.user.id, "person", [id]);
   return { before, draft, person: drafted(before, draft) };
 }
 
@@ -291,7 +302,7 @@ export async function draftPersonChange(
       change.managerId !== undefined ||
       change.managerFrom !== undefined ||
       change.isManager !== undefined) &&
-    (await hireDraftsNaming(transaction, "filledBy", [id]))
+    (await hireDraftsNaming(transaction, "filledBy", [id], actor.user.id))
   ) {
     throw new ConflictError(partOfFill);
   }
@@ -353,7 +364,7 @@ export async function draftPersonChange(
   if (made.length === 0) return [];
   const lines =
     before === undefined ? [] : (await readLines(transaction, [id])).get(id);
-  await checkLine(transaction, id, after, lines ?? [], today);
+  await checkLine(transaction, id, after, lines ?? [], today, actor.user.id);
   if (
     typeof after.managerFrom === "string" &&
     (after.managerId !== person.managerId ||
@@ -379,6 +390,7 @@ export async function draftPersonChange(
   if (person.isManager === true && after.isManager === false) {
     await refuseUnmarkingManagers(transaction, [id], today, {
       drafted: true,
+      editor: actor.user.id,
     });
     await refuseUnmarkingHireManagers(transaction, [id], {
       drafted: true,
@@ -389,10 +401,14 @@ export async function draftPersonChange(
     typeof after.teamName === "string" &&
     after.teamName !== person.teamName
   ) {
-    await refuseTakenTeamNames(transaction, [{ id, name: after.teamName }]);
+    await refuseTakenTeamNames(
+      transaction,
+      [{ id, name: after.teamName }],
+      actor.user.id,
+    );
   }
   if (change.employeeId !== undefined) {
-    await refuseTakenIds(transaction, [change.employeeId], [id]);
+    await refuseTakenIds(transaction, [change.employeeId], [id], actor.user.id);
   }
   const all = [
     ...asDraft(made),
@@ -463,11 +479,11 @@ export async function deletePerson(
     // Already drafted to be removed.
     if (person === undefined) return null;
     if (before !== undefined) {
-      await refuseRemovingManagers(transaction, [id]);
+      await refuseRemovingManagers(transaction, [id], actor.user.id);
     }
-    await refuseRemovingHiresPeople(transaction, [id]);
+    await refuseRemovingHiresPeople(transaction, [id], actor.user.id);
     await refuseRemovingNamed(transaction, "person", [id], actor);
-    await refuseRemovingPeopleOnTeams(transaction, [id]);
+    await refuseRemovingPeopleOnTeams(transaction, [id], actor.user.id);
     const made = [
       ...asDraft(personChanges(columns, id, "deleted", person, undefined)),
       ...clearedRejection(id, personTier(columns), before, draft),

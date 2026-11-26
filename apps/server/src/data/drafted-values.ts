@@ -13,6 +13,7 @@ import {
 } from "@fathom/db";
 import {
   type AnyColumn,
+  type SQL,
   and,
   eq,
   inArray,
@@ -23,16 +24,19 @@ import {
 import { columnTableOf, isLink } from "@fathom/shared";
 import { isNote, isNumber } from "./column-types.ts";
 import { planningOwners, valueOwnersOf } from "./values.ts";
+import { asSeenBy, ownFieldsSeen, publishedFieldsSeen } from "./drafts.ts";
 
 // The IDs asked for that another row of the ID column already has, ignoring letter case: a person's
-// Employee ID or a planned hire's requisition, live or as a draft makes it, published or not. A live
-// ID stays taken until a draft that changes it is approved, so approving drafts one at a time never
-// finds two rows with the same one, and an unpublished draft's until it is discarded, so publishing
-// never finds it taken. The records excepted are people or hires, whose identifiers never clash.
+// Employee ID or a planned hire's requisition, live or as a published draft makes it. A live ID
+// stays taken until a draft that changes it is approved, so approving drafts one at a time never
+// finds two rows with the same one. With an editor, their own private changes take IDs too, and
+// nobody else's do, so publishing checks again. The records excepted are people or hires, whose
+// identifiers never clash.
 export async function takenEmployeeIds(
   reader: Reader,
   employeeIds: readonly string[],
   except: readonly string[],
+  editor: string | undefined,
 ): Promise<string[]> {
   const lowered = [...new Set(employeeIds.map((id) => id.toLowerCase()))];
   const taken = new Set<string>();
@@ -60,13 +64,20 @@ export async function takenEmployeeIds(
     for (const { value } of [
       ...live,
       ...liveHires,
-      ...(await draftedPersonValues(reader, "employeeId", chunk, except)),
+      ...(await draftedPersonValues(
+        reader,
+        "employeeId",
+        chunk,
+        except,
+        editor,
+      )),
       ...(await draftedTexts(
         reader,
         "planned-hire",
         "requisition",
         chunk,
         except,
+        editor,
       )),
     ]) {
       taken.add(value.toLowerCase());
@@ -76,25 +87,29 @@ export async function takenEmployeeIds(
 }
 
 // The values of a person's text field, such as an Employee ID, that drafts of people other than
-// those excepted hold, published or not, among those given in lower case.
+// those excepted hold, as the editor, when given, sees the drafts, among those given in lower case.
 export const draftedPersonValues = (
   reader: Reader,
   field: string,
   lowered: readonly string[],
   except: readonly string[],
-) => draftedTexts(reader, "person", field, lowered, except);
+  editor: string | undefined,
+) => draftedTexts(reader, "person", field, lowered, except, editor);
 
 // The values of a text field that drafts of records of the type given, other than those excepted,
-// hold, published or not, among those given in lower case.
+// hold, among those given in lower case, as the editor, when given, sees the drafts.
 async function draftedTexts(
   reader: Reader,
   recordType: string,
   field: string,
   lowered: readonly string[],
   except: readonly string[],
+  editor: string | undefined,
 ): Promise<{ value: string }[]> {
   const found = [];
-  for (const table of [drafts, privateChanges]) {
+  for (const table of editor === undefined
+    ? [drafts]
+    : [drafts, privateChanges]) {
     found.push(
       ...(await reader
         .select({ value: sql<string>`${table.fields}->>${field}::text` })
@@ -106,6 +121,7 @@ async function draftedTexts(
             except.length === 0
               ? undefined
               : notInArray(table.recordId, [...except]),
+            asSeenBy(table, editor, field),
           ),
         )),
     );
@@ -113,16 +129,22 @@ async function draftedTexts(
   return found;
 }
 
-// Whether any person's or planned hire's draft, published or not, changes the column, even to clear
-// it, or whether a draft of either has the choice given, as a value, or as a position or state. The
-// editor's unpublished drafts stand in for the published drafts of the same records, so a draft
-// they have changed or discarded but not yet published no longer counts.
+// Whether any person's or planned hire's draft, as the editor sees the drafts, changes the column,
+// even to clear it, or whether a draft of either has the choice given, as a value, or as a position
+// or state. The editor's private changes stand in for the published drafts of the same records, and
+// nobody else's count.
 export async function draftsUse(
   reader: Reader,
   use: { column: string } | { choice: string },
-  editor?: string,
+  editor: string | undefined,
 ): Promise<boolean> {
-  for (const table of [drafts, privateChanges]) {
+  for (const table of editor === undefined
+    ? [drafts]
+    : [drafts, privateChanges]) {
+    // A choice may be in any of a record's fields, so it is looked for in the fields the editor sees:
+    // a published draft's that their own change doesn't hold, and their own change's.
+    const choiceSeen = table === drafts ? undefined : asSeenBy(table, editor);
+    const seen = table === drafts ? publishedFieldsSeen(editor) : ownFieldsSeen;
     const found = await reader
       .select({ one: sql`1` })
       .from(table)
@@ -133,9 +155,7 @@ export async function draftsUse(
                 and(
                   eq(table.recordType, recordType),
                   sql`${table.fields} ? ${`value:${use.column}`}::text`,
-                  table === drafts && editor !== undefined
-                    ? notReplacedBy(recordType, table.recordId, editor)
-                    : undefined,
+                  asSeenBy(table, editor, `value:${use.column}`),
                 ),
               ),
             )
@@ -143,32 +163,26 @@ export async function draftsUse(
               and(
                 eq(table.recordType, "person"),
                 or(
-                  holdsChoice(table.fields, use.choice),
-                  sql`${table.fields}->>'positionId' = ${use.choice}`,
-                  sql`${table.fields}->>'stateId' = ${use.choice}`,
+                  holdsChoice(seen, use.choice),
+                  sql`${seen}->>'positionId' = ${use.choice}`,
+                  sql`${seen}->>'stateId' = ${use.choice}`,
                 ),
-                table === drafts && editor !== undefined
-                  ? notReplacedBy("person", table.recordId, editor)
-                  : undefined,
+                choiceSeen,
               ),
               and(
                 eq(table.recordType, "planned-hire"),
                 or(
-                  holdsChoice(table.fields, use.choice),
-                  sql`${table.fields}->>'positionId' = ${use.choice}`,
-                  sql`${table.fields}->>'stateId' = ${use.choice}`,
+                  holdsChoice(seen, use.choice),
+                  sql`${seen}->>'positionId' = ${use.choice}`,
+                  sql`${seen}->>'stateId' = ${use.choice}`,
                 ),
-                table === drafts && editor !== undefined
-                  ? notReplacedBy("planned-hire", table.recordId, editor)
-                  : undefined,
+                choiceSeen,
               ),
               ...planningOwners.map((recordType) =>
                 and(
                   eq(table.recordType, recordType),
-                  holdsChoice(table.fields, use.choice),
-                  table === drafts && editor !== undefined
-                    ? notReplacedBy(recordType, table.recordId, editor)
-                    : undefined,
+                  holdsChoice(seen, use.choice),
+                  choiceSeen,
                 ),
               ),
             ),
@@ -183,16 +197,8 @@ export async function draftsUse(
 const valueOwners = Object.values(valueOwnersOf).flat();
 
 // Whether a draft's fields give a column's value holding the choice.
-const holdsChoice = (fields: AnyColumn, choiceId: string) =>
+const holdsChoice = (fields: AnyColumn | SQL, choiceId: string) =>
   sql`EXISTS (SELECT 1 FROM jsonb_each(${fields}) AS held(field, value) WHERE jsonb_typeof(held.value) = 'array' AND held.value @> ${JSON.stringify([choiceId])}::jsonb)`;
-
-// Whether the editor holds no unpublished draft of the record whose published draft is given.
-const notReplacedBy = (
-  recordType: string,
-  recordId: AnyColumn,
-  editor: string,
-) =>
-  sql`NOT EXISTS (SELECT 1 FROM ${privateChanges} WHERE ${privateChanges.recordType} = ${recordType} AND ${privateChanges.recordId} = ${recordId} AND ${privateChanges.userId} = ${editor})`;
 
 // How many values a recorded value holds: its choices, or one link, note, or number, or undefined
 // when none is recorded.
@@ -203,22 +209,26 @@ function valueCount(value: unknown): number | undefined {
 }
 
 // A column's values as drafts hold them, for checking that the column's settings fit the drafts
-// too: for each draft, published or not, that adds or changes a record of the column's table, whether it
-// is a hire's, how many values it gives the column, or undefined when it leaves the column as it
-// is.
+// too: for each draft, as the editor, when given, sees the drafts, that adds or changes a record of
+// the column's table, whether it is a hire's, how many values it gives the column, or undefined when
+// it leaves the column as it is.
 export async function draftedValues(
   reader: Reader,
   columnId: string,
   onTable: unknown,
+  editor: string | undefined,
 ): Promise<{ hire: boolean; adds: boolean; held: number | undefined }[]> {
+  const field = `value:${columnId}`;
   const rows = [];
-  for (const table of [drafts, privateChanges]) {
+  for (const table of editor === undefined
+    ? [drafts]
+    : [drafts, privateChanges]) {
     rows.push(
       ...(await reader
         .select({
           recordType: table.recordType,
           action: table.action,
-          value: sql<unknown>`${table.fields} -> ${`value:${columnId}`}::text`,
+          value: sql<unknown>`${table.fields} -> ${field}::text`,
         })
         .from(table)
         .where(
@@ -227,6 +237,7 @@ export async function draftedValues(
               ...valueOwnersOf[columnTableOf(onTable)],
             ]),
             inArray(table.action, ["created", "changed"]),
+            asSeenBy(table, editor, field),
           ),
         )),
     );

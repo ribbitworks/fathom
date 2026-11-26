@@ -11,7 +11,6 @@ import {
   listItems,
   people,
   plannedHires,
-  privateChanges,
   type Reader,
 } from "@fathom/db";
 import {
@@ -39,7 +38,7 @@ import { allocationKind, allocationRowFields } from "./allocation-kinds.ts";
 import { expectedMonth, hireIdOf } from "./hire-fields.ts";
 import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
 import { drafting, saveRecordDraft } from "./record-drafting.ts";
-import { readRecordsState, recordDraftOut, recordHeldBy } from "./records.ts";
+import { readRecordsState, recordDraftOut } from "./records.ts";
 import {
   addedOnly,
   everyVersion,
@@ -316,7 +315,6 @@ export async function readAllocations(
                       : {}),
                   },
                 }),
-            ...recordHeldBy(state, type, id),
           };
         }),
         // Every feature has a status, a choice of the feature statuses list, read above.
@@ -340,7 +338,7 @@ export async function readAllocations(
 }
 
 // The allocation a change is to: the one its person or planned hire already has to its feature, as
-// anyone's drafts, published or not, make it, or a new one.
+// the drafts make it, or a new one.
 function allocationFor(
   state: RecordsState,
   change: AllocationChange,
@@ -499,7 +497,7 @@ export async function checkAllocationsAsked(
 }
 
 // The allocations of the people or planned hires given, live, and whether any of them, or any only
-// drafted to be added, has a draft, published or not.
+// drafted to be added, has a published draft.
 async function allocationsOf(
   reader: Reader,
   column: "personId" | "plannedHireId",
@@ -515,32 +513,24 @@ async function allocationsOf(
       ]),
     );
   const liveIds = rows.map(({ id }) => id);
-  const naming = (table: typeof drafts | typeof privateChanges) =>
-    and(
-      eq(table.recordType, type),
-      or(
-        liveIds.length === 0 ? undefined : inArray(table.recordId, liveIds),
-        inArray(sql`${table.fields}->>${column}`, [...ids]),
-      ),
-    );
   const [published] = await reader
     .select({ id: drafts.recordId })
     .from(drafts)
-    .where(naming(drafts))
+    .where(
+      and(
+        eq(drafts.recordType, type),
+        or(
+          liveIds.length === 0 ? undefined : inArray(drafts.recordId, liveIds),
+          inArray(sql`${drafts.fields}->>${column}`, [...ids]),
+        ),
+      ),
+    )
     .limit(1);
-  const [unpublished] = await reader
-    .select({ id: privateChanges.recordId })
-    .from(privateChanges)
-    .where(naming(privateChanges))
-    .limit(1);
-  return {
-    rows,
-    drafted: published !== undefined || unpublished !== undefined,
-  };
+  return { rows, drafted: published !== undefined };
 }
 
 // Removes the allocations of the people or planned hires being removed, and returns the changes,
-// refusing while any of them has a draft, published or not, since it would be left with nobody.
+// refusing while any of them has a published draft, since it would be left with nobody.
 export async function removeAllocationsOf(
   transaction: Transaction,
   column: "personId" | "plannedHireId",

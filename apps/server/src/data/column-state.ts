@@ -36,13 +36,7 @@ import {
   type Maker,
   otherApprover,
 } from "./draft-makers.ts";
-import {
-  type Held,
-  heldByOf,
-  readDrafts,
-  readHeld,
-  refuseHolder,
-} from "./drafts.ts";
+import { readDrafts } from "./drafts.ts";
 import { typeOf } from "./column-types.ts";
 import { fieldFields } from "./fields.ts";
 import { unpublishedMark } from "./list-reads.ts";
@@ -101,7 +95,6 @@ export interface ColumnsState {
   fieldDrafts: Map<string, Draft>;
   liveOrder: string[];
   lists: ListsState;
-  held: { fields: Map<string, Held> };
 }
 
 export async function readColumnsState(
@@ -115,9 +108,6 @@ export async function readColumnsState(
     fieldDrafts: await readDrafts(reader, "field", undefined, viewer),
     liveOrder: await readColumnOrder(reader),
     lists: await readState(reader, viewer),
-    held: {
-      fields: await readHeld(reader, "field", viewer),
-    },
   };
 }
 
@@ -168,7 +158,7 @@ const lower = (value: unknown) => String(value).trim().toLowerCase();
 const tableOfField = (state: ColumnsState, id: string, draft?: Draft) =>
   state.fields.get(id)?.tableName ?? draft?.fields.tableName;
 
-// Whether another column on the same table has the name, live or in a draft, published or not, as
+// Whether another column on the same table has the name, live or in a draft the editor sees, as
 // for lists' names.
 export function nameTaken(
   state: ColumnsState,
@@ -184,10 +174,7 @@ export function nameTaken(
         field.tableName === within &&
         lower(field.name) === wanted,
     ) ||
-    [
-      ...state.fieldDrafts,
-      ...[...state.held.fields].map(([id, { draft }]) => [id, draft] as const),
-    ].some(
+    [...state.fieldDrafts].some(
       ([id, draft]) =>
         id !== except &&
         tableOfField(state, id, draft) === within &&
@@ -195,11 +182,6 @@ export function nameTaken(
         lower(draft.fields.name) === wanted,
     )
   );
-}
-
-// Refuses a change to a record someone else holds.
-export function refuseHeldIn(held: Held | undefined): void {
-  refuseHolder(held?.holder);
 }
 
 // The tier of a column's values, as its type sets it, with each list's tier live or as drafted,
@@ -235,11 +217,6 @@ export async function checkList(
   if ((state.lists.lists.get(listId) ?? list).retired === true) {
     throw refusal("Choose a list that is not retired");
   }
-  // Someone else holding a list only drafted to be added may be discarding it.
-  const held = state.lists.lists.has(listId)
-    ? undefined
-    : state.lists.held.lists.get(listId);
-  refuseHeldIn(held);
   // Locked shared, so the list cannot be approved as retired until this draft is saved. A list only
   // drafted to be added has no row yet; the drafts lock keeps its draft in place instead.
   await transaction
@@ -398,7 +375,6 @@ export async function readColumnsOut(
         ...(draft === undefined
           ? {}
           : { draft: draftOut(live, draft, makers.get(id)) }),
-        ...heldByOf(state.held.fields, id),
       },
     ];
   });

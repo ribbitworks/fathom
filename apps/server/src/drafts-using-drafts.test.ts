@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for drafts that use other drafts of another kind, against a PostgreSQL server of their own:
-// people and planned hires given values in columns, and choices, drafted to be added, read with the tier of their
-// column, and kept from losing what they use by discarding or undoing; approving a draft with those
+// people and planned hires given values in columns, and choices, drafted to be added, read with the
+// tier of their column, and kept from losing what they use by discarding or undoing; approving a draft with those
 // it uses, and rejecting a draft only with those that use it.
 
 import {
@@ -186,7 +186,6 @@ describe("the tier of values in a column drafted to be added", () => {
           listDrafts: new Map(),
           choiceDrafts: new Map(),
           orderDrafts: new Map(),
-          held: { lists: new Map(), choices: new Map(), orders: new Map() },
           keys: new Map(),
         } satisfies ListsState,
         "missing",
@@ -324,7 +323,7 @@ describe("what people's drafts use stays while they use it", () => {
     }
   });
 
-  it("refuses using a new list, column, or choice another editor is changing, unpublished", async () => {
+  it("uses a new list, column, or choice another editor is discarding, unpublished", async () => {
     const { list, choices, field } = await addedColumn();
     const [alpha] = choiceIds(choices);
     const other = await test.signedIn("workforce-administrator");
@@ -332,19 +331,21 @@ describe("what people's drafts use stays while they use it", () => {
       test.request(other.cookie, "DELETE", url, undefined, { publish: false });
     await discard(`/api/lists/${list.id}/choices/${String(alpha)}/draft`);
     await discard(`/api/people/columns/${field.id}/draft`);
-    const person = {
-      preferredName: unique("Fictional Person"),
-      employeeId: unique("U"),
-      positionId: testPosition,
-    };
     for (const values of [
       { [field.id]: [] },
       { [field.id]: [String(alpha)] },
     ]) {
-      const refused = await send("POST", "/api/people", {
-        people: [{ ...person, values }],
+      const added = await send("POST", "/api/people", {
+        people: [
+          {
+            preferredName: unique("Fictional Person"),
+            employeeId: unique("U"),
+            positionId: testPosition,
+            values,
+          },
+        ],
       });
-      expect(refused.statusCode, JSON.stringify(values)).toBe(409);
+      expect(added.statusCode, added.body).toBe(201);
     }
     const second = (
       await send("POST", "/api/lists", {
@@ -359,7 +360,8 @@ describe("what people's drafts use stays while they use it", () => {
       name: unique("Fictional Column"),
       listId: second.id,
     });
-    expect(column.statusCode).toBe(409);
+    expect(column.statusCode, column.body).toBeLessThan(300);
+    await test.request(other.cookie, "POST", "/api/unpublished/discard");
   });
 
   it("refuses undoing the drafts adding a choice or a column people's drafts use", async () => {
@@ -419,32 +421,50 @@ describe("approving a draft with the drafts it uses", () => {
     expect(await isLive(listItems, beta as string)).toBe(true);
   });
 
-  it("approves nothing when someone is changing a draft it uses", async () => {
-    const { list, choices, field } = await addedColumn();
-    const [alpha] = choiceIds(choices);
-    const id = await personWith({ [field.id]: [String(alpha)] });
+  it("approves it while someone else is changing a draft it uses, unpublished", async () => {
     const other = await test.signedIn("workforce-administrator");
-    const change = (method: Method, url: string, body: object) =>
-      test.request(other.cookie, method, url, body, { publish: false });
-    for (const [url, body] of [
-      [`/api/lists/${list.id}`, { name: list.name, description: "Held" }],
-      [
-        `/api/lists/${list.id}/choices/${String(alpha)}`,
-        { label: "Alpha held", description: "" },
-      ],
-      [`/api/people/columns/${field.id}`, { name: unique("Held Column") }],
-    ] as const) {
-      const held = await change("PUT", url, {
-        visibility: "general",
-        listId: list.id,
-        multiple: false,
-        required: false,
-        ...body,
-      });
-      expect(held.statusCode, held.body).toBe(200);
-      const refused = await decide("approval", { people: [id] });
-      expect(refused.statusCode, url).toBe(409);
-      expect(await isLive(people, id)).toBe(false);
+    for (const changing of ["list", "choice", "column"] as const) {
+      // Given a person's draft using a new list, choice and column, one of which someone else is
+      // changing
+      const { list, choices, field } = await addedColumn();
+      const [alpha] = choiceIds(choices);
+      const id = await personWith({ [field.id]: [String(alpha)] });
+      const [url, body]: [string, object] =
+        changing === "list"
+          ? [
+              `/api/lists/${list.id}`,
+              { name: list.name, description: "Fictional" },
+            ]
+          : changing === "choice"
+            ? [
+                `/api/lists/${list.id}/choices/${String(alpha)}`,
+                { label: "Alpha private", description: "" },
+              ]
+            : [
+                `/api/people/columns/${field.id}`,
+                { name: unique("Fictional Private Column") },
+              ];
+      const changed = await test.request(
+        other.cookie,
+        "PUT",
+        url,
+        {
+          visibility: "general",
+          listId: list.id,
+          multiple: false,
+          required: false,
+          ...body,
+        },
+        { publish: false },
+      );
+      expect(changed.statusCode, changed.body).toBe(200);
+
+      // When the person's draft is approved
+      const approved = await decide("approval", { people: [id] });
+
+      // Then it is approved with the drafts it uses
+      expect(approved.statusCode, approved.body).toBe(200);
+      expect(await isLive(people, id)).toBe(true);
       await test.request(other.cookie, "POST", "/api/unpublished/discard");
     }
   });

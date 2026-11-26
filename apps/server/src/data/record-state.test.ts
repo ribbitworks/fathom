@@ -119,21 +119,11 @@ describe("a value taken", () => {
     );
   });
 
-  it("counts drafts others hold, ignoring letter case", () => {
+  it("counts drafts, ignoring letter case", () => {
     const state = recordsState({
       release: kindState(
         [],
-        [],
-        new Map([
-          [
-            "r",
-            {
-              holderId: "u",
-              holder: "Fictional Holder",
-              draft: draft("created", { streamId: "s", name: "Taken" }),
-            },
-          ],
-        ]),
+        [["r", draft("created", { streamId: "s", name: "Taken" })]],
       ),
     });
     expect(

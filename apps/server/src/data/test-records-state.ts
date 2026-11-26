@@ -20,12 +20,10 @@ export const draft = (
 export const kindState = (
   live: [string, Recorded][] = [],
   drafts: [string, Draft][] = [],
-  held: KindState["held"] = new Map(),
 ): KindState => ({
   live: new Map(live),
   rows: new Map(live),
   drafts: new Map(drafts),
-  held,
   // Each record numbered in the order given, live ones first.
   keys: new Map(
     [...new Set([...live, ...drafts].map(([id]) => id))].map((id, index) => [

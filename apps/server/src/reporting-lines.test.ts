@@ -457,7 +457,7 @@ describe("a reporting line", () => {
     expect(await linesOf(report)).toEqual([]);
   });
 
-  it("refuses a manager drafted to be removed, and removing someone a draft names as manager, published or not", async () => {
+  it("refuses a manager drafted to be removed, and removing someone a published draft names as manager", async () => {
     const leaving = await person();
     const report = await person();
     const removed = await test.request(
@@ -468,6 +468,17 @@ describe("a reporting line", () => {
     expect(removed.statusCode, removed.body).toBe(200);
     expect((await change(report, { managerId: leaving })).statusCode).toBe(400);
     const manager = await person();
+    await changed(report, { managerId: manager });
+    expect(
+      (await test.request(cookie, "DELETE", `/api/people/${manager}`))
+        .statusCode,
+    ).toBe(409);
+  });
+
+  it("refuses removing someone a user's own unpublished draft names as manager, but not for another user", async () => {
+    // Given one user's unpublished draft naming a manager
+    const manager = await person();
+    const report = await person();
     const other = await test.signedIn("workforce-administrator");
     const unpublished = await test.request(
       other.cookie,
@@ -477,10 +488,28 @@ describe("a reporting line", () => {
       { publish: false },
     );
     expect(unpublished.statusCode, unpublished.body).toBe(200);
-    expect(
-      (await test.request(cookie, "DELETE", `/api/people/${manager}`))
-        .statusCode,
-    ).toBe(409);
+
+    // When that user and another remove the manager
+    const own = await test.request(
+      other.cookie,
+      "DELETE",
+      `/api/people/${manager}`,
+      undefined,
+      { publish: false },
+    );
+    const removed = await test.request(
+      cookie,
+      "DELETE",
+      `/api/people/${manager}`,
+    );
+
+    // Then only the user whose draft names them is refused
+    expect(own.statusCode, own.body).toBe(409);
+    expect(own.json<{ error: string }>().error).toBe(
+      "People report, have reported, or are drafted to report to this person, so they cannot be removed",
+    );
+    expect(removed.statusCode, removed.body).toBe(200);
+    await test.request(other.cookie, "POST", "/api/unpublished/discard");
   });
 
   it("is not written when its draft is rejected", async () => {

@@ -324,18 +324,19 @@ describe("changing streams, patterns, and releases", () => {
     );
   });
 
-  it("refuses changing a record someone else has unpublished changes to", async () => {
+  it("changes a record someone else has unpublished changes to, naming nobody", async () => {
     const stream = await liveStream();
-    await rename(stream.id, `${stream.name} Held`, other.cookie);
-    expect((await readStream(stream.id))?.heldBy).toMatch(/^Fictional User/);
+    await rename(stream.id, `${stream.name} Theirs`, other.cookie);
+    expect(await readStream(stream.id)).not.toHaveProperty("heldBy");
     const response = await rename(stream.id, `${stream.name} Mine`);
-    expect(response.statusCode).toBe(409);
+    expect(response.statusCode, response.body).toBe(200);
+    expect((await readStream(stream.id))?.name).toBe(`${stream.name} Mine`);
     await test.request(other.cookie, "POST", "/api/unpublished/discard");
   });
 
   it("adds and publishes a release in a stream someone else is renaming", async () => {
     const stream = await liveStream();
-    await rename(stream.id, `${stream.name} Held`, other.cookie);
+    await rename(stream.id, `${stream.name} Theirs`, other.cookie);
     const response = await draftRelease(stream.id, {
       name: "Fictional Beside A Rename",
       ...firstHalf,
@@ -351,7 +352,7 @@ describe("changing streams, patterns, and releases", () => {
     await test.request(other.cookie, "POST", "/api/unpublished/discard");
   });
 
-  const discardHeld = (type: string, id: string) =>
+  const discardUnpublished = (type: string, id: string) =>
     test.request(
       other.cookie,
       "DELETE",
@@ -360,28 +361,20 @@ describe("changing streams, patterns, and releases", () => {
       { publish: false },
     );
 
-  it("refuses adding to a stream someone else is discarding, naming them", async () => {
+  it("adds to a stream someone else is discarding, unpublished", async () => {
     const stream = await draftStream();
     await draftPattern(stream.id);
-    const held = await discardHeld("release-stream", stream.id);
-    expect(held.statusCode).toBe(200);
+    const discarding = await discardUnpublished("release-stream", stream.id);
+    expect(discarding.statusCode).toBe(200);
     const response = await draftRelease(stream.id, {
-      name: "Fictional Orphan",
+      name: "Fictional Beside A Discard",
       ...firstHalf,
     });
-    expect([
-      response.statusCode,
-      response.json<{ error: string }>().error,
-    ]).toEqual([
-      409,
-      expect.stringMatching(
-        /^This conflicts with changes Fictional User .* has not yet published/,
-      ),
-    ]);
+    expect(response.statusCode, response.body).toBe(201);
     await test.request(other.cookie, "POST", "/api/unpublished/discard");
   });
 
-  it("refuses a release on cycles that a change someone else is discarding makes", async () => {
+  it("adds a release on cycles that a change someone else is discarding makes, unpublished", async () => {
     const stream = await liveStream();
     await draftPattern(stream.id, {
       ...quarters,
@@ -391,21 +384,13 @@ describe("changing streams, patterns, and releases", () => {
     const pattern = (await readStream(stream.id))?.patterns.find(
       ({ startsOn }) => startsOn === "2027-07-01",
     );
-    await discardHeld("cycle-pattern", String(pattern?.id));
+    await discardUnpublished("cycle-pattern", String(pattern?.id));
     const response = await draftRelease(stream.id, {
       name: "Fictional Monthly",
       firstCycle: "2027-08-01",
       lastCycle: "2027-08-01",
     });
-    expect([
-      response.statusCode,
-      response.json<{ error: string }>().error,
-    ]).toEqual([
-      409,
-      expect.stringMatching(
-        /^This conflicts with changes Fictional User .* has not yet published/,
-      ),
-    ]);
+    expect(response.statusCode, response.body).toBe(201);
     await test.request(other.cookie, "POST", "/api/unpublished/discard");
   });
 

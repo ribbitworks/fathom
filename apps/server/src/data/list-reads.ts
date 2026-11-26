@@ -23,7 +23,6 @@ import {
 import { type Actor } from "../access.ts";
 import { type Transaction } from "./changes.ts";
 import { type AddedUse, addedColumnsByList } from "./list-uses.ts";
-import { heldByOf } from "./drafts.ts";
 import {
   type Draft,
   drafted,
@@ -141,7 +140,6 @@ function choiceOut(state: ListsState, makers: Makers, id: string): Choice {
             makers.choice.get(id),
           ),
         }),
-    ...heldByOf(state.held.choices, id),
   };
 }
 
@@ -217,11 +215,7 @@ export function listsOut(
                 makers.list.get(id),
               ),
             }),
-        ...heldByOf(state.held.lists, id),
         ...(order === undefined ? {} : { orderDraft: order }),
-        ...(state.held.orders.has(id)
-          ? { orderHeldBy: state.held.orders.get(id)?.holder }
-          : {}),
       },
     ];
   });
@@ -286,7 +280,7 @@ export async function readListsWithin(
   return listsOut(
     state,
     await readMakers(transaction, state, viewer),
-    await generalOnlyListIds(transaction),
+    await generalOnlyListIds(transaction, viewer.user.id),
     await usesFor(transaction, viewer),
   );
 }

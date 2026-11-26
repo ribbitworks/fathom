@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Feature Lead Workflows
@@ -22,10 +22,7 @@ It also verifies that the account, which holds a second role, switches between t
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
-
-- A browser window at least 1,440 pixels wide.
-- A second browser, or a private window, for signing in as a second account while the first stays signed in.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
 
 ## Test Accounts
 
@@ -34,15 +31,14 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Feature Lead:** `feature.lead@fathom.test`, holding the Feature Lead role, its default, and the Engineering Manager role
 - **Project Manager:** `project.manager@fathom.test`
 - **Product Manager:** `product.manager@fathom.test`
-- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database), [Publish](manual-test-basics.md#publish) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the account menu and role menu, marks, the lock, Draft rows and Live rows, the Publish button, the finder, the teams switch, the team panel and the details button.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the account menu and role menu, marks, Draft rows and Live rows, the Publish button, the finder, the teams switch, the team panel and the details button.
 
 ## Test Cases
 
@@ -50,30 +46,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### LEAD-01: A Feature Lead Proposes a Lead and a Member
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser; the first test case. Step `76A1` signs in as another account in the second browser.
+**Account:** Feature Lead, `feature.lead@fathom.test`; the first test case.
 
 **Preconditions:** Reset the Database run. Signed in with this account, acting as **Feature Lead**. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
 
 - [ ] `DAF2` Select the Feature teams button, then 'Platform reliability'.
   - **Expected:**
-    - The team panel opens, titled 'Platform reliability', with a grey lock before it.
-    - Pointing at the lock shows "Being changed by Second Engineering Operations Manager".
-    - No row but **Colour** has a change button.
-  - **Notes:**
-
-- [ ] `76A1` In the second browser, sign in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`.
-  - **Expected:** The top bar shows the **Publish** button.
-  - **Notes:**
-
-- [ ] `F276` In the second browser, run Discard the Unpublished Changes.
-  - **Expected:**
-    - A notice says "Discarded" followed by the number of changes.
-    - The **Publish** button is gone.
-  - **Notes:**
-
-- [ ] `9C39` In the main browser, reload the page.
-  - **Expected:**
-    - The team panel is titled 'Platform reliability', with no lock.
+    - The team panel opens, titled 'Platform reliability'.
     - **Feature lead** reads "None".
     - **Name**, **Feature lead** and **Members** each have a change button.
   - **Notes:**
@@ -112,7 +91,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### LEAD-02: A Project Manager Approves the Feature Team
 
-**Account:** Project Manager, `project.manager@fathom.test`, in the main browser, changed from LEAD-01.
+**Account:** Project Manager, `project.manager@fathom.test`, changed from LEAD-01.
 
 **Preconditions:** LEAD-01 done. Signed in with this account.
 
@@ -157,7 +136,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### LEAD-03: A Feature's Team, Status, Estimate and Note Are Kept Current
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from LEAD-02. Step `DA73` signs in as another account.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from LEAD-02. Step `DA73` signs in as another account.
 
 **Preconditions:** Signed in with this account, acting as **Feature Lead**.
 
@@ -235,7 +214,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### LEAD-04: What Each Release and Cycle Holds, in the Table and on the Board
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from LEAD-03.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from LEAD-03.
 
 **Preconditions:** Signed in with this account, acting as **Feature Lead**. **Features** page open from the left-hand menu.
 
@@ -280,7 +259,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### LEAD-05: Someone Is Found on the Org Chart, and Their Details Opened
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-04.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as LEAD-04.
 
 **Preconditions:** None beyond LEAD-04.
 
@@ -308,7 +287,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### LEAD-06: Switching Role Changes What Can Be Done at Once
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-05.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as LEAD-05.
 
 **Preconditions:** Acting as **Feature Lead**. Select the **Releases** page in the left-hand menu, then the **Schedules** tab, then the details button at the right of the first cell of the row for 'Platform'.
 
@@ -335,7 +314,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### LEAD-07: The Change History Names the Role a Change Was Made As
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-06.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as LEAD-06.
 
 **Preconditions:** LEAD-06 done, acting as **Engineering Manager**. **Releases** page open on the **Schedules** tab, with 'Platform' open in the side panel.
 

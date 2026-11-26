@@ -142,6 +142,7 @@ export async function undoPersonDrafts(
         transaction,
         [String(person.employeeId)],
         [id],
+        editor,
       );
       if (taken.length > 0 || !fitsColumns(columns, listOf, person)) {
         throw new ConflictError(changedSince);
@@ -174,7 +175,11 @@ async function refuseUndoneReporting(
   hiresUndone: readonly string[],
 ): Promise<void> {
   if (putBack.has("teamName") && typeof person.teamName === "string") {
-    await refuseTakenTeamNames(transaction, [{ id, name: person.teamName }]);
+    await refuseTakenTeamNames(
+      transaction,
+      [{ id, name: person.teamName }],
+      editor,
+    );
   }
   // What a fill drafted sets on its person is kept until the fill is discarded, undone or decided.
   if (
@@ -198,9 +203,9 @@ async function refuseUndoneReporting(
     typeof person.managerFrom === "string"
   ) {
     if (typeof person.managerId === "string") {
-      const manager = (await readManagers(transaction, [person.managerId])).get(
-        person.managerId,
-      );
+      const manager = (
+        await readManagers(transaction, [person.managerId], editor)
+      ).get(person.managerId);
       if (manager !== undefined && !manager.isManager) {
         throw new ConflictError(notMarked(manager));
       }
@@ -215,7 +220,10 @@ async function refuseUndoneReporting(
     );
   }
   if (putBack.has("isManager") && person.isManager !== true) {
-    await refuseUnmarkingManagers(transaction, [id], today, { drafted: true });
+    await refuseUnmarkingManagers(transaction, [id], today, {
+      drafted: true,
+      editor,
+    });
     await refuseUnmarkingHireManagers(transaction, [id], {
       drafted: true,
       editor,
@@ -337,7 +345,12 @@ export async function undoListDrafts(
       if (wanted !== undefined && live === undefined) {
         const to = storedTier(wanted.visibility);
         reclassifyDraft(actor, wanted, now?.visibility, to);
-        await refuseSensitivePlanningList(transaction, record.id, to);
+        await refuseSensitivePlanningList(
+          transaction,
+          record.id,
+          to,
+          actor.user.id,
+        );
       }
     } else if (wanted !== undefined) {
       // A choice always records its list.
@@ -430,6 +443,7 @@ export async function undoColumnDrafts(
         transaction,
         columnRow(record.id, live ?? { ...wanted, required: false }),
         columnRow(record.id, wanted),
+        actor.user.id,
       );
     } else if (live !== undefined) {
       // Putting back a removal: the column's values go once approved, so as when drafting it, no

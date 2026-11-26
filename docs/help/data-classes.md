@@ -42,10 +42,7 @@ You're done when the row shows the class you chose.
 
 ## When Change Class… Is Greyed Out
 
-A line under it says why:
-
-- **This role can't see** a class: your role doesn't see the class the data is in now, so it can't move it.
-- **Being changed by** someone: they have unpublished changes to it. You can change its class once they publish or discard them.
+A line under it says **This role can't see** a class: your role doesn't see the class the data is in now, so it can't move it.
 
 In the dialog, you can't choose a class your role can't see, so data never moves out of sight of the people who keep it. A list that a column on **Features** uses stays **General**, since everyone who sees the plan sees those columns.
 

@@ -131,8 +131,14 @@ export async function checkValuesFit(
     listId?: string | null | undefined;
     onPlannedHires?: boolean | undefined;
   },
+  editor: string | undefined,
 ): Promise<void> {
-  const inDrafts = await draftedValues(transaction, field.id, field.tableName);
+  const inDrafts = await draftedValues(
+    transaction,
+    field.id,
+    field.tableName,
+    editor,
+  );
   const listChanges = (request.listId ?? null) !== field.listId;
   if (
     request.required &&

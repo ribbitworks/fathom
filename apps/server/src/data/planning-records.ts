@@ -128,7 +128,7 @@ export async function planningRecord(
   request: PlanningRequest,
   current?: Recorded,
 ): Promise<Recorded> {
-  await checkTeamForFeature(transaction, request.featureTeamId);
+  await checkTeamForFeature(transaction, request.featureTeamId, editor);
   const added = await addedValues(transaction, editor, table, request, current);
   return {
     ...added,

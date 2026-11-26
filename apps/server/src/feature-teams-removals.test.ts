@@ -82,14 +82,12 @@ describe("a person named in a team's draft", () => {
     );
   });
 
-  it("cannot be removed while another user's unpublished draft names them as a member", async () => {
+  it("can be removed while only another user's unpublished draft names them as a member", async () => {
     const member = await person();
     const other = await test.signedIn("workforce-administrator");
     await drafted({ members: [member] }, other, { publish: false });
 
-    expect(
-      (await send(editor, "DELETE", `/api/people/${member}`)).statusCode,
-    ).toBe(409);
+    await ok(await send(editor, "DELETE", `/api/people/${member}`));
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 
@@ -122,14 +120,12 @@ describe("a team's lead", () => {
     }
   });
 
-  it("cannot be removed from People while another user's unpublished draft makes them a lead", async () => {
+  it("can be removed from People while only another user's unpublished draft makes them a lead", async () => {
     const lead = await person();
     const other = await test.signedIn("workforce-administrator");
     await drafted({ leadId: lead }, other, { publish: false });
 
-    expect(
-      (await send(editor, "DELETE", `/api/people/${lead}`)).statusCode,
-    ).toBe(409);
+    await ok(await send(editor, "DELETE", `/api/people/${lead}`));
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 

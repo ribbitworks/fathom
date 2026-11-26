@@ -2,12 +2,12 @@
 
 // Integration tests for a private change's own fields: which fields are its maker's and the values
 // they started from, reading and publishing them over a published draft changed meanwhile, a draft
-// wanted gone, and a record its maker adds.
+// wanted gone, a record its maker adds, and the values that must be unique each maker sees.
 
 import { drafts, privateChanges, valueField } from "@fathom/db";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { unique } from "./test-app.ts";
+import { testPosition, unique } from "./test-app.ts";
 import {
   alice,
   bob,
@@ -22,6 +22,7 @@ import {
   siteColumn,
   startUnpublishedTests,
   test,
+  type User,
 } from "./test-unpublished.ts";
 
 beforeAll(startUnpublishedTests);
@@ -125,5 +126,59 @@ describe("a private change's own fields", () => {
 
     expect((await privateRowOf(alice.id, id))?.startedFrom).toEqual({});
     expect(await personOf(alice, id)).toMatchObject({ preferredName: added });
+  });
+});
+
+describe("an Employee ID in a published draft", () => {
+  const taken = "Someone already has that ID";
+  const addingWith = (who: User, employeeId: string) =>
+    test.request(who.cookie, "POST", "/api/people", {
+      people: [
+        {
+          preferredName: unique("Fictional Other"),
+          employeeId,
+          positionId: testPosition,
+        },
+      ],
+    });
+
+  it("stays taken for a user whose private change to the person leaves the ID as published", async () => {
+    // Given one user's private change to a person's Site, and another's published new Employee ID
+    const [person = ""] = await livePeople(1);
+    await saved(bob, "PATCH", `/api/people/${person}`, {
+      values: { [siteColumn.id]: [north.id] },
+    });
+    const employeeId = unique("E-Published");
+    await saved(alice, "PATCH", `/api/people/${person}`, { employeeId });
+    await publish(alice);
+
+    // When the first user gives that ID to someone else
+    const response = await addingWith(bob, employeeId);
+
+    // Then it is refused
+    expect(response.statusCode, response.body).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(taken);
+    expect(await discard(bob)).toBe(1);
+  });
+
+  it("is free for a user whose own private change gives the person another, and for nobody else", async () => {
+    // Given a published new Employee ID, and one user's private change giving the person another
+    const [person = ""] = await livePeople(1);
+    const employeeId = unique("E-Published");
+    await saved(alice, "PATCH", `/api/people/${person}`, { employeeId });
+    await publish(alice);
+    await saved(bob, "PATCH", `/api/people/${person}`, {
+      employeeId: unique("E-Private"),
+    });
+
+    // When each user gives the published ID to someone else
+    const theirs = await addingWith(bob, employeeId);
+    const others = await addingWith(alice, employeeId);
+
+    // Then only the user who changed it privately may
+    expect(theirs.statusCode, theirs.body).toBe(201);
+    expect(others.statusCode, others.body).toBe(409);
+    expect(others.json<{ error: string }>().error).toBe(taken);
+    expect(await discard(bob)).toBe(2);
   });
 });

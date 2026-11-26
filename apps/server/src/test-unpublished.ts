@@ -94,11 +94,6 @@ export async function refused(
   expect(response.json<{ error: string }>().error).toBe(error);
 }
 
-export const held = (holder: User) =>
-  `${holder.name} is changing this; it can be changed once they publish or discard their changes`;
-export const heldDecision = (holder: User) =>
-  `${holder.name} is changing one of these drafts; it can be decided once they publish or discard their changes`;
-
 export const readPeople = async (who: User) =>
   (await send(who, "GET", "/api/people")).json<PeopleRead>();
 export const personOf = async (who: User, id: string) =>

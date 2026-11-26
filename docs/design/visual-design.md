@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/ui-conventions.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Fathom: Visual Design
@@ -151,14 +151,14 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
       - **Its draft section:** Starts with the draft's mark and any rejection's reason, then one line for each change, naming the field in semibold and setting each value apart, as in code, with who made the change.
     - **A list's menu:** Has a short section for its own draft and one for a new order of its choices, each with its mark, who made it, and any reason.
   - **Publishing:** As [Publishing](../standards/ui-conventions/entering-and-saving.md#publishing) sets out, with Publish in the top bar beside the user's account.
-    - **Someone else's changes:** A record someone else is changing is read only, and its menu says Being changed by, with who, and that it can be changed once they publish or discard their changes. Approvers cannot decide it.
-    - **The user's own draft:** Approvers cannot decide the user's own unpublished draft either, whose menu says only they see it until they publish it.
+    - **Someone else's changes:** Never shown: a record someone else has unpublished changes to looks and works as if they had none.
+    - **The user's own draft:** Approvers cannot decide the user's own unpublished draft, whose menu says only they see it until they publish it.
   - **Actions:** Those who may edit discard a draft, or resubmit a rejected one; a new order is discarded with Discard new order. Approvers approve or reject a waiting draft from its menu, when their role approves drafts of its area.
     - **Rejected drafts:** A rejected draft offers Approvers nothing to decide until it is resubmitted, and a draft that depends on a rejected draft has Approve disabled, with "Waits on a rejected draft" under it.
     - **The account's own changes:** A draft this account changed, when its role does not let it approve its own, has Approve disabled, with "Needs another approver" under it, the same phrase as on the Drafts page; Reject stays.
   - **Deciding several:** The Draft menu offers Approve N drafts… and Reject N drafts… for the waiting drafts shown.
     - **Label:** Both sit under a Waiting drafts label that, when a search, a filter, a hidden column or Drafts applied hides some, says how many are shown, such as 9 of 11 waiting drafts shown.
-    - **Counts:** Both counts take only the drafts the role may decide now, each once, so drafts held by someone else, not yet published or of a kind the role doesn't approve never count as hidden.
+    - **Counts:** Both counts take only the drafts the role may decide now, each once, so drafts not yet published or of a kind the role doesn't approve never count as hidden.
     - **Dialog:** Names the drafts it decides, up to five, then "and n others", lists the related drafts it includes, and says how many it skips because they depend on a rejected draft.
     - **Approving:** Leaves waiting, and names, the drafts another approver must approve, as [Approving several](../standards/ui-conventions/drafts-and-values.md#drafts) sets out; only when every one is does the dialog decide none.
     - **Deciding none:** When every draft needs another approver, the dialog is titled Another approver needed, says why, names them, and offers only Close.
@@ -173,11 +173,11 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
     - **Tabs:** Beside the heading, drawn as [The Page Heading](../standards/ui-conventions/pages-and-panels.md#the-page-heading) sets out and kept in the address and in saved views, each followed by how many drafts it holds, dimmed.
       - **To decide:** The drafts the role may decide now, for roles that approve.
       - **Not published:** The user's own changes, for roles that make drafts.
-      - **All drafts:** Every published draft, for everyone who opens the page. It is read only, and is where rejected drafts, those waiting on one, those someone else is changing and those the role can't decide are found.
+      - **All drafts:** Every published draft, for everyone who opens the page. It is read only, and is where rejected drafts, those waiting on one and those the role can't decide are found.
       - **Opening:** The page opens on the tab it last showed, as [The last view](../standards/ui-conventions/tables.md#tables) sets out, or at first on the first tab the role has.
       - **Switching:** Switching tabs keeps the rest of the view, unticks every row and closes any details.
     - **Columns:** Record, Change, State, What changes, Type, Area, Made by, Drafted, Reason and Key.
-      - **Record:** The record's name, with what it belongs to where its name alone may not say, such as Harbourside in Sites, and a project's or proposal's ID first, after the draft's dot, any lock, and the grey boxes.
+      - **Record:** The record's name, with what it belongs to where its name alone may not say, such as Harbourside in Sites, and a project's or proposal's ID first, after the draft's dot and the grey boxes.
       - **Record's grey boxes:** Waits on a rejected draft and Needs another approver, shown only to a role that could otherwise decide it.
         - **Unseen details:** Needs another approver also marks a draft of a list, a list's choice or its order whose class the role can't see, and a person's draft holding details the role can't see. Each stays off To decide, its details saying why.
         - **Taken along:** it also marks a draft whose approval takes along one another approver must approve, such as a feature filled in a column still drafted to be added that the role can't approve or this account changed. It stays on To decide, since it can still be rejected.

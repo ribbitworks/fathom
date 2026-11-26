@@ -183,7 +183,7 @@ describe("a hire's manager", () => {
     );
   });
 
-  it("is refused while someone's unpublished change removes them", async () => {
+  it("is taken while only another user's unpublished change removes them", async () => {
     const leaving = await person();
     const other = await test.signedIn("workforce-administrator");
     await ok(
@@ -191,13 +191,15 @@ describe("a hire's manager", () => {
         publish: false,
       }),
     );
-    const response = await send(
-      editor,
-      "POST",
-      "/api/planned-hires",
-      hireRequest({ managerId: leaving }),
+    await ok(
+      await send(
+        editor,
+        "POST",
+        "/api/planned-hires",
+        hireRequest({ managerId: leaving }),
+      ),
+      201,
     );
-    expect(response.statusCode).toBe(400);
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 

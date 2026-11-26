@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Draft rows: reading, holding and writing the changes waiting for approval, and each user's
-// unpublished changes to them. Part of the data access layer.
+// Draft rows: reading and writing the changes waiting for approval, and each user's private changes
+// to them. Part of the data access layer.
 
 import {
   type Database,
@@ -10,11 +10,9 @@ import {
   privateChanges,
   privateSetOf,
   type Reader,
-  users,
 } from "@fathom/db";
 import type { DraftKind } from "@fathom/shared";
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
-import { ConflictError } from "../errors.ts";
+import { and, eq, inArray, type SQL, sql } from "drizzle-orm";
 import type { Transaction } from "./changes.ts";
 import {
   type Draft,
@@ -25,7 +23,6 @@ import {
   startedFrom,
   tidy,
   toDraft,
-  toUnpublished,
   type Viewer,
   withOwnFields,
 } from "./draft-records.ts";
@@ -58,8 +55,9 @@ const bySequence = (
 ) => first.sequence - second.sequence;
 
 // The drafts of the records of one kind given, or of every record of that kind, by record, in the
-// order they were made: the published drafts, with the viewer's own unpublished drafts over them, and the records only the viewer drafts adding after them. A record the viewer wants no
-// draft of has none.
+// order they were made: the published drafts, with the viewer's own unpublished drafts over them,
+// and the records only the viewer drafts adding after them. A record the viewer wants no draft of
+// has none.
 export async function readDrafts(
   reader: Reader,
   recordType: DraftKind,
@@ -134,65 +132,51 @@ export async function overPublished<
   });
 }
 
+// Rows of either table as an editor sees them in the field given, or in the whole record without
+// one, as reads put a private change over the published draft: a published draft unless the
+// editor's own change holds that field or the whole draft, and the editor's own changes where they
+// do. Nobody else's private changes count for anyone; with no editor, the published drafts alone.
+export function asSeenBy(
+  table: typeof drafts | typeof privateChanges,
+  editor: string | undefined,
+  field?: string,
+): SQL | undefined {
+  const whole = (own: typeof privateChanges, action: SQL) =>
+    field === undefined
+      ? sql`true`
+      : sql`(${own.startedFrom} = '{}'::jsonb OR ${own.startedFrom} ? ${field} OR ${own.action} IS DISTINCT FROM ${action})`;
+  if (table === privateChanges) {
+    if (editor === undefined) return sql`false`;
+    return and(
+      eq(privateChanges.userId, editor),
+      whole(
+        privateChanges,
+        sql`(SELECT ${drafts.action} FROM ${drafts} WHERE ${drafts.recordType} = ${privateChanges.recordType} AND ${drafts.recordId} = ${privateChanges.recordId})`,
+      ),
+    );
+  }
+  if (editor === undefined) return undefined;
+  return sql`NOT EXISTS (SELECT 1 FROM ${privateChanges} WHERE ${privateChanges.userId} = ${editor} AND ${privateChanges.recordType} = ${drafts.recordType} AND ${privateChanges.recordId} = ${drafts.recordId} AND ${whole(privateChanges, sql`${drafts.action}`)})`;
+}
+
+// The fields a private change holds as its maker sees them: all of them where it holds the whole
+// draft, with no own fields or another action than the published draft's, otherwise its own alone,
+// since the rest are copies of the published draft taken when it was made.
+export const ownFieldsSeen: SQL = sql`CASE WHEN ${privateChanges.startedFrom} = '{}'::jsonb OR ${privateChanges.action} IS DISTINCT FROM (SELECT ${drafts.action} FROM ${drafts} WHERE ${drafts.recordType} = ${privateChanges.recordType} AND ${drafts.recordId} = ${privateChanges.recordId}) THEN ${privateChanges.fields} ELSE (SELECT coalesce(jsonb_object_agg(own.key, own.value), '{}'::jsonb) FROM jsonb_each(${privateChanges.fields}) AS own WHERE ${privateChanges.startedFrom} ? own.key) END`;
+
+// The fields of a published draft an editor still sees: none where their own private change holds
+// the whole draft, otherwise those their change doesn't hold; every field with no editor.
+export const publishedFieldsSeen = (editor: string | undefined): SQL =>
+  editor === undefined
+    ? sql`${drafts.fields}`
+    : sql`CASE WHEN EXISTS (SELECT 1 FROM ${privateChanges} WHERE ${privateChanges.userId} = ${editor} AND ${privateChanges.recordType} = ${drafts.recordType} AND ${privateChanges.recordId} = ${drafts.recordId} AND (${privateChanges.startedFrom} = '{}'::jsonb OR ${privateChanges.action} IS DISTINCT FROM ${drafts.action})) THEN '{}'::jsonb ELSE ${drafts.fields} - coalesce((SELECT array_agg(own.field) FROM ${privateChanges}, jsonb_object_keys(${privateChanges.startedFrom}) AS own(field) WHERE ${privateChanges.userId} = ${editor} AND ${privateChanges.recordType} = ${drafts.recordType} AND ${privateChanges.recordId} = ${drafts.recordId}), '{}'::text[]) END`;
+
 // The drafts of the people given, or of everyone, by person.
 export const readPersonDrafts = (
   reader: Reader,
   ids?: readonly string[],
   viewer?: Viewer,
 ) => readDrafts(reader, "person", ids, viewer);
-
-// A record someone holds by having unpublished changes to it: who, and the draft they intend, which
-// wants no draft at all when it changes nothing.
-export interface Held {
-  holderId: string;
-  holder: string;
-  draft: Draft;
-}
-
-// Who holds a record, to add to it, when someone does.
-export const heldByOf = (
-  held: ReadonlyMap<string, Held>,
-  id: string,
-): { heldBy?: string } => {
-  const holder = held.get(id)?.holder;
-  return holder === undefined ? {} : { heldBy: holder };
-};
-
-// The records of one kind given, or of every record of that kind, that users other than the viewer
-// hold, or that anyone holds when there is no viewer, by record.
-export async function readHeld(
-  reader: Reader,
-  recordType: DraftKind,
-  viewer: Viewer,
-  ids?: readonly string[],
-): Promise<Map<string, Held>> {
-  const rows = await readRows(ids, (chunk) =>
-    reader
-      .select({ row: privateChanges, holder: users.name })
-      .from(privateChanges)
-      .innerJoin(users, eq(users.id, privateChanges.userId))
-      .where(
-        and(
-          eq(privateChanges.recordType, recordType),
-          viewer === undefined ? undefined : ne(privateChanges.userId, viewer),
-          chunk === undefined
-            ? undefined
-            : inArray(privateChanges.recordId, [...chunk]),
-        ),
-      ),
-  );
-  return new Map(
-    rows
-      .sort((first, second) => bySequence(first.row, second.row))
-      .map(({ row, holder }) => [
-        row.recordId,
-        { holderId: row.userId, holder, draft: toUnpublished(row) },
-      ]),
-  );
-}
-
-export const heldMessage = (holder: string) =>
-  `${holder} is changing this; it can be changed once they publish or discard their changes`;
 
 // Rejects drafts for a reason.
 export const rejectedIn = (
@@ -213,11 +197,6 @@ export const reopened = (
     reason: null,
   });
 
-// Refuses a change to a record someone holds.
-export function refuseHolder(holder: string | undefined): void {
-  if (holder !== undefined) throw new ConflictError(heldMessage(holder));
-}
-
 // A change of drafts in a transaction of its own, the drafts locked, given the state of the records
 // of its kind as the editor sees them.
 export async function draftingWith<State, Result>(
@@ -230,32 +209,6 @@ export async function draftingWith<State, Result>(
     await lockDrafts(transaction);
     return change(transaction, await readState(transaction, editor));
   });
-}
-
-// Refuses a change to records someone other than the editor holds.
-export async function refuseHeld(
-  reader: Reader,
-  editor: string,
-  recordType: DraftKind,
-  ids: readonly string[],
-): Promise<void> {
-  const [held] = (await readHeld(reader, recordType, editor, ids)).values();
-  refuseHolder(held?.holder);
-}
-
-// Refuses approving or rejecting drafts of records anyone holds, the Approver included, since
-// Approvers decide only published drafts that nobody is changing.
-export async function refuseHeldDecision(
-  reader: Reader,
-  recordType: DraftKind,
-  ids: readonly string[],
-): Promise<void> {
-  const [held] = (await readHeld(reader, recordType, undefined, ids)).values();
-  if (held !== undefined) {
-    throw new ConflictError(
-      `${held.holder} is changing one of these drafts; it can be decided once they publish or discard their changes`,
-    );
-  }
 }
 
 // Whether two drafts make the same change, field for field.
@@ -291,7 +244,7 @@ function editorSet(transaction: Transaction, editor: string): Promise<string> {
 }
 
 // Keeps the draft the editor intends for a record as their unpublished draft: none at all when it
-// is the published draft, so the record is no longer held, and one that wants no draft when the
+// is the published draft, and one that wants no draft when the
 // editor wants none but there is a published one. It keeps, for each field the editor changes,
 // the value it started from.
 async function keepUnpublished(
@@ -302,7 +255,6 @@ async function keepUnpublished(
   draft: Pick<Draft, "action" | "fields"> | undefined,
   live?: Recorded,
 ): Promise<void> {
-  await refuseHeld(transaction, editor, recordType, [id]);
   const published = (await readDrafts(transaction, recordType, [id])).get(id);
   const editors = and(
     eq(privateChanges.recordType, recordType),
@@ -348,8 +300,7 @@ async function keepUnpublished(
 
 export type Rejection = Pick<Draft, "state" | "reason">;
 
-// Keeps the editor's draft of a record as wanted, as their unpublished draft, refusing a record
-// someone else holds.
+// Keeps the editor's draft of a record as wanted, as their unpublished draft.
 export async function writeDraft(
   transaction: Transaction,
   editor: string,

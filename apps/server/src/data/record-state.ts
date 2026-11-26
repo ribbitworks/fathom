@@ -22,7 +22,6 @@ import {
   drafted,
   type Recorded,
 } from "./draft-records.ts";
-import type { Held } from "./drafts.ts";
 import type { KeyNumbers } from "./record-keys.ts";
 import type { ValueOwner } from "./values.ts";
 
@@ -107,8 +106,6 @@ export interface KindState {
   // The drafts as the viewer sees them: the published ones, with their own unpublished ones in
   // place.
   drafts: Map<string, Draft>;
-  // The records others hold by having unpublished changes to them.
-  held: Map<string, Held>;
   // The key numbers of the records, live and drafted to be added, of a kind with keys.
   keys: KeyNumbers;
 }
@@ -226,22 +223,18 @@ export function usesOf(
   return [...linked, ...(kind.alsoUses?.(state, id) ?? [])];
 }
 
-// Every version of the records of a kind: live, as drafts make them, and as others' unpublished
-// changes would, each with its record's identifier.
+// Every version of the records of a kind: live, and as drafts make them, each with its record's
+// identifier.
 export function everyVersion(
   state: RecordsState,
   type: RecordType,
 ): [string, Recorded | undefined][] {
-  const { live, drafts, held } = stateOf(state, type);
+  const { live, drafts } = stateOf(state, type);
   return [
     ...live,
     ...[...drafts.keys()].map((id): [string, Recorded | undefined] => [
       id,
       versionOf(state, type, id),
-    ]),
-    ...[...held].map(([id, { draft }]): [string, Recorded | undefined] => [
-      id,
-      drafted(live.get(id), draft),
     ]),
   ];
 }
@@ -258,10 +251,10 @@ const uniqueKey = (unique: UniqueValue, record: Recorded) => {
   };
 };
 
-// Why the record cannot have its unique values: the first another record has, live or in a draft,
-// published or not, with its message, or undefined when none is taken. A live record's value stays
-// taken until a draft that changes it is approved, and an unpublished draft's until it is
-// discarded.
+// Why the record cannot have its unique values: the first another record has, live or in a draft
+// as the editor sees the drafts, with its message, or undefined when none is taken. A live record's
+// value stays taken until a draft that changes it is approved; someone else's private change takes
+// none, and publishing checks again.
 export function takenValue(
   kind: RecordKind,
   state: RecordsState,
@@ -323,7 +316,6 @@ export const liveOnly = (state: RecordsState): RecordsState =>
         live: kind.live,
         rows: kind.rows,
         drafts: new Map(),
-        held: new Map(),
         keys: kind.keys,
       },
     ]),

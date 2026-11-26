@@ -259,6 +259,43 @@ describe("a list with meanings", () => {
     expect((await approve({ choices: [id] })).statusCode).toBe(200);
   });
 
+  it("refuses giving a state the meaning Hired while the editor's own unpublished hire is in it, but not for another editor", async () => {
+    // Given a state with one editor's unpublished hire in it
+    const label = unique("Fictional Interviewing");
+    const {
+      choices: [added],
+    } = await addStates([{ label, meaning: "open" }]);
+    const id = String(added?.id);
+    expect((await approve({ choices: [id] })).statusCode).toBe(200);
+    const unpublished = { publish: false };
+    const hire = await send(
+      "POST",
+      "/api/planned-hires",
+      { hires: [{ positionId: testPosition, stateId: id }] },
+      editor,
+      unpublished,
+    );
+    expect(hire.statusCode, hire.body).toBe(201);
+    const other = await test.signedIn("workforce-administrator");
+
+    // When that editor and another give the state the meaning Hired
+    const hired = { label, meaning: "hired" };
+    const own = await send("PUT", choiceUrl(id), hired, editor, unpublished);
+    const theirs = await send("PUT", choiceUrl(id), hired, other, unpublished);
+
+    // Then only the editor whose hire is in it is refused
+    expect(own.statusCode).toBe(409);
+    expect(errorOf(own)).toBe(
+      "Planned hires are in this state, so it can't mean Hired. Move them to another state first.",
+    );
+    expect(theirs.statusCode, theirs.body).toBe(200);
+    for (const who of [editor, other]) {
+      await send("POST", "/api/unpublished/discard", undefined, who);
+    }
+    expect((await retire(id)).statusCode).toBe(200);
+    expect((await approve({ choices: [id] })).statusCode).toBe(200);
+  });
+
   it("refuses retiring, removing, or giving another meaning to the last choice offered for a meaning", async () => {
     const message = "Hiring states needs a choice that means Proposed.";
     const retired = await retire(proposed);

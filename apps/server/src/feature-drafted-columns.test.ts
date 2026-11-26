@@ -2,7 +2,7 @@
 
 // Tests for features given values in columns only drafted to be added to Features, against a
 // PostgreSQL server of their own: drafting them, approving the column with the feature only for a
-// role that approves both, rejecting them together, and refusing a column someone else holds.
+// role that approves both, rejecting them together, and using a column someone else is discarding.
 
 import {
   drafts,
@@ -367,26 +367,27 @@ describe("a feature given a value in a column drafted to be added", () => {
     await test.request(planner.cookie, "POST", "/api/unpublished/discard");
   });
 
-  it("refuses a value in a column drafted to be added that someone else is changing, unpublished", async () => {
+  it("takes a value in a column drafted to be added that someone else is discarding, unpublished", async () => {
     // Given a column drafted to be added that another editor is discarding, unpublished
     const column = await draftedColumn();
     const other = await test.signedIn("product-manager");
-    const held = await test.request(
+    const discarding = await test.request(
       other.cookie,
       "DELETE",
       `/api/features/columns/${column.id}/draft`,
       undefined,
       { publish: false },
     );
-    expect(held.statusCode, held.body).toBe(200);
+    expect(discarding.statusCode, discarding.body).toBe(200);
 
     // When the Product Manager scores a feature in it
-    const refused = await draftFeature({
+    const scored = await draftFeature({
       numbers: { [column.id]: fictionalScore },
     });
 
-    // Then the value is refused
-    expect(refused.statusCode).toBe(409);
+    // Then the value is taken
+    expect(scored.statusCode, scored.body).toBe(201);
+    await test.request(other.cookie, "POST", "/api/unpublished/discard");
   });
 });
 

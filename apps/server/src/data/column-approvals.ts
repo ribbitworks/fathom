@@ -24,7 +24,7 @@ import {
 import { columnMoved } from "./column-drafts.ts";
 import { appendColumn } from "./column-order.ts";
 import { recordAddedClass } from "./data-classes.ts";
-import { deleteDrafts, refuseHeldDecision, rejectedIn } from "./drafts.ts";
+import { deleteDrafts, rejectedIn } from "./drafts.ts";
 import {
   type Draft,
   draftUnseen,
@@ -65,7 +65,6 @@ async function stateWithDrafts(
       throw new ForbiddenError(draftUnseen("is of a column whose details"));
     }
   }
-  await refuseHeldDecision(transaction, "field", asked.columns);
   return state;
 }
 
@@ -86,7 +85,7 @@ export async function approveColumnDrafts(
     const live = state.fields.get(id);
     const field = draftedField(state, id);
     if (field === undefined) {
-      if (await draftsUse(transaction, { column: id })) {
+      if (await draftsUse(transaction, { column: id }, undefined)) {
         throw new ConflictError(
           "Drafts change a column drafted to be removed; approve or discard them first",
         );
@@ -115,7 +114,7 @@ export async function approveColumnDrafts(
     }
     const before =
       live === undefined ? { ...after, required: false } : columnRow(id, live);
-    await checkValuesFit(transaction, before, after);
+    await checkValuesFit(transaction, before, after, undefined);
     if (live === undefined) {
       await transaction.insert(fields).values(after);
       // Only People's columns have an order kept yet.

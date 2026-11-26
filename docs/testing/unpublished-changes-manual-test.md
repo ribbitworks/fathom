@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Unpublished Changes
@@ -14,7 +14,7 @@ last_updated: "2026-11-24"
 Verifies:
 
 - That changes are seen only by the person who made them until they're published.
-- That a record someone else is changing is held.
+- That several people can each change the same record, each seeing only their own unpublished changes.
 - That publishing and Discard all… in the top bar work.
 - That publishing leaves the changes the role in use can't make.
 - That one record's change is published from its row's menu and discarded from the menu in its details.
@@ -30,6 +30,7 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
+- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 - **Engineering Director:** `engineering.director@fathom.test`
 - **Feature Lead:** `feature.lead@fathom.test`
 
@@ -88,28 +89,72 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `40D2` Type `Mariana Metz` in the search box.
   - **Expected:**
-    - Her row has the grey lock in its slot.
+    - Her row has nothing in its slot.
     - Her **Site** has no dot before it.
     - Her **Site** cell is not yellow.
     - The top bar shows no **Publish** button.
   - **Notes:**
 
-### DRAFT-16: A Record Someone Else Is Changing Is Held
+### DRAFT-16: Several People Can Change the Same Record
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-15.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-15. Step `6F3A` signs in as another account, and step `7A10` as this one again.
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] `E97E` Clear the search box above the table, and type `Viktoria Holmberg` in it.
+- [ ] `E97E` Clear the search box above the table, and type `Viktoria Holmberg` in it. Write down her **ID**.
   - **Expected:** In her row:
-    - The grey lock in the slot
     - A yellow dot before each value her published draft changes
+    - No dot before her **Position**
+    - No dot before her **ID**
   - **Notes:**
 
 - [ ] `B5C4` Select the **⋯** button at the end of her row.
+  - **Expected:** The menu has **Discard draft** and **Remove person**.
+  - **Notes:**
+
+- [ ] `C4E1` Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] `9B27` Select her **ID** cell, type `E20003`, and press Enter.
   - **Expected:**
-    - The menu says "Being changed by Second Engineering Operations Manager. It can be changed once they publish or discard their changes."
-    - It has no **Discard draft** or **Remove person**.
+    - The cell reads `E20003`.
+    - A hollow yellow dot is before it.
+    - The top bar shows **Publish 4 changes**.
+  - **Notes:**
+
+- [ ] `6F3A` Sign out, and sign in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`.
+  - **Expected:** The top bar's right end reads "Second Engineering Operations Manager".
+  - **Notes:**
+
+- [ ] `2D84` Select the **People** page in the left-hand menu.
+  - **Expected:** The People table shows.
+  - **Notes:**
+
+- [ ] `E05B` Clear the search box above the table, and type `Viktoria Holmberg` in it.
+  - **Expected:** In her row:
+    - A hollow yellow dot before her **Position**
+    - Her **ID** as written down in `E97E`, with no dot before it
+  - **Notes:**
+
+- [ ] `7A10` Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+  - **Expected:** The top bar's right end reads "Engineering Operations Manager".
+  - **Notes:**
+
+- [ ] `B862` Select the **People** page in the left-hand menu.
+  - **Expected:** The People table shows.
+  - **Notes:**
+
+- [ ] `0C5D` Clear the search box above the table, and type `Viktoria Holmberg` in it.
+  - **Expected:** In her row:
+    - `E20003` in her **ID**, after a hollow yellow dot
+    - No dot before her **Position**
+  - **Notes:**
+
+- [ ] `F4A9` Select her **ID** cell, type the ID written down in `E97E`, and press Enter.
+  - **Expected:**
+    - The cell reads the ID written down, with no dot before it.
+    - The top bar shows **Publish 3 changes**.
   - **Notes:**
 
 ### DRAFT-17: Changing a Published Draft Keeps Others Seeing It as Published
@@ -142,7 +187,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The row still reads `E10002`.
     - No dot before `E10002`.
-    - The grey lock is in the row's slot.
   - **Notes:**
 
 ### DRAFT-18: Publishing Shows the Changes to Everyone

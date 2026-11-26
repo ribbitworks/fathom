@@ -30,7 +30,7 @@ import {
   rejectionChange,
   unseenDraft,
 } from "./draft-records.ts";
-import { refuseHeldDecision, rejectedIn, writeDraft } from "./drafts.ts";
+import { rejectedIn, writeDraft } from "./drafts.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
 import { reassignReports, text } from "./reporting.ts";
 import {
@@ -76,7 +76,6 @@ async function seenHires(
       throw new ForbiddenError(unseenDraft);
     }
   }
-  await refuseHeldDecision(transaction, recordType, ids);
   return { found, live, tierOf };
 }
 
@@ -203,7 +202,12 @@ export async function approveHiresIn(
       ? [id]
       : [],
   );
-  if (await hiresReportTo(transaction, unmarked, { drafted: false })) {
+  if (
+    await hiresReportTo(transaction, unmarked, {
+      drafted: false,
+      editor: undefined,
+    })
+  ) {
     throw new ConflictError(reassignReports);
   }
   made.push(
@@ -307,8 +311,14 @@ export async function undoHireDrafts(
         !(await fitOffered(transaction, columns, [hire]))) ||
       !(await managerAllowed(transaction, hire?.managerId, editor)) ||
       (typeof hire?.requisition === "string" &&
-        (await takenEmployeeIds(transaction, [hire.requisition], [record.id]))
-          .length > 0)
+        (
+          await takenEmployeeIds(
+            transaction,
+            [hire.requisition],
+            [record.id],
+            undefined,
+          )
+        ).length > 0)
     ) {
       throw new ConflictError(changedSince);
     }
@@ -317,7 +327,10 @@ export async function undoHireDrafts(
     if (
       now?.isManager === true &&
       hire?.isManager !== true &&
-      (await hiresReportTo(transaction, [record.id], { drafted: true }))
+      (await hiresReportTo(transaction, [record.id], {
+        drafted: true,
+        editor: undefined,
+      }))
     ) {
       throw new ConflictError(changedSince);
     }

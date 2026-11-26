@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-team-member.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Team Member Workflows
@@ -32,7 +32,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the lock, the Group by menu, the details button, the side panel, the finder, the teams switch and the card.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the Group by menu, the details button, the side panel, the finder, the teams switch and the card.
 
 ## Test Cases
 
@@ -72,7 +72,6 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The chart shows the feature teams of the [Fictional Data](../design/development-setup.md#fictional-data) side by side, each first card naming its team.
     - 'Search and discovery' has a yellow dot before its name.
-    - 'Platform reliability' has a grey lock before its name.
     - There is no date row between the finder and the chart.
   - **Notes:**
 

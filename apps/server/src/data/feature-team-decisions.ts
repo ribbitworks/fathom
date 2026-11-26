@@ -24,7 +24,7 @@ import {
   rejectionChange,
   unseenDraft,
 } from "./draft-records.ts";
-import { refuseHeldDecision, rejectedIn } from "./drafts.ts";
+import { rejectedIn } from "./drafts.ts";
 import {
   membershipChanges,
   peopleOf,
@@ -107,7 +107,6 @@ async function seenTeams(
       throw new ForbiddenError(unseenDraft);
     }
   }
-  await refuseHeldDecision(transaction, recordType, ids);
   return { found, live, everyone };
 }
 
