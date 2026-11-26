@@ -38,6 +38,8 @@ import {
   MarkedItem,
   MarkRow,
   useBesideLive,
+  marksIn,
+  useDraftView,
 } from "./status-mark.tsx";
 import { type DraftLike, wasWords, emptiedWords } from "./draft-marks.ts";
 import {
@@ -343,6 +345,8 @@ export function Row({
   action?: ReactNode;
 }) {
   const draft = changed?.draft;
+  // A value reads as drafted wherever the view marks its draft, as its cell does.
+  const drafted = marksIn(draft, useDraftView());
   const liveUnder =
     useBesideLive() && changed?.live !== undefined
       ? { ...changed, live: changed.live }
@@ -401,7 +405,7 @@ export function Row({
                       <Value
                         column={column}
                         value={value}
-                        drafted={draft !== undefined}
+                        drafted={drafted}
                         onOpenNote={start}
                       />
                     )}

@@ -43,6 +43,7 @@ import {
 } from "./projects.ts";
 import { ScopeHistory } from "./scope-history.tsx";
 import { type AddsByKey, withAdding } from "./add-from-panel.tsx";
+import { recordsAsShown, withOwnDrafts } from "./live-records.ts";
 import { RecordPanel } from "./record-details.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { Column, ColumnGroup } from "./record-table.ts";
@@ -231,20 +232,22 @@ export function recordPanel({
   adds: (type: PlanRecordKind) => AddsByKey;
 }): SidePanel | undefined {
   if (open === undefined) return undefined;
-  const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
-    show === "live" ? livePlanRecords(records) : records;
   const shownOf = (
     type: PlanRecordKind,
     records: readonly PlanRecord[],
     columns: () => readonly Column<never, PlanChange>[],
   ) => {
-    const record = asShown(records).find(({ id }) => id === open);
-    // The record's draft, whatever the view, which marks it and the values it changes, so the Draft
-    // view decides how they show.
-    const ownDraft = records.find(({ id }) => id === open)?.draft;
+    const held = records.find(({ id }) => id === open);
+    if (held === undefined) return undefined;
+    // As its row shows it; a record Drafts applied leaves out keeps its details.
+    const record =
+      withOwnDrafts(
+        recordsAsShown(show, records, livePlanRecords),
+        records,
+      ).find(({ id }) => id === open) ?? (show === "live" ? undefined : held);
     return record === undefined
       ? undefined
-      : { type, record, columns, ownDraft };
+      : { type, record, held, columns, ownDraft: held.draft };
   };
   const shownFrom: Readonly<
     Record<DetailTab, () => ReturnType<typeof shownOf>>
@@ -276,24 +279,24 @@ export function recordPanel({
     )
     .find((one) => one !== undefined);
   if (found === undefined) return undefined;
-  const { type, record: shown, ownDraft } = found;
+  const { type, record: shown, held, ownDraft } = found;
   const columns = withAdding(found.columns(), adds(type));
   const canEdit = editsKind(type);
   // Projects and proposals, which name features, show their scope history to those who see them.
   const scope =
-    "featureIds" in shown && seesFeatures ? (
+    "featureIds" in held && seesFeatures ? (
       <ScopeHistory
-        type={isProposal(shown) ? "proposal" : "project"}
-        record={shown}
-        features={asShown(plan.features)}
+        type={isProposal(held) ? "proposal" : "project"}
+        record={held}
+        features={choices.features}
         show={show}
         onShow={(featureId) => {
           follow.showRecord("features", featureId);
         }}
         onChangeReason={
-          isProposal(shown) && canEdit
+          isProposal(held) && canEdit
             ? (featureId, reason) => {
-                changeReason(featureId, shown, reason);
+                changeReason(featureId, held, reason);
               }
             : undefined
         }

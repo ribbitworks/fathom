@@ -14,6 +14,7 @@ import { Button, Group, Menu, Stack, Text } from "@mantine/core";
 import { Icon } from "./icons.tsx";
 import details from "./record-details.module.css";
 import { addedColumnsTitle, releaseColumnKey } from "./feature-table.tsx";
+import { undoDrafts, withOwnDrafts } from "./live-records.ts";
 import {
   livePlanRecords,
   NamerName,
@@ -58,6 +59,7 @@ import {
   DraftedItem,
   MarkRow,
   useDraftView,
+  viewedDraft,
 } from "./status-mark.tsx";
 import type { CellValue, View } from "./table-view.ts";
 import { formatDay } from "./day-formats.ts";
@@ -324,8 +326,16 @@ export function ProjectExtras({
 }) {
   const editable = canEdit && project.draft?.action !== "deleted";
   const publishDraft = usePublishDraft();
+  // Under Drafts applied, rejected drafts taken back, as the Milestones tab takes them back.
   const milestones =
-    show === "live" ? livePlanRecords(project.milestones) : project.milestones;
+    show === "live"
+      ? livePlanRecords(project.milestones)
+      : show === "drafts"
+        ? withOwnDrafts(
+            undoDrafts(project.milestones, ({ state }) => state === "rejected"),
+            project.milestones,
+          )
+        : project.milestones;
   return (
     <>
       <dl className={details.list}>
@@ -387,7 +397,8 @@ export function ProjectExtras({
                     <Text
                       fz="sm"
                       td={
-                        milestone.draft?.action === "deleted"
+                        viewedDraft(milestone.draft, show).draft?.action ===
+                        "deleted"
                           ? "line-through"
                           : undefined
                       }

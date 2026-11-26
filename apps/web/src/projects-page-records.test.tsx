@@ -1,15 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for changing the Projects page's records: each change to a record's draft from its panel
-// and its row's menu, the panel beside Live only, exporting a table, and a customer's description
-// and notes.
+// and its row's menu, the panel in the Live only and Drafts applied views, exporting a table, and a
+// customer's description and notes.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { unsavedExport } from "./exports.ts";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { recordDraft, savedFiles } from "./test-support.tsx";
+import {
+  detailRow,
+  recordCell,
+  recordDraft,
+  savedFiles,
+} from "./test-support.tsx";
 import {
   customerId,
   proposalId,
@@ -144,7 +149,7 @@ describe("changing a record in its panel", () => {
   });
 });
 
-describe("the panel beside Live only", () => {
+describe("the panel in the Live only and Drafts applied views", () => {
   const drafted = plan({
     proposals: [
       proposal({
@@ -185,6 +190,181 @@ describe("the panel beside Live only", () => {
     await screen.findByRole("heading", { name: /Fictional Proposal/ });
     expect(within(sidePanel()).getByText("NEW-1")).toBeTruthy();
     expect(within(sidePanel()).queryByText("OLD-1")).toBeNull();
+  });
+
+  it("shows a rejected change as it is live while drafts are applied, as the table does", async () => {
+    await openPage(
+      `/projects?tab=proposals&open=${proposalId}&show=drafts`,
+      plan({
+        proposals: [
+          proposal({
+            externalId: "NEW-1",
+            draft: recordDraft({
+              state: "rejected",
+              changed: ["externalId"],
+              live: { externalId: "OLD-1" },
+            }),
+          }),
+        ],
+      }),
+    );
+    await screen.findByRole("heading", { name: /Fictional Proposal/ });
+    expect(recordCell(proposalId, "externalId")?.textContent).toContain(
+      "OLD-1",
+    );
+    expect(within(sidePanel()).getByText("OLD-1")).toBeTruthy();
+    expect(within(sidePanel()).queryByText("NEW-1")).toBeNull();
+  });
+
+  it("keeps a record whose removal was rejected locked while drafts are applied", async () => {
+    await openPage(
+      `/projects?open=${projectId}&show=drafts`,
+      plan({
+        projects: [
+          project({
+            draft: recordDraft({ action: "deleted", state: "rejected" }),
+          }),
+        ],
+      }),
+    );
+    await screen.findByRole("heading", { name: /Fictional Project/ });
+    expect(
+      within(sidePanel()).queryByRole("button", { name: "Change Name" }),
+    ).toBeNull();
+    expect(
+      within(sidePanel()).queryByRole("button", { name: "Add milestone" }),
+    ).toBeNull();
+  });
+
+  it("words a value a waiting draft fills as its cell does under Live only", async () => {
+    await openPage(
+      `/projects?tab=proposals&open=${proposalId}&show=live`,
+      plan({
+        proposals: [
+          proposal({
+            externalId: "NEW-1",
+            draft: recordDraft({
+              changed: ["externalId"],
+              live: { externalId: null },
+            }),
+          }),
+        ],
+      }),
+    );
+    await screen.findByRole("heading", { name: /Fictional Proposal/ });
+    expect(recordCell(proposalId, "externalId")?.textContent).toContain(
+      "No proposal ID",
+    );
+    expect(within(sidePanel()).getByText("No proposal ID")).toBeTruthy();
+  });
+
+  it("doesn't word a value a rejected draft filled as drafted while drafts are applied", async () => {
+    await openPage(
+      `/projects?tab=proposals&open=${proposalId}&show=drafts`,
+      plan({
+        proposals: [
+          proposal({
+            externalId: "NEW-1",
+            draft: recordDraft({
+              state: "rejected",
+              changed: ["externalId"],
+              live: { externalId: null },
+            }),
+          }),
+        ],
+      }),
+    );
+    await screen.findByRole("heading", { name: /Fictional Proposal/ });
+    expect(recordCell(proposalId, "externalId")?.textContent).not.toContain(
+      "No proposal ID",
+    );
+    expect(within(sidePanel()).queryByText("No proposal ID")).toBeNull();
+    // The live value shows instead, empty.
+    expect(detailRow("Proposal ID", sidePanel()).textContent).not.toContain(
+      "NEW-1",
+    );
+  });
+
+  it("doesn't strike through a milestone whose removal was rejected while drafts are applied", async () => {
+    await openPage(
+      `/projects?open=${projectId}&show=drafts`,
+      plan({
+        projects: [
+          project({
+            milestones: [
+              milestone({
+                draft: recordDraft({ action: "deleted", state: "rejected" }),
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
+    await screen.findByRole("heading", { name: /Fictional Project/ });
+    const name = within(sidePanel()).getByText("Fictional Kickoff");
+    expect(name.style.textDecoration).not.toBe("line-through");
+    expect(getComputedStyle(name).textDecoration).not.toContain("line-through");
+    // Its draft still holds it: it can be resubmitted, not changed or removed.
+    await userEvent.click(
+      within(sidePanel()).getByRole("button", {
+        name: "Actions for Fictional Kickoff",
+      }),
+    );
+    await screen.findByRole("menuitem", { name: /Resubmit/ });
+    expect(screen.queryByRole("menuitem", { name: "Edit…" })).toBeNull();
+    expect(
+      screen.queryByRole("menuitem", { name: "Remove milestone" }),
+    ).toBeNull();
+  });
+
+  it("keeps the details of a project drafted to be removed while drafts are applied", async () => {
+    await openPage(
+      `/projects?open=${projectId}&show=drafts`,
+      plan({
+        projects: [project({ draft: recordDraft({ action: "deleted" }) })],
+      }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: /Fictional Project/ }),
+    ).toBeDefined();
+  });
+
+  it("shows no details of a project only drafted to be added under Live only", async () => {
+    await openPage(
+      `/projects?open=${projectId}&show=live`,
+      plan({
+        projects: [project({ draft: recordDraft({ action: "created" }) })],
+      }),
+    );
+    await screen.findByRole("grid", { name: "Projects" });
+    expect(
+      screen.queryByRole("heading", { name: /Fictional Project/ }),
+    ).toBeNull();
+  });
+
+  it("takes back a milestone's rejected change while drafts are applied, as the Milestones tab does", async () => {
+    await openPage(
+      `/projects?open=${projectId}&show=drafts`,
+      plan({
+        projects: [
+          project({
+            milestones: [
+              milestone({
+                name: "Fictional Rehearsal",
+                draft: recordDraft({
+                  state: "rejected",
+                  changed: ["name"],
+                  live: { name: "Fictional Kickoff" },
+                }),
+              }),
+            ],
+          }),
+        ],
+      }),
+    );
+    await screen.findByRole("heading", { name: /Fictional Project/ });
+    expect(within(sidePanel()).getByText("Fictional Kickoff")).toBeTruthy();
+    expect(within(sidePanel()).queryByText("Fictional Rehearsal")).toBeNull();
   });
 });
 
