@@ -4,14 +4,20 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Executive Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as an Executive](../help/working-as-an-executive.md) on the seed data: reading the plan on Features and on the Releases timeline, live only or with drafts, looking at people on the org chart and in Metrics, seeing people and administration without changing them, and following what changed in both histories, and keeping a view of People.
+Verifies the workflows of [Working as an Executive](../help/working-as-an-executive.md) on the seed data, without changing any record:
+
+- Reading the plan on Features and on the Releases timeline, live only or with drafts.
+- Seeing who is on each feature team and what each person works on, on Capacity.
+- Looking at people on the org chart, on another date and in Metrics.
+- Seeing people, accounts, roles and settings without changing them.
+- Following what changed in the change history and the access history.
 
 ## Test Environment
 
@@ -35,7 +41,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 ## Test Cases
 
-Run the test cases in order, in about 20 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
 
 ### EXECUTIVE-01: An Executive Reads the Plan
 
@@ -56,11 +62,14 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 - [ ] `723D` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - The **Releases** page opens on its **Releases** tab.
+    - The table under the timeline has a **Ships on** column, with a day in each row.
     - There is no **New release** button.
   - **Notes:**
 
 - [ ] `0CAA` Select **All** on the timeline.
-  - **Expected:** Each schedule's lane shows from its first cycle to its last without scrolling.
+  - **Expected:**
+    - Each schedule's lane shows from its first cycle to its last without scrolling.
+    - Each release has a diamond on the day it ships.
   - **Notes:**
 
 - [ ] `6E61` Hover over the span of 'Lantern 2' on the timeline.
@@ -131,7 +140,9 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `E326` Select **Metrics** above the table.
-  - **Expected:** **Break down by** reads "Choose a column".
+  - **Expected:**
+    - The **Metrics** panel opens beside the table.
+    - **Break down by** reads "Choose a column".
   - **Notes:**
 
 - [ ] `BE0F` Set **Break down by** to **Position**.
@@ -168,8 +179,31 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 
 - [ ] `4B61` Select the **Accounts** page in the left-hand menu.
   - **Expected:**
-    - Every account is in the table with its roles.
+    - Every account is in the table, with its **Roles** and **Status**.
     - There is no **New account** button.
+  - **Notes:**
+
+- [ ] `DF6E` Select the **Roles** page in the left-hand menu.
+  - **Expected:**
+    - Each role's row has a **View** button.
+    - There is no **New role** button.
+  - **Notes:**
+
+- [ ] `464F` Select **View** in the **Executive** row.
+  - **Expected:**
+    - A dialog titled "Executive" opens, with the grid at its left.
+    - Its only button at the bottom is **Close**.
+  - **Notes:**
+
+- [ ] `013D` Select **Close**.
+  - **Expected:** The dialog closes.
+  - **Notes:**
+
+- [ ] `F170` Select the **Settings** page in the left-hand menu.
+  - **Expected:**
+    - **Time zone** reads **America/Vancouver**.
+    - **Password requirements** and **Generated passwords** are shown.
+    - There is no **Save** button.
   - **Notes:**
 
 ### EXECUTIVE-04: An Executive Follows What Changed
@@ -182,7 +216,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:** The entries are listed, newest first.
   - **Notes:**
 
-- [ ] `327C` Type `Simone Jean` in the search box.
+- [ ] `327C` Type `Simone Jean` in the **Search** box.
   - **Expected:** Only entries naming 'Simone Jean' are listed, the newest by "Engineering Operations Manager".
   - **Notes:**
 
@@ -190,43 +224,45 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:** The entries are listed, newest first, such as one that "created the account for" an account.
   - **Notes:**
 
+- [ ] `C8FD` Type `Team Member` in the **Search** box.
+  - **Expected:** The entries listed include one that says "created the account for" 'Team Member', ending in a grey **Worth checking** box.
+  - **Notes:**
+
 ### EXECUTIVE-05: An Executive Keeps a View
+
+Removed: keeping a view is checked in [VIEW-01](saved-views-manual-test.md#view-01-a-personal-view-is-kept-to-its-maker) in Saved Views.
+
+### EXECUTIVE-06: An Executive Sees Who Works on What
 
 **Account:** Executive, `executive@fathom.test`, the same as EXECUTIVE-04.
 
 **Preconditions:** None beyond EXECUTIVE-04.
 
-- [ ] `1D99` Select the **People** page in the left-hand menu.
-  - **Expected:** The **People** page opens.
-  - **Notes:**
-
-- [ ] `4E2A` Open the **Views** menu above the table and select **Clear view**.
+- [ ] `7C77` Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab.
   - **Expected:**
-    - The search box above the table is empty.
-    - Every person's row shows.
+    - **Feature teams** is chosen in the tabs.
+    - Each row is a person, and each column a month.
+    - The cells show feature teams, each name after a small square in its team's colour.
   - **Notes:**
 
-- [ ] `DDED` Type `Lorenza` in the search box.
-  - **Expected:** Only rows with `Lorenza` in a cell are listed.
-  - **Notes:**
-
-- [ ] `8CFC` Open the Views menu, and select **Save view…**.
+- [ ] `B9F7` Select **Feature team** in the Group by menu.
   - **Expected:**
-    - A dialog titled "Save view" shows **Name**.
-    - Under **Includes**, it shows the search.
-    - It offers no choice about sharing.
+    - **Group by: Feature team** shows.
+    - A group heading names each feature team, such as 'Mobile apps' and 'Payments core', with its members under it.
   - **Notes:**
 
-- [ ] `35EB` Type `Fictional reading` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `93D9` Select **Save view**.
+- [ ] `19C9` Select the **Allocations** tab.
   - **Expected:**
-    - The dialog closes.
-    - The Views button reads `Fictional reading`.
+    - **Allocations** is chosen in the tabs.
+    - **Group by** shows, naming no grouping.
+    - The cells list features, each with its percentage, such as "50%".
   - **Notes:**
 
-- [ ] `E7E9` Open the Views menu, and select **Delete view**.
-  - **Expected:** A notice reads "Deleted the Fictional reading view."
+- [ ] `78DA` Type `Blaise Gislason` in the search box.
+  - **Expected:**
+    - The row of 'Blaise Gislason' is listed, and no other person's.
+    - In the current month's cell, each line names a feature, with its percentage at the right.
+    - The cell's last line reads "Over", red and bold, with how far over a whole month at the right, such as "+25%".
   - **Notes:**
+
+**Afterwards:** Empty the search box.

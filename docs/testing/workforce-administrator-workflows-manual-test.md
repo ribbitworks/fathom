@@ -11,15 +11,15 @@ last_updated: "2026-11-25"
 
 ## Scope
 
-Verifies the workflows of [Working as a Workforce Administrator](../help/working-as-a-workforce-administrator.md) on the seed data, each approved by a Project Manager or the Engineering Director:
+Verifies the jobs of [Working as a Workforce Administrator](../help/working-as-a-workforce-administrator.md) on the seed data, each approved by a Project Manager or the Engineering Director:
 
-- Keeping people current with a leaving date and a new manager.
-- Keeping the hiring plan with a planned hire and its state.
-- Keeping a list current.
-- Putting someone on a feature team from an earlier month.
-- Changing a planning setting.
+- Keeping people current: a leaving date and a new manager.
+- Planning the hiring: requesting a hire and marking one approved to hire.
+- Keeping the feature teams current: moving someone to another team from next month.
+- Setting up the choices people pick from: adding a choice and retiring one.
+- Setting the working time: the hours a day.
 
-[Engineering Director](engineering-director-workflows-manual-test.md) verifies choosing classes.
+[Engineering Director](engineering-director-workflows-manual-test.md) verifies filling a hire and choosing classes.
 
 ## Test Environment
 
@@ -41,9 +41,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses. This test adds:
 
-- **Months from today:** the steps name months by where they fall from the current month: **last month** is the one before it, and the **month before last month** the one before that. The examples after "such as" are for a run in November 2026.
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20301231`.
-- **Date box:** the box labelled **Date** between the **Org chart** heading and the chart, before the left arrow, timeline, right arrow and **Today**.
 
 ## Test Cases
 
@@ -304,87 +302,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - A yellow **Retired** box is after its name.
   - **Notes:**
 
-### WORKFORCE-06: A Member Joins a Feature Team From an Earlier Date
+### WORKFORCE-06: Someone Moves to Another Feature Team From Next Month
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as WORKFORCE-05. Step `2A2C` signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as WORKFORCE-05.
 
-**Preconditions:** Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch; it shows today.
-
-- [ ] `F376` Select the left arrow once.
-  - **Expected:**
-    - The **Date** box shows the first day of last month.
-    - The **Draft** button is above the chart.
-  - **Notes:**
-
-- [ ] `AD56` Select the Feature teams button, then 'Search and discovery'.
-  - **Expected:**
-    - The team panel is titled 'Search and discovery'.
-    - **Name** reads 'Search and discovery', with a yellow dot before it.
-    - Under it, 'Search', with a green dot before it.
-  - **Notes:**
-
-- [ ] `EE54` Select the change button in the **Members** row.
-  - **Expected:**
-    - A list of people opens under the row.
-    - The cursor is in a box above it.
-  - **Notes:**
-
-- [ ] `B930` Type `Candice`, and press Enter.
-  - **Expected:** 'Candice Swift' has a tick.
-  - **Notes:**
-
-- [ ] `08EB` Press Enter.
-  - **Expected:**
-    - **Members** lists 'Candice Swift', with a hollow yellow dot before her name.
-    - No date is after her name.
-  - **Notes:**
-
-- [ ] `CBE2` Select **Today**.
-  - **Expected:**
-    - The text below the row is gone.
-    - In the team panel, 'Candice Swift' has a hollow yellow dot before her name, followed in grey by "from" and the first day of last month.
-  - **Notes:**
-
-- [ ] `CA86` Run Publish.
-  - **Expected:** The **Publish** button is gone.
-  - **Notes:**
-
-- [ ] `2A2C` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
-  - **Expected:** The top bar's right end reads "Engineering Director".
-  - **Notes:**
-
-- [ ] `4DCA` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
-  - **Notes:**
-
-- [ ] `9AF6` Clear the search box, and type `Candice`.
-  - **Expected:**
-    - One row is listed, whose **Record** reads 'Search and discovery', with **Type** "Feature team".
-    - Its **What changes** adds "Candice Swift" to **Members**.
-    - Its **What changes** gives **Joining and leaving dates** as "Candice Swift" and the first day of last month.
-  - **Notes:**
-
-- [ ] `F1BE` Tick that row's tick box.
-  - **Expected:**
-    - The tick box is ticked.
-    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
-  - **Notes:**
-
-- [ ] `BD38` Select **Approve 1 draft…** at the right of the page's heading.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
-  - **Notes:**
-
-- [ ] `9AD4` Select **Approve** in the dialog.
-  - **Expected:**
-    - The dialog closes.
-    - A notice begins "Approved".
-  - **Notes:**
-
-### WORKFORCE-07: Capacity's Feature Teams Show the Earlier Join
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from WORKFORCE-06.
-
-**Preconditions:** WORKFORCE-06 done. Signed in with this account.
+**Preconditions:** None beyond WORKFORCE-05.
 
 - [ ] `8D15` Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab.
   - **Expected:** The page is headed **Capacity**, with **Feature teams** chosen in its tabs.
@@ -394,32 +316,98 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The rows are grouped under the feature teams, then **No feature team**.
   - **Notes:**
 
-- [ ] `264A` Open the **Person** column menu, and select **Filter…**.
-  - **Expected:** A box for the name opens.
+- [ ] `359F` Scroll to the 'Identity' group, and note the name in its first row: the mover.
+  - **Expected:** The mover's cell in the current month names 'Identity'.
   - **Notes:**
 
-- [ ] `B755` Type `Candice`.
+- [ ] `D3ED` Select **None** in the Group by menu.
+  - **Expected:** There are no group names.
+  - **Notes:**
+
+- [ ] `1780` Type the mover's name in the search box.
+  - **Expected:** Only the mover's row is listed.
+  - **Notes:**
+
+- [ ] `4BE6` Select the mover's cell in the month after the current month.
+  - **Expected:** The cell has a blue outline.
+  - **Notes:**
+
+- [ ] `C94D` Press Delete.
   - **Expected:**
-    - Only 'Candice Swift' is listed, under the 'Search and discovery' group.
-    - Her current month's cell names 'Search and discovery'.
+    - The row is tinted faint yellow.
+    - In the cell and every cell to its right, 'Identity' has a hollow yellow dot before it, and is struck through.
+    - The current month's cell names 'Identity', with no dot.
   - **Notes:**
 
-- [ ] `9B41` Press Esc.
-  - **Expected:** The filter closes.
+- [ ] `327F` Press Enter.
+  - **Expected:** The team list opens.
   - **Notes:**
 
-- [ ] `9F00` Scroll the table one month to the left.
+- [ ] `704F` Type `Pay`, then press Tab.
   - **Expected:**
-    - The **Person** column stays in place.
-    - Last month's cell for 'Candice Swift' names 'Search and discovery' too.
-    - The month before it names no team.
+    - The team list closes.
+    - From the cell selected on, each cell names 'Payments core' after a hollow yellow dot.
+    - A light green Live row is under the mover's row.
+  - **Notes:**
+
+- [ ] `CA86` Run Publish.
+  - **Expected:** The **Publish** button is gone.
+  - **Notes:**
+
+### WORKFORCE-07: The Move Is Approved and Shows on Capacity
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as WORKFORCE-06. Step `2A2C` signs in as another account.
+
+**Preconditions:** WORKFORCE-06 done, with the mover's name noted.
+
+- [ ] `2A2C` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+  - **Expected:** The top bar's right end reads "Engineering Director".
+  - **Notes:**
+
+- [ ] `4DCA` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
+  - **Notes:**
+
+- [ ] `9AF6` Clear the search box, and type the mover's name.
+  - **Expected:** Two rows are listed, each with **Type** "Feature team" and a tick box:
+    - one whose **Record** reads 'Payments core', whose **What changes** adds the mover to **Members**
+    - one whose **Record** reads 'Identity'
+  - **Notes:**
+
+- [ ] `F1BE` Tick the 'Payments core' row's tick box.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
+  - **Notes:**
+
+- [ ] `4801` Tick the 'Identity' row's tick box.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 2 drafts…**.
+  - **Notes:**
+
+- [ ] `BD38` Select **Approve 2 drafts…** at the right of the page's heading.
+  - **Expected:** A dialog titled "Approve 2 drafts?" opens.
+  - **Notes:**
+
+- [ ] `9AD4` Select **Approve** in the dialog.
+  - **Expected:**
+    - The dialog closes.
+    - A notice begins "Approved".
+  - **Notes:**
+
+- [ ] `7E0F` Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab.
+  - **Expected:** The page is headed **Capacity**, with **Feature teams** chosen in its tabs.
+  - **Notes:**
+
+- [ ] `5EC1` Type the mover's name in the search box.
+  - **Expected:**
+    - Only the mover's row is listed, with no tint.
+    - The current month's cell names 'Identity', with no dot.
+    - The next month's cell names 'Payments core', with no dot.
   - **Notes:**
 
 ### WORKFORCE-08: A Planning Setting Is Changed and Approved
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as WORKFORCE-07. Step `A2F8` signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from WORKFORCE-07. Step `A2F8` signs in as another account.
 
-**Preconditions:** None beyond WORKFORCE-07.
+**Preconditions:** Signed in with this account.
 
 - [ ] `17DE` Select the **Capacity** page in the left-hand menu.
   - **Expected:** The page is headed **Capacity**, with **Feature teams** chosen in its tabs.

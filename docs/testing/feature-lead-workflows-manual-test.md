@@ -13,10 +13,10 @@ last_updated: "2026-11-25"
 
 Verifies the workflows of [Working as a Feature Lead](../help/working-as-a-feature-lead.md) on the seed data:
 
-- Shaping a feature team, approved by a Project Manager.
-- Keeping a feature's status and estimate current, approved by a Product Manager.
-- Seeing what each release and cycle holds, and keeping views of one schedule and of the Features board.
-- Finding someone on the org chart.
+- Changing a feature team's lead and members, approved by a Project Manager.
+- Keeping a feature's team, status, estimate and note current, approved by a Product Manager.
+- Seeing what each release and cycle holds, in the Features table and on the board.
+- Finding someone on the org chart, and opening their details there and on People.
 
 It also verifies that the account, which holds a second role, switches between them at once, and that the change history names the role a change was made as.
 
@@ -155,7 +155,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - No dot is before 'Polly Smith' or 'Rosendo Champlin'.
   - **Notes:**
 
-### LEAD-03: A Feature's Team, Status and Estimate Are Kept Current
+### LEAD-03: A Feature's Team, Status, Estimate and Note Are Kept Current
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from LEAD-02. Step `DA73` signs in as another account.
 
@@ -180,12 +180,38 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The cell reads "40 h", with a hollow yellow dot before it.
   - **Notes:**
 
+- [ ] `8F31` Open the column menu of **Effort**, and select **Person-days (8 hours)** under **Show in**.
+  - **Expected:**
+    - The menu closes.
+    - The **Effort** cell of the row above the Live row reads "5 PD", with a hollow yellow dot before it.
+  - **Notes:**
+
+- [ ] `D2D0` Open the column menu of **Effort**, and select **Hours** under **Show in**.
+  - **Expected:** The **Effort** cell of the row above the Live row reads "40 h" again.
+  - **Notes:**
+
 - [ ] `7C31` Select the row's **Feature team** cell, press Enter, choose 'Platform reliability', and press Enter.
   - **Expected:** The cell reads 'Platform reliability', with a hollow yellow dot before it.
   - **Notes:**
 
+- [ ] `AA36` Select the **Notes** cell of the row, above the Live row.
+  - **Expected:**
+    - A side panel titled **Notes** opens beside the table.
+    - **Clear**, **Cancel** and **Save** are at its bottom.
+  - **Notes:**
+
+- [ ] `32D2` Type `Fictional retention note` in the panel's text.
+  - **Expected:** The panel shows `Fictional retention note`.
+  - **Notes:**
+
+- [ ] `BE5C` Select **Save**.
+  - **Expected:**
+    - The panel closes.
+    - The **Notes** cell reads `Fictional retention note`, with a hollow yellow dot before it.
+  - **Notes:**
+
 - [ ] `B465` Run Publish.
-  - **Expected:** The dots before "In progress", "40 h" and 'Platform reliability' are filled yellow.
+  - **Expected:** The dots before "In progress", "40 h", 'Platform reliability' and `Fictional retention note` are filled yellow.
   - **Notes:**
 
 - [ ] `DA73` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
@@ -204,10 +230,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - A notice reads "Approved 1 draft."
     - 'Data Retention Controls' has no dot.
-    - It reads "In progress" in **Status**, "40 h" in **Effort** and 'Platform reliability' in **Feature team**.
+    - It reads "In progress" in **Status**, "40 h" in **Effort**, 'Platform reliability' in **Feature team** and `Fictional retention note` in **Notes**.
   - **Notes:**
 
-### LEAD-04: What Each Release and Cycle Holds
+### LEAD-04: What Each Release and Cycle Holds, in the Table and on the Board
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from LEAD-03.
 
@@ -231,9 +257,28 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The last heading is **Later**.
   - **Notes:**
 
-**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+- [ ] `4DFE` Select **Group by: Cycle**, then **Clear grouping**.
+  - **Expected:**
+    - The button reads **Group by**.
+    - The features are in one list.
+  - **Notes:**
 
-### LEAD-05: Someone Is Found on the Org Chart
+- [ ] `494C` Choose **Board** beside the **Features** heading.
+  - **Expected:**
+    - The board shows, with the button **Columns: Months**.
+    - Its columns are months, this month second, then **No date**.
+    - Each feature has a card in the month it's needed by.
+  - **Notes:**
+
+- [ ] `F853` Select **Columns: Months**, then **Platform** under **A schedule's cycles**.
+  - **Expected:**
+    - The button reads **Columns: Platform cycles**.
+    - The board's columns are Platform's cycles, from left to right, the last headed "Later".
+  - **Notes:**
+
+**Afterwards:** Choose **Table** beside the **Features** heading, then open the **Views** menu above the table and select **Clear view**.
+
+### LEAD-05: Someone Is Found on the Org Chart, and Their Details Opened
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-04.
 
@@ -247,6 +292,18 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The chart moves until the card for 'Gloria Armas Guardado' is in the middle of the panel.
     - A blue ring is around the card.
+  - **Notes:**
+
+- [ ] `CEB7` Select the name on the card for 'Gloria Armas Guardado'.
+  - **Expected:**
+    - The details panel slides out on the right, headed 'Gloria Armas Guardado'.
+    - The link **Show in People** is under the position.
+  - **Notes:**
+
+- [ ] `D89A` Select **Show in People**.
+  - **Expected:**
+    - The **People** page opens.
+    - Only the row of 'Gloria Armas Guardado' is listed.
   - **Notes:**
 
 ### LEAD-06: Switching Role Changes What Can Be Done at Once
@@ -324,79 +381,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **People** section of the left-hand menu shows no **Capacity**.
   - **Notes:**
 
+**Afterwards:** Run Reset the Database.
+
 ### LEAD-08: A Feature Lead Keeps Views of One Schedule and the Board
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-07.
-
-**Preconditions:** LEAD-07 done, acting as **Feature Lead**, with the **Releases** page open on the **Schedules** tab.
-
-- [ ] `3293` Type `Platform` in the search box.
-  - **Expected:**
-    - The table lists only 'Platform'.
-    - The timeline shows only 'Platform'.
-  - **Notes:**
-
-- [ ] `8D38` Open the Views menu, and select **Save view…**.
-  - **Expected:**
-    - A dialog titled "Save view" shows **Name**.
-    - Under **Includes**, **Search** reads “Platform”.
-    - It offers no choice about sharing.
-  - **Notes:**
-
-- [ ] `728E` Type `Fictional my schedule` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `F3C2` Select **Save view**.
-  - **Expected:**
-    - The dialog closes.
-    - The Views button reads `Fictional my schedule`.
-  - **Notes:**
-
-- [ ] `121F` Open the Views menu, and select **Clear view**.
-  - **Expected:**
-    - The search box is empty.
-    - The table lists 'Platform', 'Patches' and 'Field Apps'.
-  - **Notes:**
-
-- [ ] `FDC2` Open the Views menu, and select `Fictional my schedule` under **My views**.
-  - **Expected:**
-    - The search box shows `Platform`.
-    - The table and the timeline show only 'Platform'.
-  - **Notes:**
-
-- [ ] `D14D` Select the **Features** page in the left-hand menu.
-  - **Expected:** The **Features** page opens, with no view applied.
-  - **Notes:**
-
-- [ ] `494C` Select **Board** in the switch after the **Features** heading.
-  - **Expected:**
-    - The board shows, with the button **Columns: Months**.
-    - Its columns are months, this month second, then **No date**.
-  - **Notes:**
-
-- [ ] `DC97` Select **Card**, then **Risk**.
-  - **Expected:** The cards no longer show **Risk**.
-  - **Notes:**
-
-- [ ] `CAD3` Press Esc.
-  - **Expected:** The Card menu closes.
-  - **Notes:**
-
-- [ ] `71F1` Open the Views menu, and select **Save view…**.
-  - **Expected:**
-    - A dialog titled "Save view" shows **Name**.
-    - Under **Includes**, **Card** reads "Key, Status, Priority, Size, Needed by, Staffed months".
-  - **Notes:**
-
-- [ ] `00CA` Type `Fictional board` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `A48F` Select **Save view**.
-  - **Expected:**
-    - The dialog closes.
-    - The Views button reads `Fictional board`.
-  - **Notes:**
-
-**Afterwards:** Run Reset the Database.
+Removed: a view on Features and its board is checked in [VIEW-13](saved-views-manual-test.md#view-13-a-view-on-features-is-shared-by-its-table-and-board) in Saved Views, and the board in [LEAD-04](#lead-04-what-each-release-and-cycle-holds-in-the-table-and-on-the-board).

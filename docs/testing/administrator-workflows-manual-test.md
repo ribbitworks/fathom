@@ -4,14 +4,20 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Administrator Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as an Administrator](../help/working-as-an-administrator.md) on the seed data: making an account that signs in for the first time, giving it a copied role, changing what a role grants after checking who gains what, restoring a starting role, deactivating, reactivating and resetting the account, setting the rules for passwords, and checking the access history.
+Verifies the jobs of [Working as an Administrator](../help/working-as-an-administrator.md) on the seed data:
+
+- Setting up the roles: reading what a role gives, making a role from a copy, changing a role after checking who gains what, and restoring a starting role.
+- Looking after accounts: making one that signs in for the first time, changing its roles, deactivating and reactivating it, and resetting its password.
+- Reviewing who holds each role: filtering accounts by role and taking away a role no longer needed.
+- Checking the access history: finding an account's entries and the entries marked **Worth checking**.
+- Changing the settings: the time zone and the rules for passwords.
 
 ## Test Environment
 
@@ -174,7 +180,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The left-hand menu shows **Lists** in the **Administration** section.
   - **Notes:**
 
-### ADMIN-03: A Role Is Changed After Checking Who Gains What
+### ADMIN-03: What a Role Gives Is Read, Then Changed After Checking Who Gains What
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ADMIN-02.
 
@@ -182,6 +188,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `8BF7` Select **Edit** in the `Fictional Reader` row.
   - **Expected:** The role dialog opens, titled **Edit Fictional Reader**.
+  - **Notes:**
+
+- [ ] `D8BF` Read the summary at the right of the grid.
+  - **Expected:**
+    - It has the headings **Sees**, **Doesn't see**, **Can** and **Cannot**.
+    - **Sees** includes **Lists**.
+    - **Doesn't see** includes **Accounts**, **Roles**, **Settings** and **Access history**.
   - **Notes:**
 
 - [ ] `DAB8` Tick **View** on the **Administration** row.
@@ -318,7 +331,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Sign in** page opens.
   - **Notes:**
 
-### ADMIN-07: The Rules for Passwords Are Changed
+### ADMIN-07: The Time Zone and the Rules for Passwords Are Changed
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ADMIN-06.
 
@@ -326,15 +339,32 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `773F` Select the **Settings** page in the left-hand menu.
   - **Expected:**
+    - **Time zone** shows **America/Vancouver**, with the day and time in Vancouver under it, such as "It is Thursday, November 5, 2026 at 6:06 AM there."
     - **Password requirements** shows **Minimum length** at "12".
-    - The panel's **Save** is turned off.
+    - Each panel's **Save** is turned off.
+  - **Notes:**
+
+- [ ] `93AE` Clear **Time zone**, and type `Toronto` in it.
+  - **Expected:** A list opens, offering **America/Toronto**.
+  - **Notes:**
+
+- [ ] `00E5` Choose **America/Toronto** from the list.
+  - **Expected:**
+    - The line under **Time zone** shows the day and time in Toronto, matching a clock there.
+    - The **Time zone** panel's **Save** is turned on.
+  - **Notes:**
+
+- [ ] `B165` Select the **Time zone** panel's **Save**.
+  - **Expected:**
+    - A notification says "Fathom's time zone is now America/Toronto."
+    - **Save** is turned off again.
   - **Notes:**
 
 - [ ] `1BC2` Replace the text in **Minimum length** with `14`.
-  - **Expected:** The panel's **Save** is turned on.
+  - **Expected:** The password panel's **Save** is turned on.
   - **Notes:**
 
-- [ ] `20C7` Select the panel's **Save**.
+- [ ] `20C7` Select the password panel's **Save**.
   - **Expected:**
     - A notification says "Saved the password settings."
     - **Save** is turned off again.
@@ -357,7 +387,62 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - "Fathom Administrator" "deactivated the account for" `Fictional Newcomer`, marked as worth checking
     - "Fathom Administrator" "changed the role of" `Fictional Newcomer`, "from Team Member to Fictional Reader", marked as worth checking
     - `Fictional Newcomer` "changed their own password"
-    - "Fathom Administrator" "created the account for" `Fictional Newcomer`
+    - "Fathom Administrator" "created the account for" `Fictional Newcomer`, marked as worth checking
+  - **Notes:**
+
+### ADMIN-09: A Role No Longer Needed Is Taken Away
+
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ADMIN-08.
+
+**Preconditions:** None beyond ADMIN-08.
+
+- [ ] `2723` Select the **Accounts** page in the left-hand menu.
+  - **Expected:** The **Accounts** page opens, listing every account.
+  - **Notes:**
+
+- [ ] `6F06` Open the **Roles** column menu, and select **Filter…**.
+  - **Expected:** Every role is among the choices, **Engineering Manager** among them.
+  - **Notes:**
+
+- [ ] `C2A3` Tick **Engineering Manager**.
+  - **Expected:** Only these rows are listed:
+    - 'Engineering Manager'
+    - 'Feature Lead'
+    - 'Superuser'
+  - **Notes:**
+
+- [ ] `4DA6` Press Esc.
+  - **Expected:**
+    - The choices close.
+    - In the bar above the table, after the **Views** button, a box reads **Roles: Engineering Manager**.
+  - **Notes:**
+
+- [ ] `DD92` Select the details button at the right of the **Name** cell of 'Feature Lead'.
+  - **Expected:** A side panel opens, headed "Feature Lead", with **Roles** showing **Feature Lead** and **Engineering Manager**.
+  - **Notes:**
+
+- [ ] `A338` Select **Edit…** in the side panel.
+  - **Expected:** A dialog titled "Edit Feature Lead" opens, with **Feature Lead** and **Engineering Manager** ticked.
+  - **Notes:**
+
+- [ ] `FF10` Untick **Engineering Manager**.
+  - **Expected:** Only **Feature Lead** is ticked.
+  - **Notes:**
+
+- [ ] `3746` Select **Save**.
+  - **Expected:**
+    - A green banner says "Saved the account for Feature Lead."
+    - Only the 'Engineering Manager' and 'Superuser' rows are listed.
+  - **Notes:**
+
+- [ ] `A470` Select the **Access history** page in the left-hand menu.
+  - **Expected:** The newest entry reads "Fathom Administrator" "changed the role of" 'Feature Lead', ending "to Feature Lead", with a grey **Worth checking** box at its end.
+  - **Notes:**
+
+- [ ] `E9EA` Read down the entries with a grey **Worth checking** box.
+  - **Expected:** Among them:
+    - "Fathom Administrator" "changed Fathom's password settings"
+    - "Fathom Administrator" "changed the role" `Fictional Reader`
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.
