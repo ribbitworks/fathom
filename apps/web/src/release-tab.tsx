@@ -10,6 +10,7 @@ import {
   type ActivityRow,
   activitiesShowOn,
   listingActivities,
+  releaseTakesNoActivity,
 } from "./activity-list.tsx";
 import { noteOf } from "./cell-kinds.tsx";
 import type { DraftSelection } from "./drafts.ts";
@@ -270,6 +271,7 @@ export function ReleasesTable({
   showIn,
   notes,
   notePanel,
+  addingPanel,
   onChange,
   run,
   decide,
@@ -298,6 +300,8 @@ export function ReleasesTable({
   // Opens a release's note, which the page holds, and its panel while one is open.
   notes: NoteOpening;
   notePanel: SidePanel | undefined;
+  // New activity, stacked under the release's details, while one is being added.
+  addingPanel?: SidePanel | undefined;
   onChange: (
     stream: ReleaseStream,
     release: Release,
@@ -463,6 +467,7 @@ export function ReleasesTable({
               />
             ),
           },
+          ...(addingPanel === undefined ? [] : [addingPanel]),
           ...(notePanel === undefined ? [] : [notePanel]),
         ];
 
@@ -526,7 +531,6 @@ const releaseActivityRow = (
         ...activities,
         owner: "releaseId",
         idOf: ({ releaseId }) => releaseId,
-        // A retired schedule's release is no longer offered for an activity.
         takesNoActivity: ({ release, stream }) =>
-          release.draft?.action === "deleted" || stream.retired,
+          releaseTakesNoActivity(release, stream),
       };

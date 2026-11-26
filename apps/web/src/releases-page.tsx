@@ -46,11 +46,13 @@ import {
   type ActivitiesOf,
   editsFeatureKinds,
   leavingFor,
+  addingActivity,
 } from "./activity-list.tsx";
 import { recordsAsShown } from "./live-records.ts";
 import { EndsDialog } from "./schedule-end-dialog.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
-import { afterNote, useNoteEditing } from "./note-editing.tsx";
+import { useActivityAdding } from "./activity-adding.tsx";
+import { leavingForms, useNoteEditing } from "./note-editing.tsx";
 import {
   draftsById,
   recordNodes,
@@ -90,8 +92,8 @@ type Dialog =
     };
 
 const tabsId = "releases-tabs";
-// Also where one of a release's activities opens.
-export interface ReleaseActivitiesOf extends ActivitiesOf {
+// Showing a release's activities on Activities, and where one of them opens.
+export interface ReleaseActivitiesOf extends Pick<ActivitiesOf, "showAll"> {
   open: (id: string) => void;
 }
 
@@ -168,6 +170,7 @@ export function ReleasesPage({
   onOpen,
   onFeatures,
   activitiesOf,
+  editsFeatureTeams = false,
   approves,
   view,
   onView,
@@ -185,6 +188,8 @@ export function ReleasesPage({
   onFeatures: (at: FeaturesAt) => void;
   // Set for a role that sees activities.
   activitiesOf?: ReleaseActivitiesOf | undefined;
+  // Whether the user may set an activity's feature team.
+  editsFeatureTeams?: boolean;
   // The kinds of draft the user's role approves and rejects.
   approves: readonly DraftKind[];
   view: View;
@@ -209,13 +214,29 @@ export function ReleasesPage({
   const [busy, setBusy] = useState(false);
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
+  const showDecision = (shown: Decision) => {
+    setDecision(shown);
+    setDeciding(true);
+  };
   // A release's note, written in a panel of its own beside its details, which closes once the
   // release is no longer shown; anything that would close it while it is changed asks first.
   const notes = useNoteEditing(releasePanelTitleId);
   const notePanel = notes.note(openId);
   const question = useDiscardQuestion();
+  const addsActivities =
+    activitiesOf !== undefined &&
+    plan.data !== undefined &&
+    editsFeatureKinds(plan.data.canEditFeatures, show);
+  const adding = useActivityAdding({
+    plan: plan.data,
+    streams: query.data?.streams ?? [],
+    canAdd: addsActivities,
+    blocked: dialog !== undefined || deciding || question.asking,
+    onDecision: showDecision,
+  });
+  // Anything that would close a form asks first, while it holds something.
   const leave = (go: () => void) => {
-    afterNote(notes, question.ask, go);
+    leavingForms([adding], notes, question.ask, go);
   };
   const views = useSavedViews({
     // The tab is always one of the fixed tabs.
@@ -259,13 +280,20 @@ export function ReleasesPage({
             plan.data.activities,
             livePlanRecords,
           ),
-          of: leavingFor(activitiesOf, leave),
+          of: leavingFor(
+            {
+              ...activitiesOf,
+              add: addingActivity(adding.addActivity, "releaseId"),
+            },
+            leave,
+          ),
           onShow: (id) => {
             leave(() => {
               activitiesOf.open(id);
             });
           },
-          mayAdd: editsFeatureKinds(plan.data.canEditFeatures, show),
+          // Offered once New activity can open, its fields' choices read.
+          mayAdd: addsActivities && adding.ready,
         };
   const openRecord = (record: { id: string }) => {
     leave(() => {
@@ -308,7 +336,7 @@ export function ReleasesPage({
     ...(plan.data === undefined ? [] : planNodes(plan.data)),
   ];
   const decide = (asking: Asking, selection: DraftSelection, all?: boolean) => {
-    setDecision(
+    showDecision(
       decisionFor(
         asking,
         selection,
@@ -318,7 +346,6 @@ export function ReleasesPage({
         all,
       ),
     );
-    setDeciding(true);
   };
   const actions: ScheduleActions = {
     draftOf: (id) => drafts.get(id),
@@ -438,6 +465,13 @@ export function ReleasesPage({
         showIn={showIn}
         notes={notes}
         notePanel={notePanel}
+        addingPanel={adding.panel({
+          editsFeatureTeams,
+          narrow,
+          notes,
+          units: view.units,
+          ask: question.ask,
+        })}
         onChange={(stream, release, part) => {
           setDialog({ kind: "release", stream, release, part });
         }}

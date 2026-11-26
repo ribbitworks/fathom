@@ -57,7 +57,7 @@ A record's panel names the records it's tied to, each as a link that opens it on
 
 The **Features** row lists the features one to a line, each a link to it on **Features**. After the first five, select **Show all** under them to see the rest. **Show on Features** opens **Features** showing only those features, and **Show on the Board** opens the **Features** board at their cycle.
 
-A release's **Activities** row lists its activities the same way, each a link to it on **Activities**. Select **Activities**, the row's name, or **Show on Activities** in the release's **⋯** menu, to open **Activities** showing only the release's. **Add activity** opens **Activities** with **New activity** beside them and the release chosen.
+A release's **Activities** row lists its activities the same way, each a link to it on **Activities**. Select **Activities**, the row's name, or **Show on Activities** in the release's **⋯** menu, to open **Activities** showing only the release's. **Add activity** opens **New activity** under the release's details, with the release chosen; once you select **Add**, the details list it.
 
 On the timeline, each release, cycle and schedule name opens its record too. From the keyboard, press Tab to reach it, then Enter.
 
