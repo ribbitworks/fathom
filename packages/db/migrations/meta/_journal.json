@@ -477,6 +477,13 @@
       "when": 1795663652663,
       "tag": "0067_activities",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1795674335106,
+      "tag": "0068_new_value_kinds",
+      "breakpoints": true
     }
   ]
 }

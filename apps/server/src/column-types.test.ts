@@ -39,6 +39,8 @@ describe("choice columns", () => {
       listId: "l1",
       visibility: null,
       multiple: false,
+      multiline: false,
+      linkedTable: null,
     });
   });
 
@@ -98,6 +100,8 @@ describe("web link columns", () => {
       listId: null,
       visibility: "confidential",
       multiple: false,
+      multiline: false,
+      linkedTable: null,
     });
   });
 
@@ -151,6 +155,8 @@ describe("note columns", () => {
       listId: null,
       visibility: "personal",
       multiple: false,
+      multiline: false,
+      linkedTable: null,
     });
   });
 
@@ -202,6 +208,8 @@ describe("number columns", () => {
       listId: null,
       visibility: "personal",
       multiple: false,
+      multiline: false,
+      linkedTable: null,
     });
   });
 
