@@ -1,13 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The dialog for adding a column to a table or changing one: its name, its type, which is set once,
-// whether it must be filled in, and, for a choice column, the list it draws on and whether several
-// choices can be picked. On People, it also sets whether planned hires, which never must fill it
-// in, are offered it, and, for a web link, note, or number column not yet approved and a role with
-// Classify data, the class of its values; an approved column changes class from its menu instead.
-// A column on Features is General, so it offers only General lists. Changing a column also offers
-// removing it, to those who may. The name is checked against the other columns as it is typed. The
-// dialog cannot be closed while a change is being saved.
+// The dialog for adding a column to a table or changing one.
 
 import {
   classNames,
@@ -203,7 +196,6 @@ export function ColumnDialog({
             field === undefined ? undefined : "A column's type cannot change"
           }
           disabled={field !== undefined}
-          allowDeselect={false}
           data={fieldTypeSchema.options.map((option) => ({
             value: option,
             // The type is always one of the fixed types named above.

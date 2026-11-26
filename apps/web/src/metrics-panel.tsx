@@ -219,7 +219,6 @@ export function MetricsPanel<Row>({
       <Select
         label={label}
         size="sm"
-        allowDeselect={false}
         title={shown}
         styles={{ input: { textOverflow: "ellipsis" } }}
         data={[

@@ -36,6 +36,9 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 - **The keyboard's option in a drop-down list:** The option the keyboard is on, which Enter would pick, looks like an option pointed at: light grey in light mode, dark grey in dark mode. It is never the accent colour, which looks like a choice already made.
   - **Drawn by:** The theme, through `Combobox.extend` and `Select.extend` in `apps/web/src/theme.ts`. Both give their options the class in `apps/web/src/combobox.module.css`, so every drop-down list, Select and table cell's choices follow it. A new kind of drop-down list from Mantine, such as `MultiSelect`, needs the same class in the theme.
   - **Example:** On Features, open a Status cell's choices and press the Down arrow.
+- **A choice chosen again:** Choosing a Select's chosen option again keeps it, so a value that must be filled in can't be emptied unseen. A Select that may be emptied offers its ×.
+  - **Drawn by:** The theme, through `Select.extend` in `apps/web/src/theme.ts`.
+  - **Example:** On Releases, select New release, choose a First cycle, then choose the same cycle as Last cycle.
 - **A switch's chosen side:** A switch between a page's views, such as the Org chart's Reporting teams and Feature teams, fills its chosen side with the accent colour, as any choice made is, never white on grey, which reads as turned off.
   - **Drawn by:** The theme, through `SegmentedControl.extend` in `apps/web/src/theme.ts`, so every switch follows it, `ModeSwitch` in `apps/web/src/page-header.tsx` included.
   - **Example:** The Org chart's switch.
