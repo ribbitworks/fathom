@@ -73,12 +73,14 @@ function Figure({
   now,
   moved,
   live,
+  besideLive,
 }: {
   now: string;
   moved: FigureMove | undefined;
   live: string | undefined;
+  besideLive: boolean;
 }) {
-  const beside = moved !== undefined && live !== undefined;
+  const beside = besideLive && moved !== undefined;
   return (
     <>
       {/* The key is one of the union's own. */}
@@ -254,7 +256,12 @@ export function MetricsPanel<Row>({
           : { now },
     );
     return (
-      <Figure now={now} moved={moved} live={shownLive && format(shownLive)} />
+      <Figure
+        now={now}
+        moved={moved}
+        live={shownLive && format(shownLive)}
+        besideLive={besideLive}
+      />
     );
   };
   const allLabel = `All ${kinds?.noun ?? noun}`;

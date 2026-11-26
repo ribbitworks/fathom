@@ -95,6 +95,11 @@
   padding-inline: var(--fathom-cell-editor-bleed);
 }
 
+/* A value a draft changes, semibold while drafts show beside live, as a changed cell is. */
+.changedValue {
+  font-weight: 600;
+}
+
 /* A drafted value's live value, under it. */
 .live {
   margin-top: 4px;

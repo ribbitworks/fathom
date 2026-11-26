@@ -7,7 +7,7 @@ import classes from "./flag-field.module.css";
 
 export function FlagCell({ checked }: { checked: boolean }) {
   return (
-    <span className={classes.flag}>
+    <span className={[classes.flag, classes.textBaseline].join(" ")}>
       <input
         type="checkbox"
         className={classes.box}

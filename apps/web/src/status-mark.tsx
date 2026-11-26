@@ -54,7 +54,16 @@ const draftTone = (draft: DraftLike): Tone =>
 
 // A dot alone, in its tone, offering its words as its tip; a rejected draft's dot sits in a ring, so
 // it is told apart by its shape as well as its colour.
-function Dot({ tone, tip }: { tone: Tone; tip: string }) {
+// Before a figure, a ring keeps the same gap to it as a plain dot does.
+function Dot({
+  tone,
+  tip,
+  beforeFigure = false,
+}: {
+  tone: Tone;
+  tip: string;
+  beforeFigure?: boolean;
+}) {
   return (
     <Tipped
       tip={tip}
@@ -64,6 +73,7 @@ function Dot({ tone, tip }: { tone: Tone; tip: string }) {
         className={[
           classes.statusDot,
           tone === "rejected" ? marks.ringed : "",
+          tone === "rejected" && beforeFigure ? marks.ringedFigure : "",
         ].join(" ")}
         aria-hidden="true"
       />
@@ -103,7 +113,7 @@ export function MarkedFigure({
   if (mark === undefined) return children;
   return (
     <>
-      <Dot tone={mark.tone} tip={mark.tip} />
+      <Dot tone={mark.tone} tip={mark.tip} beforeFigure />
       {children}
     </>
   );

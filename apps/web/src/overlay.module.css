@@ -9,3 +9,9 @@
   --popover-border-color: var(--fathom-overlay-edge);
   --popover-shadow: var(--fathom-overlay-shadow);
 }
+
+/* A menu taller than the room left in the window scrolls inside itself, as its height is held to
+   that room. */
+.menuDropdown {
+  overflow-y: auto;
+}

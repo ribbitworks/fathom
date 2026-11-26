@@ -85,6 +85,12 @@
     0 0 0 var(--fathom-ring-room) currentColor;
 }
 
+/* Before a figure, where nothing lines up after it, its ring is given its room on the right too, so
+   the figure keeps the same gap to it as to a plain dot. */
+.ringedFigure {
+  margin-right: var(--fathom-ring-room);
+}
+
 /* Its ring reaches past its dot, so it is set in from the start of a line, where it would be cut
    off; in a row's slot, and in the place a first value's dot hangs into, the slot is set in
    instead, so every row's dots, and what follows them, line up. */

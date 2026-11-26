@@ -105,8 +105,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `26DE` Select the details button in the row of 'Simone Jean'.
   - **Expected:** In the side panel's **Manager** row:
-    - A yellow dot before 'Silje Holm-Schrøder'
-    - Under it, a green dot before 'Viktoria Holmberg', then a red **Left** box
+    - A yellow dot before 'Silje Holm-Schrøder', in semibold
+    - Under it, a green dot before 'Viktoria Holmberg', not semibold, then a red **Left** box
   - **Notes:**
 
 - [ ] `1EE3` Type `Viktoria Holmberg` in the search box.

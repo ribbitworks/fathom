@@ -140,6 +140,14 @@ describe("a row's colour", () => {
     expect(squares()).toEqual(["grape", "teal"]);
   });
 
+  it("sets a value a draft changes in semibold beside live, and its live value under it not", () => {
+    renderColoured(null, { live: "FX-1", liveColour: null });
+    expect([
+      screen.getByText("FX-2").closest('[class*="changedValue"]') !== null,
+      screen.getByText("FX-1").closest('[class*="changedValue"]') !== null,
+    ]).toEqual([true, false]);
+  });
+
   it("draws no square beside an empty value or an empty live one", () => {
     render(
       <MantineProvider theme={testTheme}>

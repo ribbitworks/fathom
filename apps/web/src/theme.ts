@@ -70,6 +70,9 @@ export const byWords: OptionsFilter = ({ options, search, limit }) => {
   );
 };
 
+// The room a menu held to the window keeps from its edge, in pixels.
+const menuWindowGap = 8;
+
 export const theme = createTheme({
   fontFamily:
     '"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
@@ -86,8 +89,24 @@ export const theme = createTheme({
       classNames: { option: comboboxClasses.option },
     }),
     // Every menu, popover and drop-down list stands out from the page by a darker edge and a clear
-    // shadow; drop-down lists take it through Popover, while Menu passes its own classes to it.
-    Menu: Menu.extend({ classNames: { dropdown: overlayClasses.dropdown } }),
+    // shadow; drop-down lists take it through Popover, while Menu passes its own classes to it. A
+    // menu is held to the room left in the window, flipping and shifting as Mantine's do, and
+    // scrolls inside itself rather than running past the window's edge.
+    Menu: Menu.extend({
+      classNames: {
+        dropdown: [overlayClasses.dropdown, overlayClasses.menuDropdown].join(
+          " ",
+        ),
+      },
+      defaultProps: {
+        middlewares: {
+          // A menu that fits neither below nor above opens on the side with more room.
+          flip: { fallbackStrategy: "bestFit" },
+          shift: true,
+          size: { padding: menuWindowGap },
+        },
+      },
+    }),
     Popover: Popover.extend({
       classNames: { dropdown: overlayClasses.dropdown },
     }),

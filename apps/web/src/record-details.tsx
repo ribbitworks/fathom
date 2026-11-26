@@ -368,8 +368,9 @@ export function Row({
   const draft = changed?.draft;
   // A value reads as drafted wherever the view marks its draft, as its cell does.
   const drafted = marksIn(draft, useDraftView());
+  const besideLive = useBesideLive();
   const liveUnder =
-    useBesideLive() && changed?.live !== undefined
+    besideLive && changed?.live !== undefined
       ? { ...changed, live: changed.live }
       : undefined;
   const start = editing?.open === true ? undefined : editing?.onStart;
@@ -405,7 +406,11 @@ export function Row({
             justify="space-between"
             align="flex-start"
           >
-            <MarkRow>
+            <MarkRow
+              className={
+                besideLive && drafted ? classes.changedValue : undefined
+              }
+            >
               <DraftedItem
                 draft={draft}
                 from={changed?.from}
