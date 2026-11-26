@@ -23,7 +23,7 @@ import {
   site,
   avery,
   savedAs,
-  Answers,
+  type Answers,
   cell,
   inRow,
   focusCell,

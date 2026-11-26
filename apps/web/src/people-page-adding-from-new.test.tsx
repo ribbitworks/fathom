@@ -25,7 +25,7 @@ import {
   order,
   peopleAnswer,
   refused,
-  Answers,
+  type Answers,
   openPeople,
   offeredOptions,
   pick,
