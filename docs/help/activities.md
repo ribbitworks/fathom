@@ -26,7 +26,7 @@ If you choose neither, Fathom says "Choose a release or a project" under **Relea
 
 You're done when the activity shows in the table with a hollow dot.
 
-You can also start from a project's details on **Projects**: select **Add activity**, and **New activity** opens with the project chosen.
+You can also start from a project's details on **Projects**: select **Add activity**, and **New activity** opens under the details with the project chosen. On **Activities** showing only one project's, **New activity** starts with that project chosen.
 
 ### Change an Activity
 

@@ -108,14 +108,15 @@ import type {
 import { newRecordQuestion, useDiscardQuestion } from "./discard-question.tsx";
 import { entered, type FormValues, newRecordId } from "./new-record-panel.tsx";
 import {
-  type ActivitiesOf,
   editsFeatureKinds,
   leavingFor,
+  filteredOwner,
+  releaseTakesNoActivity,
+  addingActivity,
   activitiesShowOn,
   projectActivityFields,
 } from "./activity-list.tsx";
-import type { LinkedAsk } from "./signed-in-route.tsx";
-import { afterNote, noteQuestion, useNoteEditing } from "./note-editing.tsx";
+import { afterNote, leavingForms, useNoteEditing } from "./note-editing.tsx";
 import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
 import { focusSoon } from "./focus.ts";
 import { addingTo, useAddFromPanel } from "./add-from-panel.tsx";
@@ -145,7 +146,6 @@ export function ProjectsPage({
   seesFeatures = true,
   onReleaseStream,
   activitiesOf,
-  adding,
   board,
   linkedColumn,
 }: ProjectsPageProps) {
@@ -154,13 +154,17 @@ export function ProjectsPage({
   const planned = plannedTableOn(tab);
   const query = useQuery(projectPlanQuery);
   const choicesQuery = useQuery(planChoicesQuery);
+  // New activity, which Projects stacks under a project's details, offers releases and effort's
+  // units; they don't hold up Projects' own tabs, which need neither.
+  const loadsStreams = page.loadsStreams || activitiesOf !== undefined;
+  const loadsEffort = page.loadsEffort || activitiesOf !== undefined;
   const streamsQuery = useQuery({
     ...releaseStreamsQuery,
-    enabled: page.loadsStreams,
+    enabled: loadsStreams,
   });
   const effortQuery = useQuery({
     ...effortConversionsQuery,
-    enabled: page.loadsEffort,
+    enabled: loadsEffort,
   });
   const mode = board?.mode ?? "table";
   const onBoard = tab === "features" && mode === "board";
@@ -184,7 +188,8 @@ export function ProjectsPage({
   const [beingAdded, setBeingAdded] = useState<{
     tab: PlanTab;
     values: FormValues;
-    // What a link started the form with, which isn't anything entered.
+    // What the form started with, such as the project Activities is filtered to, which isn't
+    // anything entered.
     starting?: FormValues;
     saving?: boolean;
   }>();
@@ -236,26 +241,9 @@ export function ProjectsPage({
   });
   const { shown, undoable } = changes;
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
-  // A New form a link asks for opens once New could, and the ask is let go whether it opened or not.
   const newReady = query.isSuccess && choicesSettled;
-  const [openedFor, setOpenedFor] = useState<FormValues>();
-  if (
-    adding !== undefined &&
-    adding.asked !== openedFor &&
-    newReady &&
-    canEdit &&
-    view.show !== "live"
-  ) {
-    setOpenedFor(adding.asked);
-    setForms((count) => count + 1);
-    setBeingAdded({ tab, values: adding.asked, starting: adding.asked });
-  }
-  const addingDone = adding?.onDone;
-  const addingSettled =
-    adding !== undefined && (adding.asked === openedFor || newReady);
-  useEffect(() => {
-    if (addingSettled) addingDone?.();
-  }, [addingSettled, addingDone]);
+  // The release streams, which Features and Activities load, and Projects for New activity.
+  const streams = streamsQuery.data?.streams ?? [];
 
   const { decide, discard, changeReason, resubmit, actionsFor } =
     planRecordActions({
@@ -275,17 +263,23 @@ export function ProjectsPage({
   });
   // Anything that would close a form asks first, while it holds something.
   const leave = (go: () => void) => {
-    if (beingAdded?.saving === true || linked.saving) return;
-    question.ask(
-      beingAdded !== undefined && entered(beingAdded)
-        ? newRecordQuestion(wordsOf(beingAdded.tab).one)
-        : (linked.question ?? (notes.changing ? noteQuestion : undefined)),
-      () => {
-        notes.discard();
-        setBeingAdded(undefined);
-        linked.close();
-        go();
-      },
+    leavingForms(
+      [
+        {
+          saving: beingAdded?.saving === true,
+          question:
+            beingAdded !== undefined && entered(beingAdded)
+              ? newRecordQuestion(wordsOf(beingAdded.tab).one)
+              : undefined,
+          close: () => {
+            setBeingAdded(undefined);
+          },
+        },
+        linked,
+      ],
+      notes,
+      question.ask,
+      go,
     );
   };
   const { addsFor } = linked;
@@ -314,8 +308,6 @@ export function ProjectsPage({
     );
   } else {
     const plan = query.data;
-    // The release streams, which only Features and Activities load.
-    const streams = streamsQuery.data?.streams ?? [];
     const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
       recordsAsShown(view.show, records, livePlanRecords);
     // A role's activities, for one that sees them, as the view shows them.
@@ -325,7 +317,13 @@ export function ProjectsPage({
         : {
             ...projectActivityFields,
             activities: asShown(plan.activities),
-            of: leavingFor(activitiesOf, leave),
+            of: leavingFor(
+              {
+                ...activitiesOf,
+                add: addingActivity(linked.addActivity, "projectId"),
+              },
+              leave,
+            ),
           };
     // Projects and proposals as the view shows them, so the features they name follow the view.
     const choices = {
@@ -456,6 +454,7 @@ export function ProjectsPage({
         const adding = linked.panel({
           plan,
           choices,
+          editsFeatureTeams,
           narrow,
           notes,
           units: view.units,
@@ -750,7 +749,26 @@ export function ProjectsPage({
           leave(() => {
             onOpen?.(undefined);
             setForms((count) => count + 1);
-            setBeingAdded({ tab, values: {} });
+            const starting =
+              tab === "activities"
+                ? filteredOwner(view.filters, (owner, id) =>
+                    owner === "projectId"
+                      ? // New shows only once the plan is read.
+                        (query.data as ProjectPlan).projects.some(
+                          (project) =>
+                            project.id === id &&
+                            !projectActivityFields.takesNoActivity(project),
+                        )
+                      : streams.some((stream) =>
+                          stream.releases.some(
+                            (release) =>
+                              release.id === id &&
+                              !releaseTakesNoActivity(release, stream),
+                          ),
+                        ),
+                  )
+                : {};
+            setBeingAdded({ tab, values: starting, starting });
           });
         }}
       />

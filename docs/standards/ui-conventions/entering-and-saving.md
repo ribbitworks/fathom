@@ -34,6 +34,11 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Adding:** Add adds the record, as a draft, and links it: within that draft where the new record names the other, by filling the empty row the picker was in, or else as a draft of the record the picker was for. It then closes the form and puts focus back on the picker's row.
   - **Drawn by:** `ChoicePicker`'s `adding` in `apps/web/src/choice-picker.tsx`, offered by a column's `adds` in `apps/web/src/record-table.ts`, and the form by `useAddFromPanel` in `apps/web/src/add-from-panel.tsx`, through `NewPlanRecordPanel` in `apps/web/src/new-plan-record-panel.tsx` and the shared panel stack in `apps/web/src/side-panel.tsx`.
   - **Example:** On Projects' Proposals, open Fleet Tracking Bid's details, select the pencil beside Customers and type a name no customer has.
+- **Adding from a record's details:** An Add button in a record's details for another kind of record, such as Add activity, opens that kind's New form on the same page, stacked under the details as a picker's New does, with the record set; it never goes to the other kind's page.
+  - **The form:** What it starts with isn't anything entered, so leaving it unchanged asks nothing.
+  - **Adding:** Add adds the record, closes the form, and puts focus back on the Add button; the details then list the record.
+  - **Drawn by:** `useAddFromPanel`'s `addActivity` in `apps/web/src/add-from-panel.tsx`, through `NewPlanRecordPanel` in `apps/web/src/new-plan-record-panel.tsx`.
+  - **Example:** On Projects, Add activity in Crane Control's details.
 - **The keyboard's option in a drop-down list:** The option the keyboard is on, which Enter would pick, looks like an option pointed at: light grey in light mode, dark grey in dark mode. It is never the accent colour, which looks like a choice already made.
   - **Drawn by:** The theme, through `Combobox.extend` and `Select.extend` in `apps/web/src/theme.ts`. Both give their options the class in `apps/web/src/combobox.module.css`, so every drop-down list, Select and table cell's choices follow it. A new kind of drop-down list from Mantine, such as `MultiSelect`, needs the same class in the theme.
   - **Example:** On Features, open a Status cell's choices and press the Down arrow.

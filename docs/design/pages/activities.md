@@ -31,7 +31,7 @@ Activities lists the work releases and projects need that isn't a feature, such 
   - **Project:** names a project with its Project ID first, as Features' Projects does.
   - **Moving:** choosing a value in the empty one moves the activity there, as a draft, and clears the other.
   - **Clearing:** clearing the filled one is refused under the row, as any refused value is: "Choose a release or a project".
-- **New activity:** the shared New form, with Release and Project as two pickers, neither marked required. Add with neither, or both, is refused under Release, with focus there, and nothing is sent: "Choose a release or a project", or "Choose a release or a project, not both".
+- **New activity:** the shared New form, with Release and Project as two pickers, neither marked required. On Activities filtered to one project or one release, it starts with that one, as Add activity in its details does; what it starts with isn't anything entered, so Cancel closes it without asking. Add with neither, or both, is refused under Release, with focus there, and nothing is sent: "Choose a release or a project", or "Choose a release or a project, not both".
 
 ## Grouping
 
@@ -40,7 +40,7 @@ Group by offers Needed by and each column of choices: Status, Release, Project, 
 ## Planned
 
 - **Releases:** a release's details listing its first five activities, its row's name a link to Activities, with Add activity, and Releases' Activities column, come with the Releases changes, as a project's are on [Projects](projects.md#record-details) ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
-- **A project's list:** Total effort under it, and a draft's mark on each activity a draft adds to the project or takes from it, as a project's Features row marks its features.
+- **A project's list:** Total effort under it.
 - **Staffed:** No until allocating to activities is built ([issue #207](https://github.com/ribbitworks/fathom/issues/207)).
 - **Duplicate…:** in an activity's row menu and details, with duplicating features.
 - **Colour:** an activity's colour, saved at once with no draft, comes with feature colours.

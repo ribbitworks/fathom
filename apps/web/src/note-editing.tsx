@@ -263,3 +263,31 @@ export function afterNote(
     go();
   });
 }
+
+// A form the page may close to go on, such as a New form stacked under a record's details.
+export interface LeftForm {
+  saving: boolean;
+  // What to ask before giving up what it holds, if anything is entered.
+  question: { title: string; keep: string } | undefined;
+  close: () => void;
+}
+
+// Goes on once the page's forms and any note being changed have been given up, asking first about
+// the first holding something; nothing goes on while a form is saving.
+export function leavingForms(
+  forms: readonly LeftForm[],
+  notes: Pick<NoteEditing, "changing" | "discard">,
+  ask: ReturnType<typeof useDiscardQuestion>["ask"],
+  go: () => void,
+) {
+  if (forms.some(({ saving }) => saving)) return;
+  ask(
+    forms.find(({ question }) => question !== undefined)?.question ??
+      (notes.changing ? noteQuestion : undefined),
+    () => {
+      notes.discard();
+      for (const form of forms) form.close();
+      go();
+    },
+  );
+}

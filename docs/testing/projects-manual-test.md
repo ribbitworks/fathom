@@ -479,13 +479,19 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 - [ ] `6F18` Select **Add activity**.
   - **Expected:**
-    - The **Activities** page opens, with the **New activity** form beside the table.
+    - A second panel, headed **New activity**, opens under the details of 'Crane Control', on **Projects**.
     - **Project** reads 'P-2001 Crane Control'.
     - **Release** reads None.
   - **Notes:**
 
-- [ ] `4F2A` Type 'Fictional Rehearsal' in **Name**, and select **Add**.
-  - **Expected:** 'Fictional Rehearsal' shows in the table with a hollow dot, its **Project** 'P-2001 Crane Control'.
+- [ ] `4F2A` Type `Fictional Rehearsal` in **Name**.
+  - **Expected:** The name is in the field.
+  - **Notes:**
+
+- [ ] `640E` Select **Add**.
+  - **Expected:**
+    - The **New activity** panel closes, and focus is on **Add activity**.
+    - 'Fictional Rehearsal' is listed under **Activities** in the details of 'Crane Control'.
   - **Notes:**
 
 ### PROJ-19: A Team Member Sees a Project's Activities

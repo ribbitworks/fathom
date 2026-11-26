@@ -37,9 +37,9 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 - **Linked records:** customers and proposals open in their own tab's panel; features open on [Features](features.md).
 - **A customer:** Name, Description and Notes under Details, then Projects, Proposals and Features under Commitments, drawn as a feature's details draw its customers and commitments: links one to a line, ID first, None when empty. Features shows only to those who see features. The owner chose this on 2026-11-24 over a customer-only layout with each project's next delivery and features nested under it, which an earlier mockup showed.
 - **Adding a customer from Customers:** a project's and a proposal's Customers picker offers New customer, in its panel and in its table's cell, as [Adding from a picker](../../standards/ui-conventions/entering-and-saving.md#choices) sets out. A feature's pickers on [Features](features.md) do the same.
-- **Activities:** for those who see features, a project's Activities row lists them one to a line, folded past the first five, each opening on [Activities](activities.md), or None.
+- **Activities:** for those who see features, a project's Activities row lists them one to a line, folded past the first five, each opening on [Activities](activities.md), or None. An activity a draft adds to the project, or takes from it, carries that draft's mark, as the Draft view shows it, as a milestone does in Milestones.
   - **Show on Activities:** whenever the project has an activity, the row's name, Activities, is a link opening Activities filtered to the project, read as "Activities, show on Activities"; the project's ⋯ menu, on its row and in its details, offers Show on Activities too, whenever the link shows.
-  - **Add activity:** under the list for those who edit features, opening New activity on Activities filtered to the project, with the project set.
+  - **Add activity:** under the list for those who edit features, opening New activity stacked under the project's details, on Projects, with the project set, as [Adding from a record's details](../../standards/ui-conventions/entering-and-saving.md#choices) sets out; once added, the details list it, and focus goes back to Add activity.
 
 ### Scope History
 

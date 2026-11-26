@@ -5,13 +5,15 @@
 
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { FoldedList } from "./folded-list.tsx";
-import { RecordLinkList } from "./record-details.tsx";
+import { type RecordLinkItem, RecordLinkList } from "./record-details.tsx";
 
 const shownFirst = 5;
 
 export interface ShortListAction {
   label: string;
   onClick: () => void;
+  // For a button focus goes back to, such as after a form it opened closes.
+  id?: string;
 }
 
 export function ShortList({
@@ -20,7 +22,10 @@ export function ShortList({
   onShow,
   actions,
 }: {
-  items: readonly { id: string; name: string }[];
+  items: readonly (Pick<RecordLinkItem, "around"> & {
+    id: string;
+    name: string;
+  })[];
   // What the items are, in the plural, as Show all names them.
   noun: string;
   onShow: (id: string) => void;
@@ -34,9 +39,10 @@ export function ShortList({
         <FoldedList items={items} first={shownFirst} noun={noun}>
           {(shown) => (
             <RecordLinkList
-              links={shown.map(({ id, name }) => ({
+              links={shown.map(({ id, name, around }) => ({
                 id,
                 name,
+                around,
                 onShow: () => {
                   onShow(id);
                 },
@@ -47,8 +53,8 @@ export function ShortList({
       )}
       {actions.length > 0 && (
         <Group gap="xs">
-          {actions.map(({ label, onClick }) => (
-            <Button key={label} variant="default" onClick={onClick}>
+          {actions.map(({ label, onClick, id }) => (
+            <Button key={label} id={id} variant="default" onClick={onClick}>
               {label}
             </Button>
           ))}
