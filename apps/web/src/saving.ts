@@ -121,11 +121,16 @@ export function useSaving<Data>({
   // The count of the change saved last, as made, so only the latest change made can be undone, even
   // when an earlier one finishes saving after it.
   const savedLast = useRef(0);
+  // Whether the change saved last is part of the one saved before it, such as a new record's link.
+  const savedJoins = useRef(false);
+  // Set until the next change is made, which is then part of the one before.
+  const joining = useRef(false);
 
   const change = useMutation({
     mutationKey: changeKey,
     scope: { id: JSON.stringify(queryKey) },
-    mutationFn: ({ save }: Change<Data> & { made: number }) => save(),
+    mutationFn: ({ save }: Change<Data> & { made: number; joins?: boolean }) =>
+      save(),
     onMutate: async ({ next }) => {
       await queryClient.cancelQueries({ queryKey });
       const before = queryClient.getQueryData(queryKey) as Data;
@@ -143,8 +148,9 @@ export function useSaving<Data>({
           : describeProblem(error, failure),
       );
     },
-    onSuccess: (changeSetId, { onSaved, made }, context) => {
+    onSuccess: (changeSetId, { onSaved, made, joins }, context) => {
       savedLast.current = made;
+      savedJoins.current = joins === true;
       onSaved?.(changeSetId, context.before);
     },
     onSettled: async () => {
@@ -179,12 +185,25 @@ export function useSaving<Data>({
     };
   }, [undo, blocked]);
 
-  // Undoes a saved change set, showing the data as it was before it at once.
-  const revert = (before: Data, changeSetId: string, onUndone?: () => void) => {
+  // The change sets the Undo offered last takes back, and the data before the first of them.
+  const offered = useRef<{ changeSetIds: string[]; before: Data }>(undefined);
+
+  // Undoes saved change sets, the latest first, showing the data as it was before them at once.
+  const revert = (
+    before: Data,
+    changeSetIds: readonly string[],
+    onUndone?: () => void,
+  ) => {
     change.mutate({
       made: changeMade(),
       next: () => before,
-      save: () => undoChange(changeSetId),
+      save: async () => {
+        let undid: string | null = null;
+        for (const changeSetId of [...changeSetIds].reverse()) {
+          undid = await undoChange(changeSetId);
+        }
+        return undid;
+      },
       failure: undoFailure,
       ...(onUndone ? { onSaved: onUndone } : {}),
     });
@@ -200,9 +219,16 @@ export function useSaving<Data>({
   ): (() => void) => {
     const change = savedLast.current;
     if (isLatestChange(change)) closeUndoNotice();
+    const joined = savedJoins.current ? offered.current : undefined;
+    const taken = {
+      changeSetIds: [...(joined?.changeSetIds ?? []), changeSetId],
+      before: joined?.before ?? before,
+    };
+    offered.current = taken;
     const run = () => {
       setUndo(undefined);
-      revert(before, changeSetId, onUndone);
+      offered.current = undefined;
+      revert(taken.before, taken.changeSetIds, onUndone);
       if (focus !== undefined) focusSoon(focus);
     };
     setUndo({ run, change });
@@ -220,6 +246,7 @@ export function useSaving<Data>({
     if (changeSetId === null) {
       closeUndoNotice();
       setUndo(undefined);
+      offered.current = undefined;
       return;
     }
     offer(changeSetId, before, focus, onUndone);
@@ -243,7 +270,12 @@ export function useSaving<Data>({
 
   return {
     save: (next: Change<Data>) => {
-      change.mutate({ ...next, made: changeMade() });
+      change.mutate({ ...next, made: changeMade(), joins: joining.current });
+      joining.current = false;
+    },
+    // Makes the next change made part of the one made before it, so one Undo takes back both.
+    joinNext: () => {
+      joining.current = true;
     },
     // A change a dialog already saved, in the change set given, if any: shown at once, then
     // reloaded once no other change is saving.

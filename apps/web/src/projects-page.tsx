@@ -289,6 +289,7 @@ export function ProjectsPage({
       query.data !== undefined && query.data.canEdit && form === undefined,
     canAddFeatures: query.data?.canEditFeatures === true,
     actionsFor,
+    joinNext: changes.joinNext,
   });
   // Anything that would close a form asks first, while it holds something.
   const leave = (go: () => void) => {

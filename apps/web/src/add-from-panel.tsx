@@ -165,6 +165,7 @@ export function useAddFromPanel({
   canAdd,
   canAddFeatures,
   actionsFor,
+  joinNext,
 }: {
   // Whether the role may add the plan's records here, and a picker may offer New now.
   canAdd: boolean;
@@ -173,6 +174,8 @@ export function useAddFromPanel({
   actionsFor: <Rec extends PlanRecord, Request>(
     type: PlanRecordKind,
   ) => RecordActions<Rec, PlanChange, Request>;
+  // Makes the next change part of the one before it, so one Undo takes back a record and its link.
+  joinNext: () => void;
 }) {
   const client = useQueryClient();
   const [linking, setLinking] = useState<Linking>();
@@ -236,6 +239,7 @@ export function useAddFromPanel({
       .filter((holder) => holder.id === id)) {
       // Only pickers that link after adding, through a column the record holds, come here.
       const key = current.key as LinkKey;
+      joinNext();
       actionsFor(current.type).update(record, {
         [key]: [...linkedIn(record, key), ...added],
       });

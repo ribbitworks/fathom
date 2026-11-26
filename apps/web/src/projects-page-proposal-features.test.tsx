@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for a proposal's Features in its details: choosing features, and adding a new one linked to
-// the proposal, against a simulated server.
+// the proposal, which one Undo takes back with its link, against a simulated server.
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -49,6 +49,38 @@ async function openProposal(
   return opened;
 }
 
+// Adds Fictional Dock Lights from the proposal's New feature, the server answering its add and the
+// proposal's link as given, and waits for the form to close.
+async function addNewFeature(saves = {}) {
+  const opened = await openProposal({
+    "POST /api/features": saved(() => withAdded),
+    [`PUT /api/proposals/${proposalId}`]: saved(() => linked),
+    ...saves,
+  });
+  await userEvent.click(
+    within(sidePanel()).getByRole("button", { name: "New feature" }),
+  );
+  const form = newForm() as HTMLElement;
+  expect(
+    within(form).getByRole("heading", { name: "New feature" }),
+  ).toBeDefined();
+  await userEvent.type(
+    within(form).getByRole("textbox", { name: "Name" }),
+    "Fictional Dock Lights",
+  );
+  opened.held.plan = withAdded;
+  await userEvent.click(within(form).getByRole("button", { name: "Add" }));
+  await waitFor(() => {
+    expect(sent(opened.fetch, `PUT /api/proposals/${proposalId}`)).toEqual([
+      expect.objectContaining({ featureIds: [newId] }),
+    ]);
+  });
+  await waitFor(() => {
+    expect(newForm()).toBeNull();
+  });
+  return opened;
+}
+
 describe("a proposal's Features in its details", () => {
   it("offers Choose features and New feature under the list, in place of the row's pencil", async () => {
     await openProposal();
@@ -71,36 +103,36 @@ describe("a proposal's Features in its details", () => {
   });
 
   it("adds a new feature and links it as the proposal's own draft, then puts focus back on New feature", async () => {
-    const { fetch, held } = await openProposal({
-      "POST /api/features": saved(() => withAdded),
-      [`PUT /api/proposals/${proposalId}`]: saved(() => linked),
-    });
-    await userEvent.click(
-      within(sidePanel()).getByRole("button", { name: "New feature" }),
-    );
-    const form = newForm() as HTMLElement;
-    expect(
-      within(form).getByRole("heading", { name: "New feature" }),
-    ).toBeDefined();
-    await userEvent.type(
-      within(form).getByRole("textbox", { name: "Name" }),
-      "Fictional Dock Lights",
-    );
-    held.plan = withAdded;
-    await userEvent.click(within(form).getByRole("button", { name: "Add" }));
-    await waitFor(() => {
-      expect(sent(fetch, `PUT /api/proposals/${proposalId}`)).toEqual([
-        expect.objectContaining({ featureIds: [newId] }),
-      ]);
-    });
+    const { fetch } = await addNewFeature();
     expect(sent(fetch, "POST /api/features")).toEqual([
       expect.objectContaining({ name: "Fictional Dock Lights" }),
     ]);
     await waitFor(() => {
-      expect(newForm()).toBeNull();
-    });
-    await waitFor(() => {
       expect(document.activeElement?.textContent).toBe("New feature");
+    });
+  });
+
+  it("takes back the new feature and its link with one Undo, the link first", async () => {
+    const [addSet, linkSet] = [crypto.randomUUID(), crypto.randomUUID()];
+    const undone = () => Response.json({ changeSetId: crypto.randomUUID() });
+    const { fetch } = await addNewFeature({
+      "POST /api/features": () =>
+        Response.json({ plan: withAdded, changeSetId: addSet }),
+      [`PUT /api/proposals/${proposalId}`]: () =>
+        Response.json({ plan: linked, changeSetId: linkSet }),
+      [`POST /api/undo/${addSet}`]: undone,
+      [`POST /api/undo/${linkSet}`]: undone,
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    await userEvent.keyboard("{Meta>}z{/Meta}");
+    await waitFor(() => {
+      expect(
+        fetch.mock.calls
+          .map(([url]) => url)
+          .filter((url) => url.startsWith("/api/undo/")),
+      ).toEqual([`/api/undo/${linkSet}`, `/api/undo/${addSet}`]);
     });
   });
 

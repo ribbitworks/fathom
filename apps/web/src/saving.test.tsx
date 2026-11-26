@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for saving changes on a page: that only the latest change made offers Undo, even when an
-// earlier one finishes saving after a later one was made, and which fields leave Cmd+Z to their own
-// undo.
+// earlier one finishes saving after a later one was made, that a change joined to the one before is
+// undone with it, and which fields leave Cmd+Z to their own undo.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "./api.ts";
 import {
   changeMade,
@@ -16,6 +16,7 @@ import {
   notifyUndoable,
 } from "./notices.tsx";
 import { isUndo, useSaving } from "./saving.ts";
+import { serverAnswers } from "./test-support.tsx";
 
 // Semgrep can't parse typeof import() as a type argument.
 type Notices = typeof import("./notices.tsx");
@@ -74,6 +75,61 @@ describe("saving a change", () => {
       expect(notifySuccess).toHaveBeenCalledWith("Removed the one.");
     });
     expect(notifyUndoable).not.toHaveBeenCalled();
+  });
+});
+
+describe("a change joined to the one before", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("is undone with it by one Cmd+Z, the later change first", async () => {
+    // Given a change that, once saved, makes another joined to it, as a new record's link is
+    const fetch = serverAnswers({
+      "POST /api/undo/link-set": () =>
+        Response.json({ changeSetId: crypto.randomUUID() }),
+      "POST /api/undo/added-set": () =>
+        Response.json({ changeSetId: crypto.randomUUID() }),
+    });
+    const { result } = renderHook(
+      () =>
+        useSaving({ queryKey, removed: "Removed elsewhere.", blocked: false }),
+      { wrapper: wrapperFor(new QueryClient()) },
+    );
+    const saved = (changeSetId: string) => ({
+      next: (data: unknown) => data,
+      failure: "Could not save.",
+      onSaved: (id: string | null, before: unknown) => {
+        result.current.undoable(id, before);
+      },
+      save: () => Promise.resolve(changeSetId),
+    });
+    act(() => {
+      result.current.save({
+        ...saved("added-set"),
+        save: () => {
+          result.current.joinNext();
+          result.current.save(saved("link-set"));
+          return Promise.resolve("added-set");
+        },
+      });
+    });
+    // When Cmd+Z is pressed once both have saved
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    act(() => {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "z", metaKey: true }),
+      );
+    });
+    // Then both change sets are undone, the link's first
+    await waitFor(() => {
+      expect(fetch.mock.calls.map(([url]) => url)).toEqual([
+        "/api/undo/link-set",
+        "/api/undo/added-set",
+      ]);
+    });
   });
 });
 
