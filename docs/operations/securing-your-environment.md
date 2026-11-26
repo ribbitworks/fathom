@@ -1,6 +1,6 @@
 # Fathom: Securing Your Environment
 
-**Last updated:** 2026-11-24
+**Last updated:** 2026-11-26
 
 What Fathom can't secure for itself, and recommendations for securing it. The [Security Plan](../security/security-plan.md) covers what it does; everything below is up to whoever runs it. Settings named here are in `deploy/compose.env.example`, and [Installing Fathom](installing-fathom.md) sets out the installation itself.
 
@@ -58,8 +58,7 @@ On Windows Server, run Fathom in a Linux virtual machine instead, and secure it 
 
 ## Updates
 
-- **Run the latest release:** Each release's images are scanned before they're published. Update to each new release as it comes out.
-- **Images built on the machine:** Set `FATHOM_SECURITY_FIXES_DATE` to a newer date to fetch the latest operating system fixes when rebuilding.
+- **Run the latest release:** Each release's images are scanned before they're published, and a server runs only those, never images built on it. Update to each new release as it comes out, as [Installing Fathom § Stopping and Updating](installing-fathom.md#stopping-and-updating) sets out.
 
 ## What Leaves Fathom
 

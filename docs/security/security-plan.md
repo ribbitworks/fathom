@@ -1,6 +1,6 @@
 # Fathom: Security Plan
 
-**Last updated:** 2026-11-25
+**Last updated:** 2026-11-26
 
 How Fathom guards against threats as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it, as [Securing Your Environment](../operations/securing-your-environment.md) sets out. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
 
@@ -86,7 +86,8 @@ flowchart LR
 - **Dependencies:** Packages are installed from the lockfile exactly, and base images are pinned by digest and GitHub Actions by commit.
   - **Security fixes in images:** image builds also install the operating system's security fixes released by `FATHOM_SECURITY_FIXES_DATE`.
   - **Renovate:** Renovate, as a GitHub App, may only open pull requests on branches of its own, which are reviewed and merged like any change.
-  - **Accepted:** release images aren't signed and come with no list of their components.
+  - **Published images only:** a server runs a release's published images, which were scanned before publishing, and never builds; it holds only the release's two settings files, not the source, as [Installing Fathom](../operations/installing-fathom.md) sets out. Development, scan and container-test builds are named without a registry, so they can't take a release's name. Checked by `scripts/compose-settings.test.mjs`, `scripts/image-scans.test.mjs` and the [Installing Fathom acceptance test](../testing/acceptance/acceptance-installing-fathom-manual-test.md).
+  - **Accepted:** release images aren't signed and come with no list of their components, and a server pulls them by their version tag, which the registry could let be pushed again, not by digest.
 - **The UI tests' browser:** `pnpm test:ui` downloads Chromium from Playwright's servers, at the version its pinned package names, outside the lockfile and the scans. Accepted: it runs only on a contributor's computer, against fictional data, and never reaches an image.
 - **Workflows:** The Check workflow runs every pull request's code, including a fork's, with a read-only token and no secrets, on the `pull_request` event, never `pull_request_target`.
   - **Least access:** each job is given the least it needs, and values a person can choose, such as a tag's name, reach a command only as quoted settings.

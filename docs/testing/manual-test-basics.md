@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test Basics
@@ -140,15 +140,15 @@ Run this in three cases:
 
 - Before [Installing Fathom](acceptance/acceptance-installing-fathom-manual-test.md) when an earlier acceptance run's installation is still on the machine.
 - To end an acceptance run.
-- Before any other manual test in a clone that still has an installation, since the development commands read the clone's `deploy/.env`.
+- Before any other manual test on a machine that still has an installation.
 
-This deletes the installation's containers, its database and its secrets, and the clone's `deploy/.env`. It keeps the images it built, named `fathom-app`, `fathom-postgres` and `fathom-proxy`, and leaves the development database alone.
+This deletes the installation's containers, its database, its secrets and its folder, `~/fathom-install`. It keeps the images it pulled, such as `ghcr.io/ribbitworks/fathom-app:0.1.0`, and leaves the development database alone.
 
-1. In the second terminal, at the repository root, run:
+1. In the second terminal, run:
 
    ```sh
-   docker compose --file deploy/compose.yaml down --volumes
-   rm -rf ~/fathom-install deploy/.env
+   docker compose --project-name fathom down --volumes
+   rm -rf ~/fathom-install
    ```
 
 2. Confirm that `docker compose ls --all` lists no project named `fathom`.

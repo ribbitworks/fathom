@@ -1,11 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Fathom as it runs in production: the proxy, the application, a one-off migration run, and the
-# database, each with the container hardening the security plan requires. Only the proxy is on a
-# network with a route out, so users can reach it; the application and the database are each on
-# internal networks with no route out, and the database is reachable only from the application and
-# the migration run. Images are built for linux/amd64. The settings on the
-# host are listed in compose.env.example; scripts/stack.sh runs this file on a development machine.
+# database, each hardened, with only the proxy reachable. A server pulls a release's images, named
+# by FATHOM_REGISTRY and FATHOM_IMAGE_TAG; a development machine builds them.
 
 name: fathom
 
@@ -17,8 +14,11 @@ x-hardening: &hardening
     - ALL
   restart: unless-stopped
 
-# The application's image, which the migration run shares. The front end shows the release, commit
-# and commit date, which scripts/lib.sh reads from git, since the build cannot see .git.
+# The application's image, which the migration run shares.
+x-app-image: &app-image ${FATHOM_REGISTRY:-}${FATHOM_REGISTRY:+/}fathom-app:${FATHOM_IMAGE_TAG:-latest}
+
+# The front end shows the release, commit and commit date, which scripts/lib.sh reads from git, since
+# the build cannot see .git.
 x-app-build: &app-build
   context: ..
   dockerfile: deploy/docker/app/Dockerfile
@@ -35,7 +35,7 @@ services:
       dockerfile: deploy/docker/proxy/Dockerfile
       args:
         SECURITY_FIXES_DATE: ${FATHOM_SECURITY_FIXES_DATE:-unset}
-    image: fathom-proxy:${FATHOM_IMAGE_TAG:-latest}
+    image: ${FATHOM_REGISTRY:-}${FATHOM_REGISTRY:+/}fathom-proxy:${FATHOM_IMAGE_TAG:-latest}
     platform: linux/amd64
     user: haproxy
     networks:
@@ -52,7 +52,7 @@ services:
   app:
     <<: *hardening
     build: *app-build
-    image: fathom-app:${FATHOM_IMAGE_TAG:-latest}
+    image: *app-image
     platform: linux/amd64
     user: nonroot
     environment:
@@ -88,7 +88,7 @@ services:
   migrate:
     <<: *hardening
     build: *app-build
-    image: fathom-app:${FATHOM_IMAGE_TAG:-latest}
+    image: *app-image
     platform: linux/amd64
     user: nonroot
     command: ["packages/db/src/migrate.ts"]
@@ -116,7 +116,7 @@ services:
       dockerfile: deploy/docker/postgres/Dockerfile
       args:
         SECURITY_FIXES_DATE: ${FATHOM_SECURITY_FIXES_DATE:-unset}
-    image: fathom-postgres:${FATHOM_IMAGE_TAG:-latest}
+    image: ${FATHOM_REGISTRY:-}${FATHOM_REGISTRY:+/}fathom-postgres:${FATHOM_IMAGE_TAG:-latest}
     platform: linux/amd64
     user: postgres
     environment:
