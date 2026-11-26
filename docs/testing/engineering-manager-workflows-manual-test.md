@@ -130,7 +130,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `CB7D` Select **Feature team** in the Group by menu.
   - **Expected:**
     - Under the 'Payments core' group, cells list features, each on a line of its own with its percentage at the right, such as "50%".
-    - The group ends with a row in bold headed **Total, PM**.
+    - The group ends with a row in bold headed **Total, person-months**.
   - **Notes:**
 
 - [ ] `FAE8` Search for `Blaise Gislason`, and read his cell in the current month's column.

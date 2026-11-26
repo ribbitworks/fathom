@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Scope History
@@ -285,7 +285,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `6B38` Press Enter.
   - **Expected:**
     - No dialog opens.
-    - **Features** in the side panel names 'Offline Sync' alone.
+    - **Features** in the side panel names 'Offline Sync', then a hollow yellow dot and 'Scheduler API', struck through.
     - The first row under **Scope history** names 'Scheduler API'.
     - The first row has a hollow yellow dot before 'Scheduler API'.
     - The first row reads "Removed" and today's date, in grey.
