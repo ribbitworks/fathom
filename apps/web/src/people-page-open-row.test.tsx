@@ -5,8 +5,8 @@
 
 import { screen } from "@testing-library/react";
 import { afterEach, describe, it, vi } from "vitest";
-import { editor, peopleAnswer, positions } from "./people-note-fixtures.ts";
-import { renderApp, serverAnswers } from "./test-support.tsx";
+import { editor, peopleAnswer } from "./people-note-fixtures.ts";
+import { positions, renderApp, serverAnswers } from "./test-support.tsx";
 import { markedUntilClosed } from "./test-open-row.tsx";
 
 afterEach(() => {
