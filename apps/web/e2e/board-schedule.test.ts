@@ -5,6 +5,7 @@
 
 import { expect, test } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";
+import { send } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("productManager") });
 
@@ -57,16 +58,16 @@ test("shows one schedule's features by months, and a saved view keeps the choice
   await expect(page.getByText("Offline Sync", { exact: true })).toHaveCount(0);
 
   // The view is taken away again, so runs leave none behind.
-  const removed = await page.evaluate(async (name) => {
-    const views = (await (await fetch("/api/views/features")).json()) as {
-      id: string;
-      name: string;
-    }[];
-    const saved = views.find((view) => view.name === name);
-    return saved === undefined
-      ? 0
-      : (await fetch(`/api/views/features/${saved.id}`, { method: "DELETE" }))
-          .status;
-  }, named);
-  expect(removed).toBe(200);
+  const views = (await send(page, "GET", "/api/views/features")).body as {
+    id: string;
+    name: string;
+  }[];
+  const saved = views.find((view) => view.name === named);
+  expect(saved).toBeDefined();
+  const removed = await send(
+    page,
+    "DELETE",
+    `/api/views/features/${String(saved?.id)}`,
+  );
+  expect(removed.ok).toBe(true);
 });

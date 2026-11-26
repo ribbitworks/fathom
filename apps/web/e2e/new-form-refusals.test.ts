@@ -5,6 +5,7 @@
 
 import { expect, type Page, test } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";
+import { send } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("productManager") });
 
@@ -26,12 +27,12 @@ async function newCustomerFromBid(
   role: "region" | "dialog" = "region",
 ) {
   await page.goto("/projects?tab=proposals");
-  const bidId = await page.evaluate(async () => {
-    const plan = (await (await fetch("/api/projects")).json()) as {
-      proposals: { id: string; name: string }[];
-    };
-    return plan.proposals.find(({ name }) => name === "Fleet Tracking Bid")?.id;
-  });
+  const plan = (await send(page, "GET", "/api/projects")).body as {
+    proposals: { id: string; name: string }[];
+  };
+  const bidId = plan.proposals.find(
+    ({ name }) => name === "Fleet Tracking Bid",
+  )?.id;
   await page.goto(`/projects?tab=proposals&open=${String(bidId)}`);
   const details = page.getByRole(role, { name: /Fleet Tracking Bid/ });
   await details.getByText("Customers", { exact: true }).click();
@@ -41,13 +42,12 @@ async function newCustomerFromBid(
   return { details, form, name: form.getByRole("textbox", { name: "Name" }) };
 }
 
-const customersNamed = (page: Page, name: string) =>
-  page.evaluate(async (wanted) => {
-    const plan = (await (await fetch("/api/projects")).json()) as {
-      customers: { name: string }[];
-    };
-    return plan.customers.filter((one) => one.name === wanted).length;
-  }, name);
+async function customersNamed(page: Page, name: string) {
+  const plan = (await send(page, "GET", "/api/projects")).body as {
+    customers: { name: string }[];
+  };
+  return plan.customers.filter((one) => one.name === name).length;
+}
 
 test("the stacked form refuses a Name emptied with its ×, keeping focus in it and saving nothing", async ({
   page,

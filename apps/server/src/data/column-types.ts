@@ -35,6 +35,13 @@ export interface LiveValues {
   numbers: Numbers;
 }
 
+export const noLiveValues = (): LiveValues => ({
+  values: {},
+  links: {},
+  notes: {},
+  numbers: {},
+});
+
 export interface ColumnType {
   type: FieldType;
   // The settings a column of this type keeps, from those recorded or asked for.
@@ -159,7 +166,7 @@ export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
 export function liveValuesOf(
   recorded: ReadonlyMap<string, unknown>,
 ): LiveValues {
-  const live: LiveValues = { values: {}, links: {}, notes: {}, numbers: {} };
+  const live = noLiveValues();
   for (const [columnId, value] of recorded) {
     Object.values(columnTypes)
       .find(({ count }) => count(value) > 0)
