@@ -410,7 +410,10 @@ describe("Allocations kept to what someone is allocated to", () => {
     });
     expect(rowOf("Casey Fictional")).toBeDefined();
     expect(rowOf("Payments tester")).toBeDefined();
-    expect(screen.getByText("Allocated to: A feature")).toBeDefined();
+    expect(
+      screen.getByText(/^Allocated to:/).closest(".mantine-Pill-root")
+        ?.textContent,
+    ).toBe("Allocated to: A feature");
   });
 
   it("keeps the rows on a feature chosen from the Allocations button, in any month, keeping it in the address", async () => {

@@ -8,9 +8,12 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { featureDraft, recordCell } from "./test-support.tsx";
 import {
+  answers,
+  featureEditor,
   featurePlan,
   first,
   open,
+  openPage,
   sidePanel,
   teamId,
   withRelease,
@@ -47,7 +50,13 @@ describe("a feature's team on Features", () => {
   });
 
   it("offers each team in the picker after its square", async () => {
-    await open(onTeam, {}, `/features?open=${first.id}`);
+    // Seeing people reads the lists too.
+    await openPage(
+      `/features?open=${first.id}`,
+      onTeam,
+      { ...answers, "GET /api/lists": () => Response.json({ lists: [] }) },
+      [...featureEditor, "people:view", "feature-teams:edit"],
+    );
     await userEvent.click(
       await screen.findByRole("button", { name: "Change Feature team" }),
     );
