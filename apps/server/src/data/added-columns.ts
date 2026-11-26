@@ -59,6 +59,8 @@ export async function columnsWithAdded(
       return {
         id,
         tableName: String(field.tableName),
+        // A drafted column is never a private page's, which are saved at once.
+        pageId: null,
         name: String(field.name),
         ...settings,
         required: false,

@@ -11,6 +11,7 @@ import {
   type Permission,
   permissionDescriptions,
   permissionGrid,
+  shownOnRoles,
   roleEffectsSchema,
   roleListSchema,
   type RoleChange,
@@ -200,7 +201,7 @@ export interface Difference {
 }
 
 // What an account gains and loses when what it may do changes, in plain English: pages first, then
-// what it may do with data.
+// what it may do with data, leaving out permissions not shown on Roles yet.
 export function difference(
   before: readonly Permission[],
   after: readonly Permission[],
@@ -213,7 +214,10 @@ export function difference(
       .filter((page) => !pagesBefore.includes(page))
       .map((page) => `Sees the ${page} page.`),
     ...after
-      .filter((permission) => !before.includes(permission))
+      .filter(
+        (permission) =>
+          shownOnRoles(permission) && !before.includes(permission),
+      )
       // The permission is always one of the shared list.
       // eslint-disable-next-line security/detect-object-injection
       .map((permission) => permissionDescriptions[permission].allows),
@@ -223,7 +227,9 @@ export function difference(
       .filter((page) => !pagesAfter.includes(page))
       .map((page) => `The ${page} page no longer appears.`),
     ...before
-      .filter((permission) => !after.includes(permission))
+      .filter(
+        (permission) => shownOnRoles(permission) && !after.includes(permission),
+      )
       // The permission is always one of the shared list.
       // eslint-disable-next-line security/detect-object-injection
       .map((permission) => permissionDescriptions[permission].without),

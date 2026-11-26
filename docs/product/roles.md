@@ -1,6 +1,6 @@
 # Fathom: Roles
 
-**Last updated:** 2026-11-25
+**Last updated:** 2026-11-26
 
 What each role can see, change and approve. The [Administration Pages](../design/pages/administration.md#roles) describe the Roles page.
 
@@ -38,6 +38,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 | Confidential data | None | None | None | View | View | Edit | Edit | View | None |
 | Classify data | None | None | None | None | None | Yes | Yes | None | None |
 | Approve own drafts | None | None | None | None | None | Yes | None | None | None |
+| Make private pages | None | Yes | Yes | Yes | Yes | Yes | Yes | None | None |
 | Administration: accounts, roles, settings and the access history | None | None | None | None | None | View | None | View | Edit |
 
 - **Edit includes View:** A role that may edit an area or class also views it, so nobody changes what they can't see.
@@ -49,11 +50,12 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 - **Choices:** Everyone who sees data drawn from a list sees the list's choices, without needing the Lists page.
 - **Lists made with a column:** Whoever sets up Features' or Activities' columns also drafts a new General list with a column, without Edit Configuration, as [A new list with a column](#columns-and-saved-views) sets out.
 - **Team colours:** Edit People sets each reporting team's colour, and Edit Feature teams sets each feature team's.
+- **Private pages:** Make private pages lets a person make pages of their own, each a table only they read; nobody else reads them, an Administrator included. Losing the permission hides a person's pages until it comes back. Their pages aren't built yet, so the Roles page doesn't show the permission until they are.
 - **Exports:** Exporting needs no permission of its own: whoever opens a page exports what its table shows, so Product Managers export Features, and the [Plan](domain.md#planning-terms) once it is built.
 
 ## Permissions
 
-- **An action on an area:** Each permission is View, Edit or Approve on an area, as the grid above shows. Administration and the two classes have View and Edit only; Classify data and Approve own drafts stand alone. Each feature adds its areas to the one list, so a role grows by a row, not a new role.
+- **An action on an area:** Each permission is View, Edit or Approve on an area, as the grid above shows. Administration and the two classes have View and Edit only; Classify data, Approve own drafts and Make private pages stand alone. Each feature adds its areas to the one list, so a role grows by a row, not a new role.
 - **Edit means drafting:** Edit makes drafts. The few changes that skip drafts are marked on their page.
 - **Splitting a permission:** When an upgrade splits a permission into finer ones, every role that held it gets all of them, so nobody's access changes.
 
@@ -158,3 +160,4 @@ Whoever edits a table's records sets the table up (owner, 2026-11-23), so there 
 - **The first Administrator:** The install creates the Fathom Administrator account, holding the Administrator role, so no employee starts with full access. A person later given the Administrator role takes over from it, as [Securing Your Environment](../operations/securing-your-environment.md#accounts) sets out.
 - **Changes take effect at once:** Changes to roles and to an account's roles are not drafts, since Approvers decide data, not who sees what. A second person's confirmation of changes granting Confidential data is deferred in [issue #8](https://github.com/ribbitworks/fathom/issues/8).
 - **Updates never change grants:** An update never changes what an organization's roles grant. A changed starting role reaches an organization only when someone who may edit roles chooses Restore template and saves it, recorded like any change to a role. An update may add a new starting role, since it grants nothing until given to an account.
+  - **One exception before the first release:** The migration that adds Make private pages also grants it to the six starting roles that make pages, as an earlier one granted View Confidential data to Project Managers and Engineering Managers. A new database's starting roles come from the migrations, and nothing is converted, since databases are reset rather than upgraded until the first release.

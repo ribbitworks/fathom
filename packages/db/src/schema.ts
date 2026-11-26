@@ -8,6 +8,7 @@ export * from "./schema-lists.ts";
 export * from "./schema-plan.ts";
 export * from "./schema-people.ts";
 export * from "./schema-columns.ts";
+export * from "./schema-private.ts";
 export * from "./schema-views.ts";
 export * from "./schema-changes.ts";
 export * from "./schema-teams.ts";

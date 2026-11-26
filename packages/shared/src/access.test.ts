@@ -11,6 +11,7 @@ import {
   permissionLabel,
   permissionSchema,
   sameGrants,
+  shownOnRoles,
   startingRoles,
   withImplied,
 } from "./access.ts";
@@ -66,11 +67,14 @@ describe("holdsAny", () => {
 });
 
 describe("permissionGrid", () => {
-  it("places every permission exactly once", () => {
+  it("places every permission shown on Roles exactly once, and none not shown yet", () => {
     const placed = permissionGrid.flatMap(({ actions }) =>
       Object.values(actions),
     );
-    expect([...placed].sort()).toEqual([...permissionSchema.options].sort());
+    expect([...placed].sort()).toEqual(
+      permissionSchema.options.filter(shownOnRoles).sort(),
+    );
+    expect(shownOnRoles("private-pages:make")).toBe(false);
   });
 });
 

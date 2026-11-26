@@ -55,6 +55,7 @@ const expected: [Role, Permission[]][] = [
       "people:view",
       "feature-teams:view",
       "configuration:view",
+      "private-pages:make",
     ],
   ],
   [
@@ -66,6 +67,7 @@ const expected: [Role, Permission[]][] = [
       "people:view",
       "feature-teams:view",
       "feature-teams:edit",
+      "private-pages:make",
     ],
   ],
   [
@@ -89,6 +91,7 @@ const expected: [Role, Permission[]][] = [
       "configuration:approve",
       "personal:view",
       "confidential:view",
+      "private-pages:make",
     ],
   ],
   [
@@ -107,6 +110,7 @@ const expected: [Role, Permission[]][] = [
       "configuration:view",
       "personal:view",
       "confidential:view",
+      "private-pages:make",
     ],
   ],
   [
@@ -140,6 +144,7 @@ const expected: [Role, Permission[]][] = [
       "confidential:edit",
       "data:classify",
       "drafts:approve-own",
+      "private-pages:make",
     ],
   ],
   [
@@ -161,6 +166,7 @@ const expected: [Role, Permission[]][] = [
       "confidential:view",
       "confidential:edit",
       "data:classify",
+      "private-pages:make",
     ],
   ],
   [

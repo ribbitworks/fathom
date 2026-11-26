@@ -4,6 +4,7 @@
 // columns' values.
 
 import {
+  type AnyPgColumn,
   boolean,
   check,
   date,
@@ -26,6 +27,7 @@ import {
   proposals,
   releases,
 } from "./schema-plan.ts";
+import { privatePages, privateRows } from "./schema-private.ts";
 import { featureTeams } from "./schema-teams.ts";
 
 // The tables a Link to another table column can link to. People's links hold a person or a planned
@@ -42,15 +44,22 @@ export const linkableTables = [
   "activities",
 ] as const;
 
-// The columns people add to Fathom's tables, as ADR 0005 sets out. Its names are unique within its
-// table, ignoring letter case. A list cannot be deleted while a column draws on it. A column on
-// people can be offered on planned hires too, where a value is never required.
+// The columns people add to Fathom's tables, as ADR 0005 sets out, and the columns of a private
+// page. Names are unique within a table, or within a page, ignoring letter case. A list cannot be
+// deleted while a column draws on it. A column on people can be offered on planned hires too, where
+// a value is never required.
 export const fields = fathomSchema.table(
   "fields",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    // The table the column is on, such as "people", checked by the server.
+    // The table the column is on, such as "people", or "private" for a private page's, checked by
+    // the server.
     tableName: text("table_name").notNull(),
+    // The private page the column is on, exactly when the table is "private"; removing the page
+    // removes its columns.
+    pageId: uuid("page_id").references((): AnyPgColumn => privatePages.id, {
+      onDelete: "cascade",
+    }),
     name: text("name").notNull(),
     // "choice" for a column drawing on a list, "link" for a web link, "note" for a note, "number"
     // for a number, "flag" for a checkbox, "text" for text, "date" for a day, or "record" for a
@@ -71,9 +80,15 @@ export const fields = fathomSchema.table(
     onPlannedHires: boolean("on_planned_hires").notNull().default(false),
   },
   (table) => [
-    uniqueIndex("fields_table_name_index").on(
-      table.tableName,
-      sql`lower(${table.name})`,
+    uniqueIndex("fields_table_name_index")
+      .on(table.tableName, sql`lower(${table.name})`)
+      .where(sql`${table.pageId} IS NULL`),
+    uniqueIndex("fields_page_name_index")
+      .on(table.pageId, sql`lower(${table.name})`)
+      .where(sql`${table.pageId} IS NOT NULL`),
+    check(
+      "fields_page_private",
+      sql`(${table.pageId} IS NOT NULL) = (${table.tableName} = 'private')`,
     ),
     // Only People's columns are offered on planned hires.
     check(
@@ -119,6 +134,9 @@ export const fieldValues = fathomSchema.table(
       onDelete: "cascade",
     }),
     activityId: uuid("activity_id").references(() => activities.id, {
+      onDelete: "cascade",
+    }),
+    privateRowId: uuid("private_row_id").references(() => privateRows.id, {
       onDelete: "cascade",
     }),
     choiceId: uuid("choice_id").references(() => listItems.id, {
@@ -202,6 +220,7 @@ export const fieldValues = fathomSchema.table(
           ["planned_hire", table.plannedHireId],
           ["feature", table.featureId],
           ["activity", table.activityId],
+          ["private_row", table.privateRowId],
         ] as const
       ).flatMap(([owner, ownerId]) => [
         uniqueIndex(`field_values_${owner}_choice_index`)
@@ -224,6 +243,9 @@ export const fieldValues = fathomSchema.table(
       index("field_values_activity_index")
         .on(table.activityId)
         .where(sql`${table.activityId} IS NOT NULL`),
+      index("field_values_private_row_index")
+        .on(table.privateRowId)
+        .where(sql`${table.privateRowId} IS NOT NULL`),
       index("field_values_person_index")
         .on(table.personId)
         .where(sql`${table.personId} IS NOT NULL`),
@@ -238,7 +260,7 @@ export const fieldValues = fathomSchema.table(
       ),
       check(
         "field_values_one_owner",
-        sql`num_nonnulls(${table.personId}, ${table.plannedHireId}, ${table.featureId}, ${table.activityId}) = 1`,
+        sql`num_nonnulls(${table.personId}, ${table.plannedHireId}, ${table.featureId}, ${table.activityId}, ${table.privateRowId}) = 1`,
       ),
       check(
         "field_values_one_kind",

@@ -491,6 +491,13 @@
       "when": 1795694420476,
       "tag": "0069_planned_hires_on_teams",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1795703076266,
+      "tag": "0070_private_pages",
+      "breakpoints": true
     }
   ]
 }
