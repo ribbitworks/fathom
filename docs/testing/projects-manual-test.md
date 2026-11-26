@@ -541,3 +541,31 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Notes:**
 
 **Afterwards:** Run Discard the Unpublished Changes.
+
+### PROJ-18: The Product Manager Adds a New Feature to a Proposal
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-15.
+
+**Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
+
+- [ ] `6C1E` Point at 'Harbour Cranes Upgrade' and select the details button at the right of its **Name** cell.
+  - **Expected:**
+    - The side panel opens, headed 'Harbour Cranes Upgrade'.
+    - Under the features listed in its **Features** row are two outlined buttons, **Choose features** then **New feature**, at the left.
+    - The **Features** row has no change button.
+  - **Notes:**
+
+- [ ] `A47D` Select **New feature**.
+  - **Expected:**
+    - A second panel, headed **New feature**, opens under the details of 'Harbour Cranes Upgrade'.
+    - The cursor is in its **Name**.
+    - Its **Status** reads 'Possible'.
+  - **Notes:**
+
+- [ ] `0E93` Type `Testing Quay Lights` in **Name**, and select **Add**.
+  - **Expected:**
+    - The **New feature** panel closes.
+    - **Features** names 'Testing Quay Lights' last, with a hollow yellow dot before it.
+    - The header's 'Harbour Cranes Upgrade' has a hollow yellow dot before it.
+    - Focus is on **New feature**.
+  - **Notes:**

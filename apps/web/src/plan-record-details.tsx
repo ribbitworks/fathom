@@ -310,12 +310,11 @@ function DetailRow({
     ) : also !== undefined ? (
       <Text>{also}</Text>
     ) : undefined;
-  const { adds } = column;
+  const { adds, chooseWords } = column;
   const listed =
-    adds?.chooseWords !== undefined &&
+    chooseWords !== undefined &&
     editing?.onStart !== undefined &&
     !editing.open;
-  const newId = `${changeId(column)}-new`;
   return (
     <Row
       column={column}
@@ -331,28 +330,30 @@ function DetailRow({
     >
       {listed ? (
         <Stack gap={6} align="flex-start">
-          {shown}
+          {shown ?? <Text c="dimmed">{column.emptyLabel ?? "None"}</Text>}
           <Group gap={8}>
             <Button
               variant="default"
               size="compact-sm"
-              id={changeId(column)}
+              id={changeId(column, editing.scope)}
               onClick={editing.onStart}
             >
-              {adds.chooseWords}
+              {chooseWords}
             </Button>
-            <Button
-              variant="default"
-              size="compact-sm"
-              id={newId}
-              onClick={() => {
-                adds.onNew(record.id, "", () => {
-                  focusSoon(newId);
-                });
-              }}
-            >
-              New {adds.one}
-            </Button>
+            {adds !== undefined && (
+              <Button
+                variant="default"
+                size="compact-sm"
+                id={`${changeId(column, editing.scope)}-new`}
+                onClick={() => {
+                  adds.onNew({ id: record.id }, "", () => {
+                    focusSoon(`${changeId(column, editing.scope)}-new`);
+                  });
+                }}
+              >
+                New {adds.one}
+              </Button>
+            )}
           </Group>
         </Stack>
       ) : (
