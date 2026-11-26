@@ -4,6 +4,7 @@
 // records, linked to the record the picker was for, or an activity of a project or release, with it
 // set.
 
+import type { AddedColumns } from "./added-columns.ts";
 import type { Feature, Project, ProjectPlan, Proposal } from "@fathom/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
@@ -149,8 +150,8 @@ export const addingTo = <Rec extends PlanRecord, Request>(
 
 interface Linking {
   kind: LinkedKind;
-  // The picker's column, which the record added is linked through.
-  key: AddingPicker["key"];
+  // The picker's column, which the record added is linked through, when a picker opened the form.
+  key?: AddingPicker["key"];
   linkedBy: LinkedBy;
   values: FormValues;
   // The form as it opens with nothing typed: a name typed into the picker counts as entered, what
@@ -316,7 +317,7 @@ export function useAddFromPanel({
     function form<Rec extends PlanRecord, Request>(
       table: RecordTable<Rec, PlanChange, Request>,
       records: readonly Rec[],
-      added?: ProjectPlan["activityColumns"] | ProjectPlan["featureColumns"],
+      added?: AddedColumns,
     ) {
       const actions = actionsFor<Rec, Request>(current.kind);
       return (
