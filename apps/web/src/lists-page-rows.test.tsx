@@ -117,9 +117,7 @@ describe("renaming a list in its row", () => {
     await userEvent.type(input, "locations{Enter}");
 
     // Then the row says why, and nothing is sent
-    expect(
-      await screen.findByText("Another list already has that name"),
-    ).toBeDefined();
+    expect(await screen.findByText("Another list has that name")).toBeDefined();
     expect(sent(fetch, "PUT", "/api/lists/l2")).toBe(false);
   });
 
@@ -173,9 +171,7 @@ describe("renaming a list in its row", () => {
     await userEvent.type(input, "Locations{Enter}");
 
     // Then the row says why, and nothing is sent
-    expect(
-      await screen.findByText("Another list already has that name"),
-    ).toBeDefined();
+    expect(await screen.findByText("Another list has that name")).toBeDefined();
     expect(sent(fetch, "PUT", "/api/lists/l2")).toBe(false);
   });
 

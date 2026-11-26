@@ -259,12 +259,12 @@ describe("the table of lists", () => {
     [
       "another list's name, in any case and spacing",
       " locations ",
-      { message: "Another list already has that name", column: "name" },
+      { message: "Another list has that name", column: "name" },
     ],
     [
       "the name of a list the table doesn't show",
       "positions",
-      { message: "Another list already has that name", column: "name" },
+      { message: "Another list has that name", column: "name" },
     ],
   ])("finds %s", (_case, name, problem) => {
     expect(
