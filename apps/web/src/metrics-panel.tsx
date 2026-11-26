@@ -45,15 +45,14 @@ export interface CountedRows<Row> {
   columns: readonly TableColumn<Row>[];
 }
 
-// The rows counted, as the Draft menu shows them, and while it shows drafts, the same rows as
-// published, as waiting and live, as `countedRecords` gives them, to tell what moves each figure.
+// The rows counted, as the Draft menu shows them, and the same rows as `countedRecords` gives them
+// to tell what moves each figure: while drafts show, as published, as waiting and live; live only,
+// as the drafts will make them, with and without the user's own unpublished changes.
 export interface CountedDrafts<Row> {
   rows: readonly Row[];
-  published?: CountedRows<Row> | undefined;
-  waiting?: CountedRows<Row> | undefined;
+  drafted?: { published: CountedRows<Row>; waiting: CountedRows<Row> };
   live?: CountedRows<Row> | undefined;
-  coming?: CountedRows<Row> | undefined;
-  comingPublished?: CountedRows<Row> | undefined;
+  toCome?: { coming: CountedRows<Row>; published: CountedRows<Row> };
   besideLive: boolean;
 }
 
@@ -134,10 +133,8 @@ export function MetricsPanel<Row>({
   kinds,
   rows,
   live,
-  published,
-  waiting,
-  coming,
-  comingPublished,
+  drafted,
+  toCome,
   besideLive,
   offered,
   breakdown,
@@ -180,11 +177,16 @@ export function MetricsPanel<Row>({
     live && liveBy.length === by.length
       ? countRows(live.rows, liveBy, liveAdded)
       : undefined;
-  const publishedCounts = published && countRows(published.rows, by, added);
-  const waitingCounts = waiting && countRows(waiting.rows, by, added);
-  const comingCounts = coming && countRows(coming.rows, by, added);
-  const comingPublishedCounts =
-    comingPublished && countRows(comingPublished.rows, by, added);
+  const countsOf = ({ rows: counted }: CountedRows<Row>) =>
+    countRows(counted, by, added);
+  const draftedCounts = drafted && {
+    published: countsOf(drafted.published),
+    waiting: countsOf(drafted.waiting),
+  };
+  const toComeCounts = toCome && {
+    coming: countsOf(toCome.coming),
+    published: countsOf(toCome.published),
+  };
   const shownLive = besideLive ? liveCounts : undefined;
   const rowsLabel = (counted: readonly Row[]) =>
     kinds?.counted(counted) ??
@@ -236,17 +238,17 @@ export function MetricsPanel<Row>({
     };
     const now = format(counts);
     const moved = figureMove(
-      comingCounts && comingPublishedCounts
+      toComeCounts
         ? {
             now,
-            coming: format(comingCounts),
-            comingPublished: format(comingPublishedCounts),
+            coming: format(toComeCounts.coming),
+            comingPublished: format(toComeCounts.published),
           }
-        : publishedCounts && waitingCounts
+        : draftedCounts
           ? {
               now,
-              published: format(publishedCounts),
-              waiting: format(waitingCounts),
+              published: format(draftedCounts.published),
+              waiting: format(draftedCounts.waiting),
               live: liveCounts && format(liveCounts),
             }
           : { now },
