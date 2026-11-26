@@ -40,7 +40,13 @@ describe("a short list", () => {
 
   it("says None with no items, still offering its actions", async () => {
     const { onAdd } = renderList([]);
-    expect(screen.getByText("None")).toBeDefined();
+    const none = screen.getByText("None");
+    // Nothing between None and the actions, which would double the gap under it.
+    expect(
+      none.nextElementSibling?.contains(
+        screen.getByRole("button", { name: "Add activity" }),
+      ),
+    ).toBe(true);
     await userEvent.click(screen.getByRole("button", { name: "Add activity" }));
     expect(onAdd).toHaveBeenCalled();
   });

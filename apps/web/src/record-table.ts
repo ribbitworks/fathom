@@ -117,6 +117,12 @@ export interface NamingPart {
   draft: PartDraft;
 }
 
+// Where the records a record lists show, filtered to it, such as its activities on Activities.
+export interface ShowOn {
+  page: string;
+  onShow: () => void;
+}
+
 // A record's built-in detail, keyed by its name, or an added column, keyed by its identifier, with
 // how it reads a value from a draft's live values, and the change that saves a value in it.
 export interface Column<
@@ -158,6 +164,9 @@ export interface Column<
   // What a record's details show for it, empty or not, in place of its value, such as a list with
   // actions on it.
   details?: (record: Rec) => ReactNode;
+  // For a details row listing records, the page showing them all, filtered to the record, which the
+  // row's name opens and the record's menu offers, where the record has any.
+  showOn?: (record: Rec) => ShowOn | undefined;
   // For a column listing records, each of them, as drafted and as live, given the row's record, so a
   // details panel marks them as the cell does.
   parts?: (record: Rec) => readonly NamingPart[];

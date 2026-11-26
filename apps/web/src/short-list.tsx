@@ -28,20 +28,23 @@ export function ShortList({
 }) {
   return (
     <Stack gap="xs" align="flex-start">
-      {items.length === 0 && <Text c="dimmed">None</Text>}
-      <FoldedList items={items} first={shownFirst} noun={noun}>
-        {(shown) => (
-          <RecordLinkList
-            links={shown.map(({ id, name }) => ({
-              id,
-              name,
-              onShow: () => {
-                onShow(id);
-              },
-            }))}
-          />
-        )}
-      </FoldedList>
+      {items.length === 0 ? (
+        <Text c="dimmed">None</Text>
+      ) : (
+        <FoldedList items={items} first={shownFirst} noun={noun}>
+          {(shown) => (
+            <RecordLinkList
+              links={shown.map(({ id, name }) => ({
+                id,
+                name,
+                onShow: () => {
+                  onShow(id);
+                },
+              }))}
+            />
+          )}
+        </FoldedList>
+      )}
       {actions.length > 0 && (
         <Group gap="xs">
           {actions.map(({ label, onClick }) => (

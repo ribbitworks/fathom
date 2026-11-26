@@ -212,13 +212,25 @@ export const testTheme = mergeThemeOverrides(theme, {
   },
 });
 
+// A row of a details panel by its label, which may be a link showing the records it lists on their
+// own page; none where the panel has no such row.
+export const queryDetailRow = (
+  label: string,
+  container: HTMLElement = document.body,
+): HTMLElement | null =>
+  within(container)
+    .queryByText(label, { selector: "dt, dt > button" })
+    ?.closest("dt")?.parentElement ?? null;
+
 // A row of a details panel, by its label, within the panel given or the whole page.
 export const detailRow = (
   label: string,
   container: HTMLElement = document.body,
-): HTMLElement =>
-  within(container).getByText(label, { selector: "dt" })
-    .parentElement as HTMLElement;
+): HTMLElement => {
+  const row = queryDetailRow(label, container);
+  if (row === null) throw new Error(`No details row ${label}`);
+  return row;
+};
 
 // What a row of a details panel reads, by its label: its value, and any marks and live value under
 // it.

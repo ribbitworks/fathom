@@ -444,7 +444,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 - [ ] `9737` Open the ⋯ menu of 'Crane Control' and select **Show details**.
   - **Expected:**
     - The side panel lists the project's activities under **Activities**, each a link on a line of its own.
-    - **Show on Activities** and **Add activity** are under the list.
+    - **Activities**, the row's name, is a link, and **Add activity** is under the list.
   - **Notes:**
 
 - [ ] `28C8` Select the first activity under **Activities**.
@@ -457,13 +457,23 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Expected:** The details of 'Crane Control' show on **Projects**.
   - **Notes:**
 
-- [ ] `D4E1` Select **Show on Activities**.
+- [ ] `D4E1` Select **Activities**, the row's name.
   - **Expected:**
     - The **Activities** page opens.
     - The table shows only the activities of 'Crane Control'.
   - **Notes:**
 
 - [ ] `5DB3` Select the browser's back button.
+  - **Expected:** The details of 'Crane Control' show on **Projects**.
+  - **Notes:**
+
+- [ ] `A482` Open the **⋯** at the top of the details and select **Show on Activities**.
+  - **Expected:**
+    - The **Activities** page opens.
+    - The table shows only the activities of 'Crane Control'.
+  - **Notes:**
+
+- [ ] `CDCE` Select the browser's back button.
   - **Expected:** The details of 'Crane Control' show on **Projects**.
   - **Notes:**
 
@@ -486,7 +496,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 - [ ] `BBD3` Open the ⋯ menu of 'Crane Control' and select **Show details**.
   - **Expected:**
-    - **Activities** lists the project's activities, with **Show on Activities** under them.
+    - **Activities** lists the project's activities, and **Activities**, the row's name, is a link.
     - There's no **Add activity**.
   - **Notes:**
 
