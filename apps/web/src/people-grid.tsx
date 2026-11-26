@@ -512,7 +512,7 @@ function peopleTable(
   // The columns and lists as the Draft menu's choice shows them, which the rows can be grouped by.
   schema: { fields: readonly Field[]; lists: readonly List[] },
   showDates: boolean,
-  showHireDates: boolean,
+  seesHiringPlan: boolean,
   showPosition: boolean,
   people: readonly Person[],
   lists: readonly List[],
@@ -556,7 +556,7 @@ function peopleTable(
         showDates,
         records,
         showPosition,
-        showHireDates,
+        seesHiringPlan,
         canEditHires,
       ),
       teamColourOf,
@@ -569,9 +569,10 @@ function peopleTable(
     exported: {
       recordedAs: "people",
       asOn,
-      // Planned hires' rows are the hiring plan, whatever columns are exported.
+      // Planned hires' rows are the hiring plan, whatever columns are exported, to a reader sent the
+      // plan; others are sent only approved hires, whose columns carry their own classes.
       held: (rows, show) => [
-        ...(rows.some(isHire)
+        ...(seesHiringPlan && rows.some(isHire)
           ? [
               {
                 field: "hiringPlan" as const,
@@ -580,10 +581,13 @@ function peopleTable(
               },
             ]
           : []),
-        // A drafted manager is a past manager to come, so is as past managers are, though live
-        // managers are General.
+        // A person's drafted manager is a past manager to come, so is as past managers are, though
+        // live managers are General; a planned hire's is the hiring plan's.
         ...(show !== "live" &&
-        rows.some((row) => row.draft?.changed.includes("managerId") === true)
+        rows.some(
+          (row) =>
+            !isHire(row) && row.draft?.changed.includes("managerId") === true,
+        )
           ? [
               {
                 field: "managerHistory" as const,
@@ -662,8 +666,9 @@ type PeopleGridProps = Omit<
   // what order.
   people: Person[];
   showDates: boolean;
-  // Whether the user sees planned hires' target dates, which come with the hiring plan.
-  showHireDates?: boolean;
+  // Whether the user is sent the hiring plan: planned hires' target dates, drafts and history, which
+  // an export of their rows then holds.
+  seesHiringPlan: boolean;
   // Whether the user sees the Positions list's tier; without it they see no Position column and
   // cannot add people, who each need a position.
   showPosition?: boolean;
@@ -686,7 +691,7 @@ type PeopleGridProps = Omit<
 export function PeopleGrid({
   people,
   showDates,
-  showHireDates = showDates,
+  seesHiringPlan,
   showPosition = true,
   canEditHires = false,
   dataClasses = defaultClasses,
@@ -707,7 +712,7 @@ export function PeopleGrid({
           props.lists,
         ),
         showDates,
-        showHireDates,
+        seesHiringPlan,
         showPosition,
         people,
         props.lists,

@@ -110,6 +110,7 @@ describe("how wide each column is", () => {
         canEdit={false}
         canEditColumns={false}
         showDates
+        seesHiringPlan
         view={emptyView}
         onView={noop}
         actions={peopleActions()}
@@ -238,6 +239,7 @@ describe("adding people without dates", () => {
           canEdit
           canEditColumns={false}
           showDates={false}
+          seesHiringPlan={false}
           view={emptyView}
           onView={noop}
           actions={peopleActions({ add })}
@@ -308,6 +310,7 @@ describe("adding someone with an Employee ID already taken", () => {
           canEdit
           canEditColumns={false}
           showDates={false}
+          seesHiringPlan={false}
           view={emptyView}
           onView={noop}
           actions={peopleActions({ add })}
@@ -371,6 +374,7 @@ describe("a start date after the end date", () => {
           canEdit
           canEditColumns={false}
           showDates
+          seesHiringPlan
           view={emptyView}
           onView={noop}
           actions={peopleActions()}

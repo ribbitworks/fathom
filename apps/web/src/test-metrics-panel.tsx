@@ -122,6 +122,7 @@ export function Table({
         canEdit={false}
         canEditColumns={false}
         showDates={showDates}
+        seesHiringPlan={showDates}
         view={view}
         onView={(next) => {
           if (drawnLater) {

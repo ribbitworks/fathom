@@ -75,6 +75,7 @@ export const grid = (more: Partial<Parameters<typeof PeopleGrid>[0]> = {}) => (
       canEdit
       canEditColumns={false}
       showDates
+      seesHiringPlan
       view={emptyView}
       onView={noop}
       actions={peopleActions()}
