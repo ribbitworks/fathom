@@ -20,6 +20,7 @@ import {
 } from "./changes.ts";
 import { deletePageColumnOrder, readPageColumnOrder } from "./column-order.ts";
 import { addColumns, columnsAsked, columnsRemoved } from "./private-columns.ts";
+import { makeRandomKey } from "./private-keys.ts";
 import {
   changingPage,
   lockPageOrder,
@@ -59,6 +60,7 @@ export async function makePage(
         firstFieldId: (columns[0] as FieldRow).id,
       };
       await transaction.insert(privatePages).values(page);
+      await makeRandomKey(transaction, "page", id);
       const changeSetId = await recordChanges(transaction, actor, [
         ...pageChanges(id, "created", undefined, page),
         ...(await addColumns(transaction, actor, id, columns)),

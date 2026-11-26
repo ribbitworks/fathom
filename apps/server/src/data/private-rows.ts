@@ -21,6 +21,7 @@ import {
 } from "./changes.ts";
 import type { Recorded } from "./draft-records.ts";
 import { askedColumnValues } from "./person-fields.ts";
+import { makeRandomKey } from "./private-keys.ts";
 import { changingPage } from "./private-page-changes.ts";
 import { type PageRow, rowValues, type RowRow } from "./private-page-reads.ts";
 import {
@@ -172,6 +173,7 @@ export async function addRow(
       position: (last?.position ?? -1) + 1,
     };
     await transaction.insert(privateRows).values(row);
+    await makeRandomKey(transaction, "row", row.id);
     const made = rowChanges(
       row.id,
       "created",

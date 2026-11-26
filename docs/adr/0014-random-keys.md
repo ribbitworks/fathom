@@ -31,6 +31,6 @@ A short random code, made by the database.
 ## Consequences
 
 - **Nothing counted:** a key tells nothing about how many pages or rows exist.
-- **Two kinds of key:** links by key and key search will take both forms, a number for most records and a code for private ones. Not built yet: keys are made, but no link uses them.
-- **Not found the same way:** once links use them, a key that names nobody's record, and one that names a record the reader may not read, get the same answer, as every read of a private page already does.
+- **Two kinds of key:** links by key take both forms, a number for most records, as `/go/feature/123`, and a code for private ones, whole, as `/go/ROW-4X9T`. Searching a table by key will take both once a private page's table is built.
+- **Not found the same way:** a key that names nobody's record, one whose record was removed, and one that names a record the reader may not read, get the same answer, "Nothing found", from one database query whatever the key names.
 - **A guess may find one:** a guessed code may name someone else's page or row, but every read refuses it as if nobody made it.

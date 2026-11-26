@@ -2,7 +2,12 @@
 
 // How the shared table's columns are made, and what each kind of cell does with a column's values.
 
-import { type Choice, type RecordKeyOf, shownRecordKey } from "@fathom/shared";
+import {
+  type Choice,
+  keyValue,
+  type RecordKeyOf,
+  shownRecordKey,
+} from "@fathom/shared";
 import {
   type CellChange,
   type CellSource,
@@ -336,7 +341,7 @@ export function keyColumn<Rec extends GridRecord, Change>(
   };
   const shown = (record: Rec) => {
     const key = savedKey(record);
-    return key === undefined ? "" : shownRecordKey(key.kind, key.keyNumber);
+    return key === undefined ? "" : shownRecordKey(key);
   };
   return {
     // As wide as the longest key shown, so none is cut short.
@@ -358,7 +363,10 @@ export function keyColumn<Rec extends GridRecord, Change>(
     change: () => {
       throw new Error("A record's key can't be changed");
     },
-    value: (record) => String(savedKey(record)?.keyNumber ?? ""),
+    value: (record) => {
+      const key = savedKey(record);
+      return key === undefined ? "" : keyValue(key);
+    },
     content: (record) => shown(record) || null,
   };
 }

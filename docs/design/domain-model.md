@@ -348,6 +348,8 @@ erDiagram
 - **Random key:** A page's or a row's short code, such as K7QM in #PAGE-K7QM, as [ADR 0014](../adr/0014-random-keys.md) sets out.
   - **Codes:** four characters from 30 that can't be taken for one another, widening to five once a tenth of a kind's four-character codes are used.
   - **Kept:** made once for a record, held apart from it, and never given again, even once the record is removed.
+  - **Made with its record:** a page and a row get their key when made, and a page as read carries its key and each row's. Pages and rows made before keys were have none.
+  - **Links:** a link by a key, such as `/go/ROW-4X9T`, goes to the page's address, `/mine/<page>`, with the row's details asked for, only for the page's maker; for anyone else it finds nothing. It opens there once Mine's page is built.
 - **Who reads them:** only the page's maker, while their role may make private pages. A column of a class the maker's role no longer sees is left out, with its values.
 - **Saved at once:** making, renaming, moving and removing a page, adding, changing and removing its columns, and adding, changing and removing its rows and their values, save at once, with no drafts and no approval, since the data is one person's own. A column's type never changes, and its first column is never removed.
   - **Recorded:** every change is recorded in the change history with each field's class, a row's values each with its column's class.

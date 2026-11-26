@@ -311,8 +311,14 @@ export {
 } from "./links.ts";
 export {
   draftKeyKinds,
+  type CodedRecordKey,
+  isCodedKey,
   keyMark,
   keyNumberSchema,
+  keyValue,
+  type NumberedRecordKey,
+  type RandomKeyKind,
+  randomKeyKindSchema,
   type RecordKeyOf,
   parseRecordKey,
   parseRecordLink,

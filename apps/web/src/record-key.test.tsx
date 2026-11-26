@@ -70,6 +70,28 @@ describe("a record's key", () => {
   });
 });
 
+describe("a random key", () => {
+  it("shows a private row's key, and copies its link by the whole key", async () => {
+    const user = userEvent.setup();
+    render(
+      <MantineProvider theme={testTheme}>
+        <Notifications />
+        <RecordKey record={{ kind: "row", code: "4X9T" }} />
+      </MantineProvider>,
+    );
+    await user.click(
+      screen.getByRole("button", { name: "#ROW-4X9T, copy link or key" }),
+    );
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Copy link" }),
+    );
+    expect(await screen.findByText("Link copied.")).toBeDefined();
+    expect(await navigator.clipboard.readText()).toBe(
+      `${window.location.origin}/go/ROW-4X9T`,
+    );
+  });
+});
+
 describe("a name after its key", () => {
   const showName = (record: Parameters<typeof KeyedName>[0]["record"]) =>
     render(

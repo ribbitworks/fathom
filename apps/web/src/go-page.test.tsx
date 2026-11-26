@@ -166,6 +166,46 @@ describe("a link to a record found", () => {
   });
 });
 
+describe("a link to a private page or row by its random key", () => {
+  it.each([
+    ["page", "/go/PAGE-K7QM", "GET /api/go/PAGE-K7QM", `/mine/${recordId}`, ""],
+    [
+      "row",
+      "/go/row-4x9t",
+      "GET /api/go/ROW-4X9T",
+      `/mine/${otherId}`,
+      `?open=${recordId}`,
+    ],
+  ] as const)(
+    "opens a %s on its page's address",
+    async (kind, link, asked, pathname, search) => {
+      const { history } = await follow(link, {
+        [asked]: lookup({
+          result: "found",
+          kind,
+          id: recordId,
+          pageId: kind === "row" ? otherId : recordId,
+        }),
+      });
+      await waitFor(() => {
+        expect(history.location.pathname).toBe(pathname);
+      });
+      expect(history.location.search).toBe(search);
+    },
+  );
+
+  it("says nothing was found for a key the reader may not follow", async () => {
+    await follow("/go/ROW-4X9T", {
+      "GET /api/go/ROW-4X9T": lookup({ result: "nothing" }),
+    });
+    expect(
+      await screen.findByRole("heading", {
+        name: "Nothing found for #ROW-4X9T",
+      }),
+    ).toBeDefined();
+  });
+});
+
 describe("a link to no record", () => {
   it("says nothing was found, the same whether no record has the key or the reader may not see it", async () => {
     await follow("/go/feature/9", {
@@ -203,6 +243,7 @@ describe("a link to no record", () => {
   it.each([
     ["/go/nonsense", "Nothing found for nonsense"],
     ["/go/feature/first", "Nothing found for #FEATURE-first"],
+    ["/go/ROW-01IL", "Nothing found for ROW-01IL"],
   ])(
     "says nothing was found for %s, which names no key, without asking the server",
     async (link, shown) => {

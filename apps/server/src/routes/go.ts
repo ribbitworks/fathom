@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Links to records by their keys: what /go/feature/123, or /go/FEATURE-123 typed by hand, opens for
-// the signed-in reader. A link that names no key finds nothing, as one the reader may not see does.
-// The data access layer checks the actor's permissions.
+// Links to records by their keys: what /go/feature/123, or /go/FEATURE-123 or /go/ROW-4X9T typed by
+// hand, opens for the signed-in reader. A link that names no key finds nothing, as one the reader
+// may not see does. The data access layer checks the actor's permissions.
 
 import {
+  isCodedKey,
   type RecordKeyOf,
   parseRecordKey,
   parseRecordLink,
@@ -31,7 +32,9 @@ export function goRoutes(data: DataAccess): FastifyPluginCallbackZod {
   ): Promise<RecordLookup> =>
     parsed === undefined
       ? { result: "nothing" }
-      : data.findRecord(actor, parsed.kind, parsed.keyNumber);
+      : isCodedKey(parsed)
+        ? data.findPrivateRecord(actor, parsed)
+        : data.findRecord(actor, parsed.kind, parsed.keyNumber);
   return (app, _options, done) => {
     app.get(
       "/api/go/:kind/:keyNumber",

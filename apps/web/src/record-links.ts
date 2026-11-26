@@ -5,7 +5,11 @@
 
 import {
   type ColumnTable,
+  type FoundPrivateRecord,
   type FoundRecord,
+  isCodedKey,
+  isFoundPrivate,
+  recordKey,
   type RecordKeyOf,
   recordLookupSchema,
   shownRecordKey,
@@ -28,6 +32,12 @@ type RecordAddress =
   | { to: "/lists/{-$listId}"; params: { listId: string } }
   | { to: "/features" | "/activities" | "/people"; search: { column: string } }
   | { to: "/accounts" | "/roles"; search: { open: string } };
+
+// A private page's address, or the page's with a row's details open, which Mine's page will serve.
+export const privatePagePath = ({ kind, id, pageId }: FoundPrivateRecord) =>
+  kind === "page"
+    ? `/mine/${pageId}`
+    : `/mine/${pageId}?${new URLSearchParams({ open: id }).toString()}`;
 
 // The page each table's added columns open on.
 const columnPages = {
@@ -105,18 +115,23 @@ export async function followLink(
 ): Promise<{ shownKey: string; removed: boolean }> {
   if (parsed === undefined) return { shownKey: typed, removed: false };
   const lookup = await getJson(
-    `/api/go/${parsed.kind}/${String(parsed.keyNumber)}`,
+    isCodedKey(parsed)
+      ? `/api/go/${recordKey(parsed)}`
+      : `/api/go/${parsed.kind}/${String(parsed.keyNumber)}`,
     recordLookupSchema,
   );
   if (lookup.result === "found") {
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-    throw redirect({
-      ...(await recordAddress(queryClient, lookup)),
-      replace: true,
-    });
+    throw isFoundPrivate(lookup)
+      ? // Not yet served by a route of its own, so by its whole address.
+        redirect({ href: privatePagePath(lookup), replace: true })
+      : redirect({
+          ...(await recordAddress(queryClient, lookup)),
+          replace: true,
+        });
   }
   return {
-    shownKey: shownRecordKey(parsed.kind, parsed.keyNumber),
+    shownKey: shownRecordKey(parsed),
     removed: lookup.result === "removed",
   };
 }
