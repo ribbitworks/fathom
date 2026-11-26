@@ -433,6 +433,7 @@ export function hireRow(
     links: hire.links,
     notes: hire.notes,
     numbers: hire.numbers,
+    flags: hire.flags,
     ...(draft === undefined || live === undefined
       ? {}
       : {
@@ -463,6 +464,7 @@ export function hireRow(
               links: live.links,
               notes: live.notes,
               numbers: live.numbers,
+              flags: live.flags,
             },
           },
         }),

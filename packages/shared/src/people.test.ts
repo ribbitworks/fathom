@@ -5,9 +5,11 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
+  canBeRequired,
   columnTableOf,
   editsColumnsOf,
   fieldRequestSchema,
+  fieldTypeSchema,
   newListSchema,
   personChangeSchema,
   personRequestSchema,
@@ -204,6 +206,56 @@ describe("fieldRequestSchema", () => {
       "A note column has no list",
       "A note column holds one note",
     ]);
+  });
+});
+
+describe("checkbox columns", () => {
+  it("keep a visibility of their own", () => {
+    expect(
+      fieldRequestSchema.parse({
+        name: "First aider",
+        type: "flag",
+        visibility: "personal",
+      }),
+    ).toMatchObject({ type: "flag", visibility: "personal", required: false });
+  });
+
+  it("refuse no visibility, a list, several boxes, or being required", () => {
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "First aider",
+          type: "flag",
+          listId: randomUUID(),
+          multiple: true,
+          required: true,
+        }),
+      ),
+    ).toEqual([
+      "Choose a visibility",
+      "A checkbox column has no list",
+      "A checkbox column holds one box",
+      "A checkbox column can't be required",
+    ]);
+  });
+
+  it("are ticked by column, with null unticking one", () => {
+    const column = randomUUID();
+    expect(
+      personChangeSchema.parse({ flags: { [column]: true } }).flags,
+    ).toEqual({ [column]: true });
+    expect(
+      personChangeSchema.parse({ flags: { [column]: null } }).flags,
+    ).toEqual({ [column]: null });
+    expect(
+      personChangeSchema.safeParse({ flags: { [column]: false } }).success,
+    ).toBe(false);
+  });
+
+  it("are the one type that can't be required", () => {
+    expect(
+      fieldTypeSchema.options.filter((type) => !canBeRequired(type)),
+    ).toEqual(["flag"]);
   });
 });
 

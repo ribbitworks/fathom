@@ -71,6 +71,7 @@ import {
   resubmitPersonDraftIn,
 } from "./people.ts";
 import {
+  flagsOf,
   linksOf,
   noPerson,
   notesOf,
@@ -412,6 +413,7 @@ export async function fillHire(
             links: { ...fill.links, ...linksOf(hire) },
             notes: { ...fill.notes, ...notesOf(hire) },
             numbers: { ...fill.numbers, ...numbersOf(hire) },
+            flags: { ...fill.flags, ...flagsOf(hire) },
           },
         ],
         today,

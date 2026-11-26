@@ -167,13 +167,13 @@ describe("the rows for each kind of column", () => {
     await userEvent.click(screen.getByRole("checkbox", { name: /^done/ }));
     await add();
     expect(onAdd).toHaveBeenLastCalledWith(
-      { done: true },
+      { flags: { done: true } },
       expect.any(Function),
     );
     await userEvent.click(screen.getByRole("checkbox", { name: /^done/ }));
     await add();
     expect(onAdd).toHaveBeenLastCalledWith(
-      { done: false },
+      { flags: { done: null } },
       expect.any(Function),
     );
   });

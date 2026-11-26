@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for what each type of column on People keeps and holds, apart from the database: the
-// settings, tier, values, and live values of choice, web link, note, and number columns.
+// settings, tier, values, and live values of choice, web link, note, number, and checkbox columns.
 
 import { describe, expect, it } from "vitest";
-import { columnTypes, noLiveValues, typeOf } from "./data/column-types.ts";
+import {
+  columnTypes,
+  liveValuesOf,
+  noLiveValues,
+  typeOf,
+} from "./data/column-types.ts";
 
 const link = { address: "https://example.test/", text: "Example" };
 const listOf = new Map([
@@ -79,10 +84,8 @@ describe("choice columns", () => {
     choice.showLive(live, "f1", ["c1"]);
     choice.showLive(live, "f2", undefined);
     expect(live).toEqual({
+      ...noLiveValues(),
       values: { f1: ["c1"], f2: [] },
-      links: {},
-      notes: {},
-      numbers: {},
     });
   });
 });
@@ -137,10 +140,8 @@ describe("web link columns", () => {
     linkType.showLive(live, "f1", link);
     linkType.showLive(live, "f2", []);
     expect(live).toEqual({
-      values: {},
+      ...noLiveValues(),
       links: { f1: link },
-      notes: {},
-      numbers: {},
     });
   });
 });
@@ -190,10 +191,8 @@ describe("note columns", () => {
     note.showLive(live, "f1", "*Kind*");
     note.showLive(live, "f2", []);
     expect(live).toEqual({
-      values: {},
-      links: {},
+      ...noLiveValues(),
       notes: { f1: "*Kind*" },
-      numbers: {},
     });
   });
 });
@@ -237,5 +236,94 @@ describe("number columns", () => {
     number.showLive(live, "f1", 0);
     number.showLive(live, "f2", []);
     expect(live.numbers).toEqual({ f1: 0 });
+  });
+});
+
+describe("checkbox columns", () => {
+  const { flag } = columnTypes;
+  const settings = { listId: null, multiple: false };
+
+  it("have a visibility of their own, as their tier", () => {
+    expect(flag.settings({ visibility: "personal" })).toEqual({
+      type: "flag",
+      listId: null,
+      visibility: "personal",
+      multiple: false,
+      multiline: false,
+      linkedTable: null,
+    });
+  });
+
+  it.each([
+    [true, true],
+    [undefined, true],
+    [[], true],
+    [null, true],
+    [false, false],
+    ["yes", false],
+    [1, false],
+  ])("hold %j: %s", (value, fits) => {
+    expect(flag.fits(settings, value, new Map())).toBe(fits);
+  });
+
+  it("count a ticked box, and nothing else", () => {
+    expect(flag.count(true)).toBe(1);
+    expect(flag.count(false)).toBe(0);
+    expect(flag.count([])).toBe(0);
+  });
+
+  it("show their live box beside a draft only while it is ticked", () => {
+    const live = noLiveValues();
+    flag.showLive(live, "f1", true);
+    flag.showLive(live, "f2", []);
+    expect(live.flags).toEqual({ f1: true });
+  });
+});
+
+describe("the values table's rows", () => {
+  it("hold each type's value in its own column, and nothing for a value of another type", () => {
+    expect(
+      Object.values(columnTypes).map((type) => [
+        type.type,
+        type.rows(["c1"]),
+        type.rows(link),
+        type.rows("*Kind*"),
+        type.rows(0),
+        type.rows(true),
+      ]),
+    ).toEqual([
+      ["choice", [{ choiceId: "c1" }], [], [], [], []],
+      [
+        "link",
+        [],
+        [{ linkAddress: link.address, linkText: link.text }],
+        [],
+        [],
+        [],
+      ],
+      ["note", [], [], [{ note: "*Kind*" }], [], []],
+      ["number", [], [], [], [{ number: 0 }], []],
+      ["flag", [], [], [], [], [{ flag: true }]],
+    ]);
+  });
+});
+
+describe("live values", () => {
+  it("are read by the type each value recorded is of", () => {
+    expect(
+      liveValuesOf(
+        new Map<string, unknown>([
+          ["f1", ["c1"]],
+          ["f2", true],
+          ["f3", 0],
+          ["f4", []],
+        ]),
+      ),
+    ).toEqual({
+      ...noLiveValues(),
+      values: { f1: ["c1"] },
+      numbers: { f3: 0 },
+      flags: { f2: true },
+    });
   });
 });

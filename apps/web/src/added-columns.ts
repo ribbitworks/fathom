@@ -55,8 +55,8 @@ export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
 // A record's values in added columns with a change applied, as the table shows them before it is
 // saved.
 export const withCellChange = (
-  record: Pick<CellSource, "values" | "links" | "notes" | "numbers">,
-  { values, links, notes, numbers }: CellChange,
+  record: Pick<CellSource, "values" | "links" | "notes" | "numbers" | "flags">,
+  { values, links, notes, numbers, flags }: CellChange,
 ) => ({
   values: { ...record.values, ...values },
   links: kept({ ...record.links, ...links }),
@@ -66,6 +66,9 @@ export const withCellChange = (
   ...(record.numbers === undefined && numbers === undefined
     ? {}
     : { numbers: kept({ ...record.numbers, ...numbers }) }),
+  ...(record.flags === undefined && flags === undefined
+    ? {}
+    : { flags: kept({ ...record.flags, ...flags }) }),
 });
 
 // What a new record is given in columns of one value, left out when it is given none.
@@ -80,6 +83,7 @@ function askedOf<Held>(
 export function cellRequest(parts: readonly CellChange[]) {
   const notes = askedOf(parts.map((part) => part.notes));
   const numbers = askedOf(parts.map((part) => part.numbers));
+  const flags = askedOf(parts.map((part) => part.flags));
   return {
     values: Object.assign({}, ...parts.map((part) => part.values)) as Record<
       string,
@@ -92,5 +96,6 @@ export function cellRequest(parts: readonly CellChange[]) {
     ),
     ...(notes === undefined ? {} : { notes }),
     ...(numbers === undefined ? {} : { numbers }),
+    ...(flags === undefined ? {} : { flags }),
   };
 }

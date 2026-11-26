@@ -277,7 +277,8 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
 - **Field definition:** A custom field on a built-in or custom table, with a name, [field type](#field-types), class, and whether it must be filled in or be unique. A Person or Link field also names the table it links to.
   - **Built:** columns are built on People and Features only, with the field types below. Unique columns, Person and Link fields are not built yet.
   - **Choice from a list:** names its list, takes its class from the list's, and says whether it takes one choice or several.
-  - **Other types:** a Web link, Note or Number field has a class of its own.
+  - **Other types:** a Web link, Note, Number or Checkbox field has a class of its own.
+  - **Checkbox:** is never required, since an unticked box is a value, No.
   - **On People:** a field also says whether planned hires have it too, as [Planned Hires](#planned-hires) sets out.
   - **Changing:** its type is fixed once it is added. It can be made required only once every record has a value, and single-choice only once none has several. Its list cannot change while it has values.
 - **Column order:** A table's own order of its columns, built-in and custom alike, which every view starts from. A view may hold an order of its own.
@@ -300,8 +301,9 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
 | Web link | An address, and optionally text shown in its place | Address up to 2,000 characters, text up to 200 |
 | Note | Rich text, as GitHub-flavoured Markdown | Up to 10,000 characters |
 | Number | A whole or decimal number, positive or negative | Up to 15 digits, at most 6 after the point; 0 is a value |
+| Checkbox | Yes or No | Yes is kept; No is no value |
 
-- **Not built yet:** Checkbox, Text, Date and Link to another table. The database already holds their values and settings, such as a Text field's several lines and the table a Link field links to, as [ADR 0005](../adr/0005-flexible-data-model.md#what-is-built) records.
+- **Not built yet:** Text, Date and Link to another table. The database already holds their values and settings, such as a Text field's several lines and the table a Link field links to, as [ADR 0005](../adr/0005-flexible-data-model.md#what-is-built) records.
 - **Web link:** only http and https addresses, on the internet or a local network, by name or IP address. An address typed without a scheme is taken as https only when its host has a dot. What else is refused, and why, is in the [Security Plan](../security/security-plan.md#tampering).
 - **Note:** what a note may hold, including the one HTML tag it may hold for text colour, is in [Visual Design](visual-design.md#components) under Notes.
 - **Plain text:** built-in text, such as names and a feature's description, holds no control characters or marks that change which way text runs.

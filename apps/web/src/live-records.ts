@@ -94,6 +94,7 @@ export function liveRecordsOf<Rec extends CellRecord>(
     const links = withLiveValues(record.links, columns, draft.live.links);
     const notes = withLiveValues(record.notes, columns, draft.live.notes);
     const numbers = withLiveValues(record.numbers, columns, draft.live.numbers);
+    const flags = withLiveValues(record.flags, columns, draft.live.flags);
     const details = Object.fromEntries(
       draft.changed
         .filter((key) => detailKeys.includes(key))
@@ -101,13 +102,20 @@ export function liveRecordsOf<Rec extends CellRecord>(
         // eslint-disable-next-line security/detect-object-injection
         .map((key) => [key, draft.live[key] ?? null]),
     );
+    // The record's own maps go, so one a draft empties isn't kept from before it.
+    const unmapped = Object.fromEntries(
+      Object.entries(rest).filter(
+        ([key]) => !["notes", "numbers", "flags"].includes(key),
+      ),
+    );
     return {
-      ...rest,
+      ...(unmapped as Rec),
       ...details,
       values,
       links,
       ...(Object.keys(notes).length === 0 ? {} : { notes }),
       ...(Object.keys(numbers).length === 0 ? {} : { numbers }),
+      ...(Object.keys(flags).length === 0 ? {} : { flags }),
     };
   });
 }

@@ -363,6 +363,40 @@ describe("the Metrics panel's drafts", () => {
     ]);
   });
 
+  it("marks a checkbox column's Yes with a hollow dot where the user's unpublished change ticks a box", () => {
+    const unpublished = { ...waiting, unpublished: true };
+    const added: Field = {
+      ...level,
+      type: "flag",
+      listId: null,
+      visibility: "general",
+      draft: { ...unpublished, action: "created", changed: [], live: {} },
+    };
+    const people = [
+      ...everyone.filter(({ id }) => id !== "a"),
+      {
+        ...person("a", [], ["test"], {
+          ...unpublished,
+          action: "changed",
+          changed: ["f1"],
+          live: { values: {}, links: {}, flags: {} },
+        }),
+        flags: { f1: true as const },
+      },
+    ];
+    render(
+      <Table
+        people={people}
+        fields={[added, role]}
+        start={{ ...emptyView, breakdown: ["f1"] }}
+      />,
+    );
+    expect([
+      marksOf("Yes", "unpublishedMark"),
+      marksOf("No", "unpublishedMark"),
+    ]).toEqual([2, 2]);
+  });
+
   it("gives no live figures for a column only drafted to be added, or to draw on another list", () => {
     const waiting = { state: "waiting" as const, madeBy: null, madeAt: null };
     const people = [

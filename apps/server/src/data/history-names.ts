@@ -30,6 +30,7 @@ import { builtInTier } from "./values.ts";
 import { type RecordKind, readsKind } from "./record-state.ts";
 import { recordKinds } from "./records.ts";
 import type { StoredChange } from "./changes.ts";
+import { isFlag } from "./column-types.ts";
 
 // The kinds of record that belong to another, which the history names them by, as a choice is by
 // its list.
@@ -313,7 +314,7 @@ export function unseenValueName(
 }
 
 // What a value shows: text, yes or no, or several names, with identifiers named, a note as its
-// words without their formatting, and a number as written.
+// words without their formatting, a number as written, and a box as ticked or not.
 export function shown(
   row: StoredChange,
   value: unknown,
@@ -332,6 +333,13 @@ export function shown(
   }
   if (fieldOfValue(row.field) !== null && typeof value === "number") {
     return String(value);
+  }
+  // Only a ticked box is recorded, so beside one, no value is a box unticked.
+  if (
+    fieldOfValue(row.field) !== null &&
+    [row.oldValue, row.newValue].some(isFlag)
+  ) {
+    return value === true;
   }
   if (
     fieldOfValue(row.field) !== null ||

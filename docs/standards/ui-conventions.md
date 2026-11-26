@@ -66,7 +66,8 @@ The rest follow from them:
 
 - **Plain words:** Every word on screen follows the [Principles](#principles). On top of them, use the plain verb: added, removed, changed, retired, restored, never "comes off" or "taking off".
   - **Removed, not deleted:** Records and their drafts are removed, never deleted; delete is for what isn't a record, such as a saved view.
-  - **Setting up fields and tables:** In everyday words, such as Must be filled in, never database terms. A column of web addresses is a Web link, so it isn't taken for Link to another table.
+  - **Setting up fields and tables:** In everyday words, such as Must be filled in, never database terms. A column of web addresses is a Web link, so it isn't taken for Link to another table, and a column of tick boxes is a Checkbox, never Yes/No or Boolean.
+    - **The Type list:** New column names only the types Fathom offers, in a fixed order. Drawn by `typeNames` in `apps/web/src/column-dialog.tsx`.
   - **Naming patterns:** A naming pattern is shown as typed, such as {YY}.{N}, only where it is set: the Names field of the dialog that sets a schedule's cycles, and the row in the schedule's details that names its pattern. Everywhere else, cycles show their real names, such as 27.1.
   - **Drawn by:** The words themselves, with `draftWords` in `apps/web/src/draft-marks.ts` and `DraftedWords` in `apps/web/src/status-mark.tsx` for drafts.
   - **Example:** Draft: removed.

@@ -40,9 +40,15 @@ export const personLengths = {
 // A date without a time, such as 2026-10-31.
 const day = daySchema;
 
-// A column chooses from a list, or holds a web link, a note, or a number. A column's type never
-// changes.
-export const fieldTypeSchema = z.enum(["choice", "link", "note", "number"]);
+// A column chooses from a list, or holds a web link, a note, a number, or a checkbox ("flag"). A
+// column's type never changes.
+export const fieldTypeSchema = z.enum([
+  "choice",
+  "link",
+  "note",
+  "number",
+  "flag",
+]);
 
 export type FieldType = z.infer<typeof fieldTypeSchema>;
 
@@ -133,6 +139,17 @@ export const requestedNumbersSchema = z.record(
   numberValueSchema.nullable(),
 );
 
+// Each checkbox column whose box is ticked, by column. A column with its box unticked is left out.
+export const flagsSchema = z.record(z.string(), z.literal(true));
+
+export type Flags = Record<string, true>;
+
+// Boxes asked for, by column; null unticks a column's box.
+export const requestedFlagsSchema = z.record(
+  z.uuid(),
+  z.literal(true).nullable(),
+);
+
 // Choices asked for, by column: each a choice's identifier, at most once.
 export const requestedValuesSchema = z.record(
   z.uuid(),
@@ -148,6 +165,7 @@ export const requestedColumnValues = {
   links: z.record(z.uuid(), linkValueSchema).default({}),
   notes: requestedNotesSchema.optional(),
   numbers: requestedNumbersSchema.optional(),
+  flags: requestedFlagsSchema.optional(),
 };
 
 // A change to a record's values in the columns added to its table: each column named is replaced.
@@ -156,6 +174,7 @@ export const changedColumnValues = {
   links: requestedLinksSchema.optional(),
   notes: requestedNotesSchema.optional(),
   numbers: requestedNumbersSchema.optional(),
+  flags: requestedFlagsSchema.optional(),
 };
 
 // A person's draft, as the user may see it: whether it adds, changes, or removes them, the columns
@@ -181,6 +200,7 @@ export const personDraftSchema = z.object({
     links: linksSchema.default({}),
     notes: notesSchema.optional(),
     numbers: numbersSchema.optional(),
+    flags: flagsSchema.optional(),
   }),
   // Set, for a role that approves people's or planned hires' drafts, on one holding details the role
   // can't see, such as a fill's, which another approver must decide; trying would tell the role as
@@ -253,6 +273,7 @@ export const personSchema = z.object({
   links: linksSchema.default({}),
   notes: notesSchema.optional(),
   numbers: numbersSchema.optional(),
+  flags: flagsSchema.optional(),
   // For a planned hire, who its draft fills it with, as a planned hire has it.
   filler: z.string().nullable().optional(),
   draft: personDraftSchema.optional(),
@@ -351,11 +372,19 @@ export const personChangeSchema = z.object({
 
 export type PersonChange = z.infer<typeof personChangeSchema>;
 
+// An unticked box is a value, No, so a checkbox column is never required.
 const heldAlone = {
-  link: { kind: "web link", value: "link" },
-  note: { kind: "note", value: "note" },
-  number: { kind: "number", value: "number" },
+  link: { kind: "web link", value: "link", requirable: true },
+  note: { kind: "note", value: "note", requirable: true },
+  number: { kind: "number", value: "number", requirable: true },
+  flag: { kind: "checkbox", value: "box", requirable: false },
 };
+
+// Whether a column of the type can be one that must be filled in.
+export const canBeRequired = (type: FieldType): boolean =>
+  // The type is always one of the fixed types.
+  // eslint-disable-next-line security/detect-object-injection
+  type === "choice" || heldAlone[type].requirable;
 
 // What sets each table apart: its name, what reading it needs, what adding, changing and removing
 // its columns needs, which is editing its records and seeing people, whose sight General lists and
@@ -435,7 +464,7 @@ export const newListSchema = z.object({
 export type NewList = z.infer<typeof newListSchema>;
 
 // A choice column names its list, or a new one, and takes its visibility from it; a web link, note,
-// or number column names its visibility, no list, and takes one value.
+// number, or checkbox column names its visibility, no list, and takes one value.
 export const fieldRequestSchema = z
   .object({
     name: z.string().trim().min(1).max(personLengths.column),
@@ -465,6 +494,9 @@ export const fieldRequestSchema = z
         issue(`A ${kind} column has no list`);
       }
       if (request.multiple) issue(`A ${kind} column holds one ${value}`);
+      if (request.required && !canBeRequired(request.type)) {
+        issue(`A ${kind} column can't be required`);
+      }
     }
   })
   .transform((request) =>

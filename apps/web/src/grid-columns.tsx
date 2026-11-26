@@ -82,6 +82,7 @@ export function cellColumn<Rec extends CellRecord, Change extends CellChange>(
     key,
     kind,
     ...rest,
+    ...cellKind.columnDefaults,
     value: (record) => cellKind.read(record, key),
     live: (draft) => cellKind.read(draft.live, key),
     // Each table's change holds what its kinds of cell save.
@@ -111,6 +112,7 @@ export function fieldColumn<
     key,
     kind,
     ...rest,
+    ...cellKind.columnDefaults,
     value: read,
     live: (draft) => read(draft.live),
     change: (value) =>

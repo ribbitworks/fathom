@@ -4,7 +4,7 @@
 // they are recorded in the change history. Part of the data access layer.
 
 import { storedTier } from "../access.ts";
-import { isNote, isNumber, typeOf } from "./column-types.ts";
+import { typeHolding, typeOf } from "./column-types.ts";
 import { readDataClasses } from "./data-classes.ts";
 import {
   type Database,
@@ -22,7 +22,6 @@ import {
   builtInColumnTiers,
   type BuiltInTiers,
   type ColumnTable,
-  isLink,
   type Link,
   type Tier,
 } from "@fathom/shared";
@@ -201,12 +200,12 @@ export const valuesTier = (
   return type.tier(type.settings(field), () => storedTier(listVisibility));
 };
 
-// A column's value for one person, as the change history records it: the chosen choices, a link, or
-// a note, or a number.
-export type FieldValue = string[] | Link | string | number;
+// A column's value for one person, as the change history records it: the chosen choices, a link, a
+// note, a number, or a ticked box.
+export type FieldValue = string[] | Link | string | number | true;
 
 // Each record's values, by record and column, for the people, or planned hires, and columns given:
-// chosen choices in their list's order, links, notes, and numbers.
+// chosen choices in their list's order, links, notes, numbers, and ticked boxes.
 export async function readValues(
   reader: Reader,
   recordIds: readonly string[],
@@ -222,7 +221,7 @@ export async function readValues(
   )) {
     values.set(recordId, new Map(byField));
   }
-  for (const read of [readLinks, readNotes, readNumbers]) {
+  for (const read of [readLinks, readNotes, readNumbers, readFlags]) {
     for (const [recordId, byField] of await read(
       reader,
       recordIds,
@@ -342,6 +341,7 @@ const readerOf =
 
 const readNotes = readerOf(fieldValues.note, String);
 const readNumbers = readerOf(fieldValues.number, Number);
+const readFlags = readerOf(fieldValues.flag, (): true => true);
 
 // The names of the added columns' values any version of a record holds.
 export const valueFieldsIn = (
@@ -363,16 +363,15 @@ export function recordedValues(
 ): Record<string, unknown> {
   const record: Record<string, unknown> = {};
   for (const [fieldId, value] of values) {
-    if (isLink(value)) record[valueField(fieldId)] = { ...value };
-    else if (isNote(value) || isNumber(value)) {
-      record[valueField(fieldId)] = value;
-    } else if (value.length > 0) record[valueField(fieldId)] = [...value];
+    if (typeHolding(value) !== undefined) {
+      record[valueField(fieldId)] = structuredClone(value);
+    }
   }
   return record;
 }
 
 // The rows that hold a value as the change history records it: one for each choice, or one for a
-// link, a note, or a number. Anything else holds nothing.
+// link, a note, a number, or a ticked box. Anything else holds nothing.
 export function valueRows(
   recordId: string,
   fieldId: string,
@@ -380,15 +379,10 @@ export function valueRows(
   owner: ValueOwner,
 ): (typeof fieldValues.$inferInsert)[] {
   const held = { fieldId, [ownerKey(owner)]: recordId };
-  if (Array.isArray(value)) {
-    return value.map((choiceId) => ({ ...held, choiceId: String(choiceId) }));
-  }
-  if (isLink(value)) {
-    return [{ ...held, linkAddress: value.address, linkText: value.text }];
-  }
-  if (isNote(value)) return [{ ...held, note: value }];
-  if (isNumber(value)) return [{ ...held, number: value }];
-  return [];
+  return (typeHolding(value)?.rows(value) ?? []).map((columns) => ({
+    ...columns,
+    ...held,
+  }));
 }
 
 export type ValueRow = ReturnType<typeof valueRows>[number];

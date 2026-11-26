@@ -202,6 +202,7 @@ const featureRequest = (feature: Feature): FeatureRequest => ({
   links: {},
   notes: {},
   numbers: {},
+  flags: {},
 });
 
 // The start of the cycle some cycles after the one starting on a day.
@@ -358,6 +359,7 @@ async function draftFeatures(
         links: {},
         notes: {},
         numbers: {},
+        flags: {},
       },
     ],
   });

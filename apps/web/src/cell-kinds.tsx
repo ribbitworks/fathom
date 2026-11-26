@@ -41,7 +41,7 @@ import {
   NotePanel,
   notePreview,
 } from "./note-editor.tsx";
-import { offered } from "./lists.ts";
+import { choice as choiceOf, offered } from "./lists.ts";
 import { decimal, decimalUpTo } from "./numbers.ts";
 import {
   type CellValue,
@@ -88,6 +88,7 @@ export interface CellSource {
   links: Readonly<Record<string, Link>>;
   notes?: Readonly<Record<string, string>> | undefined;
   numbers?: Readonly<Record<string, number>> | undefined;
+  flags?: Readonly<Record<string, true>> | undefined;
 }
 
 // The change that saves a value: a detail by its key, or an added column's choices or link.
@@ -97,6 +98,7 @@ export interface CellChange {
   links?: Record<string, Link | null> | undefined;
   notes?: Record<string, string | null> | undefined;
   numbers?: Record<string, number | null> | undefined;
+  flags?: Record<string, true | null> | undefined;
 }
 
 export interface EditorProps {
@@ -157,6 +159,9 @@ export interface CellKind {
   // since a required one is always filled in.
   breaksDown: "always" | "never" | "unless required";
   Editor?: (props: EditorProps) => ReactNode;
+  // What every column of the kind offers, whatever its own settings, such as a checkbox's Yes,
+  // and No for unchecked, which its filter and metrics name.
+  columnDefaults?: { choices: Choice[]; emptyLabel: string };
   // For a kind edited in one step, such as a checkbox: the value editing gives, in place of an
   // editor.
   toggled?: (value: CellValue) => CellValue;
@@ -566,19 +571,27 @@ const note: CellKind = {
   Cell: ({ value }) => <NoteCell note={noteOf(value)} />,
 };
 
-// A checkbox, read from a detail held as true or false, checked when it holds its one choice.
+// A checkbox, checked when it holds its one choice: a ticked box in an added column, or a detail
+// held as true or false.
 export const flagChoice = "yes";
 
 export const toggledFlag = (value: CellValue): CellValue =>
   chosen(value).length > 0 ? [] : [flagChoice];
 
+const flagValue = (held: unknown): CellValue =>
+  held === true ? [flagChoice] : [];
+
 const flag: CellKind = {
   empty: [],
   problem: () => undefined,
   measured: false,
-  read: (source, key) =>
-    // eslint-disable-next-line security/detect-object-injection
-    source[key] === true ? [flagChoice] : [],
+  // The key is a column's own.
+  // eslint-disable-next-line security/detect-object-injection
+  read: (source, key) => flagValue(source.flags?.[key]),
+  ownField: {
+    read: flagValue,
+    save: (value) => chosen(value).length > 0,
+  },
   inWords: (_column, value) => (chosen(value).length > 0 ? "Yes" : "No"),
   inDetail: (_column, value) => (chosen(value).length > 0 ? "Yes" : "No"),
   pasted: (column, content) => {
@@ -589,10 +602,16 @@ const flag: CellKind = {
     if (["no", "n", "false", "", "0"].includes(word)) return { value: [] };
     return { problem: `Choose Yes or No for ${column.label}` };
   },
-  change: (key, value) => ({ [key]: chosen(value).length > 0 }),
+  change: (key, value) => ({
+    flags: { [key]: chosen(value).length > 0 ? true : null },
+  }),
   width: () => 3,
   breaksDown: "always",
   toggled: toggledFlag,
+  columnDefaults: {
+    choices: [choiceOf(flagChoice, "Yes", false)],
+    emptyLabel: "No",
+  },
   Cell: ({ value }) => <FlagCell checked={chosen(value).length > 0} />,
 };
 

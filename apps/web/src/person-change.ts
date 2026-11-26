@@ -18,6 +18,7 @@ function changed(person: Person, change: RowChange): Person {
     links,
     notes,
     numbers,
+    flags,
     preferredName,
     employeeId,
     positionId,
@@ -27,7 +28,7 @@ function changed(person: Person, change: RowChange): Person {
   return {
     ...person,
     ...dates,
-    ...withCellChange(person, { values, links, notes, numbers }),
+    ...withCellChange(person, { values, links, notes, numbers, flags }),
     preferredName: preferredName ?? person.preferredName,
     employeeId: employeeId ?? person.employeeId,
     positionId: positionId ?? person.positionId,

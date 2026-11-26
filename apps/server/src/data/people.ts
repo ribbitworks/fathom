@@ -81,6 +81,7 @@ import {
   checkedLinks,
   checkedNotes,
   checkedNumbers,
+  checkedFlags,
   checkComplete,
   type PersonRow,
 } from "./person-fields.ts";
@@ -166,6 +167,7 @@ export async function draftNewPeople(
     const links = checkedLinks(columns, request.links);
     const notes = checkedNotes(columns, request.notes ?? {});
     const numbers = checkedNumbers(columns, request.numbers ?? {});
+    const flags = checkedFlags(columns, request.flags ?? {});
     const row: PersonRow = {
       id,
       preferredName: request.preferredName,
@@ -182,6 +184,7 @@ export async function draftNewPeople(
       ...links,
       ...notes,
       ...numbers,
+      ...flags,
       ...(request.managerId == null
         ? {}
         : {
@@ -335,6 +338,7 @@ export async function draftPersonChange(
       ...checkedLinks(columns, change.links ?? {}),
       ...checkedNotes(columns, change.notes ?? {}),
       ...checkedNumbers(columns, change.numbers ?? {}),
+      ...checkedFlags(columns, change.flags ?? {}),
       ...changedReporting(person, change, today),
     }),
     before,

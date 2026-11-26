@@ -286,7 +286,7 @@ export const featureDraft = ({
   live?: Record<string, unknown>;
 } = {}): FeatureDraft => ({
   ...recordDraft(fields),
-  live: { values: {}, links: {}, notes: {}, numbers: {}, ...live },
+  live: { values: {}, links: {}, notes: {}, numbers: {}, flags: {}, ...live },
 });
 
 export const fictionalFeature = (fields: Partial<Feature> = {}): Feature => ({

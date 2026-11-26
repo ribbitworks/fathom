@@ -358,9 +358,6 @@ export function milestoneColumns(
       "customerDelivery",
       planColumnNames.customerDelivery,
       "flag",
-      {
-        emptyLabel: "No",
-      },
     ),
   ];
 }

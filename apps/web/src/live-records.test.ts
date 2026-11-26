@@ -43,6 +43,24 @@ describe("the records as they are live", () => {
       }),
     ]);
   });
+
+  it("put back a record's only note, number or ticked box as not there, where a draft gave it", () => {
+    expect(
+      liveGadgets([
+        gadget("g1", {
+          notes: { f4: "Fictional note" },
+          numbers: { f5: 3 },
+          flags: { f6: true },
+          draft: {
+            ...waiting,
+            action: "changed",
+            changed: ["f4", "f5", "f6"],
+            live: { values: {}, links: {}, notes: {}, numbers: {}, flags: {} },
+          },
+        }),
+      ]),
+    ).toEqual([gadget("g1")]);
+  });
 });
 
 describe("the records the metrics count", () => {

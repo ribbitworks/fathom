@@ -9,6 +9,7 @@ import { meaningSchema } from "./lists.ts";
 import { keyNumberSchema } from "./record-keys.ts";
 import {
   changedColumnValues,
+  flagsSchema,
   hireNameSchema,
   linksSchema,
   notesSchema,
@@ -65,6 +66,7 @@ export const hireDraftSchema = z.object({
     links: linksSchema.default({}),
     notes: notesSchema.default({}),
     numbers: numbersSchema.default({}),
+    flags: flagsSchema.default({}),
   }),
   ...draftShape,
 });
@@ -102,6 +104,7 @@ export const hireSchema = z.object({
   links: linksSchema.default({}),
   notes: notesSchema.default({}),
   numbers: numbersSchema.default({}),
+  flags: flagsSchema.default({}),
   // Who the hire's draft fills it with, for those who see the hiring plan: the person, for those
   // who see Personal details, and otherwise null, since they may not have started.
   filler: z.string().nullable().optional(),

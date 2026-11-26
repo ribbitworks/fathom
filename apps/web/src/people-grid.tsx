@@ -24,7 +24,7 @@ import { leftWarning } from "./status-mark.tsx";
 import { canFill } from "./hire-fill.ts";
 import { noDrafts } from "./drafts.ts";
 import { choice, offered } from "./lists.ts";
-import { cellColumn, inOrder } from "./grid-columns.tsx";
+import { fieldColumn, inOrder } from "./grid-columns.tsx";
 import { isPending } from "./grid-drafts.ts";
 import { shownSchema } from "./live-records.ts";
 import { RecordGrid } from "./record-grid.tsx";
@@ -36,7 +36,6 @@ import type {
   RowGrouping,
 } from "./record-table.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
-import { flagChoice } from "./cell-kinds.tsx";
 import {
   aboutPerson,
   isHire,
@@ -181,8 +180,6 @@ function featureTeamsColumn(people: readonly Person[]): Column | undefined {
 
 const asIds = (value: CellValue) => value as string[];
 
-const markedChoice = choice(flagChoice, "Yes", false);
-
 // A single choice as a cell's value: the one chosen, or none.
 export const chosen = (id: string | null | undefined): string[] =>
   typeof id === "string" ? [id] : [];
@@ -296,7 +293,7 @@ export function columnsFor(
     required = false,
     maxLength?: number,
   ) =>
-    cellColumn<Person, RowChange>(key, kind, {
+    fieldColumn<Person, RowChange>(key, kind, {
       // Every built-in column is named.
       label: builtInColumnNames.get(key) as string,
       required,
@@ -412,11 +409,7 @@ export function columnsFor(
         ? [{ ...builtIn("startDate", "date"), offeredOn: hiresOnly }]
         : []),
       manager,
-      {
-        ...builtIn("isManager", "flag"),
-        choices: [markedChoice],
-        emptyLabel: "No",
-      },
+      builtIn("isManager", "flag"),
       ...(showDates
         ? [
             // Fathom takes today, or a new person's start date, when no date is given.
