@@ -73,6 +73,8 @@ If your role approves drafts, the menu ends with **Approve** and **Reject** for 
 
 To undo your latest change, press Cmd+Z on a Mac, or Ctrl+Z elsewhere. If you're in a field with something typed in it, that undoes the typing instead.
 
+A record added from a list of choices, such as **New feature** under a proposal's **Features**, is undone together with its link to that record.
+
 A change that takes something out of view, such as deleting a saved view, also shows a notice with **Undo** for a few seconds.
 
 You can't undo approving or rejecting a draft.

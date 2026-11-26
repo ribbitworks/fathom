@@ -83,51 +83,123 @@ describe("a change joined to the one before", () => {
     vi.unstubAllGlobals();
   });
 
-  it("is undone with it by one Cmd+Z, the later change first", async () => {
-    // Given a change that, once saved, makes another joined to it, as a new record's link is
-    const fetch = serverAnswers({
-      "POST /api/undo/link-set": () =>
-        Response.json({ changeSetId: crypto.randomUUID() }),
-      "POST /api/undo/added-set": () =>
-        Response.json({ changeSetId: crypto.randomUUID() }),
-    });
+  const [addSet, editSet, linkSet] = [
+    crypto.randomUUID(),
+    crypto.randomUUID(),
+    crypto.randomUUID(),
+  ];
+  const undone = () => Response.json({ changeSetId: crypto.randomUUID() });
+  const undoCalls = (fetch: ReturnType<typeof serverAnswers>) =>
+    fetch.mock.calls.map(([url]) => url);
+
+  // Saves an add which, once its request returns, joins a link to it, as a new record from a picker
+  // is linked; an edit, when asked for, is made while the add saves. Resolves once all have saved.
+  async function addThenLink(withEdit = false) {
     const { result } = renderHook(
       () =>
         useSaving({ queryKey, removed: "Removed elsewhere.", blocked: false }),
       { wrapper: wrapperFor(new QueryClient()) },
     );
-    const saved = (changeSetId: string) => ({
+    const linked = vi.fn();
+    const saved = (changeSetId: string, onSaved?: () => void) => ({
       next: (data: unknown) => data,
       failure: "Could not save.",
+      save: () => Promise.resolve(changeSetId),
       onSaved: (id: string | null, before: unknown) => {
         result.current.undoable(id, before);
+        onSaved?.();
       },
-      save: () => Promise.resolve(changeSetId),
     });
+    let returned: (() => void) | undefined;
     act(() => {
       result.current.save({
-        ...saved("added-set"),
-        save: () => {
+        ...saved(addSet),
+        save: async () => {
+          await new Promise<void>((resolve) => {
+            returned = resolve;
+          });
           result.current.joinNext();
-          result.current.save(saved("link-set"));
-          return Promise.resolve("added-set");
+          result.current.save(saved(linkSet, linked));
+          return addSet;
         },
       });
     });
-    // When Cmd+Z is pressed once both have saved
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitFor(() => {
+      expect(returned).toBeDefined();
     });
+    if (withEdit) {
+      act(() => {
+        result.current.save(saved(editSet));
+      });
+    }
+    act(() => {
+      returned?.();
+    });
+    await waitFor(() => {
+      expect(linked).toHaveBeenCalledOnce();
+    });
+  }
+
+  const pressUndo = () => {
     act(() => {
       document.dispatchEvent(
         new KeyboardEvent("keydown", { key: "z", metaKey: true }),
       );
     });
+  };
+
+  it("is undone with it by one Cmd+Z, the later change first", async () => {
+    // Given an add and the link joined to it, both saved
+    const fetch = serverAnswers({
+      [`POST /api/undo/${linkSet}`]: undone,
+      [`POST /api/undo/${addSet}`]: undone,
+    });
+    await addThenLink();
+    // When Cmd+Z is pressed once
+    pressUndo();
     // Then both change sets are undone, the link's first
     await waitFor(() => {
-      expect(fetch.mock.calls.map(([url]) => url)).toEqual([
-        "/api/undo/link-set",
-        "/api/undo/added-set",
+      expect(undoCalls(fetch)).toEqual([
+        `/api/undo/${linkSet}`,
+        `/api/undo/${addSet}`,
+      ]);
+    });
+  });
+
+  it("joins nothing made while the change it joins was saving", async () => {
+    // Given an edit made while the add saved, so its Undo was offered between the add's and the link's
+    const fetch = serverAnswers({ [`POST /api/undo/${linkSet}`]: undone });
+    await addThenLink(true);
+    // When Cmd+Z is pressed once
+    pressUndo();
+    // Then only the link is undone, never the edit with it
+    await waitFor(() => {
+      expect(undoCalls(fetch)).toEqual([`/api/undo/${linkSet}`]);
+    });
+  });
+
+  it("offers Undo again for what one Cmd+Z couldn't undo", async () => {
+    // Given an add and its link, and a server that undoes the link but not, at first, the add
+    vi.mocked(notifyFailure).mockClear();
+    let refusals = 1;
+    const fetch = serverAnswers({
+      [`POST /api/undo/${linkSet}`]: undone,
+      [`POST /api/undo/${addSet}`]: () =>
+        refusals-- > 0 ? new Response(null, { status: 500 }) : undone(),
+    });
+    await addThenLink();
+    pressUndo();
+    await waitFor(() => {
+      expect(notifyFailure).toHaveBeenCalled();
+    });
+    // When Cmd+Z is pressed again
+    pressUndo();
+    // Then the add alone is undone again
+    await waitFor(() => {
+      expect(undoCalls(fetch)).toEqual([
+        `/api/undo/${linkSet}`,
+        `/api/undo/${addSet}`,
+        `/api/undo/${addSet}`,
       ]);
     });
   });

@@ -174,7 +174,6 @@ export function useAddFromPanel({
   actionsFor: <Rec extends PlanRecord, Request>(
     type: PlanRecordKind,
   ) => RecordActions<Rec, PlanChange, Request>;
-  // Makes the next change part of the one before it, so one Undo takes back a record and its link.
   joinNext: () => void;
 }) {
   const client = useQueryClient();

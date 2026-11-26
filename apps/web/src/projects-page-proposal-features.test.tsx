@@ -3,7 +3,7 @@
 // Tests for a proposal's Features in its details: choosing features, and adding a new one linked to
 // the proposal, which one Undo takes back with its link, against a simulated server.
 
-import { act, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -113,6 +113,7 @@ describe("a proposal's Features in its details", () => {
   });
 
   it("takes back the new feature and its link with one Undo, the link first", async () => {
+    // Given a new feature added from the proposal, and its link, both saved
     const [addSet, linkSet] = [crypto.randomUUID(), crypto.randomUUID()];
     const undone = () => Response.json({ changeSetId: crypto.randomUUID() });
     const { fetch } = await addNewFeature({
@@ -123,10 +124,17 @@ describe("a proposal's Features in its details", () => {
       [`POST /api/undo/${addSet}`]: undone,
       [`POST /api/undo/${linkSet}`]: undone,
     });
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+    // The plan is reloaded once nothing is left saving.
+    const requests = () =>
+      fetch.mock.calls.map(([url, init]) => `${init?.method ?? "GET"} ${url}`);
+    await waitFor(() => {
+      expect(requests().lastIndexOf("GET /api/projects")).toBeGreaterThan(
+        requests().indexOf(`PUT /api/proposals/${proposalId}`),
+      );
     });
+    // When Cmd+Z is pressed once
     await userEvent.keyboard("{Meta>}z{/Meta}");
+    // Then the link is undone, then the feature
     await waitFor(() => {
       expect(
         fetch.mock.calls
