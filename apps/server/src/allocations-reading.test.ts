@@ -91,9 +91,13 @@ describe("reading", () => {
   });
 
   it("gives no feature a colour for a role that doesn't see feature teams", async () => {
-    // Given a role that reads allocations and Personal details, but not feature teams
+    // Given a role that reads allocations, Personal details and features, but not feature teams
     const ids = await tealAndTeamless();
-    const noTeams = await test.signedIn(["allocations:view", "personal:view"]);
+    const noTeams = await test.signedIn([
+      "allocations:view",
+      "personal:view",
+      "features:view",
+    ]);
 
     // Then neither feature has a colour
     expect(await coloursFor(noTeams, ids)).toEqual([null, null]);
