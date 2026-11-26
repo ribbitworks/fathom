@@ -2,9 +2,9 @@
 title: "Manual Test: Feature Teams"
 category: "How-To"
 audience: "Contributors"
-applies_to: ["apps/web/src/org-chart*", "apps/web/src/people-grid.tsx", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "apps/server/src/data/feature-team-rules.ts", "apps/server/src/data/feature-team-held-changes.ts", "apps/server/src/data/feature-team-sight.ts", "apps/server/src/data/feature-team-reads.ts", "apps/server/src/data/feature-team-records.ts", "apps/server/src/data/feature-team-decisions.ts", "apps/server/src/data/feature-team-undo.ts", "apps/server/src/data/feature-team-removals.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
+applies_to: ["apps/web/src/org-chart*", "apps/web/src/people-grid.tsx", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "apps/server/src/data/feature-team-days.ts", "apps/server/src/data/feature-team-rules.ts", "apps/server/src/data/feature-team-held-changes.ts", "apps/server/src/data/feature-team-sight.ts", "apps/server/src/data/feature-team-reads.ts", "apps/server/src/data/feature-team-records.ts", "apps/server/src/data/feature-team-decisions.ts", "apps/server/src/data/feature-team-undo.ts", "apps/server/src/data/feature-team-removals.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/org-chart.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Feature Teams

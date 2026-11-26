@@ -12,11 +12,11 @@ import { peopleOf, readLiveTeams } from "./feature-team-reads.ts";
 import { membersOf } from "./feature-team-rules.ts";
 import { heldTeamChange, monthRefusals } from "./feature-team-held-changes.ts";
 import { noPerson } from "./person-fields.ts";
+import { fromDay } from "./feature-team-days.ts";
 import {
   changingTeams,
   draftedTeam,
   draftTeamChange,
-  fromDay,
   saved,
 } from "./feature-teams.ts";
 

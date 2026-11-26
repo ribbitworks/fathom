@@ -30,11 +30,8 @@ import {
 import { peopleNamed, withoutLeavers } from "./feature-team-sight.ts";
 import { refuseRemovingNamed } from "./records.ts";
 import { readToday } from "./settings.ts";
-import {
-  changesDates,
-  readTeamNames,
-  requireChanging,
-} from "./feature-teams.ts";
+import { changesDates } from "./feature-team-days.ts";
+import { readTeamNames, requireChanging } from "./feature-teams.ts";
 
 // Refuses putting back a joining, leaving or lead day the actor could not choose today. Those who
 // do not see the days are refused any, since which they could choose would say what the day is.

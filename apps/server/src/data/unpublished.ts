@@ -87,7 +87,8 @@ import {
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { readLiveTeams, readTeamDrafts } from "./feature-team-reads.ts";
-import { recordTeamDayChanges, teamChanges } from "./feature-teams.ts";
+import { recordTeamDayChanges } from "./feature-team-days.ts";
+import { teamChanges } from "./feature-teams.ts";
 import { readFills } from "./fills.ts";
 import { readToday } from "./settings.ts";
 import { editsDraft } from "./draft-editors.ts";
