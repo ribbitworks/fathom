@@ -4,6 +4,7 @@
 // signed-in user, fictional records, gadgets for the shared table's own tests, and Fathom's front
 // end started on a page of the test's choosing.
 
+import type { RowTicks } from "./row-ticks.tsx";
 import type {
   Choice,
   DraftKind,
@@ -677,6 +678,7 @@ export function renderGadgets({
   canEditColumns = false,
   fields = [colour],
   order = [],
+  ticks,
 }: {
   gadgets: Gadget[];
   fields?: Field[];
@@ -687,6 +689,7 @@ export function renderGadgets({
   approves?: readonly DraftKind[];
   canEditColumns?: boolean;
   order?: string[];
+  ticks?: RowTicks<Gadget>;
 }): RenderResult {
   return render(
     <MantineProvider theme={testTheme}>
@@ -702,6 +705,7 @@ export function renderGadgets({
         view={view}
         onView={onView}
         actions={given}
+        ticks={ticks}
       />
     </MantineProvider>,
   );

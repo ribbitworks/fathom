@@ -16,6 +16,7 @@ import {
   gadgetTable,
   nameThen,
   nextColumn,
+  recordCell,
   renderGadgets,
 } from "./test-support.tsx";
 
@@ -357,6 +358,8 @@ describe("typing fast into a cell", () => {
     ["next", "date", "203009", "2030-09"],
     ["next", "choice", "Wid", "Wid"],
     ["next", "link", "exa", "exa"],
+    ["name", "text", "Wi d", "Wi d"],
+    ["next", "choice", "Wi d", "Wi d"],
   ] as const)(
     "keeps the keys typed into the %s cell, a %s, before its editor has focus",
     async (key, kind, typed, shown) => {
@@ -377,4 +380,34 @@ describe("typing fast into a cell", () => {
       });
     },
   );
+
+  it("keeps a space typed into a ticking table's first cell, rather than ticking the row", async () => {
+    // Given a table whose rows can be ticked, with Space on the first cell ticking its row
+    const onTick = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      fields: [],
+      table: nameThen(nextColumn("text")),
+      ticks: {
+        ticked: new Set(),
+        onTick,
+        tickable: () => true,
+        label: (one) => `Select ${one.name}`,
+        allLabel: "Select all",
+      },
+    });
+    const cell = recordCell("g1", "name") as HTMLElement;
+    act(() => {
+      cell.focus();
+    });
+    // When a name with a space is typed fast, before the cell's editor has focus
+    for (const one of "Wi d") fireEvent.keyDown(cell, { key: one });
+    // Then the space is in the name, and the row stays unticked
+    await waitFor(() => {
+      expect(
+        (document.querySelector('[id$="-editor"]') as HTMLInputElement).value,
+      ).toBe("Wi d");
+    });
+    expect(onTick).not.toHaveBeenCalled();
+  });
 });

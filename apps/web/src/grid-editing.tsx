@@ -258,6 +258,23 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       return;
     }
     if (!plain) return;
+    const { asTyped, inPanel } = kindOf(column);
+    // Keys typed fast reach the cell until its editor has focus, and follow the first, a space
+    // among them.
+    if (
+      event.key.length === 1 &&
+      editing?.row === cell.row &&
+      editing.column === cell.column &&
+      inPanel !== true
+    ) {
+      event.preventDefault();
+      const next = typed.current + event.key;
+      typed.current = asTyped?.({ text: next, cursor: null }).text ?? next;
+      // The editor, which keeps its own text once open, starts afresh from what is typed so far.
+      setOpenedWith((before) => before && { ...before, edit: before.edit + 1 });
+      focusSoon(`${cellId(cell.row, cell.column)}-editor`);
+      return;
+    }
     if (
       ticks !== undefined &&
       event.key === " " &&
@@ -296,21 +313,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       if (!save(cell, emptyValue(column))) putBack();
     } else if (event.key.length === 1) {
       event.preventDefault();
-      // Keys typed fast reach the cell until its editor has focus, and follow the first.
-      const { asTyped, inPanel } = kindOf(column);
-      if (
-        editing?.row === cell.row &&
-        editing.column === cell.column &&
-        inPanel !== true
-      ) {
-        const next = typed.current + event.key;
-        typed.current = asTyped?.({ text: next, cursor: null }).text ?? next;
-        // The editor, which keeps its own text once open, starts afresh from what is typed so far.
-        setOpenedWith(
-          (before) => before && { ...before, edit: before.edit + 1 },
-        );
-        focusSoon(`${cellId(cell.row, cell.column)}-editor`);
-      } else startEdit(cell, event.key);
+      startEdit(cell, event.key);
     }
   };
   // The problem in a cell, if any: one saving its value found, or one found in it when its new row
