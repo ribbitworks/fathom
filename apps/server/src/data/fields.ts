@@ -17,7 +17,16 @@ import {
   columnTableOf,
   type FieldRequest,
 } from "@fathom/shared";
-import { and, asc, count, countDistinct, eq, gt, isNull } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  countDistinct,
+  eq,
+  gt,
+  inArray,
+  isNull,
+} from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftedValues } from "./drafted-values.ts";
@@ -66,18 +75,28 @@ export async function lockFields(
     .for("update");
 }
 
-// Refuses a live list that does not exist or is retired, since a retired list is no longer offered.
-export async function checkLiveList(transaction: Transaction, listId: string) {
-  const [list] = await transaction
+// Refuses live lists that do not exist or are retired, since a retired list is no longer offered,
+// read in one query.
+export async function checkLiveLists(
+  transaction: Transaction,
+  listIds: readonly string[],
+) {
+  const wanted = [...new Set(listIds)];
+  const found = await transaction
     .select({ retired: lists.retired })
     .from(lists)
-    .where(eq(lists.id, listId))
+    .where(inArray(lists.id, wanted))
     .for("share");
-  if (list === undefined) throw new BadRequestError("There is no such list");
-  if (list.retired) {
+  if (found.length < wanted.length) {
+    throw new BadRequestError("There is no such list");
+  }
+  if (found.some(({ retired }) => retired)) {
     throw new BadRequestError("Choose a list that is not retired");
   }
 }
+
+export const checkLiveList = (transaction: Transaction, listId: string) =>
+  checkLiveLists(transaction, [listId]);
 
 // The total a count query found.
 async function totalOf(query: Promise<{ total: number }[]>): Promise<number> {

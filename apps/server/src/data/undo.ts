@@ -35,6 +35,7 @@ import {
 import { columnsWithAdded } from "./added-columns.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import {
+  isPrivateRecordType,
   type RecordType,
   recordChanges,
   type StoredChange,
@@ -239,6 +240,9 @@ async function undoIn(
     throw new ConflictError(
       "A change of class can't be undone; change it back instead",
     );
+  }
+  if (records.some(({ recordType }) => isPrivateRecordType(recordType))) {
+    throw new ConflictError("Changes to private pages can't be undone yet");
   }
   if (records.some(({ recordType }) => planRecordTypes.has(recordType))) {
     throw new ConflictError(

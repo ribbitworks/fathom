@@ -18,6 +18,7 @@ import { storedTier } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import type {
   Change,
+  PrivateRecordType,
   RecordType,
   StoredChange,
   Transaction,
@@ -76,7 +77,7 @@ const asStored: Convert = (value) => value;
 // read each column's value from the history. Other fields, such as a record's place in its order or
 // a person's values for a column, are put back separately.
 const columnsOf: Record<
-  Exclude<RecordType, "choice-order" | PlanRecordType>,
+  Exclude<RecordType, "choice-order" | PlanRecordType | PrivateRecordType>,
   Readonly<Record<string, Convert>>
 > = {
   list: {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A person's own pages: the one check every read of a page goes through, and reading the actor's
-// pages and one page with its columns and rows. Part of the data access layer.
+// A person's own pages: the one check every read and change of a page goes through, and reading
+// the actor's pages and one page with its columns and rows. Part of the data access layer.
 
 import {
   type Database,
@@ -12,6 +12,7 @@ import {
 import {
   type ListedPrivatePage,
   makesPrivatePages,
+  mayEditPrivatePage,
   mayReadPrivatePage,
   type PrivateColumn,
   type PrivatePage,
@@ -33,16 +34,22 @@ import {
   recordedValues,
 } from "./values.ts";
 
-type PageRow = typeof privatePages.$inferSelect;
+export type PageRow = typeof privatePages.$inferSelect;
+export type RowRow = typeof privateRows.$inferSelect;
 
 // The same answer as for a page nobody made, so a refusal never says that a page exists.
 const noPage = "There is no such page";
 
+const readerOf = (actor: Actor) => ({
+  id: actor.user.id,
+  permissions: actor.permissions,
+});
+
 const mayRead = (actor: Actor, page: Pick<PageRow, "userId">) =>
-  mayReadPrivatePage(
-    { id: actor.user.id, permissions: actor.permissions },
-    page,
-  );
+  mayReadPrivatePage(readerOf(actor), page);
+
+const mayEdit = (actor: Actor, page: Pick<PageRow, "userId">) =>
+  mayEditPrivatePage(readerOf(actor), page);
 
 // The pages the actor may read, in their order under Mine. Only a role that may make pages has a
 // Mine to list.
@@ -61,24 +68,40 @@ export async function listPages(
     .map(({ id, name, position }) => ({ id, name, position }));
 }
 
-// The page, once the actor may read it; for anyone else it is not there.
-async function checkedPage(
+export async function pageRow(
   reader: Reader,
-  actor: Actor,
   id: string,
-): Promise<PageRow> {
-  const [page] = await reader
+  lock: boolean,
+): Promise<PageRow | undefined> {
+  const query = reader
     .select()
     .from(privatePages)
     .where(eq(privatePages.id, id));
-  if (page === undefined || !mayRead(actor, page)) {
+  const [page] = await (lock ? query.for("update") : query);
+  return page;
+}
+
+// The page, once the actor may read it, and change it if asked, locked for the change; for anyone
+// else it is not there.
+export async function checkedPage(
+  reader: Reader,
+  actor: Actor,
+  id: string,
+  edits: boolean,
+): Promise<PageRow> {
+  const page = await pageRow(reader, id, edits);
+  if (
+    page === undefined ||
+    !mayRead(actor, page) ||
+    (edits && !mayEdit(actor, page))
+  ) {
     throw new NotFoundError(noPage);
   }
   return page;
 }
 
 // The columns of a page whose class the actor sees, in the page's order.
-async function seenColumns(
+export async function seenColumns(
   reader: Reader,
   actor: Actor,
   pageId: string,
@@ -112,7 +135,7 @@ const columnOut = (column: ColumnInfo): PrivateColumn => {
 };
 
 // Each row's values in the columns given, by row, as recorded.
-async function rowValues(
+export async function rowValues(
   reader: Reader,
   rowIds: readonly string[],
   columns: readonly ColumnInfo[],
@@ -128,7 +151,7 @@ async function rowValues(
   );
 }
 
-async function pageRows(reader: Reader, pageId: string) {
+export async function pageRows(reader: Reader, pageId: string) {
   return reader
     .select()
     .from(privateRows)
@@ -137,11 +160,16 @@ async function pageRows(reader: Reader, pageId: string) {
 }
 
 // A page as the actor sees it, and whether it showed them a column beyond General.
-async function pageOut(
+export interface PageOut {
+  page: PrivatePage;
+  sensitive: boolean;
+}
+
+export async function pageOut(
   reader: Reader,
   actor: Actor,
   page: PageRow,
-): Promise<{ page: PrivatePage; sensitive: boolean }> {
+): Promise<PageOut> {
   const columns = await seenColumns(reader, actor, page.id);
   const rows = await pageRows(reader, page.id);
   const values = await rowValues(
@@ -169,18 +197,13 @@ async function pageOut(
   };
 }
 
-// A page as the actor sees it, read as of one moment, so a change saved meanwhile is seen whole or
-// not at all. Seeing a column beyond General is recorded in the access history, once a day.
-export async function readPage(
+// A page as the actor is answered with it, read or just saved: seeing a column beyond General is
+// recorded in the access history, once a day.
+export async function answeredPage(
   database: Database,
   actor: Actor,
-  id: string,
+  { page, sensitive }: PageOut,
 ): Promise<PrivatePage> {
-  const { page, sensitive } = await database.transaction(
-    async (transaction) =>
-      pageOut(transaction, actor, await checkedPage(transaction, actor, id)),
-    { isolationLevel: "repeatable read", accessMode: "read only" },
-  );
   if (sensitive) {
     await recordPersonalView(
       database,
@@ -189,4 +212,26 @@ export async function readPage(
     );
   }
   return page;
+}
+
+// A page as the actor sees it, read as of one moment, so a change saved meanwhile is seen whole or
+// not at all.
+export async function readPage(
+  database: Database,
+  actor: Actor,
+  id: string,
+): Promise<PrivatePage> {
+  return answeredPage(
+    database,
+    actor,
+    await database.transaction(
+      async (transaction) =>
+        pageOut(
+          transaction,
+          actor,
+          await checkedPage(transaction, actor, id, false),
+        ),
+      { isolationLevel: "repeatable read", accessMode: "read only" },
+    ),
+  );
 }

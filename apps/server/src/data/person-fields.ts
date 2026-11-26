@@ -17,10 +17,10 @@ import { inArray } from "drizzle-orm";
 import { type Actor, seesSensitivity } from "../access.ts";
 import { BadRequestError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
-import { fitsColumns, type Recorded } from "./draft-records.ts";
+import { fitsColumns, type Recorded, tidy } from "./draft-records.ts";
 import { choicesWithAdded, refuseHeldColumns } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
-import { isNote, isNumber } from "./column-types.ts";
+import { isNote, isNumber, typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { keptNote } from "./records.ts";
 import { reportingFields } from "./reporting.ts";
@@ -375,6 +375,46 @@ export const checkedNumbers = (
   requested: Readonly<Record<string, number | null>>,
 ): Recorded =>
   checkedOfType(columns, requested, "number", (number) => number ?? []);
+
+// A record's values in the columns given: those a request names replace those it has, each checked
+// against its column, given the choices asked for, and every required column must then hold one.
+export function askedColumnValues(
+  columns: readonly ColumnInfo[],
+  known: readonly ChoiceRow[],
+  request: {
+    values?: Readonly<Record<string, readonly string[]>> | undefined;
+    links?: Readonly<Record<string, Link | null>> | undefined;
+    notes?: Readonly<Record<string, string | null>> | undefined;
+    numbers?: Readonly<Record<string, number | null>> | undefined;
+  },
+  current: Recorded | undefined,
+): Recorded {
+  const had = current === undefined ? undefined : valuesOf(current);
+  const chosen = checkedValues(columns, known, request.values ?? {}, had);
+  const kept = Object.fromEntries(
+    Object.entries(current ?? {}).filter(
+      ([field]) => fieldOfValue(field) !== null,
+    ),
+  );
+  const values: Recorded = {
+    ...kept,
+    ...Object.fromEntries(
+      [...chosen].map(([fieldId, ids]) => [valueField(fieldId), ids]),
+    ),
+    ...checkedLinks(columns, request.links ?? {}),
+    ...checkedNotes(columns, request.notes ?? {}),
+    ...checkedNumbers(columns, request.numbers ?? {}),
+  };
+  for (const column of columns) {
+    if (
+      column.required &&
+      typeOf(column).count(values[valueField(column.id)]) === 0
+    ) {
+      throw new BadRequestError(`${column.name} must be filled in`);
+    }
+  }
+  return tidy(values);
+}
 
 // Whether the live people given, as they are now, fit their columns, as fitsColumns sets out. Used
 // after an undo or an approval puts people's values in place, since the columns may have changed
