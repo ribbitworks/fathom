@@ -3,7 +3,7 @@
 // Adding a record from a picker of the plan's records, in a New form stacked under the picker's
 // panel, and linking it to the record the picker was for.
 
-import type { Feature, Project, ProjectPlan, Proposal } from "@fathom/shared";
+import type { ProjectPlan } from "@fathom/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { newRecordQuestion } from "./discard-question.tsx";
@@ -19,6 +19,7 @@ import {
   projectPlanQuery,
   type TableChoices,
 } from "./projects.ts";
+import { type FeatureEdits, featureTable } from "./feature-table.tsx";
 import {
   customerTable,
   projectTable,
@@ -34,12 +35,13 @@ import type { SidePanel } from "./side-panel.tsx";
 import type { View } from "./table-view.ts";
 
 // The kinds of record a picker may add.
-type LinkedKind = "customer" | "project" | "proposal";
+type LinkedKind = "customer" | "project" | "proposal" | "feature";
 
 const tabOf = {
   customer: "customers",
   project: "projects",
   proposal: "proposals",
+  feature: "features",
 } as const satisfies Record<LinkedKind, string>;
 
 // How a record added from a picker is linked: after it is added, as a draft of the record the
@@ -54,6 +56,7 @@ interface AddingPicker {
   kind: LinkedKind;
   opening: (typed: string, to: AddedTo) => FormValues;
   linkedBy: LinkedBy;
+  chooseWords?: string;
 }
 
 const named = (typed: string): FormValues => ({ name: typed });
@@ -79,9 +82,19 @@ const featureNamer = (
   linkedBy: "within",
 });
 
+// A feature added from a proposal's Features, linked as a draft of the proposal that uses the
+// feature's own draft, so the two are approved together.
+const proposalFeaturesPicker: AddingPicker = {
+  key: "featureIds",
+  kind: "feature",
+  opening: (typed) => ({ name: typed }),
+  linkedBy: "after",
+  chooseWords: "Choose features",
+};
+
 const pickersOf: Readonly<Record<PlanRecordKind, readonly AddingPicker[]>> = {
   project: [customersPicker],
-  proposal: [customersPicker],
+  proposal: [customersPicker, proposalFeaturesPicker],
   feature: [
     customersPicker,
     featureNamer("projectIds", "project"),
@@ -123,6 +136,8 @@ export const addingTo = <Rec extends PlanRecord, Request>(
 
 interface Linking {
   kind: LinkedKind;
+  // The picker's column, which the record added is linked through.
+  key: string;
   linkedBy: LinkedBy;
   values: FormValues;
   // What the form opened with, which leaving it unchanged discards without asking.
@@ -138,9 +153,6 @@ const oneOf = (kind: LinkedKind): string =>
   // The kind is always one of the fixed kinds.
   // eslint-disable-next-line security/detect-object-injection
   wordsOf(tabOf[kind]).one;
-
-// A record that holds customers: a project, a proposal or a feature.
-type CustomerHolder = Project | Proposal | Feature;
 
 export function useAddFromPanel({
   canAdd,
@@ -158,7 +170,7 @@ export function useAddFromPanel({
   const [forms, setForms] = useState(0);
 
   const addsOf = (
-    { kind, opening, linkedBy }: AddingPicker,
+    { key, kind, opening, linkedBy }: AddingPicker,
     type: PlanRecordKind,
   ): Adds => ({
     one: oneOf(kind),
@@ -168,6 +180,7 @@ export function useAddFromPanel({
       setForms((count) => count + 1);
       setLinking({
         kind,
+        key,
         linkedBy,
         values: opened,
         opened,
@@ -199,17 +212,21 @@ export function useAddFromPanel({
       ? newRecordQuestion(oneOf(linking.kind))
       : undefined;
 
-  // Links customers added to the record the picker was for, as a draft of it, as the plan holds it
-  // with what was saved since the form opened, unless someone has removed it since.
-  const linkCustomers = (current: Linking, added: readonly string[]) => {
+  // Links records added to the record the picker was for, through the picker's column, as a draft
+  // of it, as the plan holds it with what was saved since the form opened, unless someone has
+  // removed it since.
+  const linkAfter = (current: Linking, added: readonly string[]) => {
     // The plan is loaded while its page shows.
     const plan = client.getQueryData(projectPlanQuery.queryKey) as ProjectPlan;
-    // Only records that hold customers have a Customers picker.
-    const holders = operationsOf(current.type).all(plan) as CustomerHolder[];
     const id = savedOf(current.to);
-    for (const record of holders.filter((holder) => holder.id === id)) {
+    for (const record of operationsOf(current.type)
+      .all(plan)
+      .filter((holder) => holder.id === id)) {
+      // A picker's column holds the identifiers of the records it names.
+      const linked = new Map(Object.entries(record)).get(current.key) as
+        readonly string[] | undefined;
       actionsFor(current.type).update(record, {
-        customerIds: [...record.customerIds, ...added],
+        [current.key]: [...(linked ?? []), ...added],
       });
     }
   };
@@ -217,7 +234,7 @@ export function useAddFromPanel({
   const linkOf: Readonly<
     Record<LinkedBy, (current: Linking, added: readonly string[]) => void>
   > = {
-    after: linkCustomers,
+    after: linkAfter,
     within: () => undefined,
     // Only a new row's picker fills it.
     fill: (current, added) => {
@@ -229,6 +246,7 @@ export function useAddFromPanel({
   const panel = ({
     plan,
     choices,
+    featureEdits,
     narrow,
     notes,
     units,
@@ -236,6 +254,8 @@ export function useAddFromPanel({
   }: {
     plan: ProjectPlan;
     choices: TableChoices;
+    // What the role may change on a new feature, as on Features.
+    featureEdits: FeatureEdits;
     narrow: boolean;
     notes: NoteOpening;
     units: View["units"];
@@ -251,6 +271,7 @@ export function useAddFromPanel({
     function form<Rec extends PlanRecord, Request>(
       table: RecordTable<Rec, PlanChange, Request>,
       records: readonly Rec[],
+      added?: ProjectPlan["featureColumns"],
     ) {
       const actions = actionsFor<Rec, Request>(current.kind);
       return (
@@ -263,6 +284,7 @@ export function useAddFromPanel({
           saving={current.saving}
           narrow={narrow}
           panelId={panelId}
+          {...(added === undefined ? {} : { added })}
           notes={notes}
           units={units}
           onValue={(key, value) => {
@@ -301,6 +323,12 @@ export function useAddFromPanel({
         form(customerTable(choices, { seesFeatures: false }), plan.customers),
       project: () => form(projectTable(choices), plan.projects),
       proposal: () => form(proposalTable(choices), plan.proposals),
+      feature: () =>
+        form(
+          featureTable(choices, featureEdits),
+          plan.features,
+          plan.featureColumns,
+        ),
     };
     return {
       key: "linked",
