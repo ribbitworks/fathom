@@ -93,8 +93,6 @@ function TeamRow({
   if (person.teamName === null && renamed === undefined) return null;
   const colourChosen =
     editsTeams && person.teamName !== null && hasApprovedName(person);
-  // Whether a colour, or the button to choose one, comes before the name.
-  const swatched = colourChosen || person.teamColour !== null;
   return (
     <>
       <MarkRow small>
@@ -137,8 +135,10 @@ function TeamRow({
         </TeamMarks>
       </MarkRow>
       {renamed !== undefined && renamed.live !== null && (
-        <LiveLine className={swatched ? classes.liveName : undefined}>
-          {renamed.live}
+        <LiveLine className={colourChosen ? classes.liveName : undefined}>
+          <ColouredName colour={colourChosen ? null : person.teamColour}>
+            {renamed.live}
+          </ColouredName>
         </LiveLine>
       )}
     </>
