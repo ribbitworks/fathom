@@ -44,6 +44,7 @@ import { inViewUnits } from "./grid-columns.tsx";
 import { heldBack } from "./grid-drafts.ts";
 import type { Column, ColumnGroup } from "./record-table.ts";
 import {
+  changeId,
   type Editing,
   useChosenUnits,
   useRecordEditing,
@@ -63,6 +64,7 @@ import {
 } from "./status-mark.tsx";
 import type { CellValue, View } from "./table-view.ts";
 import { formatDay } from "./day-formats.ts";
+import { focusSoon } from "./focus.ts";
 
 // The kind of a record in a table of one kind.
 export const onlyKind = "";
@@ -308,6 +310,12 @@ function DetailRow({
     ) : also !== undefined ? (
       <Text>{also}</Text>
     ) : undefined;
+  const { adds } = column;
+  const listed =
+    adds?.chooseWords !== undefined &&
+    editing?.onStart !== undefined &&
+    !editing.open;
+  const newId = `${changeId(column)}-new`;
   return (
     <Row
       column={column}
@@ -317,10 +325,39 @@ function DetailRow({
           ? undefined
           : { live: column.live(draft as never), draft }
       }
-      editing={editing}
+      // Closed, the buttons under the list stand in for the pencil.
+      editing={listed ? undefined : editing}
       showOn={column.showOn?.(record as never)}
     >
-      {shown}
+      {listed ? (
+        <Stack gap={6} align="flex-start">
+          {shown}
+          <Group gap={8}>
+            <Button
+              variant="default"
+              size="compact-sm"
+              id={changeId(column)}
+              onClick={editing.onStart}
+            >
+              {adds.chooseWords}
+            </Button>
+            <Button
+              variant="default"
+              size="compact-sm"
+              id={newId}
+              onClick={() => {
+                adds.onNew(record.id, "", () => {
+                  focusSoon(newId);
+                });
+              }}
+            >
+              New {adds.one}
+            </Button>
+          </Group>
+        </Stack>
+      ) : (
+        shown
+      )}
     </Row>
   );
 }

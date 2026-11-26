@@ -454,7 +454,7 @@ export function ProjectsPage({
         const adding = linked.panel({
           plan,
           choices,
-          editsFeatureTeams,
+          featureEdits: { editsCommitments: plan.canEdit, editsFeatureTeams },
           narrow,
           notes,
           units: view.units,
