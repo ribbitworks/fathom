@@ -615,4 +615,47 @@ describe("what a table can ask of its columns and rows", () => {
       expect(screen.getAllByText("2 gadgets")).toHaveLength(2);
     });
   });
+
+  describe("the count above the table, with a record drafted to be removed", () => {
+    const removing = (state: "waiting" | "rejected" = "waiting") => [
+      gadget("a"),
+      gadget("b", { draft: { ...waiting, state, action: "deleted" } }),
+    ];
+    const counting = (view: View, gadgets = removing()) => {
+      renderTable(gadgetTable(), gadgets, { view });
+      return screen.getByRole("status").textContent;
+    };
+
+    it("leaves it out with drafts beside live, as the metrics do", () => {
+      expect(counting({ ...emptyView, show: "both", breakdown: [] })).toBe(
+        "1 gadget",
+      );
+      expect(
+        screen.getByRole("region", { name: "Metrics" }).textContent,
+      ).toContain("1 gadget with drafts, 2 live");
+    });
+
+    it("leaves it out of what a search keeps, though its row shows", () => {
+      expect(counting({ ...emptyView, show: "both", search: "Gadget b" })).toBe(
+        "0 of 1",
+      );
+      expect(screen.getByText("Gadget b")).toBeTruthy();
+    });
+
+    it("counts it live only, as it is still live", () => {
+      expect(counting({ ...emptyView, show: "live" })).toBe("2 gadgets");
+    });
+
+    it("counts it once its removal is rejected, as the metrics do", () => {
+      expect(
+        counting(
+          { ...emptyView, show: "both", breakdown: [] },
+          removing("rejected"),
+        ),
+      ).toBe("2 gadgets");
+      expect(
+        screen.getByRole("region", { name: "Metrics" }).textContent,
+      ).toContain("2 gadgets");
+    });
+  });
 });

@@ -11,7 +11,11 @@ import { breaksDown, kindOf } from "./grid-columns.tsx";
 import { draftTotal } from "./drafts.ts";
 import { draftColumn, waitingDrafts } from "./grid-drafts.ts";
 import { TableScrolling } from "./grid-layout.ts";
-import { countedRecords, removedWhenApplied } from "./live-records.ts";
+import {
+  countedRecords,
+  removedWhenApplied,
+  withoutRemovals,
+} from "./live-records.ts";
 import { MetricsPanel } from "./metrics-panel.tsx";
 import { chosenSum, sumAtFirst } from "./table-view.ts";
 import { metricsButtonId, metricsPanelId } from "./metrics.ts";
@@ -246,6 +250,11 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
         ]),
   ];
 
+  // Counted as the metrics count them: each record once, leaving out those drafted to be removed.
+  const stayingOnce = (rows: readonly Rec[]) =>
+    withoutRemovals(countedOnce(rows));
+  const staying = stayingOnce(records);
+
   const exportQuestion = useTableExport({
     table,
     show: known.show,
@@ -264,16 +273,10 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
       barFilters={table.barFilters}
       view={view}
       onView={onView}
-      shown={countedOnce(shownRecords).length}
-      total={countedOnce(records).length}
-      counted={
-        count?.(countedOnce(records)) ??
-        table.counted?.counted(countedOnce(records))
-      }
-      countedNarrowed={countNarrowed?.(
-        countedOnce(records),
-        countedOnce(shownRecords),
-      )}
+      shown={stayingOnce(shownRecords).length}
+      total={staying.length}
+      counted={count?.(staying) ?? table.counted?.counted(staying)}
+      countedNarrowed={countNarrowed?.(staying, stayingOnce(shownRecords))}
       groupings={table.groupings}
       nests={nests}
       laysOutColumns={laysOutColumns}

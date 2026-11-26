@@ -35,7 +35,7 @@ import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 import { colourVariable, colourWords } from "./colours.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import { withRetiring } from "./lists.ts";
-import { undoDrafts } from "./live-records.ts";
+import { undoDrafts, withoutRemovals } from "./live-records.ts";
 import { recordMark } from "./draft-marks.ts";
 
 export const releaseStreamsQuery = queryOptions({
@@ -303,9 +303,6 @@ export function slotDraft(
 
 const everyDraft = () => true;
 const rejected = ({ state }: { state: string }) => state === "rejected";
-const kept = <Drafted extends { draft?: { action: string } | undefined }>(
-  records: readonly Drafted[],
-) => records.filter(({ draft }) => draft?.action !== "deleted");
 
 // Every stream as it is live, without drafts, as Live only shows them.
 export const liveStreams = (
@@ -323,10 +320,10 @@ export const liveStreams = (
 export const draftedStreams = (
   streams: readonly ReleaseStream[],
 ): ReleaseStream[] =>
-  kept(undoDrafts(streams, rejected)).map((stream) => ({
+  withoutRemovals(undoDrafts(streams, rejected)).map((stream) => ({
     ...stream,
-    patterns: kept(undoDrafts(stream.patterns, rejected)),
-    releases: kept(undoDrafts(stream.releases, rejected)),
+    patterns: withoutRemovals(undoDrafts(stream.patterns, rejected)),
+    releases: withoutRemovals(undoDrafts(stream.releases, rejected)),
   }));
 
 // Each stream's, pattern's and release's draft, whatever the view, by its record, for its marks.
