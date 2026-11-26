@@ -76,10 +76,11 @@ export const featureTeams = fathomSchema.table(
   ],
 );
 
-// Who leads a feature team: each record names its lead, or none, from a date, in force until the
-// team's next record, so past and planned leads are kept. The server checks a new lead is one of the
-// team's members on that date, and refuses removing someone who leads a team today or later, so
-// removing a person only clears them from past records, leaving those periods with no lead.
+// Who leads a feature team: each record names its lead, a person or a planned hire, or none, from a
+// date, in force until the team's next record, so past and planned leads are kept. The server checks
+// a new lead is one of the team's members on that date, and refuses removing someone who leads a team
+// today or later, so removing a person only clears them from past records, leaving those periods
+// with no lead; removing a planned hire clears it the same way.
 export const featureTeamLeads = fathomSchema.table(
   "feature_team_leads",
   {
@@ -90,6 +91,10 @@ export const featureTeamLeads = fathomSchema.table(
     leadId: uuid("lead_id").references(() => people.id, {
       onDelete: "set null",
     }),
+    leadPlannedHireId: uuid("lead_planned_hire_id").references(
+      () => plannedHires.id,
+      { onDelete: "set null" },
+    ),
     fromDate: date("from_date").notNull(),
   },
   (table) => [
@@ -98,12 +103,17 @@ export const featureTeamLeads = fathomSchema.table(
       table.fromDate,
     ),
     index("feature_team_leads_lead_index").on(table.leadId),
+    index("feature_team_leads_planned_hire_index").on(table.leadPlannedHireId),
+    check(
+      "feature_team_leads_one_lead",
+      sql`num_nonnulls(${table.leadId}, ${table.leadPlannedHireId}) <= 1`,
+    ),
   ],
 );
 
-// Joining and leaving feature teams: each record puts a person on a team, or takes them off it,
-// from a date, in force until their next record for that team, so past memberships are kept, as
-// reporting lines are.
+// Joining and leaving feature teams: each record puts a person or a planned hire on a team, or takes
+// them off it, from a date, in force until their next record for that team, so past memberships are
+// kept, as reporting lines are.
 export const featureTeamMemberships = fathomSchema.table(
   "feature_team_memberships",
   {
@@ -111,9 +121,12 @@ export const featureTeamMemberships = fathomSchema.table(
     teamId: uuid("team_id")
       .notNull()
       .references(() => featureTeams.id, { onDelete: "cascade" }),
-    personId: uuid("person_id")
-      .notNull()
-      .references(() => people.id, { onDelete: "cascade" }),
+    personId: uuid("person_id").references(() => people.id, {
+      onDelete: "cascade",
+    }),
+    plannedHireId: uuid("planned_hire_id").references(() => plannedHires.id, {
+      onDelete: "cascade",
+    }),
     member: boolean("member").notNull(),
     fromDate: date("from_date").notNull(),
   },
@@ -123,7 +136,19 @@ export const featureTeamMemberships = fathomSchema.table(
       table.personId,
       table.fromDate,
     ),
+    uniqueIndex("feature_team_memberships_planned_hire_from_index").on(
+      table.teamId,
+      table.plannedHireId,
+      table.fromDate,
+    ),
     index("feature_team_memberships_person_index").on(table.personId),
+    index("feature_team_memberships_planned_hire_index").on(
+      table.plannedHireId,
+    ),
+    check(
+      "feature_team_memberships_one_member",
+      sql`(${table.personId} IS NULL) <> (${table.plannedHireId} IS NULL)`,
+    ),
   ],
 );
 

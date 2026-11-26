@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of reporting lines and teams against a real PostgreSQL server.
+// Tests of reporting lines, teams and feature teams against a real PostgreSQL server.
 
 import type { Client } from "pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { databaseCodes } from "./errors.ts";
 import {
+  addPlannedHire,
   addPosition,
   aPosition,
   errorCodeOf,
+  firstId,
   withClient,
 } from "./test-clients.ts";
 
@@ -122,6 +124,133 @@ describe("reporting lines and teams", () => {
       expect(await errorCodeOf(name(second, "fictional platform team"))).toBe(
         uniqueViolation,
       );
+    });
+  });
+});
+
+describe("feature teams", () => {
+  const { uniqueViolation, checkViolation } = databaseCodes;
+  let added = 0;
+
+  // A fictional feature team, a person and a planned hire, by their ids.
+  async function addTeamPersonAndHire(client: Client) {
+    added += 1;
+    const n = String(added);
+    const team = await firstId(
+      client,
+      "INSERT INTO feature_teams (name) VALUES ($1) RETURNING id",
+      [`Fictional Feature Team ${n}`],
+    );
+    const person = await firstId(
+      client,
+      `INSERT INTO people (preferred_name, employee_id, position_id) VALUES ($1, $2, ${aPosition}) RETURNING id`,
+      [`Fictional Team Person ${n}`, `FT-${n}`],
+    );
+    const hire = await addPlannedHire(client, `FT-REQ-${n}`);
+    return { team, person, hire };
+  }
+
+  const join = (
+    client: Client,
+    team: string,
+    member: { person?: string | null; hire?: string | null },
+    fromDate = "2027-01-04",
+  ) =>
+    client.query(
+      "INSERT INTO feature_team_memberships (team_id, person_id, planned_hire_id, member, from_date) VALUES ($1, $2, $3, true, $4)",
+      [team, member.person ?? null, member.hire ?? null, fromDate],
+    );
+
+  const lead = (
+    client: Client,
+    team: string,
+    by: { person?: string | null; hire?: string | null },
+    fromDate = "2027-01-04",
+  ) =>
+    client.query(
+      "INSERT INTO feature_team_leads (team_id, lead_id, lead_planned_hire_id, from_date) VALUES ($1, $2, $3, $4)",
+      [team, by.person ?? null, by.hire ?? null, fromDate],
+    );
+
+  it("puts a person or a planned hire on a team, never both or neither", async () => {
+    await withClient(database.app, async (client) => {
+      const { team, person, hire } = await addTeamPersonAndHire(client);
+      await join(client, team, { person });
+      await join(client, team, { hire });
+      expect(
+        await errorCodeOf(join(client, team, { person, hire }, "2027-02-01")),
+      ).toBe(checkViolation);
+      expect(await errorCodeOf(join(client, team, {}, "2027-02-01"))).toBe(
+        checkViolation,
+      );
+    });
+  });
+
+  it("puts two planned hires on a team from the same day", async () => {
+    await withClient(database.app, async (client) => {
+      const { team, hire } = await addTeamPersonAndHire(client);
+      added += 1;
+      const other = await addPlannedHire(client, `FT-REQ-${String(added)}`);
+      await join(client, team, { hire });
+      await join(client, team, { hire: other });
+      expect(
+        (
+          await client.query(
+            "SELECT 1 FROM feature_team_memberships WHERE team_id = $1",
+            [team],
+          )
+        ).rowCount,
+      ).toBe(2);
+    });
+  });
+
+  it("refuses a planned hire's two records for a team from the same day, but not from another", async () => {
+    await withClient(database.app, async (client) => {
+      const { team, hire } = await addTeamPersonAndHire(client);
+      await join(client, team, { hire });
+      expect(await errorCodeOf(join(client, team, { hire }))).toBe(
+        uniqueViolation,
+      );
+      await join(client, team, { hire }, "2027-03-01");
+    });
+  });
+
+  it("deletes a planned hire's memberships with it, and clears it from the leads it held", async () => {
+    await withClient(database.app, async (client) => {
+      const { team, hire } = await addTeamPersonAndHire(client);
+      await join(client, team, { hire });
+      await lead(client, team, { hire });
+
+      await client.query("DELETE FROM planned_hires WHERE id = $1", [hire]);
+
+      expect(
+        (
+          await client.query(
+            "SELECT 1 FROM feature_team_memberships WHERE team_id = $1",
+            [team],
+          )
+        ).rowCount,
+      ).toBe(0);
+      expect(
+        (
+          await client.query(
+            "SELECT lead_id, lead_planned_hire_id FROM feature_team_leads WHERE team_id = $1",
+            [team],
+          )
+        ).rows,
+      ).toEqual([{ lead_id: null, lead_planned_hire_id: null }]);
+    });
+  });
+
+  it("names a team's lead as a person, a planned hire or none, never both", async () => {
+    await withClient(database.app, async (client) => {
+      const { team, person, hire } = await addTeamPersonAndHire(client);
+      await lead(client, team, { person }, "2027-01-04");
+      await lead(client, team, { hire }, "2027-02-01");
+      await lead(client, team, {}, "2027-03-01");
+      expect(
+        await errorCodeOf(lead(client, team, { person, hire }, "2027-04-05")),
+      ).toBe(checkViolation);
     });
   });
 });

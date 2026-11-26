@@ -32,6 +32,7 @@ import {
   type MemberDay,
   membersOf,
   type Person,
+  peopleRows,
 } from "./feature-team-rules.ts";
 import {
   draftAsSeen,
@@ -68,7 +69,9 @@ export async function readLiveTeams(
   }: { ids?: readonly string[]; employmentDay?: string } = {},
 ): Promise<LiveTeams> {
   const rows: (typeof featureTeams.$inferSelect)[] = [];
-  const memberships: (typeof featureTeamMemberships.$inferSelect)[] = [];
+  const memberships: (typeof featureTeamMemberships.$inferSelect & {
+    personId: string;
+  })[] = [];
   const leadRecords: (typeof featureTeamLeads.$inferSelect)[] = [];
   const read = async (chunk?: readonly string[]) => {
     leadRecords.push(
@@ -95,18 +98,20 @@ export async function readLiveTeams(
         )),
     );
     memberships.push(
-      ...(await reader
-        .select()
-        .from(featureTeamMemberships)
-        .where(
-          and(
-            chunk === undefined
-              ? undefined
-              : inArray(featureTeamMemberships.teamId, [...chunk]),
-            sql`${featureTeamMemberships.fromDate} <= ${day}`,
-          ),
-        )
-        .orderBy(asc(featureTeamMemberships.fromDate))),
+      ...peopleRows(
+        await reader
+          .select()
+          .from(featureTeamMemberships)
+          .where(
+            and(
+              chunk === undefined
+                ? undefined
+                : inArray(featureTeamMemberships.teamId, [...chunk]),
+              sql`${featureTeamMemberships.fromDate} <= ${day}`,
+            ),
+          )
+          .orderBy(asc(featureTeamMemberships.fromDate)),
+      ),
     );
   };
   if (ids === undefined) await read();
@@ -298,17 +303,19 @@ export async function peopleOf(
 async function readDisbandedMonths(
   reader: Reader,
 ): Promise<Map<string, string>> {
-  const records = await reader
-    .select({
-      teamId: featureTeamMemberships.teamId,
-      personId: featureTeamMemberships.personId,
-      member: featureTeamMemberships.member,
-      fromDate: featureTeamMemberships.fromDate,
-      startDate: people.startDate,
-      endDate: people.endDate,
-    })
-    .from(featureTeamMemberships)
-    .innerJoin(people, eq(people.id, featureTeamMemberships.personId));
+  const records = peopleRows(
+    await reader
+      .select({
+        teamId: featureTeamMemberships.teamId,
+        personId: featureTeamMemberships.personId,
+        member: featureTeamMemberships.member,
+        fromDate: featureTeamMemberships.fromDate,
+        startDate: people.startDate,
+        endDate: people.endDate,
+      })
+      .from(featureTeamMemberships)
+      .innerJoin(people, eq(people.id, featureTeamMemberships.personId)),
+  );
   const disbanded = new Map<string, string>();
   for (const [teamId, rows] of bySubject(records, ({ teamId }) => teamId)) {
     const month = disbandedMonth([

@@ -185,11 +185,12 @@ Percentages are whole.
   - **Name:** required, up to 60 characters and unique ignoring letter case, since one person may lead several teams and leads change.
   - **Colour:** optional, from the palette, for the feature team chart. Its name and colour each keep one value, not dated.
   - **Disbanded:** from the first month with none of its members from then on, worked out from its membership records and not stored. A team that has never had a member has not disbanded, and one that disbanded comes back if someone joins it.
-- **Feature team lead:** Records who leads a feature team, or that no one does, from a given date, in force until the team's next record, so past and planned leads are kept.
+- **Feature team lead:** Records who leads a feature team, a person or a planned hire, or that no one does, from a given date, in force until the team's next record, so past and planned leads are kept.
   - **Who may lead:** the lead is optional, and is one of the team's members on that date, so their time counts in its capacity. On a day they are not, the team has no lead. A lead chosen who is not a member joins the team in the same draft.
   - **No lead:** a team with no lead is marked, since its features then have no owner.
-- **Feature team membership:** Records that a person joins or leaves a feature team from a given date, in force until their next record for that team. Past memberships are kept, as reporting lines are, and future-dated records represent planned changes.
+- **Feature team membership:** Records that a person or a planned hire joins or leaves a feature team from a given date, never both in one record, in force until their next record for that team. Past memberships are kept, as reporting lines are, and future-dated records represent planned changes.
   - **Several teams:** a person may be on several feature teams at once.
+  - **Planned hires:** a planned hire's membership and lead records are kept as a person's are, and removing the hire removes its memberships and clears it as lead; until reads and drafts take them ([issue #395](https://github.com/ribbitworks/fathom/issues/395)), Fathom shows and counts only people's, and a team a planned hire leads shows no lead.
   - **Leaving:** once someone's end date has passed, they are off every feature team from the next day. They no longer count as a member, a team they led has no lead, and their past membership is kept.
 
 ### Planned Hires

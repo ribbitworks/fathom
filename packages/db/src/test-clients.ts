@@ -52,3 +52,12 @@ export const addPosition = (client: Client) =>
   client.query(
     "INSERT INTO list_items (list_id, label) SELECT id, 'Fictional Position' FROM lists WHERE built_in = 'positions'",
   );
+
+// Adds an open fictional planned hire with the requisition given, once addPosition has added its
+// position, and gives its id.
+export const addPlannedHire = (client: Client, requisition: string) =>
+  firstId(
+    client,
+    `INSERT INTO planned_hires (requisition, position_id, state_id) VALUES ($1, ${aPosition}, (SELECT i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'hiring-states' AND i.meaning = 'open')) RETURNING id`,
+    [requisition],
+  );

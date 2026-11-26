@@ -484,6 +484,13 @@
       "when": 1795674335106,
       "tag": "0068_new_value_kinds",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1795694420476,
+      "tag": "0069_planned_hires_on_teams",
+      "breakpoints": true
     }
   ]
 }

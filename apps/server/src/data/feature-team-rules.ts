@@ -15,6 +15,14 @@ import { text } from "./reporting.ts";
 
 const chooseFromPeople = "Choose members from People";
 
+// People's membership rows, leaving out planned hires', which these reads and rules don't take.
+export const peopleRows = <Row extends { personId: string | null }>(
+  rows: readonly Row[],
+): (Row & { personId: string })[] =>
+  rows.filter(
+    (row): row is Row & { personId: string } => row.personId !== null,
+  );
+
 export type Person = Recorded & {
   preferredName: string;
   started: boolean;

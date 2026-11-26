@@ -16,6 +16,7 @@ import {
   membersRefusal,
   nameIsTaken,
   nextTeamDraft,
+  peopleRows,
 } from "./feature-team-rules.ts";
 import { someone } from "./test-feature-team-people.ts";
 
@@ -559,5 +560,14 @@ describe("a new lead on the team", () => {
     expect(leadOffTeamRefusal(records, "2025-06-01", "2099-03-01")).toBe(
       offTeam,
     );
+  });
+});
+
+describe("peopleRows", () => {
+  it("keeps people's membership rows and leaves out planned hires'", () => {
+    const person = { teamId: "t-1", personId: "p-1", member: true };
+    const hire = { teamId: "t-1", personId: null, member: true };
+
+    expect(peopleRows([person, hire])).toEqual([person]);
   });
 });
