@@ -132,7 +132,7 @@ interface TimelineContext {
 }
 
 // Opens the person's timeline, where focus goes back once it closes.
-export function ShowTimeline({ onOpen }: { onOpen: () => void }) {
+function ShowTimeline({ onOpen }: { onOpen: () => void }) {
   return (
     <Anchor
       id={showButtonId}

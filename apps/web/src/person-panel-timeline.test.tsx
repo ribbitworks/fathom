@@ -347,8 +347,15 @@ describe("a person's timeline", () => {
       ).toEqual(["Jan 4, 2099", "Mar 1, 2024", "Jan 1, 2020", "Dec 2, 2019"]);
     });
 
-    it("offers Show timeline on that line, focus going back to it once closed and to the title once opened again", async () => {
+    it("ends the details with the Timeline section employed people have, focus going back to its Show timeline once closed and to the title once opened again", async () => {
       const { history } = await notEmployed();
+      await waitFor(() => {
+        expect(
+          within(preview())
+            .getAllByRole("term")
+            .map(({ textContent }) => textContent),
+        ).toEqual(["Dec 2, 2019"]);
+      });
       await userEvent.click(
         screen.getByRole("button", { name: "Close timeline" }),
       );
