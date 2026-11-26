@@ -466,7 +466,7 @@ export function ReleasesPage({
         notes={notes}
         notePanel={notePanel}
         addingPanel={adding.panel({
-          editsFeatureTeams,
+          featureEdits: { editsFeatureTeams },
           narrow,
           notes,
           units: view.units,
