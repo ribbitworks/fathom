@@ -158,6 +158,7 @@ describe("Capacity's Feature teams", () => {
       expect(row.className).toContain("draftRow");
       expect(within(row).getByText(", added")).toBeDefined();
       expect(within(row).getByText(", removed")).toBeDefined();
+      expect(row.textContent).not.toContain("Reordered");
     });
 
     it("shows the person's teams as approved in a Live row under it, as labels", async () => {
@@ -258,6 +259,8 @@ describe("Capacity's Feature teams", () => {
 
       expect(within(draftRow()).queryByText("Platform reliability")).toBeNull();
       expect(within(draftRow()).getByText("Mobile apps")).toBeDefined();
+      expect(within(draftRow()).getByText(", added")).toBeDefined();
+      expect(draftRow().textContent).not.toContain("Reordered");
     });
   });
 

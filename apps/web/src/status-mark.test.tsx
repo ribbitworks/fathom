@@ -7,6 +7,7 @@ import type { Show } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import {
   classMarkChars,
@@ -170,6 +171,36 @@ describe("a draft's mark on screen", () => {
     expect(screen.getByText(", added")).toBeDefined();
     expect(screen.queryByText(/Draft/)).toBeNull();
   });
+
+  it.each([
+    ["added", "both"],
+    ["added", "drafts"],
+    ["removed", "both"],
+    ["removed", "drafts"],
+  ] as const)(
+    "names a part %s, with Draft view %s, by a draft naming no action",
+    async (part, show) => {
+      // Given a draft holding only its state, as a person's drafted months give one
+      const { container } = renderIn(
+        show,
+        <DraftedPartItem draft={{ state: "waiting" }} part={part}>
+          Fictional Team
+        </DraftedPartItem>,
+      );
+
+      // Then the part reads what the draft does to it, with no Reordered box, seen or unseen
+      expect(screen.getByText(`, ${part}`)).toBeDefined();
+      expect(container.textContent).not.toContain("Reordered");
+
+      // And its dot's tip says so too
+      await userEvent.hover(
+        container.querySelector('[class*="statusDot"]') as HTMLElement,
+      );
+      expect((await screen.findByRole("tooltip")).textContent).toBe(
+        `Draft: ${part}`,
+      );
+    },
+  );
 
   it("says a part's draft was rejected, after what it does", () => {
     renderIn(
