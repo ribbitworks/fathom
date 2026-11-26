@@ -284,7 +284,7 @@ export function ChangePasswordDialog({
 
 // The page users see in place of every other while they sign in with a password Fathom generated,
 // with only Fathom's name and mark above it, like the sign-in page. Once the password is changed,
-// Fathom opens as it does after signing in, on the Overview or the first page their role allows.
+// Fathom opens on the Overview, as it does after signing in.
 export function FirstPasswordChange({
   rules,
   owner,

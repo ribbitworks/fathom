@@ -226,6 +226,7 @@ export {
   noteProblem,
   parseNote,
   toggleCheckbox,
+  markdownWords,
   writeNote,
 } from "./notes.ts";
 export { folded, matchesWords, searchWords } from "./search.ts";

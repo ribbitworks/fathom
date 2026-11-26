@@ -8,12 +8,7 @@ import type { ChangedRecord, ChangeEntry } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  fictionalUser,
-  greeting,
-  renderApp,
-  serverAnswers,
-} from "./test-support.tsx";
+import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
 
 const changesViewer = () =>
   Response.json({
@@ -78,12 +73,13 @@ describe("who sees the Change history page", () => {
   it("links to it for users who may view the change history", async () => {
     serverAnswers({
       "GET /api/session": changesViewer,
-      "GET /api/greeting": greeting,
       "GET /api/changes": page([]),
     });
     renderApp("/");
     await userEvent.click(
-      await screen.findByRole("link", { name: "Change history" }),
+      within(
+        await screen.findByRole("navigation", { name: "Sections" }),
+      ).getByRole("link", { name: "Change history" }),
     );
     expect(
       await screen.findByRole("heading", { name: "Change history" }),

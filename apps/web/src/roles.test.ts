@@ -36,7 +36,6 @@ describe("what a role allows", () => {
     const { sees, doesNotSee } = allowed([]);
     expect(sees).toEqual([]);
     expect(doesNotSee).toEqual([
-      "Overview",
       "Projects",
       "Features",
       "Activities",
@@ -105,7 +104,6 @@ describe("what a role allows", () => {
       "Change history",
     ]);
     expect(engineeringManager.doesNotSee).toEqual([
-      "Overview",
       "Projects",
       "Features",
       "Activities",
@@ -316,11 +314,7 @@ describe("what a change to an account's permissions does", () => {
 
   it("lists gains and losses together, without pages that stay", () => {
     expect(difference(["people:view"], ["plan:view"], defaultClasses)).toEqual({
-      gains: [
-        "Sees the Overview page.",
-        "Sees the Projects page.",
-        allows("plan:view"),
-      ],
+      gains: ["Sees the Projects page.", allows("plan:view")],
       losses: [
         "The People page no longer appears.",
         "The Org chart page no longer appears.",

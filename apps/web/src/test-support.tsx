@@ -142,7 +142,14 @@ export const fictionalUser = {
 export const signedIn = () => Response.json(fictionalUser);
 export const signedOut = () =>
   Response.json({ error: "Unauthorized" }, { status: 401 });
-export const greeting = () => Response.json({ greeting: "Hello, Fathom" });
+// The sidebar of Fathom's sections, holding a link to each page the role opens.
+export const sidebar = () =>
+  screen.getByRole("navigation", { name: "Sections" });
+export const findSidebar = () =>
+  screen.findByRole("navigation", { name: "Sections" });
+
+// The Overview's greeting, at any time of day, which shows a signed-in page has loaded.
+export const overviewGreeting = /^Good (?:morning|afternoon|evening), /u;
 
 // A list's choice, named by its ID.
 export const fictionalChoice = (id: string): Choice => ({

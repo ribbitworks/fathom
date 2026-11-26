@@ -200,7 +200,6 @@ describe("the summary of what a role allows", () => {
       "Edit Fictional Auditors",
     );
     expect(summaryLines(dialog, "Sees")).toEqual([
-      "Overview",
       "Projects",
       "People",
       "People on other dates",
@@ -261,7 +260,6 @@ describe("the summary of what a role allows", () => {
     await userEvent.click(box(dialog, "View People"));
     // Then
     expect(summaryLines(dialog, "Sees")).toEqual([
-      "Overview",
       "Projects",
       "No longer: People",
       "No longer: People on other dates",
@@ -284,7 +282,6 @@ describe("the summary of what a role allows", () => {
     await userEvent.click(box(dialog, "View Configuration"));
     // Then
     expect(summaryLines(dialog, "Sees")).toEqual([
-      "No longer: Overview",
       "No longer: Projects",
       "No longer: People",
       "No longer: People on other dates",

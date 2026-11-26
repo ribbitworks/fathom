@@ -29,7 +29,8 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 ## Layout
 
 - **Frame:** A deep-water sidebar on the left, the same in light and dark mode, groups pages into sections. It shows only the pages the user's role allows.
-  - **First page:** Fathom opens on the Overview, or, for a user who may not see the plan, the first page their role allows, else Help's index.
+  - **First page:** Fathom opens on the Overview for every role.
+  - **Overview:** A greeting by the time of day and full name, with the role acted as under it, small and dimmed. Then, in one bordered section, every job the role's permissions allow, from every starting role's Help page, under its area's name, in the sidebar's order: Plan, People, Capacity, Administration, Drafts and History, with no heading over them. Each job, small, is a row of a chevron button and its name, the page and part where it's done, the part dimmed after ›, and its Help link at the right, dimmed. On a narrow screen the page and part go under the name. A job opens to its tasks, laid out the same and indented under its name. No numbers. A role allowed none reads No jobs, dimmed.
   - **Help:** The last section, open to everyone, holding Help pages and About Fathom.
 - **Top bar:** It names where the user is, as [The Top Bar](../standards/ui-conventions/pages-and-panels.md#the-top-bar) sets out, and holds the account menu.
   - **Account menu:** The email address, then the role acted as, then Change name…, Change password…, Appearance (System, Light, Dark), and Sign out.

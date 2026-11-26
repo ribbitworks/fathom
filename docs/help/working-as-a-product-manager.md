@@ -59,13 +59,13 @@ See [Projects](projects.md#add-a-project-proposal-customer-or-milestone).
 
 As a proposal is won, lost or withdrawn, choose its new **Status** on the **Proposals** tab. See [Projects](projects.md#marks-and-terms).
 
-### Add Milestones to a Project
+### Add or Change Milestones
 
 1. Open the project's details.
-1. Select **Add milestone**.
+1. Select **Add milestone**, or **Edit…** in a milestone's **⋯** menu to change one.
 1. Type its **Name** and **Date**.
 1. If the customer receives something then, tick **Customer delivery**.
-1. Select **Add milestone**.
+1. Select **Add milestone** or **Save**.
 
 See [Projects](projects.md#add-a-milestone-to-a-project).
 

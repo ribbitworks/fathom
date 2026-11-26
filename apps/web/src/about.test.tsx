@@ -17,15 +17,13 @@ import {
 } from "./about.tsx";
 import {
   fictionalUser,
-  greeting,
+  findSidebar,
   onNarrowScreen,
   renderApp,
   sectionsButton,
   serverAnswers,
   testTheme,
 } from "./test-support.tsx";
-
-const sidebar = () => screen.findByRole("navigation", { name: "Sections" });
 
 // A user with no permissions at all, who still sees Help.
 const noPermissions = () =>
@@ -48,11 +46,10 @@ function renderBox(shown: Build) {
 async function openFromSidebar() {
   serverAnswers({
     "GET /api/session": noPermissions,
-    "GET /api/greeting": greeting,
   });
   renderApp("/help/roles");
   await userEvent.click(
-    within(await sidebar()).getByRole("button", { name: "About Fathom" }),
+    within(await findSidebar()).getByRole("button", { name: "About Fathom" }),
   );
   return screen.findByRole("dialog", { name: "About Fathom" });
 }
@@ -153,12 +150,11 @@ describe("the About box", () => {
     onNarrowScreen();
     serverAnswers({
       "GET /api/session": noPermissions,
-      "GET /api/greeting": greeting,
     });
     renderApp("/help/roles");
     await userEvent.click(await sectionsButton());
     await userEvent.click(
-      within(await sidebar()).getByRole("button", { name: "About Fathom" }),
+      within(await findSidebar()).getByRole("button", { name: "About Fathom" }),
     );
     expect(
       await screen.findByRole("dialog", { name: "About Fathom" }),

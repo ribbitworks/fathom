@@ -10,31 +10,21 @@ As a Project Manager, you see projects through to delivery: their milestones, th
 - **Cycles and releases:** a feature targets a cycle, a planning period such as a quarter. A release ships the features that target its cycles.
 - **Drafts:** your changes are drafts. Nobody else sees them until you select **Publish** in the top bar.
 
-## Track Projects and Proposals
+## Keep Projects and Proposals Current
 
 Once you've made your changes, select **Publish** in the top bar.
 
-### Add a Project or Proposal
+### Add Customers, Proposals and Projects
 
-1. On **Projects**, select the **Projects** or **Proposals** tab.
-1. Select **New project** or **New proposal**.
+1. On **Projects**, select the **Customers**, **Proposals** or **Projects** tab.
+1. Select **New customer**, **New proposal** or **New project**.
 1. Fill in the form, and select **Add**.
 
 See [Projects](projects.md#add-a-project-proposal-customer-or-milestone).
 
-### Choose the Features Each Needs
-
-1. Select the project's or proposal's **Features** cell, and press Enter.
-1. Pick each feature it needs.
-1. Press Enter again to finish.
-
-See [Projects](projects.md#choose-the-features-a-project-needs).
-
 ### Change a Proposal's Status
 
 As a proposal is won, lost or withdrawn, choose its new **Status** on the **Proposals** tab. See [Projects](projects.md#marks-and-terms).
-
-## Keep a Project on Track
 
 ### Add or Change Milestones
 
@@ -44,9 +34,20 @@ As a proposal is won, lost or withdrawn, choose its new **Status** on the **Prop
 1. Type its **Date**.
 1. If the customer receives something then, tick **Customer delivery**.
 1. Select **Add milestone** or **Save**.
-1. Select **Publish** in the top bar.
 
 **Next delivery** follows from the milestones. See [Projects](projects.md#add-a-milestone-to-a-project).
+
+## Tie Features to Projects and Proposals
+
+Once you've made your changes, select **Publish** in the top bar.
+
+### Choose the Features a Project Needs
+
+1. On **Projects**, select the project's or proposal's **Features** cell, and press Enter.
+1. Pick each feature it needs.
+1. Press Enter again to finish.
+
+See [Projects](projects.md#choose-the-features-a-project-needs).
 
 ### Read the Scope History
 
@@ -113,7 +114,7 @@ On **Capacity**, choose **Allocations**. Each month shows the features each pers
 
 ### Group by Feature Team
 
-To see each team's people together, select **Group by**, then **Feature team**. See [Capacity](capacity.md#group-the-rows).
+On **Capacity**, choose **Allocations**, then select **Group by** and **Feature team**, to see each team's people together. See [Capacity](capacity.md#group-the-rows).
 
 ## Approve or Reject Drafts
 

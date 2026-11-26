@@ -10,8 +10,6 @@ import {
   type ClassAccess,
   type DataClasses,
   draftingPermissions,
-  opensWith,
-  type GuardedPage,
   pageNeeds,
   type PasswordRules,
   type Permission,
@@ -48,13 +46,13 @@ import { Brand } from "./brand.tsx";
 import { PageExportProvider } from "./page-export.tsx";
 import { PublishDraftProvider } from "./publish-draft.tsx";
 import { DevBadge, devLabel } from "./dev-label.tsx";
-import { shownHelpPage } from "./help-pages.ts";
-import { Icon, type IconName } from "./icons.tsx";
+import { Icon } from "./icons.tsx";
 import { useSignOutWhenIdle } from "./idle.ts";
 import classes from "./layout.module.css";
 import { ChangeNameDialog } from "./change-name.tsx";
 import { ChangePasswordDialog } from "./change-password.tsx";
 import { menuChoice } from "./last-views.ts";
+import { type Item, opens, sections } from "./navigation.ts";
 import { initials } from "./names.ts";
 import {
   type SignedInUser,
@@ -68,178 +66,6 @@ const headerHeight = 56;
 const sidebarWidth = 228;
 const railWidth = 56;
 const sidebarId = "sections";
-
-type Page =
-  | "/"
-  | "/accounts"
-  | "/roles"
-  | "/settings"
-  | "/data-classes"
-  | "/history"
-  | "/changes"
-  | "/drafts"
-  | "/lists/{-$listId}"
-  | "/people"
-  | "/org-chart"
-  | "/releases/{-$streamId}"
-  | "/capacity"
-  | "/projects"
-  | "/features"
-  | "/activities"
-  | "/help";
-
-// A page, or a box opened over the current page instead of going to another.
-type Item = {
-  label: string;
-  icon: IconName;
-  // The page whose needs decide who opens it; a page with none is open to everyone signed in.
-  page?: GuardedPage;
-  // Pages with addresses below their own, such as each list's, are marked as the current page for
-  // all of them.
-  nested?: boolean;
-  // The name of what an address below the page shows, such as a Help page's title, which the top
-  // bar adds after the page's, given the rest of the address.
-  detailOf?: (below: string) => string | undefined;
-} & ({ to: Page; box?: undefined } | { box: "about"; to?: undefined });
-
-// Whether the user's access opens an item's page.
-function opens(item: Item, access: ClassAccess): boolean {
-  return item.page === undefined || opensWith(pageNeeds[item.page], access);
-}
-
-const sections: { label: string; items: Item[] }[] = [
-  {
-    label: "Plan",
-    items: [
-      {
-        label: "Overview",
-        icon: "overview",
-        to: "/",
-        page: "overview",
-      },
-      {
-        label: "Projects",
-        icon: "projects",
-        to: "/projects",
-        page: "projects",
-      },
-      {
-        label: "Features",
-        icon: "features",
-        to: "/features",
-        page: "features",
-      },
-      {
-        label: "Activities",
-        icon: "activities",
-        to: "/activities",
-        page: "activities",
-      },
-      {
-        label: "Releases",
-        icon: "releases",
-        to: "/releases/{-$streamId}",
-        nested: true,
-        page: "releases",
-      },
-    ],
-  },
-  {
-    label: "People",
-    items: [
-      {
-        label: "People",
-        icon: "people",
-        to: "/people",
-        page: "people",
-      },
-      {
-        label: "Org chart",
-        icon: "orgChart",
-        to: "/org-chart",
-        page: "org-chart",
-      },
-      {
-        label: "Capacity",
-        icon: "capacity",
-        to: "/capacity",
-        page: "capacity",
-      },
-    ],
-  },
-  {
-    label: "Administration",
-    items: [
-      {
-        label: "Accounts",
-        icon: "accounts",
-        to: "/accounts",
-        page: "accounts",
-      },
-      {
-        label: "Roles",
-        icon: "roles",
-        to: "/roles",
-        page: "roles",
-      },
-      {
-        label: "Settings",
-        icon: "settings",
-        to: "/settings",
-        page: "settings",
-      },
-      {
-        label: "Lists",
-        icon: "lists",
-        to: "/lists/{-$listId}",
-        page: "lists",
-        nested: true,
-      },
-      {
-        label: "Data classes",
-        icon: "lock",
-        to: "/data-classes",
-        page: "data-classes",
-      },
-    ],
-  },
-  {
-    label: "History",
-    items: [
-      {
-        label: "Drafts",
-        icon: "drafts",
-        to: "/drafts",
-        page: "drafts",
-      },
-      {
-        label: "Change history",
-        icon: "changes",
-        to: "/changes",
-        page: "changes",
-      },
-      {
-        label: "Access history",
-        icon: "history",
-        to: "/history",
-        page: "history",
-      },
-    ],
-  },
-  {
-    label: "Help",
-    items: [
-      {
-        label: "Help pages",
-        icon: "helpPages",
-        to: "/help",
-        nested: true,
-        detailOf: (name) => shownHelpPage(name)?.title,
-      },
-      { label: "About Fathom", icon: "aboutHelp", box: "about" },
-    ],
-  },
-];
 
 // How Fathom looks for the person using this browser: following the computer's setting, or always
 // light or dark. Mantine keeps the choice in the browser, so it applies on every page, signing in
@@ -263,21 +89,6 @@ function AppearanceChoices() {
       onChoose={setColorScheme}
     />
   );
-}
-
-// The first page in the sidebar, other than the Overview, that the user's roles let them open, if
-// any: where someone who may not see the Overview starts. Never the Overview, so sending them there
-// cannot loop back, and never Help, which is open to everyone.
-export function firstPage(access: ClassAccess): Page | undefined {
-  return sections
-    .flatMap(({ items }) => items)
-    .find(
-      (item) =>
-        item.to !== undefined &&
-        item.to !== "/" &&
-        item.page !== undefined &&
-        opens(item, access),
-    )?.to;
 }
 
 // The pages in the sidebar that some access opens, by name, leaving out those open to everyone,

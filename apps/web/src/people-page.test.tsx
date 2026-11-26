@@ -11,7 +11,12 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { bodyOf, greeting, renderApp, serverAnswers } from "./test-support.tsx";
+import {
+  bodyOf,
+  overviewGreeting,
+  renderApp,
+  serverAnswers,
+} from "./test-support.tsx";
 import {
   s1,
   session,
@@ -43,7 +48,6 @@ describe("who sees the People page", () => {
   it("hides the Position column, and adding people, from those who cannot see positions", async () => {
     serverAnswers({
       "GET /api/session": editor,
-      "GET /api/greeting": greeting,
       "GET /api/people": () =>
         Response.json({
           people: [
@@ -85,7 +89,6 @@ describe("who sees the People page", () => {
   it("links to it for users who may see people, read only for viewers", async () => {
     serverAnswers({
       "GET /api/session": viewer,
-      "GET /api/greeting": greeting,
       "GET /api/people": () =>
         Response.json({
           people: [{ ...avery, startDate: undefined, endDate: undefined }],
@@ -162,10 +165,9 @@ describe("who sees the People page", () => {
   it("is not linked or shown for anyone else", async () => {
     serverAnswers({
       "GET /api/session": session(["plan:view", "features:view"]),
-      "GET /api/greeting": greeting,
     });
     const history = renderApp("/");
-    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
     expect(screen.queryByRole("link", { name: "People" })).toBeNull();
     history.push("/people");
     expect(

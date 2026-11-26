@@ -347,6 +347,9 @@ importers:
       '@xyflow/react':
         specifier: 13.0.2
         version: 13.0.2(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
+      github-slugger:
+        specifier: 2.0.0
+        version: 2.0.0
       react:
         specifier: 19.3.1
         version: 19.3.1
@@ -405,9 +408,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: 5.1.1
         version: 5.1.1(vitest@5.1.1)
-      github-slugger:
-        specifier: 2.0.0
-        version: 2.0.0
       jsdom:
         specifier: 31.0.1
         version: 31.0.1(@noble/hashes@2.4.0)

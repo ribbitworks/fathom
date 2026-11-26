@@ -8,7 +8,7 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import {
   fictionalUser,
-  greeting,
+  overviewGreeting,
   renderApp,
   serverAnswers,
   signedIn,
@@ -30,11 +30,10 @@ describe("who sees the Roles page", () => {
   it("links to it under Administration for users who may edit roles", async () => {
     serverAnswers({
       "GET /api/session": roleEditor,
-      "GET /api/greeting": greeting,
       "GET /api/roles": roleList,
     });
     const history = renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     const link = screen
       .getAllByRole("link", { name: "Roles" })
       .find((found) => found.getAttribute("href") === "/roles");
@@ -46,10 +45,9 @@ describe("who sees the Roles page", () => {
   it("is not linked for anyone else", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     expect(screen.queryAllByRole("link", { name: "Roles" })).toEqual([]);
   });
 

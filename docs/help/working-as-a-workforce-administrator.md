@@ -66,9 +66,9 @@ See [People](people.md#change-a-person).
 
 If the hire has allocations, remove them first, since Fathom doesn't move them to the person. See [People](people.md#fill-a-planned-hire).
 
-## Keep the Feature Teams Current
+## Staff the Feature Teams
 
-### Move Someone to Another Team From a Month
+### Put Someone on a Team From a Month
 
 1. On **Capacity**, select **Feature teams**.
 1. Select the person's cell in the month they move.

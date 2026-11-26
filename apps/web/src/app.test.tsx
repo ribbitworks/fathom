@@ -2,16 +2,15 @@
 
 // Tests for Fathom's front end, with the server's responses simulated: signing in, being sent to
 // sign in and brought back, including when a session ends, signing out, by choice or after a time
-// without use, the greeting on the home page, and the pages and messages shown when something goes
-// wrong.
+// without use, the Overview every role opens on, and the pages and messages shown when something
+// goes wrong.
 
-import { act, fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { notAllowedMessage } from "./api.ts";
 import {
   fictionalUser,
-  greeting,
+  overviewGreeting,
   renderApp,
   serverAnswers,
   signedIn,
@@ -29,6 +28,11 @@ async function fillIn(email: string, password: string) {
 const administratorOnly = () =>
   Response.json({
     ...fictionalUser,
+    role: {
+      ...fictionalUser.role,
+      key: "administrator",
+      name: "Administrator",
+    },
     permissions: ["administration:view", "administration:edit"],
   });
 
@@ -38,53 +42,35 @@ afterEach(() => {
 });
 
 describe("home page", () => {
-  it("shows the greeting and who is signed in", async () => {
-    serverAnswers({
-      "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
-    });
+  it("greets the person by name, with the role they act as, and shows who is signed in", async () => {
+    serverAnswers({ "GET /api/session": signedIn });
     renderApp("/");
-    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect((await screen.findByText(overviewGreeting)).textContent).toMatch(
+      /, Fictional Person$/u,
+    );
+    expect(screen.getByText("Acting as Team Member")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Overview" })).toBeDefined();
     expect(
       screen.getByRole("button", { name: "Account, Fictional Person" }),
     ).toBeDefined();
   });
 
-  it("shows a loading indicator until the greeting arrives", async () => {
-    serverAnswers({
-      "GET /api/session": signedIn,
-      "GET /api/greeting": () => new Promise<Response>(() => undefined),
-    });
-    renderApp("/");
-    expect(await screen.findByLabelText("Loading")).toBeDefined();
-  });
-
-  it("says so when the server refuses the greeting, rather than that it could not be reached", async () => {
-    serverAnswers({
-      "GET /api/session": signedIn,
-      "GET /api/greeting": () =>
-        Response.json({ error: "Forbidden" }, { status: 403 }),
-    });
-    renderApp("/");
-    expect((await screen.findByRole("alert")).textContent).toBe(
-      notAllowedMessage,
-    );
-  });
-
-  it("sends an administrator who may not see the plan to the first page their roles open", async () => {
-    serverAnswers({
-      "GET /api/session": administratorOnly,
-      "GET /api/accounts": () => Response.json({ accounts: [] }),
-    });
+  it("opens on the Overview for an administrator, who may not see the plan, with their jobs", async () => {
+    serverAnswers({ "GET /api/session": administratorOnly });
     const history = renderApp("/");
+    const jobs = await screen.findByRole("region", { name: "Jobs" });
     expect(
-      await screen.findByRole("heading", { name: "Accounts" }),
+      within(jobs)
+        .getAllByRole("heading", { level: 2 })
+        .map(({ textContent }) => textContent),
+    ).toEqual(["Administration", "History"]);
+    expect(
+      within(jobs).getByRole("button", { name: "Look After Accounts" }),
     ).toBeDefined();
-    expect(history.location.pathname).toBe("/accounts");
+    expect(history.location.pathname).toBe("/");
   });
 
-  it("brings an administrator who may not see the plan to their first page after signing in", async () => {
+  it("brings an administrator back to the Overview after signing in", async () => {
     let session = signedOut;
     serverAnswers({
       "GET /api/session": () => session(),
@@ -92,37 +78,34 @@ describe("home page", () => {
         session = administratorOnly;
         return Response.json({});
       },
-      "GET /api/accounts": () => Response.json({ accounts: [] }),
     });
     const history = renderApp("/sign-in?redirect=/");
     await fillIn("person@example.test", "fictional password 1");
-    expect(
-      await screen.findByRole("heading", { name: "Accounts" }),
-    ).toBeDefined();
-    expect(history.location.pathname).toBe("/accounts");
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
+    expect(history.location.pathname).toBe("/");
   });
 
-  it("sends someone whose roles open no page to Help's index", async () => {
+  it("greets someone whose role allows no job, saying it has none", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({ ...fictionalUser, role: null, permissions: [] }),
     });
-    const history = renderApp("/");
+    renderApp("/");
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
     expect(
-      await screen.findByRole("heading", { name: "Help", level: 1 }),
+      within(screen.getByRole("region", { name: "Jobs" })).getByText("No jobs"),
     ).toBeDefined();
-    expect(history.location.pathname).toBe("/help");
   });
 
   it("shows a plain message when the server fails", async () => {
     serverAnswers({
-      "GET /api/session": signedIn,
-      "GET /api/greeting": () =>
+      "GET /api/session": administratorOnly,
+      "GET /api/accounts": () =>
         Response.json({ error: "Internal Server Error" }, { status: 500 }),
     });
-    renderApp("/");
+    renderApp("/accounts");
     expect((await screen.findByRole("alert")).textContent).toMatch(
-      /could not reach its server/,
+      /could not load the accounts/,
     );
   });
 });
@@ -136,14 +119,13 @@ describe("signing in", () => {
         session = signedIn;
         return Response.json({});
       },
-      "GET /api/greeting": greeting,
     });
     const history = renderApp("/?tab=fictional");
     expect(
       await screen.findByRole("heading", { name: "Sign in" }),
     ).toBeDefined();
     await fillIn("person@example.test", "fictional password 1");
-    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
     expect(history.location.href).toBe("/?tab=fictional");
     expect(fetch).toHaveBeenCalledWith("/api/auth/sign-in/email", {
       method: "POST",
@@ -165,11 +147,10 @@ describe("signing in", () => {
         session = signedIn;
         return Response.json({});
       },
-      "GET /api/greeting": greeting,
     });
     const history = renderApp("/sign-in");
     await fillIn("person@example.test", "fictional password 1");
-    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
     expect(history.location.pathname).toBe("/");
   });
 
@@ -217,7 +198,6 @@ describe("signing out", () => {
     let session = signedIn;
     const fetch = serverAnswers({
       "GET /api/session": () => session(),
-      "GET /api/greeting": greeting,
       "POST /api/auth/sign-out": () => {
         session = signedOut;
         return Response.json({ success: true });
@@ -238,7 +218,6 @@ describe("signing out", () => {
   it("says so when signing out fails, and stays signed in", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       "POST /api/auth/sign-out": () =>
         Response.json({ error: "Internal Server Error" }, { status: 500 }),
     });
@@ -264,11 +243,10 @@ describe("signing out after a time without use", () => {
   async function openHome(answers: Parameters<typeof serverAnswers>[0]) {
     const fetch = serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       ...answers,
     });
     const history = renderApp("/");
-    await screen.findByText("Hello, Fathom");
+    await screen.findByText(overviewGreeting);
     vi.useFakeTimers({ toFake: ["Date"], now: Date.now() });
     return { fetch, history };
   }
@@ -289,7 +267,7 @@ describe("signing out after a time without use", () => {
     });
     later(29 * minute);
     seen();
-    expect(screen.getByText("Hello, Fathom")).toBeDefined();
+    expect(screen.getByText(overviewGreeting)).toBeDefined();
     later(2 * minute);
     seen();
     seen();
@@ -331,7 +309,7 @@ describe("signing out after a time without use", () => {
     later(31 * minute);
     localStorage.setItem("fathom-last-use", String(Date.now() - minute));
     seen();
-    expect(screen.getByText("Hello, Fathom")).toBeDefined();
+    expect(screen.getByText(overviewGreeting)).toBeDefined();
     localStorage.setItem("fathom-last-use", "not a time");
     seen();
     expect(await screen.findByRole("status")).toBeDefined();
@@ -354,7 +332,7 @@ describe("signing out after a time without use", () => {
       fireEvent.keyDown(window);
       later(29 * minute);
       seen();
-      expect(screen.getByText("Hello, Fathom")).toBeDefined();
+      expect(screen.getByText(overviewGreeting)).toBeDefined();
       later(2 * minute);
       seen();
       expect(await screen.findByRole("status")).toBeDefined();
@@ -414,7 +392,6 @@ describe("when something goes wrong", () => {
       Response.json({ error: "Internal Server Error" }, { status: 500 });
     serverAnswers({
       "GET /api/session": () => session(),
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     expect((await screen.findByRole("alert")).textContent).toBe(
@@ -422,13 +399,12 @@ describe("when something goes wrong", () => {
     );
     session = signedIn;
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
   });
 
   it("says when an address names no page, with a way home", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     const history = renderApp("/no-such-page");
     expect(
@@ -437,7 +413,7 @@ describe("when something goes wrong", () => {
     await userEvent.click(
       screen.getByRole("link", { name: "Go to the start page" }),
     );
-    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
     expect(history.location.pathname).toBe("/");
   });
 
@@ -449,28 +425,27 @@ describe("when something goes wrong", () => {
         session = signedIn;
         return Response.json({});
       },
-      "GET /api/greeting": greeting,
     });
     const history = renderApp("/sign-in?redirect=123");
     await fillIn("person@example.test", "fictional password 1");
-    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(await screen.findByText(overviewGreeting)).toBeDefined();
     expect(history.location.pathname).toBe("/");
   });
 
   it("sends someone whose session has ended to sign in, then back", async () => {
-    let session = signedIn;
+    let session = administratorOnly;
     serverAnswers({
       "GET /api/session": () => session(),
-      "GET /api/greeting": () => {
+      "GET /api/accounts": () => {
         session = signedOut;
         return signedOut();
       },
     });
-    const history = renderApp("/?tab=fictional");
+    const history = renderApp("/accounts?search=fictional");
     expect(
       await screen.findByRole("heading", { name: "Sign in" }),
     ).toBeDefined();
     expect(history.location.pathname).toBe("/sign-in");
-    expect(history.location.search).toContain("tab%3Dfictional");
+    expect(history.location.search).toContain("search%3Dfictional");
   });
 });

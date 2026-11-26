@@ -8,7 +8,6 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fictionalUser,
-  greeting,
   renderApp,
   serverAnswers,
   signedIn,
@@ -35,7 +34,6 @@ describe("changing one's own name", () => {
     let session = signedIn;
     const fetch = serverAnswers({
       "GET /api/session": () => session(),
-      "GET /api/greeting": greeting,
       "PUT /api/account/name": () => {
         session = () =>
           Response.json({
@@ -72,7 +70,6 @@ describe("changing one's own name", () => {
   it("asks for a name", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();
@@ -84,7 +81,6 @@ describe("changing one's own name", () => {
   it("names the rule a name breaks", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();
@@ -100,7 +96,6 @@ describe("changing one's own name", () => {
   it("explains a refusal plainly, keeping the dialog open", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       "PUT /api/account/name": () =>
         Response.json(
           { error: "Another account has that name" },
@@ -119,7 +114,6 @@ describe("changing one's own name", () => {
     let answer: (response: Response) => void = () => undefined;
     serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
       "PUT /api/account/name": () =>
         new Promise<Response>((resolve) => {
           answer = resolve;
@@ -138,7 +132,6 @@ describe("changing one's own name", () => {
   it("closes without saving on Cancel", async () => {
     const fetch = serverAnswers({
       "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();

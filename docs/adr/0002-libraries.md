@@ -16,6 +16,7 @@
   - 2026-11-19, to mark TanStack Table and Playwright as not adopted yet, to say data classes, as Fathom does, rather than tiers, and to group Renovate's minor and patch npm updates weekly, with security fixes and PostgreSQL's updates first
   - 2026-11-23, to keep Renovate's controls in each pull request's description
   - 2026-11-24, to adopt Playwright for UI tests, as ADR 0013 sets out
+  - 2026-11-26, to ship github-slugger in the browser, where the Overview links to Help pages' headings by their anchors
 
 ## Context
 
@@ -49,7 +50,7 @@ What matters most in these choices:
 | Front-end routing and data fetching | TanStack Router and TanStack Query | React Router | Type-safe routes and consistent loading, caching, and error handling |
 | Tables | TanStack Table. Not adopted yet: no plain table uses it | A component library's table | The first stage is mostly tables; headless, so styling stays separate |
 | Unit and integration tests | Vitest, with Testcontainers for PostgreSQL | Jest | Fast and Vite-native; integration tests run against a real PostgreSQL database |
-| Notes' Markdown | [unified](https://unifiedjs.com) with remark-parse, remark-gfm, and remark-stringify in the shared package, and react-markdown with rehype-raw and rehype-sanitize in the browser, with rehype-slug giving Help pages' headings GitHub's anchors, and github-slugger, the same slugs, in tests | markdown-it, or marked with DOMPurify | One parser, the same in the server and the browser, gives a syntax tree to check against the notes' allowlist and writes every note back the same way; rehype-sanitize filters what is shown by an allowlist without a browser's DOM. markdown-it and marked turn Markdown straight into HTML, which then needs sanitising and cannot be checked or written back |
+| Notes' Markdown | [unified](https://unifiedjs.com) with remark-parse, remark-gfm, and remark-stringify in the shared package, and react-markdown with rehype-raw and rehype-sanitize in the browser, with rehype-slug giving Help pages' headings GitHub's anchors, and github-slugger, the same slugs, for links to them | markdown-it, or marked with DOMPurify | One parser, the same in the server and the browser, gives a syntax tree to check against the notes' allowlist and writes every note back the same way; rehype-sanitize filters what is shown by an allowlist without a browser's DOM. markdown-it and marked turn Markdown straight into HTML, which then needs sanitising and cannot be checked or written back |
 | Fictional data | Faker, as a development-only dependency | Hand-written generators | Widely used, with locale-aware realistic names and a fixed seed for repeatable data |
 | UI tests | Playwright, as [ADR 0013](0013-ui-tests.md) sets out | Cypress | Cross-browser; these are UI tests, so they are kept out of `pnpm test` |
 | Linting and formatting | ESLint with typescript-eslint's strict type-checked rules, eslint-plugin-security, and eslint-plugin-react-hooks for the front end, and Prettier | Biome | Type-aware rules, security rules, and React's rules of hooks |
