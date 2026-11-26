@@ -100,7 +100,7 @@ A person's timeline lists the days something about them changed, or will: the pl
 1. Select **Show timeline**. The timeline opens under the details, newest first, with planned days above the red **Today** line.
 1. To see People on one of its days, select its date. Your role needs to see other days, and later days for a date still to come.
 
-On a day someone isn't employed, such as after they've left, their details say so and end with **Show timeline**. A timeline already open stays open.
+On a day someone isn't employed, such as after they've left, their details say so, then end with the **Timeline** section, as anyone's do. A timeline already open stays open.
 
 You're done when the timeline shows the person's days.
 

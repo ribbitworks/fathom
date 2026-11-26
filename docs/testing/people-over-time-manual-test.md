@@ -259,12 +259,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `D63A` In the date row, select the right arrow once.
   - **Expected:**
-    - The details read "Viktoria Holmberg isn't employed on" the first day of this month, then **Show timeline**.
+    - The details read "Viktoria Holmberg isn't employed on" the first day of this month.
+    - They end with a **Timeline** section, its latest day reading **End**, then **Show timeline**, as anyone's details do.
     - The timeline stays open beside them, its latest day still reading **End**.
   - **Notes:**
 
 - [ ] `B7D5` Select the timeline's **×**.
   - **Expected:**
     - The timeline closes; the line saying Viktoria Holmberg isn't employed stays.
-    - The cursor is on that line's **Show timeline**.
+    - The cursor is on **Show timeline** at the end of the details.
   - **Notes:**

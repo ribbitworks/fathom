@@ -59,7 +59,7 @@ import {
 import type { DraftLike } from "./draft-marks.ts";
 import type { CellValue } from "./table-view.ts";
 import { formatDay, plannedWords } from "./day-formats.ts";
-import { ShowTimeline, TimelinePreview } from "./person-timeline.tsx";
+import { TimelinePreview } from "./person-timeline.tsx";
 import { today } from "./today.ts";
 import { changesFromDay, livePeople, peopleAsShown } from "./people-live.ts";
 import { recordProblem } from "./people-requests.ts";
@@ -227,17 +227,22 @@ export function PersonPanel({
       const today = namedBy(todays.data?.people, employeeId);
       return frame(
         "Details",
-        <Text>
-          {shownOn === undefined
-            ? `Nobody in People has the ID ${employeeId}.`
-            : `${today === undefined ? employeeId : rowName(today, lists.data)} isn't employed on ${formatDay(shownOn)}.`}
-          {timeline !== undefined && shownOn !== undefined && (
-            <>
-              {" "}
-              <ShowTimeline onOpen={timeline.onOpen} />
-            </>
-          )}
-        </Text>,
+        <>
+          <Text>
+            {shownOn === undefined
+              ? `Nobody in People has the ID ${employeeId}.`
+              : `${today === undefined ? employeeId : rowName(today, lists.data)} isn't employed on ${formatDay(shownOn)}.`}
+          </Text>
+          {timeline !== undefined &&
+            today !== undefined &&
+            shownOn !== undefined && (
+              <TimelinePreview
+                personId={today.id}
+                shownOn={shownOn}
+                {...timeline}
+              />
+            )}
+        </>,
       );
     }
     const name = rowName(drafted, lists.data);
