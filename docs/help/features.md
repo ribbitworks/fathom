@@ -124,6 +124,8 @@ You can fill the new column's cells straight away, before it's approved. Approvi
 
 The counts include every row the table shows, so a search or a filter changes them. **Needed by** counts by each month, in date order. A feature with several projects or proposals adds its effort to each of them, so their totals can add up to more than **All features**. If the panel opens under a feature's details, select **Maximize** to give it the whole height.
 
+A dot before a count marks a draft that changes it, as on [People](people.md#count-people).
+
 You're done when the panel shows how many features hold each value of the column you chose, with each one's total, average and **None**, the count with no value.
 
 ### Group the Table

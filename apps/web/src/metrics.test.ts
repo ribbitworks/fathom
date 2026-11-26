@@ -2,10 +2,16 @@
 
 // Tests for metrics over a table's rows: counting rows by one column's groups and by two crossed,
 // with rows holding several choices counted in each; adding a number column up in each group; the
-// groups each kind of column offers, months among them; and shares.
+// groups each kind of column offers, months among them; shares; and what moves a figure.
 
 import { describe, expect, it } from "vitest";
-import { countRows, emptyGroup, groupsFor, share } from "./metrics.ts";
+import {
+  countRows,
+  emptyGroup,
+  figureMove,
+  groupsFor,
+  share,
+} from "./metrics.ts";
 import type { TableColumn } from "./table-view.ts";
 
 interface Row {
@@ -232,5 +238,47 @@ describe("shares", () => {
       }).format(0.125),
     );
     expect(share(0, 0)).toBe(share(0, 5));
+  });
+});
+
+describe("what moves a figure", () => {
+  it("is nothing where nothing is compared, or where no draft moves it", () => {
+    expect(figureMove({ now: "3" })).toBeUndefined();
+    expect(
+      figureMove({ now: "3", published: "3", waiting: "3", live: "3" }),
+    ).toBeUndefined();
+    expect(
+      figureMove({ now: "3", coming: "3", comingPublished: "3" }),
+    ).toBeUndefined();
+  });
+
+  it("is the user's own unpublished change, the newest, before any other draft", () => {
+    expect(
+      figureMove({ now: "4", published: "3", waiting: "2", live: "1" }),
+    ).toBe("unpublished");
+  });
+
+  it("is a rejected draft, before a waiting one", () => {
+    expect(
+      figureMove({ now: "3", published: "3", waiting: "2", live: "1" }),
+    ).toBe("rejected");
+  });
+
+  it("is a waiting draft, where only it moves the figure from live", () => {
+    expect(
+      figureMove({ now: "3", published: "3", waiting: "3", live: "2" }),
+    ).toBe("waiting");
+  });
+
+  it("is a waiting draft still to come, where only live shows", () => {
+    expect(figureMove({ now: "2", coming: "3", comingPublished: "3" })).toBe(
+      "live",
+    );
+  });
+
+  it("is the user's own unpublished change still to come, before a waiting draft, where only live shows", () => {
+    expect(figureMove({ now: "2", coming: "4", comingPublished: "3" })).toBe(
+      "liveUnpublished",
+    );
   });
 });

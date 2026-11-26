@@ -35,6 +35,10 @@
   color: var(--mantine-color-dimmed);
 }
 
+.moved {
+  font-weight: 600;
+}
+
 .groupName {
   font-weight: 400;
   text-align: left;

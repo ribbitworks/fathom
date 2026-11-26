@@ -53,18 +53,121 @@ describe("the records the metrics count", () => {
   ];
   const [column, other] = gadgetColumns([], [], []);
 
-  it("are those shown, unless drafts show beside live", () => {
-    for (const show of ["live", "drafts"] as const) {
-      expect(
-        countedRecords(show, gadgets, [], () => undefined, liveGadgets),
-      ).toEqual({ rows: gadgets });
-    }
+  // A gadget whose draft changes its first column from nothing to c1.
+  const changed = (id: string, draft: object) =>
+    gadget(id, {
+      values: { f1: ["c1"] },
+      draft: {
+        ...waiting,
+        action: "changed",
+        changed: ["f1"],
+        live: { values: { f1: [] }, links: {} },
+        ...draft,
+      },
+    });
+  const ids = (rows: readonly { id: string }[] | undefined) =>
+    rows?.map(({ id }) => id);
+  const firstValues = (rows: readonly { values: object }[] | undefined) =>
+    rows?.map(({ values }) => values);
+
+  it("are those shown, live alone, with nothing to compare where nothing is drafted", () => {
+    expect(
+      countedRecords(
+        "live",
+        gadgets,
+        undefined,
+        [],
+        () => undefined,
+        liveGadgets,
+      ),
+    ).toEqual({ rows: gadgets, besideLive: false });
+  });
+
+  it("are, live only, those shown, and as the drafts will make them, with and without the user's own unpublished changes", () => {
+    const drafted = [
+      ...gadgets,
+      gadget("g4", {
+        draft: { ...waiting, action: "created", unpublished: true },
+      }),
+      gadget("g5", {
+        draft: { ...waiting, action: "created", state: "rejected" },
+      }),
+    ];
+    const counted = countedRecords(
+      "live",
+      liveGadgets(drafted),
+      drafted,
+      [],
+      () => undefined,
+      liveGadgets,
+    );
+    expect(ids(counted.rows)).toEqual(["g1", "g3"]);
+    expect(ids(counted.coming?.rows)).toEqual(["g1", "g2", "g4"]);
+    expect(ids(counted.comingPublished?.rows)).toEqual(["g1", "g2"]);
+    expect(counted.published).toBeUndefined();
+  });
+
+  it("are, with drafts applied, those shown, and as published and live with those drafted to be removed, but no live figures", () => {
+    const [kept, added, removed] = gadgets;
+    const counted = countedRecords(
+      "drafts",
+      [kept, added].flatMap((each) => (each ? [each] : [])),
+      removed ? [removed] : [],
+      [],
+      () => undefined,
+      liveGadgets,
+    );
+    expect(ids(counted.rows)).toEqual(["g1", "g2"]);
+    expect(ids(counted.published?.rows)).toEqual(["g1", "g2"]);
+    expect(ids(counted.live?.rows)).toEqual(["g1", "g3"]);
+    expect(counted.besideLive).toBe(false);
+  });
+
+  it("are, as published, without the user's own unpublished changes", () => {
+    const counted = countedRecords(
+      "both",
+      [
+        gadget("g1"),
+        gadget("g4", {
+          draft: { ...waiting, action: "created", unpublished: true },
+        }),
+        gadget("g5", {
+          draft: { ...waiting, action: "deleted", unpublished: true },
+        }),
+        changed("g6", { unpublished: true }),
+      ],
+      [],
+      [],
+      () => undefined,
+      liveGadgets,
+    );
+    expect(ids(counted.rows)).toEqual(["g1", "g4", "g6"]);
+    expect(ids(counted.published?.rows)).toEqual(["g1", "g5", "g6"]);
+    expect(firstValues(counted.published?.rows)?.at(-1)).toEqual({});
+    expect(counted.besideLive).toBe(true);
+  });
+
+  it("are, as waiting, without rejected drafts either", () => {
+    const counted = countedRecords(
+      "both",
+      [changed("g6", {}), changed("g7", { state: "rejected" })],
+      [],
+      [],
+      () => undefined,
+      liveGadgets,
+    );
+    expect(firstValues(counted.published?.rows)).toEqual([
+      { f1: ["c1"] },
+      { f1: ["c1"] },
+    ]);
+    expect(firstValues(counted.waiting?.rows)).toEqual([{ f1: ["c1"] }, {}]);
   });
 
   it("are, with drafts beside live, those not drafted to be removed, and as they are live by each column's live copy", () => {
     const counted = countedRecords(
       "both",
       gadgets,
+      [],
       [column, other].flatMap((each) => (each ? [each] : [])),
       (each) => (each === column ? each : undefined),
       liveGadgets,

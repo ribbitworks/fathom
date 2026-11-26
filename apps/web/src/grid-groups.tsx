@@ -169,6 +169,15 @@ export function useShownRows<Rec extends GridRecord, Change, Request>(
   const { table, body, ticks, allColumns, view, records, pageFilter } = grid;
   const keptByPage = (shown: readonly Rec[]) =>
     pageFilter === undefined ? shown : shown.filter(pageFilter.keeps);
+  // The records the page and the view's search and filters keep.
+  const viewed = (shown: readonly Rec[]) =>
+    applyView(
+      keptByPage(shown),
+      allColumns,
+      view,
+      filtersBesideColumns(draftColumn, table.barFilters),
+      table.keyOf,
+    );
   // The records this user has added since the page opened, which stay shown whatever the view.
   const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
   // The identifier each record added since the page opened was shown under before it was saved, by
@@ -216,17 +225,7 @@ export function useShownRows<Rec extends GridRecord, Change, Request>(
     everyRow,
     rowView,
     (rows) =>
-      rowsInOrder(
-        rows,
-        applyView(
-          keptByPage(recordsOf(rows)),
-          allColumns,
-          view,
-          filtersBesideColumns(draftColumn, table.barFilters),
-          table.keyOf,
-        ),
-        view.groupsReversed === true,
-      ),
+      rowsInOrder(rows, viewed(recordsOf(rows)), view.groupsReversed === true),
     ({ key }) => key,
     addedRows,
   );
@@ -260,6 +259,7 @@ export function useShownRows<Rec extends GridRecord, Change, Request>(
     nests,
     laysOutColumns,
     countedOnce,
+    viewed,
     shownRows,
     shownRecords,
     tickedShown,

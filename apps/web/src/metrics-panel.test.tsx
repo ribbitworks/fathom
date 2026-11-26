@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the Metrics panel beside the People table: opening and closing it, breaking people down
-// by a column and by two crossed, following the table's filters, counting drafts as the Draft menu
-// shows them, and offering only the columns the table has.
+// by a column and by two crossed, following the table's filters, and offering only the columns the
+// table has.
 
-import type { Field, List, Person, PersonDraft } from "@fathom/shared";
-import { MantineProvider } from "@mantine/core";
+import type { List } from "@fathom/shared";
 import {
   act,
   fireEvent,
@@ -15,152 +14,23 @@ import {
   within,
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { share } from "./metrics.ts";
 import { panelWidth, panelWidths } from "./side-panel.tsx";
-import { PeopleGrid } from "./people-grid.tsx";
 import { emptyView, type View } from "./table-view.ts";
-import { chooseIn, optionsIn, testTheme } from "./test-support.tsx";
-import { peopleActions } from "./test-people-grid.tsx";
-
-const level: Field = {
-  id: "f1",
-  keyNumber: 1,
-  name: "Level",
-  type: "choice" as const,
-  listId: "l1",
-  visibility: null,
-  multiple: false,
-  required: false,
-  onPlannedHires: true,
-};
-const role: Field = {
-  id: "f2",
-  keyNumber: 1,
-  name: "Role",
-  type: "choice" as const,
-  listId: "l2",
-  visibility: null,
-  multiple: false,
-  required: false,
-  onPlannedHires: true,
-};
-const hours: Field = {
-  id: "f3",
-  keyNumber: 1,
-  name: "Hours",
-  type: "number" as const,
-  listId: null,
-  visibility: "general",
-  multiple: false,
-  required: false,
-  onPlannedHires: true,
-};
-const choice = (id: string, label: string) => ({
-  id,
-  label,
-  description: "",
-  retired: false,
-});
-const lists: List[] = [
-  {
-    id: "l1",
-    keyNumber: 1,
-    name: "Levels",
-    description: "",
-    visibility: "general",
-    retired: false,
-    choices: [choice("p3", "P3"), choice("p4", "P4")],
-  },
-  {
-    id: "l2",
-    keyNumber: 1,
-    name: "Roles",
-    description: "",
-    visibility: "general",
-    retired: false,
-    choices: [choice("test", "Test engineer"), choice("dev", "Developer")],
-  },
-];
-
-const person = (
-  id: string,
-  levels: string[],
-  roles: string[],
-  draft?: PersonDraft,
-): Person => ({
-  id,
-  keyNumber: 1,
-  preferredName: `Fictional ${id}`,
-  employeeId: id,
-  positionId: "position-1",
-  values: { f1: levels, f2: roles },
-  links: {},
-  ...(draft ? { draft } : {}),
-});
-
-const everyone = [
-  person("a", ["p4"], ["test"]),
-  person("b", ["p4"], ["dev"]),
-  person("c", ["p3"], ["test"]),
-  person("d", [], ["test"]),
-];
-
-function Table({
-  people = everyone,
-  fields = [level, role],
-  start = emptyView,
-  showDates = false,
-  listsShown = lists,
-  drawnLater = false,
-}: {
-  people?: Person[];
-  fields?: Field[];
-  start?: View;
-  showDates?: boolean;
-  listsShown?: List[];
-  // Whether a new view is drawn a few frames after it is asked for, as one kept in the address is.
-  drawnLater?: boolean;
-}) {
-  const [view, setView] = useState(start);
-  return (
-    <MantineProvider theme={testTheme}>
-      <PeopleGrid
-        people={people}
-        fields={fields}
-        order={[]}
-        lists={listsShown}
-        canEdit={false}
-        canEditColumns={false}
-        showDates={showDates}
-        view={view}
-        onView={(next) => {
-          if (drawnLater) {
-            setTimeout(() => {
-              setView(next);
-            }, laterMilliseconds);
-          } else setView(next);
-        }}
-        actions={peopleActions()}
-      />
-    </MantineProvider>
-  );
-}
-
-// Longer than focusing waits before its first look, shorter than the frames it waits for after.
-const laterMilliseconds = 30;
-
-const panel = () => screen.getByRole("region", { name: "Metrics" });
-// The figures of a row of the panel's table, by the name of its group.
-const figures = (group: string) =>
-  within(
-    within(panel())
-      .getByRole("rowheader", { name: group })
-      .closest("tr") as HTMLElement,
-  )
-    .getAllByRole("cell")
-    .map((cell) => cell.textContent);
+import { chooseIn, optionsIn } from "./test-support.tsx";
+import {
+  choice,
+  everyone,
+  figures,
+  hours,
+  level,
+  lists,
+  panel,
+  person,
+  role,
+  Table,
+} from "./test-metrics-panel.tsx";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -402,66 +272,6 @@ describe("the Metrics panel", () => {
     expect(figures("P4")).toEqual(["1", share(1, 3)]);
   });
 
-  it("counts people as drafted, with the live figure under it where it differs, unless drafts are applied or live only", () => {
-    const draft = {
-      state: "waiting" as const,
-      madeBy: null,
-      madeAt: null,
-    };
-    const people = [
-      ...everyone,
-      person("e", ["p4"], ["dev"], {
-        ...draft,
-        action: "created",
-        changed: [],
-        live: { values: {}, links: {} },
-      }),
-      person("c2", ["p4"], ["test"], {
-        ...draft,
-        action: "changed",
-        changed: ["f1"],
-        live: { values: { f1: ["p3"] }, links: {} },
-      }),
-      person("f", ["p3"], ["dev"], {
-        ...draft,
-        action: "deleted",
-        changed: [],
-        live: { values: {}, links: {} },
-      }),
-    ];
-    const { unmount } = render(
-      <Table people={people} start={{ ...emptyView, breakdown: ["f1"] }} />,
-    );
-    expect(panel().textContent).toContain("6 people with drafts");
-    expect(figures("P4")).toEqual([
-      `42, live`,
-      `${share(4, 6)}${share(2, 6)}, live`,
-    ]);
-    expect(figures("P3")).toEqual([
-      "13, live",
-      `${share(1, 6)}${share(3, 6)}, live`,
-    ]);
-    unmount();
-
-    const live = render(
-      <Table
-        people={people}
-        start={{ ...emptyView, show: "live", breakdown: ["f1"] }}
-      />,
-    );
-    expect(panel().textContent).toContain("6 people");
-    expect(figures("P4")).toEqual(["2", share(2, 6)]);
-    live.unmount();
-
-    render(
-      <Table
-        people={people}
-        start={{ ...emptyView, show: "drafts", breakdown: ["f1"] }}
-      />,
-    );
-    expect(figures("P4")).toEqual(["4", share(4, 6)]);
-  });
-
   it("offers only the columns the table has, and drops one it does not", async () => {
     render(
       <Table fields={[level]} start={{ ...emptyView, breakdown: ["f2"] }} />,
@@ -542,34 +352,6 @@ describe("the Metrics panel", () => {
     expect(panel().textContent).not.toContain("Choose a column to count");
     await user.keyboard("{Tab}");
     expect(panel()).toBeTruthy();
-  });
-
-  it("says how many are counted live when drafts add someone, and leaves out empty values nobody has", () => {
-    const people = [
-      ...everyone,
-      person("e", ["p4"], ["dev"], {
-        state: "waiting",
-        madeBy: null,
-        madeAt: null,
-        action: "created",
-        changed: [],
-        live: { values: {}, links: {} },
-      }),
-    ];
-    const { unmount } = render(
-      <Table people={people} start={{ ...emptyView, breakdown: ["f2"] }} />,
-    );
-    expect(panel().textContent).toContain("5 people with drafts, 4 live");
-    unmount();
-    render(
-      <Table
-        people={people}
-        start={{ ...emptyView, show: "live", breakdown: ["f2"] }}
-      />,
-    );
-    expect(
-      within(panel()).queryByRole("rowheader", { name: "Empty" }),
-    ).toBeNull();
   });
 
   it("covers the screen below the top bar on a narrow screen", () => {
@@ -655,49 +437,6 @@ describe("the Metrics panel", () => {
     );
     expect(figures("Populated")).toEqual(["1", share(1, 2)]);
     expect(figures("Empty")).toEqual(["1", share(1, 2)]);
-  });
-
-  it("gives no live figures for a column only drafted to be added, or to draw on another list", () => {
-    const waiting = { state: "waiting" as const, madeBy: null, madeAt: null };
-    const people = [
-      person("a", ["p4"], ["test"], {
-        ...waiting,
-        action: "changed",
-        changed: ["f1"],
-        live: { values: { f1: ["p3"] }, links: {} },
-      }),
-    ];
-    const added: Field = {
-      ...level,
-      draft: { ...waiting, action: "created", changed: [], live: {} },
-    };
-    const { unmount } = render(
-      <Table
-        people={people}
-        fields={[added, role]}
-        start={{ ...emptyView, breakdown: ["f1"] }}
-      />,
-    );
-    expect(figures("P4")).toEqual(["1", share(1, 1)]);
-    unmount();
-    const moved: Field = {
-      ...level,
-      listId: "l2",
-      draft: {
-        ...waiting,
-        action: "changed",
-        changed: ["listId"],
-        live: { listId: "l1" },
-      },
-    };
-    render(
-      <Table
-        people={people}
-        fields={[moved, role]}
-        start={{ ...emptyView, breakdown: ["f1"] }}
-      />,
-    );
-    expect(within(panel()).queryByText(/Live/)).toBeNull();
   });
 
   it("is resized by its edge, from the keyboard or by dragging, never past the table's least width", async () => {

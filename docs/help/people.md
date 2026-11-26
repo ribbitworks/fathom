@@ -158,6 +158,8 @@ To give a note opened under the details the whole height, select **Maximize**, t
 
 The counts include every row the table shows, planned hires too. So a search or a filter changes them.
 
+A dot before a count marks a draft that changes it: yellow while the draft waits, hollow for your own unpublished change, and red in a ring for a rejected draft. Under **Drafts & Live**, the live count shows under it. Under **Live only**, a green dot marks a count a waiting draft will change. See [Drafts](drafts.md#marks).
+
 If the **Metrics** panel opens under another panel, such as a person's details, you can give it the whole height with **Maximize**, the button with four corners at its top right.
 
 You're done when the panel shows how many rows hold each value of the column you chose.

@@ -10,15 +10,24 @@ import {
   Table,
   Text,
 } from "@mantine/core";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { inSentence } from "./draft-marks.ts";
-import { MarkedItem } from "./status-mark.tsx";
+import { RecordName } from "./plan-table.tsx";
+import {
+  type DraftLike,
+  liveWaitingWords,
+  rejectedChangeWords,
+  waitingWords,
+} from "./draft-marks.ts";
+import { MarkedFigure, MarkedItem, type Tone } from "./status-mark.tsx";
 import classes from "./metrics.module.css";
 import { numberShown } from "./cell-kinds.tsx";
 import { exportHeading } from "./exports.ts";
 import {
   type Counts,
   countRows,
+  type FigureMove,
+  figureMove,
   type Group,
   groupsFor,
   metricsPanelId,
@@ -36,11 +45,48 @@ export interface CountedRows<Row> {
   columns: readonly TableColumn<Row>[];
 }
 
-// A figure, with the live one beside it when it differs, after Live's green dot.
-function Figure({ now, live }: { now: string; live: string | undefined }) {
+// The rows counted, as the Draft menu shows them, and while it shows drafts, the same rows as
+// published, as waiting and live, as `countedRecords` gives them, to tell what moves each figure.
+export interface CountedDrafts<Row> {
+  rows: readonly Row[];
+  published?: CountedRows<Row> | undefined;
+  waiting?: CountedRows<Row> | undefined;
+  live?: CountedRows<Row> | undefined;
+  coming?: CountedRows<Row> | undefined;
+  comingPublished?: CountedRows<Row> | undefined;
+  besideLive: boolean;
+}
+
+const aChange: DraftLike = { action: "changed", state: "waiting" };
+const yours: DraftLike = { ...aChange, unpublished: true };
+// The dot of what moves a figure, as a value's dot shows that draft in each view.
+const figureMarks: Record<FigureMove, { tone: Tone; tip: string }> = {
+  unpublished: { tone: "unpublished", tip: waitingWords(yours) },
+  rejected: { tone: "rejected", tip: rejectedChangeWords },
+  waiting: { tone: "draft", tip: waitingWords(aChange) },
+  live: { tone: "live", tip: liveWaitingWords(aChange) },
+  liveUnpublished: { tone: "live", tip: liveWaitingWords(yours) },
+};
+
+// A figure, after the dot of what moves it, if anything, and semibold where drafts show beside live,
+// as a value a draft changes is, with the live one under it when it differs, after Live's green dot.
+function Figure({
+  now,
+  moved,
+  live,
+}: {
+  now: string;
+  moved: FigureMove | undefined;
+  live: string | undefined;
+}) {
+  const beside = moved !== undefined && live !== undefined;
   return (
     <>
-      {now}
+      {/* The key is one of the union's own. */}
+      {/* eslint-disable-next-line security/detect-object-injection */}
+      <MarkedFigure mark={moved && figureMarks[moved]}>
+        <span className={beside ? classes.moved : undefined}>{now}</span>
+      </MarkedFigure>
       {live !== undefined && live !== now && (
         <Text component="span" fz="xs" c="dimmed" className={classes.live}>
           <MarkedItem tone="live">{live}</MarkedItem>
@@ -53,6 +99,14 @@ function Figure({ now, live }: { now: string; live: string | undefined }) {
 // A column's name ending in an s, but not in ss, is, or us, is taken as plural; Fathom keeps no
 // plural for a column's name, so another reads as its choices.
 const isPlural = (name: string) => /(?<![siu])s$/u.test(name);
+
+function GroupName({ group }: { group: Group }) {
+  return group.record === undefined ? (
+    group.label
+  ) : (
+    <RecordName record={group.record} />
+  );
+}
 
 function CountsInEach({ one, name }: { one: string; name: string }) {
   const named = inSentence(name);
@@ -80,6 +134,11 @@ export function MetricsPanel<Row>({
   kinds,
   rows,
   live,
+  published,
+  waiting,
+  coming,
+  comingPublished,
+  besideLive,
   offered,
   breakdown,
   onBreakdown,
@@ -95,11 +154,6 @@ export function MetricsPanel<Row>({
   // and how many of each a count holds, such as "150 people and 6 planned hires".
   kinds?:
     { noun: string; counted: (rows: readonly Row[]) => string } | undefined;
-  // The rows the view shows, as the table shows them, leaving out any drafted to be removed.
-  rows: readonly Row[];
-  // With drafts shown beside live, the same rows as they are live, and the columns as they are
-  // live; a column without a live copy has no live figures.
-  live?: CountedRows<Row> | undefined;
   // The columns rows may be broken down by.
   offered: readonly TableColumn<Row>[];
   breakdown: readonly string[];
@@ -109,7 +163,7 @@ export function MetricsPanel<Row>({
   sum: string;
   onSum: (key: string) => void;
   onClose: () => void;
-}) {
+} & CountedDrafts<Row>) {
   const narrow = useNarrow();
   const [measure, setMeasure] = useState<Measure>("count");
   const by = breakdown.flatMap((key) =>
@@ -121,10 +175,17 @@ export function MetricsPanel<Row>({
   const added = summable.find((column) => column.key === sum);
   const liveAdded = live?.columns.find((column) => column.key === added?.key);
   const counts = countRows(rows, by, added);
+  // A column without a live copy, such as one only drafted to be added, has no live figures.
   const liveCounts =
     live && liveBy.length === by.length
       ? countRows(live.rows, liveBy, liveAdded)
       : undefined;
+  const publishedCounts = published && countRows(published.rows, by, added);
+  const waitingCounts = waiting && countRows(waiting.rows, by, added);
+  const comingCounts = coming && countRows(coming.rows, by, added);
+  const comingPublishedCounts =
+    comingPublished && countRows(comingPublished.rows, by, added);
+  const shownLive = besideLive ? liveCounts : undefined;
   const rowsLabel = (counted: readonly Row[]) =>
     kinds?.counted(counted) ??
     `${count(counted.length)} ${counted.length === 1 ? one : noun}`;
@@ -139,9 +200,9 @@ export function MetricsPanel<Row>({
       column,
       (group) => {
         const pick = by.map((_, at) => (at === index ? group : undefined));
-        return counts.of(pick) > 0 || (liveCounts?.of(pick) ?? 0) > 0;
+        return counts.of(pick) > 0 || (shownLive?.of(pick) ?? 0) > 0;
       },
-      new Set([...counts.seen(index), ...(liveCounts?.seen(index) ?? [])]),
+      new Set([...counts.seen(index), ...(shownLive?.seen(index) ?? [])]),
     );
 
   // A total or an average shown, blank where no row has an amount, as an empty cell is.
@@ -173,8 +234,23 @@ export function MetricsPanel<Row>({
         }
       }
     };
+    const now = format(counts);
+    const moved = figureMove(
+      comingCounts && comingPublishedCounts
+        ? {
+            now,
+            coming: format(comingCounts),
+            comingPublished: format(comingPublishedCounts),
+          }
+        : {
+            now,
+            published: publishedCounts && format(publishedCounts),
+            waiting: waitingCounts && format(waitingCounts),
+            live: liveCounts && format(liveCounts),
+          },
+    );
     return (
-      <Figure now={format(counts)} live={liveCounts && format(liveCounts)} />
+      <Figure now={now} moved={moved} live={shownLive && format(shownLive)} />
     );
   };
   const allLabel = `All ${kinds?.noun ?? noun}`;
@@ -183,7 +259,7 @@ export function MetricsPanel<Row>({
       ? ["count", "share"]
       : ["count", "share", "sum", "average", "none"];
   // A group's row of figures, or the whole's, under its name.
-  const figuresRow = (group: string | undefined, label: string) => (
+  const figuresRow = (group: string | undefined, label: ReactNode) => (
     <>
       <Table.Th scope="row" className={classes.groupName}>
         {label}
@@ -277,7 +353,7 @@ export function MetricsPanel<Row>({
             <Table.Tbody>
               {groupsAt(first, 0).map((group) => (
                 <Table.Tr key={group.id}>
-                  {figuresRow(group.id, group.label)}
+                  {figuresRow(group.id, <GroupName group={group} />)}
                 </Table.Tr>
               ))}
             </Table.Tbody>
@@ -318,7 +394,7 @@ export function MetricsPanel<Row>({
                 </Table.Th>
                 {columnsGroups.map((group) => (
                   <Table.Th key={group.id} className={classes.number}>
-                    {group.label}
+                    <GroupName group={group} />
                   </Table.Th>
                 ))}
                 <Table.Th className={classes.number}>All</Table.Th>
@@ -328,7 +404,7 @@ export function MetricsPanel<Row>({
               {[...groupsAt(first, 0), undefined].map((row) => (
                 <Table.Tr key={row?.id ?? "all"}>
                   <Table.Th scope="row" className={classes.groupName}>
-                    {row?.label ?? "All"}
+                    {row === undefined ? "All" : <GroupName group={row} />}
                   </Table.Th>
                   {[...columnsGroups, undefined].map((column) => (
                     <Table.Td
@@ -369,8 +445,9 @@ export function MetricsPanel<Row>({
       {/* The bar above the table announces how many rows are shown as they change. */}
       <Text fz="sm" c="dimmed" mb="sm">
         {rowsLabel(rows)}
-        {live !== undefined && " with drafts"}
-        {live !== undefined &&
+        {besideLive && " with drafts"}
+        {besideLive &&
+          live !== undefined &&
           live.rows.length !== rows.length &&
           `, ${count(live.rows.length)} live`}
       </Text>

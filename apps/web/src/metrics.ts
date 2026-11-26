@@ -3,6 +3,7 @@
 // Metrics over a table's rows: counts, shares and sums by one column's groups or two crossed.
 
 import { formatMonth } from "./day-formats.ts";
+import { type Identified, isIdentifiedChoice } from "./identified.ts";
 import type { CellValue, TableColumn } from "./table-view.ts";
 import { isEmptyIn } from "./table-rows.ts";
 
@@ -14,6 +15,7 @@ export const metricsPanelId = "metrics-panel";
 export interface Group {
   id: string;
   label: string;
+  record?: Identified;
 }
 
 // The group of rows whose value is empty, in every kind of column.
@@ -110,7 +112,11 @@ function filledGroups(
   if (column.kind === "choice" || column.kind === "flag") {
     return column.choices
       .filter((choice) => choice.retired !== true || held(choice.id))
-      .map(({ id, label }) => ({ id, label }));
+      .map((choice) => ({
+        id: choice.id,
+        label: choice.label,
+        ...(isIdentifiedChoice(choice) ? { record: choice.record } : {}),
+      }));
   }
   if (column.kind === "month") {
     // Months written as 2027-03 sort as text in date order.
@@ -138,6 +144,39 @@ export function groupsFor(
       ? [{ id: emptyGroup, label: column.emptyLabel ?? "Empty" }]
       : []),
   ];
+}
+
+export type FigureMove =
+  "unpublished" | "rejected" | "waiting" | "live" | "liveUnpublished";
+
+// A figure as shown, and as the rows it is compared with give it: live only, as the drafts will make
+// it, and as they will without the user's own unpublished changes; where drafts show, as published,
+// as waiting and live, where the view counts each.
+export type FigureAs =
+  | { now: string; coming: string; comingPublished: string }
+  | {
+      now: string;
+      published?: string | undefined;
+      waiting?: string | undefined;
+      live?: string | undefined;
+    };
+
+// What moves a figure: the user's own unpublished change, the newest, before a rejected draft, before
+// a waiting one, each still to come where only live shows.
+export function figureMove(as: FigureAs): FigureMove | undefined {
+  if ("coming" in as) {
+    if (as.coming !== as.comingPublished) return "liveUnpublished";
+    return as.coming === as.now ? undefined : "live";
+  }
+  if (as.published !== undefined && as.published !== as.now) {
+    return "unpublished";
+  }
+  const published = as.published ?? as.now;
+  if (as.waiting !== undefined && as.waiting !== published) return "rejected";
+  if (as.live !== undefined && as.live !== (as.waiting ?? published)) {
+    return "waiting";
+  }
+  return undefined;
 }
 
 const percent = new Intl.NumberFormat(undefined, {

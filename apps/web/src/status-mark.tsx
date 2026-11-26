@@ -34,7 +34,7 @@ export const draftMarkChars = 2;
 // it.
 const kindBoxChars = 2;
 
-type Tone = "draft" | "rejected" | "live" | "unpublished";
+export type Tone = "draft" | "rejected" | "live" | "unpublished";
 
 const toneClass = new Map<Tone, string | undefined>([
   ["draft", classes.draftMark],
@@ -87,6 +87,24 @@ export function DraftDot({
       {draft.state === "rejected" && draft.unpublished === true && (
         <Dot tone="unpublished" tip="Unpublished" />
       )}
+    </>
+  );
+}
+
+// A figure after the dot of the draft that moves it, as a value a draft changes has, saying in its
+// tip what moves it.
+export function MarkedFigure({
+  mark,
+  children,
+}: {
+  mark: { tone: Tone; tip: string } | undefined;
+  children: ReactNode;
+}) {
+  if (mark === undefined) return children;
+  return (
+    <>
+      <Dot tone={mark.tone} tip={mark.tip} />
+      {children}
     </>
   );
 }
