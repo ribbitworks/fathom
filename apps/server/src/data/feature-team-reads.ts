@@ -29,7 +29,6 @@ import {
   datesOf,
   leftBy,
   type Member,
-  type Person,
   memberChanges,
   type MemberDay,
   membersOf,
@@ -45,6 +44,7 @@ import {
   teamSight,
   withoutLeavers,
 } from "./feature-team-sight.ts";
+import { recordType as hireRecordType } from "./hire-fields.ts";
 import { hiresOf } from "./hire-reads.ts";
 import { bySubject, inForceOn } from "./in-force.ts";
 import { notStarted } from "./people-reads.ts";
@@ -285,19 +285,28 @@ export function membershipChanges(
     for (const memberId of memberIds) {
       const from = dates.get(memberId);
       records.push({ teamId, memberId, member, fromDate: from ?? today });
-      if (from !== undefined) days.push({ teamId, memberId, from });
+      if (from !== undefined) {
+        days.push({
+          teamId,
+          memberId,
+          from,
+          ...(member ? {} : { leaves: true as const }),
+        });
+      }
     }
   }
   return { records, days };
 }
 
-// The people given who are live, with whether each has started and left as of a day.
-export async function peopleOf(
+// The people given who are live, with whether each has started and left as of a day, and the planned
+// hires given: each one's first day on teams, the first of the month it's expected then, as
+// allocations count it, whether it's filled, and whether a draft, published or not, removes it.
+export async function readMembers(
   reader: Reader,
   ids: readonly string[],
   day: string,
-): Promise<Map<string, Person>> {
-  const found = new Map<string, Person>();
+): Promise<Map<string, Member>> {
+  const found = new Map<string, Member>();
   for (const chunk of inChunks([...new Set(ids)])) {
     for (const person of await reader
       .select({
@@ -318,26 +327,39 @@ export async function peopleOf(
       });
     }
   }
+  const hires = await hiresOf(
+    reader,
+    [...new Set(ids)].filter((id) => !found.has(id)),
+    day,
+  );
+  if (hires.size === 0) return found;
+  const removing = await removalsDrafted(reader, [...hires.keys()]);
+  for (const [id, hire] of hires) {
+    found.set(id, {
+      kind: "planned-hire",
+      preferredName: hire.called,
+      firstDay: `${hire.expected}-01`,
+      filled: hire.filledBy !== null,
+      removing: removing.has(id),
+    });
+  }
   return found;
 }
 
-// The people who are live, as peopleOf reads them, and the planned hires given, each named as
-// allocations name it.
-export async function readMembers(
+// The planned hires given that a draft removes, published or not.
+async function removalsDrafted(
   reader: Reader,
   ids: readonly string[],
-  day: string,
-): Promise<Map<string, Member>> {
-  const found = new Map<string, Member>(await peopleOf(reader, ids, day));
-  const hires = await hiresOf(
-    reader,
-    ids.filter((id) => !found.has(id)),
-    day,
+): Promise<Set<string>> {
+  const drafts = [
+    ...(await readDrafts(reader, hireRecordType, ids)),
+    ...[...(await readHeld(reader, hireRecordType, undefined, ids))].map(
+      ([id, { draft }]): [string, Draft] => [id, draft],
+    ),
+  ];
+  return new Set(
+    drafts.flatMap(([id, draft]) => (draft.action === "deleted" ? [id] : [])),
   );
-  for (const [id, hire] of hires) {
-    found.set(id, { kind: "planned-hire", preferredName: hire.called });
-  }
-  return found;
 }
 
 // The month each team disbands from, which depends on when people and planned hires join and leave

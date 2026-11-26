@@ -15,8 +15,8 @@ import {
 } from "./draft-records.ts";
 import { writeDraft } from "./drafts.ts";
 import {
-  peopleOf,
   readLiveTeams,
+  readMembers,
   readTeamDrafts,
 } from "./feature-team-reads.ts";
 import { recordType } from "./feature-team-records.ts";
@@ -108,7 +108,7 @@ export async function undoTeamDrafts(
     actor,
   );
   const names = await readTeamNames(transaction);
-  const everyone = await peopleOf(
+  const everyone = await readMembers(
     transaction,
     undone.flatMap(({ team }) => peopleNamed(team)),
     today,

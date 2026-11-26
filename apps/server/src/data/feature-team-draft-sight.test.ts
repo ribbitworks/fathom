@@ -15,6 +15,7 @@ import {
 import {
   draftOf,
   everyone,
+  hire,
   lead,
   leaver,
   member,
@@ -231,6 +232,18 @@ describe("a team's draft as a reader sees it", () => {
       expect(unseen).not.toHaveProperty("days");
       expect(unseen).not.toHaveProperty("leadDay");
       expect(unseen?.changed).toEqual(["leadId"]);
+    });
+
+    it("give a planned hire's day only to a role that sees people's, as a person's", () => {
+      const fields = {
+        members: [lead, member, hire],
+        memberFrom: { [hire]: "2026-08-01" },
+      };
+
+      expect(seenAs(workforceAdministrator, fields)?.days).toEqual({
+        [hire]: "2026-08-01",
+      });
+      expect(seenAs(teamMember, fields)).not.toHaveProperty("days");
     });
 
     it("leave out the day of someone the reader doesn't see", () => {

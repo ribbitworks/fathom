@@ -27,9 +27,21 @@ describe("the refusals of a change of someone's teams from a month", () => {
       refusals.outOfOrder(
         { teamId: team, memberId: member, from: "2026-08-01" },
         "2026-09-01",
+        "person",
       ),
     ).toBe(
       "Fictional Person has an approved change on Fictional Team in this month or later, so this month can't change here.",
+    );
+  });
+
+  it("refuse a month before a planned hire is expected, naming the month to choose from", () => {
+    expect(
+      refusals.beforeExpected(
+        { teamId: team, memberId: member, from: "2026-08-01" },
+        "2026-09",
+      ),
+    ).toBe(
+      "This planned hire is expected in 2026-09. Choose a month from then on.",
     );
   });
 

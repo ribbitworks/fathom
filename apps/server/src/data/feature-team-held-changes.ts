@@ -24,6 +24,8 @@ export function monthRefusals(
     ...draftingRefusals,
     outOfOrder: () =>
       `${personName} has an approved change on ${teamName} in this month or later, so this month can't change here.`,
+    beforeExpected: (_, month) =>
+      `This planned hire is expected in ${month}. Choose a month from then on.`,
   };
 }
 
@@ -74,7 +76,8 @@ export type HeldChange = { change: FeatureTeamChange } | { refusal: string };
 
 // A change of a team's members from another day than today, by date, without those it changes
 // nothing about, or why the team's draft can't hold it, as heldTeamChange sets out. Someone who has
-// left, or is not a person, is kept for drafting to refuse, so no refusal names them wrongly.
+// left, or is neither a person nor a planned hire, is kept for drafting to refuse, so no refusal
+// names them wrongly.
 export function heldChange(
   now: { before: Recorded | undefined; team: Recorded },
   change: FeatureTeamChange,

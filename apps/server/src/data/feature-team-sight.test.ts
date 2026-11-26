@@ -177,6 +177,24 @@ describe("a team without those who have left", () => {
     expect(withoutLeavers(team, everyone)).toEqual(team);
   });
 
+  it("keeps planned hires and their days, since a planned hire never leaves", () => {
+    const team = {
+      name: "Fictional Team",
+      leadId: hire,
+      members: [hire, leaver],
+      memberFrom: { [hire]: "2026-08-01", [leaver]: "2026-08-01" },
+      leadFrom: { [hire]: "2026-08-01" },
+    };
+
+    expect(withoutLeavers(team, everyone)).toEqual({
+      name: "Fictional Team",
+      leadId: hire,
+      members: [hire],
+      memberFrom: { [hire]: "2026-08-01" },
+      leadFrom: { [hire]: "2026-08-01" },
+    });
+  });
+
   it("adds no members to a team that names none", () => {
     expect(withoutLeavers({ name: "Fictional Team" }, everyone)).toEqual({
       name: "Fictional Team",

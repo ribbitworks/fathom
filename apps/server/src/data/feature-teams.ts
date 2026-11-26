@@ -43,8 +43,8 @@ import {
   writeDraft,
 } from "./drafts.ts";
 import {
-  peopleOf,
   readLiveTeams,
+  readMembers,
   readTeamDrafts,
 } from "./feature-team-reads.ts";
 import { recordType } from "./feature-team-records.ts";
@@ -55,6 +55,7 @@ import {
   refuseLeadDayOutOfOrder,
   refuseLeadOffTeam,
   refuseOutsideEmployment,
+  refusePlannedHireDays,
   refuseWith,
 } from "./feature-team-days.ts";
 import {
@@ -63,6 +64,7 @@ import {
   draftingRefusals,
   type Everyone,
   leadDatesOf,
+  type MemberDay,
   membersOf,
   membersRefusal,
   nameIsTaken,
@@ -82,10 +84,10 @@ import { readToday } from "./settings.ts";
 const noTeam = "There is no such feature team";
 const nameTaken = "Another feature team has that name";
 
-// A team's fields as drafts and the change history hold them: its name, lead, members, by person,
-// sorted, the days the members a draft adds or removes join or leave, by person, when given, and
-// the day a draft's change of lead takes effect, under the new lead, or the old one if none
-// replaces them, when given.
+// A team's fields as drafts and the change history hold them: its name, lead, members, by person or
+// planned hire, sorted, the days the members a draft adds or removes join or leave, by member, when
+// given, and the day a draft's change of lead takes effect, under the new lead, or the old one if
+// none replaces them, when given.
 export const featureTeamFields = [
   "name",
   "leadId",
@@ -196,7 +198,6 @@ export async function createFeatureTeam(
   return changingTeams(database, actor, asOf, async (transaction, today) => {
     const from = fromDay(actor, request.from, today);
     const id = randomUUID();
-    await refuseTakenName(transaction, request.name, id);
     // A lead who is not among the members asked for joins the team with them.
     const members = [
       ...new Set([
@@ -204,15 +205,18 @@ export async function createFeatureTeam(
         ...(request.leadId === null ? [] : [request.leadId]),
       ]),
     ].sort();
-    const everyone = await peopleOf(transaction, members, today);
+    await refuseTakenName(transaction, request.name, id);
+    const everyone = await readMembers(transaction, members, today);
     checkMembers(actor, members, members, request.leadId, everyone);
-    if (from !== undefined) {
-      await refuseDaysOutOfOrder(
-        transaction,
-        members.map((memberId) => ({ teamId: id, memberId, from })),
-        everyone,
-        draftingRefusals,
-      );
+    const days = members.map((memberId) => ({
+      teamId: id,
+      memberId,
+      from: from ?? today,
+    }));
+    if (from === undefined) {
+      refusePlannedHireDays(days, everyone, draftingRefusals);
+    } else {
+      await refuseDaysOutOfOrder(transaction, days, everyone, draftingRefusals);
     }
     // A team added with no members records none, rather than an empty list.
     const after = tidy({
@@ -276,7 +280,7 @@ export async function draftedTeam(
       team &&
       withoutLeavers(
         team,
-        await peopleOf(transaction, peopleNamed(team), today),
+        await readMembers(transaction, peopleNamed(team), today),
       ),
   };
 }
@@ -296,7 +300,7 @@ async function clearedTeamRejection(
   const holdsNotStarted = draftHoldsNotStarted(
     before,
     after,
-    await peopleOf(transaction, peopleDraftChanges(before, after), today),
+    await readMembers(transaction, peopleDraftChanges(before, after), today),
   );
   return clearedRejection(
     id,
@@ -319,6 +323,7 @@ export async function updateFeatureTeam(
   return changingTeams(database, actor, asOf, async (transaction, today) => {
     const from = fromDay(actor, change.from, today);
     const now = await draftedTeam(transaction, actor, id, today);
+    const everyone = await readNamedIn(transaction, now, change, today);
     const made = await draftTeamChange(
       transaction,
       actor,
@@ -328,6 +333,7 @@ export async function updateFeatureTeam(
           from === undefined
             ? change
             : await heldMembers(transaction, now, id, change, {
+                everyone,
                 day: from,
                 today,
               }),
@@ -335,13 +341,42 @@ export async function updateFeatureTeam(
         today,
       },
       now,
-      draftingRefusals,
+      { refusals: draftingRefusals, everyone },
     );
     return made.length === 0 ? null : saved(transaction, actor, made);
   });
 }
 
 type DraftedTeamNow = Awaited<ReturnType<typeof draftedTeam>>;
+
+// The team a change is drafted on, refusing one its draft removes.
+export function teamToChange({ team }: DraftedTeamNow): Recorded {
+  if (team === undefined) {
+    throw new ConflictError(
+      "This feature team's draft removes it; discard the draft to change it",
+    );
+  }
+  return team;
+}
+
+// Everyone a team, its draft and a change to it name, read once for every check of the change.
+export const readNamedIn = (
+  transaction: Transaction,
+  { before, team }: DraftedTeamNow,
+  change: FeatureTeamChange,
+  today: string,
+) =>
+  readMembers(
+    transaction,
+    [
+      ...peopleNamed(team),
+      ...peopleNamed(before),
+      ...(change.add ?? []),
+      ...(change.remove ?? []),
+      ...(typeof change.leadId === "string" ? [change.leadId] : []),
+    ],
+    today,
+  );
 
 // Writes a team's draft with a change made, once the drafts lock is held, as updateFeatureTeam
 // describes, returning the changes to record; none when it changes nothing.
@@ -359,14 +394,14 @@ export async function draftTeamChange(
     from: string | undefined;
     today: string;
   },
-  { before, draft, team }: DraftedTeamNow,
-  dayRefusals: DayRefusals,
+  now: DraftedTeamNow,
+  {
+    refusals: dayRefusals,
+    everyone,
+  }: { refusals: DayRefusals; everyone: Everyone },
 ): Promise<Change[]> {
-  if (team === undefined) {
-    throw new ConflictError(
-      "This feature team's draft removes it; discard the draft to change it",
-    );
-  }
+  const { before, draft } = now;
+  const team = teamToChange(now);
   if (change.name !== undefined) {
     await refuseTakenName(transaction, change.name, id);
   }
@@ -380,17 +415,28 @@ export async function draftTeamChange(
     leadChanges,
     leadJoinsOn,
   } = nextTeamDraft({ before, team }, change, { from, today });
-  const everyone = await peopleOf(
-    transaction,
-    [...dayPeople, ...(leadId === null ? [] : [leadId])],
-    today,
-  );
   checkMembers(actor, added, members, leadId, everyone);
-  // A day other than today is chosen only by those who see employment dates, as fromDay requires.
+  const dayOf = (memberId: string, day: string): MemberDay => ({
+    teamId: id,
+    memberId,
+    from: day,
+    ...(members.includes(memberId) ? {} : { leaves: true as const }),
+  });
+  // A planned hire changed from today, with no day chosen, joins or leaves today, so its day is
+  // checked as a day chosen is.
+  if (from === undefined) {
+    refusePlannedHireDays(
+      dayPeople.map((memberId) => dayOf(memberId, today)),
+      everyone,
+      dayRefusals,
+    );
+  }
+  // A day other than today dates a person only for those who see employment dates, as fromDay
+  // requires.
   if (from !== undefined) {
     await refuseDaysOutOfOrder(
       transaction,
-      dated.map((memberId) => ({ teamId: id, memberId, from })),
+      dated.map((memberId) => dayOf(memberId, from)),
       everyone,
       dayRefusals,
     );
@@ -436,12 +482,11 @@ async function heldMembers(
   { before, team }: DraftedTeamNow,
   id: string,
   change: FeatureTeamChange,
-  when: { day: string; today: string },
+  { everyone, ...when }: { everyone: Everyone; day: string; today: string },
 ): Promise<FeatureTeamChange> {
   const asked = [...(change.add ?? []), ...(change.remove ?? [])];
   // A team its draft removes is refused when the change is drafted.
   if (asked.length === 0 || team === undefined) return change;
-  const everyone = await peopleOf(transaction, asked, when.today);
   const onDay = membersOf(
     (await readLiveTeams(transaction, when.day, { ids: [id] })).teams.get(id),
   );
