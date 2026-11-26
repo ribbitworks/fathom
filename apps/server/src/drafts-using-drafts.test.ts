@@ -17,7 +17,7 @@ import {
 import type { Choice, Field, List, Person } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { listTier, type ListsState } from "./data/lists.ts";
+import { listTier, type ListsState } from "./data/list-state.ts";
 import {
   generalReader,
   startTestApp,

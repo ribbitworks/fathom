@@ -31,18 +31,20 @@ import { checkValuesFit } from "./fields.ts";
 import {
   choiceLabelTaken,
   choicesHaveDrafts,
-  draftedList,
-  listExists,
   listNameTaken,
-  listOfChoice,
-  readState,
   refuseIfChosen,
   refuseIfUsed,
   refuseLastKept,
-  refuseUnseenList,
-  writeOrderDraft,
   refuseSensitiveFeatureList,
-} from "./lists.ts";
+} from "./list-rules.ts";
+import {
+  draftedList,
+  listExists,
+  listOfChoice,
+  readState,
+  writeOrderDraft,
+} from "./list-state.ts";
+import { refuseUnseenList } from "./lists.ts";
 import { withMark } from "./person-fields.ts";
 import { readLive } from "./people-reads.ts";
 import {

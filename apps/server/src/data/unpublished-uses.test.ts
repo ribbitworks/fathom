@@ -7,7 +7,7 @@
 import { withNeeded, withUsers } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import type { ColumnsState } from "./column-state.ts";
-import type { ListsState } from "./lists.ts";
+import type { ListsState } from "./list-state.ts";
 import type { RecordsState } from "./record-state.ts";
 import {
   fillKeys,

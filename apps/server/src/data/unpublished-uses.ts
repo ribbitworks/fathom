@@ -18,7 +18,7 @@ import { usedByRecord } from "./draft-uses.ts";
 import type { Draft } from "./draft-records.ts";
 import type { Fill } from "./fills.ts";
 import { withUsed } from "./list-approvals.ts";
-import type { ListsState } from "./lists.ts";
+import type { ListsState } from "./list-state.ts";
 import { type RecordsState, stateOf, usesOf } from "./record-state.ts";
 import { isRecordType, kindOf } from "./records.ts";
 

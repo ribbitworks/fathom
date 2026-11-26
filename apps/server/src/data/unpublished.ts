@@ -54,22 +54,20 @@ import { lockDrafts, readPersonDrafts } from "./drafts.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
 import { typeOf } from "./column-types.ts";
 import { fieldChanges } from "./fields.ts";
+import { choiceLabelTaken, listNameTaken, keptOffered } from "./list-rules.ts";
 import {
   choiceChanges,
-  choiceLabelTaken,
   draftedChoice,
   draftedList,
   draftedOrder,
   listChanges,
   listExists,
-  listNameTaken,
   listOfChoice,
   type ListsState,
-  keptOffered,
   orderChanges,
   readState,
-  removeEmptyOrders,
-} from "./lists.ts";
+} from "./list-state.ts";
+import { removeEmptyOrders } from "./lists.ts";
 import {
   isRecordType,
   readRecordVersions,

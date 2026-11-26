@@ -12,6 +12,7 @@ import type {
   RetiredRequest,
 } from "@fathom/shared";
 import { type Actor, requirePermission } from "../access.ts";
+import { discardListDraft, resubmitListDraft } from "./list-draft-decisions.ts";
 import * as lists from "./lists.ts";
 import type { Saved, ChangeSetId } from "./changes.ts";
 import { seenLists } from "./page-reads.ts";
@@ -95,7 +96,7 @@ export function createListAccess(database: Database): ListAccess {
     deleteChoice: async (actor, listId, id) =>
       lists.deleteChoice(database, editor(actor), listId, id),
     discardDraft: async (actor, target) =>
-      lists.discardListDraft(
+      discardListDraft(
         database,
         editor(actor),
         target.kind,
@@ -103,7 +104,7 @@ export function createListAccess(database: Database): ListAccess {
         target.kind === "choice" ? target.choiceId : undefined,
       ),
     resubmitDraft: async (actor, target) =>
-      lists.resubmitListDraft(
+      resubmitListDraft(
         database,
         editor(actor),
         target.kind,

@@ -20,26 +20,27 @@ import {
 } from "./draft-records.ts";
 import {
   refuseSensitiveFeatureList,
-  choiceChanges,
-  choicesOrderUses,
-  heldOrder,
-  listChanges,
-  listMoved,
-  listOfChoice,
-  type ListsState,
-  listTier,
-  liveOrder,
   lockChoices,
-  orderChanges,
-  readState,
   refuseIfChosen,
   refuseIfUsed,
   peoplesMeaning,
   refusePeoplesMeaningWhileHeld,
   refuseKeptUnoffered,
-  removeEmptyOrders,
   writePositions,
-} from "./lists.ts";
+} from "./list-rules.ts";
+import {
+  choiceChanges,
+  choicesOrderUses,
+  heldOrder,
+  listChanges,
+  listOfChoice,
+  type ListsState,
+  listTier,
+  liveOrder,
+  orderChanges,
+  readState,
+} from "./list-state.ts";
+import { listMoved, removeEmptyOrders } from "./lists.ts";
 
 export type ListSelection = Pick<DraftsRequest, "lists" | "choices" | "orders">;
 

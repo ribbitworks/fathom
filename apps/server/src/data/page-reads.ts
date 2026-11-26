@@ -11,7 +11,7 @@ import {
   requirePermission,
 } from "../access.ts";
 import { readColumnsOut } from "./column-state.ts";
-import * as lists from "./lists.ts";
+import { readLists } from "./list-reads.ts";
 import * as peopleReads from "./people-table-reads.ts";
 import * as projectReads from "./project-reads.ts";
 import * as releases from "./releases.ts";
@@ -19,7 +19,7 @@ import * as releases from "./releases.ts";
 // Lists' choices are also read by those who see People, whose columns draw on them.
 export function seenLists(database: Database, actor: Actor): Promise<List[]> {
   requireAnyPermission(actor, ["configuration:view", "people:view"]);
-  return lists.readLists(database, actor);
+  return readLists(database, actor);
 }
 
 export function seenStreams(

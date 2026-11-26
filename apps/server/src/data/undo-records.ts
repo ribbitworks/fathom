@@ -24,7 +24,7 @@ import type {
 } from "./changes.ts";
 import { draftsUse, takenEmployeeIds } from "./drafted-values.ts";
 import { checkLiveList, checkValuesFit, lockFields } from "./fields.ts";
-import { lockChoices, placeChoice, refuseIfUsed } from "./lists.ts";
+import { lockChoices, placeChoice, refuseIfUsed } from "./list-rules.ts";
 import { fieldOfValue, writeValues } from "./values.ts";
 
 export const changedSince =

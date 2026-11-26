@@ -7,7 +7,7 @@ import { actorWith } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
 import type { Draft } from "./draft-records.ts";
 import { requireSeesLists } from "./list-approvals.ts";
-import type { ListsState } from "./lists.ts";
+import type { ListsState } from "./list-state.ts";
 
 const user = {
   id: "fictional-user",
