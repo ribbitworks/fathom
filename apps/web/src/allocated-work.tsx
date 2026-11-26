@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A feature's or activity's hours on Allocations grouped by what each is allocated to: its effort,
-// the hours its
-// allocations give it over the grid's months, and what remains.
+// the hours its allocations give it to its last month, and what remains.
 
 import {
   type AllocatedFeature,
   type Allocation,
   hoursAllocated,
   isForecast,
+  monthsBetween,
   remainingHours,
   type Show,
   type WorkEffort,
@@ -27,28 +27,34 @@ function monthsShown(allocation: Allocation, show: Show) {
   return draft.action === "deleted" ? {} : draft.months;
 }
 
-// The hours a feature's or activity's allocations give it over some months, after focus and ramp-up.
+// The hours a feature's or activity's allocations give it, after focus and ramp-up, each from its
+// first month to the last month given, so they don't depend on how far the grid reaches.
 export const allocatedHours = (
   allocations: readonly Allocation[],
   workId: string,
-  months: readonly string[],
+  lastMonth: string,
   show: Show,
 ): number =>
-  allocations.reduce(
-    (total, allocation) =>
+  allocations.reduce((total, allocation) => {
+    if (
       (allocation.featureId ?? allocation.activityId) !== workId ||
       allocation.hours === undefined
-        ? total
-        : total +
+    ) {
+      return total;
+    }
+    const percentages = monthsShown(allocation, show);
+    const first = Object.keys(percentages).sort().at(0);
+    return first === undefined
+      ? total
+      : total +
           hoursAllocated(
-            monthsShown(allocation, show),
+            percentages,
             allocation.hours,
-            months,
-          ),
-    0,
-  );
+            monthsBetween(first, lastMonth),
+          );
+  }, 0);
 
-// A work's estimate and the hours it needs as the Draft menu shows them.
+// A work's estimate, the hours it needs, and its last month, as the Draft menu shows them.
 export const effortShown = (
   effort: NonNullable<AllocatedFeature["effort"]>,
   show: Show,
@@ -57,11 +63,19 @@ export const effortShown = (
     ? effort.drafted
     : effort.live;
 
+// The month a work's allocations are counted to: its last month as shown, or the current month for
+// work with no dates.
+export const countedTo = (
+  effort: NonNullable<AllocatedFeature["effort"]>,
+  show: Show,
+  currentMonth: string,
+): string => effortShown(effort, show).lastMonth ?? currentMonth;
+
 const hours = (value: number) => `${decimal(value)} h`;
 
 // After a feature's or activity's heading: Effort · Allocated · Remaining. Remaining past what it
-// needs reads in red with a minus sign, and None for done or cancelled work, or work with no
-// estimate. Work the reader can't read shows none of it.
+// needs reads in red with a minus sign, and None for done or cancelled work. Work with no estimate
+// shows Allocated alone, and work the reader can't read none of it.
 export function WorkFacts({
   work,
   allocated,
@@ -76,14 +90,28 @@ export function WorkFacts({
   const remaining = isForecast(work.meaning)
     ? remainingHours(needed, allocated)
     : undefined;
+  const allocatedFact = (
+    <span
+      {...{
+        [tipAttribute]:
+          "From each allocation's first month to the work's end, or to this month if the work has no dates",
+      }}
+    >
+      Allocated {hours(allocated)}
+    </span>
+  );
+  if (estimate === null) {
+    return (
+      <Text component="span" fz="sm" c="dimmed">
+        {" "}
+        · {allocatedFact}
+      </Text>
+    );
+  }
   return (
     <Text component="span" fz="sm" c="dimmed">
       {" "}
-      · Effort {estimate === null ? "None" : hours(estimate)} ·{" "}
-      <span {...{ [tipAttribute]: "Over the months the grid shows" }}>
-        Allocated {hours(allocated)}
-      </span>{" "}
-      · Remaining{" "}
+      · Effort {hours(estimate)} · {allocatedFact} · Remaining{" "}
       {remaining === undefined ? (
         "None"
       ) : remaining < 0 ? (

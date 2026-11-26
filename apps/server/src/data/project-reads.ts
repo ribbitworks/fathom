@@ -37,7 +37,7 @@ import { readColumnsOut } from "./column-state.ts";
 import { liveValuesOf } from "./column-types.ts";
 import { readListsWithin } from "./list-reads.ts";
 import { linksOf, notesOf, numbersOf, valuesOf } from "./person-fields.ts";
-import { milestonesOf } from "./project-kinds.ts";
+import { milestoneDays, milestonesOf } from "./project-kinds.ts";
 import { text } from "./reporting.ts";
 import { fieldOfValue } from "./values.ts";
 import {
@@ -46,7 +46,6 @@ import {
   shownIds,
   shownVersion,
   stateOf,
-  versionOf,
 } from "./record-state.ts";
 import {
   type Makers,
@@ -171,11 +170,6 @@ function milestoneOut(
   };
 }
 
-const asDay = (milestone: Recorded) => ({
-  date: String(milestone.date),
-  customerDelivery: milestone.customerDelivery === true,
-});
-
 // A project's milestones by day, its dates as their drafts make them, those drafted to be removed
 // left out, and, where that differs, its dates from the live milestones.
 function projectOut(
@@ -186,13 +180,7 @@ function projectOut(
 ): Project {
   const project = shownVersion(state, "project", id) as Recorded;
   const found = milestonesOf(state, id);
-  const drafted = found.flatMap((milestone) => {
-    const version = versionOf(state, "milestone", milestone);
-    return version === undefined ? [] : [asDay(version)];
-  });
-  const live = [...stateOf(state, "milestone").live.values()]
-    .filter((milestone) => milestone.projectId === id)
-    .map(asDay);
+  const { live, drafted } = milestoneDays(state, id);
   const dates = projectDates(drafted, today);
   const liveDates = projectDates(live, today);
   return {

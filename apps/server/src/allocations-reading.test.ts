@@ -173,18 +173,22 @@ describe("reading", () => {
   const settingsReader = () =>
     test.signedIn([...generalReader, "personal:view", "configuration:view"]);
 
-  it("gives a reader who sees the planning settings each feature's estimate and the hours it needs with the buffer", async () => {
+  it("gives a reader who sees the planning settings each feature's estimate, the hours it needs with the buffer, and its last month", async () => {
     const personId = await addPerson();
     const featureId = await addFeature();
     await test.connection
       .update(features)
-      .set({ estimateHours: 50 })
+      .set({ estimateHours: 50, neededBy: month(3) })
       .where(eq(features.id, featureId));
     await changed({ personId, featureId, percentage: 50, from: month(0) });
     const { features: named } = await read(await settingsReader());
     const { bufferPercent } = await settings();
     expect(named.find(({ id }) => id === featureId)?.effort).toEqual({
-      live: { estimate: 50, needed: 50 + (50 * bufferPercent) / 100 },
+      live: {
+        estimate: 50,
+        needed: 50 + (50 * bufferPercent) / 100,
+        lastMonth: month(3),
+      },
     });
   });
 
@@ -212,8 +216,12 @@ describe("reading", () => {
     const { features: named } = await read(editor);
     const { bufferPercent } = await settings();
     expect(named.find(({ id }) => id === featureId)?.effort).toEqual({
-      live: { estimate: null, needed: null },
-      drafted: { estimate: 80, needed: 80 + (80 * bufferPercent) / 100 },
+      live: { estimate: null, needed: null, lastMonth: null },
+      drafted: {
+        estimate: 80,
+        needed: 80 + (80 * bufferPercent) / 100,
+        lastMonth: null,
+      },
     });
   });
 
@@ -226,7 +234,11 @@ describe("reading", () => {
     const { activities: named } = await read(await settingsReader());
     const { bufferPercent } = await settings();
     expect(named.find(({ id }) => id === activityId)?.effort).toEqual({
-      live: { estimate: 40, needed: 40 + (40 * bufferPercent) / 100 },
+      live: {
+        estimate: 40,
+        needed: 40 + (40 * bufferPercent) / 100,
+        lastMonth: null,
+      },
     });
   });
 

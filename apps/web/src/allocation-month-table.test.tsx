@@ -413,11 +413,16 @@ describe("the table", () => {
 
 describe("the table grouped by what each is allocated to", () => {
   // Casey on Checkout at half from March, whose whole month gives 80 hours, and Checkout's
-  // estimate, needing 120 hours with the buffer.
+  // estimate, needing 240 hours with the buffer, by June, past the grid's last month.
   const onCheckout = allocation({ hours: { full: 80, rampUp: {} } });
   const withEffort = features.map((feature) =>
     feature.id === "f-checkout"
-      ? { ...feature, effort: { live: { estimate: 100, needed: 120 } } }
+      ? {
+          ...feature,
+          effort: {
+            live: { estimate: 200, needed: 240, lastMonth: "2027-06" },
+          },
+        }
       : feature,
   );
   const tableBy = (byWork: boolean) =>
@@ -446,7 +451,7 @@ describe("the table grouped by what each is allocated to", () => {
     ]);
   });
 
-  it("heads each feature with its Effort, Allocated and Remaining", () => {
+  it("heads each feature with its Effort, Remaining, and Allocated to its last month, past the grid's", () => {
     const grouping = tableBy(true).groupings?.find(
       ({ key }) => key === allocatedToGrouping,
     );
@@ -461,7 +466,7 @@ describe("the table grouped by what each is allocated to", () => {
     );
 
     expect(screen.getByTestId("heading").textContent).toBe(
-      "Checkout · Effort 100 h · Allocated 80 h · Remaining 40 h",
+      "Checkout · Effort 200 h · Allocated 160 h · Remaining 80 h",
     );
   });
 
@@ -495,7 +500,8 @@ describe("the table grouped by what each is allocated to", () => {
     expect(screen.getByTestId("cell").textContent).toBe("Checkout50%");
   });
 
-  // Casey on the General activity at half from March too, its estimate needing 48 hours.
+  // Casey on the General activity at half from March too, its estimate needing 48 hours, with no
+  // dates, so counted to the current month.
   const onGeneral = allocation({
     id: "a-2",
     featureId: null,
@@ -504,7 +510,7 @@ describe("the table grouped by what each is allocated to", () => {
   });
   const withActivityEffort = activities.map((activity) => ({
     ...activity,
-    effort: { live: { estimate: 40, needed: 48 } },
+    effort: { live: { estimate: 40, needed: 48, lastMonth: null } },
   }));
   const tableOfWork = (
     works: Parameters<typeof allocatedWork>[0],
@@ -523,7 +529,7 @@ describe("the table grouped by what each is allocated to", () => {
   const groupingOf = (table: ReturnType<typeof tableOfWork>) =>
     table.groupings?.find(({ key }) => key === allocatedToGrouping);
 
-  it("heads an activity by its name and its project, with its hours, and totals them", () => {
+  it("heads an activity by its name and its project, with its hours to the current month without dates, and totals them", () => {
     const table = tableOfWork(
       { allocations: [], features: withEffort, activities: withActivityEffort },
       [onCheckout, onGeneral],
@@ -546,7 +552,7 @@ describe("the table grouped by what each is allocated to", () => {
       screen.getByTestId("heading").textContent,
       table.totals?.cell(onActivity, "2027-03"),
     ]).toEqual([
-      "General (Crane Control) · Effort 40 h · Allocated 80 h · Remaining \u221232 h",
+      "General (Crane Control) · Effort 40 h · Allocated 40 h · Remaining 8 h",
       "40 h",
     ]);
   });

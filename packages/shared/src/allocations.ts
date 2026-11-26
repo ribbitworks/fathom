@@ -204,6 +204,8 @@ export const summedCapacity = (capacities: readonly Capacity[]): Capacity =>
 export const workEffortSchema = z.object({
   estimate: z.number().nullable(),
   needed: z.number().nullable(),
+  // The month its allocations' hours are counted to; none for work with no dates.
+  lastMonth: monthSchema.nullable(),
 });
 
 export type WorkEffort = z.infer<typeof workEffortSchema>;
