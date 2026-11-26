@@ -329,12 +329,11 @@ function DetailRow({
       showOn={column.showOn?.(record as never)}
     >
       {listed ? (
-        <Stack gap={6} align="flex-start">
+        <Stack gap="xs" align="flex-start">
           {shown ?? <Text c="dimmed">{column.emptyLabel ?? "None"}</Text>}
-          <Group gap={8}>
+          <Group gap="xs">
             <Button
               variant="default"
-              size="compact-sm"
               id={changeId(column, editing.scope)}
               onClick={editing.onStart}
             >
@@ -343,7 +342,6 @@ function DetailRow({
             {adds !== undefined && (
               <Button
                 variant="default"
-                size="compact-sm"
                 id={`${changeId(column, editing.scope)}-new`}
                 onClick={() => {
                   adds.onNew({ id: record.id }, "", () => {
