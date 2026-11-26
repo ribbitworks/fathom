@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A user's unpublished changes to drafts: listing, publishing and discarding them, all at once or
-// those chosen. Part of the data access layer.
+// A user's private changes to drafts: listing and publishing them, all at once or those chosen.
+// Part of the data access layer.
 
 import {
   changes,
@@ -12,84 +12,35 @@ import {
   type Reader,
 } from "@fathom/db";
 import {
-  type DataClasses,
-  type DraftKind,
   draftKey,
   draftKeysOf,
   type DraftsRequest,
-  draftingPermissions,
-  hireCalled,
-  type Permission,
-  type RecordType,
   type Unpublished,
   type UnpublishedPublished,
   withNeeded,
   withUsers,
 } from "@fathom/shared";
-import { and, asc, eq, inArray, max, notExists } from "drizzle-orm";
-import {
-  type Actor,
-  requireAnyPermission,
-  seesSensitivity,
-} from "../access.ts";
+import { and, eq, inArray, max, notExists } from "drizzle-orm";
+import { type Actor } from "../access.ts";
 import { ConflictError, NotFoundError } from "../errors.ts";
-import { type Change, recordChanges, type Transaction } from "./changes.ts";
-import {
-  columnRow,
-  type ColumnsState,
-  draftedField,
-  nameTaken,
-  readColumnsState,
-} from "./column-state.ts";
-import {
-  actionTo,
-  asDraft,
-  type Draft,
-  drafted,
-  type Recorded,
-  wantsNoDraft,
-} from "./draft-records.ts";
-import { chunksByKind, draftKeys, openChangeSets } from "./draft-makers.ts";
-import { lockDrafts, overPublished, readPersonDrafts } from "./drafts.ts";
+import { type Change, type Transaction } from "./changes.ts";
+import { draftedField, nameTaken } from "./column-state.ts";
+import { drafted, wantsNoDraft } from "./draft-records.ts";
+import { chunksByKind, openChangeSets } from "./draft-makers.ts";
+import { lockDrafts } from "./drafts.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
 import { typeOf } from "./column-types.ts";
-import { fieldChanges } from "./fields.ts";
 import { choiceLabelTaken, listNameTaken, keptOffered } from "./list-rules.ts";
 import {
-  choiceChanges,
   draftedChoice,
   draftedList,
-  draftedOrder,
-  listChanges,
   listExists,
   listOfChoice,
-  type ListsState,
-  orderChanges,
-  readState,
 } from "./list-state.ts";
 import { removeEmptyOrders } from "./lists.ts";
-import {
-  isRecordType,
-  readRecordVersions,
-  type RecordVersions,
-  recordSubject,
-} from "./records.ts";
-import { recordFits, takingBackRecord } from "./record-drafting.ts";
-import { personChanges, recordSensitiveChanges } from "./person-fields.ts";
-import { readLive } from "./people-reads.ts";
-import {
-  hireChanges,
-  type HireTier,
-  hireIdOf,
-  readHireTier,
-  recordHiringChanges,
-} from "./hire-fields.ts";
-import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
-import { columnsWithAdded } from "./added-columns.ts";
-import { readLiveTeams, readTeamDrafts } from "./feature-team-reads.ts";
-import { recordTeamDayChanges, teamChanges } from "./feature-teams.ts";
+import { isRecordType } from "./records.ts";
+import { recordFits } from "./record-drafting.ts";
 import { readFills } from "./fills.ts";
-import { readToday } from "./settings.ts";
 import { editsDraft } from "./draft-editors.ts";
 import {
   changeKey,
@@ -99,221 +50,17 @@ import {
   publishableAmong,
   usesAmong,
 } from "./unpublished-uses.ts";
-import type { TableColumns } from "./values.ts";
-
-type Row = typeof privateChanges.$inferSelect;
-
-// Anyone who may make drafts may publish or discard their own changes.
-const requireDrafting = (actor: Actor) => {
-  requireAnyPermission(actor, draftingPermissions);
-};
-
-// The user's unpublished drafts, in the order they were made.
-const ownRows = async (reader: Reader, userId: string): Promise<Row[]> =>
-  overPublished(
-    reader,
-    await reader
-      .select()
-      .from(privateChanges)
-      .where(eq(privateChanges.userId, userId))
-      .orderBy(asc(privateChanges.sequence)),
-  );
-
-const idsOf = (rows: readonly Row[], recordType: DraftKind) =>
-  rows
-    .filter((row) => row.recordType === recordType)
-    .map(({ recordId }) => recordId);
-
-// Everything the user's unpublished drafts change, as the user sees it, and as everyone else does,
-// read together.
-interface Versions {
-  rows: Row[];
-  mine: { lists: ListsState; columns: ColumnsState };
-  theirs: { lists: ListsState; columns: ColumnsState };
-  people: {
-    columns: TableColumns;
-    live: Map<string, Recorded>;
-    mine: Map<string, Draft>;
-    theirs: Map<string, Draft>;
-  };
-  hires: {
-    live: Map<string, Recorded>;
-    mine: Map<string, Draft>;
-    theirs: Map<string, Draft>;
-    tierOf: HireTier;
-  };
-  teams: {
-    live: Map<string, Recorded>;
-    mine: Map<string, Draft>;
-    theirs: Map<string, Draft>;
-  };
-  records: RecordVersions;
-}
-
-async function readVersions(
-  reader: Reader,
-  userId: string,
-  rows: Row[],
-): Promise<Versions> {
-  const personIds = idsOf(rows, "person");
-  const hireIds = idsOf(rows, "planned-hire");
-  const teamIds = idsOf(rows, "feature-team");
-  const columns = await columnsWithAdded(reader, userId);
-  return {
-    rows,
-    mine: {
-      lists: await readState(reader, userId),
-      columns: await readColumnsState(reader, userId),
-    },
-    theirs: {
-      lists: await readState(reader),
-      columns: await readColumnsState(reader),
-    },
-    people: {
-      columns,
-      live: await readLive(reader, columns, { ids: personIds }),
-      mine: await readPersonDrafts(reader, personIds, userId),
-      theirs: await readPersonDrafts(reader, personIds),
-    },
-    hires: {
-      live: await readLiveHires(reader, hireIds),
-      mine: await readHireDrafts(reader, hireIds, userId),
-      theirs: await readHireDrafts(reader, hireIds),
-      tierOf: await readHireTier(reader),
-    },
-    teams: {
-      live: (
-        await readLiveTeams(reader, await readToday(reader), { ids: teamIds })
-      ).teams,
-      mine: await readTeamDrafts(reader, teamIds, userId),
-      theirs: await readTeamDrafts(reader, teamIds),
-    },
-    records: await readRecordVersions(reader, userId),
-  };
-}
-
-// A record as the user sees it, or, where their draft removes it, or wants none of a record only
-// drafted to be added, as everyone else does.
-function versionOf(
-  versions: Versions,
-  recordType: DraftKind,
-  id: string,
-): Recorded | undefined {
-  const { mine, theirs } = versions;
-  if (recordType === "person") {
-    const live = versions.people.live.get(id);
-    return (
-      drafted(live, versions.people.mine.get(id)) ??
-      drafted(live, versions.people.theirs.get(id))
-    );
-  }
-  if (recordType === "planned-hire") {
-    const live = versions.hires.live.get(id);
-    return (
-      drafted(live, versions.hires.mine.get(id)) ??
-      drafted(live, versions.hires.theirs.get(id))
-    );
-  }
-  if (recordType === "feature-team") {
-    const live = versions.teams.live.get(id);
-    return (
-      drafted(live, versions.teams.mine.get(id)) ??
-      drafted(live, versions.teams.theirs.get(id))
-    );
-  }
-  if (recordType === "list") {
-    return draftedList(mine.lists, id) ?? draftedList(theirs.lists, id);
-  }
-  if (recordType === "list-item") {
-    return draftedChoice(mine.lists, id) ?? draftedChoice(theirs.lists, id);
-  }
-  return draftedField(mine.columns, id) ?? draftedField(theirs.columns, id);
-}
-
-const holds =
-  (permission: Permission) =>
-  (actor: Actor): boolean =>
-    actor.permissions.includes(permission);
-
-// Planned hires are read as the change history reads them: with people, and the hiring plan's class.
-const readsHires = (actor: Actor): boolean =>
-  holds("people:view")(actor) && seesSensitivity(actor, "hiring-plan");
-
-interface OtherKind {
-  reads: (actor: Actor) => boolean;
-  unseen: string;
-}
-
-// Who reads each kind of draft kept outside the plan's records, and how a change to one is named to
-// a role that doesn't, since the change may have been made under another role.
-const otherKinds: Record<Exclude<DraftKind, RecordType>, OtherKind> = {
-  person: { reads: holds("people:view"), unseen: "a person" },
-  "planned-hire": { reads: readsHires, unseen: "a planned hire" },
-  "feature-team": {
-    reads: holds("feature-teams:view"),
-    unseen: "a feature team",
-  },
-  list: { reads: holds("configuration:view"), unseen: "a list" },
-  "list-item": { reads: holds("configuration:view"), unseen: "a choice" },
-  "choice-order": {
-    reads: holds("configuration:view"),
-    unseen: "the new order for a list",
-  },
-  field: { reads: holds("configuration:view"), unseen: "a column" },
-};
-
-const otherKindOf = new Map<string, OtherKind>(Object.entries(otherKinds));
-
-// A change of a kind Fathom no longer has, which no role reads, so one stored row can't keep the user
-// from seeing the rest of their changes, or discarding them.
-const unknownKind: OtherKind = { reads: () => false, unseen: "a change" };
-
-// What a change is to, as the Drafts page names drafts, by name only to a role that reads its kind.
-function subjectOf(versions: Versions, row: Row, actor: Actor): string {
-  const id = row.recordId;
-  // A list's name is always text.
-  const listName = (listId: string) =>
-    (versionOf(versions, "list", listId)?.name as string | undefined) ??
-    "a removed list";
-  if (isRecordType(row.recordType)) {
-    return recordSubject(versions.records, row.recordType, id, actor);
-  }
-  const other = otherKindOf.get(row.recordType) ?? unknownKind;
-  if (!other.reads(actor)) return other.unseen;
-  if (row.recordType === "person") {
-    return String(versionOf(versions, "person", id)?.preferredName);
-  }
-  if (row.recordType === "planned-hire") {
-    // A hire is named by its name, or, while it has none, by its position and ID, such as
-    // "Software Engineer, TBD-7", or by its ID alone to those who cannot see the Positions list's
-    // tier. A hire whose draft is listed is live or drafted, so has a version.
-    const hire = versionOf(versions, "planned-hire", id) as Recorded;
-    const { requisition, temporaryId } = hireIdOf(hire);
-    const position = seesSensitivity(actor, versions.hires.tierOf("positionId"))
-      ? String(versionOf(versions, "list-item", String(hire.positionId))?.label)
-      : undefined;
-    return `the planned hire ${hireCalled(
-      typeof hire.name === "string" ? hire.name : null,
-      String(requisition ?? temporaryId),
-      position,
-    )}`;
-  }
-  if (row.recordType === "feature-team") {
-    // A team whose draft is listed is live or drafted, so has a version.
-    return `the feature team ${String(versionOf(versions, "feature-team", id)?.name)}`;
-  }
-  if (row.recordType === "list") return `the list ${listName(id)}`;
-  if (row.recordType === "list-item") {
-    const choice = versionOf(versions, "list-item", id);
-    return `the choice ${String(choice?.label)} in ${listName(String(choice?.listId))}`;
-  }
-  if (row.recordType === "choice-order") {
-    return `the new order for ${listName(id)}`;
-  }
-  return `the column ${String(versionOf(versions, "field", id)?.name)}`;
-}
-
-const orders = new Set(["choice-order"]);
+import {
+  idsOf,
+  orders,
+  ownRows,
+  readVersions,
+  requireDrafting,
+  type Row,
+  subjectOf,
+  versionOf,
+  type Versions,
+} from "./private-versions.ts";
 
 // The user's unpublished changes, newest first: by the last change made to each record.
 export async function readUnpublished(
@@ -502,7 +249,7 @@ async function ownDrafts(
 // with them, when publishing; those that use them, and the rest of a fill, when discarding. A change
 // that is not the user's own unpublished change is answered as one that does not exist, so asking
 // reveals nothing of anyone else's.
-async function readGoing(
+export async function readGoing(
   transaction: Transaction,
   userId: string,
   chosen: DraftsRequest | undefined,
@@ -522,7 +269,7 @@ async function readGoing(
   return { versions, rows: all.filter((row) => going.has(changeKey(row))) };
 }
 
-async function removeRows(
+export async function removeRows(
   transaction: Transaction,
   userId: string,
   rows: readonly Row[],
@@ -665,129 +412,5 @@ export async function publishUnpublished(
       );
     await removeEmptyOrders(transaction, undefined);
     return { total: rows.length, left };
-  });
-}
-
-// The changes that take a record back from the user's draft to the published one, or the live
-// record.
-function takingBack(
-  versions: Versions,
-  row: Row,
-  classes: DataClasses,
-): Change[] {
-  const id = row.recordId;
-  const { mine, theirs } = versions;
-  if (isRecordType(row.recordType)) {
-    return takingBackRecord(versions.records, row.recordType, id);
-  }
-  if (row.recordType === "person") {
-    const live = versions.people.live.get(id);
-    const before = drafted(live, versions.people.mine.get(id));
-    const after = drafted(live, versions.people.theirs.get(id));
-    return personChanges(
-      versions.people.columns,
-      id,
-      actionTo(before, after),
-      before,
-      after,
-    );
-  }
-  if (row.recordType === "planned-hire") {
-    const live = versions.hires.live.get(id);
-    const before = drafted(live, versions.hires.mine.get(id));
-    const after = drafted(live, versions.hires.theirs.get(id));
-    return hireChanges(
-      id,
-      actionTo(before, after),
-      before,
-      after,
-      versions.hires.tierOf,
-    );
-  }
-  if (row.recordType === "feature-team") {
-    const live = versions.teams.live.get(id);
-    const before = drafted(live, versions.teams.mine.get(id));
-    const after = drafted(live, versions.teams.theirs.get(id));
-    return teamChanges(id, actionTo(before, after), before, after, classes);
-  }
-  if (row.recordType === "list" || row.recordType === "list-item") {
-    const isList = row.recordType === "list";
-    const versionIn = isList ? draftedList : draftedChoice;
-    const before = versionIn(mine.lists, id);
-    const after = versionIn(theirs.lists, id);
-    return (isList ? listChanges : choiceChanges)(
-      id,
-      actionTo(before, after),
-      before,
-      after,
-    );
-  }
-  if (row.recordType === "choice-order") {
-    return orderChanges(
-      id,
-      draftedOrder(mine.lists, id),
-      draftedOrder(theirs.lists, id),
-    );
-  }
-  const before = draftedField(mine.columns, id);
-  const after = draftedField(theirs.columns, id);
-  return fieldChanges(
-    id,
-    actionTo(before, after),
-    before && columnRow(id, before),
-    after && columnRow(id, after),
-  );
-}
-
-// Discards the actor's unpublished drafts a request chooses, with those that use them, or every one
-// when it chooses none, recording the changes that takes back, and returns how many records'
-// changes it discarded. Discarding them all ends every change set they were saved in, so none is
-// ever published. Discarding some is recorded as discarding each record's draft is: a discard where
-// no published draft is left, which no longer credits who changed it, and an edit back to the
-// published draft otherwise, both published with the user's next changes.
-export async function discardUnpublished(
-  database: Database,
-  actor: Actor,
-  chosen?: DraftsRequest,
-): Promise<number> {
-  requireDrafting(actor);
-  return database.transaction(async (transaction) => {
-    await lockDrafts(transaction);
-    const userId = actor.user.id;
-    const { versions, rows } = await readGoing(
-      transaction,
-      userId,
-      chosen,
-      "discard",
-    );
-    if (rows.length === 0) return 0;
-    const takenBack = (some: readonly Row[]) =>
-      asDraft(
-        some.flatMap((row) => takingBack(versions, row, actor.dataClasses)),
-      );
-    const record = async (made: readonly Change[]) => {
-      await recordSensitiveChanges(transaction, userId, made);
-      await recordHiringChanges(transaction, userId, made);
-      await recordTeamDayChanges(transaction, userId, made);
-    };
-    if (chosen === undefined) {
-      const made = takenBack(rows);
-      await removeRows(transaction, userId, rows);
-      await record(made);
-      await recordChanges(transaction, actor, made, "withdrawal");
-      return rows.length;
-    }
-    const published = await draftKeys(transaction, rows);
-    const toPublished = takenBack(
-      rows.filter((row) => published.has(changeKey(row))),
-    );
-    const toNone = takenBack(
-      rows.filter((row) => !published.has(changeKey(row))),
-    );
-    await removeRows(transaction, userId, rows);
-    await record([...toNone, ...toPublished]);
-    await recordChanges(transaction, actor, toNone, "discard");
-    await recordChanges(transaction, actor, toPublished);
-    return rows.length;
   });
 }

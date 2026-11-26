@@ -59,11 +59,8 @@ import { readHistory, recordPersonalView } from "./history.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./record-decisions.ts";
 import type { ChangeSetId, Saved } from "./changes.ts";
 import { undoChangeSet } from "./undo.ts";
-import {
-  discardUnpublished,
-  publishUnpublished,
-  readUnpublished,
-} from "./unpublished.ts";
+import { discardUnpublished } from "./private-discards.ts";
+import { publishUnpublished, readUnpublished } from "./unpublished.ts";
 import {
   type ActorAccess,
   keepSessionRole,
