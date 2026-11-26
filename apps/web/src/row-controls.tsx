@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The controls over a record's Name cell, shown while the row is pointed at or the cell has focus:
-// one shows the record's details beside the table, drawn as the panel it opens, and the ⋯ beside it
-// opens the row's menu, so neither needs the table scrolled to its end. From the keyboard, the
-// row's menu opens with Shift+F10 and offers the same. A planned hire's Fill button sits before
-// them. Every other ⋯ that opens a menu, such as a list's or a cycle's, is the same button.
+// The controls over a record's Name cell, its details button and its menu's ⋯, so neither needs the
+// table scrolled to its end, and the ⋯ every other menu shares.
 
 import { ActionIcon, Button } from "@mantine/core";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";

@@ -128,15 +128,10 @@ export const accountList = () =>
   Response.json({ accounts: [own, planner, former] });
 
 // Opens an account's details beside the table, from its details button.
-// Opens an account's details, unless they are open already, when its details button would close
-// them.
 export async function openPanelFor(name: string): Promise<HTMLElement> {
-  const details = await screen.findByRole("button", {
-    name: `Show details of ${name}`,
-  });
-  if (details.getAttribute("aria-expanded") !== "true") {
-    await userEvent.click(details);
-  }
+  await userEvent.click(
+    await screen.findByRole("button", { name: `Show details of ${name}` }),
+  );
   // One's own account is headed with This account after the name.
   return screen.findByRole("region", {
     name: (heading) => heading === name || heading === `${name} This account`,

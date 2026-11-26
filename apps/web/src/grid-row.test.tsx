@@ -612,24 +612,34 @@ describe("a row's details button", () => {
   const detailsButton = (id: string) =>
     screen.getByRole("button", { name: `Show details of Gadget ${id}` });
 
-  it("closes the open row's details, and opens another row's", async () => {
+  it("closes the open row's details, its button read as expanded", async () => {
     // Given g1's details open
     const closeSelected = vi.fn();
     const showDetails = renderWithOpen(closeSelected);
-    expect([
-      detailsButton("g1").getAttribute("aria-expanded"),
-      detailsButton("g2").getAttribute("aria-expanded"),
-    ]).toEqual(["true", "false"]);
+    expect(detailsButton("g1").getAttribute("aria-expanded")).toBe("true");
 
-    // When g1's details button is selected, then g2's
+    // When g1's details button is selected
     await userEvent.click(detailsButton("g1"));
+
+    // Then g1's details close
+    expect(closeSelected).toHaveBeenCalledExactlyOnceWith("g1");
+    expect(showDetails).not.toHaveBeenCalled();
+  });
+
+  it("opens another row's details, its button read as not expanded", async () => {
+    // Given g1's details open
+    const closeSelected = vi.fn();
+    const showDetails = renderWithOpen(closeSelected);
+    expect(detailsButton("g2").getAttribute("aria-expanded")).toBe("false");
+
+    // When g2's details button is selected
     await userEvent.click(detailsButton("g2"));
 
-    // Then g1's details close, and g2's open
-    expect(closeSelected).toHaveBeenCalledExactlyOnceWith("g1");
+    // Then g2's details open
     expect(showDetails).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ id: "g2" }),
     );
+    expect(closeSelected).not.toHaveBeenCalled();
   });
 
   it("shows the open row's details again where the page can't close them from the table", async () => {

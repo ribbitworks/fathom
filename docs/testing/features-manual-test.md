@@ -755,10 +755,8 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
     - **Risk** reads "None", dimmed.
   - **Notes:**
 
-- [ ] `3761` Point at the row 'Voice Notes', and select its details button again.
-  - **Expected:**
-    - The side panel closes.
-    - The row 'Voice Notes' no longer has a blue bar at its left.
+- [ ] `B488` Close the side panel.
+  - **Expected:** The side panel closes.
   - **Notes:**
 
 - [ ] `F7EB` Select the **Size** cell of 'Scheduler API', and press Enter.

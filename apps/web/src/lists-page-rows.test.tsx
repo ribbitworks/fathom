@@ -587,10 +587,6 @@ describe("the Lists page's saved views", () => {
 });
 
 describe("a list's details button", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it("closes the list's open details, with focus back on its row", async () => {
     // Given Skills' details, opened from its row's details button
     serverAnswers({

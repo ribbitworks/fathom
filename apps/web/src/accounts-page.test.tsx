@@ -367,10 +367,12 @@ describe("the last active account with Edit Administration", () => {
       "GET /api/accounts": () => Response.json({ accounts }),
     });
     renderApp("/accounts");
-    const deactivate = within(await openPanelFor(name)).getByRole("button", {
+    const panel = await openPanelFor(name);
+    const deactivate = within(panel).getByRole("button", {
       name: "Deactivate…",
     });
-    const dialog = await openEditFor(name);
+    await userEvent.click(within(panel).getByRole("button", { name: "Edit…" }));
+    const dialog = await screen.findByRole("dialog", { name: `Edit ${name}` });
     const choice = (name: string) =>
       within(dialog).getByRole<HTMLInputElement>("checkbox", { name });
     return { deactivate, choice };
