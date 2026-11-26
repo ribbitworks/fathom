@@ -113,6 +113,7 @@ export const hiresHave = (total: number) =>
 export const featuresHave = (total: number) =>
   have(total, "feature", "features");
 const activitiesHave = (total: number) => have(total, "activity", "activities");
+const rowsHave = (total: number) => have(total, "row", "rows");
 
 // The record of planned work a value row is held by.
 const heldBy = (
@@ -151,7 +152,11 @@ export async function checkValuesFit(
     onPlannedHires?: boolean | undefined;
   },
 ): Promise<void> {
-  const inDrafts = await draftedValues(transaction, field.id, field.tableName);
+  // A private page's column is never drafted, nor are its rows.
+  const inDrafts =
+    field.pageId === null
+      ? await draftedValues(transaction, field.id, field.tableName)
+      : [];
   const listChanges = (request.listId ?? null) !== field.listId;
   if (
     request.required &&
@@ -217,6 +222,7 @@ export async function checkValuesFit(
         plannedHireId: fieldValues.plannedHireId,
         featureId: fieldValues.featureId,
         activityId: fieldValues.activityId,
+        privateRowId: fieldValues.privateRowId,
       })
       .from(fieldValues)
       .leftJoin(plannedHires, eq(plannedHires.id, fieldValues.plannedHireId))
@@ -228,6 +234,7 @@ export async function checkValuesFit(
         fieldValues.plannedHireId,
         fieldValues.featureId,
         fieldValues.activityId,
+        fieldValues.privateRowId,
       )
       .having(gt(count(), 1));
     const people = several.filter(({ personId }) => personId !== null).length;
@@ -245,6 +252,14 @@ export async function checkValuesFit(
           `${recordsOf[planningTableOf[owner]].have(holding.length)} several choices for ${field.name}, so it cannot take only one yet`,
         );
       }
+    }
+    const rows = several.filter(
+      ({ privateRowId }) => privateRowId !== null,
+    ).length;
+    if (rows > 0) {
+      throw new ConflictError(
+        `${rowsHave(rows)} several choices for ${field.name}, so it cannot take only one yet`,
+      );
     }
     if (several.length > 0) {
       throw new ConflictError(

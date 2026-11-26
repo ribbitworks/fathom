@@ -90,6 +90,23 @@ export const viewAndPageRoutes: Route[] = [
   { method: "DELETE", pattern: "/api/private-pages/:pageId", needs: signedIn },
   {
     method: "POST",
+    pattern: "/api/private-pages/:pageId/columns",
+    needs: signedIn,
+    body: () => ({ ...named(), type: "number", visibility: "general" }),
+  },
+  {
+    method: "PUT",
+    pattern: "/api/private-pages/:pageId/columns/:columnId",
+    needs: signedIn,
+    body: () => ({ ...named(), type: "number", visibility: "general" }),
+  },
+  {
+    method: "DELETE",
+    pattern: "/api/private-pages/:pageId/columns/:columnId",
+    needs: signedIn,
+  },
+  {
+    method: "POST",
     pattern: "/api/private-pages/:pageId/rows",
     needs: signedIn,
     body: () => ({}),

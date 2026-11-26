@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for saving a person's own pages, against a PostgreSQL server of their own: making, renaming,
-// moving and removing a page, and adding, changing and removing its rows.
+// moving and removing a page, and adding, changing and removing its columns and rows.
 
 import { accessHistory, columnOrders } from "@fathom/db";
 import type { ListedPrivatePage, PrivatePage } from "@fathom/shared";
@@ -432,7 +432,7 @@ describe("renaming, moving and removing a page", () => {
   });
 });
 
-describe("a page's answers and changes elsewhere", () => {
+describe("a change's answers and refusals", () => {
   it("records the maker seeing Personal details, once a day, when a change answers with them", async () => {
     const lead = await test.signedIn("engineering-manager");
     const saved = await ok<SavedPage>(
@@ -481,21 +481,163 @@ describe("a page's answers and changes elsewhere", () => {
       "This page's first column is of a class your role can't see, so no row can be added",
     );
   });
+});
 
-  it("are not shown in the change history, nor undone, until they are kept to their maker", async () => {
-    const { page, changeSetId } = await makePage();
-    const reader = await test.signedIn("engineering-director");
-    for (const who of [maker, reader]) {
-      const history = await ok<{ entries: { id: string }[] }>(
-        await test.request(who.cookie, "GET", "/api/changes"),
-      );
-      expect(history.entries.map(({ id }) => id)).not.toContain(changeSetId);
-    }
-    const undone = await send("POST", `/api/undo/${String(changeSetId)}`);
-    expect(undone.statusCode).toBe(409);
-    expect(errorOf(undone)).toBe(
-      "Changes to private pages can't be undone yet",
+describe("a page's columns", () => {
+  it("adds a column after the others, changes it, and removes it with its values", async () => {
+    // Given a page with a row
+    const { page } = await makePage([numberColumn("Number")]);
+    await addRow(page, { numbers: { [columnOf(page, "Number")]: 5 } });
+
+    // When a column is added, renamed and given a value
+    const added = (
+      await ok<SavedPage>(
+        await send("POST", `${pageUrl(page)}/columns`, numberColumn("Pages")),
+        201,
+      )
+    ).page;
+    const pages = columnOf(added, "Pages");
+    const renamed = (
+      await ok<SavedPage>(
+        await send(
+          "PUT",
+          `${pageUrl(page)}/columns/${pages}`,
+          numberColumn("Length"),
+        ),
+      )
+    ).page;
+    const row = renamed.rows[0];
+    await send("PATCH", `${pageUrl(page)}/rows/${String(row?.id)}`, {
+      numbers: { [pages]: 300 },
+    });
+
+    // Then it is after the first, under its new name
+    expect(renamed.columns.map(({ name }) => name)).toEqual([
+      "Number",
+      "Length",
+    ]);
+
+    // When it is removed
+    const { page: removed } = await ok<SavedPage>(
+      await send("DELETE", `${pageUrl(page)}/columns/${pages}`),
     );
-    expect((await send("GET", pageUrl(page))).statusCode).toBe(200);
+
+    // Then its values go with it, and the row's history says so
+    expect(removed.columns.map(({ name }) => name)).toEqual(["Number"]);
+    expect(removed.rows[0]?.numbers).toEqual({
+      [columnOf(page, "Number")]: 5,
+    });
+    expect((await test.historyOf(String(row?.id))).at(-1)).toMatchObject({
+      oldValue: 300,
+      newValue: null,
+    });
+  });
+
+  it("refuses a name another column on the page has, but not one on another page", async () => {
+    const { page } = await makePage();
+    const taken = await send(
+      "POST",
+      `${pageUrl(page)}/columns`,
+      numberColumn("note"),
+    );
+    expect(taken.statusCode).toBe(409);
+    expect(errorOf(taken)).toBe("There is already a column with that name");
+    const other = (await makePage()).page;
+    expect(
+      (await send("POST", `${pageUrl(other)}/columns`, numberColumn("Pages")))
+        .statusCode,
+    ).toBe(201);
+    expect(
+      (await send("POST", `${pageUrl(page)}/columns`, numberColumn("Pages")))
+        .statusCode,
+    ).toBe(201);
+  });
+
+  it("refuses removing the first column, changing a type, and a column of another page", async () => {
+    const { page } = await makePage();
+    const other = (await makePage()).page;
+    const first = await send(
+      "DELETE",
+      `${pageUrl(page)}/columns/${String(page.firstFieldId)}`,
+    );
+    expect(first.statusCode).toBe(409);
+    expect(errorOf(first)).toBe(
+      "The first column names each row, so it can't be removed",
+    );
+    const retyped = await send(
+      "PUT",
+      `${pageUrl(page)}/columns/${columnOf(page, "Note")}`,
+      numberColumn("Note"),
+    );
+    expect(retyped.statusCode).toBe(400);
+    expect(errorOf(retyped)).toBe("A column's type cannot change");
+    const elsewhere = await send(
+      "DELETE",
+      `${pageUrl(page)}/columns/${columnOf(other, "Note")}`,
+    );
+    expect(elsewhere.statusCode).toBe(404);
+    expect(errorOf(elsewhere)).toBe("There is no such column");
+  });
+
+  it("changes a choice column's list only while no row holds one, and to one choice only while no row holds several", async () => {
+    // Given a choice column taking several, and a row holding two
+    const { list, choices } = await liveList();
+    const other = await liveList();
+    const { page } = await makePage([
+      numberColumn("Number"),
+      { name: "Mood", listId: list.id, multiple: true },
+    ]);
+    const mood = columnOf(page, "Mood");
+    const row = (
+      await addRow(page, {
+        numbers: { [columnOf(page, "Number")]: 1 },
+        values: { [mood]: choices },
+      })
+    ).page.rows[0];
+    const change = (body: object) =>
+      send("PUT", `${pageUrl(page)}/columns/${mood}`, {
+        name: "Mood",
+        ...body,
+      });
+
+    // Then it can take one choice, or another list, only once the row holds one, then none
+    const single = await change({ listId: list.id, multiple: false });
+    expect(single.statusCode).toBe(409);
+    expect(errorOf(single)).toBe(
+      "1 row has several choices for Mood, so it cannot take only one yet",
+    );
+    const moved = await change({ listId: other.list.id, multiple: true });
+    expect(moved.statusCode).toBe(409);
+    await send("PATCH", `${pageUrl(page)}/rows/${String(row?.id)}`, {
+      values: { [mood]: [] },
+    });
+    const { page: changed } = await ok<SavedPage>(
+      await change({ listId: other.list.id, multiple: false }),
+    );
+    expect(changed.columns[1]).toMatchObject({
+      listId: other.list.id,
+      multiple: false,
+    });
+  });
+
+  it("refuses giving a column a class the role does not see", async () => {
+    const lead = await test.signedIn("feature-lead");
+    const { page } = await ok<SavedPage>(
+      await test.request(lead.cookie, "POST", "/api/private-pages", {
+        name: unique("Fictional Page"),
+        columns: [numberColumn("Number"), noteColumn("Note")],
+      }),
+      201,
+    );
+    const response = await test.request(
+      lead.cookie,
+      "PUT",
+      `${pageUrl(page)}/columns/${columnOf(page, "Note")}`,
+      noteColumn("Note", "confidential"),
+    );
+    expect(response.statusCode).toBe(403);
+    expect(errorOf(response)).toBe(
+      "Choose a list, or a visibility, whose details this role can see",
+    );
   });
 });

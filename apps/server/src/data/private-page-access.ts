@@ -6,12 +6,14 @@
 import type { Database } from "@fathom/db";
 import type {
   ListedPrivatePage,
+  PrivateColumnRequest,
   PrivatePage,
   PrivatePageRequest,
   PrivateRowRequest,
 } from "@fathom/shared";
 import type { Actor } from "../access.ts";
 import type { ChangeSetId, Saved } from "./changes.ts";
+import * as columns from "./private-columns.ts";
 import { listPages, readPage } from "./private-page-reads.ts";
 import * as pages from "./private-pages.ts";
 import * as rows from "./private-rows.ts";
@@ -23,6 +25,22 @@ export interface PrivatePageAccess {
   rename(actor: Actor, id: string, name: string): Promise<Saved<PrivatePage>>;
   move(actor: Actor, id: string, position: number): Promise<ChangeSetId>;
   remove(actor: Actor, id: string): Promise<ChangeSetId>;
+  addColumn(
+    actor: Actor,
+    id: string,
+    request: PrivateColumnRequest,
+  ): Promise<Saved<PrivatePage>>;
+  changeColumn(
+    actor: Actor,
+    id: string,
+    columnId: string,
+    request: PrivateColumnRequest,
+  ): Promise<Saved<PrivatePage>>;
+  removeColumn(
+    actor: Actor,
+    id: string,
+    columnId: string,
+  ): Promise<Saved<PrivatePage>>;
   addRow(
     actor: Actor,
     id: string,
@@ -51,6 +69,12 @@ export function createPrivatePageAccess(database: Database): PrivatePageAccess {
     move: async (actor, id, position) =>
       pages.movePage(database, actor, id, position),
     remove: async (actor, id) => pages.removePage(database, actor, id),
+    addColumn: async (actor, id, request) =>
+      columns.addColumn(database, actor, id, request),
+    changeColumn: async (actor, id, columnId, request) =>
+      columns.changeColumn(database, actor, id, columnId, request),
+    removeColumn: async (actor, id, columnId) =>
+      columns.removeColumn(database, actor, id, columnId),
     addRow: async (actor, id, request) =>
       rows.addRow(database, actor, id, request),
     changeRow: async (actor, id, rowId, request) =>
