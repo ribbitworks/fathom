@@ -22,11 +22,12 @@ import {
   noDraft,
   type Recorded,
   same,
+  startedFrom,
   tidy,
   toDraft,
   toUnpublished,
   type Viewer,
-  wantsNoDraft,
+  withOwnFields,
 } from "./draft-records.ts";
 
 // Changes to drafts of every kind wait for one another, as do approvals, rejections, undoing,
@@ -57,8 +58,7 @@ const bySequence = (
 ) => first.sequence - second.sequence;
 
 // The drafts of the records of one kind given, or of every record of that kind, by record, in the
-// order they were made: the published drafts, with the viewer's own unpublished drafts in their
-// place, and the records only the viewer drafts adding after them. A record the viewer wants no
+// order they were made: the published drafts, with the viewer's own unpublished drafts over them, and the records only the viewer drafts adding after them. A record the viewer wants no
 // draft of has none.
 export async function readDrafts(
   reader: Reader,
@@ -98,10 +98,40 @@ export async function readDrafts(
       ),
   );
   for (const row of own.sort(bySequence)) {
-    if (wantsNoDraft(row)) found.delete(row.recordId);
-    else found.set(row.recordId, toUnpublished(row));
+    const draft = withOwnFields(found.get(row.recordId), row);
+    if (draft === undefined) found.delete(row.recordId);
+    else found.set(row.recordId, draft);
   }
   return found;
+}
+
+// A user's private changes as they stand over the published drafts now: each holds the fields its
+// maker changed over the published draft's others, or wants no draft when that leaves none.
+export async function overPublished<
+  Row extends typeof privateChanges.$inferSelect,
+>(reader: Reader, rows: readonly Row[]): Promise<Row[]> {
+  const published = new Map<string, Draft>();
+  for (const recordType of new Set(rows.map((row) => row.recordType))) {
+    const ids = rows
+      .filter((row) => row.recordType === recordType)
+      .map(({ recordId }) => recordId);
+    for (const [id, draft] of await readDrafts(
+      reader,
+      recordType as DraftKind,
+      ids,
+    )) {
+      published.set(`${recordType}\n${id}`, draft);
+    }
+  }
+  return rows.map((row) => {
+    const draft = withOwnFields(
+      published.get(`${row.recordType}\n${row.recordId}`),
+      row,
+    );
+    const { action, fields }: Pick<Draft, "action" | "fields"> =
+      draft ?? noDraft;
+    return { ...row, action, fields };
+  });
 }
 
 // The drafts of the people given, or of everyone, by person.
@@ -262,40 +292,57 @@ function editorSet(transaction: Transaction, editor: string): Promise<string> {
 
 // Keeps the draft the editor intends for a record as their unpublished draft: none at all when it
 // is the published draft, so the record is no longer held, and one that wants no draft when the
-// editor wants none but there is a published one.
+// editor wants none but there is a published one. It keeps, for each field the editor changes,
+// the value it started from.
 async function keepUnpublished(
   transaction: Transaction,
   editor: string,
   recordType: DraftKind,
   id: string,
   draft: Pick<Draft, "action" | "fields"> | undefined,
+  live?: Recorded,
 ): Promise<void> {
   await refuseHeld(transaction, editor, recordType, [id]);
   const published = (await readDrafts(transaction, recordType, [id])).get(id);
+  const editors = and(
+    eq(privateChanges.recordType, recordType),
+    eq(privateChanges.recordId, id),
+    eq(privateChanges.userId, editor),
+  );
   if (sameDraft(draft, published)) {
-    await transaction
-      .delete(privateChanges)
-      .where(
-        and(
-          eq(privateChanges.recordType, recordType),
-          eq(privateChanges.recordId, id),
-          eq(privateChanges.userId, editor),
-        ),
-      );
+    await transaction.delete(privateChanges).where(editors);
     return;
   }
   const row = draft ?? noDraft;
+  const [kept] = await transaction.select().from(privateChanges).where(editors);
+  // A change kept from before own fields were recorded holds its whole draft, so what its maker saw
+  // is taken as the published draft, and every field they changed from it becomes theirs.
+  const seen =
+    kept === undefined || Object.keys(kept.startedFrom).length === 0
+      ? published
+      : withOwnFields(published, kept);
+  const values = {
+    action: row.action,
+    fields: row.fields,
+    startedFrom: startedFrom(
+      kept?.startedFrom ?? {},
+      row,
+      seen,
+      published,
+      live,
+    ),
+  };
   const setId = await editorSet(transaction, editor);
   await transaction
     .insert(privateChanges)
-    .values({ recordType, recordId: id, userId: editor, setId, ...row })
+    .values({ recordType, recordId: id, userId: editor, setId, ...values })
     .onConflictDoUpdate({
       target: [
         privateChanges.recordType,
         privateChanges.recordId,
         privateChanges.userId,
       ],
-      set: { action: row.action, fields: row.fields },
+      set: values,
     });
 }
 
@@ -317,6 +364,7 @@ export async function writeDraft(
     recordType,
     id,
     draftBetween(live, wanted),
+    live,
   );
 }
 

@@ -50,7 +50,7 @@ import {
   wantsNoDraft,
 } from "./draft-records.ts";
 import { chunksByKind, draftKeys, openChangeSets } from "./draft-makers.ts";
-import { lockDrafts, readPersonDrafts } from "./drafts.ts";
+import { lockDrafts, overPublished, readPersonDrafts } from "./drafts.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
 import { typeOf } from "./column-types.ts";
 import { fieldChanges } from "./fields.ts";
@@ -109,12 +109,15 @@ const requireDrafting = (actor: Actor) => {
 };
 
 // The user's unpublished drafts, in the order they were made.
-const ownRows = (reader: Reader, userId: string): Promise<Row[]> =>
-  reader
-    .select()
-    .from(privateChanges)
-    .where(eq(privateChanges.userId, userId))
-    .orderBy(asc(privateChanges.sequence));
+const ownRows = async (reader: Reader, userId: string): Promise<Row[]> =>
+  overPublished(
+    reader,
+    await reader
+      .select()
+      .from(privateChanges)
+      .where(eq(privateChanges.userId, userId))
+      .orderBy(asc(privateChanges.sequence)),
+  );
 
 const idsOf = (rows: readonly Row[], recordType: DraftKind) =>
   rows

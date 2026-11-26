@@ -110,6 +110,64 @@ export const noDraft = { action: "changed", fields: {} } as const;
 export const wantsNoDraft = (row: { action: string; fields: Recorded }) =>
   row.action === "changed" && Object.keys(row.fields).length === 0;
 
+// For each field a user's private change makes its own, the value it started from: as the
+// published draft had it, or the live record where that doesn't change it. Fields kept from before
+// stay theirs, from the value they first started from; a field becomes theirs once the draft wanted
+// differs in it from the one they saw, a field cleared to nothing included.
+export function startedFrom(
+  kept: Recorded,
+  wanted: Pick<Draft, "fields">,
+  seen: Pick<Draft, "fields"> | undefined,
+  published: Pick<Draft, "fields"> | undefined,
+  live: Recorded | undefined,
+): Recorded {
+  const from = { ...kept };
+  const fields = new Set([
+    ...Object.keys(wanted.fields),
+    ...Object.keys(seen?.fields ?? {}),
+  ]);
+  // The fields are the drafts' own, read just above.
+  /* eslint-disable security/detect-object-injection */
+  for (const field of fields) {
+    if (Object.hasOwn(from, field)) continue;
+    const both =
+      Object.hasOwn(wanted.fields, field) ===
+      Object.hasOwn(seen?.fields ?? {}, field);
+    if (both && same(wanted.fields[field], seen?.fields[field])) continue;
+    from[field] =
+      published !== undefined && Object.hasOwn(published.fields, field)
+        ? published.fields[field]
+        : (live?.[field] ?? null);
+  }
+  /* eslint-enable security/detect-object-injection */
+  return from;
+}
+
+// A user's private change over the published draft it started from, or none when it leaves the
+// record as it is live. The fields its maker changed are the keys of what they started from; a
+// change that names none, such as a record its maker adds, holds the whole draft, as does a change
+// of action, such as a removal, and so stands in for the published draft.
+export function withOwnFields(
+  published: Draft | undefined,
+  row: UnpublishedRow,
+): Draft | undefined {
+  const own = Object.keys(row.startedFrom);
+  const whole =
+    own.length === 0 ||
+    published === undefined ||
+    published.action !== row.action;
+  const fields = whole
+    ? row.fields
+    : Object.fromEntries([
+        ...Object.entries(published.fields).filter(
+          ([field]) => !own.includes(field),
+        ),
+        ...Object.entries(row.fields).filter(([field]) => own.includes(field)),
+      ]);
+  const draft = { action: row.action, fields };
+  return wantsNoDraft(draft) ? undefined : toUnpublished({ ...row, fields });
+}
+
 // The action that takes a record from one version to another.
 export function actionTo(
   before: Recorded | undefined,
