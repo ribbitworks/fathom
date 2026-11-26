@@ -54,7 +54,7 @@ import {
 } from "./person-fields.ts";
 import { requireViewUndo, type ViewNow, viewNow } from "./views.ts";
 import { undoTeamDrafts } from "./feature-team-undo.ts";
-import { recordTeamDayChanges } from "./feature-teams.ts";
+import { recordTeamDayChanges } from "./feature-team-days.ts";
 import {
   hireSensitivities,
   readHireTier,

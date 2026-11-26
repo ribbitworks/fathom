@@ -50,8 +50,8 @@ import { text } from "./reporting.ts";
 import {
   refuseDaysOutOfOrder,
   refuseOutsideEmployment,
-  teamChanges,
-} from "./feature-teams.ts";
+} from "./feature-team-days.ts";
+import { teamChanges } from "./feature-teams.ts";
 
 // An Approver has no day to choose, so is told which day no longer fits, and what to do about it.
 function refusalsWhenApproving(

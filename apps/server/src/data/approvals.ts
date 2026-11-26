@@ -78,7 +78,7 @@ import {
   rejectTeamsIn,
 } from "./feature-team-decisions.ts";
 import { refuseRemovingPeopleOnTeams } from "./feature-team-removals.ts";
-import { recordTeamDayChanges } from "./feature-teams.ts";
+import { recordTeamDayChanges } from "./feature-team-days.ts";
 import {
   applyReporting,
   refuseRemovingManagers,
