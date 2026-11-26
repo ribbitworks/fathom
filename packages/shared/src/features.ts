@@ -6,10 +6,12 @@ import { z } from "zod";
 import { daySchema, monthSchema } from "./days.ts";
 import { recordDraftSchema } from "./drafts.ts";
 import {
+  flagsSchema,
   linksSchema,
   notesSchema,
   numbersSchema,
   requestedLinksSchema,
+  requestedFlagsSchema,
   requestedNotesSchema,
   requestedNumbersSchema,
   requestedValuesSchema,
@@ -132,6 +134,7 @@ export const featureDraftSchema = recordDraftSchema.extend({
       links: linksSchema,
       notes: notesSchema,
       numbers: numbersSchema,
+      flags: flagsSchema.default({}),
     })
     .loose(),
 });
@@ -156,6 +159,7 @@ export const planningShape = {
   links: linksSchema.default({}),
   notes: notesSchema.optional(),
   numbers: numbersSchema.optional(),
+  flags: flagsSchema.optional(),
   // Whether any allocation gives it a month, as drafts make the allocations, and as they are live:
   // a fact about the work, seen by all who see it, though the allocations aren't.
   staffed: z.boolean(),
@@ -200,6 +204,7 @@ export const planningRequestShape = {
   links: requestedLinksSchema.default({}),
   notes: requestedNotesSchema.default({}),
   numbers: requestedNumbersSchema.default({}),
+  flags: requestedFlagsSchema.default({}),
 };
 
 export const featureRequestSchema = z.object({

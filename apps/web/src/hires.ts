@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Planned hires, drafted through the server's API from the People table, where each is a row: its
-// name is its preferred name, its ID its requisition, cleared to give it a temporary ID, and its
-// start date its target date; its manager may be a person or a planned manager, and its values in
-// the added columns are kept as a person's are. Each change returns the change set it was saved
-// in, which undoing it names, or null when nothing changed.
+// Planned hires, drafted through the server's API from the People table, where each is a row.
 
 import {
   changeSetIdSchema,
@@ -39,6 +35,7 @@ export function hireRequest(row: RowRequest): HireRequest {
     links: row.links,
     ...(row.notes === undefined ? {} : { notes: row.notes }),
     ...(row.numbers === undefined ? {} : { numbers: row.numbers }),
+    ...(row.flags === undefined ? {} : { flags: row.flags }),
   };
 }
 
@@ -62,6 +59,7 @@ export function hireChange(change: RowChange): HireChange {
     ...(change.links === undefined ? {} : { links: change.links }),
     ...(change.notes === undefined ? {} : { notes: change.notes }),
     ...(change.numbers === undefined ? {} : { numbers: change.numbers }),
+    ...(change.flags === undefined ? {} : { flags: change.flags }),
   };
 }
 

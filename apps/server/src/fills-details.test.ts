@@ -270,6 +270,25 @@ describe("what a fill is given", () => {
     });
   });
 
+  it("carries a hire's ticked box to the new person", async () => {
+    const { field } = await ok<{ field: Field }>(
+      await send(editor, "POST", "/api/people/columns", {
+        name: unique("Fictional First Aider"),
+        type: "flag",
+        visibility: "general",
+        onPlannedHires: true,
+      }),
+      201,
+    );
+    await test.approveLists();
+    const id = await hire({ flags: { [field.id]: true } });
+    const name = unique("Fictional Starter");
+
+    await filled(id, newPerson({ preferredName: name }));
+
+    expect((await rowNamed(name))?.flags).toEqual({ [field.id]: true });
+  });
+
   it("does not let a value the fill gives replace one the hire has", async () => {
     const { field } = await ok<{ field: Field }>(
       await send(editor, "POST", "/api/people/columns", {

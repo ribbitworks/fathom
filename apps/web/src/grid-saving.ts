@@ -246,7 +246,14 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
   // live, so a stand-in made from other cells uses their live values too.
   const liveStandIn = (record: Rec, column: Column<Rec, Change>) => {
     const live = liveById.get(record.id);
-    if (live === undefined || !isEmpty(column.value(live))) return undefined;
+    // A kind edited in one step, such as a checkbox, is never empty: its Live row draws it.
+    if (
+      live === undefined ||
+      kindOf(column).toggled !== undefined ||
+      !isEmpty(column.value(live))
+    ) {
+      return undefined;
+    }
     return (
       column.standIn?.(live) ??
       (wholeCellDraft(record.draft, column)

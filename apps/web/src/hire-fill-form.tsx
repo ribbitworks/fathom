@@ -319,6 +319,7 @@ export function HireFillForm({
         links: asked.links,
         notes: asked.notes,
         numbers: asked.numbers,
+        flags: asked.flags,
         by: "new person",
         preferredName: (values.preferredName as string).trim(),
         employeeId: (values.employeeId as string).trim(),

@@ -3,6 +3,7 @@
 // The dialog for adding a column to a table or changing one.
 
 import {
+  canBeRequired,
   classNames,
   type ColumnTable,
   columnTablePolicies,
@@ -37,12 +38,13 @@ const conflict = 409;
 // The List picker's choice that drafts a new list with the column, which no list's ID can be.
 const newListChoice = "new";
 
-// Every type must be named, which the compiler checks.
+// Every type must be named, which the compiler checks, and is offered in this order.
 const typeNames: Record<FieldType, string> = {
+  number: "Number",
+  flag: "Checkbox",
   choice: "Choice from a list",
   link: "Web link",
   note: "Note",
-  number: "Number",
 };
 
 export function ColumnDialog({
@@ -209,7 +211,7 @@ export function ColumnDialog({
                 type,
                 visibility,
                 multiple: false,
-                required,
+                required: canBeRequired(type) && required,
                 onPlannedHires,
               }
             : {
@@ -248,11 +250,9 @@ export function ColumnDialog({
             field === undefined ? undefined : "A column's type cannot change"
           }
           disabled={field !== undefined}
-          data={fieldTypeSchema.options.map((option) => ({
+          data={Object.entries(typeNames).map(([option, label]) => ({
             value: option,
-            // The type is always one of the fixed types named above.
-            // eslint-disable-next-line security/detect-object-injection
-            label: typeNames[option],
+            label,
           }))}
           value={type}
           onChange={(value) => {
@@ -327,16 +327,18 @@ export function ColumnDialog({
             />
           </>
         )}
-        <Checkbox
-          label="Must be filled in"
-          description={
-            onPlannedHires ? "Planned hires can leave it empty" : undefined
-          }
-          checked={required}
-          onChange={(event) => {
-            setRequired(event.currentTarget.checked);
-          }}
-        />
+        {canBeRequired(type) && (
+          <Checkbox
+            label="Must be filled in"
+            description={
+              onPlannedHires ? "Planned hires can leave it empty" : undefined
+            }
+            checked={required}
+            onChange={(event) => {
+              setRequired(event.currentTarget.checked);
+            }}
+          />
+        )}
         {policy.onPlannedHires && (
           <Checkbox
             label="Offered on planned hires"

@@ -161,6 +161,7 @@ export function refuseNotOffered(
     links?: Readonly<Record<string, unknown>> | undefined;
     notes?: Readonly<Record<string, unknown>> | undefined;
     numbers?: Readonly<Record<string, unknown>> | undefined;
+    flags?: Readonly<Record<string, unknown>> | undefined;
   },
 ): void {
   for (const fieldId of [
@@ -168,6 +169,7 @@ export function refuseNotOffered(
     ...Object.keys(asked.links ?? {}),
     ...Object.keys(asked.notes ?? {}),
     ...Object.keys(asked.numbers ?? {}),
+    ...Object.keys(asked.flags ?? {}),
   ]) {
     const column = columns.find(({ id }) => id === fieldId);
     if (column !== undefined && !column.onPlannedHires) {

@@ -7,6 +7,7 @@ import { type Database, fieldOfValue, people, type Reader } from "@fathom/db";
 import {
   isLink,
   type FieldType,
+  type Flags,
   type Link,
   type Links,
   type Notes,
@@ -20,7 +21,7 @@ import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { fitsColumns, type Recorded, tidy } from "./draft-records.ts";
 import { choicesWithAdded, refuseHeldColumns } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
-import { isNote, isNumber, typeOf } from "./column-types.ts";
+import { isFlag, isNote, isNumber, typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { keptNote } from "./records.ts";
 import { reportingFields } from "./reporting.ts";
@@ -194,6 +195,9 @@ export const notesOf = (person: Recorded): Notes =>
 export const numbersOf = (person: Recorded): Numbers =>
   valuesHolding(person, isNumber);
 
+export const flagsOf = (person: Recorded): Flags =>
+  valuesHolding(person, isFlag);
+
 const shownOnly = <Value>(
   byColumn: Iterable<[string, Value]>,
   shows: (columnId: string) => boolean,
@@ -209,6 +213,7 @@ export const shownValuesOf = (
   links: shownOnly(Object.entries(linksOf(record)), shows),
   notes: shownOnly(Object.entries(notesOf(record)), shows),
   numbers: shownOnly(Object.entries(numbersOf(record)), shows),
+  flags: shownOnly(Object.entries(flagsOf(record)), shows),
 });
 
 // The changes between two versions of a person, with each field's tier.
@@ -271,6 +276,7 @@ export async function choicesAskedFor(
     links?: Readonly<Record<string, Link | null>> | undefined;
     notes?: Readonly<Record<string, string | null>> | undefined;
     numbers?: Readonly<Record<string, number | null>> | undefined;
+    flags?: Readonly<Record<string, true | null>> | undefined;
   }[],
 ): Promise<ChoiceRow[]> {
   await refuseHeldColumns(
@@ -281,6 +287,7 @@ export async function choicesAskedFor(
       ...Object.keys(request.links ?? {}),
       ...Object.keys(request.notes ?? {}),
       ...Object.keys(request.numbers ?? {}),
+      ...Object.keys(request.flags ?? {}),
     ]),
   );
   return choicesWithAdded(
@@ -386,6 +393,7 @@ export function askedColumnValues(
     links?: Readonly<Record<string, Link | null>> | undefined;
     notes?: Readonly<Record<string, string | null>> | undefined;
     numbers?: Readonly<Record<string, number | null>> | undefined;
+    flags?: Readonly<Record<string, true | null>> | undefined;
   },
   current: Recorded | undefined,
 ): Recorded {
@@ -404,6 +412,7 @@ export function askedColumnValues(
     ...checkedLinks(columns, request.links ?? {}),
     ...checkedNotes(columns, request.notes ?? {}),
     ...checkedNumbers(columns, request.numbers ?? {}),
+    ...checkedFlags(columns, request.flags ?? {}),
   };
   for (const column of columns) {
     if (
@@ -415,6 +424,12 @@ export function askedColumnValues(
   }
   return tidy(values);
 }
+
+// The boxes asked for each column, as recorded: a ticked box, or no choices for one unticked.
+export const checkedFlags = (
+  columns: readonly ColumnInfo[],
+  requested: Readonly<Record<string, true | null>>,
+): Recorded => checkedOfType(columns, requested, "flag", (box) => box ?? []);
 
 // Whether the live people given, as they are now, fit their columns, as fitsColumns sets out. Used
 // after an undo or an approval puts people's values in place, since the columns may have changed

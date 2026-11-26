@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What each type of added column keeps and holds, so a new type is added in one place: a choice
-// column draws on a list, takes its tier from the list, and holds choices from it, one or several; a
-// web link column has a visibility of its own as its tier and holds one link, and a note or
-// number column likewise holds one note or number. Values are as the change history records
-// them: choices as a list of identifiers, a link as its address and text, a note as its Markdown,
-// a number as a number, and no value as nothing or an empty list. Part of the data access layer.
+// What each type of added column keeps and holds, so a new type is added in one place. Part of the
+// data access layer.
 
 import {
   type FieldType,
+  type Flags,
   fieldTypeSchema,
   isLink,
   isNumberValue,
@@ -17,6 +14,7 @@ import {
   type Numbers,
   type Tier,
 } from "@fathom/shared";
+import type { fieldValues } from "@fathom/db";
 import { storedTier } from "../access.ts";
 
 // The settings a column keeps that depend on its type.
@@ -32,12 +30,14 @@ export interface TypeSettings {
 
 const laterSettingsUnset = { multiline: false, linkedTable: null } as const;
 
-// A record's values as a draft shows them live: choices, links, notes, and numbers, by column.
+// A record's values as a draft shows them live: choices, links, notes, numbers, and ticked boxes,
+// by column.
 export interface LiveValues {
   values: Record<string, string[]>;
   links: Links;
   notes: Notes;
   numbers: Numbers;
+  flags: Flags;
 }
 
 export const noLiveValues = (): LiveValues => ({
@@ -45,6 +45,7 @@ export const noLiveValues = (): LiveValues => ({
   links: {},
   notes: {},
   numbers: {},
+  flags: {},
 });
 
 export interface ColumnType {
@@ -64,7 +65,11 @@ export interface ColumnType {
   ) => boolean;
   // Adds a record's live value, or that it has none, to what its draft shows.
   showLive: (live: LiveValues, columnId: string, value: unknown) => void;
+  // The values table's columns that hold a recorded value this type holds, one set for each row.
+  rows: (value: unknown) => ValueColumns[];
 }
+
+export type ValueColumns = Partial<typeof fieldValues.$inferInsert>;
 
 const choices = (value: unknown): string[] =>
   Array.isArray(value) ? value.map(String) : [];
@@ -92,6 +97,7 @@ const choice: ColumnType = {
     // eslint-disable-next-line security/detect-object-injection
     live.values[columnId] = choices(value);
   },
+  rows: (value) => choices(value).map((choiceId) => ({ choiceId })),
 };
 
 // The settings and tier of a column with a visibility of its own, rather than a list's.
@@ -126,6 +132,8 @@ const link: ColumnType = {
       live.links[columnId] = { address: value.address, text: value.text };
     }
   },
+  rows: (value) =>
+    isLink(value) ? [{ linkAddress: value.address, linkText: value.text }] : [],
 };
 
 export const isNote = (value: unknown): value is string =>
@@ -143,6 +151,7 @@ const note: ColumnType = {
       live.notes[columnId] = value;
     }
   },
+  rows: (value) => (isNote(value) ? [{ note: value }] : []),
 };
 
 export const isNumber = (value: unknown): value is number =>
@@ -160,6 +169,25 @@ const number: ColumnType = {
       live.numbers[columnId] = value;
     }
   },
+  rows: (value) => (isNumber(value) ? [{ number: value }] : []),
+};
+
+// An unticked box is recorded as no value.
+export const isFlag = (value: unknown): value is true => value === true;
+
+const flag: ColumnType = {
+  type: "flag",
+  ...withOwnVisibility("flag"),
+  count: (value) => (isFlag(value) ? 1 : 0),
+  fits: (_settings, value) => isFlag(value) || isNone(value),
+  showLive: (live, columnId, value) => {
+    if (isFlag(value)) {
+      // The column is the person's own, named by their draft.
+      // eslint-disable-next-line security/detect-object-injection
+      live.flags[columnId] = value;
+    }
+  },
+  rows: (value) => (isFlag(value) ? [{ flag: value }] : []),
 };
 
 export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
@@ -167,7 +195,12 @@ export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
   link,
   note,
   number,
+  flag,
 };
+
+// The type of column that holds a recorded value, which the value says, or undefined for none.
+export const typeHolding = (value: unknown): ColumnType | undefined =>
+  Object.values(columnTypes).find(({ count }) => count(value) > 0);
 
 // Fields' live values, by the type of column each holds, which the value as recorded says.
 export function liveValuesOf(
@@ -175,9 +208,7 @@ export function liveValuesOf(
 ): LiveValues {
   const live = noLiveValues();
   for (const [columnId, value] of recorded) {
-    Object.values(columnTypes)
-      .find(({ count }) => count(value) > 0)
-      ?.showLive(live, columnId, value);
+    typeHolding(value)?.showLive(live, columnId, value);
   }
   return live;
 }

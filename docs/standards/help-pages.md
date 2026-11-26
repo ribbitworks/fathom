@@ -46,7 +46,7 @@ Besides a page for each page of Fathom, listed in `docs/help/index.md`, Help hol
 | Before | After |
 | --- | --- |
 | Check **Hiring states**, whose choices start with one for each meaning, and rename or add to them. | Open **Hiring states**. It starts with **Request to hire**, **Approved to hire**, **Hired** and **Left**. Rename those to the words your organization uses, if they differ. |
-| Add a column for each list made, and any web link, note or number columns, as [People](../help/people.md#add-a-column) sets out. | Add a column for each list you made. You can also add a column that holds a web link, a note or a number. |
+| Add a column for each list made, and any web link, note or number columns, as [People](../help/people.md#add-a-column) sets out. | Add a column for each list you made. You can also add a column that holds a number, a tick box, a web link or a note. |
 | Give a column holding private details the **Personal** or **Confidential** class, as [Data classes](../help/data-classes.md) explains. | Each list and column has a class, which decides who sees it. If a list's values are private, choose **Personal** or **Confidential** as its class when you make it. |
 
 ## Exceptions

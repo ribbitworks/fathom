@@ -20,8 +20,8 @@ import {
   or,
   sql,
 } from "drizzle-orm";
-import { columnTableOf, isLink } from "@fathom/shared";
-import { isNote, isNumber } from "./column-types.ts";
+import { columnTableOf } from "@fathom/shared";
+import { typeHolding } from "./column-types.ts";
 import { planningOwners, valueOwnersOf } from "./values.ts";
 
 // The IDs asked for that another row of the ID column already has, ignoring letter case: a person's
@@ -194,12 +194,11 @@ const notReplacedBy = (
 ) =>
   sql`NOT EXISTS (SELECT 1 FROM ${privateChanges} WHERE ${privateChanges.recordType} = ${recordType} AND ${privateChanges.recordId} = ${recordId} AND ${privateChanges.userId} = ${editor})`;
 
-// How many values a recorded value holds: its choices, or one link, note, or number, or undefined
-// when none is recorded.
+// How many values a recorded value holds: its choices, or one link, note, number, or ticked box, or
+// undefined when none is recorded.
 function valueCount(value: unknown): number | undefined {
   if (Array.isArray(value)) return value.length;
-  if (isLink(value) || isNote(value) || isNumber(value)) return 1;
-  return undefined;
+  return typeHolding(value) === undefined ? undefined : 1;
 }
 
 // A column's values as drafts hold them, for checking that the column's settings fit the drafts

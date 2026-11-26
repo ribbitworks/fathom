@@ -108,21 +108,23 @@ describe("what a planned hire's row sends", () => {
     const values = { f1: ["c1"] };
     const links = { f2: { address: "https://example.test/", text: "" } };
     const notes = { f3: "Fictional note" };
-    expect(hireChange({ values, links, notes })).toEqual({
+    const flags = { f4: true as const };
+    expect(hireChange({ values, links, notes, flags })).toEqual({
       values,
       links,
       notes,
+      flags,
     });
-    expect(
-      hireRequest({
-        preferredName: "",
-        employeeId: "",
-        positionId: "position-1",
-        values,
-        links,
-        notes,
-      }).notes,
-    ).toEqual(notes);
+    const request = hireRequest({
+      preferredName: "",
+      employeeId: "",
+      positionId: "position-1",
+      values,
+      links,
+      notes,
+      flags,
+    });
+    expect([request.notes, request.flags]).toEqual([notes, flags]);
   });
 
   it("changes only what a change to the row holds, a start date being the target date", () => {

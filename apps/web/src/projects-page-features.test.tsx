@@ -550,6 +550,7 @@ describe("the Features page", () => {
         links: {},
         notes: {},
         numbers: {},
+        flags: {},
         target: null,
       },
     ]);
@@ -592,6 +593,7 @@ describe("the Features page", () => {
             links: {},
             notes: {},
             numbers: {},
+            flags: {},
             target: null,
           },
         ],

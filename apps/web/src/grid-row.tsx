@@ -597,6 +597,9 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                               valueAt(row, column),
                             )
                           : has &&
+                            // The empty row's cells stay blank, so an unticked box isn't taken for a
+                            // record's No.
+                            !(row.newRow && !filling && isEmpty(value)) &&
                             (standIn === undefined ? (
                               <ColouredName
                                 colour={

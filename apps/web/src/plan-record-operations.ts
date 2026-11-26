@@ -106,7 +106,13 @@ export const planningRequest = (
     description,
     note,
   }: PlanningFields,
-  { values = {}, links = {}, notes = {}, numbers = {} }: CellChange = {},
+  {
+    values = {},
+    links = {},
+    notes = {},
+    numbers = {},
+    flags = {},
+  }: CellChange = {},
 ) => ({
   name,
   ...(statusId === "" ? {} : { statusId }),
@@ -122,6 +128,7 @@ export const planningRequest = (
   links,
   notes,
   numbers,
+  flags,
 });
 
 // What saving a feature sends: its planning fields, its customers, and its target as a stream and

@@ -4,7 +4,7 @@
 // by a column and by two crossed, following the table's filters, and offering only the columns the
 // table has.
 
-import type { List } from "@fathom/shared";
+import type { Field, List } from "@fathom/shared";
 import {
   act,
   fireEvent,
@@ -69,6 +69,28 @@ describe("the Metrics panel", () => {
     await waitFor(() => {
       expect(screen.queryByRole("region", { name: "Metrics" })).toBeNull();
     });
+  });
+
+  it("counts a checkbox column's ticked boxes as Yes and the rest as No, as Manager? does", () => {
+    const firstAider: Field = {
+      ...level,
+      id: "f3",
+      name: "First aider",
+      type: "flag",
+      listId: null,
+      visibility: "general",
+    };
+    render(
+      <Table
+        people={everyone.map((one, index) =>
+          index === 0 ? { ...one, flags: { f3: true } } : one,
+        )}
+        fields={[firstAider]}
+        start={{ ...emptyView, breakdown: ["f3"] }}
+      />,
+    );
+    expect(figures("Yes")).toEqual(["1", share(1, 4)]);
+    expect(figures("No")).toEqual(["3", share(3, 4)]);
   });
 
   it("breaks people down by a column, each choice with its count and share, and empty values", async () => {

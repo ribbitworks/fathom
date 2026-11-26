@@ -127,12 +127,24 @@ You're done once the fill is approved. The person then takes the hire's place.
 
 1. Select **New column**.
 1. Type the column's **Name**.
-1. Choose its **Type**: **Choice from a list**, **Web link**, **Note** or **Number**.
+1. Choose its **Type**: **Number**, **Checkbox**, **Choice from a list**, **Web link** or **Note**.
 1. If you chose **Choice from a list**, choose the list. The column takes the list's class.
 1. For any other type, choose the column's **Class**, if your role can set classes.
 1. Select **Add column**.
 
 You're done when the new column shows in the table, with a hollow dot until you publish it.
+
+An empty box means No, so a **Checkbox** column never asks for **Must be filled in**.
+
+### Tick a Box
+
+A **Checkbox** column holds a tick box for each person, as **Manager?** does.
+
+1. Select the person's cell in the column. A click ticks the box, or clears a ticked one.
+
+From the keyboard, move to the cell and press Space or Enter instead. You can also paste **Yes** or **No** into the column, one per row.
+
+You're done when the box shows your change, with a hollow dot until you publish it.
 
 ### Change or Remove a Column
 

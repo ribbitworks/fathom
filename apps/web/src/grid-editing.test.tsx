@@ -46,8 +46,26 @@ describe("Tab across a new row", () => {
     expect(screen.queryByRole("textbox", { name: "Name" })).toBeNull();
     await userEvent.keyboard("{Enter}");
     expect(add.mock.calls.at(0)?.[0].map(({ request }) => request)).toEqual([
-      { name: "Widget", next: false },
+      { name: "Widget", flags: { next: null } },
     ]);
+  });
+
+  it("leaves a checkbox's cell blank in the empty row, showing its box once something is typed", async () => {
+    renderGadgets({
+      gadgets: [],
+      fields: [],
+      table: nameThen(nextColumn("flag")),
+      given: actions({}),
+    });
+    const box = () =>
+      document
+        .getElementById("cell-new-0-next")
+        ?.querySelector('input[type="checkbox"]');
+    expect(box()).toBeNull();
+    await typeNameAndTab();
+    await waitFor(() => {
+      expect(box()).not.toBeNull();
+    });
   });
 
   it("lays out a date's digits as they are typed, and shows a date once left", async () => {

@@ -40,7 +40,7 @@ import type { RecordSaving } from "./saving.ts";
 // Someone or a planned hire being added, as the table shows them before they are saved: a draft
 // adding them.
 function adding(id: string, request: RowRequest): Person {
-  const { values, links, notes, numbers, ...details } = request;
+  const { values, links, notes, numbers, flags, ...details } = request;
   return {
     id,
     keyNumber: unsavedKeyNumber,
@@ -49,6 +49,7 @@ function adding(id: string, request: RowRequest): Person {
     links: kept(links),
     ...(notes === undefined ? {} : { notes: kept(notes) }),
     ...(numbers === undefined ? {} : { numbers: kept(numbers) }),
+    ...(flags === undefined ? {} : { flags: kept(flags) }),
     // A draft adding someone changes everything, so names nothing in particular.
     draft: pendingDraft("created", { values: {}, links: {} }),
   };
@@ -57,7 +58,7 @@ function adding(id: string, request: RowRequest): Person {
 // A person as they are live, without their draft. A web link column the draft changes that is not
 // in the live links had no link.
 function asLive(person: Person, draft: PersonDraft): Person {
-  const { values, links, notes, numbers, ...details } = draft.live;
+  const { values, links, notes, numbers, flags, ...details } = draft.live;
   const live: Person = {
     ...person,
     ...(details as Partial<Person>),
@@ -65,6 +66,7 @@ function asLive(person: Person, draft: PersonDraft): Person {
     links: withLiveValues(person.links, draft.changed, links),
     notes: withLiveValues(person.notes, draft.changed, notes),
     numbers: withLiveValues(person.numbers, draft.changed, numbers),
+    flags: withLiveValues(person.flags, draft.changed, flags),
   };
   delete live.draft;
   return live;

@@ -19,7 +19,7 @@ import {
 import { Menu, Text } from "@mantine/core";
 import { Fragment, type ReactNode } from "react";
 import type { AddedColumns } from "./added-columns.ts";
-import { cellKinds, flagChoice } from "./cell-kinds.tsx";
+import { cellKinds } from "./cell-kinds.tsx";
 import type { DraftField } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
 import { choice, offered } from "./lists.ts";
@@ -129,7 +129,7 @@ export function field<Rec extends PlanRecord>(
     label,
     required,
     multiple,
-    choices: kind === "flag" ? [choice(flagChoice, "Yes", false)] : choices,
+    choices,
     ...others,
   });
 }
