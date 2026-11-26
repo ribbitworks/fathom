@@ -55,7 +55,7 @@ As [Manual Test Basics](manual-test-basics.md#terms) sets out, such as a page's 
 - **× button:** the small × after the change button of a month of ramp-up, which removes that month.
 - **Draft button:** the button above **Working time** on **Settings**, which opens a menu choosing how drafts show.
 - **Row menu:** the ⋯ button at the right of a setting's row that a draft changes, which opens a menu of the whole draft of the settings and what can be done with it.
-- **Total row:** in **Allocations**, a row in bold at the end of each group, headed **Total, person-months** in the **Person** column, and one at the foot of the table, headed **Organization, person-months**. PM stands for person-months.
+- **Total row:** in **Allocations**, a row in bold at the end of each group, headed **Total, person-months** in the **Person** column, and one at the foot of the table, headed **Organization, person-months**.
 
 ## Test Cases
 
