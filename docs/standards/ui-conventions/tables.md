@@ -21,7 +21,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Drawn by:** `RecordGrid`'s `canEditDrafts`, one answer for the table or one for each row, such as a cycle's row carrying its release's draft on Releases' Cycles tab, with a table's `ownDraft`, in `apps/web/src/record-table.ts`, and the actions' `draftRef` naming the record each draft is of.
   - **Example:** On Releases' Schedules tab, a schedule drafted to be retired.
 - **A row's controls:** While a row is pointed at, or its Name cell has focus, two buttons show at the right of the Name cell.
-  - **The details button:** On a table whose records have details, a box with its right side marked, since the details open beside the table. Selecting it again while the row's details are open closes them; a screen reader hears it as expanded while they are.
+  - **The details button:** On a table whose records have details, a box with its right side marked, since the details open beside the table. Selecting it while the row's details are open closes them; a screen reader hears it as expanded while they are.
   - **The ⋯ button:** A ⋯ opens the row's menu, so it's in reach without scrolling to the row's end.
   - **One row at a time:** One row shows them at a time: the row whose menu is open, from its ⋯ or a right-click; else the row pointed at; else the row whose Name cell has focus.
   - **The ⋯ at the row's end:** Always shown.
