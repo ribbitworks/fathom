@@ -153,12 +153,13 @@ export type FigureMove =
 // it, and as they will without the user's own unpublished changes; where drafts show, as published,
 // as waiting and live, where the view counts each.
 export type FigureAs =
+  | { now: string }
   | { now: string; coming: string; comingPublished: string }
   | {
       now: string;
-      published?: string | undefined;
-      waiting?: string | undefined;
-      live?: string | undefined;
+      published: string;
+      waiting: string;
+      live: string | undefined;
     };
 
 // What moves a figure: the user's own unpublished change, the newest, before a rejected draft, before
@@ -168,15 +169,12 @@ export function figureMove(as: FigureAs): FigureMove | undefined {
     if (as.coming !== as.comingPublished) return "liveUnpublished";
     return as.coming === as.now ? undefined : "live";
   }
-  if (as.published !== undefined && as.published !== as.now) {
-    return "unpublished";
-  }
-  const published = as.published ?? as.now;
-  if (as.waiting !== undefined && as.waiting !== published) return "rejected";
-  if (as.live !== undefined && as.live !== (as.waiting ?? published)) {
-    return "waiting";
-  }
-  return undefined;
+  if (!("published" in as)) return undefined;
+  if (as.published !== as.now) return "unpublished";
+  if (as.waiting !== as.published) return "rejected";
+  return as.live !== undefined && as.live !== as.waiting
+    ? "waiting"
+    : undefined;
 }
 
 const percent = new Intl.NumberFormat(undefined, {

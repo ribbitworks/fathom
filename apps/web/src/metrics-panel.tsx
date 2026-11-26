@@ -242,12 +242,14 @@ export function MetricsPanel<Row>({
             coming: format(comingCounts),
             comingPublished: format(comingPublishedCounts),
           }
-        : {
-            now,
-            published: publishedCounts && format(publishedCounts),
-            waiting: waitingCounts && format(waitingCounts),
-            live: liveCounts && format(liveCounts),
-          },
+        : publishedCounts && waitingCounts
+          ? {
+              now,
+              published: format(publishedCounts),
+              waiting: format(waitingCounts),
+              live: liveCounts && format(liveCounts),
+            }
+          : { now },
     );
     return (
       <Figure now={now} moved={moved} live={shownLive && format(shownLive)} />
