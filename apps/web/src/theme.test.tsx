@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for what every page shares through the theme: each kind of drop-down list gives its options
-// the class that keeps the keyboard's option grey, rather than filled with the accent, a Select's
-// search finds options whatever their accents, every dialog's close button has a name, and every menu,
-// popover and drop-down list stands out by the theme's edge and shadow.
+// Tests of what every page shares through the theme: its drop-down lists, Selects, dialogs and
+// menus.
 
 import {
   Combobox,
@@ -66,6 +64,23 @@ describe("the keyboard's option in a drop-down list", () => {
         comboboxClasses.option as string,
       ),
     ).toBe(true);
+  });
+});
+
+describe("a Select's choice", () => {
+  it("stays when its option is chosen again", async () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <Select label="Cycle" data={["Alpha", "Beta"]} defaultValue="Alpha" />
+      </MantineProvider>,
+    );
+
+    await userEvent.click(screen.getByRole("combobox", { name: "Cycle" }));
+    await userEvent.click(await screen.findByRole("option", { name: "Alpha" }));
+
+    expect(
+      screen.getByRole<HTMLInputElement>("combobox", { name: "Cycle" }).value,
+    ).toBe("Alpha");
   });
 });
 

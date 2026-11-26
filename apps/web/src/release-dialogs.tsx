@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The dialogs of the Releases page: naming a release stream; changing a stream's cycles from a day,
-// with their length and how they are named, showing the first names they make; one cycle's length,
-// showing the cycles it makes and the releases that move; and making or changing a release from
-// consecutive cycles of its stream that no other release includes, shipping at the end of its last
-// cycle or on a day of its own. Each saves its change as a draft, and cannot be closed while it
-// saves.
+// The dialogs of the Releases page: a release stream, its cycles, and a release.
 
 import { MarkRow } from "./status-mark.tsx";
 import {
@@ -312,7 +307,6 @@ export function PatternDialog({
             data={choices}
             value={startsOn}
             searchable
-            allowDeselect={false}
             error={tried && !startOk ? "Choose a cycle" : undefined}
             onOptionSubmit={setStartsOn}
           />
@@ -649,7 +643,6 @@ export function ReleaseDialog({
             data={scheduleChoices(streams)}
             value={streamId || null}
             searchable
-            allowDeselect={false}
             error={
               tried && stream === undefined ? "Choose a schedule" : undefined
             }
@@ -684,11 +677,9 @@ export function ReleaseDialog({
               value={firstCycle || null}
               searchable
               error={tried ? firstCycleProblem : undefined}
-              onChange={(value) => {
-                setFirst(value ?? "");
-                if (lastCycle === "" || (value ?? "") > lastCycle) {
-                  setLast(value ?? "");
-                }
+              onOptionSubmit={(value) => {
+                setFirst(value);
+                if (lastCycle === "" || value > lastCycle) setLast(value);
               }}
             />
             <Select
@@ -698,14 +689,10 @@ export function ReleaseDialog({
               searchable
               error={
                 tried && firstCycle !== "" && !consecutive
-                  ? lastCycle === ""
-                    ? "Choose a cycle"
-                    : "Choose cycles no other release includes"
+                  ? "Choose cycles no other release includes"
                   : undefined
               }
-              onChange={(value) => {
-                setLast(value ?? "");
-              }}
+              onOptionSubmit={setLast}
             />
           </>
         )}
@@ -739,7 +726,6 @@ export function ReleaseDialog({
             data-autofocus={part === "colour" || undefined}
             data={colourChoices}
             value={shownColour(colour)}
-            allowDeselect={false}
             leftSection={<Swatch colour={shownColour(colour)} alone />}
             renderOption={({ option }) => (
               <MarkRow>

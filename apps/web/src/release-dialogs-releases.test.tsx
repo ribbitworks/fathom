@@ -178,57 +178,29 @@ describe("the dialog making or changing a release", () => {
     ]).toEqual([expect.anything(), "", []]);
   });
 
-  it("asks for the cycles again once both are deselected", async () => {
-    const fetch = serverAnswers({});
-    show((handlers) => <ReleaseDialog stream={releasing} {...handlers} />);
+  it("makes a release of one cycle, its first cycle chosen again as its last", async () => {
+    const fetch = serverAnswers({
+      [`POST ${streamPath}/releases`]: savedStream,
+    });
+    const { onSaved } = show((handlers) => (
+      <ReleaseDialog stream={releasing} {...handlers} />
+    ));
     await userEvent.type(box("Name"), "Fictional Two");
     await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
     await choose("Last cycle", "27.2 (Apr 1 to Jun 30, 2027)");
-    await choose("First cycle", "27.2 (Apr 1 to Jun 30, 2027)");
     await userEvent.click(screen.getByRole("button", { name: "Make release" }));
-    expect([
-      picker("First cycle").value,
-      picker("Last cycle").value,
-      screen.getByText("Choose a cycle"),
-      fetch.mock.calls,
-    ]).toEqual(["", "", expect.anything(), []]);
-  });
-
-  it("asks for a first cycle once it is deselected, keeping the last", async () => {
-    const fetch = serverAnswers({});
-    show((handlers) => (
-      <ReleaseDialog
-        stream={stream}
-        release={fictionalRelease()}
-        {...handlers}
-      />
-    ));
-    await choose("First cycle", "27.1 (Jan 1 to Mar 31, 2027)");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect([
-      picker("First cycle").value,
-      picker("Last cycle").value,
-      screen.getByText("Choose a cycle"),
-      fetch.mock.calls,
-    ]).toEqual(["", "27.1 (Jan 1 to Mar 31, 2027)", expect.anything(), []]);
-  });
-
-  it("asks for a last cycle once it is deselected", async () => {
-    const fetch = serverAnswers({});
-    show((handlers) => (
-      <ReleaseDialog
-        stream={stream}
-        release={fictionalRelease()}
-        {...handlers}
-      />
-    ));
-    await choose("Last cycle", "27.1 (Jan 1 to Mar 31, 2027)");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect([
-      picker("Last cycle").value,
-      screen.getByText("Choose a cycle"),
-      fetch.mock.calls,
-    ]).toEqual(["", expect.anything(), []]);
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(bodiesOf(fetch)).toEqual([
+      {
+        name: "Fictional Two",
+        firstCycle: "2027-04-01",
+        lastCycle: "2027-04-01",
+        shipsOn: null,
+        colour: null,
+      },
+    ]);
   });
 
   it("asks for a first cycle before saving", async () => {

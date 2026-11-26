@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Fathom's visual design as a Mantine theme: IBM Plex Sans, bundled with the front end; quiet
-// neutrals with one sea-blue accent for actions and the current place; colour otherwise only for
-// meaning, or as chosen for a release; light and dark modes that follow the computer's setting
-// unless the person chooses one; tables that look alike, each header row staying in view; and
-// drop-down lists whose keyboard place is light grey, as pointing is, and whose search finds options
-// as every search in Fathom does; and switches whose chosen side is filled with the accent.
+// Fathom's visual design as a Mantine theme, with the defaults every page's components share.
 
 import { matchesWords, searchWords } from "@fathom/shared";
 import {
@@ -98,7 +93,9 @@ export const theme = createTheme({
     }),
     Select: Select.extend({
       classNames: { option: comboboxClasses.option },
-      defaultProps: { filter: byWords },
+      // Choosing the chosen option again keeps it, rather than emptying a value that may be
+      // required; a Select that may be emptied offers its clear button.
+      defaultProps: { filter: byWords, allowDeselect: false },
     }),
     // Every dialog's × is named for assistive technology, which otherwise hears only "button".
     Modal: Modal.extend({

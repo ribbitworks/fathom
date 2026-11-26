@@ -142,7 +142,6 @@ export function ChartControls({
           value={found}
           searchable
           clearable
-          allowDeselect={false}
           searchValue={search}
           onSearchChange={setSearch}
           // The select offers its own clear button only once someone is chosen.

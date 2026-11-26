@@ -1704,12 +1704,6 @@ describe("columns", () => {
       ),
     ).toBeDefined();
     expect(bodyOf(fetch, "POST", "/api/people/columns")).toHaveLength(2);
-    // Choosing the list chosen again empties it.
-    await chooseIn(dialog, "List", "Sites");
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Add column" }),
-    );
-    expect(within(dialog).getByText("List needed")).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Cancel" }),
     );

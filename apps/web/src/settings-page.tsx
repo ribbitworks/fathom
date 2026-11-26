@@ -109,7 +109,6 @@ export function SettingsPage({
               value={chosen}
               searchable
               readOnly={!canEdit}
-              allowDeselect={false}
               nothingFoundMessage="No time zone has that name"
               onOptionSubmit={setChosen}
             />
