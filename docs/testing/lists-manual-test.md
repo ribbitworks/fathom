@@ -332,7 +332,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `78D2` Double-click the name **Fictional pay levels**, replace it with `Sites`, and press Enter.
   - **Expected:**
     - The name stays open for editing
-    - A red line reads "Another list already has that name"
+    - A red line reads "Another list has that name"
   - **Notes:**
 
 - [ ] `72F4` Press Esc.
