@@ -174,9 +174,10 @@
   min-height: var(--stack-least);
 }
 
-/* At the top, it keeps at most half the column, so what opened under it has room to read. */
+/* At the top, it keeps at most half the column, the gap under it shared evenly, so what opened
+   under it has room to read. */
 .stackItemFittedTop {
-  max-height: 50%;
+  max-height: calc(50% - var(--mantine-spacing-md) / 2);
 }
 
 .stackItemFitted .body {

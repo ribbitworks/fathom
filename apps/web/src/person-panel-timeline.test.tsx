@@ -85,7 +85,6 @@ const plannedHire = person("9", "Fictional Engineer", {
 const preview = () =>
   document.getElementById("person-timeline")?.closest("section") as HTMLElement;
 const timelinePanel = () => document.getElementById(timelinePanelId);
-// The place in the stack of panels that holds a panel.
 const stackItemOf = (panel: HTMLElement | null) =>
   (panel as HTMLElement).closest("[class*='stackItem']") as HTMLElement;
 
