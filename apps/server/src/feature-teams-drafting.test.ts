@@ -87,12 +87,20 @@ describe("adding a feature team", () => {
     }
   });
 
-  it("is refused with a name another user's unpublished draft gives a team", async () => {
+  it("is refused a name the user's own unpublished draft gives a team, and takes one only another user's gives", async () => {
+    // Given one user's unpublished draft naming a team
     const other = await test.signedIn("workforce-administrator");
     const name = unique("Fictional Unpublished");
     await drafted({ name }, other, { publish: false });
 
-    expect((await create({ name })).statusCode).toBe(409);
+    // When that user and another add a team of that name
+    const own = await create({ name }, other, { publish: false });
+    const taken = await create({ name });
+
+    // Then only the user whose draft names it is refused
+    expect(own.statusCode).toBe(409);
+    expect(errorOf(own)).toBe("Another feature team has that name");
+    await ok(taken, 201);
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 
@@ -475,18 +483,19 @@ describe("changing a feature team", () => {
     expect(response.statusCode).toBe(409);
   });
 
-  it("is refused while another user is changing it", async () => {
+  it("is saved while another user is changing it, unpublished", async () => {
     const id = await liveTeam();
     const other = await test.signedIn("workforce-administrator");
     await ok(
-      await change(id, { name: unique("Fictional Held") }, other, {
+      await change(id, { name: unique("Fictional Theirs") }, other, {
         publish: false,
       }),
     );
+    const name = unique("Fictional Mine");
 
-    const response = await change(id, { name: unique("Fictional Mine") });
+    await ok(await change(id, { name }));
 
-    expect(response.statusCode).toBe(409);
+    expect((await teamSeen(id))?.name).toBe(name);
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 

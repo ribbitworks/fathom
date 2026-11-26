@@ -76,7 +76,6 @@ import {
   columnEditor,
   policyOf,
   readColumnsState,
-  refuseHeldIn,
   refuseSensitiveOnFeatures,
   table,
   toBeRemoved,
@@ -222,6 +221,7 @@ export async function createField(
       transaction,
       { ...columnRow(id, field), required: false },
       request,
+      actor.user.id,
     );
     const changeSetId = await saveFieldDraft(
       transaction,
@@ -252,7 +252,6 @@ function changeableField(
   if (!fieldExists(state, id) || !isOnTable(state, id, tableName)) {
     throw new NotFoundError(noField);
   }
-  refuseHeldIn(state.held.fields.get(id));
   const field = draftedField(state, id);
   if (field === undefined) throw new ConflictError(toBeRemoved);
   return field;
@@ -293,7 +292,7 @@ async function changeField(
   // The live values are checked against the live column, so a change already drafted is checked
   // again here.
   const current = columnRow(id, live ?? { ...field, required: false });
-  await checkValuesFit(transaction, current, request);
+  await checkValuesFit(transaction, current, request, actor.user.id);
   if (request.listId !== undefined && request.listId !== current.listId) {
     await checkList(transaction, state, request.listId, badRequest);
   }
@@ -385,7 +384,6 @@ export async function moveColumnClass(
     if (row === undefined) {
       return classifyAddedField(transaction, actor, state, id, to);
     }
-    refuseHeldIn(state.held.fields.get(id));
     if (draftedField(state, id) === undefined) {
       throw new ConflictError(toBeRemoved);
     }
@@ -439,8 +437,8 @@ function discardingField(state: ColumnsState, id: string): Change[] {
   ];
 }
 
-// Refuses discarding a column drafted to be added while people's drafts, published or not, give
-// anyone a value in it, as the editor sees the drafts.
+// Refuses discarding a column drafted to be added while people's drafts, as the editor sees them,
+// give anyone a value in it.
 async function refuseIfDraftsFill(
   transaction: Transaction,
   editor: string,
@@ -496,7 +494,6 @@ function draftOf(state: ColumnsState, target: ColumnDraftTarget): Draft {
   if (!isOnTable(state, target.id, target.table ?? table)) {
     throw new NotFoundError("There is no such draft");
   }
-  refuseHeldIn(state.held.fields.get(target.id));
   const draft = state.fieldDrafts.get(target.id);
   if (draft === undefined) throw new NotFoundError("There is no such draft");
   return draft;

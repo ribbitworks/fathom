@@ -334,7 +334,7 @@ describe("on People", () => {
     expect(await rowOn(someone, planner)).toMatchObject({ stateId: hired });
   });
 
-  it("shows a draft that names a hire, gives it a requisition, and changes its manager with the row's live values, and who holds it", async () => {
+  it("shows a draft that names a hire, gives it a requisition, and changes its manager with the row's live values, naming nobody else changing it", async () => {
     const manager = await person();
     const id = await liveHire();
     await changed(id, {
@@ -351,18 +351,18 @@ describe("on People", () => {
       employeeId: expect.stringMatching(/^TBD-\d+$/) as string,
       managerId: null,
     });
-    const held = await liveHire();
+    const changing = await liveHire();
     const other = await test.signedIn("workforce-administrator");
     await ok(
       await send(
         other,
         "PATCH",
-        `/api/planned-hires/${held}`,
-        { name: unique("Fictional Held") },
+        `/api/planned-hires/${changing}`,
+        { name: unique("Fictional Private") },
         { publish: false },
       ),
     );
-    expect((await rowOn(held, editor))?.heldBy).toEqual(expect.any(String));
+    expect(await rowOn(changing, editor)).not.toHaveProperty("heldBy");
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 
@@ -520,7 +520,7 @@ describe("each role's view of the hiring plan", () => {
     ).toBe(404);
   });
 
-  it("keeps a placeholder as it is live, without who holds it or why its draft was rejected", async () => {
+  it("keeps a placeholder as it is live, without why its draft was rejected", async () => {
     const id = await liveHire();
     await changed(id, { positionId: otherTestPosition });
     await ok(
@@ -535,7 +535,7 @@ describe("each role's view of the hiring plan", () => {
         other,
         "PATCH",
         `/api/planned-hires/${id}`,
-        { requisition: unique("Fictional-Held") },
+        { requisition: unique("Fictional-Private") },
         { publish: false },
       ),
     );

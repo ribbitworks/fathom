@@ -143,8 +143,8 @@ export async function choicesMadeWithColumn(
 
 // Discards a list made with a column, and its choices, with the last column drawing on it, whether
 // the one it was made with or another since, returning the changes to record with the column's. The
-// list stays while another column draws on it, when anything changed it, its choices or their order
-// since it was made, or when someone else is changing it or one of its choices.
+// list stays while another column draws on it, or when anything changed it, its choices or their
+// order since it was made.
 export async function discardingNewList(
   transaction: Transaction,
   maker: Actor,
@@ -157,13 +157,6 @@ export async function discardingNewList(
   ) {
     return [];
   }
-  const heldByOthers =
-    state.held.lists.has(listId) ||
-    state.held.orders.has(listId) ||
-    [...state.held.choices.values()].some(
-      ({ draft }) => draft.fields.listId === listId,
-    );
-  if (heldByOthers) return [];
   const listSets = await changeSetsOf(transaction, [
     { recordType: "list", ids: [listId] },
     { recordType: "choice-order", ids: [listId] },
@@ -175,12 +168,9 @@ export async function discardingNewList(
   ) {
     return [];
   }
-  const { named, unnamed } = await columnsDrawingOn(
-    transaction,
-    listId,
-    maker.user.id,
-  );
-  if (named.length > 0 || unnamed > 0) return [];
+  if ((await columnsDrawingOn(transaction, listId, maker.user.id)).length > 0) {
+    return [];
+  }
   const made = discardingList(state, listId);
   await removeDiscarded(transaction, maker.user.id, made);
   return made;

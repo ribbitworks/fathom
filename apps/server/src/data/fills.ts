@@ -26,7 +26,7 @@ import {
   type Recorded,
   type Viewer,
 } from "./draft-records.ts";
-import { lockDrafts, readHeld, readPersonDrafts } from "./drafts.ts";
+import { lockDrafts, readPersonDrafts } from "./drafts.ts";
 import { recordHiringChanges } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import {
@@ -175,13 +175,13 @@ export async function withFills(
   return { ...asked, people: [...people], plannedHires: [...hires] };
 }
 
-// Whether any hire's draft, published or not, by anyone, fills it with the person given.
-const inAnyFill = (reader: Reader, personId: string) =>
-  hireDraftsNaming(reader, "filledBy", [personId]);
+// Whether any hire's draft, as the editor sees the drafts, fills it with the person given.
+const inAnyFill = (reader: Reader, personId: string, editor: string) =>
+  hireDraftsNaming(reader, "filledBy", [personId], editor);
 
 // The person asked to fill a hire, as the actor's drafts make them, refusing someone with a draft of
 // their own, so the fill's draft of them holds only the fill, someone who has left, and someone who
-// fills another hire, in anyone's draft, or live without having started. With no draft, they are as
+// fills another hire, in a published draft, or live without having started. With no draft, they are as
 // they are live. An actor who does not see Personal details has someone not started answered as
 // no one, as People hides them.
 async function fillingPerson(
@@ -204,10 +204,7 @@ async function fillingPerson(
     throw new NotFoundError(noPerson);
   }
   const name = String(live.preferredName);
-  const [held] = (
-    await readHeld(transaction, "person", actor.user.id, [personId])
-  ).values();
-  if (draft !== undefined || held !== undefined) {
+  if (draft !== undefined) {
     throw new ConflictError(
       `${name} has a draft; approve or discard it before they fill a planned hire`,
     );
@@ -215,7 +212,7 @@ async function fillingPerson(
   if (typeof live.endDate === "string" && live.endDate < today) {
     throw new ConflictError(`${name} has left, so can't fill a planned hire`);
   }
-  if (await inAnyFill(transaction, personId)) {
+  if (await inAnyFill(transaction, personId, actor.user.id)) {
     throw new ConflictError(
       `${name} is already filling a planned hire in a draft`,
     );
@@ -257,7 +254,7 @@ export async function fillHire(
       typeof fill.managerId !== "string" &&
       !keepsOwn
     ) {
-      await requirePersonManager(transaction, hire.managerId);
+      await requirePersonManager(transaction, hire.managerId, actor.user.id);
     }
     if (typeof fill.managerId === "string") {
       await checkFillManager(transaction, fill.managerId, actor.user.id);
@@ -365,40 +362,14 @@ function requireFillRights(actor: Actor): void {
   }
 }
 
-// Refuses changing a fill any of whose records someone other than the actor holds.
-async function refuseHeldFill(
-  transaction: Transaction,
-  actor: Actor,
-  fill: Fill,
-): Promise<void> {
-  const [held] = [
-    ...(
-      await readHeld(transaction, "person", actor.user.id, fill.people)
-    ).values(),
-    ...(
-      await readHeld(
-        transaction,
-        "planned-hire",
-        actor.user.id,
-        fill.plannedHires,
-      )
-    ).values(),
-  ];
-  if (held !== undefined) {
-    throw new ConflictError(
-      `${held.holder} is changing part of this fill of a planned hire; it can be changed once they publish or discard their changes`,
-    );
-  }
-}
-
 const discardIn = (transaction: Transaction, actor: Actor, asked: Asked) =>
   asked.kind === "person"
     ? discardPersonDraftIn(transaction, actor, asked.id)
     : discardHireDraftIn(transaction, actor, asked.id);
 
 // Discards the draft asked for, and takes its fill, if any, out of the drafts of the fill's other
-// records, keeping their other changes: the hire's filler and manager, its person's position, manager, Manager? and line,
-// and the hires moved to them, put back as they are live. A person only drafted to be added by the
+// records, keeping their other changes: the hire's filler and manager, its person's position,
+// manager, Manager? and line, and the hires moved to them, put back as they are live. A person only drafted to be added by the
 // fill is discarded with it.
 async function discardWithFill(
   transaction: Transaction,
@@ -408,7 +379,6 @@ async function discardWithFill(
   const fill = await fillOf(transaction, actor, asked);
   if (fill === undefined) return discardIn(transaction, actor, asked);
   requireFillRights(actor);
-  await refuseHeldFill(transaction, actor, fill);
   const others = (kind: Asked["kind"], ids: readonly string[]) =>
     ids.filter((id) => !(asked.kind === kind && asked.id === id));
   const made = await discardIn(transaction, actor, asked);
@@ -451,7 +421,6 @@ async function resubmitWithFill(
   };
   if (fill !== undefined) {
     requireFillRights(actor);
-    await refuseHeldFill(transaction, actor, fill);
   }
   const hireDrafts = await readHireDrafts(
     transaction,

@@ -23,7 +23,7 @@ import {
   type Maker,
   otherApprover,
 } from "./draft-makers.ts";
-import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
+import { readDrafts } from "./drafts.ts";
 import { activityKind } from "./activity-kinds.ts";
 import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
 import { planningSettingsKind } from "./planning-settings-kind.ts";
@@ -129,7 +129,7 @@ export const ownFields = (kind: RecordKind, from: Recorded): Recorded =>
     kind.fields.map((name) => [name, from[name]]),
   );
 
-// The first record, live, in a draft, or in anyone's unpublished changes, as the editor sees them,
+// The first record, live or in a draft, as the editor sees the drafts,
 // that names any of the people, choices, or feature teams given, with the records it was found in.
 async function namingRecord(
   reader: Reader,
@@ -166,8 +166,8 @@ const removedWords: Record<Exclude<Referred, "choice">, string> = {
   "feature-team": "This feature team",
 };
 
-// Refuses removing people or feature teams a record names, live or in a draft, published or not,
-// anyone's unpublished changes included, naming that record only to a role that reads its kind.
+// Refuses removing people or feature teams a record names, live or in a draft as the editor sees
+// the drafts, naming that record only to a role that reads its kind.
 export async function refuseRemovingNamed(
   reader: Reader,
   named: Exclude<Referred, "choice">,
@@ -238,7 +238,6 @@ export async function readRecordsState(
         ),
         rows: new Map(rows.map((row) => [String(row.id), row])),
         drafts: await readDrafts(reader, kind.type, undefined, viewer),
-        held: await readHeld(reader, kind.type, viewer),
         keys: (keyKind === null ? undefined : keys.get(keyKind)) ?? new Map(),
       },
     ]);
@@ -330,14 +329,7 @@ export function recordDraftOut(
   };
 }
 
-// Who holds a record, when someone other than the viewer does.
-export const recordHeldBy = (
-  state: RecordsState,
-  type: RecordType,
-  id: string,
-): { heldBy?: string } => heldByOf(stateOf(state, type).held, id);
-
-// A record's draft and who holds it, as the API sends them beside its fields.
+// A record's draft, as the API sends it beside its fields.
 export const recordExtras = (
   state: RecordsState,
   makers: Makers,
@@ -345,10 +337,7 @@ export const recordExtras = (
   id: string,
 ) => {
   const draft = recordDraftOut(kindOf(type), state, makers, id);
-  return {
-    ...(draft === undefined ? {} : { draft }),
-    ...recordHeldBy(state, type, id),
-  };
+  return draft === undefined ? {} : { draft };
 };
 
 // A record's key number, live or drafted to be added.

@@ -492,12 +492,9 @@ describe("feature teams", () => {
     );
   });
 
-  it.each([
-    ["published", true],
-    ["not yet published", false],
-  ])("refuse one with a removal %s", async (_kind, publish) => {
+  it("refuse one with a removal published", async () => {
     const featureTeamId = await liveTeam();
-    expect((await removeTeam(featureTeamId, { publish })).statusCode).toBe(200);
+    expect((await removeTeam(featureTeamId)).statusCode).toBe(200);
     const response = await post({
       name: unique("Fictional Feature"),
       featureTeamId,
@@ -506,6 +503,19 @@ describe("feature teams", () => {
     expect(errorOf(response)).toBe(
       "This feature team is drafted to be removed; choose another",
     );
+  });
+
+  it("take one only someone else's unpublished change removes", async () => {
+    const featureTeamId = await liveTeam();
+    expect(
+      (await removeTeam(featureTeamId, { publish: false })).statusCode,
+    ).toBe(200);
+    const response = await post(
+      { name: unique("Fictional Feature"), featureTeamId },
+      featureLead.cookie,
+    );
+    expect(response.statusCode, response.body).toBe(201);
+    await test.request(configurer.cookie, "POST", "/api/unpublished/discard");
   });
 
   it("cannot be removed while a feature names them", async () => {

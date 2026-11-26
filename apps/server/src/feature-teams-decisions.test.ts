@@ -268,17 +268,19 @@ describe("approving a team's draft", () => {
     );
   });
 
-  it("is refused while someone is changing the team", async () => {
+  it("approves it while someone else is changing the team, unpublished", async () => {
     const id = await liveTeam();
-    await changed(id, { name: unique("Fictional Renamed Team") });
+    const name = unique("Fictional Renamed Team");
+    await changed(id, { name });
     const other = await test.signedIn("workforce-administrator");
     await ok(
-      await change(id, { name: unique("Fictional Held") }, other, {
+      await change(id, { name: unique("Fictional Private") }, other, {
         publish: false,
       }),
     );
 
-    expect((await approve(id)).statusCode).toBe(409);
+    await ok(await approve(id));
+    expect((await teamSeen(id, planner))?.name).toBe(name);
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 });

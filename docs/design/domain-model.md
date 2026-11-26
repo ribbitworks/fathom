@@ -4,7 +4,7 @@ category: "Domain"
 audience: "Contributors"
 applies_to: ["packages/shared/src/**", "packages/db/**", "apps/server/src/**"]
 dependencies: ["docs/product/domain.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Fathom: Domain Model
@@ -323,7 +323,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
   - **Kinds:** saved changes, approved, rejected or discarded drafts, rejected drafts sent again unchanged, and a user's unpublished changes discarded all at once.
   - **Private:** it is marked while it holds private changes, which only its maker sees; publishing clears the mark.
 - **Change:** One field of one record changed in a change set, with its class, its old and new values, and whether it changed the record's draft or the live record.
-- **Private change:** A user's change to a record not yet published, which only they see, as [ADR 0008](../adr/0008-unpublished-drafts.md) sets out. It is kept for the record and the user, in the user's private set, with the value each field its maker changed started from. It holds those fields over whatever the published draft holds; a record its maker adds, or a change of action such as a removal, holds the whole draft. A record has at most one, and nobody else may change, approve or reject it until the user publishes or discards it. Publishing makes it a draft row.
+- **Private change:** A user's change to a record not yet published, which only they see, as [ADR 0008](../adr/0008-unpublished-drafts.md) sets out. It is kept for the record and the user, in the user's private set, with the value each field its maker changed started from. It puts those fields over whatever the published draft holds; a record its maker adds, or a change of action such as a removal, keeps the whole draft. It holds nothing: several users may each have one for the same record, and anyone may change, approve or reject the record meanwhile. Another user's private changes count in no check, such as whether a value is taken or a choice in use. Publishing makes it a draft row.
 - **Private set:** A user's private changes, made with their first one.
 - **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason.
   - **What has drafts:** people, planned hires, feature teams, lists, choices, columns, schedules, cycle patterns, releases, features, activities, customers, proposals, projects, milestones, allocations and the planning settings, and the order of each list's choices, held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
@@ -350,7 +350,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
   - Approving a draft approves the drafts it uses with it, so the approver's role must approve the areas of both. A feature or an activity given a value in a new column, or a new choice, needs Approve Features and Approve Configuration.
   - A draft that others use is rejected only together with them, or once they no longer use it.
   - It cannot be discarded, nor its adding undone, while others use it, except that discarding a list drafted to be added discards its choices' drafts, and discarding a schedule drafted to be added discards its cycles' and releases' drafts, whoever made them.
-  - A column on Features drafted to be added with a new list takes the list and its choices with it: adding them is one change, undone together, and discarding the draft of the last Features column drawing on the list, whether the one it was made with or another since, discards the list's, unless anything changed the list since it was made, or someone else is changing it.
+  - A column on Features drafted to be added with a new list takes the list and its choices with it: adding them is one change, undone together, and discarding the draft of the last Features column drawing on the list, whether the one it was made with or another since, discards the list's, unless anything changed the list since it was made.
 - **Feature teams:** a team's name, lead and member changes make one draft, approved or rejected together.
 - **Lists:** a list cannot be drafted to be removed while its choices or their order have drafts, and the choices of a list drafted to be removed cannot be changed. A restored choice keeps its place in the order.
 - **Undo:** takes back an edit to a draft. Approving and rejecting are not undone: an approved change is changed by a new draft, and a rejected draft by changing it.

@@ -101,8 +101,6 @@ Use the team's panel on the **Org chart**, under **Feature teams**. See [Org cha
 
 To leave the value as it was, press Esc instead of Enter. If Fathom can't take a value, it stays in its field, with the reason in red under it.
 
-While someone else has unpublished changes to the settings, you can't change them, and **Being changed by** names who.
-
 You're done once it's approved, and the setting shows its new value with no dot.
 
 ### Approve or Reject a Draft of the Settings

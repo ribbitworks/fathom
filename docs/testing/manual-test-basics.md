@@ -184,10 +184,9 @@ This deletes the installation's containers, its database, its secrets and its fo
   - Red in a ring: once the draft is rejected.
   - Green: marks a live value, the record as it is now, in a Live row or under a drafted value, and, under **Live only**, what a waiting draft would change.
   - Struck through: a removed record or part is struck through after its dot.
-- **Lock:** a grey lock before a record someone else has unpublished changes to. Pointing at it shows **Being changed by** and their name. The record is read only until they publish or discard them.
 - **Class mark:** a small grey symbol just before a column's name in its heading, or a list's name, giving the class of its data. Pointing at it shows the class's name.
   - **Personal:** an eye with a line through it.
-  - **Confidential:** a lock with a keyhole. It is not the lock above, which has no keyhole.
+  - **Confidential:** a lock with a keyhole.
   - **General:** a column or list of this class has none.
 - **Box:** a small outlined word just after an item: yellow for **Moved**, **Reordered**, **Retired** or **Restored**; red for a warning after a value, such as **Left**; grey for a fact, such as **Built in** or **Planned, expected** and a month.
 - **Slot:** the narrow space at the start of a table's row, before its first value, holding the mark of a draft that adds, removes, retires or moves the record. A draft that only changes values the row shows leaves the slot empty, with a dot before each changed value.

@@ -215,7 +215,8 @@ describe("a team's name", () => {
     expect(response.statusCode, response.body).toBe(409);
   });
 
-  it("is unique against another editor's unpublished draft", async () => {
+  it("is taken by an editor's own unpublished draft, and not by another editor's", async () => {
+    // Given one editor's unpublished draft naming a team
     const first = await person();
     const second = await person();
     const name = unique("Fictional Unpublished Team");
@@ -228,7 +229,24 @@ describe("a team's name", () => {
       { publish: false },
     );
     expect(unpublished.statusCode, unpublished.body).toBe(200);
-    expect((await change(second, { teamName: name })).statusCode).toBe(409);
+
+    // When that editor and another give the name to someone else
+    const own = await test.request(
+      other.cookie,
+      "PATCH",
+      `/api/people/${second}`,
+      { teamName: name },
+      { publish: false },
+    );
+    const taken = await change(second, { teamName: name });
+
+    // Then only the editor whose draft names it is refused
+    expect(own.statusCode, own.body).toBe(409);
+    expect(own.json<{ error: string }>().error).toBe(
+      "Another team has that name",
+    );
+    expect(taken.statusCode, taken.body).toBe(200);
+    await test.request(other.cookie, "POST", "/api/unpublished/discard");
   });
 
   it("cannot be put back by undo once another team has taken it", async () => {

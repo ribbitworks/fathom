@@ -188,18 +188,19 @@ async function checkFits(
   const putBackId = values.employeeId ?? values.requisition;
   if (
     typeof putBackId === "string" &&
-    (await takenEmployeeIds(transaction, [putBackId], [record.id])).length > 0
+    (await takenEmployeeIds(transaction, [putBackId], [record.id], undefined))
+      .length > 0
   ) {
     throw new ConflictError(changedSince);
   }
   if (record.recordType === "list" && values.retired === true) {
-    await refuseIfUsed(transaction, record.id, "retired");
+    await refuseIfUsed(transaction, record.id, "retired", undefined);
   }
   if (record.recordType === "field") {
     for (const current of await lockFields(transaction)) {
       if (current.id === record.id) {
         const wanted = { ...current, ...values };
-        await checkValuesFit(transaction, current, wanted);
+        await checkValuesFit(transaction, current, wanted, undefined);
         if (wanted.listId !== null && wanted.listId !== current.listId) {
           await checkLiveList(transaction, wanted.listId);
         }
@@ -296,9 +297,9 @@ async function refuseIfHeld(
   // Drafts hold choices and values without the database knowing.
   if (
     (record.recordType === "field" &&
-      (await draftsUse(transaction, { column: record.id }))) ||
+      (await draftsUse(transaction, { column: record.id }, undefined))) ||
     (record.recordType === "list-item" &&
-      (await draftsUse(transaction, { choice: record.id })))
+      (await draftsUse(transaction, { choice: record.id }, undefined)))
   ) {
     throw new ConflictError(changedSince);
   }

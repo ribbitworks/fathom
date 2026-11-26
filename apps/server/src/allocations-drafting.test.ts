@@ -292,7 +292,7 @@ describe("allocating", () => {
     );
   });
 
-  it("refuses changing an allocation someone else holds", async () => {
+  it("changes an allocation someone else is changing, unpublished", async () => {
     const personId = await addPerson();
     const featureId = await addFeature();
     expect(
@@ -304,13 +304,13 @@ describe("allocating", () => {
         )
       ).statusCode,
     ).toBe(200);
-    const refused = await change({
+    const changed = await change({
       personId,
       featureId,
       percentage: 25,
       from: month(0),
     });
-    expect(refused.statusCode).toBe(409);
+    expect(changed.statusCode, changed.body).toBe(200);
     await test.request(manager.cookie, "POST", "/api/unpublished/discard");
   });
 });

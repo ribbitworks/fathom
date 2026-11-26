@@ -24,7 +24,7 @@ import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { type Actor, requirePermission, requireView } from "../access.ts";
 import { type Draft, drafted, type Recorded } from "./draft-records.ts";
 import { draftMakers } from "./draft-makers.ts";
-import { type Held, heldByOf, readDrafts, readHeld } from "./drafts.ts";
+import { readDrafts } from "./drafts.ts";
 import {
   datesOf,
   leftBy,
@@ -354,9 +354,6 @@ export async function readFeatureTeams(
           : await readLiveTeams(transaction, today, {
               ids: [...draftsNow.keys()],
             });
-      const held = seesDrafts
-        ? await readHeld(transaction, recordType, actor.user.id)
-        : new Map<string, Held>();
       const makers = await draftMakers(
         transaction,
         recordType,
@@ -419,7 +416,6 @@ export async function readFeatureTeams(
                 ? { disbandedFrom: disbanded.get(id) }
                 : {}),
               ...withDraft,
-              ...heldByOf(held, id),
             },
           ];
         },

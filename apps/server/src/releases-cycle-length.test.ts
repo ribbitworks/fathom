@@ -248,7 +248,7 @@ describe("changing one cycle's length", () => {
     );
   });
 
-  it("refuses moving a release someone else is changing", async () => {
+  it("moves a release someone else is changing, unpublished", async () => {
     const stream = await withRelease();
     await test.request(
       planner.cookie,
@@ -265,7 +265,8 @@ describe("changing one cycle's length", () => {
       length: 2,
       later: "move",
     });
-    expect(response.statusCode).toBe(409);
+    expect(response.statusCode, response.body).toBe(200);
+    await test.request(planner.cookie, "POST", "/api/unpublished/discard");
   });
 
   it("is discarded whole from any of its drafts", async () => {

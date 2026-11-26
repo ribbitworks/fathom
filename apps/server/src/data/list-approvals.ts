@@ -10,7 +10,7 @@ import { type Actor, seesSensitivity, storedTier } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import { recordAddedClass } from "./data-classes.ts";
-import { deleteDrafts, refuseHeldDecision, rejectedIn } from "./drafts.ts";
+import { deleteDrafts, rejectedIn } from "./drafts.ts";
 import {
   type Draft,
   drafted,
@@ -48,16 +48,6 @@ const gone = "One of these drafts no longer exists; refresh to see the latest";
 
 export const asksForLists = (asked: ListSelection) =>
   asked.lists.length + asked.choices.length + asked.orders.length > 0;
-
-// Refuses deciding drafts of records someone holds.
-async function refuseHeld(
-  transaction: Transaction,
-  decided: ListSelection,
-): Promise<void> {
-  await refuseHeldDecision(transaction, "list", decided.lists);
-  await refuseHeldDecision(transaction, "list-item", decided.choices);
-  await refuseHeldDecision(transaction, "choice-order", decided.orders);
-}
 
 // Refuses drafts asked for that do not exist.
 function requireDrafts(state: ListsState, asked: ListSelection): void {
@@ -176,7 +166,6 @@ export async function approveListDrafts(
   requireDrafts(state, asked);
   const approved = withUsed(state, asked);
   requireSeesLists(actor, state, approved);
-  await refuseHeld(transaction, approved);
   refuseRejected([
     ...approved.lists.map((id) => state.listDrafts.get(id)),
     ...approved.choices.map((id) => state.choiceDrafts.get(id)),
@@ -208,10 +197,10 @@ export async function approveListDrafts(
           .from(listTable)
           .where(eq(listTable.id, id))
           .for("update");
-        await refuseIfUsed(transaction, id, "retired");
+        await refuseIfUsed(transaction, id, "retired", undefined);
       }
       const { name, description, visibility, retired } = asList(id, list);
-      await refuseSensitivePlanningList(transaction, id, visibility);
+      await refuseSensitivePlanningList(transaction, id, visibility, undefined);
       await transaction
         .update(listTable)
         .set({ name, description, visibility, retired })
@@ -245,7 +234,12 @@ export async function approveListDrafts(
         drafted,
       );
       if (peoplesMeaning(meaning) && !peoplesMeaning(live.meaning)) {
-        await refusePeoplesMeaningWhileHeld(transaction, id, meaning);
+        await refusePeoplesMeaningWhileHeld(
+          transaction,
+          id,
+          meaning,
+          undefined,
+        );
       }
       await transaction
         .update(listItems)
@@ -265,29 +259,20 @@ export async function approveListDrafts(
     made.push(...orderChanges(listId, before, after));
   }
   for (const id of removedChoices) {
-    await refuseIfChosen(transaction, id);
+    await refuseIfChosen(transaction, id, undefined);
     made.push(
       ...choiceChanges(id, "deleted", state.choices.get(id)?.record, undefined),
     );
     await transaction.delete(listItems).where(eq(listItems.id, id));
   }
   for (const id of removedLists) {
-    await refuseIfUsed(transaction, id, "deleted");
-    // Choices and orders someone is changing count too, since their changes are made to the list
-    // as it is.
-    const waitingChoices = [
-      ...state.choiceDrafts.keys(),
-      ...state.held.choices.keys(),
-    ].some(
+    await refuseIfUsed(transaction, id, "deleted", undefined);
+    const waitingChoices = [...state.choiceDrafts.keys()].some(
       (choiceId) =>
         listOfChoice(state, choiceId) === id &&
         !approved.choices.includes(choiceId),
     );
-    if (
-      waitingChoices ||
-      state.orderDrafts.has(id) ||
-      state.held.orders.has(id)
-    ) {
+    if (waitingChoices || state.orderDrafts.has(id)) {
       throw new ConflictError(
         "A list drafted to be removed has choices with drafts; approve or discard them first",
       );
@@ -296,7 +281,7 @@ export async function approveListDrafts(
       (choiceId) => !removedChoices.includes(choiceId),
     );
     for (const choiceId of choiceIdsNow) {
-      await refuseIfChosen(transaction, choiceId);
+      await refuseIfChosen(transaction, choiceId, undefined);
       made.push(
         ...choiceChanges(
           choiceId,
@@ -316,7 +301,7 @@ export async function approveListDrafts(
   await deleteDrafts(transaction, "list", approved.lists);
   await deleteDrafts(transaction, "list-item", approved.choices);
   await deleteDrafts(transaction, "choice-order", approved.orders);
-  await removeEmptyOrders(transaction);
+  await removeEmptyOrders(transaction, undefined);
   return made;
 }
 
@@ -331,7 +316,6 @@ export async function rejectListDrafts(
   const state = await readState(transaction);
   requireDrafts(state, asked);
   requireSeesLists(actor, state, asked);
-  await refuseHeld(transaction, asked);
   const users = usersOf(state, asked);
   if (
     users.choices.some((id) => !asked.choices.includes(id)) ||

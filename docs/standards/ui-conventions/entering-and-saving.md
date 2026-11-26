@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Entering and Saving Data
@@ -140,7 +140,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 
 ## Publishing
 
-- **Private until published:** A person's changes are theirs alone until they publish them. A record someone else is changing is held, as [Drafts](drafts-and-values.md#drafts) sets out.
+- **Private until published:** A person's changes are theirs alone until they publish them. They hold nothing: others may change the record meanwhile, as [ADR 0008](../../adr/0008-unpublished-drafts.md) sets out.
   - **The top bar:** While they have any, the top bar shows Publish with how many, such as Publish 3 changes, beside a menu listing them. The menu offers Discard all…, which asks first.
   - **Publish:** Publish publishes them all and confirms it in a notification without Undo, such as Published 3 changes.
   - **Changes needing another role:** Changes made under another of the user's roles that the role in use can't make stay unpublished, with those that go with them.

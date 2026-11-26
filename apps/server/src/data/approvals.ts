@@ -46,12 +46,7 @@ import {
   rejectionChange,
   unseenDraft,
 } from "./draft-records.ts";
-import {
-  lockDrafts,
-  readPersonDrafts,
-  refuseHeldDecision,
-  rejectedIn,
-} from "./drafts.ts";
+import { lockDrafts, readPersonDrafts, rejectedIn } from "./drafts.ts";
 import { refuseOwnDrafts, draftKeys } from "./draft-makers.ts";
 import { currentOn, readLive } from "./people-reads.ts";
 import {
@@ -145,7 +140,6 @@ async function seenAsked(
       throw new ForbiddenError(unseenDraft);
     }
   }
-  await refuseHeldDecision(transaction, "person", ids);
   return { columns, found, live };
 }
 
@@ -319,10 +313,10 @@ async function approvePeopleIn(
   const removed = ids.filter(
     (id) => live.has(id) && wanted.get(id)?.person === undefined,
   );
-  await refuseRemovingManagers(transaction, removed);
-  await refuseRemovingHiresPeople(transaction, removed);
+  await refuseRemovingManagers(transaction, removed, undefined);
+  await refuseRemovingHiresPeople(transaction, removed, undefined);
   await refuseRemovingNamed(transaction, "person", removed, actor);
-  await refuseRemovingPeopleOnTeams(transaction, removed);
+  await refuseRemovingPeopleOnTeams(transaction, removed, undefined);
   made.push(...(await removeAllocationsOf(transaction, "personId", removed)));
   await apply(transaction, wanted);
   await applyReporting(transaction, wanted, today);
@@ -334,8 +328,12 @@ async function approvePeopleIn(
   );
   await refuseUnmarkingManagers(transaction, unmarked, today, {
     drafted: false,
+    editor: undefined,
   });
-  await refuseUnmarkingHireManagers(transaction, unmarked, { drafted: false });
+  await refuseUnmarkingHireManagers(transaction, unmarked, {
+    drafted: false,
+    editor: undefined,
+  });
   for (const chunk of inChunks([...ids])) {
     await transaction
       .delete(drafts)

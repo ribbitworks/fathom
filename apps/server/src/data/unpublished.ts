@@ -421,6 +421,7 @@ function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
 // The people whose Employee ID, as the user's drafts make them, someone else has.
 async function takenPeople(
   transaction: Transaction,
+  userId: string,
   versions: Versions,
 ): Promise<Set<string>> {
   const taken = new Set<string>();
@@ -429,11 +430,9 @@ async function takenPeople(
       versions.people.live.get(id),
       versions.people.mine.get(id),
     );
-    if (
-      person !== undefined &&
-      (await takenEmployeeIds(transaction, [String(person.employeeId)], [id]))
-        .length > 0
-    ) {
+    if (person === undefined) continue;
+    const ids = [String(person.employeeId)];
+    if ((await takenEmployeeIds(transaction, ids, [id], userId)).length > 0) {
       taken.add(id);
     }
   }
@@ -623,7 +622,7 @@ export async function publishUnpublished(
       going.rows,
     );
     if (rows.length === 0) return { total: 0, left };
-    const taken = await takenPeople(transaction, versions);
+    const taken = await takenPeople(transaction, userId, versions);
     const misfit = rows.find((row) => !fits(versions, row, taken));
     if (misfit !== undefined) {
       throw new ConflictError(
@@ -664,7 +663,7 @@ export async function publishUnpublished(
       .where(
         and(openChangeSets(userId), noneStillUnpublished(transaction, userId)),
       );
-    await removeEmptyOrders(transaction);
+    await removeEmptyOrders(transaction, undefined);
     return { total: rows.length, left };
   });
 }

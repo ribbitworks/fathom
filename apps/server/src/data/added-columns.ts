@@ -3,12 +3,11 @@
 // The columns and choices drafted to be added that a draft of a person, planned hire or feature may
 // use before they are approved. Part of the data access layer.
 
-import { fields, type Reader } from "@fathom/db";
+import { type Reader } from "@fathom/db";
 import type { ColumnTable } from "@fathom/shared";
-import { inArray } from "drizzle-orm";
 import { mostSensitive } from "../access.ts";
 import type { Draft, Viewer } from "./draft-records.ts";
-import { readDrafts, refuseHeld } from "./drafts.ts";
+import { readDrafts } from "./drafts.ts";
 import { typeOf } from "./column-types.ts";
 import { draftedList, listTier, readState } from "./list-state.ts";
 import {
@@ -80,8 +79,7 @@ export async function columnsWithAdded(
 }
 
 // The choices given that are live, in list order, then those drafted to be added that the editor
-// sees, in the order drafted, which approving places them in. A choice drafted to be added that
-// someone else holds is refused, since they may be discarding it.
+// sees, in the order drafted, which approving places them in.
 export async function choicesWithAdded(
   reader: Reader,
   editor: string,
@@ -91,7 +89,6 @@ export async function choicesWithAdded(
   const found = new Set(live.map(({ id }) => id));
   const wanted = new Set(choiceIds.filter((id) => !found.has(id)));
   if (wanted.size === 0) return live;
-  await refuseHeldPublished(reader, editor, "list-item", [...wanted]);
   const choiceDrafts = await readDrafts(
     reader,
     "list-item",
@@ -106,36 +103,4 @@ export async function choicesWithAdded(
       retired: draft.fields.retired === true,
     })),
   ];
-}
-
-// Refuses giving values in a column only drafted to be added that someone else holds, since they may
-// be discarding it.
-export async function refuseHeldColumns(
-  reader: Reader,
-  editor: string,
-  columnIds: readonly string[],
-): Promise<void> {
-  const live = await reader
-    .select({ id: fields.id })
-    .from(fields)
-    .where(inArray(fields.id, [...columnIds]));
-  await refuseHeldPublished(
-    reader,
-    editor,
-    "field",
-    columnIds.filter((id) => !live.some((column) => column.id === id)),
-  );
-}
-
-// Refuses records whose published drafts someone else holds. A record only in someone else's
-// unpublished draft is left to be refused as one that does not exist, so its maker's draft and
-// name stay private.
-async function refuseHeldPublished(
-  reader: Reader,
-  editor: string,
-  recordType: "field" | "list-item",
-  ids: readonly string[],
-): Promise<void> {
-  const published = await readDrafts(reader, recordType, ids);
-  await refuseHeld(reader, editor, recordType, [...published.keys()]);
 }

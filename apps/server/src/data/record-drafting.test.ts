@@ -19,10 +19,6 @@ import {
 
 const id = "customer-1";
 const live = { name: "Fictional Harbour Co." };
-const holder = "Fictional Maker";
-
-const held = (action: "changed" | "deleted" = "changed") =>
-  new Map([[id, { holderId: "user-2", holder, draft: draft(action) }]]);
 
 describe("a record to change", () => {
   it("is the live record when it has no draft", () => {
@@ -65,28 +61,6 @@ describe("a record to change", () => {
     });
   });
 
-  it("is held when someone else has unpublished changes to it", () => {
-    const state = recordsState({
-      customer: kindState([[id, live]], [], held()),
-    });
-    expect(recordToChange(state, "customer", id)).toEqual({
-      refusal: { reason: "held", holder },
-    });
-  });
-
-  it("is held, rather than removed, when someone else's changes remove it", () => {
-    const state = recordsState({
-      customer: kindState(
-        [[id, live]],
-        [[id, draft("deleted")]],
-        held("deleted"),
-      ),
-    });
-    expect(recordToChange(state, "customer", id)).toEqual({
-      refusal: { reason: "held", holder },
-    });
-  });
-
   it("is removed when its draft removes it", () => {
     const state = recordsState({
       customer: kindState([[id, live]], [[id, draft("deleted")]]),
@@ -101,14 +75,6 @@ describe("the error a refusal is sent as", () => {
   it("is not found for a missing record", () => {
     expect(refusalError({ reason: "missing" })).toEqual(
       new NotFoundError("There is no such record; refresh to see the latest"),
-    );
-  });
-
-  it("is a conflict naming who holds the record", () => {
-    expect(refusalError({ reason: "held", holder })).toEqual(
-      new ConflictError(
-        "Fictional Maker is changing this; it can be changed once they publish or discard their changes",
-      ),
     );
   });
 

@@ -11,6 +11,7 @@ A draft goes through these stages:
   - The menu beside **Publish** lists your changes, and **Discard all…** throws them all away, after asking you first.
   - To publish or discard one record's change, use the record's [**⋯** menu](drafts.md#publish-or-discard-one-change).
   - To publish or discard several, use the **Not published** tab of the [Drafts page](drafts-page.md#publish-some-of-your-changes).
+  - Others can change the same record meanwhile. Each of you sees only your own unpublished changes.
 - **Published:** the draft waits for an approver, someone whose role approves that kind of change. If someone else changes it, only they see their changes until they publish them.
 - **Approved:** the change goes live. Any new list, column or choice it depends on is approved with it. Approving can't be undone.
 - **Rejected:** the draft goes back to whoever made it. They can change it, resubmit it, or discard it.
@@ -45,7 +46,6 @@ You're done when the record's hollow dot turns yellow, once published, or is gon
 - **A name struck through**, after its dot, is removed once the draft is approved.
 - **In a list of records**, such as a project's customers, each record is marked on its own: one the draft adds has a dot before it, one it takes away has a dot and is struck through, and the rest have no mark.
 - **A red dot in a ring** means the draft was rejected. Point at it to see what was rejected and why. The reason is in the record's menu too.
-- **A grey lock** means someone else has unpublished changes to this. Point at it to see who. You can't change it until they publish or discard their changes.
 - **Moved**, **Reordered**, **Retired** or **Restored**, in a yellow box after the name of a draft waiting for approval, says what a dot can't.
 - **A grey or red box** after a name is a fact about it, not a draft. It can be **Built in**, **Planned, expected** and a month or **Planned, no date**, or a warning such as **Left**.
 - **Red words** where a value would be, such as **No feature team** or **Not staffed**, are a warning too. They're not a draft either.

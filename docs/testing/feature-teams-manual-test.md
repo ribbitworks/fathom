@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/org-chart*", "apps/web/src/people-grid.tsx", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "apps/server/src/data/feature-team-rules.ts", "apps/server/src/data/feature-team-held-changes.ts", "apps/server/src/data/feature-team-sight.ts", "apps/server/src/data/feature-team-reads.ts", "apps/server/src/data/feature-team-records.ts", "apps/server/src/data/feature-team-decisions.ts", "apps/server/src/data/feature-team-undo.ts", "apps/server/src/data/feature-team-removals.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/org-chart.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Feature Teams
@@ -36,15 +36,14 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager", which also removes feature teams
 - **Engineering Director:** `engineering.director@fathom.test`, which approves feature teams
 - **Product Manager:** `product.manager@fathom.test`, which sees feature teams but does not change them
-- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Publish](manual-test-basics.md#publish) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms this test uses, among them the teams switch, the Feature teams button, the team panel, the change button, marks and the lock.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms this test uses, among them the teams switch, the Feature teams button, the team panel, the change button and marks.
 
 ## Test Cases
 
@@ -64,7 +63,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Search and discovery' is on the card of 'Lorenza Thiel'.
     - A yellow dot is before 'Search and discovery' on that card.
     - A card named 'Platform reliability' has the position "No feature lead".
-    - A grey lock is before 'Platform reliability' on that card.
   - **Notes:**
 
 - [ ] `5B0D` Look at the bands of the teams' cards.
@@ -100,7 +98,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `71A1` Click the card named 'Platform reliability'.
   - **Expected:**
     - The team panel opens beside the chart, titled 'Platform reliability'.
-    - A grey lock is before the title.
     - Each row has its label in grey on the left and its value on the right, with a line under it.
     - A **Details** section has two rows:
       - **Name**, reading 'Platform reliability'.
@@ -164,24 +161,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### FT-02: An Engineering Manager Proposes Members and a Lead
 
-**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from FT-01. Step `9F02` signs in as another account.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from FT-01.
 
 **Preconditions:** Signed in with this account.
-
-- [ ] `80FB` Run Discard the Unpublished Changes.
-  - **Expected:** The **Publish** button is gone.
-  - **Notes:**
-
-- [ ] `9F02` Sign in as the Engineering Manager, `engineering.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Engineering Manager".
-  - **Notes:**
 
 - [ ] `9CA3` Select the **Org chart** page in the left-hand menu.
   - **Expected:** The chart opens.
   - **Notes:**
 
 - [ ] `B377` Choose **Feature teams** in the teams switch.
-  - **Expected:** The card named 'Platform reliability' has no grey lock.
+  - **Expected:** A card named 'Platform reliability' has the position "No feature lead".
   - **Notes:**
 
 - [ ] `180D` Select the Feature teams button, then 'Platform reliability'.

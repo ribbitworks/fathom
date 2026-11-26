@@ -423,7 +423,7 @@ describe("changing a hire", () => {
     expect(response.statusCode).toBe(409);
   });
 
-  it("is refused while someone else holds the hire with unpublished changes", async () => {
+  it("is saved while someone else has unpublished changes to the hire, naming nobody", async () => {
     const id = await liveHire();
     const other = await test.signedIn("workforce-administrator");
     await ok(
@@ -431,12 +431,13 @@ describe("changing a hire", () => {
         other,
         "PATCH",
         `/api/planned-hires/${id}`,
-        { requisition: unique("Fictional-Held") },
+        { requisition: unique("Fictional-Private") },
         { publish: false },
       ),
     );
-    expect((await hireSeen(id))?.heldBy).toEqual(expect.any(String));
-    expect((await change(id, { stateId: open })).statusCode).toBe(409);
+    expect(await hireSeen(id)).not.toHaveProperty("heldBy");
+    await ok(await change(id, { stateId: open }));
+    expect((await hireSeen(id))?.stateId).toBe(open);
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 });

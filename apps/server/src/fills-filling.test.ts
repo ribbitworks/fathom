@@ -249,18 +249,16 @@ describe("filling a planned hire with someone already in Fathom", () => {
     expect(errorOf(response)).toBe("There is no such person");
   });
 
-  it("is refused for someone another user's unpublished draft is filling a hire with", async () => {
+  it("is drafted for someone only another user's unpublished draft is filling a hire with", async () => {
     const transfer = await person({ isManager: false });
     const other = await test.signedIn("workforce-administrator");
-    const first = await ok(
+    await ok(
       await fill(await hire(), existing(transfer), other, { publish: false }),
     );
-    expect(first).toBeDefined();
 
-    const response = await fill(await hire(), existing(transfer));
+    await ok(await fill(await hire(), existing(transfer)));
 
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toMatch(/already filling a planned hire/u);
+    await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 
   it("is refused for someone with a draft of their own", async () => {

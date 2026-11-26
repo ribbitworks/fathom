@@ -22,7 +22,7 @@ import {
   seesSensitivity,
 } from "../access.ts";
 import { type Draft, drafted, type Recorded } from "./draft-records.ts";
-import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
+import { readPersonDrafts } from "./drafts.ts";
 import { expectedMonth, undatedMark, hireIdOf } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import { inForceOn } from "./in-force.ts";
@@ -208,7 +208,6 @@ export async function readOrgChart(
     hireDrafts,
     positionTier,
     labelOf,
-    held,
     keys,
   } = await database.transaction(
     async (transaction) => {
@@ -256,15 +255,6 @@ export async function readOrgChart(
           ...(await readKeyNumbers(transaction, "person")),
           ...(withHires || wholePlan
             ? await readKeyNumbers(transaction, "hire")
-            : []),
-        ]),
-        // Who holds each person or planned hire by unpublished changes, to those sent their drafts.
-        held: new Map([
-          ...(!approvedOnly
-            ? await readHeld(transaction, "person", actor.user.id)
-            : []),
-          ...(wholePlan
-            ? await readHeld(transaction, "planned-hire", actor.user.id)
             : []),
         ]),
       };
@@ -358,10 +348,6 @@ export async function readOrgChart(
         }
       : person;
   };
-  const heldOf = (person: OrgChartPerson): OrgChartPerson => ({
-    ...person,
-    ...heldByOf(held, person.id),
-  });
   const approved = new Map<string, ChartRecord>([...live, ...liveHires]);
   const chart = chartOf(approved, colours, reader).map(
     (person): OrgChartPerson => {
@@ -372,7 +358,7 @@ export async function readOrgChart(
         drafts.get(person.id) ?? hireDrafts.get(person.id),
         { seesPersonal, labelOf, managerShown, managerOn },
       );
-      return heldOf(draft === undefined ? person : { ...person, draft });
+      return draft === undefined ? person : { ...person, draft };
     },
   );
   const hireDraftsShown = chart.some(
@@ -380,7 +366,7 @@ export async function readOrgChart(
   );
   return {
     people: chart,
-    drafted: draftedChart.map((person) => heldOf(withAddedDraft(person))),
+    drafted: draftedChart.map(withAddedDraft),
     includedPersonal:
       chart.some(
         (person) =>

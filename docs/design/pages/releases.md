@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/releases.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-26"
 ---
 
 # Fathom: Releases Page
@@ -50,7 +50,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 ## Release Details
 
 - **Pencils:** Release, Ships on, Cycles and Colour, for those who change releases, as [Releases](../../product/roles.md#releases) in Roles sets out.
-- **No pencils:** On a release in a retired schedule, drafted to be removed, or held by another's unpublished changes.
+- **No pencils:** On a release in a retired schedule, or drafted to be removed.
 - **Note:** Each release has one built-in note, and schedules have none. Those who see releases read it, and those who change releases write it.
   - **Opening:** The note opens in a panel beside the details, from the Note row's open button, or from **Add note…** in the row's menu while empty.
   - **Kept open:** An open note is kept in the address as [Kept in the address](../../standards/ui-conventions/tables.md#the-address) sets out.
@@ -62,7 +62,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 - **No New button:** Cycles come only from their schedule.
 - **Drafts:** A row is marked by the draft behind it, such as a change to its schedule's cycles.
   - **Two drafts:** Where that change and a draft of the cycle's own release both change a cycle that stays in that release, the menu names both drafts and credits the Release to the release's draft, whose dot, in its own state, marks the Release.
-  - **Deciding both:** Approve and Reject decide both for a role that approves both, while the release's draft is waiting, published, held by nobody and needs no other Approver; otherwise they decide the change behind the row alone.
+  - **Deciding both:** Approve and Reject decide both for a role that approves both, while the release's draft is waiting, published and needs no other Approver; otherwise they decide the change behind the row alone.
   - **Publish draft…, Discard and Resubmit:** Act on the change behind the row alone, from its row or its details.
 - **Duration:** Its pencil works as on a schedule's [cycles](#schedule-cycles).
 

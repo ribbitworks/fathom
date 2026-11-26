@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Schedules
@@ -176,7 +176,6 @@ Covered by [REL-39](releases-manual-test.md#rel-39-a-release-is-added-to-a-sched
   - **Expected:**
     - After the page reloads, the **Schedules** tab is chosen.
     - The table shows `Testing Schedule`, 'Platform', 'Patches' and 'Field Apps', in that order, under no heading.
-    - 'Platform' has a grey lock in its slot.
     - 'Patches' has a yellow dot in its slot, and the yellow **Retired** box follows its name.
     - There is no **New schedule** button.
   - **Notes:**
@@ -390,22 +389,22 @@ Covered by [REL-28](#rel-28-schedules-are-grouped-by-status), which groups the s
   - **Expected:** The section is as it first was: "Earlier cycles" folded, then the current cycle and the next five, then "Later cycles".
   - **Notes:**
 
-#### REL-33: A Schedule Is Changed Only While Nobody Holds It and It Isn't Retiring
+#### REL-33: A Schedule Others Are Changing Can Be Changed, and a Retiring One Restored
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-32 ended with.
 
 **Preconditions:** **Releases** page open on the **Schedules** tab.
 
 - [ ] `DBFB` Select 'Platform' in the table.
-  - **Expected:** A grey lock comes before 'Platform' in the side panel's heading.
+  - **Expected:** The side panel shows 'Platform', with no **Retired** box.
   - **Notes:**
 
-- [ ] `5E8B` Point at the lock.
-  - **Expected:** Its tip reads "Being changed by Second Engineering Operations Manager".
+- [ ] `3A6C` Point at the **Schedule ends** row.
+  - **Expected:** A pencil shows at the row's right.
   - **Notes:**
 
 - [ ] `F35D` Select 'Patches' in the table.
-  - **Expected:** The side panel shows 'Patches', with a **Retired** box after its name and no lock.
+  - **Expected:** The side panel shows 'Patches', with a **Retired** box after its name.
   - **Notes:**
 
 - [ ] `2C38` Select **⋯** at the right of the first cell of the row for 'Patches'.
@@ -419,7 +418,7 @@ Covered by [REL-28](#rel-28-schedules-are-grouped-by-status), which groups the s
 **Preconditions:** **Releases** page open on the **Schedules** tab.
 
 - [ ] `CFF8` Select 'Field Apps' in the table.
-  - **Expected:** The side panel shows 'Field Apps', with no lock and no **Retired** box.
+  - **Expected:** The side panel shows 'Field Apps', with no **Retired** box.
   - **Notes:**
 
 - [ ] `FB54` Point at the **Schedule ends** row.
@@ -463,7 +462,7 @@ Covered by [REL-28](#rel-28-schedules-are-grouped-by-status), which groups the s
 **Preconditions:** Signed in with this account. **Releases** page open on the **Schedules** tab.
 
 - [ ] `0012` Select 'Field Apps' in the table.
-  - **Expected:** The side panel opens on 'Field Apps', with no lock and no **Retired** box.
+  - **Expected:** The side panel opens on 'Field Apps', with no **Retired** box.
   - **Notes:**
 
 - [ ] `482D` Point at the **Schedule ends** row.

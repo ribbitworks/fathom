@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Integration tests for unpublished drafts of people, against a PostgreSQL server of their own: each
-// user's changes are theirs alone until published, others see the records held, and values that
-// must be unique stay taken while unpublished.
+// user's changes are theirs alone until published, hold nothing for anyone else, and take no value
+// that must be unique from anyone else.
 
 import { drafts } from "@fathom/db";
+import type { Field } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type Method, testPosition, unique } from "./test-app.ts";
+import { testPosition, unique } from "./test-app.ts";
 import {
   test,
   alice,
@@ -21,8 +22,6 @@ import {
   saved,
   changeSetOf,
   refused,
-  held,
-  heldDecision,
   personOf,
   unpublished,
   publish,
@@ -65,7 +64,7 @@ describe("drafts of people, until published", () => {
       expect(await personOf(other, added)).toBeUndefined();
       const seen = await personOf(other, changed);
       expect(seen).not.toHaveProperty("draft");
-      expect(seen).toMatchObject({ heldBy: alice.name });
+      expect(seen).not.toHaveProperty("heldBy");
       expect(seen?.preferredName).not.toBe(renamed);
     }
     expect(await unpublished(alice)).toEqual([
@@ -91,35 +90,32 @@ describe("drafts of people, until published", () => {
     expect((await history(bob)).map(({ id }) => id)).toContain(changeSetId);
   });
 
-  it("hold the record: others cannot change, discard, resubmit, approve, or reject it", async () => {
-    const [person = ""] = await livePeople(1);
-    await saved(alice, "PATCH", `/api/people/${person}`, {
-      preferredName: unique("Fictional Held"),
-    });
-    await publish(alice);
-    await saved(bob, "PATCH", `/api/people/${person}`, {
-      values: { [siteColumn.id]: [north.id] },
-    });
-    for (const [method, url, payload] of [
-      ["PATCH", `/api/people/${person}`, { preferredName: "Fictional" }],
-      ["DELETE", `/api/people/${person}`, undefined],
-      ["DELETE", `/api/people/${person}/draft`, undefined],
-      ["DELETE", `/api/people/${person}/draft/rejection`, undefined],
-    ] as [Method, string, object | undefined][]) {
-      await refused(alice, method, url, payload, held(bob));
-    }
+  it("hold nothing: others still change the record, and its draft is still approved or rejected", async () => {
     for (const asking of ["approval", "rejection"] as const) {
+      // Given a published draft that one user is changing, unpublished
+      const [person = ""] = await livePeople(1);
+      await saved(alice, "PATCH", `/api/people/${person}`, {
+        preferredName: unique("Fictional Published"),
+      });
+      await publish(alice);
+      await saved(bob, "PATCH", `/api/people/${person}`, {
+        values: { [siteColumn.id]: [north.id] },
+      });
+
+      // When another user changes it too, and the Approver decides its draft
+      await saved(alice, "PATCH", `/api/people/${person}`, {
+        preferredName: unique("Fictional Again"),
+      });
       const response = await decide(asking, {
         people: [person],
         reason: "Fictional reason",
       });
-      expect(response.statusCode).toBe(409);
-      expect(response.json()).toEqual({ error: heldDecision(bob) });
+
+      // Then both are kept, and the draft is decided
+      expect(response.statusCode, response.body).toBe(200);
+      expect(await discard(alice)).toBe(1);
+      expect(await discard(bob)).toBe(1);
     }
-    expect(await discard(bob)).toBe(1);
-    expect((await decide("approval", { people: [person] })).statusCode).toBe(
-      200,
-    );
   });
 
   it("let anyone change a published draft as their own, crediting both once published", async () => {
@@ -138,9 +134,9 @@ describe("drafts of people, until published", () => {
     });
     const forAlice = await personOf(alice, person);
     expect(forAlice).toMatchObject({
-      heldBy: bob.name,
       draft: { editors: [alice.name], changed: ["preferredName"] },
     });
+    expect(forAlice).not.toHaveProperty("heldBy");
     expect(await publish(bob)).toBe(1);
     expect((await personOf(alice, person))?.draft).toMatchObject({
       editors: [alice.name, bob.name],
@@ -212,16 +208,8 @@ describe("drafts of people, until published", () => {
     });
     expect((await personOf(bob, person))?.draft).not.toHaveProperty("reason");
     expect(await personOf(alice, person)).toMatchObject({
-      heldBy: bob.name,
       draft: { state: "rejected", reason: "Fictional reason" },
     });
-    await refused(
-      alice,
-      "DELETE",
-      `/api/people/${person}/draft/rejection`,
-      undefined,
-      held(bob),
-    );
     await publish(bob);
     expect((await personOf(alice, person))?.draft).toMatchObject({
       state: "waiting",
@@ -229,7 +217,7 @@ describe("drafts of people, until published", () => {
     expect((await personOf(alice, person))?.draft).not.toHaveProperty("reason");
   });
 
-  it("discard a published draft once published, and changing back to it holds nothing", async () => {
+  it("discard a published draft once published, and changing back to it leaves nothing to publish", async () => {
     const [person = ""] = await livePeople(1);
     const original = String((await personOf(alice, person))?.preferredName);
     const name = unique("Fictional Kept");
@@ -243,7 +231,6 @@ describe("drafts of people, until published", () => {
       { subject: original, discarded: true },
     ]);
     expect(await personOf(alice, person)).toMatchObject({
-      heldBy: bob.name,
       draft: { action: "changed" },
     });
     expect(await publish(bob)).toBe(1);
@@ -267,7 +254,6 @@ describe("drafts of people, until published", () => {
       preferredName: name,
     });
     expect(await unpublished(bob)).toEqual([]);
-    expect(await personOf(alice, person)).not.toHaveProperty("heldBy");
   });
 
   it("are undone only by their maker, who gets back the draft as it was", async () => {
@@ -281,10 +267,9 @@ describe("drafts of people, until published", () => {
     expect((await undo(bob, changeSetId)).statusCode).toBe(404);
     expect((await undo(alice, changeSetId)).statusCode).toBe(200);
     expect(await unpublished(alice)).toEqual([]);
-    expect(await personOf(bob, person)).not.toHaveProperty("heldBy");
   });
 
-  it("are not undone once someone else holds the record, which says who, not that it changed", async () => {
+  it("are undone while someone else has unpublished changes to the record", async () => {
     const [person = ""] = await livePeople(1);
     const changeSetId = await changeSetOf(
       alice,
@@ -294,22 +279,22 @@ describe("drafts of people, until published", () => {
     );
     await publish(alice);
     await saved(bob, "PATCH", `/api/people/${person}`, {
-      preferredName: unique("Fictional Held"),
+      preferredName: unique("Fictional Private"),
     });
     const response = await undo(alice, changeSetId);
-    expect(response.statusCode).toBe(409);
-    expect(response.json()).toEqual({ error: held(bob) });
+    expect(response.statusCode, response.body).toBe(200);
     await discard(bob);
-    expect((await undo(alice, changeSetId)).statusCode).toBe(200);
     await discard(alice);
   });
 });
 
-describe("values that must be unique", () => {
-  it("stay taken while unpublished, as do choices and columns unpublished drafts use", async () => {
-    const [person = ""] = await livePeople(1);
+describe("another user's unpublished changes", () => {
+  it("take no value that must be unique, and put no list in use", async () => {
+    // Given one user's unpublished changes naming a person, a list, choices and columns
     const { list: unused } = await liveList([]);
-    const employeeId = unique("E-Held");
+    const employeeId = unique("E-Private");
+    const listName = unique("Fictional Private List");
+    const columnName = unique("Fictional Private Column");
     await saved(alice, "POST", "/api/people", {
       people: [
         {
@@ -319,89 +304,82 @@ describe("values that must be unique", () => {
         },
       ],
     });
-    await saved(alice, "PATCH", `/api/people/${person}`, {
-      values: { [siteColumn.id]: [south.id] },
-    });
-    await refused(
-      bob,
-      "POST",
-      "/api/people",
-      {
-        people: [
-          { preferredName: "Fictional", employeeId, positionId: testPosition },
-        ],
-      },
-      "Someone already has that ID",
-    );
-    const listName = unique("Fictional Held List");
     await saved(alice, "POST", "/api/lists", { name: listName });
-    await refused(
-      bob,
-      "POST",
-      "/api/lists",
-      { name: listName },
-      "There is already a list with that name",
-    );
     await saved(alice, "POST", `/api/lists/${siteList.id}/choices`, {
-      choices: [{ label: "Fictional Held Choice" }],
+      choices: [{ label: "Fictional Private Choice" }],
     });
-    await refused(
-      bob,
-      "POST",
-      `/api/lists/${siteList.id}/choices`,
-      { choices: [{ label: "Fictional Held Choice" }] },
-      "This list already has a choice with that name",
-    );
     await saved(alice, "PUT", `/api/lists/${siteList.id}/choices/${north.id}`, {
       label: "Fictional Northern",
     });
-    await refused(
-      bob,
-      "PUT",
-      `/api/lists/${siteList.id}/choices/${south.id}`,
-      { label: "Fictional Northern" },
-      "This list already has a choice with that name",
-    );
-    const columnName = unique("Fictional Held Column");
     await saved(alice, "POST", "/api/people/columns", {
       name: columnName,
       listId: siteList.id,
     });
-    await refused(
-      bob,
-      "POST",
-      "/api/people/columns",
-      { name: columnName, listId: siteList.id },
-      "There is already a column with that name",
-    );
-    await refused(
-      bob,
-      "DELETE",
-      `/api/lists/${siteList.id}/choices/${south.id}`,
-      undefined,
-      "This choice cannot be removed while it is in use; retire it instead",
-    );
-    const deleting = await send(
-      bob,
-      "DELETE",
-      `/api/people/columns/${siteColumn.id}`,
-    );
-    expect(deleting.statusCode).toBe(409);
-    await refused(
-      bob,
-      "PUT",
-      `/api/people/columns/${siteColumn.id}`,
-      { name: siteColumn.name, listId: siteList.id, required: true },
-      `Drafts leave ${siteColumn.name} empty, so it cannot be required yet`,
-    );
     await saved(alice, "POST", "/api/people/columns", {
       name: unique("Fictional Drawing"),
       listId: unused.id,
     });
-    const retiring = await send(bob, "PUT", `/api/lists/${unused.id}/retired`, {
+
+    // When another user uses the same values, and retires the list
+    await saved(bob, "POST", "/api/people", {
+      people: [
+        { preferredName: "Fictional", employeeId, positionId: testPosition },
+      ],
+    });
+    await saved(bob, "POST", "/api/lists", { name: listName });
+    await saved(bob, "POST", `/api/lists/${siteList.id}/choices`, {
+      choices: [{ label: "Fictional Private Choice" }],
+    });
+    await saved(bob, "PUT", `/api/lists/${siteList.id}/choices/${south.id}`, {
+      label: "Fictional Northern",
+    });
+    await saved(bob, "POST", "/api/people/columns", {
+      name: columnName,
+      listId: siteList.id,
+    });
+    await saved(bob, "PUT", `/api/lists/${unused.id}/retired`, {
       retired: true,
     });
-    expect(retiring.statusCode).toBe(409);
-    expect(await discard(alice)).toBe(7);
+
+    // Then each is saved for both
+    expect(await discard(alice)).toBe(6);
+    expect(await discard(bob)).toBe(6);
+  });
+
+  it("leave a choice and a column their people use free for anyone else to remove", async () => {
+    // Given one user's unpublished change giving a person a choice in a column
+    const {
+      list,
+      choices: [east],
+    } = await liveList(["Fictional East"]);
+    const { field: column } = await saved<{ field: Field }>(
+      alice,
+      "POST",
+      "/api/people/columns",
+      { name: unique("Fictional Wing"), listId: list.id },
+    );
+    await publish(alice);
+    await test.approveLists();
+    const [person = ""] = await livePeople(1);
+    await saved(alice, "PATCH", `/api/people/${person}`, {
+      values: { [column.id]: [String(east?.id)] },
+    });
+    const choiceUrl = `/api/lists/${list.id}/choices/${String(east?.id)}`;
+    const columnUrl = `/api/people/columns/${column.id}`;
+
+    // When that user and another remove the choice and the column
+    // Then only the user whose change uses them is refused
+    await refused(
+      alice,
+      "DELETE",
+      choiceUrl,
+      undefined,
+      "This choice cannot be removed while it is in use; retire it instead",
+    );
+    expect((await send(alice, "DELETE", columnUrl)).statusCode).toBe(409);
+    await saved(bob, "DELETE", choiceUrl);
+    await saved(bob, "DELETE", columnUrl);
+    expect(await discard(alice)).toBe(1);
+    expect(await discard(bob)).toBe(2);
   });
 });

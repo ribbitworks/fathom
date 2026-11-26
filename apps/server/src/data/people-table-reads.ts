@@ -27,7 +27,7 @@ import {
   type Recorded,
 } from "./draft-records.ts";
 import { draftMakers, otherApprover } from "./draft-makers.ts";
-import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
+import { readPersonDrafts } from "./drafts.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { type LiveValues, noLiveValues, typeOf } from "./column-types.ts";
 import { readToday } from "./settings.ts";
@@ -211,9 +211,6 @@ async function readPeopleIn(
     on === undefined
       ? draftsRead
       : await draftsOn(database, draftsRead, live, { today, day });
-  const held = withDrafts
-    ? await readHeld(database, "person", actor.user.id)
-    : new Map();
   const makers = await draftMakers(
     database,
     "person",
@@ -288,7 +285,6 @@ async function readPeopleIn(
           shownFields.has(valueField(columnId)),
         ),
         ...(seen ? { draft: seen } : {}),
-        ...heldByOf(held, id),
       },
     ];
   });

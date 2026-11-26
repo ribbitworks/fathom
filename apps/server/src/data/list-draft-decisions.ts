@@ -30,7 +30,6 @@ import {
   drafting,
   noChoice,
   noList,
-  refuseHeldIn,
   refuseUnseenList,
   removeDiscarded,
 } from "./lists.ts";
@@ -55,13 +54,10 @@ function draftOf(
   }
   let draft: Draft | undefined;
   if (kind === "list") {
-    refuseHeldIn(state.held.lists, listId);
     draft = state.listDrafts.get(listId);
   } else if (kind === "order") {
-    refuseHeldIn(state.held.orders, listId);
     draft = state.orderDrafts.get(listId);
   } else {
-    refuseHeldIn(state.held.choices, choiceId as string);
     draft = state.choiceDrafts.get(choiceId as string);
   }
   if (draft === undefined) throw new NotFoundError(noDraft);

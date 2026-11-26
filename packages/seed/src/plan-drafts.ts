@@ -52,14 +52,14 @@ export const addedCustomer = "Saltmarsh Ferries";
 export const addedFeature = "Shift Handover Notes";
 
 export const draftedFeatureTeamName = "Search and discovery";
-export const heldStreamName = "Platform core";
-export const heldFeatureTeamName = "Reliability guild";
+export const unpublishedStreamName = "Platform core";
+export const unpublishedFeatureTeamName = "Reliability guild";
 
 // Days from the seed day to the milestone drafted adding, and how much later the moved one is.
 const addedMilestoneDays = 75;
 const movedMilestoneDays = 30;
 const draftedEstimateHours = 720;
-const heldEstimateHours = 1500;
+const unpublishedEstimateHours = 1500;
 // The cycles after the moved release's last before the one the release drafted adding is on.
 const addedReleaseGap = 1;
 // The colours drafted for the renamed release and the release whose colour is rejected.
@@ -106,7 +106,7 @@ const changedFeature = featureId(
     "planned feature with an estimate",
   ),
 );
-const heldFeature = featureId(
+const unpublishedFeature = featureId(
   present(
     seededFeatures.find(
       ({ status, cycle }) => status === "possible" && cycle === null,
@@ -115,13 +115,13 @@ const heldFeature = featureId(
   ),
 );
 
-// The seeded feature teams the drafts change: the second renamed, the third held, and the fourth
-// given and losing members, by place, since the teams after it are added later.
+// The seeded feature teams the drafts change: the second renamed, the third changed unpublished,
+// and the fourth given and losing members, by place, since the teams after it are added later.
 function draftedTeams(organization: FictionalOrganization) {
   const { featureTeams } = organization;
   return {
     renamed: present(featureTeams[1], "second feature team"),
-    held: present(featureTeams[2], "third feature team"),
+    unpublished: present(featureTeams[2], "third feature team"),
     regrouped: present(featureTeams[3], "fourth feature team"),
   };
 }
@@ -428,32 +428,32 @@ export async function seedUnpublishedPlan(
 ): Promise<boolean> {
   const data = createDataAccess(database);
   const platform = streamId(platformKeys);
-  const { held } = draftedTeams(organization);
+  const { unpublished } = draftedTeams(organization);
   let made = false;
   if (!(await draftedSinceAdded(database, platform))) {
     await data.releases.updateStream(
       await actorOf(database, secondEditorEmail),
       platform,
-      { name: heldStreamName },
+      { name: unpublishedStreamName },
     );
     made = true;
   }
-  if (!(await draftedSinceAdded(database, held.id))) {
+  if (!(await draftedSinceAdded(database, unpublished.id))) {
     await data.featureTeams.update(
       await actorOf(database, secondEditorEmail),
-      held.id,
-      { name: heldFeatureTeamName },
+      unpublished.id,
+      { name: unpublishedFeatureTeamName },
     );
     made = true;
   }
-  if (!(await draftedSinceAdded(database, heldFeature))) {
-    const holder = await actorOf(database, otherPlanEditorEmail);
-    const { features } = await data.projects.read(holder);
-    await data.projects.change(holder, heldFeature, {
+  if (!(await draftedSinceAdded(database, unpublishedFeature))) {
+    const maker = await actorOf(database, otherPlanEditorEmail);
+    const { features } = await data.projects.read(maker);
+    await data.projects.change(maker, unpublishedFeature, {
       type: "feature",
       request: {
-        ...featureRequest(byId(features, heldFeature)),
-        estimateHours: heldEstimateHours,
+        ...featureRequest(byId(features, unpublishedFeature)),
+        estimateHours: unpublishedEstimateHours,
       },
     });
     made = true;

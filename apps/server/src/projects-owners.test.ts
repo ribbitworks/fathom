@@ -91,7 +91,7 @@ describe("owners", () => {
     },
   );
 
-  it("cannot be removed while unpublished changes name them, naming only the remover's own", async () => {
+  it("cannot be removed while the remover's own unpublished changes name them, but can by anyone else", async () => {
     const editor = await test.signedIn("workforce-administrator");
     const person = await addPerson();
     const owner = await test.signedIn(["plan:edit", "people:edit"]);
@@ -104,11 +104,6 @@ describe("owners", () => {
       { publish: false },
     );
     expect(drafted.statusCode).toBe(201);
-    const byOther = await test.request(
-      editor.cookie,
-      "DELETE",
-      `/api/people/${person}`,
-    );
     const byMaker = await test.request(
       owner.cookie,
       "DELETE",
@@ -116,14 +111,16 @@ describe("owners", () => {
       undefined,
       { publish: false },
     );
-    expect(byOther.statusCode).toBe(409);
-    expect(errorOf(byOther)).toBe(
-      "This person is named by a project; change that first",
+    const byOther = await test.request(
+      editor.cookie,
+      "DELETE",
+      `/api/people/${person}`,
     );
     expect(byMaker.statusCode).toBe(409);
     expect(errorOf(byMaker)).toBe(
       `This person is named by the project ${project}; change that first`,
     );
+    expect(byOther.statusCode, byOther.body).toBe(200);
     await test.request(owner.cookie, "POST", "/api/unpublished/discard");
   });
 });

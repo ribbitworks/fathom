@@ -31,8 +31,8 @@ import {
   addedMilestone,
   addedRelease,
   draftedFeatureTeamName,
-  heldFeatureTeamName,
-  heldStreamName,
+  unpublishedFeatureTeamName,
+  unpublishedStreamName,
   present,
   seededDraftTypes,
   seedPlanDrafts,
@@ -72,7 +72,7 @@ const planDrafts = () =>
     .from(drafts)
     .where(inArray(drafts.recordType, [...seededDraftTypes]));
 
-const holders = async () =>
+const makers = async () =>
   (
     await connection
       .select({
@@ -124,7 +124,7 @@ describe("the seed's drafts of the plan and feature teams", () => {
     expect(await unseedPlanDrafts(connection, organization)).toBe(0);
   });
 
-  it("are drafted, held, and rejected once, and discarded leaving drafts made by hand", async () => {
+  it("are drafted, kept unpublished, and rejected once, and discarded leaving drafts made by hand", async () => {
     // Given the seed data, with its drafts
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await seedCommand(["seed"], command.environment())).toBe(0);
@@ -184,7 +184,7 @@ describe("the seed's drafts of the plan and feature teams", () => {
         .filter(({ recordType }) => recordType === "feature-team")
         .map(({ fields }) => fields.name),
     ).toContain(draftedFeatureTeamName);
-    expect(await holders()).toEqual([
+    expect(await makers()).toEqual([
       "feature project.manager@fathom.test",
       "feature-team engineering.operations.manager.2@fathom.test",
       "release-stream engineering.operations.manager.2@fathom.test",
@@ -195,24 +195,24 @@ describe("the seed's drafts of the plan and feature teams", () => {
       "engineering.director@fathom.test",
     );
     const { streams } = await data.releases.read(approver);
-    expect(streams.map(({ name, heldBy }) => [name, heldBy])).toEqual([
-      ["Platform", expect.any(String)],
-      ["Patches", undefined],
-      ["Field Apps", undefined],
+    expect(streams.map(({ name }) => name)).toEqual([
+      "Platform",
+      "Patches",
+      "Field Apps",
     ]);
-    const held = await data.releases.read(
+    const kept = await data.releases.read(
       await actorOf(connection, "engineering.operations.manager.2@fathom.test"),
     );
-    expect(held.streams[0]?.name).toBe(heldStreamName);
+    expect(kept.streams[0]?.name).toBe(unpublishedStreamName);
     const { teams } = await data.featureTeams.read(
       await actorOf(connection, "engineering.operations.manager.2@fathom.test"),
     );
-    expect(teams.map(({ name }) => name)).toContain(heldFeatureTeamName);
+    expect(teams.map(({ name }) => name)).toContain(unpublishedFeatureTeamName);
 
     // When the seed data is added again
     const organization = fictionalOrganization({ size: developmentSize });
 
-    // Then nothing more is drafted or held
+    // Then nothing more is drafted or kept unpublished
     expect(await seedPlanDrafts(connection, organization)).toBe(false);
     expect(await seedUnpublishedPlan(connection, organization)).toBe(false);
     expect(await planDrafts()).toHaveLength(15);
@@ -248,7 +248,7 @@ describe("the seed's drafts of the plan and feature teams", () => {
       "Discarded 15 drafts of releases, projects, features, and feature teams",
     );
     expect(await planDrafts()).toEqual([]);
-    expect(await holders()).toEqual([]);
+    expect(await makers()).toEqual([]);
   });
 });
 

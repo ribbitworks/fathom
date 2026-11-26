@@ -193,16 +193,18 @@ describe("reading feature teams", () => {
     expect((await teamSeen(id, planner))?.draft).toBeUndefined();
   });
 
-  it("shows who else is changing a team, and the maker's unpublished draft as theirs", async () => {
+  it("shows a team someone else is changing as it is, naming nobody, and the maker's unpublished draft as theirs", async () => {
     const id = await liveTeam();
     const other = await test.signedIn("workforce-administrator");
     await ok(
-      await change(id, { name: unique("Fictional Held Team") }, other, {
+      await change(id, { name: unique("Fictional Private Team") }, other, {
         publish: false,
       }),
     );
 
-    expect((await teamSeen(id, editor))?.heldBy).toBeDefined();
+    const seen = await teamSeen(id, editor);
+    expect(seen).not.toHaveProperty("heldBy");
+    expect(seen).not.toHaveProperty("draft");
     expect((await teamSeen(id, other))?.draft?.unpublished).toBe(true);
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });

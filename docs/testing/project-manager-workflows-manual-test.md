@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-project-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Project Manager Workflows
@@ -22,10 +22,7 @@ Verifies the workflows of [Working as a Project Manager](../help/working-as-a-pr
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
-
-- A browser window at least 1,440 pixels wide.
-- A second browser, or a private window, for signing in as a second account while the first stays signed in.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
 
 ## Test Accounts
 
@@ -33,11 +30,10 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Project Manager:** `project.manager@fathom.test`
 - **Product Manager:** `product.manager@fathom.test`
-- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database), [Publish](manual-test-basics.md#publish) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
@@ -385,23 +381,9 @@ Removed: keeping a view is checked in [VIEW-01](saved-views-manual-test.md#view-
 
 ### PROJECT-07: A Release Is Made, With a Note
 
-**Account:** Project Manager, `project.manager@fathom.test`, in the main browser, the same as PROJECT-06. Steps `131E` and `047C` act in the second browser. Step `3DB5` signs in as another account in the main browser.
+**Account:** Project Manager, `project.manager@fathom.test`, the same as PROJECT-06. Step `3DB5` signs in as another account.
 
-**Preconditions:** Signed in with this account in the main browser. **Releases** page open from the left-hand menu.
-
-- [ ] `131E` In the second browser, sign in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`.
-  - **Expected:** The top bar shows the Publish button.
-  - **Notes:**
-
-- [ ] `047C` In the second browser, run Discard the Unpublished Changes.
-  - **Expected:**
-    - A notice says "Discarded" followed by the number of changes.
-    - The Publish button is gone.
-  - **Notes:**
-
-- [ ] `076F` In the main browser, reload the page.
-  - **Expected:** The **Releases** page shows again.
-  - **Notes:**
+**Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu.
 
 - [ ] `38DB` Select **New release**.
   - **Expected:** A dialog titled "New release" opens, whose first field is **Schedule**.

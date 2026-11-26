@@ -198,25 +198,23 @@ describe("drafting a change to the settings", () => {
     });
   });
 
-  it("holds the settings for their maker until published, refusing anyone else's change", async () => {
+  it("keeps a change for its maker until published, while anyone else changes the settings too", async () => {
     // Given a change not yet published
     await change(editor.cookie, { bufferPercent: 20 }, { publish: false });
 
     // When someone else reads and changes the settings
     const other = await test.signedIn("engineering-director");
     const seen = await read(other.cookie);
-    const refused = await change(other.cookie, { focusPercent: 60 });
+    const theirs = await change(other.cookie, { focusPercent: 60 });
 
-    // Then they see them as they were, held, and their change is refused
-    expect(seen).toMatchObject({
-      bufferPercent: 0,
-      heldBy: expect.any(String) as unknown,
-    });
+    // Then they see them as they were, naming nobody, and their change is saved under the maker's
+    expect(seen).toMatchObject({ bufferPercent: 0 });
+    expect(seen).not.toHaveProperty("heldBy");
     expect(seen.draft).toBeUndefined();
-    expect(refused.statusCode).toBe(409);
+    expect(theirs.statusCode, theirs.body).toBe(200);
     expect(await read(editor.cookie)).toMatchObject({
       bufferPercent: 20,
-      focusPercent: 80,
+      focusPercent: 60,
       draft: { unpublished: true },
     });
   });

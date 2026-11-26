@@ -13,19 +13,12 @@ import {
   asDraft,
   clearedRejection,
   type Draft,
-  drafted,
   type Recorded,
   refuseRejected,
   rejectionChange,
   requireRejected,
 } from "./draft-records.ts";
-import {
-  deleteDrafts,
-  discardDrafts,
-  refuseHeldDecision,
-  rejectedIn,
-  reopened,
-} from "./drafts.ts";
+import { deleteDrafts, discardDrafts, rejectedIn, reopened } from "./drafts.ts";
 import {
   addedOnly,
   linkedIds,
@@ -62,7 +55,7 @@ import {
   recordKinds,
   ruleProblem,
 } from "./records.ts";
-import { drafting, kindChanges, refuseHeldIn } from "./record-drafting.ts";
+import { drafting, kindChanges } from "./record-drafting.ts";
 
 // The records only drafted to be added that belong to one, through the links of their kinds, and
 // those that belong to them, and so on.
@@ -126,7 +119,7 @@ export function cyclesDiscardRefusal(
 
 // Discards the editor's draft of a record, so the record is as it is live, or, for one only drafted
 // to be added, gone, with the drafts bound to it and the drafts of the records only drafted to be
-// added that belong to any of them. Refused while other drafts, published or not, use any of them,
+// added that belong to any of them. Refused while other drafts the editor sees use any of them,
 // and, to an editor who may not change cycles, when it would discard a draft of a stream's cycles.
 export async function discardRecordDraft(
   database: Database,
@@ -136,7 +129,6 @@ export async function discardRecordDraft(
 ): Promise<string | null> {
   return drafting(database, maker.user.id, async (transaction, state) => {
     if (!recordExists(state, type, id)) throw new NotFoundError(noRecord);
-    refuseHeldIn(state, type, id);
     if (!stateOf(state, type).drafts.has(id)) throw new NotFoundError(noDraft);
     const discarded = [
       ...new Map(
@@ -163,27 +155,13 @@ export async function discardRecordDraft(
     const keys = new Set(discarded.map(refKey));
     const added = discarded.filter((ref) => addedOnly(state, ref.type, ref.id));
     const addedKeys = new Set(added.map(refKey));
-    const usedElsewhere =
-      draftedRefs(state).some(
-        (ref) =>
-          !keys.has(refKey(ref)) &&
-          usesOf(kindOf(ref.type), state, ref.id).some((used) =>
-            addedKeys.has(refKey(used)),
-          ),
-      ) ||
-      recordKinds.some((kind) =>
-        [...stateOf(state, kind.type).held].some(([heldId, { draft }]) => {
-          const version = drafted(
-            stateOf(state, kind.type).live.get(heldId),
-            draft,
-          );
-          return Object.entries(kind.links).some(([name, linked]) =>
-            linkedIds(version, name).some((target) =>
-              addedKeys.has(refKey({ type: linked, id: target })),
-            ),
-          );
-        }),
-      );
+    const usedElsewhere = draftedRefs(state).some(
+      (ref) =>
+        !keys.has(refKey(ref)) &&
+        usesOf(kindOf(ref.type), state, ref.id).some((used) =>
+          addedKeys.has(refKey(used)),
+        ),
+    );
     if (usedElsewhere) {
       throw new ConflictError(
         "This draft can't be discarded while other drafts depend on it. Discard those drafts, or change them so they no longer use it, then try again.",
@@ -242,7 +220,6 @@ export async function resubmitRecordDraft(
 ): Promise<string | null> {
   return drafting(database, maker.user.id, async (transaction, state) => {
     if (!recordExists(state, type, id)) throw new NotFoundError(noRecord);
-    refuseHeldIn(state, type, id);
     const draft = stateOf(state, type).drafts.get(id);
     if (draft === undefined) throw new NotFoundError(noDraft);
     requireRejected(draft);
@@ -313,19 +290,6 @@ function requireRecordDrafts(state: RecordsState, asked: readonly RecordRef[]) {
   }
 }
 
-async function refuseHeldRecords(
-  transaction: Transaction,
-  refs: readonly RecordRef[],
-): Promise<void> {
-  for (const kind of recordKinds) {
-    await refuseHeldDecision(
-      transaction,
-      kind.type,
-      refs.filter(({ type }) => type === kind.type).map(({ id }) => id),
-    );
-  }
-}
-
 // Approves the drafts of the records asked for, and those they use, applying them to the live
 // records, and returns the changes made, for approvals.ts to record with the other drafts approved
 // at the same time, and the values still to write: those in a column or choice only drafted to be
@@ -340,7 +304,6 @@ export async function approveRecordDrafts(
   const state = await readRecordsState(transaction);
   requireRecordDrafts(state, asked);
   const approved = withUsedRecords(state, asked);
-  await refuseHeldRecords(transaction, approved);
   refuseRejected(
     approved.map(({ type, id }) => stateOf(state, type).drafts.get(id)),
   );
@@ -444,7 +407,6 @@ export async function rejectRecordDrafts(
   if (asked.length === 0) return [];
   const state = await readRecordsState(transaction);
   requireRecordDrafts(state, asked);
-  await refuseHeldRecords(transaction, asked);
   if (usingRecords(state, asked).length > 0) {
     throw new ConflictError(
       "Other drafts depend on these drafts. Reject them together, or wait until those drafts no longer depend on these.",

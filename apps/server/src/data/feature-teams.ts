@@ -44,13 +44,7 @@ import {
   requireRejected,
   tidy,
 } from "./draft-records.ts";
-import {
-  lockDrafts,
-  readHeld,
-  refuseHeld,
-  reopened,
-  writeDraft,
-} from "./drafts.ts";
+import { lockDrafts, reopened, writeDraft } from "./drafts.ts";
 import {
   peopleOf,
   readLiveTeams,
@@ -130,20 +124,18 @@ export function requireChanging(actor: Actor): void {
   if (!changesTeams(actor)) throw new ForbiddenError();
 }
 
-// Every team's name, live or in a draft, published or not, with its team.
+// Every team's name, live or in a draft as the editor, when given, sees the drafts, with its team.
 export async function readTeamNames(
   transaction: Transaction,
+  editor: string | undefined,
 ): Promise<[string, string][]> {
   const live = await transaction
     .select({ id: featureTeams.id, name: featureTeams.name })
     .from(featureTeams);
   return [
     ...live.map(({ id, name }): [string, string] => [id, name]),
-    ...[...(await readTeamDrafts(transaction))].map(
+    ...[...(await readTeamDrafts(transaction, undefined, editor))].map(
       ([id, draft]): [string, unknown] => [id, draft.fields.name],
-    ),
-    ...[...(await readHeld(transaction, recordType, undefined))].map(
-      ([id, { draft }]): [string, unknown] => [id, draft.fields.name],
     ),
   ].filter((named): named is [string, string] => typeof named[1] === "string");
 }
@@ -152,8 +144,9 @@ async function refuseTakenName(
   transaction: Transaction,
   name: string,
   except: string,
+  editor: string,
 ): Promise<void> {
-  if (nameIsTaken(await readTeamNames(transaction), name, except)) {
+  if (nameIsTaken(await readTeamNames(transaction, editor), name, except)) {
     throw new ConflictError(nameTaken);
   }
 }
@@ -326,7 +319,7 @@ export async function createFeatureTeam(
   return changingTeams(database, actor, asOf, async (transaction, today) => {
     const from = fromDay(actor, request.from, today);
     const id = randomUUID();
-    await refuseTakenName(transaction, request.name, id);
+    await refuseTakenName(transaction, request.name, id, actor.user.id);
     // A lead who is not among the members asked for joins the team with them.
     const members = [
       ...new Set([
@@ -380,8 +373,7 @@ export async function createFeatureTeam(
 }
 
 // A team as it is and as the actor's draft makes it, without anyone who has left, once the drafts
-// lock is held, refusing one that is neither live nor in a draft the actor sees, or that someone
-// else is changing.
+// lock is held, refusing one that is neither live nor in a draft the actor sees.
 export async function draftedTeam(
   transaction: Transaction,
   actor: Actor,
@@ -397,7 +389,6 @@ export async function draftedTeam(
   if (before === undefined && draft === undefined) {
     throw new NotFoundError(noTeam);
   }
-  await refuseHeld(transaction, actor.user.id, recordType, [id]);
   const team = drafted(before, draft);
   return {
     before,
@@ -498,7 +489,7 @@ export async function draftTeamChange(
     );
   }
   if (change.name !== undefined) {
-    await refuseTakenName(transaction, change.name, id);
+    await refuseTakenName(transaction, change.name, id, actor.user.id);
   }
   const {
     after,

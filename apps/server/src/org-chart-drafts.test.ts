@@ -184,77 +184,11 @@ describe("drafts on the org chart", () => {
     });
   });
 
-  it("names who holds someone by unpublished changes, to everyone else, on both charts", async () => {
-    const held = await person();
-    await changed(held, { teamName: unique("Fictional Team") }, false);
+  it("names nobody changing someone with unpublished changes, on either chart", async () => {
+    const changing = await person();
+    await changed(changing, { teamName: unique("Fictional Team") }, false);
     const others = await chart(approver);
-    expect(others.people.get(held)?.heldBy).toEqual(expect.any(String));
-    expect(others.drafted.get(held)?.heldBy).toEqual(
-      others.people.get(held)?.heldBy,
-    );
-    const own = await chart(cookie);
-    expect(own.people.get(held)).not.toHaveProperty("heldBy");
-  });
-
-  it("names nobody holding a person or a planned hire to a reader who is sent no drafts", async () => {
-    // Given a person and a planned hire, each held by unpublished changes
-    const held = await person();
-    await changed(held, { teamName: unique("Fictional Team") }, false);
-    const added = await test.request(cookie, "POST", "/api/planned-hires", {
-      hires: [{ positionId: testPosition }],
-    });
-    expect(added.statusCode, added.body).toBe(201);
-    const hire = String(added.json<{ ids: string[] }>().ids[0]);
-    await decided("/api/drafts/approval", { plannedHires: [hire] });
-    const hold = await test.request(
-      cookie,
-      "PATCH",
-      `/api/planned-hires/${hire}`,
-      { managerId: held },
-      { publish: false },
-    );
-    expect(hold.statusCode, hold.body).toBe(200);
-    expect((await chart(approver)).people.get(hire)?.heldBy).toEqual(
-      expect.any(String),
-    );
-
-    // When a Team Member, who does not see people, reads the chart
-    const member = await test.signedIn("team-member");
-    const read = await chart(member.cookie);
-
-    // Then neither is held on either chart
-    for (const id of [held, hire]) {
-      expect(read.people.get(id)).not.toHaveProperty("heldBy");
-      expect(read.drafted.get(id)).not.toHaveProperty("heldBy");
-    }
-  });
-
-  it("names nobody holding a person on a chosen day to a reader who may not change people", async () => {
-    // Given a person held by unpublished changes
-    const held = await person();
-    await changed(held, { teamName: unique("Fictional Team") }, false);
-
-    // When a reader who sees people and their Personal details, but may not change them, reads an
-    // earlier day
-    const planner = await test.signedIn([
-      "people:view",
-      "feature-teams:view",
-      "personal:view",
-    ]);
-    const response = await test.request(
-      planner.cookie,
-      "GET",
-      "/api/org-chart?on=2026-06-01",
-    );
-    expect(response.statusCode, response.body).toBe(200);
-    const read = response.json<{
-      people: OrgChartPerson[];
-      drafted: OrgChartPerson[];
-    }>();
-
-    // Then they are not held on either chart
-    for (const people of [read.people, read.drafted]) {
-      expect(people.find(({ id }) => id === held)).not.toHaveProperty("heldBy");
-    }
+    expect(others.people.get(changing)).not.toHaveProperty("heldBy");
+    expect(others.drafted.get(changing)).not.toHaveProperty("heldBy");
   });
 });

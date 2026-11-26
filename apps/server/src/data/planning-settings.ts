@@ -37,7 +37,6 @@ import {
   readRecordMakers,
   readRecordsState,
   recordDraftOut,
-  recordHeldBy,
 } from "./records.ts";
 
 const missing = "The planning settings are missing; apply the migrations";
@@ -59,7 +58,6 @@ async function settingsOut(
   return {
     ...(settings as PlanningSettings),
     ...(draft === undefined ? {} : { draft }),
-    ...recordHeldBy(state, "planning-settings", planningSettingsId),
   };
 }
 

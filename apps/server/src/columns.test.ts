@@ -2,10 +2,11 @@
 
 // Tests for required columns on the People table, against a PostgreSQL server of their own, since
 // whether a column can be required depends on everyone in Fathom: a column can be added as required
-// only while there is no one yet, made required once everyone has a value, live and in drafts, and
-// then every person needs one, including a person brought back by undoing a draft's discarding.
+// only while there is no one yet, made required once everyone has a value, live and in the drafts the
+// editor sees, and then every person needs one, including a person brought back by undoing a draft's
+// discarding.
 
-import type { Choice, Field, List } from "@fathom/shared";
+import type { Choice, Field, List, Person } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
 
@@ -160,5 +161,69 @@ describe("required columns", () => {
       `/api/undo/${deleted.json<{ changeSetId: string }>().changeSetId}`,
     );
     expect(undone.statusCode).toBe(409);
+  });
+
+  it("cannot be made required while the editor's own unpublished draft leaves it empty, but can by another editor", async () => {
+    // Given a column everyone has a value in, and one editor's unpublished draft clearing someone's
+    const { cookie } = await test.signedIn("workforce-administrator");
+    const other = await test.signedIn("workforce-administrator");
+    const list = (
+      await test.request(cookie, "POST", "/api/lists", {
+        name: "Fictional Floors",
+      })
+    ).json<{ list: List }>().list;
+    const [choice] = (
+      await test.request(cookie, "POST", `/api/lists/${list.id}/choices`, {
+        choices: [{ label: "Fictional Ground" }],
+      })
+    ).json<{ choices: Choice[] }>().choices;
+    await test.approveLists();
+    const floor = (
+      await test.request(cookie, "POST", "/api/people/columns", {
+        name: "Floor",
+        listId: list.id,
+      })
+    ).json<{ field: Field }>().field;
+    await test.approveLists();
+    const everyone = (await test.request(cookie, "GET", "/api/people"))
+      .json<{ people: Person[] }>()
+      .people.map(({ id }) => id);
+    for (const id of everyone) {
+      const given = await test.request(cookie, "PATCH", `/api/people/${id}`, {
+        values: { [floor.id]: [String(choice?.id)] },
+      });
+      expect(given.statusCode, given.body).toBe(200);
+    }
+    await approve(everyone);
+    const unpublished = { publish: false };
+    const cleared = await test.request(
+      cookie,
+      "PATCH",
+      `/api/people/${String(everyone[0])}`,
+      { values: { [floor.id]: [] } },
+      unpublished,
+    );
+    expect(cleared.statusCode, cleared.body).toBe(200);
+    const url = `/api/people/columns/${floor.id}`;
+    const required = { name: "Floor", listId: list.id, required: true };
+
+    // When that editor and another make the column required
+    const own = await test.request(cookie, "PUT", url, required, unpublished);
+    const theirs = await test.request(
+      other.cookie,
+      "PUT",
+      url,
+      required,
+      unpublished,
+    );
+
+    // Then only the editor whose draft leaves it empty is refused
+    expect(own.json()).toEqual({
+      error: "Drafts leave Floor empty, so it cannot be required yet",
+    });
+    expect(theirs.statusCode, theirs.body).toBe(200);
+    for (const who of [cookie, other.cookie]) {
+      await test.request(who, "POST", "/api/unpublished/discard");
+    }
   });
 });

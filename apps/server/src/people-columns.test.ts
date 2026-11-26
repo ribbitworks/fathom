@@ -143,6 +143,41 @@ describe("columns", () => {
     expect(required.statusCode).toBe(409);
   });
 
+  it("refuses one choice while the editor's own unpublished draft has several, but not for another editor", async () => {
+    // Given one editor's unpublished draft giving a person several choices in a column
+    const { cookie } = await editor();
+    const other = await editor();
+    const { field, choices, list } = await columnWith(cookie, ["A", "B"], {
+      multiple: true,
+    });
+    const { id } = await addLivePerson(cookie);
+    const unpublished = { publish: false };
+    const given = await send(
+      cookie,
+      "PATCH",
+      `/api/people/${id}`,
+      { values: { [field.id]: choices.map((choice) => choice.id) } },
+      unpublished,
+    );
+    expect(given.statusCode, given.body).toBe(200);
+    const url = `/api/people/columns/${field.id}`;
+    const single = { name: field.name, listId: list.id, multiple: false };
+
+    // When that editor and another make the column take one choice
+    const own = await send(cookie, "PUT", url, single, unpublished);
+    const theirs = await send(other, "PUT", url, single, unpublished);
+
+    // Then only the editor whose draft has several is refused
+    expect(own.statusCode).toBe(409);
+    expect(own.json<{ error: string }>().error).toBe(
+      `Drafts have several choices for ${field.name}, so it cannot take only one yet`,
+    );
+    expect(theirs.statusCode, theirs.body).toBe(200);
+    for (const who of [cookie, other]) {
+      await send(who, "POST", "/api/unpublished/discard");
+    }
+  });
+
   it("counts people in words", () => {
     expect([1, 2].map(peopleHave)).toEqual(["1 person has", "2 people have"]);
     expect([1, 2].map(hiresHave)).toEqual([

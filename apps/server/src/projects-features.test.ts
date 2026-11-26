@@ -219,21 +219,22 @@ describe("a feature's projects and proposals", () => {
     expect(response.statusCode).toBe(404);
   });
 
-  it("refuse a project another planner is changing", async () => {
+  it("take a project another planner is changing, unpublished", async () => {
     const { feature, added } = await liveRecords();
     const other = await test.signedIn("product-manager");
-    const held = await test.request(
+    const renamed = await test.request(
       other.cookie,
       "PUT",
       `/api/projects/${added.id}`,
       { name: unique("Fictional Renamed") },
       { publish: false },
     );
-    expect(held.statusCode).toBe(200);
+    expect(renamed.statusCode).toBe(200);
     const response = await changeNamers(feature.id, {
       projectIds: [added.id],
     });
-    expect(response.statusCode).toBe(409);
+    expect(response.statusCode, response.body).toBe(200);
+    await test.request(other.cookie, "POST", "/api/unpublished/discard");
   });
 
   it("are refused to those who edit features but not the rest of the plan", async () => {

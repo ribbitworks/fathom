@@ -92,18 +92,23 @@ describe("discarding and resubmitting drafts of the plan's records", () => {
     ).toBe(409);
   });
 
-  it("refuses discarding a stream that someone else's unpublished release belongs to", async () => {
+  it("discards a stream that only someone else's unpublished release belongs to", async () => {
     const stream = await draftStream();
     await draftPattern(stream.id);
     await test.request(
       planner.cookie,
       "POST",
       `/api/release-streams/${stream.id}/releases`,
-      { name: "Fictional Held", ...firstHalf },
+      { name: "Fictional Private", ...firstHalf },
       { publish: false },
     );
-    expect((await discard("release-stream", stream.id)).statusCode).toBe(409);
-    await test.request(planner.cookie, "POST", "/api/unpublished/discard");
+    expect((await discard("release-stream", stream.id)).statusCode).toBe(200);
+    const discarded = await test.request(
+      planner.cookie,
+      "POST",
+      "/api/unpublished/discard",
+    );
+    expect(discarded.statusCode, discarded.body).toBe(200);
   });
 
   it("refuses resubmitting the draft of a record that does not exist", async () => {

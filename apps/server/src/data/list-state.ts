@@ -8,7 +8,7 @@ import { type Tier } from "@fathom/shared";
 import { asc } from "drizzle-orm";
 import { mostSensitive, storedTier } from "../access.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
-import { type Held, readDrafts, readHeld, writeDraft } from "./drafts.ts";
+import { readDrafts, writeDraft } from "./drafts.ts";
 import {
   type Draft,
   drafted,
@@ -98,11 +98,6 @@ export interface ListsState {
   listDrafts: Map<string, Draft>;
   choiceDrafts: Map<string, Draft>;
   orderDrafts: Map<string, Draft>;
-  held: {
-    lists: Map<string, Held>;
-    choices: Map<string, Held>;
-    orders: Map<string, Held>;
-  };
   // The key numbers of the lists, live and drafted to be added.
   keys: KeyNumbers;
 }
@@ -132,11 +127,6 @@ export async function readState(
     listDrafts: await readDrafts(reader, "list", undefined, viewer),
     choiceDrafts: await readDrafts(reader, "list-item", undefined, viewer),
     orderDrafts: await readDrafts(reader, "choice-order", undefined, viewer),
-    held: {
-      lists: await readHeld(reader, "list", viewer),
-      choices: await readHeld(reader, "list-item", viewer),
-      orders: await readHeld(reader, "choice-order", viewer),
-    },
     keys: await readKeyNumbers(reader, "list"),
   };
 }

@@ -22,16 +22,9 @@ import {
   actionTo,
   asDraft,
   clearedRejection,
-  type Draft,
   type Recorded,
-  wantsNoDraft,
 } from "./draft-records.ts";
-import {
-  draftingWith,
-  heldMessage,
-  refuseHolder,
-  writeDraft,
-} from "./drafts.ts";
+import { draftingWith, writeDraft } from "./drafts.ts";
 import {
   linkedIds,
   type RecordKind,
@@ -39,7 +32,6 @@ import {
   type RecordsState,
   stateOf,
   subjectFor,
-  type Touched,
   takenValue,
   versionOf,
   withVersion,
@@ -49,7 +41,6 @@ import {
   kindOf,
   noRecord,
   readRecordsState,
-  recordKinds,
   type RecordVersions,
   ruleProblem,
 } from "./records.ts";
@@ -62,32 +53,13 @@ export const drafting = <Result>(
   change: (transaction: Transaction, state: RecordsState) => Promise<Result>,
 ) => draftingWith(database, editor, readRecordsState, change);
 
-const holderOf = (
-  state: RecordsState,
-  type: RecordType,
-  id: string,
-): string | undefined => stateOf(state, type).held.get(id)?.holder;
-
-export function refuseHeldIn(
-  state: RecordsState,
-  type: RecordType,
-  id: string,
-) {
-  refuseHolder(holderOf(state, type, id));
-}
-
-// Why a record can't be changed: it isn't there to change, someone else holds it, or its draft
-// removes it.
-export type RecordRefusal =
-  | { reason: "missing" }
-  | { reason: "held"; holder: string }
-  | { reason: "removed" };
+// Why a record can't be changed: it isn't there to change, or its draft removes it.
+export type RecordRefusal = { reason: "missing" } | { reason: "removed" };
 
 export type RecordToChange = { record: Recorded } | { refusal: RecordRefusal };
 
 // A record to change as its draft makes it, or why it can't be: one that does not exist is
-// missing; one someone else holds is theirs until they publish or discard it; and
-// one its draft removes can't be changed until the draft is discarded.
+// missing, and one its draft removes can't be changed until the draft is discarded.
 export function recordToChange(
   state: RecordsState,
   type: RecordType,
@@ -96,8 +68,6 @@ export function recordToChange(
   if (!recordExists(state, type, id)) {
     return { refusal: { reason: "missing" } };
   }
-  const holder = holderOf(state, type, id);
-  if (holder !== undefined) return { refusal: { reason: "held", holder } };
   const version = versionOf(state, type, id);
   return version === undefined
     ? { refusal: { reason: "removed" } }
@@ -109,8 +79,6 @@ export function refusalError(refusal: RecordRefusal): RequestError {
   switch (refusal.reason) {
     case "missing":
       return new NotFoundError(noRecord);
-    case "held":
-      return new ConflictError(heldMessage(refusal.holder));
     case "removed":
       return new ConflictError(
         "This record's draft removes it; discard the draft to change it",
@@ -174,76 +142,6 @@ function misfitOf(
   const after = withVersion(state, kind.type, id, wanted);
   const problem = ruleProblem(after, touched, access);
   if (problem !== undefined) return new ConflictError(problem);
-  const holder = holderBreaking(kind, after, id, wanted, touched, access);
-  return holder === undefined
-    ? undefined
-    : new ConflictError(heldConflictMessage(holder));
-}
-
-const heldConflictMessage = (holder: string) =>
-  `This conflicts with changes ${holder} has not yet published; it can be saved once they publish or discard them`;
-
-interface Holding {
-  holder: string;
-  changes: { type: RecordType; id: string; draft: Draft }[];
-}
-
-// The changes each other user holds, by user.
-function holdings(state: RecordsState): Holding[] {
-  const found = new Map<string, Holding>();
-  for (const kind of recordKinds) {
-    for (const [id, held] of stateOf(state, kind.type).held) {
-      const holding = found.get(held.holderId) ?? {
-        holder: held.holder,
-        changes: [],
-      };
-      holding.changes.push({ type: kind.type, id, draft: held.draft });
-      found.set(held.holderId, holding);
-    }
-  }
-  return [...found.values()];
-}
-
-// The records as they would be once one user publishes the changes they hold.
-function withHolding(state: RecordsState, { changes }: Holding): RecordsState {
-  const after = Object.fromEntries(
-    recordKinds.map((kind) => {
-      const kindState = stateOf(state, kind.type);
-      return [kind.type, { ...kindState, drafts: new Map(kindState.drafts) }];
-    }),
-  ) as RecordsState;
-  for (const { type, id, draft } of changes) {
-    const { drafts } = stateOf(after, type);
-    if (wantsNoDraft(draft)) drafts.delete(id);
-    else drafts.set(id, draft);
-  }
-  return after;
-}
-
-// Who else holds changes that, once published, would leave a record as wanted linking to a record
-// that is gone, or breaking a rule across records, so that its draft cannot be saved or published
-// meanwhile. A change they hold that breaks nothing, such as a new name, holds nothing up.
-function holderBreaking(
-  kind: RecordKind,
-  state: RecordsState,
-  id: string,
-  wanted: Recorded | undefined,
-  touched: readonly Touched[],
-  access: ClassAccess,
-): string | undefined {
-  for (const holding of holdings(state)) {
-    const theirs = withHolding(state, holding);
-    const linkGone =
-      wanted !== undefined &&
-      Object.entries(kind.links).some(([name, type]) =>
-        linkedIds(wanted, name).some(
-          (target) => versionOf(theirs, type, target) === undefined,
-        ),
-      );
-    if (linkGone || ruleProblem(theirs, touched, access) !== undefined) {
-      return holding.holder;
-    }
-  }
   return undefined;
 }
 
@@ -280,7 +178,6 @@ export async function saveRecordDrafts(
 ): Promise<string | null> {
   let after = state;
   for (const { type, id, record } of wanted) {
-    refuseHeldIn(state, type, id);
     after = withVersion(after, type, id, record);
   }
   const made: Change[] = [];

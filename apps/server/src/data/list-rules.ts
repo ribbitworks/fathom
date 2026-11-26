@@ -33,10 +33,10 @@ import {
 import { and, asc, count, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { type Transaction } from "./changes.ts";
-import { type Held } from "./drafts.ts";
-import { type Draft, type Recorded } from "./draft-records.ts";
+import { type Draft, drafted, type Recorded } from "./draft-records.ts";
 
 import { draftsUse } from "./drafted-values.ts";
+import { asSeenBy, readDrafts } from "./drafts.ts";
 import { isNamedByRecord } from "./records.ts";
 import {
   type ChoiceRow,
@@ -68,12 +68,9 @@ const draftsName = (
       lower(draft.fields[field]) === wanted,
   );
 
-const heldDrafts = (held: ReadonlyMap<string, Held>) =>
-  new Map([...held].map(([id, { draft }]) => [id, draft]));
-
-// Whether another list has the name, live or in a draft, published or not: a live list's name stays
-// taken until a draft that changes it is approved, and an unpublished draft's until it is
-// discarded.
+// Whether another list has the name, live or in a draft as the viewer sees the drafts: a live list's
+// name stays taken until a draft that changes it is approved. Someone else's private change takes no
+// name; publishing checks again.
 export function listNameTaken(
   state: ListsState,
   name: string,
@@ -83,9 +80,7 @@ export function listNameTaken(
   return (
     [...state.lists].some(
       ([id, record]) => id !== except && lower(record.name) === wanted,
-    ) ||
-    draftsName(state.listDrafts, "name", wanted, except) ||
-    draftsName(heldDrafts(state.held.lists), "name", wanted, except)
+    ) || draftsName(state.listDrafts, "name", wanted, except)
   );
 }
 
@@ -110,98 +105,54 @@ export function choiceLabelTaken(
       wanted,
       except,
       (id) => listOfChoice(state, id) === listId,
-    ) ||
-    draftsName(
-      heldDrafts(state.held.choices),
-      "label",
-      wanted,
-      except,
-      (id) => heldListOf(state, id) === listId,
     )
   );
 }
 
-// The list of a choice someone else holds: as they draft it, or as the viewer sees it.
-const heldListOf = (state: ListsState, id: string) =>
-  (state.held.choices.get(id)?.draft.fields.listId as string | undefined) ??
-  listOfChoice(state, id);
-
-// Whether any of a list's choices, or their order, has a draft, published or not.
+// Whether any of a list's choices, or their order, has a draft, as the viewer sees them.
 export const choicesHaveDrafts = (state: ListsState, listId: string) =>
   state.orderDrafts.has(listId) ||
-  state.held.orders.has(listId) ||
   [...state.choiceDrafts.keys()].some(
     (id) => listOfChoice(state, id) === listId,
-  ) ||
-  [...state.held.choices.keys()].some((id) => heldListOf(state, id) === listId);
+  );
 
-// The columns that draw on a list, live or in a draft: those others may see by name, live ones and
-// published drafts, and how many more are only in someone's unpublished draft, unnamed, since only
-// its maker sees it. The editor's unpublished drafts of columns stand in for the published drafts
-// of the same columns. A built-in list's built-in column always draws on it.
+// The names of the columns that draw on a list, live or in a draft as the editor, when given, sees
+// the drafts, their own private changes to columns included. A built-in list's built-in column
+// always draws on it.
 export async function columnsDrawingOn(
   transaction: Reader,
   id: string,
-  editor?: string,
-): Promise<{ named: string[]; unnamed: number }> {
+  editor: string | undefined,
+): Promise<string[]> {
   const builtIn = await transaction
     .select({ key: lists.builtIn })
     .from(lists)
     .where(eq(lists.id, id));
-  const live = [
-    ...builtIn.flatMap(({ key }) => {
-      const known = builtInKey(key);
-      return known === null
-        ? []
-        : // The key is always one of the built-in lists.
-          // eslint-disable-next-line security/detect-object-injection
-          [{ id: known, name: builtInListUses[known].column }];
-    }),
-    ...(await transaction
-      .select({ id: fields.id, name: fields.name })
-      .from(fields)
-      .where(eq(fields.listId, id))),
-  ];
-  const drafted = async (table: typeof drafts | typeof privateChanges) =>
-    transaction
-      .select({
-        id: table.recordId,
-        name: sql<string>`${table.fields}->>'name'`,
-      })
-      .from(table)
-      .where(
-        and(
-          eq(table.recordType, "field"),
-          sql`${table.fields}->>'listId' = ${id}`,
-        ),
-      );
-  const replaced =
-    editor === undefined
-      ? new Set<string>()
-      : new Set(
-          (
-            await transaction
-              .select({ id: privateChanges.recordId })
-              .from(privateChanges)
-              .where(
-                and(
-                  eq(privateChanges.recordType, "field"),
-                  eq(privateChanges.userId, editor),
-                ),
-              )
-          ).map((row) => row.id),
-        );
-  const shown = [
-    ...live,
-    ...(await drafted(drafts)).filter((column) => !replaced.has(column.id)),
-  ];
-  const named = [...new Set(shown.map(({ name }) => name))].sort((a, b) =>
+  const builtInColumns = builtIn.flatMap(({ key }) => {
+    const known = builtInKey(key);
+    // The key is always one of the built-in lists.
+    // eslint-disable-next-line security/detect-object-injection
+    return known === null ? [] : [builtInListUses[known].column];
+  });
+  // Every added column as the editor sees it, since a draft may move one onto the list or off it,
+  // or rename it.
+  const live = new Map(
+    (
+      await transaction
+        .select({ id: fields.id, name: fields.name, listId: fields.listId })
+        .from(fields)
+    ).map(({ id: column, name, listId }) => [column, { name, listId }]),
+  );
+  const seen = await readDrafts(transaction, "field", undefined, editor);
+  const named = [...new Set([...live.keys(), ...seen.keys()])].flatMap(
+    (column) => {
+      const version = drafted(live.get(column), seen.get(column));
+      return version?.listId === id ? [String(version.name)] : [];
+    },
+  );
+  return [...new Set([...builtInColumns, ...named])].sort((a, b) =>
     a.toLowerCase().localeCompare(b.toLowerCase()),
   );
-  const unnamed = (await drafted(privateChanges)).filter(
-    (column) => !shown.some((other) => other.id === column.id),
-  ).length;
-  return { named, unnamed };
 }
 
 // Refuses a change to a list while a column draws on it, naming those others may see.
@@ -209,18 +160,12 @@ export async function refuseIfUsed(
   transaction: Reader,
   id: string,
   change: string,
-  editor?: string,
+  editor: string | undefined,
 ): Promise<void> {
-  const { named, unnamed } = await columnsDrawingOn(transaction, id, editor);
-  if (named.length === 0 && unnamed === 0) return;
-  const users = [
-    ...named,
-    ...(unnamed === 0
-      ? []
-      : [unnamed === 1 ? "a column being drafted" : "columns being drafted"]),
-  ];
+  const named = await columnsDrawingOn(transaction, id, editor);
+  if (named.length === 0) return;
   throw new ConflictError(
-    `This list cannot be ${change} while ${named.length + unnamed === 1 ? "a column draws" : "columns draw"} on it: ${users.join(", ")}`,
+    `This list cannot be ${change} while ${named.length === 1 ? "a column draws" : "columns draw"} on it: ${named.join(", ")}`,
   );
 }
 
@@ -232,7 +177,7 @@ export const choiceInUse =
 export async function refuseIfChosen(
   transaction: Reader,
   id: string,
-  editor?: string,
+  editor: string | undefined,
 ): Promise<void> {
   const [held] = await transaction
     .select({ total: count() })
@@ -261,12 +206,13 @@ export const peoplesMeaning = (meaning: unknown) =>
   meaning === "hired" || meaning === "left";
 
 // Refuses giving a hiring state a meaning only people have, Hired or Left, while planned hires not
-// yet filled are in it, live or in a hire's draft, published or not. A filled hire's state no
-// longer matters, since its person is shown instead.
+// yet filled are in it, live or in a hire's draft as the editor, when given, sees the drafts. A
+// filled hire's state no longer matters, since its person is shown instead.
 export async function refusePeoplesMeaningWhileHeld(
   transaction: Reader,
   id: string,
   meaning: Meaning,
+  editor: string | undefined,
 ): Promise<void> {
   const [held] = await transaction
     .select({ total: count() })
@@ -281,6 +227,7 @@ export async function refusePeoplesMeaningWhileHeld(
         and(
           eq(table.recordType, "planned-hire"),
           sql`${table.fields}->>'stateId' = ${id}`,
+          asSeenBy(table, editor, "stateId"),
         ),
       );
     drafted ||= Number(found?.total) > 0;
@@ -431,8 +378,8 @@ export async function refuseKeptUnoffered(
   }
 }
 
-// Refuses discarding the drafts adding the choices given while people's drafts, published or not,
-// have any of them, as the editor sees the drafts.
+// Refuses discarding the drafts adding the choices given while people's drafts, as the editor sees
+// them, have any of them.
 export async function refuseIfDraftsChoose(
   transaction: Reader,
   editor: string,
@@ -512,10 +459,12 @@ const generalOnlyTables = columnTables.filter(
   (table) => columnTablePolicies[table].generalOnly,
 );
 
-// The lists a column on Features or Activities draws on, built in or added, live or in a draft,
-// published or not. Anyone's unpublished drafts count, since raising such a list is refused whoever's
-// draft it is, so telling readers says no more than the refusal would.
-export async function generalOnlyListIds(reader: Reader): Promise<Set<string>> {
+// The lists a column on Features or Activities draws on, built in or added, live or in a draft as
+// the reader, when given, sees the drafts.
+export async function generalOnlyListIds(
+  reader: Reader,
+  editor: string | undefined,
+): Promise<Set<string>> {
   const live = await reader
     .select({ listId: fields.listId })
     .from(fields)
@@ -526,7 +475,9 @@ export async function generalOnlyListIds(reader: Reader): Promise<Set<string>> {
     .where(inArray(lists.builtIn, [...featureBuiltInLists]));
   const drafted: { listId: string | null }[] = [];
   // One after the other, since a transaction runs one query at a time.
-  for (const table of [drafts, privateChanges]) {
+  for (const table of editor === undefined
+    ? [drafts]
+    : [drafts, privateChanges]) {
     drafted.push(
       ...(await reader
         .select({ listId: sql<string | null>`${table.fields}->>'listId'` })
@@ -535,6 +486,7 @@ export async function generalOnlyListIds(reader: Reader): Promise<Set<string>> {
           and(
             eq(table.recordType, "field"),
             inArray(sql`${table.fields}->>'tableName'`, [...generalOnlyTables]),
+            asSeenBy(table, editor, "listId"),
           ),
         )),
     );
@@ -550,17 +502,19 @@ export async function generalOnlyListIds(reader: Reader): Promise<Set<string>> {
 export const generalOnlyColumnDrawsOn = async (
   reader: Reader,
   listId: string,
-): Promise<boolean> => (await generalOnlyListIds(reader)).has(listId);
+  editor: string | undefined,
+): Promise<boolean> => (await generalOnlyListIds(reader, editor)).has(listId);
 
 // Refuses a visibility other than General for a list a column on Features or Activities draws on.
 export async function refuseSensitivePlanningList(
   reader: Reader,
   listId: string,
   visibility: string,
+  editor: string | undefined,
 ): Promise<void> {
   if (
     visibility !== "general" &&
-    (await generalOnlyColumnDrawsOn(reader, listId))
+    (await generalOnlyColumnDrawsOn(reader, listId, editor))
   ) {
     throw new ConflictError(featuresListGeneral);
   }

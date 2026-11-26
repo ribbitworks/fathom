@@ -18,7 +18,7 @@ import { type Actor, seesSensitivity } from "../access.ts";
 import { BadRequestError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { fitsColumns, type Recorded } from "./draft-records.ts";
-import { choicesWithAdded, refuseHeldColumns } from "./added-columns.ts";
+import { choicesWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
 import { isNote, isNumber } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
@@ -273,16 +273,6 @@ export async function choicesAskedFor(
     numbers?: Readonly<Record<string, number | null>> | undefined;
   }[],
 ): Promise<ChoiceRow[]> {
-  await refuseHeldColumns(
-    transaction,
-    editor,
-    requests.flatMap((request) => [
-      ...Object.keys(request.values ?? {}),
-      ...Object.keys(request.links ?? {}),
-      ...Object.keys(request.notes ?? {}),
-      ...Object.keys(request.numbers ?? {}),
-    ]),
-  );
   return choicesWithAdded(
     transaction,
     editor,

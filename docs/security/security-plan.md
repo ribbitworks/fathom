@@ -125,6 +125,8 @@ flowchart LR
   - **Who sees which changes:** changes to configuration are seen by those who may open its pages, changes to people by those who see people, a shared view's by those who open its table's page, and a personal saved view's by its maker alone. Something saved with no change a reader may see is left out for them.
   - **Unpublished changes:** seen only by their maker, who alone publishes or discards them.
     - **Others' changes:** asking to publish or discard someone else's is answered as if the change doesn't exist, and a change is linked only to its maker's other changes.
+    - **No trace in checks:** another user's unpublished change counts in no check or read, such as whether a value is taken or a choice in use, and nobody is told who else is changing a record, so nothing about it can be learned from a refusal.
+      - **Tests:** values taken and choices, columns and lists in use for one user but not another, in `apps/server/src/unpublished-people.test.ts` and `apps/server/src/unpublished-lists.test.ts`; two people changing one record, in `apps/server/src/private-own-fields.test.ts`.
     - **Publishing:** publishing applies the role in use alone, as [Roles](../product/roles.md#accounts-and-the-acting-role) sets out, so a change made under another role waits until a role that may make its kind of change publishes it.
 - **Shared views of Drafts:** Drafts shows each role the drafts of the areas it sees, but its shared views open to every role that opens Drafts.
   - **Sharing:** only roles with Edit Configuration can share a Drafts view.
@@ -163,7 +165,7 @@ flowchart LR
   - **One shared rule:** one shared rule on the server checks either permission, together with seeing schedules, for every change and decision on them, and tests cover each role allowed and denied.
 - **Lists made with a column:** Whoever sets up Features' columns drafts a new list with a column, without Edit Configuration, so a list could be made, or one changed or removed, by someone who doesn't change configuration.
   - **Only a new General list:** the server makes the list General itself, only with a column on Features, in the column's own change, and refuses a new list for People's columns.
-  - **Only with a column:** the list and its choices are undone without Edit Configuration only with the change that added them with the column, and discarded only with the last Features column drawing on them, never with a People column, and never when anything changed the list since it was made, another column still draws on it, or someone else is changing it. Approving it still takes Approve Configuration.
+  - **Only with a column:** the list and its choices are undone without Edit Configuration only with the change that added them with the column, and discarded only with the last Features column drawing on them, never with a People column, and never when anything changed the list since it was made, or another column still draws on it. Approving it still takes Approve Configuration.
   - **Tests:** every starting role allowed and denied, and each case the list stays, in `apps/server/src/feature-column-new-list.test.ts`.
 - **Escaping a container:** Every container runs as a user other than root, with a read-only filesystem, all Linux capabilities dropped and no privilege escalation. The application's runtime image is distroless.
 - **The database:** Passwords are stored with SCRAM-SHA-256, and the database refuses superuser logins over the network.

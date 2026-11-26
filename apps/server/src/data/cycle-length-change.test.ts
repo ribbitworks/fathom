@@ -412,30 +412,4 @@ describe("the work on the cycles", () => {
       ).toEqual({ refusal });
     },
   );
-
-  it("leaves a release someone else holds to be refused as any held record is", () => {
-    // Given a release on cycles that move, held in someone else's unpublished changes
-    const releases = kindState(
-      [["later", later]],
-      [],
-      new Map([
-        [
-          "later",
-          {
-            holderId: "user-2",
-            holder: "Fictional Holder",
-            draft: draft("changed", { name: "Fictional Held" }),
-          },
-        ],
-      ]),
-    );
-
-    // When the cycles before it change
-    const changing = () => lengthChanged(plan({ releases }), "2027-04-01", 2);
-
-    // Then the change is refused, naming who holds the release
-    expect(changing).toThrow(
-      "Fictional Holder is changing this; it can be changed once they publish or discard their changes",
-    );
-  });
 });

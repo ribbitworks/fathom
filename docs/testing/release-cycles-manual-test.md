@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Cycles
@@ -22,7 +22,6 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
-- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as **Second Engineering Operations Manager**
 - **Project Manager:** `project.manager@fathom.test`
 - **Team Member:** `team.member@fathom.test`
 
@@ -55,24 +54,16 @@ Record each step's result as [Manual Test Basics](manual-test-basics.md#recordin
 
 #### REL-23: A Cycle's New Length Moves the Cycles and Releases After It
 
-**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`; the first test case. Step `6FE2` signs in as another account, and step `B6FF` as the Workforce Administrator.
+**Account:** Project Manager, `project.manager@fathom.test`; the first test case. Step `B6FF` signs in as the Workforce Administrator.
 
 **Preconditions:** Restore the Seed Data run, then signed in with this account.
-
-- [ ] `11A6` Run Discard the Unpublished Changes.
-  - **Expected:** The Publish button is gone.
-  - **Notes:**
-
-- [ ] `6FE2` Sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Project Manager**.
-  - **Notes:**
 
 - [ ] `F216` Select the **Releases** page in the left-hand menu.
   - **Expected:** The **Releases** tab is chosen.
   - **Notes:**
 
 - [ ] `1C47` Select the **Schedules** tab.
-  - **Expected:** 'Platform' has no grey lock in its slot.
+  - **Expected:** The table lists 'Platform'.
   - **Notes:**
 
 - [ ] `39A5` Select the **⋯** at the right of the first cell of the row for 'Platform', then **Approve draft…**.

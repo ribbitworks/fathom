@@ -128,7 +128,7 @@ describe("a fill's draft", () => {
     expect(await rowNamed(body.preferredName)).toBeUndefined();
   });
 
-  it("is not discarded while someone else is changing part of it", async () => {
+  it("is discarded while someone else is changing part of it, unpublished", async () => {
     const id = await hire({ isManager: true });
     const report = await hire({ managerId: id });
     await filled(id, newPerson());
@@ -143,17 +143,10 @@ describe("a fill's draft", () => {
       ),
     );
 
-    const response = await send(
-      editor,
-      "DELETE",
-      `/api/planned-hires/${id}/draft`,
-    );
+    await ok(await send(editor, "DELETE", `/api/planned-hires/${id}/draft`));
 
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toMatch(
-      /is changing part of this fill of a planned hire/u,
-    );
-    expect((await hireOf(id))?.filler).toBeDefined();
+    expect((await hireOf(id))?.filler).toBeUndefined();
+    await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 
   it("is not discarded or resent through its person by a role that may not change the hiring plan", async () => {
@@ -517,7 +510,7 @@ describe("a fill waiting for approval", () => {
 });
 
 describe("a fill and other users' changes", () => {
-  it("is refused while another user is changing a hire that reports to the planned manager", async () => {
+  it("is drafted while another user is changing a hire that reports to the planned manager, unpublished", async () => {
     const id = await hire({ isManager: true });
     const report = await hire({ managerId: id });
     const other = await test.signedIn("workforce-administrator");
@@ -531,15 +524,12 @@ describe("a fill and other users' changes", () => {
       ),
     );
 
-    const response = await fill(id, newPerson());
+    await filled(id, newPerson());
 
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe(
-      "A planned hire reporting to this one has a draft; approve or discard it before filling this one",
-    );
+    await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 
-  it("is refused while another user is changing the person filling it", async () => {
+  it("is drafted while another user is changing the person filling it, unpublished", async () => {
     const transfer = await person({ isManager: false });
     const other = await test.signedIn("workforce-administrator");
     await ok(
@@ -552,10 +542,9 @@ describe("a fill and other users' changes", () => {
       ),
     );
 
-    const response = await fill(await hire(), existing(transfer));
+    await filled(await hire(), existing(transfer));
 
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toMatch(/has a draft; approve or discard it/u);
+    await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 
   it("is not decided by an Approver who approves planned hires but not people", async () => {

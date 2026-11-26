@@ -4,14 +4,14 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/standards/ui-conventions.md", "docs/design/visual-design.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Draft Marks
 
 ## Scope
 
-Verifies how drafts are marked on a table, a side panel, the org chart's cards and the Drafts page: dots, boxes, the lock, Live rows and tints, how they sit beside their text, and what each of the three Draft views shows.
+Verifies how drafts are marked on a table, a side panel, the org chart's cards and the Drafts page: dots, boxes, Live rows and tints, how they sit beside their text, and what each of the three Draft views shows.
 
 ## Test Environment
 
@@ -30,7 +30,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms this test uses, such as Mark, Lock, Box, Slot, and Draft row and Live row, with each mark's colour.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms this test uses, such as Mark, Box, Slot, and Draft row and Live row, with each mark's colour.
 
 ## Test Cases
 
@@ -79,12 +79,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Nothing in its slot
     - A green dot before the live **End**
     - A green dot before the live **Grade**
-  - **Notes:**
-
-- [ ] `00CF` Type `Viktoria Holmberg` in the search box.
-  - **Expected:** In the row of 'Viktoria Holmberg':
-    - The grey lock alone in the slot
-    - A yellow dot before each changed value
   - **Notes:**
 
 - [ ] `87D0` Type `우아현` in the search box.
@@ -146,7 +140,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Under 'Mobile apps', a yellow dot before 'Atmananda Ganaka'
     - Under 'Mobile apps', a yellow dot before 'Priscille Adam'
     - 'Priscille Adam' struck through
-    - The card titled 'Platform reliability': the grey lock before the title
   - **Notes:**
 
 **Afterwards:** Choose **Reporting teams** in the teams switch.
@@ -200,10 +193,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A red dot in a ring before the name, in the **Record** column
     - The row not tinted, and the name not in semibold
     - The rejection's reason in the **Reason** column
-  - **Notes:**
-
-- [ ] `34BF` Type `Viktoria Holmberg` in the search box.
-  - **Expected:** In the row of 'Viktoria Holmberg', a yellow dot, then the grey lock, before the name.
   - **Notes:**
 
 - [ ] `6089` Type `Salvador Quiñones Méndez` in the search box.
@@ -306,10 +295,6 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
     - The red dot in a ring is centred on the centreline of the **Position** value's capital letters
     - The red **Left** box is centred on the centreline of the capital letters of 'Viktoria Holmberg'
     - The dot and the box each sit just beside their text, with no extra space
-  - **Notes:**
-
-- [ ] `BB21` Type `Viktoria Holmberg` in the search box.
-  - **Expected:** The grey lock is centred on the centreline of the name's capital letters.
   - **Notes:**
 
 - [ ] `5F7B` Type `Vianney Rousseau` in the search box.
