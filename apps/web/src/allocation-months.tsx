@@ -44,7 +44,7 @@ import type { CellChange } from "./cell-kinds.tsx";
 import pages from "./pages.module.css";
 import type { RecordTable, RowGrouping, RowTotals } from "./record-table.ts";
 import { rankOfNone } from "./row-groups.ts";
-import { allocatedHours, WorkFacts } from "./allocated-work.tsx";
+import { allocatedHours, countedTo, WorkFacts } from "./allocated-work.tsx";
 import { ColouredName } from "./colour-swatch.tsx";
 import {
   DraftedPartItem,
@@ -699,12 +699,16 @@ export function allocationMonthsTable({
               groupedByWork(works, (work) => (
                 <WorkFacts
                   work={work}
-                  allocated={allocatedHours(
-                    allocations,
-                    work.id,
-                    teamMonths.months,
-                    show,
-                  )}
+                  allocated={
+                    work.effort === undefined
+                      ? 0
+                      : allocatedHours(
+                          allocations,
+                          work.id,
+                          countedTo(work.effort, show, currentMonth),
+                          show,
+                        )
+                  }
                   show={show}
                 />
               )),

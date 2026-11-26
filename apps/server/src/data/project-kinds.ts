@@ -5,10 +5,12 @@
 
 import { customers, milestones, projects, proposals } from "@fathom/db";
 import {
+  type MilestoneDay,
   projectSubjects,
   type RecordRef,
   removalReasonsIn,
 } from "@fathom/shared";
+import type { Recorded } from "./draft-records.ts";
 import {
   featureKind,
   projectReaders,
@@ -40,6 +42,28 @@ export const milestonesOf = (state: RecordsState, projectId: string) =>
   shownIds(state, "milestone").filter(
     (id) => shownVersion(state, "milestone", id)?.projectId === projectId,
   );
+
+const asDay = (milestone: Recorded): MilestoneDay => ({
+  date: String(milestone.date),
+  customerDelivery: milestone.customerDelivery === true,
+});
+
+// A project's milestones by day, approved, and as their drafts make them, those drafted to be
+// removed left out.
+export function milestoneDays(
+  state: RecordsState,
+  projectId: string,
+): { live: MilestoneDay[]; drafted: MilestoneDay[] } {
+  return {
+    live: [...stateOf(state, "milestone").live.values()]
+      .filter((milestone) => milestone.projectId === projectId)
+      .map(asDay),
+    drafted: milestonesOf(state, projectId).flatMap((milestone) => {
+      const version = versionOf(state, "milestone", milestone);
+      return version === undefined ? [] : [asDay(version)];
+    }),
+  };
+}
 
 export const customerKind: RecordKind = {
   type: "customer",

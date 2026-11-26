@@ -67,6 +67,12 @@ import { projectKind } from "./project-kinds.ts";
 import { featureKind, featureNaming } from "./release-kinds.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
+import {
+  activityLastMonth,
+  effortSides,
+  featureLastMonth,
+  type Side,
+} from "./work-months.ts";
 
 const type = "allocation";
 
@@ -292,38 +298,48 @@ export async function readAllocations(
         typeof version?.estimateHours === "number"
           ? version.estimateHours
           : null;
-      // A feature's estimate and the hours it needs, as a version of it holds them.
+      const readsPlan = readsKind(projectKind, actor);
+      // A work's estimate, the hours it needs, and its last month, from one version of it and the
+      // records its last month is read from as the side gives them.
       const effortIn = (
+        type: "feature" | "activity",
         version: Recorded | undefined,
+        side: Side,
         bufferPercent: number,
       ) => {
         const estimate = estimateIn(version);
         return {
           estimate,
           needed: effortNeeded(estimate, bufferPercent) ?? null,
+          lastMonth:
+            type === "feature"
+              ? featureLastMonth(state, version, side)
+              : activityLastMonth(state, version, side, {
+                  readsProjects: readsPlan,
+                  today,
+                }),
         };
       };
-      // A work's estimate and the hours it needs, approved and as a waiting draft makes them, for a
-      // reader who sees the planning settings.
-      const effortOf = (type: "feature" | "activity", id: string) =>
-        settings === undefined
-          ? {}
-          : {
-              effort: {
-                live: effortIn(
-                  stateOf(state, type).live.get(id),
-                  settings.bufferPercent,
-                ),
-                ...(stateOf(state, type).drafts.get(id)?.state === "waiting"
-                  ? {
-                      drafted: effortIn(
-                        versionOf(state, type, id),
-                        settings.bufferPercent,
-                      ),
-                    }
-                  : {}),
-              },
-            };
+      // A work's effort, approved and as drafts make it, for a reader who sees the planning settings.
+      const effortOf = (type: "feature" | "activity", id: string) => {
+        if (settings === undefined) return {};
+        const live = stateOf(state, type).live.get(id);
+        const waiting =
+          stateOf(state, type).drafts.get(id)?.state === "waiting";
+        const { bufferPercent } = settings;
+        return {
+          effort: effortSides(
+            effortIn(type, live, "live", bufferPercent),
+            effortIn(
+              type,
+              waiting ? versionOf(state, type, id) : live,
+              "drafted",
+              bufferPercent,
+            ),
+            waiting,
+          ),
+        };
+      };
       // The month someone's ramp-up counts from: a person's start, or a planned hire's expected
       // month. That month is General, though the target date it may come from is the hiring plan's.
       const hires =
@@ -392,7 +408,6 @@ export async function readAllocations(
         meaning: meaningSchema.nullable().parse(meanings.get(statusOf(one))),
         colour: colourOf(colours, teamOf(one)),
       });
-      const readsPlan = readsKind(projectKind, actor);
       const colours = new Map(
         teamIds.length === 0
           ? []

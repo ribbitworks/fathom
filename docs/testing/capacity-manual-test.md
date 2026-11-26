@@ -745,7 +745,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - Each feature or activity someone is allocated to is a heading, after its feature team's colour square, with its count of people.
     - An activity's heading names its project or release in brackets, such as "General (Crane Control)".
-    - After the count, the heading reads "· Effort", the feature's estimate in hours or "None", "· Allocated" and its hours, and "· Remaining" and its hours, or "None" for a done or cancelled feature or one with no estimate.
+    - After the count, a heading of a feature with an estimate reads "· Effort" and its estimate in hours, "· Allocated" and its hours, and "· Remaining" and its hours, or "None" for a done or cancelled feature.
+    - A heading of a feature with no estimate reads "· Allocated" and its hours alone.
     - The last heading is **Not allocated**.
   - **Notes:**
 
