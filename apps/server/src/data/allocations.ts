@@ -10,7 +10,6 @@ import {
   featureTeams,
   listItems,
   people,
-  plannedHires,
   privateChanges,
   type Reader,
 } from "@fathom/db";
@@ -25,7 +24,6 @@ import {
   changedSpans,
   allocationHours,
   effortNeeded,
-  hireCalled,
   knownColour,
   meaningSchema,
   monthOf,
@@ -45,7 +43,7 @@ import {
   allocationKind,
   workOf,
 } from "./allocation-kinds.ts";
-import { expectedMonth, hireIdOf, undatedMark } from "./hire-fields.ts";
+import { type HireFacts, hiresOf } from "./hire-reads.ts";
 import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
 import { readHourSettings } from "./planning-settings.ts";
 import { drafting, saveRecordDraft } from "./record-drafting.ts";
@@ -181,55 +179,6 @@ async function employmentOf(
     .from(people)
     .where(inArray(people.id, [...new Set(ids)]));
   return new Map(rows.map(({ id, ...rest }) => [id, rest]));
-}
-
-interface HireFacts {
-  expected: string;
-  // Whether a date gives the month it is expected, rather than its standing in for today.
-  dated: boolean;
-  filledBy: string | null;
-  called: string;
-}
-
-// The planned hires given, with what the rules need: the month each is expected, whether it is
-// filled, and what it is called where its position is not shown.
-async function hiresOf(
-  reader: Reader,
-  ids: readonly string[],
-  today: string,
-): Promise<Map<string, HireFacts>> {
-  if (ids.length === 0) return new Map();
-  const rows = await reader
-    .select({
-      id: plannedHires.id,
-      name: plannedHires.name,
-      requisition: plannedHires.requisition,
-      temporaryNumber: plannedHires.temporaryNumber,
-      targetDate: plannedHires.targetDate,
-      filledBy: plannedHires.filledBy,
-      fillerStart: people.startDate,
-    })
-    .from(plannedHires)
-    .leftJoin(people, eq(people.id, plannedHires.filledBy))
-    .where(inArray(plannedHires.id, [...new Set(ids)]));
-  return new Map(
-    rows.map((hire) => {
-      const { requisition, temporaryId } = hireIdOf(hire);
-      return [
-        hire.id,
-        {
-          expected: expectedMonth(hire, today),
-          dated: undatedMark(hire).undated !== true,
-          filledBy: hire.filledBy,
-          called: hireCalled(
-            hire.name,
-            String(requisition ?? temporaryId),
-            undefined,
-          ),
-        },
-      ];
-    }),
-  );
 }
 
 // A feature as a list names it, and as a sentence does: by its name, or only by its kind.

@@ -10,6 +10,7 @@ import {
   type DayRefusals,
   draftingRefusals,
   type Everyone,
+  hasLeft,
   membersOf,
 } from "./feature-team-rules.ts";
 
@@ -87,7 +88,7 @@ export function heldChange(
   ] as const) {
     for (const personId of personIds) {
       const person = everyone.get(personId);
-      if (person?.left !== false) {
+      if (person === undefined || hasLeft(person)) {
         into.push(personId);
         continue;
       }

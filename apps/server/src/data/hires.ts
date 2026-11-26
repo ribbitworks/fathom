@@ -22,6 +22,10 @@ import {
   ForbiddenError,
   NotFoundError,
 } from "../errors.ts";
+import {
+  onTeamsRefusals,
+  refuseRemovingOnTeams,
+} from "./feature-team-removals.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice, firstChoiceMeaning } from "./built-in-lists.ts";
 import { valueField, recordedValues } from "./values.ts";
@@ -480,7 +484,8 @@ export async function draftHireAsLive(
 }
 
 // Drafts removing a hire, which is how a hire is cancelled; removing one only drafted to be added
-// discards that draft. Filled hires are refused, since the person who filled one is kept with it.
+// discards that draft. Filled hires are refused, since the person who filled one is kept with it, as
+// are hires that lead a feature team, today or later, or that a team's draft names.
 export async function deleteHire(
   database: Database,
   actor: Actor,
@@ -506,6 +511,7 @@ export async function deleteHire(
     if (await hiresReportTo(transaction, [id], { drafted: true })) {
       throw new ConflictError(reassignReports);
     }
+    await refuseRemovingOnTeams(transaction, [id], onTeamsRefusals.plannedHire);
     const tierOf = await readHireTier(transaction);
     const made = [
       ...asDraft(hireChanges(id, "deleted", hire, undefined, tierOf)),

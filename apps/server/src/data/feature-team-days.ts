@@ -15,6 +15,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { type Actor, requireView } from "../access.ts";
 import { BadRequestError, ForbiddenError } from "../errors.ts";
 import type { Change } from "./changes.ts";
+import { memberColumn } from "./feature-team-reads.ts";
 import { recordType } from "./feature-team-records.ts";
 import {
   type DayRefusals,
@@ -26,7 +27,6 @@ import {
   leadOffTeamRefusal,
   type MemberDay,
   type MemberRecord,
-  peopleRows,
 } from "./feature-team-rules.ts";
 import { recordEvents } from "./history.ts";
 
@@ -111,16 +111,14 @@ export async function refuseDaysOutOfOrder(
   const records: MemberRecord[] = [];
   for (const chunk of inChunks([...new Set(days.map((day) => day.teamId))])) {
     records.push(
-      ...peopleRows(
-        await reader
-          .select({
-            teamId: featureTeamMemberships.teamId,
-            personId: featureTeamMemberships.personId,
-            fromDate: featureTeamMemberships.fromDate,
-          })
-          .from(featureTeamMemberships)
-          .where(inArray(featureTeamMemberships.teamId, chunk)),
-      ),
+      ...(await reader
+        .select({
+          teamId: featureTeamMemberships.teamId,
+          memberId: memberColumn,
+          fromDate: featureTeamMemberships.fromDate,
+        })
+        .from(featureTeamMemberships)
+        .where(inArray(featureTeamMemberships.teamId, chunk))),
     );
   }
   refuseWith(daysRefusal(days, records, everyone, refusals));

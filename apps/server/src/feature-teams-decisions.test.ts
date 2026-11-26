@@ -155,7 +155,9 @@ describe("approving a team's draft", () => {
     await approved(id);
 
     expect(await liveRow(id)).toMatchObject({ name });
-    expect(await leads(id)).toEqual([{ leadId: lead, fromDate: today }]);
+    expect(await leads(id)).toEqual([
+      { leadId: lead, leadPlannedHireId: null, fromDate: today },
+    ]);
     expect(await memberships(id)).toEqual(
       expect.arrayContaining([
         { personId: lead, member: true, fromDate: today },
@@ -174,7 +176,9 @@ describe("approving a team's draft", () => {
     await approved(id);
 
     expect(await liveRow(id)).toMatchObject({ name });
-    expect(await leads(id)).toEqual([{ leadId: lead, fromDate: today }]);
+    expect(await leads(id)).toEqual([
+      { leadId: lead, leadPlannedHireId: null, fromDate: today },
+    ]);
   });
 
   it("replaces a planned hire leading the team from the same day with the person approved", async () => {

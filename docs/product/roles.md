@@ -114,6 +114,7 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 - **Placeholders:** Everyone who sees people sees each planned hire not yet filled, and each filled one whose person hasn't started, as a placeholder: a row of People and a card under its manager on the Org chart.
   - **What it shows:** Its name, ID, position, state, manager, Expected month, and its values in the columns it shares with people, each at its column's class.
   - **Classes:** Its name, ID, manager and Expected month are General; its position and state take the class of the Positions and Hiring states lists.
+- **Feature teams:** Everyone who sees feature teams sees the planned hires on each, by name, or by ID when it has none, as they see people on them, since a hire's teams are General, as its manager is.
 - **Expected:** A month, never a day, so the placeholder doesn't leak the exact date. How it is worked out is in the [Domain Model](../design/domain-model.md#planned-hires).
 - **Counts:** Counts, such as reports per manager, follow what each reader sees, so each hire or new employee counts once.
 - **The hiring plan:** View Hiring plan shows every planned hire with its target date, drafts and history, and needs View People. Edit Hiring plan adds, changes and removes planned hires, and needs Edit People. Both also need the hiring plan's class, Confidential unless moved; View Confidential data alone doesn't show it.

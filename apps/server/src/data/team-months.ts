@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Who was on which feature team, month by month, approved and as drafted, for the monthly grid on
-// Feature assignments. Part of the data access layer.
+// Who was on which feature team, month by month, approved and as drafted, people and planned hires,
+// for the monthly grid on Feature assignments. Part of the data access layer.
 
 import {
   type Database,
   featureTeamMemberships,
   featureTeams,
   people,
+  plannedHires,
 } from "@fathom/db";
 import {
   dayReadingMonth,
@@ -17,12 +18,14 @@ import {
   seesView,
   type TeamMonths,
 } from "@fathom/shared";
+import { isNull } from "drizzle-orm";
 import { type Actor, requirePermission, requireView } from "../access.ts";
 import {
   type DraftedTeam,
+  memberColumn,
   readDraftedMemberships,
 } from "./feature-team-reads.ts";
-import { peopleRows } from "./feature-team-rules.ts";
+import { expectedMonth } from "./hire-fields.ts";
 import { bySubject, currentRecordOn, inForceOn } from "./in-force.ts";
 import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
 import { type LineRow, readLines } from "./reporting.ts";
@@ -36,15 +39,15 @@ function employedIn(person: Employment, month: string): boolean {
   );
 }
 
-// A record of someone joining or leaving a team from a day, approved or drafted.
+// A record of a person or planned hire joining or leaving a team from a day, approved or drafted.
 interface MembershipRecord {
   teamId: string;
-  personId: string;
+  memberId: string;
   member: boolean;
   fromDate: string;
 }
 
-type Membership = Omit<MembershipRecord, "personId">;
+type Membership = Omit<MembershipRecord, "memberId">;
 
 // The identifiers of the teams someone is on on a day, from their records by team, sorted.
 const teamsOn = (byTeam: ReadonlyMap<string, Membership[]>, day: string) =>
@@ -97,6 +100,8 @@ export interface TeamMonthsRead {
     id: string;
     preferredName: string;
   })[];
+  // The planned hires not yet filled, each on teams from the first day of the month it's expected.
+  readonly hires: readonly { id: string; firstDay: string }[];
   readonly lines: ReadonlyMap<
     string,
     readonly Pick<LineRow, "managerId" | "fromDate">[]
@@ -135,6 +140,15 @@ export async function readTeamMonths(
           endDate: people.endDate,
         })
         .from(people),
+      hires: (
+        await transaction
+          .select({ id: plannedHires.id, targetDate: plannedHires.targetDate })
+          .from(plannedHires)
+          .where(isNull(plannedHires.filledBy))
+      ).map(({ id, targetDate }) => ({
+        id,
+        firstDay: `${expectedMonth({ fillerStart: null, targetDate }, today)}-01`,
+      })),
       lines: await readLines(transaction),
       teams: await transaction
         .select({
@@ -143,16 +157,14 @@ export async function readTeamMonths(
           colour: featureTeams.colour,
         })
         .from(featureTeams),
-      memberships: peopleRows(
-        await transaction
-          .select({
-            teamId: featureTeamMemberships.teamId,
-            personId: featureTeamMemberships.personId,
-            member: featureTeamMemberships.member,
-            fromDate: featureTeamMemberships.fromDate,
-          })
-          .from(featureTeamMemberships),
-      ),
+      memberships: await transaction
+        .select({
+          teamId: featureTeamMemberships.teamId,
+          memberId: memberColumn,
+          member: featureTeamMemberships.member,
+          fromDate: featureTeamMemberships.fromDate,
+        })
+        .from(featureTeamMemberships),
     }),
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
@@ -160,20 +172,27 @@ export async function readTeamMonths(
     months: monthsBetween(from, to),
     today,
     byManager: seesView("groupingByManager", actor),
+    seesPeople: actor.permissions.includes("people:view"),
   });
 }
 
 export function teamMonthsFrom(
-  { rows, lines, teams, memberships, drafts }: TeamMonthsRead,
+  { rows, hires, lines, teams, memberships, drafts }: TeamMonthsRead,
   {
     months,
     today,
     byManager,
-  }: { months: readonly string[]; today: string; byManager: boolean },
+    seesPeople,
+  }: {
+    months: readonly string[];
+    today: string;
+    byManager: boolean;
+    seesPeople: boolean;
+  },
 ): TeamMonths {
   const nameOf = new Map(rows.map((row) => [row.id, row.preferredName]));
-  const recordsOf = bySubject(memberships, ({ personId }) => personId);
-  const draftedOf = bySubject(drafts.records, ({ personId }) => personId);
+  const recordsOf = bySubject(memberships, ({ memberId }) => memberId);
+  const draftedOf = bySubject(drafts.records, ({ memberId }) => memberId);
   const removed = new Set(
     drafts.teams
       .filter(({ action }) => action === "deleted")
@@ -191,19 +210,20 @@ export function teamMonthsFrom(
       : { id: managerId, name: nameOf.get(managerId) as string };
   };
   const draftedBy = new Set<string>();
-  const shownPeople = shown.map((person) => {
-    const records = recordsOf.get(person.id) ?? [];
+  // A member's teams in each month they are employed in, or a planned hire is expected by, approved
+  // and as drafted.
+  const monthsOf = (id: string, employment: Employment) => {
+    const records = recordsOf.get(id) ?? [];
     const byTeam = bySubject(records, ({ teamId }) => teamId);
-    const draftedRecords = draftedOf.get(person.id) ?? [];
+    const draftedRecords = draftedOf.get(id) ?? [];
     const byTeamDrafted =
       draftedRecords.length === 0 &&
       !records.some(({ teamId }) => removed.has(teamId))
         ? undefined
         : withDrafted(records, draftedRecords, removed);
-    const outside = months.filter((month) => !employedIn(person, month));
     const shownMonths = months.flatMap((month) => {
       const day = dayReadingMonth(month, today);
-      return currentOn(person, day) ? [{ month, day }] : [];
+      return currentOn(employment, day) ? [{ month, day }] : [];
     });
     const teamsIn = (of: ReadonlyMap<string, Membership[]>) =>
       shownMonths.flatMap(({ month, day }): [string, string[]][] => {
@@ -216,6 +236,14 @@ export function teamMonthsFrom(
         ? undefined
         : draftedMonths(shownMonths, approved, byTeamDrafted);
     for (const teamId of drafted?.by ?? []) draftedBy.add(teamId);
+    return {
+      teams: Object.fromEntries(approved),
+      ...(drafted === undefined ? {} : { drafted }),
+    };
+  };
+  const shownPeople = shown.map((person) => {
+    const outside = months.filter((month) => !employedIn(person, month));
+    const { teams: approved, ...drafted } = monthsOf(person.id, person);
     return {
       id: person.id,
       preferredName: person.preferredName,
@@ -232,11 +260,22 @@ export function teamMonthsFrom(
             ),
           }
         : {}),
-      teams: Object.fromEntries(approved),
+      teams: approved,
       ...(outside.length > 0 ? { outside } : {}),
-      ...(drafted === undefined ? {} : { drafted }),
+      ...drafted,
     };
   });
+  // Planned hires are shown as placeholders only to those who see people; others see those on a
+  // team, or drafted onto one, as they see a team's members.
+  const shownHires = hires
+    .map(({ id, firstDay }) => ({
+      id,
+      ...monthsOf(id, { startDate: firstDay, endDate: null }),
+    }))
+    .filter(
+      ({ teams: onTeams, drafted }) =>
+        seesPeople || Object.keys(onTeams).length > 0 || drafted !== undefined,
+    );
   const added = drafts.teams.filter(
     ({ teamId, action }) => action === "created" && draftedBy.has(teamId),
   );
@@ -255,6 +294,7 @@ export function teamMonthsFrom(
       })),
     ],
     people: shownPeople,
+    hires: shownHires,
     drafts: drafts.teams
       .filter(({ teamId }) => draftedBy.has(teamId))
       .map(({ teamId, action, state, unpublished }) => ({

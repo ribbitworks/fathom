@@ -14,7 +14,7 @@ import {
   type FeatureTeams,
   startingRoles,
 } from "@fathom/shared";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull } from "drizzle-orm";
 import { vi } from "vitest";
 import { readToday } from "./data/settings.ts";
 import {
@@ -25,6 +25,7 @@ import {
   sender,
   startTestApp,
   type TestApp,
+  testPosition,
   unique,
   type User,
 } from "./test-app.ts";
@@ -98,6 +99,31 @@ export const person = (details: object = {}) =>
     },
     details,
   );
+
+// A fictional planned hire, approved so it is live, named uniquely and expected in March 2026, before
+// today, unless told otherwise.
+export async function plannedHire(details: object = {}): Promise<string> {
+  const { ids } = await ok<{ ids: string[] }>(
+    await send(editor, "POST", "/api/planned-hires", {
+      hires: [
+        {
+          name: unique("Fictional Planned Hire"),
+          positionId: testPosition,
+          targetDate: "2026-03-15",
+          ...details,
+        },
+      ],
+    }),
+    201,
+  );
+  const id = String(ids[0]);
+  await ok(
+    await send(approver, "POST", "/api/drafts/approval", {
+      plannedHires: [id],
+    }),
+  );
+  return id;
+}
 
 // Changes someone's details, approved, such as giving them an end date so they have left once it
 // passes.
@@ -229,14 +255,59 @@ export const memberships = (id: string) =>
       asc(featureTeamMemberships.member),
     );
 
+// A team's lead records, each naming a person, a planned hire, or neither.
 export const leads = (id: string) =>
   test.connection
     .select({
       leadId: featureTeamLeads.leadId,
+      leadPlannedHireId: featureTeamLeads.leadPlannedHireId,
       fromDate: featureTeamLeads.fromDate,
     })
     .from(featureTeamLeads)
     .where(eq(featureTeamLeads.teamId, id))
     .orderBy(asc(featureTeamLeads.fromDate));
+
+// Records a planned hire joining a team, or leaving it, from a day, straight into its table, since
+// drafts don't put planned hires on teams yet.
+export async function hireOnTeam(
+  teamId: string,
+  plannedHireId: string,
+  {
+    fromDate = today,
+    member = true,
+  }: { fromDate?: string; member?: boolean } = {},
+): Promise<void> {
+  await test.connection
+    .insert(featureTeamMemberships)
+    .values({ teamId, plannedHireId, member, fromDate });
+}
+
+// Records a planned hire leading a team from a day, straight into its table, as hireOnTeam does.
+export async function hireLeading(
+  teamId: string,
+  plannedHireId: string,
+  fromDate = today,
+): Promise<void> {
+  await test.connection
+    .insert(featureTeamLeads)
+    .values({ teamId, leadPlannedHireId: plannedHireId, fromDate });
+}
+
+// The records of planned hires joining and leaving a team.
+export const hireMemberships = (id: string) =>
+  test.connection
+    .select({
+      plannedHireId: featureTeamMemberships.plannedHireId,
+      member: featureTeamMemberships.member,
+      fromDate: featureTeamMemberships.fromDate,
+    })
+    .from(featureTeamMemberships)
+    .where(
+      and(
+        eq(featureTeamMemberships.teamId, id),
+        isNotNull(featureTeamMemberships.plannedHireId),
+      ),
+    )
+    .orderBy(asc(featureTeamMemberships.fromDate));
 
 export const sorted = (...ids: string[]) => [...ids].sort();

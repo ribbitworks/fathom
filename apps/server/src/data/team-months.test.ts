@@ -27,15 +27,15 @@ const personRow = (
   ...dates,
 });
 
-const joins = (fromDate: string, teamId = team, personId = member) => ({
+const joins = (fromDate: string, teamId = team, memberId = member) => ({
   teamId,
-  personId,
+  memberId,
   member: true,
   fromDate,
 });
 
-const leaves = (fromDate: string, teamId = team, personId = member) => ({
-  ...joins(fromDate, teamId, personId),
+const leaves = (fromDate: string, teamId = team, memberId = member) => ({
+  ...joins(fromDate, teamId, memberId),
   member: false,
 });
 
@@ -62,17 +62,19 @@ function grid(
   read: Partial<TeamMonthsRead>,
   months: string[],
   byManager = true,
+  seesPeople = true,
 ) {
   return teamMonthsFrom(
     {
       rows: [personRow(member)],
+      hires: [],
       lines: new Map(),
       teams: [{ id: team, name: "Fictional Team", colour: null }],
       memberships: [],
       drafts: { teams: [], records: [] },
       ...read,
     },
-    { months, today, byManager },
+    { months, today, byManager, seesPeople },
   );
 }
 
@@ -393,5 +395,80 @@ describe("what the reader's drafts would change", () => {
     expect(rowOf(made)?.drafted).toBeUndefined();
     expect(made.drafts).toEqual([]);
     expect(made.teams.map(({ id }) => id)).toEqual([team]);
+  });
+});
+
+describe("planned hires' teams", () => {
+  const hire = "00000000-0000-4000-8000-0000000000c1";
+  const hireOf = (made: ReturnType<typeof grid>) =>
+    made.hires?.find((one) => one.id === hire);
+
+  it("counts a planned hire on its team from the month it's expected, never before", () => {
+    // Given a planned hire expected in March, recorded on a team from February
+    const made = grid(
+      {
+        hires: [{ id: hire, firstDay: "2025-03-01" }],
+        memberships: [joins("2025-02-01", team, hire)],
+      },
+      ["2025-02", "2025-03"],
+    );
+
+    // Then it is on the team from March only, and isn't listed among people
+    expect(hireOf(made)).toEqual({ id: hire, teams: { "2025-03": [team] } });
+    expect(rowOf(made, hire)).toBeUndefined();
+  });
+
+  it("lists a planned hire on no team with no teams", () => {
+    const made = grid({ hires: [{ id: hire, firstDay: "2025-01-01" }] }, [
+      "2025-02",
+    ]);
+
+    expect(made.hires).toEqual([{ id: hire, teams: {} }]);
+  });
+
+  it("shows what a draft would change in a planned hire's months, naming its team and draft", () => {
+    const made = grid(
+      {
+        hires: [{ id: hire, firstDay: "2025-01-01" }],
+        drafts: {
+          teams: [draftOf("changed")],
+          records: [joins("2025-03-01", team, hire)],
+        },
+      },
+      ["2025-02", "2025-03"],
+    );
+
+    expect(hireOf(made)?.drafted).toEqual({
+      teams: { "2025-03": [team] },
+      by: [team],
+    });
+    expect(made.drafts).toEqual([
+      { teamId: team, action: "changed", state: "waiting" },
+    ]);
+  });
+
+  it("lists only planned hires on a team, or drafted onto one, to a reader who doesn't see people", () => {
+    // Given one planned hire on a team, one a draft adds to it, and one on none
+    const drafted = "00000000-0000-4000-8000-0000000000c2";
+    const alone = "00000000-0000-4000-8000-0000000000c3";
+    const read = {
+      hires: [hire, drafted, alone].map((id) => ({
+        id,
+        firstDay: "2025-01-01",
+      })),
+      memberships: [joins("2025-01-01", team, hire)],
+      drafts: {
+        teams: [draftOf("changed")],
+        records: [joins("2025-02-01", team, drafted)],
+      },
+    };
+
+    // When a reader who doesn't see people reads the grid, and one who does
+    const unseen = grid(read, ["2025-02"], false, false);
+    const seen = grid(read, ["2025-02"]);
+
+    // Then the first lists only the hires on a team or drafted onto one
+    expect(unseen.hires?.map(({ id }) => id)).toEqual([hire, drafted]);
+    expect(seen.hires?.map(({ id }) => id)).toEqual([hire, drafted, alone]);
   });
 });

@@ -15,10 +15,12 @@ import {
   type MemberDay,
   membersRefusal,
   nameIsTaken,
+  hasLeft,
   nextTeamDraft,
-  peopleRows,
+  notYetStarted,
+  onTeamTodayOrLater,
 } from "./feature-team-rules.ts";
-import { someone } from "./test-feature-team-people.ts";
+import { plannedHire, someone } from "./test-feature-team-people.ts";
 
 const today = "2026-06-15";
 const team = "team-1";
@@ -417,12 +419,12 @@ describe("the day someone joins or leaves a team", () => {
   ]);
   const day = (from: string, teamId = team): MemberDay => ({
     teamId,
-    personId: member,
+    memberId: member,
     from,
   });
-  const record = (fromDate: string, teamId = team, personId = member) => ({
+  const record = (fromDate: string, teamId = team, memberId = member) => ({
     teamId,
-    personId,
+    memberId,
     fromDate,
   });
   const refusal = (from: string, records = [record("2025-06-01")]) =>
@@ -495,7 +497,7 @@ describe("the day someone joins or leaves a team", () => {
   it("leaves someone who is not a person to the members' check", () => {
     expect(
       employmentDayRefusal(
-        { teamId: team, personId: "person-unknown", from: "2025-01-01" },
+        { teamId: team, memberId: "person-unknown", from: "2025-01-01" },
         everyone,
         draftingRefusals,
       ),
@@ -563,11 +565,40 @@ describe("a new lead on the team", () => {
   });
 });
 
-describe("peopleRows", () => {
-  it("keeps people's membership rows and leaves out planned hires'", () => {
-    const person = { teamId: "t-1", personId: "p-1", member: true };
-    const hire = { teamId: "t-1", personId: null, member: true };
+describe("whether a planned hire is on a team today or later", () => {
+  const joins = (fromDate: string) => ({ member: true, fromDate });
+  const leaves = (fromDate: string) => ({ member: false, fromDate });
 
-    expect(peopleRows([person, hire])).toEqual([person]);
+  it.each([
+    ["it joined before today", [joins("2026-01-01")]],
+    ["it joins later", [joins("2099-01-01")]],
+    ["it leaves later", [joins("2026-01-01"), leaves("2099-01-01")]],
+    [
+      "it left and joins again later, whatever order its records come in",
+      [joins("2099-01-01"), leaves("2026-02-01"), joins("2026-01-01")],
+    ],
+  ])("is when %s", (_, records) => {
+    expect(onTeamTodayOrLater(records, today)).toBe(true);
+  });
+
+  it.each([
+    ["it left today", [joins("2026-01-01"), leaves(today)]],
+    ["it left before today", [joins("2026-01-01"), leaves("2026-02-01")]],
+    ["it has no records", []],
+  ])("isn't when %s", (_, records) => {
+    expect(onTeamTodayOrLater(records, today)).toBe(false);
+  });
+});
+
+describe("whether a member has left or not yet started", () => {
+  it.each([
+    ["a person who has left", someone({ left: true }), true, false],
+    ["a person not yet started", someone({ started: false }), false, true],
+    ["a current person", someone(), false, false],
+    ["a planned hire, which has no dates", plannedHire(), false, false],
+    ["someone not read", undefined, false, false],
+  ])("is answered for %s", (_, member, left, notStarted) => {
+    expect(hasLeft(member)).toBe(left);
+    expect(notYetStarted(member)).toBe(notStarted);
   });
 });

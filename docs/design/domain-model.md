@@ -190,8 +190,11 @@ Percentages are whole.
   - **Who may lead:** the lead is optional, and is one of the team's members on that date, so their time counts in its capacity. On a day they are not, the team has no lead. A lead chosen who is not a member joins the team in the same draft.
   - **No lead:** a team with no lead is marked, since its features then have no owner.
 - **Feature team membership:** Records that a person or a planned hire joins or leaves a feature team from a given date, never both in one record, in force until their next record for that team. Past memberships are kept, as reporting lines are, and future-dated records represent planned changes.
-  - **Several teams:** a person may be on several feature teams at once.
-  - **Planned hires:** a planned hire's membership and lead records are kept as a person's are, and removing the hire removes its memberships and clears it as lead; until reads and drafts take them ([issue #395](https://github.com/ribbitworks/fathom/issues/395)), Fathom shows and counts only people's, and a team a planned hire leads shows no lead.
+  - **Several teams:** a person or planned hire may be on several feature teams at once.
+  - **Planned hires:** a planned hire's membership and lead records are kept as a person's are, and Fathom shows and counts a hire on its teams and as their lead, named by its name, or by its ID when it has none. Drafts don't put a planned hire on a team yet ([issue #395](https://github.com/ribbitworks/fathom/issues/395)).
+    - **From its Expected month:** a hire counts in a team's capacity from its Expected month, never before. It has no end date, so it never leaves on one.
+    - **Removing:** removing a hire is refused, when drafted and again when approved, while it leads a team, today, later or in a draft, or a team's draft names it as a member. Approving its removal takes it off the teams it is on today or later, recording the change, and clears it as a past lead.
+    - **Filling:** until filling carries a hire's teams to its person ([issue #395](https://github.com/ribbitworks/fathom/issues/395)), a hire on a team today or later, or leading one today or later, live or in a team's draft, can't be filled. Once it is taken off its teams, it can be.
   - **Leaving:** once someone's end date has passed, they are off every feature team from the next day. They no longer count as a member, a team they led has no lead, and their past membership is kept.
 
 ### Planned Hires
@@ -205,7 +208,7 @@ Percentages are whole.
   - **Columns:** it has values for the columns it shares with people. Every column added to People is offered on planned hires unless switched off for them, as a draft of the column. People's End column is not offered.
   - **Optional values:** every value is optional on a hire, even where People requires it.
   - **Switching a column off:** a column cannot be switched off for planned hires while any hire not yet filled, live or in a draft, has a value in it; those values are cleared first.
-  - **Removing:** a hire is cancelled by removing it, which removes its allocations in the same draft. The change history keeps it.
+  - **Removing:** a hire is cancelled by removing it, which removes its allocations in the same draft and takes it off its feature teams, as [Feature team membership](#feature-teams) sets out. The change history keeps it.
   - **Filling:** links the hire to the person who fills it, a new person or one already in Fathom, as one draft, approved or rejected whole. Once filled, it leaves People.
     - **Which hires:** only a hire in a state meaning Open, with no rejected draft, can be filled. A person may fill several over time, but not a second while the hire they filled before has not started.
     - **A new person:** takes the hire's position, the manager chosen and the hire's values in the shared columns, and is asked for any value People requires that the hire has none for.

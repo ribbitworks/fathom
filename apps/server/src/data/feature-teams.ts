@@ -209,7 +209,7 @@ export async function createFeatureTeam(
     if (from !== undefined) {
       await refuseDaysOutOfOrder(
         transaction,
-        members.map((personId) => ({ teamId: id, personId, from })),
+        members.map((memberId) => ({ teamId: id, memberId, from })),
         everyone,
         draftingRefusals,
       );
@@ -390,7 +390,7 @@ export async function draftTeamChange(
   if (from !== undefined) {
     await refuseDaysOutOfOrder(
       transaction,
-      dated.map((personId) => ({ teamId: id, personId, from })),
+      dated.map((memberId) => ({ teamId: id, memberId, from })),
       everyone,
       dayRefusals,
     );
@@ -408,7 +408,7 @@ export async function draftTeamChange(
     );
     if (from !== undefined) {
       refuseOutsideEmployment(
-        { teamId: id, personId: leadId, from },
+        { teamId: id, memberId: leadId, from },
         everyone,
         draftingRefusals,
       );

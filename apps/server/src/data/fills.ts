@@ -4,6 +4,7 @@
 // that report to it. Part of the data access layer.
 
 import { refuseFillingAllocated } from "./allocations.ts";
+import { refuseFillingOnTeams } from "./feature-team-removals.ts";
 import { type Database, plannedHires, type Reader } from "@fathom/db";
 import {
   decides,
@@ -251,6 +252,7 @@ export async function fillHire(
     await lockDrafts(transaction);
     const { before, hire } = await fillableHire(transaction, actor, hireId);
     await refuseFillingAllocated(transaction, hireId);
+    await refuseFillingOnTeams(transaction, hireId);
     // Someone already in Fathom given no manager keeps the one they have; a new person needs one.
     const keepsOwn = fill.managerId === null && fill.by === "existing person";
     if (

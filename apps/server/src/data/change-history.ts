@@ -83,7 +83,7 @@ export interface ReadChangeHistory {
 
 // The people a change names, whom a reader who doesn't see start and end dates may not see while
 // they haven't started or once they have left: the person changed, a team's members and lead, and a
-// hire's manager or filler.
+// hire's manager or filler. Planned hires among a team's members and lead are never hidden.
 export function peopleNamedBy(row: StoredChange): string[] {
   if (row.recordType === "person") return [row.recordId];
   if (namesMembers(row)) return [row.oldValue, row.newValue].flatMap(strings);
@@ -230,7 +230,7 @@ async function readBatch(
     ...rows.map((row) => row.recordId),
     ...rows.flatMap((row) => referencedIds(row)),
   ]);
-  // A hire's manager may be a planned hire too, named as any hire is.
+  // A hire's manager, and a team's members and lead, may be planned hires too, named as any hire is.
   const hireRows = rows.filter((row) => row.recordType === "planned-hire");
   await nameHires(
     database,
@@ -241,6 +241,9 @@ async function readBatch(
         .filter((row) => row.field === "managerId")
         .flatMap((row) => [row.oldValue, row.newValue])
         .filter((value): value is string => typeof value === "string"),
+      ...rows
+        .filter((row) => row.recordType === "feature-team")
+        .flatMap(peopleNamedBy),
     ],
     facts,
   );

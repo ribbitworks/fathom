@@ -195,7 +195,7 @@ export const rowKindSchema = z.enum(["person", "planned-hire"]);
 
 export type RowKind = z.infer<typeof rowKindSchema>;
 
-// A feature team someone is on, as People names it.
+// A feature team a person or planned hire is on, as People names it.
 export const personFeatureTeamSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -245,8 +245,8 @@ export const personSchema = z.object({
   teamName: z.string().nullable().optional(),
   // Whether others can be named as reporting to the person, which is General.
   isManager: z.boolean().optional(),
-  // The feature teams the person is on, live, on the day shown, by name; none for a planned hire.
-  // Left out for users who cannot see feature teams.
+  // The feature teams the person or planned hire is on, live, on the day shown, by name. Left out for
+  // users who cannot see feature teams.
   featureTeams: z.array(personFeatureTeamSchema).optional(),
   values: valuesSchema,
   links: linksSchema.default({}),

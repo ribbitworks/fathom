@@ -60,8 +60,8 @@ function refusalsWhenApproving(
 ): DayRefusals {
   const refusal =
     (fact: string): DayRefusal =>
-    ({ teamId, personId }) =>
-      `${String(everyone.get(personId)?.preferredName)}'s day in the draft of ${String(teamNames.get(teamId))} ${fact}; reject the draft so it can be changed`;
+    ({ teamId, memberId }) =>
+      `${String(everyone.get(memberId)?.preferredName)}'s day in the draft of ${String(teamNames.get(teamId))} ${fact}; reject the draft so it can be changed`;
   return {
     outOfOrder: refusal(
       "no longer comes after the last time they joined or left it",
@@ -172,11 +172,21 @@ export async function approveTeamsIn(
       const [leadDay] = Object.values(leadDatesOf(team));
       leadRecords.push({ teamId: id, leadId, fromDate: leadDay ?? today });
       if (leadId !== null && leadDay !== undefined) {
-        leadDays.push({ teamId: id, personId: leadId, from: leadDay });
+        leadDays.push({ teamId: id, memberId: leadId, from: leadDay });
       }
     }
     const joiningAndLeaving = membershipChanges(id, before, team, today);
-    records.push(...joiningAndLeaving.records);
+    // Only people are drafted onto teams yet.
+    records.push(
+      ...joiningAndLeaving.records.map(
+        ({ teamId, memberId, member, fromDate }) => ({
+          teamId,
+          personId: memberId,
+          member,
+          fromDate,
+        }),
+      ),
+    );
     days.push(...joiningAndLeaving.days);
   }
   const refusals = refusalsWhenApproving(teamNames, everyone);
