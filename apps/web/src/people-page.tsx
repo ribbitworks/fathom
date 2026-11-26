@@ -104,7 +104,7 @@ export function PeoplePage({
   approves = [],
   canEditColumns,
   showDates,
-  showHireDates = showDates,
+  seesHiringPlan,
   view,
   onView,
   applied,
@@ -139,8 +139,8 @@ export function PeoplePage({
   approves?: readonly DraftKind[];
   canEditColumns: boolean;
   showDates: boolean;
-  // Whether the user sees planned hires' target dates, which come with the hiring plan.
-  showHireDates?: boolean;
+  // Whether the user is sent the hiring plan: planned hires' target dates, drafts and history.
+  seesHiringPlan: boolean;
   view: View;
   onView: ChangeView;
   // The saved view the view started from, and how to apply one, replacing the current address
@@ -447,7 +447,7 @@ export function PeoplePage({
                           showDates,
                           query.data.people,
                           !positionHidden,
-                          showHireDates,
+                          seesHiringPlan,
                           canEditHires,
                         )}
                         narrow={narrow}
@@ -500,7 +500,7 @@ export function PeoplePage({
                         employeeId={open}
                         show={view.show}
                         showDates={showDates}
-                        showHireDates={showHireDates}
+                        showHireDates={seesHiringPlan}
                         canEditHires={canEditHires}
                         seesFeatureTeams={seesFeatureTeams}
                         narrow={narrow}
@@ -602,7 +602,7 @@ export function PeoplePage({
           saving={saving}
           canEditColumns={canEditColumns}
           showDates={showDates}
-          showHireDates={showHireDates}
+          seesHiringPlan={seesHiringPlan}
           showPosition={query.data.positionHidden !== true}
           actions={actions}
           view={view}

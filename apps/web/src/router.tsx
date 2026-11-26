@@ -446,7 +446,7 @@ const peopleRoute = createRoute({
             : undefined
         }
         showDates={seesEmployment(access)}
-        showHireDates={seesHiringPlan(access)}
+        seesHiringPlan={seesHiringPlan(access)}
         {...viewProps(search, (next, replace) => {
           void navigate({
             search: { ...next, open, ...notes, day, timeline },

@@ -140,7 +140,7 @@ flowchart LR
 - **Exports:** An exported file holds only what the role was sent.
   - **Recording:** the browser asks the server to record an export of Personal or Confidential data once it is confirmed and a place to save it chosen, then writes the file.
   - **Checked by the server:** it finds each column's class and name itself, and refuses an export naming a column the role can't see.
-  - **Classified rows:** rows hold classified data apart from their columns: planned hires are recorded as the Hiring plan, and a drafted change of manager as Past managers.
+  - **Classified rows:** rows hold classified data apart from their columns: planned hires are recorded as the Hiring plan, and a drafted change of manager as Past managers. A planned hire's drafted manager is the hiring plan's, not Past managers. A role not sent the hiring plan is sent only approved hires, whose columns carry their own classes, so its export holds no Hiring plan. A role sent the plan but not people's dates is sent a Start column holding only planned hires' target dates, recorded under the plan's class.
   - **Accounts:** an account's name and email address are Personal in an export, whose classes the server holds fixed, so it is recorded. It isn't refused for the class, since every role that sees accounts sees them.
   - **Accepted:** a changed browser or a script can save the data without the record, as it could copy it from the screen.
 - **Logs and errors:** Logs leave out database error messages and known sensitive fields, though a path can name a record's ID. Server errors shown to users are generic.

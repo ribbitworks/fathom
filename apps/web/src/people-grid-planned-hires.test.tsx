@@ -181,6 +181,7 @@ describe("planned hires beside people", () => {
           canEditColumns={false}
           canEditHires
           showDates
+          seesHiringPlan
           view={emptyView}
           onView={noop}
           actions={peopleActions()}
@@ -217,6 +218,7 @@ describe("planned hires beside people", () => {
             canEdit={false}
             canEditColumns={false}
             showDates
+            seesHiringPlan
             view={{ ...emptyView, breakdown: ["positionId"] }}
             onView={noop}
             actions={peopleActions()}
@@ -260,6 +262,7 @@ describe("planned hires beside people", () => {
           canEditColumns={false}
           canEditHires
           showDates
+          seesHiringPlan
           view={emptyView}
           onView={noop}
           actions={peopleActions()}
@@ -287,6 +290,7 @@ describe("planned hires beside people", () => {
           canEditColumns={false}
           canEditHires
           showDates
+          seesHiringPlan
           view={{
             ...emptyView,
             sort: [{ key: "preferredName", descending: true }],

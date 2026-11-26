@@ -147,6 +147,40 @@ describe("recording an export", () => {
     expect(await exportsBy(reader.id)).toEqual([]);
   });
 
+  it("refuses the hiring plan to a role that sees Confidential data but isn't sent the plan", async () => {
+    // Given a reader of Confidential data without View Hiring plan
+    const reader = await test.signedIn(seesBoth);
+
+    const response = await exported(reader.cookie, [name], "people", [
+      "hiringPlan",
+    ]);
+
+    expect(response.statusCode).toBe(403);
+    expect(await exportsBy(reader.id)).toEqual([]);
+  });
+
+  it("records Start as the hiring plan for a role sent planned hires' target dates but not people's dates", async () => {
+    // Given a reader of the hiring plan and Confidential data who doesn't see Personal data, whose
+    // Start column holds only planned hires' target dates
+    const reader = await test.signedIn([
+      ...seesPeople,
+      "confidential:view",
+      "hiring-plan:view",
+    ]);
+
+    const response = await exported(reader.cookie, [name, start], "people", [
+      "hiringPlan",
+    ]);
+
+    // Then the export is recorded, Start under the hiring plan's class, never refused as Personal
+    expect(response.statusCode, response.body).toBe(200);
+    const [entry] = await exportsBy(reader.id);
+    expect(entry?.details).toEqual({
+      exported: "People",
+      confidentialColumns: ["Hiring plan", "Start"],
+    });
+  });
+
   it("records nothing for an export holding only General columns", async () => {
     const reader = await test.signedIn(seesPeople);
     const response = await exported(reader.cookie, [name, "employeeId"]);

@@ -15,12 +15,16 @@ import {
   fixedClassTables,
   heldTiers,
   isFixedClassTable,
+  seesEmployment,
 } from "@fathom/shared";
 import { type Actor, requirePermission, seesSensitivity } from "../access.ts";
 import { BadRequestError, ConflictError, ForbiddenError } from "../errors.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { recordEvent } from "./history.ts";
 import { columnClasses } from "./values.ts";
+
+// Said when an export names the hiring plan to a role it isn't sent to.
+const unseenPlan = "This file holds the hiring plan, which this role can't see";
 
 // Said when the page names a column the server no longer has, such as one removed since it opened,
 // whose class can't be checked.
@@ -102,6 +106,18 @@ export async function recordExport(
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
   const byKey = columnClasses(shown);
+  // A role sent the hiring plan but not people's dates is sent a Start column holding only planned
+  // hires' target dates, which are the plan.
+  const startIsPlan =
+    table === "people" &&
+    !seesEmployment(actor) &&
+    seesSensitivity(actor, "hiring-plan");
+  if (
+    details.includes("hiringPlan") &&
+    !seesSensitivity(actor, "hiring-plan")
+  ) {
+    throw new ForbiddenError(unseenPlan);
+  }
   const held = classifiedData([
     ...details.map((field) => ({
       // The field is always one of the fixed fields.
@@ -113,6 +129,9 @@ export async function recordExport(
     ...columns.map((key) => {
       const column = byKey.get(key);
       if (column === undefined) throw new ConflictError(changedColumns);
+      if (startIsPlan && key === "startDate") {
+        return { name: column.name, dataClass: shown.dataClasses.hiringPlan };
+      }
       return { name: column.name, dataClass: column.tier };
     }),
   ]);

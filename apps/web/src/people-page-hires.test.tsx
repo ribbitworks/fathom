@@ -16,6 +16,7 @@ import {
   s1,
   u1,
   hiringEditor,
+  session,
   sites,
   roles,
   positions,
@@ -201,6 +202,87 @@ describe("planned hires", () => {
       },
     ]);
     expect(files[0]?.name).toMatch(/\.tsv$/u);
+  });
+
+  it("counts a planned hire's drafted manager as the hiring plan, not as Past managers", async () => {
+    // Given a reader of the hiring plan who doesn't see Personal data, and a hire whose draft changes
+    // its manager
+    serverAnswers({
+      "GET /api/session": session([
+        "people:view",
+        "plan:view",
+        "configuration:view",
+        "hiring-plan:view",
+        "confidential:view",
+      ]),
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            avery,
+            {
+              ...opening,
+              draft: { ...rejected, changed: ["managerId"], state: "waiting" },
+            },
+          ],
+          fields: [],
+          order: ["preferredName", "employeeId", "positionId", "stateId"],
+        }),
+      "GET /api/lists": () =>
+        Response.json({ lists: [sites, roles, positions, states] }),
+    });
+    renderApp("/people");
+    await screen.findByRole("grid", { name: "People" });
+
+    // When People is exported
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "CSV file" }),
+    );
+
+    // Then it asks about the hiring plan alone, never Personal data the reader can't see
+    const dialog = await screen.findByRole("dialog", {
+      name: "Export Confidential data?",
+    });
+    expect(dialog.textContent).not.toContain("Past managers");
+  });
+
+  it("saves a reader's approved planned hires without asking, when it isn't sent the hiring plan", async () => {
+    // Given People with an approved planned hire, read by a role that sees people but not the hiring
+    // plan, so is sent only the hire's General details
+    const files = savedFiles();
+    const fetch = serverAnswers({
+      "GET /api/session": session([
+        "people:view",
+        "plan:view",
+        "configuration:view",
+      ]),
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            avery,
+            { ...opening, draft: undefined, startDate: undefined },
+          ],
+          fields: [],
+          order: ["preferredName", "employeeId", "positionId", "stateId"],
+        }),
+      "GET /api/lists": () =>
+        Response.json({ lists: [sites, roles, positions, states] }),
+    });
+    renderApp("/people");
+    await screen.findByRole("grid", { name: "People" });
+
+    // When People is exported as a CSV file
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "CSV file" }),
+    );
+
+    // Then it is saved at once, with no question and nothing for the server to record
+    await waitFor(() => {
+      expect(files).toHaveLength(1);
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(bodyOf(fetch, "POST", "/api/exports")).toEqual([]);
   });
 
   it("offers a person the states of their meaning, and a hire only Proposed or Open", async () => {
