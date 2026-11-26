@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/design/pages/features.md", "docs/help/activities.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Fathom: Activities Page
@@ -24,6 +24,7 @@ Activities lists the work releases and projects need that isn't a feature, such 
 ## Columns
 
 - **Order:** Name, Status, Description, Notes, Release, Project, Priority, Needed by, Effort, Size, Risk, Feature team, Staffed, then added columns.
+- **Added columns:** set up in [Features](features.md)' column dialog, with New list last in a choice column's List picker.
 - **Shared with Features:** every column but Release and Project is Features' own, drawn by the same code, with the same rules, such as No team for a Planned or In progress activity with no feature team.
 - **Staffed:** read only, as a feature's is: for Planned or In progress activities, Yes when any allocation gives them a month, a planned hire's included.
 - **Release and Project:** exactly one is filled.

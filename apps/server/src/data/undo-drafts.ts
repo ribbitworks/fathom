@@ -22,7 +22,7 @@ import {
   columnRow,
   columnTier,
   mayRemoveValuesOf,
-  refuseSensitiveOnFeatures,
+  refuseSensitivePlanningColumn,
   nameTaken,
   readColumnsState,
 } from "./column-state.ts";
@@ -407,7 +407,7 @@ export async function undoColumnDrafts(
       if (nameTaken(state, String(wanted.name), record.id, wanted.tableName)) {
         throw new ConflictError(changedSince);
       }
-      refuseSensitiveOnFeatures(state, wanted);
+      refuseSensitivePlanningColumn(state, wanted);
       const { listId, visibility } = typeOf(wanted).settings(wanted);
       const before = drafted(live, draft);
       if (visibility !== null && live === undefined) {

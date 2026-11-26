@@ -15,7 +15,7 @@ import {
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import {
-  refuseSensitiveOnFeatures,
+  refuseSensitivePlanningColumn,
   columnRow,
   columnTier,
   draftedField,
@@ -95,7 +95,7 @@ export async function approveColumnDrafts(
       made.push(...(await deleteLiveField(transaction, id)));
       continue;
     }
-    refuseSensitiveOnFeatures(state, field);
+    refuseSensitivePlanningColumn(state, field);
     const after = columnRow(id, field);
     if (after.listId !== null) {
       // The list is locked, so it cannot be retired while the column comes to draw on it.

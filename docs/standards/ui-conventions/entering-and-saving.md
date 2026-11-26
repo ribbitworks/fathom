@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Entering and Saving Data
@@ -28,7 +28,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Drawn by:** `ChoicePicker` in `apps/web/src/choice-picker.tsx`, given the word through `cellKinds` in `apps/web/src/cell-kinds.tsx` from the column's `emptyLabel`.
   - **Example:** On People, open a person's Manager cell: No manager is first.
 - **Adding from a picker:** A picker of the plan's linked records, in a details panel or a table's cell, offers New and the kind of record last, under a line, in the accent colour, with what was typed in quotes, such as New customer “Harbour Ferries”.
-  - **Every picker that adds:** Any picker that can make what it picks offers it the same way, last, under a line, in the accent colour, such as New list in a choice column's List picker on Features, which shows the new list's fields in the dialog rather than a form; a picker that can't be typed into names no typed words, just New list.
+  - **Every picker that adds:** Any picker that can make what it picks offers it the same way, last, under a line, in the accent colour, such as New list in a choice column's List picker on Features and Activities, which shows the new list's fields in the dialog rather than a form; a picker that can't be typed into names no typed words, just New list.
   - **Who sees it:** It shows only to a role that may add that record, and never under Live only, in a New form, or in a table's empty row, except where the value can't change once the record is saved, such as a milestone's project. Enter picks it when nothing else matches.
   - **The form:** It keeps what was picked, then opens the record's own New form, the one its page's New opens, named by what was typed, stacked under the details, or beside the table from a cell, with Maximize. Its pickers offer no New. A record that names the other, such as a project naming its features, opens naming it already. Leaving the form while it holds anything entered, the name typed into the picker included, asks Discard the new customer? or the like; what the form fills in itself, such as the feature it names, isn't counted, as [Leaving Unsaved Work](#leaving-unsaved-work) sets out.
   - **Adding:** Add adds the record, as a draft, and links it: within that draft where the new record names the other, by filling the empty row the picker was in, or else as a draft of the record the picker was for. It then closes the form and puts focus back on the picker's row.

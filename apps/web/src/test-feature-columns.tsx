@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Fictional columns added to Features, their lists, and opening Features with them and the column
-// dialog, shared by the tests of Features' columns.
+// Fictional added columns, their lists, and opening a planned-work page, Features by default, with
+// them and the column dialog, shared by the tests of Features' and Activities' columns.
 
 import { screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -67,9 +67,10 @@ export const openWith = (
   start: Plan,
   more: object = {},
   permissions = columnEditor,
+  path = "/features",
 ) =>
   openPage(
-    "/features",
+    path,
     start,
     { ...answers, "GET /api/lists": lists, ...more },
     permissions,

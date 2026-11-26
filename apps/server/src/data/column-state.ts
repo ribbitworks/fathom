@@ -278,9 +278,9 @@ export const toFieldOut = (
   };
 };
 
-// Refuses a column on Features whose values are not General, since everyone who sees the plan is
-// sent them.
-export function refuseSensitiveOnFeatures(
+// Refuses a column on Features or Activities whose values are not General, since everyone who sees
+// the plan is sent them.
+export function refuseSensitivePlanningColumn(
   state: ColumnsState,
   field: Recorded,
 ) {
@@ -289,7 +289,7 @@ export function refuseSensitiveOnFeatures(
     columnTier(state, field) !== "general"
   ) {
     throw new BadRequestError(
-      "Everyone who sees the plan sees columns on Features, so choose a General list or visibility",
+      `Everyone who sees the plan sees columns on ${policyOf(field.tableName).name}, so choose a General list or visibility`,
     );
   }
 }

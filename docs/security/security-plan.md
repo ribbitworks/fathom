@@ -161,10 +161,10 @@ flowchart LR
 - **Approving one's own change:** Nobody approves their own change, made under any of their roles, unless the role they act as is given that permission.
 - **Approving under either of two areas:** Drafts of schedules and their cycles are changed with Edit on the plan or on configuration, and approved with Approve on either one, so a role granted either reaches them.
   - **One shared rule:** one shared rule on the server checks either permission, together with seeing schedules, for every change and decision on them, and tests cover each role allowed and denied.
-- **Lists made with a column:** Whoever sets up Features' columns drafts a new list with a column, without Edit Configuration, so a list could be made, or one changed or removed, by someone who doesn't change configuration.
-  - **Only a new General list:** the server makes the list General itself, only with a column on Features, in the column's own change, and refuses a new list for People's columns.
-  - **Only with a column:** the list and its choices are undone without Edit Configuration only with the change that added them with the column, and discarded only with the last Features column drawing on them, never with a People column, and never when anything changed the list since it was made, another column still draws on it, or someone else is changing it. Approving it still takes Approve Configuration.
-  - **Tests:** every starting role allowed and denied, and each case the list stays, in `apps/server/src/feature-column-new-list.test.ts`.
+- **Lists made with a column:** Whoever sets up Features' or Activities' columns drafts a new list with a column, without Edit Configuration, so a list could be made, or one changed or removed, by someone who doesn't change configuration.
+  - **Only a new General list:** the server makes the list General itself, only with a column on Features or Activities, in the column's own change, and refuses a new list for People's columns.
+  - **Only with a column:** the list and its choices are undone without Edit Configuration only with the change that added them with the column, and discarded only with the last Features or Activities column drawing on them, never with a People column, and never when anything changed the list since it was made, another column still draws on it, or someone else is changing it. Approving it still takes Approve Configuration.
+  - **Tests:** every starting role allowed and denied on both tables, and each case the list stays, in `apps/server/src/feature-column-new-list.test.ts`.
 - **Escaping a container:** Every container runs as a user other than root, with a read-only filesystem, all Linux capabilities dropped and no privilege escalation. The application's runtime image is distroless.
 - **The database:** Passwords are stored with SCRAM-SHA-256, and the database refuses superuser logins over the network.
 

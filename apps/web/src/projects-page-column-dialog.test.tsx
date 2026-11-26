@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the column dialog on Features: making a new list with a column, and asking before
-// leaving the dialog with anything changed.
+// Tests for the column dialog on Features and Activities: making a new list with a column, and asking
+// before leaving the dialog with anything changed.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -14,6 +14,7 @@ import {
   columnsOf,
   withColumns,
   openWith,
+  columnEditor,
   newColumn,
   editColumn,
 } from "./test-feature-columns.tsx";
@@ -493,5 +494,55 @@ describe("the column dialog on Features", () => {
       within(question).getByRole("button", { name: "Keep editing" }),
     );
     expect(screen.getByRole("dialog", { name: "Edit column" })).toBeDefined();
+  });
+});
+
+describe("the column dialog on Activities", () => {
+  it("adds a column with a new list, as Features does", async () => {
+    // Given the New column dialog on Activities, with New list chosen
+    const path = "POST /api/activities/columns";
+    const added = { ...size, id: "new", name: "Fictional Tier" };
+    const { fetch } = await openWith(
+      withColumns(),
+      {
+        [path]: () =>
+          Response.json({ field: added, changeSetId }, { status: 201 }),
+      },
+      columnEditor,
+      "/activities",
+    );
+    const dialog = await newColumn();
+    await userEvent.type(
+      within(dialog).getByLabelText("Name"),
+      "Fictional Tier",
+    );
+    await chooseIn(dialog, "List", "New list");
+
+    // When the list is named and given a choice, and the column added
+    await userEvent.type(
+      within(dialog).getByLabelText("List name"),
+      "Fictional Tiers",
+    );
+    await userEvent.type(
+      within(dialog).getByRole("textbox", { name: "New choice name" }),
+      "Gold{Enter}",
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Add column" }),
+    );
+
+    // Then the column is sent to Activities with its new list
+    await waitFor(() => {
+      expect(sent(fetch, path)).toEqual([
+        expect.objectContaining({
+          name: "Fictional Tier",
+          type: "choice",
+          newList: {
+            name: "Fictional Tiers",
+            choices: [{ label: "Gold", description: "" }],
+          },
+        }),
+      ]);
+    });
   });
 });

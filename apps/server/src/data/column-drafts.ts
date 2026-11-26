@@ -77,7 +77,7 @@ import {
   policyOf,
   readColumnsState,
   refuseHeldIn,
-  refuseSensitiveOnFeatures,
+  refuseSensitivePlanningColumn,
   table,
   toBeRemoved,
   toFieldOut,
@@ -152,7 +152,8 @@ function refuseUnseenTier(
   field: Recorded,
   message = unseenTier,
 ) {
-  // Columns on Features are General, which refuseSensitiveOnFeatures holds them to.
+  // Columns on Features and Activities are General, which refuseSensitivePlanningColumn holds them
+  // to.
   if (policyOf(field.tableName).generalOnly) return;
   if (!seesSensitivity(actor, columnTier(state, field))) {
     throw new ForbiddenError(message);
@@ -171,7 +172,7 @@ async function discardColumn(
   const made = discardingField(state, id);
   await discardDrafts(transaction, maker.user.id, "field", [id]);
   // Only a table whose columns make lists takes one along, so a People column, which may draw on a
-  // list made with a Features column, never discards it without Edit Configuration.
+  // list made with a Features or Activities column, never discards it without Edit Configuration.
   const listMade =
     policyOf(drafted.tableName).newLists &&
     typeof drafted.listId === "string" &&
@@ -210,7 +211,7 @@ export async function createField(
     );
     refuseUnseenTier(actor, state, field);
     // A new list is General, as drafted above, and isn't in the state read before it.
-    if (newList === undefined) refuseSensitiveOnFeatures(state, field);
+    if (newList === undefined) refuseSensitivePlanningColumn(state, field);
     classifyDraft(actor, {
       live: false,
       name: request.name,
@@ -299,7 +300,7 @@ async function changeField(
   }
   const after = { ...field, ...requested(request, field.tableName) };
   refuseUnseenTier(actor, state, after);
-  refuseSensitiveOnFeatures(state, after);
+  refuseSensitivePlanningColumn(state, after);
   classifyDraft(actor, {
     live: live !== undefined,
     name: String(field.name),
@@ -397,7 +398,7 @@ export async function moveColumnClass(
     if (from === to) return null;
     if (policyOf(row.tableName).generalOnly) {
       throw new ConflictError(
-        "Everyone who sees the plan sees columns on Features, so they stay General",
+        `Everyone who sees the plan sees columns on ${policyOf(row.tableName).name}, so they stay General`,
       );
     }
     await transaction

@@ -67,6 +67,7 @@ You can add your own columns to Activities if your role edits features and sees 
 1. Type the column's **Name**.
 1. Choose its **Type**: **Choice from a list**, **Web link**, **Note** or **Number**.
 1. If you chose **Choice from a list**, choose a list. Only lists whose class is **General** are offered, since everyone who sees activities sees these columns.
+1. If the list you need isn't there, choose **New list**, last under **List**, instead. Give the list a name, then type each choice in the row that starts with **+** under **Choices**, pressing Enter after each, or paste several, one to a line. To take one out, select **Remove** in its **⋯** menu. The new list is approved with the column.
 1. Select **Add column**.
 
 You're done when the new column shows in the table, with a hollow dot until you publish it.
