@@ -75,6 +75,15 @@ const opening = (typed: string): FormValues => ({ name: typed });
 const changed = ({ typed, values }: Linking) =>
   JSON.stringify(values) !== JSON.stringify(opening(typed));
 
+// A new customer's form leaves out the read-only columns that its projects, proposals and features
+// fill, so it needs none of them.
+const noLinks = {
+  projects: [],
+  proposals: [],
+  features: [],
+  drafted: { projects: [], proposals: [], features: [] },
+};
+
 export function useAddFromPanel({
   canAdd,
   actionsFor,
@@ -166,7 +175,7 @@ export function useAddFromPanel({
         <NewPlanRecordPanel
           key={forms}
           title={`New ${one}`}
-          table={customerTable()}
+          table={customerTable(noLinks, { seesFeatures: false })}
           records={plan.customers}
           values={current.values}
           saving={current.saving}
