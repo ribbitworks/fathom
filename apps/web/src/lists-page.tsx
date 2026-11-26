@@ -642,6 +642,13 @@ export function ListsPage({
           panels={panels}
           viewChoices={choices}
           selected={open?.id}
+          closeSelected={
+            open === undefined
+              ? undefined
+              : () => {
+                  closePanel(open);
+                }
+          }
         />
       </TableTips>
     );

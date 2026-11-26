@@ -326,6 +326,13 @@ export function ProjectsPage({
         onCustomerFeatures?.(customer);
       });
     };
+    const closeOpen = () => {
+      leave(() => {
+        onOpen?.(undefined);
+        if (onBoard) focusCard(String(open));
+        else focusRecordCell(String(open), "name");
+      });
+    };
     const panel = recordPanel({
       tab,
       plan,
@@ -343,13 +350,7 @@ export function ProjectsPage({
       approves,
       seesFeatures,
       nodes,
-      onClose: () => {
-        leave(() => {
-          onOpen?.(undefined);
-          if (onBoard) focusCard(String(open));
-          else focusRecordCell(String(open), "name");
-        });
-      },
+      onClose: closeOpen,
       menu: {
         decide: (asking, ref) => {
           decide(asking, { ...noDrafts(), records: [ref] });
@@ -397,6 +398,7 @@ export function ProjectsPage({
       onView,
       saved: views.saved,
       selected: open,
+      closeSelected: closeOpen,
     };
     // The form takes the panel's place while a record is being added.
     function panelsWith<Rec extends PlanRecord, Request>(

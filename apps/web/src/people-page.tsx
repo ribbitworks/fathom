@@ -256,6 +256,14 @@ export function PeoplePage({
       go();
     });
   };
+  const closeShown = () => {
+    leave(() => {
+      onOpen?.(undefined);
+      if (shownRecord !== undefined) {
+        focusRecordCell(shownRecord.id, "preferredName");
+      }
+    });
+  };
   const startFill = (hire: Person) => {
     leave(() => {
       onOpen?.(hire.employeeId, open === hire.employeeId);
@@ -399,6 +407,7 @@ export function PeoplePage({
       <>
         <PeopleGrid
           selected={shownId}
+          closeSelected={closeShown}
           linkedColumn={linkedColumn}
           teamColourOf={teamColourOf}
           count={countOn}
@@ -575,14 +584,7 @@ export function PeoplePage({
                                 ),
                               }
                         }
-                        onClose={() => {
-                          leave(() => {
-                            onOpen(undefined);
-                            if (shownRecord !== undefined) {
-                              focusRecordCell(shownRecord.id, "preferredName");
-                            }
-                          });
-                        }}
+                        onClose={closeShown}
                       />
                     ),
                   },

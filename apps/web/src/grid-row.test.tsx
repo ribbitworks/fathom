@@ -584,3 +584,59 @@ describe("the waiting drafts the Draft menu counts", () => {
     expect(within(menu).getByText("Waiting drafts")).toBeDefined();
   });
 });
+
+describe("a row's details button", () => {
+  // Gadgets g1 and g2 in a table that shows their details, with g1's open beside it.
+  function renderWithOpen(closeSelected?: (id: string) => void) {
+    const showDetails = vi.fn();
+    render(
+      <MantineProvider theme={testTheme}>
+        <RecordGrid
+          records={[gadget("g1"), gadget("g2")]}
+          table={{ ...gadgetTable(), showDetails }}
+          fields={[]}
+          order={[]}
+          lists={[]}
+          canEdit={false}
+          canEditColumns={false}
+          view={emptyView}
+          onView={noop}
+          actions={actions()}
+          selected="g1"
+          closeSelected={closeSelected}
+        />
+      </MantineProvider>,
+    );
+    return showDetails;
+  }
+  const detailsButton = (id: string) =>
+    screen.getByRole("button", { name: `Show details of Gadget ${id}` });
+
+  it("closes the open row's details, and opens another row's", async () => {
+    // Given g1's details open
+    const closeSelected = vi.fn();
+    const showDetails = renderWithOpen(closeSelected);
+    expect([
+      detailsButton("g1").getAttribute("aria-expanded"),
+      detailsButton("g2").getAttribute("aria-expanded"),
+    ]).toEqual(["true", "false"]);
+
+    // When g1's details button is selected, then g2's
+    await userEvent.click(detailsButton("g1"));
+    await userEvent.click(detailsButton("g2"));
+
+    // Then g1's details close, and g2's open
+    expect(closeSelected).toHaveBeenCalledExactlyOnceWith("g1");
+    expect(showDetails).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ id: "g2" }),
+    );
+  });
+
+  it("shows the open row's details again where the page can't close them from the table", async () => {
+    const showDetails = renderWithOpen();
+    await userEvent.click(detailsButton("g1"));
+    expect(showDetails).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ id: "g1" }),
+    );
+  });
+});

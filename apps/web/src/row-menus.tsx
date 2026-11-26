@@ -70,6 +70,8 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
     | "moveTo"
     | "clearable"
     | "clearNewRow"
+    | "selected"
+    | "closeSelected"
   > & {
     // How the user publishes their own draft, where they can.
     publishDraft: PublishDraft | undefined;
@@ -102,6 +104,8 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
     moveTo,
     clearable,
     clearNewRow,
+    selected,
+    closeSelected,
     publishDraft,
   } = grid;
   // Whether a row has a menu: a record with anything in it to offer, or a new row with something in
@@ -365,16 +369,20 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
     />
   );
 
-  // The controls over a row's Name cell: its details' button and its menu's ⋯, where it has them.
+  // The controls over a row's Name cell: its details' button, which closes the details when they
+  // are open, and its menu's ⋯, where it has them.
   const nameCellControls = (row: Row<Rec>) => {
     const { record } = row;
     const { showDetails } = table;
+    const open = record?.id === selected;
     const details =
       record && showDetails !== undefined && !isPending(record)
         ? {
             name: table.nameOf(record),
+            open,
             onShow: () => {
-              showDetails(record);
+              if (open && closeSelected !== undefined) closeSelected(record.id);
+              else showDetails(record);
             },
           }
         : undefined;
