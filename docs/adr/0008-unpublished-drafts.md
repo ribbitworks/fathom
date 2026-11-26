@@ -3,7 +3,7 @@
 - **ADR:** 0008
 - **Status:** Accepted
 - **Date:** 2026-11-03
-- **Revised:** 2026-11-17, to publish or discard chosen changes, and to mark a change set published once none of its changes is held; 2026-11-20, to publish only the changes the role in use may make; 2026-11-25, to keep them as private changes, by record and user in each user's set
+- **Revised:** 2026-11-17, to publish or discard chosen changes, and to mark a change set published once none of its changes is held; 2026-11-20, to publish only the changes the role in use may make; 2026-11-25, to keep them as private changes, by record and user in each user's set, each standing over the published draft with its maker's own fields
 
 ## Context
 
@@ -20,9 +20,10 @@ A user's changes are seen only by that user until they publish them:
 
 - **A table of private changes:** A user's unpublished changes are kept in a second table, shaped as the table of drafts, keyed by the record and the user whose changes they are, in that user's set. While records are held, a record still has at most one.
   - **Whole drafts:** Each row holds the whole draft the user intends, as a draft row does, not the difference from the published draft.
+  - **Own fields:** Each row records, for each field its maker changed, the value it started from. Read and published, it puts those fields over whatever the published draft holds then, so once records stop being held, a change made by another meanwhile to other fields stays; a row naming no field of its own, such as a record its maker adds, or changing the action, such as a removal, holds the whole draft.
 - **Held by the row:** A record is held while it has an unpublished draft. Changing it, approving it, or rejecting it is refused for anyone but that user, and the user's own changes update their unpublished draft, starting from the published draft when there is one.
 - **Read per user:** Reading a table puts each user's own unpublished drafts over the published drafts, and marks the records others hold with who holds them. A record that exists only as someone else's unpublished draft is not shown at all.
-- **Publishing moves the rows:** Publishing writes each of the user's unpublished drafts over the published draft for the same record, waiting for approval, and removes them, all in one transaction.
+- **Publishing moves the rows:** Publishing writes each of the user's unpublished drafts, its own fields over the published draft for the same record, waiting for approval, and removes them, all in one transaction.
   - **No change left:** An unpublished draft that no longer changes anything removes the published draft.
   - **Discarding:** Discarding removes them.
   - **Chosen rows:** Publishing or discarding chosen rows works the same way on those rows alone, with the rows the server adds to them:

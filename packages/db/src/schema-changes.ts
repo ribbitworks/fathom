@@ -155,8 +155,9 @@ export const privateChanges = fathomSchema.table(
       .$type<Record<string, unknown>>()
       .notNull()
       .default({}),
-    // Kept for a check, not yet made, that publishing overwrites no one else's change unasked: for
-    // each field the change sets, the value it started from. Empty until that check fills it.
+    // For each field its maker changed, the value it started from: its keys are the fields that
+    // stand over the published draft, and its values are what a check on publishing is to compare.
+    // Empty for a change that holds its whole draft, such as a record its maker adds.
     startedFrom: jsonb("started_from")
       .$type<Record<string, unknown>>()
       .notNull()
