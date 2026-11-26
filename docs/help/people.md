@@ -168,7 +168,7 @@ To give a note opened under the details the whole height, select **Maximize**, t
 1. To count by two columns at once, choose the second under **and by**.
 1. If the table has a column of numbers, choose it under **Measure** to add it up. **Measure** shows once you've chosen a column to count by.
 
-The counts include every row the table shows, planned hires too. So a search or a filter changes them.
+The counts include every row the table shows, planned hires too, but not someone drafted to be removed. So a search or a filter changes them.
 
 A dot before a count marks a draft that changes it: yellow while the draft waits, hollow for your own unpublished change, and red in a ring for a rejected draft. Under **Drafts & Live**, the live count shows under it. Under **Live only**, a green dot marks a count a waiting draft will change. See [Drafts](drafts.md#marks).
 

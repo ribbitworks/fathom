@@ -151,8 +151,6 @@ export function countedRecords<
       besideLive: false,
     };
   }
-  const kept = (records: readonly Rec[]) =>
-    records.filter(({ draft }) => draft?.action !== "deleted");
   const drafted = [...shown, ...besides];
   const published = withDraftsUndone(
     drafted,
@@ -165,10 +163,10 @@ export function countedRecords<
     liveRecords,
   );
   return {
-    rows: kept(shown),
+    rows: withoutRemovals(shown),
     drafted: {
-      published: { rows: kept(published), columns: [...columns] },
-      waiting: { rows: kept(waiting), columns: [...columns] },
+      published: { rows: withoutRemovals(published), columns: [...columns] },
+      waiting: { rows: withoutRemovals(waiting), columns: [...columns] },
     },
     live: {
       rows: liveRecords(drafted),
@@ -240,16 +238,28 @@ export function recordsAsShown<Rec extends GridRecord>(
 ): Rec[] {
   if (show === "live") return liveRecords(records);
   if (besideLive(show)) return [...records];
-  return withDraftsUndone(
-    records,
-    (draft) => draft.state === "rejected",
-    liveRecords,
-  ).filter((record) => !removedWhenApplied(record));
+  return withoutRemovals(
+    withDraftsUndone(
+      records,
+      (draft) => draft.state === "rejected",
+      liveRecords,
+    ),
+  );
 }
 
-// Whether Drafts applied leaves a record out: drafted to be removed, unless the removal was rejected.
-export const removedWhenApplied = ({ draft }: GridRecord): boolean =>
+// A record whose draft can remove it, and can be rejected.
+interface Removable {
+  draft?: { action: string; state?: string } | undefined;
+}
+
+// Whether a record's draft removes it once approved: a removal not rejected.
+export const removedWhenApplied = ({ draft }: Removable): boolean =>
   draft?.action === "deleted" && draft.state !== "rejected";
+
+// The records that stay once their drafts are approved.
+export const withoutRemovals = <Rec extends Removable>(
+  records: readonly Rec[],
+): Rec[] => records.filter((record) => !removedWhenApplied(record));
 
 // The records with the drafts chosen taken back, each as it is live, and those the drafts add left
 // out. Made from every record, since a record's live form can depend on others, such as its live
