@@ -11,11 +11,21 @@ last_updated: "2026-11-25"
 
 ## Scope
 
-Verifies the workflows of [Working as a Project Manager](../help/working-as-a-project-manager.md) on the seed data: keeping a project on track with a new milestone, its scope history and its features, approved by a Product Manager; seeing who works on what in Capacity's Feature teams and Allocations tabs; approving and rejecting others' drafts; and keeping a view of one project's milestones.
+Verifies the workflows of [Working as a Project Manager](../help/working-as-a-project-manager.md) on the seed data:
+
+- Tracking proposals: adding one, choosing its features and changing its status.
+- Keeping a project on track: a new milestone, approved by a Product Manager, its scope history and its features.
+- Moving a feature to another cycle and a milestone to another date.
+- Making a release with a note, approved by a Product Manager.
+- Seeing who works on what in Capacity's Feature teams and Allocations tabs.
+- Checking, approving and rejecting others' drafts.
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+
+- A browser window at least 1,440 pixels wide.
+- A second browser, or a private window, for signing in as a second account while the first stays signed in.
 
 ## Test Accounts
 
@@ -23,10 +33,11 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Project Manager:** `project.manager@fathom.test`
 - **Product Manager:** `product.manager@fathom.test`
+- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database), [Publish](manual-test-basics.md#publish) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
 
 ## Terms
 
@@ -196,6 +207,18 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - **Made by** reads "Engineering Operations Manager".
   - **Notes:**
 
+- [ ] `FD04` Point at that row, and select the details button that shows at the right of its **Record** cell.
+  - **Expected:** A details panel opens beside the table:
+    - Its title is a yellow dot, then 'Search and discovery'.
+    - **State** reads "Waiting".
+    - **What changes** sets **Name** from "Search" to "Search and discovery".
+    - **Made by** reads "Engineering Operations Manager".
+  - **Notes:**
+
+- [ ] `98DC` Press Esc.
+  - **Expected:** The details panel closes.
+  - **Notes:**
+
 - [ ] `BE6F` Tick that row's tick box.
   - **Expected:**
     - The tick box is ticked.
@@ -259,57 +282,194 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### PROJECT-04: A Project Manager Keeps a View of One Project's Milestones
 
+Removed: keeping a view is checked in [VIEW-01](saved-views-manual-test.md#view-01-a-personal-view-is-kept-to-its-maker) in Saved Views.
+
+### PROJECT-05: A Proposal Is Added, Given a Feature and Won
+
 **Account:** Project Manager, `project.manager@fathom.test`, the same as PROJECT-03.
 
 **Preconditions:** None beyond PROJECT-03.
 
-- [ ] `404D` Select the **Projects** page in the left-hand menu, then the **Milestones** tab.
-  - **Expected:** The **Milestones** tab is chosen, with no view applied.
+- [ ] `ED9C` Select the **Projects** page in the left-hand menu, then the **Proposals** tab.
+  - **Expected:** The table lists the proposals.
   - **Notes:**
 
-- [ ] `C19F` Select the **Project** header, then **Filter…**.
-  - **Expected:** The choices include 'P-2017 Depot Operations'.
+- [ ] `24F3` Select **New proposal**.
+  - **Expected:** The side panel opens, headed **New proposal**.
   - **Notes:**
 
-- [ ] `078B` Tick 'P-2017 Depot Operations'.
-  - **Expected:** 'P-2017 Depot Operations' is the only choice ticked.
-  - **Notes:**
-
-- [ ] `F30F` Press Esc.
-  - **Expected:**
-    - Only milestones of 'Depot Operations' are listed, such as 'Depot pilot'.
-    - `Fictional site survey`, approved in PROJECT-01, is among them.
-  - **Notes:**
-
-- [ ] `F2B5` Open the Views menu, and select **Save view…**.
-  - **Expected:**
-    - A dialog titled "Save view" shows **Name**.
-    - Under **Includes**, **Filter** reads "Project: P-2017 Depot Operations".
-    - It offers no choice about sharing.
-  - **Notes:**
-
-- [ ] `6CAE` Type `Fictional depot milestones` in **Name**.
+- [ ] `57DD` Type `Fictional Lighthouse Proposal` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `B2F7` Select **Save view**.
+- [ ] `668E` Select **Add**.
+  - **Expected:**
+    - The side panel is headed with a hollow yellow dot before `Fictional Lighthouse Proposal`.
+    - **Status** reads "Open".
+  - **Notes:**
+
+- [ ] `EEEA` Search for `Fictional Lighthouse`.
+  - **Expected:** Only the row of `Fictional Lighthouse Proposal` is listed.
+  - **Notes:**
+
+- [ ] `6F07` Select its **Features** cell, and press Enter.
+  - **Expected:** A list of features opens, with a search box.
+  - **Notes:**
+
+- [ ] `A903` Type `Scheduler`, and press Enter to pick 'Scheduler API'.
+  - **Expected:** 'Scheduler API' has a tick.
+  - **Notes:**
+
+- [ ] `F3AA` Press Enter.
+  - **Expected:** The **Features** cell names 'Scheduler API', with a hollow yellow dot before it.
+  - **Notes:**
+
+- [ ] `5A89` Select its **Status** cell, press Enter, choose **Won**, and press Enter.
+  - **Expected:** The **Status** cell reads "Won".
+  - **Notes:**
+
+- [ ] `AB6F` Run Publish.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+### PROJECT-06: A Feature and a Milestone Move When Dates Change
+
+**Account:** Project Manager, `project.manager@fathom.test`, the same as PROJECT-05.
+
+**Preconditions:** None beyond PROJECT-05.
+
+- [ ] `294B` Select the **Features** page in the left-hand menu.
+  - **Expected:** The **Features** page opens.
+  - **Notes:**
+
+- [ ] `E166` Search for `Scheduler API`.
+  - **Expected:** Only the row of 'Scheduler API' is listed.
+  - **Notes:**
+
+- [ ] `F5F8` Select its **Target cycle** cell, press Enter, choose the cycle listed after the one it shows, and press Enter.
+  - **Expected:**
+    - **Target cycle** reads the cycle chosen, with a hollow yellow dot before it.
+    - **Release** names 'Harbor 3'.
+  - **Notes:**
+
+- [ ] `4D28` Run Publish.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+- [ ] `F5B9` Select the **Projects** page in the left-hand menu, then the **Projects** tab.
+  - **Expected:** The table lists the projects.
+  - **Notes:**
+
+- [ ] `BC4D` Select the details button at the right of the **Name** cell of 'Depot Operations'.
+  - **Expected:** Under **Milestones**, `Fictional site survey` shows the date for `2030-03-15`, with no dot.
+  - **Notes:**
+
+- [ ] `5DEB` Open the **⋯** menu of `Fictional site survey` under **Milestones**, and select **Edit…**.
+  - **Expected:** A dialog opens, with `Fictional site survey` in **Name**.
+  - **Notes:**
+
+- [ ] `2CDA` Clear **Date**, and type `20300415`.
+  - **Expected:** **Date** shows the date typed.
+  - **Notes:**
+
+- [ ] `9E47` Select **Save**.
   - **Expected:**
     - The dialog closes.
-    - The Views button reads `Fictional depot milestones`.
+    - Under **Milestones**, `Fictional site survey` shows the date for `2030-04-15`.
+    - A hollow yellow dot is before `Fictional site survey`.
   - **Notes:**
 
-- [ ] `ACCD` Select the **Projects** tab.
+- [ ] `4F1A` Run Publish.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+### PROJECT-07: A Release Is Made, With a Note
+
+**Account:** Project Manager, `project.manager@fathom.test`, in the main browser, the same as PROJECT-06. Steps `131E` and `047C` act in the second browser. Step `3DB5` signs in as another account in the main browser.
+
+**Preconditions:** Signed in with this account in the main browser. **Releases** page open from the left-hand menu.
+
+- [ ] `131E` In the second browser, sign in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`.
+  - **Expected:** The top bar shows the Publish button.
+  - **Notes:**
+
+- [ ] `047C` In the second browser, run Discard the Unpublished Changes.
   - **Expected:**
-    - Every project is listed.
-    - The **Views** button reads **Views**.
+    - A notice says "Discarded" followed by the number of changes.
+    - The Publish button is gone.
   - **Notes:**
 
-- [ ] `7E76` Select the **Milestones** tab.
-  - **Expected:** The **Milestones** tab is chosen.
+- [ ] `076F` In the main browser, reload the page.
+  - **Expected:** The **Releases** page shows again.
   - **Notes:**
 
-- [ ] `B134` Open the Views menu, and select `Fictional depot milestones` under **My views**.
-  - **Expected:** Only milestones of 'Depot Operations' are listed.
+- [ ] `38DB` Select **New release**.
+  - **Expected:** A dialog titled "New release" opens, whose first field is **Schedule**.
+  - **Notes:**
+
+- [ ] `1C70` Choose 'Platform' in **Schedule**.
+  - **Expected:** **Name**, **First cycle**, **Last cycle**, an empty **Ships on** and **Colour** follow it.
+  - **Notes:**
+
+- [ ] `B1A8` Type `Fictional Harbor 4` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] `1FE0` Choose the last cycle in the list in **First cycle**.
+  - **Expected:** **First cycle** shows the cycle chosen.
+  - **Notes:**
+
+- [ ] `D146` Choose the last cycle in the list in **Last cycle**.
+  - **Expected:** The empty **Ships on** field shows, in grey, that cycle's last day, then "end of" and the cycle's name in brackets.
+  - **Notes:**
+
+- [ ] `C642` Select **Make release**.
+  - **Expected:**
+    - A notification says "Drafted the new release."
+    - The side panel is headed with a hollow yellow dot before `Fictional Harbor 4`.
+  - **Notes:**
+
+- [ ] `67E5` Select the **⋯** button at the right of the first cell of the row for `Fictional Harbor 4`, then **Add note…**.
+  - **Expected:**
+    - A panel titled "Note for Fictional Harbor 4" opens beside the release's details.
+    - **Editor** is chosen.
+  - **Notes:**
+
+- [ ] `C123` Type `Fictional ferry timetables`.
+  - **Expected:** The note shows what was typed.
+  - **Notes:**
+
+- [ ] `58FA` Select **Save**.
+  - **Expected:**
+    - A notification says "Drafted the note on Fictional Harbor 4."
+    - The note's panel closes.
+    - The **Note** row in the release's details reads `Fictional ferry timetables`.
+  - **Notes:**
+
+- [ ] `FF3E` Run Publish.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+- [ ] `3DB5` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
+  - **Expected:** The top bar's right end reads "Product Manager".
+  - **Notes:**
+
+- [ ] `119A` Select the **Releases** page in the left-hand menu.
+  - **Expected:** The **Releases** tab shows, with a row for `Fictional Harbor 4` whose **Schedule** reads 'Platform'.
+  - **Notes:**
+
+- [ ] `5E58` Select the **⋯** button at the right of the first cell of the row for `Fictional Harbor 4`, then **Approve draft…**.
+  - **Expected:** A dialog titled "Approve 1 draft?" opens.
+  - **Notes:**
+
+- [ ] `B441` Select **Approve** in the dialog.
+  - **Expected:**
+    - A notification says "Approved 1 draft."
+    - `Fictional Harbor 4` has no dot.
+  - **Notes:**
+
+- [ ] `CBD5` Select the details button at the right of the first cell of the row for `Fictional Harbor 4`.
+  - **Expected:** The **Note** row reads `Fictional ferry timetables`.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

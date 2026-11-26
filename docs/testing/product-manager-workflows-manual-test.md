@@ -13,20 +13,16 @@ last_updated: "2026-11-25"
 
 Verifies the workflows of [Working as a Product Manager](../help/working-as-a-product-manager.md) on the seed data:
 
+- Planning a feature for a cycle and a month, and adding a column to Features.
 - Keeping customers, proposals, projects and milestones current.
-- Planning a feature for a cycle and a month.
 - Choosing a project's features and taking one off a proposal with a reason, as the scope history shows.
-- Making a release with a note.
-- Approving and rejecting others' drafts, each sent on to an approver where the role needs one.
+- Approving and rejecting others' drafts on the Drafts page and from the Features table, with the Product Manager's own approved by a Project Manager.
 
 It also checks that the Product Manager doesn't see someone who has not started.
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
-
-- A browser window at least 1,440 pixels wide.
-- A second browser, or a private window, for signing in as a second account while the first stays signed in.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
 
 ## Test Accounts
 
@@ -36,12 +32,10 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Project Manager:** `project.manager@fathom.test`
 - **Feature Lead:** `feature.lead@fathom.test`, holding the Feature Lead role, its default, and the Engineering Manager role
 - **Engineering Director:** `engineering.director@fathom.test`
-- **Engineering Manager:** `engineering.manager@fathom.test`
-- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database), [Publish](manual-test-basics.md#publish) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
@@ -298,7 +292,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** `Fictional Atlas` has a tick.
   - **Notes:**
 
-- [ ] `D603` Press Esc.
+- [ ] `D603` Press Enter.
   - **Expected:** The **Features** cell names `Fictional Atlas`, with a hollow yellow dot before it.
   - **Notes:**
 
@@ -321,7 +315,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** 'Audit Export' has no tick.
   - **Notes:**
 
-- [ ] `7E49` Press Esc.
+- [ ] `7E49` Press Enter.
   - **Expected:** The **Features** cell names 'Offline Sync' alone.
   - **Notes:**
 
@@ -378,125 +372,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - Its **Features** cell names 'Offline Sync' alone.
   - **Notes:**
 
-- [ ] `D4AB` Select the **Projects** tab.
-  - **Expected:** The table lists the projects.
-  - **Notes:**
-
-- [ ] `8A70` Select **Show on Features** in the ⋯ menu of `Fictional Harbour Lights`.
-  - **Expected:**
-    - The **Features** page opens showing only `Fictional Atlas`.
-    - A pill above the table reads "Projects: FHL-1 Fictional Harbour Lights".
-  - **Notes:**
-
-- [ ] `57DA` Select the **×** on the pill.
-  - **Expected:**
-    - The pill is gone.
-    - The table lists every feature.
-  - **Notes:**
-
 ### PRODUCT-05: A Release Is Made, With a Note
 
-**Account:** Product Manager, `product.manager@fathom.test`, in the main browser, changed from PRODUCT-04. Steps `131E` and `047C` act in the second browser. Step `3DB5` signs in as another account in the main browser.
+Removed: making a release is checked in [PROJECT-07](project-manager-workflows-manual-test.md#project-07-a-release-is-made-with-a-note) in Project Manager Workflows.
 
-**Preconditions:** Signed in with this account in the main browser. **Releases** page open from the left-hand menu.
+### PRODUCT-06: A Feature Lead's Change Is Rejected With a Reason on the Drafts Page
 
-- [ ] `131E` In the second browser, sign in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`.
-  - **Expected:** The top bar shows the Publish button.
-  - **Notes:**
-
-- [ ] `047C` In the second browser, run Discard the Unpublished Changes.
-  - **Expected:**
-    - A notice says "Discarded" followed by the number of changes.
-    - The Publish button is gone.
-  - **Notes:**
-
-- [ ] `076F` In the main browser, reload the page.
-  - **Expected:** The **Releases** page shows again.
-  - **Notes:**
-
-- [ ] `38DB` Select **New release**.
-  - **Expected:** A dialog titled "New release" opens, whose first field is **Schedule**.
-  - **Notes:**
-
-- [ ] `1C70` Choose 'Platform' in **Schedule**.
-  - **Expected:** **Name**, **First cycle**, **Last cycle**, an empty **Ships on** and **Colour** follow it.
-  - **Notes:**
-
-- [ ] `B1A8` Type `Fictional Harbor 4` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `1FE0` Choose the last cycle in the list in **First cycle**.
-  - **Expected:** **First cycle** shows the cycle chosen.
-  - **Notes:**
-
-- [ ] `D146` Choose the last cycle in the list in **Last cycle**.
-  - **Expected:** The empty **Ships on** field shows, in grey, that cycle's last day, then "end of" and the cycle's name in brackets.
-  - **Notes:**
-
-- [ ] `C642` Select **Make release**.
-  - **Expected:**
-    - A notification says "Drafted the new release."
-    - The side panel is headed with a hollow yellow dot before `Fictional Harbor 4`.
-  - **Notes:**
-
-- [ ] `67E5` Select the **⋯** button at the right of the first cell of the row for `Fictional Harbor 4`, then **Add note…**.
-  - **Expected:**
-    - A panel titled "Note for Fictional Harbor 4" opens beside the release's details.
-    - **Editor** is chosen.
-  - **Notes:**
-
-- [ ] `C123` Type `Fictional ferry timetables`.
-  - **Expected:** The note shows what was typed.
-  - **Notes:**
-
-- [ ] `58FA` Select **Save**.
-  - **Expected:**
-    - A notification says "Drafted the note on Fictional Harbor 4."
-    - The note's panel closes.
-    - The **Note** row in the release's details reads `Fictional ferry timetables`.
-  - **Notes:**
-
-- [ ] `FF3E` Run Publish.
-  - **Expected:** The Publish button is gone.
-  - **Notes:**
-
-- [ ] `F083` Select the **Features** page in the left-hand menu.
-  - **Expected:** The **Features** page opens.
-  - **Notes:**
-
-- [ ] `A09D` Select **Group by** above the table, then **Release**.
-  - **Expected:**
-    - The release headings, such as **Platform: Harbor 1**, are each followed by a comma, "ships" and a date.
-    - `Fictional Atlas` is under the heading **Platform: Not released yet**.
-    - The last heading is **Later**.
-  - **Notes:**
-
-- [ ] `3DB5` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Project Manager".
-  - **Notes:**
-
-- [ ] `119A` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The **Releases** tab shows, with a row for `Fictional Harbor 4` whose **Schedule** reads 'Platform'.
-  - **Notes:**
-
-- [ ] `5E58` Select the **⋯** button at the right of the first cell of the row for `Fictional Harbor 4`, then **Approve draft…**.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
-  - **Notes:**
-
-- [ ] `B441` Select **Approve** in the dialog.
-  - **Expected:**
-    - A notification says "Approved 1 draft."
-    - `Fictional Harbor 4` has no dot.
-  - **Notes:**
-
-- [ ] `CBD5` Select the details button at the right of the first cell of the row for `Fictional Harbor 4`.
-  - **Expected:** The **Note** row reads `Fictional ferry timetables`.
-  - **Notes:**
-
-### PRODUCT-06: A Feature Lead's Change Is Rejected With a Reason
-
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from PRODUCT-05. Step `5AB9` signs in as another account.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from PRODUCT-04. Step `5AB9` signs in as another account.
 
 **Preconditions:** Signed in with this account, acting as **Feature Lead**. **Features** page open.
 
@@ -516,17 +398,22 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The top bar's right end reads "Product Manager".
   - **Notes:**
 
-- [ ] `FBED` Select the **Features** page in the left-hand menu.
-  - **Expected:** The **Features** page opens.
+- [ ] `D73D` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
-- [ ] `312A` Open the ⋯ menu of 'Partner Portal'.
-  - **Expected:**
-    - The menu names the change to **Status**.
-    - It offers **Approve draft…** and **Reject draft…**.
+- [ ] `8CE8` Type `Partner Portal` in the search box.
+  - **Expected:** One row is shown, with a tick box:
+    - **Record** reads 'Partner Portal'.
+    - **State** reads "Waiting".
+    - **Made by** reads "Feature Lead as Feature Lead".
   - **Notes:**
 
-- [ ] `F5B3` Select **Reject draft…**.
+- [ ] `2A64` Tick that row's tick box.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
+  - **Notes:**
+
+- [ ] `7DE1` Select **Reject…** at the right of the page's heading.
   - **Expected:**
     - A dialog titled "Reject 1 draft?" opens.
     - It has a **Reason** box.
@@ -539,8 +426,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `55A4` Select **Reject**.
   - **Expected:**
     - A notice reads "Rejected 1 draft."
-    - In the 'Partner Portal' row, "Planned" has a red dot in a ring before it.
-    - The row is faintly red.
+    - The table reads "No matching drafts".
   - **Notes:**
 
 ### PRODUCT-07: A Rejected Change Is Resubmitted and Approved
@@ -551,6 +437,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `1ADD` Open the ⋯ menu of 'Partner Portal'.
   - **Expected:**
+    - In the 'Partner Portal' row, "Planned" has a red dot in a ring before it.
+    - The row is faintly red.
     - The menu shows a red dot in a ring, then "Rejected".
     - Under it, "Reason: Fictional reason: wait for the customer day."
     - The menu offers **Resubmit** and **Discard draft**.
@@ -633,3 +521,89 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 An account that sees Personal details does see her, as [EXECUTIVE-03](executive-workflows-manual-test.md#executive-03-an-executive-sees-people-and-administration-without-changing-them) checks.
+
+### PRODUCT-10: A Feature Lead's Change Is Approved From the Features Table
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from PRODUCT-09. Step `A8DE` signs in as another account.
+
+**Preconditions:** Signed in with this account, acting as **Feature Lead**. **Features** page open from the left-hand menu.
+
+- [ ] `BCA0` Search for `Partner Portal`.
+  - **Expected:** Only the row of 'Partner Portal' is listed, reading "High" in **Priority**.
+  - **Notes:**
+
+- [ ] `3A3E` Select its **Priority** cell, press Enter, choose **Medium**, and press Enter.
+  - **Expected:**
+    - The cell reads "Medium", with a hollow yellow dot before it.
+    - The row is faintly yellow.
+    - A Live row under it reads "High" in **Priority**.
+  - **Notes:**
+
+- [ ] `EB5B` Run Publish.
+  - **Expected:** The dot before "Medium" is filled yellow.
+  - **Notes:**
+
+- [ ] `A8DE` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
+  - **Expected:** The top bar's right end reads "Product Manager".
+  - **Notes:**
+
+- [ ] `42A0` Select the **Features** page in the left-hand menu.
+  - **Expected:** The **Features** page opens.
+  - **Notes:**
+
+- [ ] `9BDB` Search for `Partner Portal`.
+  - **Expected:** The 'Partner Portal' row reads "Medium" in **Priority**, with a yellow dot before it.
+  - **Notes:**
+
+- [ ] `D189` Open the Draft menu.
+  - **Expected:** The menu offers **Approve 1 draft…**.
+  - **Notes:**
+
+- [ ] `C093` Select **Approve 1 draft…**.
+  - **Expected:** A dialog titled "Approve 1 draft?" opens.
+  - **Notes:**
+
+- [ ] `33A1` Select **Approve** in the dialog.
+  - **Expected:**
+    - A notice reads "Approved 1 draft."
+    - 'Partner Portal' reads "Medium" in **Priority**, with no dot and no Live row.
+  - **Notes:**
+
+### PRODUCT-11: A Column Is Added to Features and Filled In
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PRODUCT-10.
+
+**Preconditions:** **Features** page open.
+
+- [ ] `29D5` Select **New column**, at the right of the page's heading.
+  - **Expected:** The **New column** dialog opens.
+  - **Notes:**
+
+- [ ] `C27B` Type `Fictional Reach` in **Name**.
+  - **Expected:** **Name** holds `Fictional Reach`.
+  - **Notes:**
+
+- [ ] `E1FB` Choose **Number** in **Type**.
+  - **Expected:** **List** and **Several choices** are gone.
+  - **Notes:**
+
+- [ ] `FE86` Select **Add column**.
+  - **Expected:**
+    - The dialog closes.
+    - A `Fictional Reach` column is at the right end of the table.
+    - A hollow yellow dot is before `Fictional Reach` in its header.
+  - **Notes:**
+
+- [ ] `AA60` Search for `Report Builder`.
+  - **Expected:** Only the row of 'Report Builder' is listed.
+  - **Notes:**
+
+- [ ] `D13D` Select its `Fictional Reach` cell, type `40`, and press Enter.
+  - **Expected:** The cell reads "40", with a hollow yellow dot before it.
+  - **Notes:**
+
+- [ ] `292D` Run Publish.
+  - **Expected:** The dot before `Fictional Reach` in its header is filled yellow.
+  - **Notes:**
+
+**Afterwards:** Run Reset the Database.

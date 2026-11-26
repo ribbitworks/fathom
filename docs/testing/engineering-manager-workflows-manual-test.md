@@ -4,14 +4,19 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-25"
 ---
 
 # Manual Test: Engineering Manager Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as an Engineering Manager](../help/working-as-an-engineering-manager.md) on the seed data: putting someone on a feature team from a month ahead, approved by a Project Manager; finding who is over or under allocated; estimating a feature; seeing a team on the org chart, alone and on an earlier date; and counting people with Metrics.
+Verifies the workflows of [Working as an Engineering Manager](../help/working-as-an-engineering-manager.md) on the seed data:
+
+- Estimating a feature, seeing what each cycle holds, and giving a feature that isn't staffed a team.
+- Putting someone on a feature team from a month ahead, approved by a Project Manager, and changing a team's lead.
+- Finding who is over or under allocated.
+- Finding a team on the org chart, and seeing one alone and on an earlier date.
 
 ## Test Environment
 
@@ -123,7 +128,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `CB7D` Select **Feature team** in the Group by menu.
-  - **Expected:** Under the 'Payments core' group, cells list features, each on a line of its own with its percentage at the right, such as "50%".
+  - **Expected:**
+    - Under the 'Payments core' group, cells list features, each on a line of its own with its percentage at the right, such as "50%".
+    - The group ends with a row in bold headed **Total, PM**.
   - **Notes:**
 
 - [ ] `FAE8` Search for `Blaise Gislason`, and read his cell in the current month's column.
@@ -144,7 +151,23 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - Its only line reads "Not allocated", in red and bold, with no percentage.
   - **Notes:**
 
-### MANAGER-03: A Feature Is Given a Team and Estimated
+- [ ] `CF3F` Clear the search box.
+  - **Expected:** Every row is listed again.
+  - **Notes:**
+
+- [ ] `291B` Open the **Views** menu, and select **Over**.
+  - **Expected:**
+    - **Over** is ticked.
+    - The table lists only rows with a cell reading "Over" in the current month or a later one, such as 'Blaise Gislason'.
+  - **Notes:**
+
+- [ ] `77F0` Select **Over** again.
+  - **Expected:**
+    - **Over** is not ticked.
+    - Every row is listed again.
+  - **Notes:**
+
+### MANAGER-03: Features Are Estimated, Seen by Cycle, and Given a Team Where Not Staffed
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as MANAGER-02.
 
@@ -162,8 +185,42 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The cell reads "120 h", with a hollow yellow dot before it.
   - **Notes:**
 
-- [ ] `4D8E` Select its **Feature team** cell, press Enter, choose 'Mobile apps', and press Enter.
+- [ ] `92C3` Clear the search box.
+  - **Expected:** The table lists every feature.
+  - **Notes:**
+
+- [ ] `A87B` Select **Group by** above the table, then **Cycle**.
+  - **Expected:**
+    - The button reads **Group by: Cycle**.
+    - The last heading is **Later**.
+    - 'Voice Notes' and 'Partner Portal' are under **Later**.
+  - **Notes:**
+
+- [ ] `D93F` Open the Group by menu, and select **Clear grouping**.
+  - **Expected:** The table lists the features in one list, with no headings.
+  - **Notes:**
+
+- [ ] `E5E9` Select the **Staffed** header, then **Filter…**.
+  - **Expected:** The choices include **No**.
+  - **Notes:**
+
+- [ ] `BCDA` Tick **No**.
+  - **Expected:** **No** is the only choice ticked.
+  - **Notes:**
+
+- [ ] `FBE6` Press Esc.
+  - **Expected:**
+    - Each row listed reads "No" in **Staffed**.
+    - 'Scheduler API' is listed, and 'Offline Sync' is not.
+    - The **Feature team** cell of 'Scheduler API' shows **No feature team** in red.
+  - **Notes:**
+
+- [ ] `4D8E` Select the **Feature team** cell of 'Scheduler API', press Enter, choose 'Mobile apps', and press Enter.
   - **Expected:** The cell reads 'Mobile apps', with a hollow yellow dot before it.
+  - **Notes:**
+
+- [ ] `A043` Run Publish.
+  - **Expected:** The Publish button is gone.
   - **Notes:**
 
 ### MANAGER-04: An Engineering Manager Reads a Note Beside the Chart
@@ -242,79 +299,53 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### MANAGER-07: Metrics Count People by Two Columns and Follow a Filter
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as MANAGER-06.
-
-**Preconditions:** **People** page open from the left-hand menu, with no filters and no search.
-
-- [ ] `534E` Select **Metrics** above the table.
-  - **Expected:**
-    - The Metrics panel opens on the right.
-    - The table narrows beside it.
-  - **Notes:**
-
-- [ ] `7ECB` Set **Break down by** to **Position**.
-  - **Expected:** **Break down by** reads **Position**.
-  - **Notes:**
-
-- [ ] `4DDB` Set **and by** to **Site**.
-  - **Expected:**
-    - A table headed **Position by Site** has a column for each site, an **Empty** column for the planned hires that have no site, and an **All** column.
-    - The **Position by Site** table has a row for each position and an **All** row.
-  - **Notes:**
-
-- [ ] `D46A` Open the **Site** column menu, and select **Filter…**.
-  - **Expected:**
-    - The filter opens.
-    - It lists the sites.
-  - **Notes:**
-
-- [ ] `40DD` Pick only 'Ashgrove'.
-  - **Expected:** 'Ashgrove' is the only site picked.
-  - **Notes:**
-
-- [ ] `D6E7` Press Esc.
-  - **Expected:**
-    - The bar above the table says how many rows are shown of how many, such as "48 of 160".
-    - The count line under the panel's title gives the first number in the bar, such as "47 people and 1 planned hire".
-    - The **Position by Site** table has only the 'Ashgrove' column besides **All**.
-  - **Notes:**
-
-- [ ] `EBB7` Select **Clear all** in the bar above the table.
-  - **Expected:**
-    - The filter is cleared.
-    - The panel stays open.
-  - **Notes:**
+Removed: this is checked in [METRICS-04](metrics-manual-test.md#metrics-04-metrics-follow-the-filters) in Metrics.
 
 ### MANAGER-08: Metrics Show Live Figures Beside Drafts
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as MANAGER-07.
+Removed: this is checked in [METRICS-05](metrics-manual-test.md#metrics-05-metrics-show-live-figures-beside-drafts) in Metrics.
 
-**Preconditions:** **People** page open, with the Metrics panel open.
+### MANAGER-09: A Feature Team Is Found and Given a New Lead
 
-- [ ] `F2CD` Open the Draft menu, and select **Drafts & Live**.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as MANAGER-06.
+
+**Preconditions:** **Org chart** page open from the left-hand menu.
+
+- [ ] `0A02` Choose **Feature teams** in the teams switch.
+  - **Expected:** The chart shows the feature teams side by side.
+  - **Notes:**
+
+- [ ] `3D4E` Type `Payments` in **Find a person or team**.
+  - **Expected:** 'Payments core' is listed under **Teams**.
+  - **Notes:**
+
+- [ ] `CC5A` Choose 'Payments core' under **Teams**.
   - **Expected:**
-    - The Draft menu stays open.
-    - A tick is before **Drafts & Live**.
+    - The chart centres on the card of 'Gilda Effertz'.
+    - The card has a blue ring.
+    - 'Payments core' is under her position.
   - **Notes:**
 
-- [ ] `ACCE` Press Esc.
-  - **Expected:** The Draft menu closes.
-  - **Notes:**
-
-- [ ] `C058` Set **Break down by** to **Grade**.
-  - **Expected:** **Break down by** reads **Grade**.
-  - **Notes:**
-
-- [ ] `CAEB` Set **and by** to **Nothing more**.
+- [ ] `6B17` Select the Feature teams button, then 'Payments core'.
   - **Expected:**
-    - At least one row, such as 'P1', shows a count with a dimmed live figure under it, with a green dot before the live figure.
-    - Rows whose count the drafts do not change show no live figure.
+    - The team panel is titled 'Payments core'.
+    - **Feature lead** reads 'Gilda Effertz'.
   - **Notes:**
 
-- [ ] `DDDB` Press Esc.
+- [ ] `3BC5` Select the change button in the **Feature lead** row.
   - **Expected:**
-    - The panel closes.
-    - The **Metrics** button has the keyboard focus.
+    - A list of people opens under the row.
+    - The cursor is in a box above it.
+  - **Notes:**
+
+- [ ] `13BA` Type `Lorenza`, and select 'Lorenza Thiel'.
+  - **Expected:**
+    - **Feature lead** reads 'Lorenza Thiel', with a hollow yellow dot before it.
+    - Under it, 'Gilda Effertz' shows, with a green dot before it.
+  - **Notes:**
+
+- [ ] `9C8F` Run Publish.
+  - **Expected:** The Publish button is gone.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

@@ -11,7 +11,12 @@ last_updated: "2026-11-25"
 
 ## Scope
 
-Verifies the workflows of [Working as a Team Member](../help/working-as-a-team-member.md) on the seed data: finding someone on the org chart, seeing what's planned on Features and on the Releases timeline without changing it, looking at a project and its milestones, and keeping a personal view of People.
+Verifies the workflows of [Working as a Team Member](../help/working-as-a-team-member.md) on the seed data, without changing any record:
+
+- Finding a person on the org chart, and opening their details there and on People.
+- Seeing what each cycle and release holds on Features, and when each release ships on the Releases timeline.
+- Looking at a project's details and its milestones.
+- Keeping a personal view's frozen columns, widths and column order.
 
 ## Test Environment
 
@@ -27,13 +32,13 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the lock, the Views menu, the Group by menu, the details button, the side panel, the finder, the teams switch and the card.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the lock, the Group by menu, the details button, the side panel, the finder, the teams switch and the card.
 
 ## Test Cases
 
 Run the test cases in order, in about 20 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
 
-### MEMBER-01: A Team Member Reads the Org Chart
+### MEMBER-01: A Team Member Finds Someone on the Org Chart
 
 **Account:** Team Member, `team.member@fathom.test`; the first test case.
 
@@ -63,12 +68,6 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
     - The line "Only the team of Lorenza Thiel is shown." is gone.
   - **Notes:**
 
-- [ ] `67F5` In the finder, type `Gloria`, and select 'Gloria Armas Guardado'.
-  - **Expected:**
-    - The chart moves until the card for 'Gloria Armas Guardado' is in the middle of the panel.
-    - A blue ring is around the card.
-  - **Notes:**
-
 - [ ] `C68D` Choose **Feature teams** in the teams switch.
   - **Expected:**
     - The chart shows the feature teams of the [Fictional Data](../design/development-setup.md#fictional-data) side by side, each first card naming its team.
@@ -83,7 +82,25 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
     - There is no date row between the finder and the chart.
   - **Notes:**
 
-### MEMBER-02: A Team Member Reads the Plan Without Changing It
+- [ ] `67F5` In the finder, type `Gloria`, and select 'Gloria Armas Guardado'.
+  - **Expected:**
+    - The chart moves until the card for 'Gloria Armas Guardado' is in the middle of the panel.
+    - A blue ring is around the card.
+  - **Notes:**
+
+- [ ] `0A0C` Select the name on the card for 'Gloria Armas Guardado'.
+  - **Expected:**
+    - The details panel is headed 'Gloria Armas Guardado'.
+    - The link **Show in People** is under the position.
+  - **Notes:**
+
+- [ ] `B8D1` Select **Show in People**.
+  - **Expected:**
+    - The **People** page opens.
+    - Only the row of 'Gloria Armas Guardado' is listed.
+  - **Notes:**
+
+### MEMBER-02: A Team Member Sees What's Planned Without Changing It
 
 **Account:** Team Member, `team.member@fathom.test`, the same as MEMBER-01.
 
@@ -115,14 +132,23 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
     - The last heading is **Later**.
   - **Notes:**
 
+- [ ] `3A3B` Select **Group by: Release**, then **Cycle** under **Group by**.
+  - **Expected:**
+    - The headings name the cycles, such as **Platform: 27.1**.
+    - The last heading is **Later**.
+  - **Notes:**
+
 - [ ] `5D0B` Select **Releases**.
   - **Expected:**
     - The **Releases** page opens on its **Releases** tab.
+    - The table under the timeline has a **Ships on** column, with a day in each row.
     - There is no **New release** button.
   - **Notes:**
 
 - [ ] `DB21` Select **All** on the timeline.
-  - **Expected:** Each schedule's lane shows from its first cycle to its last without scrolling.
+  - **Expected:**
+    - Each schedule's lane shows from its first cycle to its last without scrolling.
+    - Each release has a diamond on the day it ships.
   - **Notes:**
 
 - [ ] `E851` Hover over the span of 'Lantern 2' on the timeline.
