@@ -35,8 +35,10 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
   - A thin line between columns, and the current month's heading underlined in today's red, as [Month grids](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out.
 - **Strip:** the [strip](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) of the grid's quarters, under the bar, following the grid as it scrolls.
 - **Where the grid lands:** opening a tab, Today, a quarter chosen in the strip and **‹** and **›** put the month gone to second, with the month before it wholly in view after the frozen column; the grid's first month has none before it. The current quarter is filled from the first drawing, as after choosing it.
-- **The count:** one count on both tabs, after the bar's buttons, such as 137 people and 10 planned hires in Apr 2027, for one month: the month gone to, the second wholly in view, or the first when it is the grid's first month.
+- **The count:** one count on both tabs, after the bar's buttons, month first, such as "Apr 2027: 137 people, 10 planned hires", for one month: the month gone to, the second wholly in view, or the first when it is the grid's first month.
   - It counts the people employed that month and the planned hires expected by then, so it changes as the grid scrolls.
+  - **While the rows are narrowed:** a filter, a search or a month's own filter makes it how many of the month's are shown, such as "Apr 2027: 6 of 137 people", and "Apr 2027: 4 of 137 people, 1 of 10 planned hires" only when both kinds are shown. The rows stay put as the month changes, since the filter reads every month, so someone who has left by the month counted stays in the rows but not in the count.
+  - **Grouped:** someone under two groups is counted once.
   - That month's heading is filled in the accent colour, as the strip's chosen quarter is.
   - **‹** and **›** step a quarter from that month.
 - **Drafts:** marks as [Month grids](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out, carried by each team's or feature's line.

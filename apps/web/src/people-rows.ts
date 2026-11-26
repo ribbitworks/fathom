@@ -139,18 +139,52 @@ export function peopleAndHires<Row>(isPlanned: (row: Row) => boolean): {
   return {
     noun: "people and planned hires",
     counted: (rows) => {
-      const hires = rows.filter(isPlanned).length;
-      const people = rows.length - hires;
+      const { people, hires } = kindsOf(rows, isPlanned);
       return [
         ...(people > 0 || hires === 0
-          ? [`${count(people)} ${people === 1 ? "person" : "people"}`]
+          ? [`${count(people)} ${peopleNoun(people)}`]
           : []),
-        ...(hires > 0
-          ? [
-              `${count(hires)} ${hires === 1 ? "planned hire" : "planned hires"}`,
-            ]
-          : []),
+        ...(hires > 0 ? [`${count(hires)} ${hiresNoun(hires)}`] : []),
       ].join(" and ");
     },
   };
+}
+
+const peopleNoun = (total: number) => (total === 1 ? "person" : "people");
+const hiresNoun = (total: number) =>
+  total === 1 ? "planned hire" : "planned hires";
+
+const kindsOf = <Row>(
+  rows: readonly Row[],
+  isPlanned: (row: Row) => boolean,
+) => {
+  const hires = rows.filter(isPlanned).length;
+  return { people: rows.length - hires, hires };
+};
+
+// How many people and planned hires a month counts, month first: "Nov 2026: 14 people, 1 planned
+// hire", or, while something narrows the rows, how many of each are shown, "Nov 2026: 6 of 14
+// people". A kind none of is counted, or none shown, is left out, but people are named when
+// nothing else is.
+export function monthCount<Row>(
+  month: string,
+  isPlanned: (row: Row) => boolean,
+  all: readonly Row[],
+  shown?: readonly Row[],
+): string {
+  const total = kindsOf(all, isPlanned);
+  const seen = kindsOf(shown ?? all, isPlanned);
+  const part = (kept: number, of: number, noun: string) =>
+    shown === undefined
+      ? `${count(of)} ${noun}`
+      : `${count(kept)} of ${count(of)} ${noun}`;
+  const parts = [
+    ...(seen.people > 0 || seen.hires === 0
+      ? [part(seen.people, total.people, peopleNoun(total.people))]
+      : []),
+    ...(seen.hires > 0
+      ? [part(seen.hires, total.hires, hiresNoun(total.hires))]
+      : []),
+  ];
+  return `${month}: ${parts.join(", ")}`;
 }

@@ -34,6 +34,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     | "panels"
     | "viewChoices"
     | "count"
+    | "countNarrowed"
     | "pageParts"
     | "pageFilter"
     | "above"
@@ -81,6 +82,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     panels,
     viewChoices,
     count,
+    countNarrowed,
     pageParts,
     pageFilter,
     above,
@@ -268,6 +270,10 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
         count?.(countedOnce(records)) ??
         table.counted?.counted(countedOnce(records))
       }
+      countedNarrowed={countNarrowed?.(
+        countedOnce(records),
+        countedOnce(shownRecords),
+      )}
       groupings={table.groupings}
       nests={nests}
       laysOutColumns={laysOutColumns}

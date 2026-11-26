@@ -649,7 +649,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** Reset the Database has been run, as CAP-15 ends. Signed in with this account. Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `C4E1` Look at the count after **Group by**, and note it.
-  - **Expected:** It counts people and planned hires in the current month, naming it, such as "40 people and 3 planned hires in Nov 2026".
+  - **Expected:** It names the current month first, then counts people and planned hires, such as "Nov 2026: 40 people, 3 planned hires".
   - **Notes:**
 
 - [ ] `0B7D` Select the **Allocations** tab.
@@ -659,7 +659,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `9F25` Select the first quarter in the strip of quarters.
   - **Expected:**
     - The table scrolls to the start of that quarter.
-    - The count names the quarter's first month, such as "in Oct 2025".
+    - The count starts with the quarter's first month, such as "Oct 2025:".
     - It counts no planned hires.
   - **Notes:**
 

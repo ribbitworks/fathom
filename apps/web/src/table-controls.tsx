@@ -1225,6 +1225,7 @@ export function ViewBar({
   shown,
   total,
   counted,
+  countedNarrowed,
   onLeave,
   saved,
   draftItems,
@@ -1251,6 +1252,8 @@ export function ViewBar({
   // For rows of several kinds, how many of each there are in all, such as "150 people and 6
   // planned hires".
   counted?: ReactNode;
+  // The count while something narrows the rows, where the page words it its own way.
+  countedNarrowed?: ReactNode;
   // What the rows can be grouped by, for a table that groups them.
   groupings?: readonly GroupingChoice[] | undefined;
   // False for rows drawn their own way, such as a board's, or made for their grouping.
@@ -1377,7 +1380,7 @@ export function ViewBar({
         className={classes.figures}
       >
         {narrowed
-          ? `${count(shown)} of ${count(total)}`
+          ? (countedNarrowed ?? `${count(shown)} of ${count(total)}`)
           : (counted ?? `${count(total)} ${total === 1 ? one : noun}`)}
       </Text>
       {(narrowed || setsApart(view)) && (

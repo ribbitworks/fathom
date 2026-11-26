@@ -33,7 +33,9 @@ Select **Feature teams**, **Allocations** or **Settings** beside the heading. Th
 - From the keyboard, press Tab to reach the strip's quarters, and the arrow keys to move between them. Press Enter or Space to choose the quarter you're on.
 - To go back to the current month, select **Today**, at the end of the strip.
 
-The count after **Group by**, such as **137 people and 10 planned hires in Apr 2027**, is for one month: the one you moved to, second in view, whose heading is filled blue. It counts the people working that month and the planned hires expected by then, and changes as you scroll.
+The count after **Group by**, such as **Apr 2027: 137 people, 10 planned hires**, is for one month: the one you moved to, second in view, whose heading is filled blue. It counts the people working that month and the planned hires expected by then, and changes as you scroll.
+
+While a filter, a search or a month's own filter narrows the rows, the count says how many of that month's are shown, such as **Apr 2027: 6 of 137 people**. A kind none of which is shown is left out. Someone listed under two groups is counted once.
 
 ### Group the Rows
 

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the People table's two kinds of row: what a planned hire is called, and what a request
-// to add one or a change to one becomes for the server.
+// Tests for the People table's two kinds of row: what a planned hire is called, what a request to
+// add one or a change to one becomes for the server, and how a month counts each kind.
 
 import type { Person } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { hireChange, hireRequest } from "./hires.ts";
 import {
   addedNames,
+  monthCount,
   noticeName,
   personOnly,
   plannedHireName,
@@ -201,5 +202,55 @@ describe("a planned hire's numbers", () => {
     expect(hireChange({ numbers: { f1: null } }).numbers).toEqual({
       f1: null,
     });
+  });
+});
+
+describe("a month's count of people and planned hires", () => {
+  // Rows of people and planned hires, as many of each as given.
+  const rows = (people: number, hires: number) => [
+    ...Array.from({ length: people }, () => ({ hire: false })),
+    ...Array.from({ length: hires }, () => ({ hire: true })),
+  ];
+  const isHire = ({ hire }: { hire: boolean }) => hire;
+  const counted = (
+    all: ReturnType<typeof rows>,
+    shown?: ReturnType<typeof rows>,
+  ) => monthCount("Nov 2026", isHire, all, shown);
+
+  it.each([
+    [
+      "people and planned hires",
+      rows(14, 1),
+      "Nov 2026: 14 people, 1 planned hire",
+    ],
+    ["people only", rows(3, 0), "Nov 2026: 3 people"],
+    ["planned hires only", rows(0, 2), "Nov 2026: 2 planned hires"],
+    ["no one", rows(0, 0), "Nov 2026: 0 people"],
+  ])(
+    "names the month first, then %s, with nothing narrowing the rows",
+    (_, all, words) => {
+      expect(counted(all)).toBe(words);
+    },
+  );
+
+  it.each([
+    [
+      "people alone, leaving out planned hires none of which are shown",
+      rows(6, 0),
+      "Nov 2026: 6 of 14 people",
+    ],
+    [
+      "both kinds, when both are shown",
+      rows(4, 1),
+      "Nov 2026: 4 of 14 people, 1 of 1 planned hire",
+    ],
+    [
+      "planned hires alone, when no people are shown",
+      rows(0, 1),
+      "Nov 2026: 1 of 1 planned hire",
+    ],
+    ["people, when no one is shown", rows(0, 0), "Nov 2026: 0 of 14 people"],
+  ])("counts %s while something narrows the rows", (_, shown, words) => {
+    expect(counted(rows(14, 1), shown)).toBe(words);
   });
 });
