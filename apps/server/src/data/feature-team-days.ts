@@ -8,7 +8,6 @@ import {
   featureTeamLeads,
   featureTeamMemberships,
   inChunks,
-  people,
   type Reader,
 } from "@fathom/db";
 import { editsField, mayDateChange } from "@fathom/shared";
@@ -28,6 +27,7 @@ import {
   leadOffTeamRefusal,
   type MemberDay,
   type MemberRecord,
+  type NextTeamDraft,
   plannedHireDaysRefusal,
 } from "./feature-team-rules.ts";
 import { recordEvents } from "./history.ts";
@@ -39,11 +39,19 @@ export function refuseWith(refusal: string | undefined): void {
 export const changesDates = (actor: Actor) =>
   editsField(actor, "featureTeamDates");
 
-// The day members join or leave from: today, or another day for those who see the classes of data
-// other dates need, an earlier day needing the right to change feature team dates' class too. A
-// planned hire's day is a person's in this.
-export function fromDay(actor: Actor, from: string | undefined, today: string) {
+// The day members join or leave from: today, or another day. For a change whose days are people's,
+// another day needs the classes of data other dates need, and an earlier day the right to change
+// feature team dates' class too. A change dating only planned hires reveals no one's Personal
+// details, so any day may be chosen, as the hire rules allow; datesOnlyHires decides which, so the
+// check and the field the days are held in always agree.
+export function fromDay(
+  actor: Actor,
+  from: string | undefined,
+  today: string,
+  change: Pick<NextTeamDraft, "datesOnlyHires">,
+) {
   if (from === undefined || from === today) return undefined;
+  if (change.datesOnlyHires) return from;
   requireView(actor, "orgChartOtherDates");
   if (!mayDateChange(changesDates(actor), from, today)) {
     throw new ForbiddenError(
@@ -140,39 +148,28 @@ export async function refuseDaysOutOfOrder(
   refuseWith(daysRefusal(days, records, everyone, refusals));
 }
 
-// Records, in the access history, the people whose Personal joining or leaving days changed. A
-// planned hire is no person, so its days are recorded only in the change history.
+// Records, in the access history, the people whose Personal joining or leaving days changed.
+// Planned hires' days are held apart, and are General.
 export async function recordTeamDayChanges(
-  transaction: Pick<Database, "insert" | "select">,
+  transaction: Pick<Database, "insert">,
   actorId: string,
   made: readonly Change[],
 ): Promise<void> {
-  const named = [
-    ...new Set(
-      made
-        .filter(
-          (change) =>
-            change.recordType === recordType &&
-            (change.field === "memberFrom" || change.field === "leadFrom"),
-        )
-        .flatMap((change) => [
-          ...Object.keys(daysIn(change.oldValue)),
-          ...Object.keys(daysIn(change.newValue)),
-        ]),
-    ),
-  ];
-  const subjects: string[] = [];
-  for (const chunk of inChunks(named)) {
-    for (const { id } of await transaction
-      .select({ id: people.id })
-      .from(people)
-      .where(inArray(people.id, chunk))) {
-      subjects.push(id);
-    }
-  }
+  const subjects = new Set(
+    made
+      .filter(
+        (change) =>
+          change.recordType === recordType &&
+          (change.field === "memberFrom" || change.field === "leadFrom"),
+      )
+      .flatMap((change) => [
+        ...Object.keys(daysIn(change.oldValue)),
+        ...Object.keys(daysIn(change.newValue)),
+      ]),
+  );
   await recordEvents(
     transaction,
-    subjects.map((subjectId) => ({
+    [...subjects].map((subjectId) => ({
       actorId,
       action: "personal-changed" as const,
       subjectId,

@@ -24,6 +24,7 @@ import {
 import { type Maker, otherApprover } from "./draft-makers.ts";
 import {
   datesOf,
+  daysIn,
   type Everyone,
   hasLeft,
   leadDatesOf,
@@ -33,8 +34,8 @@ import {
 } from "./feature-team-rules.ts";
 import { text } from "./reporting.ts";
 
-// The days members join and leave and leads change are in Feature team dates' class; the rest is
-// General.
+// The days people join and leave and become leads are in Feature team dates' class; the rest, and
+// planned hires' days, which come from no one's Personal details, are General.
 export const featureTeamTier =
   (classes: DataClasses) =>
   (field: string): Tier =>
@@ -46,13 +47,15 @@ export const featureTeamTier =
 export const seesTeamField = (access: ClassAccess) => (field: string) =>
   seesClass(access.permissions, featureTeamTier(access.dataClasses)(field));
 
-// Whether a team's draft changes anyone's team, or its lead, from a day of its own.
+// Whether a team's draft changes a person's team, or makes a person its lead or no longer, from a
+// day of its own.
 const dated = (team: Recorded): boolean =>
-  Object.keys(datesOf(team)).length > 0 ||
-  Object.keys(leadDatesOf(team)).length > 0;
+  Object.keys(daysIn(team.memberFrom)).length > 0 ||
+  Object.keys(daysIn(team.leadFrom)).length > 0;
 
-// A draft dated from another day is held only for those who see the days changes take effect
-// from, so no one sees a later change drawn as if it were today's.
+// A draft dating a person's change from another day is held only for those who see the days changes
+// take effect from, so no one sees a later change drawn as if it were today's. Planned hires' days
+// are General, so dating only them hides nothing.
 export const draftShownTo = (access: ClassAccess, draft: Draft): boolean =>
   seesField(access, "featureTeamDates") || !dated(draft.fields);
 
@@ -65,11 +68,14 @@ export const peopleAsTodayOn = (
 ): boolean => day > today && !seesView("orgChartFutureDates", access);
 
 // A team without those who have left, whether as members, as its lead, or as members given a day.
+// Only people leave, so planned hires' days are kept as they are.
 export function withoutLeavers(team: Recorded, everyone: Everyone): Recorded {
   const gone = (id: unknown) =>
     typeof id === "string" && hasLeft(everyone.get(id));
-  const days = Object.entries(datesOf(team)).filter(([id]) => !gone(id));
-  const leadDays = Object.entries(leadDatesOf(team)).filter(
+  const days = Object.entries(daysIn(team.memberFrom)).filter(
+    ([id]) => !gone(id),
+  );
+  const leadDays = Object.entries(daysIn(team.leadFrom)).filter(
     ([id]) => !gone(id),
   );
   const rest = { ...team };
@@ -232,19 +238,21 @@ export function draftAsSeen(
   const changesWhoIsSeen = (field: string) =>
     !["members", "leadId"].includes(field) ||
     stableJson(seenIn(field, before)) !== stableJson(seenIn(field, after));
-  const shownDays = (held: Record<string, string>) =>
-    Object.entries(held).filter(([personId]) => shown(personId));
-  const memberDays = shownDays(datesOf(team));
-  const leadDays = shownDays(leadDatesOf(team));
-  const days = seesDays ? memberDays : [];
-  const leadDay = seesDays ? leadDays[0]?.[1] : undefined;
+  const shownDays = (held: unknown) =>
+    Object.entries(daysIn(held)).filter(([personId]) => shown(personId));
+  const days = seesDays ? shownDays(team.memberFrom) : [];
+  const leadDay = seesDays ? shownDays(team.leadFrom)[0]?.[1] : undefined;
+  const hireDays = shownDays(team.hireFrom);
+  const hireLeadDay = shownDays(team.hireLeadFrom)[0]?.[1];
   const fields = draftFields(before, draft);
   const changed = fields.filter(
     (field) =>
       seen(field) &&
       changesWhoIsSeen(field) &&
       (field !== "memberFrom" || days.length > 0) &&
-      (field !== "leadFrom" || leadDay !== undefined),
+      (field !== "leadFrom" || leadDay !== undefined) &&
+      (field !== "hireFrom" || hireDays.length > 0) &&
+      (field !== "hireLeadFrom" || hireLeadDay !== undefined),
   );
   // Nothing left to show those who see start and end dates means only people who have left remain
   // in the draft, so it stays listed for them to clear. For others it may hide someone who has not
@@ -270,6 +278,10 @@ export function draftAsSeen(
             },
       ...(days.length === 0 ? {} : { days: Object.fromEntries(days) }),
       ...(leadDay === undefined ? {} : { leadDay }),
+      ...(hireDays.length === 0
+        ? {}
+        : { hireDays: Object.fromEntries(hireDays) }),
+      ...(hireLeadDay === undefined ? {} : { hireLeadDay }),
       state: draft.state,
       ...(draft.state === "rejected" &&
       draft.reason !== null &&

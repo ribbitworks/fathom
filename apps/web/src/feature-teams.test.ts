@@ -11,6 +11,7 @@ import {
   liveTeam,
   memberCardId,
   membersChanged,
+  takesEffect,
   teamCardId,
 } from "./feature-teams.ts";
 
@@ -450,5 +451,19 @@ describe("a choice of a team's members", () => {
 
   it("is nothing when it changes no one, in whatever order", () => {
     expect(membersChanged(["a", "b"], ["b", "a"], offered)).toBeUndefined();
+  });
+});
+
+describe("when a drafted change takes effect", () => {
+  it("gives a planned hire's day, held apart from people's", () => {
+    const drafted = draft({ hireDays: { h1: "2027-05-01" } });
+
+    expect(takesEffect(drafted, "h1", "2027-01-01")).toBe("May 1, 2027");
+  });
+
+  it("gives the day a planned hire becomes the lead", () => {
+    const drafted = draft({ hireLeadDay: "2027-06-01" });
+
+    expect(takesEffect(drafted, undefined, "2027-01-01")).toBe("Jun 1, 2027");
   });
 });

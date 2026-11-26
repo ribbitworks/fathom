@@ -3,9 +3,9 @@
 // Integration tests for drafting planned hires on feature teams: adding, taking off and making them
 // lead through drafts and approval, the days they may join from, and which roles may do it.
 
-import { startingRoles } from "@fathom/shared";
+import { type ChangeHistory, startingRoles } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { errorOf, ok } from "./test-app.ts";
+import { errorOf, ok, type User } from "./test-app.ts";
 import {
   test,
   editor,
@@ -18,6 +18,8 @@ import {
   send,
   approve,
   approved,
+  reject,
+  resubmit,
   person,
   plannedHire,
   create,
@@ -120,36 +122,176 @@ describe("drafting a planned hire on a team", () => {
     );
   });
 
-  it("joins from the month it's expected, chosen as the day, held as a person's day is", async () => {
-    // Given a planned hire expected in September
+  it("joins from a day chosen by a role without Personal details, shown to every reader", async () => {
+    // Given a planned hire expected in September, and a Feature Lead, who doesn't see Personal details
     const hire = await plannedHire({ targetDate: "2026-09-15" });
     const id = await liveTeam();
 
-    // When it is added from a day in September
-    await changed(id, { add: [hire], from: "2026-09-01" });
+    // When the Feature Lead adds it from a day in September
+    await changed(id, { add: [hire], from: "2026-09-01" }, proposer);
 
-    // Then the day is in Feature team dates' class, hidden from a reader without Personal details
-    expect((await teamSeen(id))?.draft?.days).toEqual({
+    // Then the day is held as General, shown to a reader without Personal details
+    expect((await teamSeen(id, planner))?.draft?.hireDays).toEqual({
       [hire]: "2026-09-01",
     });
-    expect((await teamSeen(id, planner))?.draft).toBeUndefined();
     // A planned hire is no person, so its day is no one's Personal details in the access history.
     expect(await accessRecords("personal-changed", editor.id, hire)).toEqual(
       [],
     );
   });
 
-  it("is refused a day other than today by a role without Personal details, as a person is", async () => {
-    const hire = await plannedHire({ targetDate: "2026-09-15" });
+  it("joins and leads from an earlier day chosen by a role without Personal details", async () => {
+    const hire = await plannedHire();
+    const id = await liveTeam();
+
+    await changed(id, { leadId: hire, from: "2026-04-01" }, proposer);
+
+    expect((await teamSeen(id, planner))?.draft).toMatchObject({
+      hireDays: { [hire]: "2026-04-01" },
+      hireLeadDay: "2026-04-01",
+    });
+  });
+
+  it("still refuses a role without Personal details another day for a person", async () => {
+    const member = await person();
     const id = await liveTeam();
 
     const response = await change(
       id,
-      { add: [hire], from: "2026-09-01" },
+      { add: [member], from: "2026-09-01" },
       proposer,
     );
 
     expect(response.statusCode).toBe(403);
+  });
+});
+
+describe("a planned hire's day in a change that dates a person", () => {
+  // The fields of a change set's team record a reader is shown.
+  async function fieldsSeen(changeSetId: string | null, who: User) {
+    const { entries } = await ok<ChangeHistory>(
+      await send(who, "GET", "/api/changes"),
+    );
+    return (
+      entries
+        .find((entry) => entry.id === changeSetId)
+        ?.records.find((record) => record.kind === "feature-team")
+        ?.fields.map(({ field }) => field) ?? []
+    );
+  }
+
+  it("is refused to a role without Personal details, adding a person and a planned hire from one later day", async () => {
+    const hire = await plannedHire();
+    const member = await person();
+    const id = await liveTeam();
+
+    const response = await change(
+      id,
+      { add: [member, hire], from: "2026-09-01" },
+      proposer,
+    );
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("is held with the person's, so a reader without Feature team dates sees neither day", async () => {
+    // Given a person and a planned hire added from one later day by a role that may
+    const hire = await plannedHire();
+    const member = await person();
+    const id = await liveTeam();
+
+    const changeSetId = await changed(id, {
+      add: [member, hire],
+      from: "2026-09-01",
+    });
+
+    // Then a reader without Feature team dates is shown neither the draft nor the days
+    expect((await teamSeen(id, planner))?.draft).toBeUndefined();
+    expect(await fieldsSeen(changeSetId, planner)).toEqual(["members"]);
+    expect((await teamSeen(id))?.draft?.days).toEqual({
+      [member]: "2026-09-01",
+      [hire]: "2026-09-01",
+    });
+  });
+
+  it("is refused to a role without Personal details making a planned hire take over from a person as the lead", async () => {
+    const lead = await person();
+    const hire = await plannedHire();
+    const id = await liveTeam({ members: [lead, hire], leadId: lead });
+
+    const response = await change(
+      id,
+      { leadId: hire, from: "2026-09-01" },
+      proposer,
+    );
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("holds the day a planned hire takes over from a person as the lead with people's", async () => {
+    const lead = await person();
+    const hire = await plannedHire();
+    const id = await liveTeam({ members: [lead, hire], leadId: lead });
+
+    const changeSetId = await changed(id, {
+      leadId: hire,
+      from: "2026-09-01",
+    });
+
+    expect((await teamSeen(id, planner))?.draft).toBeUndefined();
+    expect(await fieldsSeen(changeSetId, planner)).toEqual(["leadId"]);
+  });
+
+  it("is refused to a role without Personal details changing a drafted planned hire lead while a person leads live", async () => {
+    // Given a team a person leads live, whose draft makes a planned hire its lead
+    const lead = await person();
+    const first = await plannedHire();
+    const second = await plannedHire();
+    const id = await liveTeam({ members: [lead, first, second], leadId: lead });
+    await changed(id, { leadId: first });
+
+    // When a role without Personal details makes another planned hire its lead from a later day
+    const response = await change(
+      id,
+      { leadId: second, from: "2026-09-01" },
+      proposer,
+    );
+
+    // Then it is refused, since the day is the day the person stops leading
+    expect(response.statusCode).toBe(403);
+  });
+});
+
+describe("a planned hire's past day, put back or sent again", () => {
+  it("is undone by a role without the right to change Feature team dates", async () => {
+    // Given a role without Personal details that added a planned hire from April, then moved it to May
+    const hire = await plannedHire();
+    const id = await liveTeam();
+    await changed(id, { add: [hire], from: "2026-04-01" }, proposer);
+    const moved = await changed(
+      id,
+      { add: [hire], from: "2026-05-01" },
+      proposer,
+    );
+
+    // When it undoes the move
+    await ok(await send(proposer, "POST", `/api/undo/${String(moved)}`));
+
+    // Then the April day is back
+    expect((await teamSeen(id, planner))?.draft?.hireDays).toEqual({
+      [hire]: "2026-04-01",
+    });
+  });
+
+  it("is sent again by a role without the right to change Feature team dates", async () => {
+    const hire = await plannedHire();
+    const id = await liveTeam();
+    await changed(id, { add: [hire], from: "2026-04-01" }, proposer);
+    await ok(await reject(id));
+
+    await ok(await resubmit(id, proposer));
+
+    expect((await teamSeen(id, planner))?.draft?.state).toBe("waiting");
   });
 });
 

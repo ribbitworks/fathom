@@ -35,11 +35,16 @@ export const featureTeamDraftSchema = z.object({
     leadId: z.string().nullable().optional(),
     members: z.array(z.string()).optional(),
   }),
-  // The days the draft gives members joining or leaving, by person or planned hire, for readers who
-  // see Personal details.
+  // The days the draft gives members joining or leaving, by member, for readers who see Personal
+  // details: people's, and planned hires' given by a change that dates a person too.
   days: z.record(z.string(), daySchema).optional(),
-  // The day the draft's change of lead takes effect, for readers who see Personal details.
+  // The day the draft's change of lead takes effect, for readers who see Personal details, when a
+  // person leads live or is made the lead.
   leadDay: daySchema.optional(),
+  // The days given by changes that date only planned hires, and the day a planned hire takes over
+  // from another as the lead, for every reader, since they are General and never a target date.
+  hireDays: z.record(z.string(), daySchema).optional(),
+  hireLeadDay: daySchema.optional(),
   ...draftShape,
 });
 
@@ -170,8 +175,9 @@ export function disbandedMonth(
 }
 
 // Adds a feature team, with its members, people and planned hires, and lead, who is one of them;
-// members join from the day given, today or later, or earlier for those who may change Personal
-// details, or from today. A planned hire joins from the month it's expected, never before.
+// members join from the day given, or from today. A day other than today that dates a person needs
+// Personal details, and an earlier one the right to change them; a planned hire joins from the month
+// it's expected, never before.
 export const featureTeamRequestSchema = z.object({
   name,
   leadId: z.uuid().nullable().default(null),
@@ -182,8 +188,9 @@ export const featureTeamRequestSchema = z.object({
 export type FeatureTeamRequest = z.infer<typeof featureTeamRequestSchema>;
 
 // Changes a feature team: renames it, chooses its lead or none, and adds and removes members, people
-// and planned hires, who join or leave, and the lead changes, from the day given, today or later, or
-// earlier for those who may change Personal details, or from today.
+// and planned hires, who join or leave, and the lead changes, from the day given, or from today. A
+// day other than today that dates a person needs Personal details, and an earlier one the right to
+// change them.
 export const featureTeamChangeSchema = z.object({
   name: name.optional(),
   leadId: z.uuid().nullable().optional(),

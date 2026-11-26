@@ -234,16 +234,26 @@ describe("a team's draft as a reader sees it", () => {
       expect(unseen?.changed).toEqual(["leadId"]);
     });
 
-    it("give a planned hire's day only to a role that sees people's, as a person's", () => {
-      const fields = {
+    it("are shown for planned hires to a role that doesn't see people's, apart from people's", () => {
+      const seen = seenAs(teamMember, {
         members: [lead, member, hire],
-        memberFrom: { [hire]: "2026-08-01" },
-      };
-
-      expect(seenAs(workforceAdministrator, fields)?.days).toEqual({
-        [hire]: "2026-08-01",
+        memberFrom: { [starter]: "2026-08-01" },
+        hireFrom: { [hire]: "2026-08-01" },
+        leadId: hire,
+        hireLeadFrom: { [hire]: "2026-09-01" },
       });
-      expect(seenAs(teamMember, fields)).not.toHaveProperty("days");
+
+      expect(seen).toMatchObject({
+        hireDays: { [hire]: "2026-08-01" },
+        hireLeadDay: "2026-09-01",
+      });
+      expect(seen).not.toHaveProperty("days");
+      expect(seen?.changed).toEqual([
+        "members",
+        "hireFrom",
+        "leadId",
+        "hireLeadFrom",
+      ]);
     });
 
     it("leave out the day of someone the reader doesn't see", () => {

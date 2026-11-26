@@ -57,12 +57,61 @@ export const daysIn = (value: unknown): Record<string, string> =>
     ? (value as Record<string, string>)
     : {};
 
-export const datesOf = (team: Recorded | undefined): Record<string, string> =>
-  daysIn(team?.memberFrom);
+// The days a team's draft gives members joining or leaving, people's and planned hires', which are
+// held apart, since a planned hire's days are General and people's are Feature team dates.
+export const datesOf = (
+  team: Recorded | undefined,
+): Record<string, string> => ({
+  ...daysIn(team?.memberFrom),
+  ...daysIn(team?.hireFrom),
+});
 
+// The day a team's draft changes its lead, held under the lead, a person's or a planned hire's.
 export const leadDatesOf = (
   team: Recorded | undefined,
-): Record<string, string> => daysIn(team?.leadFrom);
+): Record<string, string> => ({
+  ...daysIn(team?.leadFrom),
+  ...daysIn(team?.hireLeadFrom),
+});
+
+// Whether the days a change gives are planned hires' alone, so General: it dates someone, and each
+// is a planned hire, as are the live and the new lead of a change of lead it dates. A change dating
+// a person, or no one, as a rename does, keeps every day it gives with people's, in Feature team
+// dates, so no day it gives says when a person joins, leaves or stops leading.
+export function datesOnlyHires(
+  memberIds: readonly string[],
+  leads: readonly (string | null)[],
+  isHire: (id: string) => boolean,
+): boolean {
+  const dated = [
+    ...memberIds,
+    ...leads.filter((lead): lead is string => lead !== null),
+  ];
+  return dated.length > 0 && dated.every(isHire);
+}
+
+// The fields holding the days a change gives members and its lead: planned hires' own when it dates
+// only them, or people's.
+export function dayFields(
+  days: readonly [string, string][],
+  leadDay: [string, string] | undefined,
+  onlyHires: boolean,
+): Recorded {
+  return {
+    ...(days.length === 0
+      ? {}
+      : {
+          [onlyHires ? "hireFrom" : "memberFrom"]: Object.fromEntries(days),
+        }),
+    ...(leadDay === undefined
+      ? {}
+      : {
+          [onlyHires ? "hireLeadFrom" : "leadFrom"]: Object.fromEntries([
+            leadDay,
+          ]),
+        }),
+  };
+}
 
 // Whether someone is on a team today or will be, by their records on it: the one in force today
 // has them on it, or a later one does.
@@ -303,6 +352,8 @@ export interface NextTeamDraft {
   leadChanges: boolean;
   // The day the lead joins in this draft, when the draft adds them.
   leadJoinsOn: string | undefined;
+  // Whether the days the change gives are planned hires' alone, as datesOnlyHires sets out.
+  datesOnlyHires: boolean;
 }
 
 // A team's draft with a change made, from the day given, or from today when none is: the team as it
@@ -311,7 +362,15 @@ export interface NextTeamDraft {
 export function nextTeamDraft(
   { before, team }: { before: Recorded | undefined; team: Recorded },
   change: FeatureTeamChange,
-  { from, today }: { from: string | undefined; today: string },
+  {
+    from,
+    today,
+    isHire = () => false,
+  }: {
+    from: string | undefined;
+    today: string;
+    isHire?: (id: string) => boolean;
+  },
 ): NextTeamDraft {
   const current = membersOf(team);
   // A lead chosen from outside the team joins it, so the lead is always a member.
@@ -342,34 +401,46 @@ export function nextTeamDraft(
         ? null
         : text(team.leadId);
   const dayPeople = [...added, ...removed, ...redated];
-  // A day is kept for each member a draft adds or removes, so approving it records when; a change
-  // taken back leaves none.
-  const days = new Map(Object.entries(datesOf(team)));
-  for (const memberId of dayPeople) {
-    if (from === undefined) days.delete(memberId);
-    else days.set(memberId, from);
-  }
-  const dates = new Map(
-    [...days].filter(
-      ([memberId]) =>
-        members.includes(memberId) !== wasMembers.includes(memberId),
-    ),
-  );
-  // A change of lead keeps its own day, set only by the edit that changes the lead, and held
-  // under the new lead, or the old one when none replaces them.
   const wasLead = text(before?.leadId);
   const setsLead = change.leadId !== undefined || leadId !== text(team.leadId);
+  const onlyHires = datesOnlyHires(
+    dayPeople,
+    setsLead && leadId !== wasLead ? [wasLead, leadId] : [],
+    isHire,
+  );
+  // A day is kept for each member a draft adds or removes, so approving it records when, where the
+  // change that gave it held it; a change taken back leaves none.
+  const personDays = new Map(Object.entries(daysIn(team.memberFrom)));
+  const hireDays = new Map(Object.entries(daysIn(team.hireFrom)));
+  for (const memberId of dayPeople) {
+    personDays.delete(memberId);
+    hireDays.delete(memberId);
+    if (from !== undefined) {
+      (onlyHires ? hireDays : personDays).set(memberId, from);
+    }
+  }
+  const changesMember = ([memberId]: [string, string]) =>
+    members.includes(memberId) !== wasMembers.includes(memberId);
+  const keptPersonDays = [...personDays].filter(changesMember);
+  const keptHireDays = [...hireDays].filter(changesMember);
+  const dates = new Map([...keptPersonDays, ...keptHireDays]);
+  // A change of lead keeps its own day, set only by the edit that changes the lead, and held
+  // under the new lead, or the old one when none replaces them.
   const [keptLeadDay] = Object.values(leadDatesOf(team));
   const leadDay = setsLead ? from : keptLeadDay;
+  const leadByHires = setsLead
+    ? onlyHires
+    : Object.keys(daysIn(team.hireLeadFrom)).length > 0;
   return {
     after: tidy({
       name: change.name ?? team.name,
       leadId,
       members,
-      ...(dates.size === 0 ? {} : { memberFrom: Object.fromEntries(dates) }),
+      ...dayFields(keptPersonDays, undefined, false),
+      ...dayFields(keptHireDays, undefined, true),
       ...(leadId === wasLead || leadDay === undefined
         ? {}
-        : { leadFrom: { [String(leadId ?? wasLead)]: leadDay } }),
+        : dayFields([], [String(leadId ?? wasLead), leadDay], leadByHires)),
     }),
     added,
     members,
@@ -381,5 +452,6 @@ export function nextTeamDraft(
       leadId === null || wasMembers.includes(leadId)
         ? undefined
         : (dates.get(leadId) ?? today),
+    datesOnlyHires: onlyHires,
   };
 }
