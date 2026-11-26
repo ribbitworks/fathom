@@ -5,7 +5,7 @@
 # It runs as HAProxy's own user, never as root. Built from the repository root;
 # Dockerfile.dockerignore lists the only files it reads.
 
-FROM haproxy:3.4.7-alpine3.24@sha256:b9fe316f718d5015c5cfebd8ca019591f3e44656f61d93cb8b59a1028961e530
+FROM haproxy:3.4.8-alpine3.24@sha256:8aa6458a9d22a8364a2d2ee9ce93de0cc4a2789e3cf63f0b44adc972863724d7
 
 # Changing the date makes the build fetch the latest security fixes instead of reusing a cached layer.
 ARG SECURITY_FIXES_DATE=unset
