@@ -203,7 +203,13 @@ export async function createField(
     const newList =
       request.newList === undefined
         ? undefined
-        : await draftNewList(transaction, actor, state.lists, request.newList);
+        : await draftNewList(
+            transaction,
+            actor,
+            state.lists,
+            request.newList,
+            tableName,
+          );
     const id = randomUUID();
     const field = requested(
       newList === undefined ? request : { ...request, listId: newList.id },

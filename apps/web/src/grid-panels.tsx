@@ -3,12 +3,13 @@
 // The bar above the shared table, with what Approvers decide at once, and the side panels beside it:
 // a cell's editor and Metrics.
 
+import type { Field } from "@fathom/shared";
 import type { ReactNode } from "react";
 import type { EditorProps } from "./cell-kinds.tsx";
 import type { HeaderGrid } from "./column-header.tsx";
 import { focusSoon } from "./focus.ts";
 import { breaksDown, kindOf } from "./grid-columns.tsx";
-import { draftTotal } from "./drafts.ts";
+import { draftTotal, mayDecide, noDrafts } from "./drafts.ts";
 import { draftColumn, waitingDrafts } from "./grid-drafts.ts";
 import { TableScrolling } from "./grid-layout.ts";
 import {
@@ -50,6 +51,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     | "view"
     | "records"
     | "approves"
+    | "decidedBy"
     | "approvesRecord"
     | "decidableRow"
     | "fieldsLive"
@@ -98,6 +100,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     view,
     records,
     approves,
+    decidedBy,
     approvesRecord,
     decidableRow,
     fieldsLive,
@@ -126,7 +129,8 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
   const deciding = {
     decidableRow,
     approvesRecord,
-    approvesColumns: approves.includes("field"),
+    approvesColumn: (field: Field) =>
+      mayDecide(approves, { ...noDrafts(), columns: [field.id] }, decidedBy),
     draftsOf: table.drafts,
   };
   const waitingShown = waitingDrafts(

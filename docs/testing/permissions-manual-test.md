@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["packages/shared/src/access.ts", "packages/shared/src/page-access.ts", "apps/web/src/layout.tsx", "apps/web/src/router.tsx", "apps/web/src/signed-in-route.tsx", "apps/web/src/plan-routes.tsx", "apps/web/src/*-page.tsx", "apps/server/src/access.ts", "apps/server/src/data/**", "apps/server/src/routes/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/testing/roles-manual-test.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: What Each Permission Allows
@@ -153,7 +153,8 @@ Covered by [PERM-05](#perm-05-edit-people-changes-people-their-classified-values
     - A row's **Record** reads 'Silje Holm-Schrøder', with a tick box before it
     - Its **What changes** reads **Skills** set to `Rust`
     - Its **Made by** reads "Engineering Operations Manager"
-    - No row's **Type** reads "List", "Column" or "Choice"
+    - Another row's **Record** reads 'Skills', and its **Type** reads "Column"
+    - No row's **Type** reads "List" or "Choice"
   - **Notes:**
 
 - [ ] `5FA1` Tick the tick box of the row of 'Silje Holm-Schrøder'.
@@ -163,7 +164,7 @@ Covered by [PERM-05](#perm-05-edit-people-changes-people-their-classified-values
 - [ ] `219C` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:**
     - A dialog titled "Another approver needed" opens
-    - It reads "This role can't approve these drafts:" above "the column Skills", "the list Skills" and "the choice Rust in Skills"
+    - It reads "This role can't approve these drafts:" above "the list Skills" and "the choice Rust in Skills"
     - Its only button is **Close**
   - **Notes:**
 

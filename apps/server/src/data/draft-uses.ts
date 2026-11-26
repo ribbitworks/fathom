@@ -5,7 +5,10 @@
 
 import { fieldOfValue } from "@fathom/db";
 import {
-  approvesKind,
+  type Decided,
+  decides,
+  draftKey,
+  type DraftKind,
   type DraftsRequest,
   type RecordRef,
   takenAlongRefusal,
@@ -128,34 +131,37 @@ export async function withUsedAcross(
   };
 }
 
-// Refuses approving drafts that take along a column or choice only drafted to be added whose area
-// the approver's role does not approve, naming the first, since approving one approves both. A list
-// is only taken along with a column drawing on it, which is named instead.
+// Refuses approving drafts that take along a column, list or choice only drafted to be added that the
+// approver's role does not decide, by the waiting drafts as deciding each needs, read before any is
+// approved, naming the first, since approving one approves both.
 export async function refuseTakenAlongBeyondRole(
   transaction: Transaction,
   actor: Actor,
   chosen: DraftsRequest,
   asked: DraftsRequest,
+  waiting: ReadonlyMap<string, Decided>,
 ): Promise<void> {
-  const takenAlong = [
-    { kind: "field", ids: without(asked.columns, chosen.columns) },
-    { kind: "list-item", ids: without(asked.choices, chosen.choices) },
-  ] as const;
-  const refused = takenAlong.find(
-    ({ kind, ids }) => ids.length > 0 && !approvesKind(actor.permissions, kind),
+  const takenAlong = new Set(
+    [
+      { kind: "field", ids: without(asked.columns, chosen.columns) },
+      { kind: "list", ids: without(asked.lists, chosen.lists) },
+      { kind: "list-item", ids: without(asked.choices, chosen.choices) },
+    ].flatMap(({ kind, ids }) => ids.map((id) => draftKey(kind, id))),
+  );
+  const refused = [...waiting].find(
+    ([key, one]) => takenAlong.has(key) && !decides(actor.permissions, one),
   );
   if (refused === undefined) return;
-  const id = String(refused.ids.at(0));
+  const [key, one] = refused;
+  const id = key.slice(one.kind.length + 1);
   const { lists, fieldDrafts } = await readColumnsState(transaction);
-  const named: Record<(typeof takenAlong)[number]["kind"], () => string> = {
-    field: () => `the new column ${String(fieldDrafts.get(id)?.fields.name)}`,
-    "list-item": () =>
-      `the new choice ${String(lists.choiceDrafts.get(id)?.fields.label)}`,
+  const named: Partial<Record<DraftKind, string>> = {
+    field: `the new column ${String(fieldDrafts.get(id)?.fields.name)}`,
+    list: `the new list ${String(lists.listDrafts.get(id)?.fields.name)}`,
+    "list-item": `the new choice ${String(lists.choiceDrafts.get(id)?.fields.label)}`,
   };
   throw new ForbiddenError(
-    String(
-      takenAlongRefusal(actor.permissions, refused.kind, named[refused.kind]()),
-    ),
+    String(takenAlongRefusal(actor.permissions, one, String(named[one.kind]))),
   );
 }
 

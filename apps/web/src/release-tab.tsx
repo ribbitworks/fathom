@@ -3,7 +3,12 @@
 // The Releases page's Releases tab: the table of releases, with a timeline above it, the selected
 // release's details beside it, and its note in a panel of its own.
 
-import type { Asking, DraftKind, Release, ReleaseStream } from "@fathom/shared";
+import type {
+  Asking,
+  DecidedKind,
+  Release,
+  ReleaseStream,
+} from "@fathom/shared";
 import { Menu } from "@mantine/core";
 import { useEffect, useEffectEvent, useRef } from "react";
 import {
@@ -281,7 +286,7 @@ export function ReleasesTable({
   day: string;
   view: View;
   onView: ChangeView;
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   saved: SavedViews;
   // Whether the user may change releases in the Draft view shown.
   canEdit: boolean;

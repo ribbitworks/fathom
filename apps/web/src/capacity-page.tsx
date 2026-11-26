@@ -2,7 +2,7 @@
 
 // The Capacity page: its tabs, Feature teams, Allocations and Settings, and the tab shown.
 
-import type { CapacityMode, DraftKind } from "@fathom/shared";
+import type { CapacityMode, DecidedKind } from "@fathom/shared";
 import { Stack } from "@mantine/core";
 import { type ReactNode, useState } from "react";
 import { CapacityAllocations } from "./capacity-allocations.tsx";
@@ -43,7 +43,7 @@ export function CapacityPage({
   changesDates: boolean;
   canEditSettings: boolean;
   // The kinds of draft the user may approve and reject.
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
 }) {
   const [now] = useState(today);
   const tabs: Record<CapacityMode, () => ReactNode> = {

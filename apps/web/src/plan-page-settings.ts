@@ -4,7 +4,7 @@
 
 import type {
   Customer,
-  DraftKind,
+  DecidedKind,
   PlanMode,
   Project,
   ProjectPlan,
@@ -76,7 +76,7 @@ export interface ProjectsPageProps {
   // Shows another of the plan's pages or tabs, with a record's details open if one is named.
   onTab?: (tab: PlanTab, open?: string) => void;
   // The kinds of draft the user's role approves and rejects.
-  approves?: readonly DraftKind[];
+  approves?: readonly DecidedKind[];
   // Whether the user may add and change the columns on Features.
   canEditColumns?: boolean;
   // Whether the user may set a feature's feature team.

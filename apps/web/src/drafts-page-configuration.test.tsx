@@ -247,40 +247,49 @@ describe("the Drafts page", () => {
     });
   });
 
-  it("offers only drafts of the areas the role approves, and names those of other areas a decision would take", async () => {
-    const created = (more: object = {}) =>
-      draft({ action: "created", changed: [], live: {}, ...more });
-    const guild = {
-      id: "f2",
-      keyNumber: 1,
-      name: "Guild",
-      listId: "l1",
-      multiple: false,
-      required: false,
-      draft: created(),
-    };
-    const given = person("p6", "Finley Fictional", {
-      values: { f2: ["c1"] },
-      draft: draft({ action: "changed", changed: ["f2"] }),
-    });
-    const answers = (permissions: string[]) => ({
-      "GET /api/session": session([...permissions, "people:view"]),
-      "GET /api/people": () =>
-        Response.json({
-          people: [given],
-          fields: [site, guild],
-          order: [],
-        }),
-    });
-    const { fetch } = await openDrafts(answers(["people:approve"]));
+  // A column on People, and a person given a value in it, drawing on a list drafted on Lists.
+  const created = (more: object = {}) =>
+    draft({ action: "created", changed: [], live: {}, ...more });
+  const guilds = {
+    ...sites,
+    id: "l9",
+    name: "Guilds",
+    choices: [{ id: "c9", label: "Makers", description: "", retired: false }],
+    draft: created(),
+  };
+  const guild = {
+    id: "f2",
+    keyNumber: 1,
+    name: "Guild",
+    listId: "l9",
+    multiple: false,
+    required: false,
+    table: "people",
+    draft: created(),
+  };
+  const given = person("p6", "Finley Fictional", {
+    values: { f2: ["c9"] },
+    draft: draft({ action: "changed", changed: ["f2"] }),
+  });
+  const guildAnswers = (permissions: string[]) => ({
+    "GET /api/session": session([...permissions, "people:view"]),
+    "GET /api/people": () =>
+      Response.json({ people: [given], fields: [site, guild], order: [] }),
+    "GET /api/lists": () => Response.json({ lists: [sites, guilds] }),
+  });
+
+  it("offers a People column's draft to Approve People, and names the list made on Lists approving it would take", async () => {
+    const { fetch } = await openDrafts(guildAnswers(["people:approve"]));
     await userEvent.click(
       await screen.findByRole("checkbox", {
         name: "Select the draft of Finley Fictional",
       }),
     );
-    // A draft this role doesn't approve isn't one to decide.
     expect(
-      screen.queryByRole("checkbox", { name: "Select the draft of Guild" }),
+      screen.getByRole("checkbox", { name: "Select the draft of Guild" }),
+    ).toBeDefined();
+    expect(
+      screen.queryByRole("checkbox", { name: "Select the draft of Guilds" }),
     ).toBeNull();
     await userEvent.click(
       screen.getByRole("button", { name: "Approve 1 draft…" }),
@@ -291,36 +300,16 @@ describe("the Drafts page", () => {
     expect(
       within(dialog).getByText("This role can't approve these drafts:"),
     ).toBeDefined();
-    expect(within(dialog).getByText("the column Guild")).toBeDefined();
+    expect(within(dialog).getByText("the list Guilds")).toBeDefined();
+    expect(within(dialog).queryByText("the column Guild")).toBeNull();
     expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([]);
   });
 
   it("names the drafts of other areas that rejecting would take with it", async () => {
-    const guild = {
-      id: "f2",
-      keyNumber: 1,
-      name: "Guild",
-      listId: "l1",
-      multiple: false,
-      required: false,
-      draft: draft({ action: "created", changed: [], live: {} }),
-    };
-    const given = person("p6", "Finley Fictional", {
-      values: { f2: ["c1"] },
-      draft: draft({ action: "changed", changed: ["f2"] }),
-    });
-    await openDrafts({
-      "GET /api/session": session(["configuration:approve", "people:view"]),
-      "GET /api/people": () =>
-        Response.json({
-          people: [given],
-          fields: [site, guild],
-          order: [],
-        }),
-    });
+    await openDrafts(guildAnswers(["configuration:approve"]));
     await userEvent.click(
       await screen.findByRole("checkbox", {
-        name: "Select the draft of Guild",
+        name: "Select the draft of Guilds",
       }),
     );
     await userEvent.click(screen.getByRole("button", { name: "Reject…" }));
@@ -423,7 +412,7 @@ describe("the Drafts page", () => {
     expect(await showOn("Previous site", "People")).toBe("/go/column/1");
   });
 
-  it("opens for Approvers who see lists but not people, with only the drafts of lists, for another approver to decide", async () => {
+  it("opens for Approvers who see lists but not people, with only the drafts of lists, none for them to decide", async () => {
     const fetch = serverAnswers({
       "GET /api/session": session([
         "plan:approve",
@@ -465,8 +454,8 @@ describe("the Drafts page", () => {
     // A list's values are people's details, so deciding its drafts needs sight of people.
     renderApp("/drafts?tab=all");
     expect(await entries()).toEqual([
-      "Sites, DraftNeeds another approver | Changed | Waiting | Name from Old Sites to Sites | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
-      "Harbour in Sites, DraftNeeds another approver | Changed | Waiting | Name from Old Harbour to Harbour | Choice | Configuration | Fictional Editor | Oct 30, 2026 | ",
+      "Sites, Draft | Changed | Waiting | Name from Old Sites to Sites | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
+      "Harbour in Sites, Draft | Changed | Waiting | Name from Old Harbour to Harbour | Choice | Configuration | Fictional Editor | Oct 30, 2026 | ",
     ]);
     expect(screen.getByRole("tab", { name: /^To decide\s*0$/u })).toBeDefined();
     expect(fetch.mock.calls.some(([url]) => url.endsWith("/api/people"))).toBe(

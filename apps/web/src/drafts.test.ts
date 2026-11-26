@@ -4,10 +4,17 @@
 // includes, how they are named, and whether the approver's role approves drafts of their areas, and
 // for grouping the user's own changes the server links.
 
-import { type Field, type List, type Person, draftKinds } from "@fathom/shared";
+import {
+  approvableKinds,
+  type Field,
+  type List,
+  type Person,
+  decidedKinds,
+} from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { decisionFor, needsOtherApproval } from "./draft-decisions.ts";
 import {
+  beyondRole,
   creditedBy,
   decidable,
   differingKeys,
@@ -28,12 +35,13 @@ import {
 } from "./drafts.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import {
+  addedChoice,
   bothLists as lists,
   draftToDecide as waiting,
-  recordDraft,
   sitesList as sites,
   teamsList as teams,
-} from "./test-support.tsx";
+} from "./test-draft-lists.ts";
+import { recordDraft } from "./test-support.tsx";
 
 describe("the values a draft changes", () => {
   it("are those that differ from live, a list only where its items or their order do", () => {
@@ -160,6 +168,90 @@ describe("feature teams an approval includes", () => {
   });
 });
 
+describe("who may decide a column's, list's or choice's draft", () => {
+  const madeWith = {
+    ...waiting,
+    action: "created" as const,
+    changed: [],
+    live: {},
+  };
+  // A list made with a Features column, and its choice, and a list made on Lists.
+  const withColumn: List = {
+    ...teams,
+    draft: { ...madeWith, madeWith: "features" },
+    choices: [
+      { ...addedChoice("g"), draft: { ...madeWith, madeWith: "features" } },
+    ],
+    orderDraft: undefined,
+  };
+  const onLists: List = { ...sites, id: "l3", orderDraft: undefined };
+  const featuresColumn: Field = {
+    id: "f9",
+    keyNumber: 9,
+    name: "Fictional Tier",
+    type: "choice",
+    listId: withColumn.id,
+    visibility: null,
+    multiple: false,
+    required: false,
+    onPlannedHires: false,
+    table: "features",
+  };
+  const decidedBy = { lists: [withColumn, onLists], fields: [featuresColumn] };
+  const features = approvableKinds(["features:approve", "people:view"]);
+  const configuration = approvableKinds([
+    "configuration:approve",
+    "people:view",
+  ]);
+
+  it.each([
+    ["a Features column", { columns: ["f9"] }],
+    ["a list made with it", { lists: [withColumn.id] }],
+    ["a choice made with it", { choices: ["g"] }],
+  ])(
+    "lets Approve Features decide %s, and not Approve Configuration",
+    (_case, chosen) => {
+      const selection = { ...noDrafts(), ...chosen };
+      expect(mayDecide(features, selection, decidedBy)).toBe(true);
+      expect(mayDecide(configuration, selection, decidedBy)).toBe(false);
+    },
+  );
+
+  it("leaves a Features column to another approver for a role without View People", () => {
+    const selection = { ...noDrafts(), columns: ["f9"] };
+    expect(
+      mayDecide(approvableKinds(["features:approve"]), selection, decidedBy),
+    ).toBe(false);
+  });
+
+  it("leaves a column the page doesn't hold to another approver", () => {
+    const selection = { ...noDrafts(), columns: ["unknown"] };
+    expect(
+      mayDecide(
+        approvableKinds(["people:approve", "people:view"]),
+        selection,
+        decidedBy,
+      ),
+    ).toBe(false);
+  });
+
+  it("leaves a list made on Lists to Approve Configuration", () => {
+    const selection = { ...noDrafts(), lists: [onLists.id] };
+    expect(mayDecide(configuration, selection, decidedBy)).toBe(true);
+    expect(mayDecide(features, selection, decidedBy)).toBe(false);
+  });
+
+  it("names only the drafts the role may not decide", () => {
+    expect(
+      beyondRole(
+        { ...noDrafts(), columns: ["f9"], lists: [withColumn.id, onLists.id] },
+        features,
+        decidedBy,
+      ),
+    ).toEqual({ ...noDrafts(), lists: [onLists.id] });
+  });
+});
+
 describe("drafts of columns an approval or rejection includes", () => {
   const columns = {
     fields: [
@@ -178,13 +270,27 @@ describe("drafts of columns an approval or rejection includes", () => {
   };
   it("names the drafts a decision covers whose areas the approver's role does not approve", () => {
     const column = { ...noDrafts(), columns: ["f1"] };
-    expect(mayDecide(["field"], column)).toBe(true);
-    expect(mayDecide(["list"], column)).toBe(false);
+    expect(
+      mayDecide(approvableKinds(["people:approve", "people:view"]), column, {
+        lists: [],
+        ...columns,
+      }),
+    ).toBe(true);
+    expect(
+      mayDecide(
+        approvableKinds(["configuration:approve", "people:view"]),
+        column,
+        {
+          lists: [],
+          ...columns,
+        },
+      ),
+    ).toBe(false);
     expect(
       decisionFor("approve", column, ["list"], [], columns).beyondRole,
     ).toEqual(["the column Previous site"]);
     expect(
-      decisionFor("approve", column, draftKinds, [], columns).beyondRole,
+      decisionFor("approve", column, decidedKinds, [], columns).beyondRole,
     ).toBeUndefined();
   });
 });
@@ -430,6 +536,7 @@ describe("drafts of features that use drafts of columns", () => {
     multiple: false,
     required: false,
     onPlannedHires: false,
+    table: "features",
     draft: { ...waiting, action: "created", changed: [], live: {} },
   };
   const feature = (
@@ -478,7 +585,19 @@ describe("drafts of features that use drafts of columns", () => {
     ).toEqual({ ...noDrafts(), records: records("scored") });
   });
 
-  it("leaves approving a feature and its column to another approver for a role that approves features alone", () => {
+  it("approves a feature with its new column for a role that approves features", () => {
+    const decision = decisionFor(
+      "approve",
+      { ...noDrafts(), records: records("scored") },
+      approvableKinds(["features:approve", "people:view"]),
+      lists,
+      columns,
+    );
+    expect(decision.beyondRole).toBeUndefined();
+    expect(decision.included).toEqual(["the column Fictional Score"]);
+  });
+
+  it("leaves approving a feature and its column to another approver for a role that decides the feature alone", () => {
     const decision = decisionFor(
       "approve",
       { ...noDrafts(), records: records("scored") },
@@ -508,7 +627,12 @@ describe("drafts of features that use drafts of columns", () => {
       true,
     );
     expect(
-      needsOtherApproval(scoredOnly, ["feature", "field"], lists, columns),
+      needsOtherApproval(
+        scoredOnly,
+        ["feature", "field on features"],
+        lists,
+        columns,
+      ),
     ).toBe(false);
   });
 
@@ -531,7 +655,7 @@ describe("drafts of features that use drafts of columns", () => {
     expect(
       needsOtherApproval(
         { ...noDrafts(), records: records("scored") },
-        ["feature", "field"],
+        ["feature", "field on features"],
         lists,
         mineToo,
       ),

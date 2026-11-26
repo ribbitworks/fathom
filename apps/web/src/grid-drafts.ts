@@ -147,12 +147,12 @@ export function waitingDrafts<Rec extends GridRecord>(
   {
     decidableRow,
     approvesRecord,
-    approvesColumns,
+    approvesColumn,
     draftsOf,
   }: {
     decidableRow: (record: Rec) => boolean;
     approvesRecord: (record: Rec) => boolean;
-    approvesColumns: boolean;
+    approvesColumn: (field: Field) => boolean;
     draftsOf: (ids: string[]) => DraftSelection;
   },
 ): DraftSelection {
@@ -162,9 +162,9 @@ export function waitingDrafts<Rec extends GridRecord>(
         .filter((record) => decidableRow(record) && approvesRecord(record))
         .map(({ id }) => id),
     ),
-    columns: approvesColumns
-      ? fields.filter((field) => decidable(field)).map(({ id }) => id)
-      : [],
+    columns: fields
+      .filter((field) => decidable(field) && approvesColumn(field))
+      .map(({ id }) => id),
   };
 }
 

@@ -5,7 +5,7 @@
 
 import type {
   Asking,
-  DraftKind,
+  DecidedKind,
   RecordDraft,
   ReleaseStream,
 } from "@fathom/shared";
@@ -213,7 +213,7 @@ export function SchedulesTable({
   showScheduleIn: ShowScheduleIn;
   view: View;
   onView: ChangeView;
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   saved: SavedViews;
   narrow: boolean;
   // The schedule whose details are open, if any.

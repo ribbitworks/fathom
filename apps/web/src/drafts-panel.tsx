@@ -2,6 +2,7 @@
 
 // A draft's details beside the Drafts table.
 
+import { areaWords } from "@fathom/shared";
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { useEffect } from "react";
 import {
@@ -12,7 +13,7 @@ import {
 import type { ReactNode } from "react";
 import type { NamedDraft } from "./draft-reading.ts";
 import { placeKey } from "./draft-places.ts";
-import { areaWords, type DraftRow } from "./drafts-table.tsx";
+import type { DraftRow } from "./drafts-table.tsx";
 import { focusSoon } from "./focus.ts";
 import { PhraseList } from "./phrase.tsx";
 import type { Column } from "./record-table.ts";
@@ -76,7 +77,8 @@ function whyNot(
   if (entry.state === "rejected") {
     return `Back with ${entry.who} to change and resubmit.`;
   }
-  if (!approves) return `This role doesn't approve ${areaWords(entry.kind)}.`;
+  if (!approves)
+    return `This role doesn't approve ${areaWords(entry.decided)}.`;
   if (unseen !== undefined) {
     return `${unseen}, so another approver must decide this draft.`;
   }

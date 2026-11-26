@@ -140,9 +140,10 @@ describe("the Drafts page", () => {
   it("names a draft of a column on Features as being on Features", async () => {
     serverAnswers({
       "GET /api/session": session([
-        "configuration:approve",
+        "features:approve",
         "plan:view",
         "features:view",
+        "people:view",
       ]),
       "GET /api/release-streams": streamsAnswer([]),
       "GET /api/people": peopleWith([]),
@@ -166,6 +167,7 @@ describe("the Drafts page", () => {
                 multiple: false,
                 required: false,
                 onPlannedHires: false,
+                table: "features",
                 draft: {
                   action: "changed",
                   changed: ["listId"],
@@ -185,11 +187,74 @@ describe("the Drafts page", () => {
           canEditFeatures: false,
         }),
     });
-    renderApp("/drafts");
+    renderApp("/drafts?tab=all");
     expect(await screen.findByText("Fictional Size on Features")).toBeDefined();
     expect(await showOn("Fictional Size on Features", "Features")).toBe(
       "/go/column/1",
     );
+  });
+
+  it("lists a draft of a column on Activities, decided in the area of features and releases", async () => {
+    serverAnswers({
+      "GET /api/session": session([
+        "features:approve",
+        "plan:view",
+        "features:view",
+        "people:view",
+      ]),
+      "GET /api/release-streams": streamsAnswer([]),
+      "GET /api/people": peopleWith([]),
+      "GET /api/lists": () => Response.json({ lists: [] }),
+      "GET /api/projects/choices": noPlanChoices,
+      "GET /api/projects": () =>
+        Response.json({
+          customers: [],
+          projects: [],
+          proposals: [],
+          features: [],
+          featureColumns: noFeatureColumns,
+          activities: [],
+          activityColumns: {
+            fields: [
+              {
+                id: "f7",
+                keyNumber: 7,
+                name: "Fictional Effort",
+                type: "number",
+                listId: null,
+                visibility: "general",
+                multiple: false,
+                required: false,
+                onPlannedHires: false,
+                table: "activities",
+                draft: {
+                  action: "created",
+                  changed: [],
+                  live: {},
+                  state: "waiting",
+                  madeBy: "Fictional Editor",
+                  madeAt: "2026-10-30T15:00:00.000Z",
+                },
+              },
+            ],
+            order: ["name", "f7"],
+            lists: [],
+          },
+          canEdit: false,
+          canEditFeatures: false,
+        }),
+    });
+    renderApp("/drafts");
+    expect(
+      await screen.findByRole("checkbox", {
+        name: "Select the draft of Fictional Effort on Activities",
+      }),
+    ).toBeDefined();
+    expect(
+      (await entries()).find((row) =>
+        row.startsWith("Fictional Effort on Activities"),
+      ),
+    ).toContain("| Features and releases |");
   });
 
   it("lists a feature's draft, naming the cycle in words", async () => {

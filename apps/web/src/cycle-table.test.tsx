@@ -4,7 +4,7 @@
 
 import type {
   CyclePattern,
-  DraftKind,
+  DecidedKind,
   Release,
   ReleaseStream,
 } from "@fathom/shared";
@@ -83,7 +83,7 @@ describe("the Cycles tab's rows", () => {
       expect(row).toBeDefined();
       return row as CycleRow;
     };
-    const decided = (stream: ReleaseStream, approves: DraftKind[]) => {
+    const decided = (stream: ReleaseStream, approves: DecidedKind[]) => {
       const row = rowOf(stream);
       const table = cycleTable({
         streams: [stream],
@@ -99,7 +99,7 @@ describe("the Cycles tab's rows", () => {
         menu: menu && { ...menu, approved: menu.approved.records },
       };
     };
-    const both: DraftKind[] = ["cycle-pattern", "release"];
+    const both: DecidedKind[] = ["cycle-pattern", "release"];
     const pattern = { type: "cycle-pattern", id: patternId };
     const release = { type: "release", id: releaseId };
     const rejectedPattern = {

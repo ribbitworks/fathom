@@ -8,7 +8,7 @@
 - **Built-in lists:** lists Fathom needs, such as **Positions** and **Hiring states**. They're marked **Built in**, and you can't retire or remove them, but their choices can be changed.
 - **Meanings:** in some lists, each choice has a meaning that Fathom acts on, such as **Proposed** or **Open**. Fathom shows the choice's own name, so you can call it whatever you like.
 - **Classes:** each list has a class, which decides who sees the values picked from it. A list is **General**, seen by everyone, unless its values are private. Only a role that sees a list's class can change the list or approve its drafts; for any other role, the list's panel is read only and says why.
-- **Drafts:** every change to a list or its choices is a draft, apart from a change of class. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves configuration approves it.
+- **Drafts:** every change to a list or its choices is a draft, apart from a change of class. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves configuration approves it. A list made with **New list** in a column's dialog on **Features** or **Activities**, with any choice added to it before it's approved, is approved by whoever approves features instead.
 
 See [Drafts](drafts.md) for more.
 

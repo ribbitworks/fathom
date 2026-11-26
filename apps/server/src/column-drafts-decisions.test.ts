@@ -187,6 +187,7 @@ describe("what decides and keeps column drafts safe", () => {
         .statusCode,
     ).toBe(403);
     const generalOnly = await test.signedIn([
+      "people:approve",
       "configuration:approve",
       "people:view",
     ]);

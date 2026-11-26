@@ -3,7 +3,7 @@
 // The Releases page's Cycles tab: the table of every schedule's cycles, with a timeline above it
 // and the selected cycle's details beside it.
 
-import type { Asking, DraftKind, ReleaseStream } from "@fathom/shared";
+import type { Asking, DecidedKind, ReleaseStream } from "@fathom/shared";
 import {
   type CycleDetailRows,
   cycleColumnOrder,
@@ -192,7 +192,7 @@ export function CyclesTable({
   canEditReleases: boolean;
   view: View;
   onView: ChangeView;
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   saved: SavedViews;
   narrow: boolean;
   // The cycle whose details are open, if any.

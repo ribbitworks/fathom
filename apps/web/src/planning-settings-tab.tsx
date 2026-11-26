@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Capacity page's Settings tab, for those who see configuration: the working time effort is
-// converted with, the defaults forecasts start from, and how new starters ramp up, month by month.
-// Those who change configuration change each setting in place, as a details panel's values are
-// changed, each change a draft of the settings, undone with Cmd+Z or Ctrl+Z and live once approved
-// with Approve Configuration; anyone else sees them read only. The Draft menu chooses how the draft
-// shows, and each changed row's menu offers what may be done with the draft as a whole.
+// converted with, the defaults forecasts start from, and how new starters ramp up, month by month,
+// each changed in place as a draft of the settings.
 
 import {
   type Asking,
-  type DraftKind,
+  type DecidedKind,
   type PlanningSettings,
   type PlanningSettingsChange,
   type PlanningSettingsShown,
@@ -198,7 +195,7 @@ export function PlanningSettingsTab({
 }: {
   canEdit: boolean;
   // The kinds of draft the user may approve and reject.
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   show: Show;
   onShow: (show: Show) => void;
 }) {

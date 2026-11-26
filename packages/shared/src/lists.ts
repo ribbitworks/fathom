@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
+import { columnTableSchema } from "./column-tables.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { numberProblem, outOfRange } from "./numbers.ts";
 import { keyNumberSchema } from "./record-keys.ts";
@@ -15,12 +16,14 @@ export const listLengths = {
 } as const;
 
 // A choice's or list's draft: whether it adds, changes, or removes the record, the fields it
-// changes, and their live values, which a draft that adds the record has none of.
+// changes, and their live values, which a draft that adds the record has none of, and, for one added
+// with a new column through New list, that column's table, whose Approver decides it.
 const configDraft = <Live extends z.ZodRawShape>(live: Live) =>
   z.object({
     action: draftActionSchema,
     changed: z.array(z.string()),
     live: z.object(live).partial(),
+    madeWith: columnTableSchema.optional(),
     ...draftShape,
   });
 

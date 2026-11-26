@@ -89,7 +89,7 @@ export function ListActions({
   list,
   canEdit,
   mayEdit,
-  canApprove,
+  decides,
   waits,
   draftActions,
   onEditList,
@@ -98,7 +98,7 @@ export function ListActions({
   list: List;
   canEdit: boolean;
   mayEdit: boolean;
-  canApprove: boolean;
+  decides: (selection: DraftSelection) => boolean;
   waits: (selection: DraftSelection) => boolean;
   draftActions: ListDraftActions;
   onEditList: () => void;
@@ -121,7 +121,8 @@ export function ListActions({
           list={list}
           orderWaits={waits({ ...noDrafts(), orders: [list.id] })}
           canEdit={mayEdit}
-          canApprove={canApprove}
+          canApprove={decides({ ...noDrafts(), lists: [list.id] })}
+          canApproveOrder={decides({ ...noDrafts(), orders: [list.id] })}
           actions={draftActions}
         />
       )}

@@ -8,7 +8,7 @@ import type { Adding } from "./choice-picker.tsx";
 import type {
   Asking,
   Choice,
-  DraftKind,
+  DecidedKind,
   ExportedTable,
   Field,
   List,
@@ -20,7 +20,7 @@ import type {
 import type { ReactNode } from "react";
 import { type CellSource, chosenColour } from "./cell-kinds.tsx";
 import type { Credited, DraftField } from "./draft-details.tsx";
-import type { DraftSelection } from "./drafts.ts";
+import type { DecidedBy, DraftSelection } from "./drafts.ts";
 import type { HeldDetail } from "./exports.ts";
 import type { RowTicks } from "./row-ticks.tsx";
 import type { SidePanel } from "./side-panel.tsx";
@@ -436,7 +436,10 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // drafts of different kinds, each row's.
   canEditDrafts?: boolean | ((record: Rec) => boolean);
   // The kinds of draft the user's role approves and rejects.
-  approves?: readonly DraftKind[];
+  approves?: readonly DecidedKind[];
+  // What says who decides the drafts of columns, lists and choices, where the table's own columns
+  // and lists don't, as on Lists, whose rows are lists.
+  decidedBy?: DecidedBy | undefined;
   // Whether a change is still saving, which approving all shown waits for, so it never sends a
   // draft not saved yet.
   saving?: boolean;

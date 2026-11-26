@@ -127,7 +127,7 @@ const addsOrDiscardsColumn = (records: readonly Undone[]): boolean =>
 
 // A new list drafted with a column, and its choices, go with the column: their drafts, added or
 // discarded in a change set that adds or discards a column, are undone by whoever may undo the
-// column, checked with it. Only a list made in one change with a column, as New list does, counts.
+// column, checked with it. Only a list New list made with a column, as its draft recorded, counts.
 async function goesWithColumn(
   reader: Reader,
   records: readonly Undone[],

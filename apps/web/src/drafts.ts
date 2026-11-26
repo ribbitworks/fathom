@@ -4,10 +4,13 @@
 // one takes along, and how the drafts are named.
 
 import {
-  type DraftKind,
+  type ColumnTable,
+  type Decided,
+  type DecidedKind,
+  decidedKindOf,
+  draftsWhere,
   type FeatureTeam,
   type Field,
-  kindsAsked,
   type List,
   type Person,
   type RecordRef,
@@ -60,17 +63,58 @@ export const draftTotal = (selection: DraftSelection) =>
   selection.columns.length +
   selection.records.length;
 
-// Whether a user who approves drafts of some kinds approves drafts of every kind given.
-export const approvesAll = (
-  approves: readonly DraftKind[],
-  kinds: readonly DraftKind[],
-): boolean => kinds.every((kind) => approves.includes(kind));
+// The lists and columns that say who decides a draft of a column, or of a list or choice made with
+// one, by the column's table.
+export interface DecidedBy {
+  lists: readonly List[];
+  fields: readonly Field[];
+}
 
-// Whether a user who approves drafts of these kinds may approve or reject every draft chosen.
-export const mayDecide = (
-  approves: readonly DraftKind[],
+// The drafts chosen that a user who decides drafts of these kinds may not decide.
+export function beyondRole(
   selection: DraftSelection,
-): boolean => approvesAll(approves, kindsAsked(selection));
+  approves: readonly DecidedKind[],
+  { lists, fields }: DecidedBy,
+): DraftSelection {
+  const allows = (decided: Decided) =>
+    approves.includes(decidedKindOf(decided));
+  const listTables = new Map(lists.map((list) => [list.id, list.draft]));
+  const choiceTables = new Map(
+    choicesOf(lists).map(({ choice }) => [choice.id, choice.draft]),
+  );
+  const refused = (
+    kind: "list" | "list-item",
+    ids: readonly string[],
+    tableOf: (id: string) => ColumnTable | undefined,
+  ) => ids.filter((id) => !allows({ kind, table: tableOf(id) }));
+  return {
+    ...draftsWhere(selection, (kind) => !allows({ kind })),
+    // A column the page doesn't hold is left to an approver who sees its table.
+    columns: selection.columns.filter((id) => {
+      const field = fields.find((one) => one.id === id);
+      return (
+        field === undefined || !allows({ kind: "field", table: field.table })
+      );
+    }),
+    lists: refused(
+      "list",
+      selection.lists,
+      (id) => listTables.get(id)?.madeWith,
+    ),
+    choices: refused(
+      "list-item",
+      selection.choices,
+      (id) => choiceTables.get(id)?.madeWith,
+    ),
+  };
+}
+
+// Whether a user who decides drafts of these kinds may approve or reject every draft chosen.
+export const mayDecide = (
+  approves: readonly DecidedKind[],
+  selection: DraftSelection,
+  decidedBy: DecidedBy,
+): boolean => draftTotal(beyondRole(selection, approves, decidedBy)) === 0;
 
 // Approves the drafts chosen, and those they use, all together, and gives the change set that
 // applied them.

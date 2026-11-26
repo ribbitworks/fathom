@@ -6,7 +6,7 @@
 import type {
   Asking,
   Cycle,
-  DraftKind,
+  DecidedKind,
   Release,
   ReleaseStream,
   ViewTable,
@@ -191,7 +191,7 @@ export function ReleasesPage({
   // Whether the user may set an activity's feature team.
   editsFeatureTeams?: boolean;
   // The kinds of draft the user's role approves and rejects.
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   view: View;
   onView: ChangeView;
   // The saved view the view started from, as the address names it.

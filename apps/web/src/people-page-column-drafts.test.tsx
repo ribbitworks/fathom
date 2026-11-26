@@ -182,6 +182,39 @@ describe("drafts of columns", () => {
     ).toBeDefined();
   });
 
+  it.each([
+    ["Approve People", ["people:approve", "people:view"], true],
+    [
+      "Approve Configuration alone",
+      ["configuration:approve", "configuration:view", "people:view"],
+      false,
+    ],
+  ])(
+    "offers deciding a column's draft to a role with %s: %s",
+    async (_case, permissions, offered) => {
+      await openPeople({
+        "GET /api/session": session(permissions),
+        "GET /api/people": () =>
+          Response.json({
+            people: [avery, blake],
+            fields: [
+              site,
+              {
+                ...role,
+                draft: { ...waiting, action: "created", changed: [], live: {} },
+              },
+            ],
+            order,
+          }),
+      });
+      await userEvent.click(header("Role on team"));
+      const menu = await screen.findByRole("menu");
+      expect(
+        within(menu).queryByRole("menuitem", { name: "Approve…" }) !== null,
+      ).toBe(offered);
+    },
+  );
+
   it("decides a column's draft from its menu", async () => {
     await openPeople({
       "GET /api/session": approverEditor,

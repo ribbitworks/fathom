@@ -96,6 +96,7 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
     | "liveOnly"
     | "view"
     | "approves"
+    | "decidedBy"
     | "renamedFrom"
     | "columnTint"
     | "tickedShown"
@@ -128,6 +129,7 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
     liveOnly,
     view,
     approves,
+    decidedBy,
     renamedFrom,
     columnTint,
     tickedShown,
@@ -208,7 +210,7 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
       rejected: field?.draft?.state === "rejected",
       unpublished: field?.draft?.unpublished === true,
       editsDraft: changesColumn,
-      decides: ownWaiting && mayDecide(approves, deciding),
+      decides: ownWaiting && mayDecide(approves, deciding, decidedBy),
       publishes: false,
     });
     const dragProps = {

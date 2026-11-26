@@ -5,7 +5,7 @@
 
 import { activityColumnGroups, activityColumns } from "./activity-table.tsx";
 import type {
-  DraftKind,
+  DecidedKind,
   Milestone,
   MilestoneRequest,
   Project,
@@ -218,7 +218,7 @@ export function recordPanel({
   // Whether the user may change a kind of record here.
   editsKind: (type: PlanRecordKind) => boolean;
   editsFeatureTeams: boolean;
-  approves: readonly DraftKind[];
+  approves: readonly DecidedKind[];
   // Whether the user's role sees features, which a scope history lists and a customer's details
   // show a Features row for.
   seesFeatures: boolean;

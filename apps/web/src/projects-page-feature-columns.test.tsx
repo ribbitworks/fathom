@@ -371,6 +371,40 @@ describe("the Features page", () => {
       });
     });
 
+    it.each([
+      ["Approve Features", ["features:approve", "people:view"], true],
+      ["Approve Features without View People", ["features:approve"], false],
+      [
+        "Approve Configuration alone",
+        ["configuration:approve", "people:view"],
+        false,
+      ],
+    ] as const)(
+      "offers deciding a column's draft to a role with %s: %s",
+      async (_case, approve, offered) => {
+        const score = {
+          ...size,
+          id: "10000000-0000-4000-8000-0000000000c5",
+          name: "Fictional Drafted Tier",
+          draft: { ...recordDraft({ action: "created" }), live: {} },
+        };
+        await openWith(
+          withColumns({ featureColumns: columnsOf([score]) }),
+          {},
+          ["plan:view", "features:view", "configuration:view", ...approve],
+        );
+        await userEvent.click(
+          screen.getByRole("button", {
+            name: (name) => name.startsWith("Fictional Drafted Tier column"),
+          }),
+        );
+        const menu = await screen.findByRole("menu");
+        expect(
+          within(menu).queryByRole("menuitem", { name: "Approve…" }) !== null,
+        ).toBe(offered);
+      },
+    );
+
     it("sends only the added column's value a change gives", async () => {
       const path = `PUT /api/features/${later.id}`;
       const { fetch } = await open(withColumns(), {

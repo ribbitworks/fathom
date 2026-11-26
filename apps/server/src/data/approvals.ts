@@ -16,15 +16,9 @@ import {
   people,
 } from "@fathom/db";
 import {
-  approvedAreaNames,
-  approvePermissions,
-  approvesKind,
   type Asking,
-  type DraftKind,
-  draftKinds,
+  draftKeysOf,
   type DraftsRequest,
-  eitherOf,
-  kindsAsked,
   seesEmployment,
 } from "@fathom/shared";
 import { and, eq, inArray, or } from "drizzle-orm";
@@ -53,6 +47,7 @@ import {
   rejectedIn,
 } from "./drafts.ts";
 import { refuseOwnDrafts, draftKeys } from "./draft-makers.ts";
+import { readDecided, refuseBeyondRole } from "./draft-deciders.ts";
 import { currentOn, readLive } from "./people-reads.ts";
 import {
   personChanges,
@@ -349,27 +344,6 @@ async function approvePeopleIn(
 const allocationIds = (asked: DraftsRequest): string[] =>
   asked.records.flatMap(({ type, id }) => (type === "allocation" ? [id] : []));
 
-// Refuses deciding drafts of a kind whose area the actor's role does not approve.
-function refuseBeyondRole(
-  actor: Actor,
-  kinds: readonly DraftKind[],
-  asking: Asking,
-): void {
-  for (const kind of kinds) {
-    if (!approvesKind(actor.permissions, kind)) {
-      // The kind, and each Approve permission that decides it, always come from the fixed lists.
-      // eslint-disable-next-line security/detect-object-injection
-      const areas = approvePermissions[kind].map(
-        // eslint-disable-next-line security/detect-object-injection
-        (permission) => approvedAreaNames[permission],
-      );
-      throw new ForbiddenError(
-        `This role can't ${asking} drafts of ${eitherOf(areas)}`,
-      );
-    }
-  }
-}
-
 // Checks the actor may approve or reject the drafts asked for, after every other change to drafts.
 async function deciding(
   transaction: Transaction,
@@ -377,11 +351,15 @@ async function deciding(
   asked: DraftsRequest,
   asking: Asking,
 ): Promise<void> {
-  refuseBeyondRole(actor, kindsAsked(asked), asking);
+  refuseBeyondRole(
+    actor,
+    (await readDecided(transaction, draftKeysOf(asked))).values(),
+    asking,
+  );
   // A list's values are people's details, so deciding one needs sight of people, and of its class,
   // which approving and rejecting lists check.
   if (asksForLists(asked)) requirePermission(actor, "people:view");
-  // Columns are seen on the People table, with the people's values in them.
+  // A column's values are people's details too, whichever table it is on.
   if (asksForColumns(asked)) requirePermission(actor, "people:view");
   // Planned hires are seen beside the people who manage and fill them.
   if (asked.plannedHires.length > 0) requirePermission(actor, "people:view");
@@ -414,6 +392,9 @@ export async function approveDrafts(
     return await database.transaction(async (transaction) => {
       await deciding(transaction, actor, requested, "approve");
       const waiting = await draftKeys(transaction);
+      // Who decides each waiting draft is read before any is approved, since an approved column or
+      // list goes live and no longer says which table it was drafted for.
+      const deciders = await readDecided(transaction, [...waiting]);
       if (requested.people.length > 0) {
         await seenAsked(transaction, actor, requested.people, today);
       }
@@ -435,7 +416,13 @@ export async function approveDrafts(
       );
       const chosen = await withFills(transaction, actor, requested);
       const asked = await withUsedAcross(transaction, chosen);
-      await refuseTakenAlongBeyondRole(transaction, actor, chosen, asked);
+      await refuseTakenAlongBeyondRole(
+        transaction,
+        actor,
+        chosen,
+        asked,
+        deciders,
+      );
       const { made, values: unwritten } = await approveRecordDrafts(
         transaction,
         actor,
@@ -472,16 +459,14 @@ export async function approveDrafts(
         )),
       );
       const left = await draftKeys(transaction);
-      const decided = [...waiting].filter((key) => !left.has(key));
+      const decided = new Set([...waiting].filter((key) => !left.has(key)));
       // The drafts approved with those asked for may belong to other areas.
       refuseBeyondRole(
         actor,
-        draftKinds.filter((kind) =>
-          decided.some((key) => key.startsWith(`${kind} `)),
-        ),
+        [...deciders].filter(([key]) => decided.has(key)).map(([, one]) => one),
         "approve",
       );
-      await refuseOwnDrafts(transaction, actor, decided);
+      await refuseOwnDrafts(transaction, actor, [...decided]);
       await recordSensitiveChanges(transaction, actor.user.id, made);
       await recordHiringChanges(transaction, actor.user.id, made);
       await recordTeamDayChanges(transaction, actor.user.id, made);
@@ -521,7 +506,11 @@ export async function rejectDrafts(
     await deciding(transaction, actor, requested, "reject");
     // A fill is rejected whole, so every area its drafts belong to must be one the actor approves.
     const asked = await withFills(transaction, actor, requested);
-    refuseBeyondRole(actor, kindsAsked(asked), "reject");
+    refuseBeyondRole(
+      actor,
+      (await readDecided(transaction, draftKeysOf(asked))).values(),
+      "reject",
+    );
     const seen =
       asked.people.length > 0
         ? await seenAsked(transaction, actor, asked.people, today)

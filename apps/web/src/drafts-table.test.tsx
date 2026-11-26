@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Drafts table's rows and columns: each draft's record, what it does, its state,
-// type, area, maker, day and reason; the facts that keep a draft from being decided now, shown
-// only to those whose role decides it; the choices each column offers; the page's tabs and which
-// drafts each holds; and the drafts a set of rows names.
+// Tests for the Drafts table's rows and columns, the facts that keep a draft from being decided now,
+// the choices each column offers, the page's tabs, and the drafts a set of rows names.
 
 import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
@@ -43,6 +41,7 @@ const entry = (key: string, more: Partial<Entry> = {}): Entry => ({
   place: { kind: "person", keyNumber: 1 },
   selects: { ...noDrafts(), people: [key] },
   ...more,
+  decided: more.decided ?? { kind: more.kind ?? "person" },
 });
 
 const reading = {
@@ -137,8 +136,22 @@ describe("a draft's row", () => {
 describe("each draft's area", () => {
   it("is the area whose Approvers decide it, as a heading names it", () => {
     expect(
-      (["person", "field", "release", "milestone"] as const).map(areaOf),
-    ).toEqual(["People", "Configuration", "Features and releases", "The plan"]);
+      (
+        [
+          { kind: "person" },
+          { kind: "field", table: "features" },
+          { kind: "list" },
+          { kind: "list", table: "features" },
+          { kind: "milestone" },
+        ] as const
+      ).map(areaOf),
+    ).toEqual([
+      "People",
+      "Features and releases",
+      "Configuration",
+      "Features and releases",
+      "The plan",
+    ]);
   });
 });
 

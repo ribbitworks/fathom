@@ -39,7 +39,7 @@ const deciding = ({
 } = {}) => ({
   decidableRow: decidable,
   approvesRecord: () => approves,
-  approvesColumns,
+  approvesColumn: () => approvesColumns,
   draftsOf,
 });
 

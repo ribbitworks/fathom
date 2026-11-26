@@ -4,7 +4,7 @@
 // Part of the data access layer.
 
 import { changes, type Reader } from "@fathom/db";
-import { duplicateList, type NewList } from "@fathom/shared";
+import { type ColumnTable, duplicateList, type NewList } from "@fathom/shared";
 import { and, eq, inArray, or } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
@@ -20,14 +20,21 @@ import {
   type ListsState,
 } from "./list-state.ts";
 import { discardingList, removeDiscarded } from "./lists.ts";
+import {
+  listsMadeWith,
+  madeWithChange,
+  recordedListOf,
+} from "./lists-made-with.ts";
 
-// Drafts a General list and its choices, in order, inside the change that draws a new column on
-// it, returning the list and the changes to record with the column's, so one undo takes back all.
+// Drafts a General list and its choices, in order, inside the change that draws a new column on a
+// table on it, recording that table, and returns the list and the changes to record with the
+// column's, so one undo takes back all.
 export async function draftNewList(
   transaction: Transaction,
   maker: Actor,
   state: ListsState,
   { name, choices }: NewList,
+  table: ColumnTable,
 ): Promise<{ id: string; changes: Change[] }> {
   if (listNameTaken(state, name)) throw new ConflictError(duplicateList);
   const id = randomUUID();
@@ -49,6 +56,7 @@ export async function draftNewList(
     id,
     changes: asDraft([
       ...listChanges(id, "created", undefined, list),
+      madeWithChange(id, table),
       ...added.flatMap(({ id: choiceId, fields }) =>
         choiceChanges(choiceId, "created", undefined, fields),
       ),
@@ -79,35 +87,15 @@ async function changeSetsOf(
   return new Set(rows.map(({ changeSetId }) => changeSetId));
 }
 
-// Whether a list's or choice's draft was added in one change with a column and a list, as only New
-// list in a Features or Activities column's dialog does, so it goes with the column.
+// Whether a list, or a choice's list, was made with a column, as its draft recorded, even once the
+// draft is gone.
 export async function madeWithColumn(
   reader: Reader,
   recordType: "list" | "list-item",
   id: string,
 ): Promise<boolean> {
-  const createdIn = reader
-    .select({ changeSetId: changes.changeSetId })
-    .from(changes)
-    .where(
-      and(
-        eq(changes.recordType, recordType),
-        eq(changes.recordId, id),
-        eq(changes.action, "created"),
-      ),
-    );
-  const kinds = await reader
-    .select({ recordType: changes.recordType })
-    .from(changes)
-    .where(
-      and(
-        inArray(changes.changeSetId, createdIn),
-        eq(changes.action, "created"),
-        inArray(changes.recordType, ["field", "list"]),
-      ),
-    );
-  const made = new Set(kinds.map(({ recordType: kind }) => kind));
-  return made.has("field") && made.has("list");
+  const listId = recordType === "list" ? id : await recordedListOf(reader, id);
+  return (await listsMadeWith(reader, [listId])).has(listId);
 }
 
 // The choices drafted into a new list in the same change as the column drawing on it, which come
