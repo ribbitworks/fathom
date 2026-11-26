@@ -286,6 +286,9 @@ describe("which columns Metrics breaks rows down by", () => {
     expect(
       breaksDown({ kind: "choice", required: true, breaksDown: false }),
     ).toBe(false);
+  });
+});
+
 describe("a Live row's coloured choices", () => {
   it("names each after its square, in one line", () => {
     render(
