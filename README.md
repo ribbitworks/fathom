@@ -1,11 +1,11 @@
 # Fathom
 
-Fathom plans software work over time: what a team will build, who will build it, and when. It keeps features, releases, projects, people, teams and the hiring plan in one place, for the people who plan and staff that work.
+Fathom plans software work over time: what a team will build, who will build it, and when. It keeps features, releases, projects, customers, people, teams, allocations and the hiring plan in one place, for the people who plan and staff that work.
 
 ## Documentation
 
 - [Product Brief](docs/product/brief.md) and [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398): what Fathom is for, and what comes next
-- [Help](docs/help/index.md): how to use each page of Fathom
+- [How Fathom fits together](docs/help/how-fathom-fits-together.md), the first read for newcomers, and [Help](docs/help/index.md): how Fathom's records connect, and how to use each page
 - [Development Setup](docs/design/development-setup.md): how to set up, run, test and release Fathom
 - [Architecture](docs/design/architecture.md): Fathom's parts and how they connect
 - [How Fathom Is Built](docs/how-fathom-is-built.md): how AI agents build Fathom under the maintainer's review, and how its quality is checked

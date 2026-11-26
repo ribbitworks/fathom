@@ -11,30 +11,88 @@ As a Feature Lead, you lead a feature team: a group that works on features toget
 
 ## Keep the Team's Features Current
 
-1. On **Features**, give each feature your team builds your team, in its **Feature team**. See [Features](features.md#give-a-feature-to-a-team).
-1. Change each of your team's features' **Status** as the work moves along. See [Features](features.md#change-a-feature).
-1. Type or update each feature's estimate in **Effort**. See [Features](features.md#give-an-estimate).
+Your team's features are those whose **Feature team** names your team. To give a feature to your team, choose the team in its **Feature team**. See [Features](features.md#give-a-feature-to-a-team).
+
+### Change a Feature's Status
+
+1. On **Features**, select the feature's **Status** cell.
+1. Press Enter.
+1. Choose the status the work has reached, and press Enter.
 1. Select **Publish** in the top bar.
+
+See [Features](features.md#change-a-feature).
+
+### Update an Estimate
+
+1. Select the feature's **Effort** cell.
+1. Type a number, in the unit the column shows.
+1. Press Enter.
+1. Select **Publish** in the top bar.
+
+To show another unit, open the **Effort** column's menu, and choose one under **Show in**. See [Features](features.md#give-an-estimate).
+
+### Write a Note
+
+1. Select the feature's cell in the **Notes** column.
+1. Press Enter. The note opens in a panel beside the table.
+1. Write the note.
+1. Select **Save**.
+1. Select **Publish** in the top bar.
+
+See [Features](features.md#write-a-note).
 
 ## See What a Cycle or Release Holds
 
-On **Features**, select **Group by**, and choose **Cycle** or **Release**. See [Features](features.md#group-the-table).
+### Group by Cycle or Release
 
-## Keep a View
+1. On **Features**, select **Group by**.
+1. Choose **Cycle** or **Release**. The features show under a heading for each.
 
-A view is how you've set up a table, such as its search and grouping. You can save one on the pages you open, such as **Features**, the board included, **Releases** or the **Org chart**, to come back to.
+See [Features](features.md#group-the-table).
 
-Only you see it. See [Saved views](saved-views.md#save-a-view).
+### See Features as a Board
+
+1. Choose **Board** beside the **Features** heading. Each feature has a card in the month it's needed by.
+1. To see a schedule's cycles instead, select **Columns**, and choose the schedule under **A schedule's cycles**.
+1. To put the cards in a row for each team, select **Group by**, and choose **Feature team**.
+
+See [Features](features.md#see-features-as-a-board).
 
 ## Change the Feature Team
 
-1. On the **Org chart**, choose **Feature teams**, and open your team's panel. See [Org chart](org-chart.md#change-a-feature-team).
-1. Change its members or its lead.
+### Add or Remove Members
+
+1. On the **Org chart**, choose **Feature teams** in the switch.
+1. Select the **Feature teams** button, and choose your team. Its panel opens beside the chart.
+1. Point at **Members**, and select the pencil at its right.
+1. Pick each person to add, or a ticked member to take off. The list stays open after each one.
+1. Press Enter to finish.
 1. Select **Publish** in the top bar.
+
+See [Org chart](org-chart.md#change-a-feature-team).
+
+### Change the Lead
+
+1. In your team's panel, point at **Feature lead**, and select the pencil at its right.
+1. Choose the new lead.
+1. Select **Publish** in the top bar.
+
+See [Org chart](org-chart.md#change-a-feature-team).
 
 ## Find Someone on the Org Chart
 
-1. On the **Org chart**, type their name in **Find a person or team**.
-1. Choose them, and the chart centres their card. See [Org chart](org-chart.md#find-a-person-or-team).
+### Find a Person or Team
+
+1. On the **Org chart**, type part of a name in **Find a person or team**.
+1. Choose the person or team. The chart centres the card, with a blue ring around it.
+
+See [Org chart](org-chart.md#find-a-person-or-team).
+
+### See Someone's Details
+
+1. Select the person's name on their card. Their details open beside the chart.
+1. To see them on **People** instead, select **Show in People**, near the top of their details.
+
+See [Org chart](org-chart.md#see-someones-details).
 
 You're done when your team's features show their status and estimates, and your team has the members it should, with each change approved.
