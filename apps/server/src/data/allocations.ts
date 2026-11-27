@@ -37,6 +37,7 @@ import { type Actor, requirePermission, requireView } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { kindMakers } from "./record-makers.ts";
+import { planDiscardRule } from "./record-discards.ts";
 import type { Recorded } from "./draft-records.ts";
 import {
   allocationFields,
@@ -314,8 +315,8 @@ export async function readAllocations(
       };
       const found = await kindMakers(
         transaction,
-        state,
         actor,
+        planDiscardRule(state, actor),
         type,
         records
           .map(({ id }) => id)

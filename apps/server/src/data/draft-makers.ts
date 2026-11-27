@@ -57,8 +57,7 @@ export function openChangeSets(userId: string): SQL {
 }
 
 // Why a user may not discard a draft, or undefined when they may: only one who changed it since it
-// was last approved or discarded discards it, since others who disagree reject it. The plan's
-// records add their cycles rule to this one, in record-discards.ts.
+// was last approved or discarded discards it, since others who disagree reject it.
 export const ownDiscardRefusal = (
   changedByUser: boolean,
 ): string | undefined => (changedByUser ? undefined : discardRefusal);
