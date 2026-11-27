@@ -210,7 +210,7 @@ describe("what a role allows", () => {
   });
 
   it("leaves pages out of what its holders cannot do", () => {
-    expect(allowed([]).cannot.filter((line) => line.includes("page"))).toEqual(
+    expect(allowed([]).cannot.filter((line) => /\bpage\b/u.test(line))).toEqual(
       [],
     );
   });
@@ -367,16 +367,18 @@ describe("what a change to an account's permissions does", () => {
     });
   });
 
-  it("says nothing of a permission not shown on Roles yet", () => {
+  it("names making private pages, gained and lost", () => {
     const plan: Permission[] = ["plan:view"];
     const making: Permission[] = ["plan:view", "private-pages:make"];
     expect(difference(plan, making, defaultClasses)).toEqual({
-      gains: [],
+      gains: ["Makes pages under Mine, each a table nobody else sees."],
       losses: [],
     });
     expect(difference(making, plan, defaultClasses)).toEqual({
       gains: [],
-      losses: [],
+      losses: [
+        "Cannot make private pages, and doesn't see the ones they made.",
+      ],
     });
   });
 });

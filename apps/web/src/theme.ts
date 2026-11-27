@@ -237,6 +237,7 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-draft-cell-tint": "var(--fathom-draft-tint)",
     "--fathom-rejected-tint": "var(--mantine-color-red-0)",
     "--fathom-rejected-cell-tint": "var(--fathom-rejected-tint)",
+    "--fathom-private": "var(--mantine-color-violet-6)",
     // A size's blocks, light to dark blue-grey by position.
     "--fathom-size-1": "#b4c3d0",
     "--fathom-size-2": "#8399ad",
@@ -272,6 +273,7 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-rejected-tint":
       "color-mix(in srgb, var(--mantine-color-red-5) 6%, transparent)",
     "--fathom-rejected-cell-tint": "transparent",
+    "--fathom-private": "var(--mantine-color-violet-4)",
     // Dark to light, so the last block still stands out most against the dark panel.
     "--fathom-size-1": "#3e5266",
     "--fathom-size-2": "#5d7792",

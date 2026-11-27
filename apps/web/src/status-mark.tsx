@@ -34,13 +34,14 @@ export const draftMarkChars = 2;
 // it.
 const kindBoxChars = 2;
 
-export type Tone = "draft" | "rejected" | "live" | "unpublished";
+export type Tone = "draft" | "rejected" | "live" | "unpublished" | "private";
 
 const toneClass = new Map<Tone, string | undefined>([
   ["draft", classes.draftMark],
   ["rejected", classes.draftRejected],
   ["live", classes.liveMark],
   ["unpublished", classes.unpublishedMark],
+  ["private", classes.privateMark],
 ]);
 
 // A draft's tone: red once rejected, otherwise hollow while it holds the user's unpublished changes,
@@ -78,6 +79,18 @@ function Dot({
         aria-hidden="true"
       />
     </Tipped>
+  );
+}
+
+// The violet ring before the name of a page only its maker sees, read aloud where nothing else says
+// the page is private.
+export function PrivateRing({ spoken = false }: { spoken?: boolean }) {
+  const tip = "Private. Nobody else sees this page.";
+  return (
+    <>
+      <Dot tone="private" tip={tip} />
+      {spoken && <VisuallyHidden>{`${tip} `}</VisuallyHidden>}
+    </>
   );
 }
 

@@ -39,7 +39,6 @@ export {
   type Permission,
   permissionDescriptions,
   permissionGrid,
-  shownOnRoles,
   permissionLabel,
   permissionSchema,
   type Role,

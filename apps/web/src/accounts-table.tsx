@@ -8,9 +8,9 @@ import {
   fixedClassTables,
   type RecordKeyOf,
 } from "@fathom/shared";
-import { noDrafts } from "./drafts.ts";
 import { rolesHeld } from "./names.ts";
 import { fieldColumn } from "./grid-columns.tsx";
+import { liveTableParts } from "./live-table.ts";
 import {
   type Column,
   type GridRecord,
@@ -144,6 +144,7 @@ export function accountsTable({
   const shownColumns = accountColumns(accounts, ownId);
   return {
     ...readOnlyTableParts,
+    ...liveTableParts,
     label: "Accounts",
     exported: {
       recordedAs: "accounts",
@@ -154,8 +155,6 @@ export function accountsTable({
     nameOf: (row) => row.name,
     nameColumn: "name",
     columnsFor: () => shownColumns,
-    liveRecords: (rows) => [...rows],
-    drafts: () => noDrafts(),
     showDetails: (row) => {
       onOpen(row.account);
     },

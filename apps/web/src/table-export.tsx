@@ -36,6 +36,7 @@ export function useTableExport<
   columns,
   liveColumn,
   saved,
+  withDrafts,
 }: {
   table: Pick<RecordTable<Rec, never, never>, "label" | "exported"> & {
     liveRecords: (records: readonly Rec[]) => Rec[];
@@ -47,6 +48,8 @@ export function useTableExport<
   columns: readonly Col[];
   liveColumn: (column: Col) => Col;
   saved: SavedViews | undefined;
+  // False for a table whose records never have drafts, whose file says nothing of drafts.
+  withDrafts: boolean;
 }): ReactNode {
   const dialog = useDialogState<{
     question: ExportQuestionWords;
@@ -69,13 +72,14 @@ export function useTableExport<
           columns.map(classed),
           (column) => classed(liveColumn(column)),
           exported.asOn,
+          withDrafts,
         );
         const saving = {
           name: exportFileName({
             page: table.label,
             view: appliedViewName(saved),
             person,
-            show,
+            show: withDrafts ? show : "live",
             day: exported.asOn ?? today(),
             format,
           }),

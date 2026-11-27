@@ -1087,4 +1087,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu closes.
   - **Notes:**
 
+- [ ] `B688` Under **Mine** in the left-hand menu, select **New page**.
+  - **Expected:** A dark dialog titled **New page** opens, its words and **Name** box easy to read.
+  - **Notes:**
+
+- [ ] `B8BB` Type `Dark notes` and press Enter.
+  - **Expected:** The **Columns** step's rows, their **Type** boxes and the **Back**, **Cancel** and **Add page** buttons are easy to read.
+  - **Notes:**
+
+- [ ] `BB8E` Select **Add page**.
+  - **Expected:**
+    - The page opens, dark, titled **Dark notes**.
+    - The violet ring before its heading, and before **Dark notes** under **Mine** in the left-hand menu, is easy to see.
+  - **Notes:**
+
 **Afterwards:** Choose **Light** in the Appearance menu, then run Reset the Database, ending on the **Sign in** page without signing in.

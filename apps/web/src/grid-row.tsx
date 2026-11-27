@@ -129,6 +129,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     | "view"
     | "recordDraft"
     | "marksRows"
+    | "withDrafts"
     | "liveById"
     | "draftById"
     | "cellDraftsById"
@@ -187,6 +188,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     view,
     recordDraft,
     marksRows,
+    withDrafts,
     liveById,
     draftById,
     cellDraftsById,
@@ -314,11 +316,12 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     // record for it.
     const liveWarning = (column: Column<Rec, Change>) =>
       column.status?.(liveRecord as Rec);
-    // A row with a draft is tinted, and one a draft removes is struck through too.
+    // A row with a draft is tinted, and one a draft removes is struck through too. A new row being
+    // filled in is tinted as the draft it will be, on a table whose records have drafts.
     let rowClass: string | undefined;
     const filling = row.newRow && !emptyNewRow(row.newRow);
     if (row.newRow) {
-      rowClass = filling ? classes.recordFillingRow : undefined;
+      rowClass = filling && withDrafts ? classes.recordFillingRow : undefined;
     } else if (draft && marksRows) {
       rowClass = [
         besideLive(view.show) ? classes.draftRow : "",

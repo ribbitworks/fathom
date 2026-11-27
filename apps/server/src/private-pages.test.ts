@@ -146,7 +146,7 @@ describe("making a page", () => {
       columns: [numberColumn("Number")],
     });
     expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe("You already have a page with that name");
+    expect(errorOf(response)).toBe("Another page has that name");
   });
 
   it("refuses a column of a list that is not there, or a class the role does not see", async () => {

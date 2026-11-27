@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The heading of a page: its title, with what switches how the page shows its records beside it, the
-// Export icon while a table on the page offers its export, and the page's main action. It is one
-// height on every page, as tall as a button, unless a narrow window wraps it, with no space of its
-// own under it: each page puts the same gap after it, so the row under the heading starts at the
-// same place on every page.
+// The heading of a page: its title, what switches how it shows its records, the Export icon and
+// its main action.
 
 import { Group, SegmentedControl, Tabs, Title } from "@mantine/core";
 import type { ReactNode } from "react";
@@ -13,10 +10,13 @@ import classes from "./pages.module.css";
 
 export function PageHeader({
   title,
+  mark,
   beside,
   action,
 }: {
   title: string;
+  // Before the title, such as a private page's ring.
+  mark?: ReactNode;
   beside?: ReactNode;
   action?: ReactNode;
 }) {
@@ -29,6 +29,7 @@ export function PageHeader({
     >
       <Group gap="lg" align="center">
         <Title order={1} fz={22}>
+          {mark}
           {title}
         </Title>
         {beside}

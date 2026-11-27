@@ -19,6 +19,7 @@ import { ColumnDialog } from "./column-dialog.tsx";
 import {
   changesQuestion,
   newRecordQuestion,
+  escapeLeaves,
   useDiscardQuestion,
 } from "./discard-question.tsx";
 import { moveColumnClass } from "./data-classes.ts";
@@ -197,25 +198,8 @@ export function ColumnModal<Data>({
       <Modal
         opened={opened && moving === undefined}
         onClose={leave}
-        // Esc is handled here, so the question it may open doesn't take the same Esc as its own.
         closeOnEscape={false}
-        onKeyDown={(event) => {
-          // Esc in anything open, a drop-down list or a choice's ⋯ menu, closes that alone.
-          const inOpenList =
-            event.target instanceof HTMLElement &&
-            event.target.getAttribute("aria-expanded") === "true";
-          // An Esc a field already used, such as emptying a choice being typed, isn't the dialog's.
-          if (
-            event.key !== "Escape" ||
-            busy ||
-            inOpenList ||
-            event.defaultPrevented
-          ) {
-            return;
-          }
-          event.stopPropagation();
-          leave();
-        }}
+        onKeyDown={escapeLeaves(leave, busy)}
         closeOnClickOutside={!busy}
         withCloseButton={!busy}
         title={dialog?.kind === "new" ? "New column" : "Edit column"}

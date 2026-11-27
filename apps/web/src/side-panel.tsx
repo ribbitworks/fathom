@@ -641,7 +641,9 @@ export function SidePanelFrame({
         id={id}
         className={narrow ? classes.frameNarrow : classes.frame}
         aria-labelledby={titleId}
-        {...(narrow ? { role: "dialog", "aria-modal": true } : {})}
+        {...(narrow
+          ? { role: "dialog", "aria-modal": true, "data-side-panel": "" }
+          : {})}
         onKeyDown={(event) => {
           if (
             event.key !== "Escape" ||

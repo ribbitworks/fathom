@@ -214,6 +214,28 @@ describe("the Key column", () => {
     expect(namesShown()).toEqual(["Gadget a", "Gadget b"]);
   });
 
+  it("sorts codes, such as a private page's rows' keys, by their text", () => {
+    const codes = new Map([
+      ["a", "M2RW"],
+      ["b", "4X9T"],
+    ]);
+    renderGadgets({
+      gadgets: [gadget("a"), gadget("b"), gadget("c")],
+      table: {
+        ...gadgetTable(),
+        keyOf: ({ id }: Gadget) => {
+          const code = codes.get(id);
+          return code === undefined
+            ? undefined
+            : { kind: "row" as const, code };
+        },
+      },
+      view: { ...keyShown, sort: [{ key: keyColumnKey, descending: false }] },
+    });
+    // A row with no key yet comes last, as an empty value does
+    expect(namesShown()).toEqual(["Gadget b", "Gadget a", "Gadget c"]);
+  });
+
   it("filters by the key's number", () => {
     renderGadgets({
       gadgets: keyed,

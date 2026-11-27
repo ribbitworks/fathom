@@ -3,6 +3,7 @@
 - **ADR:** 0014
 - **Status:** Accepted
 - **Date:** 2026-11-26
+- **Revised:** 2026-11-27, to say a private page's table is built and its search finds rows by their codes
 
 ## Context
 
@@ -31,6 +32,6 @@ A short random code, made by the database.
 ## Consequences
 
 - **Nothing counted:** a key tells nothing about how many pages or rows exist.
-- **Two kinds of key:** links by key take both forms, a number for most records, as `/go/feature/123`, and a code for private ones, whole, as `/go/ROW-4X9T`. Searching a table by key will take both once a private page's table is built.
+- **Two kinds of key:** links by key take both forms, a number for most records, as `/go/feature/123`, and a code for private ones, whole, as `/go/ROW-4X9T`. Searching a table by key takes both, a private page's table finding a row by its code, such as 4X9T.
 - **Not found the same way:** a key that names nobody's record, one whose record was removed, and one that names a record the reader may not read, get the same answer, "Nothing found", from one database query whatever the key names.
 - **A guess may find one:** a guessed code may name someone else's page or row, but every read refuses it as if nobody made it.

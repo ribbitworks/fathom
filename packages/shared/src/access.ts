@@ -244,8 +244,7 @@ export const permissionDescriptions: Record<
     ],
   },
   "private-pages:make": {
-    allows:
-      "Makes pages of their own, under Mine, each a table nobody else sees, and opens the pages they made.",
+    allows: "Makes pages under Mine, each a table nobody else sees.",
     without: "Cannot make private pages, and doesn't see the ones they made.",
   },
 };
@@ -438,14 +437,13 @@ export const permissionGrid: readonly GridRow[] = [
     kind: "single",
     name: "Approve own drafts",
   },
+  {
+    area: "Private pages",
+    actions: { edit: "private-pages:make" },
+    kind: "single",
+    name: "Make private pages",
+  },
 ];
-
-// Permissions kept and granted, but not yet shown on Roles, since no page uses them yet; each joins
-// the grid with the pages it opens.
-export const unshownPermissions: readonly Permission[] = ["private-pages:make"];
-
-export const shownOnRoles = (permission: Permission): boolean =>
-  !unshownPermissions.includes(permission);
 
 const actionNames: Record<GridAction, string> = {
   view: "View",

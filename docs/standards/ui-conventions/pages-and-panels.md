@@ -14,8 +14,8 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
 ## The Top Bar
 
 - **Where the user is:** The top bar names the sidebar's section and page. On an address below a sidebar item, such as a Help page, the item's name links back to its page, then comes what the address shows, such as the Help page's title.
-  - **Drawn by:** The sidebar's items in `apps/web/src/layout.tsx`, where an item's `detailOf` names what an address below it shows.
-  - **Example:** Select Help pages, then Lists: the top bar reads Help / Help pages / Lists.
+  - **Drawn by:** The sidebar's items in `apps/web/src/layout.tsx`, where an item's `detailOf` names what an address below it shows, and, on a page under Mine, `useMinePlace` in `apps/web/src/mine-section.tsx`, naming Mine and the page.
+  - **Example:** Select Help pages, then Lists: the top bar reads Help / Help pages / Lists. On a private page named Follow-ups, it reads Mine / Follow-ups.
 - **One line:** The top bar stays one line at any width. Where its parts don't fit, the development label, then the account's name, are cut short with an ellipsis, each with its whole text in a tip while cut, the name's on keyboard focus too.
   - **Drawn by:** The top bar in `apps/web/src/layout.tsx`, with its parts' room in `apps/web/src/layout.module.css`, the development label by `DevBadge` in `apps/web/src/dev-label.tsx`, and each tip by `useCutTip` in `apps/web/src/cut-tip.ts`.
   - **Example:** As the Engineering Operations Manager, narrow the window to about 680 pixels: the label shows little more than its clone, the name ends in an ellipsis, and pointing at it shows the whole name.

@@ -274,6 +274,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     columns,
     liveColumn,
     saved,
+    withDrafts,
   });
   const viewBar = (
     <ViewBar

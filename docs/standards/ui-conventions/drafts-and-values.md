@@ -161,6 +161,10 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **A class named in words:** Where a class is named in words, such as in the Data classes page's Class column or a line of a role's summary, the symbol comes before the name, and General's is an open eye. Only class names Fathom writes are marked, never words someone typed, such as a role's description.
   - **Drawn by:** `ClassMark` and `ClassName` in `apps/web/src/status-mark.tsx`, placed by `DraftedItem`'s `dataClass`, with the symbols from `apps/web/src/icons.tsx`.
   - **Example:** Start, End and Work pattern on People, with Compensation band and Performance rating marked Confidential; Work patterns and Compensation bands on the Lists page.
+- **The private ring:** A page only its maker reads has a hollow violet ring before its name, in the sidebar and its heading only, never on each value, since everything on it is private.
+  - **Its tip:** Private. Nobody else sees this page. In the heading, it is also read aloud before the name; in the sidebar, the Mine section says it.
+  - **Drawn by:** `PrivateRing` in `apps/web/src/status-mark.tsx`, a dot of its own tone, `private`, in the theme's `--fathom-private` from `apps/web/src/theme.ts`.
+  - **Example:** Sign in as the Feature Lead, select New page under Mine, and make a page: it shows under Mine, and in its heading, after the ring.
 - **Changing a class:** Wherever it starts, Change class… opens one dialog, as [Data Classes](../../design/pages/administration.md#data-classes) sets out.
   - **Takes effect at once:** Never as a draft, and is changed back rather than undone. A move is recorded in the access history and marked worth checking. A list's or column's move is recorded in the change history too.
   - **A list or column only drafted to be added:** The same dialog changes its draft instead, which can be undone. Drafts and the change history name a class beyond General with the addition, such as Class Confidential. Once approved, it is recorded as a move, naming the Approver.

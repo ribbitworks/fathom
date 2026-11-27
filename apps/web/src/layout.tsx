@@ -53,8 +53,15 @@ import { ChangeNameDialog } from "./change-name.tsx";
 import { ChangePasswordDialog } from "./change-password.tsx";
 import { menuChoice } from "./last-views.ts";
 import { type Item, opens, sections } from "./navigation.ts";
+import {
+  MineSection,
+  opensUnderMine,
+  showsMine,
+  useMinePlace,
+} from "./mine-section.tsx";
 import { initials } from "./names.ts";
 import { useCutTip } from "./cut-tip.ts";
+import { RailTip, SidebarGroup, sidebarId } from "./sidebar-group.tsx";
 import {
   type SignedInUser,
   sessionQuery,
@@ -66,7 +73,6 @@ import { UnpublishedControl } from "./unpublished.tsx";
 const headerHeight = 56;
 const sidebarWidth = 228;
 const railWidth = 56;
-const sidebarId = "sections";
 
 // How Fathom looks for the person using this browser: following the computer's setting, or always
 // light or dark. Mantine keeps the choice in the browser, so it applies on every page, signing in
@@ -142,32 +148,13 @@ function placeAt(
   return undefined;
 }
 
-// Whether some access opens the page at an address. Pages outside the sidebar are open to all.
+// Whether some access opens the page at an address. Pages outside the sidebar, but for Mine's, are
+// open to all.
 function opensPage(pathname: string, access: ClassAccess) {
   const place = placeAt(pathname);
-  return place === undefined || opens(place.item, access);
-}
-
-// In the rail, each page's name shows beside its icon on hover or focus.
-function RailTip({
-  rail,
-  label,
-  children,
-}: {
-  rail: boolean;
-  label: string;
-  children: React.ReactElement;
-}) {
   return (
-    <Tooltip
-      label={label}
-      position="right"
-      disabled={!rail}
-      events={{ hover: true, focus: true, touch: false }}
-      withinPortal
-    >
-      {children}
-    </Tooltip>
+    opensUnderMine(pathname, access.permissions) &&
+    (place === undefined || opens(place.item, access))
   );
 }
 
@@ -203,26 +190,12 @@ function AboutItem({ item, rail }: { item: Item; rail: boolean }) {
 function Sidebar({ access, rail }: { access: ClassAccess; rail: boolean }) {
   return (
     <Stack gap={22}>
+      {showsMine(access.permissions) && <MineSection rail={rail} />}
       {sections.map((section) => {
         const items = section.items.filter((item) => opens(item, access));
         if (items.length === 0) return null;
         return (
-          <Stack
-            key={section.label}
-            gap={2}
-            className={rail ? classes.railSection : undefined}
-            role="group"
-            aria-labelledby={`${sidebarId}-${section.label}`}
-          >
-            <Text
-              id={`${sidebarId}-${section.label}`}
-              className={[
-                classes.section,
-                rail ? classes.railHeading : "",
-              ].join(" ")}
-            >
-              {section.label}
-            </Text>
+          <SidebarGroup key={section.label} label={section.label} rail={rail}>
             {items.map((item) =>
               item.box === "about" ? (
                 <AboutItem key={item.label} item={item} rail={rail} />
@@ -244,7 +217,7 @@ function Sidebar({ access, rail }: { access: ClassAccess; rail: boolean }) {
                 </RailTip>
               ),
             )}
-          </Stack>
+          </SidebarGroup>
         );
       })}
     </Stack>
@@ -295,6 +268,7 @@ export function Layout({
   const [changingPassword, setChangingPassword] = useState(false);
   const narrow = useMediaQuery("(max-width: 48em)");
   const place = placeAt(pathname);
+  const minePlace = useMinePlace(pathname, permissions);
 
   const rail = collapsed && !narrow;
 
@@ -392,6 +366,19 @@ export function Layout({
             aria-expanded={opened}
             aria-controls={sidebarId}
           />
+          {minePlace && (
+            <Breadcrumbs
+              separator="/"
+              fz="sm"
+              c="dimmed"
+              className={classes.place}
+            >
+              <span>{minePlace.section}</span>
+              <Text span fz="sm" fw={500} c="var(--mantine-color-text)">
+                {minePlace.label}
+              </Text>
+            </Breadcrumbs>
+          )}
           {place && (
             <Breadcrumbs
               separator="/"

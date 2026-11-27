@@ -33,7 +33,7 @@ import { answeredPage, pageRows } from "./private-page-reads.ts";
 import { rowsRemoved } from "./private-rows.ts";
 import { type FieldRow, readPageColumns } from "./values.ts";
 
-const duplicatePage = "You already have a page with that name";
+const duplicatePage = "Another page has that name";
 
 // Makes a page after the maker's others, with its columns, the first naming each row.
 export async function makePage(

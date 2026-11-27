@@ -6,7 +6,7 @@ This page lists every page of Fathom. It says what each is for, where it is, and
 
 ## What to Know First
 
-- **Sections:** the left-hand menu groups the pages into sections: **Plan**, **People**, **Administration**, **History** and **Help**.
+- **Sections:** the left-hand menu groups the pages into sections: **Mine**, **Plan**, **People**, **Administration**, **History** and **Help**.
 - **Permissions:** a role is a set of permissions. Each one is a box in the grid on the [Roles](roles.md) page.
   - **View Plan**, for example, is the **View** box in the **Plan** row.
   - **Edit** brings **View** with it, so a role that edits an area sees it too.
@@ -14,6 +14,13 @@ This page lists every page of Fathom. It says what each is for, where it is, and
   - Some pages need **View Personal details**, since they show when people start and leave, and the months they join and leave teams.
   - Those dates are Personal unless someone moves them to another class. If they're moved, these pages need the class the dates are in instead. See [Data classes](data-classes.md).
 - **Starting roles:** Fathom starts with nine roles, one for each kind of work. The lists below say which of them see each page. These roles can be changed, and others made, so check a role's own boxes on the Roles page.
+
+## Mine
+
+**Mine** comes first in the left-hand menu. It lists the pages you made yourself, each after a violet ring, then **New page**. Nobody else sees them. See [Private pages](private-pages.md).
+
+- **Shown with:** **Make private pages**
+- **Starting roles that see it:** Product Manager, Feature Lead, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator
 
 ## Plan
 

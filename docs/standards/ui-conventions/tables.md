@@ -196,6 +196,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Drafts:** As the Draft menu shows them: beside live, each drafted record's draft row, then its Live row; applied, the records as drafted; live only, the records as they are.
     - **The Draft column:** A Draft column says Yes on each row that differs from live, under every choice, and is empty on every other row, so a spreadsheet's filter can leave out either.
     - **The Change column:** A Change column says what the draft does, such as Added, Changed, not published, or Added, rejected. Under live only, it says what a waiting draft would change, as its green dot's tip says.
+    - **A table without drafts:** Such as Accounts or a private page, its file has no Draft or Change column, and its name says nothing of drafts.
   - **As on:** On a page with a date control, such as People, every row starts with an As on column, the day shown as 2027-03-31, so a file says when its data was true.
   - **Fixed classes:** A table whose columns' classes are fixed rather than set on Data classes, such as Accounts', gives each column its class for the file. Accounts' Name and Email address are Personal, so the file asks and is recorded, but is never refused for the class, since everyone who sees accounts sees them.
   - **Rows:** Always flat, whatever the grouping, since spreadsheets filter and sort only rows without headings. Total rows are left out; a record under several headings is in the file once.
