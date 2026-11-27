@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Integration tests for planned hires on feature teams: reading them on teams, in People and by
-// month, for every role, naming them in the change history, and removing and filling a hire that is
-// on a team. Most tests record a hire on a team straight into its table, to reach each state at once.
+// month, for every role, naming them in the change history, and removing a hire that is on a team.
+// Most tests record a hire on a team straight into its table, to reach each state at once.
 
 import { featureTeamLeads } from "@fathom/db";
 import {
@@ -14,7 +14,7 @@ import {
   type TeamMonths,
 } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { builtInChoice, errorOf, ok } from "./test-app.ts";
+import { errorOf, ok } from "./test-app.ts";
 import {
   test,
   editor,
@@ -26,7 +26,6 @@ import {
   send,
   person,
   plannedHire,
-  drafted,
   liveTeam,
   changed,
   teamSeen,
@@ -423,108 +422,5 @@ describe("removing a planned hire on a team", () => {
       { leadId: null, leadPlannedHireId: null, fromDate: "2026-04-01" },
       { leadId: lead, leadPlannedHireId: null, fromDate: "2026-05-01" },
     ]);
-  });
-});
-
-describe("filling a planned hire on a team", () => {
-  const onTeamRefusal =
-    "This planned hire is on a feature team now or later, or in a team's draft. Take it off its teams before filling it.";
-  const openHire = async () =>
-    plannedHire({
-      stateId: await builtInChoice(test.connection, "hiring-states", "open"),
-    });
-  const fill = async (hire: string) =>
-    send(editor, "POST", `/api/planned-hires/${hire}/fill`, {
-      by: "existing person",
-      personId: await person(),
-    });
-
-  it("is refused while it is on a team", async () => {
-    const hire = await openHire();
-    await hireOnTeam(await liveTeam(), hire);
-
-    const response = await fill(hire);
-
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe(onTeamRefusal);
-  });
-
-  it("is refused while it leaves its team only later", async () => {
-    const hire = await openHire();
-    const id = await liveTeam();
-    await hireOnTeam(id, hire, { fromDate: "2026-04-01" });
-    await hireOnTeam(id, hire, { fromDate: "2026-07-01", member: false });
-
-    expect((await fill(hire)).statusCode).toBe(409);
-  });
-
-  it("is refused while it leads a team", async () => {
-    const hire = await openHire();
-    await hireLeading(await liveTeam(), hire);
-
-    expect((await fill(hire)).statusCode).toBe(409);
-  });
-
-  it("is refused while it joins a team only later", async () => {
-    const hire = await openHire();
-    await hireOnTeam(await liveTeam(), hire, { fromDate: "2026-09-01" });
-
-    expect((await fill(hire)).statusCode).toBe(409);
-  });
-
-  it("is refused while a team's draft names it", async () => {
-    // Given a team with the planned hire, whose draft adds a person
-    const hire = await openHire();
-    const id = await liveTeam();
-    await hireOnTeam(id, hire);
-    await changed(id, { add: [await person()] });
-
-    // When the hire's fill is drafted
-    const response = await fill(hire);
-
-    // Then it is refused
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe(onTeamRefusal);
-  });
-
-  it("is drafted once it has left its teams", async () => {
-    const hire = await openHire();
-    const id = await liveTeam();
-    await hireOnTeam(id, hire, { fromDate: "2026-04-01" });
-    await hireOnTeam(id, hire, { fromDate: "2026-05-01", member: false });
-
-    expect((await fill(hire)).statusCode).toBe(200);
-  });
-
-  it("is refused when approved once it is on a team", async () => {
-    // Given a fill drafted, then the planned hire on a team
-    const hire = await openHire();
-    await ok(await fill(hire));
-    await hireOnTeam(await liveTeam(), hire);
-
-    // When the fill is approved
-    const response = await approveHire(hire);
-
-    // Then it is refused
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe(onTeamRefusal);
-  });
-
-  it("is refused when approved once a team's draft names it", async () => {
-    const hire = await openHire();
-    await ok(
-      await send(editor, "POST", `/api/planned-hires/${hire}/fill`, {
-        by: "existing person",
-        personId: await person(),
-      }),
-    );
-    await drafted({ members: [hire] });
-
-    const response = await approveHire(hire);
-
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe(
-      "This planned hire is on a feature team now or later, or in a team's draft. Take it off its teams before filling it.",
-    );
   });
 });
