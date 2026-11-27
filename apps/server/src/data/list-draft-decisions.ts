@@ -10,7 +10,7 @@ import { type Actor } from "../access.ts";
 import { ConflictError, NotFoundError } from "../errors.ts";
 import { type Change, recordChanges } from "./changes.ts";
 import { setRejection } from "./drafts.ts";
-import { refuseDiscardingOthers } from "./draft-makers.ts";
+import { refuseDiscardingOthers } from "./record-discards.ts";
 import { clearedRejection, type Draft } from "./draft-records.ts";
 import {
   refuseIfDraftsChoose,

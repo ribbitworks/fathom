@@ -70,7 +70,7 @@ import {
   requireHireEdits,
 } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
-import { refuseDiscardingOthers } from "./draft-makers.ts";
+import { refuseDiscardingOthers } from "./record-discards.ts";
 import {
   checkManager,
   checkRequisition,

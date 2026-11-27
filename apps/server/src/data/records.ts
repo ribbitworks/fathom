@@ -242,15 +242,15 @@ export async function readRecordsState(
 }
 
 // Who changed each record's draft, and when, by kind, as the viewer may see it, and the drafts the
-// viewer may discard whoever changed them, by record.
+// viewer may discard, by record.
 export interface Makers {
   byKind: ReadonlyMap<RecordType, ReadonlyMap<string, Maker>>;
-  discardedByAny: ReadonlySet<string>;
+  discardable: ReadonlySet<string>;
 }
 
 export const noMakers: Makers = {
   byKind: new Map(),
-  discardedByAny: new Set(),
+  discardable: new Set(),
 };
 
 // A record's draft as the API sends it, or undefined when it has none.
@@ -303,7 +303,7 @@ export function recordDraftOut(
     editors: maker?.editors ?? [],
     ...viewerMarks(
       maker,
-      makers.discardedByAny.has(refKey({ type: kind.type, id })),
+      makers.discardable.has(refKey({ type: kind.type, id })),
     ),
     changedBy: Object.fromEntries(
       changed.map((name) => [

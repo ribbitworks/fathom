@@ -7,7 +7,7 @@ import type { Database } from "@fathom/db";
 import type { RecordRef, RecordType } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import type { Actor } from "../access.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
+import { ConflictError, NotFoundError } from "../errors.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
 import {
   asDraft,
@@ -50,14 +50,12 @@ import {
   valueRows,
 } from "./values.ts";
 import {
-  boundWith,
-  discardedByAnyEditor,
+  discardedWith,
   draftedRefs,
   usingRecords,
   withUsedRecords,
 } from "./bound-drafts.ts";
-import { editsKind } from "./draft-editors.ts";
-import { refuseDiscardingOthers } from "./draft-makers.ts";
+import { refuseDiscardingOthers } from "./record-discards.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import {
   gone,
@@ -72,53 +70,10 @@ import {
 } from "./records.ts";
 import { drafting, kindChanges, refuseHeldIn } from "./record-drafting.ts";
 
-// The records only drafted to be added that belong to one, through the links of their kinds, and
-// those that belong to them, and so on.
-function addedBelow(state: RecordsState, root: RecordRef): RecordRef[] {
-  const found = new Map([[refKey(root), root]]);
-  const queue = [root];
-  for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
-    const parent = next;
-    for (const kind of recordKinds) {
-      const linking = Object.entries(kind.links).filter(
-        ([, type]) => type === parent.type,
-      );
-      if (linking.length === 0) continue;
-      for (const id of shownIds(state, kind.type)) {
-        const version = versionOf(state, kind.type, id);
-        const ref = { type: kind.type, id };
-        if (
-          !addedOnly(state, kind.type, id) ||
-          found.has(refKey(ref)) ||
-          !linking.some(([name]) =>
-            linkedIds(version, name).includes(parent.id),
-          )
-        ) {
-          continue;
-        }
-        found.set(refKey(ref), ref);
-        queue.push(ref);
-      }
-    }
-  }
-  return [...found.values()];
-}
-
-export function cyclesDiscardRefusal(
-  discarded: readonly RecordRef[],
-  maker: Actor,
-): string | undefined {
-  return discarded.some((ref) => ref.type === "cycle-pattern") &&
-    !editsKind(maker, "cycle-pattern")
-    ? "Only someone who changes cycles can discard this."
-    : undefined;
-}
-
 // Discards the editor's draft of a record, so the record is as it is live, or, for one only drafted
 // to be added, gone, with the drafts bound to it and the drafts of the records only drafted to be
 // added that belong to any of them, whoever made them. Refused while other drafts, published or not,
-// use any of them, to an editor who may not discard the draft asked for, and to one who may not
-// change cycles when it would discard a draft of a stream's cycles.
+// use any of them, and to an editor who may not discard the draft asked for.
 export async function discardRecordDraft(
   database: Database,
   maker: Actor,
@@ -129,24 +84,8 @@ export async function discardRecordDraft(
     if (!recordExists(state, type, id)) throw new NotFoundError(noRecord);
     refuseHeldIn(state, type, id);
     if (!stateOf(state, type).drafts.has(id)) throw new NotFoundError(noDraft);
-    const discarded = [
-      ...new Map(
-        boundWith(state, { type, id })
-          .flatMap((ref) =>
-            addedOnly(state, ref.type, ref.id) ? addedBelow(state, ref) : [ref],
-          )
-          .map((ref) => [refKey(ref), ref]),
-      ).values(),
-    ];
-    const refusal = cyclesDiscardRefusal(discarded, maker);
-    if (refusal !== undefined) throw new ForbiddenError(refusal);
-    await refuseDiscardingOthers(
-      transaction,
-      maker,
-      type,
-      id,
-      discardedByAnyEditor(state, maker).has(refKey({ type, id })),
-    );
+    await refuseDiscardingOthers(transaction, maker, type, id);
+    const discarded = discardedWith(state, { type, id });
     for (const ref of discarded.filter(
       ({ type: kind }) => kind === "feature",
     )) {

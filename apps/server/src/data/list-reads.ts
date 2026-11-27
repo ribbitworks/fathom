@@ -35,7 +35,7 @@ import {
   draftMakers,
   everything,
   type Maker,
-  viewerMarks,
+  ownMarks,
 } from "./draft-makers.ts";
 import { keyNumberOf } from "./record-keys.ts";
 import { tablesMadeWith } from "./lists-made-with.ts";
@@ -80,7 +80,7 @@ function draftOut<Live extends Record<string, unknown>>(
     madeAs: maker?.madeAs ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
-    ...viewerMarks(maker),
+    ...ownMarks(maker),
     changedBy: Object.fromEntries(
       changed.map((field) => [field, maker?.fieldEditors.get(field) ?? null]),
     ),
@@ -193,7 +193,7 @@ export function listsOut(
             madeAs: makers.order.get(id)?.madeAs ?? null,
             madeAt: makers.order.get(id)?.madeAt.toISOString() ?? null,
             editors: makers.order.get(id)?.editors ?? [],
-            ...viewerMarks(makers.order.get(id)),
+            ...ownMarks(makers.order.get(id)),
           };
     return [
       {

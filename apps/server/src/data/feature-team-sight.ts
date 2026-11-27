@@ -21,7 +21,7 @@ import {
   type Recorded,
   tidy,
 } from "./draft-records.ts";
-import { type Maker, viewerMarks } from "./draft-makers.ts";
+import { type Maker, ownMarks } from "./draft-makers.ts";
 import {
   datesOf,
   daysIn,
@@ -295,7 +295,7 @@ export function draftAsSeen(
       madeAs: maker?.madeAs ?? null,
       madeAt: maker?.madeAt.toISOString() ?? null,
       editors: maker?.editors ?? [],
-      ...viewerMarks(maker),
+      ...ownMarks(maker),
       changedBy: Object.fromEntries(
         changed.map((field) => [field, maker?.fieldEditors.get(field) ?? null]),
       ),

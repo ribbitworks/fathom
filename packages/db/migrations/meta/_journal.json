@@ -505,6 +505,13 @@
       "when": 1795744454163,
       "tag": "0071_working_week",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1795772152678,
+      "tag": "0072_draft_kept_by_discard",
+      "breakpoints": true
     }
   ]
 }

@@ -94,6 +94,62 @@ describe("a fill's draft", () => {
     expect((await rowOf(transfer))?.draft).toBeUndefined();
   });
 
+  it("leaves the rest of the fill's drafts with their makers when any part is discarded", async () => {
+    // Given a planned manager whose own draft moves its target date, filled by a transfer
+    const transfer = await person({ isManager: false });
+    const id = await hire({ isManager: true, managerId: await person() });
+    await ok(
+      await send(editor, "PATCH", `/api/planned-hires/${id}`, {
+        targetDate: "2099-06-01",
+      }),
+    );
+    await filled(id, existing(transfer));
+
+    // When the transfer's draft is discarded
+    await ok(await send(editor, "DELETE", `/api/people/${transfer}/draft`));
+
+    // Then the hire's draft is still theirs: needing another approver, and theirs to discard
+    expect((await hireOf(id))?.draft).toMatchObject({
+      discardable: true,
+      needsOtherApprover: true,
+    });
+    expect(
+      (await send(editor, "DELETE", `/api/planned-hires/${id}/draft`))
+        .statusCode,
+    ).toBe(200);
+  });
+
+  it("is undone whole after any part is discarded, the drafts it kept included", async () => {
+    // Given a planned manager whose own draft moves its target date, filled by a transfer, and the
+    // transfer's draft discarded
+    const transfer = await person({ isManager: false });
+    const id = await hire({ isManager: true, managerId: await person() });
+    await ok(
+      await send(editor, "PATCH", `/api/planned-hires/${id}`, {
+        targetDate: "2099-06-01",
+      }),
+    );
+    await filled(id, existing(transfer));
+    const fillOf = async () => {
+      const kept = await hireOf(id);
+      return [
+        kept?.filler,
+        kept?.draft?.changed,
+        (await rowOf(transfer))?.draft?.changed,
+      ];
+    };
+    const before = await fillOf();
+    const { changeSetId } = await ok<{ changeSetId: string }>(
+      await send(editor, "DELETE", `/api/people/${transfer}/draft`),
+    );
+
+    // When the discard is undone
+    await ok(await send(editor, "POST", `/api/undo/${changeSetId}`));
+
+    // Then the whole fill is back
+    expect(await fillOf()).toEqual(before);
+  });
+
   it("puts a transfer's manager back when discarded from the hire, keeping their other changes", async () => {
     // Given a transfer filling a hire under another manager, then renamed in the same draft
     const before = await person();

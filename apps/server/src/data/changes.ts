@@ -56,6 +56,8 @@ export interface Change {
   newValue: unknown;
   // Whether the change is to the record's draft rather than to the live record.
   draft?: boolean;
+  // Whether a change in a discard leaves the record's draft in place.
+  keepsDraft?: boolean;
 }
 
 // The change set a change was saved in, which undoing it names; null when nothing changed.

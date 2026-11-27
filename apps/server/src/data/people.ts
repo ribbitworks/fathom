@@ -52,7 +52,7 @@ import {
   refuseUnmarkingHireManagers,
 } from "./hire-checks.ts";
 import { refuseRemovingNamed } from "./records.ts";
-import { refuseDiscardingOthers } from "./draft-makers.ts";
+import { refuseDiscardingOthers } from "./record-discards.ts";
 import {
   changedReporting,
   checkLine,

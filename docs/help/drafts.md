@@ -18,7 +18,7 @@ A draft goes through these stages:
 - **Discarded:** the draft is removed, and the record stays as it was.
   - Only someone who changed the draft can discard it. If you disagree with someone else's draft, ask an approver to reject it.
   - A change to a schedule's cycles is the exception, which anyone who changes schedules can discard.
-  - Discarding a new record also discards the new records that go with it, such as a new list's choices, whoever made them.
+  - Discarding a new record, or removing a record, also discards the new records that go with it, whoever made them, such as a new list's choices or a removed project's new milestones.
   - You can't discard a new list, column or choice while other drafts depend on it. Discard or change those drafts first.
 
 Approvers approve and reject drafts on the [Drafts page](drafts-page.md), under **To decide**, as well as where the records are.

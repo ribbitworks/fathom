@@ -306,6 +306,64 @@ describe("changing one cycle's length", () => {
     expect(response.statusCode).toBe(200);
   });
 
+  it("marks a change of cycles, and the release it moves, discardable for another role that changes cycles", async () => {
+    // Given a change of one cycle's length a Workforce Administrator made, moving a release
+    const { stream } = await draftedChange();
+
+    // When a Product Manager, who changes cycles too, reads the schedule
+    const seen = await readStream(stream.id, planner.cookie);
+
+    // Then they may discard both drafts
+    expect([
+      seen?.patterns.find(({ draft }) => draft !== undefined)?.draft
+        ?.discardable,
+      seen?.releases[0]?.draft?.discardable,
+    ]).toEqual([true, true]);
+  });
+
+  it("offers no discarding of a release moved under a change of cycles to one who may not change cycles, as the server refuses it", async () => {
+    // Given a Workforce Administrator's rename of a schedule's cycles, and a Feature Lead's move of
+    // a release on them, which binds the two
+    const stream = await withRelease();
+    await test.request(
+      configurer.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}/patterns/${String(stream.patterns[0]?.id)}`,
+      { ...quarters, naming: "Q{N} {YYYY}" },
+    );
+    const releaseId = String(stream.releases[0]?.id);
+    await test.request(
+      featureLead.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}/releases/${releaseId}`,
+      {
+        name: "Fictional Later",
+        firstCycle: "2027-04-01",
+        lastCycle: "2027-07-01",
+      },
+    );
+
+    // When the Feature Lead reads the release, and discards its draft
+    const seen = (await readStream(stream.id, featureLead.cookie))?.releases[0]
+      ?.draft;
+    const response = await test.request(
+      featureLead.cookie,
+      "DELETE",
+      `/api/records/release/${releaseId}/draft`,
+    );
+
+    // Then it is bound to the change of cycles, not marked discardable, and refused
+    expect(seen?.uses).toContainEqual({
+      type: "cycle-pattern",
+      id: String(stream.patterns[0]?.id),
+    });
+    expect(seen?.discardable).toBeUndefined();
+    expect([
+      response.statusCode,
+      response.json<{ error: string }>().error,
+    ]).toEqual([403, "Only someone who changes cycles can discard this."]);
+  });
+
   it("refuses moving a release's first cycle after its Ships on day", async () => {
     const stream = await withRelease("2027-07-15");
     const response = await changeLength(stream.id, "2027-04-01", {
