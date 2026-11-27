@@ -314,7 +314,7 @@ describe("a row's values", () => {
         Fictional After
       </DraftedValue>,
     );
-    expect(screen.getByText(", Draft: changed from no name")).toBeDefined();
+    expect(screen.getByText(", Draft: filled in")).toBeDefined();
   });
 
   it("shows a value its draft keeps as it is, unmarked", () => {

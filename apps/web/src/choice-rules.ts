@@ -89,7 +89,7 @@ export function pasteProblem(
     const problem =
       choiceNameProblem(list, choice.label) ??
       (choice.description.length > listLengths.description
-        ? "Description too long"
+        ? "Description is too long"
         : undefined) ??
       (seen.some((label) => sameName(label, choice.label))
         ? duplicateChoice

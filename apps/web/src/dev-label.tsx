@@ -3,15 +3,14 @@
 // Which copy of the repository and which branch 'pnpm dev' runs from, shown in the top bar and the
 // browser tab's title so copies running at once can be told apart. Builds and tests have none.
 
-import { Badge } from "@mantine/core";
+import { Badge, Tooltip } from "@mantine/core";
+import { useCutTip } from "./cut-tip.ts";
+import classes from "./layout.module.css";
 
 export interface DevLabel {
   clone: string;
   branch: string;
 }
-
-// Wide enough for most branch names; longer ones are cut short.
-const badgeWidth = 360;
 
 // Set by vite.config.ts.
 declare const FATHOM_DEV_LABEL: DevLabel | null;
@@ -23,16 +22,23 @@ export function devTitle(title: string, label: DevLabel | null): string {
 }
 
 export function DevBadge({ label }: { label: DevLabel | null }) {
+  const { words: wordsRef, shown, target } = useCutTip();
   if (label === null) return null;
+  const words = `Clone ${label.clone} · ${label.branch}`;
   return (
-    <Badge
-      variant="light"
-      color="orange"
-      tt="none"
-      maw={badgeWidth}
-      visibleFrom="xs"
-    >
-      Clone {label.clone} · {label.branch}
-    </Badge>
+    <Tooltip label={words} opened={shown}>
+      <Badge
+        variant="light"
+        color="orange"
+        tt="none"
+        visibleFrom="xs"
+        className={classes.devLabel}
+        {...target}
+      >
+        <span ref={wordsRef} className={classes.cutShort}>
+          {words}
+        </span>
+      </Badge>
+    </Tooltip>
   );
 }

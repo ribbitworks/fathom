@@ -132,9 +132,7 @@ export function StreamDialog({
           value={name}
           maximum={releaseLengths.name}
           error={tried || name !== "" ? problem : undefined}
-          onChange={(event) => {
-            setName(event.currentTarget.value);
-          }}
+          onValue={setName}
         />
         <DialogActions
           error={save.error}
@@ -257,6 +255,7 @@ export function PatternDialog({
     false,
     "",
     "Names needed",
+    "Names are too long",
   );
   const namingOk = namingProblem === undefined;
   // The first three cycles from the day chosen, named as the stream will name them, counting the
@@ -663,9 +662,7 @@ export function ReleaseDialog({
             value={name}
             maximum={releaseLengths.name}
             error={tried || name !== "" ? problem : undefined}
-            onChange={(event) => {
-              setName(event.currentTarget.value);
-            }}
+            onValue={setName}
           />
         )}
         {asks("cycles") && (

@@ -212,9 +212,10 @@ export function nameProblem(
   taken: boolean,
   duplicate: string,
   needed = "Name needed",
+  tooLong = "Name is too long",
 ): string | undefined {
   if (name.trim() === "") return needed;
-  if (name.trim().length > maximum) return "Too long";
+  if (name.trim().length > maximum) return tooLong;
   return taken ? duplicate : undefined;
 }
 

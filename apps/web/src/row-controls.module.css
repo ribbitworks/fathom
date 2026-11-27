@@ -16,6 +16,17 @@
   margin-block: auto;
 }
 
+/* In a row grown to hold a refusal under its first line, they stay level with that line, the height
+   of a cell's editor inside its padding. Moved by translate, which a pressed button's transform
+   leaves alone. */
+td:has(> [role="alert"]) :is(.rowControls, .fillHire) {
+  top: calc(
+    var(--record-cell-padding-block, 0px) + var(--fathom-cell-editor-height) / 2
+  );
+  bottom: auto;
+  translate: 0 -50%;
+}
+
 .rowControls {
   right: 4px;
   display: flex;

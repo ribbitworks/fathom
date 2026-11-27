@@ -75,12 +75,15 @@ export function draftWords(draft: DraftLike): string {
   return change === undefined ? "Draft" : `Draft: ${change}`;
 }
 
+// What a value was before a draft changed it, as wasWords gives it, or null where it was empty.
+export type Was = string | null;
+
 // What a draft's change says of a value: when it takes effect, who made it, and what the value was,
 // where each is known.
 export interface Change {
   from?: string | undefined;
   by?: string | undefined;
-  was?: string | undefined;
+  was?: Was | undefined;
 }
 
 // The words a draft's dot stands for: its tip, and what is read aloud after the item it marks, with
@@ -94,7 +97,7 @@ export function draftTip(
   const told = [
     was === undefined
       ? words
-      : `${words}${words === "Draft" ? ":" : ","} changed from ${was}`,
+      : `${words}${words === "Draft" ? ":" : ","} ${was === null ? "filled in" : `changed from ${was}`}`,
     ...(draft.unpublished === true ? ["unpublished"] : []),
     ...(from === undefined ? [] : [`from ${from}`]),
     ...(by === undefined ? [] : [`by ${by}`]),
@@ -105,17 +108,16 @@ export function draftTip(
 }
 
 // A value as it was before a draft changed it, as a dot's tip names it: quoted, cut short when long,
-// or, when it was empty, the words for none, such as "no description".
-export function wasWords(
-  words: string,
-  name: string,
-  emptyLabel?: string,
-): string {
-  if (words === "") {
-    const none = emptiedWords(name, emptyLabel);
-    return none.charAt(0).toLowerCase() + none.slice(1);
-  }
+// or null when it was empty, since the draft then fills it in rather than changing it.
+export function wasWords(words: string): Was {
+  if (words === "") return null;
   return `“${words.length > wasLength ? `${words.slice(0, wasLength - 1)}…` : words}”`;
+}
+
+// The words for none inside a sentence, such as "no description".
+export function noneInSentence(name: string, emptyLabel?: string): string {
+  const none = emptiedWords(name, emptyLabel);
+  return none.charAt(0).toLowerCase() + none.slice(1);
 }
 
 const wasLength = 40;

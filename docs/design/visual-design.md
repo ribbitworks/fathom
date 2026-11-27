@@ -216,6 +216,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **Side panels:** `WithSidePanel` and `SidePanelFrame` in `side-panel.tsx`, the frame holding a panel's heading, with its marks beside it, its subtitle and its actions. A record's details panel is `RecordPanel` in `record-details.tsx`, on that frame, with its ⋯ menu from `PanelMenu` in `panel-menu.tsx`. Every ⋯ menu in a side panel, `RecordMenu`'s and a list's drafts' included, is drawn by `PanelMoreMenu` there.
 - **A coloured name:** `ColouredName` in `colour-swatch.tsx`, as [A coloured name](../standards/ui-conventions/drafts-and-values.md#values) sets out.
 - **One tooltip for a whole table:** `TableTips` in `table-tips.tsx`, showing the tip of whatever carries `tipAttribute` under the pointer or in the cell with keyboard focus, such as a feature team's whole name or an estimate's hours.
+- **A tip for words cut short:** `useCutTip` in `cut-tip.ts`, giving the whole of words cut short on one line, such as the top bar's account name and development label.
 - **Resizing by an edge:** `ResizeEdge` in `resize-edge.tsx`, for side panels and table columns, with a table's column widths in `useColumnWidths` in `column-widths.ts`.
 - **A text field with an × to empty it:** `ClearableInput` in `clearable-input.tsx`.
 - **Choosing from a list:** `ChoicePicker` in `choice-picker.tsx`, with its New option given by a column's `adds`, and the plan's New form it opens, stacked under the picker's panel, from `useAddFromPanel` in `add-from-panel.tsx`.

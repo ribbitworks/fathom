@@ -9,6 +9,7 @@ import {
   draftWords,
   emptiedWords,
   liveWaitingWords,
+  noneInSentence,
   partsMark,
   recordMark,
   wasWords,
@@ -57,6 +58,15 @@ describe("a draft's words", () => {
     );
   });
 
+  it("says a value that was empty is filled in, rather than changed from none", () => {
+    expect(draftTip(waiting, { was: null, by: "Fictional Person" })).toBe(
+      "Draft: filled in, by Fictional Person",
+    );
+    expect(draftTip(rejected, { was: null })).toBe(
+      "Rejected, filled in: Fictional reason.",
+    );
+  });
+
   it("keeps a rejection's reason last, after what the value was", () => {
     expect(draftTip(rejected, { was: "“Harbor 2”" })).toBe(
       "Rejected, changed from “Harbor 2”: Fictional reason.",
@@ -81,16 +91,17 @@ describe("a draft's words", () => {
     );
   });
 
-  it("quotes what a value was, cut short when long, or names it as none", () => {
-    expect(wasWords("Level", "Name")).toBe("“Level”");
-    expect(wasWords("", "Description")).toBe("no description");
-    expect(wasWords("", "Start", "Later")).toBe("later");
-    expect(wasWords("x".repeat(50), "Name")).toBe(`“${"x".repeat(39)}…”`);
+  it("quotes what a value was, cut short when long, or none when it was empty", () => {
+    expect(wasWords("Level")).toBe("“Level”");
+    expect(wasWords("")).toBeNull();
+    expect(wasWords("x".repeat(50))).toBe(`“${"x".repeat(39)}…”`);
+    expect(noneInSentence("Description")).toBe("no description");
+    expect(noneInSentence("Start", "Later")).toBe("later");
     expect(emptiedWords("ID")).toBe("No ID");
     expect(emptiedWords("Start")).toBe("No start");
     expect(emptiedWords("Needed by")).toBe("No needed by");
     expect(emptiedWords("Proposal ID")).toBe("No proposal ID");
-    expect(wasWords("", "Fictional Score")).toBe("no Fictional Score");
+    expect(noneInSentence("Fictional Score")).toBe("no Fictional Score");
   });
 });
 

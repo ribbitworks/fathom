@@ -15,7 +15,7 @@ import { Anchor } from "@mantine/core";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { getJson } from "./api.ts";
-import { emptiedWords, wasWords } from "./draft-marks.ts";
+import { emptiedWords, noneInSentence } from "./draft-marks.ts";
 import { foldControl } from "./folded-note.tsx";
 import { focusSoon } from "./focus.ts";
 import { LoadProblem } from "./load-problem.tsx";
@@ -98,7 +98,7 @@ export function timelineWords(
   if (change.was !== undefined) {
     words.push(
       ...(change.was === null
-        ? [` changed from ${wasWords("", name)}`]
+        ? [` changed from ${noneInSentence(name)}`]
         : [" changed from ", value(change.was)]),
     );
   }

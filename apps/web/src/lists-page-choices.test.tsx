@@ -230,7 +230,7 @@ describe("adding choices", () => {
     expect(screen.getByText("58/60")).toBeDefined();
     await userEvent.paste("xxx");
     await userEvent.keyboard("{Enter}");
-    expect(screen.getByText("Too long")).toBeDefined();
+    expect(screen.getByText("Name is too long")).toBeDefined();
     expect(screen.getByText("61/60")).toBeDefined();
     expect(bodyOf(fetch, "POST", "/api/lists/l1/choices")).toEqual([]);
   });
@@ -274,11 +274,15 @@ describe("adding choices", () => {
       "Ashgrove\nashgrove",
       "Line 2: Already in this list",
     ],
-    ["a name too long", `Ashgrove\n${"x".repeat(61)}`, "Line 2: Too long"],
+    [
+      "a name too long",
+      `Ashgrove\n${"x".repeat(61)}`,
+      "Line 2: Name is too long",
+    ],
     [
       "a description too long",
       `Ashgrove\tx\nBrindle\t${"x".repeat(501)}`,
-      "Line 2: Description too long",
+      "Line 2: Description is too long",
     ],
   ])(
     "adds nothing when the pasted lines include %s",

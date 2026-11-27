@@ -141,13 +141,13 @@ describe("creating and editing lists", () => {
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     await userEvent.click(within(dialog).getByLabelText("Name"));
     await userEvent.paste("x".repeat(41));
-    expect(within(dialog).getByText("Too long")).toBeDefined();
+    expect(within(dialog).getByText("Name is too long")).toBeDefined();
     expect(within(dialog).getByText("41/40")).toBeDefined();
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     await userEvent.type(within(dialog).getByLabelText("Name"), "Fine");
     await userEvent.click(within(dialog).getByLabelText(/^Description/));
     await userEvent.paste("x".repeat(501));
-    expect(within(dialog).getByText("Too long")).toBeDefined();
+    expect(within(dialog).getByText("Description is too long")).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create list" }),
     );

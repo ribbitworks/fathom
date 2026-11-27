@@ -169,7 +169,7 @@ describe("the column dialog on Features", () => {
 
     await userEvent.paste(`Gold\n${"x".repeat(listLengths.choice + 1)}`);
 
-    expect(within(dialog).getByText(/Too long/u)).toBeDefined();
+    expect(within(dialog).getByText(/Name is too long/u)).toBeDefined();
     expect(within(dialog).queryByText("Gold")).toBeNull();
   });
 

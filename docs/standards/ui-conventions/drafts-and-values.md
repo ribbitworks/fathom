@@ -15,7 +15,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 
 - **A draft's dot:** A draft is marked by its dot alone, always before the record, value or part it marks. No words such as Draft or Draft: added sit beside it.
   - **Its states:** The dot is yellow while waiting for approval, hollow while it holds the user's own unpublished changes, and red in a ring once rejected, so shape tells it apart as well as colour.
-  - **Its tip:** Its tip, also read aloud, says what the draft does, such as Draft: added. Where known, it also says what a value was, when the draft takes effect and who made it. A rejection's reason comes last, such as Rejected, added: and the reason.
+  - **Its tip:** Its tip, also read aloud, says what the draft does, such as Draft: added. Where known, it also says what a value was, such as Draft: changed from “Level”, or Draft: filled in where it was empty, then when the draft takes effect and who made it. A rejection's reason comes last, such as Rejected, added: and the reason.
   - **In a record's menu:** Only in a record's menu do the draft's words follow its dot, as the heading of the draft's details.
   - **Drawn by:** `DraftedItem` in `apps/web/src/status-mark.tsx`, with the words from `draftWords` and `draftTip` in `apps/web/src/draft-marks.ts`, and the menu's heading from `apps/web/src/draft-details.tsx`.
   - **Example:** Vianney Rousseau, drafted to be added, and Ophélie Roussel, whose addition was rejected, on People.
@@ -66,6 +66,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** `columnHeaders` in `apps/web/src/column-header.tsx`, with the live column beside it from `useGridModel` in `apps/web/src/grid-model.tsx`.
   - **Example:** Grade on People, with Level under it.
 - **Tints:** Only beside live, a row, column or org chart card with a draft is faint yellow, or faint red once rejected, and a Live row is light green. Each is darker in the dark scheme, so its text stays readable.
+  - **One tint to a row:** A tinted row has its own tint in every cell, where it crosses a tinted column too.
   - **Drawn by:** `draftRowClass` in `apps/web/src/list-drafts.tsx`, `RecordGrid`, and the org chart's cards, with the colours from `apps/web/src/theme.ts`.
   - **Example:** Vianney Rousseau's row on People.
 - **A table of drafts:** On the Drafts page, where every row is a draft, the dot in a row's slot is the row's only mark: no tints, semibold, strike-through or Live rows. The row isn't read aloud as a draft, since every row is one. This is a recorded exception to Tints and A removal.

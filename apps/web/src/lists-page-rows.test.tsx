@@ -147,7 +147,7 @@ describe("renaming a list in its row", () => {
     await userEvent.type(input, `${"x".repeat(listLengths.name + 1)}{Enter}`);
 
     // Then the row says why, the name stays open, and nothing is sent
-    expect(await screen.findByText("Name too long")).toBeDefined();
+    expect(await screen.findByText("Name is too long")).toBeDefined();
     expect(document.activeElement).toBe(input);
     expect(sent(fetch, "PUT", "/api/lists/l2")).toBe(false);
   });

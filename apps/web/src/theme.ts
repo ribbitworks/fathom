@@ -163,6 +163,9 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-dot-size": "7px",
     "--fathom-mark-gap": "6px",
     "--fathom-ring-room": "3px",
+    // A row's slot before its first value: a ring's room, then two places for a mark and its gap.
+    "--fathom-slot-width":
+      "calc(var(--fathom-ring-room) + 2 * (var(--fathom-dot-size) + var(--fathom-mark-gap)))",
     // Today, only ever as a thin line: a timeline's line, a strip's underline, a board's heading.
     "--fathom-today": "var(--mantine-color-red-6)",
     // The underline of the period holding today, such as a strip's quarter, a grid's month or a

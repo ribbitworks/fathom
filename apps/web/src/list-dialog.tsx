@@ -129,9 +129,7 @@ export function ListDialog({
           value={name}
           maximum={listLengths.name}
           error={shownProblem}
-          onChange={(event) => {
-            setName(event.currentTarget.value);
-          }}
+          onValue={setName}
         />
         <Textarea
           label={
@@ -143,7 +141,7 @@ export function ListDialog({
           minRows={2}
           maxRows={6}
           value={description}
-          error={descriptionTooLong ? "Too long" : undefined}
+          error={descriptionTooLong ? "Description is too long" : undefined}
           onChange={(event) => {
             setDescription(event.currentTarget.value);
           }}

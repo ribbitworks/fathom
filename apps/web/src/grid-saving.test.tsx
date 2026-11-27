@@ -59,7 +59,7 @@ describe("problems with a row", () => {
     });
     await userEvent.keyboard("Far too long a name{Tab}");
     const alert = screen.getByRole("alert");
-    expect(alert.textContent).toBe("Name too long");
+    expect(alert.textContent).toBe("Name is too long");
     const editor = screen.getByRole("textbox", { name: "Name" });
     expect(editor.getAttribute("aria-invalid")).toBe("true");
     expect(editor.getAttribute("aria-describedby")).toBe(alert.id);
@@ -124,7 +124,7 @@ describe("problems with a row", () => {
       document.getElementById("cell-new-0-name")?.focus();
     });
     await userEvent.keyboard("Far too long a name{Enter}");
-    expect(screen.getByRole("alert").textContent).toBe("Name too long");
+    expect(screen.getByRole("alert").textContent).toBe("Name is too long");
     expect(document.getElementById("cell-new-0-name")?.className).toContain(
       "recordProblemCell",
     );

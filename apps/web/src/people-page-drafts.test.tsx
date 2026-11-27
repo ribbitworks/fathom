@@ -126,10 +126,10 @@ describe("drafts", () => {
       "Engineer, Draft: changed from “Tester”, draft, live Tester",
     );
     expect(cell("p1", "startDate").textContent).toBe(
-      "Mar 1, 2024, Draft: changed from no start, draft, live empty",
+      "Mar 1, 2024, Draft: filled in, draft, live empty",
     );
     expect(cell("p1", "f2").textContent).toContain(
-      ", Draft: changed from no role on team, draft, live empty",
+      ", Draft: filled in, draft, live empty",
     );
     expect(cell("p1", "employeeId").textContent).toBe("E1");
     // Under the draft row, the person as they are live, which only sighted users need.
