@@ -50,6 +50,7 @@ import {
   DraftedItem,
   DraftedValue,
   EmptyLive,
+  EmptySide,
   MarkedItem,
   MarkRow,
   useBesideLive,
@@ -111,7 +112,10 @@ function Value({
   const kind = cellKinds[column.kind];
   const onlyLive = useDraftView() === "live";
   const none = drafted ? (
-    onlyLive && <EmptyLive />
+    <>
+      <EmptySide />
+      {onlyLive && <EmptyLive />}
+    </>
   ) : (
     <Text c="dimmed">{column.emptyLabel ?? "None"}</Text>
   );
@@ -549,7 +553,9 @@ export function Row({
                         chosenColour(column, liveUnder.live))
                   }
                 >
-                  {!liveEmpty && (
+                  {liveEmpty ? (
+                    <EmptySide />
+                  ) : (
                     <Value column={column} value={liveUnder.live} drafted />
                   )}
                 </ColouredName>
