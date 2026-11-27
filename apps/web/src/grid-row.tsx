@@ -32,7 +32,7 @@ import {
   wholeCellDraft,
 } from "./grid-drafts.ts";
 import { NamedWithOthers } from "./grid-groups.tsx";
-import type { Place, PlaceStore } from "./grid-places.ts";
+import type { Place, PlaceStore, Row } from "./grid-places.ts";
 import type { PanelGrid } from "./grid-panels.tsx";
 import classes from "./pages.module.css";
 import {
@@ -170,6 +170,8 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     | "onCellKey"
     | "problemIn"
     | "editor"
+    | "rowReuse"
+    | "passed"
   >,
 ) {
   const {
@@ -223,6 +225,8 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     onCellKey,
     problemIn,
     editor,
+    rowReuse,
+    passed,
   } = grid;
   const liveCellBeside = (
     record: Rec | undefined,
@@ -283,7 +287,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
       {withActions && <Table.Td className={classes.recordCell} />}
     </Table.Tr>
   );
-  const bodyRows = rows.map((row, rowIndex) => {
+  const drawRow = (row: Row<Rec>, rowIndex: number) => {
     const key = rowKey(row);
     const rowProblem =
       problem?.row === key ? problem.message : row.newRow?.problem;
@@ -774,7 +778,14 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
         runEnded !== undefined &&
         totalRow(`total-${key}`, table.totals, table.totals.label, runEnded),
     ];
-  });
+  };
+  const bodyRows = rowReuse.draw(
+    passed,
+    rows,
+    rowKey,
+    editing?.row,
+    drawRow,
+  );
   return {
     totalRow,
     bodyRows,

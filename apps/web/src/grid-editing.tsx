@@ -56,6 +56,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     | "followingKind"
     | "submitNewRows"
     | "hasRowMenu"
+    | "rowReuse"
   >,
 ) {
   const {
@@ -91,6 +92,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     followingKind,
     submitNewRows,
     hasRowMenu,
+    rowReuse,
   } = grid;
   // Whether a cell's value may not change, as in a record nobody may change yet, or a column whose
   // values follow from another's or that its kind of row does not have.
@@ -124,6 +126,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       if (typedFirst === undefined) save(cell, toggled(shownAt(row, column)));
       return;
     }
+    rowReuse.editStarting.current = true;
     setEditing(cell);
     setPanelOpen(
       opensPanel === true
@@ -283,6 +286,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       const next = typed.current + event.key;
       typed.current = asTyped?.({ text: next, cursor: null }).text ?? next;
       // The editor, which keeps its own text once open, starts afresh from what is typed so far.
+      rowReuse.editStarting.current = true;
       setOpenedWith((before) => before && { ...before, edit: before.edit + 1 });
       focusSoon(`${cellId(cell.row, cell.column)}-editor`);
       return;
