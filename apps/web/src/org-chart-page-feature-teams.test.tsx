@@ -117,8 +117,10 @@ describe("feature teams on the org chart", () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
 
-    // And Quay is under the unnamed hire's card, which names the team, by its ID
-    const lead = screen.getByRole("group", { name: "TBD-4" });
+    // And Quay is under the unnamed hire's card, which names the team, by its position and ID
+    const lead = screen.getByRole("group", {
+      name: "Fictional Engineer, TBD-4",
+    });
     expect(lead.textContent).toContain("Planned, no target date");
     expect(
       within(lead).getByRole("button", { name: "Fictional Quay" }),

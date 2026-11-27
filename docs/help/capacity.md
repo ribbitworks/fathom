@@ -107,6 +107,8 @@ The person is on the team from that month on. The change starts on the first day
 
 To take someone off a team from a month on, select their cell in that month, and press Delete.
 
+A planned hire's row works the same way, from the month it's expected. Its earlier months are shaded, and you can't change them, as for someone before they started.
+
 You're done when the team shows in the cell, with a dot for your draft.
 
 ### Change Several Members or a Team's Lead
@@ -124,8 +126,8 @@ You're done when the cell shows its value from before the change.
 ### In Feature Teams
 
 - **A team in a cell** shows its name after a small square in its colour, or with no square when it has none. Point at a name to see all of it.
-- **Shaded months** come before someone started or after they left.
-- **Planned hires** have rows too. A hire's cells name the teams it's on, from the month it joins, as a person's do.
+- **Shaded months** come before someone started or after they left, and can't be changed. Point at one, or move to it, to see why.
+- **Planned hires** have rows too. A hire's cells name the teams it's on, from the month it joins, as a person's do. Months before it's expected are shaded, and can't be changed.
 - **No feature team**, when grouped by **Feature team**, heads the people who are on no team in all the months shown.
 - **No manager**, when grouped by **Manager**, heads the people who report to nobody today.
 - **A green dot before a team**, in the light green Live row under a drafted row, marks a team the draft takes away. With **Live only** chosen in the **Draft** menu, it marks each team a waiting draft would take away. Point at it to see the change.
@@ -136,6 +138,7 @@ You're done when the cell shows its value from before the change.
 - **Over**, in red, ends a month whose allocations add up to more than 100%, with how much more at the right, such as **+25%**. **Under**, in red, ends one under 100%, with how much less, such as **−90%**.
 - **Not allocated**, in red, ends a month with nothing allocated. A month at exactly 100% has no last line.
 - **Over**, **Under** and **Not allocated** show from the current month on, and features and activities whose status means Possible don't count. Point at **Over** or **Under** to see the month's total.
+- **An earlier month** has no last line, though the totals still count everyone who could be allocated then, a planned hire from the month it was expected included. A cell with nothing allocated is blank, and counts as **0 of 1**.
 - **Planned hires** have rows of their own, under their manager, and under each feature team they're on or under **No feature team**. A group's heading counts people and planned hires apart, such as **2 people, 1 planned hire**. One with no name shows its position and ID in grey, such as **SDET, TBD-5**. Months before one is expected are shaded.
 - **Total, person-months**, in bold, ends each group, and **Organization, person-months** stays at the foot of the table. Grouped by **Allocated to**, **Allocated, all work** stays at the foot instead, in hours.
 - **A total**, such as **7.5 of 9**, is the person-months allocated that month, out of those available. The share is under it.

@@ -38,10 +38,10 @@ describe("the refusals of a change of someone's teams from a month", () => {
     expect(
       refusals.beforeExpected(
         { teamId: team, memberId: member, from: "2026-08-01" },
-        "2026-09",
+        "Sep 2026",
       ),
     ).toBe(
-      "This planned hire is expected in 2026-09. Choose a month from then on.",
+      "This planned hire is expected in Sep 2026. Choose a month from then on.",
     );
   });
 

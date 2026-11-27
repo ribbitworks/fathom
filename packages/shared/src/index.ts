@@ -201,6 +201,7 @@ export {
   isDay,
   isFirstOfMonth,
   monthNumber,
+  monthInWords,
   monthOf,
   isMonth,
   monthSchema,

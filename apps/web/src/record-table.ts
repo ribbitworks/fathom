@@ -144,6 +144,9 @@ export interface Column<
   choices: Choice[];
   // Whether a choice may be put in a cell, apart from being offered in its list.
   pickable?: (choice: Choice) => boolean;
+  // Why a choice offered can't be picked now, such as a planned hire not yet expected on the day
+  // shown, said in place of its description; undefined when it can.
+  choiceTurnedOff?: (choice: Choice) => string | undefined;
   // Whether a choice may be put in a row's cell, for a column whose choices depend on the row: its
   // record, or none for a new row, and its kind. It takes the place of pickable for that row.
   pickableOn?: (
@@ -228,6 +231,9 @@ export interface Column<
   // For a table with several kinds of record: whether a kind's rows show the column's value without
   // letting it be changed, such as a state that follows from being that kind.
   readOnlyOn?: (kind: string) => boolean;
+  // Why one record's cell can't be changed though its others can, such as a planned hire's months
+  // before it's expected, shown as the cell's tip; undefined when it can.
+  readOnlyIn?: (record: Rec) => string | undefined;
   // What a new row of a kind shows before anything is put in it, such as its kind.
   newRowValue?: (kind: string) => CellValue;
   // For a column the reader may show in one of several units: the units offered, the first of which

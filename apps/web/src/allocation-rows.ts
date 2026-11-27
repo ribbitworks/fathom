@@ -364,6 +364,7 @@ export function allocationMonthRecords({
         outside: person.outside,
         ...(person.madeName === undefined ? {} : { madeName: person.madeName }),
         ...(person.plannedHire === undefined ? {} : { plannedHire: true }),
+        ...(person.expected === undefined ? {} : { expected: person.expected }),
       },
       {
         teamsIn: person.teamsIn,

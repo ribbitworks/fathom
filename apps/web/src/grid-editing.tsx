@@ -102,7 +102,9 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     const { row, column } = at(cell);
     return (
       Boolean(row.record && locked(row.record)) ||
-      readOnlyFor(column, rowKind(row))
+      readOnlyFor(column, rowKind(row)) ||
+      (row.record !== undefined &&
+        column.readOnlyIn?.(row.record) !== undefined)
     );
   };
 
@@ -329,7 +331,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       startEdit(cell);
     } else if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
-      if (readOnlyFor(column, rowKind(row)) || writingInPanel) return;
+      if (readOnlyAt(cell) || writingInPanel) return;
       if (!save(cell, emptyValue(column))) putBack();
     } else if (event.key.length === 1) {
       event.preventDefault();

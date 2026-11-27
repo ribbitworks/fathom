@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for changing a month's teams on Capacity's Feature teams tab: from which day a change takes
-// effect, undoing it, and who may change which months.
+// effect, undoing it, who may change which months, and a planned hire's months.
 
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -163,5 +163,141 @@ describe("changing a month's teams", () => {
 
     expect(bodyOf(fetch, "PATCH", caseyUrl)).toEqual([]);
     expect(within(cell("2027-03")).getByText(platform.name)).toBeDefined();
+  });
+});
+
+describe("changing a planned hire's months", () => {
+  const hireUrl = "/api/feature-teams/members/h-tester";
+  const chart = {
+    people: [
+      {
+        id: "h-tester",
+        keyNumber: 2,
+        preferredName: "Fictional Tester, TBD-7",
+        employeeId: null,
+        position: "Fictional Tester",
+        teamName: null,
+        teamColour: null,
+        managerId: null,
+        planned: { expected: "2027-05", shownId: "TBD-7" },
+      },
+    ],
+    drafted: [],
+  };
+
+  async function openHire(
+    saved: () => Response = () => Response.json({ changeSetId: null }),
+  ) {
+    const fetch = answer({
+      "GET /api/session": session(["feature-teams:view", "feature-teams:edit"]),
+      [monthsUrl]: () =>
+        Response.json({
+          ...months,
+          hires: [{ id: "h-tester", teams: { "2027-04": [mobile.id] } }],
+        }),
+      "GET /api/org-chart": () => Response.json(chart),
+      [`PATCH ${hireUrl}`]: saved,
+    });
+    renderApp(featureTeamsAt());
+    await screen.findByText("Fictional Tester, TBD-7");
+    return fetch;
+  }
+
+  const hireCell = (month: string) =>
+    document.getElementById(`cell-h-tester-${month}`) as HTMLElement;
+
+  it("adds a team from the first day of the month it's expected", async () => {
+    const fetch = await openHire();
+    act(() => {
+      hireCell("2027-05").focus();
+    });
+
+    await userEvent.keyboard("mob");
+    await screen.findByRole("option", { name: "Mobile apps" });
+    await userEvent.keyboard("{Tab}");
+
+    expect(bodyOf(fetch, "PATCH", hireUrl)).toEqual([
+      { add: [mobile.id], remove: [], from: "2027-05-01" },
+    ]);
+  });
+
+  it("changes nothing in a month before it's expected", async () => {
+    const fetch = await openHire();
+    act(() => {
+      hireCell("2027-04").focus();
+    });
+
+    await userEvent.keyboard("mob");
+    await userEvent.keyboard("{Tab}");
+
+    expect(bodyOf(fetch, "PATCH", hireUrl)).toEqual([]);
+  });
+
+  it("says why a month before it's expected can't change, when the month has focus", async () => {
+    await openHire();
+    act(() => {
+      hireCell("2027-04").focus();
+    });
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "Can't join before May 2027",
+    );
+  });
+
+  it("takes nothing away with Delete in a month before it's expected", async () => {
+    const fetch = await openHire();
+    act(() => {
+      hireCell("2027-04").focus();
+    });
+
+    await userEvent.keyboard("{Delete}");
+
+    expect(bodyOf(fetch, "PATCH", hireUrl)).toEqual([]);
+    expect(within(hireCell("2027-04")).getByText(mobile.name)).toBeDefined();
+  });
+
+  it("names a planned hire with no name by its position and ID when a change fails", async () => {
+    await openHire(() => Response.json({}, { status: 500 }));
+    act(() => {
+      hireCell("2027-05").focus();
+    });
+
+    await userEvent.keyboard("mob");
+    await screen.findByRole("option", { name: "Mobile apps" });
+    await userEvent.keyboard("{Tab}");
+
+    expect(
+      await screen.findByText(
+        "Fathom could not change the feature teams of Fictional Tester, TBD-7.",
+      ),
+    ).toBeDefined();
+  });
+});
+
+describe("a person's months outside their employment", () => {
+  it("can't be changed, as the server would refuse them", async () => {
+    answer({
+      "GET /api/session": session([
+        "people:view",
+        "feature-teams:view",
+        "feature-teams:edit",
+        "personal:edit",
+      ]),
+      [monthsUrl]: () => Response.json(months),
+    });
+    renderApp(featureTeamsAt());
+    await screen.findByRole("grid", { name: "Feature teams by month" });
+    const avery = (month: string) =>
+      document.getElementById(`cell-p-avery-${month}`) as HTMLElement;
+
+    expect([
+      avery("2026-03").getAttribute("aria-readonly"),
+      avery("2026-04").hasAttribute("aria-readonly"),
+    ]).toEqual(["true", false]);
+    act(() => {
+      avery("2026-03").focus();
+    });
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "Not employed this month",
+    );
   });
 });

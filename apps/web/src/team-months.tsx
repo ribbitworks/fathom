@@ -68,6 +68,8 @@ export interface MonthRow extends CellRecord {
   // For a planned hire with no name: its position and ID, shown in grey in place of a name.
   madeName?: string;
   plannedHire?: true;
+  // For a planned hire: the month it's expected, from which it may join teams.
+  expected?: string;
 }
 
 export interface PersonMonths extends MonthRow {
@@ -178,6 +180,9 @@ const editableMonth = (
 
 const madeNameOf = ({ madeName }: MonthRow) => madeName ?? "";
 
+// A row's name, or, for a planned hire with none, its position and ID.
+const shownName = (record: MonthRow) => record.name || madeNameOf(record);
+
 // The key of the filter by the choices in any month, in the address and in views.
 export const anyMonthKey = "any-month";
 
@@ -253,6 +258,14 @@ export function monthGridTable<
       headingCentred: true,
       current: month === currentMonth,
       readOnly: readOnly(month),
+      // Nobody joins or leaves a team outside their employment, nor a planned hire before the month
+      // it's expected, so the server would refuse a change there.
+      readOnlyIn: (record) => {
+        if (!record.outside.has(month)) return undefined;
+        return record.expected === undefined
+          ? "Not employed this month"
+          : `Can't join before ${formatMonth(record.expected)}`;
+      },
       choiceColour,
     };
   });
@@ -289,8 +302,7 @@ export function monthGridTable<
     label,
     one: "person",
     noun: "people",
-    nameOf: (record) => record.name || madeNameOf(record),
-    readOnlyRecord: (record) => record.plannedHire === true,
+    nameOf: shownName,
     nameColumn: "name",
     countedAs: ({ personId }) => personId,
     columnsFor: () => columns,
@@ -364,36 +376,50 @@ export function monthChange(
 }
 
 // The months as a change of someone's teams from a month makes them, shown at once while it saves:
-// the teams added and removed in that month and every later one, as the person's own draft.
+// the teams added and removed in that month and every later one, as the person's or planned hire's
+// own draft.
 export function withMonthChange(
   data: TeamMonths,
-  personId: string,
+  memberId: string,
   month: string,
   { add, remove }: MemberTeamsChange,
 ): TeamMonths {
   const changed = [...add, ...remove];
   const knownDrafts = new Set(data.drafts.map(({ teamId }) => teamId));
+  const changedMember = <Member extends { id: string } & MemberMonths>(
+    member: Member,
+  ): Member => {
+    if (member.id !== memberId) return member;
+    const teams = new Map(Object.entries(member.drafted?.teams ?? {}));
+    const approved = new Map(Object.entries(member.teams));
+    for (const later of data.months.filter((one) => one >= month)) {
+      const before = teams.get(later) ?? approved.get(later) ?? [];
+      teams.set(
+        later,
+        [...before.filter((id) => !changed.includes(id)), ...add].sort(),
+      );
+    }
+    return {
+      ...member,
+      drafted: {
+        teams: Object.fromEntries(teams),
+        by: [...new Set([...(member.drafted?.by ?? []), ...changed])],
+      },
+    };
+  };
+  const hires = data.hires ?? [];
+  // Someone neither listed is a planned hire on no team yet, whose months the data doesn't hold.
+  const listed = [...data.people, ...hires].some(({ id }) => id === memberId);
   return {
     ...data,
-    people: data.people.map((person) => {
-      if (person.id !== personId) return person;
-      const teams = new Map(Object.entries(person.drafted?.teams ?? {}));
-      const approved = new Map(Object.entries(person.teams));
-      for (const later of data.months.filter((one) => one >= month)) {
-        const before = teams.get(later) ?? approved.get(later) ?? [];
-        teams.set(
-          later,
-          [...before.filter((id) => !changed.includes(id)), ...add].sort(),
-        );
-      }
-      return {
-        ...person,
-        drafted: {
-          teams: Object.fromEntries(teams),
-          by: [...new Set([...(person.drafted?.by ?? []), ...changed])],
-        },
-      };
-    }),
+    people: data.people.map(changedMember),
+    ...(listed && data.hires === undefined
+      ? {}
+      : {
+          hires: (listed ? hires : [...hires, { id: memberId, teams: {} }]).map(
+            changedMember,
+          ),
+        }),
     drafts: [
       ...data.drafts,
       ...changed
@@ -440,7 +466,7 @@ export function useTeamMonthActions(
       save({
         next: (data) => withMonthChange(data, record.personId, month, request),
         save: () => changeMemberTeams(record.personId, request),
-        failure: `Fathom could not change the feature teams of ${record.name}.`,
+        failure: `Fathom could not change the feature teams of ${shownName(record)}.`,
         onSaved: undoable,
       });
     },

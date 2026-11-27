@@ -7,6 +7,7 @@ import { Table, Text, VisuallyHidden } from "@mantine/core";
 import type { FocusEvent } from "react";
 import { ColouredName } from "./colour-swatch.tsx";
 import { focusFoundSoon } from "./focus.ts";
+import { tipAttribute } from "./table-tips.tsx";
 import {
   cellContent,
   centred,
@@ -414,6 +415,11 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
             draftChanges(cellDraft, column) &&
             !(column.parts !== undefined && cellDraft?.action === "changed");
           const mark = row.record && !editingHere && column.mark?.(row.record);
+          // Why this record's cell can't be changed, as its tip, where the column says.
+          const readOnlyWhy =
+            row.record === undefined
+              ? undefined
+              : column.readOnlyIn?.(row.record);
           const facts =
             row.record && !editingHere && column.facts?.(row.record);
           const recordClass =
@@ -480,9 +486,11 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
               data-shaded={
                 (row.record && column.shaded?.(row.record)) || undefined
               }
+              {...{ [tipAttribute]: readOnlyWhy }}
               aria-readonly={
                 readOnlyFor(column, rowKind(row)) ||
                 (row.record && table.readOnlyRecord?.(row.record)) ||
+                readOnlyWhy !== undefined ||
                 draft?.action === "deleted" ||
                 row.record?.heldBy !== undefined ||
                 (row.record && isPending(row.record))

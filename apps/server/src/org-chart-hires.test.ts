@@ -226,9 +226,19 @@ describe("planned hires on the chart", () => {
       /^Fictional Renamed Hire/,
     );
     expect(asDrafted.has(removed)).toBe(false);
+    // A hire drafted to be removed is marked so, and one whose other draft changes nothing shown isn't
+    expect(shown.get(removed)?.draft).toEqual({
+      removed: true,
+      state: "waiting",
+      unpublished: false,
+    });
+    expect(shown.get(moving)?.draft?.removed).toBeUndefined();
     const generalViewer = await test.signedIn(generalReader);
     expect(
       (await chart(generalViewer.cookie)).get(moving)?.draft,
+    ).toBeUndefined();
+    expect(
+      (await chart(generalViewer.cookie)).get(removed)?.draft,
     ).toBeUndefined();
     const viewerDrafted = await drafted(generalViewer.cookie);
     expect(viewerDrafted.get(moving)?.managerId).toBe(first);

@@ -2,191 +2,26 @@
 
 // Tests for a feature team's panel on its own, with what it asks to save recorded.
 
-import type { FeatureTeam, OrgChartPerson, Show } from "@fathom/shared";
-import { MantineProvider } from "@mantine/core";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  cleanup,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import type { FeatureTeam } from "@fathom/shared";
+import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { noFeatureTeamEdits } from "./feature-team-panel.tsx";
+import { formatDay, plannedWords } from "./day-formats.ts";
+import marks from "./status-mark.module.css";
+import { detailRow } from "./test-support.tsx";
 import {
-  type FeatureTeamActions,
-  type FeatureTeamEdits,
-  FeatureTeamPanel,
-  noFeatureTeamEdits,
-} from "./feature-team-panel.tsx";
-import { DraftView } from "./status-mark.tsx";
-import { formatDay, formatMonth } from "./day-formats.ts";
-import { detailRow, detailValue, testTheme } from "./test-support.tsx";
-
-const person = (
-  id: string,
-  preferredName: string,
-  details: Partial<OrgChartPerson> = {},
-): OrgChartPerson => ({
-  id,
-  keyNumber: 1,
-  preferredName,
-  employeeId: `E-${id}`,
-  position: "Fictional Engineer",
-  teamName: null,
-  teamColour: null,
-  managerId: "boss",
-  ...details,
-});
-
-const people = [
-  person("boss", "Robin Fictional", {
-    position: "Fictional Director",
-    managerId: null,
-    teamName: "Fictional Harbour Crew",
-  }),
-  person("other-boss", "Sasha Fictional", {
-    position: "Fictional Manager",
-    managerId: null,
-  }),
-  person("m1", "Avery Fictional"),
-  person("m2", "Blake Fictional", { position: "Fictional Designer" }),
-  person("p1", "Casey Fictional", { managerId: "other-boss" }),
-  person("p2", "Drew Fictional", { managerId: "nobody", position: "" }),
-  person("hire", "Ellis Fictional", { planned: { expected: "2027-06" } }),
-  person("tbd", "Fictional Tester, TBD-7", {
-    planned: { expected: "2027-04", undated: true, shownId: "TBD-7" },
-  }),
-  person("departed", "Gale Fictional", { left: true }),
-] as OrgChartPerson[];
-
-const team = (fields: Partial<FeatureTeam> = {}): FeatureTeam => ({
-  id: "t1",
-  keyNumber: 1,
-  name: "Fictional Lighthouse",
-  leadId: "m1",
-  colour: null,
-  members: ["m2", "m1"],
-  names: {},
-  ...fields,
-});
-
-// The planned hires the team read gives, as it names them.
-const hireNames = {
-  hire: "Ellis Fictional",
-  tbd: "Fictional Tester, TBD-7",
-  filled: "Fictional Data Engineer",
-  later: "Fictional Analyst",
-};
-
-const teamHires: FeatureTeam["hires"] = {
-  hire: { keyNumber: 9, expected: "2027-06" },
-  tbd: { keyNumber: 12, shownId: "TBD-7", expected: "2027-04", undated: true },
-  filled: {
-    keyNumber: 5,
-    expected: "2027-02",
-    filledBy: { id: "joiner", name: "Fictional Joiner", starts: "2027-02-01" },
-  },
-  later: { keyNumber: 3, expected: "2027-09" },
-};
-
-const draft = (fields: Partial<NonNullable<FeatureTeam["draft"]>> = {}) => ({
-  action: "changed" as const,
-  changed: [],
-  live: {},
-  state: "waiting" as const,
-  madeBy: "Fictional Editor",
-  madeAt: "2026-10-30T15:00:00.000Z",
-  discardable: true,
-  ...fields,
-});
-
-const everything: FeatureTeamEdits = {
-  members: true,
-  undated: true,
-  dates: true,
-};
-
-const actions = () =>
-  ({
-    create: vi.fn(),
-    rename: vi.fn(),
-    lead: vi.fn(),
-    members: vi.fn(),
-    removeTeam: vi.fn(),
-    discard: vi.fn(),
-    resubmit: vi.fn(),
-    colour: vi.fn(() => () => Promise.resolve()),
-  }) satisfies FeatureTeamActions;
-
-function openPanel({
-  shown = team(),
-  edits = everything,
-  show = "both",
-  day,
-}: {
-  // None for a new team.
-  shown?: FeatureTeam | null;
-  edits?: FeatureTeamEdits;
-  show?: Show;
-  // The day the chart shows, when not today.
-  day?: string;
-} = {}) {
-  const asked = actions();
-  const onClose = vi.fn();
-  render(
-    <QueryClientProvider client={new QueryClient()}>
-      <MantineProvider theme={testTheme}>
-        <DraftView show={show}>
-          <FeatureTeamPanel
-            team={shown ?? undefined}
-            day={day}
-            people={people}
-            edits={edits}
-            show={show}
-            narrow={false}
-            actions={asked}
-            onClose={onClose}
-          />
-        </DraftView>
-      </MantineProvider>
-    </QueryClientProvider>,
-  );
-  return { asked, onClose };
-}
-
-// The panel's heading with the marks beside it, such as a draft's, which are kept out of the heading
-// itself so it names the team alone.
-const headingRow = () =>
-  screen.getByRole("heading", { name: "Fictional Lighthouse", level: 2 })
-    .parentElement as HTMLElement;
-
-// What a row of the panel reads, by its label: its value, and any marks and live value under it.
-const rowText = (label: string) => detailValue(label);
-
-// The members listed, each with what screen readers hear of a draft's change to them.
-const memberLines = () =>
-  within(detailRow("Members"))
-    .getAllByRole("listitem")
-    .map(({ textContent }) => textContent.trim());
-
-// The planned hires listed, each its two lines.
-const hireLines = () =>
-  within(detailRow("Planned hires"))
-    .getAllByRole("listitem")
-    .map(({ textContent }) => textContent.trim());
-
-const optionNames = () =>
-  screen.queryAllByRole("option").map(({ textContent }) => textContent);
-
-const changeButton = (label: string) =>
-  screen.queryByRole("button", { name: `Change ${label}` });
-
-async function pick(label: string, option: RegExp | string) {
-  await userEvent.click(changeButton(label) as HTMLElement);
-  await userEvent.click(await screen.findByRole("option", { name: option }));
-}
+  changeButton,
+  draft,
+  everything,
+  headingRow,
+  memberLines,
+  openPanel,
+  optionNames,
+  pick,
+  rowText,
+  team,
+} from "./test-feature-team-panel.tsx";
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -296,119 +131,6 @@ describe("a feature team's panel", () => {
     ]);
   });
 
-  it("lists people under Members and planned hires under Planned hires, filled first, then by the month expected, with no target date last", () => {
-    openPanel({
-      shown: team({
-        members: ["tbd", "m2", "later", "hire", "filled", "m1"],
-        names: hireNames,
-        hires: teamHires,
-      }),
-    });
-    expect(memberLines()).toEqual(["Avery Fictional", "Blake Fictional"]);
-    expect(hireLines()).toEqual([
-      `Fictional Data Engineer #HIRE-5Filled by Fictional Joiner, starts ${formatDay("2027-02-01")}`,
-      `Ellis Fictional #HIRE-9Expected ${formatMonth("2027-06")}`,
-      `Fictional Analyst #HIRE-3Expected ${formatMonth("2027-09")}`,
-      "Fictional Tester, TBD-7 #HIRE-12No target date",
-    ]);
-  });
-
-  it("marks no planned hire with a Planned box, which its row's label says", () => {
-    openPanel({
-      shown: team({
-        members: ["m1", "hire"],
-        names: hireNames,
-        hires: teamHires,
-      }),
-    });
-    expect(rowText("Planned hires")).not.toMatch(/Planned/);
-  });
-
-  it("names a planned hire with no name of its own by its position and ID in grey italics", () => {
-    openPanel({
-      shown: team({
-        members: ["m1", "tbd", "hire"],
-        names: hireNames,
-        hires: teamHires,
-      }),
-    });
-    const hires = within(detailRow("Planned hires"));
-    expect(
-      hires.getByText("Fictional Tester, TBD-7").getAttribute("style"),
-    ).toContain("italic");
-    expect(
-      hires.getByText("Ellis Fictional").getAttribute("style") ?? "",
-    ).not.toContain("italic");
-  });
-
-  it("names a planned hire leading the team on the same two lines, listing it under Planned hires too", () => {
-    openPanel({
-      shown: team({
-        leadId: "tbd",
-        members: ["tbd", "m1"],
-        names: hireNames,
-        hires: teamHires,
-      }),
-    });
-    expect(rowText("Feature lead")).toBe(
-      "Fictional Tester, TBD-7 #HIRE-12No target date",
-    );
-    expect(hireLines()).toEqual([
-      "Fictional Tester, TBD-7 #HIRE-12No target date",
-    ]);
-  });
-
-  it("has no Planned hires row without planned hires, and never a pencil of its own", () => {
-    openPanel();
-    expect(screen.queryByText("Planned hires")).toBeNull();
-    cleanup();
-    openPanel({
-      shown: team({
-        members: ["m1", "hire"],
-        names: hireNames,
-        hires: teamHires,
-      }),
-    });
-    expect(screen.getByText("Planned hires")).toBeDefined();
-    expect(changeButton("Planned hires")).toBeNull();
-    expect(changeButton("Members")).not.toBeNull();
-  });
-
-  it("gives a planned hire a draft takes off the day of the draft alone", () => {
-    openPanel({
-      day: "2027-05-01",
-      shown: team({
-        members: ["m1", "m2"],
-        names: hireNames,
-        hires: teamHires,
-        hiresFrom: { hire: "2027-03-01" },
-        draft: draft({
-          changed: ["members"],
-          live: { members: ["m1", "m2", "hire"] },
-          hireDays: { hire: "2027-06-01" },
-        }),
-      }),
-    });
-    const [line] = hireLines();
-    expect(line).toContain(`from ${formatDay("2027-06-01")}, removed`);
-    expect(line).not.toContain(formatDay("2027-03-01"));
-  });
-
-  it("marks a planned hire a draft adds under Planned hires", () => {
-    openPanel({
-      shown: team({
-        members: ["m1", "m2", "hire"],
-        names: hireNames,
-        hires: teamHires,
-        draft: draft({ changed: ["members"], live: { members: ["m1", "m2"] } }),
-      }),
-    });
-    expect(memberLines()).toEqual(["Avery Fictional", "Blake Fictional"]);
-    expect(hireLines()).toEqual([
-      `Ellis Fictional #HIRE-9, addedExpected ${formatMonth("2027-06")}`,
-    ]);
-  });
-
   it("names no members and no lead as None", () => {
     openPanel({ shown: team({ leadId: null, members: [] }) });
     expect([rowText("Feature lead"), rowText("Members")]).toEqual([
@@ -460,7 +182,7 @@ describe("a feature team's panel", () => {
     expect(asked.rename).not.toHaveBeenCalled();
   });
 
-  it("offers None first, then each person who may lead, with their position and the team they are on or whom they report to", async () => {
+  it("offers None first, then each person who may lead, with their position and the team they are on or whom they report to, then each planned hire, by when it's expected or why it can't join yet", async () => {
     openPanel();
     await userEvent.click(changeButton("Feature lead") as HTMLElement);
     expect(optionNames()).toEqual([
@@ -471,19 +193,31 @@ describe("a feature team's panel", () => {
       "Drew Fictional",
       "Robin FictionalFictional Director",
       "Sasha FictionalFictional Manager",
+      "Ellis FictionalCan't join before Jun 2027",
+      "Fictional Tester, TBD-7No target date",
     ]);
   });
 
   it("chooses the lead", async () => {
     const { asked } = openPanel();
     await pick("Feature lead", /^Blake Fictional/);
-    expect(asked.lead).toHaveBeenCalledWith(team(), "m2", undefined);
+    expect(asked.lead).toHaveBeenCalledWith(
+      team(),
+      "m2",
+      undefined,
+      expect.objectContaining({ about: "leadId" }),
+    );
   });
 
   it("takes the lead away with None", async () => {
     const { asked } = openPanel();
     await pick("Feature lead", "None");
-    expect(asked.lead).toHaveBeenCalledWith(team(), null, undefined);
+    expect(asked.lead).toHaveBeenCalledWith(
+      team(),
+      null,
+      undefined,
+      expect.objectContaining({ about: "leadId" }),
+    );
   });
 
   it("finds people by their position and the team they are on", async () => {
@@ -506,6 +240,7 @@ describe("a feature team's panel", () => {
       team(),
       { add: ["p1"], remove: ["m2"] },
       undefined,
+      expect.objectContaining({ about: "members" }),
     );
   });
 
@@ -532,13 +267,14 @@ describe("a feature team's panel", () => {
       expect.anything(),
       { add: ["p1"], remove: [] },
       undefined,
+      expect.objectContaining({ about: "members" }),
     );
   });
 
-  it("does not offer someone who has left, or a planned hire", async () => {
+  it("does not offer someone who has left", async () => {
     openPanel();
     await userEvent.click(changeButton("Members") as HTMLElement);
-    expect(optionNames().join()).not.toMatch(/Gale|Ellis/);
+    expect(optionNames().join()).not.toMatch(/Gale/);
   });
 
   it("makes changes from the day the chart shows", async () => {
@@ -547,11 +283,17 @@ describe("a feature team's panel", () => {
     await userEvent.click(changeButton("Members") as HTMLElement);
     await userEvent.click(screen.getByRole("option", { name: /^Casey/ }));
     await userEvent.keyboard("{Enter}");
-    expect(asked.lead).toHaveBeenCalledWith(team(), "m2", "2027-05-01");
+    expect(asked.lead).toHaveBeenCalledWith(
+      team(),
+      "m2",
+      "2027-05-01",
+      expect.objectContaining({ about: "leadId" }),
+    );
     expect(asked.members).toHaveBeenCalledWith(
       team(),
       { add: ["p1"], remove: [] },
       "2027-05-01",
+      expect.objectContaining({ about: "members" }),
     );
   });
 

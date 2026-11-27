@@ -488,7 +488,7 @@ describe("planned hires on Feature teams", () => {
     drafted: [],
   };
 
-  it("gives a planned hire on no team a row with no teams, read only, shaded before it is expected", async () => {
+  it("gives a planned hire on no team a row with no teams, read only and shaded before it is expected", async () => {
     // Given a role that sees planned hires, and one expected in May 2027
     answer({
       "GET /api/session": session(["feature-teams:view", "feature-teams:edit"]),
@@ -500,15 +500,16 @@ describe("planned hires on Feature teams", () => {
     renderApp(featureTeamsAt());
     await screen.findByText("Payments tester");
 
-    // Then the hire's months are read only, and those before May 2027 are shaded
+    // Then the hire's months before May 2027 are read only and shaded, and May's may be changed
     const cell = (month: string) =>
       document.getElementById(`cell-h-tester-${month}`) as HTMLElement;
     expect([
       cell("2027-04").getAttribute("aria-readonly"),
       cell("2027-04").hasAttribute("data-shaded"),
+      cell("2027-05").hasAttribute("aria-readonly"),
       cell("2027-05").hasAttribute("data-shaded"),
       cell("2027-05").textContent,
-    ]).toEqual(["true", true, false, ""]);
+    ]).toEqual(["true", true, false, false, ""]);
   });
 
   it("gives a planned hire on a team its team in each month from the one it joins, under the team grouped by feature team", async () => {

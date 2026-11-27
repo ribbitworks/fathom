@@ -20,8 +20,10 @@ import classes from "./date-control.module.css";
 
 const dateBoxId = "date-shown";
 const monthsEachWay = 24;
-// Every month has a mark, and every twelfth its name, or fewer where the slider is narrow.
+// Every month has a mark, and every January its name, or fewer where the slider is narrow.
 const monthsBetweenLabels = 12;
+// January's number in monthNumber's count, from which named months are counted.
+const januaryNumber = 1;
 // The room a month's label needs beside the next, such as Nov 2026, in pixels.
 const labelRoom = 80;
 
@@ -112,8 +114,10 @@ export function DateControl({
     { length: monthsEachWay + latest + 1 },
     (_, index) => {
       const value = index - monthsEachWay;
-      return value % every === 0
-        ? { value, label: formatMonth(monthOf(dayOfMonthFromNow(value))) }
+      const month = monthOf(dayOfMonthFromNow(value));
+      // Each name is a January, so a month shown never sits beside another month's name.
+      return (monthNumber(month) - januaryNumber) % every === 0
+        ? { value, label: formatMonth(month) }
         : { value };
     },
   );

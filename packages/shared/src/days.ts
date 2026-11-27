@@ -31,6 +31,17 @@ const monthLength = "YYYY-MM".length;
 // The month a day is in, such as 2026-10 for 2026-10-31.
 export const monthOf = (day: string): string => day.slice(0, monthLength);
 
+const monthWords = new Intl.DateTimeFormat("en", {
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+// A month, such as 2027-05, as the server's refusals say it, such as May 2027: in English, as a
+// screen in English shows it, though a reader's own language may word it otherwise, such as Sept.
+export const monthInWords = (month: string): string =>
+  monthWords.format(new Date(`${month}-01T00:00:00Z`));
+
 const monthsInYear = 12;
 
 // A month, or the month of a day, as a count of months, so two can be compared or subtracted.

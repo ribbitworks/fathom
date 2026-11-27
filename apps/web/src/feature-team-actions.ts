@@ -4,9 +4,8 @@
 // removing members, removing it, discarding or resending its draft, and its colour. Each change
 // saves as a draft, which can be undone.
 
-import type { Refusal } from "./api.ts";
 import type { FeatureTeams } from "@fathom/shared";
-import type { FeatureTeamActions } from "./feature-team-panel.tsx";
+import type { FeatureTeamActions, RefusedIn } from "./feature-team-panel.tsx";
 import {
   createFeatureTeam,
   deleteFeatureTeam,
@@ -33,14 +32,15 @@ export function useFeatureTeamActions(
   const saveTeam = (
     save: () => Promise<string | null>,
     failure: string,
-    onRefused?: (refusal: Refusal) => boolean,
+    refused?: RefusedIn,
   ) => {
     saving({
       next: (data) => data,
       save,
       failure,
-      onRefused,
+      onRefused: refused?.onRefused,
       onSaved: undoable,
+      ...(refused?.about === undefined ? {} : { about: refused.about }),
     });
   };
   return {
@@ -52,7 +52,7 @@ export function useFeatureTeamActions(
           return changeSetId;
         },
         `Fathom could not add ${request.name}.`,
-        refused,
+        { onRefused: refused },
       );
     },
     rename: (team, name) => {
@@ -61,7 +61,7 @@ export function useFeatureTeamActions(
         `Fathom could not rename ${team.name}.`,
       );
     },
-    lead: (team, leadId, from) => {
+    lead: (team, leadId, from, refused) => {
       saveTeam(
         () =>
           updateFeatureTeam(team.id, {
@@ -69,9 +69,10 @@ export function useFeatureTeamActions(
             ...(from === undefined ? {} : { from }),
           }),
         `Fathom could not change the lead of ${team.name}.`,
+        refused,
       );
     },
-    members: (team, { add, remove }, from) => {
+    members: (team, { add, remove }, from, refused) => {
       saveTeam(
         () =>
           updateFeatureTeam(team.id, {
@@ -80,6 +81,7 @@ export function useFeatureTeamActions(
             ...(from === undefined ? {} : { from }),
           }),
         `Fathom could not change the members of ${team.name}.`,
+        refused,
       );
     },
     removeTeam: (team) => {

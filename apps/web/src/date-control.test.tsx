@@ -37,7 +37,7 @@ const button = (name: string) =>
   screen.getByRole<HTMLButtonElement>("button", { name });
 
 describe("the date control", () => {
-  it("marks every month on the timeline and names every twelfth", () => {
+  it("marks every month on the timeline and names each year's January", () => {
     control(undefined);
 
     expect(document.querySelectorAll(".mantine-Slider-mark")).toHaveLength(49);
@@ -45,7 +45,19 @@ describe("the date control", () => {
       [...document.querySelectorAll(".mantine-Slider-markLabel")].map(
         (label) => label.textContent,
       ),
-    ).toEqual(["Mar 2025", "Mar 2026", "Mar 2027", "Mar 2028", "Mar 2029"]);
+    ).toEqual(["Jan 2026", "Jan 2027", "Jan 2028", "Jan 2029"]);
+  });
+
+  it("names no month beside a later one shown, so the day shown never reads as today's month", () => {
+    // Given today in November, and a day in February shown
+    vi.setSystemTime(new Date("2026-11-26T12:00:00Z"));
+    control("2027-02-01");
+
+    // Then the months named are Januaries, the one before February among them, and not November
+    const names = [
+      ...document.querySelectorAll(".mantine-Slider-markLabel"),
+    ].map((label) => label.textContent);
+    expect(names).toEqual(["Jan 2025", "Jan 2026", "Jan 2027", "Jan 2028"]);
   });
 
   it("names fewer months as the timeline narrows, such as beside a wider side panel", () => {
@@ -74,7 +86,7 @@ describe("the date control", () => {
       [...document.querySelectorAll(".mantine-Slider-markLabel")].map(
         (label) => label.textContent,
       ),
-    ).toEqual(["Mar 2025", "Mar 2027", "Mar 2029"]);
+    ).toEqual(["Jan 2026", "Jan 2028"]);
   });
 
   it("shows today with nothing to go back to", () => {

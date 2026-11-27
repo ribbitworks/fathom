@@ -16,6 +16,7 @@ import {
   chartViewSearch,
   chartPeople,
   heightOf,
+  hiresRemoved,
   collapsedBelow,
   collapsedTo,
   leadOf,
@@ -648,5 +649,23 @@ describe("the details each card opens", () => {
         filled: { name: "Fictional Unlisted", personId: "unlisted" },
       }),
     ).toBeUndefined();
+  });
+});
+
+describe("the planned hires a draft removes", () => {
+  it("are those whose own draft removes them, not those missing from the drafted chart for another draft, such as a fill", () => {
+    const draft = { state: "waiting" as const, unpublished: false };
+    const removed = {
+      ...person("h-removed", null),
+      planned: { expected: "2027-03" },
+      draft: { ...draft, removed: true as const },
+    };
+    const filling = {
+      ...person("h-filling", null),
+      planned: { expected: "2027-03" },
+    };
+    expect([
+      ...hiresRemoved({ people: [person("p1", null), removed, filling] }),
+    ]).toEqual(["h-removed"]);
   });
 });

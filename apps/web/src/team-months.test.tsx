@@ -589,4 +589,34 @@ describe("the months shown at once while a change saves", () => {
       by: ["t-web"],
     });
   });
+
+  it("changes a planned hire's months as its own draft, leaving people as they were", () => {
+    const shown = withMonthChange(
+      { ...data, hires: [{ id: "h-tester", teams: { "2027-05": ["t-web"] } }] },
+      "h-tester",
+      "2027-05",
+      { add: ["t-mobile"], remove: [] },
+    );
+
+    expect(shown.hires?.[0]?.drafted).toEqual({
+      teams: { "2027-05": ["t-mobile", "t-web"] },
+      by: ["t-mobile"],
+    });
+    expect(shown.people).toEqual(data.people);
+  });
+
+  it("gives a planned hire on no team yet the months its change makes", () => {
+    const shown = withMonthChange(data, "h-tester", "2027-05", {
+      add: ["t-mobile"],
+      remove: [],
+    });
+
+    expect(shown.hires).toEqual([
+      {
+        id: "h-tester",
+        teams: {},
+        drafted: { teams: { "2027-05": ["t-mobile"] }, by: ["t-mobile"] },
+      },
+    ]);
+  });
 });

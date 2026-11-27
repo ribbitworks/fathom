@@ -80,7 +80,11 @@ describe("saving a change", () => {
 describe("a change the server refuses", () => {
   // Saves a change the server answers with the error given, its refusal shown in place when the
   // page says it could be.
-  async function refusedWith(error: Error, shownInPlace = true) {
+  async function refusedWith(
+    error: Error,
+    shownInPlace = true,
+    about?: string,
+  ) {
     const onRefused = vi.fn(() => shownInPlace);
     const onFailed = vi.fn();
     const { result } = renderHook(
@@ -96,6 +100,7 @@ describe("a change the server refuses", () => {
         failure: "Could not save.",
         onFailed,
         onRefused,
+        ...(about === undefined ? {} : { about }),
       });
     });
     await waitFor(() => {
@@ -115,6 +120,19 @@ describe("a change the server refuses", () => {
       expect(notifyFailure).not.toHaveBeenCalled();
     },
   );
+
+  it("names a refusal about no field under the field the change was made in", async () => {
+    const onRefused = await refusedWith(
+      new ApiError(400, "Try again."),
+      true,
+      "members",
+    );
+    expect(onRefused).toHaveBeenCalledWith({
+      reason: "Try again.",
+      field: "members",
+    });
+    expect(notifyFailure).not.toHaveBeenCalled();
+  });
 
   it("names a refusal in a notification when its field isn't shown", async () => {
     await refusedWith(new ApiError(409, taken, undefined, "name"), false);

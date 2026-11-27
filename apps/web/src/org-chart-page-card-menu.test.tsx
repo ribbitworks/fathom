@@ -70,9 +70,9 @@ describe("a card's menu and finding by key", () => {
   it("offers a planned hire's placeholder only Copy link, linking the hire", async () => {
     const user = userEvent.setup();
     await openChart(keyed);
-    const placeholder = (await screen.findAllByText("TBD-7")).find(
-      (shown) => shown.closest("div.react-flow__node") !== null,
-    ) as HTMLElement;
+    const placeholder = await screen.findByRole("group", {
+      name: "Fictional Engineer, TBD-7",
+    });
     await user.pointer({ keys: "[MouseRight]", target: placeholder });
     expect(await items()).toEqual(["Copy link"]);
     await user.click(screen.getByRole("menuitem", { name: "Copy link" }));
@@ -83,7 +83,9 @@ describe("a card's menu and finding by key", () => {
 
   it("opens the menu of a card with no link from Shift+F10 on the card itself", async () => {
     await openChart(keyed);
-    const placeholder = await screen.findByRole("group", { name: "TBD-7" });
+    const placeholder = await screen.findByRole("group", {
+      name: "Fictional Engineer, TBD-7",
+    });
     placeholder.focus();
     await userEvent.keyboard("{Shift>}{F10}{/Shift}");
     expect(await items()).toEqual(["Copy link"]);

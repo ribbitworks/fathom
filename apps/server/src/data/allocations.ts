@@ -26,6 +26,7 @@ import {
   effortNeeded,
   knownColour,
   meaningSchema,
+  monthInWords,
   type PaletteColour,
   type MonthSpan,
   withChange,
@@ -145,7 +146,7 @@ function draftingRefusal(outside: Outside, person: boolean): string {
   }
   return person
     ? `This person starts in ${outside.before}. Choose a first month from then on.`
-    : `This planned hire is expected in ${outside.before}. Choose a first month from then on.`;
+    : `This planned hire is expected in ${monthInWords(outside.before)}. Choose a first month from then on.`;
 }
 
 // An Approver has no month to choose, so is told what does not fit, and what to do about it. The
@@ -165,7 +166,7 @@ function outsideInWords(outside: Outside, person: boolean): string {
   }
   return person
     ? `starts before their first month, ${outside.before}`
-    : `starts before ${outside.before}, the month they're expected`;
+    : `starts before ${monthInWords(outside.before)}, the month they're expected`;
 }
 
 const notAllocatedYet = "This planned hire can't be allocated yet";
