@@ -75,7 +75,7 @@ import {
   refuseSensitivePlanningList,
   refuseWeightMisfit,
 } from "./list-rules.ts";
-import { refuseDiscardingOthers } from "./draft-makers.ts";
+import { refuseDiscardingOthers } from "./record-discards.ts";
 import {
   addedChoices,
   choiceChanges,

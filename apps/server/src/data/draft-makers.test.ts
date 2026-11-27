@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Unit tests for who may discard a draft, and the marks a draft carries for the viewer.
+// Unit tests for the rule for who may discard any draft, and the marks a draft carries for the
+// viewer.
 
 import { describe, expect, it } from "vitest";
-import { type Maker, mayDiscard, viewerMarks } from "./draft-makers.ts";
+import {
+  type Maker,
+  ownDiscardRefusal,
+  ownMarks,
+  viewerMarks,
+} from "./draft-makers.ts";
 
 const maker = (changedByUser: boolean): Maker => ({
   madeBy: "Fictional Maker",
@@ -17,27 +23,23 @@ const maker = (changedByUser: boolean): Maker => ({
 
 describe("who may discard a draft", () => {
   it.each([
-    [true, false, true],
-    [false, true, true],
-    [false, false, false],
-  ])(
-    "is one who changed it (%s), or whose role discards it whoever changed it (%s): %s",
-    (changed, whoever, may) => {
-      expect(mayDiscard(changed, whoever)).toBe(may);
-    },
-  );
+    [true, undefined],
+    [false, "Only someone who changed this draft can discard it."],
+  ])("is one who changed it: changed %s", (changed, refusal) => {
+    expect(ownDiscardRefusal(changed)).toBe(refusal);
+  });
 });
 
 describe("a draft's marks for the viewer", () => {
   it("mark it discardable for the viewer who changed it", () => {
-    expect(viewerMarks(maker(true))).toEqual({ discardable: true });
+    expect(ownMarks(maker(true))).toEqual({ discardable: true });
   });
 
-  it("mark it discardable for a role that discards it whoever changed it, though Fathom made it", () => {
+  it("mark nothing for anyone else, nor for a draft Fathom made", () => {
+    expect([ownMarks(maker(false)), ownMarks(undefined)]).toEqual([{}, {}]);
+  });
+
+  it("mark it discardable where the plan's rule lets the viewer discard it, though Fathom made it", () => {
     expect(viewerMarks(undefined, true)).toEqual({ discardable: true });
-  });
-
-  it("mark nothing for anyone else", () => {
-    expect(viewerMarks(maker(false))).toEqual({});
   });
 });

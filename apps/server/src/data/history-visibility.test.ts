@@ -23,6 +23,7 @@ const saved = (field: string, draft: boolean): StoredChange => ({
   oldValue: "Fictional drafted value",
   newValue: "Fictional value",
   draft,
+  keepsDraft: false,
 });
 
 const fieldsOf = (changes: readonly StoredChange[]) =>

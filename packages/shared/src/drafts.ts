@@ -363,21 +363,33 @@ export const unpublishedChosenSchema = z.object({
   drafts: draftsRequestSchema.optional(),
 });
 
+// Whether a change in the history ends its record's draft: approving it, or discarding it, unless
+// the discard keeps the draft.
+export const endsDraft = ({
+  kind,
+  keepsDraft,
+}: {
+  kind: string;
+  keepsDraft: boolean;
+}): boolean => (kind === "approval" || kind === "discard") && !keepsDraft;
+
 // The records whose drafts a user changed since each was last approved or discarded, from their
 // history in order: rejecting or resubmitting a draft does not change it, so neither counts nor
-// resets. One rule for the drafts marked on screen, and the approvals and discards refused.
+// resets, and a change in a discard that keeps the draft, as taking a fill out of it does, changes
+// it. One rule for the drafts marked on screen, and the approvals and discards refused.
 export function draftsChangedBy(
   rows: readonly {
     recordId: string;
     draft: boolean;
     kind: string;
     makerId: string | null;
+    keepsDraft: boolean;
   }[],
   userId: string,
 ): Set<string> {
   const changed = new Set<string>();
   for (const row of rows) {
-    if (row.kind === "approval" || row.kind === "discard") {
+    if (endsDraft(row)) {
       changed.delete(row.recordId);
     } else if (
       row.draft &&

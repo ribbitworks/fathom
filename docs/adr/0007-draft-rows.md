@@ -3,7 +3,7 @@
 - **ADR:** 0007
 - **Status:** Accepted
 - **Date:** 2026-11-01
-- **Revised:** 2026-11-19, to say data classes, as Fathom does, rather than tiers
+- **Revised:** 2026-11-19, to say data classes, as Fathom does, rather than tiers; 2026-11-27, to mark a change in a discard that keeps its draft
 
 ## Context
 
@@ -26,6 +26,7 @@ The data access layer already writes every change through one place per kind of 
   - **Columns and choices:** A column or choice a draft uses cannot be deleted, and a column's settings must fit the drafts.
   - **Approving:** Approving checks again, and the database's own constraints refuse what was missed.
 - **Marked in the change history:** Each change records whether it was to a draft, and each change set what it did: saved changes, or approved, rejected, or discarded drafts.
+  - **Kept by a discard:** A change in a discard that leaves its record's draft in place, as taking a fill out of the fill's other drafts does, records that it keeps the draft, so it doesn't end the draft's makers.
   - **Approving:** Approving records the changes it makes to the live data as a change set of its own, by the Approver.
   - **Undo:** Undo puts back drafts from the history as it puts back live records, and refuses to undo approving or rejecting.
 - **One lock for drafts:** Changes to drafts, approvals, rejections, undoing, and deleting a choice wait for one another, through one advisory lock taken before any row is locked, so two cannot take the same Employee ID, update the same draft, or remove a choice a draft is being given, at once.

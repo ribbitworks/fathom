@@ -206,7 +206,8 @@ describe("the drafts a user changed, which need another approver", () => {
     makerId: string | null,
     kind = "change",
     draft = true,
-  ) => ({ recordId, draft, kind, makerId });
+    keepsDraft = false,
+  ) => ({ recordId, draft, kind, makerId, keepsDraft });
 
   it("names a record whose draft the user changed", () => {
     expect(draftsChangedBy([change("r1", "u1")], "u1")).toEqual(
@@ -247,6 +248,20 @@ describe("the drafts a user changed, which need another approver", () => {
         "u1",
       ),
     ).toEqual(new Set(["r1"]));
+  });
+
+  it("counts a change in a discard that keeps the draft, leaving its makers, as taking a fill out of it does", () => {
+    expect(
+      draftsChangedBy(
+        [
+          change("r1", "u1"),
+          change("r1", "u2", "discard", true, true),
+          change("r2", "u2"),
+          change("r2", "u1", "discard", true, true),
+        ],
+        "u1",
+      ),
+    ).toEqual(new Set(["r1", "r2"]));
   });
 
   it("neither counts nor resets on rejecting or resubmitting, which change nothing", () => {

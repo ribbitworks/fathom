@@ -181,7 +181,9 @@ async function refuseUndoneReporting(
     ["managerId", "managerFrom", "isManager"].some((field) =>
       putBack.has(field),
     ) &&
-    (await hireDraftsNaming(transaction, "filledBy", [id], editor))
+    (await hireDraftsNaming(transaction, "filledBy", [id], editor, {
+      except: hiresUndone,
+    }))
   ) {
     throw new ConflictError(partOfFill);
   }

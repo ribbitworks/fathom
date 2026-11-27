@@ -55,7 +55,7 @@ import {
   writeDraft,
 } from "./drafts.ts";
 import { draftsUse } from "./drafted-values.ts";
-import { refuseDiscardingOthers } from "./draft-makers.ts";
+import { refuseDiscardingOthers } from "./record-discards.ts";
 import { checkValuesFit, fieldChanges } from "./fields.ts";
 import { unseenDetails } from "./lists.ts";
 import { discardingNewList, draftNewList } from "./new-lists.ts";

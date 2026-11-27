@@ -20,6 +20,8 @@ export interface ChangeRecord {
   newValue: unknown;
   // Whether the change is to the record's draft rather than to the live record.
   draft?: boolean;
+  // Whether a change in a discard leaves the record's draft in place.
+  keepsDraft?: boolean;
 }
 
 // What a change set did: saved changes, or approved, rejected, discarded, or resubmitted drafts: rejected

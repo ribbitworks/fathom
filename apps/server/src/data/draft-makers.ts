@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Who made each draft, the refusal of an approval of drafts the approver changed, and who may
-// discard a draft, with the refusal of anyone else. Part of the data access layer.
+// Who made each draft, the refusal of an approval of drafts the approver changed, and the rule for
+// who may discard a draft that every kind starts from. Part of the data access layer.
 
 import {
   changes,
@@ -16,6 +16,7 @@ import {
 import {
   draftsChangedBy,
   type DraftKind,
+  endsDraft,
   draftKey,
   type Tier,
 } from "@fathom/shared";
@@ -55,25 +56,30 @@ export function openChangeSets(userId: string): SQL {
   ) as SQL;
 }
 
-// Whether a user may discard a draft: only one who changed it since it was last approved or
-// discarded, since others who disagree reject it, unless their role discards it whoever changed it.
-// The one rule for the drafts marked discardable and the discards refused.
-export const mayDiscard = (
+// Why a user may not discard a draft, or undefined when they may: only one who changed it since it
+// was last approved or discarded discards it, since others who disagree reject it. The plan's
+// records add their cycles rule to this one, in record-discards.ts.
+export const ownDiscardRefusal = (
   changedByUser: boolean,
-  discardsWhoeverChanged: boolean,
-): boolean => changedByUser || discardsWhoeverChanged;
+): string | undefined => (changedByUser ? undefined : discardRefusal);
 
-// The marks a draft carries for the viewer: that they may discard it, and, where they changed it and
-// may not approve their own, that another approver must.
+// The marks a draft carries for the viewer: whether they may discard it, and, where they changed it
+// and may not approve their own, that another approver must.
 export const viewerMarks = (
   maker: Maker | undefined,
-  discardsWhoeverChanged = false,
+  discardable: boolean,
 ) => ({
-  ...(mayDiscard(maker?.changedByUser === true, discardsWhoeverChanged)
-    ? { discardable: true }
-    : {}),
+  ...(discardable ? { discardable: true } : {}),
   ...(maker?.needsOtherApprover === true ? { needsOtherApprover: true } : {}),
 });
+
+// The marks of a draft of a kind outside the plan's records, which only the rule for everyone's
+// drafts decides.
+export const ownMarks = (maker: Maker | undefined) =>
+  viewerMarks(
+    maker,
+    ownDiscardRefusal(maker?.changedByUser === true) === undefined,
+  );
 
 // The changes to the records given, of one kind, that tell who changed each draft, in the order they
 // were made: changes to drafts and the approvals and discards that end them, published, and the
@@ -102,6 +108,7 @@ async function draftHistory(
       tier: changes.tier,
       draft: changes.draft,
       kind: changeSets.kind,
+      keepsDraft: changes.keepsDraft,
       unpublished: changeSets.private,
       madeBy: users.name,
       madeAs: roles.name,
@@ -145,7 +152,7 @@ export async function draftMakers(
     // The viewer's changes count whatever their tier, since they made them.
     const mine = draftsChangedBy(counted, viewer.user.id);
     for (const row of counted) {
-      if (row.kind === "approval" || row.kind === "discard") {
+      if (endsDraft(row)) {
         makers.delete(row.recordId);
         continue;
       }
@@ -246,6 +253,7 @@ export async function refuseOwnDrafts(
           draft: changes.draft,
           kind: changeSets.kind,
           makerId: changeSets.madeBy,
+          keepsDraft: changes.keepsDraft,
         })
         .from(changes)
         .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
@@ -273,24 +281,14 @@ export async function refuseOwnDrafts(
   }
 }
 
-// Refuses discarding a draft to anyone who may not, by the rule the marks follow: their own
-// unpublished changes to it count, and a draft Fathom itself made is discarded by no one but a role
-// that discards it whoever changed it. Only the draft asked for is checked; the drafts discarded with
-// it go whoever made them.
-export async function refuseDiscardingOthers(
+// Whether the actor changed a draft since it was last approved or discarded, their own unpublished
+// changes to it counting; never for a draft only Fathom itself changed.
+export async function changedByActor(
   reader: Pick<Database, "select">,
   actor: Actor,
   recordType: DraftKind,
   id: string,
-  discardsWhoeverChanged = false,
-): Promise<void> {
+): Promise<boolean> {
   const history = await draftHistory(reader, recordType, [id], actor);
-  if (
-    !mayDiscard(
-      draftsChangedBy(history, actor.user.id).has(id),
-      discardsWhoeverChanged,
-    )
-  ) {
-    throw new ForbiddenError(discardRefusal);
-  }
+  return draftsChangedBy(history, actor.user.id).has(id);
 }

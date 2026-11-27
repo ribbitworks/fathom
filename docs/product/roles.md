@@ -79,7 +79,8 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 - **Your own drafts:** Someone else approves a user's drafts, unless the role holds Approve own drafts. That is one permission for every area, and it applies only where the role also holds Approve.
 - **Discarding a draft:** Only a user who changed a draft since it was last approved or discarded may discard it, under any of their roles that may change it. Others who disagree with it reject it. A draft only Fathom itself changed is never discarded, so an Approver approves or rejects it. There are two exceptions:
   - **Cycles:** a draft of a schedule's cycles, and the drafts bound to it, such as the releases a change of length moves, are discarded by any role that may change cycles, as [Moving with cycles](#releases) sets out.
-  - **What a new record takes with it:** discarding a record only drafted to be added discards the drafts that go with it, whoever made them: the new records that belong to it, such as a new schedule's cycles or a new list's choices, a new list made with a column, and a new person filling a planned hire. Only the draft asked for is checked.
+  - **What a record takes with it:** discarding a record only drafted to be added, or removing a record, discards the drafts of the new records that go with it, whoever made them. Only the draft asked for is checked.
+    - **Which go with it:** the new records that belong to it, such as a new schedule's cycles, a new list's choices or a removed project's new milestones; a new list made with a column; and a new person filling a planned hire.
 - **Schedules and cycle patterns:** Edited with Edit Plan or Edit Configuration, and approved with Approve Plan or Approve Configuration, so either Approver may decide them.
 
 ## Data Classes

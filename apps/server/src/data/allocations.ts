@@ -36,7 +36,7 @@ import { randomUUID } from "node:crypto";
 import { type Actor, requirePermission, requireView } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
-import { draftMakers, everything } from "./draft-makers.ts";
+import { kindMakers } from "./record-makers.ts";
 import type { Recorded } from "./draft-records.ts";
 import {
   allocationFields,
@@ -312,22 +312,18 @@ export async function readAllocations(
         const hire = hires.get(String(record.plannedHireId));
         return hire?.dated === true ? hire.expected : undefined;
       };
+      const found = await kindMakers(
+        transaction,
+        state,
+        actor,
+        type,
+        records
+          .map(({ id }) => id)
+          .filter((id) => stateOf(state, type).drafts.has(id)),
+      );
       const makers: Makers = {
-        ...noMakers,
-        byKind: new Map([
-          [
-            type,
-            await draftMakers(
-              transaction,
-              type,
-              records
-                .map(({ id }) => id)
-                .filter((id) => stateOf(state, type).drafts.has(id)),
-              everything,
-              actor,
-            ),
-          ],
-        ]),
+        byKind: new Map([[type, found.makers]]),
+        discardable: new Set(found.discardable),
       };
       const idsOf = (field: "featureId" | "activityId") => [
         ...new Set(

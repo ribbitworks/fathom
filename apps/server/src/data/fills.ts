@@ -45,7 +45,7 @@ import {
   readHeld,
   readPersonDrafts,
 } from "./drafts.ts";
-import { refuseDiscardingOthers } from "./draft-makers.ts";
+import { refuseDiscardingOthers } from "./record-discards.ts";
 import { recordHiringChanges } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import {
@@ -561,7 +561,8 @@ async function refuseDiscardingAsked(
 // Discards the draft asked for, and takes its fill, if any, out of the drafts of the fill's other
 // records, keeping their other changes: the hire's filler and manager, its person's position, manager, Manager? and line,
 // and the hires moved to them, put back as they are live. A person only drafted to be added by the
-// fill is discarded with it.
+// fill is discarded with it. The changes to the drafts left in place are marked as keeping them, so
+// they stay their makers' drafts.
 async function discardWithFill(
   transaction: Transaction,
   actor: Actor,
@@ -599,7 +600,15 @@ async function discardWithFill(
         : await draftPersonAsLive(transaction, actor, id, fill.personFields)),
     );
   }
-  return made;
+  const left = new Set([
+    ...(
+      await readHireDrafts(transaction, fill.plannedHires, actor.user.id)
+    ).keys(),
+    ...(await readPersonDrafts(transaction, fill.people, actor.user.id)).keys(),
+  ]);
+  return made.map((change) =>
+    left.has(change.recordId) ? { ...change, keepsDraft: true } : change,
+  );
 }
 
 // Sends the rejected draft asked for for approval again, with the drafts of the rest of its fill,

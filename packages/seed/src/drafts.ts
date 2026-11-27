@@ -31,18 +31,7 @@ import {
 } from "@fathom/shared";
 import type { Actor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
-import {
-  and,
-  desc,
-  eq,
-  gt,
-  inArray,
-  isNull,
-  max,
-  ne,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, max, ne, or, sql } from "drizzle-orm";
 import { accountDomain, personaAccounts, personaActor } from "./accounts.ts";
 
 const editorEmail = `engineering.operations.manager@${accountDomain}`;
@@ -77,23 +66,24 @@ export async function discardAsMaker(
   recordId: string,
   discard: (maker: Actor) => Promise<unknown>,
 ): Promise<void> {
-  const ofDraft = and(
-    eq(changes.recordType, recordType),
-    eq(changes.recordId, recordId),
-    eq(changeSets.private, false),
-  );
   const history = await database
     .select({
       recordId: changes.recordId,
       draft: changes.draft,
       kind: changeSets.kind,
+      keepsDraft: changes.keepsDraft,
       makerId: changeSets.madeBy,
+      name: users.name,
+      email: users.email,
     })
     .from(changes)
     .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+    .leftJoin(users, eq(users.id, changeSets.madeBy))
     .where(
       and(
-        ofDraft,
+        eq(changes.recordType, recordType),
+        eq(changes.recordId, recordId),
+        eq(changeSets.private, false),
         or(
           eq(changes.draft, true),
           inArray(changeSets.kind, ["approval", "discard"]),
@@ -101,16 +91,17 @@ export async function discardAsMaker(
       ),
     )
     .orderBy(changes.id);
-  const editors = await database
-    .select({ id: users.id, name: users.name, email: users.email })
-    .from(changes)
-    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
-    .innerJoin(users, eq(users.id, changeSets.madeBy))
-    .where(and(ofDraft, eq(changes.draft, true)))
-    .orderBy(desc(changes.id));
-  const last = editors
-    .filter(({ id }) => draftsChangedBy(history, id).has(recordId))
-    .slice(0, 1);
+  // Fathom's own changes name no account, so count for no one.
+  const last = history
+    .filter(({ makerId }) =>
+      draftsChangedBy(history, String(makerId)).has(recordId),
+    )
+    .slice(-1)
+    .map(({ makerId, name, email }) => ({
+      id: String(makerId),
+      name: String(name),
+      email: String(email),
+    }));
   for (const account of last) {
     const maker = personaActor(account, "superuser");
     await discard(maker);

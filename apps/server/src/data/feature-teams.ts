@@ -48,7 +48,7 @@ import {
   readTeamDrafts,
 } from "./feature-team-reads.ts";
 import { recordType } from "./feature-team-records.ts";
-import { refuseDiscardingOthers } from "./draft-makers.ts";
+import { refuseDiscardingOthers } from "./record-discards.ts";
 import {
   fromDay,
   recordTeamDayChanges,

@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The drafts of the plan's records bound together: those a draft uses, those that use it, and those
-// approved or discarded only together, such as the patterns and moved releases of a change of one
-// cycle's length, with the drafts any role that may change cycles discards. Part of the data access
-// layer.
+// The drafts of the plan's records bound together, by what they use, and those a discard takes
+// along. Part of the data access layer.
 
 import type { RecordRef } from "@fathom/shared";
-import type { Actor } from "../access.ts";
-import { editsKind } from "./draft-editors.ts";
-import { type RecordsState, refKey, stateOf, usesOf } from "./record-state.ts";
+import {
+  addedOnly,
+  linkedIds,
+  type RecordsState,
+  refKey,
+  shownIds,
+  stateOf,
+  usesOf,
+  versionOf,
+} from "./record-state.ts";
 import { kindOf, recordKinds } from "./records.ts";
 
 // Every record with a draft, of every kind, as the viewer sees them.
@@ -73,17 +78,49 @@ export function boundWith(state: RecordsState, root: RecordRef): RecordRef[] {
   );
 }
 
-// The drafts the actor may discard whoever changed them, by record: each draft of a schedule's
-// cycles, with those bound to it, when their role may change cycles. A new schedule is not one, as
-// it uses none of its new cycles' drafts.
-export function discardedByAnyEditor(
-  state: RecordsState,
-  actor: Actor,
-): ReadonlySet<string> {
-  if (!editsKind(actor, "cycle-pattern")) return new Set();
-  return new Set(
-    [...stateOf(state, "cycle-pattern").drafts.keys()]
-      .flatMap((id) => boundWith(state, { type: "cycle-pattern", id }))
-      .map(refKey),
-  );
+// The records only drafted to be added that belong to one, through the links of their kinds, and
+// those that belong to them, and so on.
+function addedBelow(state: RecordsState, root: RecordRef): RecordRef[] {
+  const found = new Map([[refKey(root), root]]);
+  const queue = [root];
+  for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
+    const parent = next;
+    for (const kind of recordKinds) {
+      const linking = Object.entries(kind.links).filter(
+        ([, type]) => type === parent.type,
+      );
+      if (linking.length === 0) continue;
+      for (const id of shownIds(state, kind.type)) {
+        const version = versionOf(state, kind.type, id);
+        const ref = { type: kind.type, id };
+        if (
+          !addedOnly(state, kind.type, id) ||
+          found.has(refKey(ref)) ||
+          !linking.some(([name]) =>
+            linkedIds(version, name).includes(parent.id),
+          )
+        ) {
+          continue;
+        }
+        found.set(refKey(ref), ref);
+        queue.push(ref);
+      }
+    }
+  }
+  return [...found.values()];
 }
+
+// The drafts discarding a record's draft discards: those bound to it, and the drafts of the records
+// only drafted to be added that belong to any of them.
+export const discardedWith = (
+  state: RecordsState,
+  root: RecordRef,
+): RecordRef[] => [
+  ...new Map(
+    boundWith(state, root)
+      .flatMap((ref) =>
+        addedOnly(state, ref.type, ref.id) ? addedBelow(state, ref) : [ref],
+      )
+      .map((ref) => [refKey(ref), ref]),
+  ).values(),
+];

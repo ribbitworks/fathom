@@ -71,6 +71,9 @@ export const changes = fathomSchema.table(
     newValue: jsonb("new_value"),
     // Whether the change is to a record's draft, rather than to the live record.
     draft: boolean("draft").notNull().default(false),
+    // Whether a change in a discard leaves its record's draft in place, as taking a fill out of the
+    // fill's other drafts does, so it changes the draft rather than ending it.
+    keepsDraft: boolean("keeps_draft").notNull().default(false),
   },
   (table) => [
     index("changes_record_index").on(table.recordType, table.recordId),
