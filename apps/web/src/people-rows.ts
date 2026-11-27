@@ -130,14 +130,12 @@ export function addedNames(requests: readonly RowRequest[]): string {
     : "the people and planned hires";
 }
 
-// How Metrics and the count above a table call rows of people and planned hires together, and how
-// many of each some rows are, such as "150 people and 6 planned hires".
+// How many people and planned hires some rows are, for Metrics and the count above a table, such as
+// "150 people and 6 planned hires".
 export function peopleAndHires<Row>(isPlanned: (row: Row) => boolean): {
-  noun: string;
   counted: (rows: readonly Row[]) => string;
 } {
   return {
-    noun: "people and planned hires",
     counted: (rows) => {
       const counts = kindsOf(rows, isPlanned);
       return named(counts, counts)

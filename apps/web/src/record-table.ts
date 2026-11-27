@@ -256,9 +256,8 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // What the table says while it has no records, where not "No" and its noun with "yet", such as
   // "No drafts" for drafts, which come and go.
   none?: string;
-  // For a table of several kinds of record, what its records are called together, and how many of
-  // each some records are, which Metrics counts.
-  counted?: { noun: string; counted: (records: readonly Rec[]) => string };
+  // For a table of several kinds of record, how many of each some records are, which Metrics counts.
+  counted?: { counted: (records: readonly Rec[]) => string };
   // The kinds of record the table holds, the first of which a new row adds unless asked for
   // another, and each record's kind; a table of one kind leaves them out.
   kinds?: readonly string[];

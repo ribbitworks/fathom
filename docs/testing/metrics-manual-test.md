@@ -98,8 +98,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - 'SDET', "32", "20%"
       - 'Engineering Manager', "17", "10.6%"
       - 'Architect', "0", "0%"
-      - "All people and planned hires", "160", "100%", set apart under the rest
-    - A green dot is before the counts of 'Engineering Manager' and the "All people and planned hires" row, and before the shares of 'Software Engineer', 'Test Engineer', 'SDET' and 'Engineering Manager'.
+      - "All", "160", "100%", set apart under the rest
+    - A green dot is before the counts of 'Engineering Manager' and the **All** row, and before the shares of 'Software Engineer', 'Test Engineer', 'SDET' and 'Engineering Manager'.
     - No other figure has a dot, and none has a second figure under it.
   - **Notes:**
 

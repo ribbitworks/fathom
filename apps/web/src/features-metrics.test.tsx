@@ -39,7 +39,7 @@ describe("Metrics on Features", () => {
       within(panel)
         .getAllByRole("rowheader")
         .map(({ textContent }) => textContent),
-    ).toEqual(["Mar 2027", "Jun 2027", "Empty", "All features"]);
+    ).toEqual(["Mar 2027", "Jun 2027", "Empty", "All"]);
   });
 
   it("never breaks features down by Effort, in whatever unit it's shown", async () => {

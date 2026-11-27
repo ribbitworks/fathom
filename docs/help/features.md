@@ -123,7 +123,7 @@ You can fill the new column's cells straight away, before it's approved. Approvi
 1. To count by two columns at once, choose the second under **and by**.
 1. To add up a number column, choose it under **Measure**, which shows once you've chosen a column to count by. It starts on **Effort**; choose **Nothing** to leave it out.
 
-The counts include every row the table shows, but not a feature drafted to be removed. So a search or a filter changes them. **Needed by** counts by each month, in date order. A feature with several projects or proposals adds its effort to each of them, so their totals can add up to more than **All features**. If the panel opens under a feature's details, select **Maximize** to give it the whole height.
+The counts include every row the table shows, but not a feature drafted to be removed. So a search or a filter changes them. **Needed by** counts by each month, in date order. A feature with several projects or proposals adds its effort to each of them, so their totals can add up to more than **All**. If the panel opens under a feature's details, select **Maximize** to give it the whole height.
 
 A dot before a count marks a draft that changes it, as on [People](people.md#count-people).
 
