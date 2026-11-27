@@ -35,12 +35,17 @@ const renamed = (fields: object = {}) =>
 
 // A server whose draft of Avery Fictional, which the user may discard, goes once discarded and
 // comes back once the discard is undone, beside another draft.
-function discardingServer(discard: () => Response | Promise<Response> = saved) {
+function discardingServer(
+  discard: () => Response | Promise<Response> = saved,
+  newer: object[] = [],
+) {
   let discarded = false;
   return {
     "GET /api/people": () =>
       peopleWith(
-        discarded ? [rejected] : [renamed({ discardable: true }), rejected],
+        discarded
+          ? [...newer, rejected]
+          : [...newer, renamed({ discardable: true }), rejected],
       )(),
     "DELETE /api/people/p1/draft": async () => {
       const answer = await discard();
@@ -197,6 +202,22 @@ describe("a published draft on the Drafts page", () => {
     });
   });
 
+  it("puts focus on the next row once discarded with the mouse from its row's menu", async () => {
+    // Given a newer draft before it, so its row is not the first
+    const removing = person("p6", "Finley Fictional", {
+      draft: draft({ action: "deleted", madeAt: "2026-11-01T09:00:00.000Z" }),
+    });
+    await openDrafts(discardingServer(saved, [removing]), "/drafts?tab=all");
+    // When it is discarded from its row's menu
+    await discardFromRow("Avery Fictional");
+    // Then focus is on the row after it
+    await waitFor(() => {
+      expect(document.activeElement?.closest("tr")?.textContent).toContain(
+        "Drew Fictional",
+      );
+    });
+  });
+
   it("is resubmitted from its row's menu once rejected, by whoever made it", async () => {
     const { fetch } = await openDrafts(
       {
@@ -213,11 +234,10 @@ describe("a published draft on the Drafts page", () => {
     );
     expect(await rowMenuItems("Avery Fictional")).toContain("Resubmit");
     await userEvent.click(screen.getByRole("menuitem", { name: "Resubmit" }));
-    await waitFor(() => {
-      expect(sentTo(fetch, "DELETE")).toEqual([
-        "/api/people/p1/draft/rejection",
-      ]);
-    });
+    expect(
+      await screen.findByText("Resubmitted the draft of Avery Fictional."),
+    ).toBeDefined();
+    expect(sentTo(fetch, "DELETE")).toEqual(["/api/people/p1/draft/rejection"]);
   });
 
   it("leaves one's own unpublished changes to Not published's buttons", async () => {
