@@ -155,7 +155,7 @@ test("refuses a day that doesn't exist typed fast with Enter in a date column's 
         });
       }
     },
-    [..."2026-02-30", "Enter"],
+    ["2", "0", "2", "6", "-", "0", "2", "-", "3", "0", "Enter"],
   );
 
   // Then the day is refused under the row, its editor kept open with what was typed

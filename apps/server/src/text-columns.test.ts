@@ -5,9 +5,8 @@
 // history shows them; with what every type of column shares, for planned hires, features,
 // activities, and who sees a Personal or Confidential column.
 
-import type { PrivatePage } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { errorOf, ok, startTestApp, type TestApp, unique } from "./test-app.ts";
+import { errorOf, startTestApp, type TestApp } from "./test-app.ts";
 import {
   addedColumnTests,
   type ColumnKind,
