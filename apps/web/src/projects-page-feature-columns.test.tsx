@@ -92,6 +92,7 @@ describe("the Features page", () => {
       expect(
         within(dialog).queryByLabelText("Offered on planned hires"),
       ).toBeNull();
+      await chooseIn(dialog, "Type", "Choice from a list");
       expect(await optionsIn(dialog, "List")).toEqual([
         "Fictional Sizes",
         "New list",
@@ -127,7 +128,6 @@ describe("the Features page", () => {
       await openWith(withColumns());
       const dialog = await newColumn();
       await chooseIn(dialog, "Type", "Number");
-      expect(within(dialog).queryByLabelText("List")).toBeNull();
       expect(within(dialog).queryByRole("radiogroup")).toBeNull();
       expect(within(dialog).queryByLabelText(/visible|see/i)).toBeNull();
     });

@@ -145,6 +145,10 @@ describe("a refused Save puts focus in the field refused", () => {
     const fetch = serverAnswers({});
     columnDialog();
     await userEvent.type(box("Name"), "Fictional column");
+    await userEvent.click(screen.getByRole("combobox", { name: "Type" }));
+    await userEvent.click(
+      await screen.findByRole("option", { name: "Choice from a list" }),
+    );
     await press("Add column");
     expect(await screen.findByText("List needed")).toBeDefined();
     await expectFocusIn(screen.getByRole("combobox", { name: "List" }));

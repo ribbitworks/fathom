@@ -17,6 +17,8 @@ async function openNewColumn(page: Page, path = "/features") {
   await dialog
     .getByRole("textbox", { name: "Name", exact: true })
     .fill("Fictional Tier");
+  await dialog.getByLabel("Type").click();
+  await page.getByRole("option", { name: "Choice from a list" }).click();
   await dialog.getByRole("combobox", { name: "List", exact: true }).click();
   await page.getByRole("option", { name: "New list" }).click();
   return dialog;

@@ -145,11 +145,15 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
 - [ ] `A7E9` Select **New column**.
   - **Expected:**
     - A dialog titled "New column" opens.
-    - **Type** reads "Choice from a list".
+    - **Type** reads "Text".
   - **Notes:**
 
 - [ ] `7DC8` Type `Site` in **Name**.
   - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] `F69B` Choose **Choice from a list** in **Type**.
+  - **Expected:** **List** shows.
   - **Notes:**
 
 - [ ] `DD49` Choose **Sites (new)** in **List**.

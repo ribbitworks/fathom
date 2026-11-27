@@ -39,6 +39,7 @@ describe("the column dialog on Features", () => {
       within(dialog).getByLabelText("Name"),
       "Fictional Tier",
     );
+    await chooseIn(dialog, "Type", "Choice from a list");
     await chooseIn(dialog, "List", "New list");
 
     // When the list is named and given two choices, and the column added
@@ -89,6 +90,7 @@ describe("the column dialog on Features", () => {
       within(dialog).getByLabelText("Name"),
       "Fictional Tier",
     );
+    await chooseIn(dialog, "Type", "Choice from a list");
     await chooseIn(dialog, "List", "New list");
     return dialog;
   };
@@ -304,6 +306,7 @@ describe("the column dialog on Features", () => {
       within(dialog).getByLabelText("Name"),
       "Fictional Tier",
     );
+    await chooseIn(dialog, "Type", "Choice from a list");
     await chooseIn(dialog, "List", "New list");
     await userEvent.type(
       within(dialog).getByLabelText("List name"),
@@ -351,6 +354,7 @@ describe("the column dialog on Features", () => {
   it("closes only an open drop-down list on Esc, leaving the dialog open", async () => {
     await openWith(withColumns());
     const dialog = await newColumn();
+    await chooseIn(dialog, "Type", "Choice from a list");
     await userEvent.click(within(dialog).getByLabelText("List"));
     expect(
       await screen.findByRole("option", { name: "New list" }),
@@ -516,6 +520,7 @@ describe("the column dialog on Activities", () => {
       within(dialog).getByLabelText("Name"),
       "Fictional Tier",
     );
+    await chooseIn(dialog, "Type", "Choice from a list");
     await chooseIn(dialog, "List", "New list");
 
     // When the list is named and given a choice, and the column added

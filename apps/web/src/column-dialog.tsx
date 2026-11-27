@@ -38,7 +38,8 @@ const conflict = 409;
 // The List picker's choice that drafts a new list with the column, which no list's ID can be.
 const newListChoice = "new";
 
-// Every type must be named, which the compiler checks, and is offered in this order.
+// Every type must be named, which the compiler checks, and is offered in this order; a new column
+// starts on the first.
 const typeNames: Record<FieldType, string> = {
   text: "Text",
   number: "Number",
@@ -47,6 +48,13 @@ const typeNames: Record<FieldType, string> = {
   link: "Web link",
   note: "Note",
 };
+
+const typesOffered = Object.entries(typeNames).map(([option, label]) => ({
+  value: fieldTypeSchema.parse(option),
+  label,
+}));
+
+const firstType = fieldTypeSchema.parse(typesOffered[0]?.value);
 
 export function ColumnDialog({
   table,
@@ -77,7 +85,7 @@ export function ColumnDialog({
   onChanged: (changed: boolean) => void;
 }) {
   const [name, setName] = useState(field?.name ?? "");
-  const [type, setType] = useState<FieldType>(field?.type ?? "choice");
+  const [type, setType] = useState<FieldType>(field?.type ?? firstType);
   const [visibility, setVisibility] = useState<Tier>(
     field?.visibility ?? "general",
   );
@@ -251,10 +259,7 @@ export function ColumnDialog({
             field === undefined ? undefined : "A column's type cannot change"
           }
           disabled={field !== undefined}
-          data={Object.entries(typeNames).map(([option, label]) => ({
-            value: option,
-            label,
-          }))}
+          data={typesOffered}
           value={type}
           onChange={(value) => {
             setType(fieldTypeSchema.parse(value));
