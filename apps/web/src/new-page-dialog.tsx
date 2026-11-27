@@ -37,7 +37,11 @@ import { focusSoon } from "./focus.ts";
 import { Icon } from "./icons.tsx";
 import { nameTaken } from "./list-dialog.tsx";
 import { listsQuery, liveLists, nameProblem } from "./lists.ts";
-import { makePrivatePage, privatePagesQuery } from "./private-pages.ts";
+import {
+  makePrivatePage,
+  privatePageQuery,
+  privatePagesQuery,
+} from "./private-pages.ts";
 import { wholeList } from "./theme.ts";
 
 const conflict = 409;
@@ -113,12 +117,10 @@ export function NewPageDialog({
   const question = useDiscardQuestion();
   const [typed, setTyped] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [step, setStep] = useState<Step>("name");
   // Made afresh each time it opens, so nothing typed before is kept.
   const [opening, setOpening] = useState(0);
   const close = () => {
     setOpening((count) => count + 1);
-    setStep("name");
     onClose();
   };
   const leave = () => {
@@ -128,7 +130,8 @@ export function NewPageDialog({
     <>
       <Modal
         opened={opened}
-        size={step === "name" ? "sm" : "lg"}
+        // Focus goes to the new page's first row once made, rather than back to New page.
+        returnFocus={false}
         title="New page"
         closeOnEscape={false}
         onKeyDown={escapeLeaves(leave, busy)}
@@ -140,8 +143,6 @@ export function NewPageDialog({
           key={opening}
           onTyped={setTyped}
           onBusy={setBusy}
-          step={step}
-          onStep={setStep}
           pages={pages}
           onCancel={leave}
           onMade={close}
@@ -156,22 +157,18 @@ function NewPageSteps({
   pages,
   onTyped,
   onBusy,
-  step,
-  onStep: setStep,
   onCancel,
   onMade,
 }: {
   pages: readonly ListedPrivatePage[];
   onTyped: (typed: boolean) => void;
   onBusy: (busy: boolean) => void;
-  // The step shown, kept by the dialog, which is narrow for the name and wide for the columns.
-  step: Step;
-  onStep: (step: Step) => void;
   onCancel: () => void;
   onMade: () => void;
 }) {
   const ids = useId();
   const [name, setName] = useState("");
+  const [step, setStep] = useState<Step>("name");
   const [nextKey, setNextKey] = useState(1);
   const [columns, setColumns] = useState<TypedColumn[]>([
     {
@@ -198,8 +195,12 @@ function NewPageSteps({
       await queryClient.invalidateQueries({
         queryKey: privatePagesQuery.queryKey,
       });
+      // Kept as read, so the page draws at once and its empty row takes focus.
+      queryClient.setQueryData(privatePageQuery(page.id).queryKey, page);
       onMade();
       await navigate({ to: "/mine/$pageId", params: { pageId: page.id } });
+      // The new page's empty row, ready for its first row to be typed.
+      focusSoon(`cell-new-0-${String(page.firstFieldId)}`);
     },
     onError: (error) => {
       if (refusedAsTaken(error)) {

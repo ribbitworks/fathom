@@ -57,8 +57,9 @@ test("refuses a missing name and a column named twice, then makes the page and s
   await expect(grid).toBeVisible();
   made.pageId = new URL(page.url()).pathname.split("/").slice(-1).join("");
 
-  // And a row typed in its empty row is saved at once, still there once the page is read again
-  await grid.locator("tbody td").first().click();
+  // And a row typed at once, in its empty row, which has focus, is saved at once, still there once
+  // the page is read again
+  await expect(grid.locator("tbody td").first()).toBeFocused();
   await page.keyboard.type("Fictional title");
   const saved = page.waitForResponse(
     (response) =>
