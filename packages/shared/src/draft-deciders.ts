@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Who decides a draft: the Approver of its kind's area, or, for a column and a list or choice made
-// with one, the Approver of the column's table.
+// with one, the Approver of the column's table, who also sees what deciding it needs.
 
 import {
   holdsAny,
@@ -14,6 +14,11 @@ import {
   columnTableOf,
   columnTables,
 } from "./column-tables.ts";
+import {
+  type ClassifiedField,
+  classPermissions,
+  type DataClasses,
+} from "./data-classes.ts";
 import {
   type ApprovePermission,
   approvedAreaNames,
@@ -37,10 +42,53 @@ const byTable = (kind: DraftKind): kind is TableKind =>
 const tableSight: Permission = "people:view";
 
 // A draft as deciding it needs: its kind, with, for a column, its table, absent for one recorded
-// before columns had tables, and, for a list or choice made with a column, that column's table.
+// before columns had tables, and, for a list or choice made with a column, that column's table, and
+// the sight of what it holds that deciding it needs besides its kind's, such as a fill's.
 export interface Decided {
   kind: DraftKind;
   table?: ColumnTable | undefined;
+  sight?: readonly Permission[] | undefined;
+}
+
+const sightOf = ({ kind, sight = [] }: Decided): Permission[] => [
+  ...(byTable(kind) ? [tableSight] : []),
+  ...sight,
+];
+
+const lackedSight = (
+  permissions: readonly string[],
+  decided: Decided,
+): Permission[] => {
+  const held = withImplied(permissions);
+  return sightOf(decided).filter((permission) => !held.includes(permission));
+};
+
+// What deciding a fill's drafts needs besides their kinds': sight of start and end dates when it
+// names who fills the hire, who may not have started, and, when it carries the hire's feature teams
+// to them, sight of feature teams and of the days people join them too.
+export function fillSight(
+  dataClasses: DataClasses,
+  { names, carries }: { names: boolean; carries: boolean },
+): Permission[] {
+  const fields: ClassifiedField[] = [
+    ...(names || carries ? (["startDate", "endDate"] as const) : []),
+    ...(carries ? (["featureTeamDates"] as const) : []),
+  ];
+  const classes = new Set(
+    // The field is always one of the fixed fields.
+    // eslint-disable-next-line security/detect-object-injection
+    fields.map((field) => dataClasses[field]),
+  );
+  return [
+    ...(carries ? (["feature-teams:view"] as const) : []),
+    ...[...classes].flatMap((dataClass) =>
+      dataClass === "general"
+        ? []
+        : // The class is always one of the fixed classes.
+          // eslint-disable-next-line security/detect-object-injection
+          [classPermissions[dataClass].view],
+    ),
+  ];
 }
 
 // The Approve permissions that decide a draft, any one of them sufficing.
@@ -65,7 +113,7 @@ export const decides = (
   decided: Decided,
 ): boolean =>
   holdsAny(permissions, decidersOf(decided)) &&
-  (!byTable(decided.kind) || withImplied(permissions).includes(tableSight));
+  lackedSight(permissions, decided).length === 0;
 
 // The areas whose Approvers decide a draft, either being enough, such as "features and releases",
 // or "the plan or configuration".
@@ -88,7 +136,7 @@ export const takenAlongRefusal = (
     ? undefined
     : `Approving this also approves ${name}, which needs ${eitherOf(
         (holdsAny(permissions, decidersOf(decided))
-          ? [tableSight]
+          ? lackedSight(permissions, decided)
           : decidersOf(decided)
         ).map(permissionLabel),
       )}.`;

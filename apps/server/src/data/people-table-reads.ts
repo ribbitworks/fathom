@@ -6,6 +6,7 @@
 import { type Database, fieldOfValue, type Reader } from "@fathom/db";
 import {
   changesLinesOn,
+  draftKey,
   seesBuiltInColumn,
   seesEmployment,
   type Person,
@@ -27,6 +28,7 @@ import {
   type Recorded,
 } from "./draft-records.ts";
 import { draftMakers, otherApprover } from "./draft-makers.ts";
+import { fillsBeyondSight } from "./fills.ts";
 import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { type LiveValues, noLiveValues, typeOf } from "./column-types.ts";
@@ -385,6 +387,23 @@ async function readPeopleIn(
     featureTeamsOf === undefined
       ? row
       : { ...row, featureTeams: featureTeamsOf.get(row.id) ?? [] };
+  const beyondSight = withDrafts
+    ? await fillsBeyondSight(database, actor, today)
+    : new Set<string>();
+  // A published draft of a fill the role lacks the sight to decide holds details it can't see.
+  const markedBeyondSight = (row: Person): Person =>
+    row.draft !== undefined &&
+    row.draft.unpublished !== true &&
+    beyondSight.has(draftKey(row.kind ?? "person", row.id))
+      ? {
+          ...row,
+          draft: {
+            ...row.draft,
+            needsOtherApprover: true,
+            holdsUnseen: true,
+          },
+        }
+      : row;
   return {
     people: [
       ...(stateOf === undefined
@@ -397,7 +416,9 @@ async function readPeopleIn(
             ) as string,
           }))),
       ...hiring.hires.map((hire) => hireRow(hire, teamOf)),
-    ].map(withFeatureTeams),
+    ]
+      .map(withFeatureTeams)
+      .map(markedBeyondSight),
     columns,
     positionHidden: !shownFields.has("positionId"),
     includedPersonal:

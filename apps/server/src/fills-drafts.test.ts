@@ -4,7 +4,7 @@
 // rejecting, discarding, resubmitting and undoing it as one draft, a fill waiting for approval, other
 // users' changes, and a hire with a rejected draft.
 
-import { type ChangeHistory } from "@fathom/shared";
+import { type ChangeHistory, startingRoles } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   errorOf,
@@ -335,6 +335,69 @@ describe("a fill's draft", () => {
       "A fill names who fills the hire, so an Approver who sees start and end dates must decide it",
     );
     expect((await liveHire(id))?.filledBy).toBeNull();
+  });
+
+  describe("for a role short of the sight deciding it needs", () => {
+    // An Engineering Director without Personal data, who still edits and approves the hiring plan
+    // and approves their own drafts.
+    const withoutPersonal = startingRoles[
+      "engineering-director"
+    ].permissions.filter((permission) => permission !== "personal:edit");
+    const marks = async (id: string, who: User) => {
+      const draft = (await rowOf(id, who))?.draft;
+      return {
+        needsOtherApprover: draft?.needsOtherApprover,
+        holdsUnseen: draft?.holdsUnseen,
+      };
+    };
+    const unmarked = { needsOtherApprover: undefined, holdsUnseen: undefined };
+
+    it("is marked as needing another approver, which it can't decide, only for an Approver who doesn't see start and end dates", async () => {
+      const id = await hire();
+      await filled(id, newPerson());
+
+      expect(await marks(id, await test.signedIn(generalApprover))).toEqual({
+        needsOtherApprover: true,
+        holdsUnseen: true,
+      });
+      expect(
+        await marks(id, await test.signedIn("engineering-director")),
+      ).toEqual(unmarked);
+    });
+
+    it("is not marked for a role that doesn't approve it", async () => {
+      const id = await hire();
+      await filled(id, newPerson());
+      const notApproving = generalApprover.filter(
+        (permission) =>
+          permission !== "people:approve" &&
+          permission !== "hiring-plan:approve",
+      );
+
+      expect(await marks(id, await test.signedIn(notApproving))).toEqual(
+        unmarked,
+      );
+    });
+
+    it("leaves unmarked the reader's own unpublished draft of a record in it", async () => {
+      // Given a published fill whose hire the reader then changes without publishing
+      const id = await hire();
+      await filled(id, newPerson());
+      const who = await test.signedIn(withoutPersonal);
+      await ok(
+        await send(
+          who,
+          "PATCH",
+          `/api/planned-hires/${id}`,
+          { targetDate: "2099-07-01" },
+          { publish: false },
+        ),
+      );
+
+      // Then the reader's draft of the hire is not marked
+      expect((await rowOf(id, who))?.draft?.unpublished).toBe(true);
+      expect(await marks(id, who)).toEqual(unmarked);
+    });
   });
 
   it("is published whole when only its planned hire is chosen", async () => {

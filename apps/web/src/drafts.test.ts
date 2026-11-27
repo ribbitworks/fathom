@@ -713,4 +713,11 @@ describe("a person's draft holding details the role can't see", () => {
     expect(unseenPeople({ people: ["p2", "p3"] }, people)).toBeUndefined();
     expect(unseenPeople({ people: [] }, people)).toBeUndefined();
   });
+
+  it("is why another approver must decide a planned hire's draft holding it, as a fill's does", () => {
+    const rows = [{ id: "h1", draft: { holdsUnseen: true as const } }];
+    expect(unseenPeople({ people: [], plannedHires: ["h1"] }, rows)).toBe(
+      unseenDetails,
+    );
+  });
 });

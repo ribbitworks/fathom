@@ -3,7 +3,7 @@
 // Unit tests for what a reader sees of a feature team, by role and data class: whom of its people,
 // which of its fields and days, and which drafts.
 
-import { defaultClasses, withImplied } from "@fathom/shared";
+import { defaultClasses } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   draftedOn,
@@ -15,7 +15,6 @@ import {
   peopleDraftChanges,
   peopleNamed,
   seenBy,
-  seesCarried,
   seesTeamField,
   teamSight,
   withoutLeavers,
@@ -478,31 +477,5 @@ describe("what a reader sees of the days a draft gives", () => {
     expect(teamSight(access, everyone, { day: today, today }).seesDays).toBe(
       seesDays,
     );
-  });
-});
-
-describe("who sees what a fill carries to its person", () => {
-  it.each([
-    [
-      "a role seeing feature teams, Personal data and their days",
-      personalOnly,
-      true,
-    ],
-    ["a role without Personal data", teamMember, false],
-    [
-      "a role seeing Personal data but not the class the days are moved to",
-      personalOnlyWithConfidentialDays,
-      false,
-    ],
-    [
-      "a role seeing Personal data but not feature teams",
-      {
-        permissions: withImplied(["people:view", "personal:view"]),
-        dataClasses: defaultClasses,
-      },
-      false,
-    ],
-  ])("is answered for %s", (_, access, sees) => {
-    expect(seesCarried(access)).toBe(sees);
   });
 });

@@ -6,9 +6,14 @@
 import { refuseFillingAllocated } from "./allocations.ts";
 import { type Database, plannedHires, type Reader } from "@fathom/db";
 import {
+  decidersOf,
   decides,
+  draftKey,
   type DraftsRequest,
+  fillSight,
   type HireFill,
+  holdsAny,
+  type Permission,
   seesEmployment,
   seesField,
 } from "@fathom/shared";
@@ -25,8 +30,8 @@ import {
   refuseJoiningAfterEnd,
   teamDraftsBeforeFill,
   refuseFillingInTeamDrafts,
-  requireSeesCarried,
 } from "./feature-team-fills.ts";
+import { teamsOfHires } from "./feature-team-reads.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
 import {
   drafted,
@@ -153,9 +158,38 @@ const inFill = (
   fill.people.some((id) => asked.people.includes(id)) ||
   fill.plannedHires.some((id) => asked.plannedHires.includes(id));
 
-// The drafts asked for, with every published draft of the fills any of them belong to. A fill's
-// person, with a start date or a reporting line in their draft, is decided only by those who see
-// Personal data, and a fill carrying the hire's feature teams only by those who see their days.
+// The kinds of a fill's drafts, and its drafts of each: its person's, when it drafts them, and its
+// planned hires'.
+const fillKinds = ["person", "planned-hire"] as const;
+
+type FillKind = (typeof fillKinds)[number];
+
+const draftsOf = (fill: Fill): Record<FillKind, string[]> => ({
+  person: fill.people,
+  "planned-hire": fill.plannedHires,
+});
+
+const kindsOf = (fill: Fill): FillKind[] =>
+  // The kind is always one of the fixed pair.
+  // eslint-disable-next-line security/detect-object-injection
+  fillKinds.filter((kind) => draftsOf(fill)[kind].length > 0);
+
+// The kinds of drafts the actor's role approves but whose sight it lacks, as a fill's need it.
+const lackingSight = (
+  actor: Actor,
+  sight: readonly Permission[],
+  kinds: readonly FillKind[] = fillKinds,
+): FillKind[] =>
+  kinds.filter((kind) => {
+    const decided = { kind, sight };
+    return (
+      holdsAny(actor.permissions, decidersOf(decided)) &&
+      !decides(actor.permissions, decided)
+    );
+  });
+
+// The drafts asked for, with every published draft of the fills any of them belong to. Each fill is
+// decided only by a role that decides all its kinds of draft with the sight fillSight sets out.
 export async function withFills(
   reader: Reader,
   actor: Actor,
@@ -166,27 +200,82 @@ export async function withFills(
   const hires = new Set(asked.plannedHires);
   for (const fill of await readFills(reader)) {
     if (!inFill(fill, asked)) continue;
-    if (fill.people.length > 0 && !seesEmployment(actor)) {
+    const kinds = kindsOf(fill);
+    const names = fill.people.length > 0;
+    const decidesAll = (carries: boolean) =>
+      kinds.every((kind) =>
+        decides(actor.permissions, {
+          kind,
+          sight: fillSight(actor.dataClasses, { names, carries }),
+        }),
+      );
+    if (!decidesAll(false)) {
       throw new ForbiddenError(
-        "A fill names who fills the hire, so an Approver who sees start and end dates must decide it",
+        lackingSight(
+          actor,
+          fillSight(actor.dataClasses, { names, carries: false }),
+          kinds,
+        ).length > 0
+          ? "A fill names who fills the hire, so an Approver who sees start and end dates must decide it"
+          : "This draft is part of filling a planned hire, which this role can't decide",
       );
     }
-    if (
-      (fill.people.length > 0 &&
-        !decides(actor.permissions, { kind: "person" })) ||
-      !decides(actor.permissions, { kind: "planned-hire" })
-    ) {
+    if ((await carriesTeams(reader, fill.hireId, today)) && !decidesAll(true)) {
       throw new ForbiddenError(
-        "This draft is part of filling a planned hire, which this role can't decide",
+        "This fill moves the planned hire's feature teams to its person, so an Approver who sees feature teams and Personal details must decide it",
       );
-    }
-    if (await carriesTeams(reader, fill.hireId, today)) {
-      requireSeesCarried(actor);
     }
     for (const id of fill.people) people.add(id);
     for (const id of fill.plannedHires) hires.add(id);
   }
   return { ...asked, people: [...people], plannedHires: [...hires] };
+}
+
+// The keys of the drafts of published fills whose kind the actor's role approves but whose sight it
+// lacks, so another approver must decide them. Only fills whose teams could change that are read
+// for them, and none for a role seeing all a fill can need.
+export async function fillsBeyondSight(
+  reader: Reader,
+  actor: Actor,
+  today: string,
+): Promise<Set<string>> {
+  const beyond = new Set<string>();
+  const sightOf = (fill: Fill, carries: boolean) =>
+    fillSight(actor.dataClasses, { names: fill.people.length > 0, carries });
+  const most = lackingSight(
+    actor,
+    fillSight(actor.dataClasses, { names: true, carries: true }),
+  );
+  if (most.length === 0) return beyond;
+  const fills = await readFills(reader);
+  const unsure = fills.filter(
+    (fill) => lackingSight(actor, sightOf(fill, false)).length < most.length,
+  );
+  const carrying = new Set(
+    unsure.length === 0
+      ? []
+      : [
+          ...(
+            await teamsOfHires(
+              reader,
+              unsure.map(({ hireId }) => hireId),
+              today,
+            )
+          ).values(),
+        ].flat(),
+  );
+  for (const fill of fills) {
+    const ids = draftsOf(fill);
+    for (const kind of lackingSight(
+      actor,
+      sightOf(fill, carrying.has(fill.hireId)),
+    )) {
+      // The kind is always one of the fixed pair.
+      // eslint-disable-next-line security/detect-object-injection
+      for (const id of ids[kind]) beyond.add(draftKey(kind, id));
+    }
+  }
+  return beyond;
 }
 
 // The team drafts asked for that a fill asked for waits on, which are approved before it.
