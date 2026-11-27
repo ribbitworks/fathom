@@ -14,7 +14,7 @@ import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Transaction } from "./changes.ts";
 import type { Recorded } from "./draft-records.ts";
-import { checkTeamForFeature } from "./feature-team-removals.ts";
+import { checkTeamsForFeatures } from "./feature-team-removals.ts";
 import { askedColumnValues, choicesAskedFor } from "./person-fields.ts";
 import { keptNote } from "./records.ts";
 
@@ -42,7 +42,7 @@ const startingStatus: Readonly<
 
 // The status a record is given: the one asked for, if it is offered or the record already has it,
 // or, for a record added without one, the first status it can start in.
-export async function statusFor(
+async function statusFor(
   transaction: Transaction,
   list: StatusList,
   asked: string | undefined,
@@ -59,20 +59,34 @@ export async function statusFor(
   return firstOfferedOrRefused(transaction, list, meaning, missing);
 }
 
-// A record's values in the columns added to its table, live or drafted to be added as the editor sees
-// them: those a request names replace those it has, each checked against its column, and every
-// required column must then hold one.
-async function addedValues(
-  transaction: Transaction,
-  editor: string,
-  table: PlanningTable,
-  request: PlanningRequest,
-  current: Recorded | undefined,
-): Promise<Recorded> {
-  const columns = await columnsWithAdded(transaction, editor, true, table);
-  const known = await choicesAskedFor(transaction, editor, [request]);
-  return askedColumnValues(columns, known, request, current);
+// Answers each read once per key, however often it is asked for. A rejected read refuses the whole
+// batch, so it is kept as any other.
+export function readOnce<Asked extends unknown[], Value>(
+  read: (...asked: Asked) => Promise<Value>,
+): (...asked: Asked) => Promise<Value> {
+  const answers = new Map<string, Promise<Value>>();
+  return (...asked) => {
+    const key = JSON.stringify(asked);
+    const known = answers.get(key);
+    if (known !== undefined) return known;
+    const answer = read(...asked);
+    answers.set(key, answer);
+    return answer;
+  };
 }
+
+// Each built-in choice a batch of records asks for, read once however many of them ask for it.
+export const choiceReads = (transaction: Transaction) => ({
+  status: readOnce(
+    (list: StatusList, asked: string | undefined, had: unknown) =>
+      statusFor(transaction, list, asked, had),
+  ),
+  optional: readOnce((list: BuiltInList, asked: string | null, had: unknown) =>
+    optionalChoice(transaction, list, asked, had),
+  ),
+});
+
+export type ChoiceReads = ReturnType<typeof choiceReads>;
 
 // A choice of a built-in list a record need not have: none, or one offered or the record already has.
 async function optionalChoice(
@@ -85,40 +99,55 @@ async function optionalChoice(
   return asked;
 }
 
-// A feature's or an activity's planning fields and column values, as a request makes them, from
-// the version shown, if any.
-export async function planningRecord(
+// What the features or activities a request makes are checked against, read once for all of them:
+// their feature teams, their table's columns, live or drafted to be added as the editor sees them,
+// and the choices they name.
+export async function planningReads(
   transaction: Transaction,
   editor: string,
   table: PlanningTable,
+  requests: readonly PlanningRequest[],
+) {
+  await checkTeamsForFeatures(
+    transaction,
+    requests.map(({ featureTeamId }) => featureTeamId),
+  );
+  return {
+    columns: await columnsWithAdded(transaction, editor, true, table),
+    known: await choicesAskedFor(transaction, editor, requests),
+    choices: choiceReads(transaction),
+  };
+}
+
+export type PlanningReads = Awaited<ReturnType<typeof planningReads>>;
+
+// A feature's or an activity's planning fields and column values, as a request makes them, from
+// the version shown, if any. Those a request names replace those it has, each checked against its
+// column, and every required column must then hold one.
+export async function planningRecord(
+  { columns, known, choices }: PlanningReads,
   request: PlanningRequest,
   current?: Recorded,
 ): Promise<Recorded> {
-  await checkTeamForFeature(transaction, request.featureTeamId);
-  const added = await addedValues(transaction, editor, table, request, current);
   return {
-    ...added,
+    ...askedColumnValues(columns, known, request, current),
     name: request.name,
-    statusId: await statusFor(
-      transaction,
+    statusId: await choices.status(
       "feature-statuses",
       request.statusId,
       current?.statusId,
     ),
-    priorityId: await optionalChoice(
-      transaction,
+    priorityId: await choices.optional(
       "feature-priorities",
       request.priorityId,
       current?.priorityId,
     ),
-    sizeId: await optionalChoice(
-      transaction,
+    sizeId: await choices.optional(
       "feature-sizes",
       request.sizeId,
       current?.sizeId,
     ),
-    riskId: await optionalChoice(
-      transaction,
+    riskId: await choices.optional(
       "feature-risks",
       request.riskId,
       current?.riskId,

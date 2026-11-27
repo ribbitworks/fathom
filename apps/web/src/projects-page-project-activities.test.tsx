@@ -15,13 +15,13 @@ import {
   recordDraft,
 } from "./test-support.tsx";
 import {
+  addingAnswer,
   activity,
   answers,
   openPage,
   plan,
   project,
   projectId,
-  saved,
   sent,
   sidePanel,
   withRelease,
@@ -183,7 +183,10 @@ describe("a project's activities on Projects", () => {
         ...withRelease,
         "POST /api/activities": () => {
           if (holding.plan !== undefined) holding.plan.plan = withAdded;
-          return saved(() => withAdded)();
+          return addingAnswer(
+            () => withAdded,
+            ["50000000-0000-4000-8000-0000000000aa"],
+          )();
         },
       },
       featuresEditor,
@@ -209,7 +212,11 @@ describe("a project's activities on Projects", () => {
       expect(screen.queryByRole("region", { name: "New activity" })).toBeNull();
     });
     expect(sent(fetch, "POST /api/activities")).toEqual([
-      expect.objectContaining({ name: "Fictional Rehearsal", projectId }),
+      {
+        records: [
+          expect.objectContaining({ name: "Fictional Rehearsal", projectId }),
+        ],
+      },
     ]);
     await waitFor(() => {
       expect(document.activeElement?.textContent).toBe("Add activity");

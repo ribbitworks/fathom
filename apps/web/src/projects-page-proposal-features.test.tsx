@@ -7,6 +7,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  addingAnswer,
   answers,
   feature,
   newId,
@@ -73,7 +74,7 @@ describe("a proposal's Features in its details", () => {
 
   it("adds a new feature and links it as the proposal's own draft, then puts focus back on New feature", async () => {
     const { fetch, held } = await openProposal({
-      "POST /api/features": saved(() => withAdded),
+      "POST /api/features": addingAnswer(() => withAdded),
       [`PUT /api/proposals/${proposalId}`]: saved(() => linked),
     });
     await userEvent.click(
@@ -95,7 +96,7 @@ describe("a proposal's Features in its details", () => {
       ]);
     });
     expect(sent(fetch, "POST /api/features")).toEqual([
-      expect.objectContaining({ name: "Fictional Dock Lights" }),
+      { records: [expect.objectContaining({ name: "Fictional Dock Lights" })] },
     ]);
     await waitFor(() => {
       expect(newForm()).toBeNull();

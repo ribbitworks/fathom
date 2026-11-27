@@ -4,13 +4,14 @@
 // the data access layer; the caller checks the actor may change the kind, and a feature's customers
 // and feature team are checked here, since they take more than changing features.
 
-import { type Database, people } from "@fathom/db";
+import type { Database } from "@fathom/db";
 import {
   type CustomerRequest,
   featureNamerKeys,
   type FeatureProjectsRequest,
   type FeatureRequest,
   type MilestoneRequest,
+  type PlanAddingRequests,
   type ProjectRequest,
   type ProposalRequest,
   type RemovalReasonRequest,
@@ -19,7 +20,6 @@ import {
   type RecordRef,
   type RecordType,
 } from "@fathom/shared";
-import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
 import {
@@ -28,12 +28,18 @@ import {
   ForbiddenError,
   NotFoundError,
 } from "../errors.ts";
-import type { Saved, Transaction } from "./changes.ts";
+import type { Added, Saved, Transaction } from "./changes.ts";
 import { type Recorded, unseenDraft } from "./draft-records.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import { text } from "./reporting.ts";
-import { planningRecord, statusFor } from "./planning-records.ts";
+import {
+  type ChoiceReads,
+  choiceReads,
+  planningReads,
+  type PlanningReads,
+  planningRecord,
+} from "./planning-records.ts";
 import {
   addedOnly,
   linkedIds,
@@ -53,7 +59,7 @@ import {
 } from "./record-drafting.ts";
 import { discardRecordDraft, withUsedRecords } from "./record-decisions.ts";
 import { keptNote, readRecordsState } from "./records.ts";
-import { hiddenPeople } from "./people-reads.ts";
+import { hiddenPeople, shownPeople } from "./people-reads.ts";
 import { readToday } from "./settings.ts";
 import { planOut, type PlanRecords, reasonsOf } from "./project-reads.ts";
 
@@ -76,6 +82,40 @@ export async function changingPlan(
       changeSetId,
     };
   });
+}
+
+// Reads what new records of a kind are checked against, once for all of them, and answers how each
+// is made from its request, refusing what the maker may not add.
+export type NewRecords<Request> = (
+  transaction: Transaction,
+  maker: Actor,
+  requests: readonly Request[],
+) => Promise<(request: Request) => Promise<Recorded>>;
+
+// Adds records of one kind in one change set, all or none, each judged against the others as they
+// will all be, and answers with their identifiers in the order asked.
+export async function addingPlan<Request>(
+  database: Database,
+  maker: Actor,
+  type: RecordType,
+  requests: readonly Request[],
+  newRecords: NewRecords<Request>,
+): Promise<Added<PlanRecords>> {
+  const adding = requests.map((request) => ({ id: randomUUID(), request }));
+  const saved = await changingPlan(
+    database,
+    maker,
+    async (transaction, state) => {
+      const made = await newRecords(transaction, maker, requests);
+      const wanted: Wanted[] = [];
+      // In turn, since a transaction runs one query at a time.
+      for (const { id, request } of adding) {
+        wanted.push({ type, id, record: await made(request) });
+      }
+      return saveRecordDrafts(transaction, maker, state, wanted);
+    },
+  );
+  return { ...saved, ids: adding.map(({ id }) => id) };
 }
 
 // Refuses deciding a project's or proposal's draft that gives or takes an owner the actor doesn't
@@ -127,15 +167,35 @@ async function ownerFor(
   const shown = current !== null && hidden.has(current) ? null : current;
   if (requested === shown) return current;
   if (requested === null) return null;
-  const [found] = await transaction
-    .select({ id: people.id })
-    .from(people)
-    .where(eq(people.id, requested));
-  if (found === undefined || hidden.has(requested)) {
-    throw new BadRequestError("Choose an owner from People");
-  }
+  await refuseOwnersUnseen(transaction, actor, [requested]);
   return requested;
 }
+
+// Refuses an owner asked for who isn't one of People as the actor sees them.
+async function refuseOwnersUnseen(
+  transaction: Transaction,
+  actor: Actor,
+  asked: readonly string[],
+): Promise<void> {
+  if (asked.length === 0) return;
+  const today = await readToday(transaction);
+  const shown = await shownPeople(transaction, actor, asked, today);
+  if (asked.some((id) => !shown.has(id))) {
+    throw new BadRequestError("Choose an owner from People");
+  }
+}
+
+// Refuses new records' owners as a change's are refused, reading People once for all of them.
+const refuseNewOwnersUnseen = (
+  transaction: Transaction,
+  maker: Actor,
+  requests: readonly { ownerId: string | null }[],
+) =>
+  refuseOwnersUnseen(
+    transaction,
+    maker,
+    requests.flatMap(({ ownerId }) => (ownerId === null ? [] : [ownerId])),
+  );
 
 // A customer, project, proposal, or feature, as a request adds or changes it.
 export type PlanRecordRequest =
@@ -146,28 +206,18 @@ export type PlanRecordRequest =
 
 export type PlanKind = PlanRecordRequest["type"];
 
+type AddedKind = Exclude<keyof PlanAddingRequests, "activity">;
+
+// Records of one kind of the plan's, other than activities, as a request adds them.
+export type PlanAdding<Kinds extends AddedKind = AddedKind> = {
+  [Kind in Kinds]: { type: Kind; requests: PlanAddingRequests[Kind][] };
+}[Kinds];
+
 const customerRecord = (request: CustomerRequest) => ({
   name: request.name,
   description: request.description,
   note: keptNote(request.note),
 });
-
-export async function addCustomer(
-  database: Database,
-  maker: Actor,
-  request: CustomerRequest,
-): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, (transaction, state) =>
-    saveRecordDraft(
-      transaction,
-      maker,
-      state,
-      "customer",
-      randomUUID(),
-      customerRecord(request),
-    ),
-  );
-}
 
 export async function changeCustomer(
   database: Database,
@@ -191,29 +241,6 @@ const projectRecord = (request: ProjectRequest) => ({
   proposalIds: request.proposalIds,
   featureIds: request.featureIds,
 });
-
-export async function addProject(
-  database: Database,
-  maker: Actor,
-  request: ProjectRequest,
-): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, async (transaction, state) => {
-    const ownerId = await ownerFor(
-      transaction,
-      maker,
-      request.ownerId,
-      undefined,
-    );
-    return saveRecordDraft(
-      transaction,
-      maker,
-      state,
-      "project",
-      randomUUID(),
-      projectRecord({ ...request, ownerId }),
-    );
-  });
-}
 
 export async function changeProject(
   database: Database,
@@ -240,28 +267,20 @@ export async function changeProject(
   });
 }
 
-// A proposal as a request makes it, from the version shown, if any.
+// A proposal as a request makes it, with the owner it is given, from the version shown, if any.
 async function proposalRecord(
-  transaction: Transaction,
-  maker: Actor,
-  state: RecordsState,
+  choices: ChoiceReads,
   request: ProposalRequest,
+  ownerId: string | null,
   current?: Recorded,
 ) {
-  const ownerId = await ownerFor(
-    transaction,
-    maker,
-    request.ownerId,
-    current?.ownerId,
-  );
   return {
     name: request.name,
     externalId: request.externalId,
     link: request.link,
     ownerId,
     customerIds: request.customerIds,
-    statusId: await statusFor(
-      transaction,
+    statusId: await choices.status(
       "proposal-statuses",
       request.statusId,
       current?.statusId,
@@ -275,23 +294,6 @@ async function proposalRecord(
   };
 }
 
-export async function addProposal(
-  database: Database,
-  maker: Actor,
-  request: ProposalRequest,
-): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, async (transaction, state) =>
-    saveRecordDraft(
-      transaction,
-      maker,
-      state,
-      "proposal",
-      randomUUID(),
-      await proposalRecord(transaction, maker, state, request),
-    ),
-  );
-}
-
 export async function changeProposal(
   database: Database,
   maker: Actor,
@@ -300,55 +302,46 @@ export async function changeProposal(
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
     const proposal = changeableRecord(state, "proposal", id);
+    const ownerId = await ownerFor(
+      transaction,
+      maker,
+      request.ownerId,
+      proposal.ownerId,
+    );
     return saveRecordDraft(
       transaction,
       maker,
       state,
       "proposal",
       id,
-      await proposalRecord(transaction, maker, state, request, proposal),
+      await proposalRecord(
+        choiceReads(transaction),
+        request,
+        ownerId,
+        proposal,
+      ),
     );
   });
 }
 
+const featureReads = (
+  transaction: Transaction,
+  maker: Actor,
+  requests: readonly FeatureRequest[],
+) => planningReads(transaction, maker.user.id, "features", requests);
+
 // A feature as a request makes it: its planning fields, then its customers and target cycle.
 async function featureRecord(
-  transaction: Transaction,
-  editor: string,
+  reads: PlanningReads,
   request: FeatureRequest,
   current?: Recorded,
 ) {
   return {
-    ...(await planningRecord(
-      transaction,
-      editor,
-      "features",
-      request,
-      current,
-    )),
+    ...(await planningRecord(reads, request, current)),
     customerIds: request.customerIds,
     targetStreamId: request.target?.streamId ?? null,
     targetCycle: request.target?.cycle ?? null,
   };
-}
-
-export async function addFeature(
-  database: Database,
-  maker: Actor,
-  request: FeatureRequest,
-): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, async (transaction, state) => {
-    const record = await featureRecord(transaction, maker.user.id, request);
-    refuseFeatureFieldChanges(maker, undefined, record);
-    return saveRecordDraft(
-      transaction,
-      maker,
-      state,
-      "feature",
-      randomUUID(),
-      record,
-    );
-  });
 }
 
 export async function changeFeature(
@@ -360,8 +353,7 @@ export async function changeFeature(
   return changingPlan(database, maker, async (transaction, state) => {
     const feature = changeableRecord(state, "feature", id);
     const record = await featureRecord(
-      transaction,
-      maker.user.id,
+      await featureReads(transaction, maker, [request]),
       request,
       feature,
     );
@@ -495,24 +487,42 @@ const milestoneRecord = (projectId: string, request: MilestoneRequest) => ({
   customerDelivery: request.customerDelivery,
 });
 
-// Saving refuses a project that does not exist, as it does any link to a record.
-export async function addMilestone(
+// How each kind is made new from its requests. A milestone's project is checked as any link is.
+const newRecords: {
+  [Kind in AddedKind]: NewRecords<PlanAddingRequests[Kind]>;
+} = {
+  customer: () =>
+    Promise.resolve((request) => Promise.resolve(customerRecord(request))),
+  project: async (transaction, maker, requests) => {
+    await refuseNewOwnersUnseen(transaction, maker, requests);
+    return (request) => Promise.resolve(projectRecord(request));
+  },
+  proposal: async (transaction, maker, requests) => {
+    await refuseNewOwnersUnseen(transaction, maker, requests);
+    const choices = choiceReads(transaction);
+    return (request) => proposalRecord(choices, request, request.ownerId);
+  },
+  feature: async (transaction, maker, requests) => {
+    const reads = await featureReads(transaction, maker, requests);
+    return async (request) => {
+      const record = await featureRecord(reads, request);
+      refuseFeatureFieldChanges(maker, undefined, record);
+      return record;
+    };
+  },
+  milestone: () =>
+    Promise.resolve(({ projectId, ...request }) =>
+      Promise.resolve(milestoneRecord(projectId, request)),
+    ),
+};
+
+export const addRecords = <Kind extends AddedKind>(
   database: Database,
   maker: Actor,
-  projectId: string,
-  request: MilestoneRequest,
-): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, (transaction, state) =>
-    saveRecordDraft(
-      transaction,
-      maker,
-      state,
-      "milestone",
-      randomUUID(),
-      milestoneRecord(projectId, request),
-    ),
-  );
-}
+  { type, requests }: PlanAdding<Kind>,
+) =>
+  // eslint-disable-next-line security/detect-object-injection
+  addingPlan(database, maker, type, requests, newRecords[type]);
 
 export async function changeMilestone(
   database: Database,

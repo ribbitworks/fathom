@@ -103,6 +103,11 @@ export const approver = [...editor, "plan:approve"];
 
 export const saved = (current: () => Plan) => () =>
   Response.json({ plan: current(), changeSetId });
+// What adding records answers: the plan, and the identifiers the records were given, in order.
+export const addingAnswer =
+  (current: () => Plan, ids: readonly string[] = [newId]) =>
+  () =>
+    Response.json({ plan: current(), ids, changeSetId });
 export const deleted = () => Response.json({ changeSetId });
 
 // Opens the page at an address, with the server holding the plan the test can change.

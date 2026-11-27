@@ -5,14 +5,17 @@
 
 import {
   type Activity,
+  type AddedPlan,
   type ActivityRequest,
   type Customer,
   type CustomerRequest,
   type Feature,
   type FeatureRequest,
   type Milestone,
+  type MilestoneAdding,
   type MilestoneRequest,
   ownersAfter,
+  type PlanAddingRequests,
   type Project,
   type ProjectPlan,
   type ProjectRequest,
@@ -21,14 +24,13 @@ import {
 } from "@fathom/shared";
 import type { CellChange } from "./cell-kinds.tsx";
 import {
-  addMilestone,
-  addRecord,
+  addRecords,
   allMilestones,
   changeFeatureProjects,
   changeMilestone,
   changeRecord,
-  type MilestoneAdding,
   namersIn,
+  type PlanAdding,
   type PlanKind,
   type PlanRecord,
   type PlanRecordKind,
@@ -176,7 +178,8 @@ interface PlanRecordOperations {
     | Blank<Activity>;
   all: (plan: ProjectPlan) => readonly PlanRecord[];
   withAll: (plan: ProjectPlan, records: readonly PlanRecord[]) => ProjectPlan;
-  add: (request: unknown) => Promise<SavedPlan>;
+  // Adds records of the kind from what each new row holds, all saved together or none.
+  add: (requests: readonly unknown[]) => Promise<AddedPlan>;
   change: (record: PlanRecord, change: CellChange) => Promise<SavedPlan>;
   remove: (record: PlanRecord) => Promise<string | null>;
 }
@@ -188,7 +191,9 @@ const savedAs = (
   type: Exclude<PlanKind, "feature">,
   requestOf: (record: never) => object,
 ): Pick<PlanRecordOperations, "add" | "change" | "remove"> => ({
-  add: (request) => addRecord({ type, request } as PlanRequest),
+  add: (requests) =>
+    // The grid's rows are the kind's own requests, which the server parses.
+    addRecords(...([type, requests] as PlanAdding)),
   change: (record, change) =>
     changeRecord(record.id, {
       type,
@@ -213,26 +218,30 @@ const planningBlank = {
   links: {},
 };
 
-// How a feature or an activity is added: its request built from its blank, with what the new row
+// How features or activities are added: each request built from its blank, with what its new row
 // holds laid over it.
 const addPlanned =
-  (
-    type: "feature" | "activity",
-    requestOf: (fields: never, change: CellChange) => object,
+  <Kind extends "feature" | "activity">(
+    type: Kind,
+    requestOf: (fields: never, change: CellChange) => PlanAddingRequests[Kind],
   ) =>
-  (request: unknown): Promise<SavedPlan> =>
-    addRecord({
-      type,
-      request: requestOf(
-        {
-          // The kind is always one of the two above.
-          // eslint-disable-next-line security/detect-object-injection
-          ...planRecordOperations[type].blank,
-          ...(request as object),
-        } as never,
-        request as CellChange,
-      ),
-    } as PlanRequest);
+  (requests: readonly unknown[]): Promise<AddedPlan> =>
+    addRecords(
+      ...([
+        type,
+        requests.map((request) =>
+          requestOf(
+            {
+              // The kind is always one of the two above.
+              // eslint-disable-next-line security/detect-object-injection
+              ...planRecordOperations[type].blank,
+              ...(request as object),
+            } as never,
+            request as CellChange,
+          ),
+        ),
+      ] as PlanAdding),
+    );
 
 const planRecordOperations: Readonly<
   Record<PlanRecordKind, PlanRecordOperations>
@@ -291,10 +300,8 @@ const planRecordOperations: Readonly<
         ),
       })),
     }),
-    add: (request) => {
-      const { projectId, ...milestone } = request as MilestoneAdding;
-      return addMilestone(projectId, milestone);
-    },
+    add: (requests) =>
+      addRecords("milestone", requests as readonly MilestoneAdding[]),
     change: (record, change) =>
       changeMilestone(record as Milestone, {
         ...milestoneRequest(record as Milestone),

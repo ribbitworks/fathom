@@ -66,8 +66,12 @@ describe("records a change links to, in the history", () => {
     ]);
     const name = `Fictional Activity ${first.id.slice(0, 8)}`;
     const added = await send("POST", "/api/activities", {
-      name,
-      projectId: first.id,
+      records: [
+        {
+          name,
+          projectId: first.id,
+        },
+      ],
     });
     expect(added.statusCode, added.body).toBe(201);
     const activityId = String(

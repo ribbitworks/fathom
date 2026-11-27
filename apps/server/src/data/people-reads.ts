@@ -87,6 +87,27 @@ export function currentOn(person: Recorded, today: string): boolean {
   );
 }
 
+// The people a reader sees among those given, as People shows them: each who exists, unless hidden
+// as below.
+export async function shownPeople(
+  transaction: Reader,
+  reader: Actor,
+  ids: readonly string[],
+  today: string,
+): Promise<Set<string>> {
+  const shown = new Set<string>();
+  const seesAll = seesEmployment(reader);
+  for (const chunk of inChunks([...new Set(ids)])) {
+    for (const person of await transaction
+      .select({ id: people.id, startDate: people.startDate })
+      .from(people)
+      .where(inArray(people.id, chunk))) {
+      if (seesAll || !notStarted(person, today)) shown.add(person.id);
+    }
+  }
+  return shown;
+}
+
 // The people a reader doesn't see among those given, as People hides them: those not yet started,
 // to a reader who doesn't see start and end dates. Those who have left stay named, retired.
 export async function hiddenPeople(

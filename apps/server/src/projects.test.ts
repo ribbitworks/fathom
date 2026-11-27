@@ -187,8 +187,12 @@ describe("customers", () => {
 
   it("refuses a customer's note a note may not hold", async () => {
     const response = await send("POST", "/api/customers", {
-      name: unique("Fictional Customer"),
-      note: "a".repeat(noteLength + 1),
+      records: [
+        {
+          name: unique("Fictional Customer"),
+          note: "a".repeat(noteLength + 1),
+        },
+      ],
     });
     expect(response.statusCode).toBe(400);
   });
@@ -196,7 +200,11 @@ describe("customers", () => {
   it("refuses a name taken, ignoring letter case", async () => {
     const customer = await addCustomer();
     const response = await send("POST", "/api/customers", {
-      name: customer.name.toUpperCase(),
+      records: [
+        {
+          name: customer.name.toUpperCase(),
+        },
+      ],
     });
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toBe("Another customer has that name");
@@ -254,8 +262,12 @@ describe("customers", () => {
     const customer = await addCustomer();
     await approve([{ type: "customer", id: customer.id }]);
     const feature = await send("POST", "/api/features", {
-      name: unique("Fictional Feature"),
-      customerIds: [customer.id],
+      records: [
+        {
+          name: unique("Fictional Feature"),
+          customerIds: [customer.id],
+        },
+      ],
     });
     expect(feature.statusCode).toBe(201);
     const editor = await test.signedIn(["plan:edit"]);
@@ -335,8 +347,12 @@ describe("projects", () => {
 
   it("refuse a customer that does not exist", async () => {
     const response = await send("POST", "/api/projects", {
-      name: unique("Fictional Project"),
-      customerIds: [missing],
+      records: [
+        {
+          name: unique("Fictional Project"),
+          customerIds: [missing],
+        },
+      ],
     });
     expect(response.statusCode).toBe(404);
   });
@@ -346,8 +362,12 @@ describe("projects", () => {
     await approve([{ type: "customer", id: customer.id }]);
     await send("DELETE", `/api/customers/${customer.id}`);
     const response = await send("POST", "/api/projects", {
-      name: unique("Fictional Project"),
-      customerIds: [customer.id],
+      records: [
+        {
+          name: unique("Fictional Project"),
+          customerIds: [customer.id],
+        },
+      ],
     });
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toBe(
@@ -360,12 +380,20 @@ describe("projects", () => {
     const project = await addProject({ externalId });
     expect(project.externalId).toBe(externalId);
     const sameId = await send("POST", "/api/projects", {
-      name: unique("Fictional Project"),
-      externalId: externalId.toLowerCase(),
+      records: [
+        {
+          name: unique("Fictional Project"),
+          externalId: externalId.toLowerCase(),
+        },
+      ],
     });
     expect(errorOf(sameId)).toBe("Another project has that Project ID");
     const sameName = await send("POST", "/api/projects", {
-      name: project.name.toLowerCase(),
+      records: [
+        {
+          name: project.name.toLowerCase(),
+        },
+      ],
     });
     expect(errorOf(sameName)).toBe("Another project has that name");
     await addProject({ externalId: "" });
@@ -522,9 +550,10 @@ describe("milestones", () => {
   });
 
   it("refuse a project that does not exist", async () => {
-    const response = await send("POST", `/api/projects/${missing}/milestones`, {
-      name: "Fictional Orphan",
-      date: "2027-01-04",
+    const response = await send("POST", "/api/milestones", {
+      records: [
+        { projectId: missing, name: "Fictional Orphan", date: "2027-01-04" },
+      ],
     });
     expect(response.statusCode).toBe(404);
   });
@@ -576,8 +605,12 @@ describe("proposals", () => {
 
   it("refuse a status that is not one of proposals'", async () => {
     const response = await send("POST", "/api/proposals", {
-      name: unique("Fictional Proposal"),
-      statusId: testPosition,
+      records: [
+        {
+          name: unique("Fictional Proposal"),
+          statusId: testPosition,
+        },
+      ],
     });
     expect(response.statusCode).toBe(400);
     expect(errorOf(response)).toBe("Choose a status from its list");
@@ -596,7 +629,11 @@ describe("proposals", () => {
         .where(eq(listItems.id, id));
     }
     const response = await send("POST", "/api/proposals", {
-      name: unique("Fictional Proposal"),
+      records: [
+        {
+          name: unique("Fictional Proposal"),
+        },
+      ],
     });
     for (const id of rest) {
       await test.connection
@@ -614,8 +651,12 @@ describe("proposals", () => {
     const proposal = await addProposal({ link: "example.com/bid" });
     expect(proposal.link).toBe("https://example.com/bid");
     const response = await send("POST", "/api/proposals", {
-      name: unique("Fictional Proposal"),
-      link: "javascript:alert(1)",
+      records: [
+        {
+          name: unique("Fictional Proposal"),
+          link: "javascript:alert(1)",
+        },
+      ],
     });
     expect(response.statusCode).toBe(400);
   });
@@ -624,12 +665,20 @@ describe("proposals", () => {
     const externalId = unique("PR");
     const proposal = await addProposal({ externalId });
     const sameName = await send("POST", "/api/proposals", {
-      name: proposal.name.toUpperCase(),
+      records: [
+        {
+          name: proposal.name.toUpperCase(),
+        },
+      ],
     });
     expect(errorOf(sameName)).toBe("Another proposal has that name");
     const response = await send("POST", "/api/proposals", {
-      name: unique("Fictional Proposal"),
-      externalId: externalId.toUpperCase(),
+      records: [
+        {
+          name: unique("Fictional Proposal"),
+          externalId: externalId.toUpperCase(),
+        },
+      ],
     });
     expect(errorOf(response)).toBe("Another proposal has that Proposal ID");
   });

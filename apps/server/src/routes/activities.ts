@@ -5,6 +5,8 @@
 
 import {
   activityRequestSchema,
+  addedPlanSchema,
+  addedRecordsSchema,
   changeSetIdSchema,
   projectPlanSchema,
   savedSchema,
@@ -28,16 +30,16 @@ export function activityRoutes(
       "/api/activities",
       {
         schema: {
-          body: activityRequestSchema,
-          response: { [created]: planResponse },
+          body: addedRecordsSchema(activityRequestSchema),
+          response: { [created]: addedPlanSchema },
         },
       },
       async (request, reply) => {
-        const { result, changeSetId } = await activities.add(
+        const { result, ids, changeSetId } = await activities.add(
           request.actor,
-          request.body,
+          request.body.records,
         );
-        return reply.status(created).send({ plan: result, changeSetId });
+        return reply.status(created).send({ plan: result, ids, changeSetId });
       },
     );
     app.put(

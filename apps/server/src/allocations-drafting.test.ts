@@ -275,7 +275,11 @@ describe("allocating", () => {
       "POST",
       "/api/features",
       {
-        name,
+        records: [
+          {
+            name,
+          },
+        ],
       },
     );
     expect(response.statusCode, response.body).toBe(201);
@@ -368,7 +372,7 @@ describe("allocating", () => {
       director.cookie,
       "POST",
       "/api/activities",
-      { name, projectId },
+      { records: [{ name, projectId }] },
     );
     expect(response.statusCode, response.body).toBe(201);
     const drafted = response

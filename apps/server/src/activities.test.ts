@@ -74,7 +74,7 @@ const approve = async (records: { type: string; id: string }[]) => {
 // A project, approved, so its activities are drafts of their own.
 async function liveProject(): Promise<string> {
   const name = unique("Fictional Project");
-  const response = await send("POST", "/api/projects", { name });
+  const response = await send("POST", "/api/projects", { records: [{ name }] });
   expect(response.statusCode, response.body).toBe(201);
   const id = String(
     response
@@ -142,7 +142,7 @@ async function addActivity(
   const response = await send(
     "POST",
     "/api/activities",
-    { name, ...owner, ...body },
+    { records: [{ name, ...owner, ...body }] },
     cookie,
   );
   expect(response.statusCode, response.body).toBe(201);
@@ -190,7 +190,11 @@ describe("adding an activity", () => {
 
   it("refuses one of neither a release nor a project", async () => {
     const response = await send("POST", "/api/activities", {
-      name: unique("Fictional Activity"),
+      records: [
+        {
+          name: unique("Fictional Activity"),
+        },
+      ],
     });
     expect(response.statusCode).toBe(400);
     expect(errorOf(response)).toBe("Choose a release or a project");
@@ -200,16 +204,24 @@ describe("adding an activity", () => {
     const projectId = await liveProject();
     const first = await addActivity({ projectId });
     const repeated = await send("POST", "/api/activities", {
-      name: first.name.toUpperCase(),
-      projectId,
+      records: [
+        {
+          name: first.name.toUpperCase(),
+          projectId,
+        },
+      ],
     });
     expect(repeated.statusCode).toBe(409);
     expect(errorOf(repeated)).toBe(
       "This project already has an activity with that name",
     );
     const elsewhere = await send("POST", "/api/activities", {
-      name: first.name,
-      releaseId: await liveRelease(),
+      records: [
+        {
+          name: first.name,
+          releaseId: await liveRelease(),
+        },
+      ],
     });
     expect(elsewhere.statusCode, elsewhere.body).toBe(201);
   });
@@ -467,7 +479,7 @@ describe("reading activities", () => {
     const saved = await send(
       "POST",
       "/api/customers",
-      { name: unique("Fictional Customer") },
+      { records: [{ name: unique("Fictional Customer") }] },
       planEditor.cookie,
     );
     expect(saved.statusCode, saved.body).toBe(201);
@@ -486,7 +498,14 @@ describe("reading activities", () => {
     const saved = await send(
       "POST",
       "/api/activities",
-      { name: unique("Fictional Activity"), releaseId: await liveRelease() },
+      {
+        records: [
+          {
+            name: unique("Fictional Activity"),
+            releaseId: await liveRelease(),
+          },
+        ],
+      },
       featuresEditor.cookie,
     );
     expect(saved.statusCode, saved.body).toBe(201);

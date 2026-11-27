@@ -2,14 +2,19 @@
 
 // Customers, projects with their milestones, and proposals, as records of the plan.
 
-import { activitySchema } from "./activities.ts";
+import { type ActivityRequest, activitySchema } from "./activities.ts";
 import { z } from "zod";
 import { daySchema } from "./days.ts";
-import { featureLengths, featureSchema } from "./features.ts";
+import {
+  featureLengths,
+  type FeatureRequest,
+  featureSchema,
+} from "./features.ts";
 import { listSchema, meaningSchema } from "./lists.ts";
+import { draftsAtOnce } from "./drafts.ts";
 import { addressProblem, linkLengths, webAddress } from "./links.ts";
 import { paletteColourSchema } from "./palette.ts";
-import { fieldSchema } from "./people.ts";
+import { changeSetIdSchema, fieldSchema } from "./people.ts";
 import {
   optionalText,
   picked,
@@ -266,6 +271,38 @@ export const milestoneRequestSchema = z.object({
 });
 
 export type MilestoneRequest = z.infer<typeof milestoneRequestSchema>;
+
+// A milestone added, with the project it is added to.
+export const milestoneAddingSchema = milestoneRequestSchema.extend({
+  projectId: z.uuid(),
+});
+
+export type MilestoneAdding = z.infer<typeof milestoneAddingSchema>;
+
+// Records of one kind added at once, such as rows pasted into a table, saved all together or none.
+export const addedRecordsSchema = <Request extends z.ZodType>(
+  request: Request,
+) => z.object({ records: z.array(request).min(1).max(draftsAtOnce) });
+
+// What adding each kind of the plan's records asks for, one request a record.
+export interface PlanAddingRequests {
+  customer: CustomerRequest;
+  project: ProjectRequest;
+  proposal: ProposalRequest;
+  feature: FeatureRequest;
+  milestone: MilestoneAdding;
+  activity: ActivityRequest;
+}
+
+// What adding records answers: the plan as the editor now sees it, and the new records' identifiers
+// in the order asked.
+export const addedPlanSchema = z.object({
+  plan: projectPlanSchema,
+  ids: z.array(z.uuid()),
+  changeSetId: changeSetIdSchema,
+});
+
+export type AddedPlan = z.infer<typeof addedPlanSchema>;
 
 // A web address, kept in the form webAddress gives it back, or null when empty.
 const webLink = z

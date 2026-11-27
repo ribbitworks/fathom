@@ -107,7 +107,7 @@ export const recordDraftSchema = z.object({
 
 export type RecordDraft = z.infer<typeof recordDraftSchema>;
 
-// The most drafts approved or rejected at once, as many people as can be added at once.
+// The most drafts approved or rejected at once, as many records of a kind as can be added at once.
 export const draftsAtOnce = 1000;
 
 const ids = (what: string) =>

@@ -9,7 +9,7 @@ import {
   startingPlanningSettings,
 } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
-import { testPosition, unique } from "./test-app.ts";
+import { addingOne, testPosition, unique } from "./test-app.ts";
 
 import {
   allOf,
@@ -623,7 +623,12 @@ export const routes: Route[] = [
     needs: allOf("features:edit"),
     ...(method === "DELETE"
       ? {}
-      : { body: () => ({ ...named(), projectId: id() }) }),
+      : {
+          body: () => {
+            const activity = { ...named(), projectId: id() };
+            return method === "POST" ? addingOne(activity) : activity;
+          },
+        }),
   })),
   ...(
     [
@@ -637,7 +642,7 @@ export const routes: Route[] = [
       method: "POST",
       pattern: `/api/${path}`,
       needs: allOf(permission),
-      body: named,
+      body: () => addingOne(named()),
     },
     {
       method: "PUT",
@@ -671,9 +676,9 @@ export const routes: Route[] = [
   },
   {
     method: "POST",
-    pattern: "/api/projects/:projectId/milestones",
+    pattern: "/api/milestones",
     needs: allOf("plan:edit"),
-    body: milestone,
+    body: () => addingOne({ ...milestone(), projectId: id() }),
   },
   {
     method: "PUT",

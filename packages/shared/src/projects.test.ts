@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for projects' dates from their milestones, the requests that add and change customers,
-// projects, milestones, and proposals, a feature's projects and proposals, the reasons kept for
-// features removed from a proposal, the records naming a record, and a customer's links.
+// Tests for projects' dates from their milestones, the requests that add and change the plan's
+// records, a feature's projects and proposals, the reasons kept for features removed from a
+// proposal, the records naming a record, and a customer's links.
 
 import { describe, expect, it } from "vitest";
+import { draftsAtOnce } from "./drafts.ts";
 import {
+  addedRecordsSchema,
   customerFeatures,
   customerKeptBy,
   customerNamers,
   featureKeptBy,
   customerRequestSchema,
   featureProjectsRequestSchema,
+  milestoneAddingSchema,
   milestoneRequestSchema,
   namedBy,
   projectDates,
@@ -132,6 +135,29 @@ describe("requests", () => {
     expect(
       milestoneRequestSchema.safeParse({ name: "Fictional", date: "soon" })
         .success,
+    ).toBe(false);
+  });
+
+  it("add a milestone to the project named, and only to one", () => {
+    const projectId = "00000000-0000-4000-8000-000000000001";
+    const milestone = { name: "Fictional", date: "2027-01-04" };
+    expect(
+      milestoneAddingSchema.parse({ ...milestone, projectId }).projectId,
+    ).toBe(projectId);
+    expect(milestoneAddingSchema.safeParse(milestone).success).toBe(false);
+  });
+
+  it("add from one record to as many as can be added at once", () => {
+    const adding = addedRecordsSchema(customerRequestSchema);
+    const records = (count: number) =>
+      Array.from({ length: count }, () => ({ name: "Fictional" }));
+    expect(adding.safeParse({ records: records(1) }).success).toBe(true);
+    expect(adding.safeParse({ records: records(draftsAtOnce) }).success).toBe(
+      true,
+    );
+    expect(adding.safeParse({ records: [] }).success).toBe(false);
+    expect(
+      adding.safeParse({ records: records(draftsAtOnce + 1) }).success,
     ).toBe(false);
   });
 

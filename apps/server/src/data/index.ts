@@ -106,7 +106,7 @@ import {
 } from "./people-access.ts";
 import { createListAccess, type ListAccess } from "./configuration-access.ts";
 
-export type { PlanKind, PlanRecordRequest } from "./projects.ts";
+export type { PlanAdding, PlanKind, PlanRecordRequest } from "./projects.ts";
 export { firstOffered } from "./built-in-lists.ts";
 
 export interface DataAccess {

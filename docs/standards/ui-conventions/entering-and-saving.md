@@ -62,6 +62,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Drawn by:** `apps/web/src/grid-editing.tsx` and `apps/web/src/grid-saving.ts` for tables, and `useChoiceEditing` in `apps/web/src/choice-editing.ts` and `useChoiceEntry` in `apps/web/src/choice-entry.ts` for a list's choices.
   - **Example:** On the Lists page, select the details button of Sites and type a new choice in its empty row.
 - **Like a spreadsheet:** Tables where many records are entered work like a spreadsheet. Pasting rows copied from a spreadsheet into an empty row adds one record per row.
+  - **Saved together:** Pasted records of one kind are saved together, all or none, as one change.
   - **Moving:** Arrow keys, Home, End and Tab move between cells, and Ctrl+Home and Ctrl+End go to the first and last.
   - **Editing:** Enter, F2 or typing edits a cell. Enter saves and moves down, Tab saves and moves across, Esc cancels, and Delete clears.
   - **Drawn by:** `gridEditing` in `apps/web/src/grid-editing.tsx`, with pasting in `apps/web/src/grid-saving.ts`.

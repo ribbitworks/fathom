@@ -4,10 +4,13 @@
 // projects and proposals. The data access layer checks the actor's permissions.
 
 import {
+  addedPlanSchema,
+  addedRecordsSchema,
   changeSetIdSchema,
   customerRequestSchema,
   featureProjectsRequestSchema,
   featureRequestSchema,
+  milestoneAddingSchema,
   milestoneRequestSchema,
   planChoicesSchema,
   projectPlanSchema,
@@ -19,7 +22,7 @@ import {
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-import type { PlanKind, PlanRecordRequest } from "../data/index.ts";
+import type { PlanAdding, PlanKind, PlanRecordRequest } from "../data/index.ts";
 import type { ProjectAccess } from "../data/plan-access.ts";
 
 const created = 201;
@@ -28,8 +31,8 @@ const planResponse = z.object({
   plan: projectPlanSchema,
   changeSetId: changeSetIdSchema,
 });
+const addedResponse = { [created]: addedPlanSchema };
 const idParams = z.object({ id: z.uuid() });
-const projectParams = z.object({ projectId: z.uuid() });
 const milestoneParams = z.object({ projectId: z.uuid(), id: z.uuid() });
 const saved = { 200: savedSchema };
 
@@ -48,22 +51,36 @@ export function projectRoutes(
       async (request) => projects.readChoices(request.actor),
     );
 
+    // Adding several records of a kind at once, all in one change set or none, milestones among
+    // them, whichever projects they are of.
+    const addingRoute = (
+      path: string,
+      type: PlanAdding["type"],
+      body: z.ZodType,
+    ) => {
+      app.post(
+        `/api/${path}`,
+        {
+          schema: { body: addedRecordsSchema(body), response: addedResponse },
+        },
+        async (request, reply) => {
+          const { result, ids, changeSetId } = await projects.add(
+            request.actor,
+            // The records are parsed against the schema the kind takes.
+            { type, requests: request.body.records } as PlanAdding,
+          );
+          return reply.status(created).send({ plan: result, ids, changeSetId });
+        },
+      );
+    };
+    addingRoute("milestones", "milestone", milestoneAddingSchema);
+
     // Adding, changing, and removing customers, projects, proposals, and features.
     const recordRoutes = (path: string, type: PlanKind, body: z.ZodType) => {
       const asked = (request: unknown) =>
         // The body is parsed against the schema the kind takes.
         ({ type, request }) as PlanRecordRequest;
-      app.post(
-        `/api/${path}`,
-        { schema: { body, response: { [created]: planResponse } } },
-        async (request, reply) => {
-          const { result, changeSetId } = await projects.add(
-            request.actor,
-            asked(request.body),
-          );
-          return reply.status(created).send({ plan: result, changeSetId });
-        },
-      );
+      addingRoute(path, type, body);
       app.put(
         `/api/${path}/:id`,
         { schema: { params: idParams, body, response: { 200: planResponse } } },
@@ -142,24 +159,6 @@ export function projectRoutes(
       },
     );
 
-    app.post(
-      "/api/projects/:projectId/milestones",
-      {
-        schema: {
-          params: projectParams,
-          body: milestoneRequestSchema,
-          response: { [created]: planResponse },
-        },
-      },
-      async (request, reply) => {
-        const { result, changeSetId } = await projects.addMilestone(
-          request.actor,
-          request.params.projectId,
-          request.body,
-        );
-        return reply.status(created).send({ plan: result, changeSetId });
-      },
-    );
     app.put(
       "/api/projects/:projectId/milestones/:id",
       {

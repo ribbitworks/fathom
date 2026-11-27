@@ -114,7 +114,7 @@ describe("adding and changing", () => {
       planner.cookie,
       "POST",
       "/api/customers",
-      { name: unique("Fictional Customer") },
+      { records: [{ name: unique("Fictional Customer") }] },
     );
     const customer = created.json<Saved>().plan.customers.at(-1);
     const { id: customerId } = customer as { id: string };
@@ -508,6 +508,30 @@ describe("feature teams", () => {
     );
   });
 
+  it("refuse every row added at once when a later one's is drafted to be removed", async () => {
+    const featureTeamId = await liveTeam();
+    expect((await removeTeam(featureTeamId)).statusCode).toBe(200);
+    const asked = [unique("Fictional Feature"), unique("Fictional Feature")];
+    const response = await test.request(
+      featureLead.cookie,
+      "POST",
+      "/api/features",
+      {
+        records: [
+          { name: asked[0], featureTeamId: await liveTeam() },
+          { name: asked[1], featureTeamId },
+        ],
+      },
+    );
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      "This feature team is drafted to be removed; choose another",
+    );
+    expect((await readPlan()).features.map(({ name }) => name)).not.toContain(
+      asked[0],
+    );
+  });
+
   it("cannot be removed while a feature names them", async () => {
     const featureTeamId = await liveTeam();
     const feature = await draftFeature({ featureTeamId }, featureLead.cookie);
@@ -612,7 +636,7 @@ describe("a feature's customers", () => {
       planner.cookie,
       "POST",
       "/api/customers",
-      { name: unique("Fictional Customer") },
+      { records: [{ name: unique("Fictional Customer") }] },
     );
     const { id } = created.json<Saved>().plan.customers.at(-1) as {
       id: string;

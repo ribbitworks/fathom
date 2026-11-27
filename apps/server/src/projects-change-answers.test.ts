@@ -36,7 +36,9 @@ beforeAll(async () => {
   const featureName = unique("Fictional Feature");
   featureId = String(
     (
-      await sent(planner.cookie, "POST", "/api/features", { name: featureName })
+      await sent(planner.cookie, "POST", "/api/features", {
+        records: [{ name: featureName }],
+      })
     ).features.find(({ name }) => name === featureName)?.id,
   );
   const column = await test.request(
@@ -55,14 +57,20 @@ beforeAll(async () => {
   customerId = String(
     (
       await sent(planner.cookie, "POST", "/api/customers", {
-        name: customerName,
+        records: [
+          {
+            name: customerName,
+          },
+        ],
       })
     ).customers.find(({ name }) => name === customerName)?.id,
   );
   const projectName = unique("Fictional Project");
   projectId = String(
     (
-      await sent(planner.cookie, "POST", "/api/projects", { name: projectName })
+      await sent(planner.cookie, "POST", "/api/projects", {
+        records: [{ name: projectName }],
+      })
     ).projects.find(({ name }) => name === projectName)?.id,
   );
 });
@@ -76,7 +84,11 @@ describe("a change to the plan's records", () => {
   const planChanges: [string, () => ["POST" | "PUT", string, object]][] = [
     [
       "adding a customer",
-      () => ["POST", "/api/customers", { name: unique("Fictional Customer") }],
+      () => [
+        "POST",
+        "/api/customers",
+        { records: [{ name: unique("Fictional Customer") }] },
+      ],
     ],
     [
       "changing a customer",
@@ -90,11 +102,16 @@ describe("a change to the plan's records", () => {
       "adding a milestone",
       () => [
         "POST",
-        `/api/projects/${projectId}/milestones`,
+        "/api/milestones",
         {
-          name: unique("Fictional Milestone"),
-          date: "2027-03-31",
-          customerDelivery: false,
+          records: [
+            {
+              projectId,
+              name: unique("Fictional Milestone"),
+              date: "2027-03-31",
+              customerDelivery: false,
+            },
+          ],
         },
       ],
     ],
@@ -114,7 +131,11 @@ describe("a change to the plan's records", () => {
   it("answers a change to a feature with features but none of the plan's other records to a role that doesn't see the plan", async () => {
     const editor = await test.signedIn(["features:view", "features:edit"]);
     const plan = await sent(editor.cookie, "POST", "/api/features", {
-      name: unique("Fictional Feature"),
+      records: [
+        {
+          name: unique("Fictional Feature"),
+        },
+      ],
     });
     expect(ids(plan.features)).toContain(featureId);
     expect(ids(plan.featureColumns.fields)).toContain(columnId);

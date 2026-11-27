@@ -109,16 +109,3 @@ export const discarded = (record: PlanRecord): PlanRecord | undefined =>
   record.draft?.action === "created"
     ? undefined
     : livePlanRecords([record]).at(0);
-
-// The identifier the server gave the record just added: the one of its kind not seen before.
-export const newestId = (
-  plan: ProjectPlan,
-  type: PlanRecordKind,
-  taken: readonly string[],
-) =>
-  // The plan saved holds the record just added.
-  (
-    operationsOf(type)
-      .all(plan)
-      .find(({ id }) => !taken.includes(id)) as PlanRecord
-  ).id;

@@ -33,9 +33,9 @@ import { editsKind, recordEditor } from "./draft-editors.ts";
 import * as projectData from "./projects.ts";
 import * as projectReads from "./project-reads.ts";
 import { readScopeHistory } from "./scope-history.ts";
-import type { PlanKind, PlanRecordRequest } from "./projects.ts";
+import type { PlanAdding, PlanKind, PlanRecordRequest } from "./projects.ts";
 import * as releases from "./releases.ts";
-import type { Saved, ChangeSetId } from "./changes.ts";
+import type { Added, Saved, ChangeSetId } from "./changes.ts";
 import { planOrFeatures, seenPlan, seenStreams } from "./page-reads.ts";
 
 // Every change to release streams, patterns, and releases is a draft. Streams and their patterns
@@ -107,13 +107,13 @@ export interface ReleaseAccess {
 // Every change to customers, projects, milestones, proposals, and features is a draft, made by those
 // who edit the plan, or, for features, those who edit features, though only those who edit the plan
 // change which customers a feature is for, and only those who edit feature teams its feature team.
-// Each answers with every record as the editor now sees them.
+// Each answers with every record as the editor now sees them, and adding with the records' ids.
 export interface ProjectAccess {
   read(actor: Actor): Promise<ProjectPlan>;
   // What the plan's records can be given, which everyone who sees the plan may read, though they
   // may not see People or Lists.
   readChoices(actor: Actor): Promise<PlanChoices>;
-  add(actor: Actor, added: PlanRecordRequest): Promise<Saved<ProjectPlan>>;
+  add(actor: Actor, added: PlanAdding): Promise<Added<ProjectPlan>>;
   change(
     actor: Actor,
     id: string,
@@ -140,11 +140,6 @@ export interface ProjectAccess {
     featureId: string,
     proposalId: string,
     request: RemovalReasonRequest,
-  ): Promise<Saved<ProjectPlan>>;
-  addMilestone(
-    actor: Actor,
-    projectId: string,
-    request: MilestoneRequest,
   ): Promise<Saved<ProjectPlan>>;
   changeMilestone(
     actor: Actor,
@@ -236,26 +231,23 @@ const planAbilities = (actor: Actor) => ({
   canEditFeatures: actor.permissions.includes("features:edit"),
 });
 
-const edited = async (
+const edited = async <Extra extends object>(
   actor: Actor,
-  saved: Promise<Saved<projectReads.PlanRecords>>,
-): Promise<Saved<ProjectPlan>> => {
-  const { result, changeSetId } = await saved;
-  return { result: { ...result, ...planAbilities(actor) }, changeSetId };
+  saved: Promise<Saved<projectReads.PlanRecords> & Extra>,
+): Promise<Saved<ProjectPlan> & Extra> => {
+  const answer = await saved;
+  return {
+    ...answer,
+    result: { ...answer.result, ...planAbilities(actor) },
+  };
 };
 
-// How each kind of record is added and changed.
+// How each kind of record is changed.
 const planChanges = {
-  customer: {
-    add: projectData.addCustomer,
-    change: projectData.changeCustomer,
-  },
-  project: { add: projectData.addProject, change: projectData.changeProject },
-  proposal: {
-    add: projectData.addProposal,
-    change: projectData.changeProposal,
-  },
-  feature: { add: projectData.addFeature, change: projectData.changeFeature },
+  customer: projectData.changeCustomer,
+  project: projectData.changeProject,
+  proposal: projectData.changeProposal,
+  feature: projectData.changeFeature,
 } as const;
 
 export function createProjectAccess(database: Database): ProjectAccess {
@@ -268,23 +260,22 @@ export function createProjectAccess(database: Database): ProjectAccess {
       requireAnyPermission(actor, planOrFeatures);
       return projectReads.readPlanChoices(database, actor);
     },
-    // The kind is one of the fixed kinds above, and the request the one it takes, as
-    // PlanRecordRequest pairs them.
-    add: async (actor, { type, request }) =>
+    add: async (actor, added) =>
       edited(
         actor,
-        // eslint-disable-next-line security/detect-object-injection
-        planChanges[type].add(
+        projectData.addRecords(
           database,
-          recordEditor(actor, type),
-          request as never,
+          recordEditor(actor, added.type),
+          added,
         ),
       ),
+    // The kind is one of the fixed kinds above, and the request the one it takes, as
+    // PlanRecordRequest pairs them.
     change: async (actor, id, { type, request }) =>
       edited(
         actor,
         // eslint-disable-next-line security/detect-object-injection
-        planChanges[type].change(
+        planChanges[type](
           database,
           recordEditor(actor, type),
           id,
@@ -322,16 +313,6 @@ export function createProjectAccess(database: Database): ProjectAccess {
           request,
         ),
       ),
-    addMilestone: async (actor, projectId, request) =>
-      edited(
-        actor,
-        projectData.addMilestone(
-          database,
-          recordEditor(actor, "milestone"),
-          projectId,
-          request,
-        ),
-      ),
     changeMilestone: async (actor, projectId, id, request) =>
       edited(
         actor,
@@ -356,7 +337,10 @@ export function createProjectAccess(database: Database): ProjectAccess {
 // Activities are drafted with Features' permissions, whichever release or project each belongs to,
 // and read with the plan; each change answers with the plan as the editor now sees it.
 export interface ActivityAccess {
-  add(actor: Actor, request: ActivityRequest): Promise<Saved<ProjectPlan>>;
+  add(
+    actor: Actor,
+    requests: readonly ActivityRequest[],
+  ): Promise<Added<ProjectPlan>>;
   change(
     actor: Actor,
     id: string,
@@ -367,13 +351,13 @@ export interface ActivityAccess {
 
 export function createActivityAccess(database: Database): ActivityAccess {
   return {
-    add: async (actor, request) =>
+    add: async (actor, requests) =>
       edited(
         actor,
-        activityData.addActivity(
+        activityData.addActivities(
           database,
           recordEditor(actor, "activity"),
-          request,
+          requests,
         ),
       ),
     change: async (actor, id, request) =>

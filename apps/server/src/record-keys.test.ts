@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for record keys and the links that open records by them, against a migrated PostgreSQL
-// server: how records are numbered, whether added, drafted to be added, removed, or discarded; that
-// the application cannot change a number; and what a link finds for every kind and every starting
-// role, for a record drafted to be added, one removed, and a planned hire once filled.
+// Tests for record keys, against a migrated PostgreSQL server: how records are numbered, that the
+// application cannot change a number, and what a link by key finds for every kind and role.
 
 import {
   accessHistory,
@@ -49,6 +47,7 @@ import { keyNumberOf } from "./data/record-keys.ts";
 import { unlessRefused } from "./data/record-links.ts";
 import { findStartingRole } from "./data/roles.ts";
 import {
+  addingOne,
   builtInChoice,
   startTestApp,
   type TestApp,
@@ -99,7 +98,7 @@ async function draftCustomer(
     cookie,
     "POST",
     "/api/customers",
-    { name },
+    addingOne({ name }),
     options,
   );
   expect(response.statusCode, response.body).toBe(201);

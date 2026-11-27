@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for a project's and proposal's scope history, against a PostgreSQL server of their own: the
-// features given and removed, read from approved changes, newest first, and the reason for taking
-// a feature off a proposal, given once the removal is drafted, kept on the proposal's draft, and
-// named in the change history.
+// features given and removed, newest first, and the reason for taking a feature off a proposal.
 
 import type {
   ChangeHistory,
@@ -15,6 +13,7 @@ import { recordChanges } from "@fathom/db";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  addingOne,
   errorOf,
   missingRecord as missing,
   startTestApp,
@@ -47,7 +46,11 @@ async function added<Named extends { name: string }>(
   body: object = {},
 ): Promise<Named & { id: string }> {
   const name = unique("Fictional Record");
-  const response = await send("POST", `/api/${path}`, { name, ...body });
+  const response = await send(
+    "POST",
+    `/api/${path}`,
+    addingOne({ name, ...body }),
+  );
   expect(response.statusCode).toBe(201);
   return pick(response.json<Saved>().plan).find(
     (record) => record.name === name,

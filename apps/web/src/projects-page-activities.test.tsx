@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { exportedCsv } from "./test-exports.tsx";
 import { recordCell, savedFiles } from "./test-support.tsx";
 import {
+  addingAnswer,
   activity,
   answers,
   chooseFrom,
@@ -137,7 +138,7 @@ describe("the Activities page", () => {
 
   it("adds an activity of a project, sending what it belongs to", async () => {
     const { fetch, held } = await open(activityPlan(), {
-      "POST /api/activities": saved(() => held.plan),
+      "POST /api/activities": addingAnswer(() => held.plan),
     });
     await userEvent.click(await newButton("activity"));
     const form = screen.getByRole("region", { name: "New activity" });
@@ -152,11 +153,15 @@ describe("the Activities page", () => {
     await userEvent.click(within(form).getByRole("button", { name: "Add" }));
     await waitFor(() => {
       expect(sent(fetch, "POST /api/activities")).toEqual([
-        expect.objectContaining({
-          name: "Fictional Rehearsal",
-          projectId,
-          releaseId: null,
-        }),
+        {
+          records: [
+            expect.objectContaining({
+              name: "Fictional Rehearsal",
+              projectId,
+              releaseId: null,
+            }),
+          ],
+        },
       ]);
     });
   });
