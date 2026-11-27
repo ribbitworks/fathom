@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Releases
@@ -40,7 +40,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
   - **Show on Activities** to those who see features, while the release has activities.
   - **Remove release**, and **Add note…** while the release has no note, to those who change releases.
   - **Publish draft…** for the account's own unpublished draft.
-  - **Resubmit** for the release's draft, and **Discard draft** for one the account changed.
+  - **Resubmit** for the release's draft, and **Discard draft** for one the account changed, or, to those who change schedules, one a change to its schedule's cycles moves.
   - **Approve draft…** and **Reject draft…** to an account whose role approves its drafts.
 - **Timeline:** the section headed **Timeline** above the table, with the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right.
   - It has a row for each schedule the table lists, named on the left, with each release as a strip of its colour and a diamond on the day it ships, over the schedule's cycles, which are drawn faint.

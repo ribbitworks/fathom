@@ -12,6 +12,7 @@ import {
 import { describe, expect, it } from "vitest";
 import type { Draft, Recorded } from "./draft-records.ts";
 import type { RecordsState } from "./record-state.ts";
+import { noMakers } from "./records.ts";
 import { streamAsSeen, streamOut, streamsOut } from "./release-stream-view.ts";
 import {
   draft,
@@ -30,7 +31,7 @@ const today = "2026-06-15";
 const twoYearsOn = "2028-06-15";
 
 const shown = (state: RecordsState, id = stream): ReleaseStream =>
-  streamOut(state, new Map(), id, today);
+  streamOut(state, noMakers, id, today);
 
 // Two live streams with cycles in quarters from 2027, the first ending on the day given, with the
 // pattern drafts and releases given.
@@ -291,7 +292,7 @@ describe("every stream as shown", () => {
     });
 
     // When every stream is shown
-    const shownIds = streamsOut(state, new Map(), today).map(({ id }) => id);
+    const shownIds = streamsOut(state, noMakers, today).map(({ id }) => id);
 
     // Then the live ones come in their order, then the drafted ones as drafted
     expect(shownIds).toEqual(["first", "second", "drafted", "next"]);

@@ -36,7 +36,7 @@ const unpublished = {
   changed: ["code"],
   live: { code: "OLD", values: {}, links: {} },
   unpublished: true,
-  changedByUser: true,
+  discardable: true,
 };
 
 // The user's own change to a gadget, as the server lists it, by the key of its draft.

@@ -47,9 +47,9 @@ import {
   shownVersion,
   stateOf,
 } from "./record-state.ts";
+import { readRecordMakers } from "./record-makers.ts";
 import {
   type Makers,
-  readRecordMakers,
   readRecordsState,
   type RecordDraftOut,
   recordExtras,

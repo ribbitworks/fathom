@@ -31,12 +31,8 @@ import {
   drafting,
   saveRecordDraft,
 } from "./record-drafting.ts";
-import {
-  readRecordMakers,
-  readRecordsState,
-  recordDraftOut,
-  recordHeldBy,
-} from "./records.ts";
+import { readRecordMakers } from "./record-makers.ts";
+import { readRecordsState, recordDraftOut, recordHeldBy } from "./records.ts";
 
 const missing = "The planning settings are missing; apply the migrations";
 

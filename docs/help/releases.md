@@ -214,7 +214,7 @@ See [People](people.md#export-people) for what the file holds.
 Each row's **⋯** menu, and the **⋯** at the top of its details, offers:
 
 - **Publish draft…** for your own change you haven't published.
-- **Discard draft** for your own draft.
+- **Discard draft** for your own draft, or for a change to a schedule's cycles, which anyone who changes schedules can discard.
 - **Resubmit** once its draft is rejected.
 
 On **Cycles**, a cycle's menu names the change behind it, such as a change to its schedule's cycles, and acts on that change. See [Drafts](drafts.md#publish-or-discard-one-change).

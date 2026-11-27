@@ -273,7 +273,7 @@ export const draftOf = (draft: object) => ({
   state: "waiting",
   madeBy: "Fictional Editor",
   madeAt: "2026-10-30T15:00:00.000Z",
-  changedByUser: true,
+  discardable: true,
   ...draft,
 });
 

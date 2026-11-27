@@ -15,7 +15,11 @@ A draft goes through these stages:
 - **Approved:** the change goes live. Any new list, column or choice it depends on is approved with it. Approving can't be undone.
 - **Rejected:** the draft goes back to whoever made it. They can change it, resubmit it, or discard it.
   - Drafts that depend on it wait. Rejecting a new list, column or choice also rejects the drafts that depend on it.
-- **Discarded:** the draft is removed, and the record stays as it was. Only someone who changed the draft can discard it; if you disagree with someone else's draft, an approver rejects it. A change to a schedule's cycles is the exception, which anyone who changes schedules can discard. You can't discard a new list, column or choice while other drafts depend on it. Discard or change those drafts first.
+- **Discarded:** the draft is removed, and the record stays as it was.
+  - Only someone who changed the draft can discard it. If you disagree with someone else's draft, ask an approver to reject it.
+  - A change to a schedule's cycles is the exception, which anyone who changes schedules can discard.
+  - Discarding a new record also discards the new records that go with it, such as a new list's choices, whoever made them.
+  - You can't discard a new list, column or choice while other drafts depend on it. Discard or change those drafts first.
 
 Approvers approve and reject drafts on the [Drafts page](drafts-page.md), under **To decide**, as well as where the records are.
 

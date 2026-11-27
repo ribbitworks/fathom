@@ -64,7 +64,7 @@ describe("drafts of columns", () => {
     required: false,
     draft: {
       ...waiting,
-      changedByUser: true,
+      discardable: true,
       action: "created",
       changed: ["name", "listId", "multiple", "required"],
       live: {},

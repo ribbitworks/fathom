@@ -210,7 +210,7 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
       rejected: field?.draft?.state === "rejected",
       unpublished: field?.draft?.unpublished === true,
       editsDraft: changesColumn,
-      changedByUser: field?.draft?.changedByUser === true,
+      discardable: field?.draft?.discardable === true,
       decides: ownWaiting && mayDecide(approves, deciding, decidedBy),
       publishes: false,
     });

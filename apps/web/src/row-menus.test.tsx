@@ -293,11 +293,11 @@ describe("a read-only table's own drafts", () => {
   };
 
   it("offers Resubmit and Discard draft for a record's own draft", async () => {
-    // Given a rejected draft the user changed, on a table whose records are changed elsewhere
+    // Given a rejected draft the user may discard, on a table whose records are changed elsewhere
     const discard = vi.fn();
     const resubmit = vi.fn();
     renderReadOnly({
-      gadgets: [gadget("g1", { draft: { ...rejected, changedByUser: true } })],
+      gadgets: [gadget("g1", { draft: { ...rejected, discardable: true } })],
       given: actions({ discard, resubmit }),
     });
 
@@ -315,7 +315,7 @@ describe("a read-only table's own drafts", () => {
     ]);
   });
 
-  it("offers no Discard draft for a draft someone else changed", async () => {
+  it("offers no Discard draft for a draft the user may not discard", async () => {
     renderReadOnly({ gadgets: [gadget("g1", { draft: rejected })] });
 
     const menu = await menuOf("Gadget g1");
@@ -325,21 +325,6 @@ describe("a read-only table's own drafts", () => {
         .getAllByRole("menuitem")
         .map((item) => item.textContent),
     ).toEqual(["Show details", "Resubmit"]);
-  });
-
-  it("offers Discard draft for a draft someone else changed where the table lets any who change it discard it", async () => {
-    renderReadOnly({
-      gadgets: [gadget("g1", { draft: rejected })],
-      table: detailed({ discardsUnchanged: () => true }),
-    });
-
-    const menu = await menuOf("Gadget g1");
-
-    expect(
-      within(menu)
-        .getAllByRole("menuitem")
-        .map((item) => item.textContent),
-    ).toEqual(["Show details", "Resubmit", "Discard draft"]);
   });
 
   it("offers neither under Live only", async () => {

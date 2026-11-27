@@ -27,7 +27,8 @@ import {
   saveRecordDrafts,
 } from "./record-drafting.ts";
 import { discardRecordDraft } from "./record-decisions.ts";
-import { keptNote, readRecordMakers, readRecordsState } from "./records.ts";
+import { readRecordMakers } from "./record-makers.ts";
+import { keptNote, readRecordsState } from "./records.ts";
 import { streamAsSeen, streamOut, streamsOut } from "./release-stream-view.ts";
 import { readToday } from "./settings.ts";
 

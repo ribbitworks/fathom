@@ -1,6 +1,6 @@
 # Fathom: Roles
 
-**Last updated:** 2026-11-26
+**Last updated:** 2026-11-27
 
 What each role can see, change and approve. The [Administration Pages](../design/pages/administration.md#roles) describe the Roles page.
 
@@ -77,7 +77,9 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 - **Seeing what a draft holds:** Approving never grants seeing. An Approver's role must see every detail a draft holds, so a draft with an end date needs a role that sees Personal data, and drafts of any column or list need one that sees people, since General values are people's details.
 - **Drafts that use other drafts:** A draft may use drafts of another area. Approving a draft approves the drafts it uses, so it needs Approve on every area involved. A draft other drafts use is rejected only together with them, since rejecting it alone would leave them using a change that is going back to its maker.
 - **Your own drafts:** Someone else approves a user's drafts, unless the role holds Approve own drafts. That is one permission for every area, and it applies only where the role also holds Approve.
-- **Discarding a draft:** Only a user who changed a draft since it was last approved or discarded may discard it, under any of their roles that may change it. Others who disagree with it reject it, so a draft only Fathom itself changed is never discarded. Drafts of a schedule's cycles are the exception, as [Moving with cycles](#releases) sets out.
+- **Discarding a draft:** Only a user who changed a draft since it was last approved or discarded may discard it, under any of their roles that may change it. Others who disagree with it reject it. A draft only Fathom itself changed is never discarded, so an Approver approves or rejects it. There are two exceptions:
+  - **Cycles:** a draft of a schedule's cycles, and the drafts bound to it, such as the releases a change of length moves, are discarded by any role that may change cycles, as [Moving with cycles](#releases) sets out.
+  - **What a new record takes with it:** discarding a record only drafted to be added discards the drafts that go with it, whoever made them: the new records that belong to it, such as a new schedule's cycles or a new list's choices, a new list made with a column, and a new person filling a planned hire. Only the draft asked for is checked.
 - **Schedules and cycle patterns:** Edited with Edit Plan or Edit Configuration, and approved with Approve Plan or Approve Configuration, so either Approver may decide them.
 
 ## Data Classes

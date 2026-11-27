@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Who made each draft, the refusal of an approval of drafts the approver changed, and the refusal of
-// a discard of a draft the user didn't change. Part of the data access layer.
+// Who made each draft, the refusal of an approval of drafts the approver changed, and who may
+// discard a draft, with the refusal of anyone else. Part of the data access layer.
 
 import {
   changes,
@@ -37,7 +37,7 @@ export interface Maker {
   // Whether the viewer changed the draft since it was last approved or discarded, and their role
   // does not let them approve their own, so another approver must approve it.
   needsOtherApprover: boolean;
-  // Whether the viewer changed the draft since it was last approved or discarded, so may discard it.
+  // Whether the viewer changed the draft since it was last approved or discarded.
   changedByUser: boolean;
 }
 
@@ -55,10 +55,23 @@ export function openChangeSets(userId: string): SQL {
   ) as SQL;
 }
 
-// The marks a draft carries for the viewer who changed it: that they may discard it, and, where they
+// Whether a user may discard a draft: only one who changed it since it was last approved or
+// discarded, since others who disagree reject it, unless their role discards it whoever changed it.
+// The one rule for the drafts marked discardable and the discards refused.
+export const mayDiscard = (
+  changedByUser: boolean,
+  discardsWhoeverChanged: boolean,
+): boolean => changedByUser || discardsWhoeverChanged;
+
+// The marks a draft carries for the viewer: that they may discard it, and, where they changed it and
 // may not approve their own, that another approver must.
-export const viewerMarks = (maker: Maker | undefined) => ({
-  ...(maker?.changedByUser === true ? { changedByUser: true } : {}),
+export const viewerMarks = (
+  maker: Maker | undefined,
+  discardsWhoeverChanged = false,
+) => ({
+  ...(mayDiscard(maker?.changedByUser === true, discardsWhoeverChanged)
+    ? { discardable: true }
+    : {}),
   ...(maker?.needsOtherApprover === true ? { needsOtherApprover: true } : {}),
 });
 
@@ -260,17 +273,24 @@ export async function refuseOwnDrafts(
   }
 }
 
-// Refuses discarding a draft to anyone who didn't change it since it was last approved or discarded,
-// their own unpublished changes to it counting, since others who disagree with it reject it instead.
-// A draft Fathom itself made is discarded by no one.
+// Refuses discarding a draft to anyone who may not, by the rule the marks follow: their own
+// unpublished changes to it count, and a draft Fathom itself made is discarded by no one but a role
+// that discards it whoever changed it. Only the draft asked for is checked; the drafts discarded with
+// it go whoever made them.
 export async function refuseDiscardingOthers(
   reader: Pick<Database, "select">,
   actor: Actor,
   recordType: DraftKind,
   id: string,
+  discardsWhoeverChanged = false,
 ): Promise<void> {
   const history = await draftHistory(reader, recordType, [id], actor);
-  if (!draftsChangedBy(history, actor.user.id).has(id)) {
+  if (
+    !mayDiscard(
+      draftsChangedBy(history, actor.user.id).has(id),
+      discardsWhoeverChanged,
+    )
+  ) {
     throw new ForbiddenError(discardRefusal);
   }
 }

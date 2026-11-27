@@ -23,7 +23,12 @@ import {
   valueField,
 } from "@fathom/db";
 import type { FictionalOrganization, FictionalPerson } from "@fathom/fixtures";
-import { addMonths, draftingPermissions, lastDayOfMonth } from "@fathom/shared";
+import {
+  addMonths,
+  draftingPermissions,
+  draftsChangedBy,
+  lastDayOfMonth,
+} from "@fathom/shared";
 import type { Actor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
 import {
@@ -63,31 +68,49 @@ export async function actorOf(
   return personaActor(user, persona.role);
 }
 
-// Discards a draft as the account that last changed it, acting with every permission, since only
-// those who changed a draft may discard it, and publishes that. A draft no account changed is left,
-// as no one may discard it.
+// Discards a draft as the account that last changed it since it was last approved or discarded, as
+// the server counts them, acting with every permission, since only those who changed a draft may
+// discard it, and publishes that. A draft no account changed is left, as no one may discard it.
 export async function discardAsMaker(
   database: Database,
   recordType: string,
   recordId: string,
   discard: (maker: Actor) => Promise<unknown>,
 ): Promise<void> {
-  const last = await database
+  const ofDraft = and(
+    eq(changes.recordType, recordType),
+    eq(changes.recordId, recordId),
+    eq(changeSets.private, false),
+  );
+  const history = await database
+    .select({
+      recordId: changes.recordId,
+      draft: changes.draft,
+      kind: changeSets.kind,
+      makerId: changeSets.madeBy,
+    })
+    .from(changes)
+    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+    .where(
+      and(
+        ofDraft,
+        or(
+          eq(changes.draft, true),
+          inArray(changeSets.kind, ["approval", "discard"]),
+        ),
+      ),
+    )
+    .orderBy(changes.id);
+  const editors = await database
     .select({ id: users.id, name: users.name, email: users.email })
     .from(changes)
     .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
     .innerJoin(users, eq(users.id, changeSets.madeBy))
-    .where(
-      and(
-        eq(changes.recordType, recordType),
-        eq(changes.recordId, recordId),
-        eq(changes.draft, true),
-        eq(changeSets.kind, "edit"),
-        eq(changeSets.private, false),
-      ),
-    )
-    .orderBy(desc(changes.id))
-    .limit(1);
+    .where(and(ofDraft, eq(changes.draft, true)))
+    .orderBy(desc(changes.id));
+  const last = editors
+    .filter(({ id }) => draftsChangedBy(history, id).has(recordId))
+    .slice(0, 1);
   for (const account of last) {
     const maker = personaActor(account, "superuser");
     await discard(maker);

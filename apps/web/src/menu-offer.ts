@@ -28,7 +28,7 @@ export const menuPlace = (place: MenuPlace): PlaceRules =>
 export interface RecordMenuFacts {
   // The draft the menu discards, resubmits or publishes: the record's own, if it has one.
   ownDraft:
-    Pick<GridDraft, "state" | "unpublished" | "changedByUser"> | undefined;
+    Pick<GridDraft, "state" | "unpublished" | "discardable"> | undefined;
   // What the record's draft as shown does, if it has one, which decides whether it can be removed.
   shownAction: GridDraft["action"] | undefined;
   // Whether the user may change the record from its table now, with nobody else holding it.
@@ -38,9 +38,6 @@ export interface RecordMenuFacts {
   // Whether the user may discard or resubmit its own draft, on a table whose records are changed
   // elsewhere.
   editsOwnDraft: boolean;
-  // Whether the user may discard its draft without having changed it, as any role that changes
-  // cycles may a draft of a schedule's cycles.
-  discardsUnchanged: boolean;
   // Whether the user's role approves or rejects its draft now.
   decides: boolean;
   // Whether the user's changes can be published from here.
@@ -63,8 +60,8 @@ export interface DraftOfferFacts {
   unpublished: boolean;
   // Whether the user may publish, resubmit or discard it.
   editsDraft: boolean;
-  // Whether the user changed it since it was last approved or discarded, so may discard it.
-  changedByUser: boolean;
+  // Whether the user may discard it, as the server says.
+  discardable: boolean;
   // Whether the user's role approves or rejects it now.
   decides: boolean;
   // Whether the user's changes can be published from here.
@@ -72,13 +69,14 @@ export interface DraftOfferFacts {
 }
 
 // A rejected draft is back with its makers to resubmit, and their own unpublished one is theirs to
-// publish. Only those who changed a draft discard it, since others who disagree reject it.
+// publish. Only those the server lets discard a draft are offered it, since others who disagree
+// reject it.
 export const draftOffer = ({
   hasDraft,
   rejected,
   unpublished,
   editsDraft,
-  changedByUser,
+  discardable,
   decides,
   publishes,
 }: DraftOfferFacts): DraftOffer => {
@@ -87,7 +85,7 @@ export const draftOffer = ({
     decide: decides,
     publish: ownDraft && publishes && unpublished,
     resubmit: ownDraft && rejected,
-    discard: ownDraft && changedByUser,
+    discard: ownDraft && discardable,
   };
 };
 
@@ -103,7 +101,6 @@ export function recordMenuOffer({
   changes,
   removable,
   editsOwnDraft,
-  discardsUnchanged,
   decides,
   publishes,
 }: RecordMenuFacts): RecordMenuOffer {
@@ -113,7 +110,7 @@ export function recordMenuOffer({
       rejected: ownDraft?.state === "rejected",
       unpublished: ownDraft?.unpublished === true,
       editsDraft: changes || editsOwnDraft,
-      changedByUser: ownDraft?.changedByUser === true || discardsUnchanged,
+      discardable: ownDraft?.discardable === true,
       decides,
       publishes,
     }),

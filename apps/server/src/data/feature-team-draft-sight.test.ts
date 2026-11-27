@@ -350,7 +350,7 @@ describe("a team's draft as a reader sees it", () => {
       madeAt: "2026-06-01T09:00:00.000Z",
       editors: ["Fictional Maker", "Fictional Editor"],
       needsOtherApprover: true,
-      changedByUser: true,
+      discardable: true,
       changedBy: { name: "Fictional Editor", leadId: null },
     });
   });

@@ -350,7 +350,7 @@ describe("a web link column", () => {
         state: "waiting",
         madeBy: null,
         madeAt: null,
-        changedByUser: true,
+        discardable: true,
       },
     };
     await openPeople({
