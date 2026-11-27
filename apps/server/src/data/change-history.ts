@@ -58,6 +58,7 @@ import {
 import {
   changesShownTo,
   notCurrentAmong,
+  readRejected,
   teamRowKey,
   teamRowShowsNoOne,
   visibleRows,
@@ -226,9 +227,11 @@ async function readBatch(
         .orderBy(asc(changes.id))),
     );
   }
+  const rejected = await readRejected(database, rows);
+  const judged = [...rows, ...[...rejected.values()].flat()];
   const facts = await readFacts(database, actor, [
     ...rows.map((row) => row.recordId),
-    ...rows.flatMap((row) => referencedIds(row)),
+    ...judged.flatMap((row) => referencedIds(row)),
   ]);
   // A hire's manager, and a team's members and lead, may be planned hires too, named as any hire is.
   const hireRows = rows.filter((row) => row.recordType === "planned-hire");
@@ -278,7 +281,7 @@ async function readBatch(
         )),
       ]);
   const seenRows = (
-    await visibleRows(database, actor, rows, facts, tierNow)
+    await visibleRows(database, actor, rows, facts, tierNow, rejected)
   ).filter(
     ({ row }) => !(row.recordType === "person" && hidden.has(row.recordId)),
   );

@@ -16,7 +16,14 @@ import {
   rolePermissions,
   roles as roleTable,
 } from "@fathom/db";
-import type { BuiltInList, Meaning, Permission, Role } from "@fathom/shared";
+import type {
+  BuiltInList,
+  ChangeEntry,
+  ChangeHistory,
+  Meaning,
+  Permission,
+  Role,
+} from "@fathom/shared";
 import { startingRoles } from "@fathom/shared";
 import {
   createTestCertificate,
@@ -80,6 +87,32 @@ export const unique = (prefix: string) => {
 
 // A body adding one record, as adding the plan's records takes a list of them.
 export const addingOne = (record: object) => ({ records: [record] });
+
+// Moves data to another class, as a classifier who sees every class.
+export async function moveClass(
+  app: TestApp,
+  url: string,
+  dataClass: string,
+): Promise<void> {
+  const classifier = await app.signedIn("engineering-director");
+  const response = await app.request(classifier.cookie, "PUT", url, {
+    dataClass,
+  });
+  expect(response.statusCode, response.body).toBe(200);
+}
+
+// A change set's entry in the change history, or undefined when the reader doesn't see it.
+export async function changeEntry(
+  app: TestApp,
+  cookie: string,
+  changeSetId: string | null,
+): Promise<ChangeEntry | undefined> {
+  const response = await app.request(cookie, "GET", "/api/changes");
+  expect(response.statusCode).toBe(200);
+  return response
+    .json<ChangeHistory>()
+    .entries.find((entry) => entry.id === changeSetId);
+}
 
 export const errorOf = (response: { json: () => unknown }) =>
   (response.json() as { error: string }).error;

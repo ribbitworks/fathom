@@ -3,14 +3,14 @@
 // Shared setup for the change history's tests: a test app with an administrator's account, and
 // helpers that read the history, search it, and make and approve the changes it records.
 
-import {
-  type ChangeEntry,
-  type ChangeHistory,
-  type Field,
-  type List,
-} from "@fathom/shared";
+import { type ChangeHistory, type Field, type List } from "@fathom/shared";
 import { expect } from "vitest";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
+import {
+  changeEntry,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 export let test: TestApp;
 export let admin: { id: string; cookie: string };
@@ -45,10 +45,8 @@ export const search = async (cookie: string, text: string) => {
 };
 
 // The entry for a change set, or undefined when the reader does not see it.
-export const entryFor = async (cookie: string, changeSetId: string | null) =>
-  (await history(cookie)).entries.find(
-    (entry: ChangeEntry) => entry.id === changeSetId,
-  );
+export const entryFor = (cookie: string, changeSetId: string | null) =>
+  changeEntry(test, cookie, changeSetId);
 
 export async function send(
   method: "POST" | "PUT" | "PATCH" | "DELETE",
