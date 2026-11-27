@@ -285,7 +285,7 @@ You're done when the row is struck through. It's removed once the removal is app
 ## Marks and Terms
 
 - **A planned hire with no name** shows its position and ID in grey, such as **SDET, TBD-5**. **TBD-** and a number is a temporary ID, used until the hire has its own.
-- **Expected** is the month the hire is expected to start, worked out from its **Start** date. You can't type it. It's empty for a hire with no **Start**, which is marked **Planned, no date**.
+- **Expected** is the month the hire is expected to start, worked out from its **Start** date. You can't type it. It's empty for a hire with no **Start**, which is marked **Planned, no target date**.
 - **The hiring plan** holds the planned hires. Some roles may see it, and some may not.
 - **A planned hire's Start** is the day it's planned to start. You see it, and the hire's drafts, only if your role may see the hiring plan. Otherwise you see the hire's name, ID, position, state, manager and **Expected** month.
 - **A red Left box** after a manager's name means they've left, and people still report to them.

@@ -168,7 +168,7 @@ describe("the org chart", () => {
     expect(within(placeholder).getByText("Fictional Engineer")).toBeDefined();
     const report = onCard("Fictional Planned Report").textContent;
     expect(report).toContain("Fictional Engineer");
-    expect(report).toContain("Planned, no date");
+    expect(report).toContain("Planned, no target date");
     expect(report).not.toContain("Planned, expected");
     await userEvent.click(screen.getByRole("button", { name: "Teams" }));
     const panel = await screen.findByRole("dialog", { name: "Teams" });

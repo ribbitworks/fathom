@@ -50,8 +50,8 @@ export function formatMonth(value: string): string {
   return month.format(parseDay(`${value}-01`));
 }
 
-// What marks a planned hire: the month it is expected, or no date when that month comes from none,
-// since it would move with the day shown.
+// What marks a planned hire: the month it is expected, or no target date when that month comes from
+// none, since it would move with the day shown.
 export const plannedWords = ({
   expected,
   undated,
@@ -60,5 +60,5 @@ export const plannedWords = ({
   undated?: true | undefined;
 }): string =>
   undated === true
-    ? "Planned, no date"
+    ? "Planned, no target date"
     : `Planned, expected ${formatMonth(expected)}`;
