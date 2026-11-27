@@ -46,7 +46,7 @@ describe("Tab across a new row", () => {
     expect(screen.queryByRole("textbox", { name: "Name" })).toBeNull();
     await userEvent.keyboard("{Enter}");
     expect(add.mock.calls.at(0)?.[0].map(({ request }) => request)).toEqual([
-      { name: "Widget", flags: { next: null } },
+      { name: "Widget", next: false },
     ]);
   });
 

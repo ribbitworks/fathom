@@ -25,7 +25,7 @@ export const mostColumnsAtOnce = 50;
 export const makesPrivatePages: Permission = "private-pages:make";
 
 // The types a page's first column may be, since its value names each row.
-export const rowNamingTypes: readonly FieldType[] = ["number", "text"];
+export const rowNamingTypes: readonly FieldType[] = ["number", "text", "date"];
 
 // Whether a reader may read a page: its maker, while their role may make private pages. Nobody
 // else may, an Administrator included.

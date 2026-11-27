@@ -237,9 +237,9 @@ describe("the New column dialog", () => {
     });
     await userEvent.type(within(dialog).getByLabelText("Name"), "Fire warden");
     await chooseIn(dialog, "Type", "Number");
-    await userEvent.click(within(dialog).getByLabelText("Must be filled in"));
+    await userEvent.click(within(dialog).getByLabelText("Required"));
     await chooseIn(dialog, "Type", "Checkbox");
-    expect(within(dialog).queryByLabelText("Must be filled in")).toBeNull();
+    expect(within(dialog).queryByLabelText("Required")).toBeNull();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
     );

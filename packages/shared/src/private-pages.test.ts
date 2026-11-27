@@ -115,6 +115,15 @@ describe("privatePageRequestSchema", () => {
     ).toBe(true);
   });
 
+  it("takes a date column first, to name each row", () => {
+    expect(
+      privatePageRequestSchema.safeParse({
+        name: "Tide log",
+        columns: [{ name: "Day", type: "date", visibility: "general" }],
+      }).success,
+    ).toBe(true);
+  });
+
   it("refuses a first column of a type that cannot name a row", () => {
     expect(
       messages(

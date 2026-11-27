@@ -3,12 +3,13 @@
 // Tests for a draft's details in words: what it does, or each field it changes, with who changed it.
 
 import { describe, expect, it } from "vitest";
-import type { Person } from "@fathom/shared";
+import type { Field, Person } from "@fathom/shared";
 import {
   configDraftFields,
   draftLines,
   personDraftFields,
 } from "./draft-details.tsx";
+import { formatDay } from "./day-formats.ts";
 import { phraseText } from "./phrase.tsx";
 
 const draft = {
@@ -128,6 +129,48 @@ describe("a draft's details", () => {
       { field: "managerFrom", oldValue: "2024-03-01", newValue: "2026-10-01" },
       { field: "teamName", oldValue: null, newValue: "Fictional Team" },
     ]);
+  });
+
+  it("gives a drafted day in a date column, and its live day, in words", () => {
+    const lastReview: Field = {
+      id: "f1",
+      keyNumber: 1,
+      name: "Last review",
+      type: "date",
+      listId: null,
+      visibility: "general",
+      multiple: false,
+      required: false,
+      onPlannedHires: true,
+    };
+    const [field] = personDraftFields(
+      {
+        id: "p1",
+        keyNumber: 1,
+        preferredName: "Fictional Reviewed",
+        employeeId: "p1",
+        positionId: "position-1",
+        values: {},
+        links: {},
+        days: { f1: "2026-04-01" },
+      },
+      {
+        action: "changed",
+        changed: ["f1"],
+        live: { values: {}, links: {}, days: { f1: "2026-03-14" } },
+        state: "waiting",
+        madeBy: null,
+        madeAt: null,
+      },
+      [lastReview],
+      [],
+    );
+    expect(field?.field).toEqual({
+      field: "value",
+      column: "Last review",
+      oldValue: formatDay("2026-03-14"),
+      newValue: formatDay("2026-04-01"),
+    });
   });
 
   it("words a past manager not among the people shown as someone not shown, never none", () => {

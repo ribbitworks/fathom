@@ -127,14 +127,14 @@ You're done once the fill is approved. The person then takes the hire's place.
 
 1. Select **New column**.
 1. Type the column's **Name**.
-1. Choose its **Type**: **Text**, **Number**, **Checkbox**, **Choice from a list**, **Web link** or **Note**.
+1. Choose its **Type**: **Text**, **Number**, **Date**, **Checkbox**, **Choice from a list**, **Web link** or **Note**.
 1. If you chose **Choice from a list**, choose the list. The column takes the list's class.
 1. For any other type, choose the column's **Class**, if your role can set classes.
 1. Select **Add column**.
 
 You're done when the new column shows in the table, with a hollow dot until you publish it.
 
-An empty box means No, so a **Checkbox** column never asks for **Must be filled in**.
+An empty box means No, so a **Checkbox** column never asks for **Required**.
 
 ### Tick a Box
 
@@ -156,6 +156,18 @@ A **Text** column holds plain text, with no formatting, for each person. It hold
 A long text is cut short in its cell. Open the person's details to see all of it.
 
 You're done when the cell shows your text, with a hollow dot until you publish it.
+
+### Type a Date
+
+A **Date** column holds a day for each person, such as the day of their last review. It shows the day as the **Start** column does.
+
+1. Select the person's cell in the column.
+1. Type the day as digits, year first, such as `20260314`. Fathom lays it out as 2026-03-14 as you type.
+1. Press Enter to save.
+
+You can also paste days written that way, such as 2026-03-14, one per row. A day that doesn't exist, such as 2026-02-30, is refused under the row.
+
+You're done when the cell shows the day, with a hollow dot until you publish it.
 
 ### Change or Remove a Column
 

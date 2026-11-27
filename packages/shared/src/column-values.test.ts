@@ -40,6 +40,7 @@ describe("values in added columns", () => {
       numbers: {},
       flags: {},
       texts: {},
+      days: {},
     });
   });
 

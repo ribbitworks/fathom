@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  daySchema,
   dayReadingMonth,
   defaultLineFrom,
   isDay,
@@ -58,6 +59,12 @@ describe("isDay", () => {
       isDay("27-2-28"),
     ]).toEqual([true, false, false]);
   });
+
+  it("refuses a day in year 0000, which a database can't hold, and takes one from 0001", () => {
+    expect(isDay("0000-01-01")).toBe(false);
+    expect(daySchema.safeParse("0000-02-29").success).toBe(false);
+    expect(isDay("0001-01-01")).toBe(true);
+  });
 });
 
 describe("typedDay", () => {
@@ -71,6 +78,16 @@ describe("typedDay", () => {
 
   it("keeps digits typed with their dashes in the same form", () => {
     expect(typedDay(" 2027-01-04 ")).toBe("2027-01-04");
+  });
+
+  it("reads a hyphen or minus sign copied from elsewhere as a dash, as in a refusal's example", () => {
+    expect(
+      [
+        "2026\u201110\u201131",
+        "2026\u201010\u201031",
+        "2026\u221210\u221231",
+      ].map(typedDay),
+    ).toEqual(["2026-10-31", "2026-10-31", "2026-10-31"]);
   });
 
   it("stops at a whole day's digits", () => {

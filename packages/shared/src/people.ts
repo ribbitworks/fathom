@@ -44,8 +44,8 @@ export const personLengths = {
 // A date without a time, such as 2026-10-31.
 const day = daySchema;
 
-// A column chooses from a list, or holds a web link, a note, a number, a checkbox ("flag"), or text.
-// A column's type never changes.
+// A column chooses from a list, or holds a web link, a note, a number, a checkbox ("flag"), text, or
+// a day ("date"). A column's type never changes.
 export const fieldTypeSchema = z.enum([
   "choice",
   "link",
@@ -53,6 +53,7 @@ export const fieldTypeSchema = z.enum([
   "number",
   "flag",
   "text",
+  "date",
 ]);
 
 export type FieldType = z.infer<typeof fieldTypeSchema>;
@@ -298,6 +299,7 @@ const heldAlone = {
   number: { kind: "number", value: "number", requirable: true },
   flag: { kind: "checkbox", value: "box", requirable: false },
   text: { kind: "text", value: "text", requirable: true },
+  date: { kind: "date", value: "date", requirable: true },
 };
 
 // Whether a column of the type can be one that must be filled in.

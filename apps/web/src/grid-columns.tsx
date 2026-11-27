@@ -78,6 +78,11 @@ export function cellColumn<Rec extends CellRecord, Change extends CellChange>(
   // The kind is always one of the fixed kinds.
   // eslint-disable-next-line security/detect-object-injection
   const cellKind = cellKinds[kind];
+  // A kind that also serves a record's own fields reads a column's values from a map of added
+  // values, where a record's own field never is. A choice's map is keyed by any column, as months.
+  if (cellKind.ownField !== undefined && kind !== "choice" && !rest.field) {
+    throw new Error("A record's own field is made with fieldColumn");
+  }
   return {
     key,
     kind,

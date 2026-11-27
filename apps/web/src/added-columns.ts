@@ -12,6 +12,7 @@ import {
   columnValueMapsOf,
   type Field,
   type List,
+  monthOf,
   optionalColumnValueMaps,
   requestedColumnValueMapsOf,
   type SomeColumnValues,
@@ -19,8 +20,11 @@ import {
   textLimit,
 } from "@fathom/shared";
 import type { CellChange, CellSource } from "./cell-kinds.tsx";
+import { noDate } from "./filter-words.tsx";
 import { cellColumn } from "./grid-columns.tsx";
 import type { CellRecord, Column } from "./record-table.ts";
+import { asText } from "./table-rows.ts";
+import type { CellValue } from "./table-view.ts";
 
 // The added columns a table shows, in the order and as the Draft menu's choice makes them.
 export interface AddedColumns {
@@ -59,9 +63,8 @@ export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
   };
 };
 
-// The settings a column takes from its field's type, beyond those of its cells' kind: a number
-// column adds up its numbers, and a text column holds its own limit, and breaks rows down where it
-// may be empty, which the built-in text columns sharing its kind don't.
+// The settings a column takes from its field's type beyond its cells' kind's, which the built-in
+// columns sharing the kind don't take.
 function ownSettings<Rec extends CellRecord>(
   field: Field,
 ): Partial<Column<Rec, never>> {
@@ -72,6 +75,14 @@ function ownSettings<Rec extends CellRecord>(
       };
     case "text":
       return { maxLength: textLimit, breaksDown: "unless required" };
+    case "date":
+      return {
+        months: {
+          of: (value: CellValue) => monthOf(asText(value)),
+          emptyLabel: noDate,
+        },
+        breaksDown: true,
+      };
     case "choice":
     case "link":
     case "note":

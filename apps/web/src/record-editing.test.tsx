@@ -7,14 +7,14 @@ import { render, renderHook, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { PlanChange } from "./plan-table.tsx";
-import { cellColumn } from "./grid-columns.tsx";
+import { fieldColumn } from "./grid-columns.tsx";
 import type { CellRecord } from "./record-table.ts";
 import { useRecordEditing } from "./record-editing.tsx";
 import { testTheme } from "./test-support.tsx";
 
 describe("a note column", () => {
   it("cannot be changed where no notes can be written", () => {
-    const note = cellColumn<CellRecord, PlanChange>("words", "note", {
+    const note = fieldColumn<CellRecord, PlanChange>("words", "note", {
       label: "Words",
       required: false,
       multiple: false,
@@ -36,7 +36,7 @@ describe("a note column", () => {
 });
 
 describe("a value opened for changing", () => {
-  const code = cellColumn<CellRecord, PlanChange>("code", "text", {
+  const code = fieldColumn<CellRecord, PlanChange>("code", "text", {
     label: "Code",
     required: false,
     multiple: false,
@@ -83,7 +83,7 @@ describe("a value opened for changing", () => {
 });
 
 describe("a date opened for changing", () => {
-  const starts = cellColumn<CellRecord, PlanChange>("starts", "date", {
+  const starts = fieldColumn<CellRecord, PlanChange>("starts", "date", {
     label: "Starts",
     required: false,
     multiple: false,

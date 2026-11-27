@@ -12,11 +12,13 @@ import {
   isOptionsGroup,
   type MantineColorsTuple,
   Menu,
+  type MenuProps,
   Modal,
   type OptionsFilter,
   Popover,
   SegmentedControl,
   Select,
+  type SelectProps,
   Table,
   VisuallyHidden,
 } from "@mantine/core";
@@ -75,6 +77,45 @@ export const byWords: OptionsFilter = ({ options, search, limit }) => {
 // The room a menu held to the window keeps from its edge, in pixels.
 const menuWindowGap = 8;
 
+// How a menu or a list shown whole is held to the window: one that fits neither below nor above
+// opens on the side with more room, shifts to stay in view, and keeps its gap from the window's edge.
+const heldToWindow = {
+  flip: { fallbackStrategy: "bestFit" },
+  shift: true,
+  size: { padding: menuWindowGap },
+} satisfies NonNullable<MenuProps["middlewares"]>;
+
+// A drop-down list of a few fixed choices shown whole, such as New column's Type, rather than cut at
+// Mantine's height for a list, which hid its last choice with no sign of it. Where the window has
+// too little room, it is held to the room left, as a menu is, and its choices scroll inside it.
+export const wholeList: Pick<
+  SelectProps,
+  "maxDropdownHeight" | "comboboxProps"
+> = {
+  maxDropdownHeight: "var(--whole-list-room, 100dvh)",
+  comboboxProps: {
+    middlewares: {
+      ...heldToWindow,
+      size: {
+        ...heldToWindow.size,
+        // The choices get the room left less the list's own edges and padding.
+        apply: ({ availableHeight, elements: { floating } }) => {
+          const { paddingTop, paddingBottom } = getComputedStyle(floating);
+          const frame =
+            floating.offsetHeight -
+            floating.clientHeight +
+            parseFloat(paddingTop) +
+            parseFloat(paddingBottom);
+          floating.style.setProperty(
+            "--whole-list-room",
+            `${String(availableHeight - frame)}px`,
+          );
+        },
+      },
+    },
+  },
+};
+
 export const theme = createTheme({
   fontFamily:
     '"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
@@ -100,14 +141,7 @@ export const theme = createTheme({
           " ",
         ),
       },
-      defaultProps: {
-        middlewares: {
-          // A menu that fits neither below nor above opens on the side with more room.
-          flip: { fallbackStrategy: "bestFit" },
-          shift: true,
-          size: { padding: menuWindowGap },
-        },
-      },
+      defaultProps: { middlewares: heldToWindow },
     }),
     Popover: Popover.extend({
       classNames: { dropdown: overlayClasses.dropdown },

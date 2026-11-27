@@ -38,6 +38,7 @@ describe("a feature request", () => {
       numbers: {},
       flags: {},
       texts: {},
+      days: {},
     });
   });
 

@@ -6,7 +6,10 @@
 
 import { z } from "zod";
 
-export const daySchema = z.iso.date();
+// From year 0001, since PostgreSQL, which keeps every day, has no year 0000.
+export const daySchema = z.iso
+  .date()
+  .refine((day) => !day.startsWith("0000"), "Use a year from 0001");
 
 export const monthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 
@@ -39,10 +42,14 @@ export const monthNumber = (monthOrDay: string): number =>
 export const dayReadingMonth = (month: string, today: string): string =>
   month === monthOf(today) ? today : `${month}-01`;
 
+// A hyphen, a hyphen that never breaks the line, and a minus sign, read as a dash, so a day copied
+// from where Fathom keeps it whole, such as a refusal's example, pastes back in.
+const dashLike = /[\u2010\u2011\u2212]/gu;
+
 // Text with digits alone, or digits and dashes, laid out in parts of the lengths given as the digits
 // fill them. Anything else is left as typed.
 function laidOut(text: string, lengths: readonly number[]): string {
-  const trimmed = text.trim();
+  const trimmed = text.trim().replace(dashLike, "-");
   if (!/^[\d-]*$/.test(trimmed)) return trimmed;
   let digits = trimmed.replaceAll("-", "");
   return lengths

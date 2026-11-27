@@ -552,6 +552,7 @@ describe("the Features page", () => {
         numbers: {},
         flags: {},
         texts: {},
+        days: {},
         target: null,
       },
     ]);
@@ -596,6 +597,7 @@ describe("the Features page", () => {
             numbers: {},
             flags: {},
             texts: {},
+            days: {},
             target: null,
           },
         ],

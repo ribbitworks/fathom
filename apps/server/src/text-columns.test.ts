@@ -5,9 +5,7 @@
 // history shows them; with what every type of column shares, for planned hires, features,
 // activities, and who sees a Personal or Confidential column.
 
-import { fieldValues } from "@fathom/db";
 import type { PrivatePage } from "@fathom/shared";
-import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { errorOf, ok, startTestApp, type TestApp, unique } from "./test-app.ts";
 import {
@@ -15,6 +13,7 @@ import {
   type ColumnKind,
   describeClassedColumn,
   describeColumnValues,
+  describeRowNamingColumn,
 } from "./test-added-columns.ts";
 
 let test: TestApp;
@@ -34,7 +33,9 @@ const text: ColumnKind = {
   value: "North 4-12",
   changed: "Remote",
   inHistory: "North 4-12",
+  changedInHistory: "Remote",
   noneInHistory: null,
+  stored: { column: "text", value: "North 4-12" },
 };
 
 const {
@@ -45,14 +46,7 @@ const {
   addedId,
   approve,
   readPerson,
-  historyFields,
 } = addedColumnTests(() => test, text);
-
-const textRows = (fieldId: string) =>
-  test.connection
-    .select({ text: fieldValues.text, note: fieldValues.note })
-    .from(fieldValues)
-    .where(eq(fieldValues.fieldId, fieldId));
 
 describe("adding text columns", () => {
   it("adds one with a class of its own and no list", async () => {
@@ -67,37 +61,18 @@ describe("adding text columns", () => {
 });
 
 describe("people's texts", () => {
-  it("keep a text, trimmed, as a row of its own once approved, never as a note", async () => {
+  it("keep a text trimmed, and record nothing when it's sent again with spaces around it", async () => {
     const { cookie } = await editor();
     const { id: fieldId } = await textColumn(cookie);
     const id = await addedId(cookie, { [fieldId]: "  North 4-12 " });
     await approve({ people: [id] });
-    const person = await readPerson(cookie, id);
-    expect(person?.texts).toEqual({ [fieldId]: "North 4-12" });
-    expect(person?.notes).toEqual({});
-    expect(await textRows(fieldId)).toEqual([
-      { text: "North 4-12", note: null },
-    ]);
-  });
-
-  it("are changed by a draft, showing the live text beside, and removed when emptied", async () => {
-    const { cookie } = await editor();
-    const { id: fieldId } = await textColumn(cookie);
-    const id = await addedId(cookie, { [fieldId]: "North 4-12" });
-    await approve({ people: [id] });
-
-    await send(cookie, "PATCH", `/api/people/${id}`, {
-      texts: { [fieldId]: "South 2-07" },
+    expect((await readPerson(cookie, id))?.texts).toEqual({
+      [fieldId]: "North 4-12",
     });
-    const drafted = await readPerson(cookie, id);
-    expect(drafted?.texts).toEqual({ [fieldId]: "South 2-07" });
-    expect(drafted?.draft?.live.texts).toEqual({ [fieldId]: "North 4-12" });
-
-    await send(cookie, "PATCH", `/api/people/${id}`, {
-      texts: { [fieldId]: " " },
+    const saved = await send(cookie, "PATCH", `/api/people/${id}`, {
+      texts: { [fieldId]: " North 4-12 " },
     });
-    await approve({ people: [id] });
-    expect(await textRows(fieldId)).toEqual([]);
+    expect(saved.json()).toEqual({ changeSetId: null });
   });
 
   it("refuse a text past 200 characters, or of several lines", async () => {
@@ -119,65 +94,10 @@ describe("people's texts", () => {
     );
     expect(errorOf(lines)).toBe(`${field.name}: use one line`);
   });
-
-  it("are recorded in the change history as written", async () => {
-    const { cookie } = await editor();
-    const field = await textColumn(cookie);
-    const id = await addedId(cookie, { [field.id]: "North 4-12" });
-    await approve({ people: [id] });
-    await send(cookie, "PATCH", `/api/people/${id}`, {
-      texts: { [field.id]: "Remote" },
-    });
-    await approve({ people: [id] });
-    expect(
-      (await historyFields(cookie)).filter(
-        ({ column }) => column === field.name,
-      ),
-    ).toContainEqual({
-      field: "value",
-      column: field.name,
-      oldValue: "North 4-12",
-      newValue: "Remote",
-    });
-  });
-
-  it("record nothing when a text is saved as it is", async () => {
-    const { cookie } = await editor();
-    const { id: fieldId } = await textColumn(cookie);
-    const id = await addedId(cookie, { [fieldId]: "North 4-12" });
-    await approve({ people: [id] });
-    const saved = await send(cookie, "PATCH", `/api/people/${id}`, {
-      texts: { [fieldId]: " North 4-12 " },
-    });
-    expect(saved.json()).toEqual({ changeSetId: null });
-  });
 });
 
 describe("a private page's text column", () => {
-  it("names each row, and refuses a row without its text", async () => {
-    const maker = await editor();
-    const { page } = await ok<{ page: PrivatePage }>(
-      await send(maker.cookie, "POST", "/api/private-pages", {
-        name: unique("Fictional Reading List"),
-        columns: [{ name: "Title", type: "text", visibility: "general" }],
-      }),
-      201,
-    );
-    const title = String(page.columns[0]?.id);
-    const rows = `/api/private-pages/${page.id}/rows`;
-    const saved = await ok<{ page: PrivatePage }>(
-      await send(maker.cookie, "POST", rows, {
-        texts: { [title]: "Tide Tables" },
-      }),
-      201,
-    );
-    expect(saved.page.rows[0]?.texts).toEqual({ [title]: "Tide Tables" });
-    const empty = await send(maker.cookie, "POST", rows, {
-      texts: { [title]: "  " },
-    });
-    expect(empty.statusCode).toBe(400);
-    expect(errorOf(empty)).toBe("Title must be filled in");
-  });
+  describeRowNamingColumn(() => test, text);
 });
 
 describeColumnValues(() => test, text);

@@ -34,6 +34,19 @@ import {
   renderGadgets,
 } from "./test-gadgets.tsx";
 
+describe("a column of an added column's values", () => {
+  it("is refused for a record's own field, which a map of added values would never hold", () => {
+    expect(() =>
+      cellColumn("startDate", "date", {
+        label: "Start",
+        required: false,
+        choices: [],
+        multiple: false,
+      }),
+    ).toThrow("A record's own field is made with fieldColumn");
+  });
+});
+
 describe("the order of the columns", () => {
   it("follows the order given, putting columns it does not name at the end in their usual order", () => {
     expect(

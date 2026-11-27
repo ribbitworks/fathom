@@ -40,6 +40,9 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Adding:** Add adds the record, closes the form, and puts focus back on the Add button; the details then list the record.
   - **Drawn by:** `useAddFromPanel`'s `addActivity` in `apps/web/src/add-from-panel.tsx`, through `NewPlanRecordPanel` in `apps/web/src/new-plan-record-panel.tsx`, and on a page that doesn't save the plan's records itself, `useActivityAdding` in `apps/web/src/activity-adding.tsx`.
   - **Example:** On Projects, Add activity in Crane Control's details; on Releases, in Harbor 2 LTS's.
+- **A list shown whole:** A drop-down list of a few fixed choices, such as New column's Type, shows every choice, never cut with its last half hidden. Where the window has too little room, it is held to the room left and scrolls inside itself, as a menu does.
+  - **Drawn by:** `wholeList` in `apps/web/src/theme.ts`, spread on each such `Select`: New column's Type in `apps/web/src/column-dialog.tsx`, and a release's Colour in `apps/web/src/release-dialogs.tsx`. A list someone types into to find a choice, such as a time zone, keeps Mantine's height.
+  - **Example:** On People, select New column, then open Type.
 - **The keyboard's option in a drop-down list:** The option the keyboard is on, which Enter would pick, looks like an option pointed at: light grey in light mode, dark grey in dark mode. It is never the accent colour, which looks like a choice already made.
   - **Drawn by:** The theme, through `Combobox.extend` and `Select.extend` in `apps/web/src/theme.ts`. Both give their options the class in `apps/web/src/combobox.module.css`, so every drop-down list, Select and table cell's choices follow it. A new kind of drop-down list from Mantine, such as `MultiSelect`, needs the same class in the theme.
   - **Example:** On Features, open a Status cell's choices and press the Down arrow.

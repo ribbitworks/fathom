@@ -9,6 +9,7 @@ import {
   type ColumnValueMap,
   type ColumnValues,
   columnValueMaps,
+  type Days,
   eachColumnValueMap,
   isLink,
   type FieldType,
@@ -29,7 +30,14 @@ import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { fitsColumns, type Recorded, tidy } from "./draft-records.ts";
 import { choicesWithAdded, refuseHeldColumns } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
-import { isFlag, isNote, isNumber, isText, typeOf } from "./column-types.ts";
+import {
+  isDate,
+  isFlag,
+  isNote,
+  isNumber,
+  isText,
+  typeOf,
+} from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { keptNote } from "./records.ts";
 import { reportingFields } from "./reporting.ts";
@@ -213,6 +221,9 @@ const flagsOf = (person: Recorded, shows: Shows): Flags =>
 const textsOf = (person: Recorded, shows: Shows): Texts =>
   valuesHolding(person, isText, shows, ({ text }) => text);
 
+const daysOf = (person: Recorded, shows: Shows): Days =>
+  valuesHolding(person, isDate, shows, ({ date }) => date);
+
 const columnValueReaders: {
   [Kind in ColumnValueMap]: (
     person: Recorded,
@@ -224,6 +235,7 @@ const columnValueReaders: {
   numbers: numbersOf,
   flags: flagsOf,
   texts: textsOf,
+  days: daysOf,
 };
 
 // A person's or planned hire's values in each map, by column, as recorded, in only the columns
@@ -461,6 +473,16 @@ const checkedTexts = (
     return { text };
   });
 
+// The days asked for each column, as recorded, or none, for a day removed. The shared schema has
+// already checked that each day exists.
+const checkedDays = (
+  columns: readonly ColumnInfo[],
+  requested: Readonly<Record<string, string | null>> | undefined,
+): Recorded =>
+  checkedOfType(columns, requested, "date", (date) =>
+    date === null ? [] : { date },
+  );
+
 const columnValueCheckers: {
   [Kind in ColumnValueMap]: (
     columns: readonly ColumnInfo[],
@@ -472,6 +494,7 @@ const columnValueCheckers: {
   numbers: checkedNumbers,
   flags: checkedFlags,
   texts: checkedTexts,
+  days: checkedDays,
 };
 
 // The values asked for in each map, as recorded, checked in turn.

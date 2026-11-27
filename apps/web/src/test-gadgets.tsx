@@ -188,7 +188,7 @@ export const nameThen = (next: Column<Gadget, GadgetChange>) => ({
   ...gadgetTable(),
   columnsFor: () => [...gadgetColumns([], [], []).slice(0, 1), next],
 });
-// A text is a gadget's own field, as a name is, rather than a text column's.
+// Every kind but a choice is a gadget's own field, as a name is, rather than an added column's.
 export const nextColumn = (
   kind: "choice" | "date" | "flag" | "link" | "text",
 ) => {
@@ -198,7 +198,7 @@ export const nextColumn = (
     choices: [],
     multiple: false,
   };
-  return kind === "text"
-    ? fieldColumn<Gadget, GadgetChange>("next", kind, settings)
-    : cellColumn<Gadget, GadgetChange>("next", kind, settings);
+  return kind === "choice"
+    ? cellColumn<Gadget, GadgetChange>("next", kind, settings)
+    : fieldColumn<Gadget, GadgetChange>("next", kind, settings);
 };

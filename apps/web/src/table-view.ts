@@ -100,6 +100,10 @@ export interface TableColumn<Row> {
   searched?: false | undefined;
   // For a choice column whose choices have colours, such as teams.
   choiceColour?: ((choiceId: string) => string | null) | undefined;
+  // For a column Metrics breaks down by month, other than a month column, such as an added Date
+  // column: each value's month, and what its rows with none are called.
+  months?:
+    { of: (value: CellValue) => string; emptyLabel?: string } | undefined;
 }
 
 // What a field editing a column's value is called: its label, and its unit's words, if any.

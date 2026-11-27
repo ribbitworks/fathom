@@ -1,20 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // What the tests of each type of added column share, against a migrated PostgreSQL server: adding a
-// column of the type and giving people its values, and who sees a Personal or Confidential column of
-// it, live, in drafts, on planned hires, in the change history, the access history and exports.
+// column of the type and giving people its values, kept, drafted, recorded and naming a private
+// page's rows, and who sees a Personal or Confidential column of it, live, in drafts, on planned
+// hires, in the change history, the access history and exports.
 
 import { accessHistory, fieldValues } from "@fathom/db";
 import {
   type Activity,
   type ChangeHistory,
   type ColumnValueMap,
+  columnValueMaps,
   type Feature,
   type FieldType,
   type Field,
   type Hire,
   type Permission,
   type Person,
+  type PrivatePage,
   type ProjectPlan,
   startingRoles,
 } from "@fathom/shared";
@@ -40,10 +43,26 @@ export interface ColumnKind {
   value: unknown;
   // A value a draft changes it to, or null for one emptying it.
   changed: unknown;
-  // The value, and none, as the change history shows them.
+  // The value, the value it is changed to, and none, as the change history shows them.
   inHistory: unknown;
+  changedInHistory: unknown;
   noneInHistory: unknown;
+  // The values table's column holding the type's values, and the value as it holds it.
+  stored: { column: HeldColumn; value: unknown };
 }
+
+// The values table's columns that hold one value for each record and column.
+const heldColumns = {
+  choiceId: fieldValues.choiceId,
+  linkAddress: fieldValues.linkAddress,
+  note: fieldValues.note,
+  number: fieldValues.number,
+  flag: fieldValues.flag,
+  text: fieldValues.text,
+  date: fieldValues.date,
+};
+
+type HeldColumn = keyof typeof heldColumns;
 
 export interface ColumnSettings {
   visibility?: string;
@@ -53,7 +72,8 @@ export interface ColumnSettings {
 
 // What every type of column holding one value does with its values, beyond People: planned hires'
 // values, refused on a column not offered on them, features' and activities' values, and each
-// person's value recorded as removed when its column is deleted.
+// person's value kept in its own map and row, changed by a draft, recorded in the change history,
+// and recorded as removed when its column is deleted.
 export function describeColumnValues(test: () => TestApp, kind: ColumnKind) {
   const {
     send,
@@ -67,7 +87,18 @@ export function describeColumnValues(test: () => TestApp, kind: ColumnKind) {
     readPerson,
     readHire,
     valuesOf,
+    historyFields,
   } = addedColumnTests(test, kind);
+  const heldRows = (fieldId: string) =>
+    test()
+      .connection.select(heldColumns)
+      .from(fieldValues)
+      .where(eq(fieldValues.fieldId, fieldId));
+  // A row holding the type's value, as stored, in its own column, and nothing in any other.
+  const heldRow = {
+    ...Object.fromEntries(Object.keys(heldColumns).map((key) => [key, null])),
+    [kind.stored.column]: kind.stored.value,
+  };
   const editsPlan = () =>
     test().signedIn([
       ...startingRoles["workforce-administrator"].permissions,
@@ -75,6 +106,83 @@ export function describeColumnValues(test: () => TestApp, kind: ColumnKind) {
     ]);
 
   describe(`${kind.type} columns' values`, () => {
+    it("are kept as a row of their own once approved, in no other type's map", async () => {
+      const { cookie } = await editor();
+      const { id: fieldId } = await column(cookie);
+      const id = await addedId(cookie, { [fieldId]: kind.value });
+      await approve({ people: [id] });
+      const person = await readPerson(cookie, id);
+      const inMap = (map: ColumnValueMap) =>
+        // The map is one of the record's own.
+        // eslint-disable-next-line security/detect-object-injection
+        new Map(Object.entries(person?.[map] ?? {})).has(fieldId);
+      expect(columnValueMaps.filter(inMap)).toEqual([kind.map]);
+      expect(valuesOf(person)).toEqual({ [fieldId]: kind.value });
+      expect(await heldRows(fieldId)).toEqual([heldRow]);
+    });
+
+    it("are changed by a draft, showing the live value beside, and leave no row once emptied", async () => {
+      const { cookie } = await editor();
+      const { id: fieldId } = await column(cookie);
+      const id = await addedId(cookie, { [fieldId]: kind.value });
+      await approve({ people: [id] });
+
+      await send(
+        cookie,
+        "PATCH",
+        `/api/people/${id}`,
+        valued({ [fieldId]: kind.changed }),
+      );
+      const drafted = await readPerson(cookie, id);
+      expect(valuesOf(drafted)).toEqual(
+        kind.changed === null ? {} : { [fieldId]: kind.changed },
+      );
+      expect(valuesOf(drafted?.draft?.live)).toEqual({ [fieldId]: kind.value });
+
+      await send(
+        cookie,
+        "PATCH",
+        `/api/people/${id}`,
+        valued({ [fieldId]: null }),
+      );
+      await approve({ people: [id] });
+      expect(await heldRows(fieldId)).toEqual([]);
+    });
+
+    it("are recorded in the change history as they show", async () => {
+      const { cookie } = await editor();
+      const field = await column(cookie);
+      const id = await addedId(cookie, { [field.id]: kind.value });
+      await approve({ people: [id] });
+      await send(
+        cookie,
+        "PATCH",
+        `/api/people/${id}`,
+        valued({ [field.id]: kind.changed }),
+      );
+      await approve({ people: [id] });
+      expect(await historyFields(cookie)).toContainEqual({
+        field: "value",
+        column: field.name,
+        oldValue: kind.inHistory,
+        newValue: kind.changedInHistory,
+      });
+    });
+
+    it("record nothing when a value is saved as it is", async () => {
+      const { cookie } = await editor();
+      const { id: fieldId } = await column(cookie);
+      const id = await addedId(cookie, { [fieldId]: kind.value });
+      await approve({ people: [id] });
+      const saved = await send(
+        cookie,
+        "PATCH",
+        `/api/people/${id}`,
+        valued({ [fieldId]: kind.value }),
+      );
+      expect(saved.json()).toEqual({ changeSetId: null });
+    });
+
     it("are refused in a column of another type", async () => {
       const { cookie } = await editor();
       const { field } = await ok<{ field: Field }>(
@@ -220,6 +328,40 @@ export function describeColumnValues(test: () => TestApp, kind: ColumnKind) {
           .where(eq(fieldValues.fieldId, field.id)),
       ).toEqual([]);
     });
+  });
+}
+
+// What a type of column that can be a private page's first column does there: its value names each
+// row, so a row without one is refused.
+export function describeRowNamingColumn(test: () => TestApp, kind: ColumnKind) {
+  const { send, editor, valued } = addedColumnTests(test, kind);
+
+  it(`names each row of a private page as a ${kind.type} column, refusing a row without its value`, async () => {
+    const maker = await editor();
+    const { page } = await ok<{ page: PrivatePage }>(
+      await send(maker.cookie, "POST", "/api/private-pages", {
+        name: unique("Fictional Page"),
+        columns: [{ name: "Title", type: kind.type, visibility: "general" }],
+      }),
+      201,
+    );
+    const title = String(page.columns[0]?.id);
+    const rows = `/api/private-pages/${page.id}/rows`;
+    const saved = await ok<{ page: PrivatePage }>(
+      await send(maker.cookie, "POST", rows, valued({ [title]: kind.value })),
+      201,
+    );
+    expect(
+      new Map(Object.entries(saved.page.rows[0] ?? {})).get(kind.map),
+    ).toEqual({ [title]: kind.value });
+    const empty = await send(
+      maker.cookie,
+      "POST",
+      rows,
+      valued({ [title]: null }),
+    );
+    expect(empty.statusCode).toBe(400);
+    expect(errorOf(empty)).toBe("Title must be filled in");
   });
 }
 
