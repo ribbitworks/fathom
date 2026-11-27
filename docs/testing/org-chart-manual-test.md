@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/org-chart*", "apps/server/src/data/org-chart.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/org-chart.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Org Chart
@@ -15,13 +15,11 @@ Verifies the **Org chart** page:
 
 - The levels it opens on, each person's card, and showing reports.
 - Finding a person or team, and one team shown alone.
-- Teams' colours and choosing them, and naming teams.
 - Panning and zooming.
-- Showing a person's details beside the chart from a card.
-- The red **Left** box on a manager who has left.
-- Drafts of managers, positions and team names drawn beside the chart, applied to it, or left out with the Draft menu.
+- Teams' colours and choosing them, and naming a team as a draft.
+- The red **Left** box on a manager who has left, and drafted team names and positions marked on cards.
+- Planned hires drawn as placeholders.
 - Changing a manager from an earlier date.
-- Planned hires drawn on later dates.
 
 ## Test Environment
 
@@ -33,7 +31,6 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Engineering Manager:** `engineering.manager@fathom.test`
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
-- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
@@ -41,9 +38,10 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks and the Publish button. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the chart, the finder, cards, bands, marks and the Publish button. This test adds:
 
 - **Date row:** the row between the finder and the chart, holding a **Date** box, a left arrow, a timeline, a right arrow and **Today**.
+- **Colour square:** the small rounded square of a team's colour just before its name on a card or in the **Teams** panel.
 
 ## Test Cases
 
@@ -57,23 +55,24 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `B4D3` Select the **Org chart** page in the **People** section of the left-hand menu.
   - **Expected:**
-    - The page's heading reads **Org chart**.
+    - The page's heading reads **Org chart**, followed by the teams switch, with **Reporting teams** chosen.
     - The top bar reads "People / Org chart".
-    - Above the chart are the finder, **Draft** and **Teams** on the left.
-    - **Show levels**, **+**, **−** and **Fit to screen** are on the right.
+    - Above the chart, on the left: the finder, the **Draft** button reading **Drafts & Live**, and **Views**.
+    - On the right: **Show levels**, **+**, **−** and **Fit to screen**.
+    - The date row is between them and the chart.
   - **Notes:**
 
 ### ORG-02: The Chart Opens on the Top Two Levels
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-01.
 
-**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu, with **Reporting teams** chosen in the teams switch.
 
 - [ ] `2A30` Read the card at the top left of the chart.
   - **Expected:**
     - It reads 'Silje Holm-Schrøder'.
-    - "Manager" is under the name.
-    - 'Platform team' is under "Manager".
+    - 'Engineering Manager' is under the name.
+    - 'Platform team' is under 'Engineering Manager'.
     - It ends with "Hide 8 reports".
     - Two cards with dashed edges are beside it at the top:
       - "TBD-" and a number, with 'Engineering Manager' under it
@@ -91,8 +90,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `53AB` Read the card for 'Viktoria Holmberg'.
   - **Expected:**
     - A red **Left** box follows the name.
-    - Its position reads "Manager".
-    - 'Search team' is under it.
+    - 'Engineering Manager' is under the name.
+    - 'Search team' is under that.
   - **Notes:**
 
 ### ORG-03: A Manager's Reports and All Levels Are Shown
@@ -143,10 +142,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The card for 'Joaquin Rice' shows 'Billing team'.
   - **Notes:**
 
-- [ ] `D9EB` Select the finder, clear what it holds, and type `Zzz`.
-  - **Expected:** The list reads "Nobody has that name".
-  - **Notes:**
-
 - [ ] `92E7` Select the **×** at the right of the finder.
   - **Expected:** The finder is empty.
   - **Notes:**
@@ -188,39 +183,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ORG-06: A Card Shows the Person's Details Beside the Chart
 
+Covered by [DETAILS-01](person-details-manual-test.md#details-01-a-persons-details-open-beside-the-org-chart) in Person Details.
+
+### ORG-07: One Team Is Shown Alone
+
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-05.
 
 **Preconditions:** As ORG-02.
 
-- [ ] `D92A` On the card for 'Lorenza Thiel', select the name.
-  - **Expected:**
-    - A panel slides out on the right, headed 'Lorenza Thiel'.
-    - The chart narrows to make room.
-    - Her card stays in the middle of the space left beside the panel.
-    - Her card has a blue ring around it.
-  - **Notes:**
-
-- [ ] `8D83` Select the **×** at the top right of the panel.
-  - **Expected:**
-    - The panel slides away.
-    - The chart fills the page again.
-    - Her card is still in the middle.
-    - The finder reads 'Lorenza Thiel'.
-  - **Notes:**
-
-### ORG-07: One Team Is Shown Alone
-
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-06.
-
-**Preconditions:** As ORG-02.
-
-- [ ] `861F` Point at the small org chart button at the top right of the card for 'Lorenza Thiel'.
-  - **Expected:**
-    - A tip reads "Show only this team".
-    - The cards for 'Tanushree Patel-Singh' and the others with no reports have no such button.
-  - **Notes:**
-
-- [ ] `7D8E` Select the button.
+- [ ] `7D8E` Select the small org chart button at the top right of the card for 'Lorenza Thiel'.
   - **Expected:**
     - 'Lorenza Thiel' is at the top of the chart.
     - Her eight reports are under her.
@@ -233,7 +204,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `A2DE` Select **Show everyone**.
   - **Expected:**
     - 'Silje Holm-Schrøder' is at the top of the chart again.
-    - The line above the chart is gone.
+    - The line "Only the team of Lorenza Thiel is shown." is gone.
   - **Notes:**
 
 - [ ] `B75A` Go back with the browser's back button.
@@ -244,33 +215,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ORG-08: Only Readers Who See Personal Details Are Told a Manager Has Left
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ORG-07.
-
-**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
-
-- [ ] `7A96` Look at the area between the finder and the chart.
-  - **Expected:** There is no date row.
-  - **Notes:**
-
-- [ ] `C89C` Type `Viktoria` in **Find a person or team**, and choose 'Viktoria Holmberg'.
-  - **Expected:**
-    - The chart centres on the card for 'Viktoria Holmberg'.
-    - The card shows her name, position and a yellow dot before 'Search team'.
-    - There is no red **Left** box after the name.
-    - The card is joined by a line to the manager above it.
-    - The card ends with "Hide 3 reports".
-    - 'Simone Jean', '우아현' and '西尾 亮' are in a column under it, each joined to it by a line.
-  - **Notes:**
+Proved by automated tests in `apps/server/src/org-chart.test.ts` and `apps/web/src/org-chart-page-feature-team-changes.test.tsx`.
 
 ### ORG-09: Each Team Is Drawn in Its Colour, Reaching Down to Teams With None
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ORG-08.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-07.
 
 **Preconditions:** As ORG-02.
 
 - [ ] `E696` Read the card for 'Silje Holm-Schrøder'.
   - **Expected:**
-    - A small teal dot comes before 'Platform team'.
+    - A teal colour square comes before 'Platform team'.
     - The card has no band.
   - **Notes:**
 
@@ -290,7 +245,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `AD3D` On the card for 'Atmananda Ganaka', select **Show 9 reports**.
   - **Expected:**
     - His card has a teal band.
-    - A small grape (purple) dot comes before 'Payments team'.
+    - A grape (purple) colour square comes before 'Payments team'.
     - His nine reports' cards have grape bands.
     - The lines to them are grape.
   - **Notes:**
@@ -305,29 +260,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ORG-09.
 
-**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu, with **Reporting teams** chosen in the teams switch. The number on the Publish button written down.
 
-- [ ] `F922` On the card for 'Silje Holm-Schrøder', select the small teal dot before 'Platform team'.
+- [ ] `F922` On the card for 'Silje Holm-Schrøder', select the teal colour square before 'Platform team'.
   - **Expected:**
     - A menu opens headed "Colour of Platform team".
-    - It lists **Indigo**, **Violet**, **Grape**, **Pink**, **Red**, **Orange**, **Yellow**, **Lime**, **Green** and **Teal**, each after a small dot of its colour, then **No colour**.
+    - It lists **Indigo**, **Violet**, **Grape**, **Pink**, **Red**, **Orange**, **Yellow**, **Lime**, **Green** and **Teal**, each after a small square of its colour, then, under a line, **No colour**.
     - **Teal** has a tick.
   - **Notes:**
 
 - [ ] `B3FC` Select **Grape**.
   - **Expected:**
     - The menu closes.
-    - The dot before 'Platform team' is grape (purple).
+    - A notification says "Platform team now has the colour Grape.", with **Undo**.
+    - The colour square before 'Platform team' is grape (purple).
     - The bands of the eight cards under her and the lines to them are grape.
-    - The **Publish** button does not appear.
-  - **Notes:**
-
-- [ ] `691C` Select the grape dot before 'Platform team', then **Teal**.
-  - **Expected:** The dot, the bands and the lines are teal again.
-  - **Notes:**
-
-- [ ] `D72D` In the finder, type `Joaquin`, and select 'Joaquin Rice'.
-  - **Expected:** A small dashed circle comes before 'Billing team' on his card.
+    - The Publish button's number is the one written down.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -336,11 +284,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as ORG-10.
 
-**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
-
-- [ ] `C4F4` Read 'Platform team' on the card for 'Silje Holm-Schrøder'.
-  - **Expected:** 'Platform team' is underlined.
-  - **Notes:**
+**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu, with **Reporting teams** chosen in the teams switch. The number on the Publish button written down.
 
 - [ ] `1CCE` On the card for 'Silje Holm-Schrøder', select 'Platform team'.
   - **Expected:**
@@ -356,7 +300,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `FFD5` Select **Save**.
   - **Expected:**
     - The box closes.
-    - The **Publish** button reads "Publish 4 changes".
+    - A notification says "Draft saved. The team's name becomes Platform crew once approved."
+    - The Publish button's number is one more than the number written down.
     - The card is tinted faint yellow.
     - The card is taller.
     - It reads `Platform crew`.
@@ -364,20 +309,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Under that, a green dot before 'Platform team', in grey.
   - **Notes:**
 
-- [ ] `79AC` Select **Teams** beside the finder.
+- [ ] `79AC` Select **Teams** above the chart, just right of the **Draft** button.
   - **Expected:**
-    - A **Teams** panel opens on the right.
-    - It lists first the named teams by name.
-    - Each named team has a square button holding its colour dot, or a dashed circle where it has none, then "Led by" and its manager's name.
-    - The unnamed teams come after them.
-    - The unnamed teams have no square button.
-    - Each unnamed team reads "Add a name".
-    - Among the unnamed teams is the team led by 'Lorenza Thiel'.
+    - A panel titled **Teams** opens on the right.
+    - It lists the named teams first, by name, then the unnamed teams.
+    - Each team has "Led by" and its manager's name under it.
+    - Each team whose name is approved has a square button before it holding its colour square, or a dashed square where it has no colour.
+    - Each unnamed team reads "Add a name", with no square button; among them is the team led by 'Lorenza Thiel'.
     - `Platform crew` has a hollow yellow dot before it.
     - Under `Platform crew`, a green dot before 'Platform team', in grey.
-    - 'Observability team' has no square button.
-    - 'Observability team' has a yellow dot before it.
-    - The card for 'Lorenza Thiel' shows no team.
+    - 'Observability team' has a yellow dot before it, and no square button.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -387,13 +328,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ORG-11.
 
 **Preconditions:** As ORG-02.
-
-- [ ] `5CDC` Read the card for 'Simone Jean', in the column under 'Silje Holm-Schrøder'.
-  - **Expected:**
-    - The card is tinted faint yellow.
-    - A yellow dot comes before the name.
-    - 'Software Engineer' is under the name.
-  - **Notes:**
 
 - [ ] `C32D` On the card for 'Viktoria Holmberg', select **Show 3 reports**.
   - **Expected:**
@@ -448,93 +382,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ORG-14: The Draft Menu Applies Drafts or Leaves Them Out
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-13.
-
-**Preconditions:** As ORG-02.
-
-- [ ] `0BA8` Select **Draft**.
-  - **Expected:**
-    - A menu opens with **Drafts & Live**, **Drafts applied** and **Live only** under **Show**.
-    - **Drafts & Live** has a tick.
-  - **Notes:**
-
-- [ ] `E344` Select **Drafts applied**.
-  - **Expected:** **Drafts applied** has a tick.
-  - **Notes:**
-
-- [ ] `990C` Press Esc.
-  - **Expected:**
-    - The menu closes.
-    - The **Draft** button reads **Drafts applied**.
-    - The card for 'Simone Jean' under 'Silje Holm-Schrøder' is no longer tinted.
-    - It still has a yellow dot before her name.
-    - No card on the chart is light green.
-  - **Notes:**
-
-- [ ] `739A` In the finder, type `Vianney`, and select 'Vianney Rousseau'.
-  - **Expected:**
-    - The card for 'Vianney Rousseau' has 'Engineering Manager' under the name.
-    - The card is in the middle of the panel.
-    - The card has a blue ring around it.
-    - No line joins it to a card above.
-  - **Notes:**
-
-- [ ] `C862` Select the **×** at the right of the finder.
-  - **Expected:** The finder is empty.
-  - **Notes:**
-
-- [ ] `B8D1` Type `Ophélie`.
-  - **Expected:** The list reads "Nobody has that name".
-  - **Notes:**
-
-- [ ] `49F8` Select **Draft**, then **Live only**.
-  - **Expected:** **Live only** has a tick.
-  - **Notes:**
-
-- [ ] `2F9B` Press Esc.
-  - **Expected:**
-    - The menu closes.
-    - The card for 'Silje Holm-Schrøder' ends with "Hide 7 reports".
-    - 'Simone Jean' is not under her.
-    - No card is tinted.
-    - No card has a yellow or red dot.
-  - **Notes:**
-
-- [ ] `1E2E` Read the buttons just right of the finder.
-  - **Expected:**
-    - The **Draft** button is there, reading **Live only**.
-    - **Teams** is not.
-  - **Notes:**
-
-- [ ] `AE0B` On the card for 'Silje Holm-Schrøder', select the name.
-  - **Expected:**
-    - Her details slide out in a panel on the right.
-    - The **Draft** button still reads **Live only**.
-    - Her card still ends with "Hide 7 reports".
-    - 'Simone Jean' is not under her in **Direct reports** in the panel.
-  - **Notes:**
-
-**Afterwards:** Select **Draft**, then **Drafts & Live**, and press Esc.
+Covered by [MARK-06](draft-marks-manual-test.md#mark-06-drafts-applied-shows-dots-without-tints-or-live-rows) and [MARK-07](draft-marks-manual-test.md#mark-07-live-only-marks-what-a-waiting-draft-would-change) in Draft Marks.
 
 ### ORG-15: Readers Who Do Not See Personal Details See No Drafted Manager
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ORG-14.
-
-**Preconditions:** Signed in with this account, with "Feature Lead" on the account button at the top right. **Org chart** page open from the left-hand menu.
-
-- [ ] `2A9C` On the card for 'Viktoria Holmberg', read the column under it.
-  - **Expected:**
-    - The column holds 'Simone Jean', '우아현' and '西尾 亮'.
-    - The card for 'Simone Jean' is untinted.
-    - It has no dot.
-    - No card on the chart is light green.
-  - **Notes:**
+Proved by automated tests in `apps/server/src/org-chart.test.ts`.
 
 ### ORG-16: Planned Hires Are Placeholders, and a Planned Manager Heads Its Team
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ORG-15.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-13.
 
-**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
+**Preconditions:** As ORG-02.
 
 - [ ] `A6AC` Read the card at the top of the chart that reads "TBD-" and a number, with 'Engineering Manager' under it.
   - **Expected:**
@@ -562,28 +420,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The page reads "Only the team of Engineering Manager, TBD-", the card's number, then "is shown."
   - **Notes:**
 
-- [ ] `A9EE` Select **Show everyone**.
-  - **Expected:** The line starting "Only the team of Engineering Manager" is gone.
-  - **Notes:**
+**Afterwards:** Select **Show everyone**.
 
 ### ORG-17: A Manager Is Changed From an Earlier Date
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ORG-16.
 
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Org chart** page open from the left-hand menu, showing today.
-
-- [ ] `0CC9` Select **Reporting teams** in the teams switch.
-  - **Expected:** The chart shows managers and their reports.
-  - **Notes:**
-
-- [ ] `FADD` Select **Show levels**, then **All levels**.
-  - **Expected:** No card ends with a **Show** button.
-  - **Notes:**
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Org chart** page open from the left-hand menu, showing today, with **Reporting teams** chosen in the teams switch. Select **Show levels**, then **All levels**, first.
 
 - [ ] `76C4` In the date row, select the left arrow once.
   - **Expected:**
     - The **Date** box shows the first day of last month.
-    - **Draft** stays just right of the finder.
+    - The **Draft** button stays just right of the finder.
     - **Teams** is gone.
   - **Notes:**
 
@@ -598,9 +446,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Her details slide out in a panel on the right.
     - **Manager** reads 'Lorenza Thiel'.
     - **Manager** has a change button.
-    - **Manager assigned**, **Reporting team name**, and every value under **Details** and **Columns** have no change button.
-    - **Manager?** reads "No".
-    - **Manager?** has no checkbox.
+    - **Reporting team name** has no change button.
   - **Notes:**
 
 - [ ] `DEBB` Select the change button beside **Manager**, and choose 'Max Munk'.
@@ -618,10 +464,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `2AD0` Select **Today** in the date row.
   - **Expected:**
-    - The text below the row goes.
     - **Teams** is back.
     - On the card for 'Candice Swift' under 'Max Munk', a hollow yellow dot comes before her full name.
-    - Under 'SDET', a grey line names the first day of last month, such as "Oct 1, 2026".
+    - Under 'SDET', a grey line reads "From" and the first day of last month, such as "From Oct 1, 2026".
     - Nothing on the card is cut off.
   - **Notes:**
 
@@ -637,49 +482,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ORG-18: Planned Hires Are Drawn on Later Dates
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ORG-17.
-
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Org chart** page open from the left-hand menu, showing today, with **Reporting teams** selected.
-
-- [ ] `57FA` In the finder, type `Engineering Manager, TBD`, and select the one planned hire it offers.
-  - **Expected:** That planned Engineering Manager's card is in the middle of the panel, with a grey dashed edge.
-  - **Notes:**
-
-- [ ] `427E` In the date row, select the right arrow once.
-  - **Expected:**
-    - The **Date** box shows the first day of next month.
-    - The planned Engineering Manager's card is still drawn, with its two planned hires under it.
-    - Its grey box still reads "Planned, no date".
-  - **Notes:**
-
-- [ ] `F0D2` Select **Today** in the date row.
-  - **Expected:** The **Date** box shows today's date.
-  - **Notes:**
-
-- [ ] `6312` In the date row, select the left arrow once.
-  - **Expected:**
-    - The **Date** box shows the first day of last month.
-    - No card for the planned Engineering Manager or any other planned hire is drawn.
-  - **Notes:**
+Proved by automated tests in `apps/server/src/org-chart-hires.test.ts`.
 
 ### ORG-19: A Team's Colour Shows Before Its Name on People and in Details
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the account ORG-18 ended with.
-
-**Preconditions:** Restore the Seed Data run, then signed in with this account. **People** page open from the left-hand menu.
-
-- [ ] `2EDA` In the search field, type `Atmananda`.
-  - **Expected:** 'Atmananda Ganaka' is the only row.
-  - **Notes:**
-
-- [ ] `782F` Read his **Team name** cell.
-  - **Expected:** A grape (purple) square, then "Payments team".
-  - **Notes:**
-
-- [ ] `E2B7` Point at his row, then select the details button at the right of his **Name** cell.
-  - **Expected:** His details open, and under **Reporting**, **Reporting team name** shows a grape square, then "Payments team".
-  - **Notes:**
-
-- [ ] `986E` Clear the search field, then type `Lorenza`.
-  - **Expected:** The **Team name** cell of the row for 'Lorenza Thiel' is blank, with no square.
-  - **Notes:**
+Covered by [MGR-01](managers-manual-test.md#mgr-01-manager-shows-who-is-marked-as-a-manager) and [MGR-07](managers-manual-test.md#mgr-07-a-team-name-is-edited-on-its-managers-row) in Managers and Teams on People, and [DETAILS-01](person-details-manual-test.md#details-01-a-persons-details-open-beside-the-org-chart) in Person Details.

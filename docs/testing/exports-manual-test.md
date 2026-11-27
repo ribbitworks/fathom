@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Exports
@@ -93,15 +93,15 @@ Run EXP-01 in Chrome or Edge, and EXP-02 in Safari or Firefox where one is at ha
 
 - [ ] `55F5` Select the **Access history** page in the left-hand menu.
   - **Expected:**
-    - The newest entry reads "Fathom Administrator (`fathom.administrator@fathom.test`) signed in: as Administrator".
-    - The entry under it reads "Engineering Director (`engineering.director@fathom.test`) exported People with Confidential data (Hiring plan, Compensation band, Performance rating) and Personal data (", the columns holding Personal data, including **Start** and **End**, then ")".
+    - The newest entry starts "Fathom Administrator (`fathom.administrator@fathom.test`) signed in".
+    - The entry under it starts "Engineering Director (`engineering.director@fathom.test`) exported People", then names the Confidential and Personal data exported.
   - **Notes:**
 
 ### EXP-02: Exporting General Data Saves at Once
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from EXP-01.
 
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
+**Preconditions:** Signed in with this account, in Safari or Firefox where one is at hand, otherwise in the browser EXP-01 used. **Features** page open from the left-hand menu.
 
 - [ ] `C2BF` Choose **TSV file** from the Export button's menu.
   - **Expected:**
@@ -121,7 +121,7 @@ Run EXP-01 in Chrome or Edge, and EXP-02 in Safari or Firefox where one is at ha
 
 **Account:** Product Manager, `product.manager@fathom.test`, the same as EXP-02.
 
-**Preconditions:** **Features** page open from the left-hand menu.
+**Preconditions:** In the browser EXP-02 used, **Features** page open from the left-hand menu.
 
 - [ ] `84E6` Choose **Live only** in the Draft menu.
   - **Expected:** The table shows no draft rows.

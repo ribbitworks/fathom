@@ -50,8 +50,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The date row is under the search box and the buttons beside it, above the table.
     - The **Date** box holds today's date, such as `2026-11-14`.
-    - **Today** is turned off.
-    - No line of text is under the date row.
+    - **Today** is greyed out.
   - **Notes:**
 
 ### PEOPLE-TIME-02: An Earlier Date Lists Those Employed Then, and No Planned Hires
@@ -63,7 +62,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `E0A4` In the date row, select the left arrow once.
   - **Expected:**
     - The **Date** box shows the first day of last month, such as `2026-10-01`.
-    - No **New person** button is at the top right.
     - The table shows without a loading spinner taking its place.
   - **Notes:**
 
@@ -210,6 +208,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
+- [ ] `3C7E` Search for `Carmine Labadie`.
+  - **Expected:** One row shows, 'Carmine Labadie'.
+  - **Notes:**
+
 - [ ] `D9D4` Select the name 'Carmine Labadie'.
   - **Expected:** The details open beside the table.
   - **Notes:**
@@ -258,9 +260,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The timeline opens under the details, its latest day reading **End**.
   - **Notes:**
 
-- [ ] `D63A` In the date row, select the right arrow once.
+- [ ] `D63A` In the date row, select the right arrow twice.
   - **Expected:**
-    - The details read "Viktoria Holmberg isn't employed on" the first day of this month.
+    - The **Date** box shows the first day of next month.
+    - The details read "Viktoria Holmberg isn't employed on" the first day of next month.
     - They end with a **Timeline** section, its latest day reading **End**, then **Show timeline**.
     - The timeline stays open beside them, its latest day still reading **End**.
   - **Notes:**

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Planned Hires on People
@@ -14,14 +14,13 @@ last_updated: "2026-11-24"
 Verifies planned hires shown as rows of the People table:
 
 - How their rows look beside people's, their names, and the **State** column.
-- A column planned hires have values in.
 - People who have left.
 - A planned manager whom other planned hires report to.
 - Adding one with the keyboard and by pasting.
 - What a Feature Lead sees.
 - Filling a hire from its details panel with a new or an existing person, approved on the Drafts page.
 
-The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-data).
+[Fictional Data](../design/development-setup.md#fictional-data) describes the seed data, with its planned hires.
 
 ## Test Environment
 
@@ -46,6 +45,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button, searching for text and the ⋯ menu. This test adds:
 
 - **Hire rows:** the rows at the bottom of the People table whose **ID** is a requisition, such as 'REQ-2042', or starts with "TBD-".
+- **Fill button:** the button reading **Fill** at the right of an approved hire row's **Name** cell.
 
 ## Test Cases
 
@@ -86,27 +86,11 @@ Run the test cases in the order they are listed. Start with Start Fathom, then R
 
 ### HIRE-03: Hiring States and People's States Are Filtered Together
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-01.
-
-**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
-
-- [ ] `407B` Select the **State** header, then **Filter…**, and look at the choices.
-  - **Expected:**
-    - **Request to hire**, **Approved to hire**, **Hired**, **Left**, **Empty** and **Not empty** are listed together.
-    - There is no **Retired** heading.
-  - **Notes:**
-
-- [ ] `4DD3` Tick **Hired** only.
-  - **Expected:**
-    - Only people are shown, with no hire rows.
-    - Every **State** cell reads "Hired".
-  - **Notes:**
-
-**Afterwards:** Open the **Views** menu above the table, and select **Clear view**.
+Covered by [HIRE-10](#hire-10-a-person-who-has-left-shows-left).
 
 ### HIRE-04: A Planned Hire Is Added With the Keyboard Alone
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-03.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-01.
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
@@ -168,38 +152,18 @@ Covered by [HIRE-13](#hire-13-a-planned-hire-is-filled-with-a-new-person) and [H
 
 ### HIRE-09: A Column Planned Hires Have Values In Is Not Switched Off for Them
 
+Proved by automated tests in `apps/server/src/hires-values.test.ts`.
+
+### HIRE-10: A Person Who Has Left Shows Left
+
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-05.
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] `B950` Select the **Site** header, then **Edit column…**.
-  - **Expected:**
-    - A dialog titled "Edit column" opens.
-    - **Offered on planned hires** is ticked.
-  - **Notes:**
-
-- [ ] `A000` Untick **Offered on planned hires**.
-  - **Expected:** **Offered on planned hires** is unticked.
-  - **Notes:**
-
-- [ ] `C35E` Select **Save**.
-  - **Expected:**
-    - The dialog stays open.
-    - This message shows in red under the checkboxes: "3 planned hires have values in Site, so it cannot be switched off for planned hires yet. Clear them first."
-  - **Notes:**
-
-- [ ] `D4B5` Select **Cancel**.
-  - **Expected:** The dialog closes.
-  - **Notes:**
-
-### HIRE-10: A Person Who Has Left Shows Left, Only to Those Who See Personal Details
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-09. Step `A4B7` signs in as another account.
-
-**Preconditions:** Signed in with this account. **People** page open.
-
 - [ ] `AAC4` Select the **State** header, then **Filter…**.
-  - **Expected:** **Left** is among the choices.
+  - **Expected:**
+    - **Request to hire**, **Approved to hire**, **Hired** and **Left** are listed together, followed by **Empty** and **Not empty**.
+    - There is no **Retired** heading.
   - **Notes:**
 
 - [ ] `2EAE` Tick **Left** only.
@@ -208,40 +172,17 @@ Covered by [HIRE-13](#hire-13-a-planned-hire-is-filled-with-a-new-person) and [H
 
 - [ ] `F1B2` Press Esc.
   - **Expected:**
-    - Only people are shown.
+    - Only people are shown, with no hire rows.
     - 'Viktoria Holmberg' is among them.
     - Every **State** cell reads "Left".
     - Every **End** cell holds a date that has passed.
-  - **Notes:**
-
-- [ ] `A4B7` Sign in as the Feature Lead, `feature.lead@fathom.test`, changing account.
-  - **Expected:** The top bar's right end reads "Feature Lead".
-  - **Notes:**
-
-- [ ] `320C` Select the **People** page in the left-hand menu.
-  - **Expected:** The **People** page opens.
-  - **Notes:**
-
-- [ ] `502E` Select the **State** header, then **Filter…**.
-  - **Expected:** **Left** is among the choices.
-  - **Notes:**
-
-- [ ] `5C46` Tick **Left** only.
-  - **Expected:** **Left** is the only choice ticked.
-  - **Notes:**
-
-- [ ] `E076` Press Esc.
-  - **Expected:**
-    - No one is shown.
-    - 'Viktoria Holmberg' is not listed.
-    - There are no **Start** or **End** columns.
   - **Notes:**
 
 **Afterwards:** Open the **Views** menu above the table, and select **Clear view**.
 
 ### HIRE-07: A Feature Lead Sees Placeholders Only
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, the same as the account HIRE-10 ended with.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from HIRE-10.
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
@@ -266,22 +207,11 @@ Covered by [HIRE-13](#hire-13-a-planned-hire-is-filled-with-a-new-person) and [H
     - 'REQ-2050' is not among them.
   - **Notes:**
 
-- [ ] `F5F4` Select the **Expected** header, then **List order**.
-  - **Expected:**
-    - Only hire rows are shown.
-    - They are in order of **Expected**, earliest month first.
-    - The first row is 'Data engineer', whose **Expected** is last month.
-  - **Notes:**
-
 - [ ] `A133` Read the **Name** cells of 'Backend engineer 1' and 'REQ-2042', and the **Site** cell of 'Backend engineer 1'.
   - **Expected:**
     - 'Backend engineer 1' in the usual colour.
     - "SDET, REQ-2042" in grey italics.
     - The **Site** cell reads 'Kestrel Bay'.
-  - **Notes:**
-
-- [ ] `ECD5` Select a hire row's **Name** cell and type a letter.
-  - **Expected:** No editor opens.
   - **Notes:**
 
 - [ ] `56BE` Select **Clear all** above the table.
@@ -308,7 +238,7 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
-- [ ] `312D` Type `Engineering Manager TBD` in the search box.
+- [ ] `312D` Search for `Engineering Manager TBD`.
   - **Expected:**
     - Three rows are shown:
       - the planned Engineering Manager, whose **Name** reads "Engineering Manager, TBD-" and a number, in grey italics
@@ -317,7 +247,7 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
     - The planned Engineering Manager's **Manager?** cell shows a checked box.
   - **Notes:**
 
-- [ ] `71B8` Clear the search box, and type `Platform engineer TBD`.
+- [ ] `71B8` Search for `Platform engineer TBD`.
   - **Expected:**
     - One row is shown.
     - Its **Name** reads 'Platform engineer'.
@@ -330,7 +260,7 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] `8EC5` Clear the search box, type `Backend engineer 2`, and look at the **Name** cell of the row for 'Backend engineer 2'.
+- [ ] `8EC5` Search for `Backend engineer 2`, and look at the **Name** cell of the row for 'Backend engineer 2'.
   - **Expected:**
     - A **Fill** button sits at the right of the cell.
     - 'Backend engineer 2' is still readable beside it.
@@ -365,7 +295,7 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
   - **Notes:**
 
 - [ ] `B81E` Select the Publish button.
-  - **Expected:** A notice reads "Published 2 changes."
+  - **Expected:** A notification says "Published 2 changes."
   - **Notes:**
 
 - [ ] `6F7D` Sign in as the Engineering Director, `engineering.director@fathom.test`, changing account.
@@ -376,7 +306,7 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
   - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
-- [ ] `83A3` Type `Backend engineer 2` in the search box.
+- [ ] `83A3` Search for `Backend engineer 2`.
   - **Expected:** A row's **Record** reads 'Backend engineer 2'.
   - **Notes:**
 
@@ -388,24 +318,24 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
 
 - [ ] `1BCB` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:**
-    - The dialog reads "Also approves the drafts these depend on:".
-    - It names `Fictional new starter`.
+    - A dialog titled "Approve 2 drafts?" opens.
+    - It reads "Also approves the drafts these depend on:", and names `Fictional new starter` under it.
   - **Notes:**
 
 - [ ] `36EF` In the dialog, select **Approve**.
   - **Expected:**
     - The dialog closes.
-    - A notice says the drafts were approved.
+    - A notification says "Approved 2 drafts."
   - **Notes:**
 
 - [ ] `639B` Select the **People** page in the left-hand menu.
   - **Expected:** The **People** page opens.
   - **Notes:**
 
-- [ ] `298C` Type `Fictional new starter` in the search box.
+- [ ] `298C` Search for `Fictional new starter`.
   - **Expected:** One row:
     - No dot.
-    - 'Software Engineer' in **Position**
+    - 'Software Engineer' in **Position**.
     - A name in **Manager**.
     - 'Ashgrove' in **Site**.
   - **Notes:**
@@ -443,10 +373,6 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
     - The panel stays the same width as the list opens.
   - **Notes:**
 
-- [ ] `E508` Scroll through the list.
-  - **Expected:** The list scrolls within itself.
-  - **Notes:**
-
 - [ ] `70EB` Without typing, select the first person in the list. If no **Manager assigned** row then shows, select the change button and choose the next person in the list.
   - **Expected:**
     - The panel stays the same width as the list closes.
@@ -456,17 +382,11 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
     - **Manager assigned** holds today's date.
   - **Notes:**
 
-- [ ] `2C76` Select the change button beside **Manager**, and choose a different name from the one shown.
-  - **Expected:**
-    - The **Manager** row shows the name chosen.
-    - **Manager assigned** still holds today's date.
-  - **Notes:**
-
 - [ ] `FC42` Select **Fill** at the foot of the panel.
   - **Expected:**
     - The form closes.
     - The panel is headed with the person chosen in Step `70EB`.
-    - Its **Manager** row reads the name chosen in Step `2C76`.
+    - Its **Manager** row reads the name the **Manager** row showed in Step `70EB`.
     - A hollow yellow dot is before the **Manager** row.
     - Its **Position** row reads the planned hire's position.
     - A hollow yellow dot is before the **Position** row.
@@ -474,50 +394,11 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
 
 ### HIRE-15: Filling a Planned Manager Moves Its Planned Hires
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-14.
-
-**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
-
-- [ ] `2ED2` Clear the search box, type `Engineering Manager TBD`, and look at the **State** and **Name** cells of the row whose **Name** reads "Engineering Manager, TBD-" and a number.
-  - **Expected:**
-    - **State** reads "Request to hire".
-    - There is no **Fill** button in the **Name** cell.
-  - **Notes:**
-
-- [ ] `07FA` Select that row's **State** cell, press Enter, choose **Approved to hire**, and press Enter.
-  - **Expected:** A **Fill** button shows in that row's **Name** cell.
-  - **Notes:**
-
-- [ ] `8DB0` Select **Fill**.
-  - **Expected:**
-    - A **Direct reports** row names the planned hires that report to this one.
-    - 'Platform engineer' is among them.
-  - **Notes:**
-
-- [ ] `68B0` Type `Fictional new lead` in **Name**.
-  - **Expected:** **Name** holds `Fictional new lead`.
-  - **Notes:**
-
-- [ ] `02D2` Type `EMP-9002` in **ID**.
-  - **Expected:** **ID** holds `EMP-9002`.
-  - **Notes:**
-
-- [ ] `F905` Select the change button beside **Grade**, and choose 'P1'.
-  - **Expected:** The form reads:
-    - `Fictional new lead` in **Name**
-    - `EMP-9002` in **ID**
-    - 'P1' in **Grade**
-  - **Notes:**
-
-- [ ] `4A12` Select **Fill** at the foot of the panel.
-  - **Expected:**
-    - The form closes.
-    - The panel is headed `Fictional new lead`.
-  - **Notes:**
+Proved by automated tests in `apps/server/src/fills-filling.test.ts` and `apps/web/src/hire-fill-form.test.tsx`.
 
 ### HIRE-16: The Fill Form Reads Well, and Leaving It Asks First
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-15.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-14.
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
@@ -539,16 +420,6 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
   - **Expected:**
     - A dialog titled "Stop filling this planned hire?" opens.
     - It offers **Keep filling** and **Discard**.
-  - **Notes:**
-
-- [ ] `3C3D` Select **Keep filling**.
-  - **Expected:**
-    - The dialog closes.
-    - **Name** still reads `Fictional name`.
-  - **Notes:**
-
-- [ ] `8FF5` Select **Cancel**.
-  - **Expected:** The dialog titled "Stop filling this planned hire?" opens.
   - **Notes:**
 
 - [ ] `5A61` Select **Discard**.

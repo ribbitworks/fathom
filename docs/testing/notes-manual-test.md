@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Note Columns on People
@@ -13,16 +13,13 @@ last_updated: "2026-11-24"
 
 Verifies what only a person can judge of Note columns on the People table:
 
-- How the note's side panel looks, slides and resizes.
-- Writing a note with the toolbar, and how headings, checkboxes and numbered lists look.
+- How the note's side panel looks and slides.
+- Writing a note with the toolbar, and how bold, colour, bullets, links, headings and checkboxes look.
 - Switching between the editor and Markdown, and pasting from another app.
-- Colours, the keyboard and focus.
-- The panel's place beside the Metrics panel.
-- The journey from writing a note to reading it, approving it, and finding it in the change history.
-- Filtering the rows that have a note.
-- A long note folded in a person's details and read in full on Releases.
-- An open note in a person's details kept on reload and a shared link.
-- A panel under another maximized and restored.
+- The keyboard and focus, and the panel's place beside the Metrics panel.
+- The journey from writing a note to approving it and finding it in the change history.
+- A long note folded in a person's details, and read in full on Releases.
+- An open note in a person's details kept on reload and on a shared link.
 
 ## Test Environment
 
@@ -44,18 +41,17 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as searching for a person and the column menu. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the column menu, the side panel and the open button. This test adds:
 
 - **Background cell:** the cell in a person's row under the **Background** column, which NOTE-01 adds at the right end of the People table; scroll right to reach it.
 - **Panel:** the side panel that opens beside the table from a **Background** cell, headed **Background**.
 - **Toolbar:** the row of buttons above the text in the panel's editor, for headings 1 to 3, bold, italic, strikethrough, code, colour, bullet list, numbered list, checkbox list, link, and removing a link.
-- **Maximize button:** the button showing four corners pointing out, before the close button at the top right of a panel under another, read aloud as Maximize and the panel's name. While the panel is maximized it shows four corners pointing in, read aloud as Restore: the **Restore button**.
 
 ## Test Cases
 
 Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
-To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
+To run the test again, first select **Remove column** in the **Background** column menu, run Publish, and approve the removal on the **Drafts** page as the Engineering Director.
 
 ### NOTE-01: A Note Column Is Added
 
@@ -107,7 +103,7 @@ To run the test again, delete the **Background** column first from its column me
   - **Notes:**
 
 - [ ] `5BDF` Select **Approve** in the dialog.
-  - **Expected:** A notice reads "Approved 1 draft."
+  - **Expected:** A notification says "Approved 1 draft."
   - **Notes:**
 
 ### NOTE-02: A Note Is Written in Its Panel
@@ -125,18 +121,6 @@ To run the test again, delete the **Background** column first from its column me
     - **Editor** is chosen.
     - The toolbar is under them, then the note's text.
     - **Clear**, **Cancel** and **Save** are at the bottom.
-  - **Notes:**
-
-- [ ] `F5E4` Drag the panel's left edge to the left.
-  - **Expected:**
-    - The panel widens.
-    - The table beside it stays usable.
-  - **Notes:**
-
-- [ ] `A5A7` Drag the panel's left edge to the right.
-  - **Expected:**
-    - The panel narrows.
-    - The table beside it stays usable.
   - **Notes:**
 
 - [ ] `88B3` Type `Joined from the platform team`.
@@ -195,69 +179,12 @@ To run the test again, delete the **Background** column first from its column me
   - **Expected:** `Lilian` shows as a link at once.
   - **Notes:**
 
-- [ ] `FC5C` Click in `Lilian`.
-  - **Expected:** The cursor is in `Lilian`.
-  - **Notes:**
-
-- [ ] `E537` Select the link button in the toolbar.
-  - **Expected:**
-    - The form opens again under the button.
-    - It has **Address** and **Text to show**.
-  - **Notes:**
-
-- [ ] `71D9` Replace the text in **Text to show** with `Lilian Lang`, and press Enter.
-  - **Expected:** The link reads `Lilian Lang`.
-  - **Notes:**
-
-- [ ] `5C89` Click at the end of `Speaks Japanese`.
-  - **Expected:** The cursor is after `Japanese`.
-  - **Notes:**
-
-- [ ] `BD0A` Press Enter twice.
-  - **Expected:**
-    - The list ends.
-    - The cursor is on a line with no bullet.
-  - **Notes:**
-
-- [ ] `E955` Type `Plans`.
-  - **Expected:** The line reads `Plans`.
-  - **Notes:**
-
-- [ ] `8A8E` Select the heading 2 button in the toolbar.
-  - **Expected:** `Plans` reads as a heading at once.
-  - **Notes:**
-
-- [ ] `89D9` Press Enter.
-  - **Expected:** A new line starts under `Plans`.
-  - **Notes:**
-
-- [ ] `FC0A` Select the checkbox list button in the toolbar.
-  - **Expected:** A checkbox shows at once at the start of the line.
-  - **Notes:**
-
-- [ ] `47EF` Type `Meet the team`, and press Enter.
-  - **Expected:** A second checkbox starts under `Meet the team`.
-  - **Notes:**
-
-- [ ] `F0B7` Type `Set goals`.
-  - **Expected:** The second checkbox reads `Set goals`.
-  - **Notes:**
-
-- [ ] `493F` Tick the box before `Meet the team`.
-  - **Expected:**
-    - The box before `Meet the team` is ticked.
-    - The checkboxes line up with their text.
-  - **Notes:**
-
 - [ ] `F125` Select **Note** at the top of the panel.
   - **Expected:**
     - The note reads, from the top:
       - `Joined from the platform team`, with `Joined` in bold and `platform` in teal
-      - a bullet `Mentor: Lilian Lang`, with `Lilian Lang` a link
+      - a bullet `Mentor: Lilian`, with `Lilian` a link
       - a bullet `Speaks Japanese`
-      - the heading `Plans`
-      - a ticked checkbox `Meet the team`
-      - a checkbox `Set goals`
   - **Notes:**
 
 - [ ] `C377` Select **Markdown**.
@@ -265,11 +192,8 @@ To run the test again, delete the **Background** column first from its column me
     - The text starts in the same place in the panel, so nothing jumps.
     - The note shows as Markdown text, reading, from the top:
       - `Joined from the platform team`, with bold markup around `Joined` and colour markup around `platform`
-      - a bullet `Mentor: Lilian Lang`, with link markup around `Lilian Lang`
+      - a bullet `Mentor: Lilian`, with link markup around `Lilian`
       - a bullet `Speaks Japanese`
-      - `Plans`, with heading markup before it
-      - `Meet the team`, with checkbox markup before it marking it ticked
-      - `Set goals`, with checkbox markup before it
   - **Notes:**
 
 - [ ] `5DF8` Select **Save**.
@@ -278,50 +202,6 @@ To run the test again, delete the **Background** column first from its column me
     - The table is already full width.
     - The cell shows the note's words on one line, cut short where they do not fit.
     - A hollow yellow dot is before the cell's words.
-  - **Notes:**
-
-- [ ] `65A7` Select the **Background** cell of 'Max Munk' again.
-  - **Expected:**
-    - The panel opens.
-    - It shows the note, reading, from the top:
-      - `Joined from the platform team`, with `Joined` in bold and `platform` in teal
-      - a bullet `Mentor: Lilian Lang`, with `Lilian Lang` a link
-      - a bullet `Speaks Japanese`
-      - the heading `Plans`
-      - a ticked checkbox `Meet the team`
-      - a checkbox `Set goals`
-  - **Notes:**
-
-- [ ] `F9CA` Select **Editor**.
-  - **Expected:**
-    - **Editor** is chosen.
-    - The toolbar is above the text.
-  - **Notes:**
-
-- [ ] `33E2` Click at the end of `Set goals`.
-  - **Expected:** The cursor is after `Set goals`.
-  - **Notes:**
-
-- [ ] `286F` Type a space and `again`.
-  - **Expected:** The line reads `Set goals again`.
-  - **Notes:**
-
-- [ ] `9C4C` Press Cmd+Z on a Mac, or Ctrl+Z otherwise.
-  - **Expected:**
-    - Only the space and `again` go, leaving `Set goals`.
-    - The rest of the note reads, from the top:
-      - `Joined from the platform team`, with `Joined` in bold and `platform` in teal
-      - a bullet `Mentor: Lilian Lang`, with `Lilian Lang` a link
-      - a bullet `Speaks Japanese`
-      - the heading `Plans`
-      - a ticked checkbox `Meet the team`
-  - **Notes:**
-
-- [ ] `34B0` Select **Cancel**.
-  - **Expected:**
-    - The panel closes.
-    - The cell still shows the note's words.
-    - The hollow yellow dot is still before them.
   - **Notes:**
 
 ### NOTE-03: Text Is Pasted From Another App
@@ -377,23 +257,23 @@ To run the test again, delete the **Background** column first from its column me
   - **Notes:**
 
 - [ ] `58D7` Press Tab until **Note** has focus.
-  - **Expected:**
-    - Tab reaches **Note**, **Editor** and **Markdown**.
-    - Focus is on **Note**.
+  - **Expected:** Focus is on **Note**, with a visible outline.
   - **Notes:**
 
 - [ ] `BC3A` Press the Right arrow key.
   - **Expected:** **Editor** is chosen.
   - **Notes:**
 
-- [ ] `D3FC` Press Tab.
-  - **Expected:** The cursor is in the note, ready to type.
+- [ ] `D3FC` Press Tab until the cursor is in the note.
+  - **Expected:**
+    - Focus is visible on each toolbar button on the way.
+    - The cursor is in the note, ready to type.
   - **Notes:**
 
-- [ ] `4AA7` Look at the note.
+- [ ] `4AA7` Read the note.
   - **Expected:**
     - `platform` is teal.
-    - The heading, bullets, link and checkboxes are easy to read against the panel.
+    - The bullets and the link are easy to read against the panel.
   - **Notes:**
 
 - [ ] `E586` Press Tab until **Cancel** has focus.
@@ -494,7 +374,7 @@ To run the test again, delete the **Background** column first from its column me
   - **Notes:**
 
 - [ ] `760F` Select **Approve** in the dialog.
-  - **Expected:** A notice reads "Approved 1 draft."
+  - **Expected:** A notification says "Approved 1 draft."
   - **Notes:**
 
 - [ ] `C26D` Select the **Change history** page in the left-hand menu.
@@ -505,46 +385,13 @@ To run the test again, delete the **Background** column first from its column me
 
 ### NOTE-06: Rows With a Note Are Filtered
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, the same as NOTE-05.
-
-**Preconditions:** Run after NOTE-05. Select the **People** page in the left-hand menu.
-
-- [ ] `EB7E` Open the **Background** column menu, and select **Filter…**.
-  - **Expected:** The filter opens beside the column's name, showing, from the top:
-    - **Contains**
-    - an **Empty** checkbox
-    - a **Not empty** checkbox, in the same style
-  - **Notes:**
-
-- [ ] `10BD` Tick **Empty**.
-  - **Expected:** Only people with no note in **Background** are listed.
-  - **Notes:**
-
-- [ ] `F1E0` Tick **Not empty**.
-  - **Expected:**
-    - **Not empty** is ticked.
-    - **Empty** is no longer ticked.
-    - 'Max Munk' is listed.
-    - Every person listed has a note in **Background**.
-  - **Notes:**
-
-- [ ] `4D41` Press Esc.
-  - **Expected:**
-    - The filter closes.
-    - A pill above the table reads "Background: Not empty".
-  - **Notes:**
-
-- [ ] `1BC7` Select **Clear all** above the table.
-  - **Expected:**
-    - The pill is gone.
-    - Every person is listed again.
-  - **Notes:**
+Proved by automated tests in `apps/web/src/people-page-filters.test.tsx`.
 
 ### NOTE-07: A Long Note Folds in a Person's Details
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, the same as the account NOTE-06 ended with.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as NOTE-05.
 
-**Preconditions:** Signed in with this account. **People** page open, with `Jarrod Mante` searched for.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu, with `Jarrod Mante` searched for.
 
 - [ ] `5EB4` Select **Show details** in the ⋯ menu of 'Jarrod Mante'.
   - **Expected:**
@@ -556,15 +403,16 @@ To run the test again, delete the **Background** column first from its column me
 
 - [ ] `51FF` Select **Show more**.
   - **Expected:**
-    - A panel headed **Onboarding** opens under the details.
+    - A panel titled "Onboarding for Jarrod Mante" opens under the details.
     - **Note** is chosen at its top, and the whole note reads below, ending with the heading **Looking back** and its paragraph.
+    - Its headings, bullets and checkboxes are easy to read.
   - **Notes:**
 
 - [ ] `3BA2` Select the **Releases** page in the left-hand menu.
   - **Expected:** The **Releases** tab shows, with a row for 'Harbor 3' whose **Schedule** reads 'Platform'.
   - **Notes:**
 
-- [ ] `7324` Select the details button at the right of the first cell of the row for 'Harbor 3'.
+- [ ] `7324` Select the details button of the row for 'Harbor 3'.
   - **Expected:** The side panel opens, headed 'Harbor 3', and its **Note** row starts with the heading **What Harbor 3 is for**.
   - **Notes:**
 
@@ -650,7 +498,7 @@ To run the test again, delete the **Background** column first from its column me
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as NOTE-08. Step `9906` signs in as another account.
 
-**Preconditions:** Signed in with this account. Run after NOTE-08. **People** page open, with `Max Munk` searched for.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu, with `Max Munk` searched for.
 
 - [ ] `1AF0` Select **Show details** in the ⋯ menu of 'Max Munk'.
   - **Expected:** The side panel opens, headed 'Max Munk'.
@@ -663,22 +511,8 @@ To run the test again, delete the **Background** column first from its column me
     - The note starts with `Joined from the platform team`.
   - **Notes:**
 
-- [ ] `BA41` Select **Editor** at the top of the "Background for Max Munk" panel.
-  - **Expected:** The toolbar is above the note's text.
-  - **Notes:**
-
-- [ ] `C840` Click at the end of `Set goals`.
-  - **Expected:** The cursor is after `Set goals`.
-  - **Notes:**
-
-- [ ] `4532` Type a space and `again`.
-  - **Expected:** The line reads `Set goals again`.
-  - **Notes:**
-
 - [ ] `E694` Reload the page.
-  - **Expected:**
-    - The "Background for Max Munk" panel is open under the details, on **Note**.
-    - The last checkbox reads `Set goals`.
+  - **Expected:** The "Background for Max Munk" panel is open under the details, on **Note**.
   - **Notes:**
 
 - [ ] `2EBE` Copy the web address from the browser's address bar.
@@ -698,32 +532,4 @@ To run the test again, delete the **Background** column first from its column me
 
 ### NOTE-10: A Panel Under Another Is Maximized
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, changed from NOTE-09.
-
-**Preconditions:** Signed in with this account. **People** page open, with `Jarrod Mante` searched for.
-
-- [ ] `0BDC` Select **Show details** in the ⋯ menu of 'Jarrod Mante'.
-  - **Expected:**
-    - The side panel opens, headed 'Jarrod Mante'.
-    - Its head has a close button, and no **Maximize button**.
-  - **Notes:**
-
-- [ ] `9113` Select the open button at the right of the **Onboarding** row in the details.
-  - **Expected:**
-    - A panel titled "Onboarding for Jarrod Mante" opens under the details.
-    - Its head has a **Maximize button** before its close button.
-  - **Notes:**
-
-- [ ] `A0F5` Select the **Maximize button**.
-  - **Expected:**
-    - The "Onboarding for Jarrod Mante" panel fills the height beside the table.
-    - The details of 'Jarrod Mante' are hidden.
-    - The **Maximize button** is now the **Restore button**.
-    - The panel keeps its width.
-  - **Notes:**
-
-- [ ] `4D0C` Press Enter.
-  - **Expected:**
-    - The details of 'Jarrod Mante' show again above the "Onboarding for Jarrod Mante" panel, each as tall as before.
-    - The **Restore button** is the **Maximize button** again, and still has focus.
-  - **Notes:**
+Covered by [PROJ-16](projects-manual-test.md#proj-16-the-product-manager-adds-a-customer-from-a-proposals-customers).

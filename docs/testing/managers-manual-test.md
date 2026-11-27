@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Managers and Teams on People
@@ -15,10 +15,8 @@ Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **T
 
 - Who can be picked as a manager, and how each is described in the picker.
 - Checking and clearing **Manager?** as drafts, and the rule that refuses clearing it.
-- Team names.
+- Team names and their colours.
 - The red **Left** box on a manager who has left.
-- Filtering and sorting by **Manager?**.
-- What a Feature Lead sees.
 - How the rows read grouped by manager.
 
 ## Test Environment
@@ -31,7 +29,6 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Engineering Director:** `engineering.director@fathom.test`
-- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
@@ -65,7 +62,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `693C` Search for `Max Munk`.
   - **Expected:**
     - The **Manager?** cell shows a checked box.
-    - The **Team name** cell reads 'Mobile team'.
+    - The **Team name** cell reads 'Mobile team', after a small orange square.
   - **Notes:**
 
 ### MGR-02: The Manager Picker Offers Only People Marked as Managers and Still Employed
@@ -117,10 +114,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The cell turns yellow.
   - **Notes:**
 
-- [ ] `8A51` Select the **Publish** button.
+- [ ] `8A51` Select the Publish button.
   - **Expected:**
-    - A notice reads "Published 4 changes."
-    - The **Publish** button is gone from the top bar.
+    - A notification starts "Published" and the number of changes.
+    - The Publish button is gone from the top bar.
   - **Notes:**
 
 ### MGR-04: An Approved Check Makes Someone a Manager Who Can Be Picked
@@ -152,7 +149,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `C4DA` In the dialog, select **Approve**.
   - **Expected:**
     - The dialog closes.
-    - A notice reads "Approved 1 draft."
+    - A notification says "Approved 1 draft."
   - **Notes:**
 
 - [ ] `9D0D` Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
@@ -185,9 +182,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### MGR-05: Manager? Cannot Be Cleared While People Report to Someone
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as the account MGR-04 ended with.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account MGR-04 ended with.
 
-**Preconditions:** Signed in with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `588F` Search for `Max Munk`.
   - **Expected:**
@@ -243,7 +240,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `2FD7` Search for `Lorenza Thiel`.
   - **Expected:**
     - The 'Lorenza Thiel' row is shown.
-    - Its **Team name** cell is empty.
+    - Its **Team name** cell is empty, with no colour square.
   - **Notes:**
 
 - [ ] `F4A6` Select the row's **Team name** cell, type `Fictional Crew`, and press Enter.
@@ -271,87 +268,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### MGR-09: People Are Filtered and Sorted by Manager?
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as MGR-08.
-
-**Preconditions:** As MGR-05.
-
-- [ ] `E1FC` Clear the search box.
-  - **Expected:** The search box is empty.
-  - **Notes:**
-
-- [ ] `E801` Open the **Manager?** column menu, and select **Filter…**.
-  - **Expected:** **Yes** is among the choices.
-  - **Notes:**
-
-- [ ] `BA22` Pick only **Yes**.
-  - **Expected:** **Yes** is the only choice picked.
-  - **Notes:**
-
-- [ ] `E230` Press Esc.
-  - **Expected:**
-    - Every row shown has a checked **Manager?** box.
-    - 'Max Munk' and 'Viktoria Holmberg' are among them.
-  - **Notes:**
-
-- [ ] `508F` Open the **Manager?** column menu, and select **Filter…**.
-  - **Expected:** **Yes** is picked.
-  - **Notes:**
-
-- [ ] `C933` Clear **Yes**.
-  - **Expected:** **Yes** is no longer picked.
-  - **Notes:**
-
-- [ ] `977D` Press Esc.
-  - **Expected:** The choices close.
-  - **Notes:**
-
-- [ ] `627C` Open the **Manager?** column menu.
-  - **Expected:** The menu offers **Checked first** and **Unchecked first**.
-  - **Notes:**
-
-- [ ] `B0CB` Select **Checked first**.
-  - **Expected:** The rows with a checked **Manager?** box come first.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
+Proved by automated tests in `apps/web/src/table-rows.test.ts` and `apps/web/src/people-grid-managers.test.tsx`.
 
 ### MGR-10: A Feature Lead Sees Managers and Teams but Cannot Change Them
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from MGR-09.
-
-**Preconditions:** Signed in with this account. **People** page open.
-
-- [ ] `3EDD` Read the column headers from left to right.
-  - **Expected:**
-    - **Manager**, **Manager?**, **Team** and **Team name** are shown.
-    - **Manager assigned**, **Start** and **End** are not.
-  - **Notes:**
-
-- [ ] `4CED` Search for `Max Munk`.
-  - **Expected:**
-    - The 'Max Munk' row is shown.
-    - Its **Manager?** box is checked.
-  - **Notes:**
-
-- [ ] `1BC1` Click once in the row's **Manager?** cell.
-  - **Expected:**
-    - The box stays checked.
-    - The row has no dot.
-  - **Notes:**
-
-- [ ] `C4C8` Search for `西尾 亮`.
-  - **Expected:**
-    - In the row of '西尾 亮', the **Manager** cell reads 'Viktoria Holmberg'.
-    - The cell has no **Left** box.
-  - **Notes:**
-
-**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+Proved by automated tests in `apps/web/src/people-grid-managers.test.tsx` and `apps/server/src/changes.test.ts`.
 
 ### MGR-11: People Are Grouped by Manager
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, the same as MGR-10.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as MGR-08.
 
-**Preconditions:** **People** page open from the left-hand menu.
+**Preconditions:** **People** page open from the left-hand menu, with the search box cleared.
 
 - [ ] `9652` Read the button after **Metrics** above the table.
   - **Expected:**

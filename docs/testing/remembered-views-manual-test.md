@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Remembered Views
@@ -75,11 +75,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### MEMO-02: The Last View Follows the Account to Another Browser
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, the same account as MEMO-01.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same account as MEMO-01, in the second window.
 
-**Preconditions:** MEMO-01 has been run.
+**Preconditions:** MEMO-01 has been run, and the second window is signed out.
 
-- [ ] `D407` In the second window, sign in as Feature Lead, `feature.lead@fathom.test`, and select the **People** page in the left-hand menu.
+- [ ] `B9C6` In the second window, sign in as Feature Lead, `feature.lead@fathom.test`.
+  - **Expected:** The top bar's right end reads "Feature Lead".
+  - **Notes:**
+
+- [ ] `D407` In the second window, select the **People** page in the left-hand menu.
   - **Expected:**
     - The search box above the table holds `Patel-Singh`.
     - Only the row of 'Tanushree Patel-Singh' shows.
@@ -87,7 +91,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### MEMO-03: A Link Naming a View Wins, and Clear View Starts Afresh
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, the same account as MEMO-02.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same account as MEMO-02, in the main window.
 
 **Preconditions:** MEMO-02 has been run. In the main window, select the **People** page in the left-hand menu; its search box holds `Patel-Singh`.
 
