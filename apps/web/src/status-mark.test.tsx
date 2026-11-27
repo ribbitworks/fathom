@@ -429,4 +429,11 @@ describe("a day after an item", () => {
       screen.getByText("from Dec 1, 2026").getAttribute("aria-hidden"),
     ).toBeNull();
   });
+
+  it("is set apart by a space, which a line break drops, so a wrapped day starts at the line's edge", () => {
+    renderIn("both", <FromDay day="Dec 1, 2026" />);
+    expect(
+      screen.getByText("from Dec 1, 2026").previousSibling?.textContent,
+    ).toBe(" ");
+  });
 });

@@ -373,7 +373,7 @@ describe("a feature team's draft in its panel", () => {
       day: "2027-05-01",
     });
     expect(memberLines()).toEqual([
-      `Avery Fictionalfrom ${formatDay("2027-06-01")}, removed`,
+      `Avery Fictional from ${formatDay("2027-06-01")}, removed`,
       "Blake Fictional",
       "Casey Fictional, added",
     ]);
@@ -385,7 +385,7 @@ describe("a feature team's draft in its panel", () => {
   it("gives the day of a change given no day, on another day shown", () => {
     openPanel({ shown: drafted, day: "2027-06-01" });
     expect(memberLines()).toContain(
-      `Avery Fictionalfrom ${formatDay("2027-03-10")}, removed`,
+      `Avery Fictional from ${formatDay("2027-03-10")}, removed`,
     );
   });
 
@@ -414,7 +414,7 @@ describe("a feature team's draft in its panel", () => {
       day: "2027-05-01",
     });
     expect(memberLines()).toContain(
-      `Avery Fictionalfrom ${formatDay("2027-06-01")}, removed, rejected`,
+      `Avery Fictional from ${formatDay("2027-06-01")}, removed, rejected`,
     );
   });
 
