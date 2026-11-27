@@ -26,7 +26,7 @@ import type { Draft } from "./draft-records.ts";
 import { readPersonDrafts } from "./drafts.ts";
 import { readHireDrafts } from "./hire-reads.ts";
 import { addedChoices } from "./list-state.ts";
-import { withUsedRecords } from "./record-decisions.ts";
+import { withUsedRecords } from "./bound-drafts.ts";
 import { type RecordsState, refKey, stateOf } from "./record-state.ts";
 import { readRecordsState, recordKinds } from "./records.ts";
 import { choicesMadeWithColumn } from "./new-lists.ts";

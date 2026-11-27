@@ -49,6 +49,13 @@ import {
   type ValueRow,
   valueRows,
 } from "./values.ts";
+import {
+  boundWith,
+  discardedByAnyEditor,
+  draftedRefs,
+  usingRecords,
+  withUsedRecords,
+} from "./bound-drafts.ts";
 import { editsKind } from "./draft-editors.ts";
 import { refuseDiscardingOthers } from "./draft-makers.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
@@ -97,24 +104,6 @@ function addedBelow(state: RecordsState, root: RecordRef): RecordRef[] {
   return [...found.values()];
 }
 
-// Every record with a draft, of every kind, as the viewer sees them.
-const draftedRefs = (state: RecordsState): RecordRef[] =>
-  recordKinds.flatMap((kind) =>
-    [...stateOf(state, kind.type).drafts.keys()].map((id) => ({
-      type: kind.type,
-      id,
-    })),
-  );
-
-// A record's draft with the drafts bound to it, which it uses and which use it in turn, such as the
-// patterns and moved releases of a change of one cycle's length, which are discarded only together.
-function boundWith(state: RecordsState, root: RecordRef): RecordRef[] {
-  const users = new Set(usingRecords(state, [root]).map(refKey));
-  return withUsedRecords(state, [root]).filter(
-    (ref) => refKey(ref) === refKey(root) || users.has(refKey(ref)),
-  );
-}
-
 export function cyclesDiscardRefusal(
   discarded: readonly RecordRef[],
   maker: Actor,
@@ -127,9 +116,9 @@ export function cyclesDiscardRefusal(
 
 // Discards the editor's draft of a record, so the record is as it is live, or, for one only drafted
 // to be added, gone, with the drafts bound to it and the drafts of the records only drafted to be
-// added that belong to any of them. Refused while other drafts, published or not, use any of them,
-// and to an editor who didn't change the draft, unless it would discard a draft of a stream's
-// cycles, which any editor who may change cycles discards, and no other.
+// added that belong to any of them, whoever made them. Refused while other drafts, published or not,
+// use any of them, to an editor who may not discard the draft asked for, and to one who may not
+// change cycles when it would discard a draft of a stream's cycles.
 export async function discardRecordDraft(
   database: Database,
   maker: Actor,
@@ -151,9 +140,13 @@ export async function discardRecordDraft(
     ];
     const refusal = cyclesDiscardRefusal(discarded, maker);
     if (refusal !== undefined) throw new ForbiddenError(refusal);
-    if (!discarded.some(({ type: kind }) => kind === "cycle-pattern")) {
-      await refuseDiscardingOthers(transaction, maker, type, id);
-    }
+    await refuseDiscardingOthers(
+      transaction,
+      maker,
+      type,
+      id,
+      discardedByAnyEditor(state, maker).has(refKey({ type, id })),
+    );
     for (const ref of discarded.filter(
       ({ type: kind }) => kind === "feature",
     )) {
@@ -266,50 +259,6 @@ export async function resubmitRecordDraft(
       "resubmission",
     );
   });
-}
-
-// The records asked for, with every draft they use, and those those use, and so on.
-export function withUsedRecords(
-  state: RecordsState,
-  asked: readonly RecordRef[],
-): RecordRef[] {
-  const found = new Map(asked.map((ref) => [refKey(ref), ref]));
-  const queue = [...asked];
-  for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
-    for (const used of usesOf(kindOf(next.type), state, next.id)) {
-      if (!found.has(refKey(used))) {
-        found.set(refKey(used), used);
-        queue.push(used);
-      }
-    }
-  }
-  return [...found.values()];
-}
-
-// The drafts that use any of those given, and those that use them, and so on.
-function usingRecords(
-  state: RecordsState,
-  given: readonly RecordRef[],
-): RecordRef[] {
-  const found = new Set(given.map(refKey));
-  const dependents: RecordRef[] = [];
-  let grew = true;
-  while (grew) {
-    grew = false;
-    for (const ref of draftedRefs(state)) {
-      if (found.has(refKey(ref))) continue;
-      if (
-        usesOf(kindOf(ref.type), state, ref.id).some((used) =>
-          found.has(refKey(used)),
-        )
-      ) {
-        found.add(refKey(ref));
-        dependents.push(ref);
-        grew = true;
-      }
-    }
-  }
-  return dependents;
 }
 
 function requireRecordDrafts(state: RecordsState, asked: readonly RecordRef[]) {

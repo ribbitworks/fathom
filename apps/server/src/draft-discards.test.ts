@@ -2,10 +2,12 @@
 
 // Integration tests for who may discard a draft, for every kind of record: only someone who changed
 // it since it was last approved or discarded, whatever else their role may change; others reject
-// it instead.
+// it instead. A draft Fathom made, which no one changed, is still decided.
 
+import { drafts } from "@fathom/db";
 import type { Choice, Field, List, Person, ProjectPlan } from "@fathom/shared";
 import { type Role } from "@fathom/shared";
+import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   addingOne,
@@ -317,13 +319,49 @@ describe("a draft's makers", () => {
     expect(response.statusCode).toBe(200);
   });
 
-  it("are marked on the draft for the user who changed it, and not for others", async () => {
+  it("are marked discardable for the user who changed it, and not for others", async () => {
     const { maker, other } = pair("workforce-administrator");
     const id = await madePerson(maker);
 
     expect([
-      (await draftOf(maker, id))?.changedByUser,
-      (await draftOf(other, id))?.changedByUser,
+      (await draftOf(maker, id))?.discardable,
+      (await draftOf(other, id))?.discardable,
     ]).toEqual([true, undefined]);
+  });
+});
+
+describe("a draft Fathom made, which no one changed", () => {
+  // A person only drafted to be added, with no change history, as Fathom itself might make one.
+  const unrecorded = async () => {
+    const id = randomUUID();
+    await test.connection.insert(drafts).values({
+      recordType: "person",
+      recordId: id,
+      action: "created",
+      fields: {
+        preferredName: unique("Fictional Unrecorded"),
+        employeeId: unique("FU"),
+        positionId: testPosition,
+      },
+    });
+    return id;
+  };
+
+  it.each([
+    ["approved", "/api/drafts/approval", {}],
+    ["rejected", "/api/drafts/rejection", { reason: "Fictional reason" }],
+  ])("is %s by an approver, so it never stays", async (_done, url, body) => {
+    // Given a draft no one may discard
+    const id = await unrecorded();
+    const approver = await test.signedIn("engineering-director");
+
+    // When an approver decides it
+    const response = await send(approver, "POST", url, {
+      people: [id],
+      ...body,
+    });
+
+    // Then it is decided
+    expect(response.statusCode, response.body).toBe(200);
   });
 });

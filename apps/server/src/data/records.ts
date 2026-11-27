@@ -17,12 +17,7 @@ import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { Actor } from "../access.ts";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { draftFields, type Recorded, type Viewer } from "./draft-records.ts";
-import {
-  draftMakers,
-  everything,
-  type Maker,
-  viewerMarks,
-} from "./draft-makers.ts";
+import { type Maker, viewerMarks } from "./draft-makers.ts";
 import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import { activityKind } from "./activity-kinds.ts";
 import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
@@ -38,6 +33,7 @@ import {
   type RecordKind,
   type RecordsState,
   type Referred,
+  refKey,
   shownIds,
   stateOf,
   subjectFor,
@@ -245,29 +241,17 @@ export async function readRecordsState(
   return Object.fromEntries(entries) as RecordsState;
 }
 
-export type Makers = ReadonlyMap<RecordType, Map<string, Maker>>;
-
-// Who changed each record's draft, and when, as the viewer may see it.
-export async function readRecordMakers(
-  reader: Reader,
-  state: RecordsState,
-  viewer: Actor,
-): Promise<Makers> {
-  const makers = new Map<RecordType, Map<string, Maker>>();
-  for (const kind of recordKinds) {
-    makers.set(
-      kind.type,
-      await draftMakers(
-        reader,
-        kind.type,
-        [...stateOf(state, kind.type).drafts.keys()],
-        everything,
-        viewer,
-      ),
-    );
-  }
-  return makers;
+// Who changed each record's draft, and when, by kind, as the viewer may see it, and the drafts the
+// viewer may discard whoever changed them, by record.
+export interface Makers {
+  byKind: ReadonlyMap<RecordType, ReadonlyMap<string, Maker>>;
+  discardedByAny: ReadonlySet<string>;
 }
+
+export const noMakers: Makers = {
+  byKind: new Map(),
+  discardedByAny: new Set(),
+};
 
 // A record's draft as the API sends it, or undefined when it has none.
 // A record's draft as read, which always says who last changed each field.
@@ -292,7 +276,7 @@ export function recordDraftOut(
       (together.includes(name) &&
         together.some((other) => touched.includes(other))),
   );
-  const maker = makers.get(kind.type)?.get(id);
+  const maker = makers.byKind.get(kind.type)?.get(id);
   return {
     action: draft.action,
     changed,
@@ -317,7 +301,10 @@ export function recordDraftOut(
     madeAs: maker?.madeAs ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
-    ...viewerMarks(maker),
+    ...viewerMarks(
+      maker,
+      makers.discardedByAny.has(refKey({ type: kind.type, id })),
+    ),
     changedBy: Object.fromEntries(
       changed.map((name) => [
         name,

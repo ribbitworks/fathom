@@ -14,7 +14,7 @@ import {
   roleSchema,
 } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type TestApp, unique } from "./test-app.ts";
+import { errorOf, type TestApp, unique } from "./test-app.ts";
 import {
   test,
   configurer,
@@ -23,6 +23,8 @@ import {
   quarters,
   readStreams,
   readStream,
+  draftStream,
+  draftPattern,
   draftRelease,
   decide,
   approveAll,
@@ -508,6 +510,29 @@ describe("who may discard and resend drafts of schedules and their cycles", () =
       expect(await draftOf(record)).toMatchObject(kept);
     },
   );
+
+  it("refuses another who changes cycles to discard a new schedule, though its new cycles go with it", async () => {
+    // Given a new schedule with its cycles, drafted by the Workforce Administrator
+    const stream = await draftStream();
+    await draftPattern(stream.id);
+    const { cookie } = await test.signedIn("product-manager");
+
+    // When a Product Manager, who changes cycles too, discards the schedule's draft
+    const response = await test.request(
+      cookie,
+      "DELETE",
+      `/api/records/release-stream/${stream.id}/draft`,
+    );
+
+    // Then they are refused, and the schedule stays
+    expect([response.statusCode, errorOf(response)]).toEqual([
+      403,
+      "Only someone who changed this draft can discard it.",
+    ]);
+    expect(await draftOf({ type: "release-stream", id: stream.id })).toEqual(
+      expect.objectContaining({ action: "created" }),
+    );
+  });
 });
 
 describe("who may decide drafts of schedules and their cycles", () => {

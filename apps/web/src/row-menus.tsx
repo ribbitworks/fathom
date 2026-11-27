@@ -121,7 +121,6 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
       changes: rowActions && mayChange(record) && record.heldBy === undefined,
       removable: table.removable?.(record) ?? true,
       editsOwnDraft: decidesOwnDraft(record),
-      discardsUnchanged: table.discardsUnchanged?.(record) === true,
       decides: decidedInMenu(record) !== undefined,
       publishes: publishDraft !== undefined,
     });

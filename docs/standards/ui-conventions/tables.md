@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Tables, Addresses and Search
@@ -33,12 +33,12 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
     - **Deciding:** Approve draft… and Reject draft…, to a role that decides its draft now.
     - **Publish draft…:** For the user's own unpublished draft. It publishes the draft with the changes it must go with, as [Publishing](entering-and-saving.md#publishing) sets out.
     - **Resubmit:** For a rejected draft.
-    - **Discard draft:** For a draft the user may change and changed since it was last approved or discarded. Others who disagree with it reject it. A draft of a schedule's cycles is the exception: any role that changes cycles discards it, as [Roles](../../product/roles.md#releases) sets out.
+    - **Discard draft:** For a draft the user may change and may discard, as the server marks it: one they changed since it was last approved or discarded. Others who disagree with it reject it. A draft of a schedule's cycles, and the drafts bound to it, are the exception: any role that changes cycles discards them, as [Roles](../../product/roles.md#approving) sets out.
     - **Remove:** Such as Remove person, for a record the user may change that its draft neither adds nor removes. A record that can never be removed, such as a list Fathom builds in, offers none.
   - **Focus after an item:** Once Publish draft…, Discard draft or Remove acts, or the question Publish draft… asks closes, focus goes back to the row's cell.
   - **In its details:** The same menu, less Show details, opens from the ⋯ at the top of the record's details panel, as [A panel's menu](pages-and-panels.md#details-panels) sets out.
   - **No row header:** There is no row header at the left: the slot before the first value keeps the draft's dot.
-  - **Drawn by:** `RowControls` and `MoreButton` in `apps/web/src/row-controls.tsx`, placed by `nameCellControls` in `apps/web/src/row-menus.tsx` in the column its table names as `nameColumn`, the menu's items by `recordActionItems` there, from the rule `recordMenuOffer` in `apps/web/src/menu-offer.ts`, with the draft's `changedByUser` and a table's `discardsUnchanged`, with the record's details from the table's `showDetails`, and the menu beside the pointer by `MenuAtPoint` in `apps/web/src/app-menu.tsx`, which a card's `CardMenu` uses too.
+  - **Drawn by:** `RowControls` and `MoreButton` in `apps/web/src/row-controls.tsx`, placed by `nameCellControls` in `apps/web/src/row-menus.tsx` in the column its table names as `nameColumn`, the menu's items by `recordActionItems` there, from the rule `recordMenuOffer` in `apps/web/src/menu-offer.ts`, with the draft's `discardable` mark. The record's details come from the table's `showDetails`. `MenuAtPoint` in `apps/web/src/app-menu.tsx` draws the menu beside the pointer, and a card's `CardMenu` uses it too.
   - **Example:** On People, point at any row, or right-click its Start cell.
 - **Moving columns:** Anyone who sees a table can move any of its columns, built-in or added. A new table is drawn by the shared table, so its columns move too.
   - **Part of the view:** Column order, hiding, freezing and widths are part of the view, never a draft. So each user has their own, and nothing needs approval.

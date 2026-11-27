@@ -109,7 +109,7 @@ export const removal = {
   state: "waiting",
   madeBy: "Fictional Editor",
   madeAt: "2026-11-01T10:00:00.000Z",
-  changedByUser: true,
+  discardable: true,
 };
 
 export const listsAnswer = () =>
@@ -228,7 +228,7 @@ export const waiting = {
   state: "waiting",
   madeBy: "Fictional Editor",
   madeAt: "2026-11-01T10:00:00.000Z",
-  changedByUser: true,
+  discardable: true,
 };
 // A list drafted to be added, with a choice drafted into it; a live list with a renamed, rejected
 // choice and a draft of its order.

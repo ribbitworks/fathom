@@ -57,7 +57,8 @@ import {
   saveRecordDrafts,
   type Wanted,
 } from "./record-drafting.ts";
-import { discardRecordDraft, withUsedRecords } from "./record-decisions.ts";
+import { withUsedRecords } from "./bound-drafts.ts";
+import { discardRecordDraft } from "./record-decisions.ts";
 import { keptNote, readRecordsState } from "./records.ts";
 import { hiddenPeople, shownPeople } from "./people-reads.ts";
 import { readToday } from "./settings.ts";

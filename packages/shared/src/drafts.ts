@@ -39,9 +39,10 @@ export const draftShape = {
   // approved or discarded and their role does not let them approve their own, or it is part of a
   // fill needing sight their role lacks.
   needsOtherApprover: z.boolean().optional(),
-  // True when the user changed the draft since it was last approved or discarded, so they may
-  // discard it; others reject it instead.
-  changedByUser: z.boolean().optional(),
+  // True when the user may discard the draft: they changed it since it was last approved or
+  // discarded, or their role discards it whoever changed it, as one that may change cycles does a
+  // draft of a schedule's cycles. Others reject it instead.
+  discardable: z.boolean().optional(),
 };
 
 // Who holds a record by having unpublished changes to it, by name, when it is someone other than

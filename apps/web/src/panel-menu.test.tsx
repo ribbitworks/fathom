@@ -25,7 +25,7 @@ import {
 
 const changed = {
   ...waiting,
-  changedByUser: true,
+  discardable: true,
   action: "changed" as const,
   changed: ["code"],
   live: { code: "OLD", values: {}, links: {} },
@@ -157,7 +157,7 @@ describe("a details panel's menu", () => {
   it("puts focus on the table once discarding takes away a record its draft added", async () => {
     const added = {
       ...waiting,
-      changedByUser: true,
+      discardable: true,
       action: "created" as const,
     };
     renderPanel({ gadgets: [gadget("g1", { draft: added })] });

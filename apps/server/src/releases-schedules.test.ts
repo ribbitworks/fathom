@@ -363,6 +363,15 @@ describe("changing streams, patterns, and releases", () => {
   it("refuses adding to a stream someone else is discarding, naming them", async () => {
     const stream = await draftStream();
     await draftPattern(stream.id);
+    // Only someone who changed the new stream's draft may discard it.
+    await test.request(
+      other.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}`,
+      {
+        name: unique("Fictional Renamed"),
+      },
+    );
     const held = await discardHeld("release-stream", stream.id);
     expect(held.statusCode).toBe(200);
     const response = await draftRelease(stream.id, {

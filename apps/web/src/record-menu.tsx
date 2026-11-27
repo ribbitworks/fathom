@@ -78,7 +78,7 @@ export function RecordMenu({
             canApprove={actions.approves.includes(ref.type) && decidable(node)}
             othersApprove={draft.needsOtherApprover === true}
             rejected={draft.state === "rejected"}
-            changed={draft.changedByUser === true}
+            discardable={draft.discardable === true}
             waits={waits}
             onApprove={() => {
               actions.decide("approve", ref);

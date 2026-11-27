@@ -47,7 +47,13 @@ import { type HireFacts, hiresOf } from "./hire-reads.ts";
 import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
 import { readHourSettings } from "./planning-settings.ts";
 import { drafting, saveRecordDraft } from "./record-drafting.ts";
-import { readRecordsState, recordDraftOut, recordHeldBy } from "./records.ts";
+import {
+  type Makers,
+  noMakers,
+  readRecordsState,
+  recordDraftOut,
+  recordHeldBy,
+} from "./records.ts";
 import {
   addedOnly,
   everyVersion,
@@ -194,7 +200,7 @@ function renameOf(
   state: RecordsState,
   id: string,
 ): Pick<AllocatedFeature, "rename"> {
-  const draft = recordDraftOut(kind, state, new Map(), id);
+  const draft = recordDraftOut(kind, state, noMakers, id);
   if (draft?.action !== "changed" || !draft.changed.includes("name")) {
     return {};
   }
@@ -306,20 +312,23 @@ export async function readAllocations(
         const hire = hires.get(String(record.plannedHireId));
         return hire?.dated === true ? hire.expected : undefined;
       };
-      const makers = new Map([
-        [
-          type,
-          await draftMakers(
-            transaction,
+      const makers: Makers = {
+        ...noMakers,
+        byKind: new Map([
+          [
             type,
-            records
-              .map(({ id }) => id)
-              .filter((id) => stateOf(state, type).drafts.has(id)),
-            everything,
-            actor,
-          ),
-        ],
-      ] as const);
+            await draftMakers(
+              transaction,
+              type,
+              records
+                .map(({ id }) => id)
+                .filter((id) => stateOf(state, type).drafts.has(id)),
+              everything,
+              actor,
+            ),
+          ],
+        ]),
+      };
       const idsOf = (field: "featureId" | "activityId") => [
         ...new Set(
           // The field is one of the two fixed ones.
@@ -396,6 +405,9 @@ export async function readAllocations(
                     editors: draft.editors,
                     ...(draft.unpublished === true
                       ? { unpublished: true }
+                      : {}),
+                    ...(draft.discardable === true
+                      ? { discardable: true }
                       : {}),
                     ...(draft.needsOtherApprover === true
                       ? { needsOtherApprover: true }

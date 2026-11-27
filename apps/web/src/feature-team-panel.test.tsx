@@ -70,7 +70,7 @@ const draft = (fields: Partial<NonNullable<FeatureTeam["draft"]>> = {}) => ({
   state: "waiting" as const,
   madeBy: "Fictional Editor",
   madeAt: "2026-10-30T15:00:00.000Z",
-  changedByUser: true,
+  discardable: true,
   ...fields,
 });
 

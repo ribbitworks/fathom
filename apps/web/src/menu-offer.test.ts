@@ -20,7 +20,6 @@ const facts = (more: Partial<RecordMenuFacts> = {}): RecordMenuFacts => ({
   changes: false,
   removable: true,
   editsOwnDraft: false,
-  discardsUnchanged: false,
   decides: false,
   publishes: true,
   ...more,
@@ -65,7 +64,7 @@ describe("a record's menu offer", () => {
           ownDraft: {
             state: "waiting",
             unpublished: true,
-            changedByUser: true,
+            discardable: true,
           },
           shownAction: "changed",
         }),
@@ -91,7 +90,7 @@ describe("a record's menu offer", () => {
       recordMenuOffer(
         facts({
           changes: true,
-          ownDraft: { state: "waiting", changedByUser: true },
+          ownDraft: { state: "waiting", discardable: true },
           shownAction: "changed",
         }),
       ),
@@ -103,14 +102,14 @@ describe("a record's menu offer", () => {
       recordMenuOffer(
         facts({
           changes: true,
-          ownDraft: { state: "rejected", changedByUser: true },
+          ownDraft: { state: "rejected", discardable: true },
           shownAction: "changed",
         }),
       ),
     ).toEqual({ ...nothing, resubmit: true, discard: true, remove: true });
   });
 
-  it("offers no discarding of a draft the user didn't change, since others reject it", () => {
+  it("offers no discarding of a draft the server doesn't let the user discard, since others reject it", () => {
     expect(
       recordMenuOffer(
         facts({
@@ -120,19 +119,6 @@ describe("a record's menu offer", () => {
         }),
       ),
     ).toEqual({ ...nothing, resubmit: true, remove: true });
-  });
-
-  it("offers discarding a draft the user didn't change where the table lets any who change it discard it", () => {
-    expect(
-      recordMenuOffer(
-        facts({
-          editsOwnDraft: true,
-          discardsUnchanged: true,
-          ownDraft: { state: "waiting" },
-          shownAction: "changed",
-        }),
-      ),
-    ).toEqual({ ...nothing, discard: true });
   });
 
   it.each(["created", "deleted"] as const)(
@@ -150,7 +136,7 @@ describe("a record's menu offer", () => {
     const offer = recordMenuOffer(
       facts({
         editsOwnDraft: true,
-        ownDraft: { state: "waiting", unpublished: true, changedByUser: true },
+        ownDraft: { state: "waiting", unpublished: true, discardable: true },
         shownAction: "changed",
       }),
     );
@@ -189,7 +175,7 @@ describe("a draft's offer", () => {
     rejected: false,
     unpublished: false,
     editsDraft: false,
-    changedByUser: false,
+    discardable: false,
     decides: false,
     publishes: true,
   };
@@ -214,7 +200,7 @@ describe("a draft's offer", () => {
     ],
     [
       "discarding a waiting draft to those who edit it and changed it",
-      { hasDraft: true, editsDraft: true, changedByUser: true },
+      { hasDraft: true, editsDraft: true, discardable: true },
       offering("discard"),
     ],
     [
@@ -224,7 +210,7 @@ describe("a draft's offer", () => {
     ],
     [
       "resubmitting and discarding a rejected draft to those who edit it and changed it",
-      { hasDraft: true, rejected: true, editsDraft: true, changedByUser: true },
+      { hasDraft: true, rejected: true, editsDraft: true, discardable: true },
       offering("resubmit", "discard"),
     ],
     [
@@ -238,7 +224,7 @@ describe("a draft's offer", () => {
         hasDraft: true,
         unpublished: true,
         editsDraft: true,
-        changedByUser: true,
+        discardable: true,
       },
       offering("publish", "discard"),
     ],
@@ -248,7 +234,7 @@ describe("a draft's offer", () => {
         hasDraft: true,
         unpublished: true,
         editsDraft: true,
-        changedByUser: true,
+        discardable: true,
         publishes: false,
       },
       offering("discard"),

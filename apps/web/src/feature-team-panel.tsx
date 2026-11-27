@@ -346,7 +346,7 @@ function TeamDetails({
     rejected: draft?.state === "rejected",
     unpublished: draft?.unpublished === true,
     editsDraft: changes,
-    changedByUser: draft?.changedByUser === true,
+    discardable: draft?.discardable === true,
     decides: false,
     publishes: false,
   });

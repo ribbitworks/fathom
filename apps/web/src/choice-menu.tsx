@@ -109,7 +109,7 @@ export function ChoiceMenu({
     rejected: choiceDraft?.state === "rejected",
     unpublished: choiceDraft?.unpublished === true,
     editsDraft: mayEdit && choice.heldBy === undefined,
-    changedByUser: choiceDraft?.changedByUser === true,
+    discardable: choiceDraft?.discardable === true,
     decides: canApprove && decidable(choice),
     publishes: false,
   });

@@ -243,12 +243,12 @@ const either = [false, true] as const;
 const cases = either.flatMap((canEdit) =>
   either.flatMap((canApprove) =>
     either.flatMap((rejected) =>
-      either.flatMap((changed) =>
+      either.flatMap((discardable) =>
         either.map((publishable) => ({
           canEdit,
           canApprove,
           rejected,
-          changed,
+          discardable,
           publishable,
         })),
       ),
@@ -258,15 +258,15 @@ const cases = either.flatMap((canEdit) =>
 
 describe("a list's draft menu", () => {
   it.each(cases)(
-    "offers deciding to approvers unless rejected, publishing and resubmitting to editors, and discarding to editors who changed it: %o",
+    "offers deciding to approvers unless rejected, publishing and resubmitting to editors, and discarding to editors who may discard it: %o",
     (facts) => {
-      const { canEdit, canApprove, rejected, changed, publishable } = facts;
+      const { canEdit, canApprove, rejected, discardable, publishable } = facts;
 
       expect(draftItemsOffer(facts)).toEqual({
         decide: canApprove && !rejected,
         publish: canEdit && publishable,
         resubmit: canEdit && rejected,
-        discard: canEdit && changed,
+        discard: canEdit && discardable,
       });
     },
   );
