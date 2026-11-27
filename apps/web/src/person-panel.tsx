@@ -42,13 +42,14 @@ import {
 } from "./person-editing.tsx";
 import classes from "./record-details.module.css";
 import {
+  ChoiceRenamings,
   RecordLink,
   RecordSection,
   Row,
   RecordPanel,
 } from "./record-details.tsx";
 import { onRow } from "./grid-columns.tsx";
-import { heldBack } from "./grid-drafts.ts";
+import { choiceRenamings, heldBack } from "./grid-drafts.ts";
 import { shownSchema } from "./live-records.ts";
 import { colourOf } from "./record-table.ts";
 import {
@@ -419,7 +420,8 @@ export function PersonPanel({
     : undefined;
   return frame(
     nameOf(person),
-    <>
+    // Read here too, since the Org chart shows these details beside no table.
+    <ChoiceRenamings value={choiceRenamings(lists.data)}>
       <div>
         <Group gap={0} align="baseline">
           <MarkedItem
@@ -521,7 +523,7 @@ export function PersonPanel({
           )}
         </>
       )}
-    </>,
+    </ChoiceRenamings>,
     ownDraft?.action === "changed" ? undefined : ownDraft,
     <RecordKey
       record={personKeyOf({

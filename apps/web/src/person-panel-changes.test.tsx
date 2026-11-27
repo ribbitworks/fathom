@@ -508,3 +508,41 @@ describe("changing a person's details", () => {
     });
   });
 });
+
+describe("a person's choice a draft renames, in their details", () => {
+  // Positions, whose Fictional Engineer a waiting draft renames Fictional Developer.
+  const renamedPositions = () =>
+    Response.json({
+      lists: [
+        {
+          ...positions,
+          choices: [
+            {
+              ...positions.choices[0],
+              label: "Fictional Developer",
+              draft: {
+                action: "changed",
+                changed: ["label"],
+                live: { label: "Fictional Engineer" },
+                state: "waiting",
+                madeBy: null,
+                madeAt: null,
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+  it.each([
+    ["beside People", "/people?open=E1"],
+    ["beside the Org chart", "/org-chart?open=E1"],
+  ])("has the rename's dot, naming its live name, %s", async (_, address) => {
+    answers(undefined, renamedPositions);
+    renderApp(address);
+    await panel("Robin Fictional");
+    expect(row("Position").textContent).toContain(
+      "Fictional Developer, Draft: changed from “Fictional Engineer”",
+    );
+  });
+});

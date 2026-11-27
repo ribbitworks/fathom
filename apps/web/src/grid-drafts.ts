@@ -4,6 +4,7 @@
 // and the records shown before they are saved.
 
 import {
+  type Choice,
   type Field,
   type FieldDraft,
   type List,
@@ -98,8 +99,16 @@ export function liveName(
     : undefined;
 }
 
+// The state a row's tint shows: of its own draft and the drafts of other records marking its
+// values, waiting while any waits, and rejected only once every one was, as a record's parts' mark
+// is.
+export const rowState = (
+  draft: DraftLike | undefined,
+  cellDrafts: ReadonlyMap<string, DraftLike> | undefined,
+) => partsMark([draft, ...(cellDrafts?.values() ?? [])])?.state;
+
 // What a table is filtered by besides its columns: whether each record has a draft, waiting or
-// rejected.
+// rejected, as its row's state says.
 export const draftColumn: TableColumn<GridRecord> = {
   key: draftFilterKey,
   label: "Draft",
@@ -110,7 +119,10 @@ export const draftColumn: TableColumn<GridRecord> = {
   ],
   multiple: false,
   emptyLabel: "No draft",
-  value: (record) => (record.draft === undefined ? [] : [record.draft.state]),
+  value: (record) => {
+    const state = rowState(record.draft, record.cellDrafts);
+    return state === undefined ? [] : [state];
+  },
 };
 
 // What a column's draft changes, field by field, with lists named rather than identified.
@@ -182,18 +194,12 @@ export function cellDraftOf<Draft>(
   );
 }
 
-// The state a row's tint shows: of its own draft and the drafts of other records marking its
-// values, waiting while any waits, and rejected only once every one was, as a record's parts' mark
-// is.
-export const rowState = (
-  draft: DraftLike | undefined,
-  cellDrafts: ReadonlyMap<string, DraftLike> | undefined,
-) => partsMark([draft, ...(cellDrafts?.values() ?? [])])?.state;
-
-// A choice's draft renaming it, as it marks a value holding the choice: its mark, and who renamed it.
+// A choice's draft renaming it, as it marks a value holding the choice: its mark, who renamed it,
+// and the choice's live name.
 export interface Renaming {
   draft: DraftLike;
   by: string | undefined;
+  live: string | undefined;
 }
 
 // The drafts renaming choices, by the choice's identifier, from every list with its drafts.
@@ -206,7 +212,16 @@ export function choiceRenamings(
         const mark = changedValue(draft, "label");
         if (draft === undefined || mark === undefined) return [];
         const by = new Map(Object.entries(draft.changedBy ?? {})).get("label");
-        return [[id, { draft: mark, by: by === null ? "Fathom" : by }]];
+        return [
+          [
+            id,
+            {
+              draft: mark,
+              by: by === null ? "Fathom" : by,
+              live: draft.live.label,
+            },
+          ],
+        ];
       }),
     ),
   );
@@ -235,3 +250,13 @@ export function renamedValue(
   const found = chosenIds(value).flatMap((id) => renamings.get(id) ?? []);
   return found.find(({ draft }) => draft.state === "waiting") ?? found[0];
 }
+
+// Choices with their live names, where a draft renames them, for what a value was before.
+export const liveChoices = (
+  choices: readonly Choice[],
+  renamings: ReadonlyMap<string, Renaming>,
+): Choice[] =>
+  choices.map((choice) => ({
+    ...choice,
+    label: renamings.get(choice.id)?.live ?? choice.label,
+  }));
