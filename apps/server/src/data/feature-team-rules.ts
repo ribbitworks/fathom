@@ -25,11 +25,17 @@ export type Person = Recorded & {
 
 // A planned hire on feature teams, joining them from the first day of the month it's expected, as
 // allocations count it. It has no start or end date, so it is never hidden as not started or left.
+// Its name, ID and position's label name it as People does.
 export interface PlannedHire {
   kind: "planned-hire";
   preferredName: string;
+  name: string | null;
+  shownId: string;
+  position: string;
   firstDay: string;
-  filled: boolean;
+  // Whether a date gives the month it's expected, rather than its standing in for the day read.
+  dated: boolean;
+  filledBy: string | null;
   removing: boolean;
 }
 
@@ -290,7 +296,7 @@ export function nameIsTaken(
 // Why a planned hire can't join or lead a team: it is filled, so its person takes its place, or a
 // draft removes it; undefined when it can.
 export function plannedHireRefusal(hire: PlannedHire): string | undefined {
-  if (hire.filled) {
+  if (hire.filledBy !== null) {
     return "A filled planned hire can't join or lead a team; choose its person";
   }
   return hire.removing

@@ -9,9 +9,7 @@ import {
   featureTeamMemberships,
   featureTeams,
   inChunks,
-  listItems,
   people,
-  plannedHires,
   type Reader,
 } from "@fathom/db";
 import {
@@ -21,6 +19,7 @@ import {
   type FeatureTeams,
   knownColour,
   type PersonFeatureTeam,
+  type Tier,
 } from "@fathom/shared";
 import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { type Actor, requirePermission, requireView } from "../access.ts";
@@ -29,6 +28,7 @@ import { draftMakers } from "./draft-makers.ts";
 import { type Held, heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import {
   datesOf,
+  type Everyone,
   isPlannedHire,
   leftBy,
   type Member,
@@ -41,7 +41,7 @@ import {
   draftAsSeen,
   draftedOn,
   draftShownTo,
-  type HireRead,
+  type FillerSight,
   hireLeadDaySeen,
   hireOnTeamSeen,
   type LeadRecord,
@@ -55,16 +55,11 @@ import {
   teamSight,
   withoutLeavers,
 } from "./feature-team-sight.ts";
-import {
-  expectedMonth,
-  hireIdOf,
-  recordType as hireRecordType,
-  undatedMark,
-} from "./hire-fields.ts";
+import { recordType as hireRecordType } from "./hire-fields.ts";
 import { hiresOf } from "./hire-reads.ts";
 import { bySubject, inForceOn } from "./in-force.ts";
 import { notStarted } from "./people-reads.ts";
-import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
+import { type KeyNumbers, keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { readToday } from "./settings.ts";
 import { builtInTier } from "./values.ts";
 import { recordType } from "./feature-team-records.ts";
@@ -447,8 +442,12 @@ export async function readMembers(
     found.set(id, {
       kind: "planned-hire",
       preferredName: hire.called,
+      name: hire.name,
+      shownId: hire.shownId,
+      position: hire.position,
       firstDay: `${hire.expected}-01`,
-      filled: hire.filledBy !== null,
+      dated: hire.dated,
+      filledBy: hire.filledBy,
       removing: removing.has(id),
     });
   }
@@ -497,20 +496,30 @@ async function readDisbandedMonths(
   return disbanded;
 }
 
-// The planned hires among those a team names, each named and described as its details show it, to
+// The planned hires among those a team names, each named and described as its details show it to
 // the reader, General as their names on the team are.
 function hiresNamed(
   names: Record<string, string>,
-  hires: ReadonlyMap<string, HireRead>,
-  sight: TeamSight,
+  everyone: Everyone,
+  { keys, positionTier }: { keys: KeyNumbers; positionTier: Tier },
+  fillerSight: FillerSight,
 ): Pick<FeatureTeam, "names" | "hires"> {
   const seen = Object.keys(names)
     .sort()
     .flatMap((id) => {
-      const hire = hires.get(id);
-      return hire === undefined
-        ? []
-        : [[id, hireOnTeamSeen(hire, sight)] as const];
+      const hire = everyone.get(id);
+      return hire?.kind === "planned-hire"
+        ? [
+            [
+              id,
+              hireOnTeamSeen(
+                hire,
+                { keyNumber: keyNumberOf(keys, id), positionTier },
+                fillerSight,
+              ),
+            ] as const,
+          ]
+        : [];
     });
   return {
     names: {
@@ -523,49 +532,6 @@ function hiresNamed(
           hires: Object.fromEntries(seen.map(([id, { hire }]) => [id, hire])),
         }),
   };
-}
-
-// The planned hires given, as a team's details name them, with the month each is expected as of a
-// day.
-async function readHiresOnTeams(
-  reader: Reader,
-  ids: readonly string[],
-  day: string,
-): Promise<Map<string, HireRead>> {
-  const found = new Map<string, HireRead>();
-  if (ids.length === 0) return found;
-  const positionTier = await builtInTier(reader, "positions");
-  const keys = await readKeyNumbers(reader, "hire");
-  for (const chunk of inChunks([...new Set(ids)])) {
-    for (const hire of await reader
-      .select({
-        id: plannedHires.id,
-        name: plannedHires.name,
-        requisition: plannedHires.requisition,
-        temporaryNumber: plannedHires.temporaryNumber,
-        position: listItems.label,
-        targetDate: plannedHires.targetDate,
-        filledBy: plannedHires.filledBy,
-        fillerStart: people.startDate,
-      })
-      .from(plannedHires)
-      .innerJoin(listItems, eq(listItems.id, plannedHires.positionId))
-      .leftJoin(people, eq(people.id, plannedHires.filledBy))
-      .where(inArray(plannedHires.id, chunk))) {
-      const { requisition, temporaryId } = hireIdOf(hire);
-      found.set(hire.id, {
-        name: hire.name,
-        shownId: String(requisition ?? temporaryId),
-        position: hire.position,
-        positionTier,
-        keyNumber: keyNumberOf(keys, hire.id),
-        expected: expectedMonth(hire, day),
-        undated: undatedMark(hire).undated === true,
-        filledBy: hire.filledBy,
-      });
-    }
-  }
-  return found;
 }
 
 // The days the planned hires on a team, as approved, joined it, and the day one leading it started
@@ -649,7 +615,7 @@ export async function readFeatureTeams(
         const after = draftedOn(before, teamToday, draft);
         return { id, before, teamToday, draft, after, team: after ?? before };
       });
-      const named = await readMembers(
+      const everyone = await readMembers(
         transaction,
         versions.flatMap(({ team, before, teamToday }) => [
           ...peopleNamed(team),
@@ -658,20 +624,27 @@ export async function readFeatureTeams(
         ]),
         employmentDay,
       );
-      const hires = await readHiresOnTeams(
-        transaction,
-        [...named].flatMap(([id, { kind }]) =>
-          kind === "planned-hire" ? [id] : [],
+      const hireIds = [...everyone].flatMap(([id, { kind }]) =>
+        kind === "planned-hire" ? [id] : [],
+      );
+      const hireNaming = {
+        keys: await readKeyNumbers(transaction, "hire", hireIds),
+        positionTier: await builtInTier(transaction, "positions"),
+      };
+      // Those who fill the hires, kept apart from those the teams name, and judged as they are.
+      const fillers = teamSight(
+        actor,
+        await readMembers(
+          transaction,
+          [...everyone.values()].flatMap((member) =>
+            member.kind === "planned-hire" && member.filledBy !== null
+              ? [member.filledBy]
+              : [],
+          ),
+          employmentDay,
         ),
-        employmentDay,
+        { day, today },
       );
-      // Those who fill the hires, judged as anyone on a team is, to name them only to those who see them.
-      const fillers = await readMembers(
-        transaction,
-        [...hires.values()].flatMap(({ filledBy }) => filledBy ?? []),
-        employmentDay,
-      );
-      const everyone = new Map([...fillers, ...named]);
       const sight = teamSight(actor, everyone, { day, today });
       const { shown } = sight;
       // Disbanded months are worked out from the days members leave.
@@ -703,7 +676,7 @@ export async function readFeatureTeams(
               leadId: shown(team.leadId) ? team.leadId : null,
               colour: knownColour(live.colours.get(id)),
               members,
-              ...hiresNamed(names, hires, sight),
+              ...hiresNamed(names, everyone, hireNaming, fillers),
               ...hireDaysOn(team, before, live.since.get(id), sight),
               ...(disbanded.has(id)
                 ? { disbandedFrom: disbanded.get(id) }

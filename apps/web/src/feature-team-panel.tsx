@@ -174,7 +174,7 @@ const colourColumn = {
   required: false,
 } as const satisfies Parameters<typeof Row>[0]["column"];
 
-// The planned hires on a team, shown under its members, changed with them.
+// The planned hires on a team, changed in its Members row, so with no pencil of their own.
 const plannedHiresColumn = {
   key: "plannedHires",
   label: "Planned hires",
@@ -184,8 +184,6 @@ const plannedHiresColumn = {
   required: false,
 } as const satisfies Parameters<typeof Row>[0]["column"];
 
-// Someone on a team as the panel's first line for them names them: a person by name; a planned hire
-// by its name, in grey italics where made from its position and ID, then its key.
 function MemberName({ person }: { person: TeamPerson }) {
   const { name, hire } = person;
   if (hire === undefined) return name;
@@ -197,9 +195,7 @@ function MemberName({ person }: { person: TeamPerson }) {
   );
 }
 
-// A planned hire on two lines: the first as given, such as its name with a draft's mark, then, small
-// and dimmed, when it starts, set in under the name past the dot of the draft marking the first line,
-// where the view shows one.
+// The second line starts under the name, so it sets in past the dot that hangs before the first.
 function HireEntry({
   hire,
   marked,
@@ -211,6 +207,7 @@ function HireEntry({
 }) {
   const show = useDraftView();
   const { draft: shown } = viewedDraft(marked, show);
+  /* v8 ignore next 5 -- screen layout: only how far the line under a dot is set in */
   const setIn = !marksIn(marked, show)
     ? ""
     : shown?.state === "rejected"
@@ -232,47 +229,94 @@ interface MemberMark {
   by: DraftLike;
 }
 
-// Those on a team the panel lists, one to an item, each with what a draft does to them, if anything:
-// people by name, or planned hires, on two lines each, by when they start.
-function MemberList({
+type MarkOf = ((personId: string) => MemberMark | undefined) | undefined;
+
+function PeopleList({
   members,
   personOf,
   markOf,
-  hires = false,
 }: {
   members: readonly string[];
   personOf: (personId: string) => TeamPerson;
-  markOf?: ((personId: string) => MemberMark | undefined) | undefined;
-  hires?: boolean;
+  markOf: MarkOf;
 }) {
-  const listed = members.map((personId) => ({
-    personId,
-    person: personOf(personId),
-  }));
-  const people = listed
-    .filter(({ person }) => person.hire === undefined)
+  const sorted = members
+    .map((personId) => ({ personId, person: personOf(personId) }))
     .sort((a, b) => byName.compare(a.person.name, b.person.name));
-  const planned = listed
-    .flatMap(({ personId, person: { name, hire } }) =>
-      hire === undefined ? [] : [{ personId, name, hire }],
-    )
-    .sort(plannedHireOrder);
-  const named = (personId: string, person: TeamPerson) =>
-    markOf?.(personId)?.named ?? <MemberName person={person} />;
   return (
-    <ul className={hires ? classes.spacedList : classes.reports}>
-      {hires
-        ? planned.map(({ personId, name, hire }) => (
-            <li key={personId}>
-              <HireEntry hire={hire} marked={markOf?.(personId)?.by}>
-                {named(personId, { name, hire })}
-              </HireEntry>
-            </li>
-          ))
-        : people.map(({ personId, person }) => (
-            <li key={personId}>{named(personId, person)}</li>
-          ))}
+    <ul className={classes.reports}>
+      {sorted.map(({ personId, person }) => (
+        <li key={personId}>
+          {markOf?.(personId)?.named ?? <MemberName person={person} />}
+        </li>
+      ))}
     </ul>
+  );
+}
+
+function HireList({
+  hires,
+  markOf,
+}: {
+  hires: readonly { personId: string; name: string; hire: TeamHire }[];
+  markOf: MarkOf;
+}) {
+  return (
+    <ul className={classes.spacedList}>
+      {[...hires].sort(plannedHireOrder).map(({ personId, name, hire }) => {
+        const mark = markOf?.(personId);
+        return (
+          <li key={personId}>
+            <HireEntry hire={hire} marked={mark?.by}>
+              {mark?.named ?? <MemberName person={{ name, hire }} />}
+            </HireEntry>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+// A team's Members row lists its people alone; its planned hires, changed there too, have a row of
+// their own under it while it has any.
+function MemberRows({
+  column,
+  members,
+  personOf,
+  markOf,
+  changed,
+  editing,
+}: {
+  column: Column<FeatureTeam, TeamChange>;
+  members: readonly string[];
+  personOf: (personId: string) => TeamPerson;
+  markOf: MarkOf;
+  changed?: Parameters<typeof Row>[0]["changed"];
+  editing: Parameters<typeof Row>[0]["editing"];
+}) {
+  const people = members.filter(
+    (personId) => personOf(personId).hire === undefined,
+  );
+  const hires = members.flatMap((personId) => {
+    const { name, hire } = personOf(personId);
+    return hire === undefined ? [] : [{ personId, name, hire }];
+  });
+  return (
+    <>
+      <Row column={column} value={people} changed={changed} editing={editing}>
+        {people.length === 0 ? undefined : (
+          <PeopleList members={people} personOf={personOf} markOf={markOf} />
+        )}
+      </Row>
+      {hires.length > 0 && (
+        <Row
+          column={plannedHiresColumn}
+          value={hires.map(({ personId }) => personId)}
+        >
+          <HireList hires={hires} markOf={markOf} />
+        </Row>
+      )}
+    </>
   );
 }
 
@@ -381,15 +425,13 @@ function NewFeatureTeamPanel({
           value={entered.leadId}
           editing={editing(columns.leadId)}
         />
-        <Row
+        <MemberRows
           column={columns.members}
-          value={members}
+          members={members}
+          personOf={personOf}
+          markOf={undefined}
           editing={editing(columns.members)}
-        >
-          {members.length === 0 ? undefined : (
-            <MemberList members={members} personOf={personOf} />
-          )}
-        </Row>
+        />
       </RecordSection>
     </NewRecordPanel>
   );
@@ -500,9 +542,6 @@ function TeamDetails({
     };
   };
   const members = [...shown.members, ...leaving];
-  const isHire = (personId: string) => personOf(personId).hire !== undefined;
-  const peopleOn = members.filter((personId) => !isHire(personId));
-  const hires = members.filter(isHire);
   const markOf =
     draft === undefined
       ? undefined
@@ -594,32 +633,16 @@ function TeamDetails({
                 </HireEntry>
               )}
             </Row>
-            <Row
+            <MemberRows
               column={columns.members}
-              value={peopleOn}
+              members={members}
+              personOf={personOf}
+              markOf={markOf}
               changed={
                 membersDraft === undefined ? undefined : { draft: membersDraft }
               }
               editing={editing(columns.members)}
-            >
-              {peopleOn.length === 0 ? undefined : (
-                <MemberList
-                  members={peopleOn}
-                  personOf={personOf}
-                  markOf={markOf}
-                />
-              )}
-            </Row>
-            {hires.length > 0 && (
-              <Row column={plannedHiresColumn} value={hires}>
-                <MemberList
-                  members={hires}
-                  personOf={personOf}
-                  markOf={markOf}
-                  hires
-                />
-              </Row>
-            )}
+            />
           </RecordSection>
           {changes && (
             <Group gap="xs">

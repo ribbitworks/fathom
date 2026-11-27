@@ -50,11 +50,8 @@ export const featureTeamDraftSchema = z.object({
 
 export type FeatureTeamDraft = z.infer<typeof featureTeamDraftSchema>;
 
-// A planned hire on a team, as its details show it: its key; the ID its name is made from, with its
-// position, when it has no name of its own; the month it's expected, which comes from no date when
-// it has no target date; and, once filled, the person who fills it and the day they start, to
-// readers who see them. A reader who doesn't see that person sees the hire as not yet filled, as its
-// placeholder shows it.
+// Who fills a hire is sent only to readers who see Personal details, since it reveals a reporting
+// line to come; to others the hire is not yet filled, as its placeholder is.
 export const teamHireSchema = z.object({
   keyNumber: keyNumberSchema,
   shownId: z.string().optional(),

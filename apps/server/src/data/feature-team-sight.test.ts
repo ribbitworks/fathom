@@ -3,7 +3,11 @@
 // Unit tests for what a reader sees of a feature team, by role and data class: whom of its people,
 // which of its fields and days, and which drafts.
 
-import { defaultClasses } from "@fathom/shared";
+import {
+  type ClassAccess,
+  defaultClasses,
+  type FeatureTeam,
+} from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   draftedOn,
@@ -12,9 +16,9 @@ import {
   featureTeamTier,
   hireLeadDaySeen,
   hireOnTeamSeen,
-  type HireRead,
   type LeadRecord,
   leadRunOf,
+  namesFillerAbovePersonal,
   namesSeen,
   peopleAsTodayOn,
   peopleDraftChanges,
@@ -24,7 +28,7 @@ import {
   teamSight,
   withoutLeavers,
 } from "./feature-team-sight.ts";
-import { someone } from "./test-feature-team-people.ts";
+import { plannedHire, someone } from "./test-feature-team-people.ts";
 import {
   chartOnly,
   draftOf,
@@ -529,39 +533,45 @@ describe("the day a planned hire leading a team started to", () => {
 });
 
 describe("a planned hire as a team's details name it", () => {
-  const open: HireRead = {
+  const open = plannedHire({
     name: "Fictional Data Engineer",
     shownId: "REQ-FICTIONAL-9",
     position: "Fictional Engineer",
-    positionTier: "general",
-    keyNumber: 9,
-    expected: "2027-03",
-    undated: false,
-    filledBy: null,
-  };
-  const seenBy = (access: typeof workforceAdministrator) =>
-    teamSight(access, everyone, { day: today, today });
+    firstDay: "2027-03-01",
+  });
+  const naming = { keyNumber: 9, positionTier: "general" as const };
+  const undatedStarter = "person-no-start";
+  const fillers = new Map([
+    ...everyone,
+    [
+      undatedStarter,
+      someone({ preferredName: "Fictional Undated", startDate: null }),
+    ],
+  ]);
+  const seenBy = (access: ClassAccess, day = today) =>
+    teamSight(access, fillers, { day, today });
 
   it("names one with a name of its own by it, with its key and the month it's expected", () => {
-    expect(hireOnTeamSeen(open, seenBy(teamMember))).toEqual({
+    expect(hireOnTeamSeen(open, naming, seenBy(teamMember))).toEqual({
       name: "Fictional Data Engineer",
       hire: { keyNumber: 9, expected: "2027-03" },
     });
   });
 
   it("names one with no name of its own by its position and ID, giving the ID", () => {
-    expect(hireOnTeamSeen({ ...open, name: null }, seenBy(teamMember))).toEqual(
-      {
-        name: "Fictional Engineer, REQ-FICTIONAL-9",
-        hire: { keyNumber: 9, shownId: "REQ-FICTIONAL-9", expected: "2027-03" },
-      },
-    );
+    expect(
+      hireOnTeamSeen({ ...open, name: null }, naming, seenBy(teamMember)),
+    ).toEqual({
+      name: "Fictional Engineer, REQ-FICTIONAL-9",
+      hire: { keyNumber: 9, shownId: "REQ-FICTIONAL-9", expected: "2027-03" },
+    });
   });
 
-  it("names one by its ID alone to a reader who doesn't see its position", () => {
+  it("names one by its ID alone to a reader who doesn't see its position's class", () => {
     expect(
       hireOnTeamSeen(
-        { ...open, name: null, positionTier: "confidential" },
+        { ...open, name: null },
+        { ...naming, positionTier: "confidential" },
         seenBy(teamMember),
       ).name,
     ).toBe("REQ-FICTIONAL-9");
@@ -569,29 +579,93 @@ describe("a planned hire as a team's details name it", () => {
 
   it("says when its month comes from no target date", () => {
     expect(
-      hireOnTeamSeen({ ...open, undated: true }, seenBy(teamMember)).hire,
+      hireOnTeamSeen({ ...open, dated: false }, naming, seenBy(teamMember))
+        .hire,
     ).toEqual({ keyNumber: 9, expected: "2027-03", undated: true });
   });
 
-  it("names who fills it, and the day they start, to a reader who sees both", () => {
+  it("names who fills it, and the day they start, to a reader who sees Personal details", () => {
     expect(
       hireOnTeamSeen(
         { ...open, filledBy: starter },
+        naming,
         seenBy(workforceAdministrator),
       ).hire.filledBy,
     ).toEqual({ name: "Fictional Starter", starts: "2099-01-01" });
   });
 
-  it("names who fills it without the day they start to a reader who sees them but not start dates", () => {
+  it("names who fills it alone when they have no start date", () => {
     expect(
-      hireOnTeamSeen({ ...open, filledBy: member }, seenBy(teamMember)).hire
-        .filledBy,
-    ).toEqual({ name: "Fictional Member" });
+      hireOnTeamSeen(
+        { ...open, filledBy: undatedStarter },
+        naming,
+        seenBy(workforceAdministrator),
+      ).hire.filledBy,
+    ).toEqual({ name: "Fictional Undated" });
   });
 
-  it("shows it not yet filled to a reader who doesn't see who fills it, as its placeholder is", () => {
+  it.each([
+    [
+      "a reader without Personal details, though they started",
+      member,
+      teamMember,
+      today,
+    ],
+    ["any reader once they have left", leaver, workforceAdministrator, today],
+    [
+      "a reader shown people as they are today on a later day, before they start",
+      starter,
+      personalOnly,
+      "2100-01-01",
+    ],
+  ])("shows it not yet filled to %s", (_, filler, access, day) => {
     expect(
-      hireOnTeamSeen({ ...open, filledBy: starter }, seenBy(teamMember)).hire,
+      hireOnTeamSeen({ ...open, filledBy: filler }, naming, seenBy(access, day))
+        .hire,
     ).toEqual({ keyNumber: 9, expected: "2027-03" });
+  });
+});
+
+describe("whether naming who fills a hire is recorded as a view of Personal details", () => {
+  const withFiller = [
+    {
+      hires: {
+        hire: {
+          keyNumber: 1,
+          expected: "2027-03",
+          filledBy: { name: "Fictional Starter" },
+        },
+      },
+    },
+  ] as unknown as FeatureTeam[];
+  const withoutFiller = [
+    { hires: { hire: { keyNumber: 1, expected: "2027-03" } } },
+    {},
+  ] as unknown as FeatureTeam[];
+
+  it.each([
+    [
+      "is recorded while start dates are above General",
+      workforceAdministrator,
+      withFiller,
+      true,
+    ],
+    [
+      "isn't while start dates are General",
+      {
+        ...workforceAdministrator,
+        dataClasses: { ...defaultClasses, startDate: "general" as const },
+      },
+      withFiller,
+      false,
+    ],
+    [
+      "isn't when no one is named",
+      workforceAdministrator,
+      withoutFiller,
+      false,
+    ],
+  ])("%s", (_, access, teams, recorded) => {
+    expect(namesFillerAbovePersonal(access, teams)).toBe(recorded);
   });
 });
