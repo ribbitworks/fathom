@@ -486,6 +486,13 @@ function TypedInput({
   return (
     <input
       {...input}
+      // Focus comes as the editor is drawn, before another key can arrive: one typed in the moment
+      // between, such as straight after Tab opens the next cell, would otherwise go nowhere.
+      autoFocus
+      onFocus={(event) => {
+        const { length } = event.currentTarget.value;
+        event.currentTarget.setSelectionRange(length, length);
+      }}
       value={value}
       autoComplete="off"
       onChange={(event) => {
