@@ -125,7 +125,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - One row is shown, whose **Record** reads 'Platform reliability', with **Type** "Feature team".
     - Its **What changes** sets **Feature lead** to "Polly Smith".
     - Its **What changes** adds "Rosendo Champlin" to **Members**.
-    - Its **Made by** reads "Feature Lead as Feature Lead".
+    - Its **Made by** reads "Feature Lead".
   - **Notes:**
 
 - [ ] `D2E4` Tick that row's tick box.

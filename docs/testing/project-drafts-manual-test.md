@@ -340,7 +340,7 @@ To run the test again after finishing it, start from Reset the Database, since t
       - `Testing Proposal`, with **Type** "Proposal"
       - `TP-1 Testing Project`, with **Type** "Project"
       - `Pilot of TP-1 Testing Project`, `Go live of TP-1 Testing Project` and `Sign-off of TP-1 Testing Project`, each with **Type** "Milestone"
-    - Each row's **Made by** reads "Product Manager as Product Manager".
+    - Each row's **Made by** reads "Product Manager".
     - Each row has a tick box.
   - **Notes:**
 

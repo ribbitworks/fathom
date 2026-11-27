@@ -315,7 +315,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - A row's **Record** reads `Scheduler Service`.
     - After it, a grey box reads "Needs another approver".
-    - Its **Made by** reads "Project Manager as Project Manager".
+    - Its **Made by** reads "Project Manager".
   - **Notes:**
 
 - [ ] `B553` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.

@@ -103,33 +103,44 @@ const choicesMark = (original: List, leaveOutRejected: boolean) =>
 
 // The row's draft, for its marks: the list's own, with its choices when their drafts change them, or,
 // when only its choices or their order have drafts, one standing for those, credited to whoever
-// changed them last.
+// changed them last. Beside the list's own, that one marks the choices, so they show their drafts'
+// state, not the list's.
 function rowDraft(
   original: List,
   live: ListValues,
   leaveOutRejected: boolean,
-): ListRow["draft"] {
+): Pick<ListRow, "draft" | "cellDrafts"> {
   const keeps = counted(leaveOutRejected);
   const parts = choicesMark(original, leaveOutRejected);
-  const choices = parts === undefined ? [] : ["choices"];
-  if (keeps(original.draft)) {
-    const own = withRetiring({ ...original, draft: original.draft });
-    return { ...own, changed: [...own.changed, ...choices], live };
+  if (parts === undefined) {
+    return keeps(original.draft)
+      ? {
+          draft: {
+            ...withRetiring({ ...original, draft: original.draft }),
+            live,
+          },
+        }
+      : {};
   }
-  if (parts === undefined) return undefined;
   const drafts = [
     ...original.choices.map(({ draft }) => draft),
     original.orderDraft,
   ].filter(keeps);
   const last = latestDraft(drafts);
-  return {
+  const choices: NonNullable<ListRow["draft"]> = {
     action: "changed",
     state: parts.state,
-    changed: choices,
+    changed: ["choices"],
     madeBy: last?.madeBy ?? null,
     madeAs: last?.madeAs,
     unpublished: drafts.every(({ unpublished }) => unpublished === true),
     live,
+  };
+  if (!keeps(original.draft)) return { draft: choices };
+  const own = withRetiring({ ...original, draft: original.draft });
+  return {
+    draft: { ...own, changed: [...own.changed, "choices"], live },
+    cellDrafts: new Map([["choices", choices]]),
   };
 }
 
@@ -147,7 +158,7 @@ export function listRows(lists: readonly List[], show: Show): ListRow[] {
       id: original.id,
       ...values,
       heldBy: original.heldBy,
-      draft: rowDraft(
+      ...rowDraft(
         original,
         live === undefined ? values : valuesOf(live),
         leaveOutRejected,
@@ -166,6 +177,7 @@ const liveRows = (rows: readonly ListRow[]): ListRow[] =>
       ...row,
       ...valuesOf(list),
       draft: undefined,
+      cellDrafts: undefined,
       list,
       live: true,
     })),

@@ -31,6 +31,11 @@ describe("nameAs", () => {
     expect(nameAs("Fictional Person", null)).toBe("Fictional Person");
     expect(nameAs("Fictional Person", undefined)).toBe("Fictional Person");
   });
+
+  it("names the role once when the account is named after it", () => {
+    expect(nameAs("Feature Lead", "Feature Lead")).toBe("Feature Lead");
+    expect(nameAs("feature lead ", "Feature Lead")).toBe("feature lead ");
+  });
 });
 
 describe("makerNames", () => {

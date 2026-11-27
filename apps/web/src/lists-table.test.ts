@@ -115,6 +115,23 @@ describe("the rows of lists", () => {
     expect(row.draft?.changed).toEqual(["name", "choices"]);
   });
 
+  it("marks its choices with their own drafts' state, apart from a list's own rejected draft", () => {
+    const row = rowOf(
+      list("l1", {
+        draft: renamed("rejected"),
+        choices: [
+          choice("c1", "Northmere", {
+            draft: addedChoice("Fictional Editor", "2026-11-01T11:00:00.000Z"),
+          }),
+        ],
+      }),
+    );
+    expect([row.draft?.state, row.cellDrafts?.get("choices")?.state]).toEqual([
+      "rejected",
+      "waiting",
+    ]);
+  });
+
   it("says when a list's own draft retires it", () => {
     const row = rowOf(
       list("l1", {

@@ -363,7 +363,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Its **What changes** changes **Members**:
       - from "Bilwa Iyer, Fulcran Deschamps, Gloria Armas Guardado, Polly Smith, Thad Heidenreich, Valéry Caron"
       - to "Bilwa Iyer, Fulcran Deschamps, Gloria Armas Guardado, Polly Smith, Rosendo Champlin, Valéry Caron"
-    - Its **Made by** reads "Engineering Manager as Engineering Manager".
+    - Its **Made by** reads "Engineering Manager".
   - **Notes:**
 
 - [ ] `B5F5` Tick that row's tick box.

@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Drafts, Values and Access
@@ -40,8 +40,9 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 - **A changed value:** Each value a draft changes has the draft's dot before it, and is semibold while drafts show beside live.
   - **Emptied or filled:** Where a draft empties a value, or fills an empty one, the empty side shows its words for none in grey italics, such as No start, in tables and panels alike. Where a warning stands in that side's place, it shows instead, as [A draft emptying or filling the value](#values) sets out.
   - **Another record's draft:** A value another record's draft changes, such as a cycle's Release that its release's draft renames, has that draft's dot, in that draft's state, whatever its row's draft is.
-  - **Drawn by:** `DraftedValue` and `EmptiedValue` in `apps/web/src/status-mark.tsx`, with `changedValue` in `apps/web/src/draft-marks.ts`; the table's rows in `apps/web/src/grid-row.tsx` in a table, with a row's `cellDrafts` in `apps/web/src/record-table.ts` for values another record's draft changes, and `Row` in `apps/web/src/record-details.tsx` in a panel.
-  - **Example:** 西尾 亮's End and Grade on People.
+  - **A renamed choice:** In a table, a value holding a choice a draft renames has the rename's dot, its tip naming the choice's live name, and is semibold beside live, though its row has no draft. Where its record's draft changes the value, that draft's dot marks it instead.
+  - **Drawn by:** `DraftedValue` and `EmptiedValue` in `apps/web/src/status-mark.tsx`, with `changedValue` in `apps/web/src/draft-marks.ts`; the table's rows in `apps/web/src/grid-row.tsx` in a table, with a row's `cellDrafts` in `apps/web/src/record-table.ts` for values another record's draft changes, `choiceRenamings` and `renamedValue` in `apps/web/src/grid-drafts.ts` for a renamed choice, and `Row` in `apps/web/src/record-details.tsx` in a panel.
+  - **Example:** 西尾 亮's End and Grade on People; Northmere Labs in People's Site column.
 - **A removal:** A record a draft removes is struck through after its dot. It can't be changed until the draft is discarded or decided.
   - **Drawn by:** `draftRowClass` in `apps/web/src/list-drafts.tsx`, with the row of the table or panel that holds it.
   - **Example:** Salvador Quiñones Méndez on People.
@@ -67,8 +68,9 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Example:** Grade on People, with Level under it.
 - **Tints:** Only beside live, a row, column or org chart card with a draft is faint yellow, or faint red once rejected, and a Live row is light green. Each is darker in the dark scheme, so its text stays readable.
   - **One tint to a row:** A tinted row has its own tint in every cell, where it crosses a tinted column too.
-  - **Drawn by:** `draftRowClass` in `apps/web/src/list-drafts.tsx`, `RecordGrid`, and the org chart's cards, with the colours from `apps/web/src/theme.ts`.
-  - **Example:** Vianney Rousseau's row on People.
+  - **A row's state:** A row whose values other drafts mark, such as a list's choices, is yellow while any of its drafts waits, and red only once every one was rejected, as [A record's parts](#drafts) marks them.
+  - **Drawn by:** `draftRowClass` in `apps/web/src/list-drafts.tsx`, `RecordGrid` with `rowState` in `apps/web/src/grid-drafts.ts`, and the org chart's cards, with the colours from `apps/web/src/theme.ts`.
+  - **Example:** Vianney Rousseau's row on People; Positions on the Lists page, yellow for its choices' waiting drafts, with its rejected description in red.
 - **A table of drafts:** On the Drafts page, where every row is a draft, the dot in a row's slot is the row's only mark: no tints, semibold, strike-through or Live rows. The row isn't read aloud as a draft, since every row is one. This is a recorded exception to Tints and A removal.
   - **Drawn by:** A table's `slotMarksOnly` in `apps/web/src/record-table.ts`.
   - **Example:** Salvador Quiñones Méndez's removal on the Drafts page's All drafts tab, its name not struck through.
