@@ -20,8 +20,12 @@ export const plannedHire = (
 ): PlannedHire => ({
   kind: "planned-hire",
   preferredName: "Fictional Planned Hire",
+  name: "Fictional Planned Hire",
+  shownId: "REQ-FICTIONAL-1",
+  position: "Fictional Engineer",
   firstDay: "2026-06-01",
-  filled: false,
+  dated: true,
+  filledBy: null,
   removing: false,
   ...details,
 });

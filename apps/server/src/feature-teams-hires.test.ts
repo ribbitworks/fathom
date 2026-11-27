@@ -87,51 +87,6 @@ describe("a planned hire on a team", () => {
     }
   });
 
-  it("gives each planned hire on it what its details show, naming who fills one only to readers who see them", async () => {
-    // Given a team with a hire with no name or target date, and a hire filled by someone who starts later
-    const unnamed = await plannedHire({
-      name: null,
-      requisition: "REQ-FICTIONAL-72",
-      targetDate: null,
-    });
-    const filled = await plannedHire({ name: "Fictional Filled Hire" });
-    const id = await liveTeam();
-    await hireOnTeam(id, unnamed);
-    await hireOnTeam(id, filled);
-    const joiner = await person({
-      preferredName: "Fictional Joiner",
-      startDate: "2026-09-01",
-    });
-    await test.connection
-      .update(plannedHires)
-      .set({ filledBy: joiner })
-      .where(eq(plannedHires.id, filled));
-
-    // When a reader who sees Personal details, and one who doesn't, read it
-    const seen = await teamSeen(id, editor);
-    const unseen = await teamSeen(id, planner);
-
-    // Then each hire comes with its name, key, ID and month, and the filled one with its person
-    // only for the reader who sees them
-    const seenHires = new Map(Object.entries(seen?.hires ?? {}));
-    expect(new Map(Object.entries(seen?.names ?? {})).get(unnamed)).toBe(
-      "Fictional Engineer, REQ-FICTIONAL-72",
-    );
-    expect(seenHires.get(unnamed)).toMatchObject({
-      shownId: "REQ-FICTIONAL-72",
-      expected: "2026-06",
-      undated: true,
-    });
-    expect(seenHires.get(filled)).toMatchObject({
-      expected: "2026-09",
-      filledBy: { name: "Fictional Joiner", starts: "2026-09-01" },
-    });
-    expect(typeof seenHires.get(filled)?.keyNumber).toBe("number");
-    const unseenHire = new Map(Object.entries(unseen?.hires ?? {})).get(filled);
-    expect(unseenHire?.expected).toBe("2026-09");
-    expect(unseenHire?.filledBy).toBeUndefined();
-  });
-
   it("gives the day each planned hire on it joined, since its last leave and over a repeated join, and the day one leading it started, over a repeated lead", async () => {
     // Given a hire that left the team and came back, a hire leading it, and a person
     const returning = await plannedHire({ name: "Fictional Returning Hire" });
@@ -302,6 +257,9 @@ describe("who sees a planned hire on a team", () => {
   // A team a person led until another hire took over.
   let takenOver: string;
   let takingOver: string;
+  // A team with a hire filled by someone who starts later.
+  let filledTeam: string;
+  let filled: string;
 
   beforeAll(async () => {
     hire = await plannedHire({ name: "Fictional Seen Hire" });
@@ -313,6 +271,17 @@ describe("who sees a planned hire on a team", () => {
     await hireOnTeam(takenOver, takingOver, { fromDate: "2026-03-01" });
     await personLeading(takenOver, lead, "2026-03-01");
     await hireLeading(takenOver, takingOver, "2026-04-01");
+    filled = await plannedHire();
+    filledTeam = await liveTeam();
+    await hireOnTeam(filledTeam, filled);
+    const joiner = await person({
+      preferredName: "Fictional Joiner",
+      startDate: "2026-09-01",
+    });
+    await test.connection
+      .update(plannedHires)
+      .set({ filledBy: joiner })
+      .where(eq(plannedHires.id, filled));
   });
 
   it.each(roles.map((role) => [role]))(
@@ -351,6 +320,29 @@ describe("who sees a planned hire on a team", () => {
       expect(seen?.leadId).toBe(takingOver);
       expect(seen?.hireLeadFrom).toBe(
         seesTeamDates.has(role) ? "2026-04-01" : undefined,
+      );
+    },
+  );
+
+  it.each(roles.map((role) => [role]))(
+    "names to the %s who fills a hire on a team, and the day they start, only with Personal details",
+    async (role) => {
+      const who = await test.signedIn(role);
+      const response = await send(who, "GET", "/api/feature-teams");
+
+      if (!seesTeams.has(role)) {
+        expect(response.statusCode).toBe(403);
+        return;
+      }
+      const seen = (await ok<{ teams: FeatureTeam[] }>(response)).teams.find(
+        ({ id }) => id === filledTeam,
+      );
+      const hire = new Map(Object.entries(seen?.hires ?? {})).get(filled);
+      expect(hire?.expected).toBe("2026-09");
+      expect(hire?.filledBy).toEqual(
+        seesTeamDates.has(role)
+          ? { name: "Fictional Joiner", starts: "2026-09-01" }
+          : undefined,
       );
     },
   );

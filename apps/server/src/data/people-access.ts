@@ -35,6 +35,7 @@ import * as hireReads from "./hire-reads.ts";
 import * as fills from "./fills.ts";
 import * as featureTeamData from "./feature-teams.ts";
 import { readFeatureTeams } from "./feature-team-reads.ts";
+import { namesFillerAbovePersonal } from "./feature-team-sight.ts";
 import { changeMemberTeams } from "./feature-team-month-cells.ts";
 import { readTeamMonths } from "./team-months.ts";
 import { recordPersonalView } from "./history.ts";
@@ -156,16 +157,7 @@ export function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
                 disbandedFrom !== undefined,
             )
           : seesField(actor, "featureTeamDates"));
-      // So is naming who fills a planned hire, someone not yet started, while start dates are above
-      // General.
-      const sawFiller =
-        actor.dataClasses.startDate !== "general" &&
-        read.teams.some(({ hires }) =>
-          Object.values(hires ?? {}).some(
-            ({ filledBy }) => filledBy !== undefined,
-          ),
-        );
-      if (sawDays || sawFiller) {
+      if (sawDays || namesFillerAbovePersonal(actor, read.teams)) {
         await recordPersonalView(
           database,
           actor.user.id,

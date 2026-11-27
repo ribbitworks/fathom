@@ -6,6 +6,7 @@
 import {
   type Database,
   inChunks,
+  listItems,
   people,
   plannedHires,
   type Reader,
@@ -459,12 +460,18 @@ export function hireRow(
 
 export interface HireFacts {
   expected: string;
+  // Whether a date gives the month it is expected, rather than its standing in for today.
+  dated: boolean;
   filledBy: string | null;
   called: string;
+  name: string | null;
+  shownId: string;
+  position: string;
 }
 
 // The planned hires given, with what the rules need: the month each is expected, whether it is
-// filled, and what it is called where its position is not shown.
+// filled, and what it is called where its position is not shown, and its name, ID and position's
+// label, for those who name it as People does.
 export async function hiresOf(
   reader: Reader,
   ids: readonly string[],
@@ -482,8 +489,10 @@ export async function hiresOf(
           targetDate: plannedHires.targetDate,
           filledBy: plannedHires.filledBy,
           fillerStart: people.startDate,
+          position: listItems.label,
         })
         .from(plannedHires)
+        .innerJoin(listItems, eq(listItems.id, plannedHires.positionId))
         .leftJoin(people, eq(people.id, plannedHires.filledBy))
         .where(inArray(plannedHires.id, chunk))),
     );
@@ -491,16 +500,17 @@ export async function hiresOf(
   return new Map(
     rows.map((hire) => {
       const { requisition, temporaryId } = hireIdOf(hire);
+      const shownId = String(requisition ?? temporaryId);
       return [
         hire.id,
         {
           expected: expectedMonth(hire, today),
+          dated: undatedMark(hire).undated !== true,
           filledBy: hire.filledBy,
-          called: hireCalled(
-            hire.name,
-            String(requisition ?? temporaryId),
-            undefined,
-          ),
+          called: hireCalled(hire.name, shownId, undefined),
+          name: hire.name,
+          shownId,
+          position: hire.position,
         },
       ];
     }),

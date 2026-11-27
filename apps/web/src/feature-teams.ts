@@ -4,6 +4,7 @@
 // drafts.
 
 import {
+  byName,
   capitalized,
   type FeatureTeam,
   type FeatureTeamChange,
@@ -135,21 +136,28 @@ export function teamHireWords(hire: TeamHire): string {
     : `Filled by ${filledBy.name}, starts ${formatDay(filledBy.starts)}`;
 }
 
-const byName = new Intl.Collator(undefined, { sensitivity: "base" });
+type HireStart = "filled" | "expected" | "undated";
 
-// Where a planned hire comes by when it starts: filled ones first, then those expected, with no
-// target date last.
-const startRank = ({ filledBy, undated }: TeamHire): number =>
-  filledBy !== undefined ? 0 : undated === true ? 2 : 1;
+// Filled hires first, then those expected, with no target date last.
+const startRank: Record<HireStart, number> = {
+  filled: 0,
+  expected: 1,
+  undated: 2,
+};
+
+const startOf = ({ filledBy, undated }: TeamHire): HireStart => {
+  if (filledBy !== undefined) return "filled";
+  return undated === true ? "undated" : "expected";
+};
 
 // Planned hires on a team by when they start, then by name.
 export const plannedHireOrder = (
   a: { name: string; hire: TeamHire },
   b: { name: string; hire: TeamHire },
 ): number =>
-  startRank(a.hire) - startRank(b.hire) ||
+  startRank[startOf(a.hire)] - startRank[startOf(b.hire)] ||
   a.hire.expected.localeCompare(b.hire.expected) ||
-  byName.compare(a.name, b.name);
+  byName(a, b);
 
 export function teamPersonNamer(
   team: FeatureTeam,

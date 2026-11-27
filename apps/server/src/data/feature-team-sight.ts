@@ -6,8 +6,10 @@
 import {
   type ClassAccess,
   type DataClasses,
+  type FeatureTeam,
   type FeatureTeamDraft,
   hireCalled,
+  monthOf,
   seesClass,
   seesEmployment,
   seesField,
@@ -33,6 +35,7 @@ import {
   memberChanges,
   membersOf,
   notYetStarted,
+  type PlannedHire,
 } from "./feature-team-rules.ts";
 import { text } from "./reporting.ts";
 
@@ -181,7 +184,6 @@ export interface TeamSight {
   everyone: Everyone;
   seesPeople: boolean;
   seesDays: boolean;
-  seesStartDates: boolean;
   seesTier: (tier: Tier) => boolean;
   seen: (field: string) => boolean;
   shown: (personId: unknown) => personId is string;
@@ -197,7 +199,6 @@ export function teamSight(
     everyone,
     seesPeople,
     seesDays: seesField(access, "featureTeamDates"),
-    seesStartDates: seesField(access, "startDate"),
     seesTier: (tier) => seesClass(access.permissions, tier),
     seen: seesTeamField(access),
     shown: seenBy(everyone, seesPeople && !peopleAsTodayOn(access, day, today)),
@@ -347,50 +348,38 @@ export const hireLeadDaySeen = (
 ): string | undefined =>
   run !== undefined && (seesDays || !run.afterPerson) ? run.from : undefined;
 
-// A planned hire a team names, as read for its details: its own name, if any, its ID, its position's
-// label and the Positions list's class, its key, the month it's expected and whether that comes from
-// no date, and who fills it, if anyone does.
-export interface HireRead {
-  name: string | null;
-  shownId: string;
-  position: string;
-  positionTier: Tier;
-  keyNumber: number;
-  expected: string;
-  undated: boolean;
-  filledBy: string | null;
-}
+// Who sees those who fill planned hires, judged as anyone on a team is.
+export type FillerSight = Pick<
+  TeamSight,
+  "everyone" | "seesPeople" | "seesTier" | "shown"
+>;
 
 // A planned hire as a team's details name it, as People does: by its name, or by its position and
-// ID, the position only for a reader who sees the Positions list. Who fills it is named only to a reader who sees them, as People names a person, and the day
-// they start only to one who sees start dates too; to anyone else it shows as not yet filled, as its
-// placeholder does.
+// ID, the position only for a reader who sees the Positions list's class. Who fills it, someone not
+// yet started while the hire is on a team, reveals a reporting line to come, so is named only to a
+// reader who sees Personal details, with the day they start; to anyone else the hire shows as not
+// yet filled, as its placeholder does.
 export function hireOnTeamSeen(
-  hire: HireRead,
-  {
-    everyone,
-    shown,
-    seesStartDates,
-    seesTier,
-  }: Pick<TeamSight, "everyone" | "shown" | "seesStartDates" | "seesTier">,
+  hire: PlannedHire,
+  { keyNumber, positionTier }: { keyNumber: number; positionTier: Tier },
+  { everyone, seesPeople, seesTier, shown }: FillerSight,
 ): { name: string; hire: TeamHire } {
   const filler =
-    hire.filledBy !== null && shown(hire.filledBy)
+    seesPeople && hire.filledBy !== null && shown(hire.filledBy)
       ? everyone.get(hire.filledBy)
       : undefined;
-  const starts =
-    filler?.kind === "person" && seesStartDates ? text(filler.startDate) : null;
+  const starts = filler?.kind === "person" ? text(filler.startDate) : null;
   return {
     name: hireCalled(
       hire.name,
       hire.shownId,
-      seesTier(hire.positionTier) ? hire.position : undefined,
+      seesTier(positionTier) ? hire.position : undefined,
     ),
     hire: {
-      keyNumber: hire.keyNumber,
+      keyNumber,
       ...(hire.name === null ? { shownId: hire.shownId } : {}),
-      expected: hire.expected,
-      ...(hire.undated ? { undated: true as const } : {}),
+      expected: monthOf(hire.firstDay),
+      ...(hire.dated ? {} : { undated: true as const }),
       ...(filler === undefined
         ? {}
         : {
@@ -402,3 +391,14 @@ export function hireOnTeamSeen(
     },
   };
 }
+
+// Whether a reader is told who fills a hire on a team while start dates are above General, a view
+// of Personal details the access history records.
+export const namesFillerAbovePersonal = (
+  access: ClassAccess,
+  teams: readonly FeatureTeam[],
+): boolean =>
+  access.dataClasses.startDate !== "general" &&
+  teams.some(({ hires }) =>
+    Object.values(hires ?? {}).some(({ filledBy }) => filledBy !== undefined),
+  );

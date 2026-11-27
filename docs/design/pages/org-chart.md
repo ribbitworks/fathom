@@ -81,7 +81,7 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
     - **First line:** its name, or its position and ID in grey italics when it has no name of its own, then its key, such as #HIRE-12. Names and keys are plain text.
     - **Second line, small and dimmed:** Expected and its month, such as Expected Oct 2026; No target date; or, once filled, Filled by and its person, then starts and their start date, such as Filled by Fictional joiner, starts Feb 1, 2027.
     - **Order:** filled hires first, then by expected month, with no target date last.
-    - **Filled:** who fills a hire is named only to readers who see that person, and their start date only to readers who see start dates too, so a reader who sees the person but not start dates reads Filled by and the person alone. Any other reader sees the hire as not yet filled, with its Expected month, as its card shows it.
+    - **Filled:** who fills a hire, and the day they start, is named only to readers who see Personal details, since it reveals a reporting line to come; one with no start date reads Filled by and the person alone. Any other reader sees the hire as not yet filled, with its Expected month, as its card shows it.
     - **Feature lead:** a hire leading the team takes the same two lines there, and is also listed under Planned hires, as a person leading it is under Members.
     - **Changing:** Planned hires has no pencil of its own.
     - Like a person, a hire shows no day it joined.

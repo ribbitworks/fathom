@@ -356,7 +356,7 @@ describe("a team's members and lead", () => {
     [joining, someone({ started: false, startDate: "2099-01-01" })],
     [outsider, someone({ left: true, endDate: "2021-06-30" })],
     [hire, plannedHire()],
-    [filledHire, plannedHire({ filled: true })],
+    [filledHire, plannedHire({ filledBy: "person-filler" })],
     [removedHire, plannedHire({ removing: true })],
   ]);
   const refusal = (
