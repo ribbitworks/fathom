@@ -7,6 +7,7 @@ import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { Entry } from "./draft-entries.ts";
+import { targetSelection } from "./draft-targets.ts";
 import { keyColumn } from "./grid-columns.tsx";
 import { emptyView } from "./table-view.ts";
 import { applyView } from "./table-rows.ts";
@@ -38,8 +39,10 @@ const entry = (key: string, more: Partial<Entry> = {}): Entry => ({
   unpublished: false,
   heldBy: undefined,
   needsOtherApprover: false,
+  discardable: false,
+  target: { kind: "person", id: key },
+  selects: targetSelection(more.target ?? { kind: "person", id: key }),
   place: { kind: "person", keyNumber: 1 },
-  selects: { ...noDrafts(), people: [key] },
   ...more,
   decided: more.decided ?? { kind: more.kind ?? "person" },
 });
@@ -278,7 +281,7 @@ describe("the page's tabs", () => {
 describe("the drafts rows name", () => {
   it("are all of theirs together, which deciding a row asks for", () => {
     const rows = draftRows(
-      [entry("p1"), entry("l1", { selects: { ...noDrafts(), lists: ["l1"] } })],
+      [entry("p1"), entry("l1", { target: { kind: "list", listId: "l1" } })],
       reading,
     );
     expect(selectionOf(rows)).toEqual({

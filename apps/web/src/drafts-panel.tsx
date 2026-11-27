@@ -15,6 +15,7 @@ import type { NamedDraft } from "./draft-reading.ts";
 import { placeKey } from "./draft-places.ts";
 import type { DraftRow } from "./drafts-table.tsx";
 import { focusSoon } from "./focus.ts";
+import { usePanelMenu } from "./panel-menu.tsx";
 import { PhraseList } from "./phrase.tsx";
 import type { Column } from "./record-table.ts";
 import {
@@ -124,6 +125,7 @@ export function DraftPanel({
   useEffect(() => {
     focusSoon(titleId);
   }, [row.id]);
+  const menu = usePanelMenu(row.id, row.record);
   const why = whyNot(row, {
     decides: actions !== undefined,
     approves,
@@ -148,6 +150,7 @@ export function DraftPanel({
         </span>
       }
       {...(key === undefined ? {} : { subtitle: <RecordKey record={key} /> })}
+      actions={menu}
       narrow={narrow}
       close={{ label: "Close details", onClose }}
     >

@@ -18,7 +18,7 @@ import { Icon } from "./icons.tsx";
 import { LinkCell } from "./link-field.tsx";
 import { FoldedNote } from "./folded-note.tsx";
 import { focusSoon } from "./focus.ts";
-import { PanelMenu, usePanelMenu } from "./panel-menu.tsx";
+import { usePanelMenu } from "./panel-menu.tsx";
 import { OpenBesideButton } from "./row-controls.tsx";
 import {
   changeId,
@@ -217,16 +217,14 @@ export function RecordPanel({
   useEffect(() => {
     focusSoon(titleId);
   }, [recordId, titleId]);
-  const menu = usePanelMenu(recordId);
+  const menu = usePanelMenu(recordId, title);
   return (
     <SidePanelFrame
       id={id}
       titleId={titleId}
       narrow={narrow}
       title={title}
-      actions={
-        menu === undefined ? undefined : <PanelMenu name={title} items={menu} />
-      }
+      actions={menu}
       marked={(heading) => (
         <DraftedItem draft={draft} heldBy={heldBy} facts={facts}>
           <DraftedValue draft={nameDraft} fields={["name"]} named="Name">

@@ -35,7 +35,8 @@ import {
 import { addedClass, describeField, describeValue } from "./changes.ts";
 import { personDraftFields } from "./draft-details.tsx";
 import type { DraftPlace } from "./draft-places.ts";
-import { type Columns, type DraftSelection, noDrafts } from "./drafts.ts";
+import { type DraftTarget, targetSelection } from "./draft-targets.ts";
+import type { Columns, DraftSelection } from "./drafts.ts";
 import { teamPersonNamer } from "./feature-teams.ts";
 import { liveLists } from "./lists.ts";
 import { makerNames } from "./names.ts";
@@ -93,6 +94,9 @@ export interface Entry {
   heldBy: string | undefined;
   // Changed by this user, whose role does not let them approve their own drafts.
   needsOtherApprover: boolean;
+  // Whether the user may discard it, as the server says.
+  discardable: boolean;
+  target: DraftTarget;
   selects: DraftSelection;
   place: DraftPlace;
 }
@@ -109,12 +113,13 @@ function entry(
     editors?: (string | null)[] | undefined;
     unpublished?: boolean | undefined;
     needsOtherApprover?: boolean | undefined;
+    discardable?: boolean | undefined;
     madeWith?: ColumnTable | undefined;
   },
   kind: DraftKind,
   name: string,
   details: Phrase[],
-  selects: Partial<DraftSelection>,
+  target: DraftTarget,
   place: DraftPlace,
   heldBy?: string,
 ): Entry {
@@ -139,7 +144,9 @@ function entry(
     unpublished: draft.unpublished === true,
     heldBy,
     needsOtherApprover: draft.needsOtherApprover === true,
-    selects: { ...noDrafts(), ...selects },
+    discardable: draft.discardable === true,
+    target,
+    selects: targetSelection(target),
     place,
   };
 }
@@ -235,7 +242,7 @@ function listEntries(lists: readonly List[]): Entry[] {
                   },
                   list,
                 ),
-            { lists: [list.id] },
+            { kind: "list", listId: list.id },
             { kind: "list", keyNumber: list.keyNumber },
             list.heldBy,
           ),
@@ -250,7 +257,7 @@ function listEntries(lists: readonly List[]): Entry[] {
               "list-item",
               `${choice.label} in ${list.name}`,
               configFields(choice.draft, choice),
-              { choices: [choice.id] },
+              { kind: "choice", listId: list.id, choiceId: choice.id },
               { kind: "list", keyNumber: list.keyNumber },
               choice.heldBy,
             ),
@@ -272,7 +279,7 @@ function listEntries(lists: readonly List[]): Entry[] {
                 list.choices.map(({ label }) => label),
               ),
             ],
-            { orders: [list.id] },
+            { kind: "order", listId: list.id },
             { kind: "list", keyNumber: list.keyNumber },
             list.orderHeldBy,
           ),
@@ -315,7 +322,7 @@ function columnEntries(
                     },
                     { ...field, listId: listName(field.listId) },
                   ),
-              { columns: [field.id] },
+              { kind: "column", id: field.id, table: field.table ?? table },
               {
                 kind: "column",
                 keyNumber: field.keyNumber,
@@ -349,9 +356,10 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
           ).map(({ key, field }) =>
             credited(describeField(field), key, drafted.draft),
           ),
-      isHire(drafted.person)
-        ? { plannedHires: [drafted.person.id] }
-        : { people: [drafted.person.id] },
+      {
+        kind: isHire(drafted.person) ? "planned-hire" : "person",
+        id: drafted.person.id,
+      },
       {
         kind: isHire(drafted.person) ? "hire" : "person",
         keyNumber: drafted.person.keyNumber,
@@ -384,7 +392,7 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
             type,
             name,
             configFields(record.draft, now, type),
-            { records: [{ type, id: record.id }] },
+            { kind: "record", ref: { type, id: record.id } },
             place,
             record.heldBy,
           ),
@@ -426,7 +434,7 @@ function settingsEntries(settings: PlanningSettingsShown): Entry[] {
       "planning-settings",
       planningSettingsName,
       configFields(...settingsDraftWords(draft, settings), "planning-settings"),
-      { records: [planningSettingsRef] },
+      { kind: "record", ref: planningSettingsRef },
       "planning-settings",
       settings.heldBy,
     ),
@@ -515,7 +523,7 @@ function teamEntries(
           "feature-team",
           team.name,
           details,
-          { featureTeams: [team.id] },
+          { kind: "feature-team", id: team.id },
           { kind: "team", keyNumber: team.keyNumber },
           team.heldBy,
         ),
@@ -545,7 +553,7 @@ function planEntries(
         planDraftFields(kind, record, offered).map(({ key, field }) =>
           credited(describeField(field), key, draft),
         ),
-        { records: [ref] },
+        { kind: "record", ref },
         { kind, keyNumber: record.keyNumber },
         heldBy,
       ),

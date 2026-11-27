@@ -16,6 +16,7 @@ import { DecisionModal, drafts } from "./decision-dialog.tsx";
 import { type DraftsSeen, useDraftEntries } from "./draft-reading.ts";
 import { type DraftPlace, placeKey } from "./draft-places.ts";
 import { DraftPanel, draftPanelId } from "./drafts-panel.tsx";
+import { useDraftsPageActions } from "./drafts-page-actions.ts";
 import { type DraftSelection, linkedGroups } from "./drafts.ts";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
 import {
@@ -134,6 +135,13 @@ export function DraftsPage({
     canShare: canShareViews,
     blocked: opened,
   });
+  const ownDrafts = useDraftsPageActions({
+    listed:
+      entries.state === "loaded"
+        ? entries.all.map(({ key }) => key)
+        : undefined,
+    blocked: opened || discarding !== undefined || views.opened,
+  });
 
   let content: ReactNode;
   // What can be done with the rows ticked, among the page's actions in its heading.
@@ -148,7 +156,7 @@ export function DraftsPage({
     content = <LoadProblem what="the drafts" onRetry={entries.retry} />;
   } else {
     const { all, drafted } = entries;
-    const every = draftRows(all, entries);
+    const every = ownDrafts.shown(draftRows(all, entries));
     // Whether the reader may decide a row's draft now.
     const decidesNow = (row: DraftRow) => entries.decidesNow(row.entry);
     const rows = every.filter((row) => isOnTab(tab, row, decidesNow));
@@ -349,7 +357,16 @@ export function DraftsPage({
           rowActions={false}
           approves={approves}
           canEditColumns={false}
-          actions={noRecordActions<DraftRow, never, undefined>(decide)}
+          actions={{
+            ...noRecordActions<DraftRow, never, undefined>(decide),
+            discard: ownDrafts.discard,
+            resubmit: ownDrafts.resubmit,
+          }}
+          // One's own unpublished changes go only with those linked to them, so are left to Not
+          // published's buttons.
+          canEditDrafts={(row) =>
+            !row.entry.unpublished && row.entry.discardable
+          }
           view={view}
           onView={onView}
           saved={views.saved}

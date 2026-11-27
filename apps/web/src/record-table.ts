@@ -359,6 +359,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // For a table whose every row is a draft, such as Drafts: the dot in a row's slot is its draft's
   // only mark, with no tint, semibold or strike-through, which would mark every row alike.
   slotMarksOnly?: true;
+  // For a table whose rows are drafts, such as Drafts: discarding a row's draft takes the row away,
+  // not only a draft that added its record.
+  discardTakesRow?: true;
   // For a table that sums its rows: a total row ending each group, headed with the label, and one
   // for all the rows shown, kept in view at the foot, headed with the overall label; each column's
   // total is drawn from the rows it sums.
