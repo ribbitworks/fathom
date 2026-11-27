@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
@@ -73,7 +73,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As DRAFT-01.
 
 - [ ] `5E7E` Select the **Grade** column name to open its column menu.
-  - **Expected:** Under **Grade** and a divider, a yellow dot and **Draft** heads two lines:
+  - **Expected:** The menu shows, from the top:
+    - **Grade**
+    - **Copy link**
+    - A divider
+    - A yellow dot and **Draft**
     - "Name from Level to Grade, by Engineering Operations Manager"
     - "Required from No to Yes, by Second Engineering Operations Manager"
   - **Notes:**
@@ -86,14 +90,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `FB5D` Press Esc.
   - **Expected:** The column menu closes.
-  - **Notes:**
-
-- [ ] `A0E3` Select the **Draft** button above the table.
-  - **Expected:** The Draft menu has a **Show** section and a **Filter** section.
-  - **Notes:**
-
-- [ ] `448F` Select the **Show** heading in the menu.
-  - **Expected:** The menu closes.
   - **Notes:**
 
 ### DRAFT-04: Live Only Shows the People Table as It Is Now
@@ -142,7 +138,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-01.
 
-- [ ] `17CA` In the search box above the table, type `Simone Jean`.
+- [ ] `17CA` Search for `Simone Jean`.
   - **Expected:**
     - Her row is tinted faint yellow.
     - A yellow dot before her **Manager**.

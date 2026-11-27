@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/pages/activities.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Activities
@@ -39,7 +39,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ACT-01: The Table and an Activity's Details Read Clearly
 
-**Account:** Product Manager, `product.manager@fathom.test`
+**Account:** Product Manager, `product.manager@fathom.test`; the first test case.
 
 **Preconditions:** Signed in with this account.
 
@@ -63,6 +63,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Staffed**
     - 'Data migration' shows 'P-2001 Crane Control' under **Project**, with **P-2001** dimmed, and **Release** empty.
   - **Notes:**
+
 - [ ] `F46D` Point at the 'Data migration' row and select the details button at the right of its **Name** cell.
   - **Expected:**
     - The details open beside the table, titled 'Data migration', with **#ACTIVITY-** and a number under the title.
@@ -72,43 +73,53 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ACT-02: An Activity Is Added to a Project
 
-**Account:** Product Manager, `product.manager@fathom.test`, as ACT-01 ended
+**Account:** Product Manager, `product.manager@fathom.test`, the same as ACT-01.
 
 **Preconditions:** **Activities** page open, with the details closed.
 
 - [ ] `E8B5` Select **New activity**.
   - **Expected:** The **New activity** form opens beside the table, with the cursor in **Name**.
   - **Notes:**
+
 - [ ] `7DB5` Type `Cutover rehearsal` in **Name**.
   - **Expected:** **Name** reads `Cutover rehearsal`.
   - **Notes:**
+
 - [ ] `455C` Choose 'P-2001 Crane Control' in **Project**.
-  - **Expected:** **Project** reads 'P-2001 Crane Control', with **P-2001** dimmed, and **Release** reads **None**.
+  - **Expected:**
+    - **Project** reads 'P-2001 Crane Control', with **P-2001** dimmed.
+    - **Release** reads **None**.
   - **Notes:**
+
 - [ ] `45A2` Select **Add**.
   - **Expected:**
-    - The form closes, and 'Cutover rehearsal' shows in the table with a hollow dot before its name.
-    - Its **Project** reads 'P-2001 Crane Control', and its **Status** reads **Possible**.
+    - The form closes.
+    - 'Cutover rehearsal' shows in the table with a hollow yellow dot before its name.
+    - Its **Project** reads 'P-2001 Crane Control'.
+    - Its **Status** reads **Possible**.
   - **Notes:**
 
 ### ACT-03: An Activity Moves to a Release in Its Cell
 
-**Account:** Product Manager, `product.manager@fathom.test`, as ACT-02 ended
+**Account:** Product Manager, `product.manager@fathom.test`, the same as ACT-02.
 
 **Preconditions:** **Activities** page open, with **Drafts & Live** chosen in the Draft menu.
 
 - [ ] `E450` Select the **Release** cell of 'Operator training', press Enter, choose 'Platform: Harbor 1' and press Enter.
   - **Expected:**
-    - **Release** reads 'Platform: Harbor 1' after a hollow dot.
-    - **Project** reads **None** in grey italics, after a hollow dot.
+    - **Release** reads 'Platform: Harbor 1' after a hollow yellow dot.
+    - **Project** reads **None** in grey italics, after a hollow yellow dot.
     - A light green **Live** row under it shows **None** under **Release** and 'P-2001 Crane Control' under **Project**.
   - **Notes:**
+
 - [ ] `1D8D` Select the **Release** cell of 'Operator training'.
   - **Expected:** The cell is outlined.
   - **Notes:**
+
 - [ ] `532D` Press Delete.
   - **Expected:** "Choose a release or a project" shows under the row, and the cell still reads 'Platform: Harbor 1'.
   - **Notes:**
+
 - [ ] `0372` Press Esc.
   - **Expected:** The cell reads 'Platform: Harbor 1' as before.
   - **Notes:**
@@ -117,7 +128,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ACT-04: Activities Are Grouped by Project
 
-**Account:** Product Manager, `product.manager@fathom.test`, as ACT-03 ended
+**Account:** Product Manager, `product.manager@fathom.test`, the same as ACT-03.
 
 **Preconditions:** **Activities** page open.
 
@@ -129,7 +140,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ACT-05: A Team Member Reads Activities Without Changing Them
 
-**Account:** Team Member, `team.member@fathom.test`, changed from ACT-04
+**Account:** Team Member, `team.member@fathom.test`, changed from ACT-04.
 
 **Preconditions:** Signed in with this account.
 
@@ -138,33 +149,45 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The table lists the activities.
     - There is no **New activity** or **New column** at the heading's right.
   - **Notes:**
+
 - [ ] `1A50` Point at the 'Data migration' row and select the details button at the right of its **Name** cell.
-  - **Expected:** The details show the activity's values, with no pencil on any row.
+  - **Expected:**
+    - The details show the activity's values.
+    - No row has a change button.
   - **Notes:**
 
 ### ACT-06: An Activity's Release and Project Lead to Their Pages
 
-**Account:** Product Manager, `product.manager@fathom.test`
+**Account:** Product Manager, `product.manager@fathom.test`, changed from ACT-05.
 
-**Preconditions:** Signed in with this account. **Activities** page open, with **Drafts & Live** chosen in the Draft menu.
+**Preconditions:** Signed in with this account. **Activities** page open from the left-hand menu, with **Drafts & Live** chosen in the Draft menu, and not grouped: if it is, choose **Clear grouping** in the Group by menu.
 
 - [ ] `04AE` Point at the 'Data migration' row and select the details button at the right of its **Name** cell.
   - **Expected:** **Project** reads 'P-2001 Crane Control' as a link, with **P-2001** dimmed.
   - **Notes:**
+
 - [ ] `EF10` Point at **Project** in the details.
-  - **Expected:** A pencil shows at the right of the row.
+  - **Expected:** A change button shows at the right of the row.
   - **Notes:**
+
 - [ ] `DB81` Select 'P-2001 Crane Control' under **Project**.
   - **Expected:** The **Projects** page opens, with the details of 'Crane Control' beside the table.
   - **Notes:**
-- [ ] `00C3` Select the browser's back button, then select the **Release** cell of 'Operator training', press Enter, choose 'Platform: Harbor 1' and press Enter.
-  - **Expected:** **Release** reads 'Platform: Harbor 1' after a hollow dot.
+
+- [ ] `00C3` Select the browser's Back button.
+  - **Expected:** The **Activities** page shows again.
   - **Notes:**
+
+- [ ] `6A1E` Select the **Release** cell of 'Operator training', press Enter, choose 'Platform: Harbor 1' and press Enter.
+  - **Expected:** **Release** reads 'Platform: Harbor 1' after a hollow yellow dot.
+  - **Notes:**
+
 - [ ] `694C` Point at the 'Operator training' row and select the details button at the right of its **Name** cell.
   - **Expected:**
-    - **Release** reads 'Platform: Harbor 1' as a link, after a hollow dot.
+    - **Release** reads 'Platform: Harbor 1' as a link, after a hollow yellow dot.
     - Under it, the live value reads **None**.
   - **Notes:**
+
 - [ ] `1C2C` Select 'Platform: Harbor 1' under **Release**.
   - **Expected:** The **Releases** page opens on **Schedules**, with the details of 'Platform' beside the table.
   - **Notes:**
@@ -173,25 +196,30 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ACT-07: Capacity Shows Time on Activities
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ACT-06
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ACT-06.
 
 **Preconditions:** Signed in with this account.
 
 - [ ] `795E` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:** The **Allocations** tab is chosen.
   - **Notes:**
+
 - [ ] `F941` Type `Depot rollout` in the search box.
   - **Expected:** Each row left has a line reading "Depot rollout" in at least one month, with its percentage at the right, such as "50%".
   - **Notes:**
+
 - [ ] `919D` Point at "Depot rollout" in a cell.
   - **Expected:** After a moment, a tooltip reads "Depot rollout (Depot Operations)".
   - **Notes:**
+
 - [ ] `8B4C` Clear the search box.
   - **Expected:** The rows are back, with nothing in the search box.
   - **Notes:**
+
 - [ ] `A526` Select the **Allocations** button after the search box.
   - **Expected:** Beside the features, the list offers each activity with its project, such as 'Depot rollout (Depot Operations)', 'General (Crane Control)' and 'General (Internal Tools)', each its own choice.
   - **Notes:**
+
 - [ ] `65FB` Tick 'Depot rollout (Depot Operations)'.
   - **Expected:**
     - A pill reads "Allocated to: Depot rollout (Depot Operations)".

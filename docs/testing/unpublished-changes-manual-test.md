@@ -195,7 +195,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Publish** button is gone from the top bar.
   - **Notes:**
 
-### DRAFT-20: Publishing Leaves Changes the Role in Use Can't Make
+### DRAFT-32: Publishing Leaves Changes the Role in Use Can't Make
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, changed from DRAFT-19.
 
@@ -233,11 +233,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Afterwards:** Run Restore the Seed Data.
 
-### DRAFT-21: Publishing One Change From Its Row
+### DRAFT-33: Publishing One Change From Its Row
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-20.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-32.
 
-**Preconditions:** DRAFT-20's Afterwards done. Signed in with this account. **People** page open.
+**Preconditions:** DRAFT-32's Afterwards done. Signed in with this account. **People** page open.
 
 - [ ] `3D15` Clear the search box above the table, and type `Mariana Metz` in it.
   - **Expected:** A hollow yellow dot before her new **Site**.
@@ -262,11 +262,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Afterwards:** Run Restore the Seed Data.
 
-### DRAFT-22: Discarding a Change From a Record's Details
+### DRAFT-34: Discarding a Change From a Record's Details
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-21.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-33.
 
-**Preconditions:** DRAFT-21's Afterwards done. Signed in with this account. **People** page open.
+**Preconditions:** DRAFT-33's Afterwards done. Signed in with this account. **People** page open.
 
 - [ ] `05E2` Clear the search box above the table, and type `Mariana Metz` in it.
   - **Expected:** A hollow yellow dot before her new **Site**.

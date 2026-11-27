@@ -26,17 +26,17 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Product Manager:** `product.manager@fathom.test`, shown in Fathom as "Product Manager".
-- **Feature Lead:** `feature.lead@fathom.test`, shown in Fathom as "Feature Lead".
-- **Engineering Director:** `engineering.director@fathom.test`, shown in Fathom as "Engineering Director".
+- **Product Manager:** `product.manager@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
+- **Engineering Director:** `engineering.director@fathom.test`
 
 ## Common Procedures
 
-[Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish), from Manual Test Basics.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
-As [Manual Test Basics](manual-test-basics.md#terms) sets out, and:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses. This test adds:
 
 - **Scope history:** the list at the foot of a project's or a proposal's side panel, under the heading **Scope history**.
   - Each row names a feature, with a grey line under it saying "Added" or "Removed" and the date, and any reason under that.
@@ -50,7 +50,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`; the first test case.
 
-**Preconditions:** Signed in with this account. **Features** page open.
+**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
 
 - [ ] `327B` Select **Show details** in the **⋯** menu of 'Offline Sync'.
   - **Expected:**
