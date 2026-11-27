@@ -68,21 +68,23 @@ export function TimelineDayRow({
   );
 }
 
-// Today's line across the days, or the day shown's, named by its day.
+// Today's line across the days, named only to screen readers, as red words mean a problem; or the
+// day shown's, with its day written on it.
 function Line({ day }: { day?: string }) {
-  const word = day === undefined ? "Today" : formatDay(day);
   return (
     <div
       role="separator"
-      aria-label={word}
+      aria-label={day === undefined ? "Today" : formatDay(day)}
       className={[
         pages.timelineTodayAcross,
         day === undefined ? "" : pages.timelineShownAcross,
       ].join(" ")}
     >
-      <span className={pages.timelineTodayLabel} aria-hidden>
-        {word}
-      </span>
+      {day !== undefined && (
+        <span className={pages.timelineShownLabel} aria-hidden>
+          {formatDay(day)}
+        </span>
+      )}
     </div>
   );
 }

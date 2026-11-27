@@ -66,7 +66,9 @@ describe("a record's timeline", () => {
       "Apr 1, 2026",
       "Mar 1, 2026",
     ]);
-    expect(screen.getByRole("separator", { name: "Today" })).toBeDefined();
+    expect(screen.getByRole("separator", { name: "Today" }).textContent).toBe(
+      "",
+    );
     expect(
       screen.getByRole("button", { name: "Earlier dates (2)" }),
     ).toBeDefined();

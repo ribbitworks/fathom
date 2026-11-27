@@ -6,7 +6,7 @@ import { z } from "zod";
 import { tierSchema } from "./access.ts";
 import { columnTableSchema } from "./column-tables.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
-import { numberProblem, outOfRange } from "./numbers.ts";
+import { numberProblem, numberProblemWords } from "./numbers.ts";
 import { keyNumberSchema } from "./record-keys.ts";
 
 export const listLengths = {
@@ -168,10 +168,8 @@ export const weighs = (builtIn: BuiltInList | null | undefined) =>
 // A weight as the database keeps it: more than 0, below 10,000, to two places.
 export const weightLimits = { most: 9999.99, places: 2 } as const;
 
-const weightRange = outOfRange("Weight", {
-  least: 10 ** -weightLimits.places,
-  most: weightLimits.most,
-});
+// Shown under the weight's own field, so it names no field.
+const weightRange = `Type a number from ${String(10 ** -weightLimits.places)} to ${String(weightLimits.most)}`;
 
 export const weightSchema = z
   .number()
@@ -180,13 +178,13 @@ export const weightSchema = z
   .refine(
     (weight) =>
       Number.isInteger(Number((weight * 10 ** weightLimits.places).toFixed(6))),
-    `Weight: use at most ${String(weightLimits.places)} digits after the point`,
+    `At most ${String(weightLimits.places)} digits after the point`,
   );
 
 export function weightProblem(text: string): string | undefined {
   if (text.trim() === "") return "Weight needed";
   const form = numberProblem(text);
-  if (form !== undefined) return `Weight: ${form}`;
+  if (form !== undefined) return numberProblemWords(form);
   return weightSchema.safeParse(Number(text.trim())).error?.issues[0]?.message;
 }
 

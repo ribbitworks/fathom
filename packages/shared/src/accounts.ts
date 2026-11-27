@@ -24,10 +24,7 @@ export const accountName = z
   .string()
   .overwrite((name) => name.replace(/\s+/gu, " ").trim())
   .min(1, "Enter a name")
-  .max(
-    accountLengths.name,
-    `Use at most ${String(accountLengths.name)} characters`,
-  )
+  .max(accountLengths.name, "Name is too long")
   .refine(
     (name) => isPlainText(name) && !invisible.test(name),
     "Use plain text, without control characters",

@@ -65,7 +65,7 @@ describe("a draft's details", () => {
         changed,
       ).map(phraseText),
     ).toEqual([
-      "Name set to North, by Second Fictional Editor",
+      "Name filled in: North, by Second Fictional Editor",
       "Description changed, by Fictional Editor",
     ]);
     expect(

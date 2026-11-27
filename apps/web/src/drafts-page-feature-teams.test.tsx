@@ -79,7 +79,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Pier, Draft | Changed | Waiting | Name from Fictional Quay to Fictional Pier; Feature lead from Blake Fictional to Avery Fictional; Members from Avery Fictional to Avery Fictional, Blake Fictional, Someone this role can't see; Joining and leaving dates set to Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026; Someone this role can't see, Jan 7, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Pier, Draft | Changed | Waiting | Name from Fictional Quay to Fictional Pier; Feature lead from Blake Fictional to Avery Fictional; Members from Avery Fictional to Avery Fictional, Blake Fictional, Someone this role can't see; Joining and leaving dates filled in: Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026; Someone this role can't see, Jan 7, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
     expect(await showOn("Fictional Pier", "org chart")).toBe("/go/team/1");
   });
@@ -113,7 +113,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Pier, Draft | Changed | Waiting | Members set to Ellis Fictional; Joining and leaving dates set to Ellis Fictional, Jan 5, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Pier, Draft | Changed | Waiting | Members filled in: Ellis Fictional; Joining and leaving dates filled in: Ellis Fictional, Jan 5, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -131,7 +131,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Pier, Draft | Changed | Waiting | Feature lead from Blake Fictional to Avery Fictional; Date the feature lead changes set to Jan 5, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Pier, Draft | Changed | Waiting | Feature lead from Blake Fictional to Avery Fictional; Date the feature lead changes filled in: Jan 5, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -160,7 +160,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect((await entries())[0]).toContain(
-      "Date the feature lead changes set to Jan 5, 2026",
+      "Date the feature lead changes filled in: Jan 5, 2026",
     );
   });
 
@@ -181,9 +181,11 @@ describe("drafts of feature teams on the Drafts page", () => {
     ]);
     const [entry] = await entries();
     expect(entry).toContain(
-      "Joining and leaving dates set to REQ-FICTIONAL-1, Jan 5, 2026",
+      "Joining and leaving dates filled in: REQ-FICTIONAL-1, Jan 5, 2026",
     );
-    expect(entry).toContain("Date the feature lead changes set to Jan 6, 2026");
+    expect(entry).toContain(
+      "Date the feature lead changes filled in: Jan 6, 2026",
+    );
   });
 
   it("says the days planned hires join a team added", async () => {
@@ -203,9 +205,11 @@ describe("drafts of feature teams on the Drafts page", () => {
     ]);
     const [entry] = await entries();
     expect(entry).toContain(
-      "Joining and leaving dates set to REQ-FICTIONAL-1, Jan 5, 2026",
+      "Joining and leaving dates filled in: REQ-FICTIONAL-1, Jan 5, 2026",
     );
-    expect(entry).toContain("Date the feature lead changes set to Jan 5, 2026");
+    expect(entry).toContain(
+      "Date the feature lead changes filled in: Jan 5, 2026",
+    );
   });
 
   it("says when nothing is left to change in a draft", async () => {
@@ -241,7 +245,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Pier, Draft | Changed | Waiting | Name set to Fictional Pier; Feature lead changed; Members changed | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Pier, Draft | Changed | Waiting | Name filled in: Fictional Pier; Feature lead changed; Members changed | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -263,7 +267,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Beacon, Draft: added | Added | Waiting | Feature lead Avery Fictional; Members Avery Fictional, Blake Fictional; Joining and leaving dates set to Blake Fictional, Jan 6, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Beacon, Draft: added | Added | Waiting | Feature lead Avery Fictional; Members Avery Fictional, Blake Fictional; Joining and leaving dates filled in: Blake Fictional, Jan 6, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
       "Fictional Wharf, Draft: removed | Removed | Waiting | Members Avery Fictional | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Scope History
@@ -355,7 +355,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The newest entry reads "Engineering Director approved changes to the proposal Harbour Cranes Upgrade".
     - After a colon, its details read, dimmed, in this order:
       - "Features from Audit Export, Offline Sync to Audit Export"
-      - "Reasons for removing features set to Offline Sync: Customer delayed the upgrade"
+      - "Reasons for removing features filled in: Offline Sync (Customer delayed the upgrade)"
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

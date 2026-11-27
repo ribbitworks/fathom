@@ -14,6 +14,7 @@ import {
   type ChangeKind,
   type ChangeValue,
   isDay,
+  isMonth,
   meaningName,
   meaningSchema,
   percentSettingFields,
@@ -36,7 +37,7 @@ import { getJson } from "./api.ts";
 import type { Phrase } from "./phrase.tsx";
 import { effortColumnUnits } from "./effort.ts";
 import { unitAmountWords } from "./table-view.ts";
-import { formatDay } from "./day-formats.ts";
+import { formatDay, formatMonth } from "./day-formats.ts";
 import { count, decimal, percentage } from "./numbers.ts";
 import { nameAs } from "./names.ts";
 import { colourName } from "./releases.ts";
@@ -169,9 +170,34 @@ function valueText(field: string, value: ChangeValue): string | null {
     return value.map((one) => valueWords.get(field)?.(one) ?? one).join(", ");
   }
   if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (isDay(value)) return formatDay(value);
   return valueWords.get(field)?.(value) ?? value;
 }
+
+// A day or a month as people read it, for the fields that hold one; anything else they hold is shown
+// as recorded.
+const dayWords = (value: string) =>
+  isDay(value) ? formatDay(value) : undefined;
+const monthWords = (value: string) =>
+  isMonth(value) ? formatMonth(value) : undefined;
+
+// The fields that hold a day or a month. Others, such as a name or an ID, show as typed even when
+// they look like one, such as a release named 2027-02.
+const dayFields = [
+  "startDate",
+  "endDate",
+  "managerFrom",
+  "targetDate",
+  "startsOn",
+  "endsOn",
+  "firstCycle",
+  "lastCycle",
+  "shipsOn",
+  "cyclesUntil",
+  "date",
+  // A feature's target cycle, kept as the cycle's first day.
+  "targetCycle",
+];
+const monthFields = ["neededBy", "expected", "disbandedFrom"];
 
 const weekdayWords =
   (names: Readonly<Record<Weekday, string>>) => (value: string) => {
@@ -204,6 +230,8 @@ const valueWords = new Map<string, (value: string) => string | undefined>([
     },
   ],
   ["weight", (value) => decimal(Number(value))],
+  ...dayFields.map((field) => [field, dayWords] as const),
+  ...monthFields.map((field) => [field, monthWords] as const),
   ["workingDays", weekdayWords(weekdayShortNames)],
   ["weekStartsOn", weekdayWords(weekdayNames)],
   [
@@ -215,8 +243,9 @@ const valueWords = new Map<string, (value: string) => string | undefined>([
   ),
 ]);
 
-// What changed in one field of a record of the kind given, such as "Name from Sites to Locations",
-// with the field and its values marked.
+// What changed in one field of a record of the kind given, such as "Name from Sites to Locations"
+// or "Description filled in: Offices", with the field and its values marked. A value emptied says
+// what it was the same way, as in "Description emptied, was Offices".
 export function describeField(change: ChangedField, kind?: string): Phrase {
   const name = { strong: fieldName(change, kind) };
   if (
@@ -237,8 +266,8 @@ export function describeField(change: ChangedField, kind?: string): Phrase {
   const after = valueText(change.field, change.newValue);
   // A view's filters and sort are not shown, and nor is a value whose names are gone.
   if (before === null && after === null) return [name, " changed"];
-  if (before === null) return [name, " set to ", { value: String(after) }];
-  if (after === null) return [name, " cleared, from ", { value: before }];
+  if (before === null) return [name, " filled in: ", { value: String(after) }];
+  if (after === null) return [name, " emptied, was ", { value: before }];
   return [name, " from ", { value: before }, " to ", { value: after }];
 }
 

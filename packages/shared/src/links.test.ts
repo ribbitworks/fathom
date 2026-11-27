@@ -121,7 +121,7 @@ describe("a link's problems", () => {
 
   it("ask for a missing address", () => {
     expect(linkProblems({ address: " ", text: "P-1" })).toEqual({
-      address: "Enter the address",
+      address: "Address needed",
     });
   });
 
@@ -148,7 +148,7 @@ describe("a link's problems", () => {
     expect(
       linkProblems({ address: `${web}/${"x".repeat(2000)}`, text: "" }),
     ).toEqual({
-      address: "The address is too long; use at most 2000 characters",
+      address: "Address is too long",
     });
   });
 
@@ -156,13 +156,13 @@ describe("a link's problems", () => {
     const typed = `example.test/${"x".repeat(1987)}`;
     expect(typed).toHaveLength(2000);
     expect(linkProblems({ address: typed, text: "" })).toEqual({
-      address: "The address is too long; use at most 2000 characters",
+      address: "Address is too long",
     });
   });
 
   it("name the text as too long", () => {
     expect(linkProblems({ address: web, text: "x".repeat(201) })).toEqual({
-      text: "The text is too long; use at most 200 characters",
+      text: "Text to show is too long",
     });
   });
 

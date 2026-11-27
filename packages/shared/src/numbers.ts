@@ -4,12 +4,28 @@
 // limits and rounding.
 
 import { z } from "zod";
+import { numberSample, typeFor } from "./refusal-words.ts";
 
 // Keeps every value exact in the browser and written without an exponent.
 export const numberDigits = { total: 15, afterPoint: 6 };
 
-const numberForm = "use a number such as 1234.5";
-const numberLimit = `use at most ${String(numberDigits.total)} digits, ${String(numberDigits.afterPoint)} of them after the point`;
+// What is wrong with text typed as a number: not one at all, or more digits than are kept.
+export type NumberProblem = "form" | "digits";
+
+const digits = `${String(numberDigits.total)} digits`;
+const afterPoint = `${String(numberDigits.afterPoint)} after the point`;
+
+// A number's problem in words under its own field, which needs no label.
+export const numberProblemWords = (problem: NumberProblem) =>
+  problem === "form"
+    ? `Number needed, such as ${numberSample}`
+    : `At most ${digits}, ${afterPoint}`;
+
+// A number's problem in words naming what it is for, such as a column under a table's row.
+export const numberProblemFor = (problem: NumberProblem, label: string) =>
+  problem === "form"
+    ? typeFor("number", label, numberSample)
+    : `Use at most ${digits} for ${label}, ${afterPoint}`;
 
 // One form in every language, since a comma or point between digits means different things.
 // Each branch reads a run of digits only one way, so refused text is checked in linear time.
@@ -30,20 +46,20 @@ function withinDigits(text: string): boolean {
   );
 }
 
-// What a value refused for being out of its range says, such as Hours a day: use 0.5 to 24.
+// What a value refused for being out of its range says, such as Use 0.5 to 24 for Hours a day.
 export const outOfRange = (
   name: string,
   { least, most }: { least: number; most: number },
   unit = "",
-) => `${name}: use ${String(least)}${unit} to ${String(most)}${unit}`;
+) => `Use ${String(least)}${unit} to ${String(most)}${unit} for ${name}`;
 
-// What is wrong with text typed as a number, in words to follow a label, or undefined when it is
-// empty or a number Fathom keeps.
-export function numberProblem(text: string): string | undefined {
+// What is wrong with text typed as a number, or undefined when it is empty or a number Fathom
+// keeps.
+export function numberProblem(text: string): NumberProblem | undefined {
   const trimmed = text.trim();
   if (trimmed === "") return undefined;
-  if (!typedForm.test(trimmed)) return numberForm;
-  return withinDigits(trimmed) ? undefined : numberLimit;
+  if (!typedForm.test(trimmed)) return "form";
+  return withinDigits(trimmed) ? undefined : "digits";
 }
 
 // The number typed, or undefined when the text is not one Fathom keeps.
@@ -72,5 +88,5 @@ export const isNumberValue = (value: unknown): value is number =>
   typeof value === "number" && typedNumber(String(value)) === value;
 
 export const numberValueSchema = z.custom<number>(isNumberValue, {
-  error: `Numbers ${numberForm}, and ${numberLimit}`,
+  error: `Type numbers such as ${numberSample}, with at most ${digits}, ${afterPoint}`,
 });

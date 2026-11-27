@@ -159,7 +159,7 @@ describe("the Drafts page", () => {
     );
     // Those with no time come last, their Drafted empty.
     expect(await entries()).toEqual([
-      "Avery Fictional, Draft | Changed | Waiting | Start set to Nov 2, 2026; Site from Northmere to Harbour; A removed column changed | Person | People | Fictional Editor | Oct 31, 2026 | ",
+      "Avery Fictional, Draft | Changed | Waiting | Start filled in: Nov 2, 2026; Site from Northmere to Harbour; A removed column changed | Person | People | Fictional Editor | Oct 31, 2026 | ",
       "Gale Fictional, Draft: added | Added | Waiting |  | Person | People | Fathom |  | ",
       "Hollis Fictional, Rejected, removed | Removed | Rejected |  | Person | People | Fathom |  | ",
     ]);

@@ -7,6 +7,7 @@
 import type { Cycle } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
+  cycleLengthProblem,
   changeBehind,
   cycleChanges,
   cycleTwins,
@@ -265,5 +266,23 @@ describe("where later cycles start", () => {
     ["the last quarter of a year", "2027-11-15", "2028-04-01"],
   ])("is the quarter after next's first day, from %s", (_case, day, from) => {
     expect(laterCyclesFrom(day)).toBe(from);
+  });
+});
+
+describe("a cycle's length refused", () => {
+  it("is needed when no number is typed, or else gives its range in the cycle's unit", () => {
+    expect([
+      cycleLengthProblem("", "weeks", 104),
+      cycleLengthProblem("abc", "weeks", 104),
+      cycleLengthProblem(0, "months", 24),
+    ]).toEqual([
+      "Length needed",
+      "Length needed",
+      "Type a number from 1 to 24 months",
+    ]);
+  });
+
+  it("asks for a whole number when it has a fraction", () => {
+    expect(cycleLengthProblem(2.5, "weeks", 104)).toBe("Type a whole number");
   });
 });

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["packages/shared/src/access.ts", "packages/shared/src/page-access.ts", "apps/web/src/layout.tsx", "apps/web/src/router.tsx", "apps/web/src/signed-in-route.tsx", "apps/web/src/plan-routes.tsx", "apps/web/src/*-page.tsx", "apps/server/src/access.ts", "apps/server/src/data/**", "apps/server/src/routes/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/testing/roles-manual-test.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: What Each Permission Allows
@@ -151,7 +151,7 @@ Covered by [PERM-05](#perm-05-edit-people-changes-people-their-classified-values
 - [ ] `A824` Type `Skills` in the search box.
   - **Expected:**
     - A row's **Record** reads 'Silje Holm-Schrøder', with a tick box before it
-    - Its **What changes** reads **Skills** set to `Rust`
+    - Its **What changes** reads **Skills** filled in: `Rust`
     - Its **Made by** reads "Engineering Operations Manager"
     - Another row's **Record** reads 'Skills', and its **Type** reads "Column"
     - No row's **Type** reads "List" or "Choice"

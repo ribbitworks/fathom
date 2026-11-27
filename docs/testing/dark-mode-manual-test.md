@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Dark Mode
@@ -989,7 +989,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `8013` Select **Show timeline**.
   - **Expected:**
-    - The timeline is dark, its **Today** line red and easy to see.
+    - The timeline is dark, today's line red and easy to see.
     - Its dates, changes and linked names are easy to read.
   - **Notes:**
 

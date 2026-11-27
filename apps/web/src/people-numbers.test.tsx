@@ -141,7 +141,7 @@ describe("a Number column", () => {
     const fetch = await openPeople();
     await typeInto("p3", "1,5{Enter}");
     expect(
-      await screen.findByText("Score: use a number such as 1234.5"),
+      await screen.findByText("Type a number for Score, such as 1234.5"),
     ).toBeDefined();
     expect(bodyOf(fetch, "PATCH", "/api/people/p3")).toEqual([]);
   });
@@ -215,7 +215,7 @@ describe("a Number column", () => {
     const { filter, least, most } = await openFilter();
     await userEvent.type(least, "5");
     await userEvent.type(most, "1");
-    expect(within(filter).getByText("Lower than At least")).toBeDefined();
+    expect(within(filter).getByText("Type 5 or more")).toBeDefined();
   });
 
   it("keeps what is being typed in a filter, and says what is wrong with it", async () => {
@@ -224,11 +224,11 @@ describe("a Number column", () => {
     await userEvent.type(most, "-");
     expect((most as HTMLInputElement).value).toBe("-");
     expect(
-      within(filter).queryByText("Use a number such as 1234.5"),
+      within(filter).queryByText("Number needed, such as 1234.5"),
     ).toBeNull();
     await userEvent.type(most, "x");
     expect(
-      within(filter).getByText("Use a number such as 1234.5"),
+      within(filter).getByText("Number needed, such as 1234.5"),
     ).toBeDefined();
     expect(screen.queryByText(/^Score:/)).toBeNull();
   });
@@ -284,7 +284,7 @@ describe("a Number column", () => {
     await typeInto("p3", "1234567890123456{Enter}");
     expect(
       await screen.findByText(
-        "Score: use at most 15 digits, 6 of them after the point",
+        "Use at most 15 digits for Score, 6 after the point",
       ),
     ).toBeDefined();
   });

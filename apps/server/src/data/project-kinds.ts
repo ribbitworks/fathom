@@ -106,7 +106,8 @@ export const proposalKind: RecordKind = {
   unseenSubject: "a proposal",
   subject: (state, id) =>
     projectSubjects.proposal(nameOf(state, "proposal", id)),
-  // Each reason for removing a feature, after the feature's name.
+  // Each reason for removing a feature, in brackets after the feature's name, so it reads without a
+  // second colon after the change's own.
   idsInValue: {
     removalReasons: {
       kind: "feature",
@@ -117,7 +118,7 @@ export const proposalKind: RecordKind = {
     field === "removalReasons"
       ? removalReasonsOf(value).map(
           ([featureId, reason]) =>
-            `${name(featureId) ?? "A removed feature"}: ${reason}`,
+            `${name(featureId) ?? "A removed feature"} (${reason})`,
         )
       : undefined,
 };

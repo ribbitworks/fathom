@@ -325,7 +325,7 @@ describe("the timeline", () => {
     ).toEqual(["Cycles of Fictional Majors", "Cycles of Fictional Minors"]);
     expect(
       within(timeline).getByText(
-        (_, element) => element?.textContent === "Today, 2027-02-15",
+        (_, element) => element?.textContent === "Today, Feb 15, 2027",
         { selector: "span" },
       ),
     ).toBeDefined();
@@ -348,7 +348,7 @@ describe("the timeline", () => {
     const timeline = await screen.findByRole("region", { name: "Timeline" });
     expect(
       within(timeline).getByText(
-        (_, element) => element?.textContent === "Today, 2027-02-16",
+        (_, element) => element?.textContent === "Today, Feb 16, 2027",
         { selector: "span" },
       ),
     ).toBeDefined();

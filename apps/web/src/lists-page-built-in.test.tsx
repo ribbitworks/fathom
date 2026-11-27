@@ -674,10 +674,10 @@ describe("the weights of feature sizes", () => {
     expect(document.activeElement).toBe(entryWeight());
     expect(entryWeight().getAttribute("aria-invalid")).toBe("true");
     for (const [typed, problem] of [
-      ["abc", "Weight: use a number such as 1234.5"],
-      ["0", "Weight: use 0.01 to 9999.99"],
-      ["10000", "Weight: use 0.01 to 9999.99"],
-      ["1.234", "Weight: use at most 2 digits after the point"],
+      ["abc", "Number needed, such as 1234.5"],
+      ["0", "Type a number from 0.01 to 9999.99"],
+      ["10000", "Type a number from 0.01 to 9999.99"],
+      ["1.234", "At most 2 digits after the point"],
     ] as const) {
       await userEvent.clear(entryWeight());
       await userEvent.type(entryWeight(), `${typed}{Enter}`);

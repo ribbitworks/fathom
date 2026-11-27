@@ -3,9 +3,10 @@
 // The dialog in which users change the name their account shows, opened from their account's menu.
 // Their email address and roles stay with Administrators, since the email address signs them in.
 
-import { ownNameSchema } from "@fathom/shared";
+import { accountLengths, ownNameSchema } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Modal, Stack, TextInput } from "@mantine/core";
+import { Modal, Stack } from "@mantine/core";
+import { CountedField } from "./counted-field.tsx";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
@@ -60,13 +61,15 @@ function NameForm({
       }
     >
       <Stack>
-        <TextInput
+        <CountedField
+          control={form.control}
+          name="name"
           label="Name"
+          maximum={accountLengths.name}
           description="How Fathom shows this account to others. Only an Administrator can change the email address."
           autoComplete="name"
-          data-autofocus
+          autoFocus
           error={nameProblem(errors.name, "Name needed")}
-          {...form.register("name")}
         />
         <DialogActions
           error={changing.error}

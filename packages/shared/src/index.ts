@@ -298,6 +298,7 @@ export {
 } from "./help-links.ts";
 export {
   addressProblem,
+  webAddressSample,
   isLink,
   type Link,
   linkInWords,
@@ -358,11 +359,20 @@ export {
 export {
   isNumberValue,
   numberDigits,
+  type NumberProblem,
   numberProblem,
+  numberProblemFor,
+  numberProblemWords,
   numberValueSchema,
   roundedUpTo,
   typedNumber,
 } from "./numbers.ts";
+export {
+  daySample,
+  monthSample,
+  numberSample,
+  typeFor,
+} from "./refusal-words.ts";
 export {
   defaultEffortUnit,
   type EffortConversions,

@@ -59,7 +59,7 @@ describe("unpublished and held drafts on the Drafts page", () => {
     await userEvent.click(screen.getByRole("tab", { name: /^Not published/u }));
     await waitFor(async () => {
       expect(await entries()).toEqual([
-        "Blake Fictional, Draft: added, unpublished | Added | Not published | ID set to E-p2; Site set to Harbour | Person | People | Oct 30, 2026 | ",
+        "Blake Fictional, Draft: added, unpublished | Added | Not published | ID filled in: E-p2; Site filled in: Harbour | Person | People | Oct 30, 2026 | ",
       ]);
     });
     expect(

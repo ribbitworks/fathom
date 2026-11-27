@@ -5,6 +5,7 @@
 
 import {
   type Account,
+  accountLengths,
   lastAccountManagerWords,
   newAccountSchema,
   type RoleSummary,
@@ -40,6 +41,7 @@ import {
   setActive,
   updateAccount,
 } from "./accounts.ts";
+import { CountedField } from "./counted-field.tsx";
 import { DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { notifySuccess } from "./notices.tsx";
 import { rolesQuery } from "./roles.ts";
@@ -139,10 +141,12 @@ function NameAndEmail({
   const { errors } = form.formState;
   return (
     <>
-      <TextInput
+      <CountedField
+        control={form.control}
+        name="name"
         label="Name"
+        maximum={accountLengths.name}
         error={nameProblem(errors.name, "Name needed")}
-        {...form.register("name")}
       />
       <TextInput
         label="Email address"

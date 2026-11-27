@@ -4,11 +4,13 @@
 // dialogs that show, create and change a role.
 
 import {
+  accountLengths,
   type DataClasses,
   keptPermissions,
   lockedPermissions,
   type Permission,
   type RoleEffects,
+  roleLengths,
   roleRequestSchema,
   roleSchema,
   type RoleSummary,
@@ -38,6 +40,8 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { accountsQuery, nameProblem } from "./accounts.ts";
+import { CountedField } from "./counted-field.tsx";
+import { Count, countRoom, countShown } from "./counted-input.tsx";
 import { DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { notifySuccess } from "./notices.tsx";
 import { count } from "./numbers.ts";
@@ -260,21 +264,38 @@ function RoleForm({
       <Stack>
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
           <Stack>
-            <TextInput
+            <CountedField
+              control={form.control}
+              name="name"
               label="Name"
-              data-autofocus
+              maximum={accountLengths.name}
+              autoFocus
               disabled={busy}
               error={nameProblem(errors.name, "Name needed")}
-              {...form.register("name")}
             />
             <Textarea
               label="Description"
               autosize
               minRows={2}
               disabled={busy}
-              error={
-                errors.description && `${String(errors.description.message)}.`
-              }
+              error={errors.description?.message}
+              {...(countShown(
+                description.trim().length,
+                roleLengths.description,
+              )
+                ? {
+                    rightSection: (
+                      <Count
+                        length={description.trim().length}
+                        maximum={roleLengths.description}
+                      />
+                    ),
+                    rightSectionWidth: countRoom(
+                      description.trim().length,
+                      roleLengths.description,
+                    ),
+                  }
+                : {})}
               {...form.register("description")}
             />
             <PermissionGrid

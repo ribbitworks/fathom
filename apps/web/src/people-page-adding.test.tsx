@@ -431,7 +431,7 @@ describe("new rows that will not do", () => {
     );
     expect(await within(first()).findByRole("alert")).toHaveProperty(
       "textContent",
-      "Start: use a date such as 2026-10-31",
+      "Type a date for Start, such as 2026-10-31",
     );
     act(() => {
       inRow(first(), "Site").focus();

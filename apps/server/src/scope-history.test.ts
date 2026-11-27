@@ -376,7 +376,7 @@ describe("the reason for removing a feature from a proposal", () => {
     ).toContainEqual({
       field: "removalReasons",
       oldValue: [],
-      newValue: ["A removed feature: Too costly"],
+      newValue: ["A removed feature (Too costly)"],
     });
   });
 
@@ -395,7 +395,7 @@ describe("the reason for removing a feature from a proposal", () => {
     expect(fields).toContainEqual({
       field: "removalReasons",
       oldValue: [],
-      newValue: [`${feature.name}: Too costly`],
+      newValue: [`${feature.name} (Too costly)`],
     });
   });
 });

@@ -49,7 +49,7 @@ export const effortConversionNames = {
   daysPerMonth: "Working days a month",
 } as const satisfies Record<keyof typeof effortConversionLimits, string>;
 
-const wholeDays = (name: string) => `${name}: use whole days`;
+const wholeDays = (name: string) => `Use whole days for ${name}`;
 
 export const effortConversionsSchema = z.object({
   hoursPerDay: z
@@ -61,17 +61,10 @@ export const effortConversionsSchema = z.object({
       error: outOfRange(effortConversionNames.hoursPerDay, hoursPerDay),
     })
     .refine((value) => Number.isInteger(value * hourSteps), {
-      error: `${effortConversionNames.hoursPerDay}: use whole or half hours`,
+      error: `Use whole or half hours for ${effortConversionNames.hoursPerDay}`,
     }),
-  daysPerWeek: z
-    .number()
-    .int({ error: wholeDays(effortConversionNames.daysPerWeek) })
-    .min(daysPerWeek.least, {
-      error: outOfRange(effortConversionNames.daysPerWeek, daysPerWeek),
-    })
-    .max(daysPerWeek.most, {
-      error: outOfRange(effortConversionNames.daysPerWeek, daysPerWeek),
-    }),
+  // Worked out from the working days, never typed, so it has no words for a refusal.
+  daysPerWeek: z.number().int().min(daysPerWeek.least).max(daysPerWeek.most),
   daysPerMonth: z
     .number()
     .int({ error: wholeDays(effortConversionNames.daysPerMonth) })

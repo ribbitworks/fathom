@@ -49,7 +49,7 @@ export const workingWeekNames = {
 export const workingDayNeeded = "Working day needed";
 
 const weekdayIn = (name: string) =>
-  z.literal(everyWeekday, { error: `${name}: use a day of the week` });
+  z.literal(everyWeekday, { error: `Choose a day of the week for ${name}` });
 
 export const weekdaySchema = z.literal(everyWeekday);
 

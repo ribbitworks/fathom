@@ -142,8 +142,8 @@ describe("the Features page", () => {
     });
 
     it.each([
-      ["-1", "Effort: use 0 or more"],
-      ["200000", "Effort: use 124,999.5 or less"],
+      ["-1", "Use 0 or more for Effort"],
+      ["200000", "Use 124,999.5 or less for Effort"],
     ])("refuses %s person-days", async (typed, message) => {
       await open(withEstimate(20), {}, inUnit("person-days"));
       await userEvent.dblClick(await screen.findByText("2.5 PD"));

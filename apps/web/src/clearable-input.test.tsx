@@ -9,7 +9,7 @@ import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ClearableInput } from "./clearable-input.tsx";
-import { CountedInput } from "./counted-input.tsx";
+import { CountedInput, countRoom } from "./counted-input.tsx";
 import { testTheme } from "./test-support.tsx";
 
 function Field({ start, onClear }: { start: string; onClear: () => void }) {
@@ -89,5 +89,16 @@ describe("a counted field", () => {
     // Then it is empty, with focus in it
     expect(input).toHaveProperty("value", "");
     expect(document.activeElement).toBe(input);
+  });
+});
+
+describe("a count's room beside its field", () => {
+  it("grows with the digits of the field's limit, so the text never runs under the count", () => {
+    expect(countRoom(105, 100)).toBeLessThan(countRoom(2007, 2000));
+    expect(countRoom(2007, 2000) - countRoom(105, 100)).toBe(2 * 7);
+  });
+
+  it("grows with a count longer than its limit", () => {
+    expect(countRoom(10000, 2000)).toBeGreaterThan(countRoom(2007, 2000));
   });
 });
