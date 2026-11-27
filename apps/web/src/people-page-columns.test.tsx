@@ -195,13 +195,13 @@ describe("columns", () => {
     ]);
   });
 
-  it("starts on the first type offered, with that type's own setting", async () => {
+  it("starts on the first type offered, which may be required", async () => {
     await openPeople();
     const dialog = await newColumnDialog();
     expect(within(dialog).getByLabelText<HTMLInputElement>("Type").value).toBe(
       "Text",
     );
-    expect(within(dialog).getByLabelText("Several lines")).toBeDefined();
+    expect(within(dialog).getByLabelText("Must be filled in")).toBeDefined();
   });
 
   it("opens the Type list on Enter, rather than adding the column", async () => {

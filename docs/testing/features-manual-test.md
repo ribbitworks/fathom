@@ -175,7 +175,7 @@ Proved by automated tests in `apps/server/src/feature-column-values.test.ts` and
 - [ ] `034F` Select **New column**.
   - **Expected:**
     - The **New column** dialog opens, and **Type** reads **Text**.
-    - It has the fields **Name**, **Type**, **Several lines** and **Must be filled in**.
+    - It has the fields **Name**, **Type** and **Must be filled in**.
     - There is no **Offered on planned hires**.
   - **Notes:**
 
