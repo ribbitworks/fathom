@@ -296,6 +296,14 @@ export function breaksDown(
 export const emptyValue = (column: { kind: Kind }): CellValue =>
   kindOf(column).empty;
 
+// Whether a column's cells and heading are centred, as its kind's are.
+export const centred = (column: AnyColumn): boolean =>
+  kindOf(column).centred === true;
+
+// A kind edited in one step, such as a checkbox, is never empty: its cell draws its value either way.
+export const neverEmpty = (column: AnyColumn): boolean =>
+  kindOf(column).toggled !== undefined;
+
 export function isEmpty(value: CellValue): boolean {
   if (value === null) return true;
   if (Array.isArray(value)) return value.length === 0;

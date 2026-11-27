@@ -167,6 +167,31 @@ describe("a checkbox column", () => {
     expect(liveBox?.checked).toBe(false);
   });
 
+  it("shows a box a draft unticks as an empty box after its dot, with no words for none", async () => {
+    // Given a person whose draft unticks their box
+    await openPeople({
+      "GET /api/people": peopleAnswer([
+        {
+          ...blake,
+          draft: {
+            action: "changed",
+            changed: ["f1"],
+            live: { values: {}, links: {}, flags: { f1: true } },
+            state: "waiting",
+            madeBy: "Fictional Editor",
+            madeAt: "2026-11-06T09:00:00.000Z",
+          },
+        },
+      ]),
+    });
+    // Then their cell draws the box unticked, as any other box, and says nothing more
+    const box = cell("p2").querySelector<HTMLInputElement>(
+      'input[type="checkbox"]',
+    );
+    expect(box?.checked).toBe(false);
+    expect(cell("p2").textContent).not.toMatch(/No first aider/iu);
+  });
+
   it("shows a box a draft unticks as ticked when only live records show", async () => {
     await openPeople(
       {

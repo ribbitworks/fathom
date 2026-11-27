@@ -9,6 +9,7 @@ import { ColouredName } from "./colour-swatch.tsx";
 import { focusFoundSoon } from "./focus.ts";
 import {
   cellContent,
+  centred,
   columnsOn,
   isEmpty,
   kindOf,
@@ -469,6 +470,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                 frozenAt.className,
               ].join(" ")}
               style={frozenAt.style}
+              data-centred={centred(column) ? "" : undefined}
               data-shaded={
                 (row.record && column.shaded?.(row.record)) || undefined
               }
@@ -699,6 +701,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                   key={column.key}
                   className={[classes.recordCell, frozenAt.className].join(" ")}
                   style={frozenAt.style}
+                  data-centred={centred(column) ? "" : undefined}
                 >
                   <MarkedItem
                     slot={columnIndex === 0}

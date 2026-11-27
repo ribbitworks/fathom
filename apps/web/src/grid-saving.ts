@@ -11,6 +11,7 @@ import {
   isEmpty,
   keptForKind,
   kindOf,
+  neverEmpty,
   onRow,
   readOnlyFor,
 } from "./grid-columns.tsx";
@@ -232,7 +233,9 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
       : valueAt(row, column);
   // What an empty cell of a record shows in grey, if anything.
   const standInAt = (row: Row<Rec>, column: Column<Rec, Change>) => {
-    if (row.newRow || !isEmpty(valueAt(row, column))) return undefined;
+    if (row.newRow || neverEmpty(column) || !isEmpty(valueAt(row, column))) {
+      return undefined;
+    }
     return (
       column.standIn?.(row.record) ??
       // A draft emptying the value, or filling it, says so wherever the view marks that draft.
@@ -246,10 +249,9 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
   // live, so a stand-in made from other cells uses their live values too.
   const liveStandIn = (record: Rec, column: Column<Rec, Change>) => {
     const live = liveById.get(record.id);
-    // A kind edited in one step, such as a checkbox, is never empty: its Live row draws it.
     if (
       live === undefined ||
-      kindOf(column).toggled !== undefined ||
+      neverEmpty(column) ||
       !isEmpty(column.value(live))
     ) {
       return undefined;

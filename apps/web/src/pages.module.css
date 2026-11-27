@@ -875,6 +875,11 @@ tr:is(.draftRow, .recordFillingRow, .recordLiveRow)
   --row-tint: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
 }
 
+/* A column whose kind is centred, such as a checkbox's. */
+.recordCell[data-centred] {
+  text-align: center;
+}
+
 .recordLiveRow .recordCell {
   color: var(--mantine-color-dimmed);
 }

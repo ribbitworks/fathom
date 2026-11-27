@@ -171,6 +171,8 @@ export interface CellKind {
   // For a kind edited in the side panel beside the table, such as a note: a click opens it too,
   // read only where the cell may not change.
   inPanel?: boolean;
+  // Whether its cells and its column's heading are centred, as a checkbox's are.
+  centred?: boolean;
   Cell?: (props: { value: CellValue }) => ReactNode;
   MenuItem?: (props: { name: string; value: CellValue }) => ReactNode;
 }
@@ -608,6 +610,7 @@ const flag: CellKind = {
   width: () => 3,
   breaksDown: "always",
   toggled: toggledFlag,
+  centred: true,
   columnDefaults: {
     choices: [choiceOf(flagChoice, "Yes", false)],
     emptyLabel: "No",

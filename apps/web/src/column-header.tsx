@@ -22,7 +22,7 @@ import {
 } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import { frozenAfterMove } from "./frozen-columns.ts";
-import { breaksDown } from "./grid-columns.tsx";
+import { breaksDown, centred } from "./grid-columns.tsx";
 import { fieldDraftLines } from "./grid-drafts.ts";
 import type { EditingGrid } from "./grid-editing.tsx";
 import { Icon } from "./icons.tsx";
@@ -513,7 +513,9 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
         style={frozenAt.style}
         data-column={column.key}
         aria-current={column.current === true ? "date" : undefined}
-        data-centred={column.headingCentred === true ? "" : undefined}
+        data-centred={
+          column.headingCentred === true || centred(column) ? "" : undefined
+        }
         {...dragProps}
       >
         {index === 0 && ticks !== undefined && tickedShown !== undefined ? (
