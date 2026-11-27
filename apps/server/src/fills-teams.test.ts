@@ -9,6 +9,7 @@ import { people } from "@fathom/db";
 import {
   type ChangeHistory,
   type Permission,
+  type Person,
   startingRoles,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
@@ -484,16 +485,32 @@ describe("who may decide a fill carrying feature teams", () => {
     ).toBe(200);
   });
 
+  const withoutTeams = startingRoles["project-manager"].permissions.filter(
+    (permission: Permission) => permission !== "feature-teams:view",
+  );
+
   it("refuses an Approver who doesn't see feature teams", async () => {
-    const who = await test.signedIn(
-      startingRoles["project-manager"].permissions.filter(
-        (permission: Permission) => permission !== "feature-teams:view",
-      ),
-    );
+    const who = await test.signedIn(withoutTeams);
 
     expect(
       (await decide("rejection", await fillOnTeam(), who)).statusCode,
     ).toBe(403);
+  });
+
+  it("is marked as needing another approver only for an Approver who doesn't see feature teams", async () => {
+    const hire = await fillOnTeam();
+    const marked = async (who: User) => {
+      const draft = (
+        await ok<{ people: Person[] }>(await send(who, "GET", "/api/people"))
+      ).people.find(({ id }) => id === hire)?.draft;
+      return [draft?.needsOtherApprover, draft?.holdsUnseen];
+    };
+
+    expect(await marked(await test.signedIn(withoutTeams))).toEqual([
+      true,
+      true,
+    ]);
+    expect(await marked(approver)).toEqual([undefined, undefined]);
   });
 
   const deciders = new Set(["project-manager", "engineering-director"]);

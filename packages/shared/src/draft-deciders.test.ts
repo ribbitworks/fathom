@@ -5,12 +5,14 @@
 import { describe, expect, it } from "vitest";
 import { permissionGrid, startingRoles } from "./access.ts";
 import { columnTables } from "./column-tables.ts";
+import { defaultClasses } from "./data-classes.ts";
 import {
   approvableKinds,
   areaWords,
   decidedKindOf,
   decidersOf,
   decides,
+  fillSight,
   takenAlongRefusal,
 } from "./draft-deciders.ts";
 
@@ -120,6 +122,51 @@ describe("decides", () => {
     );
     expect(decides([], { kind: "release-stream" })).toBe(false);
   });
+
+  it("needs the sight a draft asks for besides its Approve, granted or implied", () => {
+    const hire = { kind: "planned-hire", sight: ["personal:view"] } as const;
+    expect(decides(["hiring-plan:approve"], hire)).toBe(false);
+    expect(decides(["hiring-plan:approve", "personal:edit"], hire)).toBe(true);
+  });
+});
+
+describe("fillSight", () => {
+  const general = Object.fromEntries(
+    Object.keys(defaultClasses).map((field) => [field, "general"]),
+  ) as typeof defaultClasses;
+
+  it("needs nothing for a fill naming no one and carrying no team", () => {
+    expect(fillSight(defaultClasses, { names: false, carries: false })).toEqual(
+      [],
+    );
+  });
+
+  it("needs sight of start and end dates' classes, each once, for a fill naming who fills the hire", () => {
+    expect(fillSight(defaultClasses, { names: true, carries: false })).toEqual([
+      "personal:view",
+    ]);
+    expect(
+      fillSight(
+        { ...defaultClasses, endDate: "confidential" },
+        { names: true, carries: false },
+      ),
+    ).toEqual(["personal:view", "confidential:view"]);
+  });
+
+  it("needs sight of feature teams, and of start and end dates and feature team dates, for a fill carrying teams", () => {
+    expect(
+      fillSight(
+        { ...defaultClasses, featureTeamDates: "confidential" },
+        { names: false, carries: true },
+      ),
+    ).toEqual(["feature-teams:view", "personal:view", "confidential:view"]);
+  });
+
+  it("needs no class's sight for details kept in General", () => {
+    expect(fillSight(general, { names: true, carries: true })).toEqual([
+      "feature-teams:view",
+    ]);
+  });
 });
 
 describe("areaWords", () => {
@@ -168,6 +215,21 @@ describe("takenAlongRefusal", () => {
       ),
     ).toBe(
       "Approving this also approves the new column Fictional Score, which needs View People.",
+    );
+  });
+
+  it("names only the sight the role lacks of what a draft asks for", () => {
+    expect(
+      takenAlongRefusal(
+        ["hiring-plan:approve", "personal:view"],
+        {
+          kind: "planned-hire",
+          sight: ["feature-teams:view", "personal:view"],
+        },
+        "the planned hire Fictional",
+      ),
+    ).toBe(
+      "Approving this also approves the planned hire Fictional, which needs View Feature teams.",
     );
   });
 

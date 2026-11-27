@@ -549,16 +549,20 @@ export const decidable = (record: {
 // Why another approver must decide a person's draft holding details the role can't see.
 export const unseenDetails = "This role can't see all of this draft's details";
 
-// Why another approver must decide some drafts, if any of them is of a person holding details the
-// role can't see, as the people read marks them.
+// Why another approver must decide some drafts, if any of them is of a person, or of a planned hire
+// a fill holds, holding details the role can't see, as the people read marks them.
 export function unseenPeople(
-  selection: Pick<DraftSelection, "people">,
+  selection: Pick<DraftSelection, "people"> &
+    Partial<Pick<DraftSelection, "plannedHires">>,
   people: readonly {
     id: string;
     draft?: { holdsUnseen?: true | undefined } | undefined;
   }[],
 ): string | undefined {
-  const asked = new Set(selection.people);
+  const asked = new Set([
+    ...selection.people,
+    ...(selection.plannedHires ?? []),
+  ]);
   return people.some(
     ({ id, draft }) => asked.has(id) && draft?.holdsUnseen === true,
   )

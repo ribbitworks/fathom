@@ -181,7 +181,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
     - **Columns:** Record, Change, State, What changes, Type, Area, Made by, Drafted, Reason and Key.
       - **Record:** The record's name, with what it belongs to where its name alone may not say, such as Harbourside in Sites, and a project's or proposal's ID first, after the draft's dot, any lock, and the grey boxes.
       - **Record's grey boxes:** Waits on a rejected draft and Needs another approver, shown only to a role that could otherwise decide it.
-        - **Unseen details:** Needs another approver also marks a draft of a list, a list's choice or its order whose class the role can't see, and a person's draft holding details the role can't see. Each stays off To decide, its details saying why.
+        - **Unseen details:** Needs another approver also marks a draft of a list, a list's choice or its order whose class the role can't see, a person's draft holding details the role can't see, and the drafts of a fill holding details the role can't see, as [Domain Model](domain-model.md#planned-hires) sets out for approving one. Each stays off To decide, with neither Approve nor Reject, its details saying why.
         - **Taken along:** it also marks a draft whose approval takes along one another approver must approve, such as a feature given a new choice made on Lists that the role can't approve, or filled in a column still drafted to be added that this account changed. It stays on To decide, since it can still be rejected.
       - **Change:** Added, Changed, Removed or Reordered.
       - **State:** Waiting, Rejected or Not published, shown from the start so it can be filtered by.

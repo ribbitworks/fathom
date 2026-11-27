@@ -12,7 +12,7 @@ import {
 } from "@fathom/db";
 import { and, eq, gte, sql } from "drizzle-orm";
 import type { Actor } from "../access.ts";
-import { ConflictError, ForbiddenError } from "../errors.ts";
+import { ConflictError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import type { Recorded } from "./draft-records.ts";
 import {
@@ -30,7 +30,6 @@ import {
   membersOf,
   teamDraftsBlockingFill,
 } from "./feature-team-rules.ts";
-import { seesCarried } from "./feature-team-sight.ts";
 import { teamChanges } from "./feature-teams.ts";
 
 export const inTeamDraftRefusal =
@@ -89,16 +88,6 @@ export const carriesTeams = async (
   hireId: string,
   today: string,
 ): Promise<boolean> => (await teamsOfHires(reader, [hireId], today)).size > 0;
-
-// A fill carrying teams gives its person days on them, which are feature team dates and can be their
-// start date, so only an Approver who sees them decides it.
-export function requireSeesCarried(actor: Actor): void {
-  if (!seesCarried(actor)) {
-    throw new ForbiddenError(
-      "This fill moves the planned hire's feature teams to its person, so an Approver who sees feature teams and Personal details must decide it",
-    );
-  }
-}
 
 // What a fill carries to its person: their membership records, the hire's that end, and the lead
 // records written for them.
