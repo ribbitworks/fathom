@@ -2,7 +2,7 @@
 
 // The shared table of records, edited like a spreadsheet.
 
-import { Paper, Table, Text, VisuallyHidden } from "@mantine/core";
+import { Paper, Table, VisuallyHidden } from "@mantine/core";
 import { useSyncExternalStore } from "react";
 import { columnHeaders } from "./column-header.tsx";
 import {
@@ -10,6 +10,7 @@ import {
   type ScrollEdges,
   scrollEdges,
 } from "./frozen-columns.ts";
+import { EmptyTableRow, leavesOutRecords } from "./empty-table.tsx";
 import { gridEditing } from "./grid-editing.tsx";
 import { useShownRows } from "./grid-groups.tsx";
 import { columnWidth, useGridLayout, widthStyle } from "./grid-layout.ts";
@@ -26,7 +27,6 @@ import type { GridRecord, RecordGridProps } from "./record-table.ts";
 import { rowMenus } from "./row-menus.tsx";
 import { WithSidePanel } from "./side-panel.tsx";
 import { DraftView, MarkedItem } from "./status-mark.tsx";
-import { narrowsWith } from "./table-view.ts";
 import type { ValueStore } from "./value-store.ts";
 
 // A line of a column's header, its name or a mark under it, and the room above and below them, for
@@ -60,6 +60,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
     body,
     ticks,
     pageFilter,
+    viewChoices,
     known,
     columns,
     view,
@@ -71,7 +72,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
     withActions,
     groupOf,
     shownRecords,
-    rows,
+    noneBelow,
     longestText,
     edges,
     scrollRef,
@@ -111,7 +112,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
     );
   }
   const { bodyRows, totalRow } = gridRows(grid);
-  const narrowed = narrowsWith(view, pageFilter);
+  const leavesOut = leavesOutRecords(view, pageFilter, viewChoices);
   // Menus and choices stay shown beside their cell however the table scrolls, so they are not hidden
   // when the cell is partly out of view.
   return (
@@ -226,25 +227,16 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {shownRecords.length === 0 &&
-                    (narrowed || rows.length === 0) && (
-                      <Table.Tr>
-                        <Table.Td
-                          colSpan={
-                            columns.length +
-                            besides.length +
-                            Number(withActions)
-                          }
-                          className={classes.recordNone}
-                        >
-                          <Text component="span" fz="sm" c="dimmed">
-                            {narrowed
-                              ? `No matching ${table.noun}`
-                              : `No ${table.noun}`}
-                          </Text>
-                        </Table.Td>
-                      </Table.Tr>
-                    )}
+                  {shownRecords.length === 0 && (
+                    <EmptyTableRow
+                      span={
+                        columns.length + besides.length + Number(withActions)
+                      }
+                      table={table}
+                      leavesOut={leavesOut}
+                      below={noneBelow}
+                    />
+                  )}
                   {bodyRows}
                 </Table.Tbody>
                 {table.totals !== undefined && (

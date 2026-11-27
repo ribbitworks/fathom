@@ -40,6 +40,7 @@ import {
   labelPadding,
   type Px,
   pxAt,
+  spannedRanges,
   type TimelineFrame,
   timelineAxis,
   timelineFrame,
@@ -141,6 +142,7 @@ export function TimelineView({
   layerForm,
   onOpen,
   rows,
+  spanWhileEmpty,
 }: {
   title: string;
   // Where the zoom is kept in the browser.
@@ -154,6 +156,8 @@ export function TimelineView({
   onOpen?: ((record: LayerRecord) => void) | undefined;
   // The view's own rows, under the release layer, with the days they cover.
   rows?: (RowGroup & { range: DayRange }) | undefined;
+  // The days the timeline spans while it draws nothing.
+  spanWhileEmpty?: DayRange | undefined;
 }) {
   const titleId = useId();
   const scroller = useRef<HTMLDivElement>(null);
@@ -181,10 +185,13 @@ export function TimelineView({
   const frame = useMemo(
     () =>
       timelineFrame(
-        [
-          dayRange(layerRange?.first, layerRange?.last),
-          dayRange(rows?.range.first, rows?.range.last),
-        ].filter((range) => range !== undefined),
+        spannedRanges(
+          [
+            dayRange(layerRange?.first, layerRange?.last),
+            dayRange(rows?.range.first, rows?.range.last),
+          ],
+          dayRange(spanWhileEmpty?.first, spanWhileEmpty?.last),
+        ),
         today,
       ),
     [
@@ -192,6 +199,8 @@ export function TimelineView({
       layerRange?.last,
       rows?.range.first,
       rows?.range.last,
+      spanWhileEmpty?.first,
+      spanWhileEmpty?.last,
       today,
     ],
   );

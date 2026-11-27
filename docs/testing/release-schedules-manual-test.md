@@ -58,14 +58,24 @@ Record each step's result as [Manual Test Basics](manual-test-basics.md#recordin
 - [ ] `575D` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - The tabs **Releases**, **Cycles** and **Schedules** are beside the **Releases** heading, and **Releases** is chosen.
-    - It reads "No releases yet."
+    - The Export icon at the top right is greyed out.
+    - The search box, **Views** and "0 releases" are above the table.
+    - There is no timeline.
+    - The table shows its column headings, starting **Release**, **Schedule**, **Ships on**.
+    - In the table, dimmed, it reads "No releases yet", with the link **Make a schedule first** under it.
   - **Notes:**
 
-- [ ] `0B5E` Select the **Schedules** tab.
+- [ ] `4C1A` Point at the greyed-out Export icon.
+  - **Expected:** A tip reads "There's nothing to export".
+  - **Notes:**
+
+- [ ] `6F1D` Select **Make a schedule first** in the table.
   - **Expected:**
-    - There is no table.
-    - It reads "No schedules yet."
-    - A **New schedule** button is at the top right.
+    - The **Schedules** tab is chosen.
+    - The table shows its column headings, starting **Schedule**.
+    - In the table, dimmed, it reads "No schedules yet".
+    - "0 schedules" is above the table.
+    - A **New schedule** button is at the top right, with the focus on it.
   - **Notes:**
 
 #### REL-02: The Engineering Operations Manager Drafts a New Schedule

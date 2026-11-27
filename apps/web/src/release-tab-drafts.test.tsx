@@ -272,17 +272,18 @@ describe("making a release", () => {
     expect(screen.queryByRole("button", { name: "New release" })).toBeNull();
   });
 
-  it("says why it can't be done while only a retired schedule has cycles", async () => {
+  it("is turned off while only a retired schedule has cycles, with a line above the table saying why", async () => {
     await openPage([fictionalStream({ retired: true, releases: [release] })], {
       can: editsReleases,
     });
-    await userEvent.hover(
-      screen.getByRole("button", { name: "New release" })
-        .parentElement as HTMLElement,
-    );
+    const why = "No schedule takes new releases now";
+    const button = screen.getByRole("button", { name: "New release" });
+    expect(button).toHaveProperty("disabled", true);
     expect(
-      await screen.findByText("No schedule takes new releases now"),
-    ).toBeDefined();
+      document.getElementById(String(button.getAttribute("aria-describedby")))
+        ?.textContent,
+    ).toBe(why);
+    expect(screen.getByText(why)).toBeDefined();
   });
 });
 

@@ -171,7 +171,7 @@ Run the test cases in order, in about 30 minutes, straight after [Planning Proje
 
 - [ ] `AC26` Select the **Releases** page in the left-hand menu.
   - **Expected:**
-    - The **Releases** tab reads "No releases yet."
+    - In the **Releases** tab's table, dimmed, it reads "No releases yet".
     - A **New release** button is at the top right.
   - **Notes:**
 

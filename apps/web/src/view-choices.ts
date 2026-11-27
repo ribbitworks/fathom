@@ -38,8 +38,11 @@ function offered(
   count: number,
   part: ViewChoice["part"],
   view: View,
+  leavesOut: boolean,
 ): ViewChoice[] {
-  return count > 0 || on(view) ? [{ label, count, on, turned, part }] : [];
+  return count > 0 || on(view)
+    ? [{ label, count, on, turned, part, leavesOut }]
+    : [];
 }
 
 // The rows a tab shows, leaving out those it hides, such as shipped releases, unless the view's
@@ -68,6 +71,7 @@ export function hiddenUnlessShown<Row>({
       rows.filter(hidden).length,
       { name: "Show", value: records },
       view,
+      !choice.on(view),
     ),
   };
 }
@@ -101,6 +105,7 @@ export function keptByChoices<Row>({
         rows.filter(matches).length,
         { name: "Only", value: label },
         view,
+        choice.on(view),
       ),
     ),
   };

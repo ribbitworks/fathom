@@ -136,6 +136,7 @@ describe("viewParts of a grouping and a page's choices", () => {
     on: (view) => view.retired === true,
     turned: (view) => view,
     part: { name: "Show", value: "Retired schedules" },
+    leavesOut: true,
   };
   const groupings = [
     { key: "status", label: "Status", holds: "list" as const },

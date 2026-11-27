@@ -217,7 +217,7 @@ describe("the Cycles tab", () => {
     });
   });
 
-  it("says when there are no cycles yet", async () => {
+  it("keeps its table while there are no cycles yet, saying so in it", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/release-streams": streamsAnswer([
@@ -225,7 +225,9 @@ describe("the Cycles tab", () => {
       ]),
     });
     renderApp("/releases?tab=cycles");
-    expect(await screen.findByText("No cycles yet.")).toBeDefined();
+    const table = await screen.findByRole("grid", { name: "Cycles" });
+    expect(within(table).getByText("No cycles yet")).toBeDefined();
+    expect(screen.getByText("0 cycles")).toBeDefined();
   });
 });
 

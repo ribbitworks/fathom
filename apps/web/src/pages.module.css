@@ -498,9 +498,23 @@ th[data-centred] .recordHeadButton {
   display: block;
 }
 
+/* The line saying a table shows no rows spans it, over the frozen column's edge, as a group's
+   heading does. */
 .recordNone {
+  position: relative;
+  z-index: 1;
   padding: 12px;
-  text-align: center;
+  background: var(--mantine-color-body);
+}
+
+/* Centred in the part of the table in view, however far a wide table is scrolled sideways. */
+.recordNoneWords {
+  position: sticky;
+  left: 50%;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
 }
 
 /* A group's heading spans the row, over the frozen column's edge, so a long heading reads unbroken. */

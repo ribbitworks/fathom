@@ -720,13 +720,15 @@ describe("the Schedules table", () => {
     expect(calls(fetch, "POST")).toEqual([]);
   });
 
-  it("says when there are no streams yet", async () => {
+  it("keeps its table while there are no schedules yet, saying so in it", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/release-streams": streamsAnswer([]),
     });
     renderApp("/releases?tab=schedules");
-    expect(await screen.findByText("No schedules yet.")).toBeDefined();
+    const table = await screen.findByRole("grid", { name: "Schedules" });
+    expect(within(table).getByText("No schedules yet")).toBeDefined();
+    expect(screen.getByText("0 schedules")).toBeDefined();
   });
 
   it("says when the streams cannot be loaded, and loads them when tried again", async () => {

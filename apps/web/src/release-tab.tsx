@@ -9,8 +9,8 @@ import type {
   Release,
   ReleaseStream,
 } from "@fathom/shared";
-import { Menu } from "@mantine/core";
-import { useEffect, useEffectEvent, useRef } from "react";
+import { Anchor, Menu } from "@mantine/core";
+import { type ReactNode, useEffect, useEffectEvent, useRef } from "react";
 import {
   type ActivityRow,
   activitiesShowOn,
@@ -280,6 +280,8 @@ export function ReleasesTable({
   onChange,
   run,
   decide,
+  reason,
+  onMakeSchedule,
 }: {
   // Every schedule, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
@@ -314,6 +316,9 @@ export function ReleasesTable({
   ) => void;
   run: (work: () => Promise<unknown>, done: string) => void;
   decide: (asking: Asking, selection: DraftSelection, all?: boolean) => void;
+  // Why New release is turned off, drawn above the table, since the heading stays one line.
+  reason?: ReactNode;
+  onMakeSchedule?: (() => void) | undefined;
 }) {
   const { show } = view;
   const everyRow = releaseRows(streams, show, day);
@@ -478,7 +483,20 @@ export function ReleasesTable({
 
   return (
     <ReleasesTabTable
-      none={everyRow.length === 0 ? "No releases yet." : undefined}
+      empty={everyRow.length === 0}
+      reason={reason}
+      noneBelow={
+        onMakeSchedule && (
+          <Anchor
+            component="button"
+            type="button"
+            fz="sm"
+            onClick={onMakeSchedule}
+          >
+            Make a schedule first
+          </Anchor>
+        )
+      }
       day={day}
       layerForm="releases"
       onOpenMark={markOpener(
@@ -488,6 +506,7 @@ export function ReleasesTable({
         },
         showIn,
       )}
+      everyStream={streams}
       timelineOf={(shown) => {
         const listed = new Set(shown.map(({ id }) => id));
         // Each schedule holding a release the table shows, with only those releases.

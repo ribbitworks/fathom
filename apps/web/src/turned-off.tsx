@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A control turned off for a change the server would refuse, with a short dimmed line saying why,
-// which describes the control so a screen reader hears the reason with it. The page decides why; the
-// line is placed where the control's layout wants it.
+// A control turned off, with the line saying why, which describes the control for screen readers.
 
 import { Stack, Text, type TextProps } from "@mantine/core";
 import { type ComponentType, type ReactNode, useId } from "react";
@@ -23,6 +21,16 @@ export function ReasonLine({
 }: ReasonLineProps & Pick<TextProps, "ta">) {
   return (
     <Text id={id} size="xs" c="dimmed" {...placed}>
+      {children}
+    </Text>
+  );
+}
+
+// The line above a table saying why a control in its page's heading is turned off, kept apart from
+// the heading so the heading stays one line.
+export function TableReasonLine({ id, children }: ReasonLineProps) {
+  return (
+    <Text id={id} size="sm" c="dimmed" mb="sm">
       {children}
     </Text>
   );

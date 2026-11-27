@@ -96,6 +96,7 @@ export function useTableExport<
           });
         }
       }),
+    shown.length === 0,
   );
   return (
     <ExportQuestion

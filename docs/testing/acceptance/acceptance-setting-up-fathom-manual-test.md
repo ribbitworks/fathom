@@ -170,13 +170,14 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
 
 - [ ] `6D23` Select the **Releases** page in the left-hand menu.
   - **Expected:**
-    - The **Releases** tab is chosen beside the heading, and reads "No releases yet."
-    - There is no button at the top right.
+    - The **Releases** tab is chosen beside the heading.
+    - In the table, dimmed, it reads "No releases yet", with the link **Make a schedule first** under it.
+    - The only control at the top right is the greyed-out Export icon.
   - **Notes:**
 
 - [ ] `24A4` Select the **Schedules** tab.
   - **Expected:**
-    - The tab reads "No schedules yet."
+    - In the table, dimmed, it reads "No schedules yet".
     - A **New schedule** button is at the top right.
   - **Notes:**
 

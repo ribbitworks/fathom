@@ -318,6 +318,7 @@ export function draftsTable({
     label: "Drafts",
     one: "draft",
     noun: "drafts",
+    none: "No drafts",
     nameOf: (row) => row.record,
     nameColumn: "record",
     keyOf: ({ entry }) => placeKey(entry.place),

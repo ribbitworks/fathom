@@ -474,6 +474,8 @@ export interface ViewChoice {
   turned: (view: View, on: boolean) => View;
   // How the Save view dialog names it while on.
   part: ViewPart;
+  // Whether, as the view has it, it leaves out any of the table's records.
+  leavesOut: boolean;
 }
 
 // The parts of a view its page's own choices set outside the Views menu, such as Features' Board, as

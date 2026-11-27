@@ -303,7 +303,7 @@ describe("a read-only table of drafts", () => {
 
   it("says when it has no rows at all", () => {
     renderReadOnly({ gadgets: [] });
-    expect(screen.getByText("No gadgets")).toBeDefined();
+    expect(screen.getByText("No gadgets yet")).toBeDefined();
   });
 
   it("ticks rows one at a time or all those that may be, saying aloud how many", async () => {

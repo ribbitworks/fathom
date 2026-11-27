@@ -272,7 +272,7 @@ export function CyclesTable({
         ];
   return (
     <ReleasesTabTable
-      none={everyRow.length === 0 ? "No cycles yet." : undefined}
+      empty={everyRow.length === 0}
       day={day}
       layerForm="cycles"
       onOpenMark={markOpener(
@@ -282,6 +282,7 @@ export function CyclesTable({
         },
         showIn,
       )}
+      everyStream={streams}
       timelineOf={(shown) => cyclesTimeline(streams, shown)}
       records={rows}
       table={table}
