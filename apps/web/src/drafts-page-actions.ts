@@ -24,7 +24,7 @@ export function useDraftsPageActions({
   // Whether a dialog is open, behind which no change is undone.
   blocked: boolean;
 }) {
-  const { save, undoable, done } = useSaving<undefined>({
+  const { save, done } = useSaving<undefined>({
     queryKey: draftChangesKey,
     refreshes: draftedReads,
     removed: "Someone else has removed this. The drafts have been refreshed.",
@@ -81,7 +81,9 @@ export function useDraftsPageActions({
         next: unchanged,
         save: () => resubmitTarget(row.entry.target),
         failure: `Fathom could not send the draft of ${row.record} for approval again.`,
-        onSaved: undoable,
+        onSaved: (changeSetId, before) => {
+          done(`Resubmitted the draft of ${row.record}.`, changeSetId, before);
+        },
       });
     },
   };
