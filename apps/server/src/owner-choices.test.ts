@@ -303,3 +303,54 @@ describe("an owner not yet started", () => {
     expect((await projectNamed(project.id)).ownerId).toBeNull();
   });
 });
+
+describe("an owner who has left", () => {
+  it("leaves a rejection naming them shown to a role that doesn't see start and end dates, as the plan names them retired", async () => {
+    // Given a project's draft giving it an owner, rejected
+    const ownerId = await addPerson();
+    const project = await addProject();
+    await approve([{ type: "project", id: project.id }]);
+    const drafted = await test.request(
+      approver.cookie,
+      "PUT",
+      `/api/projects/${project.id}`,
+      { name: project.name, ownerId },
+      { publish: true },
+    );
+    expect(drafted.statusCode, drafted.body).toBe(200);
+    const rejected = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/rejection",
+      {
+        records: [{ type: "project", id: project.id }],
+        reason: "Fictional reason",
+      },
+    );
+    expect(rejected.statusCode, rejected.body).toBe(200);
+    const { changeSetId } = rejected.json<{ changeSetId: string }>();
+
+    // When the owner leaves, and a General change to them is in the history the role reads too
+    await test.connection
+      .update(people)
+      .set({ endDate: "2021-01-31" })
+      .where(eq(people.id, ownerId));
+    await recordChanges(test.connection, null, [
+      {
+        recordType: "person",
+        recordId: ownerId,
+        action: "changed",
+        field: "preferredName",
+        tier: "general",
+        oldValue: null,
+        newValue: "Fictional Leaver",
+      },
+    ]);
+
+    // Then the rejection is still shown to a role that doesn't see start and end dates
+    const { entries } = (
+      await test.request(viewer.cookie, "GET", "/api/changes")
+    ).json<{ entries: { id: string }[] }>();
+    expect(entries.map(({ id }) => id)).toContain(changeSetId);
+  });
+});

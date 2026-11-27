@@ -18,7 +18,19 @@ import {
   type Tier,
   tierSchema,
 } from "@fathom/shared";
-import { and, asc, desc, eq, inArray, lt, or, type SQL } from "drizzle-orm";
+import {
+  and,
+  asc,
+  eq,
+  gt,
+  inArray,
+  lt,
+  ne,
+  notExists,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import {
   type Actor,
@@ -50,7 +62,7 @@ import {
   type ViewNow,
   viewsNow,
 } from "./views.ts";
-import { type Facts, strings } from "./history-names.ts";
+import { type Facts, namesMembers, strings } from "./history-names.ts";
 import { ownPrivateChanges } from "./private-history.ts";
 
 // Configuration is seen by those who may open the configuration pages, and people by those who may
@@ -129,17 +141,16 @@ function seesRowOfKind(
   return sensitivities.every((each) => seesSensitivity(actor, each));
 }
 
-// A record's draft as a rejection found it, from the latest change to each of the record's fields
-// up to the rejection: each that is a change to its draft, other than a rejection's own reason. A
-// field changed live since, as by approving the draft or removing an unrelated column, is not the
-// draft's. A field whose latest change took a draft's value back, by a discard, still counts, since
-// that change holds the value taken back; a reason is never judged as less sensitive than its draft.
+// A record's draft as a rejection found it, from the changes to each of the record's fields since
+// the field was last changed live, up to the rejection: each that is a change to its draft, other
+// than a rejection's own reason. Every save of a draft counts, since each is recorded against the
+// save before it, so the first holds the live value it replaces. A field changed live since, as by
+// approving the draft or removing an unrelated column, is not the draft's. A discard still counts,
+// since it holds the value taken back; a reason is never judged as less sensitive than its draft.
 export const draftAsRejected = (
-  latestByField: readonly StoredChange[],
+  sinceLive: readonly StoredChange[],
 ): StoredChange[] =>
-  latestByField.filter(
-    (change) => change.draft && change.field !== rejectedField,
-  );
+  sinceLive.filter((change) => change.draft && change.field !== rejectedField);
 
 // Changes saved with the rejection count too, as undoing a discard restores a rejected draft's reason
 // before its values.
@@ -148,16 +159,14 @@ export async function readRejected(
   rows: readonly StoredChange[],
 ): Promise<Map<number, StoredChange[]>> {
   const rejections = rows.filter((row) => row.field === rejectedField);
-  const latest = new Map<number, StoredChange[]>(
+  const found = new Map<number, StoredChange[]>(
     rejections.map(({ id }) => [id, []]),
   );
   const rejection = alias(changes, "rejection");
+  const live = alias(changes, "live");
   for (const chunk of inChunks(rejections.map(({ id }) => id))) {
-    const found = await database
-      .selectDistinctOn([rejection.id, changes.field], {
-        rejectionId: rejection.id,
-        change: changes,
-      })
+    const sinceLive = await database
+      .select({ rejectionId: rejection.id, change: changes })
       .from(changes)
       .innerJoin(
         rejection,
@@ -170,14 +179,38 @@ export async function readRejected(
           ),
         ),
       )
-      .where(inArray(rejection.id, chunk))
-      .orderBy(rejection.id, changes.field, desc(changes.id));
-    for (const { rejectionId, change } of found) {
-      latest.get(rejectionId)?.push(change);
+      .where(
+        and(
+          inArray(rejection.id, chunk),
+          eq(changes.draft, true),
+          ne(changes.field, rejectedField),
+          notExists(
+            database
+              .select({ one: sql`1` })
+              .from(live)
+              .where(
+                and(
+                  eq(live.recordType, changes.recordType),
+                  eq(live.recordId, changes.recordId),
+                  eq(live.field, changes.field),
+                  eq(live.draft, false),
+                  gt(live.id, changes.id),
+                  or(
+                    lt(live.id, rejection.id),
+                    eq(live.changeSetId, rejection.changeSetId),
+                  ),
+                ),
+              ),
+          ),
+        ),
+      )
+      .orderBy(rejection.id, asc(changes.id));
+    for (const { rejectionId, change } of sinceLive) {
+      found.get(rejectionId)?.push(change);
     }
   }
   return new Map(
-    [...latest].map(([id, byField]) => [id, draftAsRejected(byField)]),
+    [...found].map(([id, changed]) => [id, draftAsRejected(changed)]),
   );
 }
 
@@ -374,8 +407,73 @@ export async function notCurrentAmong(
   );
 }
 
-export const teamRowKey = (row: StoredChange) =>
-  `${row.changeSetId} ${row.recordId} ${String(row.draft)}`;
+// The people a change names, whom a reader who doesn't see start and end dates may not see while
+// they haven't started or once they have left: the person changed, a team's members and lead, and a
+// hire's manager or filler. Planned hires among a team's members and lead are never hidden.
+export function peopleNamedBy(row: StoredChange): string[] {
+  if (row.recordType === "person") return [row.recordId];
+  if (namesMembers(row)) return [row.oldValue, row.newValue].flatMap(strings);
+  return (row.recordType === "planned-hire" &&
+    (row.field === "managerId" || row.field === "filledBy")) ||
+    (row.recordType === "feature-team" && row.field === "leadId")
+    ? valuesNamed(row)
+    : [];
+}
+
+// The owners a change names, whom the plan hides only while they haven't started, naming those who
+// have left as retired.
+export const ownersNamedBy = (row: StoredChange): string[] =>
+  namesOwner(row) ? valuesNamed(row) : [];
+
+// Whether a change is to a project's or proposal's owner.
+export const namesOwner = (row: { recordType: string; field: string }) =>
+  (row.recordType === "project" || row.recordType === "proposal") &&
+  row.field === "ownerId";
+
+const valuesNamed = (row: StoredChange) =>
+  [row.oldValue, row.newValue].filter(
+    (value): value is string => typeof value === "string",
+  );
+
+// Those a reader doesn't see: people who haven't started or have left, and owners who haven't
+// started, since the plan names an owner who has left as retired.
+export interface Unseen {
+  people: ReadonlySet<string>;
+  owners: ReadonlySet<string>;
+}
+
+// The people a change to a draft names, as a reason rejecting it may: for a team's members, those it
+// adds or removes; for a member's or lead's day, those it dates; otherwise as the change names them.
+export function namedInDraft(change: StoredChange): string[] {
+  if (namesMembers(change)) {
+    const before = strings(change.oldValue);
+    const after = strings(change.newValue);
+    return [
+      ...before.filter((id) => !after.includes(id)),
+      ...after.filter((id) => !before.includes(id)),
+    ];
+  }
+  if (
+    change.recordType === "feature-team" &&
+    (change.field === "memberFrom" || change.field === "leadFrom")
+  ) {
+    return [change.oldValue, change.newValue].flatMap((days) =>
+      typeof days === "object" && days !== null ? Object.keys(days) : [],
+    );
+  }
+  return peopleNamedBy(change);
+}
+
+// Whether a rejected draft names someone the reader doesn't see, whom its reason may name too.
+export const draftNamesUnseen = (
+  draft: readonly StoredChange[],
+  { people, owners }: Unseen,
+): boolean =>
+  draft.some(
+    (change) =>
+      namedInDraft(change).some((id) => people.has(id)) ||
+      ownersNamedBy(change).some((id) => owners.has(id)),
+  );
 
 // Whether a change to a team's members or lead changes no one the reader sees, once those hidden
 // from them are taken out of its old and new values.

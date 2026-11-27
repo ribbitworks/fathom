@@ -13,6 +13,8 @@ import {
   closeHireTests,
   editor,
   liveHire,
+  person,
+  approved,
   send,
   startHireTests,
   test,
@@ -99,5 +101,33 @@ it("hides a rejected hire value's reason once its list has become more sensitive
   await classify(`/api/lists/${list.id}/class`, "personal");
 
   // Then the reader, who doesn't see Personal data, no longer reads the reason
+  expect(await reads(reader, changeSetId)).toBe(false);
+});
+
+it("hides a rejection naming a manager who has since left from readers who do not see Personal details", async () => {
+  // Given a hire's draft naming a current manager, rejected, and a reader who sees the hiring plan
+  // but not when people start and leave
+  const manager = await person();
+  const id = await liveHire();
+  await changed(id, { managerId: manager });
+  const changeSetId = await rejected(id);
+  const reader = await test.signedIn([
+    "people:view",
+    "hiring-plan:view",
+    "confidential:view",
+  ]);
+  expect(await reads(reader, changeSetId)).toBe(true);
+
+  // When the manager leaves
+  expect(
+    (
+      await send(editor, "PATCH", `/api/people/${manager}`, {
+        endDate: "2021-01-01",
+      })
+    ).statusCode,
+  ).toBe(200);
+  await approved({ people: [manager] });
+
+  // Then the rejection, whose reason may name them, is hidden from the reader
   expect(await reads(reader, changeSetId)).toBe(false);
 });
