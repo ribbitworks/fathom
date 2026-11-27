@@ -460,6 +460,12 @@ Covered by the UI test `apps/web/e2e/fill-hire-teams.test.ts`.
   - **Expected:** **ID** holds `EMP-9003`.
   - **Notes:**
 
+- [ ] `623D` Clear **Start**, and type the first day of the month two months after the current one, as digits alone, such as `20270101` on a seed restored on 26 November 2026. Write down the date it shows.
+  - **Expected:**
+    - **Start** shows the date typed.
+    - **Feature teams** reads a small square in the team's colour, 'Field tools', then, in grey, "from" and the date typed.
+  - **Notes:**
+
 - [ ] `81F0` Select **Fill** at the foot of the panel.
   - **Expected:**
     - The form closes.
@@ -499,9 +505,18 @@ Covered by the UI test `apps/web/e2e/fill-hire-teams.test.ts`.
 - [ ] `C961` Select the Feature teams button, then 'Field tools'.
   - **Expected:**
     - The team panel opens, titled 'Field tools'.
-    - **Members** lists `Fictional joiner`.
-    - **Members** doesn't list 'Data engineer'.
+    - **Members** lists neither `Fictional joiner` nor 'Data engineer'.
+    - **Planned hires** lists 'Data engineer', then "#HIRE-" and a number.
+    - Under it, in small grey text: "Filled by Fictional joiner, starts" and the date written down at `623D`.
   - **Notes:**
+
+- [ ] `3C70` Clear the **Date** box, and type the date written down at `623D`, as digits alone.
+  - **Expected:**
+    - **Members** lists `Fictional joiner`.
+    - The team panel has no **Planned hires** row.
+  - **Notes:**
+
+**Afterwards:** Select **Today**.
 
 ### HIRE-20: Filling a Planned Hire That Leads a Feature Team Passes the Lead
 
