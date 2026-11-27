@@ -110,6 +110,31 @@
   list-style: none;
 }
 
+/* A list whose items take two lines each, set apart so each reads as one. */
+.spacedList {
+  composes: reports;
+  display: grid;
+  gap: var(--mantine-spacing-xs);
+}
+
+/* An item on two lines: its name, then a small line under it. */
+.twoLines {
+  display: inline-flex;
+  flex-direction: column;
+}
+
+/* The small line under a name a draft's dot marks starts under the name, past the dot, as the dot
+   hangs before it; a rejected draft's dot has its ring's room too. */
+.underDot {
+  padding-left: calc(var(--fathom-dot-size) + var(--fathom-mark-gap));
+}
+
+.underRinged {
+  padding-left: calc(
+    var(--fathom-dot-size) + var(--fathom-mark-gap) + var(--fathom-ring-room)
+  );
+}
+
 /* In a narrow panel, each label is a small heading over its value, rather than a column beside it. */
 @container (max-width: 26rem) {
   .row {

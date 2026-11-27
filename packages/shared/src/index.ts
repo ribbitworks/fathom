@@ -543,6 +543,7 @@ export {
   maxTeamsChanged,
   type MemberTeamsChange,
   memberTeamsChangeSchema,
+  type TeamHire,
   type TeamMonths,
   teamMonthsSchema,
 } from "./feature-teams.ts";

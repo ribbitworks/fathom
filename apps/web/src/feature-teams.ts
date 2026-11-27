@@ -4,6 +4,7 @@
 // drafts.
 
 import {
+  capitalized,
   type FeatureTeam,
   type FeatureTeamChange,
   type FeatureTeamDraft,
@@ -14,11 +15,12 @@ import {
   type PaletteColour,
   savedSchema,
   type Show,
+  type TeamHire,
 } from "@fathom/shared";
 import { z } from "zod";
 import { dayQuery, sendDeleteFor, sendJson, sendJsonFor } from "./api.ts";
+import { expectedWords, formatDay } from "./day-formats.ts";
 import { type ChartPerson, dayUnlessShown, liveCopyId } from "./org-chart.ts";
-import { formatDay } from "./day-formats.ts";
 import { today } from "./today.ts";
 import { besideLive } from "./status-mark.tsx";
 
@@ -97,45 +99,57 @@ export async function setFeatureTeamColour(
 // Names someone a team holds whom the reader cannot be shown.
 export const someoneUnseen = "Someone this role can't see";
 
-// Someone on a team as it names them, and, for a planned hire, whether its name is made from its
-// position and ID, and its key and when it's planned where the org chart has its card.
+// Someone on a team as it names them, and, for a planned hire, what the team says of it.
 export interface TeamPerson {
   name: string;
-  hire?: {
-    madeName: boolean;
-    keyNumber?: number;
-    planned?: NonNullable<OrgChartPerson["planned"]>;
-  };
+  hire?: TeamHire;
 }
 
-// Finds someone on a team: a planned hire on the org chart by its placeholder name there, its
-// position and ID when it has no name, as People names it; anyone else by the team's own names, which
-// include those who have not started, then by the org chart. The team says which are planned hires,
-// so one the chart doesn't draw, as on an earlier day, is still known as one.
+// Finds someone on a team: anyone it names by the team's own names, which include those who have not
+// started and planned hires as People names them, then by the org chart. The team says which are
+// planned hires, and what its details show of each.
 export function teamPersonOf(
   team: FeatureTeam,
   people: readonly OrgChartPerson[],
 ): (personId: string) => TeamPerson {
   const names = new Map(Object.entries(team.names));
   const cards = new Map(people.map((person) => [person.id, person]));
-  const hires = new Set(team.hires ?? []);
+  const hires = new Map(Object.entries(team.hires ?? {}));
   return (personId) => {
-    const card = cards.get(personId);
     const name =
-      card?.planned === undefined
-        ? (names.get(personId) ?? card?.preferredName ?? someoneUnseen)
-        : card.preferredName;
-    if (card?.planned === undefined && !hires.has(personId)) return { name };
-    return {
-      name,
-      hire: {
-        madeName: card?.planned?.shownId !== undefined,
-        ...(card === undefined ? {} : { keyNumber: card.keyNumber }),
-        ...(card?.planned === undefined ? {} : { planned: card.planned }),
-      },
-    };
+      names.get(personId) ??
+      cards.get(personId)?.preferredName ??
+      someoneUnseen;
+    const hire = hires.get(personId);
+    return hire === undefined ? { name } : { name, hire };
   };
 }
+
+// When a planned hire on a team starts: by whom it's filled, from the day they start where given;
+// otherwise the month it's expected, or that it has no target date.
+export function teamHireWords(hire: TeamHire): string {
+  const { filledBy } = hire;
+  if (filledBy === undefined) return capitalized(expectedWords(hire));
+  return filledBy.starts === undefined
+    ? `Filled by ${filledBy.name}`
+    : `Filled by ${filledBy.name}, starts ${formatDay(filledBy.starts)}`;
+}
+
+const byName = new Intl.Collator(undefined, { sensitivity: "base" });
+
+// Where a planned hire comes by when it starts: filled ones first, then those expected, with no
+// target date last.
+const startRank = ({ filledBy, undated }: TeamHire): number =>
+  filledBy !== undefined ? 0 : undated === true ? 2 : 1;
+
+// Planned hires on a team by when they start, then by name.
+export const plannedHireOrder = (
+  a: { name: string; hire: TeamHire },
+  b: { name: string; hire: TeamHire },
+): number =>
+  startRank(a.hire) - startRank(b.hire) ||
+  a.hire.expected.localeCompare(b.hire.expected) ||
+  byName.compare(a.name, b.name);
 
 export function teamPersonNamer(
   team: FeatureTeam,

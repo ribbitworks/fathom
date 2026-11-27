@@ -4,7 +4,7 @@
 // month, for every role, naming them in the change history, and removing a hire that is on a team.
 // Most tests record a hire on a team straight into its table, to reach each state at once.
 
-import { featureTeamLeads } from "@fathom/db";
+import { featureTeamLeads, plannedHires } from "@fathom/db";
 import {
   type ChangeHistory,
   type FeatureTeam,
@@ -15,6 +15,7 @@ import {
   type TeamMonths,
   withImplied,
 } from "@fathom/shared";
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { errorOf, ok } from "./test-app.ts";
 import {
@@ -61,7 +62,7 @@ async function teamRecordOf(changeSetId: string | null, who = editor) {
 }
 
 describe("a planned hire on a team", () => {
-  it("is shown as a member and the lead, by its name or its ID, to every reader of feature teams", async () => {
+  it("is shown as a member and the lead, by its name or its position and ID, to every reader of feature teams", async () => {
     // Given a team with a person, a named planned hire leading it, and an unnamed one
     const named = await plannedHire({ name: "Fictional Named Hire" });
     const unnamed = await plannedHire({
@@ -81,9 +82,54 @@ describe("a planned hire on a team", () => {
       expect(team?.leadId).toBe(named);
       expect(team?.names).toMatchObject({
         [named]: "Fictional Named Hire",
-        [unnamed]: "REQ-FICTIONAL-71",
+        [unnamed]: "Fictional Engineer, REQ-FICTIONAL-71",
       });
     }
+  });
+
+  it("gives each planned hire on it what its details show, naming who fills one only to readers who see them", async () => {
+    // Given a team with a hire with no name or target date, and a hire filled by someone who starts later
+    const unnamed = await plannedHire({
+      name: null,
+      requisition: "REQ-FICTIONAL-72",
+      targetDate: null,
+    });
+    const filled = await plannedHire({ name: "Fictional Filled Hire" });
+    const id = await liveTeam();
+    await hireOnTeam(id, unnamed);
+    await hireOnTeam(id, filled);
+    const joiner = await person({
+      preferredName: "Fictional Joiner",
+      startDate: "2026-09-01",
+    });
+    await test.connection
+      .update(plannedHires)
+      .set({ filledBy: joiner })
+      .where(eq(plannedHires.id, filled));
+
+    // When a reader who sees Personal details, and one who doesn't, read it
+    const seen = await teamSeen(id, editor);
+    const unseen = await teamSeen(id, planner);
+
+    // Then each hire comes with its name, key, ID and month, and the filled one with its person
+    // only for the reader who sees them
+    const seenHires = new Map(Object.entries(seen?.hires ?? {}));
+    expect(new Map(Object.entries(seen?.names ?? {})).get(unnamed)).toBe(
+      "Fictional Engineer, REQ-FICTIONAL-72",
+    );
+    expect(seenHires.get(unnamed)).toMatchObject({
+      shownId: "REQ-FICTIONAL-72",
+      expected: "2026-06",
+      undated: true,
+    });
+    expect(seenHires.get(filled)).toMatchObject({
+      expected: "2026-09",
+      filledBy: { name: "Fictional Joiner", starts: "2026-09-01" },
+    });
+    expect(typeof seenHires.get(filled)?.keyNumber).toBe("number");
+    const unseenHire = new Map(Object.entries(unseen?.hires ?? {})).get(filled);
+    expect(unseenHire?.expected).toBe("2026-09");
+    expect(unseenHire?.filledBy).toBeUndefined();
   });
 
   it("gives the day each planned hire on it joined, since its last leave and over a repeated join, and the day one leading it started, over a repeated lead", async () => {
@@ -104,7 +150,9 @@ describe("a planned hire on a team", () => {
     const team = await teamSeen(id, planner);
 
     // Then the hires are named as hires, and their days are given, and no person's
-    expect(team?.hires).toEqual(sorted(returning, leading));
+    expect(Object.keys(team?.hires ?? {}).sort()).toEqual(
+      sorted(returning, leading),
+    );
     expect(team?.hiresFrom).toEqual({
       [returning]: "2026-03-05",
       [leading]: "2026-04-05",
@@ -283,7 +331,7 @@ describe("who sees a planned hire on a team", () => {
       expect(seen?.members).toEqual([hire]);
       expect(seen?.names).toEqual({ [hire]: "Fictional Seen Hire" });
       expect(seen?.hiresFrom).toEqual({ [hire]: today });
-      expect(seen?.hires).toEqual([hire]);
+      expect(Object.keys(seen?.hires ?? {})).toEqual([hire]);
     },
   );
 

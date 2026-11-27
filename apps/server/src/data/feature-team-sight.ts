@@ -7,10 +7,12 @@ import {
   type ClassAccess,
   type DataClasses,
   type FeatureTeamDraft,
+  hireCalled,
   seesClass,
   seesEmployment,
   seesField,
   seesView,
+  type TeamHire,
   type Tier,
 } from "@fathom/shared";
 import { stableJson } from "./changes.ts";
@@ -179,6 +181,8 @@ export interface TeamSight {
   everyone: Everyone;
   seesPeople: boolean;
   seesDays: boolean;
+  seesStartDates: boolean;
+  seesTier: (tier: Tier) => boolean;
   seen: (field: string) => boolean;
   shown: (personId: unknown) => personId is string;
 }
@@ -193,6 +197,8 @@ export function teamSight(
     everyone,
     seesPeople,
     seesDays: seesField(access, "featureTeamDates"),
+    seesStartDates: seesField(access, "startDate"),
+    seesTier: (tier) => seesClass(access.permissions, tier),
     seen: seesTeamField(access),
     shown: seenBy(everyone, seesPeople && !peopleAsTodayOn(access, day, today)),
   };
@@ -340,3 +346,59 @@ export const hireLeadDaySeen = (
   seesDays: boolean,
 ): string | undefined =>
   run !== undefined && (seesDays || !run.afterPerson) ? run.from : undefined;
+
+// A planned hire a team names, as read for its details: its own name, if any, its ID, its position's
+// label and the Positions list's class, its key, the month it's expected and whether that comes from
+// no date, and who fills it, if anyone does.
+export interface HireRead {
+  name: string | null;
+  shownId: string;
+  position: string;
+  positionTier: Tier;
+  keyNumber: number;
+  expected: string;
+  undated: boolean;
+  filledBy: string | null;
+}
+
+// A planned hire as a team's details name it, as People does: by its name, or by its position and
+// ID, the position only for a reader who sees the Positions list. Who fills it is named only to a reader who sees them, as People names a person, and the day
+// they start only to one who sees start dates too; to anyone else it shows as not yet filled, as its
+// placeholder does.
+export function hireOnTeamSeen(
+  hire: HireRead,
+  {
+    everyone,
+    shown,
+    seesStartDates,
+    seesTier,
+  }: Pick<TeamSight, "everyone" | "shown" | "seesStartDates" | "seesTier">,
+): { name: string; hire: TeamHire } {
+  const filler =
+    hire.filledBy !== null && shown(hire.filledBy)
+      ? everyone.get(hire.filledBy)
+      : undefined;
+  const starts =
+    filler?.kind === "person" && seesStartDates ? text(filler.startDate) : null;
+  return {
+    name: hireCalled(
+      hire.name,
+      hire.shownId,
+      seesTier(hire.positionTier) ? hire.position : undefined,
+    ),
+    hire: {
+      keyNumber: hire.keyNumber,
+      ...(hire.name === null ? { shownId: hire.shownId } : {}),
+      expected: hire.expected,
+      ...(hire.undated ? { undated: true as const } : {}),
+      ...(filler === undefined
+        ? {}
+        : {
+            filledBy: {
+              name: filler.preferredName,
+              ...(starts === null ? {} : { starts }),
+            },
+          }),
+    },
+  };
+}

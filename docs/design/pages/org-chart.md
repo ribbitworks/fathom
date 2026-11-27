@@ -71,13 +71,20 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
 - **Where they're kept:** Here, rather than a page of their own or People, so team upkeep stays in one place.
 - **Chart:** Each team hangs under its lead's card, or a card reading No feature lead. Someone on two teams has two cards.
 - **Planned hires on a team:** A hire's placeholder card, as under its manager, after the team's people. A hire leading a team heads it, its card a line taller for the team's name, and the team is drawn after those people lead, as a planned manager's team is on Reporting teams.
-  - **An earlier day:** The chart draws placeholders today and later only, since past plans aren't kept, so on an earlier day it leaves out a hire on a team, and draws a team a hire led then under a card reading No feature lead. The team's panel still lists the hire, by the name the team gives it, its name or its ID, without its key or its Planned box.
+  - **An earlier day:** The chart draws placeholders today and later only, since past plans aren't kept, so on an earlier day it leaves out a hire on a team, and draws a team a hire led then under a card reading No feature lead. The team's panel still lists the hire under Planned hires, as on any day.
 - **Colours:** Chosen for each feature team from the same palette, and shown only on this chart, so they never meet reporting teams' colours.
 - **Cards:** No Show only this team, and no naming or colouring of reporting teams.
 - **Feature teams menu:** Replaces Teams, ending with New feature team.
-- **Team panel:** Opens beside the chart, with Name, Colour, Feature lead and Members. Membership changes are drafts from the date shown.
+- **Team panel:** Opens beside the chart, with Name, Colour, Feature lead, Members and, for a team with any, Planned hires. Membership changes are drafts from the date shown.
   - Feature lead's and Members' pickers describe each person as People's Manager picker does, as [A choice with a description](../../standards/ui-conventions/entering-and-saving.md#choices) sets out.
-  - Members lists people by name, then planned hires, each named as its card names it: its placeholder name, in grey italics where it is made from its position and ID, then its key, such as #HIRE-12, and its grey Planned box, such as Planned, expected Oct 2026. Like a person, it shows no day it joined. A hire leading the team is drawn the same way in Feature lead.
+  - Members lists people alone, by name. Planned hires, a row under it, lists the team's planned hires, each on two lines, with no Planned box, since the row's label says it; the card keeps its box.
+    - **First line:** its name, or its position and ID in grey italics when it has no name of its own, then its key, such as #HIRE-12. Names and keys are plain text.
+    - **Second line, small and dimmed:** Expected and its month, such as Expected Oct 2026; No target date; or, once filled, Filled by and its person, then starts and their start date, such as Filled by Fictional joiner, starts Feb 1, 2027.
+    - **Order:** filled hires first, then by expected month, with no target date last.
+    - **Filled:** who fills a hire is named only to readers who see that person, and their start date only to readers who see start dates too, so a reader who sees the person but not start dates reads Filled by and the person alone. Any other reader sees the hire as not yet filled, with its Expected month, as its card shows it.
+    - **Feature lead:** a hire leading the team takes the same two lines there, and is also listed under Planned hires, as a person leading it is under Members.
+    - **Changing:** Planned hires has no pencil of its own.
+    - Like a person, a hire shows no day it joined.
   - On any date but today, Name and Colour can't change and the team can't be removed, since they take no date.
   - A lead is chosen from anyone who hasn't left, never a planned hire; someone not yet a member joins in the same draft.
   - Readers without Personal details plan by month, from its first day, and aren't told when that day falls outside someone's employment. The Approver is told.

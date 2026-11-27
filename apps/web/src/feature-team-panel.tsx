@@ -12,16 +12,18 @@ import {
   type OrgChartPerson,
   type PaletteColour,
   type Show,
+  type TeamHire,
 } from "@fathom/shared";
 import { Button, Group, Text } from "@mantine/core";
 import { type ReactNode, useMemo, useState } from "react";
 import { colourWords } from "./colours.ts";
-import { plannedWords } from "./day-formats.ts";
 import {
   featureTeamsQuery,
   liveTeam,
   membersChanged,
+  plannedHireOrder,
   takesEffect,
+  teamHireWords,
   type TeamPerson,
   teamPersonOf,
 } from "./feature-teams.ts";
@@ -45,8 +47,11 @@ import {
   type DraftedPart,
   DraftedPartItem,
   FilledIn,
-  MarkedItem,
+  marksIn,
+  useDraftView,
+  viewedDraft,
 } from "./status-mark.tsx";
+import type { DraftLike } from "./draft-marks.ts";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { today } from "./today.ts";
 
@@ -169,54 +174,104 @@ const colourColumn = {
   required: false,
 } as const satisfies Parameters<typeof Row>[0]["column"];
 
-// Someone on a team as the panel names them: a person by name; a planned hire as its card names it,
-// in grey italics where its name is made from its position and ID, then its key and its Planned box.
+// The planned hires on a team, shown under its members, changed with them.
+const plannedHiresColumn = {
+  key: "plannedHires",
+  label: "Planned hires",
+  kind: "text",
+  multiple: false,
+  choices: [],
+  required: false,
+} as const satisfies Parameters<typeof Row>[0]["column"];
+
+// Someone on a team as the panel's first line for them names them: a person by name; a planned hire
+// by its name, in grey italics where made from its position and ID, then its key.
 function MemberName({ person }: { person: TeamPerson }) {
   const { name, hire } = person;
   if (hire === undefined) return name;
-  const named = (
+  return (
     <>
-      {hire.madeName ? <FilledIn>{name}</FilledIn> : name}
-      {hire.keyNumber !== undefined && (
-        <KeyAfter record={{ kind: "hire", keyNumber: hire.keyNumber }} />
-      )}
+      {hire.shownId === undefined ? name : <FilledIn>{name}</FilledIn>}
+      <KeyAfter record={{ kind: "hire", keyNumber: hire.keyNumber }} />
     </>
-  );
-  return hire.planned === undefined ? (
-    named
-  ) : (
-    <MarkedItem tone="planned" words={plannedWords(hire.planned)}>
-      {named}
-    </MarkedItem>
   );
 }
 
-// A team's members, one to a line, people by name, then planned hires by name, each with what a
-// draft does to them, if anything.
+// A planned hire on two lines: the first as given, such as its name with a draft's mark, then, small
+// and dimmed, when it starts, set in under the name past the dot of the draft marking the first line,
+// where the view shows one.
+function HireEntry({
+  hire,
+  marked,
+  children,
+}: {
+  hire: TeamHire;
+  marked?: DraftLike | undefined;
+  children: ReactNode;
+}) {
+  const show = useDraftView();
+  const { draft: shown } = viewedDraft(marked, show);
+  const setIn = !marksIn(marked, show)
+    ? ""
+    : shown?.state === "rejected"
+      ? classes.underRinged
+      : classes.underDot;
+  return (
+    <span className={classes.twoLines}>
+      <span>{children}</span>
+      <Text component="span" size="sm" c="dimmed" className={setIn}>
+        {teamHireWords(hire)}
+      </Text>
+    </span>
+  );
+}
+
+// Someone a draft adds to a team or takes off it, as the panel names them, and the draft that does.
+interface MemberMark {
+  named: ReactNode;
+  by: DraftLike;
+}
+
+// Those on a team the panel lists, one to an item, each with what a draft does to them, if anything:
+// people by name, or planned hires, on two lines each, by when they start.
 function MemberList({
   members,
   personOf,
   markOf,
+  hires = false,
 }: {
   members: readonly string[];
   personOf: (personId: string) => TeamPerson;
-  markOf?: ((personId: string) => ReactNode) | undefined;
+  markOf?: ((personId: string) => MemberMark | undefined) | undefined;
+  hires?: boolean;
 }) {
-  const sorted = members
-    .map((personId) => ({ personId, person: personOf(personId) }))
-    .sort(
-      (a, b) =>
-        Number(a.person.hire !== undefined) -
-          Number(b.person.hire !== undefined) ||
-        byName.compare(a.person.name, b.person.name),
-    );
+  const listed = members.map((personId) => ({
+    personId,
+    person: personOf(personId),
+  }));
+  const people = listed
+    .filter(({ person }) => person.hire === undefined)
+    .sort((a, b) => byName.compare(a.person.name, b.person.name));
+  const planned = listed
+    .flatMap(({ personId, person: { name, hire } }) =>
+      hire === undefined ? [] : [{ personId, name, hire }],
+    )
+    .sort(plannedHireOrder);
+  const named = (personId: string, person: TeamPerson) =>
+    markOf?.(personId)?.named ?? <MemberName person={person} />;
   return (
-    <ul className={classes.reports}>
-      {sorted.map(({ personId, person }) => (
-        <li key={personId}>
-          {markOf?.(personId) ?? <MemberName person={person} />}
-        </li>
-      ))}
+    <ul className={hires ? classes.spacedList : classes.reports}>
+      {hires
+        ? planned.map(({ personId, name, hire }) => (
+            <li key={personId}>
+              <HireEntry hire={hire} marked={markOf?.(personId)?.by}>
+                {named(personId, { name, hire })}
+              </HireEntry>
+            </li>
+          ))
+        : people.map(({ personId, person }) => (
+            <li key={personId}>{named(personId, person)}</li>
+          ))}
     </ul>
   );
 }
@@ -429,16 +484,30 @@ function TeamDetails({
         : "added";
   // A member a draft adds or takes off, with the draft's dot before them, struck through when taken
   // off, as a record's parts are, and when the change takes effect, where that is not the day shown.
-  const memberMark = (personId: string, by: FeatureTeamDraft) => {
+  const memberMark = (
+    personId: string,
+    by: FeatureTeamDraft,
+  ): MemberMark | undefined => {
     const drafted = draftedAs(personId);
     if (drafted === undefined) return undefined;
-    return (
-      <DraftedPartItem draft={by} part={drafted} from={from(by, personId)}>
-        <MemberName person={personOf(personId)} />
-      </DraftedPartItem>
-    );
+    return {
+      named: (
+        <DraftedPartItem draft={by} part={drafted} from={from(by, personId)}>
+          <MemberName person={personOf(personId)} />
+        </DraftedPartItem>
+      ),
+      by,
+    };
   };
   const members = [...shown.members, ...leaving];
+  const isHire = (personId: string) => personOf(personId).hire !== undefined;
+  const peopleOn = members.filter((personId) => !isHire(personId));
+  const hires = members.filter(isHire);
+  const markOf =
+    draft === undefined
+      ? undefined
+      : (personId: string) => memberMark(personId, draft);
+  const lead = shown.leadId === null ? undefined : personOf(shown.leadId);
   const nameDraft = markedHere("name");
   const leadDraft = markedHere("leadId");
   // Its members are marked one by one, except live only, where they are not drawn as parts.
@@ -517,32 +586,40 @@ function TeamDetails({
               }
               editing={editing(columns.leadId)}
             >
-              {shown.leadId === null ? undefined : (
-                <Text>
-                  <MemberName person={personOf(shown.leadId)} />
-                </Text>
+              {lead === undefined ? undefined : lead.hire === undefined ? (
+                <Text>{lead.name}</Text>
+              ) : (
+                <HireEntry hire={lead.hire} marked={leadDraft}>
+                  <MemberName person={lead} />
+                </HireEntry>
               )}
             </Row>
             <Row
               column={columns.members}
-              value={columns.members.value(shown)}
+              value={peopleOn}
               changed={
                 membersDraft === undefined ? undefined : { draft: membersDraft }
               }
               editing={editing(columns.members)}
             >
-              {members.length === 0 ? undefined : (
+              {peopleOn.length === 0 ? undefined : (
                 <MemberList
-                  members={members}
+                  members={peopleOn}
                   personOf={personOf}
-                  markOf={
-                    draft === undefined
-                      ? undefined
-                      : (personId) => memberMark(personId, draft)
-                  }
+                  markOf={markOf}
                 />
               )}
             </Row>
+            {hires.length > 0 && (
+              <Row column={plannedHiresColumn} value={hires}>
+                <MemberList
+                  members={hires}
+                  personOf={personOf}
+                  markOf={markOf}
+                  hires
+                />
+              </Row>
+            )}
           </RecordSection>
           {changes && (
             <Group gap="xs">

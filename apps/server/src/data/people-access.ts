@@ -156,7 +156,16 @@ export function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
                 disbandedFrom !== undefined,
             )
           : seesField(actor, "featureTeamDates"));
-      if (sawDays) {
+      // So is naming who fills a planned hire, someone not yet started, while start dates are above
+      // General.
+      const sawFiller =
+        actor.dataClasses.startDate !== "general" &&
+        read.teams.some(({ hires }) =>
+          Object.values(hires ?? {}).some(
+            ({ filledBy }) => filledBy !== undefined,
+          ),
+        );
+      if (sawDays || sawFiller) {
         await recordPersonalView(
           database,
           actor.user.id,

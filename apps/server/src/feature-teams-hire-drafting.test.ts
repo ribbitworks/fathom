@@ -76,7 +76,7 @@ describe("drafting a planned hire on a team", () => {
       expect(team?.leadId).toBe(named);
       expect(team?.names).toMatchObject({
         [named]: "Fictional Named Hire",
-        [unnamed]: "REQ-FICTIONAL-71",
+        [unnamed]: "Fictional Engineer, REQ-FICTIONAL-71",
       });
     }
   });
