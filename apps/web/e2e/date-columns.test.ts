@@ -160,7 +160,7 @@ test("refuses a day that doesn't exist typed fast with Enter in a date column's 
 
   // Then the day is refused under the row, its editor kept open with what was typed
   await expect(
-    page.getByText(`${name}: use a date such as 2026‑10‑31`),
+    page.getByText(`Type a date for ${name}, such as 2026-10-31`),
   ).toBeVisible();
   await expect(page.getByRole("textbox", { name })).toHaveValue("2026-02-30");
   expect(changes).toEqual([]);
