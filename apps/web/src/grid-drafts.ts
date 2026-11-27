@@ -9,6 +9,7 @@ import {
   type FieldDraft,
   type List,
   type Show,
+  allOf,
   draftFilterKey,
 } from "@fathom/shared";
 import { configDraftFields, draftLines } from "./draft-details.tsx";
@@ -266,7 +267,7 @@ export function renamedValue(
   const by = [...new Set(found.flatMap((one) => one.by ?? []))];
   return {
     ...(found.find(({ draft }) => draft.state === "waiting") ?? first),
-    by: by.length === 0 ? undefined : by.join(", "),
+    by: by.length === 0 ? undefined : allOf(by),
   };
 }
 

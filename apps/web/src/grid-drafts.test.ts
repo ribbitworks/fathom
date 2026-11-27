@@ -269,7 +269,7 @@ describe("the drafts renaming choices", () => {
 
   it("credit every one who renamed a choice the value holds", () => {
     expect(named(["c1", "c2", "c4"])?.by).toBe(
-      "Fictional Editor, Fictional Planner",
+      "Fictional Editor and Fictional Planner",
     );
   });
 
