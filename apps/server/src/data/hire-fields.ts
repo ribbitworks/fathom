@@ -4,20 +4,13 @@
 // to them are recorded. Part of the data access layer.
 
 import { type Database, plannedHires, type Reader } from "@fathom/db";
-import {
-  askedColumnIds,
-  hireCalled,
-  monthOf,
-  temporaryId,
-  type Tier,
-} from "@fathom/shared";
+import { hireCalled, monthOf, temporaryId, type Tier } from "@fathom/shared";
 import {
   type Actor,
   requireSensitivityEdit,
   seesSensitivity,
   type Sensitivity,
 } from "../access.ts";
-import { BadRequestError } from "../errors.ts";
 import {
   builtInTier,
   type ColumnInfo,
@@ -130,11 +123,7 @@ export async function readHireTier(
   };
 }
 
-// The columns a hire may have values in: People's columns offered on planned hires.
-export const offeredOn = (columns: readonly ColumnInfo[]) =>
-  columns.filter((column) => column.onPlannedHires);
-
-// Whether hires' values fit the columns offered on planned hires, where none is required: each in
+// Whether hires' values fit People's columns, where none is required of a planned hire: each in
 // such a column, and one its column's type holds.
 export async function fitOffered(
   reader: Reader,
@@ -151,27 +140,11 @@ export async function fitOffered(
   const listOf = new Map(
     (await inListOrder(reader, chosen)).map(({ id, listId }) => [id, listId]),
   );
-  const offered = offeredOn(columns).map((column) => ({
+  const offered = columns.map((column) => ({
     ...column,
     required: false,
   }));
   return hires.every((hire) => fitsColumns(offered, listOf, hire));
-}
-
-// Refuses values asked for in a column not offered on planned hires; any other column unknown is
-// refused as people's are.
-export function refuseNotOffered(
-  columns: readonly ColumnInfo[],
-  asked: Parameters<typeof askedColumnIds>[0],
-): void {
-  for (const fieldId of askedColumnIds(asked)) {
-    const column = columns.find(({ id }) => id === fieldId);
-    if (column !== undefined && !column.onPlannedHires) {
-      throw new BadRequestError(
-        `${column.name} is switched off for planned hires`,
-      );
-    }
-  }
 }
 
 // Refuses changes to fields the actor may not change.

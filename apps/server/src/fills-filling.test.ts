@@ -41,14 +41,13 @@ afterAll(closeFillTests);
 
 describe("filling a planned hire with a new person", () => {
   it("drafts the person with the hire's position, manager, values, and the start date given, and the hire as filled by them", async () => {
-    // Given a hire under a manager, with a link in a column offered on planned hires
+    // Given a hire under a manager, with a link in a column
     const manager = await person();
     const column = await ok<{ field: Field }>(
       await send(editor, "POST", "/api/people/columns", {
         name: unique("Fictional Profile"),
         type: "link",
         visibility: "general",
-        onPlannedHires: true,
       }),
       201,
     );

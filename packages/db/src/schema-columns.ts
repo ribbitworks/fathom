@@ -46,8 +46,8 @@ export const linkableTables = [
 
 // The columns people add to Fathom's tables, as ADR 0005 sets out, and the columns of a private
 // page. Names are unique within a table, or within a page, ignoring letter case. A list cannot be
-// deleted while a column draws on it. A column on people can be offered on planned hires too, where
-// a value is never required.
+// deleted while a column draws on it. A column on people is offered on planned hires too, where a
+// value is never required.
 export const fields = fathomSchema.table(
   "fields",
   {
@@ -72,12 +72,9 @@ export const fields = fathomSchema.table(
     visibility: text("visibility"),
     // Several choices, or several linked records.
     multiple: boolean("multiple").notNull().default(false),
-    // Several lines of text.
-    multiline: boolean("multiline").notNull().default(false),
     // The table a record column links to, one of linkableTables.
     linkedTable: text("linked_table"),
     required: boolean("required").notNull().default(false),
-    onPlannedHires: boolean("on_planned_hires").notNull().default(false),
   },
   (table) => [
     uniqueIndex("fields_table_name_index")
@@ -90,17 +87,12 @@ export const fields = fathomSchema.table(
       "fields_page_private",
       sql`(${table.pageId} IS NOT NULL) = (${table.tableName} = 'private')`,
     ),
-    // Only People's columns are offered on planned hires.
-    check(
-      "fields_planned_hires_from_people",
-      sql`NOT ${table.onPlannedHires} OR ${table.tableName} = 'people'`,
-    ),
     // A choice column has a list and takes its class; every other type has a class of its own and
-    // no list. Only choice and record columns take several values, only a text column several
-    // lines, and a record column, and only it, names the table it links to.
+    // no list. Only choice and record columns take several values, and a record column, and only
+    // it, names the table it links to.
     check(
       "fields_type_settings",
-      sql`(NOT ${table.multiline} OR ${table.type} = 'text') AND ((${table.linkedTable} IS NOT NULL) = (${table.type} = 'record')) AND (${table.linkedTable} IS NULL OR ${table.linkedTable} IN (${sql.raw(linkableTables.map((name) => `'${name}'`).join(", "))})) AND ((${table.type} = 'choice' AND ${table.listId} IS NOT NULL AND ${table.visibility} IS NULL) OR (${table.type} = 'record' AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL) OR (${table.type} IN ('link', 'note', 'number', 'flag', 'text', 'date') AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL AND NOT ${table.multiple}))`,
+      sql`((${table.linkedTable} IS NOT NULL) = (${table.type} = 'record')) AND (${table.linkedTable} IS NULL OR ${table.linkedTable} IN (${sql.raw(linkableTables.map((name) => `'${name}'`).join(", "))})) AND ((${table.type} = 'choice' AND ${table.listId} IS NOT NULL AND ${table.visibility} IS NULL) OR (${table.type} = 'record' AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL) OR (${table.type} IN ('link', 'note', 'number', 'flag', 'text', 'date') AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL AND NOT ${table.multiple}))`,
     ),
   ],
 );

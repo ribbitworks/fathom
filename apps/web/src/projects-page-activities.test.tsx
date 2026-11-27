@@ -217,7 +217,6 @@ describe("the Activities page", () => {
       visibility: "general" as const,
       multiple: false,
       required: false,
-      onPlannedHires: false,
     };
     const { history } = await openPage(
       `/activities?column=${runbook.id}`,

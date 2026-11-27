@@ -53,7 +53,6 @@ export const fieldFields = [
   "visibility",
   "multiple",
   "required",
-  "onPlannedHires",
 ] as const;
 
 export const fieldChanges = (
@@ -138,10 +137,9 @@ const recordsOf: Readonly<
 };
 
 // Refuses settings that the people and planned hires already in Fathom, live or in drafts, do not
-// meet: a required column that someone has no value for, one choice where anyone has several, or a
-// column switched off for planned hires while any has a value in it. A value is never required of a
-// planned hire, and a filled hire, which has left People and cannot be changed, keeps its values as
-// they were without holding back any change. A draft that changes someone without changing the
+// meet: a required column that someone has no value for, or one choice where anyone has several. A
+// value is never required of a planned hire, and a filled hire, which has left People and cannot be
+// changed, keeps its values as they were without holding back any change. A draft that changes someone without changing the
 // column keeps their live value. The caller checks the list, which a draft may draw from before it
 // is approved.
 export async function checkValuesFit(
@@ -149,7 +147,6 @@ export async function checkValuesFit(
   field: FieldRow,
   request: Pick<FieldRequest, "multiple" | "required"> & {
     listId?: string | null | undefined;
-    onPlannedHires?: boolean | undefined;
   },
 ): Promise<void> {
   // A private page's column is never drafted, nor are its rows.
@@ -178,15 +175,6 @@ export async function checkValuesFit(
   if (listChanges && inDrafts.some(({ held }) => (held ?? 0) > 0)) {
     throw new ConflictError(
       `Drafts have values from the list of ${field.name}, so its list cannot change`,
-    );
-  }
-  const switchedOff = request.onPlannedHires === false && field.onPlannedHires;
-  if (
-    switchedOff &&
-    inDrafts.some(({ hire, held }) => hire && (held ?? 0) > 0)
-  ) {
-    throw new ConflictError(
-      `Drafts give planned hires values in ${field.name}, so it cannot be switched off for planned hires yet`,
     );
   }
   if (request.required && !field.required) {
@@ -280,22 +268,6 @@ export async function checkValuesFit(
     if (used > 0) {
       throw new ConflictError(
         `${field.name} has values from its list, so its list cannot change`,
-      );
-    }
-  }
-  if (switchedOff) {
-    const holding = await totalOf(
-      transaction
-        .select({ total: countDistinct(fieldValues.plannedHireId) })
-        .from(fieldValues)
-        .innerJoin(plannedHires, eq(plannedHires.id, fieldValues.plannedHireId))
-        .where(
-          and(eq(fieldValues.fieldId, field.id), isNull(plannedHires.filledBy)),
-        ),
-    );
-    if (holding > 0) {
-      throw new ConflictError(
-        `${hiresHave(holding)} values in ${field.name}, so it cannot be switched off for planned hires yet. Clear them first.`,
       );
     }
   }

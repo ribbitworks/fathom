@@ -254,7 +254,6 @@ async function seedKind(
     visibility: null,
     multiple: false,
     required: false,
-    onPlannedHires: false,
   };
   await transaction.insert(fields).values({ id: kindColumnId, ...column });
   made.push(...recorded("field", kindColumnId, "created", column));

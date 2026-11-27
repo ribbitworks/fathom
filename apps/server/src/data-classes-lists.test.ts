@@ -405,7 +405,6 @@ describe("a column's class", () => {
         visibility: "general",
         multiple: false,
         required: false,
-        onPlannedHires: true,
       },
       { publish: false },
     );

@@ -531,7 +531,6 @@ describe("a Note column", () => {
           visibility: "personal",
           multiple: false,
           required: false,
-          onPlannedHires: true,
         },
       ]);
     });

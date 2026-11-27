@@ -70,7 +70,6 @@ export const fieldDraftSchema = z.object({
       visibility: tierSchema.nullable(),
       multiple: z.boolean(),
       required: z.boolean(),
-      onPlannedHires: z.boolean(),
     })
     .partial(),
   ...draftShape,
@@ -82,7 +81,7 @@ export type FieldDraft = z.infer<typeof fieldDraftSchema>;
 // required; a choice column also decides its list and whether one choice or several can be picked,
 // and a web link or note column the visibility of its values. It is as its draft, if any, makes it,
 // with the draft beside, or, for a draft that removes it, as it is. A column is offered on planned
-// hires too unless it is switched off for them, and is never required on them.
+// hires too, and is never required on them.
 export const fieldSchema = z.object({
   id: z.string(),
   keyNumber: keyNumberSchema,
@@ -94,7 +93,6 @@ export const fieldSchema = z.object({
   visibility: tierSchema.nullable().default(null),
   multiple: z.boolean(),
   required: z.boolean(),
-  onPlannedHires: z.boolean().default(true),
   // The table it is on, whose Approvers decide its drafts; one read without it is on People.
   table: columnTableSchema.optional(),
   draft: fieldDraftSchema.optional(),
@@ -310,9 +308,9 @@ export const canBeRequired = (type: FieldType): boolean =>
 
 // What sets each table apart: its name, what reading it needs, what adding, changing and removing
 // its columns needs, which is editing its records and seeing people, whose sight General lists and
-// columns take, which Approve decides its columns' drafts, that of its records' area, whether
-// planned hires are offered its added columns, whether they must be General, and whether a column
-// may draft a new General list with it, for a table whose editors don't make lists on Lists.
+// columns take, which Approve decides its columns' drafts, that of its records' area, whether its
+// added columns must be General, and whether a column may draft a new General list with it, for a
+// table whose editors don't make lists on Lists.
 export const columnTablePolicies: Readonly<
   Record<
     ColumnTable,
@@ -321,7 +319,6 @@ export const columnTablePolicies: Readonly<
       viewNeeds: Permission;
       editNeeds: readonly Permission[];
       approveNeeds: ApprovePermission;
-      onPlannedHires: boolean;
       generalOnly: boolean;
       newLists: boolean;
     }
@@ -332,7 +329,6 @@ export const columnTablePolicies: Readonly<
     viewNeeds: "people:view",
     editNeeds: ["people:edit", "people:view"],
     approveNeeds: "people:approve",
-    onPlannedHires: true,
     generalOnly: false,
     newLists: false,
   },
@@ -341,7 +337,6 @@ export const columnTablePolicies: Readonly<
     viewNeeds: "features:view",
     editNeeds: ["features:edit", "people:view"],
     approveNeeds: "features:approve",
-    onPlannedHires: false,
     generalOnly: true,
     newLists: true,
   },
@@ -350,7 +345,6 @@ export const columnTablePolicies: Readonly<
     viewNeeds: "features:view",
     editNeeds: ["features:edit", "people:view"],
     approveNeeds: "features:approve",
-    onPlannedHires: false,
     generalOnly: true,
     newLists: true,
   },
@@ -396,7 +390,6 @@ export const fieldRequestSchema = z
     visibility: tierSchema.optional(),
     multiple: z.boolean().default(false),
     required: z.boolean().default(false),
-    onPlannedHires: z.boolean().default(true),
   })
   .superRefine((request, context) => {
     const issue = (message: string) => {

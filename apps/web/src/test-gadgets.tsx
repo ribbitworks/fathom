@@ -41,7 +41,6 @@ export const colour: Field = {
   visibility: null,
   multiple: false,
   required: false,
-  onPlannedHires: true,
 };
 // A gadget's web link column.
 export const site: Field = {
@@ -53,7 +52,6 @@ export const site: Field = {
   visibility: "general",
   multiple: false,
   required: false,
-  onPlannedHires: true,
 };
 export const colours: List = {
   id: "l1",

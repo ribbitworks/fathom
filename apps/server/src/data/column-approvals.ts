@@ -130,11 +130,10 @@ export async function approveColumnDrafts(
       }
       made.push(...fieldChanges(id, "created", undefined, after));
     } else {
-      const { name, listId, visibility, multiple, required, onPlannedHires } =
-        after;
+      const { name, listId, visibility, multiple, required } = after;
       await transaction
         .update(fields)
-        .set({ name, listId, visibility, multiple, required, onPlannedHires })
+        .set({ name, listId, visibility, multiple, required })
         .where(eq(fields.id, id));
       made.push(...fieldChanges(id, "changed", before, after));
     }

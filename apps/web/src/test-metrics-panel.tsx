@@ -21,7 +21,6 @@ export const level: Field = {
   visibility: null,
   multiple: false,
   required: false,
-  onPlannedHires: true,
 };
 export const role: Field = {
   id: "f2",
@@ -32,7 +31,6 @@ export const role: Field = {
   visibility: null,
   multiple: false,
   required: false,
-  onPlannedHires: true,
 };
 export const hours: Field = {
   id: "f3",
@@ -43,7 +41,6 @@ export const hours: Field = {
   visibility: "general",
   multiple: false,
   required: false,
-  onPlannedHires: true,
 };
 export const choice = (id: string, label: string) => ({
   id,

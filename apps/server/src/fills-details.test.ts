@@ -245,7 +245,6 @@ describe("what a fill is given", () => {
             name: unique("Fictional Score"),
             type: "number",
             visibility: "general",
-            onPlannedHires: true,
           }),
           201,
         )
@@ -276,7 +275,6 @@ describe("what a fill is given", () => {
         name: unique("Fictional First Aider"),
         type: "flag",
         visibility: "general",
-        onPlannedHires: true,
       }),
       201,
     );

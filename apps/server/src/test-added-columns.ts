@@ -67,13 +67,12 @@ type HeldColumn = keyof typeof heldColumns;
 export interface ColumnSettings {
   visibility?: string;
   table?: string;
-  onPlannedHires?: boolean;
 }
 
 // What every type of column holding one value does with its values, beyond People: planned hires'
-// values, refused on a column not offered on them, features' and activities' values, and each
-// person's value kept in its own map and row, changed by a draft, recorded in the change history,
-// and recorded as removed when its column is deleted.
+// values, features' and activities' values, and each person's value kept in its own map and row,
+// changed by a draft, recorded in the change history, and recorded as removed when its column is
+// deleted.
 export function describeColumnValues(test: () => TestApp, kind: ColumnKind) {
   const {
     send,
@@ -81,7 +80,6 @@ export function describeColumnValues(test: () => TestApp, kind: ColumnKind) {
     valued,
     column,
     addedId,
-    newHire,
     addedHireId,
     approve,
     readPerson,
@@ -241,20 +239,6 @@ export function describeColumnValues(test: () => TestApp, kind: ColumnKind) {
       expect(valuesOf(hire?.draft?.live)).toEqual({ [fieldId]: kind.value });
     });
 
-    it("are refused on a planned hire for a column not offered on planned hires", async () => {
-      const { cookie } = await editor();
-      const field = await column(cookie, { onPlannedHires: false });
-      const response = await send(
-        cookie,
-        "POST",
-        "/api/planned-hires",
-        newHire({ [field.id]: kind.value }),
-      );
-      expect(errorOf(response)).toBe(
-        `${field.name} is switched off for planned hires`,
-      );
-    });
-
     it("are kept with a feature, and shown live beside its draft", async () => {
       const { id: fieldId } = await column((await editsPlan()).cookie, {
         table: "features",
@@ -381,7 +365,6 @@ export function addedColumnTests(test: () => TestApp, kind: ColumnKind) {
         name: unique(kind.name),
         type: kind.type,
         visibility: settings.visibility ?? "general",
-        onPlannedHires: settings.onPlannedHires ?? settings.table === undefined,
       }),
       201,
     );
@@ -468,7 +451,6 @@ export function addedColumnTests(test: () => TestApp, kind: ColumnKind) {
     column,
     newPerson,
     addedId,
-    newHire,
     addedHireId,
     approve,
     readPerson,

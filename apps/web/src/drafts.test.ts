@@ -194,7 +194,6 @@ describe("who may decide a column's, list's or choice's draft", () => {
     visibility: null,
     multiple: false,
     required: false,
-    onPlannedHires: false,
     table: "features",
   };
   const decidedBy = { lists: [withColumn, onLists], fields: [featuresColumn] };
@@ -264,7 +263,6 @@ describe("drafts of columns an approval or rejection includes", () => {
         visibility: null,
         multiple: false,
         required: false,
-        onPlannedHires: true,
       },
     ],
   };
@@ -336,7 +334,6 @@ describe("drafts that wait on rejected ones", () => {
         visibility: null,
         multiple: false,
         required: false,
-        onPlannedHires: true,
         draft: {
           ...rejected,
           action: "created" as const,
@@ -403,7 +400,6 @@ describe("drafts of people and columns that use drafts of another kind", () => {
     visibility: null,
     multiple: false,
     required: false,
-    onPlannedHires: true,
     draft: { ...waiting, action: "created", changed: [], live: {} },
   };
   // A live column on the live list Sites.
@@ -416,7 +412,6 @@ describe("drafts of people and columns that use drafts of another kind", () => {
     visibility: null,
     multiple: false,
     required: false,
-    onPlannedHires: true,
   };
   const person = (
     id: string,
@@ -535,7 +530,6 @@ describe("drafts of features that use drafts of columns", () => {
     visibility: "general",
     multiple: false,
     required: false,
-    onPlannedHires: false,
     table: "features",
     draft: { ...waiting, action: "created", changed: [], live: {} },
   };

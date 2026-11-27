@@ -251,7 +251,6 @@ describe("the New column dialog", () => {
           visibility: "general",
           multiple: false,
           required: false,
-          onPlannedHires: true,
         },
       ]);
     });

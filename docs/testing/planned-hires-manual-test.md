@@ -150,10 +150,6 @@ Covered by [HIRE-10](#hire-10-a-person-who-has-left-shows-left).
 
 Covered by [HIRE-13](#hire-13-a-planned-hire-is-filled-with-a-new-person) and [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
 
-### HIRE-09: A Column Planned Hires Have Values In Is Not Switched Off for Them
-
-Proved by automated tests in `apps/server/src/hires-values.test.ts`.
-
 ### HIRE-10: A Person Who Has Left Shows Left
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-05.

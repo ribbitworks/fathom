@@ -18,7 +18,6 @@ export const site: Field = {
   visibility: null,
   multiple: false,
   required: false,
-  onPlannedHires: true,
 };
 
 export const sites: List = {

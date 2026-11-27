@@ -79,7 +79,7 @@ describe("the Features page", () => {
       expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
     });
 
-    it("adds a column to Features, offering only General lists and no planned hires", async () => {
+    it("adds a column to Features, offering only General lists", async () => {
       const path = "POST /api/features/columns";
       const added = { ...size, id: "new", name: "Fictional New" };
       const { fetch, held } = await openWith(withColumns(), {
@@ -89,9 +89,6 @@ describe("the Features page", () => {
         },
       });
       const dialog = await newColumn();
-      expect(
-        within(dialog).queryByLabelText("Offered on planned hires"),
-      ).toBeNull();
       await chooseIn(dialog, "Type", "Choice from a list");
       expect(await optionsIn(dialog, "List")).toEqual([
         "Fictional Sizes",
@@ -115,7 +112,6 @@ describe("the Features page", () => {
             listId: sizes.id,
             multiple: false,
             required: false,
-            onPlannedHires: false,
           },
         ]);
       });

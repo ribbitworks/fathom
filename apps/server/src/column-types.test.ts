@@ -45,7 +45,6 @@ describe("choice columns", () => {
       listId: "l1",
       visibility: null,
       multiple: false,
-      multiline: false,
       linkedTable: null,
     });
   });
@@ -104,7 +103,6 @@ describe("web link columns", () => {
       listId: null,
       visibility: "confidential",
       multiple: false,
-      multiline: false,
       linkedTable: null,
     });
   });
@@ -157,7 +155,6 @@ describe("note columns", () => {
       listId: null,
       visibility: "personal",
       multiple: false,
-      multiline: false,
       linkedTable: null,
     });
   });
@@ -208,7 +205,6 @@ describe("number columns", () => {
       listId: null,
       visibility: "personal",
       multiple: false,
-      multiline: false,
       linkedTable: null,
     });
   });
@@ -250,7 +246,6 @@ describe("checkbox columns", () => {
       listId: null,
       visibility: "personal",
       multiple: false,
-      multiline: false,
       linkedTable: null,
     });
   });
@@ -291,7 +286,6 @@ describe("text columns", () => {
       listId: null,
       visibility: "general",
       multiple: false,
-      multiline: false,
       linkedTable: null,
     });
   });
@@ -326,7 +320,7 @@ describe("text columns", () => {
 
 describe("date columns", () => {
   const { date } = columnTypes;
-  const settings = { listId: null, multiple: false, multiline: false };
+  const settings = { listId: null, multiple: false };
 
   it("have a visibility of their own, as their tier", () => {
     expect(date.settings({ visibility: "personal" })).toEqual({
@@ -334,7 +328,6 @@ describe("date columns", () => {
       listId: null,
       visibility: "personal",
       multiple: false,
-      multiline: false,
       linkedTable: null,
     });
   });

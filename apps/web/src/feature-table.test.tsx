@@ -330,7 +330,6 @@ describe("columns added to Features", () => {
     visibility: null,
     multiple: false,
     required: true,
-    onPlannedHires: false,
   };
   const score = {
     ...size,

@@ -362,7 +362,6 @@ describe("a Number column", () => {
           visibility: "general",
           multiple: false,
           required: false,
-          onPlannedHires: true,
         },
       ]);
     });

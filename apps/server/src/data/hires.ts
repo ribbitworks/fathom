@@ -59,11 +59,9 @@ import { reassignReports, text } from "./reporting.ts";
 import {
   hireChanges,
   hireSensitivities,
-  offeredOn,
   readHireTier,
   recordHiringChanges,
   recordType,
-  refuseNotOffered,
   rejectionTier,
   requireHireEdits,
 } from "./hire-fields.ts";
@@ -141,8 +139,6 @@ export async function createHires(
       );
     }
     await lockDrafts(transaction);
-    for (const request of requests) refuseNotOffered(columns, request);
-    const offered = offeredOn(columns);
     const known = await choicesAskedFor(transaction, actor.user.id, requests);
     const ids: string[] = [];
     const made: Change[] = [];
@@ -175,9 +171,9 @@ export async function createHires(
         ...(request.isManager ? { isManager: true } : {}),
         filledBy: null,
         ...recordedValues(
-          checkedValues(offered, known, request.values, undefined),
+          checkedValues(columns, known, request.values, undefined),
         ),
-        ...checkedColumnValues(offered, request),
+        ...checkedColumnValues(columns, request),
       });
       if (newlyManaged(undefined, after)) {
         await refuseUnmarked(
@@ -244,10 +240,8 @@ export async function updateHire(
     if (hire === undefined) throw new ConflictError(toBeRemoved);
     await refuseChangingFill(transaction, actor, before, hire, change);
     const columns = await columnsWithAdded(transaction, actor.user.id, true);
-    refuseNotOffered(columns, change);
-    const offered = offeredOn(columns);
     const changedValues = checkedValues(
-      offered,
+      columns,
       await choicesAskedFor(transaction, actor.user.id, [change]),
       change.values ?? {},
       valuesOf(hire),
@@ -302,7 +296,7 @@ export async function updateHire(
           choiceIds,
         ]),
       ),
-      ...checkedColumnValues(offered, change),
+      ...checkedColumnValues(columns, change),
     });
     const tierOf = await readHireTier(transaction, columns);
     if (newlyManaged(hire, after)) {

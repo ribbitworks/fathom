@@ -51,7 +51,6 @@ const column = (
       visibility: "general",
       multiple: more.multiple ?? false,
       required: more.required ?? false,
-      onPlannedHires: false,
     },
   });
 

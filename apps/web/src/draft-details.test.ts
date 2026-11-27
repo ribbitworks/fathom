@@ -141,7 +141,6 @@ describe("a draft's details", () => {
       visibility: "general",
       multiple: false,
       required: false,
-      onPlannedHires: true,
     };
     const [field] = personDraftFields(
       {

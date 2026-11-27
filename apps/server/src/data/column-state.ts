@@ -91,7 +91,6 @@ export const fieldRecord = (row: FieldRow): Recorded => ({
   visibility: row.visibility,
   multiple: row.multiple,
   required: row.required,
-  onPlannedHires: row.onPlannedHires,
 });
 
 // Every table's added columns, live and in drafts, and the live order of the People table's columns,
@@ -258,7 +257,6 @@ export const columnRow = (id: string, field: Recorded): FieldRow => ({
   name: String(field.name),
   ...typeOf(field).settings(field),
   required: field.required === true,
-  onPlannedHires: field.onPlannedHires === true,
 });
 
 export const toFieldOut = (
@@ -276,7 +274,6 @@ export const toFieldOut = (
     visibility,
     multiple,
     required: field.required === true,
-    onPlannedHires: field.onPlannedHires === true,
     table: columnTableOf(field.tableName),
   };
 };

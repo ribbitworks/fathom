@@ -61,7 +61,6 @@ describe("Activities' table", () => {
     visibility: "general" as const,
     multiple: false,
     required: false,
-    onPlannedHires: false,
   };
   const crane = fictionalProject({ id: project, name: "Crane Control" });
   const table = activityTable(

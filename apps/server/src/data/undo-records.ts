@@ -103,7 +103,6 @@ const columnsOf: Record<
     visibility: sensitiveTier,
     multiple: flag,
     required: flag,
-    onPlannedHires: flag,
   },
   person: {
     preferredName: text,
