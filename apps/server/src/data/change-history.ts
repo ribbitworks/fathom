@@ -265,6 +265,7 @@ async function readBatch(
     : new Set([
         ...(await notCurrentAmong(
           database,
+          actor,
           [...new Set(rows.flatMap(peopleNamedBy))],
           today,
         )),

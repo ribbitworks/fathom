@@ -45,7 +45,7 @@ import {
   type ViewNow,
   viewsNow,
 } from "./views.ts";
-import { type Facts, strings } from "./history-names.ts";
+import { type Facts, seenSets, strings } from "./history-names.ts";
 import { madeInOrder } from "./history-order.ts";
 
 // Configuration is seen by those who may open the configuration pages, and people by those who may
@@ -227,10 +227,11 @@ export async function visibleRows(
 
 // Which of the people and planned hires given are people not current today, who have not started
 // or have left: by their dates when live, by the draft adding them when only drafted, and otherwise
-// by the last dates recorded for them, such as for someone removed. Planned hires are never among
-// them.
+// by the last dates recorded for them that the actor may see, such as for someone removed, never
+// another user's private change. Planned hires are never among them.
 export async function notCurrentAmong(
   database: Database,
+  actor: Actor,
   ids: readonly string[],
   today: string,
 ): Promise<Set<string>> {
@@ -278,6 +279,7 @@ export async function notCurrentAmong(
           eq(changes.recordType, "person"),
           inArray(changes.field, ["startDate", "endDate"]),
           inArray(changes.recordId, chunk),
+          seenSets(actor),
         ),
       )
       .orderBy(...madeInOrder)) {
