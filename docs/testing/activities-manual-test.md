@@ -108,8 +108,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `E450` Select the **Release** cell of 'Operator training', press Enter, choose 'Platform: Harbor 1' and press Enter.
   - **Expected:**
     - **Release** reads 'Platform: Harbor 1' after a hollow yellow dot.
-    - **Project** reads **None** in grey italics, after a hollow yellow dot.
-    - A light green **Live** row under it shows **None** under **Release** and 'P-2001 Crane Control' under **Project**.
+    - **Project** shows a hollow yellow dot and nothing after it.
+    - A light green **Live** row under it shows a green dot and nothing after it under **Release**, and 'P-2001 Crane Control' under **Project**.
   - **Notes:**
 
 - [ ] `1D8D` Select the **Release** cell of 'Operator training'.

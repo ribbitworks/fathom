@@ -94,7 +94,7 @@ export function ChoiceCells({
           draft={original.draft}
           fields={["description"]}
           named="Description"
-          emptied={choice.description === "" ? "Description" : undefined}
+          emptied={choice.description === ""}
         >
           {choice.description}
         </DraftedValue>

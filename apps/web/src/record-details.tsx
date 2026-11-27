@@ -31,7 +31,7 @@ import {
 import classes from "./record-details.module.css";
 import pages from "./pages.module.css";
 import { roundedUpTo } from "@fathom/shared";
-import { isEmpty, shownInView } from "./grid-columns.tsx";
+import { isEmpty, neverEmpty, shownInView } from "./grid-columns.tsx";
 import {
   cellDraftOf,
   type Renaming,
@@ -49,7 +49,7 @@ import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   DraftedItem,
   DraftedValue,
-  EmptiedValue,
+  EmptyLive,
   MarkedItem,
   MarkRow,
   useBesideLive,
@@ -94,7 +94,8 @@ export const ChoiceRenamings = createContext<ReadonlyMap<string, Renaming>>(
 );
 
 // A value, or, when empty, None or the column's own word for it, dimmed; where a draft empties the
-// value, or fills it, the words for none in grey italics, as a table's cell shows them.
+// value, or fills it, nothing, so its dot alone shows it, as a table's cell does, read as empty where
+// only what is live shows.
 function Value({
   column,
   value,
@@ -108,8 +109,9 @@ function Value({
   onOpenNote?: (() => void) | undefined;
 }) {
   const kind = cellKinds[column.kind];
+  const onlyLive = useDraftView() === "live";
   const none = drafted ? (
-    <EmptiedValue name={column.label} emptyLabel={column.emptyLabel} />
+    onlyLive && <EmptyLive />
   ) : (
     <Text c="dimmed">{column.emptyLabel ?? "None"}</Text>
   );
@@ -468,6 +470,12 @@ export function Row({
                       : liveWords(column, changed.live)
                     : renamedWas(column, value, renamings)
                 }
+                emptied={
+                  changed?.live !== undefined &&
+                  children === undefined &&
+                  !neverEmpty(column) &&
+                  isEmpty(value)
+                }
               >
                 {checkbox ? (
                   editing.editor
@@ -535,7 +543,13 @@ export function Row({
                         chosenColour(column, liveUnder.live))
                   }
                 >
-                  <Value column={column} value={liveUnder.live} drafted />
+                  {liveUnder.warning === undefined &&
+                  !neverEmpty(column) &&
+                  isEmpty(liveUnder.live) ? (
+                    <EmptyLive />
+                  ) : (
+                    <Value column={column} value={liveUnder.live} drafted />
+                  )}
                 </ColouredName>
               </MarkedItem>
             </MarkedItem>

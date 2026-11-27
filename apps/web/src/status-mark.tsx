@@ -22,7 +22,6 @@ import {
   type DraftLike,
   draftKind,
   draftTip,
-  emptiedWords,
   liveWaitingWords,
   type Was,
   wasWords,
@@ -89,12 +88,16 @@ export function DraftDot({
   from,
   by,
   was,
+  emptied,
 }: {
   draft: DraftLike;
 } & Change) {
   return (
     <>
-      <Dot tone={draftTone(draft)} tip={draftTip(draft, { from, by, was })} />
+      <Dot
+        tone={draftTone(draft)}
+        tip={draftTip(draft, { from, by, was, emptied })}
+      />
       {draft.state === "rejected" && draft.unpublished === true && (
         <Dot tone="unpublished" tip="Unpublished" />
       )}
@@ -212,6 +215,7 @@ export function DraftedItem({
   from,
   by,
   was,
+  emptied,
   heldBy,
   unpublished = false,
   part,
@@ -227,6 +231,8 @@ export function DraftedItem({
   by?: string | undefined;
   // What a value was before the draft changed it, in words, as wasWords gives them.
   was?: Was | undefined;
+  // Whether the draft leaves the value empty.
+  emptied?: boolean | undefined;
   heldBy?: string | undefined;
   // The user's own unpublished changes, where no draft is given to say so, or their words, such as
   // a new row's that is not saved yet.
@@ -252,7 +258,13 @@ export function DraftedItem({
   const dots = (
     <>
       {shown !== undefined && (
-        <DraftDot draft={shown} from={from} by={by} was={was} />
+        <DraftDot
+          draft={shown}
+          from={from}
+          by={by}
+          was={was}
+          emptied={emptied}
+        />
       )}
       {live && draft !== undefined && (
         <Dot tone="live" tip={liveWaitingWords(draft)} />
@@ -268,7 +280,7 @@ export function DraftedItem({
     ...(shown === undefined
       ? []
       : part === undefined
-        ? [draftTip(shown, { from, by, was })]
+        ? [draftTip(shown, { from, by, was, emptied })]
         : // A part says what the draft does to it before this, and only whether it was rejected here.
           shown.state === "rejected"
           ? ["rejected"]
@@ -489,19 +501,9 @@ export function ClassName({ dataClass }: { dataClass: Tier }) {
   );
 }
 
-// An empty value's words, in grey italics: the column's own word for empty, if it has one.
-export function EmptiedValue({
-  name,
-  emptyLabel,
-}: {
-  name: string;
-  emptyLabel?: string | undefined;
-}) {
-  return (
-    <Text component="span" inherit c="dimmed" fs="italic">
-      {emptiedWords(name, emptyLabel)}
-    </Text>
-  );
+// A live value's empty side, read aloud as empty, since its dot alone shows it.
+export function EmptyLive() {
+  return <VisuallyHidden>empty</VisuallyHidden>;
 }
 
 // A row's slot for its record's marks, as wide as a draft's dot and its gap.
@@ -647,8 +649,7 @@ function wasOf(
 
 // A value in a record's row as its draft marks it, in the Draft view around it: the draft's dot
 // before it where the draft changes it, naming what it was, or, live only, Live's while that draft
-// waits. A value the draft empties, or fills, shows its words for none where it is empty, in grey
-// italics.
+// waits. A value the draft empties is its dot alone.
 export function DraftedValue({
   draft,
   fields,
@@ -663,8 +664,8 @@ export function DraftedValue({
   fields: readonly string[];
   // The value's name, such as Name, given where its tip says what it was.
   named?: string | undefined;
-  // The value's name, given when it is empty.
-  emptied?: string | undefined;
+  // Whether the value is empty.
+  emptied?: boolean | undefined;
   dataClass?: Tier | undefined;
   children?: ReactNode;
 }) {
@@ -673,19 +674,16 @@ export function DraftedValue({
     <DraftedItem
       draft={changed}
       was={wasOf(draft, fields[0], named)}
+      emptied={emptied}
       dataClass={dataClass}
     >
-      {emptied !== undefined && changed !== undefined ? (
-        <EmptiedValue name={emptied} />
-      ) : (
-        children
-      )}
+      {children}
     </DraftedItem>
   );
 }
 
 // The same value in the record's Live row, under its draft row: a green dot before it where the draft
-// changes it.
+// changes it, alone where the value was empty.
 export function LiveValue({
   draft,
   fields,
@@ -694,17 +692,14 @@ export function LiveValue({
 }: {
   draft: ValueDraft;
   fields: readonly string[];
-  emptied?: string | undefined;
+  // Whether the value is empty.
+  emptied?: boolean | undefined;
   children?: ReactNode;
 }) {
   const changed = changedValue(draft, ...fields) !== undefined;
   return (
     <MarkedItem tone={changed ? "live" : undefined}>
-      {emptied !== undefined && changed ? (
-        <EmptiedValue name={emptied} />
-      ) : (
-        children
-      )}
+      {emptied === true && changed ? <EmptyLive /> : children}
     </MarkedItem>
   );
 }

@@ -84,6 +84,8 @@ export interface Change {
   from?: string | undefined;
   by?: string | undefined;
   was?: Was | undefined;
+  // Whether the draft leaves the value empty, so the tip says so, since nothing shows in its place.
+  emptied?: boolean | undefined;
 }
 
 // The words a draft's dot stands for: its tip, and what is read aloud after the item it marks, with
@@ -91,13 +93,11 @@ export interface Change {
 // rejection's reason last, since it is a sentence of its own.
 export function draftTip(
   draft: DraftLike,
-  { from, by, was }: Change = {},
+  { from, by, was, emptied = false }: Change = {},
 ): string {
   const words = draftWords({ ...draft, reason: undefined });
   const told = [
-    was === undefined
-      ? words
-      : `${words}${words === "Draft" ? ":" : ","} ${was === null ? "filled in" : `changed from ${was}`}`,
+    wasPhrase(words, was, emptied),
     ...(draft.unpublished === true ? ["unpublished"] : []),
     ...(from === undefined ? [] : [`from ${from}`]),
     ...(by === undefined ? [] : [`by ${by}`]),
@@ -105,6 +105,14 @@ export function draftTip(
   return draft.state === "rejected" && draft.reason !== undefined
     ? `${told}: ${draft.reason}`
     : told;
+}
+
+// What a draft did to a value, after the draft's words: emptied it, filled it in, or changed it.
+function wasPhrase(words: string, was: Was | undefined, emptied: boolean) {
+  if (was === undefined) return words;
+  if (emptied && was !== null) return `${words}, emptied, was ${was}`;
+  const change = was === null ? "filled in" : `changed from ${was}`;
+  return `${words}${words === "Draft" ? ":" : ","} ${change}`;
 }
 
 // A value as it was before a draft changed it, as a dot's tip names it: quoted, cut short when long,

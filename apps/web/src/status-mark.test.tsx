@@ -272,19 +272,22 @@ describe("a row's values", () => {
     live: { description: "" },
   };
 
-  it("marks a changed value, with words for none where the draft empties it", () => {
+  it("marks a value a draft empties with its dot alone, saying so in its words", () => {
     renderIn(
       "both",
       <DraftedValue
-        draft={filled}
+        draft={{ ...filled, live: { description: "Fictional words" } }}
         fields={["description"]}
-        emptied="Description"
+        named="Description"
+        emptied
       >
         {""}
       </DraftedValue>,
     );
-    expect(screen.getByText("No description")).toBeDefined();
-    expect(screen.getByText(", Draft")).toBeDefined();
+    expect(screen.queryByText(/No description/u)).toBeNull();
+    expect(
+      screen.getByText(", Draft, emptied, was “Fictional words”"),
+    ).toBeDefined();
   });
 
   it("says what a value was, from its draft's live value, only where the draft changes it", () => {
@@ -328,14 +331,15 @@ describe("a row's values", () => {
     expect(screen.queryByText(/Draft/)).toBeNull();
   });
 
-  it("marks a live value under a changed one Live, with words for none", () => {
+  it("marks an empty live value under a changed one with Live's dot alone, read as empty", () => {
     renderIn(
       "both",
-      <LiveValue draft={filled} fields={["description"]} emptied="Description">
+      <LiveValue draft={filled} fields={["description"]} emptied>
         {""}
       </LiveValue>,
     );
-    expect(screen.getByText("No description")).toBeDefined();
+    expect(screen.queryByText(/No description/u)).toBeNull();
+    expect(screen.getByText("empty")).toBeDefined();
     expect(screen.getByText(", live")).toBeDefined();
   });
 
