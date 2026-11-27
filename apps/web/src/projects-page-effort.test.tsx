@@ -7,6 +7,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { composingKeys, recordCell } from "./test-support.tsx";
 import {
+  addingAnswer,
   saved,
   sent,
   first,
@@ -349,7 +350,7 @@ describe("the Features page", () => {
       const path = "POST /api/features";
       const { fetch } = await open(
         featurePlan(),
-        { [path]: saved(featurePlan) },
+        { [path]: addingAnswer(featurePlan) },
         inUnit("person-weeks"),
       );
       await userEvent.click(
@@ -370,7 +371,7 @@ describe("the Features page", () => {
       await userEvent.click(screen.getByRole("button", { name: "Add" }));
       await waitFor(() => {
         expect(sent(fetch, path)).toMatchObject([
-          { name: "Fictional Estimated", estimateHours: 16 },
+          { records: [{ name: "Fictional Estimated", estimateHours: 16 }] },
         ]);
       });
     });

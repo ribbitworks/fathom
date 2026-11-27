@@ -71,6 +71,10 @@ export interface Saved<Result> {
   changeSetId: string | null;
 }
 
+// What adding records returns: what a change returns, and the new records' identifiers in the order
+// asked.
+export type Added<Result> = Saved<Result> & { ids: string[] };
+
 // A value as JSON with each object's keys in order, since the database's JSON keeps keys in an
 // order of its own, so a link read back from a draft is the same as the link written.
 export function stableJson(value: unknown): string {

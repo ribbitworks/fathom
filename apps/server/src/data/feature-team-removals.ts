@@ -11,7 +11,7 @@ import {
   inChunks,
   type Reader,
 } from "@fathom/db";
-import { eq, inArray, or } from "drizzle-orm";
+import { inArray, or } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
@@ -28,24 +28,33 @@ import { bySubject, inForceOrLater } from "./in-force.ts";
 import { readToday } from "./settings.ts";
 import { teamChanges } from "./feature-teams.ts";
 
-// Refuses a feature team for a feature unless it is live and no draft, published or not, removes it.
-export async function checkTeamForFeature(
+// Refuses the feature teams named for features unless each is live and no draft, published or not,
+// removes it.
+export async function checkTeamsForFeatures(
   reader: Reader,
-  id: string | null,
+  named: readonly (string | null)[],
 ): Promise<void> {
-  if (id === null) return;
-  const [team] = await reader
-    .select({ id: featureTeams.id })
-    .from(featureTeams)
-    .where(eq(featureTeams.id, id));
-  if (team === undefined) {
+  const ids = [...new Set(named.filter((id): id is string => id !== null))];
+  if (ids.length === 0) return;
+  const live = new Set<string>();
+  for (const chunk of inChunks(ids)) {
+    for (const { id } of await reader
+      .select({ id: featureTeams.id })
+      .from(featureTeams)
+      .where(inArray(featureTeams.id, chunk))) {
+      live.add(id);
+    }
+  }
+  if (ids.some((id) => !live.has(id))) {
     throw new BadRequestError("Choose a feature team that has been approved");
   }
-  const removals = [
-    (await readTeamDrafts(reader, [id])).get(id),
-    (await readHeld(reader, recordType, undefined, [id])).get(id)?.draft,
-  ];
-  if (removals.some((draft) => draft?.action === "deleted")) {
+  const drafts = await readTeamDrafts(reader, ids);
+  const held = await readHeld(reader, recordType, undefined, ids);
+  const removing = (id: string) =>
+    [drafts.get(id), held.get(id)?.draft].some(
+      (draft) => draft?.action === "deleted",
+    );
+  if (ids.some(removing)) {
     throw new ConflictError(
       "This feature team is drafted to be removed; choose another",
     );

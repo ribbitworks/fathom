@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Projects page against a simulated server: its tabs and tables, adding a record in
-// the side panel, what the side panel shows and links to, and the page around its tables.
+// Tests for the Projects page against a simulated server: its tabs and tables, what the side panel
+// shows and links to, and the page around its tables.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -18,7 +18,6 @@ import {
   proposalId,
   projectId,
   milestoneId,
-  statusId,
   newId,
   milestone,
   project,
@@ -26,7 +25,6 @@ import {
   customer,
   plan,
   approver,
-  saved,
   deleted,
   openPage,
   sent,
@@ -150,201 +148,6 @@ describe("the page's tabs", () => {
     healthy = true;
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("grid", { name: "Projects" })).toBeTruthy();
-  });
-});
-
-describe("adding a record in the side panel", () => {
-  it("names what is missing, then adds the customer and shows it", async () => {
-    const added = customer({
-      id: newId,
-      name: "Added Customer",
-      draft: recordDraft({ action: "created" }),
-    });
-    const after = plan({ customers: [customer(), added] });
-    const { fetch, history, held } = await openPage(
-      "/projects?tab=customers",
-      plan(),
-      { "POST /api/customers": saved(() => after) },
-    );
-    await userEvent.click(await newButton("customer"));
-    await userEvent.click(screen.getByRole("button", { name: "Add" }));
-    expect(screen.getByText("Name needed")).toBeTruthy();
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Name" }),
-      "Added Customer",
-    );
-    await userEvent.tab();
-    expect(screen.queryByText("Name needed")).toBeNull();
-    held.plan = after;
-    await userEvent.click(screen.getByRole("button", { name: "Add" }));
-    expect(
-      await screen.findByRole("heading", { name: /Added Customer/ }),
-    ).toBeTruthy();
-    expect(history.location.search).toContain(newId);
-    await waitFor(() => {
-      expect(document.activeElement?.id).toBe("project-record-panel-title");
-    });
-    expect(sent(fetch, "POST /api/customers")).toEqual([
-      { name: "Added Customer", description: "", note: null },
-    ]);
-  });
-
-  it("starts a proposal in the first status, and sends what is entered", async () => {
-    const after = plan({
-      proposals: [proposal(), proposal({ id: newId, name: "Added Proposal" })],
-    });
-    const { fetch, held } = await openPage("/projects?tab=proposals", plan(), {
-      "POST /api/proposals": saved(() => after),
-    });
-    await userEvent.click(await newButton("proposal"));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Name" }),
-      "Added Proposal",
-    );
-    held.plan = after;
-    await userEvent.click(screen.getByRole("button", { name: "Add" }));
-    await waitFor(() => {
-      expect(sent(fetch, "POST /api/proposals")).toEqual([
-        {
-          name: "Added Proposal",
-          externalId: "",
-          link: null,
-          ownerId: null,
-          customerIds: [],
-          statusId,
-          featureIds: [],
-        },
-      ]);
-    });
-  });
-
-  it("adds a project", async () => {
-    const after = plan({
-      projects: [project(), project({ id: newId, name: "Added Project" })],
-    });
-    const { fetch, held } = await openPage("/projects", plan(), {
-      "POST /api/projects": saved(() => after),
-    });
-    await userEvent.click(await newButton("project"));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Name" }),
-      "Added Project",
-    );
-    held.plan = after;
-    await userEvent.click(screen.getByRole("button", { name: "Add" }));
-    await waitFor(() => {
-      expect(sent(fetch, "POST /api/projects")).toEqual([
-        {
-          name: "Added Project",
-          externalId: "",
-          ownerId: null,
-          customerIds: [],
-          proposalIds: [],
-          featureIds: [],
-        },
-      ]);
-    });
-  });
-
-  it("adds a milestone to the project the table is filtered to, then closes", async () => {
-    const after = plan({
-      projects: [
-        project({ milestones: [milestone({ id: newId, name: "Handover" })] }),
-      ],
-    });
-    const { fetch, held } = await openPage("/projects", plan(), {
-      [`POST /api/projects/${projectId}/milestones`]: saved(() => after),
-    });
-    const menu = await rowMenu("Fictional Project");
-    await chooseFrom(menu, "Show on Milestones");
-    await screen.findByRole("grid", { name: "Milestones" });
-    await userEvent.click(await newButton("milestone"));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Name" }),
-      "Handover",
-    );
-    const date = screen.getByRole<HTMLInputElement>("textbox", {
-      name: /^Date/,
-    });
-    await userEvent.type(date, "20300901");
-    expect(date.value).toBe("2030-09-01");
-    held.plan = after;
-    await userEvent.click(screen.getByRole("button", { name: "Add" }));
-    await waitFor(() => {
-      expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
-    });
-    expect(sent(fetch, `POST /api/projects/${projectId}/milestones`)).toEqual([
-      { name: "Handover", date: "2030-09-01", customerDelivery: false },
-    ]);
-  });
-
-  it("keeps what was entered when the server refuses it", async () => {
-    await openPage("/projects?tab=customers", plan(), {
-      "POST /api/customers": () =>
-        Response.json({ error: "That name is taken" }, { status: 409 }),
-    });
-    await userEvent.click(await newButton("customer"));
-    const name = screen.getByRole<HTMLInputElement>("textbox", {
-      name: "Name",
-    });
-    await userEvent.type(name, "Taken");
-    await userEvent.click(screen.getByRole("button", { name: "Add" }));
-    expect(await screen.findByText("That name is taken")).toBeTruthy();
-    await waitFor(() => {
-      expect(
-        screen
-          .getByRole("button", { name: "Add" })
-          .getAttribute("data-loading"),
-      ).toBeNull();
-    });
-    expect(
-      screen.getByRole<HTMLInputElement>("textbox", { name: "Name" }).value,
-    ).toBe("Taken");
-  });
-
-  it("asks before discarding what was entered, and not when nothing was", async () => {
-    await openPage("/projects?tab=customers", plan());
-    await userEvent.click(await newButton("customer"));
-    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
-    await userEvent.click(await newButton("customer"));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Name" }),
-      "Unsure",
-    );
-    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(
-      await screen.findByRole("dialog", {
-        name: "Discard the new customer?",
-      }),
-    ).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Keep adding" }));
-    expect(screen.getByRole("button", { name: "Add" })).toBeTruthy();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Close New customer" }),
-    );
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Discard" }),
-    );
-    await waitFor(() => {
-      expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
-    });
-  });
-
-  it("asks before changing tabs with something entered", async () => {
-    const { history } = await openPage("/projects?tab=customers", plan());
-    await userEvent.click(await newButton("customer"));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Name" }),
-      "Unsure",
-    );
-    await userEvent.click(screen.getByRole("tab", { name: "Proposals" }));
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Discard" }),
-    );
-    await waitFor(() => {
-      expect(history.location.search).toContain("tab=proposals");
-    });
   });
 });
 

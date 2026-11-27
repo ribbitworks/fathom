@@ -13,6 +13,7 @@ import {
 } from "./test-support.tsx";
 import { operationsOf } from "./plan-record-operations.ts";
 import {
+  addingAnswer,
   changeSetId,
   saved,
   deleted,
@@ -460,7 +461,7 @@ describe("the Features page", () => {
       const path = "POST /api/features";
       const { fetch } = await openWith(
         start,
-        { [path]: saved(() => start) },
+        { [path]: addingAnswer(() => start) },
         featureEditor,
       );
       const opened = await startWriting();
@@ -481,7 +482,14 @@ describe("the Features page", () => {
       await userEvent.click(screen.getByRole("button", { name: "Add" }));
       await waitFor(() => {
         expect(sent(fetch, path)).toMatchObject([
-          { name: "Fictional Noted", notes: { [requiredNote.id]: "Because" } },
+          {
+            records: [
+              {
+                name: "Fictional Noted",
+                notes: { [requiredNote.id]: "Because" },
+              },
+            ],
+          },
         ]);
       });
     });
@@ -514,7 +522,7 @@ describe("the Features page", () => {
       const path = "POST /api/features";
       const { fetch } = await openWith(
         start,
-        { [path]: saved(() => start) },
+        { [path]: addingAnswer(() => start) },
         featureEditor,
       );
       const opened = await startWriting();
@@ -542,7 +550,7 @@ describe("the Features page", () => {
       await userEvent.click(screen.getByRole("button", { name: "Discard" }));
       await waitFor(() => {
         expect(sent(fetch, path)).toMatchObject([
-          { notes: { [requiredNote.id]: "Because" } },
+          { records: [{ notes: { [requiredNote.id]: "Because" } }] },
         ]);
       });
     });
@@ -552,7 +560,7 @@ describe("the Features page", () => {
       const path = "POST /api/features";
       const { fetch } = await openWith(
         start,
-        { [path]: saved(() => start) },
+        { [path]: addingAnswer(() => start) },
         featureEditor,
       );
       const opened = await startWriting();

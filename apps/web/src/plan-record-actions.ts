@@ -16,7 +16,6 @@ import { draftSentAgain, type DraftSelection } from "./drafts.ts";
 import {
   adding,
   discarded,
-  newestId,
   removing,
   withAdded,
   withRecord,
@@ -134,18 +133,9 @@ export function planRecordActions({
               ),
             ),
           save: async () => {
-            const ids: string[] = [];
-            // Every record of the kind before these were added, so each new one is told apart.
-            const known = operationsOf(type)
-              .all(plan as ProjectPlan)
-              .map(({ id }) => id);
-            let changeSetId: string | null = null;
-            // Each is its own request, one after another, so the change sets follow in order.
-            for (const { request } of added) {
-              const saved = await operationsOf(type).add(request);
-              changeSetId = saved.changeSetId;
-              ids.push(newestId(saved.plan, type, [...known, ...ids]));
-            }
+            const { ids, changeSetId } = await operationsOf(type).add(
+              added.map(({ request }) => request),
+            );
             onAdded(ids);
             return changeSetId;
           },

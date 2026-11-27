@@ -3,6 +3,7 @@
 // Saving a cell's value, checked against its column and the record's other values, and adding the
 // records typed or pasted into new rows.
 
+import { draftsAtOnce } from "@fathom/shared";
 import type { ClipboardEvent } from "react";
 import {
   columnsOn,
@@ -27,8 +28,8 @@ import { marksIn } from "./status-mark.tsx";
 import { emptiedWords } from "./draft-marks.ts";
 import type { CellValue } from "./table-view.ts";
 
-// The most rows one paste adds, as the server allows at once.
-const pasteLimit = 1000;
+// The most rows saved together, as the server adds at once.
+const pasteLimit = draftsAtOnce;
 
 // What putting a new value in a record's column comes to: nothing, when it is the value already
 // there; what is wrong, with the value itself or with the record's values taken together, beside
@@ -519,17 +520,17 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
       nextKey,
       rowKind(row),
     ).map((newRow) => followingKind({ ...newRow, ...kindKept(row.newRow) }));
-    if (made.length > pasteLimit) {
+    // Adding them takes the next keys past these rows.
+    const kept = newRows.filter(
+      (newRow) => newRow.key !== row.newRow.key && !emptyNewRow(newRow),
+    );
+    if (kept.length + made.length > pasteLimit) {
       setProblem({
         row: rowKey(row),
         message: `Up to ${String(pasteLimit)} rows at once`,
       });
       return;
     }
-    // Adding them takes the next keys past these rows.
-    const kept = newRows.filter(
-      (newRow) => newRow.key !== row.newRow.key && !emptyNewRow(newRow),
-    );
     submitNewRows([...kept, ...made]);
   };
   return {

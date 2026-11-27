@@ -18,6 +18,7 @@ import {
 import { formatDay } from "./day-formats.ts";
 import { operationsOf } from "./plan-record-operations.ts";
 import {
+  addingAnswer,
   projectId,
   changeSetId,
   project,
@@ -570,26 +571,30 @@ describe("the Features page", () => {
 
   it("adds a feature with what is entered and the rest empty", async () => {
     const { fetch } = await open(featurePlan(), {
-      "POST /api/features": saved(featurePlan),
+      "POST /api/features": addingAnswer(featurePlan),
     });
-    await operationsOf("feature").add({ name: "Fictional New" });
+    await operationsOf("feature").add([{ name: "Fictional New" }]);
     expect(sent(fetch, "POST /api/features")).toEqual([
       {
-        name: "Fictional New",
-        priorityId: null,
-        sizeId: null,
-        riskId: null,
-        neededBy: null,
-        customerIds: [],
-        estimateHours: null,
-        featureTeamId: null,
-        description: null,
-        note: null,
-        values: {},
-        links: {},
-        notes: {},
-        numbers: {},
-        target: null,
+        records: [
+          {
+            name: "Fictional New",
+            priorityId: null,
+            sizeId: null,
+            riskId: null,
+            neededBy: null,
+            customerIds: [],
+            estimateHours: null,
+            featureTeamId: null,
+            description: null,
+            note: null,
+            values: {},
+            links: {},
+            notes: {},
+            numbers: {},
+            target: null,
+          },
+        ],
       },
     ]);
   });

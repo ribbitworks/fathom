@@ -8,6 +8,7 @@ import type { Project, ProjectPlan } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import {
+  addingOne,
   type Method,
   ok,
   sender,
@@ -48,7 +49,8 @@ export const send = (
 ) => sendAs(planner, method, url, body, options);
 
 export const added = async (path: string, body: object) =>
-  (await ok<Saved>(await send("POST", `/api/${path}`, body), 201)).plan;
+  (await ok<Saved>(await send("POST", `/api/${path}`, addingOne(body)), 201))
+    .plan;
 
 export const byName = <Named extends { name: string }>(
   records: readonly Named[],
@@ -76,10 +78,11 @@ export async function addFeature() {
 
 export async function addMilestone(projectId: string, body: object) {
   await ok(
-    await send("POST", `/api/projects/${projectId}/milestones`, {
-      name: unique("Fictional Milestone"),
-      ...body,
-    }),
+    await send(
+      "POST",
+      "/api/milestones",
+      addingOne({ projectId, name: unique("Fictional Milestone"), ...body }),
+    ),
     201,
   );
 }

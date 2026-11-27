@@ -8,6 +8,7 @@ import type { Feature, Meaning, ProjectPlan } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
 import { expect } from "vitest";
 import {
+  addingOne,
   builtInChoice,
   startTestApp,
   type TestApp,
@@ -56,7 +57,7 @@ export const statusMeaning = (meaning: Meaning) =>
   builtInChoice(test.connection, "feature-statuses", meaning);
 
 export const post = (body: object, cookie = planner.cookie) =>
-  test.request(cookie, "POST", "/api/features", body);
+  test.request(cookie, "POST", "/api/features", addingOne(body));
 
 export const put = (id: string, body: object, cookie = planner.cookie) =>
   test.request(cookie, "PUT", `/api/features/${id}`, body);

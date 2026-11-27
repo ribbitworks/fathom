@@ -277,6 +277,7 @@ describe("a release's activities on Releases", () => {
           const shown = (await answers["GET /api/projects"]().json()) as object;
           return Response.json({
             plan: { ...shown, activities },
+            ids: [added.id],
             changeSetId: "00000000-0000-4000-8000-000000000001",
           });
         },
@@ -299,10 +300,14 @@ describe("a release's activities on Releases", () => {
       expect(screen.queryByRole("region", { name: "New activity" })).toBeNull();
     });
     expect(sent(fetch, "POST /api/activities")).toEqual([
-      expect.objectContaining({
-        name: "Fictional Rehearsal",
-        releaseId: release.id,
-      }),
+      {
+        records: [
+          expect.objectContaining({
+            name: "Fictional Rehearsal",
+            releaseId: release.id,
+          }),
+        ],
+      },
     ]);
     expect(
       await within(releasePanel()).findByRole("button", {

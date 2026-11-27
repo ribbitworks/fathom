@@ -9,6 +9,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { recordDraft } from "./test-support.tsx";
 import {
+  addingAnswer,
   projectId,
   milestoneId,
   type Milestone,
@@ -36,7 +37,7 @@ describe("a project's milestones in its panel", () => {
 
   it("adds one from a dialog", async () => {
     const { fetch } = await openPage(atProject, plan(), {
-      [`POST ${path}`]: saved(() => plan()),
+      "POST /api/milestones": addingAnswer(() => plan()),
     });
     await userEvent.click(
       await screen.findByRole("button", { name: "Add milestone" }),
@@ -68,8 +69,17 @@ describe("a project's milestones in its panel", () => {
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
-    expect(sent(fetch, `POST ${path}`)).toEqual([
-      { name: "Pilot", date: "2030-03-15", customerDelivery: true },
+    expect(sent(fetch, "POST /api/milestones")).toEqual([
+      {
+        records: [
+          {
+            name: "Pilot",
+            date: "2030-03-15",
+            customerDelivery: true,
+            projectId,
+          },
+        ],
+      },
     ]);
   });
 

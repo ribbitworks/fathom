@@ -280,10 +280,16 @@ async function draftProjects(
     request: { ...projectRequest(renamed), name: `${renamed.name} Rollout` },
   });
   const cranes = byId(plan.projects, projectId(craneControl.key));
-  await data.projects.addMilestone(editor, cranes.id, {
-    name: addedMilestone,
-    date: addDays(today, addedMilestoneDays),
-    customerDelivery: true,
+  await data.projects.add(editor, {
+    type: "milestone",
+    requests: [
+      {
+        projectId: cranes.id,
+        name: addedMilestone,
+        date: addDays(today, addedMilestoneDays),
+        customerDelivery: true,
+      },
+    ],
   });
   const lastKey = present(
     craneControl.milestones.at(-1)?.key,
@@ -302,7 +308,7 @@ async function draftProjects(
   });
   await data.projects.add(editor, {
     type: "customer",
-    request: { name: addedCustomer, description: null, note: null },
+    requests: [{ name: addedCustomer, description: null, note: null }],
   });
   const refused = byId(plan.projects, projectId(transitDisplays.key));
   await data.projects.change(editor, refused.id, {
@@ -334,24 +340,26 @@ async function draftFeatures(
   });
   await data.projects.add(editor, {
     type: "feature",
-    request: {
-      name: addedFeature,
-      priorityId: null,
-      sizeId: null,
-      riskId: null,
-      neededBy: null,
-      customerIds: [],
-      target: null,
-      estimateHours: null,
-      // The Product Manager drafts it, whose role doesn't give a feature its team.
-      featureTeamId: null,
-      description: "Pass notes from one shift to the next.",
-      note: null,
-      values: {},
-      links: {},
-      notes: {},
-      numbers: {},
-    },
+    requests: [
+      {
+        name: addedFeature,
+        priorityId: null,
+        sizeId: null,
+        riskId: null,
+        neededBy: null,
+        customerIds: [],
+        target: null,
+        estimateHours: null,
+        // The Product Manager drafts it, whose role doesn't give a feature its team.
+        featureTeamId: null,
+        description: "Pass notes from one shift to the next.",
+        note: null,
+        values: {},
+        links: {},
+        notes: {},
+        numbers: {},
+      },
+    ],
   });
   await data.unpublished.publish(editor);
   return true;

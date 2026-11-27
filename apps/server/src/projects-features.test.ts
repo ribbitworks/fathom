@@ -113,8 +113,12 @@ describe("the features projects and proposals name", () => {
 
   it("refuse a feature that does not exist", async () => {
     const response = await send("POST", "/api/proposals", {
-      name: unique("Fictional Proposal"),
-      featureIds: [missing],
+      records: [
+        {
+          name: unique("Fictional Proposal"),
+          featureIds: [missing],
+        },
+      ],
     });
     expect(response.statusCode).toBe(404);
   });

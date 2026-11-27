@@ -7,6 +7,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  addingAnswer,
   choices,
   customer,
   customerId,
@@ -74,7 +75,7 @@ describe("adding a record from a picker", () => {
       "Harbour Ferries",
       atProposal,
       {
-        "POST /api/customers": saved(() => withAdded),
+        "POST /api/customers": addingAnswer(() => withAdded),
         [`PUT /api/proposals/${proposalId}`]: saved(() => linked),
       },
     );
@@ -89,7 +90,7 @@ describe("adding a record from a picker", () => {
       ]);
     });
     expect(sent(fetch, "POST /api/customers")).toEqual([
-      { name: "Harbour Ferries", description: "", note: null },
+      { records: [{ name: "Harbour Ferries", description: "", note: null }] },
     ]);
     await waitFor(() => {
       expect(newForm()).toBeNull();
@@ -110,7 +111,7 @@ describe("adding a record from a picker", () => {
       `/projects?open=${projectId}`,
       plan(),
       {
-        "POST /api/customers": saved(() => withAdded),
+        "POST /api/customers": addingAnswer(() => withAdded),
         [`PUT /api/projects/${projectId}`]: saved(() => onProject),
       },
     );
@@ -221,7 +222,7 @@ describe("adding a record from a picker", () => {
 
   it("adds from a cell's picker beside the table, then puts focus back on the cell", async () => {
     const { fetch, held } = await openPage("/projects?tab=proposals", plan(), {
-      "POST /api/customers": saved(() => withAdded),
+      "POST /api/customers": addingAnswer(() => withAdded),
       [`PUT /api/proposals/${proposalId}`]: saved(() => linked),
     });
     await userEvent.click(recordCell(proposalId, "customerIds") as HTMLElement);
@@ -454,7 +455,7 @@ describe("adding a record from a feature's picker", () => {
     async (label, one, path, added) => {
       const after = featurePlan({ canEdit: true, ...added });
       const { fetch, held } = await newFrom(label, "Harbour Survey", {
-        [`POST ${path}`]: saved(() => after),
+        [`POST ${path}`]: addingAnswer(() => after),
         // A new proposal starts in the first status offered.
         "GET /api/projects/choices": async () =>
           Response.json({
@@ -470,10 +471,14 @@ describe("adding a record from a feature's picker", () => {
       await userEvent.click(within(form).getByRole("button", { name: "Add" }));
       await waitFor(() => {
         expect(sent(fetch, `POST ${path}`)).toEqual([
-          expect.objectContaining({
-            name: "Harbour Survey",
-            featureIds: [first.id],
-          }),
+          {
+            records: [
+              expect.objectContaining({
+                name: "Harbour Survey",
+                featureIds: [first.id],
+              }),
+            ],
+          },
         ]);
       });
       await waitFor(() => {
@@ -489,7 +494,7 @@ describe("adding a record from a feature's picker", () => {
       customers: [customer(), added],
     });
     const { fetch, held } = await newFrom("Customers", "Harbour Ferries", {
-      "POST /api/customers": saved(() => after),
+      "POST /api/customers": addingAnswer(() => after),
       [`PUT /api/features/${first.id}`]: saved(() => after),
     });
     held.plan = after;
@@ -563,7 +568,7 @@ describe("adding a project from a new milestone's row", () => {
   it("adds the project and fills the row with it, keeping what was typed in the row", async () => {
     // Given the Milestones tab, with a name typed in the empty row
     const { fetch, held } = await openPage("/projects?tab=milestones", plan(), {
-      "POST /api/projects": saved(() => surveyed),
+      "POST /api/projects": addingAnswer(() => surveyed),
     });
     await userEvent.click(newCell("name"));
     await userEvent.keyboard("Survey done{Enter}");
@@ -596,7 +601,7 @@ describe("adding a project from a new milestone's row", () => {
       newCell("date").textContent,
       newCell("projectId").textContent,
     ]).toEqual([
-      [expect.objectContaining({ name: "Harbour Survey" })],
+      [{ records: [expect.objectContaining({ name: "Harbour Survey" })] }],
       expect.stringMatching(/^Survey done/u),
       expect.stringMatching(/2030/u),
       "FP-1 Harbour Survey",

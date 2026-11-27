@@ -78,6 +78,9 @@ export const unique = (prefix: string) => {
   return `${prefix} ${String(uniqueNames)}`;
 };
 
+// A body adding one record, as adding the plan's records takes a list of them.
+export const addingOne = (record: object) => ({ records: [record] });
+
 export const errorOf = (response: { json: () => unknown }) =>
   (response.json() as { error: string }).error;
 

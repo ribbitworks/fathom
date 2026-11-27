@@ -4,6 +4,8 @@
 // features' projects and proposals, and each project's and proposal's scope history.
 
 import {
+  type AddedPlan,
+  addedPlanSchema,
   withSchedule,
   type Choice,
   type Activity,
@@ -19,6 +21,7 @@ import {
   type FeatureRequest,
   type Milestone,
   type MilestoneRequest,
+  type PlanAddingRequests,
   type PlanChoice,
   type PlanChoices,
   planChoicesSchema,
@@ -92,10 +95,29 @@ const recordPath = (type: PlanKind, id: string) =>
   // eslint-disable-next-line security/detect-object-injection
   `${paths[type]}/${encodeURIComponent(id)}`;
 
-export const addRecord = ({ type, request }: PlanRequest): Promise<SavedPlan> =>
+// Where each kind is added: a milestone with its project named, so those of several projects are
+// added at once.
+const addingPaths: Readonly<Record<PlanRecordKind, string>> = {
+  ...paths,
+  milestone: "/api/milestones",
+};
+
+// Records of one kind, as adding them asks.
+export type PlanAdding = {
+  [Kind in PlanRecordKind]: [
+    kind: Kind,
+    records: readonly PlanAddingRequests[Kind][],
+  ];
+}[PlanRecordKind];
+
+// Adds records of one kind, all saved together or none, and gives their identifiers in the order
+// given and the change set they were saved in.
+export const addRecords = (
+  ...[kind, records]: PlanAdding
+): Promise<AddedPlan> =>
   // The kind is always one of the fixed kinds above.
   // eslint-disable-next-line security/detect-object-injection
-  sendJsonFor("POST", paths[type], request, savedPlan);
+  sendJsonFor("POST", addingPaths[kind], { records }, addedPlanSchema);
 
 export const changeRecord = (
   id: string,
@@ -218,12 +240,6 @@ export const isProposal = (record: PlanRecord): record is Proposal =>
 
 const milestonesPath = (projectId: string) =>
   `/api/projects/${encodeURIComponent(projectId)}/milestones`;
-
-export const addMilestone = (
-  projectId: string,
-  request: MilestoneRequest,
-): Promise<SavedPlan> =>
-  sendJsonFor("POST", milestonesPath(projectId), request, savedPlan);
 
 export const changeMilestone = (
   milestone: Milestone,
@@ -350,11 +366,9 @@ export type PlanRecord =
 export const isPlanned = (record: PlanRecord): record is Feature | Activity =>
   "featureTeamId" in record;
 
-export type PlanRecordKind =
-  "customer" | "project" | "proposal" | "milestone" | "feature" | "activity";
+export type PlanRecordKind = keyof PlanAddingRequests;
 
-// A milestone being added, with the project it is added to.
-export type MilestoneAdding = MilestoneRequest & { projectId: string };
+export type { MilestoneAdding } from "@fathom/shared";
 
 // What the tables offer: people as owners, the plan's records, and the statuses.
 export interface TableChoices {

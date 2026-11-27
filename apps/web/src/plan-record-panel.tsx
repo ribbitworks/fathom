@@ -34,7 +34,7 @@ import {
   proposalColumns,
 } from "./project-grids.tsx";
 import {
-  addMilestone,
+  addRecords,
   changeMilestone,
   isProposal,
   type PlanRecord,
@@ -114,7 +114,7 @@ export function MilestoneForm({
   const mutation = useMutation({
     mutationFn: async (request: MilestoneRequest) =>
       (milestone === undefined
-        ? await addMilestone(project.id, request)
+        ? await addRecords("milestone", [{ ...request, projectId: project.id }])
         : await changeMilestone(milestone, request)
       ).changeSetId,
     onSuccess: onSaved,

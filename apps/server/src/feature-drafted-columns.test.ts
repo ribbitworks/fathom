@@ -54,8 +54,12 @@ async function draftedColumn(): Promise<Field> {
 
 const draftFeature = (body: object) =>
   test.request(planner.cookie, "POST", "/api/features", {
-    name: unique("Fictional Feature"),
-    ...body,
+    records: [
+      {
+        name: unique("Fictional Feature"),
+        ...body,
+      },
+    ],
   });
 
 // A feature the Product Manager drafted, scored in the column given.
@@ -344,7 +348,7 @@ describe("a feature given a value in a column drafted to be added", () => {
       planner.cookie,
       "POST",
       "/api/features",
-      { name, numbers: { [column.id]: fictionalScore } },
+      { records: [{ name, numbers: { [column.id]: fictionalScore } }] },
       unpublished,
     );
     expect(drafted.statusCode, drafted.body).toBe(201);

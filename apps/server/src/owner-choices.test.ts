@@ -205,7 +205,7 @@ describe("an owner not yet started", () => {
       approver.cookie,
       "POST",
       "/api/projects",
-      { name: "Fictional Future Project", ownerId: hidden },
+      { records: [{ name: "Fictional Future Project", ownerId: hidden }] },
       { publish: true },
     );
     expect(added.statusCode, added.body).toBe(201);
@@ -251,7 +251,7 @@ describe("an owner not yet started", () => {
       approver.cookie,
       "POST",
       "/api/proposals",
-      { name, ownerId: hidden },
+      { records: [{ name, ownerId: hidden }] },
       { publish: true },
     );
     expect(proposal.statusCode, proposal.body).toBe(201);

@@ -5,55 +5,62 @@
 
 import type { Database } from "@fathom/db";
 import { activityOwnerProblem, type ActivityRequest } from "@fathom/shared";
-import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
 import { BadRequestError } from "../errors.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import type { Recorded } from "./draft-records.ts";
-import { planningRecord } from "./planning-records.ts";
-import { changingPlan } from "./projects.ts";
+import {
+  planningReads,
+  type PlanningReads,
+  planningRecord,
+} from "./planning-records.ts";
+import { addingPlan, changingPlan } from "./projects.ts";
 import type { PlanRecords } from "./project-reads.ts";
 import { changeableRecord, saveRecordDraft } from "./record-drafting.ts";
 
-// An activity as a request makes it, belonging to exactly one release or one project; moving it to
-// another clears the one it had.
+// An activity as a request makes it, belonging to the release or project its reads were checked to
+// name; moving it to another clears the one it had.
 async function activityRecord(
-  transaction: Transaction,
-  editor: string,
+  reads: PlanningReads,
   request: ActivityRequest,
   current?: Recorded,
 ): Promise<Recorded> {
-  const problem = activityOwnerProblem(request);
-  if (problem !== undefined) throw new BadRequestError(problem);
   return {
-    ...(await planningRecord(
-      transaction,
-      editor,
-      "activities",
-      request,
-      current,
-    )),
+    ...(await planningRecord(reads, request, current)),
     releaseId: request.releaseId,
     projectId: request.projectId,
   };
 }
 
-export async function addActivity(
+// What activities are checked against, once each belongs to exactly one release or one project.
+async function activityReads(
+  transaction: Transaction,
+  maker: Actor,
+  requests: readonly ActivityRequest[],
+): Promise<PlanningReads> {
+  for (const request of requests) {
+    const problem = activityOwnerProblem(request);
+    if (problem !== undefined) throw new BadRequestError(problem);
+  }
+  return planningReads(transaction, maker.user.id, "activities", requests);
+}
+
+// Adds activities, all in one change set or none.
+export const addActivities = (
   database: Database,
   maker: Actor,
-  request: ActivityRequest,
-): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, async (transaction, state) =>
-    saveRecordDraft(
-      transaction,
-      maker,
-      state,
-      "activity",
-      randomUUID(),
-      await activityRecord(transaction, maker.user.id, request),
-    ),
+  requests: readonly ActivityRequest[],
+) =>
+  addingPlan(
+    database,
+    maker,
+    "activity",
+    requests,
+    async (transaction, adder, asked) => {
+      const reads = await activityReads(transaction, adder, asked);
+      return (request) => activityRecord(reads, request);
+    },
   );
-}
 
 export async function changeActivity(
   database: Database,
@@ -69,7 +76,11 @@ export async function changeActivity(
       state,
       "activity",
       id,
-      await activityRecord(transaction, maker.user.id, request, activity),
+      await activityRecord(
+        await activityReads(transaction, maker, [request]),
+        request,
+        activity,
+      ),
     );
   });
 }

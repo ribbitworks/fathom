@@ -100,7 +100,7 @@ describe("owners", () => {
       owner.cookie,
       "POST",
       "/api/projects",
-      { name: project, ownerId: person },
+      { records: [{ name: project, ownerId: person }] },
       { publish: false },
     );
     expect(drafted.statusCode).toBe(201);

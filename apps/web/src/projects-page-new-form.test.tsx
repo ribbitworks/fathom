@@ -115,7 +115,7 @@ describe("a value refused in a page's New form", () => {
     await userEvent.click(screen.getByRole("button", { name: "Add" }));
     await waitFor(() => {
       expect(sent(fetch, "POST /api/customers")).toEqual([
-        { name: "Zeta Depot", description: "", note: null },
+        { records: [{ name: "Zeta Depot", description: "", note: null }] },
       ]);
     });
   });
@@ -128,7 +128,7 @@ describe("a value refused in a page's New form", () => {
     await userEvent.keyboard("{Enter}");
     await waitFor(() => {
       expect(sent(fetch, "POST /api/customers")).toEqual([
-        { name: "Zeta Depot", description: "", note: null },
+        { records: [{ name: "Zeta Depot", description: "", note: null }] },
       ]);
     });
   });
@@ -144,7 +144,7 @@ describe("Enter in a page's New form", () => {
     await userEvent.type(name(), "Zeta Depot{Enter}");
     await waitFor(() => {
       expect(sent(fetch, `POST /api/${tab}`)).toEqual([
-        expect.objectContaining({ name: "Zeta Depot" }),
+        { records: [expect.objectContaining({ name: "Zeta Depot" })] },
       ]);
     });
   });

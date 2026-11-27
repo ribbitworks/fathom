@@ -63,20 +63,28 @@ describe("drafts", () => {
     await send(
       "POST",
       "/api/customers",
-      { name: customer },
+      { records: [{ name: customer }] },
       { publish: false },
     );
     await send(
       "POST",
-      `/api/projects/${project.id}/milestones`,
-      { name: "Fictional Unpublished Milestone", date: "2027-01-04" },
+      "/api/milestones",
+      {
+        records: [
+          {
+            projectId: project.id,
+            name: "Fictional Unpublished Milestone",
+            date: "2027-01-04",
+          },
+        ],
+      },
       { publish: false },
     );
     const proposal = unique("Fictional Unpublished Proposal");
     await send(
       "POST",
       "/api/proposals",
-      { name: proposal },
+      { records: [{ name: proposal }] },
       { publish: false },
     );
     const response = await test.request(
@@ -104,7 +112,7 @@ describe("drafts", () => {
       maker.cookie,
       "POST",
       "/api/customers",
-      { name: customer },
+      { records: [{ name: customer }] },
       { publish: false },
     );
     await test.holdOnly(maker.id, ["configuration:view", "configuration:edit"]);
