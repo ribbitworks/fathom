@@ -3,21 +3,12 @@
 // UI tests of a New form refusing a value, stacked under a record's details or on its own page: the
 // reason under the field, focus in it, nothing saved, and Add and Cancel acting on the first click.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
-import { send } from "./test-requests.ts";
+import { changesSent, send } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("productManager") });
-
-// The requests that would save something, as the page sends them.
-function changesSent(page: Page): string[] {
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${new URL(request.url()).pathname}`);
-  });
-  return changes;
-}
 
 // Opens Fleet Tracking Bid's details, then its Customers picker's New customer form, named by what
 // was typed, if anything. Panels are regions beside the page, and dialogs covering a narrow screen.

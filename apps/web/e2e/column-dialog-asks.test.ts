@@ -2,7 +2,7 @@
 
 // UI tests of the column dialog asking before it discards what was typed in it.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("productManager") });

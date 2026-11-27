@@ -3,8 +3,10 @@
 // UI tests of a new list made with a column on Features or Activities: its name and choices are
 // needed, and the column is drafted drawing on it.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
+import { changesSent } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("productManager") });
 
@@ -25,11 +27,7 @@ test("refuses a new list with no name or choices, naming why under each, and sav
 }) => {
   // Given the Product Manager's New column dialog, with New list chosen and nothing else filled in
   const dialog = await openNewColumn(page);
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${request.url()}`);
-  });
+  const changes = changesSent(page);
 
   // When the column is added
   await dialog.getByRole("button", { name: "Add column" }).click();

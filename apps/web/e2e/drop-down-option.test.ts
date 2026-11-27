@@ -3,7 +3,8 @@
 // UI tests of the option the keyboard is on in a drop-down list, which Enter would pick: it stands
 // out from the list in light and dark mode alike.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("engineeringOperationsManager") });

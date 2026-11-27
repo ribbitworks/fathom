@@ -3,7 +3,8 @@
 // UI tests of the Metrics panel on Features: choosing to add nothing up is a change to the view, the
 // Save view dialog names it, and the panel's table scrolls within it rather than the page.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("productManager") });
@@ -43,7 +44,10 @@ test("counts Measure set to Nothing as a change, which Clear view takes back to 
   await expect(views).toBeVisible();
   await views.click();
   await page.getByRole("menuitem", { name: "Clear view" }).click();
-  await expect(page.getByRole("button", { name: "Views" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Views", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("region", { name: "Metrics" })).toBeHidden();
   await page.getByRole("button", { name: "Metrics", exact: true }).click();
   await breakDownByStatus(page);
   await expect(measure).toHaveValue("Effort (h)");

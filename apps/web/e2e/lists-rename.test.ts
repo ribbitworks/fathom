@@ -3,20 +3,12 @@
 // UI tests of renaming a list in its row on the Lists page: an empty name, a name another list has,
 // and a name too long are each refused in the row, saving nothing.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
+import { changesSent } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("engineeringDirector") });
-
-// The changes the page sends to be saved, from when it starts watching.
-function changesSent(page: Page): string[] {
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${request.url()}`);
-  });
-  return changes;
-}
 
 async function renameLevels(page: Page, name: string) {
   const grid = page.getByRole("grid", { name: "Lists" });

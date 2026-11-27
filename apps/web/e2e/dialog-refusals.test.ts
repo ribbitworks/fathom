@@ -2,8 +2,9 @@
 
 // UI tests of a dialog refusing Save: focus goes into the field the reason is under.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
+import { changesSent } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("engineeringDirector") });
 
@@ -12,11 +13,7 @@ test("puts focus in Name when a new list is created without one, saving nothing"
 }) => {
   // Given the Engineering Director on Lists, with the New list dialog open
   await page.goto("/lists");
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${request.url()}`);
-  });
+  const changes = changesSent(page);
   await page.getByRole("button", { name: "New list" }).click();
   const dialog = page.getByRole("dialog", { name: "New list" });
   const name = dialog.getByRole("textbox", { name: "Name" });
@@ -40,11 +37,7 @@ test("puts focus in Schedule when a new release is made without one, saving noth
   // Given the Engineering Director on Releases, with the New release dialog open
   await page.goto("/releases");
   await page.getByRole("tab", { name: "Releases" }).click();
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${request.url()}`);
-  });
+  const changes = changesSent(page);
   await page.getByRole("button", { name: "New release" }).click();
   const dialog = page.getByRole("dialog", { name: "New release" });
   const schedule = dialog.getByRole("combobox", { name: "Schedule" });
@@ -72,11 +65,7 @@ test("puts focus in Names when a schedule's cycles are changed without them, sav
   await page
     .getByRole("button", { name: "Show details of Field Apps" })
     .click();
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${request.url()}`);
-  });
+  const changes = changesSent(page);
   await page.getByRole("button", { name: "Change Name pattern" }).click();
   const dialog = page.getByRole("dialog");
   const names = dialog.getByRole("textbox", { name: "Names" });

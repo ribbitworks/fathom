@@ -3,7 +3,8 @@
 // UI tests of Esc in a dropdown inside a side panel: it closes the dropdown alone, as in a dialog,
 // and only a later Esc closes the panel.
 
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 // With less motion a closing panel goes at once, rather than sliding away.

@@ -3,7 +3,7 @@
 // UI tests of pasting rows into a plan table: they are saved together, so one the server refuses
 // keeps every other row of the paste from being saved.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("productManager") });

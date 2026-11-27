@@ -3,8 +3,10 @@
 // UI tests of a control turned off with a line saying why, which a screen reader hears with the
 // control.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
+import { changesSent } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("fathomAdministrator") });
 
@@ -34,11 +36,7 @@ test("says why the last account that manages accounts can't give up its role or 
   await page.goto("/accounts");
   await changeActive(page, "Superuser", "Deactivate");
   try {
-    const changes: string[] = [];
-    page.on("request", (request) => {
-      if (request.method() !== "GET" && request.url().includes("/api/"))
-        changes.push(`${request.method()} ${request.url()}`);
-    });
+    const changes = changesSent(page);
 
     // When they open their own account
     const panel = await openAccount(

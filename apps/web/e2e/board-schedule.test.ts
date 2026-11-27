@@ -3,7 +3,7 @@
 // UI tests of the Features Board's Columns menu: months of one schedule, whose features alone show,
 // kept in a saved view.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 import { send } from "./test-requests.ts";
 

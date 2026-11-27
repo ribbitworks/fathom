@@ -118,4 +118,22 @@ export default defineConfig(
       ],
     },
   },
+  {
+    // A UI test runs in the shared test, so it leaves no view behind for the next test to open on.
+    files: ["apps/web/e2e/**/*.test.ts"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@playwright/test",
+              importNames: ["test", "expect"],
+              message: "Import test and expect from ./test-fixtures.ts.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 );

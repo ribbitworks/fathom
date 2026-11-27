@@ -3,8 +3,10 @@
 // UI tests of the working days on Planning settings: no day ticked is refused under the days, with
 // focus kept on them and nothing saved, Esc puts them back, and the days stay on one line.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
+import { changesSent } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("engineeringOperationsManager") });
 
@@ -25,11 +27,7 @@ test("refuses no working day under the days, keeping focus and saving nothing, a
 }) => {
   // Given the Workforce Administrator with the working days open
   const days = await openDays(page);
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${request.url()}`);
-  });
+  const changes = changesSent(page);
 
   // When every working day is unticked and Enter pressed
   for (const day of weekdays) {

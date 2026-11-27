@@ -3,7 +3,7 @@
 // UI tests of a row's details button: it opens the row's details beside the table, and closes them
 // again while they are open.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 // With less motion a closing panel goes at once, rather than sliding away.

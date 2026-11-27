@@ -3,7 +3,8 @@
 // UI tests of who sets a feature's Feature team: those who edit feature teams, such as the Feature
 // Lead, and not those who edit features alone, such as the Product Manager.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 const firstTeamCell = (page: Page) =>
