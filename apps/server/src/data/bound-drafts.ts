@@ -80,7 +80,7 @@ export function boundWith(state: RecordsState, root: RecordRef): RecordRef[] {
 
 // The records only drafted to be added that belong to one, through the links of their kinds, and
 // those that belong to them, and so on.
-function addedBelow(state: RecordsState, root: RecordRef): RecordRef[] {
+export function addedBelow(state: RecordsState, root: RecordRef): RecordRef[] {
   const found = new Map([[refKey(root), root]]);
   const queue = [root];
   for (let next = queue.shift(); next !== undefined; next = queue.shift()) {

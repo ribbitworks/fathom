@@ -140,7 +140,9 @@ export async function resubmitListDraft(
   });
 }
 
-export const draftTypeOf = (kind: ListDraftKind): DraftKind => {
+export const draftTypeOf = (
+  kind: ListDraftKind,
+): Extract<DraftKind, "list" | "choice-order" | "list-item"> => {
   if (kind === "list") return "list";
   return kind === "order" ? "choice-order" : "list-item";
 };

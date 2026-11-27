@@ -94,8 +94,9 @@ describe("a fill's draft", () => {
     expect((await rowOf(transfer))?.draft).toBeUndefined();
   });
 
-  it("leaves the rest of the fill's drafts with their makers when any part is discarded", async () => {
-    // Given a planned manager whose own draft moves its target date, filled by a transfer
+  it("leaves the rest of the fill's drafts with their makers when someone else discards any part", async () => {
+    // Given a planned manager whose own draft moves its target date, filled by a transfer, and
+    // another editor's change to the transfer's draft
     const transfer = await person({ isManager: false });
     const id = await hire({ isManager: true, managerId: await person() });
     await ok(
@@ -104,11 +105,17 @@ describe("a fill's draft", () => {
       }),
     );
     await filled(id, existing(transfer));
+    const other = await test.signedIn("workforce-administrator");
+    await ok(
+      await send(other, "PATCH", `/api/people/${transfer}`, {
+        preferredName: unique("Fictional Renamed"),
+      }),
+    );
 
-    // When the transfer's draft is discarded
-    await ok(await send(editor, "DELETE", `/api/people/${transfer}/draft`));
+    // When the other editor discards the transfer's draft
+    await ok(await send(other, "DELETE", `/api/people/${transfer}/draft`));
 
-    // Then the hire's draft is still theirs: needing another approver, and theirs to discard
+    // Then the hire's draft is still its maker's: needing another approver, and theirs to discard
     expect((await hireOf(id))?.draft).toMatchObject({
       discardable: true,
       needsOtherApprover: true,

@@ -55,7 +55,7 @@ import {
   usingRecords,
   withUsedRecords,
 } from "./bound-drafts.ts";
-import { refuseDiscardingOthers } from "./record-discards.ts";
+import { refuseRecordDiscard } from "./record-discards.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import {
   gone,
@@ -84,7 +84,7 @@ export async function discardRecordDraft(
     if (!recordExists(state, type, id)) throw new NotFoundError(noRecord);
     refuseHeldIn(state, type, id);
     if (!stateOf(state, type).drafts.has(id)) throw new NotFoundError(noDraft);
-    await refuseDiscardingOthers(transaction, maker, type, id);
+    await refuseRecordDiscard(transaction, state, maker, { type, id });
     const discarded = discardedWith(state, { type, id });
     for (const ref of discarded.filter(
       ({ type: kind }) => kind === "feature",
