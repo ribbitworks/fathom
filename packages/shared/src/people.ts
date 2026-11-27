@@ -146,6 +146,24 @@ export const personFeatureTeamSchema = z.object({
 
 export type PersonFeatureTeam = z.infer<typeof personFeatureTeamSchema>;
 
+// A planned hire's record on a feature team from a day: on it, or leading it, or from then not.
+export const hireTeamRecordSchema = z.object({
+  member: z.boolean(),
+  fromDate: daySchema,
+});
+
+// A feature team a planned hire is on today or later, with its records on the team and as its lead
+// from today, which filling the hire carries to its person. The days are the hire's, which are
+// General, and a lead's day another person takes over is left out for readers who don't see the
+// days people join teams.
+export const hireTeamSchema = z.object({
+  team: personFeatureTeamSchema,
+  memberships: z.array(hireTeamRecordSchema),
+  leads: z.array(hireTeamRecordSchema),
+});
+
+export type HireTeam = z.infer<typeof hireTeamSchema>;
+
 // A row of the People table as the user sees it: a person, or a planned hire, as its draft, if any,
 // makes it, with the draft beside, or, for a draft that removes it, as it is. A planned hire's
 // name, which may be empty, is its preferred name, its requisition or temporary ID its ID, and its
@@ -190,6 +208,9 @@ export const personSchema = z.object({
   // The feature teams the person or planned hire is on, live, on the day shown, by name. Left out for
   // users who cannot see feature teams.
   featureTeams: z.array(personFeatureTeamSchema).optional(),
+  // For a planned hire on a team today or later, the teams filling it carries, by team name, sent
+  // with featureTeams on today.
+  teamsCarried: z.array(hireTeamSchema).optional(),
   values: valuesSchema,
   ...shownColumnValues,
   // For a planned hire, who its draft fills it with, as a planned hire has it.

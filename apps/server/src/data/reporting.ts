@@ -3,7 +3,13 @@
 // Reporting lines and team names, held as fields of each person and changed through their drafts.
 // Part of the data access layer.
 
-import { defaultLineFrom } from "@fathom/shared";
+import {
+  bySubject,
+  currentRecordOn,
+  defaultLineFrom,
+  inForceOn,
+  inForceOrLater,
+} from "@fathom/shared";
 import {
   drafts,
   inChunks,
@@ -19,12 +25,6 @@ import type { Transaction } from "./changes.ts";
 import type { Draft, Recorded } from "./draft-records.ts";
 import { draftedPersonValues } from "./drafted-values.ts";
 import { readPersonDrafts } from "./drafts.ts";
-import {
-  bySubject,
-  currentRecordOn,
-  inForceOn,
-  inForceOrLater,
-} from "./in-force.ts";
 
 export type LineRow = typeof reportingLines.$inferSelect;
 

@@ -4,6 +4,7 @@
 // team, and the team changes removing a planned hire makes. Part of the data access layer.
 
 import { featureTeams, inChunks, type Reader } from "@fathom/db";
+import { bySubject, inForceOrLater } from "@fathom/shared";
 import { inArray } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { BadRequestError, ConflictError } from "../errors.ts";
@@ -19,7 +20,6 @@ import {
 } from "./feature-team-reads.ts";
 import { recordType } from "./feature-team-records.ts";
 import { membersOf } from "./feature-team-rules.ts";
-import { bySubject, inForceOrLater } from "./in-force.ts";
 import { readToday } from "./settings.ts";
 import { teamChanges } from "./feature-teams.ts";
 

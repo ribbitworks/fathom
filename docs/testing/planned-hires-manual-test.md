@@ -19,6 +19,7 @@ Verifies planned hires shown as rows of the People table:
 - Adding one with the keyboard and by pasting.
 - What a Feature Lead sees.
 - Filling a hire from its details panel with a new or an existing person, approved on the Drafts page.
+- Filling a hire on a feature team: the team and lead its person takes on, and a team's draft refusing the fill.
 
 [Fictional Data](../design/development-setup.md#fictional-data) describes the seed data, with its planned hires.
 
@@ -426,3 +427,148 @@ Proved by automated tests in `apps/server/src/fills-filling.test.ts` and `apps/w
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
+
+### HIRE-17: The Fill Form Names the Feature Team the Hire's Person Joins
+
+Covered by [HIRE-19](#hire-19-filling-a-hire-on-a-feature-team-puts-its-person-on-the-team) `631F`; the day following the start date entered is proved by `apps/web/src/hire-fill-form-teams.test.tsx` and `apps/web/e2e/fill-hire-teams.test.ts`.
+
+### HIRE-18: A Fill Is Refused While a Draft Changes the Hire's Feature Team
+
+Covered by the UI test `apps/web/e2e/fill-hire-teams.test.ts`.
+
+### HIRE-19: Filling a Hire on a Feature Team Puts Its Person on the Team
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-16. Step `B722` signs in as another account.
+
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
+
+- [ ] `06B4` Search for `REQ-2053`.
+  - **Expected:** One row shows, 'Data engineer'.
+  - **Notes:**
+
+- [ ] `631F` Select the **Fill** button in its **Name** cell.
+  - **Expected:**
+    - After the form's fields, a **Feature teams** row reads a small square in the team's colour, then 'Field tools', with no day after it.
+    - There is no **Leads** row.
+  - **Notes:**
+
+- [ ] `F359` Type `Fictional joiner` in **Name**.
+  - **Expected:** **Name** holds `Fictional joiner`.
+  - **Notes:**
+
+- [ ] `484F` Type `EMP-9003` in **ID**.
+  - **Expected:** **ID** holds `EMP-9003`.
+  - **Notes:**
+
+- [ ] `81F0` Select **Fill** at the foot of the panel.
+  - **Expected:**
+    - The form closes.
+    - The panel is headed `Fictional joiner`, after a hollow yellow dot.
+  - **Notes:**
+
+- [ ] `F7E2` Select the Publish button.
+  - **Expected:** A notification says "Published" followed by the number of changes.
+  - **Notes:**
+
+- [ ] `B722` Sign in as the Engineering Director, `engineering.director@fathom.test`, changing account.
+  - **Expected:** The top bar's right end reads "Engineering Director".
+  - **Notes:**
+
+- [ ] `BCA5` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
+  - **Notes:**
+
+- [ ] `E113` Type `Data engineer` in the search box.
+  - **Expected:**
+    - A row's **Record** reads 'Data engineer'.
+    - Its **What changes** reads "Filled by filled in: `Fictional joiner`; `Fictional joiner` joins 'Field tools'".
+  - **Notes:**
+
+- [ ] `2E99` Tick the tick box of the row of 'Data engineer'.
+  - **Expected:** **Approve 1 draft…** shows at the right of the page's heading.
+  - **Notes:**
+
+- [ ] `66B7` Select **Approve 1 draft…**, then **Approve** in the dialog.
+  - **Expected:** A notification says the drafts were approved.
+  - **Notes:**
+
+- [ ] `836E` Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
+  - **Expected:** The chart shows the feature teams.
+  - **Notes:**
+
+- [ ] `C961` Select the Feature teams button, then 'Field tools'.
+  - **Expected:**
+    - The team panel opens, titled 'Field tools'.
+    - **Members** lists `Fictional joiner`.
+    - **Members** doesn't list 'Data engineer'.
+  - **Notes:**
+
+### HIRE-20: Filling a Planned Hire That Leads a Feature Team Passes the Lead
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-19. Step `E540` signs in as another account.
+
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
+
+- [ ] `98AF` Search for `Engineering Manager TBD`.
+  - **Expected:** A row's **Name** reads "Engineering Manager, TBD-" and a number, with **State** "Request to hire".
+  - **Notes:**
+
+- [ ] `F1D6` Select that row's **State** cell, press Enter, choose **Approved to hire**, and press Enter.
+  - **Expected:** A **Fill** button shows in that row's **Name** cell.
+  - **Notes:**
+
+- [ ] `0A6E` Select **Fill**.
+  - **Expected:**
+    - **Feature teams** reads a small square in the team's colour, 'Field tools', then, in grey, "from" and the first day of the month three months after the current one.
+    - **Leads** reads the same.
+  - **Notes:**
+
+- [ ] `607C` Type `Fictional team lead` in **Name**.
+  - **Expected:** **Name** holds `Fictional team lead`.
+  - **Notes:**
+
+- [ ] `AA20` Type `EMP-9004` in **ID**.
+  - **Expected:** **ID** holds `EMP-9004`.
+  - **Notes:**
+
+- [ ] `CAFD` Select the change button beside **Grade**, and choose 'P1'.
+  - **Expected:** **Grade** reads 'P1'.
+  - **Notes:**
+
+- [ ] `7EF5` Select **Fill** at the foot of the panel.
+  - **Expected:** The form closes, and the panel is headed `Fictional team lead`.
+  - **Notes:**
+
+- [ ] `A7F5` Select the Publish button.
+  - **Expected:** A notification says "Published" followed by the number of changes.
+  - **Notes:**
+
+- [ ] `E540` Sign in as the Engineering Director, `engineering.director@fathom.test`, changing account.
+  - **Expected:** The top bar's right end reads "Engineering Director".
+  - **Notes:**
+
+- [ ] `E568` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
+  - **Notes:**
+
+- [ ] `F014` Type `Engineering Manager TBD` in the search box.
+  - **Expected:** The **What changes** of the row whose **Record** reads "Engineering Manager, TBD-" and a number ends "`Fictional team lead` joins 'Field tools'; `Fictional team lead` leads 'Field tools'".
+  - **Notes:**
+
+- [ ] `F929` Tick the tick box of that row.
+  - **Expected:** **Approve** followed by a number of drafts shows at the right of the page's heading.
+  - **Notes:**
+
+- [ ] `E391` Select that **Approve** button, then **Approve** in the dialog.
+  - **Expected:** A notification says the drafts were approved.
+  - **Notes:**
+
+- [ ] `825E` Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
+  - **Expected:** The chart shows the feature teams.
+  - **Notes:**
+
+- [ ] `ED02` Clear the **Date** box, and type the first day of the month three months after the current one, as digits alone, such as `20270201` on a seed restored on 26 November 2026.
+  - **Expected:** The card that names 'Field tools' reads `Fictional team lead`.
+  - **Notes:**
+
+**Afterwards:** Select **Today**, then run Restore the Seed Data.

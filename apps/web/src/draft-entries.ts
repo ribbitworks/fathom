@@ -33,7 +33,7 @@ import {
   type ReleaseStream,
 } from "@fathom/shared";
 import { addedClass, describeField, describeValue } from "./changes.ts";
-import { personDraftFields } from "./draft-details.tsx";
+import { fieldPhrase, personDraftFields } from "./draft-details.tsx";
 import type { DraftPlace } from "./draft-places.ts";
 import { type DraftTarget, targetSelection } from "./draft-targets.ts";
 import type { Columns, DraftSelection } from "./drafts.ts";
@@ -353,8 +353,8 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
             data.fields,
             lists,
             data.people,
-          ).map(({ key, field }) =>
-            credited(describeField(field), key, drafted.draft),
+          ).map((field) =>
+            credited(fieldPhrase(field), field.key, drafted.draft),
           ),
       {
         kind: isHire(drafted.person) ? "planned-hire" : "person",

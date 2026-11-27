@@ -7,6 +7,7 @@ import type { Field, Person } from "@fathom/shared";
 import {
   configDraftFields,
   draftLines,
+  fieldPhrase,
   personDraftFields,
 } from "./draft-details.tsx";
 import { formatDay } from "./day-formats.ts";
@@ -236,6 +237,104 @@ describe("a draft's details", () => {
       "Filled with Fictional Starter, by Fictional Editor",
     ]);
     expect(lines(hire(null))).toEqual(["Filled, by Fictional Editor"]);
+  });
+
+  it("says which feature teams a fill's person joins and leads, from their start", () => {
+    // Given a hire on two teams, leading one, and leaving the other before its person starts
+    const team = (id: string, name: string) => ({ id, name, colour: null });
+    const hire: Person = {
+      id: "h2",
+      keyNumber: 1,
+      kind: "planned-hire",
+      preferredName: "",
+      employeeId: "REQ-9002",
+      filler: "p9",
+      teamsCarried: [
+        {
+          team: team("t1", "Fictional Harbour"),
+          memberships: [{ member: true, fromDate: "2030-01-01" }],
+          leads: [{ member: true, fromDate: "2030-01-01" }],
+        },
+        {
+          team: team("t2", "Fictional Pier"),
+          memberships: [
+            { member: true, fromDate: "2030-01-01" },
+            { member: false, fromDate: "2030-02-01" },
+          ],
+          leads: [],
+        },
+      ],
+      values: {},
+      links: {},
+    };
+    const starter: Person = {
+      id: "p9",
+      keyNumber: 1,
+      preferredName: "Fictional Starter",
+      employeeId: "E90002",
+      startDate: "2030-03-01",
+      featureTeams: [],
+      values: {},
+      links: {},
+    };
+
+    // When the fill's draft is put in words, its fill credited to who made it
+    const filling = {
+      action: "changed" as const,
+      changed: ["filledBy"],
+      live: { values: {}, links: {} },
+      state: "waiting" as const,
+      madeBy: "Fictional Editor",
+      madeAt: null,
+    };
+    const lines = (people: Person[]) =>
+      draftLines(
+        {
+          ...draft,
+          action: "changed",
+          madeAs: "Fictional Role",
+          changedBy: { filledBy: "Fictional Filler" },
+        },
+        personDraftFields(hire, filling, [], [], people),
+      ).map(phraseText);
+
+    // Then the person joins and leads only the team the hire is still on, credited as the fill is
+    expect(lines([starter])).toEqual([
+      "Filled with Fictional Starter, by Fictional Filler",
+      "Fictional Starter joins Fictional Harbour, by Fictional Filler",
+      "Fictional Starter leads Fictional Harbour, by Fictional Filler",
+    ]);
+    // And the person is named as a value, as the fill's own line names them
+    const [, joins] = personDraftFields(hire, filling, [], [], [starter]);
+    expect(joins?.phrase?.[0]).toEqual({ value: "Fictional Starter" });
+    // And a reader who doesn't see who fills it is told of a person
+    expect(lines([])).toEqual([
+      "Filled, by Fictional Filler",
+      "Person joins Fictional Harbour, Fictional Pier, by Fictional Filler",
+      "Person leads Fictional Harbour, by Fictional Filler",
+    ]);
+  });
+
+  it("puts a field in its own words where it has them, as the Drafts page shows it", () => {
+    const field = {
+      field: "joins",
+      oldValue: null,
+      newValue: ["Fictional Pier"],
+    };
+
+    expect(
+      phraseText(
+        fieldPhrase({ key: "filledBy", field, phrase: ["Someone joins"] }),
+      ),
+    ).toBe("Someone joins");
+    expect(
+      phraseText(
+        fieldPhrase({
+          key: "employeeId",
+          field: { field: "employeeId", oldValue: "E1", newValue: "E2" },
+        }),
+      ),
+    ).toBe("ID from E1 to E2");
   });
 
   it("leaves an old manager unnamed when no people are given", () => {

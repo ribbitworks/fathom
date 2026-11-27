@@ -37,7 +37,7 @@ See [People](people.md#change-a-person).
 1. Fill in the form, and select **Fill** under it.
 1. Select **Publish**, and approve the draft.
 
-If the hire has allocations, remove them first, since Fathom doesn't move them to the person. See [People](people.md#fill-a-planned-hire).
+If the hire has allocations, remove them first, since Fathom doesn't move them to the person. Its feature teams do move: the form lists them under **Feature teams** and **Leads**. See [People](people.md#fill-a-planned-hire).
 
 ## Keep People Current
 

@@ -362,6 +362,21 @@ export {
   type SomeRequestedColumnValues,
   type Texts,
 } from "./column-values.ts";
+export {
+  type Carried,
+  carriedByFill,
+  type CarriedOnFill,
+  type HireOnTeam,
+  joinedAndLed,
+  onTeamTodayOrLater,
+} from "./fill-carries.ts";
+export {
+  bySubject,
+  currentRecordOn,
+  type Dated,
+  inForceOn,
+  inForceOrLater,
+} from "./in-force.ts";
 export { allOf, eitherOf } from "./words.ts";
 export {
   accountColumnClasses,

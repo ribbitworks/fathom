@@ -176,6 +176,8 @@ export {
   personDraftSchema,
   personLengths,
   personRequestSchema,
+  type HireTeam,
+  hireTeamSchema,
   type PersonFeatureTeam,
   personFeatureTeamSchema,
   personSchema,
