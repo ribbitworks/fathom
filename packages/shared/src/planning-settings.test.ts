@@ -24,14 +24,9 @@ describe("planningSettingsSchema", () => {
       "full focus and the largest buffer",
       { focusPercent: 100, bufferPercent: 100 },
     ],
-    ["no ramp-up", { rampUpPercents: [] }],
     [
       "a week of Sunday to Thursday, starting on Sunday",
       { workingDays: [6, 0, 1, 2, 3], weekStartsOn: 6 },
-    ],
-    [
-      "a year of ramp-up",
-      { rampUpPercents: Array.from({ length: 12 }, () => 50) },
     ],
   ])("accepts %s", (_case, change) => {
     expect(
@@ -70,21 +65,6 @@ describe("planningSettingsSchema", () => {
       { bufferPercent: 101 },
       "Use 0% to 100% for Default buffer",
     ],
-    [
-      "a month of no ramp-up",
-      { rampUpPercents: [0, 75] },
-      "Use 1% to 100% for Ramp-up",
-    ],
-    [
-      "a month beyond full",
-      { rampUpPercents: [50, 101] },
-      "Use 1% to 100% for Ramp-up",
-    ],
-    [
-      "ramp-up longer than a year",
-      { rampUpPercents: Array.from({ length: 13 }, () => 50) },
-      "Use up to 12 months for Ramp-up",
-    ],
   ])("refuses %s", (_case, change, message) => {
     const result = planningSettingsSchema.safeParse({
       ...startingPlanningSettings,
@@ -115,12 +95,12 @@ describe("changedSettings", () => {
     expect(
       changedSettings(startingPlanningSettings, {
         hoursPerDay: 7.5,
-        rampUpPercents: [],
+        focusPercent: 70,
       }),
     ).toEqual({
       ...startingPlanningSettings,
       hoursPerDay: 7.5,
-      rampUpPercents: [],
+      focusPercent: 70,
     });
   });
 

@@ -4,7 +4,7 @@ category: "Domain"
 audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/design/domain-model.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: Domain Concepts
@@ -34,10 +34,9 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Late:** Said of a feature forecast to finish after the end of its Needed by month, or, with no Needed by, after the end of its target cycle. A feature with neither is never Late. Not built yet.
 - **Estimate:** A rough size of the effort a feature needs, not its cost, such as a rough order of magnitude (ROM) or a SWAG, given in a unit of effort such as hours or person-months.
 - **Effort:** Work at full efficiency: a person-day of effort is the hours a working day converts to, not a day on the calendar. Duration, which takes in loading and time off, is apart.
-- **Planning settings:** The figures for the whole organization that capacity and forecasts are worked out with: the working time a unit of effort stands for, focus, buffer, and ramp-up.
+- **Planning settings:** The figures for the whole organization that capacity and forecasts are worked out with: the working time a unit of effort stands for, focus and buffer.
 - **Focus:** The share of a person's time that goes to feature work at all, after meetings, support and other overhead.
 - **Buffer:** A percentage added to a feature's effort before forecasting, for what the estimate leaves out. The estimate itself stays as given.
-- **Ramp-up:** The share of full output a new starter delivers in each of their first months.
 
 ## People Terms
 

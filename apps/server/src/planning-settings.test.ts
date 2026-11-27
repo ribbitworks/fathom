@@ -41,7 +41,6 @@ const asked = {
 const changed: PlanningSettingsChange = {
   hoursPerDay: 7.5,
   focusPercent: 70,
-  rampUpPercents: [25, 50, 75],
 };
 const drafted = { ...startingPlanningSettings, ...changed };
 const startingConversions = {
@@ -166,8 +165,8 @@ describe("drafting a change to the settings", () => {
       ...drafted,
       draft: {
         action: "changed",
-        changed: ["hoursPerDay", "focusPercent", "rampUpPercents"],
-        live: { hoursPerDay: 8, focusPercent: 80, rampUpPercents: [50, 75] },
+        changed: ["hoursPerDay", "focusPercent"],
+        live: { hoursPerDay: 8, focusPercent: 80 },
         state: "waiting",
         madeBy: expect.any(String) as unknown,
       },
@@ -228,21 +227,9 @@ describe("drafting a change to the settings", () => {
     },
   );
 
-  it.each([
-    ["hours that are not whole or half", { hoursPerDay: 7.25 }],
-    ["more days in a month than it has", { daysPerMonth: 32 }],
-    ["no focus", { focusPercent: 0 }],
-    ["a buffer below nothing", { bufferPercent: -5 }],
-    ["a month of ramp-up beyond full", { rampUpPercents: [50, 120] }],
-    [
-      "more than a year of ramp-up",
-      { rampUpPercents: Array.from({ length: 13 }, () => 50) },
-    ],
-    ["text for a number", { daysPerMonth: "20" }],
-    ["no working day", { workingDays: [] }],
-    ["an empty month of ramp-up", { rampUpPercents: [50, null] }],
-  ])("refuses %s, changing nothing", async (_case, wrong) => {
-    const response = await change(editor.cookie, wrong);
+  // Each setting's rule is unit-tested with the settings; one shows the route applies them.
+  it("refuses a setting its rule refuses, changing nothing", async () => {
+    const response = await change(editor.cookie, { focusPercent: 0 });
     expect(response.statusCode).toBe(400);
     expect(await read(editor.cookie)).toEqual(startingPlanningSettings);
   });
@@ -399,11 +386,6 @@ describe("the history of the settings", () => {
       ).toEqual([
         { field: "hoursPerDay", oldValue: "8", newValue: "7.5" },
         { field: "focusPercent", oldValue: "80", newValue: "70" },
-        {
-          field: "rampUpPercents",
-          oldValue: ["50", "75"],
-          newValue: ["25", "50", "75"],
-        },
       ]);
     },
   );

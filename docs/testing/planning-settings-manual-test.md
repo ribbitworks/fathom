@@ -16,7 +16,6 @@ Verifies the Planning settings page:
 - How it reads for someone who may only see it.
 - Drafting a change, undoing it and publishing it.
 - Choosing the working days from the keyboard, none refused, and the day a week starts on.
-- Adding and removing months of ramp-up.
 - The change in the change history.
 - Approving a draft and seeing the Effort column on Features follow it once approved.
 
@@ -41,7 +40,6 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 As [Manual Test Basics](manual-test-basics.md#terms) sets out, and:
 
 - **Change button:** as [Manual Test Basics](manual-test-basics.md#terms) sets out, here at the right of a setting's row.
-- **× button:** the small × after the change button of a month of ramp-up, which removes that month.
 - **Draft button:** the button above **Working time**, which opens a menu choosing how drafts show.
 - **Row menu:** the ⋯ button at the right of a setting's row that a draft changes, which opens a menu of the whole draft of the settings and what can be done with it.
 - **Day boxes:** the seven boxes, one for each day of the week, that open in place of the value of **Working days**.
@@ -68,13 +66,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - Under **Forecasts**, the rows read:
       - **Default focus**: "80%"
       - **Default buffer**: "0%"
-    - Under **Ramp-up for new starters**, the rows read:
-      - **Month 1**: "50%"
-      - **Month 2**: "75%"
-      - **From month 3**: "100%"
     - No row has a change button.
     - Above **Working time** is a **Draft** button.
-    - There are no buttons under the rows.
   - **Notes:**
 
 ### PSET-02: A Change Drafted, Undone and Published
@@ -84,10 +77,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** Signed in with this account.
 
 - [ ] `F224` Select the **Planning settings** page in the left-hand menu.
-  - **Expected:**
-    - Every row but **From month 3** has a change button at its right.
-    - The rows **Month 1** and **Month 2** each have an × button after their change button.
-    - Under the ramp-up rows is one outlined button, **Add month**.
+  - **Expected:** Every row has a change button at its right.
   - **Notes:**
 
 - [ ] `93FD` Press Tab until the change button of **Hours a day** has focus.
@@ -241,61 +231,26 @@ Proved by automated tests in `apps/web/src/planning-settings-page.test.tsx`.
   - **Expected:** The left-hand menu shows again, at the left of the page.
   - **Notes:**
 
-### PSET-07: Months of Ramp-Up Added and Removed
+### PSET-08: The Change in the Change History
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as PSET-06.
 
 **Preconditions:** **Planning settings** page open.
 
-- [ ] `5B9D` Select **Add month**.
+- [ ] `5160` Select the change button of **Default buffer**.
   - **Expected:**
-    - Under **Ramp-up for new starters**, the rows read, from the top:
-      - **Month 1**: "50%"
-      - **Month 2**: "75%"
-      - **Month 3**: "100%" after a hollow yellow dot, with "No month 3" under it after a green dot
-      - **From month 4**: "100%"
-    - The change button of **Month 3** has focus.
-    - **Month 3** has an × button after its change button.
+    - A field in place of "0%" holds "0".
+    - The focus is in the field.
   - **Notes:**
 
-- [ ] `80C1` Press Enter.
-  - **Expected:** A field in place of "100%" beside **Month 3** holds "100".
+- [ ] `7E66` Replace the value with `10`, and press Enter.
+  - **Expected:** **Default buffer** reads "10%" after a hollow yellow dot.
   - **Notes:**
-
-- [ ] `3F77` Replace the value with `90`, and press Enter.
-  - **Expected:** **Month 3** reads "90%" after a hollow yellow dot.
-  - **Notes:**
-
-- [ ] `2E12` Select the × button of **Month 3**.
-  - **Expected:**
-    - Under **Ramp-up for new starters**, the rows read, from the top:
-      - **Month 1**: "50%"
-      - **Month 2**: "75%"
-      - **From month 3**: "100%"
-    - The × button of **Month 2** has focus.
-    - A notification at the top right reads "Removed month 3 of ramp-up."
-    - It offers **Undo**.
-  - **Notes:**
-
-- [ ] `A79C` Select **Undo** in the notification.
-  - **Expected:**
-    - Under **Ramp-up for new starters**, the rows read, from the top:
-      - **Month 1**: "50%"
-      - **Month 2**: "75%"
-      - **Month 3**: "90%" after a hollow yellow dot
-      - **From month 4**: "100%"
-  - **Notes:**
-
-### PSET-08: The Change in the Change History
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as PSET-07.
-
-**Preconditions:** None beyond PSET-07.
 
 - [ ] `D295` Select the **Change history** page in the left-hand menu.
   - **Expected:**
     - The newest entry reads "Engineering Operations Manager drafted changes to the planning settings".
-    - Its details read "Ramp-up from 50%, 75% to 50%, 75%, 90%".
+    - Its details read "Default buffer from 0% to 10%".
   - **Notes:**
 
 **Afterwards:** Run Reset the Database, to leave the planning settings as Fathom starts them.

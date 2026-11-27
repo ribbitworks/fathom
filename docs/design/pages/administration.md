@@ -85,20 +85,19 @@ The Administration pages hold accounts, roles, settings, lists, the planning set
 
 ## Planning Settings
 
-- **Place:** After Lists, at `/planning-settings`, for a role with View Configuration; Edit Configuration changes it. A role with View Configuration alone sees it read only, with no pencils, ×, or Add month.
-- **Layout:** The heading, with no tabs, then the Draft menu and the sections Working time, Forecasts and Ramp-up for new starters, laid out as a details panel's rows.
+- **Place:** After Lists, at `/planning-settings`, for a role with View Configuration; Edit Configuration changes it. A role with View Configuration alone sees it read only, with no pencils.
+- **Layout:** The heading, with no tabs, then the Draft menu and the sections Working time and Forecasts, laid out as a details panel's rows.
 - **Working time:** Hours a day, Working days, Week starts on and Working days a month. Hours a day and Working days a month stay typed: a month's working days vary, and capacity needs one whole number.
 - **Working days:** At rest, the days in the week's order, three or more in a row joined with to, such as Mon to Fri, or Mon to Wed, Fri.
   - **Changing them:** The pencil opens a box for each day, the week's first first, each tinted while ticked. The boxes stay on one line, scrolling sideways with the slim scroll bar where the row is too narrow.
   - **Keys:** The boxes are one Tab stop. Arrow keys move between them, Space ticks one, Enter or leaving them saves, as a draft, and Esc puts them back.
   - **None ticked:** The boxes are outlined in red, with Working day needed in red under them, and nothing is saved until a day is ticked. Leaving them so puts the days back, as a table's cell does. The server refuses the same.
 - **Week starts on:** A choice of the seven days, saved when chosen. It orders the boxes and the words at rest, not which days are ticked.
-- **Ramp-up:** A row per month, up to 12, then a fixed From month N row at 100%.
 - **Drafts:** The settings are one draft, approved whole with Approve Configuration, so each changed row's menu lists every change, and offers Publish draft… for the user's own unpublished draft.
   - **The days in the menu:** Each side lists its days in its own week's order, such as Mon, Tue, Wed, Thu, Fri to Sun, Mon, Tue, Wed, Thu.
   - Approval is needed since a change alters every estimate's units. Effort uses the settings as approved, so a draft changes no estimate until then.
   - **The Draft menu:** The address keeps its choice, as `show`.
-- **Forecasts and Ramp-up:** Focus, buffer and ramp-up set the hours on Capacity's Allocations grouped by Allocated to; demand forecasting will use them too.
+- **Forecasts:** Focus and buffer set the hours on Capacity's Allocations grouped by Allocated to; demand forecasting will use them too.
 - **From Capacity:** Capacity's link at the right of its heading opens the page, and its old Settings tab's address redirects here, as [Capacity](capacity.md#tabs-and-access) sets out.
 
 ## Data Classes

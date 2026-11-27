@@ -338,11 +338,6 @@ export const overviewJobs: readonly JobTag[] = [
         place: on("Planning settings"),
       },
       {
-        title: "Set Ramp-Up for New Starters",
-        needs: ["configuration:edit"],
-        place: on("Planning settings"),
-      },
-      {
         title: "Add a Schedule and Its Cycles",
         place: on("Releases", "Schedules"),
       },

@@ -386,8 +386,6 @@ export const planningSettings = fathomSchema.table(
     daysPerMonth: integer("days_per_month").notNull(),
     focusPercent: integer("focus_percent").notNull(),
     bufferPercent: integer("buffer_percent").notNull(),
-    // A new starter's share of full output in each of their first months, in order.
-    rampUpPercents: integer("ramp_up_percents").array().notNull(),
   },
   (table) => [
     check(
@@ -417,10 +415,6 @@ export const planningSettings = fathomSchema.table(
     check(
       "planning_settings_buffer_percent",
       sql`${table.bufferPercent} BETWEEN 0 AND 100`,
-    ),
-    check(
-      "planning_settings_ramp_up_percents",
-      sql`array_ndims(${table.rampUpPercents}) = 1 AND array_position(${table.rampUpPercents}, NULL) IS NULL AND cardinality(${table.rampUpPercents}) <= 12 AND 1 <= ALL(${table.rampUpPercents}) AND 100 >= ALL(${table.rampUpPercents})`,
     ),
   ],
 );

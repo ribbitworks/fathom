@@ -24,7 +24,6 @@ import {
   month,
   dayIn,
   addPerson,
-  addHire,
   addFeature,
   activityAllocation,
   director,
@@ -242,16 +241,17 @@ describe("reading", () => {
     });
   });
 
-  it("gives a reader who sees the planning settings each allocation's hours, its person ramping up from their start", async () => {
+  it("gives a reader who sees the planning settings each allocation's hours, a new starter's at full output, and the Default buffer", async () => {
     const personId = await addPerson({ startDate: dayIn(-1) });
     const featureId = await addFeature();
     await changed({ personId, featureId, percentage: 50, from: month(0) });
-    const allocated = (await read(await settingsReader())).allocations.find(
+    const answer = await read(await settingsReader());
+    const allocated = answer.allocations.find(
       (one) => one.personId === personId,
     );
-    expect(allocated?.hours).toEqual(
-      allocationHours(month(-1), await settings()),
-    );
+    const shown = await settings();
+    expect(allocated?.hours).toEqual(allocationHours(shown));
+    expect(answer.bufferPercent).toBe(shown.bufferPercent);
   });
 
   it("gives a reader who doesn't see the planning settings no hours and no effort, which tell them", async () => {
@@ -262,27 +262,8 @@ describe("reading", () => {
     expect([
       answer.allocations.find((one) => one.personId === personId)?.hours,
       answer.features.find(({ id }) => id === featureId)?.effort,
-    ]).toEqual([undefined, undefined]);
-  });
-
-  it("ramps an undated planned hire up from no month, its expected month only standing in for today", async () => {
-    const plannedHireId = await addHire();
-    const featureId = await addFeature();
-    await changed({ plannedHireId, featureId, percentage: 50, from: month(0) });
-    const hours = (await read(await settingsReader())).allocations.find(
-      (one) => one.plannedHireId === plannedHireId,
-    )?.hours;
-    expect(hours).toEqual(allocationHours(undefined, await settings()));
-  });
-
-  it("ramps a planned hire up from its expected month, a month every reader of the hire sees", async () => {
-    const plannedHireId = await addHire({ targetDate: dayIn(2) });
-    const featureId = await addFeature();
-    await changed({ plannedHireId, featureId, percentage: 50, from: month(2) });
-    const hours = (await read(await settingsReader())).allocations.find(
-      (one) => one.plannedHireId === plannedHireId,
-    )?.hours;
-    expect(hours).toEqual(allocationHours(month(2), await settings()));
+      answer.bufferPercent,
+    ]).toEqual([undefined, undefined, undefined]);
   });
 
   it("reads allocations to activities beside a feature's, naming each activity with its project", async () => {

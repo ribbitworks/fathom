@@ -473,8 +473,6 @@ export function hireRow(
 
 export interface HireFacts {
   expected: string;
-  // Whether a date gives the month it is expected, rather than its standing in for today.
-  dated: boolean;
   filledBy: string | null;
   called: string;
 }
@@ -511,7 +509,6 @@ export async function hiresOf(
         hire.id,
         {
           expected: expectedMonth(hire, today),
-          dated: undatedMark(hire).undated !== true,
           filledBy: hire.filledBy,
           called: hireCalled(
             hire.name,

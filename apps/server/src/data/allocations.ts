@@ -26,7 +26,6 @@ import {
   effortNeeded,
   knownColour,
   meaningSchema,
-  monthOf,
   type PaletteColour,
   type MonthSpan,
   withChange,
@@ -296,23 +295,6 @@ export async function readAllocations(
           ),
         };
       };
-      // The month someone's ramp-up counts from: a person's start, or a planned hire's expected
-      // month. That month is General, though the target date it may come from is the hiring plan's.
-      const hires =
-        settings !== undefined
-          ? await hiresOf(
-              transaction,
-              records.flatMap(({ record }) => text(record.plannedHireId) ?? []),
-              today,
-            )
-          : new Map<string, HireFacts>();
-      // An undated hire has no month of its own to ramp up from.
-      const firstMonthOf = (record: Recorded) => {
-        const start = personOf(record)?.startDate;
-        if (start !== undefined && start !== null) return monthOf(start);
-        const hire = hires.get(String(record.plannedHireId));
-        return hire?.dated === true ? hire.expected : undefined;
-      };
       const found = await kindMakers(
         transaction,
         actor,
@@ -385,7 +367,7 @@ export async function readAllocations(
             months: monthsOf(stateOf(state, type).live.get(id)),
             ...(settings === undefined
               ? {}
-              : { hours: allocationHours(firstMonthOf(record), settings) }),
+              : { hours: allocationHours(settings) }),
             ...(draft === undefined
               ? {}
               : {
@@ -453,6 +435,9 @@ export async function readAllocations(
               ...effortOf("activity", one.id),
             };
           }),
+        ...(settings === undefined
+          ? {}
+          : { bufferPercent: settings.bufferPercent }),
         includedPersonal: records.some(({ record }) => {
           const person = personOf(record);
           return person !== undefined && !currentOn(person, today);

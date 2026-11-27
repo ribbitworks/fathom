@@ -403,11 +403,6 @@ describe("the planning settings in the change history", () => {
     expect([
       describeField({ field: "hoursPerDay", oldValue: "8", newValue: "7.5" }),
       describeField({ field: "focusPercent", oldValue: "80", newValue: "70" }),
-      describeField({
-        field: "rampUpPercents",
-        oldValue: ["50", "75"],
-        newValue: ["50"],
-      }),
     ]).toEqual([
       [
         { strong: "Hours a day" },
@@ -422,13 +417,6 @@ describe("the planning settings in the change history", () => {
         { value: "80%" },
         " to ",
         { value: "70%" },
-      ],
-      [
-        { strong: "Ramp-up" },
-        " from ",
-        { value: "50%, 75%" },
-        " to ",
-        { value: "50%" },
       ],
     ]);
   });

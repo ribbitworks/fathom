@@ -84,22 +84,17 @@ async function settingsRow(reader: Reader) {
   return row;
 }
 
-// The settings the hours an allocation gives are worked out from, as approved, for the server's own
-// use: the page is sent the hours, never the settings.
+// The settings the hours an allocation gives are worked out from, as approved, and the buffer the
+// hours a work needs include; a reader who sees the planning settings is sent the hours and the
+// buffer.
 export async function readHourSettings(reader: Reader) {
-  const {
-    hoursPerDay,
-    daysPerMonth,
-    focusPercent,
-    bufferPercent,
-    rampUpPercents,
-  } = await settingsRow(reader);
+  const { hoursPerDay, daysPerMonth, focusPercent, bufferPercent } =
+    await settingsRow(reader);
   return {
     hoursPerDay,
     daysPerMonth,
     focusPercent,
     bufferPercent,
-    rampUpPercents,
   };
 }
 
