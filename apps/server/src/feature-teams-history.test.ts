@@ -29,6 +29,7 @@ import {
   resubmit,
   teamSeen,
   moveTeamDates,
+  endDated,
 } from "./test-feature-teams.ts";
 
 beforeAll(startFeatureTeamTests);
@@ -335,6 +336,77 @@ describe("the change history of a team", () => {
     // Then those who do not see Personal details see nothing of that change
     expect(await recordOf(adding, planner)).toBeUndefined();
     expect(await recordOf(adding, editor)).toBeDefined();
+  });
+
+  it("hides a rejection naming someone who has since left from readers who do not see Personal details", async () => {
+    // Given a draft adding someone current, rejected, which every reader sees
+    const member = await person();
+    const id = await liveTeam();
+    await changed(id, { add: [member] });
+    const rejection = (await ok<{ changeSetId: string }>(await reject(id)))
+      .changeSetId;
+    expect(await recordOf(rejection, planner)).toBeDefined();
+
+    // When they leave
+    await endDated(member, "2021-01-01");
+
+    // Then the rejection, whose reason may name them, is hidden from those who don't see them
+    expect(await recordOf(rejection, planner)).toBeUndefined();
+    expect(await recordOf(rejection, editor)).toBeDefined();
+  });
+
+  it("hides a rejection naming someone added in an earlier save of its draft, once they have left", async () => {
+    // Given a draft adding one member, then another in a second save, rejected
+    const first = await person();
+    const second = await person();
+    const id = await liveTeam();
+    await changed(id, { add: [first] });
+    await changed(id, { add: [second] });
+    const rejection = (await ok<{ changeSetId: string }>(await reject(id)))
+      .changeSetId;
+    expect(await recordOf(rejection, planner)).toBeDefined();
+
+    // When the first leaves
+    await endDated(first, "2021-01-01");
+
+    // Then the rejection is hidden from those who don't see them
+    expect(await recordOf(rejection, planner)).toBeUndefined();
+    expect(await recordOf(rejection, editor)).toBeDefined();
+  });
+
+  it("keeps hiding a rejection naming someone who has left once its draft is resubmitted and approved", async () => {
+    // Given a draft adding someone, rejected, then resubmitted and approved
+    const member = await person();
+    const id = await liveTeam();
+    await changed(id, { add: [member] });
+    const rejection = (await ok<{ changeSetId: string }>(await reject(id)))
+      .changeSetId;
+    await ok(await resubmit(id));
+    await approved(id);
+
+    // When they leave
+    await endDated(member, "2021-01-01");
+
+    // Then the rejection is still hidden from those who don't see them
+    expect(await recordOf(rejection, planner)).toBeUndefined();
+    expect(await recordOf(rejection, editor)).toBeDefined();
+  });
+
+  it("shows a rejection of a later draft that names no one, though an earlier approved draft added someone who has left", async () => {
+    // Given a draft adding someone, approved, then a draft renaming the team, rejected
+    const member = await person();
+    const id = await liveTeam();
+    await changed(id, { add: [member] });
+    await approved(id);
+    await changed(id, { name: unique("Fictional Renamed") });
+    const rejection = (await ok<{ changeSetId: string }>(await reject(id)))
+      .changeSetId;
+
+    // When the one added earlier leaves
+    await endDated(member, "2021-01-01");
+
+    // Then the rejection, which can't name them, is still shown
+    expect(await recordOf(rejection, planner)).toBeDefined();
   });
 
   it("shows a reader who does not see people only approved changes", async () => {

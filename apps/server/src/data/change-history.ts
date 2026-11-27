@@ -46,21 +46,24 @@ import {
   belonging,
   nameByParts,
   nameHires,
-  namesMembers,
   partsOf,
   readFacts,
   referencedIds,
   unseenValueName,
   seenSets,
   shown,
-  strings,
 } from "./history-names.ts";
 import {
   changesShownTo,
   notCurrentAmong,
   readRejected,
-  teamRowKey,
+  draftNamesUnseen,
+  namedInDraft,
+  namesOwner,
+  ownersNamedBy,
+  peopleNamedBy,
   teamRowShowsNoOne,
+  type Unseen,
   visibleRows,
 } from "./history-visibility.ts";
 import type { StoredChange } from "./changes.ts";
@@ -82,38 +85,12 @@ export interface ReadChangeHistory {
   includedSensitive: boolean;
 }
 
-// The people a change names, whom a reader who doesn't see start and end dates may not see while
-// they haven't started or once they have left: the person changed, a team's members and lead, and a
-// hire's manager or filler. Planned hires among a team's members and lead are never hidden.
-export function peopleNamedBy(row: StoredChange): string[] {
-  if (row.recordType === "person") return [row.recordId];
-  if (namesMembers(row)) return [row.oldValue, row.newValue].flatMap(strings);
-  return (row.recordType === "planned-hire" &&
-    (row.field === "managerId" || row.field === "filledBy")) ||
-    (row.recordType === "feature-team" && row.field === "leadId")
-    ? valuesNamed(row)
-    : [];
-}
-
-// The owners a change names, whom the plan hides only while they haven't started, naming those who
-// have left as retired.
-export const ownersNamedBy = (row: StoredChange): string[] =>
-  (row.recordType === "project" || row.recordType === "proposal") &&
-  row.field === "ownerId"
-    ? valuesNamed(row)
-    : [];
-
-const valuesNamed = (row: StoredChange) =>
-  [row.oldValue, row.newValue].filter(
-    (value): value is string => typeof value === "string",
-  );
-
 // The records a change set changed, in the order first changed, each with the fields it changed.
 function recordsOf(
   rows: readonly StoredChange[],
   names: Map<string, string>,
   listOf: Map<string, string>,
-  hidden: ReadonlySet<string>,
+  hidden: Unseen,
   seesPersonal: boolean,
   access: ClassAccess,
 ): ChangedRecord[] {
@@ -123,8 +100,9 @@ function recordsOf(
   // come.
   const valueName = (row: StoredChange) => {
     const unseen = unseenValueName(row, access);
+    const unseenHere = namesOwner(row) ? hidden.owners : hidden.people;
     return (id: string) =>
-      hidden.has(id) ||
+      unseenHere.has(id) ||
       (!seesPersonal &&
         row.recordType === "planned-hire" &&
         row.field === "filledBy")
@@ -265,37 +243,37 @@ async function readBatch(
   // yet started, as the plan names one who has left as retired.
   const seesPersonal = seesEmployment(actor);
   const today = await readToday(database);
-  const hidden = seesPersonal
-    ? new Set<string>()
-    : new Set([
-        ...(await notCurrentAmong(
+  const hidden: Unseen = seesPersonal
+    ? { people: new Set(), owners: new Set() }
+    : {
+        people: await notCurrentAmong(
           database,
-          [...new Set(rows.flatMap(peopleNamedBy))],
+          [
+            ...new Set([
+              ...rows.flatMap(peopleNamedBy),
+              ...[...rejected.values()].flat().flatMap(namedInDraft),
+            ]),
+          ],
           today,
-        )),
-        ...(await hiddenPeople(
+        ),
+        owners: await hiddenPeople(
           database,
           actor,
-          rows.flatMap(ownersNamedBy),
+          judged.flatMap(ownersNamedBy),
           today,
-        )),
-      ]);
+        ),
+      };
   const seenRows = (
     await visibleRows(database, actor, rows, facts, tierNow, rejected)
   ).filter(
-    ({ row }) => !(row.recordType === "person" && hidden.has(row.recordId)),
-  );
-  // A change to a team's members or lead that only those the reader does not see are part of shows
-  // nothing to them, and neither does the rejection cleared with it.
-  const nothingSeen = new Set(
-    seenRows
-      .filter(({ row }) => teamRowShowsNoOne(row, hidden))
-      .map(({ row }) => teamRowKey(row)),
+    ({ row }) =>
+      !(row.recordType === "person" && hidden.people.has(row.recordId)),
   );
   const visible = seenRows.filter(
     ({ row }) =>
-      !teamRowShowsNoOne(row, hidden) &&
-      !(row.field === rejectedField && nothingSeen.has(teamRowKey(row))),
+      !teamRowShowsNoOne(row, hidden.people) &&
+      // Only a rejection has a draft it rejected.
+      !draftNamesUnseen(rejected.get(row.id) ?? [], hidden),
   );
   const bySet = new Map<string, { rows: StoredChange[]; sensitive: boolean }>();
   for (const { row, tier } of visible) {
