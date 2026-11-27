@@ -55,12 +55,16 @@ const settingWords = (
   Object.fromEntries(
     Object.entries(values).flatMap(([key, value]): [string, ChangeValue][] => {
       if (typeof value === "number") return [[key, String(value)]];
+      // The only setting held as a list is the working days.
       if (!Array.isArray(value)) return [];
-      const inOrder =
-        key === "workingDays"
-          ? weekOrder(startsOn).filter((day) => value.includes(day))
-          : value;
-      return [[key, inOrder.map(String)]];
+      return [
+        [
+          key,
+          weekOrder(startsOn)
+            .filter((day) => value.includes(day))
+            .map(String),
+        ],
+      ];
     }),
   );
 
