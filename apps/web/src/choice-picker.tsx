@@ -16,6 +16,7 @@ import {
 } from "react";
 import { ColouredName } from "./colour-swatch.tsx";
 import comboboxClasses from "./combobox.module.css";
+import { FilledIn } from "./status-mark.tsx";
 import { composingWord } from "./composing.ts";
 import classes from "./pages.module.css";
 
@@ -30,6 +31,8 @@ export interface Option {
   colour?: string | null | undefined;
   // Why it can't be picked now, shown in place of its description; it is offered turned off.
   turnedOff?: string | undefined;
+  // Whether its name is one Fathom fills in, such as a planned hire's made from its position and ID.
+  filledIn?: boolean | undefined;
 }
 
 const descriptionOpacity = 0.75;
@@ -61,13 +64,21 @@ export function OptionWords({
   option,
   name,
 }: {
-  option: Pick<Option, "label" | "description" | "colour" | "turnedOff">;
+  option: Pick<
+    Option,
+    "label" | "description" | "colour" | "turnedOff" | "filledIn"
+  >;
   // The option's label as drawn, where it carries marks, such as a draft's dot.
   name?: ReactNode;
 }) {
   const label = (
     <ColouredName colour={option.colour ?? null}>
-      {name ?? option.label}
+      {name ??
+        (option.filledIn === true ? (
+          <FilledIn>{option.label}</FilledIn>
+        ) : (
+          option.label
+        ))}
     </ColouredName>
   );
   const description = option.turnedOff ?? option.description;

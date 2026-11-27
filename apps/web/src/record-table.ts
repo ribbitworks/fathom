@@ -147,6 +147,9 @@ export interface Column<
   // Why a choice offered can't be picked now, such as a planned hire not yet expected on the day
   // shown, said in place of its description; undefined when it can.
   choiceTurnedOff?: (choice: Choice) => string | undefined;
+  // Whether a choice's name is one Fathom fills in, such as a planned hire's made from its position
+  // and ID, drawn in grey italics in the picker.
+  choiceFilledIn?: (choice: Choice) => boolean;
   // Whether a choice may be put in a row's cell, for a column whose choices depend on the row: its
   // record, or none for a new row, and its kind. It takes the place of pickable for that row.
   pickableOn?: (
