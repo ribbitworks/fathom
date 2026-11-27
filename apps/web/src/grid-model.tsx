@@ -3,9 +3,10 @@
 // The shared table's columns and records as the view and the Draft menu show them, and what the
 // user's role may do with each record.
 
-import { type Field, draftFilterKey } from "@fathom/shared";
+import { type DecidedKind, type Field, draftFilterKey } from "@fathom/shared";
 import { Menu } from "@mantine/core";
 import { Fragment, type ReactNode, useMemo } from "react";
+import type { SidePanel } from "./side-panel.tsx";
 import {
   type DraftSelection,
   decidable,
@@ -54,6 +55,11 @@ import {
   withoutFilters,
 } from "./table-view.ts";
 
+// A table given none of these keeps the same empty list from one drawing to the next, so its rows
+// can tell it is unchanged.
+const noApprovals: readonly DecidedKind[] = [];
+const noPanels: readonly SidePanel[] = [];
+
 const withoutDraftFilter = (view: View): View =>
   withoutFilters(view, (key) => key !== draftFilterKey);
 
@@ -67,7 +73,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
   canAdd = true,
   rowActions = true,
   canEditDrafts: mayEditDrafts = false,
-  approves: mayApprove = [],
+  approves: mayApprove = noApprovals,
   decidedBy: givenDecidedBy,
   saving = false,
   canEditColumns,
@@ -79,7 +85,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
   linkedColumn,
   withDrafts = true,
   columnBorders = false,
-  panels = [],
+  panels = noPanels,
   viewChoices,
   count,
   countNarrowed,
@@ -92,7 +98,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
   selected,
   closeSelected,
 }: RecordGridProps<Rec, Change, Request>) {
-  const passed = {
+  const givenProps = {
     everyone,
     table,
     draftedFields,
@@ -129,7 +135,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
   };
   // The props as given, kept whole too, so the rows can tell when the table redraws for its own
   // state alone.
-  return { ...passed, passed };
+  return { ...givenProps, givenProps };
 }
 
 export type GridProps<Rec extends GridRecord, Change, Request> = ReturnType<

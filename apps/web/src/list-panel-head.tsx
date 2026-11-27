@@ -16,7 +16,6 @@ import { changedValue, recordMark } from "./draft-marks.ts";
 import {
   DraftedItem,
   DraftedValue,
-  EmptyLive,
   LiveLine,
   MarkRow,
 } from "./status-mark.tsx";
@@ -162,8 +161,8 @@ export function ListSubtitle({
           </MarkRow>
           {showLive &&
             changedValue(list.draft, "description") !== undefined && (
-              <LiveLine>
-                {liveDescription === "" ? <EmptyLive /> : liveDescription}
+              <LiveLine empty={liveDescription === ""}>
+                {liveDescription}
               </LiveLine>
             )}
         </>

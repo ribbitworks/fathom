@@ -213,7 +213,7 @@ describe("a date column", () => {
     const row = detailRow("Last review", details);
     expect(row.textContent).not.toMatch(/No last review|None/iu);
     expect(row.textContent).toContain("Draft: filled in");
-    expect(row.textContent).toMatch(/empty, live$/u);
+    expect(row.textContent).toMatch(/, live, empty$/u);
   });
 
   it("shows None in a person's details for no day", async () => {

@@ -118,7 +118,7 @@ describe("a schedule's details", () => {
       detailValue("Schedule ends", details()),
     ]).toEqual([
       expect.stringContaining("Fictional Was"),
-      expect.stringMatching(/May 15, 2027.*empty, live$/),
+      expect.stringMatching(/May 15, 2027.*, live, empty$/),
     ]);
   });
 

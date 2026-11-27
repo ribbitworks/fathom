@@ -31,6 +31,7 @@ import {
   changed,
   startHireTests,
   closeHireTests,
+  hireRequest,
 } from "./test-hires.ts";
 
 beforeAll(startHireTests);
@@ -135,6 +136,29 @@ describe("values in People's columns", () => {
     );
     expect(placeholder?.links[secret.id]).toBeUndefined();
     expect(Object.keys((await hireSeen(id))?.links ?? {})).toHaveLength(2);
+  });
+
+  it("refuses a hire a value in another table's column", async () => {
+    // Given a web link column on Features
+    const productManager = await test.signedIn("product-manager");
+    const added = await test.request(
+      productManager.cookie,
+      "POST",
+      "/api/features/columns",
+      { name: unique("Fictional Spec"), type: "link", visibility: "general" },
+    );
+    expect(added.statusCode, added.body).toBe(201);
+    const { field } = added.json<{ field: Field }>();
+    // When a planned hire is drafted with a value in it
+    const response = await send(
+      editor,
+      "POST",
+      "/api/planned-hires",
+      hireRequest({ links: { [field.id]: link("https://example.test/spec") } }),
+    );
+    // Then it is refused, as a column People doesn't have
+    expect(response.statusCode).toBe(400);
+    expect(errorOf(response)).toBe("There is no such column");
   });
 
   it("shows a hire's values on its row of People, with the live value its draft changes", async () => {

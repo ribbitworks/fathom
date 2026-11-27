@@ -21,6 +21,7 @@ import { gridRows } from "./grid-row.tsx";
 import { PanelMenusContext } from "./panel-menu.tsx";
 import { usePublishDraft } from "./publish-draft.tsx";
 import { gridSaving } from "./grid-saving.ts";
+import { useRowReuse } from "./grid-row-reuse.ts";
 import { gridSelection, useGridState } from "./grid-selection.ts";
 import classes from "./pages.module.css";
 import type { GridRecord, RecordGridProps } from "./record-table.ts";
@@ -42,7 +43,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
   const withProps = gridProps(props);
   const withModel = { ...withProps, ...useGridModel(withProps) };
   const withRows = { ...withModel, ...useShownRows(withModel) };
-  const withState = { ...withRows, ...useGridState<Rec, Change>() };
+  const state = useGridState<Rec, Change>();
+  const withState = { ...withRows, ...state, ...useRowReuse(state) };
   const withSelection = { ...withState, ...gridSelection(withState) };
   const withLayout = { ...withSelection, ...useGridLayout(withSelection) };
   const withSaving = { ...withLayout, ...gridSaving(withLayout) };

@@ -256,7 +256,9 @@ export function useShownRows<Rec extends GridRecord, Change, Request>(
   }
   const runEnds = new Map(groupRuns.map((run) => [run.last, run.records]));
   return {
+    added,
     setAdded,
+    shownAs,
     setShownAs,
     stableId,
     groupOf,

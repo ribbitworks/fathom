@@ -113,12 +113,9 @@
   vertical-align: baseline;
 }
 
-.slot + .dotPlace {
-  margin-left: calc(-1 * (var(--fathom-dot-size) + var(--fathom-mark-gap)));
-}
-
-/* In a centred column, such as a checkbox's, a dot hangs out before its value or heading, so each
-   stays centred in line with the rest of the column. */
+/* In a centred column, such as a checkbox's, a dot hangs out before its value or heading too, so
+   each stays centred in line with the rest of the column. */
+.slot + .dotPlace,
 [data-centred] .dotPlace {
   margin-left: calc(-1 * (var(--fathom-dot-size) + var(--fathom-mark-gap)));
 }

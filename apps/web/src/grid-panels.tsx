@@ -169,7 +169,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     <MetricsPanel
       one={table.one}
       noun={table.noun}
-      kinds={table.counted}
+      countKinds={table.countKinds}
       {...countedRecords(
         withDrafts ? view.show : "live",
         countedOnce(shownRecords),
@@ -286,7 +286,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
       onView={onView}
       shown={stayingOnce(shownRecords).length}
       total={staying.length}
-      counted={count?.(staying) ?? table.counted?.counted(staying)}
+      counted={count?.(staying) ?? table.countKinds?.(staying)}
       countedNarrowed={countNarrowed?.(staying, stayingOnce(shownRecords))}
       groupings={table.groupings}
       nests={nests}

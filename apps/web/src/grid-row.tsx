@@ -171,7 +171,10 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     | "problemIn"
     | "editor"
     | "rowReuse"
-    | "passed"
+    | "givenProps"
+    | "measured"
+    | "added"
+    | "shownAs"
   >,
 ) {
   const {
@@ -226,7 +229,10 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     problemIn,
     editor,
     rowReuse,
-    passed,
+    givenProps,
+    measured,
+    added,
+    shownAs,
   } = grid;
   const liveCellBeside = (
     record: Rec | undefined,
@@ -780,9 +786,10 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     ];
   };
   const bodyRows = rowReuse.draw(
-    passed,
+    { ...givenProps, measured, added, shownAs },
     rows,
     rowKey,
+    (row) => row.newRow === undefined,
     editing?.row,
     drawRow,
   );

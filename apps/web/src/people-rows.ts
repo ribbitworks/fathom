@@ -132,20 +132,14 @@ export function addedNames(requests: readonly RowRequest[]): string {
 
 // How many people and planned hires some rows are, for Metrics and the count above a table, such as
 // "150 people and 6 planned hires".
-export function peopleAndHires<Row>(isPlanned: (row: Row) => boolean): {
-  counted: (rows: readonly Row[]) => string;
-} {
-  return {
-    counted: (rows) => {
-      const counts = kindsOf(rows, isPlanned);
-      return named(counts, counts)
-        .map(
-          (kind) => `${count(kind.of(counts))} ${kind.noun(kind.of(counts))}`,
-        )
-        .join(" and ");
-    },
+export const peopleAndHires =
+  <Row>(isPlanned: (row: Row) => boolean) =>
+  (rows: readonly Row[]): string => {
+    const counts = kindsOf(rows, isPlanned);
+    return named(counts, counts)
+      .map((kind) => `${count(kind.of(counts))} ${kind.noun(kind.of(counts))}`)
+      .join(" and ");
   };
-}
 
 interface Counts {
   people: number;

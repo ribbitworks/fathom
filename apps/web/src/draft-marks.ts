@@ -203,9 +203,9 @@ export function inSentence(name: string): string {
   return asNamed ? name : name.charAt(0).toLowerCase() + name.slice(1);
 }
 
-// What an empty value says, in grey, where a draft's mark would otherwise mark nothing, as where a
-// draft empties a value, or fills one that was empty: a column's own words for none, or else "No"
-// and the value's name, as in "No needed by".
+// The words for an empty value, where a sentence or heading names it, such as a Group by heading or a
+// person's timeline: a column's own words for none, or else "No" and the value's name, as in "No
+// needed by".
 export function emptiedWords(name: string, emptyLabel?: string): string {
   return emptyLabel ?? `No ${inSentence(name)}`;
 }

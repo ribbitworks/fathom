@@ -501,9 +501,9 @@ export function ClassName({ dataClass }: { dataClass: Tier }) {
   );
 }
 
-// A live value's empty side, read aloud as empty, since its dot alone shows it.
+// An empty side a dot alone shows, read aloud as empty after the dot's own words.
 export function EmptyLive() {
-  return <VisuallyHidden>empty</VisuallyHidden>;
+  return <VisuallyHidden>, empty</VisuallyHidden>;
 }
 
 // A row's slot for its record's marks, as wide as a draft's dot and its gap.
@@ -611,10 +611,13 @@ export function MarkRow({
 // A live value on a line of its own under its draft, small and dimmed, after Live's dot.
 export function LiveLine({
   className,
+  empty = false,
   children,
 }: {
   className?: string | undefined;
-  children: ReactNode;
+  // Whether the live value is empty, read aloud as live, then empty.
+  empty?: boolean | undefined;
+  children?: ReactNode;
 }) {
   return (
     <MarkRow className={[marks.liveLine, className].join(" ")}>
@@ -623,6 +626,7 @@ export function LiveLine({
           {children}
         </Text>
       </MarkedItem>
+      {empty && <EmptyLive />}
     </MarkRow>
   );
 }
@@ -698,9 +702,10 @@ export function LiveValue({
 }) {
   const changed = changedValue(draft, ...fields) !== undefined;
   return (
-    <MarkedItem tone={changed ? "live" : undefined}>
-      {emptied === true && changed ? <EmptyLive /> : children}
-    </MarkedItem>
+    <>
+      <MarkedItem tone={changed ? "live" : undefined}>{children}</MarkedItem>
+      {emptied === true && changed && <EmptyLive />}
+    </>
   );
 }
 

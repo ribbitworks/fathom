@@ -333,9 +333,7 @@ export function cellContent(column: AnyColumn, value: CellValue) {
 export function liveContent(column: AnyColumn, value: CellValue) {
   const coloured = colouredChoices(column, value);
   if (coloured !== undefined) return <ColouredNames names={coloured} />;
-  return kindOf(column).toggled === undefined
-    ? shown(column, value)
-    : cellContent(column, value);
+  return neverEmpty(column) ? cellContent(column, value) : shown(column, value);
 }
 
 export const keyColumnKey = "recordKey";

@@ -582,7 +582,7 @@ function peopleTable(
     },
     one: "person",
     noun: "people",
-    counted: peopleAndHires(isHire),
+    countKinds: peopleAndHires(isHire),
     kinds: [personKind, hireKind],
     kindOf,
     newRowLabel: (kind) =>

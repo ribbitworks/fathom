@@ -409,6 +409,12 @@ export function Row({
     besideLive && changed?.live !== undefined
       ? { ...changed, live: changed.live }
       : undefined;
+  // An empty live value is Live's dot alone, unless a warning stands in its place.
+  const liveEmpty =
+    liveUnder !== undefined &&
+    liveUnder.warning === undefined &&
+    !neverEmpty(column) &&
+    isEmpty(liveUnder.live);
   const start = editing?.open === true ? undefined : editing?.onStart;
   const openAsked = useEffectEvent(() => {
     editing?.onAsked?.();
@@ -543,16 +549,13 @@ export function Row({
                         chosenColour(column, liveUnder.live))
                   }
                 >
-                  {liveUnder.warning === undefined &&
-                  !neverEmpty(column) &&
-                  isEmpty(liveUnder.live) ? (
-                    <EmptyLive />
-                  ) : (
+                  {!liveEmpty && (
                     <Value column={column} value={liveUnder.live} drafted />
                   )}
                 </ColouredName>
               </MarkedItem>
             </MarkedItem>
+            {liveEmpty && <EmptyLive />}
           </MarkRow>
         )}
       </dd>

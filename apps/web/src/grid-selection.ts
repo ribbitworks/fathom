@@ -16,7 +16,7 @@ import {
   type Row,
   type ShownProblem,
 } from "./grid-places.ts";
-import { useRowReuse } from "./grid-row-reuse.ts";
+import type { useRowReuse } from "./grid-row-reuse.ts";
 import type { Column, GridRecord } from "./record-table.ts";
 import type { CellValue } from "./table-view.ts";
 
@@ -54,7 +54,7 @@ export function useGridState<Rec extends GridRecord, Change>() {
   const [dragging, setDragging] = useState<string>();
   // The column whose filter is open, by key.
   const [filtering, setFiltering] = useState<string>();
-  const state = {
+  return {
     newRows,
     setNewRows,
     nextKey,
@@ -80,7 +80,6 @@ export function useGridState<Rec extends GridRecord, Change>() {
     filtering,
     setFiltering,
   };
-  return { ...state, ...useRowReuse(state) };
 }
 
 export type StateGrid<Rec extends GridRecord, Change, Request> = ShownGrid<
@@ -88,7 +87,8 @@ export type StateGrid<Rec extends GridRecord, Change, Request> = ShownGrid<
   Change,
   Request
 > &
-  ReturnType<typeof useGridState<Rec, Change>>;
+  ReturnType<typeof useGridState<Rec, Change>> &
+  ReturnType<typeof useRowReuse>;
 
 export function gridSelection<Rec extends GridRecord, Change, Request>(
   grid: Pick<
