@@ -125,7 +125,7 @@ You're done when the cell shows its value from before the change.
 
 - **A team in a cell** shows its name after a small square in its colour, or with no square when it has none. Point at a name to see all of it.
 - **Shaded months** come before someone started or after they left.
-- **Planned hires** have rows, but Capacity shows no teams for them, so their cells are empty.
+- **Planned hires** have rows too. A hire's cells name the teams it's on, from the month it joins, as a person's do.
 - **No feature team**, when grouped by **Feature team**, heads the people who are on no team in all the months shown.
 - **No manager**, when grouped by **Manager**, heads the people who report to nobody today.
 - **A green dot before a team**, in the light green Live row under a drafted row, marks a team the draft takes away. With **Live only** chosen in the **Draft** menu, it marks each team a waiting draft would take away. Point at it to see the change.
@@ -136,7 +136,7 @@ You're done when the cell shows its value from before the change.
 - **Over**, in red, ends a month whose allocations add up to more than 100%, with how much more at the right, such as **+25%**. **Under**, in red, ends one under 100%, with how much less, such as **−90%**.
 - **Not allocated**, in red, ends a month with nothing allocated. A month at exactly 100% has no last line.
 - **Over**, **Under** and **Not allocated** show from the current month on, and features and activities whose status means Possible don't count. Point at **Over** or **Under** to see the month's total.
-- **Planned hires** have rows of their own, under their manager and under **No feature team**. One with no name shows its position and ID in grey, such as **SDET, TBD-5**. Months before one is expected are shaded.
+- **Planned hires** have rows of their own, under their manager, and under each feature team they're on or under **No feature team**. A group's heading counts people and planned hires apart, such as **2 people, 1 planned hire**. One with no name shows its position and ID in grey, such as **SDET, TBD-5**. Months before one is expected are shaded.
 - **Total, person-months**, in bold, ends each group, and **Organization, person-months** stays at the foot of the table. Grouped by **Allocated to**, **Allocated, all work** stays at the foot instead, in hours.
 - **A total**, such as **7.5 of 9**, is the person-months allocated that month, out of those available. The share is under it.
 - Point at a total to see it in words. Totals count only the rows shown.

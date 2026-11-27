@@ -16,6 +16,7 @@ Verifies feature teams on the **Org chart** page:
 - How each team is drawn under its lead, and a team's panel.
 - What a reader who may not change teams sees: no change buttons and no **New feature team**.
 - Proposing a lead, adding a team and removing one, as drafts, with their marks on the chart and in the panel.
+- Planned hires on a team, as members and as its lead.
 - Changing teams from another date.
 - Approving a team's draft on the Drafts page.
 - Using a team's panel from the keyboard.
@@ -413,7 +414,8 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
   - **Expected:**
     - The button reads **Group by: Feature teams**.
     - The group headings name the feature teams in order of name, from "Data pipeline" to "Search", then "No feature team".
-    - Each heading shows how many rows are under it.
+    - Each heading shows how many people and planned hires are under it, such as "4 people".
+    - The "Field tools" heading reads a number of people, then ", 1 planned hire".
   - **Notes:**
 
 - [ ] `DC77` Search for `Lorenza`.
@@ -435,4 +437,61 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
     - Its **Feature teams** cell is empty.
   - **Notes:**
 
+- [ ] `30E0` Search for `REQ-2053`.
+  - **Expected:**
+    - One row shows, 'Data engineer', under "Field tools".
+    - Its **Feature teams** cell reads 'Field tools'.
+  - **Notes:**
+
 **Afterwards:** Open the Views menu and select **Clear view**.
+
+### FT-14: Planned Hires on a Feature Team
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FT-13.
+
+**Preconditions:** Run Restore the Seed Data. Signed in with this account. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
+
+- [ ] `7464` Type `Data engineer` in the finder, and select the one planned hire it offers.
+  - **Expected:**
+    - The chart centres on a card with a grey dashed edge, under the card that names 'Field tools'.
+    - It reads 'Data engineer', then 'Software Engineer'.
+    - Under them, a grey box reads "Planned, expected" and the name of last month, such as "Planned, expected Oct 2026".
+    - It is the last card under 'Field tools', after the people.
+  - **Notes:**
+
+- [ ] `ABCE` Select the Feature teams button, then 'Field tools'.
+  - **Expected:**
+    - The team panel opens, titled 'Field tools'.
+    - **Members** lists people by name, then 'Data engineer' last.
+    - 'Data engineer' is grey, followed by "#HIRE-" and a number, then, in grey, "from" and the first day of last month, such as "from Oct 1, 2026".
+  - **Notes:**
+
+- [ ] `B55C` Clear the **Date** box, and type the first day of the month three months after the current one, as digits alone, such as `20270201` on a seed restored on 26 November 2026.
+  - **Expected:**
+    - The **Date** box shows the date typed.
+    - The team panel still shows 'Field tools'.
+  - **Notes:**
+
+- [ ] `A516` Read the **Feature lead** row of the team panel.
+  - **Expected:**
+    - It reads "Engineering Manager, TBD-" and a number, in grey italics.
+    - After it are "#HIRE-" and another number, then, in grey, "from" and the date typed.
+  - **Notes:**
+
+- [ ] `131A` Read the **Members** row of the team panel.
+  - **Expected:**
+    - It lists people by name, then 'Data engineer', then "Engineering Manager, TBD-" and the same number.
+    - Each of the last two is grey, followed by "#HIRE-" and a number, then, in grey, "from" and the day it joined: the first day of last month, then the date typed.
+    - "Engineering Manager, TBD-" and its number are in grey italics.
+  - **Notes:**
+
+- [ ] `0C0A` Close the team panel, and find the card that names 'Field tools'.
+  - **Expected:**
+    - The card has a grey dashed edge.
+    - It reads "TBD-" and the number, in grey italics, then 'Engineering Manager'.
+    - Under them, in order: a grey box reading "Planned, no date"; a small square in the team's colour and 'Field tools'; then "Hide" and a number of members.
+    - Nothing on the card overlaps the cards under it.
+    - The cards under it include the people and 'Data engineer'.
+  - **Notes:**
+
+**Afterwards:** Select **Today**.

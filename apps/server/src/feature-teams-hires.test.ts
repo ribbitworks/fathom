@@ -34,6 +34,7 @@ import {
   hireLeading,
   leads,
   sorted,
+  today,
 } from "./test-feature-teams.ts";
 
 beforeAll(startFeatureTeamTests);
@@ -80,6 +81,42 @@ describe("a planned hire on a team", () => {
         [unnamed]: "REQ-FICTIONAL-71",
       });
     }
+  });
+
+  it("gives the day each planned hire on it joined, since its last leave and over a repeated join, and the day one leading it started, over a repeated lead", async () => {
+    // Given a hire that left the team and came back, a hire leading it, and a person
+    const returning = await plannedHire({ name: "Fictional Returning Hire" });
+    const leading = await plannedHire({ name: "Fictional Leading Hire" });
+    const member = await person();
+    const id = await liveTeam({ members: [member] });
+    await hireOnTeam(id, returning, { fromDate: "2026-01-05" });
+    await hireOnTeam(id, returning, { fromDate: "2026-02-05", member: false });
+    await hireOnTeam(id, returning, { fromDate: "2026-03-05" });
+    await hireOnTeam(id, leading, { fromDate: "2026-04-05" });
+    await hireOnTeam(id, leading, { fromDate: "2026-04-10" });
+    await hireLeading(id, leading, "2026-04-06");
+    await hireLeading(id, leading, "2026-04-20");
+
+    // When the team is read
+    const team = await teamSeen(id, planner);
+
+    // Then the hires are named as hires, and their days are given, and no person's
+    expect(team?.hires).toEqual(sorted(returning, leading));
+    expect(team?.hiresFrom).toEqual({
+      [returning]: "2026-03-05",
+      [leading]: "2026-04-05",
+    });
+    expect(team?.hireLeadFrom).toBe("2026-04-06");
+  });
+
+  it("gives no day for a person leading a team", async () => {
+    const lead = await person();
+    const id = await liveTeam({ members: [lead], leadId: lead });
+
+    const team = await teamSeen(id, planner);
+
+    expect(team?.hiresFrom).toBeUndefined();
+    expect(team?.hireLeadFrom).toBeUndefined();
   });
 
   it("names a planned hire in a team's change history", async () => {
@@ -195,7 +232,7 @@ describe("who sees a planned hire on a team", () => {
   });
 
   it.each(roles.map((role) => [role]))(
-    "shows the %s it on its team, or refuses the read",
+    "shows the %s it on its team, with the day it joined, or refuses the read",
     async (role) => {
       const who = await test.signedIn(role);
       const response = await send(who, "GET", "/api/feature-teams");
@@ -209,6 +246,8 @@ describe("who sees a planned hire on a team", () => {
       );
       expect(seen?.members).toEqual([hire]);
       expect(seen?.names).toEqual({ [hire]: "Fictional Seen Hire" });
+      expect(seen?.hiresFrom).toEqual({ [hire]: today });
+      expect(seen?.hires).toEqual([hire]);
     },
   );
 

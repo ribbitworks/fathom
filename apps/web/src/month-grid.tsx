@@ -19,7 +19,11 @@ import {
 import { flushSync } from "react-dom";
 import type { CellChange } from "./cell-kinds.tsx";
 import { LoadProblem } from "./load-problem.tsx";
-import { monthCount, peopleAndHires } from "./people-rows.ts";
+import {
+  monthCount,
+  peopleAndHires,
+  peopleAndHiresInGroup,
+} from "./people-rows.ts";
 import { type TableScroll, useTableScroll } from "./grid-layout.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import type { RecordActions, RecordTable } from "./record-table.ts";
@@ -163,6 +167,7 @@ function countedAsPeople<Rec extends MonthRow>(
   return {
     ...table,
     countKinds: peopleAndHires((row: Rec) => row.plannedHire === true),
+    countInGroup: peopleAndHiresInGroup((row: Rec) => row.plannedHire === true),
   };
 }
 

@@ -91,3 +91,14 @@ export function KeyedName({
     </>
   );
 }
+
+// A record's key after its name, dimmed, a space after it.
+export function KeyAfter({ record }: { record: RecordKeyOf }) {
+  if (!isSaved(record)) return null;
+  return (
+    <>
+      {" "}
+      <span className={classes.after}>{shownRecordKey(record)}</span>
+    </>
+  );
+}

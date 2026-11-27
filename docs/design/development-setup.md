@@ -319,7 +319,7 @@ See [Releases](#releases) for the steps.
   - Lists and People columns, including Personal and Confidential ones.
   - A Kind column on Features, with New, Improvement and Fix.
   - Twelve planned hires, two of them filled.
-  - Eight feature teams: Payments core, Search, Platform reliability, Mobile apps, Field tools, Data pipeline, Identity and Integrations.
+  - Eight feature teams: Payments core, Search, Platform reliability, Mobile apps, Field tools, Data pipeline, Identity and Integrations. Two planned hires are on Field tools: Data engineer from the month it was expected, and the planned Engineering Manager, leading it, from the month three months ahead.
   - Five customers, most with a description and some with notes, one long enough to fold, one with neither; five projects with milestones and activities, some named General; and proposals in every status.
   - Activities of the Platform schedule's Harbor 1 and Harbor 2 releases, such as Release testing.
   - Three schedules, Platform, Patches and Field Apps, each with releases, and features targeting their cycles.

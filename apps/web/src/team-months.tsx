@@ -43,6 +43,13 @@ import type { TableColumn } from "./table-view.ts";
 
 type MonthTeam = TeamMonths["teams"][number];
 type TeamDraft = NonNullable<TeamMonths["drafts"]>[number];
+type Drafted = NonNullable<TeamMonths["people"][number]["drafted"]>;
+
+// Someone's teams by month, as approved, and as drafts change them.
+interface MemberMonths {
+  teams: Record<string, string[]>;
+  drafted?: Drafted | undefined;
+}
 
 export type MonthLabel = MonthTeam & {
   drafted?: DraftedLabel;
@@ -483,7 +490,7 @@ function draftedLabels(
 // the person as approved kept for the Live row.
 function draftOf(
   live: PersonMonths,
-  drafted: NonNullable<TeamMonths["people"][number]["drafted"]>,
+  drafted: Drafted,
   teamsOf: (teamIds: readonly string[]) => MonthTeam[],
   drafts: ReadonlyMap<string, TeamDraft>,
 ): PersonMonths {
@@ -563,39 +570,54 @@ export function teamsAcross(
   );
 }
 
-// A row for each person by name, or, grouped by feature team, one under each team they were on in
-// the months shown, as the Draft menu shows them, and one under none for those on no team.
+// A row for each person by name, then each planned hire given, or, grouped by feature team, one
+// under each team they were on in the months shown, as the Draft menu shows them, and one under none
+// for those on no team. A planned hire's teams are those the data gives it, if any.
 export function teamMonthRecords(
   data: TeamMonths,
   grouping: string | undefined,
   show: Show,
+  hires: readonly MonthRow[] = [],
 ): PersonMonths[] {
   const teams = new Map(data.teams.map((team) => [team.id, team]));
   const drafts = new Map(data.drafts.map((draft) => [draft.teamId, draft]));
-  // The server lists every team a person's months name.
+  // The server lists every team a person's or planned hire's months name.
   const teamsOf = (teamIds: readonly string[]) =>
     teamIds.map((teamId) => teams.get(teamId) as MonthTeam).sort(byName);
   const people = [...data.people].sort((first, second) =>
     byName({ name: first.preferredName }, { name: second.preferredName }),
   );
-  return people.flatMap((person) => {
-    const liveTeamsIn = new Map(
-      Object.entries(person.teams).map(([month, teamIds]) => [
-        month,
-        teamsOf(teamIds),
-      ]),
-    );
+  const hireMonths = new Map((data.hires ?? []).map((hire) => [hire.id, hire]));
+  const members: { row: MonthRow; months: MemberMonths }[] = [
+    ...people.map((person) => ({
+      row: {
+        id: person.id,
+        personId: person.id,
+        name: person.preferredName,
+        manager: person.manager,
+        values: {},
+        links: {},
+        outside: new Set(person.outside),
+      },
+      months: person,
+    })),
+    ...hires.map((row) => ({
+      row,
+      months: hireMonths.get(row.personId) ?? { teams: {} },
+    })),
+  ];
+  return members.flatMap(({ row, months }) => {
     const live: PersonMonths = {
-      id: person.id,
-      personId: person.id,
-      name: person.preferredName,
-      manager: person.manager,
-      values: person.teams,
-      links: {},
-      teamsIn: liveTeamsIn,
-      outside: new Set(person.outside),
+      ...row,
+      values: months.teams,
+      teamsIn: new Map(
+        Object.entries(months.teams).map(([month, teamIds]) => [
+          month,
+          teamsOf(teamIds),
+        ]),
+      ),
     };
-    const { drafted } = person;
+    const { drafted } = months;
     const record: PersonMonths =
       drafted === undefined ? live : draftOf(live, drafted, teamsOf, drafts);
     if (grouping !== featureTeamGrouping) return [record];
@@ -609,7 +631,7 @@ export function teamMonthRecords(
     return teamsInAnyMonth.length === 0
       ? [record]
       : teamsInAnyMonth.map(({ team: group }) => {
-          const id = groupedRowId(group.id, person.id);
+          const id = groupedRowId(group.id, row.personId);
           return {
             ...record,
             id,

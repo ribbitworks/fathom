@@ -63,6 +63,12 @@ export const featureTeamSchema = z.object({
   // The name of each person and planned hire on the team, drafted or live, whom the reader sees, by
   // identifier: a planned hire's placeholder name.
   names: z.record(z.string(), z.string()),
+  // Which of those it names are planned hires, drafted or live.
+  hires: z.array(z.string()).optional(),
+  // The day each planned hire on the team, as approved, joined it, and the day a planned hire
+  // leading it started to, for every reader, since a planned hire's days are General.
+  hiresFrom: z.record(z.string(), daySchema).optional(),
+  hireLeadFrom: daySchema.optional(),
   // The month from which it has no members, past or planned, if there is one.
   disbandedFrom: monthSchema.optional(),
   draft: featureTeamDraftSchema.optional(),
@@ -114,8 +120,8 @@ export const teamMonthsSchema = z.object({
   ),
   // Each planned hire not yet filled, on teams from the month it's expected: every one for readers
   // who see people, and only those on a team or drafted onto one for others. Its name, manager and
-  // months come with the hire itself. Always sent; optional while the grid builds hires' rows from
-  // the org chart alone.
+  // months come with the hire itself, from the org chart. Always sent; a reply without it has no
+  // hire on any team.
   hires: z
     .array(
       z.object({

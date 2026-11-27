@@ -92,7 +92,8 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 
 - **Place:** After Metrics, with Then by as [Tables](../../standards/ui-conventions/tables.md#tables) sets out.
 - **Choices:** None, Manager, Feature teams, Position, State, and every list column, those holding several choices included. Team isn't offered, since it follows from Manager.
-- **Feature teams:** Someone on two teams shows under each; planned hires show under No feature team.
+- **Feature teams:** Someone on two teams shows under each, a planned hire on a team included; those on none show under No feature team.
+- **Heading counts:** Each heading counts each kind it holds, as the count above the table does, such as 2 people, 1 planned hire, or 1 planned hire.
 - **Metrics by Manager:** Count each manager's direct reports among the rows shown.
 - **Manager headings:** The manager's name, then their team's, such as Max Munk, Mobile team.
 

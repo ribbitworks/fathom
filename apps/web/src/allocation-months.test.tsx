@@ -334,6 +334,37 @@ describe("planned hires' allocations", () => {
     expect(linesIn(casey(rows), "2027-03")).toEqual([]);
   });
 
+  it("gives a planned hire on a team a row under it, holding the months it is on it, grouped by feature team", () => {
+    // Given the tester on Search from April
+    const rows = rowsOf(
+      [
+        allocation({
+          personId: null,
+          plannedHireId: "h-tester",
+          months: { "2027-03": 50, "2027-04": 100 },
+        }),
+      ],
+      {
+        chart,
+        grouping: featureTeamGrouping,
+        hires: [{ id: "h-tester", teams: { "2027-04": [search.id] } }],
+      },
+    );
+    const tester = rows.filter(({ personId }) => personId === "h-tester");
+
+    // Then it has a row under Search holding April, and one under none holding March
+    expect(
+      tester.map(({ group, holds }) => [
+        group?.id,
+        [...(holds ?? [])].filter((month) => months.includes(month)).sort(),
+      ]),
+    ).toEqual([
+      [search.id, ["2027-02", "2027-04"]],
+      [undefined, ["2027-02", "2027-03"]],
+    ]);
+    expect(tester.every(({ plannedHire }) => plannedHire === true)).toBe(true);
+  });
+
   it("lists the managers of people and of planned hires, for grouping by manager", () => {
     expect(monthManagers(teamMonths, chart)).toEqual([
       { id: "p-blair", name: "Blair Fictional" },

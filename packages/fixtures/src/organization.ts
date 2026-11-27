@@ -5,7 +5,11 @@
 
 import { parseDay } from "@fathom/shared";
 import { base, en, Faker } from "@faker-js/faker";
-import { featureTeamsFor, growFeatureTeams } from "./feature-teams.ts";
+import {
+  featureTeamsFor,
+  growFeatureTeams,
+  hiresOnTeams,
+} from "./feature-teams.ts";
 import { fictionalId } from "./fictional-id.ts";
 import { setLeaving } from "./leaving.ts";
 import {
@@ -175,6 +179,7 @@ export function fictionalOrganization({
   const featureTeams = featureTeamsFor(people, referenceDate);
   setLeaving(people, hires, featureTeams, referenceDate);
   growFeatureTeams(people, hires, featureTeams, referenceDate);
+  hiresOnTeams(hires, featureTeams, referenceDate);
   return {
     referenceDate,
     lists: structuredClone([

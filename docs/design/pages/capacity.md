@@ -29,7 +29,8 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 - **Shared table:** grouped one level deep, since each row is made for its group.
 - **Rows:** one per person and planned hire, frozen on the left, in one list at first; Group by offers None, Manager and Feature team, and Allocated to on Allocations.
   - Planned hires are read only, named by their position and ID in grey when they have no name, and their months before the one they're expected in are shaded.
-  - Planned hires sit under their manager by Manager, and under No feature team by Feature team. The grid draws no feature teams for them, though the server holds them ([issue #395](https://github.com/ribbitworks/fathom/issues/395)), so their cells on Feature teams are blank.
+  - Planned hires sit under their manager by Manager. By Feature team, a hire sits under each team it is on in the months shown, as a person does, and its cells on Feature teams name its teams from the month it joins. Allocations also puts it under No feature team for the months it's on none, as it does a person.
+  - A group's heading counts each kind it holds, as People's count does, such as 2 people, 1 planned hire.
   - A role that doesn't see People has no planned hires' rows.
 - **Months:** whole quarters, from the quarter holding the month a year back to the quarter holding the month eleven months ahead; months outside employment are shaded.
   - A thin line between columns, and the current month's heading underlined in today's red, as [Month grids](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out.

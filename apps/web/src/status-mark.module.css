@@ -172,9 +172,10 @@
   margin-left: 0;
 }
 
-/* The "from" and day after an item a draft changes from another day. */
+/* The "from" and day after an item, kept on one line so the day never parts from its "from". */
 .fromDay {
   margin-left: var(--fathom-mark-gap);
+  white-space: nowrap;
 }
 
 /* A character of no width, so an empty value's place holds a line of text for its dot to sit on. */

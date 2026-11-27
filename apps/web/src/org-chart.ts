@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The org chart's people, through the server's API, and the tree they make: each person under their
-// manager, reports by name, and those with no manager at the top. Collapsing a manager hides
-// everyone below them. The people shown are laid out top to bottom, with reports who manage nobody
-// stacked in a column under their manager, so a large organization grows down rather than across.
-// Planned hires are drawn as placeholders under their managers, after the people there, and a
-// planned manager heads its planned team.
-// Each team is drawn in its colour, which reaches down to the teams below that have none. The
-// Draft menu chooses whether drafts of managers, positions and team names are drawn beside the live
-// chart, the chart is drawn as drafts make it, or drafts are left out.
+// The org chart's people, through the server's API, as the chart draws them: the tree of who sits
+// under whom, its layout, its colours and its drafts.
 
 import {
   allChartLevels,
@@ -196,11 +189,19 @@ export const changeOf = (draft: OrgChartDraft) => ({
   ...draft,
 });
 
+// A planned hire's card has a line for its Planned box, so one heading a feature team takes a line
+// more for the team's name.
+const plannedLead = (person: ChartPerson | undefined): boolean =>
+  person?.planned !== undefined && typeof person.teamName === "string";
+
 export const heightOf = (person: ChartPerson | undefined): number =>
   cardHeight +
-  [person?.repositioned?.live, person?.renamed?.live, person?.movedFrom].filter(
-    (live) => typeof live === "string",
-  ).length *
+  ([
+    person?.repositioned?.live,
+    person?.renamed?.live,
+    person?.movedFrom,
+  ].filter((live) => typeof live === "string").length +
+    (plannedLead(person) ? 1 : 0)) *
     liveLineHeight;
 
 // The position a person is listed with in the finder, which has no room for a draft's mark: the

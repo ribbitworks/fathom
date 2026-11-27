@@ -41,6 +41,7 @@ import {
   isHire,
   personKeyOf,
   peopleAndHires,
+  peopleAndHiresInGroup,
   positionLabel,
   type RowChange,
   rowName,
@@ -583,6 +584,7 @@ function peopleTable(
     one: "person",
     noun: "people",
     countKinds: peopleAndHires(isHire),
+    countInGroup: peopleAndHiresInGroup(isHire),
     kinds: [personKind, hireKind],
     kindOf,
     newRowLabel: (kind) =>

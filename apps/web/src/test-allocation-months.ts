@@ -93,14 +93,17 @@ export const rowsOf = (
     chart = noHires,
     grouping,
     show = "both",
+    hires = [],
   }: {
     chart?: OrgChart;
     grouping?: string;
     show?: "both" | "drafts" | "live";
+    // Planned hires' teams by month.
+    hires?: NonNullable<TeamMonths["hires"]>;
   } = {},
 ) =>
   allocationMonthRecords({
-    teamMonths,
+    teamMonths: { ...teamMonths, hires },
     allocations: { allocations: [...allocated], features, activities },
     chart,
     grouping,

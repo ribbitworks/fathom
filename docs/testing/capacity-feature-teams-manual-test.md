@@ -15,6 +15,7 @@ Verifies the **Feature teams** tab of the **Capacity** page:
 
 - How the table of feature teams by month looks, and moving through it with the strip of quarters under the buttons above it.
 - Grouping its rows, counting them in **Metrics**, and keeping it to the people on a feature team in any month.
+- Planned hires on a feature team, under it on this tab and on **Allocations**.
 - How it agrees with the **Org chart** on a chosen month.
 - How drafts made on the **Org chart** show in it.
 - Changing a month's teams in it and finding the change on the **Org chart**.
@@ -420,3 +421,30 @@ Proved by automated tests in `apps/server/src/feature-teams-months.test.ts`.
 - [ ] `17F0` Select the **×** on the "Feature team: Mobile apps" pill.
   - **Expected:** The table lists every row again, and the button's dot is gone.
   - **Notes:**
+
+### FA-21: A Planned Hire's Row Names Its Feature Team
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-20.
+
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] `F4AE` Type `Data engineer` in the search box.
+  - **Expected:**
+    - One row shows, 'Data engineer', under the **Field tools** group.
+    - From last month on, each of its cells names 'Field tools', after a small square in the team's colour.
+    - Its cells before last month are shaded and empty.
+  - **Notes:**
+
+- [ ] `0BDD` Clear the search box, and type `Engineering Manager, TBD`.
+  - **Expected:**
+    - One row shows, "Engineering Manager, TBD-" and a number, in grey italics, under the **Field tools** group.
+    - Its cells name 'Field tools' from the month three months after the current one on, and are empty before it.
+  - **Notes:**
+
+- [ ] `BD20` Select the **Allocations** tab, with **Feature team** still chosen in the Group by menu and the search box as it is.
+  - **Expected:**
+    - "Engineering Manager, TBD-" and its number show under the **Field tools** group, with cells from the month three months after the current one on.
+    - It also shows under **No feature team**, where its cells from the current month until the month three months after it read "Not allocated" in red.
+  - **Notes:**
+
+**Afterwards:** Clear the search box, and select the **Feature teams** tab.

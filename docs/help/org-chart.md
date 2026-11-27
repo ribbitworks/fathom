@@ -5,7 +5,7 @@ The **Org chart** draws everyone as cards, one for each person. It draws reporti
 ## What to Know First
 
 - **Reporting teams:** a reporting team is a manager and the people who report to them. **Reporting teams** shows who reports to whom.
-- **Feature teams:** a feature team is a group that works on features together, whoever its members report to. One member, the feature lead, leads the team's work. **Feature teams** shows each team under its lead.
+- **Feature teams:** a feature team is a group that works on features together, whoever its members report to. One member, the feature lead, leads the team's work. **Feature teams** shows each team under its lead. A planned hire can be on a team, or lead one, before anyone fills it.
 - **Drafts:** most changes you make here are drafts. Nobody else sees them until you select **Publish** in the top bar, and they go live once someone approves them. See [Drafts](drafts.md).
 
 ## Main Tasks
@@ -117,7 +117,9 @@ You're done when the chart shows the day you chose.
 
 - **A card** shows a person's name, their position, and the name of the team they lead, if any, after its colour's square.
 - **A band of colour** along the top of a card shows its team's colour. Under a team with no colour, cards take the colour of the team above.
-- **A dashed card**, with **Planned, expected** and a month, is a planned hire: a job you plan to fill. **Planned, no date** marks one with no target date.
+- **A dashed card**, with **Planned, expected** and a month, is a planned hire: a job you plan to fill. **Planned, no date** marks one with no target date. In **Feature teams**, a planned hire's card comes after the team's people, or heads the team when the hire leads it.
+- **Planned hires in a team's panel** come after the people in **Members**, dimmed, each with its key, such as **#HIRE-12**, and the day it joined the team. One with no name shows its position and ID in grey, such as **SDET, TBD-5**. A planned hire leading the team shows the same way in **Feature lead**, with the day it started to lead.
+- **On an earlier date**, the chart shows no planned hires, since past plans aren't kept. A team's panel still lists a planned hire that was on the team then.
 - **No feature lead** heads a feature team with no lead.
 - **A red Left box** after a manager's name means they've left, and people still report to them. Only roles that see Personal details see it.
 - **A light green card**, faded, with a dashed edge, shows where someone is now, when a draft moves them to another manager.

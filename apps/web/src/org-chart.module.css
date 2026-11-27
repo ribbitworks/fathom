@@ -60,12 +60,6 @@
   box-shadow: none;
 }
 
-/* A planned hire's ID, standing for a name it does not have, as People's Name cell shows one. */
-.madeName {
-  color: var(--mantine-color-dimmed);
-  font-style: italic;
-}
-
 /* A card with a draft is tinted as a row with one is on tables, while drafts are shown beside live. */
 .chart[data-tinted] .card[data-draft] {
   background: var(--fathom-draft-tint);

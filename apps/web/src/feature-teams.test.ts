@@ -11,8 +11,11 @@ import {
   liveTeam,
   memberCardId,
   membersChanged,
+  someoneUnseen,
   takesEffect,
   teamCardId,
+  teamPersonNamer,
+  teamPersonOf,
 } from "./feature-teams.ts";
 
 const person = (id: string, preferredName: string): OrgChartPerson => ({
@@ -26,11 +29,22 @@ const person = (id: string, preferredName: string): OrgChartPerson => ({
   managerId: "someone",
 });
 
+// A planned hire's placeholder, named by its position and ID, as it has no name of its own.
+const hire = (id: string, shownId: string): OrgChartPerson => ({
+  ...person(id, `Fictional Tester, ${shownId}`),
+  employeeId: null,
+  position: "Fictional Tester",
+  teamName: null,
+  teamColour: null,
+  planned: { expected: "2027-02", shownId },
+});
+
 const everyone = [
   person("lead", "Quinn Fictional"),
   person("m1", "Avery Fictional"),
   person("m2", "Blake Fictional"),
   person("m3", "Casey Fictional"),
+  hire("h1", "TBD-1"),
 ];
 
 const team = (fields: Partial<FeatureTeam> = {}): FeatureTeam => ({
@@ -185,6 +199,49 @@ describe("feature teams on the chart", () => {
       teamCardId("t2"),
       memberCardId("t2", "m1"),
     ]);
+  });
+
+  it("draws a planned hire on a team under it, as a placeholder", () => {
+    const [, , drawn] = featureTeamPeople(
+      [team({ members: ["lead", "m1", "h1"] })],
+      everyone,
+      "both",
+    );
+    expect(drawn).toMatchObject({
+      id: memberCardId("t1", "h1"),
+      preferredName: "Fictional Tester, TBD-1",
+      managerId: memberCardId("t1", "lead"),
+      planned: { expected: "2027-02", shownId: "TBD-1" },
+    });
+  });
+
+  it("draws a team a planned hire leads under the hire's card, naming the team", () => {
+    const [lead, member] = featureTeamPeople(
+      [team({ leadId: "h1", members: ["h1", "m1"] })],
+      everyone,
+      "both",
+    );
+    expect(lead).toMatchObject({
+      id: memberCardId("t1", "h1"),
+      teamName: "Fictional Harbour",
+      planned: { shownId: "TBD-1" },
+    });
+    expect(member?.managerId).toBe(memberCardId("t1", "h1"));
+  });
+
+  it("leaves out a planned hire the chart doesn't draw, as on an earlier day, drawing a team it led under a card naming it", () => {
+    expect(
+      cards(
+        [
+          team({
+            leadId: "past-hire",
+            members: ["past-hire", "m1"],
+            hiresFrom: { "past-hire": "2026-10-01" },
+          }),
+        ],
+        "both",
+      ).map(({ id }) => id),
+    ).toEqual([teamCardId("t1"), memberCardId("t1", "m1")]);
   });
 
   describe("with drafts beside live", () => {
@@ -465,5 +522,71 @@ describe("when a drafted change takes effect", () => {
     const drafted = draft({ hireLeadDay: "2027-06-01" });
 
     expect(takesEffect(drafted, undefined, "2027-01-01")).toBe("Jun 1, 2027");
+  });
+});
+
+describe("naming someone on a team", () => {
+  const named = teamPersonNamer(
+    team({
+      members: ["lead", "h1", "starter"],
+      names: {
+        lead: "Quinn Fictional",
+        h1: "TBD-1",
+        starter: "Drew Fictional",
+      },
+    }),
+    everyone,
+  );
+
+  it("names a planned hire on the chart by its placeholder name there", () => {
+    expect(named("h1")).toBe("Fictional Tester, TBD-1");
+  });
+
+  it("names a person by the team's names, then by the chart", () => {
+    expect([named("starter"), named("m2")]).toEqual([
+      "Drew Fictional",
+      "Blake Fictional",
+    ]);
+  });
+
+  it("names someone neither gives as someone the role can't see", () => {
+    expect(named("gone")).toBe(someoneUnseen);
+  });
+});
+
+describe("finding someone on a team", () => {
+  const personOf = teamPersonOf(
+    team({
+      members: ["m1", "h1", "off", "drafted"],
+      names: { off: "REQ-7701", drafted: "REQ-7702" },
+      hires: ["drafted", "h1", "off"],
+      hiresFrom: { h1: "2027-02-01", off: "2027-01-04" },
+    }),
+    everyone,
+  );
+
+  it("gives a person their name alone", () => {
+    expect(personOf("m1")).toEqual({ name: "Avery Fictional" });
+  });
+
+  it("gives a planned hire on the chart its made name, key and the day it joined", () => {
+    expect(personOf("h1")).toEqual({
+      name: "Fictional Tester, TBD-1",
+      hire: { madeName: true, keyNumber: 1, from: "2027-02-01" },
+    });
+  });
+
+  it("knows a planned hire the chart doesn't draw as one, as the team says, with its day", () => {
+    expect(personOf("off")).toEqual({
+      name: "REQ-7701",
+      hire: { madeName: false, from: "2027-01-04" },
+    });
+  });
+
+  it("knows a planned hire a draft adds, which the chart doesn't draw and has no day, as one", () => {
+    expect(personOf("drafted")).toEqual({
+      name: "REQ-7702",
+      hire: { madeName: false },
+    });
   });
 });
