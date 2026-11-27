@@ -2,7 +2,7 @@
 
 // UI tests of how well a refusal reads: its red words stand out from what is behind them by at least
 // WCAG's 4.5 to 1 for text, and the red outline of the value refused by at least 3 to 1, in light
-// mode and in dark.
+// mode and in dark; and a table's refusal stays one line under its row.
 
 import type { Locator, Page } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";
@@ -13,6 +13,36 @@ const outlineContrast = 3;
 
 type Colour = [number, number, number];
 
+// Marks an element so the page's own code, given as text, can find it once.
+const markMeasured = (element: Locator) =>
+  element.evaluate(
+    (node: { setAttribute: (name: string, value: string) => void }) => {
+      node.setAttribute("data-measured", "");
+    },
+  );
+
+// The height of one line of an element's text.
+const lineHeightOf = async (element: Locator) => {
+  await markMeasured(element);
+  return Number.parseFloat(
+    await element.page().evaluate<string>(`(() => {
+      const node = document.querySelector("[data-measured]");
+      node.removeAttribute("data-measured");
+      return getComputedStyle(node).lineHeight;
+    })()`),
+  );
+};
+
+// Whether an element's text is wider than its own box, so runs on past it.
+const runsPast = async (element: Locator) => {
+  await markMeasured(element);
+  return element.page().evaluate<boolean>(`(() => {
+    const node = document.querySelector("[data-measured]");
+    node.removeAttribute("data-measured");
+    return node.scrollWidth > node.clientWidth;
+  })()`);
+};
+
 // The colour a part of an element is drawn in, and the colour behind it, as the page shows them: each
 // background from the page's root down to the element painted over the one before, so a faint tint
 // over a panel counts as the panel shows it. Only background colours count, not a tint painted as a
@@ -22,11 +52,7 @@ const drawnColours = async (
   element: Locator,
   part: "color" | "border-top-color",
 ) => {
-  await element.evaluate(
-    (node: { setAttribute: (name: string, value: string) => void }) => {
-      node.setAttribute("data-measured", "");
-    },
-  );
+  await markMeasured(element);
   return element.page().evaluate<{ drawn: Colour; behind: Colour }>(`(() => {
     const node = document.querySelector("[data-measured]");
     node.removeAttribute("data-measured");
@@ -150,3 +176,31 @@ for (const colorScheme of ["light", "dark"] as const) {
     });
   });
 }
+
+test.describe("a table's refusal in a narrow window", () => {
+  test.use({
+    storageState: signedInAs("productManager"),
+    viewport: { width: 760, height: 900 },
+  });
+
+  test("makes its row one line taller, though its first column is narrower", async ({
+    page,
+  }) => {
+    // Given the Product Manager on Features, in a narrow window
+    // When the first row's Needed by is saved as no month
+    const { reason } = await neededByRefused(page);
+    const rows = page.locator("[role=grid] tbody tr");
+    const [refused, unrefused] = await Promise.all([
+      rows.nth(0).boundingBox(),
+      rows.nth(1).boundingBox(),
+    ]);
+
+    // Then the reason runs on past its cell, rather than wrapping
+    expect(await runsPast(reason)).toBe(true);
+    // And the row is one line taller than a row with no refusal
+    expect(
+      (refused?.height ?? 0) - (unrefused?.height ?? 0),
+    ).toBeLessThanOrEqual((await lineHeightOf(reason)) + 1);
+    await page.keyboard.press("Escape");
+  });
+});

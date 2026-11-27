@@ -623,17 +623,31 @@ th[data-centred] .recordHeadButton {
   box-shadow: inset 0 0 0 2px var(--mantine-color-sea-filled);
 }
 
-/* A row's refusal, under its first value, in line with it after the row's tick and slot. */
+/* A row's refusal, under its first value, in line with it after the row's tick and slot. One line,
+   running on past its cell, so a narrow first column never makes the row taller. */
 .recordProblem {
   display: block;
+  position: relative;
+  z-index: 1;
   padding-inline-start: calc(
     var(--row-tick-room, 0px) + var(--fathom-slot-width)
   );
   color: var(--mantine-color-error);
   font-size: 12px;
   font-weight: 500;
-  white-space: normal;
+  white-space: nowrap;
   line-height: var(--mantine-line-height);
+}
+
+.recordCell:has(> .recordProblem) {
+  overflow: visible;
+}
+
+/* The value above it is still cut short, as the cell would cut it. */
+.recordClippedValue {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Under the first value's editor, which takes the slot's place, it starts where the editor's text
