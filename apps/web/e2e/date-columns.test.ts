@@ -171,7 +171,7 @@ test("holds the Type list to a short window, scrolling inside it", async ({
   page,
 }) => {
   // Given People in a window too short for the whole Type list
-  await page.setViewportSize({ width: 1440, height: 420 });
+  await page.setViewportSize({ width: 1440, height: 320 });
   await page.goto("/people");
   await expect(page.getByRole("grid", { name: "People" })).toBeVisible();
 
