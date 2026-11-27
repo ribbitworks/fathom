@@ -16,6 +16,7 @@ import {
   DraftedPartItem,
   DraftedValue,
   DraftView,
+  FromDay,
   LiveRowMarks,
   LiveValue,
   MarkedItem,
@@ -419,4 +420,13 @@ describe("a warning", () => {
       );
     },
   );
+});
+
+describe("a day after an item", () => {
+  it("is read aloud, unless a tip already says it", () => {
+    renderIn("both", <FromDay day="Dec 1, 2026" />);
+    expect(
+      screen.getByText("from Dec 1, 2026").getAttribute("aria-hidden"),
+    ).toBeNull();
+  });
 });

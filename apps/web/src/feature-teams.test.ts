@@ -560,7 +560,6 @@ describe("finding someone on a team", () => {
       members: ["m1", "h1", "off", "drafted"],
       names: { off: "REQ-7701", drafted: "REQ-7702" },
       hires: ["drafted", "h1", "off"],
-      hiresFrom: { h1: "2027-02-01", off: "2027-01-04" },
     }),
     everyone,
   );
@@ -569,17 +568,21 @@ describe("finding someone on a team", () => {
     expect(personOf("m1")).toEqual({ name: "Avery Fictional" });
   });
 
-  it("gives a planned hire on the chart its made name, key and the day it joined", () => {
+  it("gives a planned hire on the chart its made name, key and when it's planned, as its card does", () => {
     expect(personOf("h1")).toEqual({
       name: "Fictional Tester, TBD-1",
-      hire: { madeName: true, keyNumber: 1, from: "2027-02-01" },
+      hire: {
+        madeName: true,
+        keyNumber: 1,
+        planned: { expected: "2027-02", shownId: "TBD-1" },
+      },
     });
   });
 
-  it("knows a planned hire the chart doesn't draw as one, as the team says, with its day", () => {
+  it("knows a planned hire the chart doesn't draw as one, as the team says", () => {
     expect(personOf("off")).toEqual({
       name: "REQ-7701",
-      hire: { madeName: false, from: "2027-01-04" },
+      hire: { madeName: false },
     });
   });
 
