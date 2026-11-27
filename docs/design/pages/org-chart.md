@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/org-chart.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: Org Chart Page
@@ -32,9 +32,9 @@ The Org chart draws the organization as cards, by reporting teams or by feature 
 
 ## Cards
 
-- **A person's card:** The name in semibold, the position dimmed, and the name of any team they lead, so a team's name appears once.
+- **A person's card:** The name in semibold, the position dimmed, and the name of any team they lead, after its colour's square, so a team's name appears once.
   - The position shows only to readers who see the Positions list's class.
-- **Team band:** A card on a coloured team is topped by an 8-pixel band of its colour, and its line takes the colour. The colour only repeats the lines, so it needs no words.
+- **Team band:** A card on a coloured team is topped by an 8-pixel band of its colour, and its line takes the colour. The band and lines carry the colour, and the square before the team's name repeats it.
   - A colour reaches down through the teams below until one has its own. The top card of a team shown alone has none, since the team above isn't drawn.
 - **A manager's card:** Has Show only this team, and Hide or Show and its count of reports.
 - **A manager who has left:** A red Left box, only for readers who see Personal details. Others see the card unmarked, opening nothing, since People doesn't list them.
@@ -73,9 +73,9 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
 - **Colours:** Chosen for each feature team from the same palette, and shown only on this chart, so they never meet reporting teams' colours.
 - **Cards:** No Show only this team, and no naming or colouring of reporting teams.
 - **Feature teams menu:** Replaces Teams, ending with New feature team.
-- **Team panel:** Opens beside the chart, with Name, Colour, Feature lead and Members. Membership changes are drafts from the date shown. Feature lead's picker describes each person as People's Manager picker does, as [A choice with a description](../../standards/ui-conventions/entering-and-saving.md#choices) sets out.
+- **Team panel:** Opens beside the chart, with Name, Colour, Feature lead and Members. Membership changes are drafts from the date shown. Feature lead's and Members' pickers describe each person as People's Manager picker does, as [A choice with a description](../../standards/ui-conventions/entering-and-saving.md#choices) sets out.
   - On any date but today, Name and Colour can't change and the team can't be removed, since they take no date.
-  - A lead is chosen from anyone; someone not yet a member joins in the same draft.
+  - A lead is chosen from anyone who hasn't left, never a planned hire; someone not yet a member joins in the same draft.
   - Readers without Personal details plan by month, from its first day, and aren't told when that day falls outside someone's employment. The Approver is told.
 - **Who sees what:** Those who only see feature teams can't change anything. Those who see the chart but not people see teams as approved.
 

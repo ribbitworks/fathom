@@ -1,6 +1,6 @@
 # Working as a Project Manager
 
-As a Project Manager, you see projects through to delivery: their milestones, the features they need, the releases that ship them, and the people and teams working on them. Your pages are **Projects**, **Features** and **Releases**, under **Plan** in the left-hand menu, **Capacity**, under **People**, and **Drafts**, under **History**.
+As a Project Manager, you see projects through to delivery: their milestones, the features they need, the releases that ship them, and the people and teams working on them. Your pages are **Projects**, **Features**, **Activities** and **Releases**, under **Plan** in the left-hand menu, **Capacity**, under **People**, and **Drafts**, under **History**.
 
 ## What to Know First
 
@@ -110,7 +110,7 @@ On **Capacity**, choose **Feature teams**. It shows who is on which feature team
 
 ### See What Each Person Works On
 
-On **Capacity**, choose **Allocations**. Each month shows the features each person works on, and how much of their month each takes. See [Capacity](capacity.md#in-allocations).
+On **Capacity**, choose **Allocations**. Each month shows the features and activities each person works on, and how much of their month each takes. See [Capacity](capacity.md#in-allocations).
 
 ### Group by Feature Team
 

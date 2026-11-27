@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: History Pages
@@ -19,3 +19,4 @@ Change history and Access history list what was done in Fathom, newest first. Th
 - **Change history search:** Runs on the server, in who made each change and the names and values involved.
 - **Access history search:** Covers only the entries shown.
 - **Someone yet to start or gone:** Readers who don't see the start and end date classes see no change naming someone who hasn't started or has left, such as a hire's manager, nor who fills a hire, nor a rejection whose draft adds, removes, replaces or dates them, as [Roles § Who Sees Which People](../../product/roles.md#who-sees-which-people) sets out. An owner who has left is still named, as the plan names them retired.
+- **A rejection's class:** A rejection is hidden from readers who don't see the class of any value its draft held, at that class when rejected or now, since a reason often repeats them.

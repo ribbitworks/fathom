@@ -32,6 +32,8 @@ You're done when the card is in the middle of the chart, with a blue ring.
 1. On a manager's card, select **Show only this team**: the small org chart button at the card's top right.
 1. To see everyone again, select **Show everyone**.
 
+You're done when the chart shows only that manager and their team.
+
 ### Save a View of the Chart
 
 A view keeps how you've set up the chart, so you can come back to it. It keeps whether the chart shows reporting teams or feature teams, the **Draft** menu's choice, the levels shown, and a team shown alone. It doesn't keep the date or the person you found.
@@ -75,10 +77,12 @@ You're done when the card shows the new name with a hollow dot, or the new colou
 
 1. Choose **Feature teams** in the switch.
 1. Select the **Feature teams** button.
-1. Choose the team. Its panel opens beside the chart.
+1. Choose the team. Its panel opens beside the chart. You can also select the team's name on its lead's card.
 1. Point at what you want to change: **Name**, **Colour**, **Feature lead** or **Members**.
 1. Select the pencil that shows at its right.
 1. Make the change.
+
+In **Feature lead** and **Members**, each person shows their position and their team, or whom they report to, so you can tell apart two people with the same name.
 
 To add a feature team:
 
@@ -94,14 +98,14 @@ You're done when the change shows in the team's panel. A change of colour applie
 
 ### See Another Date
 
-The chart can show another day, in the past or the future.
+The chart can show another day, in the past or the future. Your role needs to see Personal data for past days, and Confidential data for future ones.
 
 1. In the date row under **Find a person or team**, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
 1. To come back to today, select **Today**.
 
 On any date but today, a change you make starts on the day shown:
 
-- In **Feature teams**, you can change a team's members or lead, or add a team.
+- In **Feature teams**, you can change a team's members or lead, or add a team, on a later day, or on an earlier one if your role changes Personal details.
 - In **Reporting teams**, you can change someone's manager on an earlier day, if your role changes Personal details.
 - You can change a team's name or colour, or remove a team, only on today's chart.
 
@@ -111,7 +115,7 @@ You're done when the chart shows the day you chose.
 
 ## Marks and Terms
 
-- **A card** shows a person's name, their position, and the name of the team they lead, if any.
+- **A card** shows a person's name, their position, and the name of the team they lead, if any, after its colour's square.
 - **A band of colour** along the top of a card shows its team's colour. Under a team with no colour, cards take the colour of the team above.
 - **A dashed card**, with **Planned, expected** and a month, is a planned hire: a job you plan to fill. **Planned, no date** marks one with no target date.
 - **No feature lead** heads a feature team with no lead.

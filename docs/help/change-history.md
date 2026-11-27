@@ -20,6 +20,7 @@ When a save changed many records, a button such as **Show 3 more** lists the res
 ## Marks and Terms
 
 - **Undoing a change** adds a new entry that puts the old values back. Nothing is ever taken out of the history.
+- **A rejection** is left out when the draft it rejected held details you can't see, or named someone you don't see, since its reason may repeat them.
 
 ## Where Changes Go
 

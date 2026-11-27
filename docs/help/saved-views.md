@@ -13,7 +13,7 @@ On some pages, a view keeps more:
 - On **Capacity**'s **Allocations**, it also keeps whether **Over** or **Under** is on.
 - On **Lists**, it also keeps whether **Show retired** is on.
 - On **Drafts**, it also keeps its tab.
-- On **Features**, it also keeps the board's columns and what its cards show. The table and the board share one view. Switching between them doesn't change it.
+- On **Features**, it also keeps the board's columns, what its cards show, and whether **Show done and cancelled** is on. The table and the board share one view. Switching between them doesn't change it.
 
 On the board on **Features**, the **Views** menu leaves out the sort, the units, and the columns' order, hidden columns, widths and frozen columns. They stay in the view and show again on the table.
 
@@ -85,6 +85,8 @@ You're done when the view moves to **Shared views**, or back to **My views**.
 
 **Clear all**, above the table, does the same, but leaves the **Metrics** panel open.
 
+You're done when the **Views** button no longer names a view.
+
 ### Tidy a View You Can No Longer Use
 
 Your role might lose sight of a column one of your views uses. The view then stays under **My views**, dimmed, with a line saying what it uses, such as **Uses Site, which this role can't see.** You can't apply it, but you can rename or delete it.
@@ -129,6 +131,8 @@ You're done when the column is back in its place.
 ### Undo One Part of a View
 
 In the **Views** menu, under **Sort**, each level of the sort is named, and then any frozen columns, moved columns, hidden columns, set widths and units. Select one to undo just that part.
+
+You're done when that part is gone from the menu.
 
 ## Marks and Terms
 

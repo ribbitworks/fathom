@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/people.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: People Page
@@ -16,7 +16,7 @@ People lists everyone, one row each, with planned hires beside them. It sits in 
 ## Columns
 
 - **Kinds of row:** The State column tells people and planned hires apart, so there is no Kind column. Metrics name each kind, such as 150 people and 6 planned hires.
-- **Manager:** Picked from people flagged as managers and still employed.
+- **Manager:** Picked from people and planned hires flagged as managers, live, and not gone by today.
   - **Each described:** Under their name, by their position, then the name of the team they're on, or whom they report to where it has none, such as Engineering Manager, reports to Mateo Quintero Reynoso, so two with the same name are told apart.
   - **A pasted name:** One that more than one of them has is refused rather than given to the first.
   - **Left:** A manager whose end date has passed shows a Left mark, only to readers who see Personal details.
@@ -24,7 +24,7 @@ People lists everyone, one row each, with planned hires beside them. It sits in 
 - **Manager assigned:** The Personal date the line runs from; changing it moves the line. The label can't be read as the person being a manager since then.
 - **Team:** Follows from Manager and isn't edited, shown by the team's name, or its manager's while it has none.
 - **Team name:** The person's own team's name, edited on the manager's row.
-- **Feature teams:** After Team, each person's feature teams on the date shown, by their live names, as plain read-only names, since teams change on the [Org chart](org-chart.md#feature-teams). Sent only to those who see feature teams.
+- **Feature teams:** After Team, each person's feature teams on the date shown, by their live names, each after its colour's square, read only, since teams change on the [Org chart](org-chart.md#feature-teams). Sent only to those who see feature teams.
 - **Expected:** Read only: the month a planned hire is expected, empty for people.
 
 ## Date Row
@@ -34,7 +34,7 @@ The date row sits above the table here and above the [Org chart](org-chart.md), 
 - **Parts, in order:** a Date box, a back arrow, a timeline of 24 months either side of today, a forward arrow, and Today.
 - **Range:** Without Confidential data, People and Reporting teams stop at today. Feature teams reach future dates with Personal details alone.
 - **Feature teams on future dates:** Draw people as they are today.
-- **On another date:** Only managers can change on People and Reporting teams, and members and leads on Feature teams.
+- **On another date:** On an earlier date, only managers can change on People and Reporting teams, for those who may change Past managers; a later date is read only there. On Feature teams, members and leads change on a later date, or on an earlier one for those who may change Feature team dates.
   - Where nothing can change, it is read only: the chart has no Draft menu and shows teams or reporting lines as approved.
   - People lists those employed then, with no New person, New column or row menu.
 - **Planned hires:** Shown today and later. None show on earlier dates, since past plans are not kept.
@@ -54,7 +54,7 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
   - Feature teams, for those who see them: Leads and Member of, each team with its lead
   - Details: Name, ID, Position, State, Start, End, Expected for planned hires, Manager?
   - Columns: every added column People shows the reader
-  - Timeline, for those who see start and end dates: the next day of changes after the day shown and the latest on or before it, then Show timeline
+  - Timeline, for a person, not a planned hire, for those who see start and end dates: the next day of changes after the day shown and the latest on or before it, then Show timeline
 - **Same as People:** The panel shows only what People shows the reader, and follows the Draft menu beside it. Personal details shown are recorded in the access history.
 - **Who gets it:** Readers who see the chart but not people have no panel.
 - **Following:** Choosing a manager or a report shows them in the panel.
@@ -75,7 +75,7 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 - **Heading:** The name as its Name cell shows it, with a grey Planned, expected box, and no org chart link.
 - **Pencils:** Only for those who may change planned hires.
 - **State:** Offers only hiring states, since a hire becomes a person only by being filled.
-- **Fill:** In the Name cell and under the heading, for those who may change both people and planned hires, unless the Draft menu shows live values alone. Its form offers New person and Existing person side by side, with the hire's Position read only.
+- **Fill:** In the Name cell and under the heading, for those who may change both people and planned hires, only on today, unless the Draft menu shows live values alone. Its form offers New person and Existing person side by side, with the hire's Position read only.
   - Filling happens in this panel, not a dialog, and once filled the panel shows the person.
   - The manager starts as the hire's and can be changed. A new person's start date starts as the hire's target date. Someone already in Fathom moves from today, or from their start date if they haven't started.
   - What a fill does is in the [Domain Model](../domain-model.md#planned-hires).

@@ -4,12 +4,12 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/releases.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: Releases Page
 
-The Releases page holds releases, their cycles and the schedules they belong to, drawn on a timeline over a table. It sits in the sidebar's Plan section, after Features.
+The Releases page holds releases, their cycles and the schedules they belong to, drawn on a timeline over a table. It sits in the sidebar's Plan section, after Activities.
 
 [Releases help](../../help/releases.md) describes it for the people who use it. [Visual Design](../visual-design.md) covers what every page shares.
 

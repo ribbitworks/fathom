@@ -26,6 +26,8 @@ If you choose neither, Fathom says "Choose a release or a project" under **Relea
 
 You're done when the activity shows in the table with a hollow dot.
 
+To add several quickly, type or paste them into the empty row at the end of the table, one to a line. If Fathom refuses one row, it adds none of them.
+
 You can also start from a project's details on **Projects**, or a release's on **Releases**: select **Add activity**, and **New activity** opens under the details with the project or release chosen. On **Activities** showing only one project's or release's, **New activity** starts with it chosen.
 
 ### Change an Activity
@@ -41,6 +43,8 @@ You can also make changes in an activity's details, which open beside the table:
 1. Select the value you want to change. For **Release** and **Project**, select the pencil at the right of the row.
 
 In the details, an activity's **Release** and **Project** are links. Select the release to open its schedule on **Releases**, or the project to open its details on **Projects**.
+
+You're done when the changed value shows a hollow dot.
 
 ### Move an Activity
 
@@ -59,6 +63,8 @@ Choosing a release clears its project, and choosing a project clears its release
 
 See [Saved views](saved-views.md) to keep a view you use often.
 
+You're done when the table shows the activities you want.
+
 ### Add a Column
 
 You can add your own columns to Activities if your role edits features and sees people, as the Product Manager's does. They're Activities' own, apart from the columns on Features.
@@ -70,12 +76,17 @@ You can add your own columns to Activities if your role edits features and sees 
 1. If the list you need isn't there, choose **New list**, last under **List**, instead. Give the list a name, then type each choice in the row that starts with **+** under **Choices**, pressing Enter after each, or paste several, one to a line. To take one out, select **Remove** in its **⋯** menu. The new list is approved with the column.
 1. Select **Add column**.
 
+You can fill the new column's cells straight away. Whoever approves features approves Activities' columns too, with any list made with **New list**.
+
 You're done when the new column shows in the table, with a hollow dot until you publish it.
 
 ### Count Activities
 
 1. Select **Metrics**. The **Metrics** panel opens beside the table.
 1. Under **Break down by**, choose the column to count by, such as **Release**.
+1. To count by two columns at once, choose the second under **and by**.
+
+See [Features](features.md#count-features) for more, such as **Measure**.
 
 You're done when the panel shows how many activities hold each value of the column you chose.
 
@@ -101,6 +112,6 @@ You're done when the row is struck through. It's removed once the removal is app
 - **Release** names a release with its schedule, such as **Platform: Harbor 1**.
 - **Project** names a project with its Project ID first, if it has one, such as **P-2001 Crane Control**.
 - **None**, in **Release** or **Project**, means the activity belongs to the other one.
-- **No team**, in red in the **Feature team** cell, marks a planned or in-progress activity that has no feature team yet.
+- **No feature team**, in red in the **Feature team** cell, marks a planned or in-progress activity that has no feature team.
 - **Status** says how far along the activity is, from the same statuses features use, which are named on the **Lists** page. A new activity starts on the first status that means Possible.
 - **Effort** is the work the activity needs, such as 2.5 PD for person-days. Point at it to see the hours.

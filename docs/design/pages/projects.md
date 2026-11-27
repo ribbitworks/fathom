@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/projects.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: Projects Page
@@ -18,7 +18,7 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 - **Tabs:** Projects, Proposals, Customers and Milestones, on the heading's line and kept in the address. Each tab keeps saved views of its own.
 - **Each tab:** a table edited like People's, as [People](people.md) sets out.
 - **Names:** projects and proposals follow [Links to Records](../../standards/ui-conventions/pages-and-panels.md#links-to-records).
-- **Show on Features:** a project's or proposal's row menu opens [Features](features.md) filtered to its features.
+- **Show on Features:** a project's row menu, and a proposal's while it names a feature, opens [Features](features.md) filtered to its features.
 - **Customers' columns:** Name, Description, Notes, then Projects, Proposals and Features, in the order its details run.
   - Projects, Proposals and Features are read only, worked out from the links the other way: the projects and proposals naming the customer, and every feature it gets or asks for, naming it directly, needed by one of its projects or proposed by one of its proposals.
   - Each lists records as [Several records in a cell](../../standards/ui-conventions/pages-and-panels.md#links-to-records) sets out, and is searched, sorted, filtered, broken down by Metrics and exported as any such column, drafts included as the Draft menu shows them.
@@ -59,4 +59,4 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 
 - **Projects timeline:** each project on the [shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines), from first to last milestone.
   - Milestones are diamonds, hollow while to come; the last is red when its work ends later or isn't staffed.
-  - Its features and [activities](https://github.com/ribbitworks/fathom/issues/207) show under it, as in Capacity's Work.
+  - Its features and activities show under it, as in Capacity's Work.

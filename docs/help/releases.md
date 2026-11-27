@@ -23,7 +23,7 @@ See [Drafts](drafts.md) for more.
 
 ## The Three Tabs
 
-- **Releases** lists each release with its schedule, the day it ships, its cycles, the features that target them, and **Shipped** once its day has passed. Shipped releases are left out until you choose **Show shipped** in the **Views** menu. The timeline shows each release across its cycles.
+- **Releases** lists each release with its schedule, the day it ships, its cycles, the features that target them, its activities, and **Shipped** once its day has passed. Shipped releases are left out until you choose **Show shipped** in the **Views** menu. The timeline shows each release across its cycles.
 - **Cycles** lists each cycle with its schedule, its first and last days, the release that covers it, and its features. The cycle holding today reads **Current**. The timeline names each cycle, with the current one in bold.
   - Past cycles, and cycles that start after next quarter, are left out until you choose **Show past cycles** or **Show later cycles** in the **Views** menu.
 - **Schedules** lists each schedule with its current cycle and that cycle's first and last days, the features targeting it, the next release to ship and its day, how long its cycles last now, and its **Schedule ends** day. The timeline shows each schedule's cycles, and where it ends.
@@ -94,7 +94,7 @@ To remove a release:
 1. Select the **⋯** at the end of the release's row.
 1. Select **Remove release**.
 
-While an activity names the release, **Remove release** is greyed out, with a line under it naming the first of them. Move the activity to another release or a project first.
+While an activity names the release, **Remove release** is greyed out, with a line under it naming the first of them and counting the rest. Move the activity to another release or a project first.
 
 You're done when the release's row shows a dot for your draft.
 
@@ -205,7 +205,7 @@ Exporting saves the tab's table as a file you can open in a spreadsheet.
 1. Choose **CSV file** or **TSV file**.
 1. Choose where to save it, if your browser asks.
 
-The file holds what the tab shows, and is named after the tab, such as **fathom_cycles_product-manager_2027-03-31.csv** for the **Cycles** tab. You're done when the file is saved.
+The file holds what the tab shows, and is named after the tab, such as **fathom_cycles_product-manager_drafts-and-live_2027-03-31.csv** for the **Cycles** tab. You're done when the file is saved.
 
 See [People](people.md#export-people) for what the file holds.
 

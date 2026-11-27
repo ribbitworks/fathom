@@ -1,6 +1,6 @@
 # Working as an Engineering Manager
 
-As an Engineering Manager, you staff the work: what the features will take, and who is on which feature team, month by month. You see everyone's Personal and Confidential data, and the hiring plan, which holds the planned hires. Your pages are **Features**, under **Plan** in the left-hand menu, and **Capacity** and the **Org chart**, under **People**.
+As an Engineering Manager, you staff the work: what the features will take, and who is on which feature team, month by month. You see everyone's Personal and Confidential data, and the hiring plan, which holds the planned hires. Your pages are **Features** and **Activities**, under **Plan** in the left-hand menu, and **Capacity** and the **Org chart**, under **People**.
 
 ## What to Know First
 

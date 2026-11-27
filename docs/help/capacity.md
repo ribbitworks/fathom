@@ -25,6 +25,8 @@ See [Drafts](drafts.md) for more.
 
 Select **Feature teams** or **Allocations** beside the heading. The page opens on the tab you used last.
 
+You're done when the tab you chose is underlined.
+
 ### Move Through the Months
 
 **Feature teams** and **Allocations** have the same table: a row for each person and planned hire, and a column for each month. It holds whole quarters, from the quarter a year back to the quarter eleven months ahead. It opens with the current month second, after last month, and the current month's heading is underlined in red.
@@ -37,6 +39,8 @@ Select **Feature teams** or **Allocations** beside the heading. The page opens o
 The count after **Group by**, such as **Apr 2027: 137 people, 10 planned hires**, is for one month: the one you moved to, second in view, whose heading is filled blue. It counts the people working that month and the planned hires expected by then, and changes as you scroll.
 
 While a filter, a search or a month's own filter narrows the rows, the count says how many of that month's people and planned hires are shown, such as **Apr 2027: 6 of 137 people**, leaving out planned hires when none are shown. The rows stay the same as you scroll, so someone who has left by the month counted stays listed but isn't counted. Someone listed under two groups is counted once.
+
+You're done when the month you want is second in view.
 
 ### Group the Rows
 
@@ -77,6 +81,8 @@ You're done when the rows show under the headings you chose.
 - To see who has none in any month, pick **No feature team** or **Not allocated** there.
 - With teams, features or activities picked, the months you scroll to don't change the rows. To clear what you picked, select the **×** on its pill.
 
+You're done when the table shows the people you're looking for.
+
 ### Keep a View of the Table
 
 To come back to a tab as you've set it up, with its grouping and search, save it as a view. Each of **Feature teams** and **Allocations** has views of its own.
@@ -111,13 +117,15 @@ Use the team's panel on the **Org chart**, under **Feature teams**. See [Org cha
 
 Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you leave the page.
 
+You're done when the cell shows its value from before the change.
+
 ## Marks and Terms
 
 ### In Feature Teams
 
 - **A team in a cell** shows its name after a small square in its colour, or with no square when it has none. Point at a name to see all of it.
 - **Shaded months** come before someone started or after they left.
-- **Planned hires** have rows, but no teams yet, so their cells are empty.
+- **Planned hires** have rows, but Capacity shows no teams for them, so their cells are empty.
 - **No feature team**, when grouped by **Feature team**, heads the people who are on no team in all the months shown.
 - **No manager**, when grouped by **Manager**, heads the people who report to nobody today.
 - **A green dot before a team**, in the light green Live row under a drafted row, marks a team the draft takes away. With **Live only** chosen in the **Draft** menu, it marks each team a waiting draft would take away. Point at it to see the change.
@@ -129,12 +137,12 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 - **Not allocated**, in red, ends a month with nothing allocated. A month at exactly 100% has no last line.
 - **Over**, **Under** and **Not allocated** show from the current month on, and features and activities whose status means Possible don't count. Point at **Over** or **Under** to see the month's total.
 - **Planned hires** have rows of their own, under their manager and under **No feature team**. One with no name shows its position and ID in grey, such as **SDET, TBD-5**. Months before one is expected are shaded.
-- **Total, person-months**, in bold, ends each group, and **Organization, person-months** stays at the foot of the table.
+- **Total, person-months**, in bold, ends each group, and **Organization, person-months** stays at the foot of the table. Grouped by **Allocated to**, an **Allocated** row ends each group, and **Allocated, all work** stays at the foot, both in hours.
 - **A total**, such as **7.5 of 9**, is the person-months allocated that month, out of those available. The share is under it.
 - Point at a total to see it in words. Totals count only the rows shown.
 - **Someone on a feature team with nothing allocated** reads **Not allocated**, and counts as **0 of 1** in the totals. Being on a team doesn't allocate anyone to its features.
-- **A green dot inside a line**, in the light green Live row under a drafted row, marks a feature the draft takes off or changes. With **Live only** chosen in the **Draft** menu, it marks each one a waiting draft would change.
-- **A dot before a feature's name** marks a draft renaming the feature, red once the rename is rejected. With **Drafts applied** chosen in the **Draft** menu, a rejected rename shows the feature's name as it is. With **Live only**, every feature shows its name as it is.
+- **A green dot inside a line**, in the light green Live row under a drafted row, marks a feature or activity the draft takes off or changes. With **Live only** chosen in the **Draft** menu, it marks each one a waiting draft would change.
+- **A dot before a feature's or activity's name** marks a draft renaming it, red once the rename is rejected. With **Drafts applied** chosen in the **Draft** menu, a rejected rename shows the name as it is. With **Live only**, every feature and activity shows its name as it is.
 - **Allocations** is read only.
 
 ## Where Changes Go

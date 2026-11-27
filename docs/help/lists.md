@@ -1,6 +1,6 @@
 # Lists
 
-**Lists** holds the lists of choices that columns offer, such as **Sites** or **Levels**. A column on **People** or **Features** picks its values from one list, so everyone's values are spelled the same way. One list can feed several columns.
+**Lists** holds the lists of choices that columns offer, such as **Sites** or **Levels**. A column on **People**, **Features** or **Activities** picks its values from one list, so everyone's values are spelled the same way. One list can feed several columns.
 
 ## What to Know First
 
@@ -95,7 +95,7 @@ You can do this if your role may classify data.
 
 On an approved list, the change takes effect straight away, with no draft, and it's recorded in the access history. On a new list that isn't approved yet, it changes the list's draft instead, just as choosing its **Class** in **Edit list** does, and you can undo it.
 
-You can't choose a class your role can't see. A list that a column on **Features** uses stays **General**. You can also change an approved list's class on the **Data classes** page.
+You can't choose a class your role can't see. A list that a column on **Features** or **Activities** uses stays **General**. You can also change an approved list's class on the **Data classes** page.
 
 You're done when the list's name shows its new class.
 

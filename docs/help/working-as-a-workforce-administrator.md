@@ -4,7 +4,7 @@ As a Workforce Administrator, you keep Fathom's records: its people and planned 
 
 ## What to Know First
 
-- **Drafts:** most of your changes are drafts. Nobody else sees them until you select **Publish** in the top bar. They go live once a Project Manager or the Engineering Director approves them.
+- **Drafts:** most of your changes are drafts. Nobody else sees them until you select **Publish** in the top bar. They go live once someone whose role approves that kind of change approves them, such as a Project Manager or the Engineering Director.
 - **Planned hires:** a planned hire is a job you plan to fill. Its **State** says where the hire stands, such as **Request to hire** or **Approved to hire**.
 - **Feature teams:** a feature team is a group that works on features together, whoever its members report to.
 - **Lists:** a list holds the choices a column offers, such as each site's name, so everyone's values are spelled the same way.

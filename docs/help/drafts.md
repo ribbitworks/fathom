@@ -16,7 +16,7 @@ A draft goes through these stages:
 - **Rejected:** the draft goes back to whoever made it. They can change it, resubmit it, or discard it.
   - Drafts that depend on it wait. Rejecting a new list, column or choice also rejects the drafts that depend on it.
 - **Discarded:** the draft is removed, and the record stays as it was.
-  - Only someone who changed the draft can discard it. If you disagree with someone else's draft, ask an approver to reject it.
+  - Only someone who changed the draft since it was last approved or discarded can discard it. If you disagree with someone else's draft, ask an approver to reject it.
   - A change to a schedule's cycles is the exception, which anyone who changes schedules can discard.
   - Discarding a new record, or removing a project, also discards the new records that go with it, whoever made them, such as a new list's choices or a removed project's new milestones.
   - You can't discard a new list, column or choice while other drafts depend on it. Discard or change those drafts first.
@@ -25,7 +25,7 @@ Approvers approve and reject drafts on the [Drafts page](drafts-page.md), under 
 
 ## Publish or Discard One Change
 
-Each record's **⋯** menu acts on its draft. It opens from two places, which offer the same, except that only the row's offers **Show details**:
+Each record's **⋯** menu acts on its draft. It opens from two places, which offer the same actions. Only the row's menu offers **Show details**, and says what the draft changes and why it was rejected:
 
 - The **⋯** at the end of the record's row.
 - The **⋯** at the top of its details, just before the **×**. A person's details beside the Org chart have none.
@@ -48,7 +48,7 @@ You're done when the record's hollow dot turns yellow, once published, or is gon
 - **A yellow dot** marks a change waiting for approval. It comes before what changed: at the start of the row, for a record that's added, removed or moved, or before each value that changed. Point at the dot to see what the change is, and what the value was.
 - **A name struck through**, after its dot, is removed once the draft is approved.
 - **In a list of records**, such as a project's customers, each record is marked on its own: one the draft adds has a dot before it, one it takes away has a dot and is struck through, and the rest have no mark.
-- **A red dot in a ring** means the draft was rejected. Point at it to see what was rejected and why. The reason is in the record's menu too.
+- **A red dot in a ring** means the draft was rejected. Point at it to see what was rejected and why. The reason is in the menu of its row too.
 - **A grey lock** means someone else has unpublished changes to this. Point at it to see who. You can't change it until they publish or discard their changes.
 - **Moved**, **Reordered**, **Retired** or **Restored**, in a yellow box after the name of a draft waiting for approval, says what a dot can't.
 - **A grey or red box** after a name is a fact about it, not a draft. It can be **Built in**, **Planned, expected** and a month or **Planned, no date**, or a warning such as **Left**.

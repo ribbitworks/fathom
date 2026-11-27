@@ -13,7 +13,7 @@ The **People** page lists everyone, one row each, with your planned hires beside
 - **Drafts:** almost every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A hollow dot marks a change you haven't published yet, and a yellow dot one that's waiting for approval.
 - **Approval:** a draft goes live once an approver, such as a Project Manager or the Engineering Director, approves it on the **Drafts** page.
 - **Managers:** **Manager?** is ticked for each person others can report to. A manager types their team's name in **Team name**, on their own row. Everyone who reports to them then shows that team in **Team**.
-- **Feature teams:** if your role sees feature teams, **Feature teams** follows **Team** and names the teams each person is on, on the date the page shows. You can't change it here.
+- **Feature teams:** if your role sees feature teams, **Feature teams** follows **Team** and names the teams each person is on, each after its colour's square, on the date the page shows. You can't change it here.
   - You change a team's members on the **Org chart**. See [Org chart](org-chart.md).
 
 See [Drafts](drafts.md) for more.
@@ -52,7 +52,7 @@ You can also make changes in a person's details, which open beside the table:
 1. Select the details button: the small box at the right of the **Name** cell.
 1. Select the value you want to change.
 
-Instead of the details button, you can also right-click the row and select **Show details**.
+Instead of the details button, you can also right-click the row and select **Show details**. To close the details, select the same button again.
 
 You're done when the changed value shows a hollow dot.
 
@@ -106,11 +106,9 @@ You're done when the timeline shows the person's days.
 
 ### Fill a Planned Hire
 
-When you hire someone for a planned job, you fill the planned hire with them. **Fill** shows once the hire's **State** is approved, such as **Approved to hire**, and the hire has no rejected draft. It doesn't show while a draft that adds the hire, or changes its manager, is still waiting.
+When you hire someone for a planned job, you fill the planned hire with them. **Fill** shows once the hire's **State** is approved, such as **Approved to hire**, and the hire has no rejected draft. It doesn't show while the hire has a draft that adds it, removes it or changes its manager, or while someone else is changing it. It shows only on today's **People**, not on another date or under **Live only**.
 
 Fathom doesn't move a planned hire's allocations to the person. An allocation is the time planned for someone on a feature or activity. So if the hire has any, remove them first.
-
-Fathom does move the hire's feature teams once the fill is approved. The person joins the teams the hire is on, and leads the ones it leads, from the latest of their start date, the day the fill is approved and the hire's own day. A team the hire leaves before then isn't moved. If they're already on one of those teams, they stay on it as they are. They lead a team only while they're on it, so a team they join later has no lead until then. You can't fill the hire while a draft of one of its feature teams, or one that names it, is waiting, so approve or discard that draft first.
 
 1. In the planned hire's **Name** cell, select **Fill**.
 1. Choose **New person** to add someone new, or **Existing person** to move someone who's already here.
@@ -118,7 +116,7 @@ Fathom does move the hire's feature teams once the fill is approved. The person 
 1. Select **Fill** under the form.
 1. Select **Publish**, and ask your approver to approve it.
 
-You're done once the fill is approved. The person then takes the hire's place, on its feature teams too.
+You're done once the fill is approved. The person then takes the hire's place.
 
 ### Add a Column
 
@@ -209,7 +207,7 @@ Exporting saves the table as a file you can open in a spreadsheet.
 1. Choose **CSV file** or **TSV file**.
 1. Choose where to save it, if your browser asks.
 
-If the file would hold Personal or Confidential data, such as start dates or planned hires, Fathom asks first, and names what the file holds. Select **Export** to go ahead. That export is recorded in the access history, which roles that see administration can read.
+If the file would hold Personal or Confidential data, such as start dates, or planned hires if your role sees the hiring plan, Fathom asks first, and names what the file holds. Select **Export** to go ahead. That export is recorded in the access history, which roles that see administration can read.
 
 The file holds what the table shows, in the same order. Rows that your search or filters hide are left out.
 
