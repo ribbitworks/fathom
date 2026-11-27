@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Feature Links
@@ -71,7 +71,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### LINK-02: A Project's Details Open on Features
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as LINK-01.
+**Account:** Product Manager, `product.manager@fathom.test`, the account LINK-01 ended with.
 
 **Preconditions:** **Features** page open.
 
@@ -129,7 +129,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Features**
   - **Notes:**
 
-- [ ] `32BC` Close the side panel.
+- [ ] `32BC` Select the **×** at the top right of the side panel.
   - **Expected:**
     - The panel closes.
     - The table fills the page.
@@ -137,7 +137,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### LINK-03: Changing a Feature's Projects Drafts the Project
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as LINK-02.
+**Account:** Product Manager, `product.manager@fathom.test`, the account LINK-02 ended with.
 
 **Preconditions:** **Features** page open.
 
@@ -184,7 +184,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### LINK-04: Show on Features Opens Features Filtered
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as LINK-03.
+**Account:** Product Manager, `product.manager@fathom.test`, the account LINK-03 ended with.
 
 **Preconditions:** Restore the Seed Data run after LINK-03. **Projects** page open, **Projects** tab chosen.
 
@@ -240,7 +240,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, changed from LINK-04.
 
-**Preconditions:** Signed in with this account. **Features** page open.
+**Preconditions:** Signed in with this account, acting as **Feature Lead** in the Role menu. **Features** page open from the left-hand menu.
 
 - [ ] `49BB` Select the **Projects** cell of 'Bulk Import', and press Enter.
   - **Expected:** No list opens.

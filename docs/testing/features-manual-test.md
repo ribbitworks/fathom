@@ -13,11 +13,10 @@ last_updated: "2026-11-27"
 
 Verifies the Features page:
 
-- How the table reads, grouped by cycle with Later, by release, by the month needed and by project, two levels deep, with the +1 after a feature shown under two headings.
-- Its columns: Release, a month, customers and a note, columns added to Features, with a new list made in the column's dialog, approved by whoever approves features, and moving any column.
-- A feature's status, effort in the unit chosen, priority, size and risk, from their built-in lists.
-- Editing features as drafts, who may change them, and how their drafts show on the Drafts page.
-- Writing a note in New feature.
+- How the table reads, grouped by cycle, release and project, two levels deep, with the +1 after a feature shown under two headings.
+- Adding and changing features as drafts, a month typed in **Needed by**, the **Risk** list, and effort shown and typed in the unit chosen.
+- A note written in New feature, in a panel under it.
+- A column added to Features and its approval, and a column added with a new list made in its dialog.
 
 [Feature Links](feature-links-manual-test.md) verifies the projects and proposals that name a feature.
 
@@ -30,21 +29,18 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Product Manager:** `product.manager@fathom.test`
-- **Project Manager:** `project.manager@fathom.test`
-- **Team Member:** `team.member@fathom.test`
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Engineering Director:** `engineering.director@fathom.test`
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Reset the Database](manual-test-basics.md#reset-the-database), [Publish](manual-test-basics.md#publish) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
 
 ## Terms
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the Group by menu and group headings. This test adds:
 
-- **Group heading on Features:** it names a cycle or **Later**; grouped by release, a release or **Not released yet**; grouped by the month needed, a month or **No date**; grouped by project, a project or **No projects**.
 - **+1:** the small grey mark after a feature's name in a grouped table, when the feature also shows under another heading. Pointing at it shows a tip naming the other heading.
+- **Count:** the grey words in the bar above the table, after the **Views** button and any filter pills, such as "22 features".
 
 ## Test Cases
 
@@ -77,12 +73,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Feature team**
       - **Staffed**
       - **Kind**
-    - Beside the search box, the count reads "22 features".
+    - The count reads "22 features".
     - The rows show as one list, with no group headings, and the button after **Metrics** reads **Group by**.
-  - **Notes:**
-
-- [ ] `F6D0` Look down the **Status** column.
-  - **Expected:** Each row reads one of "Possible", "Planned", "In progress", "Done" or "Cancelled".
   - **Notes:**
 
 - [ ] `6BDE` Look at the rows, the column headers and the lines between the rows.
@@ -91,271 +83,80 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Each line between rows is one thin line running straight across the whole table.
   - **Notes:**
 
-### FEAT-02: Features Group by Cycle, With Later Last
-
-**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-01 ended with.
-
-**Preconditions:** **Features** page open, in one list.
-
-- [ ] `05B1` Select **Group by** above the table, then **Cycle**.
-  - **Expected:**
-    - The button reads **Group by: Cycle**.
-    - The group headings are clearly set apart from the rows.
-    - Each line between rows, above and below the group headings too, is one thin line running straight across the whole table.
-  - **Notes:**
-
-- [ ] `3E03` Read the group headings from top to bottom.
-  - **Expected:**
-    - Each heading names the schedule and the cycle, such as **Platform: 27.1**.
-    - Each heading has how many features it holds.
-    - The headings for **Platform** come first, from the earliest cycle to the latest, then those for **Field Apps**, such as **Field Apps: FA26.2**, from the earliest to the latest.
-    - The last heading is **Later**.
-  - **Notes:**
-
-### FEAT-03: A Planned Feature With No Feature Team Is Marked
-
-**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-02 ended with.
-
-**Preconditions:** **Features** page open.
-
 - [ ] `F55A` Look at the **Feature team** cell of the row 'Scheduler API'.
   - **Expected:**
-    - The cell shows **No feature team** in red, with no box.
-    - No dot is before the words.
+    - The cell shows "No feature team" in red, with no box and no dot.
     - The words start in line with the text of the cells above and below.
   - **Notes:**
 
+### FEAT-02: Features Group by Cycle, With Later Last
+
+Covered by [FEAT-28](#feat-28-features-group-by-cycle-then-by-status), and by [MEMBER-02](team-member-workflows-manual-test.md#member-02-a-team-member-sees-whats-planned-without-changing-it) in Team Member Workflows.
+
+### FEAT-03: A Planned Feature With No Feature Team Is Marked
+
+Covered by [FEAT-01](#feat-01-the-table-reads-well).
+
 ### FEAT-04: Adding and Changing Features Makes Drafts
 
-**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-03 ended with.
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-01 ended with.
 
-**Preconditions:** **Features** page open, grouped by **Cycle**, as FEAT-02 leaves it.
-
-- [ ] `C74B` Look at the empty row at the end of the table.
-  - **Expected:** Every cell of the empty row is blank.
-  - **Notes:**
+**Preconditions:** **Features** page open, in one list, as FEAT-01 leaves it.
 
 - [ ] `D7BE` In the empty row at the end of the table, type `Fictional Reports` in **Name**, then press Enter.
   - **Expected:**
     - A hollow yellow dot is in the row's slot.
     - The row is tinted faint yellow.
     - **Status** reads "Possible".
-    - The row stays where it is until the view next changes.
   - **Notes:**
 
-- [ ] `24AE` In the row 'Report Builder', select the **Target cycle** cell.
-  - **Expected:**
-    - A list of cycles opens.
-    - Each choice names its schedule and cycle.
+- [ ] `24AE` In the row 'Report Builder', select the **Target cycle** cell, and press Enter.
+  - **Expected:** A list of cycles opens, each choice naming its schedule and cycle.
   - **Notes:**
 
 - [ ] `F7F1` Choose another cycle from the list.
   - **Expected:**
     - The new cycle has a hollow yellow dot before it.
-    - A light green Live row under the row shows the old cycle.
-    - A green dot is before the old cycle.
-    - The row keeps its place until the view next changes.
+    - A light green Live row under the row shows the old cycle, with a green dot before it.
   - **Notes:**
 
-- [ ] `D44E` Select **Publish** in the top bar.
-  - **Expected:** The hollow dots on both rows are now solid yellow.
-  - **Notes:**
+**Afterwards:** Run Discard the Unpublished Changes.
 
 ### FEAT-05: An Approver Approves a Feature's Draft
 
-**Account:** Project Manager, `project.manager@fathom.test`, changed from FEAT-04.
-
-**Preconditions:** Signed in with this account. **Features** page open.
-
-- [ ] `ACE6` Select the **⋯** menu of the row 'Report Builder'.
-  - **Expected:**
-    - The menu names the feature and the change to **Target cycle**.
-    - It offers **Approve draft…** and **Reject draft…**.
-  - **Notes:**
-
-- [ ] `B991` Select **Approve draft…**.
-  - **Expected:**
-    - A dialog opens.
-    - It has an **Approve** button.
-  - **Notes:**
-
-- [ ] `EEE6` Select **Approve**.
-  - **Expected:**
-    - The row has no dot.
-    - The row has no Live row under it.
-    - Its **Target cycle** shows its new cycle.
-  - **Notes:**
+Covered by [PRODUCT-03](product-manager-workflows-manual-test.md#product-03-a-feature-is-planned-for-a-cycle-and-a-month) in Product Manager Workflows.
 
 ### FEAT-06: Feature Drafts Show on the Drafts Page
 
-**Account:** Project Manager, `project.manager@fathom.test`, the account FEAT-05 ended with.
-
-**Preconditions:** Signed in with this account.
-
-- [ ] `F088` Select the **Drafts** page in the left-hand menu.
-  - **Expected:**
-    - **To decide** is chosen beside the page's title.
-    - A row's **Record** reads `Fictional Reports`.
-    - Its **Change** reads "Added".
-    - Its **Type** reads "Feature".
-    - Its **Made by** reads "Product Manager".
-  - **Notes:**
+Proved by automated tests in `apps/web/src/drafts-page-plan.test.tsx`.
 
 ### FEAT-07: Those Who Only See the Plan Cannot Change Features
 
-**Account:** Team Member, `team.member@fathom.test`, changed from FEAT-06.
-
-**Preconditions:** Signed in with this account.
-
-- [ ] `FEEA` Select the **Features** page in the left-hand menu.
-  - **Expected:**
-    - The table shows.
-    - There is no **New feature** button.
-    - There is no empty row at the table's end.
-  - **Notes:**
-
-- [ ] `9F87` Double-click the **Status** cell of any row.
-  - **Expected:** The cell does not open for editing.
-  - **Notes:**
-
-- [ ] `64D3` Scroll right to the **Kind** column.
-  - **Expected:**
-    - There is no **New column** button.
-    - The row 'Offline Sync' shows 'New'.
-    - 'Mobile Approvals' shows 'Improvement'.
-    - 'Data Retention Controls' shows 'Fix'.
-    - 'Report Builder' shows 'New'.
-    - 'Usage Alerts' is empty.
-  - **Notes:**
-
-- [ ] `E244` Open the **Kind** column menu.
-  - **Expected:**
-    - The menu offers **Move left** and **Move right**.
-    - It has no **Edit column…**.
-  - **Notes:**
+Covered by [MEMBER-02](team-member-workflows-manual-test.md#member-02-a-team-member-sees-whats-planned-without-changing-it) in Team Member Workflows, with the server's refusals proved by automated tests in `apps/server/src/feature-column-values.test.ts`.
 
 ### FEAT-08: Features Follow a Cycle That Changes Length
 
 Covered by [REL-23](release-cycles-manual-test.md#rel-23-a-cycles-new-length-moves-the-cycles-and-releases-after-it) and [REL-24](release-cycles-manual-test.md#rel-24-approving-one-draft-of-a-new-length-approves-them-all) in Release Cycles.
 
+### FEAT-09: The Keyboard Moves Across Group Headings
+
+Proved by automated tests in `apps/web/src/grid-groups.test.tsx`.
+
 ### FEAT-10: Needed By Takes a Month and Shows Its Name
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-07.
-
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
-
-- [ ] `4B53` In the row 'Usage Alerts', select the **Needed by** cell.
-  - **Expected:** The cell is selected.
-  - **Notes:**
-
-- [ ] `E29F` Type `203003`.
-  - **Expected:** The cell reads "2030-03".
-  - **Notes:**
-
-- [ ] `9DD5` Press Enter.
-  - **Expected:**
-    - The cell reads "Mar 2030".
-    - A hollow yellow dot is before it.
-    - A light green Live row under the row shows an empty **Needed by**.
-  - **Notes:**
-
-- [ ] `5AF3` In the row 'Scheduler API', select the **Needed by** cell, type `203013`, then press Enter.
-  - **Expected:**
-    - The value is refused.
-    - The message reads "Type a month for Needed by, such as 2027-03".
-  - **Notes:**
-
-- [ ] `3A74` Press Esc.
-  - **Expected:** The cell is empty again.
-  - **Notes:**
+Proved by automated tests in `apps/web/src/project-grids.test.tsx` and `apps/web/e2e/row-marks.test.ts`.
 
 ### FEAT-11: Customers and the Note
 
-**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-10 ended with.
-
-**Preconditions:** **Features** page open.
-
-- [ ] `53DF` In the row 'Scheduler API', select the **Customers** cell and pick the first two customers offered.
-  - **Expected:**
-    - The cell shows both customers' names.
-    - Each has its own hollow yellow dot before it.
-  - **Notes:**
-
-- [ ] `C664` In the row 'Offline Sync', select the **Notes** cell.
-  - **Expected:**
-    - A side panel titled **Notes** opens beside the table.
-    - It shows the note with bold words and a bulleted list, formatted as written.
-  - **Notes:**
-
-- [ ] `616D` Close the side panel.
-  - **Expected:** The side panel closes.
-  - **Notes:**
+Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers-and-notes-in-its-details) in Scope History, which reads a feature's customers and note in its details.
 
 ### FEAT-12: Features Group by the Month They Are Needed
 
-**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-11 ended with.
-
-**Preconditions:** **Features** page opened from the left-hand menu, then **Clear view** selected in the **Views** menu above the table, so it is in one list.
-
-- [ ] `BD96` Select **Group by** above the table, then **Needed by**.
-  - **Expected:**
-    - The button reads **Group by: Needed by**.
-    - Each heading names a month and year, such as **Mar 2027**.
-    - Each heading has how many features it holds.
-    - The headings run from the earliest month to the latest.
-    - The last heading is **No date**.
-  - **Notes:**
-
-- [ ] `9088` Select **Group by: Needed by**.
-  - **Expected:**
-    - **Earliest first** and **Latest first** are listed after the groupings, under a line.
-    - **Earliest first** is ticked.
-  - **Notes:**
-
-- [ ] `D124` Select **Latest first**.
-  - **Expected:**
-    - The first heading is **No date**.
-    - The headings after it run from the latest month to the earliest.
-    - The button still reads **Group by: Needed by**.
-  - **Notes:**
-
-- [ ] `0F5D` Choose **Board** beside the **Features** heading.
-  - **Expected:**
-    - The first row label at the left of the board is **No date**.
-    - The row labels under it run from the latest month to the earliest.
-  - **Notes:**
-
-- [ ] `9B69` Choose **Table** beside the **Features** heading.
-  - **Expected:** The first heading is **No date**.
-  - **Notes:**
-
-**Afterwards:** Run Discard the Unpublished Changes.
+Proved by automated tests in `apps/web/src/feature-table.test.tsx`, `apps/web/src/group-order.test.ts`, `apps/web/src/projects-page-features.test.tsx` and `apps/web/src/feature-board-view.test.tsx`.
 
 ### FEAT-13: Feature Statuses Are a List With Meanings
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FEAT-12.
-
-**Preconditions:** Signed in with this account.
-
-- [ ] `B342` Select the **Lists** page in the left-hand menu.
-  - **Expected:**
-    - The **Lists** page opens.
-    - **Statuses** is in its table.
-  - **Notes:**
-
-- [ ] `05D1` Select the details button of **Statuses** in the table.
-  - **Expected:**
-    - The list's name has a grey **Built in** box after it.
-    - Its choices are, in order, **Possible**, **Planned**, **In progress**, **Done** and **Cancelled**.
-    - Each choice is beside a meaning of the same name.
-  - **Notes:**
-
-- [ ] `0EF5` Read the lines under the choices.
-  - **Expected:**
-    - They invite renaming, adding and retiring.
-    - They say what each of the five meanings is.
-    - The lines end with "Keep at least one choice for each."
-  - **Notes:**
+Covered by [LIST-01](lists-manual-test.md#list-01-built-in-lists-are-marked) in Lists.
 
 ### FEAT-14: A Feature's Details Open Beside the Table
 
@@ -363,13 +164,13 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 ### FEAT-15: Those Who Only See the Plan See Added Columns
 
-Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features).
+Proved by automated tests in `apps/server/src/feature-column-values.test.ts` and `apps/web/src/projects-page-feature-columns.test.tsx`.
 
 ### FEAT-16: A Column Is Added to Features as a Draft
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-13.
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-10 ended with.
 
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
+**Preconditions:** **Features** page open from the left-hand menu.
 
 - [ ] `034F` Select **New column**.
   - **Expected:**
@@ -385,59 +186,27 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 - [ ] `D48D` Select **Add column**.
   - **Expected:**
     - The dialog closes.
-    - A `Fictional Score` column is added at the right end of the table.
+    - A `Fictional Score` column is added at the right end of the table, after **Kind**.
     - The column is tinted faint yellow.
     - A hollow yellow dot is before `Fictional Score` in its header.
   - **Notes:**
 
-- [ ] `2C67` Double-click the `Fictional Score` cell of any row.
-  - **Expected:** The cell opens for editing.
-  - **Notes:**
-
-- [ ] `A7D2` Press Escape.
-  - **Expected:** The cell closes, still empty.
-  - **Notes:**
-
-- [ ] `F38D` Open the `Fictional Score` column menu.
-  - **Expected:**
-    - The menu offers **Move left**, **Move right**, **Edit column…** and **Remove column**.
-  - **Notes:**
-
-- [ ] `5FEE` Select **Edit column…**.
-  - **Expected:**
-    - The **Edit column** dialog opens.
-    - **Type** is greyed out.
-    - It has a red **Remove column** button.
-  - **Notes:**
-
-- [ ] `1BF3` Select **Cancel**.
-  - **Expected:**
-    - The dialog closes.
-    - Nothing has changed.
-  - **Notes:**
-
-- [ ] `933E` Select **Publish** in the top bar.
-  - **Expected:** The dot before `Fictional Score` is now solid yellow.
+- [ ] `933E` Run Publish.
+  - **Expected:** The dot before `Fictional Score` is now filled yellow.
   - **Notes:**
 
 ### FEAT-17: An Approver Approves a Column on Features
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, changed from FEAT-16.
 
-**Preconditions:** Signed in with this account.
-
-- [ ] `1F59` Select the **Features** page in the left-hand menu.
-  - **Expected:** The page is titled **Features**.
-  - **Notes:**
+**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
 
 - [ ] `C4A4` Open the `Fictional Score` column menu.
   - **Expected:** The menu offers **Approve…** and **Reject…**.
   - **Notes:**
 
 - [ ] `21F1` Select **Approve…**.
-  - **Expected:**
-    - A dialog opens.
-    - It has an **Approve** button.
+  - **Expected:** A dialog opens, with an **Approve** button.
   - **Notes:**
 
 - [ ] `293A` Select **Approve**.
@@ -447,89 +216,26 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
     - `Fictional Score` stays at the right end of the table, after **Kind**.
   - **Notes:**
 
+**Afterwards:** Run Reset the Database.
+
 ### FEAT-18: A Value in an Added Column Is Part of a Feature's Draft
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-17.
-
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
-
-- [ ] `DD3D` Double-click the `Fictional Score` cell of the row 'Usage Alerts', type `3.5` and press Enter.
-  - **Expected:**
-    - The cell shows `3.5`.
-    - A hollow yellow dot is before it.
-    - A light green Live row under the row has an empty `Fictional Score` cell.
-  - **Notes:**
-
-- [ ] `2D6E` Double-click the **Kind** cell of the same row, and choose 'Fix'.
-  - **Expected:**
-    - The cell shows 'Fix'.
-    - The Live row's **Kind** cell stays empty.
-  - **Notes:**
-
-- [ ] `C498` Point at the row 'Usage Alerts', and select the details button at the right of its **Name** cell.
-  - **Expected:**
-    - The side panel lists `Fictional Score` and **Kind**.
-    - Each shows the drafted value, with the live value under it.
-  - **Notes:**
-
-- [ ] `DB07` Close the side panel.
-  - **Expected:** The side panel closes.
-  - **Notes:**
-
-- [ ] `14F1` Select **Publish** in the top bar.
-  - **Expected:** The dots before `3.5` and 'Fix' on the row 'Usage Alerts' are now solid yellow.
-  - **Notes:**
+Proved by automated tests in `apps/server/src/feature-column-values.test.ts` and `apps/web/src/projects-page-feature-columns.test.tsx`.
 
 ### FEAT-19: Deleting a Column Removes It From Features
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, changed from FEAT-18.
-
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
-
-- [ ] `5E03` Open the **⋯** menu of the row 'Usage Alerts', and select **Approve draft…**.
-  - **Expected:**
-    - A dialog opens.
-    - It has an **Approve** button.
-  - **Notes:**
-
-- [ ] `D8C8` Select **Approve**.
-  - **Expected:**
-    - The row has no dot.
-    - The row has no Live row under it.
-    - It still shows `3.5` and 'Fix'.
-  - **Notes:**
-
-- [ ] `8B94` Open the `Fictional Score` column menu and select **Edit column…**.
-  - **Expected:**
-    - The **Edit column** dialog opens.
-    - It has a red **Remove column** button.
-  - **Notes:**
-
-- [ ] `0D9A` Select **Remove column**.
-  - **Expected:**
-    - The dialog closes.
-    - A notice reads "Removed the Fictional Score column."
-    - The column stays in the table.
-    - A hollow yellow dot is before its name.
-    - The column's name is struck through.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
+Proved by automated tests in `apps/web/src/projects-page-feature-columns.test.tsx` and `apps/server/src/feature-column-values.test.ts`.
 
 ### FEAT-20: New Feature Writes a Note in Its Own Panel
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-19.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-17.
 
-**Preconditions:** Restore the Seed Data run after FEAT-19. Signed in with this account. **Features** page open.
+**Preconditions:** Reset the Database run after FEAT-17. Signed in with this account. **Features** page open from the left-hand menu.
 
 - [ ] `9AB0` Select **New feature**.
   - **Expected:**
     - The **New feature** panel opens beside the table.
-    - Each label is at the left of its row.
-    - The rows are under the headings **Details** and **Columns**.
-    - The **Notes** row has "None" as its value.
-    - It has a change button at its right.
-    - There is no text box for the note.
+    - The **Notes** row reads "None", with no text box for the note.
   - **Notes:**
 
 - [ ] `8E63` Type `Fictional Atlas` in **Name**.
@@ -549,14 +255,6 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
   - **Expected:** The editor holds `First words`.
   - **Notes:**
 
-- [ ] `ECC4` Select the words `First words` in the editor.
-  - **Expected:** The words are highlighted.
-  - **Notes:**
-
-- [ ] `0C65` Select **Bold** in the toolbar.
-  - **Expected:** `First words` is bold in the editor.
-  - **Notes:**
-
 - [ ] `C7AB` In the **New feature** panel, change **Name** to `Fictional Atlas Two`.
   - **Expected:**
     - **Name** shows what was typed.
@@ -566,16 +264,17 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 - [ ] `1D2A` Select **Save** in the note's panel.
   - **Expected:**
     - The note's panel closes.
-    - The **Notes** row shows `First words` in bold.
+    - The **Notes** row shows `First words`.
     - **Name** still reads `Fictional Atlas Two`.
   - **Notes:**
 
 - [ ] `886E` Select **Add** at the foot of the **New feature** panel.
   - **Expected:**
-    - The feature is added as a draft.
-    - Its details show beside the table.
-    - `First words` is in bold under **Notes**.
+    - The feature's details show beside the table, with a hollow yellow dot before `Fictional Atlas Two`.
+    - `First words` is under **Notes**.
   - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
 
 ### FEAT-21: Effort Shows in the Unit Chosen
 
@@ -583,7 +282,7 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 **Preconditions:** **Features** page open, with no side panel open.
 
-- [ ] `B9CA` Find the **Effort** column, after **Needed by**, and look at the rows 'Audit Export', 'Usage Alerts' and 'Scheduler API'.
+- [ ] `B9CA` Look at the **Effort** cells of the rows 'Audit Export', 'Usage Alerts' and 'Scheduler API'.
   - **Expected:**
     - 'Audit Export' reads "316 h".
     - 'Usage Alerts' reads "424 h".
@@ -591,15 +290,18 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
   - **Notes:**
 
 - [ ] `2B82` Rest the pointer on "316 h".
-  - **Expected:** A tooltip reads "316 hours", and nothing more.
+  - **Expected:** A tip reads "316 hours", and nothing more.
   - **Notes:**
 
-- [ ] `9BDC` Open the column menu of **Effort**.
+- [ ] `9BDC` Open the **Effort** column menu.
   - **Expected:**
-    - Under **Show in**, the menu lists **Hours**, **Person-days (8 hours)**, **Person-weeks (8h / PD, 5 days / PW)**, **Person-months (8h / PD, 20 days / PM)** and **Person-quarters (8h / PD, 60 days / PQ)**, in that order.
-    - A tick is beside **Hours** only.
-    - Under **Decimal places**, it lists **0**, **1** and **2**.
-    - A tick is beside **2** only.
+    - Under **Show in**, the menu lists, in order:
+      - **Hours**, ticked
+      - **Person-days (8 hours)**
+      - **Person-weeks (8h / PD, 5 days / PW)**
+      - **Person-months (8h / PD, 20 days / PM)**
+      - **Person-quarters (8h / PD, 60 days / PQ)**
+    - Under **Decimal places**, it lists **0**, **1** and **2**, with **2** ticked.
     - It has no **Metrics**.
   - **Notes:**
 
@@ -618,38 +320,17 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 - [ ] `45AB` In the row 'Scheduler API', select the **Effort** cell, type `2.2`, then press Enter.
   - **Expected:**
-    - The cell reads "2.5 PD".
-    - A hollow yellow dot is before it.
+    - The cell reads "2.5 PD", with a hollow yellow dot before it.
     - A light green Live row under the row shows an empty **Effort**.
   - **Notes:**
 
-- [ ] `95FD` Select **Show details** in the **⋯** menu of 'Scheduler API'.
-  - **Expected:**
-    - The details panel opens beside the table.
-    - Its **Effort** row reads "2.5 person-days (20 hours)".
+- [ ] `95FD` Select **Show details** in the ⋯ menu of 'Scheduler API'.
+  - **Expected:** The details panel opens beside the table, its **Effort** row reading "2.5 person-days (20 hours)".
   - **Notes:**
 
 - [ ] `D165` Select the change button in the **Effort** row.
   - **Expected:**
     - A field opens holding "2.5".
-    - A menu beside it reads "person-days".
-  - **Notes:**
-
-- [ ] `CF2C` Select **hours** in the menu beside the field.
-  - **Expected:**
-    - The field now holds "20".
-    - The menu reads "hours".
-  - **Notes:**
-
-- [ ] `6EA5` Change the field to `28`, then press Enter.
-  - **Expected:**
-    - The **Effort** row reads "3.5 person-days (28 hours)".
-    - In the table 'Scheduler API' reads "3.5 PD".
-  - **Notes:**
-
-- [ ] `9DFC` Select the change button in the **Effort** row.
-  - **Expected:**
-    - A field opens holding "3.5".
     - A menu beside it reads "person-days".
   - **Notes:**
 
@@ -660,7 +341,7 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 - [ ] `70BA` Using only the keyboard, choose **person-weeks** in the menu.
   - **Expected:**
     - The menu reads "person-weeks".
-    - The field holds "0.8".
+    - The field holds "0.5".
   - **Notes:**
 
 - [ ] `6D53` Press Shift+Tab twice.
@@ -677,7 +358,7 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
     - The **Effort** row reads "5 person-days (40 hours)".
   - **Notes:**
 
-- [ ] `A7B1` Close the details panel.
+- [ ] `A7B1` Select the **×** at the top right of the details panel.
   - **Expected:**
     - The panel closes.
     - 'Scheduler API' reads "5 PD".
@@ -685,34 +366,17 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 **Afterwards:** Run Restore the Seed Data.
 
+### FEAT-23: New Feature Takes Effort in a Unit Chosen
+
+Proved by automated tests in `apps/web/src/projects-page-effort.test.tsx`.
+
 ### FEAT-24: Features Group by Release
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-22 ended with.
 
-**Preconditions:** Restore the Seed Data run after FEAT-22. **Features** page opened from the left-hand menu, in one list.
+**Preconditions:** Restore the Seed Data run after FEAT-22. **Features** page opened from the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
-- [ ] `DC19` Select **Group by** above the table.
-  - **Expected:**
-    - The menu lists, from the top:
-      - **None**, ticked
-      - **Cycle**
-      - **Release**
-      - **Needed by**
-      - **Status**
-      - **Customers**
-      - **Projects**
-      - **Proposals**
-      - **Priority**
-      - **Size**
-      - **Risk**
-      - **Feature team**
-      - **Staffed**
-      - **Kind**
-    - There is no **Then by** label.
-    - There is no **Clear grouping**.
-  - **Notes:**
-
-- [ ] `CD88` Select **Release**.
+- [ ] `CD88` Select **Group by** above the table, then **Release**.
   - **Expected:**
     - The button reads **Group by: Release**.
     - The headings and their counts read, from top to bottom:
@@ -728,55 +392,11 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
     - No heading names 'Harbor 4', 'Lantern 3' or a 'Patches' release.
   - **Notes:**
 
-### FEAT-25: Priority, Size and Risk
+### FEAT-25: A Feature's Risk Is Chosen From Its List
 
-**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-24 ended with. Step `B09A` signs in as another account.
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-24 ended with.
 
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu, then **Clear view** selected in the **Views** menu above the table: in one list, nothing in the search box and no filters.
-
-- [ ] `D750` Read the **Priority**, **Size** and **Risk** cells of 'Offline Sync'.
-  - **Expected:**
-    - **Priority** reads "Critical".
-    - **Size** reads "L".
-    - **Risk** reads "High".
-  - **Notes:**
-
-- [ ] `967C` Read the **Priority**, **Size** and **Risk** cells of 'Voice Notes'.
-  - **Expected:**
-    - **Priority** reads "Low".
-    - **Size** is empty.
-    - **Risk** is empty.
-  - **Notes:**
-
-- [ ] `5C6D` Point at the row 'Voice Notes', and select the details button at the right of its **Name** cell.
-  - **Expected:**
-    - Under **Planning**, **Priority** reads "Low".
-    - **Size** reads "None", dimmed.
-    - **Risk** reads "None", dimmed.
-  - **Notes:**
-
-- [ ] `B488` Close the side panel.
-  - **Expected:** The side panel closes.
-  - **Notes:**
-
-- [ ] `F7EB` Select the **Size** cell of 'Scheduler API', and press Enter.
-  - **Expected:**
-    - A list of choices opens.
-    - Its options read, from the top:
-      - **None**, with a line under it
-      - **XS**
-      - **S**
-      - **M**
-      - **L**
-      - **XL**
-  - **Notes:**
-
-- [ ] `0B6B` Choose **L**.
-  - **Expected:**
-    - The cell shows "L".
-    - A hollow yellow dot is before it.
-    - A light green Live row under the row reads "M" under **Size**.
-  - **Notes:**
+**Preconditions:** **Features** page open, as FEAT-24 leaves it.
 
 - [ ] `10CC` Select the **Risk** cell of 'Scheduler API', and press Enter.
   - **Expected:**
@@ -795,46 +415,28 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
     - The **Risk** cell still reads "Medium".
   - **Notes:**
 
-- [ ] `B09A` Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Engineering Operations Manager".
-  - **Notes:**
-
 ### FEAT-26: Any Column Moves
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-25 ended with.
-
-**Preconditions:** Signed in with this account.
-
-- [ ] `E2D8` Select the **Features** page in the left-hand menu.
-  - **Expected:** The page is titled **Features**.
-  - **Notes:**
-
-- [ ] `B5FA` Drag the **Kind** column header onto the **Customers** column header.
-  - **Expected:** **Kind** is between **Notes** and **Customers**.
-  - **Notes:**
+Covered by [VIEW-07](saved-views-manual-test.md#view-07-a-column-moves-for-one-account-only) in Saved Views, and the drag by [METRICS-09](metrics-manual-test.md#metrics-09-frozen-columns-stay-in-view-while-the-table-scrolls-sideways) `E9DB` in Metrics.
 
 ### FEAT-27: Features Group by Whether Anyone Is on Them
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-26 ended with.
-
-**Preconditions:** **Features** page open, in one list, as FEAT-26 leaves it.
-
-- [ ] `7E31` Select **Group by** above the table, then **Staffed**.
-  - **Expected:**
-    - The button reads **Group by: Staffed**.
-    - The headings read, from the top, **Yes**, **No** and **Not committed**.
-    - 'Offline Sync' is under **Yes**.
-    - 'Scheduler API' is under **No**.
-  - **Notes:**
+Proved by automated tests in `apps/web/src/feature-table.test.tsx`.
 
 ### FEAT-28: Features Group by Cycle, Then by Status
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-27 ended with.
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-25 ended with.
 
-**Preconditions:** Select the **Features** page in the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
+**Preconditions:** **Features** page opened from the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
 - [ ] `02D2` Select **Group by** above the table, then **Cycle**.
-  - **Expected:** The button reads **Group by: Cycle**.
+  - **Expected:**
+    - The button reads **Group by: Cycle**.
+    - The group headings are clearly set apart from the rows.
+    - Each line between rows, above and below the group headings too, is one thin line running straight across the whole table.
+    - Each heading names the schedule and the cycle, such as **Platform: 27.1**, with how many features it holds.
+    - The headings for **Platform** come first, from the earliest cycle to the latest, then those for **Field Apps**, such as **Field Apps: FA26.2**.
+    - The last heading is **Later**.
   - **Notes:**
 
 - [ ] `2622` Select **Group by: Cycle**, then **Status** under **Then by**.
@@ -845,110 +447,43 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 ### FEAT-29: A Feature Under Two Projects Shows Under Each
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-28 ended with.
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-28 ended with.
 
-**Preconditions:** Select the **Features** page in the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
+**Preconditions:** **Features** page opened from the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
 - [ ] `AC75` Select **Group by** above the table, then **Projects**.
   - **Expected:**
     - The button reads **Group by: Projects**.
     - The headings read, from the top:
-      - **Clinic Booking**
+      - **Clinic Booking Rollout**
       - **P-2001 Crane Control**
       - **P-2017 Depot Operations**
       - **Internal Tools**
-      - **P-1984 Transit Displays**
+      - **P-1984 Transit Displays Phase 2**
       - **No projects**
-    - 'Offline Sync' is under both **Clinic Booking** and **P-2001 Crane Control**.
+    - 'Offline Sync' is under both **Clinic Booking Rollout** and **P-2001 Crane Control**.
   - **Notes:**
 
-- [ ] `FCD5` Point at the **+1** after 'Offline Sync' under **Clinic Booking**.
-  - **Expected:** A tip reads "Also under P-2001 Crane Control"
+- [ ] `FCD5` Point at the **+1** after 'Offline Sync' under **Clinic Booking Rollout**.
+  - **Expected:** A tip reads "Also under P-2001 Crane Control".
   - **Notes:**
 
 ### FEAT-30: Metrics Adds Up Effort
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-29 ended with.
-
-**Preconditions:** Select the **Features** page in the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
-
-- [ ] `EEB5` Select **Metrics**.
-  - **Expected:** The **Metrics** panel opens.
-  - **Notes:**
-
-- [ ] `D7C2` Choose **Status** under **Break down by**.
-  - **Expected:**
-    - The panel's table has the columns **Status**, **Features**, **Share**, **Effort (h)**, **Average** and **None**.
-    - Its last row, **All features**, counts every feature in the table.
-    - Each figure is easy to read and lines up under its column's name.
-  - **Notes:**
-
-- [ ] `65D1` Open the column menu of **Effort** in the table.
-  - **Expected:** The menu lists the units Effort can be shown in.
-  - **Notes:**
-
-- [ ] `3A0E` Select **Person-days (8 hours)**.
-  - **Expected:** The panel's column reads **Effort (PD)**, and its totals and averages are in person-days.
-  - **Notes:**
-
-- [ ] `9D82` Choose **Needed by** under **Break down by**.
-  - **Expected:** A row for each month features are needed by, earliest first, then **Empty**.
-  - **Notes:**
-
-- [ ] `BE37` Choose **Nothing** under **Measure**.
-  - **Expected:** The **Effort (PD)**, **Average** and **None** columns go, and the rest stays.
-  - **Notes:**
-
-- [ ] `7E3B` Choose **Projects** under **Break down by**.
-  - **Expected:** Under the panel's table, a note says a feature in several projects counts in each, and is easy to read.
-  - **Notes:**
+Proved by automated tests in `apps/web/src/projects-page-effort.test.tsx`, `apps/web/src/metrics-panel.test.tsx` and `apps/web/src/features-metrics.test.tsx`.
 
 ### FEAT-31: The Product Manager Adds a Project From a Feature's Projects
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-30.
-
-**Preconditions:** Select the **Features** page in the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
-
-- [ ] `3B7E` Point at 'Offline Sync' and select the details button at the right of its **Name** cell.
-  - **Expected:** The side panel opens, headed 'Offline Sync'.
-  - **Notes:**
-
-- [ ] `8C21` Select the change button in the **Projects** row.
-  - **Expected:**
-    - A list of projects opens, with a search box.
-    - The last item, under a line, reads "New project", in blue.
-  - **Notes:**
-
-- [ ] `D45A` Type `Testing Survey`.
-  - **Expected:**
-    - The list reads "No matches".
-    - The last item reads "New project “Testing Survey”".
-  - **Notes:**
-
-- [ ] `6E09` Press Enter.
-  - **Expected:**
-    - A second panel, headed **New project**, opens under the details of 'Offline Sync'.
-    - Its **Name** shows `Testing Survey`.
-    - Its **Features** names 'Offline Sync'.
-  - **Notes:**
-
-- [ ] `A1F3` Select **Add**.
-  - **Expected:**
-    - The **New project** panel is gone.
-    - The **Projects** row of 'Offline Sync' names `Testing Survey`.
-    - The change button in the **Projects** row has focus.
-  - **Notes:**
-
-**Afterwards:** Run Discard the Unpublished Changes.
+Covered by [PROJ-17](projects-manual-test.md#proj-17-the-product-manager-adds-a-project-from-a-new-milestones-row) and [PROJ-20](projects-manual-test.md#proj-20-the-product-manager-adds-a-new-feature-to-a-proposal) in Projects.
 
 ### FEAT-32: A Column Is Added With a New List
 
-**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-31 ended with.
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-29 ended with.
 
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
+**Preconditions:** **Features** page open from the left-hand menu.
 
 - [ ] `0C22` Select **New column**.
-  - **Expected:** The **New column** dialog opens, and **Type** reads **Choice from a list**.
+  - **Expected:** The **New column** dialog opens, and **Type** reads "Choice from a list".
   - **Notes:**
 
 - [ ] `D9A0` Type `Fictional Tier` in **Name**.
@@ -961,10 +496,6 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
     - Under **List**, **List name** and **Choices** show, with a row starting with **+** under **Choices**.
   - **Notes:**
 
-- [ ] `BA76` Select **Add column**.
-  - **Expected:** The dialog stays open, with the cursor in **List name**.
-  - **Notes:**
-
 - [ ] `4CA2` Type `Fictional Tiers` in **List name**.
   - **Expected:** **List name** holds `Fictional Tiers`, with no message under it.
   - **Notes:**
@@ -973,22 +504,14 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
   - **Expected:** **Gold** shows in a row of its own above it, and the **+** row is empty again.
   - **Notes:**
 
-- [ ] `DD69` Type `Silver` and press Enter.
-  - **Expected:** **Gold** and **Silver** show, in that order.
-  - **Notes:**
-
 - [ ] `6E8E` Copy these two lines, then paste them into the **+** row:
 
   ```text
+  Silver
   Bronze
-  Iron
   ```
 
-  - **Expected:** **Gold**, **Silver**, **Bronze** and **Iron** show, in that order.
-  - **Notes:**
-
-- [ ] `5D1E` Open **Iron**'s **⋯** and select **Remove**.
-  - **Expected:** **Iron** is gone, and **Gold**, **Silver** and **Bronze** stay.
+  - **Expected:** **Gold**, **Silver** and **Bronze** show, in that order.
   - **Notes:**
 
 - [ ] `C79F` Select **Add column**.
@@ -997,64 +520,8 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
     - A `Fictional Tier` column is added at the right end of the table, with a hollow yellow dot before its name in its header.
   - **Notes:**
 
-- [ ] `44BA` Select the **Lists** page in the left-hand menu.
-  - **Expected:** `Fictional Tiers` is listed with a hollow yellow dot, as a draft.
-  - **Notes:**
-
-- [ ] `0CD6` Select `Fictional Tiers`.
-  - **Expected:** Its choices are **Gold**, **Silver** and **Bronze**, in that order.
-  - **Notes:**
-
 **Afterwards:** Run Discard the Unpublished Changes.
 
 ### FEAT-33: The Product Manager Approves a Column on Features
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, changed from FEAT-32.
-
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
-
-- [ ] `A107` Select **New column**.
-  - **Expected:** The **New column** dialog opens.
-  - **Notes:**
-
-- [ ] `D6B4` Type `Fictional Rank` in **Name**.
-  - **Expected:** **Name** holds `Fictional Rank`.
-  - **Notes:**
-
-- [ ] `A859` Choose **Number** under **Type**.
-  - **Expected:** **Type** reads **Number**.
-  - **Notes:**
-
-- [ ] `C139` Select **Add column**.
-  - **Expected:**
-    - The dialog closes.
-    - A `Fictional Rank` column is added at the right end of the table, with a hollow yellow dot before its name in its header.
-  - **Notes:**
-
-- [ ] `5F52` Select **Publish** in the top bar.
-  - **Expected:** The dot before `Fictional Rank` is now solid yellow.
-  - **Notes:**
-
-- [ ] `0A6F` Sign out, then sign in as the Product Manager, `product.manager@fathom.test`.
-  - **Expected:** Fathom opens, signed in as the Product Manager.
-  - **Notes:**
-
-- [ ] `180A` Select the **Features** page in the left-hand menu.
-  - **Expected:** `Fictional Rank` is the last column, with a solid yellow dot before its name.
-  - **Notes:**
-
-- [ ] `6D6D` Open the `Fictional Rank` column menu.
-  - **Expected:** The menu offers **Approve…** and **Reject…**.
-  - **Notes:**
-
-- [ ] `7F45` Select **Approve…**.
-  - **Expected:** A dialog opens, with an **Approve** button.
-  - **Notes:**
-
-- [ ] `0A45` Select **Approve**.
-  - **Expected:**
-    - The dialog closes.
-    - The `Fictional Rank` header has no dot.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
+Covered by [FEAT-17](#feat-17-an-approver-approves-a-column-on-features), with who approves proved by automated tests in `apps/server/src/columns-approved-by-table.test.ts`.

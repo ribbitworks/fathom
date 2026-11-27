@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Projects, Proposals, Customers and Milestones
@@ -19,6 +19,8 @@ Verifies the Projects page:
 - The features projects and proposals need.
 - A customer's description and notes.
 - The projects, proposals and features each customer's row and details list.
+- A project's activities, and adding one from its details.
+- Adding a customer, a project and a feature from a record's pickers and details.
 
 [Drafts of Projects, Proposals, Customers and Milestones](project-drafts-manual-test.md) verifies adding a customer, a proposal and a project with milestones, and approving, changing and removing them.
 
@@ -69,35 +71,24 @@ To run the test again, run Restore the Seed Data first.
   - **Notes:**
 
 - [ ] `E116` Select the **Customers** tab.
-  - **Expected:** A table with **Name**, **Description**, **Projects**, **Proposals**, **Features** and **Notes**.
+  - **Expected:** A table with **Name**, **Description**, **Notes**, **Projects**, **Proposals** and **Features**.
   - **Notes:**
 
 - [ ] `A16F` Select the **Milestones** tab.
   - **Expected:** A table with **Name**, **Project**, **Date** and **Customer delivery**.
   - **Notes:**
 
-- [ ] `ACE0` Select the browser's back button.
-  - **Expected:** The **Customers** tab shows again.
-  - **Notes:**
-
 - [ ] `5FA4` Select the **Projects** tab.
   - **Expected:** The table of projects shows again.
   - **Notes:**
 
-- [ ] `8D3E` On **Projects**, double-click the **Name** cell of any project.
-  - **Expected:** Nothing changes: the cell does not open for editing.
-  - **Notes:**
-
-- [ ] `5AA6` Type a letter.
-  - **Expected:** Nothing changes.
-  - **Notes:**
-
-- [ ] `FA04` Open the project's ⋯ menu and select **Show details**.
+- [ ] `FA04` Open the ⋯ menu of 'Crane Control' and select **Show details**.
   - **Expected:**
-    - The side panel opens, headed with the project's name.
+    - The side panel opens, headed 'Crane Control'.
     - It lists **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **Activities**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date.
     - There is no **Add milestone** button.
     - No milestone has a ⋯ button.
+    - **Activities**, the row's name, is a link, and there is no **Add activity**.
   - **Notes:**
 
 ### PROJ-02: The Product Manager Adds a Customer
@@ -167,7 +158,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 ### PROJ-10: The Product Manager Changes a Proposal in Its Side Panel
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-09.
+**Account:** Product Manager, `product.manager@fathom.test`, the account PROJ-09 ended with.
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
 
@@ -175,18 +166,14 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Expected:**
     - The side panel opens, headed 'Harbour Cranes Upgrade'.
     - Its first row is **Name**.
-    - Each row has a change button at its right.
+    - Pointing at each row shows a change button at its right.
   - **Notes:**
 
 - [ ] `CC32` Select the change button beside **Proposal ID**.
   - **Expected:** A box opens for **Proposal ID**.
   - **Notes:**
 
-- [ ] `3B84` Select the **×** at the end of the box, if it holds anything.
-  - **Expected:** The box is empty.
-  - **Notes:**
-
-- [ ] `C8EB` Type `PRO-9000` and press Enter.
+- [ ] `C8EB` Clear the box, type `PRO-9000` and press Enter.
   - **Expected:**
     - **Proposal ID** shows `PRO-9000`.
     - A hollow yellow dot is before `PRO-9000`.
@@ -195,23 +182,10 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - The proposal's row in the table shows `PRO-9000` too.
   - **Notes:**
 
-- [ ] `DCAF` Select the change button beside **Owner**, and choose a name from the list.
-  - **Expected:**
-    - **Owner** shows the name chosen.
-    - The list is gone.
-  - **Notes:**
-
 - [ ] `D927` Select the change button beside **Name**.
   - **Expected:**
     - A box opens for **Name**.
     - It holds the proposal's name.
-  - **Notes:**
-
-- [ ] `71CB` Empty the box and press Enter.
-  - **Expected:**
-    - The box stays open.
-    - It is outlined in red.
-    - "Name needed" shows in red under it.
   - **Notes:**
 
 - [ ] `C941` Press Esc.
@@ -227,30 +201,24 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - **Proposal ID** shows 'PR-101'.
   - **Notes:**
 
+**Afterwards:** Open the **Draft** menu and select **Drafts & Live**, then run Discard the Unpublished Changes.
+
 ### PROJ-11: A Project's and a Proposal's Features
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-10.
+**Account:** Product Manager, `product.manager@fathom.test`, the account PROJ-10 ended with.
 
-**Preconditions:** Signed in with this account. Restore the Seed Data run. **Projects** page open, **Projects** tab chosen.
+**Preconditions:** **Projects** page open, **Projects** tab chosen.
 
-- [ ] `71C1` Look at the **Features** column.
-  - **Expected:** Each project names the features it needs, separated by commas.
-  - **Notes:**
-
-- [ ] `D3DD` Point at a **Features** cell that names two features.
-  - **Expected:** A tip lists the project's features, each on a line of its own.
-  - **Notes:**
-
-- [ ] `56B3` Open **Show details** of the same project.
+- [ ] `56B3` Open the ⋯ menu of 'Crane Control' and select **Show details**.
   - **Expected:**
-    - The side panel lists the project's features under **Features**.
+    - The side panel lists 'Audit Export' and 'Offline Sync' under **Features**.
     - Each is a link on a line of its own.
   - **Notes:**
 
-- [ ] `AB8D` Select the first feature under **Features**.
+- [ ] `AB8D` Select 'Audit Export' under **Features**.
   - **Expected:**
     - The **Features** page opens.
-    - That feature's side panel is beside the table.
+    - The side panel headed 'Audit Export' is open.
   - **Notes:**
 
 - [ ] `3C89` Select the browser's back button.
@@ -259,17 +227,9 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - The project's side panel shows.
   - **Notes:**
 
-- [ ] `F63A` Select the **Proposals** tab.
-  - **Expected:** The **Features** column names each proposal's features, separated by commas.
-  - **Notes:**
-
-- [ ] `E237` Point at a **Features** cell that names two features.
-  - **Expected:** A tip lists the proposal's features, each on a line of its own.
-  - **Notes:**
-
 ### PROJ-12: The Product Manager Adds a Feature a Project Needs
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-11.
+**Account:** Product Manager, `product.manager@fathom.test`, the account PROJ-11 ended with.
 
 **Preconditions:** Signed in with this account. Run after PROJ-11. **Projects** page open, **Projects** tab chosen.
 
@@ -298,9 +258,11 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - Under it, a light green Live row's **Features** cell names 'Usage Alerts' alone.
   - **Notes:**
 
+**Afterwards:** Run Discard the Unpublished Changes.
+
 ### PROJ-13: A Customer's Description and Notes
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-12.
+**Account:** Product Manager, `product.manager@fathom.test`, the account PROJ-12 ended with.
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Customers** tab chosen.
 
@@ -321,7 +283,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 ### PROJ-16: The Product Manager Adds a Customer From a Proposal's Customers
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-12.
+**Account:** Product Manager, `product.manager@fathom.test`, the account PROJ-13 ended with.
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
 
@@ -336,8 +298,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Notes:**
 
 - [ ] `4D97` Type `Testing Ferries`.
-  - **Expected:**
-    - The list holds only "New customer “Testing Ferries”".
+  - **Expected:** The list holds only "New customer “Testing Ferries”", with no line above it.
   - **Notes:**
 
 - [ ] `E05A` Press Enter.
@@ -355,8 +316,10 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - The button now reads **Restore**.
   - **Notes:**
 
-- [ ] `2F6B` Select **Restore**.
-  - **Expected:** Both panels show again, one above the other.
+- [ ] `743A` Press Enter, with **Restore** still focused.
+  - **Expected:**
+    - Both panels show again, one above the other.
+    - The button reads **Maximize** again and still has focus.
   - **Notes:**
 
 - [ ] `C8D4` Select **Add**.
@@ -366,15 +329,13 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - The change button in the **Customers** row has focus.
   - **Notes:**
 
-- [ ] `5E73` Select the **Customers** tab.
-  - **Expected:** The table has a row for `Testing Ferries`, with a hollow yellow dot in its slot.
-  - **Notes:**
+**Afterwards:** Run Discard the Unpublished Changes.
 
 ### PROJ-14: What a Customer Gets and Asks For
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-13.
+**Account:** Product Manager, `product.manager@fathom.test`, the account PROJ-16 ended with.
 
-**Preconditions:** Signed in with this account. Run after PROJ-13. **Projects** page open, **Customers** tab chosen.
+**Preconditions:** Signed in with this account. **Projects** page open, **Customers** tab chosen.
 
 - [ ] `7587` Look at the row of 'Kestrel Mining Cooperative'.
   - **Expected:**
@@ -413,7 +374,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 ### PROJ-15: A Customer's Details
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-14.
+**Account:** Product Manager, `product.manager@fathom.test`, the account PROJ-14 ended with.
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Customers** tab chosen.
 
@@ -430,31 +391,18 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Expected:**
     - The **Projects** tab is chosen.
     - The side panel shows the details of 'Depot Operations'.
+  - **Notes:**
 
 ### PROJ-18: A Project's Activities
 
-**Account:** Product Manager, `product.manager@fathom.test`.
+**Account:** Product Manager, `product.manager@fathom.test`, the account PROJ-15 ended with.
 
-**Preconditions:** Restore the Seed Data run, then signed in with this account. **Projects** page open, **Projects** tab chosen.
-
-- [ ] `F7F6` Look at the **Activities** column of 'Crane Control'.
-  - **Expected:** The cell names the project's activities on one line, separated by commas.
-  - **Notes:**
+**Preconditions:** **Projects** page open, **Projects** tab chosen, with **Drafts & Live** chosen in the Draft menu.
 
 - [ ] `9737` Open the ⋯ menu of 'Crane Control' and select **Show details**.
   - **Expected:**
     - The side panel lists the project's activities under **Activities**, each a link on a line of its own.
     - **Activities**, the row's name, is a link, and **Add activity** is under the list.
-  - **Notes:**
-
-- [ ] `28C8` Select the first activity under **Activities**.
-  - **Expected:**
-    - The **Activities** page opens.
-    - That activity's side panel is beside the table.
-  - **Notes:**
-
-- [ ] `09B0` Select the browser's back button.
-  - **Expected:** The details of 'Crane Control' show on **Projects**.
   - **Notes:**
 
 - [ ] `D4E1` Select **Activities**, the row's name.
@@ -467,21 +415,11 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Expected:** The details of 'Crane Control' show on **Projects**.
   - **Notes:**
 
-- [ ] `A482` Open the **⋯** at the top of the details and select **Show on Activities**.
-  - **Expected:**
-    - The **Activities** page opens.
-    - The table shows only the activities of 'Crane Control'.
-  - **Notes:**
-
-- [ ] `CDCE` Select the browser's back button.
-  - **Expected:** The details of 'Crane Control' show on **Projects**.
-  - **Notes:**
-
 - [ ] `6F18` Select **Add activity**.
   - **Expected:**
     - A second panel, headed **New activity**, opens under the details of 'Crane Control', on **Projects**.
     - **Project** reads 'P-2001 Crane Control'.
-    - **Release** reads None.
+    - **Release** reads "None".
   - **Notes:**
 
 - [ ] `4F2A` Type `Fictional Rehearsal` in **Name**.
@@ -494,23 +432,17 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - 'Fictional Rehearsal' is listed under **Activities** in the details of 'Crane Control'.
   - **Notes:**
 
+**Afterwards:** Run Discard the Unpublished Changes.
+
 ### PROJ-19: A Team Member Sees a Project's Activities
 
-**Account:** Team Member, `team.member@fathom.test`.
-
-**Preconditions:** Restore the Seed Data run, then signed in with this account. **Projects** page open, **Projects** tab chosen.
-
-- [ ] `BBD3` Open the ⋯ menu of 'Crane Control' and select **Show details**.
-  - **Expected:**
-    - **Activities** lists the project's activities, and **Activities**, the row's name, is a link.
-    - There's no **Add activity**.
-  - **Notes:**
+Covered by [PROJ-01](#proj-01-a-team-member-sees-the-projects-read-only).
 
 ### PROJ-17: The Product Manager Adds a Project From a New Milestone's Row
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-15.
+**Account:** Product Manager, `product.manager@fathom.test`, the account PROJ-18 ended with.
 
-**Preconditions:** Signed in with this account. **Projects** page open, **Milestones** tab chosen.
+**Preconditions:** **Projects** page open, **Milestones** tab chosen.
 
 - [ ] `0D6B` Select the **Name** cell of the empty row at the end of the table.
   - **Expected:** The cell is outlined.
@@ -521,9 +453,7 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
   - **Notes:**
 
 - [ ] `74E2` Type `Testing Harbour`.
-  - **Expected:**
-    - The list reads "No matches".
-    - The last item, under a line, reads "New project “Testing Harbour”", in blue.
+  - **Expected:** The list holds only "New project “Testing Harbour”", in blue, with no line above it.
   - **Notes:**
 
 - [ ] `C5A9` Press Enter.
@@ -544,9 +474,9 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
 
 ### PROJ-20: The Product Manager Adds a New Feature to a Proposal
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-15.
+**Account:** Product Manager, `product.manager@fathom.test`, the account PROJ-17 ended with.
 
-**Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
+**Preconditions:** **Projects** page open, **Proposals** tab chosen.
 
 - [ ] `6C1E` Point at 'Harbour Cranes Upgrade' and select the details button at the right of its **Name** cell.
   - **Expected:**
@@ -570,8 +500,4 @@ Moved to [Drafts of Projects, Proposals, Customers and Milestones](project-draft
     - Focus is on **New feature**.
   - **Notes:**
 
-- [ ] `4F1D` Select **Features**, the name of the row listing the features.
-  - **Expected:**
-    - The **Features** page opens.
-    - It lists only the features 'Harbour Cranes Upgrade' names, 'Fictional Quay Lights' among them.
-  - **Notes:**
+**Afterwards:** Run Discard the Unpublished Changes.

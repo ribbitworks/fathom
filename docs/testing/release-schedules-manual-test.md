@@ -4,14 +4,14 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Schedules
 
 ## Scope
 
-Verifies the Releases page's **Schedules** tab: adding a schedule and setting up its cycles, the table and a schedule's details, renaming, retiring and approving a schedule, and who may change a schedule. [Releases](releases-manual-test.md) verifies the **Releases** tab, [Cycles](release-cycles-manual-test.md) the **Cycles** tab, and [Release Timelines and Links](releases-timeline-manual-test.md) the timeline and the links between the tabs.
+Verifies the Releases page's **Schedules** tab: adding a schedule and setting up its cycles, the table and a schedule's details, retiring and approving a schedule, and that a role that can't change schedules sees no pencils. [Releases](releases-manual-test.md) verifies the **Releases** tab, [Cycles](release-cycles-manual-test.md) the **Cycles** tab, and [Release Timelines and Links](releases-timeline-manual-test.md) the timeline and the links between the tabs.
 
 ## Test Environment
 
@@ -38,11 +38,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From a
 - **Selecting a schedule in the table:** selecting the details button at the right of the first cell of the schedule's row, which opens the schedule in the side panel.
 - **A schedule's details:** the side panel for the selected schedule, with the sections **Details** and **Cycles**. **Details** has a row for each of the table's columns, then **Name pattern**. **Cycles** is a table with the columns **Cycle**, **Starts**, **Ends** and **Duration**.
 - **Pencil:** the change button at the right of a row of **Details**. In **Cycles**, the pencil in a cycle's **Duration** cell opens a menu of **This cycle only…** and **This and later cycles…**.
-- **A schedule's ⋯ menu:** the ⋯ menu of a schedule's row. The **⋯** at the top of the schedule's side panel opens the same menu. The row's menu offers:
-  - **Retire** or **Restore** to those who change schedules.
-  - **Publish draft…** for the account's own unpublished draft.
-  - **Resubmit** for the schedule's own draft, and **Discard draft** for one the account changed.
-  - **Approve draft…** and **Reject draft…** to an account whose role approves its drafts.
+- **A schedule's ⋯ menu:** the ⋯ menu of a schedule's row. The **⋯** at the top of the schedule's side panel opens the same menu.
 - **Seeded dates in this test:** the cycle today is in, such as '26.4', is Platform's current cycle. The examples after "such as" are as the seed data is when added on 17 November 2026.
 
 ## Test Cases
@@ -197,8 +193,8 @@ Covered by [REL-32](#rel-32-a-schedules-details-follow-its-row), which reads a s
     - It has **From the start of**, with the line "Cycles before it keep their names and dates" under its label.
   - **Notes:**
 
-- [ ] `B1D3` Choose `2027-02-01 (Sprint 3)` in **From the start of**.
-  - **Expected:** **From the start of** reads `2027-02-01 (Sprint 3)`.
+- [ ] `B1D3` Choose the day that ends in "(Sprint 3)" in **From the start of**, such as "Feb 1, 2027 (Sprint 3)".
+  - **Expected:** **From the start of** reads that choice.
   - **Notes:**
 
 - [ ] `F3AA` Replace the number in **Each cycle lasts** with `4`.
@@ -222,37 +218,13 @@ Covered by [REL-32](#rel-32-a-schedules-details-follow-its-row), which reads a s
 
 #### REL-09: A Schedule Is Renamed by a Draft
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-08 ended with.
-
-**Preconditions:** Run after REL-08. `Testing Schedule` open in the side panel.
-
-- [ ] `7FC0` In the side panel, select the pencil at the right of the **Schedule** row.
-  - **Expected:**
-    - A dialog titled "Rename Testing Schedule" opens.
-    - The **Name** box holds `Testing Schedule`.
-  - **Notes:**
-
-- [ ] `6D73` Replace the name with `Tested Schedule`.
-  - **Expected:** The **Name** box holds `Tested Schedule`.
-  - **Notes:**
-
-- [ ] `7FFB` Select **Save**.
-  - **Expected:**
-    - A notification says "Drafted the new name."
-    - The side panel's heading and the table's row each show a hollow yellow dot before `Tested Schedule`.
-  - **Notes:**
-
-- [ ] `E7F7` Select the **⋯** at the right of the first cell of the row for `Tested Schedule`, then **Discard draft**.
-  - **Expected:**
-    - A notification says "Discarded the draft."
-    - The side panel and the table show `Testing Schedule` again, with no dot.
-  - **Notes:**
+Proved by automated tests in `apps/web/src/releases-page-schedule-details.test.tsx`.
 
 #### REL-10: A Schedule Is Retired by a Draft
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-09 ended with.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-08 ended with.
 
-**Preconditions:** Run after REL-09. `Testing Schedule` open in the side panel.
+**Preconditions:** Run after REL-08. `Testing Schedule` open in the side panel.
 
 - [ ] `9ABF` Select the **⋯** at the right of the first cell of the row for `Testing Schedule`, then **Retire**.
   - **Expected:**
@@ -296,30 +268,21 @@ Covered by [REL-41](release-cycles-manual-test.md#rel-41-the-cycles-tab-lists-ev
 
 #### REL-28: Schedules Are Grouped by Status
 
-**Account:** Project Manager, `project.manager@fathom.test`, the account REL-11 ended with.
-
-**Preconditions:** Run after REL-11. **Releases** page selected again in the left-hand menu, then the **Schedules** tab.
-
-- [ ] `E45B` Select **Group by**, then **Status**.
-  - **Expected:**
-    - The button reads **Group by: Status**.
-    - A **Current** heading is over `Testing Schedule`, 'Platform' and 'Field Apps', with how many it holds.
-    - 'Patches' is not listed.
-  - **Notes:**
+Proved by automated tests in `apps/web/src/releases-page-schedules.test.tsx`.
 
 #### REL-29: A Schedule Ends on Its Last Day
 
-Covered by [REL-34](#rel-34-a-schedule-is-changed-from-its-details), which sets a schedule's end in its dialog, and [REL-36](releases-timeline-manual-test.md#rel-36-each-tabs-timeline-draws-what-its-table-lists), which saves one and reads it on the timeline.
+Covered by [REL-36](releases-timeline-manual-test.md#rel-36-each-tabs-timeline-draws-what-its-table-lists), which saves a schedule's last day and reads it on the timeline.
 
 #### REL-30: Schedules Group by Status
 
-Covered by [REL-28](#rel-28-schedules-are-grouped-by-status), which groups the schedules by status.
+Proved by automated tests in `apps/web/src/releases-page-schedules.test.tsx`.
 
 ### Part 4: The Schedules Tab With the Seed Data
 
 #### REL-31: The Schedules Tab Shows Each Schedule Now
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-28.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-11.
 
 **Preconditions:** Restore the Seed Data run, then signed in with this account.
 
@@ -329,7 +292,8 @@ Covered by [REL-28](#rel-28-schedules-are-grouped-by-status), which groups the s
 
 - [ ] `C61E` Select the **Schedules** tab.
   - **Expected:**
-    - **Schedules** is chosen, and the button at the top right reads **New schedule**.
+    - **Schedules** is chosen.
+    - At the top right, the Export button, an arrow pointing down onto a line, is just before **New schedule**.
     - The table's columns are, in order: **Schedule**, **Current cycle**, **Cycle starts**, **Cycle ends**, **Features this cycle**, **Next release**, **Release date**, **Cycle length** and **Schedule ends**.
     - The rows are not under any heading, and the button beside **Metrics** reads "Group by", with nothing after it.
   - **Notes:**
@@ -386,79 +350,17 @@ Covered by [REL-28](#rel-28-schedules-are-grouped-by-status), which groups the s
     - The control reads "Hide earlier cycles", and has the focus.
   - **Notes:**
 
-- [ ] `6EBD` Select **Hide later cycles**.
-  - **Expected:** The section is as it first was: "Earlier cycles" folded, then the current cycle and the next five, then "Later cycles".
-  - **Notes:**
-
 #### REL-33: A Schedule Is Changed Only While Nobody Holds It and It Isn't Retiring
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-32 ended with.
-
-**Preconditions:** **Releases** page open on the **Schedules** tab.
-
-- [ ] `DBFB` Select 'Platform' in the table.
-  - **Expected:** A grey lock comes before 'Platform' in the side panel's heading.
-  - **Notes:**
-
-- [ ] `5E8B` Point at the lock.
-  - **Expected:** Its tip reads "Being changed by Second Engineering Operations Manager".
-  - **Notes:**
-
-- [ ] `F35D` Select 'Patches' in the table.
-  - **Expected:** The side panel shows 'Patches', with a **Retired** box after its name and no lock.
-  - **Notes:**
-
-- [ ] `2C38` Select **⋯** at the right of the first cell of the row for 'Patches'.
-  - **Expected:** The menu offers **Restore**.
-  - **Notes:**
+Covered by [DRAFT-16](unpublished-changes-manual-test.md#draft-16-a-record-someone-else-is-changing-is-held) in Unpublished Changes, which reads the lock and who holds the record. That a retired schedule offers **Restore** is proved by automated tests in `apps/web/src/releases-page-schedule-details.test.tsx`.
 
 #### REL-34: A Schedule Is Changed From Its Details
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-33 ended with.
-
-**Preconditions:** **Releases** page open on the **Schedules** tab.
-
-- [ ] `CFF8` Select 'Field Apps' in the table.
-  - **Expected:** The side panel shows 'Field Apps', with no lock and no **Retired** box.
-  - **Notes:**
-
-- [ ] `FB54` Point at the **Schedule ends** row.
-  - **Expected:** A pencil shows at the row's right.
-  - **Notes:**
-
-- [ ] `731E` Select the pencil.
-  - **Expected:**
-    - A dialog titled "Change when Field Apps ends" opens.
-    - Its **Schedule ends** field reads "No end date" in grey, with the line "The last cycle ends on this day." under it.
-  - **Notes:**
-
-- [ ] `C617` Type a day in the middle of the second cycle after the current one, as the **Cycles** table shows it, as its digits, such as `20270915`.
-  - **Expected:**
-    - Under the field, how many cycles there are in all, such as "5 cycles in all", then a table of the last cycles.
-    - The last of them keeps its name, starts on its own first day, and ends on the day typed.
-  - **Notes:**
-
-- [ ] `AF4E` Select **Cancel**.
-  - **Expected:** The dialog closes, and **Schedule ends** still reads "No end date".
-  - **Notes:**
-
-- [ ] `889D` Select the pencil in the **Duration** cell of the cycle after the current one, in the **Cycles** section.
-  - **Expected:** A menu offers **This cycle only…** and **This and later cycles…**.
-  - **Notes:**
-
-- [ ] `20EC` Select **This and later cycles…**.
-  - **Expected:**
-    - A dialog titled "Change the length or names of Field Apps's cycles" opens.
-    - Its start is the cycle chosen, its length `6` and unit **Months**, and its naming as **Name pattern** shows it.
-  - **Notes:**
-
-- [ ] `4E9F` Select **Cancel**.
-  - **Expected:** The dialog closes, and nothing in the panel has changed.
-  - **Notes:**
+Covered by [REL-08](#rel-08-cycles-change-only-from-the-start-of-a-cycle), which changes a schedule's cycles from its details, and [REL-36](releases-timeline-manual-test.md#rel-36-each-tabs-timeline-draws-what-its-table-lists), which changes when a schedule ends.
 
 #### REL-35: A Role That Can't Change Schedules Sees No Pencils
 
-**Account:** Team Member, `team.member@fathom.test`, changed from REL-34.
+**Account:** Team Member, `team.member@fathom.test`, changed from REL-32.
 
 **Preconditions:** Signed in with this account. **Releases** page open on the **Schedules** tab.
 
@@ -472,8 +374,4 @@ Covered by [REL-28](#rel-28-schedules-are-grouped-by-status), which groups the s
 
 - [ ] `CAF8` Point at the **Duration** cell of the cycle after the current one, in the **Cycles** section.
   - **Expected:** No pencil shows.
-  - **Notes:**
-
-- [ ] `E4E4` Select **⋯** at the right of the first cell of the row for 'Field Apps'.
-  - **Expected:** The menu offers neither **Retire** nor **Restore**.
   - **Notes:**

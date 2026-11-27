@@ -11,7 +11,7 @@ last_updated: "2026-11-27"
 
 ## Scope
 
-Verifies the Releases page's **Releases** tab: its table and a release's details, making a release, changing a release's name, ship day, colour and note as drafts, and rejecting and resubmitting a release's draft. [Schedules](release-schedules-manual-test.md) verifies the **Schedules** tab, [Cycles](release-cycles-manual-test.md) the **Cycles** tab, and [Release Timelines and Links](releases-timeline-manual-test.md) the timeline and the links between the tabs.
+Verifies the Releases page's **Releases** tab: its table and a release's details, its activities, making a release, changing a release's name, ship day and colour as drafts, and rejecting and resubmitting a release's draft. [Schedules](release-schedules-manual-test.md) verifies the **Schedules** tab, [Cycles](release-cycles-manual-test.md) the **Cycles** tab, and [Release Timelines and Links](releases-timeline-manual-test.md) the timeline and the links between the tabs.
 
 ## Test Environment
 
@@ -36,12 +36,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 - **Releases table:** the table on the **Releases** tab, under the timeline, with a row for each release. Its columns are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Activities** and **Status**. Releases that have shipped show only once **Show shipped** is chosen in the **Views** menu.
 - **A release's details:** the side panel for the selected release, headed with its name and, under it, its key. Its **Details** rows are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Activities**, **Status**, **Colour** and **Note**.
 - **Pencil:** the change button at the right of a row of **Details**, for **Release**, **Ships on**, **Cycles** and **Colour**.
-- **A release's ⋯ menu:** the ⋯ menu of a release's row. The **⋯** at the top of the release's side panel opens the same menu. The row's menu offers:
-  - **Show on Activities** to those who see features, while the release has activities.
-  - **Remove release**, and **Add note…** while the release has no note, to those who change releases.
-  - **Publish draft…** for the account's own unpublished draft.
-  - **Resubmit** for the release's draft, and **Discard draft** for one the account changed, or, to those who change schedules, one a change to its schedule's cycles moves.
-  - **Approve draft…** and **Reject draft…** to an account whose role approves its drafts.
+- **A release's ⋯ menu:** the ⋯ menu of a release's row. The **⋯** at the top of the release's side panel opens the same menu.
 - **Timeline:** the section headed **Timeline** above the table, with the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right.
   - It has a row for each schedule the table lists, named on the left, with each release as a strip of its colour and a diamond on the day it ships, over the schedule's cycles, which are drawn faint.
 - **Seeded dates in this test:** 'Lantern 3' is the 'Field Apps' release two cycles after the current one. The examples after "such as" are as the seed data is when added on 17 November 2026.
@@ -62,7 +57,8 @@ To run the test again, start again from Restore the Seed Data.
 
 - [ ] `F2C3` Select the **Releases** page in the left-hand menu.
   - **Expected:**
-    - **Releases** is the tab chosen, and the button at the top right reads **New release**.
+    - **Releases** is the tab chosen.
+    - At the top right, the Export button, an arrow pointing down onto a line, is just before **New release**.
     - The table's columns are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Activities** and **Status**.
     - The rows show as one list, with no headings.
   - **Notes:**
@@ -106,14 +102,6 @@ To run the test again, start again from Restore the Seed Data.
     - **Note** shows the release's whole note.
   - **Notes:**
 
-- [ ] `7E5C` Select the open button at the right of the **Note** row.
-  - **Expected:** A panel titled "Note for Harbor 2 LTS" opens beside the release's details.
-  - **Notes:**
-
-- [ ] `A106` Select the **×** at the top right of the note's panel.
-  - **Expected:** The release's details are still open.
-  - **Notes:**
-
 #### REL-39: A Release Is Added to a Schedule Chosen
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account REL-38 ended with.
@@ -141,7 +129,7 @@ To run the test again, start again from Restore the Seed Data.
 - [ ] `EA8F` Select **Make release**.
   - **Expected:**
     - The dialog closes, and a notification says "Drafted the new release."
-    - 'Fictional Harbor' is listed, its **Schedule** reading 'Platform', with a hollow dot in its slot.
+    - `Fictional Harbor` is listed, its **Schedule** reading 'Platform', with a hollow yellow dot in its slot.
     - Its details are open beside the table.
   - **Notes:**
 
@@ -187,16 +175,6 @@ Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-cha
   - **Expected:** The details of 'Harbor 2 LTS' show on **Releases**.
   - **Notes:**
 
-- [ ] `69B7` Open the **⋯** at the top of the details and select **Show on Activities**.
-  - **Expected:**
-    - The **Activities** page opens.
-    - The table shows only 'Release testing'.
-  - **Notes:**
-
-- [ ] `B709` Select the browser's back button.
-  - **Expected:** The details of 'Harbor 2 LTS' show on **Releases**.
-  - **Notes:**
-
 - [ ] `054A` Select **Add activity**.
   - **Expected:**
     - A second panel, headed **New activity**, opens under the details of 'Harbor 2 LTS', on **Releases**.
@@ -211,7 +189,7 @@ Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-cha
 - [ ] `D559` Select **Add**.
   - **Expected:**
     - The **New activity** panel closes, and focus is on **Add activity**.
-    - 'Fictional Sign-off' is listed under **Activities** in the details of 'Harbor 2 LTS'.
+    - `Fictional Sign-off` is listed under **Activities** in the details of 'Harbor 2 LTS'.
   - **Notes:**
 
 **Afterwards:** Run Discard the Unpublished Changes.
@@ -305,7 +283,7 @@ Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-cha
 - [ ] `DC88` Select the pencil at the right of the **Ships on** row.
   - **Expected:**
     - A dialog titled "Change when Lantern Three ships" opens, with only a **Ships on** field, which is empty.
-    - The field shows, in grey, that cycle's last day, then "end of" and the cycle's name in brackets.
+    - The field shows, in grey, the last day of the release's cycle, then "(end of", the cycle's name and ")", such as "Dec 31, 2027 (end of FA27.2)".
   - **Notes:**
 
 - [ ] `DED5` Type the day a month after that one in **Ships on**, as its digits, such as `20280131`.
@@ -366,24 +344,4 @@ Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-cha
 
 #### REL-27: A Release's Note Is Written Beside Its Details
 
-**Account:** Product Manager, `product.manager@fathom.test`, the account REL-22 ended with.
-
-**Preconditions:** Run after REL-22. **Releases** page open, with no side panel open.
-
-- [ ] `AF73` Select the **⋯** at the right of the first cell of the row for 'Lantern 3', then **Add note…**.
-  - **Expected:**
-    - The details of 'Lantern 3' open beside the table.
-    - Beside them, a panel titled "Note for Lantern 3" opens, with an empty note ready for typing and **Save** at the bottom.
-  - **Notes:**
-
-- [ ] `E879` Type `Ships with the new depot maps`.
-  - **Expected:** The note reads `Ships with the new depot maps`.
-  - **Notes:**
-
-- [ ] `AAD0` Select **Save**.
-  - **Expected:**
-    - The note's panel closes, and a notification says "Drafted the note on Lantern 3."
-    - The **Note** row of the details reads `Ships with the new depot maps`, after a hollow yellow dot.
-  - **Notes:**
-
-**Afterwards:** Run Discard the Unpublished Changes.
+Covered by [PROJECT-07](project-manager-workflows-manual-test.md#project-07-a-release-is-made-with-a-note) in Project Manager Workflows, which writes a release's note from **Add note…** in its row's ⋯ menu.

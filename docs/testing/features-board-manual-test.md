@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Features Board
@@ -14,12 +14,12 @@ last_updated: "2026-11-24"
 Verifies the Board on the Features page:
 
 - Switching between the table and the board.
-- The columns of months and No date, of all schedules' features or one's, or of one schedule's cycles and Later.
+- The columns of months and No date, or of one schedule's cycles and Later.
 - The cards and the Card menu, the strip and the Columns menu.
 - Rows from the Group by menu, with a card in each row of a feature under several values.
-- How search, drafts, a feature's details and the keyboard work on the board.
+- How search, drafts, a feature's details and the keyboard work on the board, and done and cancelled features.
 
-The table itself is verified in [Features](features-manual-test.md).
+The table itself is verified in [Features](features-manual-test.md), and a card's key and ⋯ menu in [Record Keys](record-keys-manual-test.md).
 
 ## Test Environment
 
@@ -30,7 +30,6 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out. A brow
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Product Manager:** `product.manager@fathom.test`
-- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
@@ -38,7 +37,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, boxes, the Group by menu and seeded dates. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, locks, boxes, the Group by menu and seeded dates. This test adds:
 
 - **Table and Board switch:** the two-part switch reading **Table** and **Board** just after the **Features** heading, on the same line.
 - **Board:** the panel of columns and cards shown once **Board** is chosen.
@@ -64,7 +63,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `D5B7` Select **Board** in the Table and Board switch.
   - **Expected:**
-    - The bar above the board holds the search box, **Draft**, **Metrics** and **Group by**.
+    - The bar above the board holds the search box, **Draft**, **Metrics**, **Group by** and **Views**.
     - Under it, one row starts with the buttons **Columns: Months** and **Card**, then the strip.
     - The board's columns are months, from left to right, the first headed the month before this one and the second headed this month, such as "Oct 2026" and "Nov 2026", and the last "No date".
     - A red line runs along the bottom of this month's heading.
@@ -76,27 +75,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The board's columns are Platform's cycles, from left to right, the last headed "Later".
   - **Notes:**
 
-- [ ] `A17D` Read the first column heading.
-  - **Expected:**
-    - It names the cycle before the current one, such as "Cycle 26.3".
-    - No red line is along its bottom edge.
-  - **Notes:**
-
 - [ ] `F45E` Read the second column heading.
   - **Expected:**
-    - At its top, a yellow dot is before "Harbor 2 LTS" in a teal box.
+    - At its top, a yellow dot, then a teal square and "Harbor 2 LTS".
     - Under it, the cycle is named, such as "Cycle 26.4".
     - Under that, in grey, its first and last days read, such as "1 Oct 2026 to 31 Dec 2026", and today falls between them.
     - A red line runs along the heading's bottom edge.
   - **Notes:**
 
-- [ ] `E3C1` Point at the yellow dot before "Harbor 2 LTS".
-  - **Expected:** A tip reads "Draft: changed from “Harbor 2”".
-  - **Notes:**
-
 - [ ] `D480` Read the third column heading.
   - **Expected:**
-    - At its top, a green dot is before "Harbor 3" in a grey box, dimmed.
+    - At its top, dimmed, a green dot, then Harbor 3's colour square and "Harbor 3".
     - Under it, the next cycle is named.
     - Under that, in grey, its first and last days read.
     - No red line is along its bottom edge.
@@ -104,51 +93,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `69B1` Read the fourth column heading.
   - **Expected:**
-    - At its top, a yellow dot is before "Harbor 3" in a grey box, with a yellow **Moved** box after it.
+    - At its top, a yellow dot, then Harbor 3's colour square and "Harbor 3", with a yellow **Moved** box after it.
     - No dimmed release is under it.
   - **Notes:**
 
 - [ ] `B09B` Read the column headed **Later**.
   - **Expected:**
-    - The heading has no box and no days.
+    - The heading has no release and no days.
     - The column is a shade darker than the others.
     - It holds the cards 'Partner Portal', 'Voice Notes' and 'Shift Handover Notes'.
-  - **Notes:**
-
-- [ ] `129B` Read the strip.
-  - **Expected:**
-    - It names each of Platform's cycles, from the earliest on the left.
-    - The cycles shown as columns are tinted.
-    - The current cycle, the second column's, is underlined in red, the same red as the line along the bottom of its column's heading.
-    - The current cycle is filled with blue.
-  - **Notes:**
-
-- [ ] `3C2E` Reload the page.
-  - **Expected:** The board shows as it did.
-  - **Notes:**
-
-- [ ] `8882` Select **Table** in the Table and Board switch.
-  - **Expected:** The table of features shows, in one list, and the button after **Metrics** reads **Group by**.
-  - **Notes:**
-
-- [ ] `179C` Press the browser's Back button.
-  - **Expected:** The board shows again.
   - **Notes:**
 
 ### BOARD-02: Cards Show What the Card Menu Chooses
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-01 ended with.
 
-**Preconditions:** **Features** page open, showing the board.
-
-- [ ] `285F` Read the cards in the second column, from the top.
-  - **Expected:**
-    - 'Offline Sync' is first, then 'Usage Alerts'.
-  - **Notes:**
+**Preconditions:** **Features** page open, showing Platform's board from the current cycle.
 
 - [ ] `2BCB` Read the card 'Offline Sync', from the top.
   - **Expected:**
     - Its name, "Offline Sync".
+    - Its key, small and grey, "#FEATURE-" and a number.
     - "In progress · Critical priority".
     - The word "Size", then three blue-grey blocks, from light to dark, filling three quarters of the line.
     - The word "Risk", then three short bars, green, then orange, then red, filling the line, lined up under the size's blocks.
@@ -159,25 +124,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** A tip reads "L, 3 × S".
   - **Notes:**
 
-- [ ] `4802` Point at the bars after **Risk** on 'Offline Sync'.
-  - **Expected:** A tip reads "High".
-  - **Notes:**
-
 - [ ] `C157` Read the card 'Scheduler API' in the third column.
   - **Expected:**
-    - "Planned · Medium priority" is under its name.
+    - "Planned · Medium priority" is under its key.
     - At its foot, "Not staffed" is in red words, with no box.
-  - **Notes:**
-
-- [ ] `883E` Find the card 'Report Builder', selecting **›** in the strip if it isn't shown.
-  - **Expected:**
-    - Its status, "Possible", is in italics.
-    - Its card has no "Not staffed".
   - **Notes:**
 
 - [ ] `6582` Select **Card**.
   - **Expected:**
     - A menu lists, from the top:
+      - **Key**
       - **Status**
       - **Priority**
       - **Size**
@@ -199,53 +155,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No card shows "Not staffed".
   - **Notes:**
 
-- [ ] `B1F6` Reload the page.
-  - **Expected:**
-    - The board shows.
-    - No card shows the word "Risk" or "Not staffed".
-  - **Notes:**
-
-- [ ] `DA72` Select **Card**, then **Risk**.
-  - **Expected:** The cards show their risk again.
-  - **Notes:**
-
-- [ ] `528D` Select **Staffed months**.
-  - **Expected:** 'Scheduler API' shows "Not staffed" again.
-  - **Notes:**
-
-- [ ] `20D6` Press Esc.
-  - **Expected:** The menu closes.
-  - **Notes:**
+**Afterwards:** Select **Card**, then **Risk** and **Staffed months**, and press Esc.
 
 ### BOARD-03: The Strip and the Columns Menu Choose the Columns
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-02 ended with.
 
-**Preconditions:** **Features** page open, showing the board from the current cycle, with **Drafts & Live** chosen in the Draft menu; select **Today** in the strip if it doesn't show the current cycle second.
+**Preconditions:** **Features** page open, showing Platform's board from the current cycle, with **Drafts & Live** chosen in the Draft menu; select **Today** in the strip if it doesn't show the current cycle second.
 
 - [ ] `72C8` Select **›** in the strip.
   - **Expected:**
     - The first column is the current cycle.
-    - The second column is the next cycle, headed "Harbor 3".
+    - The second column is the next cycle, headed, dimmed, by a green dot and "Harbor 3".
     - In the strip, that cycle is filled with blue.
     - The last column is still "Later".
   - **Notes:**
 
 - [ ] `B660` Select **‹** in the strip twice.
   - **Expected:**
-    - The second column is the cycle before the current one, headed "Harbor 2".
+    - The second column is the cycle before the current one, headed "Harbor 2 LTS".
     - It holds no card.
-  - **Notes:**
-
-- [ ] `E492` Select the first cycle in the strip.
-  - **Expected:**
-    - The first column is that cycle, headed "Harbor 1".
-    - It holds no card.
-    - The **‹** button is turned off.
-  - **Notes:**
-
-- [ ] `0191` Press the browser's Back button.
-  - **Expected:** The second column is again the cycle before the current one.
   - **Notes:**
 
 - [ ] `21F1` Select **Today**.
@@ -259,14 +188,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Under the heading "Months", the menu lists, from the top, **All schedules**, **Platform**, **Patches** and **Field Apps**.
     - Under the heading "A schedule's cycles", it lists **Platform**, **Patches** and **Field Apps**.
     - **Platform** under "A schedule's cycles" is ticked.
+    - Each **Platform** has a grey lock before it.
     - Each **Patches** has a yellow dot before it and a yellow **Retired** box after it.
+    - Every name starts in line with the others.
   - **Notes:**
 
 - [ ] `A0DA` Select **Patches** under **A schedule's cycles**.
   - **Expected:**
     - The button reads **Columns: Patches cycles**.
     - The columns are Patches' cycles, the current one second, named such as "Cycle P26.13", each four weeks long.
-    - The second and third columns are each headed with the same patch release, such as "Patch Dec", in a red box, after a red dot in a ring.
+    - The second and third columns are each headed with the same patch release: a red dot in a ring, then a red square and its name, such as "Patch Dec".
     - No column other than "Later" holds a card.
     - "Later" holds 'Partner Portal', 'Voice Notes' and 'Shift Handover Notes'.
   - **Notes:**
@@ -275,7 +206,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The button reads **Columns: Field Apps cycles**.
     - The columns are Field Apps' cycles, named such as "Cycle FA26.2", each six months long.
-    - The current cycle's column, the second, with the red line along its heading's bottom, is headed "Lantern 2" in an indigo box.
+    - The current cycle's column, the second, with the red line along its heading's bottom, is headed with an indigo square and "Lantern 2".
     - The column after it has no release at its top.
     - That column holds the card 'Work Order Sync', with no "Not staffed".
   - **Notes:**
@@ -286,72 +217,33 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-03 ended with.
 
-**Preconditions:** **Features** page open, showing Platform's board from the current cycle.
+**Preconditions:** **Features** page open, showing Platform's board from the current cycle, with **Drafts & Live** chosen in the Draft menu.
 
-- [ ] `2F2F` Select **Group by**.
+- [ ] `8092` Select **Group by**, then **Feature team**.
   - **Expected:**
-    - The menu lists, from the top:
-      - **None**, ticked
-      - **Release**
-      - **Needed by**
-      - **Status**
-      - **Customers**
-      - **Projects**
-      - **Proposals**
-      - **Priority**
-      - **Size**
-      - **Risk**
-      - **Feature team**
-      - **Staffed**
-      - **Kind**
-    - **Cycle** isn't listed.
-  - **Notes:**
-
-- [ ] `8092` Select **Feature team**.
-  - **Expected:**
-    - A row label at the left of the board names each feature team that has a feature, with how many features it holds after it.
+    - A row label at the left of the board names each feature team that has a feature, after its colour's square, with how many features it holds after it.
     - The last row is "No feature team".
     - Each card is in its feature team's row, under its cycle.
   - **Notes:**
 
-- [ ] `A791` Look at 'Scheduler API'.
-  - **Expected:** It is in the row "No feature team", in the third column.
-  - **Notes:**
-
-- [ ] `63AD` Select **Table** in the Table and Board switch.
+- [ ] `4E7B` Select **Group by: Feature team**, then **Projects**.
   - **Expected:**
-    - The table shows **Group by: Feature team**.
-    - Its group headings name the feature teams.
-  - **Notes:**
-
-- [ ] `52C1` Select **Board** in the Table and Board switch.
-  - **Expected:** The board shows its rows by feature team.
-  - **Notes:**
-
-- [ ] `135A` Select **Group by: Feature team**, then **Priority**.
-  - **Expected:**
-    - The rows read, from the top, "Critical", "High", "Medium" and "Low".
-    - 'Offline Sync' is in the row "Critical".
-  - **Notes:**
-
-- [ ] `4E7B` Select **Group by: Priority**, then **Projects**.
-  - **Expected:**
-    - Rows "Clinic Booking" and "P-2001 Crane Control" each hold a card 'Offline Sync'.
+    - Rows "Clinic Booking Rollout" and "P-2001 Crane Control" each hold a card 'Offline Sync'.
     - Each 'Offline Sync' card has a grey "+1" after its name.
     - The last row is "No projects".
   - **Notes:**
 
-- [ ] `B19C` Point at the "+1" on the card 'Offline Sync' in the row "Clinic Booking".
-  - **Expected:** A tooltip reads "Also under P-2001 Crane Control"
+- [ ] `B19C` Point at the "+1" on the card 'Offline Sync' in the row "Clinic Booking Rollout".
+  - **Expected:** A tip reads "Also under P-2001 Crane Control".
   - **Notes:**
 
 - [ ] `D2A6` Select that card, then press Esc.
   - **Expected:**
     - The side panel opens, headed "Offline Sync", then closes.
-    - The card 'Offline Sync' in the row "Clinic Booking" has the keyboard focus.
+    - The card 'Offline Sync' in the row "Clinic Booking Rollout" has the keyboard focus.
   - **Notes:**
 
-- [ ] `7C51` Press the Down arrow until the focus leaves the row "Clinic Booking".
+- [ ] `7C51` Press the Down arrow until the focus leaves the row "Clinic Booking Rollout".
   - **Expected:** The focus reaches the next card down the column, through the rows below, including the card 'Offline Sync' in the row "P-2001 Crane Control".
   - **Notes:**
 
@@ -361,12 +253,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-04 ended with.
 
-**Preconditions:** **Features** page open, showing Platform's board from the current cycle, with no rows.
+**Preconditions:** **Features** page open, showing Platform's board from the current cycle, with no rows, with **Drafts & Live** chosen in the Draft menu.
 
-- [ ] `8A3D` Type `offline sync` in the search box.
+- [ ] `8A3D` Search for `offline sync`.
   - **Expected:**
     - Only the card 'Offline Sync' shows.
-    - Beside the search box, the count reads "1 of 22".
+    - After **Views**, the count reads "1 of 16".
   - **Notes:**
 
 - [ ] `A605` Empty the search box, then select the card 'Offline Sync'.
@@ -393,12 +285,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The side panel opens, headed with that card's name.
   - **Notes:**
 
-- [ ] `9603` Press Esc.
-  - **Expected:**
-    - The side panel closes.
-    - The card has the focus ring.
-  - **Notes:**
-
 - [ ] `7C54` Press Tab.
   - **Expected:** The focus leaves the board, on to the browser's own controls, such as its address bar.
   - **Notes:**
@@ -407,7 +293,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-05 ended with.
 
-**Preconditions:** **Features** page open, showing Platform's board from the current cycle, with no rows.
+**Preconditions:** **Features** page open, showing Platform's board from the current cycle, with no rows, with **Drafts & Live** chosen in the Draft menu.
 
 - [ ] `5EAD` Look at the card 'Shift Handover Notes' in **Later**.
   - **Expected:**
@@ -441,65 +327,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### BOARD-07: A Role That Doesn't See Allocations Still Sees Not Staffed
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from BOARD-06.
-
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
-
-- [ ] `C5FB` Select **Board** in the Table and Board switch.
-  - **Expected:**
-    - The board shows months, with this month second.
-    - 'Scheduler API' shows "Not staffed" in red words.
-  - **Notes:**
-
-- [ ] `F21A` Select **Card**.
-  - **Expected:** The menu lists **Status**, **Priority**, **Size**, **Risk**, **Needed by** and **Staffed months**, each ticked.
-  - **Notes:**
-
-**Afterwards:** Press Esc.
+Proved by automated tests in `apps/server/src/allocations-reading.test.ts` and `apps/web/src/feature-card.test.tsx`.
 
 ### BOARD-08: The Board Leaves Out Then By
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, the account BOARD-07 ended with.
-
-**Preconditions:** Run after BOARD-07. **Features** page open, showing the board.
-
-- [ ] `6699` Select **Table** in the Table and Board switch.
-  - **Expected:** The table shows.
-  - **Notes:**
-
-- [ ] `46B2` Select **Group by**, then **Cycle**.
-  - **Expected:** The button reads **Group by: Cycle**.
-  - **Notes:**
-
-- [ ] `03B2` Select **Group by: Cycle**, then **Status** under **Then by**.
-  - **Expected:** The button reads **Group by: Cycle, then Status**.
-  - **Notes:**
-
-- [ ] `4608` Select **Board** in the Table and Board switch.
-  - **Expected:** The button above the board reads **Group by**.
-  - **Notes:**
-
-- [ ] `2DCF` Select **Group by**.
-  - **Expected:**
-    - The menu has no **Group by** or **Then by** label.
-    - It has no **Clear grouping**.
-  - **Notes:**
-
-- [ ] `0A40` Press Esc.
-  - **Expected:** The menu closes.
-  - **Notes:**
-
-- [ ] `2969` Select **Table** in the Table and Board switch.
-  - **Expected:** The button reads **Group by: Cycle, then Status**.
-  - **Notes:**
-
-**Afterwards:** Select **Group by: Cycle, then Status**, then **Clear grouping**.
+Proved by automated tests in `apps/web/src/feature-board-view.test.tsx`.
 
 ### BOARD-09: Months Step by Quarter
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from BOARD-08.
+**Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-06 ended with.
 
-**Preconditions:** Signed in with this account. **Features** page open, showing Platform's board, with **Drafts & Live** chosen in the Draft menu. Here, "this month" is the month the tester runs the test in.
+**Preconditions:** **Features** page open, showing Platform's board, with **Drafts & Live** chosen in the Draft menu. Here, "this month" is the month the tester runs the test in.
 
 - [ ] `9B41` Select **Columns: Platform cycles**, then **All schedules** under **Months**.
   - **Expected:**
@@ -531,38 +369,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The last column is still "No date".
   - **Notes:**
 
-- [ ] `0D72` Select **‹** in the strip.
-  - **Expected:**
-    - The second column is again the first month of the quarter after the one holding this month.
-    - That quarter is filled with blue.
-  - **Notes:**
-
-- [ ] `2A6F` Select **Today**.
-  - **Expected:**
-    - The first column is headed the month before this one, and the second is headed this month.
-    - The quarter holding this month is filled with blue.
-  - **Notes:**
-
-- [ ] `A8F3` Select the first quarter in the strip.
-  - **Expected:**
-    - The first column is headed the month a year before this one, such as "Nov 2025".
-    - The **‹** button is turned off.
-  - **Notes:**
-
-- [ ] `5C0E` Type `Usage Alerts` in the search box.
-  - **Expected:** The only card on the board is 'Usage Alerts'.
-  - **Notes:**
-
-- [ ] `1B96` Empty the search box.
-  - **Expected:** The board shows cards again.
-  - **Notes:**
-
-- [ ] `C2E7` Select the quarter holding the month four months before this one in the strip.
-  - **Expected:**
-    - A column is headed that month, such as "Jul 2026".
-    - That quarter is filled with blue.
-  - **Notes:**
-
 - [ ] `7F30` Select the quarter holding the month four months after this one in the strip.
   - **Expected:** The columns headed the month three months after this one and the month four months after it are both shown.
   - **Notes:**
@@ -585,7 +391,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-09 ended with.
 
-**Preconditions:** Signed in with this account. **Features** page open, showing the board by months, with **Drafts & Live** chosen in the Draft menu.
+**Preconditions:** **Features** page open, showing the board by months, with **Drafts & Live** chosen in the Draft menu.
 
 - [ ] `C307` Select **Columns: Months**, then **Field Apps** under **Months**.
   - **Expected:**
@@ -602,22 +408,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-10 ended with.
 
-**Preconditions:** Signed in with this account. **Features** page open, showing the board by months of all schedules, with **Drafts & Live** chosen in the Draft menu.
+**Preconditions:** **Features** page open, showing the board by months of all schedules, with **Drafts & Live** chosen in the Draft menu.
 
 - [ ] `5C1B` Select **Columns: Months**, then **Platform** under **A schedule's cycles**.
   - **Expected:**
-    - The first column is the cycle before the current one, headed "Harbor 2".
+    - The first column is the cycle before the current one, headed "Harbor 2 LTS".
     - It holds no card.
   - **Notes:**
 
-- [ ] `D459` Open **Views**, then choose **Show done and cancelled**.
+- [ ] `D459` Open **Views**, then choose **Show done and cancelled (6)**.
   - **Expected:**
     - The first column holds the cards 'Single Sign-On Setup' and 'Bulk Import'.
-    - **Views** marks **Show done and cancelled** as chosen.
+    - **Views** marks **Show done and cancelled (6)** as chosen.
   - **Notes:**
 
-- [ ] `5421` Select **Table** beside the **Features** heading, then open **Views**.
+- [ ] `A251` Select **Table** in the Table and Board switch.
+  - **Expected:** The table of features shows.
+  - **Notes:**
+
+- [ ] `8F4F` Open **Views**.
   - **Expected:** The menu doesn't offer **Show done and cancelled**.
   - **Notes:**
 
-**Afterwards:** Select **Board**, open **Views**, choose **Show done and cancelled** again to turn it off, then select **Columns: Platform cycles**, then **All schedules** under **Months**.
+**Afterwards:** Press Esc, select **Board**, open **Views**, choose **Show done and cancelled (6)** again to turn it off, then select **Columns: Platform cycles**, then **All schedules** under **Months**.

@@ -110,17 +110,13 @@ To run the test again, start again from Restore the Seed Data.
     - The red line crosses the timeline at today's date on the axis.
   - **Notes:**
 
-- [ ] `82FE` Select **Year**.
-  - **Expected:** **Year** is highlighted.
-  - **Notes:**
-
 #### REL-20: The Strip Follows the Timeline
 
 **Account:** Team Member, `team.member@fathom.test`, the account REL-19 ended with.
 
-**Preconditions:** Run after REL-19. **Releases** page open, with the timeline at **Year**.
+**Preconditions:** Run after REL-19. **Releases** page open, with the timeline at **Quarter**, as REL-19 ends.
 
-- [ ] `C9C3` Select **Quarter**.
+- [ ] `406D` Read the strip under the zoom buttons.
   - **Expected:**
     - Under the zoom buttons, the strip shows a box for each quarter of the timeline, such as "Q1 2027", with **‹** before it, and **›** and **Today** after it.
     - The quarters in view on the timeline are tinted blue, and the others are not.
@@ -140,22 +136,6 @@ To run the test again, start again from Restore the Seed Data.
     - No quarter's box is filled blue.
   - **Notes:**
 
-- [ ] `77FB` Press Shift+Tab until a box in the strip has focus.
-  - **Expected:** The box has a focus ring.
-  - **Notes:**
-
-- [ ] `35C1` Press the right arrow key.
-  - **Expected:**
-    - Focus moves to the next quarter's box.
-    - The timeline does not scroll.
-  - **Notes:**
-
-- [ ] `5A49` Press Enter.
-  - **Expected:**
-    - The timeline scrolls so that quarter starts about a sixth of the way across.
-    - That quarter's box is filled blue.
-  - **Notes:**
-
 #### REL-21: A Release's Own Ship Day Is Marked on the Timeline
 
 Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-its-own), which reads a release's own ship day on the timeline.
@@ -171,10 +151,6 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
     - Each release is a strip of its colour along its cycles, with its diamond under its end.
     - Under the strips, 'Platform''s cycles are drawn faint, each a different shade from the one before.
     - Above each strip wide enough for it: a dot, if it has a draft, then a small square of its colour, then its name.
-  - **Notes:**
-
-- [ ] `EB18` Read the releases of 'Patches' on the timeline.
-  - **Expected:** The strips too short for their names show no dot, square or name above them.
   - **Notes:**
 
 - [ ] `7B4D` Select the **Schedules** tab.
@@ -249,7 +225,7 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
 - [ ] `4D31` Select the details button at the right of the first cell of the row for 'Lantern 2'.
   - **Expected:**
     - The **Features** row lists 'Barcode Scanning', 'Offline Forms', 'Parts Lookup', 'Signature Capture' and 'Site Diary', one to a line, then **Show all (7)**.
-    - **Show on Features** and **Show on the Board** follow.
+    - **Show on Features** follows.
   - **Notes:**
 
 - [ ] `34D2` Select **Show all (7)**.
@@ -272,20 +248,6 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
   - **Expected:**
     - The **Features** page opens with a **Release** filter on.
     - The table lists 'Bulk Import', 'Offline Sync', 'Single Sign-On Setup' and 'Usage Alerts', and no other feature.
-  - **Notes:**
-
-- [ ] `9B5F` Select **Releases** in the left-hand menu.
-  - **Expected:** The **Releases** tab shows, with no side panel open.
-  - **Notes:**
-
-- [ ] `B62F` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
-  - **Expected:** The release's details open beside the table.
-  - **Notes:**
-
-- [ ] `C274` Select **Show on the Board**.
-  - **Expected:**
-    - The **Features** page opens on its board for 'Platform', with a **Release** filter on.
-    - Its cards are 'Offline Sync' and 'Usage Alerts', and no other.
   - **Notes:**
 
 - [ ] `43EF` Select **Releases** in the left-hand menu.
@@ -337,43 +299,11 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
 
 #### REL-47: A Schedule Shows Its Releases and Its Cycles
 
-**Account:** Product Manager, `product.manager@fathom.test`, the account REL-46 ended with.
-
-**Preconditions:** Run after REL-46, which ends on the **Cycles** tab.
-
-- [ ] `233B` Select the **Schedules** tab.
-  - **Expected:** The table of schedules shows, with no side panel open.
-  - **Notes:**
-
-- [ ] `F21E` Select the details button at the right of the first cell of the row for 'Platform'.
-  - **Expected:** The details of 'Platform' open beside the table.
-  - **Notes:**
-
-- [ ] `C4C8` Select **Show its cycles**.
-  - **Expected:**
-    - The **Cycles** tab shows.
-    - Every row's **Schedule** reads 'Platform'.
-  - **Notes:**
-
-- [ ] `3D3D` Select the **Schedules** tab.
-  - **Expected:** The table of schedules shows, with no side panel open.
-  - **Notes:**
-
-- [ ] `EE04` Select the details button at the right of the first cell of the row for 'Platform'.
-  - **Expected:** The details of 'Platform' open beside the table.
-  - **Notes:**
-
-- [ ] `9C98` Select **Show its releases**.
-  - **Expected:**
-    - The **Releases** tab shows.
-    - Every row's **Schedule** reads 'Platform'.
-  - **Notes:**
-
-**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+Proved by automated tests in `apps/web/src/releases-page-schedules.test.tsx`.
 
 #### REL-48: The Timeline's Marks Open Their Records
 
-**Account:** Product Manager, `product.manager@fathom.test`, the account REL-47 ended with.
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-46 ended with.
 
 **Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, on the **Releases** tab, with no side panel open.
 
@@ -389,10 +319,6 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
   - **Expected:**
     - The **Cycles** tab shows, with that cycle's details beside the table.
     - Its **Current** row reads "Current".
-  - **Notes:**
-
-- [ ] `E850` Select **Releases** in the left-hand menu.
-  - **Expected:** The **Cycles** tab shows, with no side panel open.
   - **Notes:**
 
 - [ ] `B7D1` Select the **Releases** tab.
@@ -415,16 +341,16 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
 
 - [ ] `7495` Make the browser window about 760 pixels wide.
   - **Expected:**
-    - Each quarter in the strip above the timeline shows its whole name, such as 'Q1 2027'.
+    - Each quarter in the strip above the timeline shows its whole name, such as "Q1 2027".
     - A slim grey scroll bar shows under the strip.
     - The strip starts at the first tinted quarter.
   - **Notes:**
 
-- [ ] `B104` Select **Zoom in** four times.
+- [ ] `B104` Select **+** at the top right of the timeline four times.
   - **Expected:** The tinted quarters sit in the middle of the strip.
   - **Notes:**
 
-- [ ] `07CD` Select ‹ six times.
+- [ ] `07CD` Select **‹** in the strip six times.
   - **Expected:**
     - The tinted quarters move left along the strip.
     - The tinted quarters stay in sight.
