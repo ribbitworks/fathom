@@ -293,6 +293,18 @@ export async function hireLeading(
     .values({ teamId, leadPlannedHireId: plannedHireId, fromDate });
 }
 
+// Records a person leading a team from a day, or no one when null, straight into its table, as
+// hireLeading does, to give a planned hire's lead a lead before it.
+export async function personLeading(
+  teamId: string,
+  leadId: string | null,
+  fromDate: string,
+): Promise<void> {
+  await test.connection
+    .insert(featureTeamLeads)
+    .values({ teamId, leadId, fromDate });
+}
+
 // The records of planned hires joining and leaving a team.
 export const hireMemberships = (id: string) =>
   test.connection

@@ -77,7 +77,7 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
 - **Feature teams menu:** Replaces Teams, ending with New feature team.
 - **Team panel:** Opens beside the chart, with Name, Colour, Feature lead and Members. Membership changes are drafts from the date shown.
   - Feature lead's and Members' pickers describe each person as People's Manager picker does, as [A choice with a description](../../standards/ui-conventions/entering-and-saving.md#choices) sets out.
-  - Members lists people by name, then planned hires, as the approved design draws them: each dimmed, by its placeholder name, in grey italics where it is made from its position and ID, then its key, such as #HIRE-12, and the day it joined, such as from Oct 1, 2026. A hire leading the team is drawn the same way in Feature lead, with the day it started to lead.
+  - Members lists people by name, then planned hires, as the approved design draws them: each dimmed, by its placeholder name, in grey italics where it is made from its position and ID, then its key, such as #HIRE-12, and the day it joined, such as from Oct 1, 2026. A hire leading the team is drawn the same way in Feature lead, with the day it started to lead, which a role that doesn't see Feature team dates isn't given when the hire took over from a person.
   - On any date but today, Name and Colour can't change and the team can't be removed, since they take no date.
   - A lead is chosen from anyone who hasn't left, never a planned hire; someone not yet a member joins in the same draft.
   - Readers without Personal details plan by month, from its first day, and aren't told when that day falls outside someone's employment. The Approver is told.

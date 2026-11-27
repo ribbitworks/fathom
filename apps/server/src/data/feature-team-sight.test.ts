@@ -10,6 +10,9 @@ import {
   draftHoldsNotStarted,
   draftShownTo,
   featureTeamTier,
+  hireLeadDaySeen,
+  type LeadRecord,
+  leadRunOf,
   namesSeen,
   peopleAsTodayOn,
   peopleDraftChanges,
@@ -477,5 +480,48 @@ describe("what a reader sees of the days a draft gives", () => {
     expect(teamSight(access, everyone, { day: today, today }).seesDays).toBe(
       seesDays,
     );
+  });
+});
+
+describe("the day a planned hire leading a team started to", () => {
+  const led = (leadId: string | null, fromDate: string, person = false) => ({
+    leadId,
+    personId: person ? leadId : null,
+    fromDate,
+  });
+  // The run of the last record, the one in force.
+  const runOf = (records: LeadRecord[]) =>
+    leadRunOf(records, records.at(-1) as LeadRecord);
+
+  it.each<[string, LeadRecord[], boolean]>([
+    ["no record before it", [], false],
+    [
+      "no lead",
+      [led(lead, "2026-03-01", true), led(null, "2026-03-15")],
+      false,
+    ],
+    ["another planned hire", [led("hire-other", "2026-03-01")], false],
+    ["a person", [led(lead, "2026-03-01", true)], true],
+  ])(
+    "takes over from %s on the first day of its run",
+    (_, before, afterPerson) => {
+      expect(
+        runOf([...before, led(hire, "2026-04-01"), led(hire, "2026-04-20")]),
+      ).toEqual({ from: "2026-04-01", afterPerson });
+    },
+  );
+
+  it.each([
+    ["a reader of Feature team dates, from a person", true, true, "2026-04-01"],
+    ["any reader, from no person", false, false, "2026-04-01"],
+    ["no other reader, from a person", false, true, undefined],
+  ])("is shown to %s", (_, seesDays, afterPerson, shown) => {
+    expect(hireLeadDaySeen({ from: "2026-04-01", afterPerson }, seesDays)).toBe(
+      shown,
+    );
+  });
+
+  it("is none for a team with no run", () => {
+    expect(hireLeadDaySeen(undefined, true)).toBeUndefined();
   });
 });
