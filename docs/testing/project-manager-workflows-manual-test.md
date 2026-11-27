@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-project-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Project Manager Workflows
@@ -14,8 +14,8 @@ last_updated: "2026-11-25"
 Verifies the workflows of [Working as a Project Manager](../help/working-as-a-project-manager.md) on the seed data:
 
 - Tracking proposals: adding one, choosing its features and changing its status.
-- Keeping a project on track: a new milestone, approved by a Product Manager, its scope history and its features.
-- Moving a feature to another cycle and a milestone to another date.
+- Keeping a project on track: a new milestone, its scope history and its features.
+- Moving a feature to another cycle and a milestone to another date, and seeing what a release holds.
 - Making a release with a note, approved by a Product Manager.
 - Seeing who works on what in Capacity's Feature teams and Allocations tabs.
 - Checking, approving and rejecting others' drafts.
@@ -47,16 +47,22 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### PROJECT-01: A Project Is Kept on Track
 
-**Account:** Project Manager, `project.manager@fathom.test`; the first test case. Step `0DC4` signs in as another account.
+**Account:** Project Manager, `project.manager@fathom.test`; the first test case.
 
-**Preconditions:** Reset the Database run. Signed in with this account.
+**Preconditions:** Reset the Database run. Signed out.
 
-- [ ] `E13F` Select the **Projects** page in the left-hand menu.
-  - **Expected:** The **Projects** tab is chosen.
+- [ ] `C618` Sign in as the Project Manager, `project.manager@fathom.test`.
+  - **Expected:** The **Overview** page opens, reading "Acting as Project Manager".
+  - **Notes:**
+
+- [ ] `704A` Select the **Projects** link beside **Keep Projects and Proposals Current**.
+  - **Expected:**
+    - The **Projects** page opens.
+    - The **Projects** tab is chosen.
   - **Notes:**
 
 - [ ] `AA7F` Select the details button at the right of the **Name** cell of 'Depot Operations'.
@@ -97,49 +103,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - A pill above the table reads "Projects: P-2017 Depot Operations".
   - **Notes:**
 
-- [ ] `D014` Select the **×** on the pill.
-  - **Expected:**
-    - The pill is gone.
-    - The table lists every feature.
-  - **Notes:**
-
 - [ ] `C73C` Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-- [ ] `0DC4` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Product Manager".
-  - **Notes:**
-
-- [ ] `5A60` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
-  - **Notes:**
-
-- [ ] `34BB` Type `Fictional site survey` in the search box.
-  - **Expected:** One row is shown:
-    - **Record** reads `Fictional site survey of P-2017 Depot Operations`.
-    - **Change** reads "Added".
-    - **Type** reads "Milestone".
-    - **Made by** reads "Project Manager".
-  - **Notes:**
-
-- [ ] `6F30` Tick that row's tick box.
-  - **Expected:**
-    - The tick box is ticked.
-    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
-  - **Notes:**
-
-- [ ] `B83C` Select **Approve 1 draft…** at the right of the page's heading.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
-  - **Notes:**
-
-- [ ] `C3C3` Select **Approve** in the dialog.
-  - **Expected:** A notice reads "Approved 1 draft."
-  - **Notes:**
-
 ### PROJECT-02: Who Works on What, by Month and by Team
 
-**Account:** Project Manager, `project.manager@fathom.test`, changed from PROJECT-01.
+**Account:** Project Manager, `project.manager@fathom.test`, the same as PROJECT-01.
 
 **Preconditions:** Signed in with this account.
 
@@ -169,24 +139,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - Cells list features, each on a line of its own with its percentage at the right, such as "50%".
   - **Notes:**
 
-- [ ] `7E22` Search for `Alvena Sanford`, and read her cell in the current month's column.
-  - **Expected:**
-    - The cell lists 'Barcode Scanning' with "10%" and 'Signature Capture' with "90%", each on a line of its own.
-    - There is no line under them.
-  - **Notes:**
-
-- [ ] `FBBB` Clear the search box, and type `Silje Holm-Schrøder`. Read the cell in the current month's column.
+- [ ] `FBBB` Search for `Silje Holm-Schrøder`, and read her cell in the current month's column.
   - **Expected:**
     - The cell lists 'Offline Sync' with "75%" and 'Usage Alerts' with "50%".
     - Its last line reads "Over", with "+25%" at the right.
     - "Over" and "+25%" are red and bold.
-  - **Notes:**
-
-- [ ] `4A9E` Clear the search box, and type `Lorenza Thiel`. Read the cell in the current month's column.
-  - **Expected:**
-    - The cell lists 'Mobile Approvals' with "50%".
-    - Its last line reads "Under", with "−50%" at the right.
-    - "Under" and "−50%" are red and bold.
   - **Notes:**
 
 ### PROJECT-03: Others' Drafts Are Approved and Rejected
@@ -215,10 +172,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - **Made by** reads "Engineering Operations Manager".
   - **Notes:**
 
-- [ ] `98DC` Press Esc.
-  - **Expected:** The details panel closes.
-  - **Notes:**
-
 - [ ] `BE6F` Tick that row's tick box.
   - **Expected:**
     - The tick box is ticked.
@@ -230,7 +183,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `D32E` Select **Approve** in the dialog.
-  - **Expected:** A notice reads "Approved 1 draft."
+  - **Expected:** A notification says "Approved 1 draft."
   - **Notes:**
 
 - [ ] `4CBA` Clear the search box, and type `Simone Jean`.
@@ -259,7 +212,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `5B7D` Select **Reject**.
   - **Expected:**
-    - A notice reads "Rejected 1 draft."
+    - A notification says "Rejected 1 draft."
     - The table reads "No matching drafts".
   - **Notes:**
 
@@ -270,19 +223,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - **Reason** reads "Fictional reason: wait for the new team plan."
   - **Notes:**
 
-- [ ] `C6D2` Select the **Org chart** page in the left-hand menu.
-  - **Expected:** The chart opens.
-  - **Notes:**
-
-- [ ] `9B65` Choose **Feature teams** in the teams switch.
-  - **Expected:**
-    - A team's first card names 'Search and discovery'.
-    - No dot is before the name.
-  - **Notes:**
-
 ### PROJECT-04: A Project Manager Keeps a View of One Project's Milestones
 
-Removed: keeping a view is checked in [VIEW-01](saved-views-manual-test.md#view-01-a-personal-view-is-kept-to-its-maker) in Saved Views.
+Covered by [VIEW-01](saved-views-manual-test.md#view-01-a-personal-view-is-kept-to-its-maker) in Saved Views.
 
 ### PROJECT-05: A Proposal Is Added, Given a Feature and Won
 
@@ -356,12 +299,29 @@ Removed: keeping a view is checked in [VIEW-01](saved-views-manual-test.md#view-
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
+- [ ] `4EAA` Select the **Releases** page in the left-hand menu, then the **Releases** tab.
+  - **Expected:** The table lists the releases, 'Harbor 3' among them.
+  - **Notes:**
+
+- [ ] `5482` Select the details button at the right of the first cell of the row for 'Harbor 3'.
+  - **Expected:**
+    - The side panel is headed 'Harbor 3'.
+    - Its **Features** row lists 'Scheduler API' among its features, one to a line.
+    - **Show on Features** is under the list.
+  - **Notes:**
+
+- [ ] `0EA8` Select **Show on Features**.
+  - **Expected:**
+    - The **Features** page opens.
+    - The table lists only the features the release's **Features** row listed, 'Scheduler API' among them.
+  - **Notes:**
+
 - [ ] `F5B9` Select the **Projects** page in the left-hand menu, then the **Projects** tab.
   - **Expected:** The table lists the projects.
   - **Notes:**
 
 - [ ] `BC4D` Select the details button at the right of the **Name** cell of 'Depot Operations'.
-  - **Expected:** Under **Milestones**, `Fictional site survey` shows the date for `2030-03-15`, with no dot.
+  - **Expected:** Under **Milestones**, `Fictional site survey` shows the date for `2030-03-15`, with a yellow dot before it.
   - **Notes:**
 
 - [ ] `5DEB` Open the **⋯** menu of `Fictional site survey` under **Milestones**, and select **Edit…**.
@@ -395,7 +355,7 @@ Removed: keeping a view is checked in [VIEW-01](saved-views-manual-test.md#view-
 
 - [ ] `047C` In the second browser, run Discard the Unpublished Changes.
   - **Expected:**
-    - A notice says "Discarded" followed by the number of changes.
+    - A notification says "Discarded" followed by the number of changes.
     - The Publish button is gone.
   - **Notes:**
 
@@ -420,7 +380,7 @@ Removed: keeping a view is checked in [VIEW-01](saved-views-manual-test.md#view-
   - **Notes:**
 
 - [ ] `D146` Choose the last cycle in the list in **Last cycle**.
-  - **Expected:** The empty **Ships on** field shows, in grey, that cycle's last day, then "end of" and the cycle's name in brackets.
+  - **Expected:** The empty **Ships on** field shows, in grey, that cycle's last day followed by "(end of" and the cycle's name, such as "Mar 31, 2028 (end of 28.1)".
   - **Notes:**
 
 - [ ] `C642` Select **Make release**.

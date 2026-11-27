@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Administrator Workflows
@@ -13,6 +13,7 @@ last_updated: "2026-11-26"
 
 Verifies the jobs of [Working as an Administrator](../help/working-as-an-administrator.md) on the seed data:
 
+- The role the Overview says the account is acting as, and its link to Accounts.
 - Setting up the roles: reading what a role gives, making a role from a copy, changing a role after checking who gains what, and restoring a starting role.
 - Looking after accounts: making one that signs in for the first time, changing its roles, deactivating and reactivating it, and resetting its password.
 - Reviewing who holds each role: filtering accounts by role and taking away a role no longer needed.
@@ -44,7 +45,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### ADMIN-01: A New Account Signs In for the First Time
 
@@ -60,16 +61,18 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The **Plan** section shows **Overview** alone, and the menu shows no page of people.
   - **Notes:**
 
-- [ ] `A38F` Select the **Accounts** page in the left-hand menu.
+- [ ] `229E` Look at the **Overview** page.
+  - **Expected:** It reads "Acting as Administrator".
+  - **Notes:**
+
+- [ ] `BF64` Select the **Accounts** link beside **Look After Accounts**, under **Administration**.
   - **Expected:** The **Accounts** page opens.
   - **Notes:**
 
 - [ ] `FD38` Select **New account**.
   - **Expected:**
     - A dialog titled "New account" opens.
-    - **Name** and **Email address** are empty.
-    - **Roles** lists every role, each with a square tick box and its description.
-    - Only **Team Member** is ticked.
+    - Under **Roles**, only **Team Member** is ticked.
   - **Notes:**
 
 - [ ] `2DE6` Type `Fictional Newcomer` in **Name**.
@@ -177,7 +180,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `5D1B` In the second browser, reload the page.
-  - **Expected:** The left-hand menu shows **Lists** in the **Administration** section.
+  - **Expected:** The left-hand menu shows **Lists** and **Planning settings** in the **Administration** section.
   - **Notes:**
 
 ### ADMIN-03: What a Role Gives Is Read, Then Changed After Checking Who Gains What
@@ -272,20 +275,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Sign in** page opens.
   - **Notes:**
 
-- [ ] `A325` In the main browser, open the **Status** column menu, and select **Filter…**.
-  - **Expected:** **Active** and **Deactivated** are among the choices.
-  - **Notes:**
-
-- [ ] `BB20` Tick **Deactivated**.
-  - **Expected:** Only the `Fictional Newcomer` row is listed.
-  - **Notes:**
-
-- [ ] `AC16` Press Esc.
-  - **Expected:**
-    - The choices close.
-    - In the bar above the table, after the **Views** button, a box reads **Status: Deactivated**.
-  - **Notes:**
-
 - [ ] `FACA` Select **Reactivate…** in the side panel.
   - **Expected:** A dialog opens with a **Reactivate** button.
   - **Notes:**
@@ -293,8 +282,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `D3CC` Select **Reactivate** in the dialog.
   - **Expected:**
     - A green banner says "Reactivated the account for Fictional Newcomer."
-    - The table shows "No matching accounts".
-    - The side panel still shows "Fictional Newcomer", with **Status** reading "Active" and **Deactivate…** in place of **Reactivate…**.
+    - The row's **Status** cell reads "Active".
+    - The side panel offers **Deactivate…** in place of **Reactivate…**.
   - **Notes:**
 
 - [ ] `DB1D` In the second browser, sign in as the new account, `fictional.newcomer@fathom.test`, with `fictional password 2`.
@@ -307,11 +296,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ADMIN-05.
 
-**Preconditions:** **Accounts** page open, with the **Status: Deactivated** filter and the side panel of `Fictional Newcomer` that ADMIN-05 left open.
-
-- [ ] `61CF` Select the **×** in the **Status: Deactivated** box above the table.
-  - **Expected:** Every account is listed, `Fictional Newcomer` among them.
-  - **Notes:**
+**Preconditions:** **Accounts** page open, with the side panel of `Fictional Newcomer` that ADMIN-05 left open.
 
 - [ ] `9F93` Select **Reset password…** in the side panel.
   - **Expected:**
@@ -381,13 +366,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `4E6C` Type `Fictional Newcomer` in the search box at the top of the page.
-  - **Expected:** The entries include, from newest to oldest:
-    - "Fathom Administrator" "reset the password for" `Fictional Newcomer`, marked as worth checking
-    - "Fathom Administrator" "reactivated the account for" `Fictional Newcomer`
-    - "Fathom Administrator" "deactivated the account for" `Fictional Newcomer`, marked as worth checking
-    - "Fathom Administrator" "changed the role of" `Fictional Newcomer`, "from Team Member to Fictional Reader", marked as worth checking
-    - `Fictional Newcomer` "changed their own password"
-    - "Fathom Administrator" "created the account for" `Fictional Newcomer`, marked as worth checking
+  - **Expected:**
+    - Only entries naming `Fictional Newcomer` are listed, newest first.
+    - The newest reads "Fathom Administrator" "reset the password for" `Fictional Newcomer`, with a grey **Worth checking** box at its end.
+    - The oldest reads "Fathom Administrator" "created the account for" `Fictional Newcomer`.
   - **Notes:**
 
 ### ADMIN-09: A Role No Longer Needed Is Taken Away
@@ -440,9 +422,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `E9EA` Read down the entries with a grey **Worth checking** box.
-  - **Expected:** Among them:
-    - "Fathom Administrator" "changed Fathom's password settings"
-    - "Fathom Administrator" "changed the role" `Fictional Reader`
+  - **Expected:** Among them, "Fathom Administrator" "changed Fathom's password settings".
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

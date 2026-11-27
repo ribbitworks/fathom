@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Engineering Manager Workflows
@@ -13,6 +13,7 @@ last_updated: "2026-11-25"
 
 Verifies the workflows of [Working as an Engineering Manager](../help/working-as-an-engineering-manager.md) on the seed data:
 
+- The role the Overview says the Engineering Manager is acting as, and its link to Capacity's feature teams.
 - Estimating a feature, seeing what each cycle holds, and giving a feature that isn't staffed a team.
 - Putting someone on a feature team from a month ahead, approved by a Project Manager, and changing a team's lead.
 - Finding who is over or under allocated.
@@ -42,13 +43,25 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### MANAGER-01: Someone Is Put on a Feature Team From a Month Ahead
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`; the first test case. Step `EF8B` signs in as another account.
 
-**Preconditions:** Reset the Database run. Signed in with this account. Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** Reset the Database run. Signed out.
+
+- [ ] `7B42` Sign in as the Engineering Manager, `engineering.manager@fathom.test`.
+  - **Expected:**
+    - The **Overview** page opens.
+    - It reads "Acting as Engineering Manager".
+  - **Notes:**
+
+- [ ] `08E3` Select the **Capacity › Feature teams** link beside **Staff the Feature Teams**.
+  - **Expected:**
+    - The **Capacity** page opens, with **Feature teams** chosen in its tabs.
+    - The Group by menu's button reads **Group by**, with nothing in the search box and no filters.
+  - **Notes:**
 
 - [ ] `3DCD` Type `Candice` in the search box.
   - **Expected:**
@@ -114,14 +127,14 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `1CA8` Select **Approve** in the dialog.
-  - **Expected:** A notice reads "Approved 1 draft."
+  - **Expected:** A notification says "Approved 1 draft."
   - **Notes:**
 
 ### MANAGER-02: Who Is Over or Under Allocated
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from MANAGER-01.
 
-**Preconditions:** Signed in with this account.
+**Preconditions:** Signed out of the Project Manager, and signed in with this account.
 
 - [ ] `825A` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:** **Allocations** is chosen in the **Capacity** page's tabs.
@@ -225,57 +238,17 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### MANAGER-04: An Engineering Manager Reads a Note Beside the Chart
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as MANAGER-03.
-
-**Preconditions:** **Org chart** page open from the left-hand menu, with **Reporting teams** chosen in the teams switch.
-
-- [ ] `11FE` On the card at the top of the chart, select the name 'Silje Holm-Schrøder'.
-  - **Expected:**
-    - The details panel slides out on the right, headed 'Silje Holm-Schrøder'.
-    - The link **Show in People** is under her position.
-    - The chart narrows.
-    - Her card, with a blue ring, stays in the middle of the space left.
-  - **Notes:**
-
-- [ ] `4EB5` Select 'Tanushree Patel-Singh' under **Direct reports**, and read **Onboarding** under **Columns**.
-  - **Expected:**
-    - The panel shows 'Tanushree Patel-Singh'.
-    - **Onboarding** shows the heading "First weeks".
-    - Under the heading is a checklist of four steps, with only "Laptop and accounts ready" ticked.
-    - In the checklist, the buddy's name 'Elly Gunther' is in bold.
-    - Under the checklist, "On track" is in teal.
-    - The last line ends with the link "onboarding guide".
-  - **Notes:**
-
-- [ ] `A189` Select the **×** at the top right of the panel.
-  - **Expected:** The panel slides away.
-  - **Notes:**
+Covered by [DETAILS-01](person-details-manual-test.md#details-01-a-persons-details-open-beside-the-org-chart).
 
 ### MANAGER-05: A Person Drafted to Another Manager Is Drawn in Both Places
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as MANAGER-04.
-
-**Preconditions:** **Org chart** page open, showing the top two levels.
-
-- [ ] `804B` Read the card for 'Simone Jean', under 'Silje Holm-Schrøder'.
-  - **Expected:**
-    - The card is faintly yellow.
-    - A yellow dot is before her name.
-  - **Notes:**
-
-- [ ] `EA88` On the card for 'Viktoria Holmberg', select **Show 3 reports**.
-  - **Expected:**
-    - 'Simone Jean', '우아현' and '西尾 亮' appear in a column under her.
-    - The card for 'Simone Jean' there is faded and light green, with a dashed edge.
-    - Its name is in grey, with a green dot before it.
-    - The line to it is dashed.
-  - **Notes:**
+Covered by [MARK-03](draft-marks-manual-test.md#mark-03-the-org-charts-cards-are-marked) in Draft Marks, and [DARK-04](dark-mode-manual-test.md#dark-04-the-org-chart) in Dark Mode.
 
 ### MANAGER-06: A Team Is Shown Alone, and on an Earlier Date
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as MANAGER-05.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as MANAGER-03.
 
-**Preconditions:** **Org chart** page open from the left-hand menu.
+**Preconditions:** **Org chart** page open from the left-hand menu, with **Reporting teams** chosen in the teams switch.
 
 - [ ] `D1F1` Select the **Show only this team** button at the top right of the card for 'Lorenza Thiel'.
   - **Expected:**
@@ -290,7 +263,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `BE0B` Select **Today**.
-  - **Expected:** The text below the row is gone.
+  - **Expected:**
+    - The **Date** box shows today.
+    - The **Draft** button is back above the chart.
   - **Notes:**
 
 - [ ] `762D` Select **Show everyone**.
@@ -299,11 +274,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### MANAGER-07: Metrics Count People by Two Columns and Follow a Filter
 
-Removed: this is checked in [METRICS-04](metrics-manual-test.md#metrics-04-metrics-follow-the-filters) in Metrics.
+Covered by [METRICS-04](metrics-manual-test.md#metrics-04-metrics-follow-the-filters) in Metrics.
 
 ### MANAGER-08: Metrics Show Live Figures Beside Drafts
 
-Removed: this is checked in [METRICS-05](metrics-manual-test.md#metrics-05-metrics-show-live-figures-beside-drafts) in Metrics.
+Covered by [METRICS-05](metrics-manual-test.md#metrics-05-metrics-show-live-figures-beside-drafts) in Metrics.
 
 ### MANAGER-09: A Feature Team Is Found and Given a New Lead
 

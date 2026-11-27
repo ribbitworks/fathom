@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-director.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Engineering Director Workflows
@@ -13,6 +13,7 @@ last_updated: "2026-11-25"
 
 Verifies the jobs of [Working as an Engineering Director](../help/working-as-an-engineering-director.md) on the seed data, each draft approved by the director:
 
+- The role the Overview says the Engineering Director is acting as, and its link to People.
 - Planning the hiring: marking a planned hire approved to hire, and filling one.
 - Changing reporting lines: a new manager from an earlier date, checked on the org chart, and someone leaving.
 - Choosing who sees Personal and Confidential data: changing a detail's class.
@@ -44,13 +45,23 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### DIRECTOR-01: A Planned Hire Is Filled, and the Director Approves Their Own Draft
 
 **Account:** Engineering Director, `engineering.director@fathom.test`; the first test case.
 
-**Preconditions:** Reset the Database run. Signed in with this account. **People** page open from the left-hand menu, with no filters.
+**Preconditions:** Reset the Database run. Signed out.
+
+- [ ] `7EEA` Sign in as the Engineering Director, `engineering.director@fathom.test`.
+  - **Expected:**
+    - The **Overview** page opens.
+    - It reads "Acting as Engineering Director".
+  - **Notes:**
+
+- [ ] `005B` Select the **People** link beside **Plan the Hiring**, under **People**.
+  - **Expected:** The **People** page opens, with nothing in the search box and no filters.
+  - **Notes:**
 
 - [ ] `DCF3` Search for `Backend engineer 2`.
   - **Expected:** A row for 'Backend engineer 2' is listed.
@@ -79,13 +90,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The 'Backend engineer 2' row has a hollow yellow dot in its slot.
   - **Notes:**
 
-- [ ] `9E62` Select the details button of the 'Backend engineer 2' row.
-  - **Expected:**
-    - The panel is headed 'Backend engineer 2'.
-    - A **Filled by** section reads `Fictional new starter` in **Name**.
-    - The **Filled by** section reads `EMP-9001` in **ID**.
-  - **Notes:**
-
 - [ ] `28AB` Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
@@ -109,7 +113,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `696E` Select **Approve** in the dialog.
-  - **Expected:** A notice says the drafts were approved.
+  - **Expected:** A notification says "Approved", followed by the number of drafts approved.
   - **Notes:**
 
 - [ ] `E6C5` Select the **People** page in the left-hand menu.
@@ -196,7 +200,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `77F0` Select **Approve** in the dialog.
-  - **Expected:** A notice reads "Approved 1 draft."
+  - **Expected:** A notification says "Approved 1 draft."
   - **Notes:**
 
 ### DIRECTOR-03: A Detail's Class Is Changed
@@ -234,11 +238,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### DIRECTOR-04: A Shared View Is Seen by Others Until It Stops Being Shared
 
-Removed: sharing a view and stopping it is checked in [VIEW-03](saved-views-manual-test.md#view-03-a-view-is-shared-and-then-stops-being-shared) in Saved Views.
+Covered by [VIEW-03](saved-views-manual-test.md#view-03-a-view-is-shared-and-then-stops-being-shared) in Saved Views.
 
 ### DIRECTOR-05: Shared Views of the Plan
 
-Removed: a shared view of the plan is checked in [VIEW-13](saved-views-manual-test.md#view-13-a-view-on-features-is-shared-by-its-table-and-board) in Saved Views.
+Covered by [VIEW-13](saved-views-manual-test.md#view-13-a-view-on-features-is-shared-by-its-table-and-board) in Saved Views.
 
 ### DIRECTOR-06: A Planned Hire Is Marked Approved to Hire
 
@@ -283,7 +287,7 @@ Removed: a shared view of the plan is checked in [VIEW-13](saved-views-manual-te
   - **Notes:**
 
 - [ ] `E3AE` Select **Approve** in the dialog.
-  - **Expected:** A notice reads "Approved 1 draft."
+  - **Expected:** A notification says "Approved 1 draft."
   - **Notes:**
 
 - [ ] `A10E` Select the **People** page in the left-hand menu.
@@ -335,7 +339,7 @@ Removed: a shared view of the plan is checked in [VIEW-13](saved-views-manual-te
 
 - [ ] `3528` Select **Approve** in the dialog.
   - **Expected:**
-    - A notice reads "Approved 1 draft."
+    - A notification says "Approved 1 draft."
     - The table reads "No matching drafts".
   - **Notes:**
 
@@ -343,7 +347,7 @@ Removed: a shared view of the plan is checked in [VIEW-13](saved-views-manual-te
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the same as DIRECTOR-07.
 
-**Preconditions:** **Drafts** page open, with **To decide** chosen beside the page's title.
+**Preconditions:** **Drafts** page open from the left-hand menu, with **To decide** chosen beside the page's title.
 
 - [ ] `B773` Clear the search box, and type `Simone Jean`.
   - **Expected:** One row is shown, with a tick box:
@@ -368,7 +372,7 @@ Removed: a shared view of the plan is checked in [VIEW-13](saved-views-manual-te
 
 - [ ] `5F1D` Select **Reject**.
   - **Expected:**
-    - A notice reads "Rejected 1 draft."
+    - A notification says "Rejected 1 draft."
     - The table reads "No matching drafts".
   - **Notes:**
 

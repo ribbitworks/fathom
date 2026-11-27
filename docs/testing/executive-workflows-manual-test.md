@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Executive Workflows
@@ -15,6 +15,7 @@ Verifies the workflows of [Working as an Executive](../help/working-as-an-execut
 
 - Reading the plan on Features and on the Releases timeline, live only or with drafts.
 - Seeing who is on each feature team and what each person works on, on Capacity.
+- The role the Overview says the Executive is acting as, and its link to Releases.
 - Looking at people on the org chart, on another date and in Metrics.
 - Seeing people, accounts, roles and settings without changing them.
 - Following what changed in the change history and the access history.
@@ -41,7 +42,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about 25 minutes. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### EXECUTIVE-01: An Executive Reads the Plan
 
@@ -54,12 +55,20 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The **Overview** page is open.
     - The **Plan** section shows **Overview**, **Projects**, **Features**, **Activities** and **Releases**.
     - The **People** section shows **People**, **Org chart** and **Capacity**.
-    - The **Administration** section shows **Accounts**, **Roles**, **Settings** and **Lists**.
+    - The **Administration** section shows **Accounts**, **Roles**, **Settings**, **Lists** and **Planning settings**.
     - The **History** section shows **Drafts**, **Change history** and **Access history**.
     - The menu shows the **Help** section.
   - **Notes:**
 
-- [ ] `723D` Select the **Releases** page in the left-hand menu.
+- [ ] `E06A` Look at the **Overview** page.
+  - **Expected:** It reads "Acting as Executive".
+  - **Notes:**
+
+- [ ] `B76D` Select **See What's Planned**, under **Plan**.
+  - **Expected:** Its tasks show under it, among them **See When Each Release Ships**, with a **Releases** link beside it.
+  - **Notes:**
+
+- [ ] `B1CD` Select the **Releases** link beside **See When Each Release Ships**.
   - **Expected:**
     - The **Releases** page opens on its **Releases** tab.
     - The table under the timeline has a **Ships on** column, with a day in each row.
@@ -255,13 +264,13 @@ Removed: keeping a view is checked in [VIEW-01](saved-views-manual-test.md#view-
   - **Expected:**
     - **Allocations** is chosen in the tabs.
     - **Group by** shows, naming no grouping.
-    - The cells list features, each with its percentage, such as "50%".
+    - The cells list features or activities, each with its percentage, such as "50%".
   - **Notes:**
 
 - [ ] `78DA` Type `Blaise Gislason` in the search box.
   - **Expected:**
     - The row of 'Blaise Gislason' is listed, and no other person's.
-    - In the current month's cell, each line names a feature, with its percentage at the right.
+    - In the current month's cell, one line names 'Warranty support' with "100%" at the right, and another names 'Depot rollout' with "25%".
     - The cell's last line reads "Over", red and bold, with how far over a whole month at the right, such as "+25%".
   - **Notes:**
 

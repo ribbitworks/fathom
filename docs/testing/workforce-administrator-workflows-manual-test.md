@@ -4,15 +4,16 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-workforce-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Workforce Administrator Workflows
 
 ## Scope
 
-Verifies the jobs of [Working as a Workforce Administrator](../help/working-as-a-workforce-administrator.md) on the seed data, each approved by a Project Manager or the Engineering Director:
+Verifies the jobs of [Working as a Workforce Administrator](../help/working-as-a-workforce-administrator.md) on the seed data, with some of the drafts approved by a Project Manager or the Engineering Director:
 
+- The role the **Overview** says the account is acting as, and its link to People.
 - Keeping people current: a leaving date and a new manager.
 - Planning the hiring: requesting a hire and marking one approved to hire.
 - Keeping the feature teams current: moving someone to another team from next month.
@@ -45,13 +46,21 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
-### WORKFORCE-01: A Planned Hire Is Added and Approved
+### WORKFORCE-01: A Planned Hire Is Requested
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step `BCEB` signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 
-**Preconditions:** Reset the Database run. Signed in with this account. **People** page open from the left-hand menu.
+**Preconditions:** Reset the Database run. Signed in with this account, with the **Overview** page open.
+
+- [ ] `C6DD` Look at the **Overview** page.
+  - **Expected:** It reads "Acting as Workforce Administrator".
+  - **Notes:**
+
+- [ ] `A92A` Select the **People** link beside **Plan the Hiring**, under **People**.
+  - **Expected:** The **People** page opens.
+  - **Notes:**
 
 - [ ] `72EE` Select **New person** at the top right of the page.
   - **Expected:** The details panel opens, headed **New person**.
@@ -84,54 +93,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-- [ ] `BCEB` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Project Manager".
-  - **Notes:**
-
-- [ ] `EA10` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
-  - **Notes:**
-
-- [ ] `0AF7` Type `REQ-5001` in the search box.
-  - **Expected:** One row is shown, with a tick box:
-    - **Record** reads `Fictional mobile tester`.
-    - **Change** reads "Added".
-    - **Type** reads "Planned hire".
-  - **Notes:**
-
-- [ ] `FC26` Tick that row's tick box.
-  - **Expected:**
-    - The tick box is ticked.
-    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
-  - **Notes:**
-
-- [ ] `222E` Select **Approve 1 draft…** at the right of the page's heading.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
-  - **Notes:**
-
-- [ ] `7C9C` Select **Approve** in the dialog.
-  - **Expected:**
-    - The dialog closes.
-    - A notice reads "Approved 1 draft."
-  - **Notes:**
-
-- [ ] `E9E5` Select the **People** page in the left-hand menu.
-  - **Expected:** The **People** page opens.
-  - **Notes:**
-
-- [ ] `2D61` Search for `Fictional mobile tester`.
-  - **Expected:**
-    - One hire row is shown, with no dot.
-    - It reads `REQ-5001` in **ID**.
-    - It reads 'SDET' in **Position**.
-    - It reads "Request to hire" in **State**.
-  - **Notes:**
-
 ### WORKFORCE-02: A Hire's State and a Leaving Date Are Drafted
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from WORKFORCE-01.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as WORKFORCE-01.
 
-**Preconditions:** Signed in with this account. **People** page open from the left-hand menu, with no filters.
+**Preconditions:** **People** page open, with no filters.
 
 - [ ] `332F` Search for `Mobile developer`.
   - **Expected:**
@@ -211,7 +177,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `FE6E` Select **Approve** in the dialog.
-  - **Expected:** A notice reads "Approved 1 draft."
+  - **Expected:** A notification says "Approved 1 draft."
   - **Notes:**
 
 - [ ] `48DD` Select the **People** page in the left-hand menu.
@@ -274,26 +240,14 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - `Long shot` has no dot.
   - **Notes:**
 
-### WORKFORCE-05: The Last Status for a Meaning Is Kept
+### WORKFORCE-05: A Status Is Retired
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from WORKFORCE-04.
 
 **Preconditions:** Signed in with this account. **Lists** page open, with the **Statuses** panel open.
 
-- [ ] `9D42` Select the **⋯** button at the end of the **Cancelled** row.
-  - **Expected:**
-    - **Retire** and **Remove** are greyed out.
-    - "Needed for Cancelled" is under them.
-  - **Notes:**
-
-- [ ] `0F39` Press Esc.
-  - **Expected:** The menu closes.
-  - **Notes:**
-
 - [ ] `6B24` Select the **⋯** button at the end of the **Possible** row.
-  - **Expected:**
-    - **Retire** can be selected.
-    - No "Needed for" line is under it.
+  - **Expected:** The menu opens, and **Retire** can be selected.
   - **Notes:**
 
 - [ ] `A06F` Select **Retire**.
@@ -389,7 +343,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `9AD4` Select **Approve** in the dialog.
   - **Expected:**
     - The dialog closes.
-    - A notice begins "Approved".
+    - A notification says "Approved 2 drafts."
   - **Notes:**
 
 - [ ] `7E0F` Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab.

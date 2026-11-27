@@ -32,15 +32,15 @@ They aren't part of a whole run. Each starts from [Reset the Database](../manual
 
 | Test | Cases | Time |
 | --- | --- | --- |
-| [Team Member](../team-member-workflows-manual-test.md) | 4 | 20 minutes |
-| [Product Manager](../product-manager-workflows-manual-test.md) | 9 | 30 minutes |
-| [Feature Lead](../feature-lead-workflows-manual-test.md) | 8 | 30 minutes |
-| [Project Manager](../project-manager-workflows-manual-test.md) | 4 | 30 minutes |
-| [Engineering Manager](../engineering-manager-workflows-manual-test.md) | 8 | 30 minutes |
-| [Engineering Director](../engineering-director-workflows-manual-test.md) | 5 | 30 minutes |
+| [Team Member](../team-member-workflows-manual-test.md) | 3 | 20 minutes |
+| [Product Manager](../product-manager-workflows-manual-test.md) | 9 | 35 minutes |
+| [Feature Lead](../feature-lead-workflows-manual-test.md) | 7 | 30 minutes |
+| [Project Manager](../project-manager-workflows-manual-test.md) | 6 | 30 minutes |
+| [Engineering Manager](../engineering-manager-workflows-manual-test.md) | 5 | 30 minutes |
+| [Engineering Director](../engineering-director-workflows-manual-test.md) | 6 | 30 minutes |
 | [Workforce Administrator](../workforce-administrator-workflows-manual-test.md) | 8 | 30 minutes |
-| [Executive](../executive-workflows-manual-test.md) | 5 | 20 minutes |
-| [Administrator](../administrator-workflows-manual-test.md) | 8 | 30 minutes |
+| [Executive](../executive-workflows-manual-test.md) | 5 | 25 minutes |
+| [Administrator](../administrator-workflows-manual-test.md) | 9 | 30 minutes |
 
 ## Starting a Whole Run
 

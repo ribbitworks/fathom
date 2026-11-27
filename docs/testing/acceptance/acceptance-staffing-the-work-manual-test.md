@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-reviewing-the-plan-manual-test.md", "docs/help/working-as-a-feature-lead.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Acceptance, Staffing the Work
@@ -18,7 +18,7 @@ Verifies that the people who build the plan pick it up once it's approved:
 
 Both roles' changes wait for the approvers in [Deciding the Changes](acceptance-deciding-the-changes-manual-test.md).
 
-Nobody can be allocated to a feature yet on a new Fathom, since Capacity's **Allocations** tab is read only, so every month from the current one reads **Not allocated**.
+Capacity's **Allocations** tab is read only, and nobody on a new Fathom is allocated to a feature or an activity, so every month from the current one reads **Not allocated**.
 
 ## Test Environment
 
