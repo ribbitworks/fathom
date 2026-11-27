@@ -3,7 +3,8 @@
 // UI tests of a proposal's Features in its details: a new feature added from New feature, linked
 // to the proposal, with focus back on the button.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("productManager") });

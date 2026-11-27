@@ -5,7 +5,8 @@
 // goes with another. Each run renames to a name of its own, since taking back a published draft
 // waits, unpublished, until its maker publishes it.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("engineeringOperationsManager") });

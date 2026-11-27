@@ -4,8 +4,9 @@
 // Enter adds the record or fills a planned hire, Esc reaches the panel unless a word is being
 // composed, and a required value left empty, or an activity of no owner, is refused.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
+import { changesSent } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("productManager") });
 
@@ -18,11 +19,7 @@ test("refuses a new project whose Name was emptied, naming why under it and savi
   const count = page.getByRole("status").filter({ hasText: /projects?$/ });
   const before = await count.innerText();
   expect(before).toMatch(/^\d+ projects?$/);
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${request.url()}`);
-  });
+  const changes = changesSent(page);
   await page.getByRole("button", { name: "New project" }).click();
   const panel = page.getByRole("region", { name: "New project" });
   const name = panel.getByRole("textbox", { name: "Name" });
@@ -162,11 +159,7 @@ test("refuses a new activity of neither a release nor a project, naming why unde
   const count = page.getByRole("status").filter({ hasText: /activit(y|ies)$/ });
   const before = await count.innerText();
   expect(before).toMatch(/^\d+ activit(y|ies)$/);
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${request.url()}`);
-  });
+  const changes = changesSent(page);
   await page.getByRole("button", { name: "New activity" }).click();
   const panel = page.getByRole("region", { name: "New activity" });
 

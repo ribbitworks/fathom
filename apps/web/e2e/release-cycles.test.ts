@@ -2,7 +2,7 @@
 
 // UI tests of New release's cycles: a release of one cycle, its first cycle chosen again as its last.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("productManager") });

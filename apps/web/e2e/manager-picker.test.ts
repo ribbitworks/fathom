@@ -3,8 +3,9 @@
 // UI tests of the Manager picker on People: each manager offered is described under their name, so
 // two with the same name are told apart.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
+import { changesSent } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("engineeringOperationsManager") });
 
@@ -13,11 +14,7 @@ test("describes each manager in a Manager cell's picker by position, then whom t
 }) => {
   // Given the Engineering Operations Manager on People, with one person found
   await page.goto("/people");
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${request.url()}`);
-  });
+  const changes = changesSent(page);
   await page
     .getByRole("textbox", { name: "Search people" })
     .fill("Samuel Richter");

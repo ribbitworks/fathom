@@ -3,7 +3,7 @@
 // UI tests of Add activity in a project's details: New activity opens stacked under them on the same
 // page, with the project set and the cursor in Name, and closing it puts focus back on Add activity.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("productManager") });

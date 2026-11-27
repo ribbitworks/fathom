@@ -3,8 +3,10 @@
 // UI tests of typing a day: a digit corrected in the middle leaves the others, and the cursor, in
 // place, in a table's cell and in a form's box, and a digit more than a day holds is ignored.
 
-import { expect, type Locator, type Page, test } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
+import { changesSent } from "./test-requests.ts";
 
 test.use({ storageState: signedInAs("engineeringOperationsManager") });
 
@@ -30,11 +32,7 @@ test("corrects a digit in the middle of a person's Start, leaving the others in 
   const cell = page.locator("[role=gridcell][id$='-startDate']").first();
   await cell.click();
   const before = await cell.innerText();
-  const changes: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() !== "GET" && request.url().includes("/api/"))
-      changes.push(`${request.method()} ${request.url()}`);
-  });
+  const changes = changesSent(page);
   await page.keyboard.press("Enter");
   const editor = page.getByRole("textbox", { name: "Start" });
   await expect(editor).toBeFocused();

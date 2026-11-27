@@ -3,7 +3,8 @@
 // UI tests of how a table's row is drawn around its values: its refusal in line with its name, its
 // buttons level with the name, and a drafted row's one tint across every cell.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("engineeringDirector") });

@@ -2,7 +2,7 @@
 
 // UI tests of a feature given a value in a Features column only drafted to be added.
 
-import { expect, test } from "@playwright/test";
+import { expect, keepViewsInBrowser, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 import { send } from "./test-requests.ts";
 
@@ -85,6 +85,7 @@ test("fills a column drafted to be added, whose approval goes with the feature's
   const approverContext = await browser.newContext({
     storageState: signedInAs("productManager"),
   });
+  await keepViewsInBrowser(approverContext);
   const approver = await approverContext.newPage();
   await approver.goto("/features");
   // The row's own ⋯, at its end, is always shown.

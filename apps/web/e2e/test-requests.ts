@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Requests the UI tests send to the server straight from the page, such as to discard what a test
-// drafted.
+// Requests between a UI test's page and the server: those a test sends straight from the page, such
+// as to discard what it drafted, and those the page sends to save a change.
 
 import type { Page } from "@playwright/test";
 
@@ -23,3 +23,23 @@ export const send = (page: Page, method: string, path: string, body?: object) =>
     },
     { method, path, body },
   );
+
+// The start of the path a page saves the view it shows to, as the account's last view.
+export const lastViewPaths = "/api/last-views/";
+
+// The changes the page sends to be saved, from when it starts watching, as method and path. Saving
+// the view shown isn't one: a page does it a second after the view changes, on a busy computer even
+// within a test.
+export function changesSent(page: Page): string[] {
+  const changes: string[] = [];
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (
+      request.method() !== "GET" &&
+      path.startsWith("/api/") &&
+      !path.startsWith(lastViewPaths)
+    )
+      changes.push(`${request.method()} ${path}`);
+  });
+  return changes;
+}

@@ -4,7 +4,8 @@
 // whole name, scrolling sideways to keep the periods in view tinted, by Today, the arrows and the
 // keys.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({

@@ -2,7 +2,7 @@
 
 // UI tests of the shared timeline: its row labels drawn at the size of the table's text.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("engineeringDirector") });

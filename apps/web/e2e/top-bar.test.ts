@@ -3,7 +3,8 @@
 // UI tests of the top bar in a narrow window: each part stays on one line, the development label is
 // cut short before the account's name, and a part cut short shows its whole text in a tip.
 
-import { expect, type Page, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("engineeringOperationsManager") });

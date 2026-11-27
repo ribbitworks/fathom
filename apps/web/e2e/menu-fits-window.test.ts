@@ -2,7 +2,7 @@
 
 // UI tests of a menu taller than the window: it stays inside the window, scrolling in itself.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 
 test.use({ storageState: signedInAs("engineeringOperationsManager") });
