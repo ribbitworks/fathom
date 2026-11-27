@@ -252,6 +252,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   label: string;
   one: string;
   noun: string;
+  // What the table says while it has no records, where not "No" and its noun with "yet", such as
+  // "No drafts" for drafts, which come and go.
+  none?: string;
   // For a table of several kinds of record, what its records are called together, and how many of
   // each some records are, which Metrics counts.
   counted?: { noun: string; counted: (records: readonly Rec[]) => string };
@@ -481,6 +484,9 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // What the page shows under the bar above the table, such as a timeline, as tall as it needs,
   // given the records the table shows.
   above?: ((shown: readonly Rec[]) => ReactNode) | undefined;
+  // What the table shows under its line saying it has no records, such as a link to where the first
+  // is made.
+  noneBelow?: ReactNode;
   // Draws the rows the view shows in place of the table, such as a board, under the same bar.
   body?: ((shown: ShownRows<Rec>) => ReactNode) | undefined;
   // Ticks for choosing rows to act on together, with the bar above the table that acts on them.

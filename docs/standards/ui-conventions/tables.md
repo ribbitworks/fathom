@@ -16,6 +16,14 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
 - **Scroll bars:** Every table, timeline, board and strip uses one style of scroll bar: slim and in the page's greys. It shows whenever there is more to scroll, so a wide view is seen to have more. Each scrolling frame with the style contains the visually hidden text of what it scrolls, so it never stretches the page.
   - **Drawn by:** `scrollBars` in `apps/web/src/pages.module.css`. Its size and colour come from the theme's `--fathom-scrollbar-size` and `--fathom-scrollbar-thumb` in `apps/web/src/theme.ts`.
   - **Example:** On Features, narrow the window until the table scrolls sideways.
+- **An empty table:** A table with no rows to show keeps its heading, the bar above it with its count, such as 0 releases, and its column headings.
+  - **The line:** Across the table, dimmed, above the empty row where there is one, it reads No and the table's noun, then yet, with no period, such as No releases yet. Drafts, which come and go, read No drafts.
+  - **None matching:** While the view leaves records out, by a search, a filter or a choice such as Show shipped, it reads No matching and the noun, such as No matching releases.
+  - **Under it:** A table may put a link under No releases yet to where the first record is made, such as Make a schedule first on Releases.
+  - **In view:** The line stays centred in the part of the table in view, however far a wide table is scrolled sideways.
+  - **Export:** Turned off while the table shows no rows, as [Exporting](#exporting) sets out.
+  - **Drawn by:** `EmptyTableRow`, with its words from `emptyTableWords` and `leavesOutRecords`, in `apps/web/src/empty-table.tsx`, which `RecordGrid` and Data classes' tables use; a table's own words are its `none` in `apps/web/src/record-table.ts`, and the link its grid's `noneBelow`.
+  - **Example:** On Features, type a word no feature holds in the search box.
 - **Drafts in a table changed elsewhere:** A table whose records are changed outside it, such as in their details panel (every tab on Releases), still offers Publish draft…, Discard draft and Resubmit in a row's menu, as [The menu](#tables) sets out, for a draft the user may change.
   - **A row for its parts too:** A row that stands for its parts' drafts as well as its own publishes, discards or resubmits the record's own draft.
   - **Drawn by:** `RecordGrid`'s `canEditDrafts`, one answer for the table or one for each row, such as a cycle's row carrying its release's draft on Releases' Cycles tab, with a table's `ownDraft`, in `apps/web/src/record-table.ts`, and the actions' `draftRef` naming the record each draft is of.
@@ -194,6 +202,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
     - **Values a spreadsheet would run:** A value other than a number that starts with =, +, -, @, a tab or a carriage return gets an apostrophe before it, so a spreadsheet shows it rather than running it.
   - **The file:** UTF-8 with a byte order mark, so spreadsheets read names in any script, and lines ending in a carriage return and line feed. A value holding the separator, a quote or a line break is quoted per RFC 4180, in TSV as in CSV.
   - **The name:** Lower case, its parts joined by underscores and each part's words by hyphens: fathom, the page, the saved view if one is applied, the exporter's account name, drafts-and-live or drafts if it holds any, and the day shown, such as fathom_people_engineers_engineering-director_drafts-and-live_2027-03-31.csv.
+  - **Nothing to export:** While the table shows no rows, the Export icon is greyed out, its tip reading There's nothing to export, tied to it for screen readers.
   - **Saving:** The browser's Save dialog opens with the name filled in where the browser offers one, as Chromium browsers do; Safari and Firefox follow their download settings. Cancelling saves and records nothing.
   - **Drawn by:** `PageExportMenu` and `useOfferedExport` in `apps/web/src/page-export.tsx`, offered for a table by `useTableExport` in `apps/web/src/table-export.tsx` from the table's `exported` in `apps/web/src/record-table.ts` (`generalExport` there for a table whose data is all General, `classOf` for fixed classes and `asOn` for the day shown), `ExportQuestion` in `apps/web/src/export-question.tsx`, and the file from `apps/web/src/exports.ts`.
   - **Example:** On People, as the Engineering Director, choose the Export icon, then CSV file.

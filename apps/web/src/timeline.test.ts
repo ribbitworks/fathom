@@ -16,6 +16,7 @@ import {
   dayRange,
   releaseLayer,
   releaseLayerRange,
+  spannedRanges,
   timelineAxis,
   timelineFrame,
   timelineQuarters,
@@ -57,6 +58,22 @@ describe("a timeline's frame", () => {
 
   it("has nothing to cover when no range is given", () => {
     expect(timelineFrame([], "2027-02-01")).toBeUndefined();
+  });
+
+  it("spans the days of what it draws, leaving out what has none", () => {
+    const drawn = { first: "2027-02-10", last: "2027-03-05" };
+    expect(
+      spannedRanges([drawn, undefined], {
+        first: "2026-01-01",
+        last: "2028-01-01",
+      }),
+    ).toEqual([drawn]);
+  });
+
+  it("spans the days given for an empty view while it draws nothing", () => {
+    const whileEmpty = { first: "2026-01-01", last: "2028-01-01" };
+    expect(spannedRanges([undefined], whileEmpty)).toEqual([whileEmpty]);
+    expect(spannedRanges([undefined], undefined)).toEqual([]);
   });
 
   it("is cut into quarters, the first and last cut short by its ends", () => {

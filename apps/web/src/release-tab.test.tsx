@@ -149,13 +149,56 @@ describe("the Releases tab", () => {
     });
   });
 
-  it("says when there are no releases yet", async () => {
+  it("keeps its bar, headings and count while there are no releases yet, with no timeline", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/release-streams": streamsAnswer([fictionalStream()]),
     });
     renderApp("/releases");
-    expect(await screen.findByText("No releases yet.")).toBeDefined();
+    const table = await screen.findByRole("grid", { name: "Releases" });
+    expect(within(table).getByText("Ships on")).toBeDefined();
+    expect(within(table).getByText("No releases yet")).toBeDefined();
+    expect(
+      screen.getByRole("textbox", { name: "Search releases" }),
+    ).toBeDefined();
+    expect(screen.getByText("0 releases")).toBeDefined();
+    expect(screen.queryByRole("region", { name: "Timeline" })).toBeNull();
+    expect(
+      within(table).queryByRole("button", { name: "Make a schedule first" }),
+    ).toBeNull();
+  });
+
+  it("says none match, keeping its timeline, while every release has shipped and Show shipped is off", async () => {
+    await openPage(inStream(shipped));
+    const table = screen.getByRole("grid", { name: "Releases" });
+    expect(within(table).getByText("No matching releases")).toBeDefined();
+    expect(screen.getByRole("region", { name: "Timeline" })).toBeDefined();
+  });
+
+  it("offers Make a schedule first under No releases yet while there are no schedules, opening Schedules", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": streamsAnswer([], {
+        canEditStreams: true,
+        canEditReleases: true,
+      }),
+    });
+    renderApp("/releases");
+    const table = await screen.findByRole("grid", { name: "Releases" });
+    await userEvent.click(
+      within(table).getByRole("button", { name: "Make a schedule first" }),
+    );
+    expect(
+      screen
+        .getByRole("tab", { name: "Schedules" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
+    expect(await screen.findByText("No schedules yet")).toBeDefined();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "New schedule" }),
+      );
+    });
   });
 
   it("draws on its timeline only the schedules of the releases it shows", async () => {

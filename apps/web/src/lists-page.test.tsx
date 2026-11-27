@@ -185,7 +185,7 @@ describe("the table of lists", () => {
     });
     renderApp("/lists?kind=built-in");
     const search = await screen.findByRole("textbox", { name: "Search lists" });
-    expect(screen.getByText("No lists")).toBeTruthy();
+    expect(screen.getByText("No lists yet")).toBeTruthy();
     search.focus();
     await userEvent.keyboard("{Escape}");
     expect(document.activeElement).toBe(search);
@@ -603,7 +603,7 @@ describe("the table of lists", () => {
       "GET /api/lists": () => Response.json({ lists: [] }),
     });
     renderApp("/lists");
-    expect(await screen.findByText("No lists")).toBeDefined();
+    expect(await screen.findByText("No lists yet")).toBeDefined();
   });
 
   it("shows a loading indicator until the lists arrive", async () => {

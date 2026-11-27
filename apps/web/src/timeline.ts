@@ -56,6 +56,16 @@ const earliest = (days: readonly string[]) =>
 const latest = (days: readonly string[]) =>
   days.reduce((a, b) => (a > b ? a : b));
 
+// The days a timeline spans: those of what it draws, or, while it draws nothing, the days given, so
+// a view showing nothing keeps the timeline in its place.
+export function spannedRanges(
+  drawn: readonly (DayRange | undefined)[],
+  whileEmpty: DayRange | undefined,
+): DayRange[] {
+  const ranges = drawn.filter((range) => range !== undefined);
+  return ranges.length > 0 || whileEmpty === undefined ? ranges : [whileEmpty];
+}
+
 // The whole months that hold every range given, from the month the first starts in to the month the
 // last ends in, or undefined when none is given.
 export function timelineFrame(

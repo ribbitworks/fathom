@@ -283,7 +283,7 @@ export function SchedulesTable({
       : [];
   return (
     <ReleasesTabTable
-      none={all.length === 0 ? "No schedules yet." : undefined}
+      empty={all.length === 0}
       day={day}
       layerForm="schedules"
       onOpenMark={markOpener(
@@ -293,6 +293,7 @@ export function SchedulesTable({
         },
         showIn,
       )}
+      everyStream={all}
       timelineOf={(shown) =>
         inShownOrder(
           kept,

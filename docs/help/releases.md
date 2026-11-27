@@ -76,7 +76,7 @@ A release's and a schedule's panel shows its key under its name, such as **#RELE
 1. Choose its **Colour**, the colour it's drawn in on the timeline.
 1. Select **Make release**.
 
-**New release** is greyed out while no schedule takes new releases, such as when every schedule is retired.
+**New release** is greyed out while no schedule takes new releases, such as when every schedule is retired. The line above the table says so. If there are no schedules yet, select **Make a schedule first** in the table to go to the **Schedules** tab.
 
 You're done when the release's panel opens, with a dot before its name until its draft is approved.
 

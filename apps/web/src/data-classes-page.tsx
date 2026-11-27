@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Data classes page, for a role with Classify data: the class of everything the organization
-// keeps in one, in three sections: each built-in detail with the pages, views and columns needing
-// it, People's added columns, and the lists. Each changes class at once, never as a draft, and every
-// page then follows its new class. A column drawing on a list takes the list's class, so changes
-// with the list. Columns and lists show only to a role that reads them.
+// The Data classes page: the class of each built-in detail, People's added columns, and the lists,
+// and changing them.
 
 import {
   type ClassAccess,
@@ -26,6 +23,7 @@ import {
   Title,
   VisuallyHidden,
 } from "@mantine/core";
+import type { ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import {
@@ -33,6 +31,7 @@ import {
   moveFieldClass,
   moveListClass,
 } from "./data-classes.ts";
+import { EmptyTableRow } from "./empty-table.tsx";
 import { listRefusal, listsQuery } from "./lists.ts";
 import { LoadProblem } from "./load-problem.tsx";
 import {
@@ -59,14 +58,32 @@ interface ClassRow {
   heldBy?: string | undefined;
 }
 
+const classHeadings: readonly {
+  key: string;
+  name: ReactNode;
+  className?: string | undefined;
+}[] = [
+  { key: "name", name: "Name", className: pageClasses.nameColumn },
+  { key: "class", name: "Class", className: pageClasses.classColumn },
+  { key: "about", name: "About" },
+  {
+    key: "actions",
+    name: <VisuallyHidden>Actions</VisuallyHidden>,
+    className: pageClasses.actionsColumn,
+  },
+];
+
 function ClassSection({
   title,
   rows,
+  noun,
   access,
   onChange,
 }: {
   title: string;
   rows: readonly ClassRow[];
+  // None while the rows are still being read, so the table never says it has none too soon.
+  noun?: string | undefined;
   access: ClassAccess;
   onChange: (subject: MoveSubject) => void;
 }) {
@@ -81,15 +98,21 @@ function ClassSection({
           <Table aria-labelledby={id} className={pageClasses.classTable}>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th className={pageClasses.nameColumn}>Name</Table.Th>
-                <Table.Th className={pageClasses.classColumn}>Class</Table.Th>
-                <Table.Th>About</Table.Th>
-                <Table.Th className={pageClasses.actionsColumn}>
-                  <VisuallyHidden>Actions</VisuallyHidden>
-                </Table.Th>
+                {classHeadings.map(({ key, name, className }) => (
+                  <Table.Th key={key} className={className}>
+                    {name}
+                  </Table.Th>
+                ))}
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
+              {rows.length === 0 && noun !== undefined && (
+                <EmptyTableRow
+                  span={classHeadings.length}
+                  table={{ noun }}
+                  leavesOut={false}
+                />
+              )}
               {rows.map(
                 ({ key, name, dataClass, about: said, change, heldBy }) => {
                   // A role changes the class only of data it sees, and nobody else is changing.
@@ -310,6 +333,11 @@ export function DataClassesPage({ access }: { access: ClassAccess }) {
             <ClassSection
               title="Columns"
               rows={columns}
+              noun={
+                lists.isSuccess && columnsRead.isSuccess
+                  ? "People columns"
+                  : undefined
+              }
               access={access}
               onChange={classMove.open}
             />

@@ -11,15 +11,7 @@ import type {
   Person,
 } from "@fathom/shared";
 import { defaultClasses, sharesViews } from "@fathom/shared";
-import {
-  Anchor,
-  Button,
-  Group,
-  Loader,
-  Paper,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Anchor, Button, Group, Loader, Stack } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
@@ -81,6 +73,7 @@ import { type PeopleData, peopleQuery, peopleQueryOn } from "./people.ts";
 import { peopleRecordActions } from "./people-actions.ts";
 import { useSaving } from "./saving.ts";
 import type { ChangeView } from "./table-controls.tsx";
+import { TableReasonLine } from "./turned-off.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import { formatDay } from "./day-formats.ts";
 import type { View } from "./table-view.ts";
@@ -389,17 +382,6 @@ export function PeoplePage({
         }}
       />
     );
-  } else if (query.data.people.length === 0 && !changesRows) {
-    content = (
-      <div>
-        {dateRow}
-        <Paper withBorder p="xl">
-          <Text fz="sm" c="dimmed" ta="center">
-            No people yet
-          </Text>
-        </Paper>
-      </div>
-    );
   } else {
     // The column dialog is part of the loaded page, since it needs the columns and lists.
     content = (
@@ -613,10 +595,10 @@ export function PeoplePage({
                   <>
                     {dateRow}
                     {changesRows && positionHidden && (
-                      <Text size="sm" c="dimmed" mb="sm" id={cannotAddId}>
+                      <TableReasonLine id={cannotAddId}>
                         This role can't add people, since it can't see
                         positions.
-                      </Text>
+                      </TableReasonLine>
                     )}
                   </>
                 )

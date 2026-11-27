@@ -11,15 +11,7 @@ import type {
   ReleaseStream,
   ViewTable,
 } from "@fathom/shared";
-import {
-  Alert,
-  Button,
-  Group,
-  Loader,
-  Modal,
-  Stack,
-  Tooltip,
-} from "@mantine/core";
+import { Alert, Button, Group, Loader, Modal, Stack } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
 import { z } from "zod";
@@ -76,7 +68,14 @@ import {
   plannedFeatures,
   type ShowIn,
 } from "./release-tabs.ts";
+import {
+  newReleaseReason,
+  offersFirstSchedule,
+  takesReleases,
+} from "./release-adding.ts";
 import type { ScheduleChange } from "./schedule-panel.tsx";
+import { focusSoon } from "./focus.ts";
+import { TableReasonLine, useTurnedOff } from "./turned-off.tsx";
 
 type Dialog =
   | { kind: "stream"; stream?: ReleaseStream }
@@ -92,6 +91,7 @@ type Dialog =
     };
 
 const tabsId = "releases-tabs";
+const newScheduleId = "releases-new-schedule";
 // Showing a release's activities on Activities, and where one of them opens.
 export interface ReleaseActivitiesOf extends Pick<ActivitiesOf, "showAll"> {
   open: (id: string) => void;
@@ -155,13 +155,6 @@ function dialogFor(stream: ReleaseStream, change: ScheduleChange): Dialog {
       return { kind: "cycle-length", stream, cycle: change.cycle };
   }
 }
-
-// Whether a new release may be made in a schedule: one not retired, nor drafted to be removed, with
-// cycles to put it in.
-const takesReleases = (stream: ReleaseStream) =>
-  !stream.retired &&
-  stream.draft?.action !== "deleted" &&
-  stream.cycles.length > 0;
 
 export function ReleasesPage({
   tab,
@@ -307,6 +300,11 @@ export function ReleasesPage({
     });
   };
 
+  const newRelease = useTurnedOff(
+    newReleaseReason(query.data?.streams ?? []),
+    TableReasonLine,
+  );
+
   if (query.isPending) return <Loader role="status" aria-label="Loading" />;
   if (query.isError) {
     return (
@@ -411,27 +409,22 @@ export function ReleasesPage({
 
   const takers = all.filter(takesReleases);
   // Nothing is made under Live only, where it would not show. Cycles come from their schedules.
+  const addsReleases = canEditReleases && show !== "live";
   const newButtons: Record<ReleasesTab, ReactNode> = {
-    releases: canEditReleases && show !== "live" && (
-      <Tooltip
-        label="No schedule takes new releases now"
-        disabled={takers.length > 0}
+    releases: addsReleases && (
+      <Button
+        {...newRelease.control}
+        onClick={() => {
+          setDialog({ kind: "new-release" });
+        }}
       >
-        <span>
-          <Button
-            disabled={takers.length === 0}
-            onClick={() => {
-              setDialog({ kind: "new-release" });
-            }}
-          >
-            New release
-          </Button>
-        </span>
-      </Tooltip>
+        New release
+      </Button>
     ),
     cycles: undefined,
     schedules: canEditStreams && show !== "live" && (
       <Button
+        id={newScheduleId}
         onClick={() => {
           setDialog({ kind: "stream" });
         }}
@@ -477,6 +470,17 @@ export function ReleasesPage({
         }}
         run={actions.run}
         decide={decide}
+        reason={addsReleases ? newRelease.line : undefined}
+        onMakeSchedule={
+          offersFirstSchedule(all, canEditStreams, show)
+            ? () => {
+                leave(() => {
+                  onTab("schedules");
+                  focusSoon(newScheduleId);
+                });
+              }
+            : undefined
+        }
       />
     ),
     cycles: () => (

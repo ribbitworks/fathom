@@ -39,6 +39,14 @@ describe("a table of another kind of record", () => {
     expect(screen.getByText("No matching gadgets")).toBeTruthy();
   });
 
+  it("says it has none yet above the empty row it may add in", () => {
+    renderGadgets({ gadgets: [] });
+    const rows = screen.getAllByRole("row");
+    const none = screen.getByText("No gadgets yet").closest("tr");
+    const empty = screen.getByRole("row", { name: "New gadget" });
+    expect(rows.indexOf(none as HTMLElement)).toBe(rows.indexOf(empty) - 1);
+  });
+
   it("names its sort and frozen columns in a Views menu without saved views, removing each", async () => {
     const onView = vi.fn();
     renderGadgets({

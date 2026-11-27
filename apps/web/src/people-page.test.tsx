@@ -188,7 +188,27 @@ describe("who sees the People page", () => {
     ).toBeDefined();
     answer = () => Response.json({ people: [], fields: [], order: [] });
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(await screen.findByText("No people yet")).toBeDefined();
+    const table = await screen.findByRole("grid", { name: "People" });
+    expect(within(table).getByText("No people yet")).toBeDefined();
+    expect(screen.getByText(/^0 people on /u)).toBeDefined();
+  });
+
+  it("turns Export off while nobody is shown, its tip saying why", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/people": () =>
+        Response.json({ people: [], fields: [], order: [] }),
+      "GET /api/lists": listsAnswer,
+    });
+    renderApp("/people");
+    await screen.findByRole("grid", { name: "People" });
+    const exportIcon = screen.getByRole("button", { name: "Export" });
+    expect(exportIcon).toHaveProperty("disabled", true);
+    expect(
+      document.getElementById(
+        String(exportIcon.getAttribute("aria-describedby")),
+      )?.textContent,
+    ).toBe("There's nothing to export");
   });
 });
 

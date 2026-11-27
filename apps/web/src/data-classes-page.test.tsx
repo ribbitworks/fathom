@@ -167,6 +167,22 @@ describe("the Data classes page", () => {
     ]);
   });
 
+  it("says in the Columns table while People has no added columns", async () => {
+    openPage({ "GET /api/people/columns": people([]) });
+    const columns = await section("Columns");
+    expect(
+      await within(columns).findByRole("cell", {
+        name: "No People columns yet",
+      }),
+    ).toBeDefined();
+  });
+
+  it("says nothing of having no columns while they are still being read", async () => {
+    openPage({ "GET /api/people/columns": () => new Promise<never>(() => {}) });
+    const columns = await section("Columns");
+    expect(within(columns).queryByText("No People columns yet")).toBeNull();
+  });
+
   it("names the list a column takes its class from, for a role without the Lists section", async () => {
     openPage({
       "GET /api/session": session(

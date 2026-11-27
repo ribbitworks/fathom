@@ -18,6 +18,8 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 - **Tabs:** **Releases**, **Cycles** and **Schedules**, as [The Page Heading](../../standards/ui-conventions/pages-and-panels.md#the-page-heading) sets out, kept in the address.
 - **Tables:** Each tab is the shared table, read only, with its own saved views and Export, as [Exporting](../../standards/ui-conventions/tables.md#exporting) sets out. Releases, cycles and schedules are General, so a file is saved at once. Records change only in their side panel.
 - **Timeline:** The [shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sits above the table and draws the schedules holding what it lists, in its order, apart from retired ones, so a search, filter or saved view narrows both.
+  - **No records:** A tab with no records at all has no timeline, since it would show nothing.
+  - **Nothing shown:** A view that shows none of the tab's records keeps the timeline, spanning every schedule's days with no rows, so the table doesn't jump.
 - **Scrolling:** The timeline and table scroll on their own; the timeline grows to about half the window.
 
 ## Timeline
@@ -45,7 +47,8 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 
 - **Columns:** Release, Schedule, Ships on, Cycles, Features, Activities and Status. Features and Activities show only to those who see features; Activities names each release's activities on one line, read only, since an activity moves on [Activities](activities.md).
 - **Rows:** One list at first, or grouped by schedule; shipped releases show only with **Show shipped**.
-- **New release:** For those who change releases. It asks for the schedule first, and is greyed out while no schedule takes new releases.
+- **New release:** For those who change releases. It asks for the schedule first, and is turned off while no schedule takes new releases, with No schedule takes new releases now as a dimmed line above the table, so the heading stays one line.
+- **Make a schedule first:** Under No releases yet in the table, a link opening the Schedules tab, only while there are no schedules, for a role that may add one, and not under Live only.
 - **Remove release:** Turned off while an activity names the release, with a line naming the first, as [Projects § Layout](projects.md#layout) sets out for every record others name. Activities come with the plan, sent only to those who see features; for others the server's refusal stays.
 
 ## Release Details

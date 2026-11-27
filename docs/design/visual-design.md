@@ -203,7 +203,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
       - **Its menu:** The ⋯ at the top of the details holds the row's menu, less Show details.
       - **Show on:** Under the title and key are Show on and the record's page, such as Show on Releases, opening a release's draft on Releases' Releases tab, and a schedule's or cycle pattern's on its Schedules tab, with its details open.
 - **Undo, not confirmation:** As [Saving and Undo](../standards/ui-conventions/entering-and-saving.md#saving-and-undo) sets out.
-- **Empty and failed states:** An empty table says so in a few words. A table that cannot be loaded says so and offers Try again.
+- **Empty and failed states:** An empty table keeps its bar and column headings and says so in a dimmed line across it, as [An empty table](../standards/ui-conventions/tables.md#tables) sets out. A table that cannot be loaded says so and offers Try again.
 - **Messages:** As [Saving and Undo](../standards/ui-conventions/entering-and-saving.md#saving-and-undo) sets out for failures.
 - **Styles:** Mantine's components, theme, and style props, such as a one-off size or margin, come first. Anything more goes in a CSS Module, never in a `style` attribute.
   - **Exceptions:** A position or size worked out while the page runs, such as where the app menu opens, the org chart's cards, the Features Board's columns, a timeline's bars and a table's column widths; and a colour chosen in the data from the palette, such as a team's colour or a note's text colour.
@@ -236,6 +236,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **A details row's name showing the records it lists on their own page:** a column's `showOn` in `record-table.ts`, drawn as the row's name by `Row` in `record-details.tsx`, with `ShowOnItem` there for the same in the record's menu, such as a project's Activities from `activitiesShowOn` in `activity-list.tsx`.
 - **Changing a record's values in a side panel:** `useRecordEditing` in `record-editing.tsx`, with what a person's notes add in `person-editing.tsx`.
 - **A record's menu outside a table:** `RecordMenu` in `record-menu.tsx`, such as a milestone's in a project's details, offering Publish draft… where `usePublishDraft` in `publish-draft.tsx` gives it.
+- **An empty table's line:** `EmptyTableRow` in `empty-table.tsx`, with its words from `emptyTableWords`, in the shared table and Data classes' tables.
 - **Something that could not be loaded:** `LoadProblem` in `load-problem.tsx`.
 - **The buttons over a Name cell:** `RowControls` in `row-controls.tsx`, placed by `nameCellControls` in `row-menus.tsx` in the column its table names.
 - **Notes:** `NotePanel`, `NoteView`, and `NoteCell` in `note-editor.tsx`, with `useNoteEditing` in `note-editing.tsx` opening one from a record's details and keeping it in the address, through `note-address.ts`, and `useTableNoteAddress` in `grid-note-address.ts` keeping one opened from a table's cell.

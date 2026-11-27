@@ -92,6 +92,18 @@ describe("keptByChoices", () => {
       ),
     ).toEqual(["Over", "Under"]);
   });
+
+  it("leaves rows out by a choice only while it is on", () => {
+    expect(
+      kept(over.turned(emptyView, true)).choices.map(({ label, leavesOut }) => [
+        label,
+        leavesOut,
+      ]),
+    ).toEqual([
+      ["Over", true],
+      ["Under", false],
+    ]);
+  });
 });
 
 describe("hiddenUnlessShown", () => {
@@ -138,5 +150,16 @@ describe("hiddenUnlessShown", () => {
     const unshipped = releases.filter((row) => !row.shipped);
 
     expect(shown(emptyView, unshipped).choices).toEqual([]);
+  });
+
+  it("leaves rows out by the choice while it is off, and none once it is on", () => {
+    expect(shown(emptyView).choices.map(({ leavesOut }) => leavesOut)).toEqual([
+      true,
+    ]);
+    expect(
+      shown(shipped.turned(emptyView, true)).choices.map(
+        ({ leavesOut }) => leavesOut,
+      ),
+    ).toEqual([false]);
   });
 });
