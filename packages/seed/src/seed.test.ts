@@ -30,7 +30,8 @@ import { and, count, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { reportingDrafts, seedDrafts, unseedDrafts } from "./drafts.ts";
 import { seedHires } from "./hires.ts";
-import { seed, unseed } from "./seed.ts";
+import { seed } from "./seed.ts";
+import { unseed } from "./unseed.ts";
 import {
   organization,
   type SeedTestDatabase,
