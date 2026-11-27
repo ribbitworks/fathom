@@ -131,6 +131,37 @@ describe("New page", () => {
     });
   });
 
+  it("keeps what is typed straight after Add page, for the new page's first row", async () => {
+    const made = followUps([]);
+    serverAnswers({
+      ...pageAnswers(made),
+      "POST /api/private-pages": () =>
+        Response.json(
+          { page: made, changeSetId: "40000000-0000-4000-8000-000000000003" },
+          { status: 201 },
+        ),
+    });
+    renderApp("/help");
+    const dialog = within(await openNewPage());
+    await userEvent.type(
+      dialog.getByRole("textbox", { name: "Name" }),
+      "Reading list{Enter}",
+    );
+    await dialog.findByRole("textbox", { name: "New column name" });
+    await userEvent.click(dialog.getByRole("button", { name: "Add page" }));
+    // Typed at once, before the new page is drawn
+    await userEvent.keyboard("Ask");
+    await waitFor(() => {
+      expect(
+        (
+          document.getElementById(
+            `cell-new-0-${nameField}-editor`,
+          ) as HTMLInputElement | null
+        )?.value,
+      ).toBe("Ask");
+    });
+  });
+
   it("refuses a choice column with no list, naming it under the list", async () => {
     const fetch = serverAnswers(pageAnswers(followUps([])));
     renderApp("/help");
