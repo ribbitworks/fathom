@@ -9,15 +9,17 @@ import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
-  allocatableIn,
-  type AllocationLine,
-  allocationMonthRecords,
-  type AllocationRow,
   CapacityTotal,
   capacityOf,
   marksFrom,
   monthTotal,
 } from "./allocation-months.tsx";
+import {
+  allocatableIn,
+  type AllocationLine,
+  allocationMonthRecords,
+  type AllocationRow,
+} from "./allocation-rows.ts";
 import { allocatedToGrouping } from "./allocation-groups.ts";
 import { monthManagers } from "./planned-hire-months.ts";
 import {

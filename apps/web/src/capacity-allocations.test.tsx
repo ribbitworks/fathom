@@ -25,7 +25,7 @@ import {
   serverAnswers,
 } from "./test-support.tsx";
 import { anyMonthKey } from "./team-months.tsx";
-import { unseenFeatureChoice } from "./allocation-months.tsx";
+import { unseenFeatureChoice } from "./allocation-rows.ts";
 
 const rowOf = (name: string) =>
   screen.getByText(name).closest("tr") as HTMLElement;
