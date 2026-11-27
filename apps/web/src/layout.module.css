@@ -167,3 +167,32 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* A page under Mine: its ring in the place of an item's icon, as wide and centred, lighter on the
+   sidebar's dark ground, then its name, cut short with an ellipsis where it's long. */
+.mineRing {
+  --fathom-private: var(--mantine-color-violet-4);
+
+  display: inline-flex;
+  flex: none;
+  justify-content: center;
+  width: 16px;
+}
+
+.mineRing > * {
+  margin-right: 0;
+}
+
+.mineRail {
+  --fathom-private: var(--mantine-color-violet-4);
+
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.minePageName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

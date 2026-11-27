@@ -37,6 +37,9 @@ import {
 import { useMemo } from "react";
 import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
+import { ApiError, notFoundStatus } from "./api.ts";
+import { PrivatePageScreen } from "./private-page.tsx";
+import { privatePageQuery } from "./private-pages.ts";
 import { RecordNotShown } from "./go-page.tsx";
 import { HelpPageView } from "./help-page.tsx";
 import { helpIndexPage, shownHelpPage } from "./help-pages.ts";
@@ -167,6 +170,47 @@ const accountsRoute = createRoute({
         onOpen={(next) => {
           void navigate({ search: { ...search, open: next } });
         }}
+      />
+    );
+  },
+});
+
+// A page under Mine: the table's view, and a row a link opens. A page nobody may read, its maker
+// included, is not found, as a key's link to it is.
+const privatePageSearch = viewSearchSchema.extend({
+  open: z.uuid().optional().catch(undefined),
+});
+
+const privatePageRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/mine/$pageId",
+  validateSearch: privatePageSearch,
+  beforeLoad: reaching("mine"),
+  loader: async ({ context, params }) => {
+    const missing = notFound();
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
+    if (!z.uuid().safeParse(params.pageId).success) throw missing;
+    try {
+      await context.queryClient.query(privatePageQuery(params.pageId));
+    } catch (error) {
+      if (error instanceof ApiError && error.status === notFoundStatus) {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
+        throw missing;
+      }
+      throw error;
+    }
+  },
+  component: function PrivatePage() {
+    const { pageId } = privatePageRoute.useParams();
+    const navigate = privatePageRoute.useNavigate();
+    const { open, ...search } = privatePageRoute.useSearch();
+    return (
+      <PrivatePageScreen
+        key={pageId}
+        pageId={pageId}
+        {...viewProps(search, (next, replace) => {
+          void navigate({ search: { ...next, open }, replace });
+        })}
       />
     );
   },
@@ -602,6 +646,7 @@ const routeTree = rootRoute.addChildren([
   signedInRoute.addChildren([
     homeRoute,
     accountsRoute,
+    privatePageRoute,
     rolesRoute,
     settingsRoute,
     dataClassesRoute,

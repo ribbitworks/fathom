@@ -32,8 +32,7 @@ The Administration pages hold accounts, roles, settings, lists, the planning set
 - **New role:** The page's main action, only for those who may edit roles, which [Edit Administration](../../product/roles.md#safeguards-for-administrators) grants.
 - **Descriptions:** Shown under the role's name wherever a role is chosen.
 - **Grid:** View, Approve and Edit columns over the areas, then General, Personal and Confidential under a Data classification heading, without Approve boxes. No lines under it explain greyed ticks.
-  - **Classify data** and **Approve own drafts** are boxes of their own below.
-  - **Make private pages** is stored and granted, but has no box and no summary line until Mine and New page are built, since no page uses it yet; `unshownPermissions` in `packages/shared/src/access.ts` keeps it off the grid, and saving a role keeps it as granted.
+  - **Classify data**, **Approve own drafts** and **Make private pages** are boxes of their own below.
   - A tick that comes with another is greyed; a box that needs another is unticked and greyed until that one is ticked.
   - The role that alone gives an active account Edit Administration has that box ticked and greyed.
 - **Summary:** Beside the grid, under Sees, Doesn't see, Can and Cannot, plain English says what the role sees, what it misses and what its holders can do. Pages it doesn't reach are under Doesn't see.

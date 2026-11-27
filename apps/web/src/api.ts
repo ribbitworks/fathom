@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Requests to Fathom's API, and how failed ones are handled: each failure carries the server's
-// status and message, refusals such as a missing sign-in are not retried, a request refused because
-// the session has ended sends the user to sign in again, and every failure can be put plainly.
+// Requests to Fathom's API, and how failed ones are handled.
 
 import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
@@ -127,6 +125,7 @@ export async function sendDeleteFor<Schema extends z.ZodType>(
 }
 
 const forbidden = 403;
+export const notFoundStatus = 404;
 const tooManyRequests = 429;
 // The server's answers refusing the values given, such as a name another record has.
 const refusedValues = new Set([400, 409]);

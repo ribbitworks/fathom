@@ -23,6 +23,10 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 - [Working as an Executive](working-as-an-executive.md): the plan, the people and what changed, to read.
 - [Working as an Administrator](working-as-an-administrator.md): accounts, roles, settings and the access history.
 
+## Mine
+
+- [Private pages](private-pages.md): tables of your own, which nobody else sees.
+
 ## Plan
 
 - [Overview](overview.md): the page Fathom opens on.

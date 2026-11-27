@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Saving changes on a page whose data is loaded as one query, such as the lists or the people. Every
-// change shows at once and saves in the background, one at a time in the order made. The latest
-// change can be undone with Cmd+Z or Ctrl+Z, or from its notification when it took something out of
-// view. Undoing asks the server to undo the change set the change was saved in, in one request, and
-// shows the data as it was just before the change straight away.
+// Saving changes on a page whose data is loaded as one query, with Undo.
 
 import type { QueryKey } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ApiError,
   describeProblem,
+  notFoundStatus,
   type Refusal,
   refusalOf,
   sendJsonFor,
@@ -28,7 +25,6 @@ import {
 import { unpublishedQuery } from "./unpublished.tsx";
 import { savedSchema } from "@fathom/shared";
 
-const notFound = 404;
 export const undoFailure =
   "Fathom could not undo the change. Try again in a moment.";
 
@@ -82,12 +78,20 @@ function inTypedText(target: EventTarget | null): boolean {
   return text !== "";
 }
 
+// Whether the key press is in a dialog over the page, such as one opened from the sidebar, which the
+// page's changes are behind. A side panel covering a narrow screen is the page's own, so its changes
+// are undone as on a wide one.
+const inModal = (target: EventTarget | null): boolean =>
+  target instanceof Element &&
+  target.closest('[aria-modal="true"]:not([data-side-panel])') !== null;
+
 // Whether a key press asks to undo the latest change, rather than the typing in a field. A field
 // that handles the keys itself, such as the note editor, has already undone its typing, so may be
 // empty by the time the page hears them.
 export function isUndo(event: KeyboardEvent): boolean {
   return (
     !event.defaultPrevented &&
+    !inModal(event.target) &&
     (event.metaKey || event.ctrlKey) &&
     !event.shiftKey &&
     event.key.toLowerCase() === "z" &&
@@ -138,7 +142,7 @@ export function useSaving<Data>({
       const refusal = refusalOf(error);
       if (refusal !== undefined && onRefused?.(refusal) === true) return;
       notifyFailure(
-        error instanceof ApiError && error.status === notFound
+        error instanceof ApiError && error.status === notFoundStatus
           ? removed
           : describeProblem(error, failure),
       );

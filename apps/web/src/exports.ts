@@ -391,7 +391,8 @@ function onRows<Rec extends GridRecord>(
 // drafts beside their live values, each drafted record's draft row, then its Live row; with the
 // drafts applied, the records as drafted; live only, the records as they are, none marked as a draft, with what
 // the draft waiting to change it does, as its green dot's tip says; each after the Draft and Change
-// columns, and those after the As on column, holding the day given, for a page with a date control.
+// columns, which a table without drafts leaves out, and those after the As on column, holding the
+// day given, for a page with a date control.
 export function shownForExport<
   Rec extends GridRecord,
   Col extends ExportColumn<Rec>,
@@ -403,13 +404,14 @@ export function shownForExport<
   columns: readonly Col[],
   liveColumn: (column: Col) => Col,
   asOn?: string,
+  withDrafts = true,
 ): { rows: ExportRow<Rec>[]; columns: ExportColumn<ExportRow<Rec>>[] } {
   const ofRecords = columns.map((column) => onRows(column, liveColumn(column)));
   const columnsWithDrafts = [
     ...(asOn === undefined
       ? []
       : [wordsColumn<ExportRow<Rec>>("exportAsOn", "As on", () => asOn)]),
-    ...draftColumns<Rec>(),
+    ...(withDrafts ? draftColumns<Rec>() : []),
     ...ofRecords,
   ];
   if (show === "live") {

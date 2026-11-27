@@ -15,6 +15,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 
 ## Pages
 
+- **[Mine](pages/mine.md):** a person's private pages, New page, and each page's table.
 - **[People](pages/people.md):** the People table's date row, a person's details, and grouping.
 - **[Org chart](pages/org-chart.md):** the chart of reporting and feature teams, its cards, and its team panels.
 - **[Capacity](pages/capacity.md):** who is on which feature team and allocated to what, month by month.
@@ -35,7 +36,8 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 - **Top bar:** It names where the user is, as [The Top Bar](../standards/ui-conventions/pages-and-panels.md#the-top-bar) sets out, and holds the account menu.
   - **Account menu:** The email address, then the role acted as, then Change name…, Change password…, Appearance (System, Light, Dark), and Sign out.
   - **Several roles:** A Role group ticks the role acted as. Choosing another switches at once, without signing in again; a page the new role doesn't allow gives way to the first one it does.
-- **Collapsed sidebar:** A rail of icons, each naming its page on hover or focus. Each item keeps its height, and a section's heading becomes a thin line of the same height, so nothing moves. The choice is remembered.
+  - **Mine:** First, for a role that makes private pages: the user's own pages, each after the private ring, then New page, as [Mine](pages/mine.md#the-sidebar) sets out.
+- **Collapsed sidebar:** A rail of icons, each naming its page on hover or focus. A private page shows its first character after its ring in place of an icon. Each item keeps its height, and a section's heading becomes a thin line of the same height, so nothing moves. The choice is remembered.
 - **Narrow screens:** The sidebar opens from a menu button, and closes when the user moves to another page.
 - **Pages:** Each starts with its heading, as [The Page Heading](../standards/ui-conventions/pages-and-panels.md#the-page-heading) sets out. The main action is at the right, after the Export icon where the table exports, as [Exporting](../standards/ui-conventions/tables.md#exporting) sets out. Content sits in bordered panels on a canvas a shade darker than them.
 - **Help pages:** Help pages opens Help's index, `docs/help/index.md`. Each Help page has its own address, open to every role, as [Help](../standards/ui-conventions/pages-and-panels.md#help) sets out.
@@ -214,6 +216,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 One component does each job, in `apps/web/src/`. A new screen uses or extends the one listed rather than making another, and a review rates a second one doing the same job as HIGH, as [Reuse across the codebase](../standards/code-review.md#architecture-and-design) sets out.
 
 - **Tables of records:** `RecordGrid` in `record-grid.tsx`, given its records, columns and actions as `record-table.ts` sets out, with each kind of cell, its display and its editor, in `cellKinds` in `cell-kinds.tsx`.
+- **A table whose records never have drafts:** `liveTableParts` in `live-table.ts`, its records as they are and no drafts to decide, given to `RecordGrid` with `withDrafts={false}`, as Accounts' and a private page's tables are.
 - **Columns of planned work:** `planningColumns` and `inGroupsThenAdded` in `planning-columns.tsx`, the columns features and activities share, drawn by Features' and Activities' tables, `feature-table.tsx` and `activity-table.tsx`, through `plannedGrid` in `projects-page.tsx`.
 - **Search, views, and the bar above a table:** `TableSearch`, `ViewBar`, and `ViewsMenu` in `table-controls.tsx`, with a page's saved views, on a table or not, such as the Org chart's, from `useSavedViews` in `saved-views.tsx`.
 - **Side panels:** `WithSidePanel` and `SidePanelFrame` in `side-panel.tsx`, the frame holding a panel's heading, with its marks beside it, its subtitle and its actions. A record's details panel is `RecordPanel` in `record-details.tsx`, on that frame, with its ⋯ menu from `usePanelMenu` in `panel-menu.tsx`, which a draft's details, `DraftPanel` in `drafts-panel.tsx`, use too. Every ⋯ menu in a side panel, `RecordMenu`'s and a list's drafts' included, is drawn by `PanelMoreMenu` there.
@@ -243,6 +246,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **Links:** `LinkEditor`, `LinkCell`, and `LinkMenuItem` in `link-field.tsx`.
 - **A draft's menu items and deciding drafts:** `DraftItems` in `list-drafts.tsx`, `DecisionModal` in `decision-dialog.tsx`, opened by `useDecisionDialog` there, and `OtherApproverNote` in `draft-details.tsx`.
 - **Draft and status marks:** `DraftedItem`, `DraftedValue`, `RowMarks`, `MarkedItem`, `FactBox` and `LiveLine` in `status-mark.tsx`, under the page's `DraftView`, as [Drafts](../standards/ui-conventions/drafts-and-values.md#drafts) sets out.
+- **A group of the sidebar's pages:** `SidebarGroup` in `sidebar-group.tsx`, the pages under a section's heading, with `RailTip` there naming each in the collapsed rail, used by the sections in `navigation.ts` and by Mine in `mine-section.tsx`.
 - **A page's title row:** `PageHeader` in `page-header.tsx`, with the Export icon from `PageExportMenu` in `page-export.tsx`, and the tabs beside it from `HeadingTabs` and `HeadingTabPanel` there.
 - **Exporting a table:** `useTableExport` in `table-export.tsx`, offering the export to the Export icon through `useOfferedExport` in `page-export.tsx`, the question in `export-question.tsx`, and the file, its name and saving it in `exports.ts`.
 - **A dialog's buttons:** `DialogActions` in `dialog-actions.tsx`.
@@ -255,3 +259,9 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 Designs agreed but not built yet:
 
 - **A page that can't load:** every page and part of one that can't load its data showing `LoadProblem` ([issue #194](https://github.com/ribbitworks/fathom/issues/194)).
+- **[Private pages](pages/mine.md):** as the [private tables design](https://github.com/ribbitworks/fathom/issues/230) sets out, still to come:
+  - New column, editing and removing a page's columns, and the page's ⋯ with Rename page…, Copy link, Copy key and Remove page.
+  - Moving pages under Mine, and saved views per page.
+  - A row's details, opened from its Name cell or a link to the row.
+  - Link to another table and Lookup columns, with Metrics breaking down by a lookup.
+  - Recording an export of a page holding Personal or Confidential columns in the access history.

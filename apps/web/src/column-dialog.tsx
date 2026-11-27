@@ -51,10 +51,12 @@ const typeNames: Record<FieldType, string> = {
   note: "Note",
 };
 
-const typesOffered = Object.entries(typeNames).map(([option, label]) => ({
-  value: fieldTypeSchema.parse(option),
-  label,
-}));
+export const typesOffered = Object.entries(typeNames).map(
+  ([option, label]) => ({
+    value: fieldTypeSchema.parse(option),
+    label,
+  }),
+);
 
 const firstType = fieldTypeSchema.parse(typesOffered[0]?.value);
 

@@ -139,7 +139,9 @@ describe("Cmd+Z", () => {
   // Whether Cmd+Z, pressed with focus on the element, undoes the latest saved change, heard on the
   // page as the page hears it, after the element's own handlers.
   function undoesFrom(element: HTMLElement): boolean {
-    document.body.append(element);
+    // An element in a dialog is added with its dialog.
+    const added = element.parentElement ?? element;
+    document.body.append(added);
     let undoes = false;
     const onKey = (event: KeyboardEvent) => {
       undoes = isUndo(event);
@@ -154,7 +156,7 @@ describe("Cmd+Z", () => {
       }),
     );
     document.removeEventListener("keydown", onKey);
-    element.remove();
+    added.remove();
     return undoes;
   }
 
@@ -173,6 +175,16 @@ describe("Cmd+Z", () => {
     if (type !== undefined) element.setAttribute("type", type);
     element.value = value;
     return element;
+  }
+
+  // An empty field in a dialog over the page, such as New page opened from the sidebar, or in a side
+  // panel, which covers a narrow screen as a dialog does.
+  function inModal({ sidePanel = false } = {}) {
+    const dialog = document.createElement("div");
+    dialog.setAttribute("aria-modal", "true");
+    if (sidePanel) dialog.setAttribute("data-side-panel", "");
+    dialog.append(field("input", ""));
+    return dialog.firstElementChild as HTMLElement;
   }
 
   function noteEditor(html: string) {
@@ -200,6 +212,12 @@ describe("Cmd+Z", () => {
     ["the empty note editor", "the saved change", noteEditor("<p><br></p>")],
     ["a checkbox", "the saved change", field("input", "on", "checkbox")],
     ["a button", "the saved change", document.createElement("button")],
+    ["an empty field in a dialog over the page", "nothing", inModal()],
+    [
+      "an empty field in a side panel covering a narrow screen",
+      "the saved change",
+      inModal({ sidePanel: true }),
+    ],
   ])("in %s undoes %s", (_name, undone, element) => {
     expect(undoesFrom(element)).toBe(undone === "the saved change");
   });

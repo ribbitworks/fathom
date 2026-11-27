@@ -3,7 +3,7 @@
 // Asking whether to discard what is being written before leaving it.
 
 import { Button, Group, Modal } from "@mantine/core";
-import { useState } from "react";
+import { type KeyboardEvent, useState } from "react";
 import classes from "./discard-question.module.css";
 
 export const newRecordQuestion = (thing: string) => ({
@@ -63,3 +63,24 @@ export function useDiscardQuestion() {
   // Whether the question is showing, so a dialog under it leaves Esc to it.
   return { ask, dialog, asking: asking !== undefined };
 }
+
+// Esc in a dialog that asks before it's left: it leaves, asking, unless something in the dialog that
+// is open, a drop-down list or a menu, takes it to close that alone, a field has used it already, or
+// the dialog is busy saving. The dialog's own Esc is turned off, so the question it may open doesn't
+// take the same Esc as its own.
+export const escapeLeaves =
+  (leave: () => void, busy: boolean) => (event: KeyboardEvent) => {
+    const inOpenList =
+      event.target instanceof HTMLElement &&
+      event.target.getAttribute("aria-expanded") === "true";
+    if (
+      event.key !== "Escape" ||
+      busy ||
+      inOpenList ||
+      event.defaultPrevented
+    ) {
+      return;
+    }
+    event.stopPropagation();
+    leave();
+  };

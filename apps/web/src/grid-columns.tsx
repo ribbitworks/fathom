@@ -4,6 +4,7 @@
 
 import {
   type Choice,
+  isCodedKey,
   keyValue,
   type RecordKeyOf,
   shownRecordKey,
@@ -341,8 +342,8 @@ export const keyColumnKey = "recordKey";
 // A key is mostly capitals, each about a third wider than the digit a column's width counts in.
 const keyCharWidth = 1.3;
 
-// Each record's key, hidden until a view shows it, sorted and filtered by its number. A key never
-// changes, so the column is read only, and no draft changes it.
+// Each record's key, hidden until a view shows it, sorted and filtered by its number, or a code's
+// text. A key never changes, so the column is read only, and no draft changes it.
 export function keyColumn<Rec extends GridRecord, Change>(
   keyOf: (record: Rec) => RecordKeyOf | undefined,
   records: readonly Rec[],
@@ -364,7 +365,13 @@ export function keyColumn<Rec extends GridRecord, Change>(
     ),
     key: keyColumnKey,
     label,
-    kind: "number",
+    // A key's number sorts and filters as a number, and a code, such as 4X9T, as text.
+    kind: records.some((record) => {
+      const key = keyOf(record);
+      return key !== undefined && isCodedKey(key);
+    })
+      ? "text"
+      : "number",
     choices: [],
     multiple: false,
     required: false,

@@ -63,6 +63,7 @@ You're done when the new role shows in the list.
 - **Columns** added to **Features**, **Activities** or **People** are set up with **Edit** on that area, together with **View** on **People**, and their drafts approved with **Approve** on that area; **Activities** go with **Features and releases**. A list made with **New list** in a column's dialog is approved with the column; one made on **Lists** needs **Approve** on **Configuration**.
 - **Classify data**, under the grid, lets the role change the class of details, lists and columns.
 - **Approve own drafts**, under the grid, lets the role approve drafts its holders made themselves, which otherwise need someone else.
+- **Make private pages**, under the grid, lets the role's holders make pages of their own under **Mine**, which nobody else sees. See [Private pages](private-pages.md).
 
 ## Reading the Summary
 

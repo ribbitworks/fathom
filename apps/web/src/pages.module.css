@@ -861,6 +861,12 @@ tr:is(.draftRow, .recordFillingRow, .recordLiveRow)
   border: 1.5px solid var(--mantine-color-yellow-6);
 }
 
+/* What only its maker sees: a hollow violet ring. */
+.privateMark .statusDot {
+  background: transparent;
+  border: 1.5px solid var(--fathom-private);
+}
+
 /* A person's live row, under their draft row: light green, dimmed, after a green dot, and joined to
    the draft row. */
 .recordTable .draftRow:has(+ .recordLiveRow) > td {

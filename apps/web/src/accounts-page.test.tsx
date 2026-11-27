@@ -592,5 +592,10 @@ describe("exporting the Accounts page", () => {
     ]);
     const text = (await files[0]?.text()) ?? "";
     expect(text).toContain("planner@example.test");
+    // Accounts have no drafts, so the file says nothing of them
+    expect(text.replace(/^\uFEFF/u, "").split("\r\n")[0]).toBe(
+      "Name,Email address,Roles,Status,Created",
+    );
+    expect(files[0]?.name).not.toContain("drafts");
   });
 });

@@ -50,7 +50,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 - **Choices:** Everyone who sees data drawn from a list sees the list's choices, without needing the Lists page.
 - **Lists made with a column:** Whoever sets up Features' or Activities' columns also drafts a new General list with a column, without Edit Configuration, as [A new list with a column](#columns-and-saved-views) sets out.
 - **Team colours:** Edit People sets each reporting team's colour, and Edit Feature teams sets each feature team's.
-- **Private pages:** Make private pages lets a person make pages of their own, each a table only they read; nobody else reads them, an Administrator included. Losing the permission hides a person's pages until it comes back. Their pages aren't built yet, so the Roles page doesn't show the permission until they are.
+- **Private pages:** Make private pages lets a person make pages of their own, each a table only they read; nobody else reads them, an Administrator included. Losing the permission hides a person's pages until it comes back.
 - **Exports:** Exporting needs no permission of its own: whoever opens a page exports what its table shows, so Product Managers export Features, and the [Plan](domain.md#planning-terms) once it is built.
 
 ## Permissions

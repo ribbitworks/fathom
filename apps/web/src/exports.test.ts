@@ -572,6 +572,25 @@ describe("the rows a view shows, as a file holds them", () => {
     ]);
   });
 
+  it("holds a table's rows without Draft and Change columns where it has no drafts", () => {
+    const exported = shownForExport(
+      "both",
+      live.slice(0, 2),
+      live,
+      live,
+      [named],
+      () => liveNamed,
+      undefined,
+      false,
+    );
+    expect(exported.columns.map(({ label }) => label)).toEqual(["Name"]);
+    expect(
+      exported.rows.map((one) =>
+        exported.columns.map((column) => exportValue(column, one)),
+      ),
+    ).toEqual([["Fictional Unchanged"], ["Fictional Before"]]);
+  });
+
   it("holds the draft rows alone with the drafts applied", () => {
     expect(asFile("drafts", drafted.slice(0, 3))).toEqual([
       ["", "", "Fictional Unchanged"],

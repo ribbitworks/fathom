@@ -6,6 +6,7 @@ Most records in Fathom have a key. You can copy a link to a record and send it t
 
 - **Key:** a record's short name in Fathom. It's the word for its kind, a hyphen and a number, after a **#**, such as **#FEATURE-123**.
 - **What has a key:** features, activities, projects, proposals, customers, milestones, releases, schedules, people, planned hires, feature teams, lists, columns, accounts and roles have keys. Cycles don't, since they're named after their schedule.
+- **Private pages' keys:** your [private pages](private-pages.md) and their rows have keys too, but with four letters and digits chosen at random in place of a number, such as **#ROW-4X9T**. So a key never says how many pages or rows anyone has made.
 - **A key stays the same:** renaming, retiring or removing a record doesn't change its key, and no other record ever gets it. It's Fathom's own, apart from your organization's IDs, such as a Project ID or an Employee ID.
 - **Link:** a link opens the page that shows the record, with its details open. It opens only for someone whose role sees that page and that record. Anyone else sees "Nothing found for" and the key, so a link never shows that a record exists.
 
@@ -19,7 +20,7 @@ On the Features Board, each card shows its key under its name. To hide the keys 
 
 A record that isn't saved yet has no key.
 
-The tables on **People**, **Features**, **Activities**, **Projects**, **Lists**, **Accounts**, **Drafts**, and the **Releases** and **Schedules** tabs of **Releases** have a **Key** column, hidden at first. On **Drafts**, it shows the key of the record each draft changes. A draft of the planning settings has no key. To show it:
+The tables on **People**, **Features**, **Activities**, **Projects**, **Lists**, **Accounts**, **Drafts**, your private pages, and the **Releases** and **Schedules** tabs of **Releases** have a **Key** column, hidden at first. On **Drafts**, it shows the key of the record each draft changes. A draft of the planning settings has no key. To show it:
 
 1. Select **Views**.
 1. Under **Hidden**, select **Key**.
@@ -53,6 +54,7 @@ Some records open in a particular place:
 - A release opens on the **Releases** tab, and a schedule on the **Schedules** tab.
 - A role's link opens its dialog on **Roles**.
 - A column's link opens the column's menu on its table.
+- A link to a private page, or to one of its rows, opens the page, and only for you.
 
 If the record was removed, and your change history shows its removal, the page says so, with a link to **Show change history**.
 
