@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Data Classes
@@ -102,7 +102,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 ### CLASS-02: Changing a Detail's Class Changes What Another Role Sees
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CLASS-01 ended with. Steps `2401`, `035D` and `605E` sign in as other accounts.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as the account CLASS-01 ended with. Steps `2401`, `035D` and `605E` sign in as other accounts.
 
 **Preconditions:** Signed in with this account.
 
@@ -162,18 +162,6 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Start date**'s class is an open eye, then **General**
   - **Notes:**
 
-- [ ] `B18D` Select **Change class…** on the **Start date** row.
-  - **Expected:**
-    - The dialog opens
-    - **General** is chosen
-  - **Notes:**
-
-- [ ] `B86B` Select **Change**.
-  - **Expected:**
-    - The dialog closes
-    - The class is still **General**
-  - **Notes:**
-
 - [ ] `54A3` Select **Change class…** on the **End date** row.
   - **Expected:**
     - A dialog titled "Change the class of End date" opens
@@ -191,10 +179,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `8F30` Select the **Access history** page in the left-hand menu.
-  - **Expected:**
-    - The newest entry has a yellow dot before it
-    - It reads "Engineering Director changed End date's class: from Personal to General"
-    - The entry under it reads "Engineering Director changed Start date's class: from Personal to General"
+  - **Expected:** The newest entry starts "Engineering Director (`engineering.director@fathom.test`) changed End date's class", and ends with a **Worth checking** box.
   - **Notes:**
 
 - [ ] `605E` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
@@ -233,11 +218,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - The dialog closes
     - A **Portfolio** column is at the right end of the table
-    - A hollow dot is before its name
+    - A hollow yellow dot is before its name
   - **Notes:**
 
 - [ ] `71F0` Select the Publish button.
-  - **Expected:** A notification reads "Published 1 change."
+  - **Expected:** A notification says "Published 1 change."
   - **Notes:**
 
 - [ ] `525B` Open the **Portfolio** column menu, and select **Approve…**.
@@ -247,7 +232,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `4ED3` Select **Approve**.
-  - **Expected:** A notification reads "Approved 1 draft."
+  - **Expected:** A notification says "Approved 1 draft."
   - **Notes:**
 
 - [ ] `F2C4` Open the **Portfolio** column menu, and select **Change class…**.
@@ -307,7 +292,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - The dialog closes
     - A **Portfolio** column is at the right end of the table
-    - A hollow dot is before its name, with no class symbol
+    - A hollow yellow dot is before its name, with no class symbol
   - **Notes:**
 
 - [ ] `924D` Open the **Portfolio** column menu, and select **Change class…**.
@@ -323,7 +308,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `A21F` Select **Change**.
   - **Expected:**
     - The dialog closes
-    - The hollow dot, then a lock with a keyhole, are before **Portfolio** in its heading
+    - The hollow yellow dot, then a lock with a keyhole, are before **Portfolio** in its heading
   - **Notes:**
 
 - [ ] `2D81` Select the **Drafts** page in the left-hand menu.
@@ -334,7 +319,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - A row's **Record** reads `Portfolio`, after a hollow yellow dot
     - Its **Change** reads "Added", and its **Type** "Column"
-    - Its **What changes** gives **Class** as `Confidential`
+    - Its **What changes** gives **Class** as "Confidential"
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

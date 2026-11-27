@@ -4,14 +4,18 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "docs/help/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Help
 
 ## Scope
 
-Verifies what only a person can judge of Help in Fathom: how a Help page and its diagram read, in a wide and a narrow window, following links between Help pages to a page and to a heading on it, from the mouse and the keyboard, and going back, and the role's jobs on the Overview, taken from its Help page.
+Verifies what only a person can judge of Help in Fathom:
+
+- How a Help page and its diagram read, in a wide and a narrow window.
+- Following links between Help pages, to a page and to a heading on it, from the mouse and the keyboard, and going back.
+- The role's jobs on the Overview, and their links to the pages and to Help.
 
 ## Test Environment
 
@@ -54,7 +58,7 @@ Start with Start Fathom. Record each step's result as [Manual Test Basics](manua
     - Its numbered steps count from 1 under each heading.
   - **Notes:**
 
-- [ ] `E536` Select the **Features** link at the end of the step about grouping by **Cycle** or **Release**.
+- [ ] `E536` Select the **Features** link in the line "See Features." under **See What Each Cycle or Release Holds**.
   - **Expected:**
     - The **Features** Help page opens in the same tab.
     - The window has scrolled to the heading **Group the Table**, at its top.
@@ -69,7 +73,7 @@ Start with Start Fathom. Record each step's result as [Manual Test Basics](manua
   - **Notes:**
 
 - [ ] `2269` Press Tab.
-  - **Expected:** The **Features** link at the end of the next step shows a focus ring.
+  - **Expected:** The **Features** link in the line "See Features." under **See What Each Cycle or Release Holds** shows a focus ring.
   - **Notes:**
 
 - [ ] `6B8B` Press Enter.
@@ -109,7 +113,7 @@ Start with Start Fathom. Record each step's result as [Manual Test Basics](manua
   - **Notes:**
 
 - [ ] `FBA4` Press the right arrow key several times.
-  - **Expected:** The diagram scrolls to show **Customer** at its right.
+  - **Expected:** The diagram scrolls until its right-hand side shows, with **Cycle** and **Release** under **Ship**.
   - **Notes:**
 
 ### HELP-03: The Overview's Jobs

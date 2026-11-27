@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Record Keys and Links
@@ -160,7 +160,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
 
 - [ ] `C81D` Right-click 'Offline Sync''s **Status** cell.
-  - **Expected:** A menu opens beside the pointer, titled **Offline Sync**, offering **Show details** and **Copy link**.
+  - **Expected:** A menu opens beside the pointer, titled **Offline Sync**, with **Show details** and **Copy link** among its items.
   - **Notes:**
 
 - [ ] `0F6B` Select **Copy link**.
@@ -190,7 +190,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `4AC2` Select the **⋯** on 'Offline Sync''s card.
-  - **Expected:** A menu opens under it, titled **Offline Sync**, offering **Show details** and **Copy link**.
+  - **Expected:** A menu opens under it, titled **Offline Sync**, with **Show details** and **Copy link** among its items.
   - **Notes:**
 
 - [ ] `91A9` Press Esc.
@@ -208,7 +208,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `3BB4` Press Shift+F10.
-  - **Expected:** A menu opens under the card, titled **Offline Sync**, offering **Show details** and **Copy link**.
+  - **Expected:** A menu opens under the card, titled **Offline Sync**, with **Show details** and **Copy link** among its items.
   - **Notes:**
 
 **Afterwards:** Select **Table** beside the **Features** heading.
@@ -219,7 +219,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open from the left-hand menu.
 
-- [ ] `DE5F` Type `Lorenza Thiel` in the search box above the table.
+- [ ] `DE5F` Search for `Lorenza Thiel`.
   - **Expected:** The row of 'Lorenza Thiel' shows.
   - **Notes:**
 
@@ -242,7 +242,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `99DF` Right-click her card.
-  - **Expected:** A menu opens beside the pointer, titled **Lorenza Thiel**, offering **Show details** and **Copy link**.
+  - **Expected:** A menu opens beside the pointer, titled **Lorenza Thiel**, with **Show details** and **Copy link** among its items.
   - **Notes:**
 
 ### KEY-08: A Column's Link Opens Its Menu
@@ -286,7 +286,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Every key shows whole, with none cut short.
   - **Notes:**
 
-- [ ] `3E7C` Write down the first row's key, then type it in the search box above the table.
+- [ ] `3E7C` Write down the first row's key, then search for it.
   - **Expected:** The table shows that row alone, its **Key** cell showing the key typed.
   - **Notes:**
 

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/person-panel*", "apps/web/src/person-change.ts", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "apps/web/src/org-chart-cards.tsx", "apps/web/src/org-chart-canvas.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Person Details
@@ -20,7 +20,7 @@ Verifies a person's or planned hire's details in the side panel beside the org c
 - How it reads, resized, and in a narrow window.
 - Changing their details there, beside People and the org chart.
 - Being asked before a changed note is discarded.
-- Adding a person or planned hire from **New person**.
+- Adding a person from **New person**.
 
 ## Test Environment
 
@@ -40,14 +40,14 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks and the Draft menu. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Draft menu, the details button and the side panel, which the steps call the details panel. This test adds:
 
-- **Details panel:** the panel that slides out on the right of the org chart or the **People** table, headed with a person's or planned hire's name, with the sections **Reporting**, **Details** and **Columns**, each a list of labels on the left and values on the right, and an **×** at its top right.
+- **Sections:** the details panel lists a person's values under headings such as **Reporting**, **Details** and **Columns**, each a list of labels on the left and values on the right.
 - **New person:** the button at the top right of the **People** page, which opens the details panel to add a person or planned hire.
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
 ### DETAILS-01: A Person's Details Open Beside the Org Chart
 
@@ -68,7 +68,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `6ACE` Read the **Reporting** section.
   - **Expected:**
     - **Manager** reads "No manager".
-    - **Team name** reads 'Platform team', after a small teal dot.
+    - **Reporting team name** reads 'Platform team', after a small teal colour square.
     - **Direct reports** lists the people under her on the org chart, from 'Blaise Gislason' to '武井 聡', among them:
       - 'Tanushree Patel-Singh'
       - 'Simone Jean', with a yellow dot before her name
@@ -111,6 +111,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Under it, a green dot, then 'Viktoria Holmberg' in grey, then a red **Left** box.
   - **Notes:**
 
+### DETAILS-03: The Details Follow the Draft Menu
+
+Covered by [DETAILS-08](#details-08-changing-a-persons-details-beside-people).
+
+### DETAILS-04: Someone Who Has Left Is Marked
+
+Covered by [DETAILS-02](#details-02-a-drafted-value-shows-beside-the-live-one).
+
 ### DETAILS-05: A Person's Details Open Beside People
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, changed from DETAILS-02.
@@ -123,21 +131,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `69F4` Point at her row, without selecting anything.
   - **Expected:**
-    - Two small buttons appear at the right of her **Name** cell: a box with a line down its right side, then **⋯**.
+    - The details button, then **⋯**, appear at the right of her **Name** cell.
     - Her name stays clear of the two buttons, not under them.
     - A **⋯** button is also at the end of her row.
   - **Notes:**
 
-- [ ] `DCAD` Point away from the row.
-  - **Expected:** The two buttons in her **Name** cell are hidden again.
-  - **Notes:**
-
-- [ ] `7C3E` Point at her row again.
-  - **Expected:** The two buttons appear again at the right of her **Name** cell.
-  - **Notes:**
-
-- [ ] `E607` Put the pointer on the box button, and press the mouse button without letting go.
-  - **Expected:** The box button stays under the pointer.
+- [ ] `E607` Put the pointer on the details button, and press the mouse button without letting go.
+  - **Expected:** The details button stays under the pointer.
   - **Notes:**
 
 - [ ] `39EF` Let go of the mouse button.
@@ -236,7 +236,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DETAILS-07.
 
-**Preconditions:** Signed in with this account. **People** page open from the left-hand menu, searched for `E10026`, with the details of 'Lorenza Thiel' open beside the table.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu, searched for `E10026`, with the details of 'Lorenza Thiel' opened from her row's details button.
 
 - [ ] `AC8F` Read the panel, with the pointer away from it.
   - **Expected:**
@@ -265,13 +265,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No notification shows.
   - **Notes:**
 
-- [ ] `BC50` Select the word **None** beside **Team name**.
+- [ ] `BC50` Select the word **None** beside **Reporting team name**.
   - **Expected:** A box to type in opens in place of **None**.
   - **Notes:**
 
 - [ ] `73E5` Type `Harbour team`, and press Enter.
   - **Expected:**
-    - **Team name** reads `Harbour team`.
+    - **Reporting team name** reads `Harbour team`.
     - A hollow yellow dot is before it.
     - Under it, a green dot, then "None" in grey.
   - **Notes:**
@@ -294,6 +294,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Position** reads 'SDET'.
     - A hollow yellow dot is before it.
     - 'SDET' under the heading at the top of the panel follows it.
+    - Focus is on the change button beside **Position**.
   - **Notes:**
 
 - [ ] `CCD6` Select **Draft** above the table, then **Live only**.
@@ -337,7 +338,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `DAD2` Select her name on her card.
   - **Expected:**
     - The details panel shows 'Lorenza Thiel'.
-    - **Team name** reads `Harbour team`.
+    - **Reporting team name** reads `Harbour team`.
     - A hollow yellow dot is before it.
     - Her card shows `Harbour team` too.
   - **Notes:**
@@ -356,7 +357,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `7F51` Select the name on the card for 'Silje Holm-Schrøder'.
   - **Expected:**
-    - A box asks "Discard changes to the note?"
+    - A dialog asks "Discard changes to the note?"
     - It offers **Keep writing** and **Discard**.
     - The details behind it still show 'Lorenza Thiel'.
   - **Notes:**
@@ -382,7 +383,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - "SDET, TBD-" and another number, with that planned Engineering Manager in **Manager**
   - **Notes:**
 
-- [ ] `F91F` Select the details button in the row for the planned Engineering Manager, the box with a line down its right side that shows at the right of its **Name** cell while the row is pointed at.
+- [ ] `F91F` Select the details button in the row for the planned Engineering Manager.
   - **Expected:**
     - The details panel opens, headed "Engineering Manager, TBD-" and the number written down at `51CD`.
     - Under the heading, 'Engineering Manager', then a grey box reading **Planned, no date**.
@@ -396,7 +397,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Details** shows:
       - **ID** "TBD-" and the number written down at `51CD`
       - **State** "Request to hire"
-      - no **Expected**
+      - **Expected** "None"
       - no **End**
     - **Manager?** shows a ticked checkbox and "Yes".
   - **Notes:**
@@ -432,22 +433,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Focus moves on from **Name**.
   - **Notes:**
 
-- [ ] `7D73` Type `E10007` in **ID**, and press Tab.
-  - **Expected:**
-    - The **ID** box is outlined in red.
-    - "Someone already has that ID" shows in red under it.
-  - **Notes:**
-
-- [ ] `54FB` Replace the ID with `E20001`, and press Tab.
-  - **Expected:** The red line under **ID** has gone.
+- [ ] `B7E1` Type `E20001` in **ID**, and press Tab.
+  - **Expected:** **ID** holds `E20001`.
   - **Notes:**
 
 - [ ] `42D9` Select the change button beside **Position**, and choose 'Software Engineer' in the list that opens.
   - **Expected:** **Position** reads 'Software Engineer'.
   - **Notes:**
 
-- [ ] `162B` Select the change button beside **Grade**, and choose 'P2' in the list that opens.
-  - **Expected:** **Grade** reads 'P2'.
+- [ ] `162B` Select the change button beside **Level**, and choose 'P2' in the list that opens.
+  - **Expected:** **Level** reads 'P2'.
   - **Notes:**
 
 - [ ] `6D1F` Select **Add**.
@@ -461,44 +456,4 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### DETAILS-12: State Decides Whether a Person or a Planned Hire Is Added
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DETAILS-11.
-
-**Preconditions:** **People** page open from the left-hand menu.
-
-- [ ] `AFE6` Select **New person**.
-  - **Expected:** The details panel opens, headed **New person**.
-  - **Notes:**
-
-- [ ] `2D82` Type `Fictional Opening` in **Name**.
-  - **Expected:** **Name** holds `Fictional Opening`.
-  - **Notes:**
-
-- [ ] `A798` Type `2027-06-30` in **End**, and press Tab.
-  - **Expected:**
-    - The panel is still headed **New person**.
-    - **End** holds `2027-06-30`.
-  - **Notes:**
-
-- [ ] `D0F8` Select the change button beside **State**.
-  - **Expected:** A list opens offering **Hired**, **Left**, **Request to hire** and **Approved to hire**.
-  - **Notes:**
-
-- [ ] `76FC` Choose **Request to hire**.
-  - **Expected:**
-    - The heading reads **New planned hire**.
-    - Under **State**, a grey line reads "End was cleared, since a planned hire doesn't have it."
-    - **Name** still holds `Fictional Opening`.
-    - There is no **End**, **Manager assigned** or **Team name**.
-  - **Notes:**
-
-- [ ] `4BD8` Select the **×** at the top right of the panel.
-  - **Expected:**
-    - A box asks "Discard the new planned hire?"
-    - It offers **Keep adding** and **Discard**.
-  - **Notes:**
-
-- [ ] `E90C` Select **Discard**.
-  - **Expected:**
-    - The panel closes.
-    - No row for `Fictional Opening` is in the table.
-  - **Notes:**
+Proved by automated tests in `apps/web/src/people-page-adding-from-new.test.tsx`.

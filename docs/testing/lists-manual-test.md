@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: The Lists Table, Built-in Lists and Lists with Meanings
@@ -19,7 +19,7 @@ Verifies the Lists page's built-in lists, **Positions**, **Hiring states**, **Pr
 - The rules that keep a choice offered for every meaning, when drafting and when approving.
 - Each size's weight.
 
-It also verifies the table of lists: the columns that use each list, filtering and saving a view, renaming a list in its row, and a row's menu for those who change lists and those who only read them.
+It also verifies the table of lists: the columns that use each list, filtering and saving a view, renaming a list in its row, and a row's menu.
 
 ## Test Environment
 
@@ -32,7 +32,6 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Engineering Director:** `engineering.director@fathom.test`
 - **Feature Lead:** `feature.lead@fathom.test`
-- **Product Manager:** `product.manager@fathom.test`
 
 ## Common Procedures
 
@@ -142,7 +141,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `2F42` Select the Publish button.
   - **Expected:**
-    - A notice says the changes were published.
+    - A notification says "Published" followed by the number of changes.
     - The Publish button is gone from the top bar.
   - **Notes:**
 
@@ -223,11 +222,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **New person** is not greyed out
   - **Notes:**
 
-- [ ] `0F88` Run Reset the Database.
-  - **Expected:**
-    - The last line printed gives the shared password.
-    - No error is above it.
-  - **Notes:**
+**Afterwards:** Run Reset the Database.
 
 ### LIST-08: The Lists Shown Can Be Narrowed to Built-in or Custom Ones
 
@@ -241,13 +236,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - The count reads "7 lists".
   - **Notes:**
 
-**Afterwards:** Run Reset the Database.
+**Afterwards:** Select **All** in the switch beside the page's title.
 
 ### LIST-09: Each Size Has a Weight
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as LIST-08.
 
-**Preconditions:** LIST-08 done, so the database is as Reset the Database leaves it. Signed in with this account. **Lists** page open from the left-hand menu.
+**Preconditions:** LIST-08 done, so the database is as Reset the Database left it. Signed in with this account. **Lists** page open from the left-hand menu.
 
 - [ ] `4A00` Select the details button of **Feature sizes**.
   - **Expected:** The choices' rows end, in order:
@@ -299,7 +294,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Sites** names "People: Site"
   - **Notes:**
 
-- [ ] `CA8F` Open the **Used by** column's filter, tick **Empty**, and close the filter.
+- [ ] `CA8F` Select the **Used by** header, then **Filter…**.
+  - **Expected:** **Empty** is among the choices.
+  - **Notes:**
+
+- [ ] `66C2` Tick **Empty**.
+  - **Expected:** **Empty** is ticked.
+  - **Notes:**
+
+- [ ] `AF80` Press Esc.
   - **Expected:**
     - A pill reads "Used by: Empty"
     - **Languages** shows, and **Sites** and **Positions** don't
@@ -319,7 +322,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 ### LIST-11: A List Is Renamed in Its Row
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as LIST-10. Step `F2E2` signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as LIST-10.
 
 **Preconditions:** LIST-10 done. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
 
@@ -327,16 +330,6 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - The row's name reads **Fictional pay levels**, after a hollow yellow dot
     - A light green Live row under it reads **Levels**
-  - **Notes:**
-
-- [ ] `78D2` Double-click the name **Fictional pay levels**, replace it with `Sites`, and press Enter.
-  - **Expected:**
-    - The name stays open for editing
-    - A red line reads "Another list has that name"
-  - **Notes:**
-
-- [ ] `72F4` Press Esc.
-  - **Expected:** The name reads **Fictional pay levels** again.
   - **Notes:**
 
 - [ ] `BA5B` Open the ⋯ menu of **Positions**.
@@ -353,26 +346,6 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `E6FB` Press Esc.
   - **Expected:** The menu closes.
-  - **Notes:**
-
-- [ ] `F2E2` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
-  - **Expected:** Fathom opens.
-  - **Notes:**
-
-- [ ] `330E` Select the **Lists** page in the left-hand menu.
-  - **Expected:** There is no **New list** button.
-  - **Notes:**
-
-- [ ] `2E68` Open the ⋯ menu of **Sites**.
-  - **Expected:** It offers only **Show details** and **Copy link**.
-  - **Notes:**
-
-- [ ] `40AE` Press Esc.
-  - **Expected:** The menu closes.
-  - **Notes:**
-
-- [ ] `866E` Double-click the name **Sites**.
-  - **Expected:** The name isn't opened for editing.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

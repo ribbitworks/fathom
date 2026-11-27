@@ -48,7 +48,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### Viewing
 
