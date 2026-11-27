@@ -35,17 +35,11 @@ export const PanelMenusContext = createContext<PanelMenus | undefined>(
   undefined,
 );
 
-// The items of a record's menu, from the table beside its panel, if it has any.
-export const usePanelMenu = (recordId: string): ReactNode =>
-  useContext(PanelMenusContext)?.(recordId);
-
-export function PanelMenu({
-  name,
-  items,
-}: {
-  // The record's name, as the panel's title shows it.
-  name: string;
-  items: ReactNode;
-}) {
-  return <PanelMoreMenu label={actionsFor(name)}>{items}</PanelMoreMenu>;
+// The ⋯ at the top of a record's panel, holding its menu from the table beside the panel, or none
+// where it offers nothing, given the record's name as the panel's title shows it.
+export function usePanelMenu(recordId: string, name: string): ReactNode {
+  const items = useContext(PanelMenusContext)?.(recordId);
+  return items === undefined ? undefined : (
+    <PanelMoreMenu label={actionsFor(name)}>{items}</PanelMoreMenu>
+  );
 }

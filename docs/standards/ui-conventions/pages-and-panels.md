@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Pages and Panels
@@ -85,11 +85,11 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
 - **A panel's menu:** A record's details panel has a ⋯ at its top, before its close ×, named Actions for the record.
   - **The same menu:** it opens the menu of the record's row on its table, less Show details: the same items, words and order, such as Copy link, Approve draft…, Reject draft…, Publish draft…, Resubmit and Discard draft.
   - **Acting:** each item does what it does from the row, and focus stays in the panel.
-  - **A record that goes:** Discarding the draft that added the record takes it away, so focus goes to the table.
+  - **A record that goes:** Discarding the draft that added the record takes it away, so focus goes to the table. On the Drafts page, discarding any draft takes its row away, so focus goes to the table too.
   - **Esc:** Esc closes the menu alone, keeping the panel open, as it does any dropdown open in a panel, such as a select's choices; the next Esc closes the panel. `SidePanelFrame` in `apps/web/src/side-panel.tsx` leaves an Esc that closes a dropdown to it.
   - **Nothing to offer:** A panel whose record's row would offer only Show details has no ⋯.
   - **Panels with their own:** A list's panel on the Lists page keeps its own menu of the list's drafts, and a feature team's panel on the Org chart its buttons at its foot, since neither is a shared table's record. A person's details beside the Org chart, which has no table, have none.
-  - **Drawn by:** `PanelMenu` in `apps/web/src/panel-menu.tsx`, on `PanelMoreMenu` there, which draws every ⋯ menu in a panel, placed by `RecordPanel` in `apps/web/src/record-details.tsx`, with the items from the table beside it, `RecordGrid`, by `panelMenuItems` in `apps/web/src/row-menus.tsx`, the one piece the row's menu draws.
+  - **Drawn by:** `usePanelMenu` in `apps/web/src/panel-menu.tsx`, on `PanelMoreMenu` there, which draws every ⋯ menu in a panel, placed by `RecordPanel` in `apps/web/src/record-details.tsx` and `DraftPanel` in `apps/web/src/drafts-panel.tsx`, with the items from the table beside it, `RecordGrid`, by `panelMenuItems` in `apps/web/src/row-menus.tsx`, the one piece the row's menu draws.
   - **Example:** On People, as the Engineering Operations Manager, open Mariana Metz's details and select its ⋯.
 - **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top, then headed sections of rows, then the columns an organization added, under Columns. A panel never mixes in another layout, such as labels over form fields.
   - **Labels:** A label sits beside its value while the panel is wide and over it once narrow. The labels form a column as wide as the section's longest, up to half the panel, so none wraps.
@@ -98,7 +98,7 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **Drawn by:** `RecordSection`, `Row`, `changeButton` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils, and `ValueField` there for a value typed in place, which a scope history's reason for a removal also uses.
   - **Example:** Any seeded person's details beside People.
 - **A draft's details:** A draft's details, beside the Drafts table, follow Person details. They show, in order:
-  1. **The top:** The draft's record after its dot, with any fact boxes, and its record's key under it.
+  1. **The top:** The draft's record after its dot, with any fact boxes, and its record's key under it, with the ⋯ of [A panel's menu](#details-panels) before the close ×.
   1. **Under Details:** The table's columns, with What changes in its full form.
   1. **Under Approved with it, or Waiting on it once rejected:** The other drafts that deciding it takes along.
   1. **On Not published, under Linked to:** The user's own changes it is published and discarded with.

@@ -122,6 +122,7 @@ export function draftRows(
       unpublished: one.unpublished,
       madeBy: one.who,
       needsOtherApprover: one.needsOtherApprover,
+      discardable: one.discardable,
       live: {},
     },
     heldBy: one.heldBy,
@@ -326,6 +327,7 @@ export function draftsTable({
     decidable,
     ...(onOpen === undefined ? {} : { showDetails: onOpen }),
     slotMarksOnly: true,
+    discardTakesRow: true,
     groupings: columns
       .filter(({ key }) => groupedBy.includes(key))
       .map((column) =>

@@ -154,13 +154,13 @@ describe("a details panel's menu", () => {
     });
   });
 
-  it("puts focus on the table once discarding takes away a record its draft added", async () => {
+  it("puts focus on the next row once discarding takes away a record its draft added", async () => {
     const added = {
       ...waiting,
       discardable: true,
       action: "created" as const,
     };
-    renderPanel({ gadgets: [gadget("g1", { draft: added })] });
+    renderPanel({ gadgets: [gadget("g1", { draft: added }), gadget("g2")] });
 
     await userEvent.click(panelActions("Gadget g1"));
     await userEvent.click(
@@ -168,7 +168,7 @@ describe("a details panel's menu", () => {
     );
 
     await waitFor(() => {
-      expect(document.activeElement?.id).toMatch(/^cell-g1-/);
+      expect(document.activeElement?.id).toMatch(/^cell-g2-/);
     });
   });
 

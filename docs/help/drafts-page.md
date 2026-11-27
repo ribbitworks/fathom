@@ -80,6 +80,16 @@ Drafts that use the ones you rejected are rejected with them. Each one goes back
 
 You're done when the drafts leave **To decide**. They're under **All drafts**, with a red dot in a ring and your reason.
 
+### Discard or Resubmit Your Draft
+
+Only someone who changed a draft can discard it, except a change to a schedule's cycles, which anyone who changes schedules can discard. See [Drafts](drafts.md).
+
+1. Select **To decide** or **All drafts**.
+1. Open the draft's row's **⋯** menu, or the **⋯** at the top of its details.
+1. Select **Discard draft**. If the draft was rejected, you can select **Resubmit** instead, to send it for approval again unchanged.
+
+You're done when a discarded draft leaves the table, and its record is back as it was. A notice offers **Undo**. A resubmitted draft reads **Waiting** again.
+
 ### Publish Some of Your Changes
 
 **Publish** in the top bar publishes all your changes at once, except changes you made under another role that your current role can't make. To publish only some of them:

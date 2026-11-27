@@ -13,7 +13,7 @@ import {
   type Permission,
   type RecordKeyOf,
 } from "@fathom/shared";
-import { useQuery } from "@tanstack/react-query";
+import { type QueryKey, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { decisionFor, needsOtherApproval } from "./draft-decisions.ts";
 import {
@@ -33,6 +33,7 @@ import {
   waitsForRejected,
   without,
 } from "./drafts.ts";
+import { effortConversionsQuery } from "./effort.ts";
 import { featureTeamsQuery } from "./feature-teams.ts";
 import { listsQuery, unchangeableLists, unseenInDrafts } from "./lists.ts";
 import { orgChartQuery } from "./org-chart.ts";
@@ -40,6 +41,20 @@ import { peopleQuery } from "./people.ts";
 import { planningSettingsQuery } from "./planning-settings.ts";
 import { planChoicesQuery, projectPlanQuery } from "./projects.ts";
 import { releaseStreamsQuery } from "./releases.ts";
+
+// Every read a decided or discarded draft may be in, on every day each is read for.
+export const draftedReads: readonly QueryKey[] = [
+  peopleQuery.queryKey,
+  listsQuery.queryKey,
+  projectPlanQuery.queryKey,
+  planChoicesQuery.queryKey,
+  releaseStreamsQuery.queryKey,
+  featureTeamsQuery.queryKey,
+  orgChartQuery.queryKey,
+  ["changes"],
+  planningSettingsQuery.queryKey,
+  effortConversionsQuery.queryKey,
+];
 
 // What drafts a role sees, by the data it sees, and which kinds it approves.
 export interface DraftsSeen {

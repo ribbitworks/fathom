@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import type { Entry } from "./draft-entries.ts";
+import { targetSelection } from "./draft-targets.ts";
 import { draftsSeen, namedDrafts, toDecide } from "./draft-reading.ts";
 import { type DraftSelection, noDrafts } from "./drafts.ts";
 
@@ -21,8 +22,10 @@ const entry = (key: string, more: Partial<Entry> = {}): Entry => ({
   unpublished: false,
   heldBy: undefined,
   needsOtherApprover: false,
+  discardable: false,
+  target: { kind: "person", id: key },
+  selects: targetSelection(more.target ?? { kind: "person", id: key }),
   place: { kind: "person", keyNumber: 1 },
-  selects: noDrafts(),
   ...more,
   decided: more.decided ?? { kind: more.kind ?? "person" },
 });
@@ -116,7 +119,7 @@ describe("the drafts named in another's details", () => {
     kind: "list",
     name: "Skills",
     place: { kind: "list", keyNumber: 7 },
-    selects: { ...noDrafts(), lists: ["l1"] },
+    target: { kind: "list", listId: "l1" },
   });
   const namesOf = (drafts: DraftSelection) => [
     ...drafts.lists.map((id) => `the list ${id}`),

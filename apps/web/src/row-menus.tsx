@@ -151,7 +151,8 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
       ? table.removeTurnedOff?.(record)
       : undefined;
     // Back to the row whose menu it was, in the active column, or, where that row is gone or the
-    // menu was the panel's, to the active cell.
+    // menu was the panel's, to the active cell. Where the active cell is in the row that leaves, to
+    // the row after it, or before it at the table's end, since cells are found by their rows.
     const backToTable = (recordLeaves = false) => {
       if (!menuPlace(place).backToTable && !recordLeaves) return;
       const active = activeNow();
@@ -160,7 +161,16 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
           ? row.record?.id === record.id
           : rowKey(row) === menuFor.key,
       );
-      moveTo(ownRow < 0 || recordLeaves ? active.row : ownRow, active.column);
+      const leavingRow = recordLeaves
+        ? rows.findIndex((row) => row.record?.id === record.id)
+        : -1;
+      const fromActive =
+        active.row === leavingRow
+          ? leavingRow + 1 < rows.length
+            ? leavingRow + 1
+            : leavingRow - 1
+          : active.row;
+      moveTo(ownRow < 0 || recordLeaves ? fromActive : ownRow, active.column);
     };
     return (
       <>
@@ -231,7 +241,10 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
               <Menu.Item
                 onClick={() => {
                   actions.discard(record, ownDraft);
-                  backToTable(ownDraft.action === "created");
+                  backToTable(
+                    ownDraft.action === "created" ||
+                      table.discardTakesRow === true,
+                  );
                 }}
               >
                 Discard draft

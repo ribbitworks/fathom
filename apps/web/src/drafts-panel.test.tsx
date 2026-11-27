@@ -9,8 +9,8 @@ import { userEvent } from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { Entry } from "./draft-entries.ts";
+import { targetSelection } from "./draft-targets.ts";
 import type { NamedDraft } from "./draft-reading.ts";
-import { noDrafts } from "./drafts.ts";
 import {
   DraftPanel,
   type DraftActions,
@@ -32,7 +32,9 @@ const entry = (more: Partial<Entry> = {}): Entry => ({
   unpublished: false,
   heldBy: undefined,
   needsOtherApprover: false,
-  selects: { ...noDrafts(), people: ["p1"] },
+  discardable: false,
+  target: { kind: "person", id: "p1" },
+  selects: targetSelection(more.target ?? { kind: "person", id: "p1" }),
   place: { kind: "person", keyNumber: 1 },
   ...more,
   decided: more.decided ?? { kind: more.kind ?? "person" },

@@ -14,7 +14,6 @@ import {
   Textarea,
 } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { planChoicesQuery, projectPlanQuery } from "./projects.ts";
 import { useState } from "react";
 import { CountedList } from "./counted-list.tsx";
 import { DialogActions, useDialogState } from "./dialog-actions.tsx";
@@ -27,15 +26,9 @@ import {
   rejectDrafts,
 } from "./drafts.ts";
 import { type Decision } from "./draft-decisions.ts";
-import { effortConversionsQuery } from "./effort.ts";
-import { featureTeamsQuery } from "./feature-teams.ts";
-import { listsQuery } from "./lists.ts";
+import { draftedReads } from "./draft-reading.ts";
 import { notifySuccess } from "./notices.tsx";
-import { orgChartQuery } from "./org-chart.ts";
 import { count } from "./numbers.ts";
-import { peopleQuery } from "./people.ts";
-import { planningSettingsQuery } from "./planning-settings.ts";
-import { releaseStreamsQuery } from "./releases.ts";
 
 // What a decision did, as its notification says.
 const decided = (asking: "approve" | "reject", total: number) =>
@@ -121,20 +114,10 @@ function DecisionDialog({
             ].join(" "),
       );
       onDone();
-      // Every read a decided draft may be in, on every day each is read for.
       await Promise.all(
-        [
-          peopleQuery.queryKey,
-          listsQuery.queryKey,
-          projectPlanQuery.queryKey,
-          planChoicesQuery.queryKey,
-          releaseStreamsQuery.queryKey,
-          featureTeamsQuery.queryKey,
-          orgChartQuery.queryKey,
-          ["changes"],
-          planningSettingsQuery.queryKey,
-          effortConversionsQuery.queryKey,
-        ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
+        draftedReads.map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey }),
+        ),
       );
     },
   });
