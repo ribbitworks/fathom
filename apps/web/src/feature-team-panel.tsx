@@ -4,6 +4,7 @@
 
 import type { Refusal } from "./api.ts";
 import {
+  capitalized,
   type Choice,
   type FeatureTeam,
   type FeatureTeamDraft,
@@ -17,6 +18,7 @@ import {
 import { Button, Group, Text } from "@mantine/core";
 import { type ReactNode, useMemo, useState } from "react";
 import { colourWords } from "./colours.ts";
+import { expectedWords, formatMonth } from "./day-formats.ts";
 import {
   featureTeamsQuery,
   liveTeam,
@@ -40,6 +42,7 @@ import {
 } from "./record-editing.tsx";
 import { fieldColumn } from "./grid-columns.tsx";
 import type { Column } from "./record-table.ts";
+import type { CellValue } from "./table-view.ts";
 import { KeyAfter, RecordKey } from "./record-key.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
@@ -79,15 +82,18 @@ export interface FeatureTeamActions {
     refused: (refusal: Refusal) => boolean,
   ) => void;
   rename: (team: FeatureTeam, name: string) => void;
+  // A change of the lead or the members names the server's refusal under the row it was made in.
   lead: (
     team: FeatureTeam,
     leadId: string | null,
     from: string | undefined,
+    refused: RefusedIn,
   ) => void;
   members: (
     team: FeatureTeam,
     change: { add: string[]; remove: string[] },
     from: string | undefined,
+    refused: RefusedIn,
   ) => void;
   removeTeam: (team: FeatureTeam) => void;
   discard: (team: FeatureTeam) => void;
@@ -95,6 +101,13 @@ export interface FeatureTeamActions {
   colour: (
     team: FeatureTeam,
   ) => (colour: PaletteColour | null) => Promise<void>;
+}
+
+// Where the server's refusal of a change shows: what names it under its field, saying whether it
+// could, and the field the change was made in, which a refusal naming no field is about.
+export interface RefusedIn {
+  about?: string;
+  onRefused: (refusal: Refusal) => boolean;
 }
 
 // A change made in one of the team's rows.
@@ -107,21 +120,31 @@ const onlyKind = "";
 
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
-// Everyone who may be chosen as a team's lead or member, by name, each described by their position
-// and the team they are on or whom they report to.
+// Everyone who may be chosen as a team's lead or member, by name: people, each described by their
+// position and the team they are on or whom they report to, then planned hires, each by when it's
+// expected, after its position where its name isn't made from it.
 function teamChoices(people: readonly OrgChartPerson[]): Choice[] {
   const byId = new Map(people.map((person) => [person.id, person]));
-  const aboutOf = (person: OrgChartPerson) => {
-    const manager =
-      person.managerId === null ? undefined : byId.get(person.managerId);
+  const aboutOf = ({ position, managerId, planned }: OrgChartPerson) => {
+    if (planned !== undefined) {
+      // A name made from the position says it already, so the line starts with when.
+      return planned.shownId === undefined
+        ? aboutPerson(position, expectedWords(planned))
+        : capitalized(expectedWords(planned));
+    }
+    const manager = managerId === null ? undefined : byId.get(managerId);
     return aboutPerson(
-      person.position,
+      position,
       manager && reportingWords(manager.teamName, manager.preferredName),
     );
   };
   return people
-    .filter((person) => person.planned === undefined && person.left !== true)
-    .sort((a, b) => byName.compare(a.preferredName, b.preferredName))
+    .filter((person) => person.left !== true)
+    .sort(
+      (a, b) =>
+        Number(a.planned !== undefined) - Number(b.planned !== undefined) ||
+        byName.compare(a.preferredName, b.preferredName),
+    )
     .map((person) => ({
       id: person.id,
       label: person.preferredName,
@@ -130,10 +153,36 @@ function teamChoices(people: readonly OrgChartPerson[]): Choice[] {
     }));
 }
 
+const noneRemoving: ReadonlySet<string> = new Set();
+
+// Why a planned hire can't be chosen from the day shown, as the server would refuse it: one drafted
+// to be removed, or one not yet expected, which joins no earlier than its month's first day.
+function hireTurnedOff(
+  people: readonly OrgChartPerson[],
+  removing: ReadonlySet<string>,
+  day: string,
+): (choice: Choice) => string | undefined {
+  const expected = new Map(
+    people.flatMap(({ id, planned }) =>
+      planned === undefined || planned.undated === true
+        ? []
+        : [[id, planned.expected] as const],
+    ),
+  );
+  return ({ id }) => {
+    if (removing.has(id)) return "Drafted to be removed";
+    const month = expected.get(id);
+    return month !== undefined && day < `${month}-01`
+      ? `Can't join before ${formatMonth(month)}`
+      : undefined;
+  };
+}
+
 // The rows the team's values are shown and changed in.
 function teamColumns(
   choices: Choice[],
   canRename: boolean,
+  turnedOff: (choice: Choice) => string | undefined,
 ): Record<"name" | "leadId" | "members", Column<FeatureTeam, TeamChange>> {
   return {
     name: fieldColumn("name", "text", {
@@ -144,13 +193,16 @@ function teamColumns(
       maxLength: featureTeamLengths.name,
       readOnly: !canRename,
     }),
-    leadId: fieldColumn("leadId", "choice", {
-      label: "Feature lead",
-      required: false,
-      choices,
-      multiple: false,
-      emptyLabel: "None",
-    }),
+    leadId: {
+      ...fieldColumn<FeatureTeam, TeamChange>("leadId", "choice", {
+        label: "Feature lead",
+        required: false,
+        choices,
+        multiple: false,
+        emptyLabel: "None",
+      }),
+      choiceTurnedOff: turnedOff,
+    },
     members: {
       ...fieldColumn<FeatureTeam, TeamChange>("members", "choice", {
         label: "Members",
@@ -160,6 +212,7 @@ function teamColumns(
         emptyLabel: "None",
       }),
       change: (value) => ({ members: value as string[] }),
+      choiceTurnedOff: turnedOff,
     },
   };
 }
@@ -330,6 +383,8 @@ export function FeatureTeamPanel({
   day: string | undefined;
   // Everyone on the org chart, who may be named and chosen as members.
   people: readonly OrgChartPerson[];
+  // The planned hires among them a draft removes, which can't join or lead a team.
+  removing?: ReadonlySet<string>;
   edits: FeatureTeamEdits;
   show: Show;
   narrow: boolean;
@@ -347,12 +402,14 @@ export function FeatureTeamPanel({
 function NewFeatureTeamPanel({
   day,
   people,
+  removing = noneRemoving,
   narrow,
   actions,
   onClose,
 }: {
   day: string | undefined;
   people: readonly OrgChartPerson[];
+  removing?: ReadonlySet<string>;
   narrow: boolean;
   actions: FeatureTeamActions;
   onClose: () => void;
@@ -363,7 +420,11 @@ function NewFeatureTeamPanel({
   const { editingOf, unfinished, withRefused, refuseEntered } =
     useRecordEditing<FeatureTeam, TeamChange>();
   const choices = useMemo(() => teamChoices(people), [people]);
-  const columns = teamColumns(choices, true);
+  const columns = teamColumns(
+    choices,
+    true,
+    hireTurnedOff(people, removing, day ?? today()),
+  );
   const shownColumns = [columns.name, columns.leadId, columns.members];
   const context: RecordEditingContext<FeatureTeam, TeamChange> = {
     id: newRecordId,
@@ -380,9 +441,15 @@ function NewFeatureTeamPanel({
   const members = entered.members as string[];
   // Members are chosen from the choices, so each has a name there.
   const labels = new Map(choices.map(({ id, label }) => [id, label]));
-  const personOf = (personId: string): TeamPerson => ({
-    name: String(labels.get(personId)),
-  });
+  const cards = new Map(people.map((person) => [person.id, person]));
+  // A planned hire chosen is one the chart draws, which says what its details show.
+  const personOf = (personId: string): TeamPerson => {
+    const name = String(labels.get(personId));
+    const card = cards.get(personId);
+    return card?.planned === undefined
+      ? { name }
+      : { name, hire: { keyNumber: card.keyNumber, ...card.planned } };
+  };
   return (
     <NewRecordPanel<FeatureTeam, TeamChange, FeatureTeamRequest>
       panelId={featureTeamPanelId}
@@ -441,6 +508,7 @@ function TeamDetails({
   team,
   day,
   people,
+  removing = noneRemoving,
   edits,
   show,
   narrow,
@@ -450,13 +518,17 @@ function TeamDetails({
   team: FeatureTeam;
   day: string | undefined;
   people: readonly OrgChartPerson[];
+  removing?: ReadonlySet<string>;
   edits: FeatureTeamEdits;
   show: Show;
   narrow: boolean;
   actions: FeatureTeamActions;
   onClose: () => void;
 }) {
-  const { closeStale, editingOf } = useRecordEditing<FeatureTeam, TeamChange>();
+  const { closeStale, editingOf, refuseSaved } = useRecordEditing<
+    FeatureTeam,
+    TeamChange
+  >();
   const choices = useMemo(() => teamChoices(people), [people]);
   const offered = useMemo(
     () => new Set(choices.map(({ id }) => id)),
@@ -484,13 +556,39 @@ function TeamDetails({
     decides: false,
     publishes: false,
   });
-  const columns = teamColumns(choices, edits.undated);
-  const save = (change: TeamChange) => {
+  const columns = teamColumns(
+    choices,
+    edits.undated,
+    hireTurnedOff(people, removing, day ?? today()),
+  );
+  // The server's refusal of a change made in a row, named in that row's editor, opened again on what
+  // was chosen, while the panel is still shown; another team's is a new panel. Otherwise, or for a
+  // field the row isn't, a notification names it.
+  const refusedIn = (
+    column: Column<FeatureTeam, TeamChange>,
+    chosen: CellValue,
+  ): RefusedIn => ({
+    about: column.key,
+    onRefused: ({ field, reason }) => {
+      return (
+        field === column.key && refuseSaved(context, column, chosen, reason)
+      );
+    },
+  });
+  const save = (
+    change: TeamChange,
+    column: Column<FeatureTeam, TeamChange>,
+    chosen: CellValue,
+  ) => {
     if (change.name !== undefined) actions.rename(team, change.name);
-    if (change.leadId !== undefined) actions.lead(team, change.leadId, day);
+    if (change.leadId !== undefined) {
+      actions.lead(team, change.leadId, day, refusedIn(column, chosen));
+    }
     if (change.members !== undefined) {
       const changed = membersChanged(shown.members, change.members, offered);
-      if (changed !== undefined) actions.members(team, changed, day);
+      if (changed !== undefined) {
+        actions.members(team, changed, day, refusedIn(column, chosen));
+      }
     }
   };
   const context: RecordEditingContext<FeatureTeam, TeamChange> = {
@@ -499,12 +597,7 @@ function TeamDetails({
     values: Object.fromEntries(
       Object.values(columns).map((column) => [column.key, column.value(shown)]),
     ),
-    save:
-      changes && draft?.action !== "deleted"
-        ? (change) => {
-            save(change);
-          }
-        : undefined,
+    save: changes && draft?.action !== "deleted" ? save : undefined,
     others: noOthers,
     recordProblem: noRecordProblem,
   };

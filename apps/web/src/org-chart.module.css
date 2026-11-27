@@ -125,6 +125,18 @@
   font-weight: 600;
 }
 
+/* A name made from a hire's position and ID: the position is cut short, never the ID, which tells
+   hires of one position apart. */
+.madeName {
+  display: flex;
+  min-width: 0;
+}
+
+.madeId {
+  flex: none;
+  white-space: nowrap;
+}
+
 .label {
   overflow: hidden;
   text-overflow: ellipsis;

@@ -20,6 +20,25 @@
   color: inherit;
 }
 
+/* A refused choice, opened again in its box. */
+.refused {
+  color: var(--mantine-color-error);
+}
+
+/* A choice turned off: greyed, with no band where it is pointed at, since it can't be picked, though
+   the keyboard still lands on it, greyed the same, so its reason is read. Its reason stays at the
+   dimmed text's full strength, the one line the reader needs. */
+.turnedOff,
+.turnedOff:hover {
+  color: var(--mantine-color-dimmed);
+  cursor: not-allowed;
+}
+
+:where([data-mantine-color-scheme])
+  .turnedOff:hover:not([data-combobox-selected]) {
+  background-color: transparent;
+}
+
 /* A picker's choice of none, first in its list, set apart from the choices under it by a line. */
 .none {
   border-bottom: 1px solid var(--mantine-color-default-border);

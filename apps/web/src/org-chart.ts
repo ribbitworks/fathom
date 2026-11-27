@@ -625,3 +625,15 @@ export function chartDays(
     day !== undefined && day > today() && !sees.futureLines ? undefined : day;
   return { day, peopleDay };
 }
+
+// The planned hires a draft removes, as their drafts say, which only readers who see the hiring
+// plan's drafts are told.
+export function hiresRemoved({
+  people,
+}: Pick<OrgChart, "people">): ReadonlySet<string> {
+  return new Set(
+    people.flatMap(({ id, planned, draft }) =>
+      planned !== undefined && draft?.removed === true ? [id] : [],
+    ),
+  );
+}

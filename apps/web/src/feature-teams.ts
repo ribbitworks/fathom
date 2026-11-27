@@ -215,24 +215,29 @@ export function liveTeam(team: FeatureTeam): FeatureTeam | undefined {
   };
 }
 
-// When a drafted change takes effect, for someone it adds or removes, or for its change of lead,
-// unless that is the day shown: its day, or today for a change given no day.
-export function takesEffect(
+// The day a drafted change takes effect, for someone it adds or removes, or for its change of lead:
+// its day, or today for a change given no day.
+export function draftedDay(
   draft: FeatureTeamDraft,
   personId: string | undefined,
-  shown: string,
-): string | undefined {
+): string {
   const heldFor = (held: Record<string, string>, lead: string | undefined) =>
     personId === undefined ? lead : new Map(Object.entries(held)).get(personId);
   // A planned hire's days are held apart from people's.
-  const day = heldFor(
-    { ...draft.days, ...draft.hireDays },
-    draft.leadDay ?? draft.hireLeadDay,
+  return (
+    heldFor(
+      { ...draft.days, ...draft.hireDays },
+      draft.leadDay ?? draft.hireLeadDay,
+    ) ?? today()
   );
-  if (day !== undefined) return dayUnlessShown(day, shown);
-  const now = today();
-  return shown === now ? undefined : formatDay(now);
 }
+
+// When a drafted change takes effect, unless that is the day shown.
+export const takesEffect = (
+  draft: FeatureTeamDraft,
+  personId: string | undefined,
+  shown: string,
+): string | undefined => dayUnlessShown(draftedDay(draft, personId), shown);
 
 // The card id of a person on a team, since someone on two teams has a card under each.
 export const memberCardId = (teamId: string, personId: string) =>

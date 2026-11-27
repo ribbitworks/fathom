@@ -40,7 +40,7 @@ const chart: OrgChart = {
 const months = ["2027-01", "2027-02", "2027-03", "2027-04"];
 
 describe("hireRows", () => {
-  it("gives each planned hire a read-only row under its manager, not employed before it is expected", () => {
+  it("gives each planned hire a row under its manager, with the month it is expected, not employed before it", () => {
     const [tester] = hireRows(chart, months);
     expect(tester).toEqual({
       id: "h-tester",
@@ -51,6 +51,7 @@ describe("hireRows", () => {
       links: {},
       outside: new Set(["2027-01", "2027-02"]),
       plannedHire: true,
+      expected: "2027-03",
     });
   });
 

@@ -244,12 +244,26 @@ function PersonCard({ data }: NodeProps<CardNode>) {
     onOpen,
   } = data;
   const { planned } = person;
-  // A planned hire with no name of its own goes by its position and ID; its card shows the ID as
-  // its name, with the position under it as a person's is, so the name fits.
+  // A planned hire with no name of its own goes by its position and ID, as People names it, so its
+  // position needs no line of its own unless a draft changes it.
   const shownId = planned?.shownId;
   const madeName = shownId !== undefined;
-  const cardName = shownId ?? person.preferredName;
-  const shownName = madeName ? <FilledIn>{cardName}</FilledIn> : cardName;
+  const cardName = person.preferredName;
+  // A made name's position and its comma, before the ID, such as "Engineering Manager,", if any.
+  const position = madeName
+    ? cardName.slice(0, cardName.length - shownId.length).trimEnd()
+    : "";
+  const shownName = madeName ? (
+    <FilledIn className={classes.madeName}>
+      <span className={classes.label}>{position}</span>
+      {/* A space kept between them, which a flex item's edge would drop. */}
+      <span className={classes.madeId}>
+        {position === "" ? shownId : `\u00a0${shownId}`}
+      </span>
+    </FilledIn>
+  ) : (
+    cardName
+  );
   return (
     <CardMenu
       name={cardName}
@@ -294,7 +308,11 @@ function PersonCard({ data }: NodeProps<CardNode>) {
                 spoken={leftWarning.spoken}
               >
                 {onOpen === undefined ? (
-                  <span className={classes.label}>{shownName}</span>
+                  madeName ? (
+                    shownName
+                  ) : (
+                    <span className={classes.label}>{cardName}</span>
+                  )
                 ) : (
                   <Link
                     id={cardLinkId(person.id)}
@@ -332,7 +350,9 @@ function PersonCard({ data }: NodeProps<CardNode>) {
               </Tooltip>
             )}
           </div>
-          <PositionRow person={person} />
+          {(!madeName || person.repositioned !== undefined) && (
+            <PositionRow person={person} />
+          )}
           {person.movedFrom !== undefined && (
             <Text size="xs" c="dimmed">
               From {person.movedFrom}

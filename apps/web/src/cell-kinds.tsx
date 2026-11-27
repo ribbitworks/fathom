@@ -71,6 +71,9 @@ type AnyColumn = Pick<
   // Whether a choice may be put in a cell, apart from being offered in its list: any may, unless
   // told otherwise.
   pickable?: ((choice: Choice) => boolean) | undefined;
+  // Why a choice offered can't be picked now, shown in place of its description, or undefined when
+  // it can.
+  choiceTurnedOff?: ((choice: Choice) => string | undefined) | undefined;
   required: boolean;
   // For text columns: the most characters a value may hold.
   maxLength?: number | undefined;
@@ -397,6 +400,10 @@ const choicesFor = (column: AnyColumn, value: readonly string[]) =>
       value: option.id,
       label: option.label,
       ...(option.description === "" ? {} : { description: option.description }),
+      // A choice already held stays free to be taken off.
+      ...(value.includes(option.id)
+        ? {}
+        : { turnedOff: column.choiceTurnedOff?.(option) }),
       ...(column.choiceColour === undefined
         ? {}
         : { colour: column.choiceColour(option.id) }),
@@ -484,6 +491,7 @@ const choice: CellKind = {
     typed,
     invalid,
     describedBy,
+    problem,
     adding,
     onDone,
     onCancel,
@@ -493,6 +501,7 @@ const choice: CellKind = {
       label={column.label}
       invalid={invalid}
       describedBy={describedBy}
+      problem={problem}
       options={choicesFor(column, chosen(value))}
       none={column.required ? undefined : (column.emptyLabel ?? "None")}
       multiple={column.multiple}

@@ -4,7 +4,7 @@
 // name, and the change history, against a PostgreSQL server of their own.
 
 import { features, people, plannedHires } from "@fathom/db";
-import { type ChangeHistory } from "@fathom/shared";
+import { type ChangeHistory, monthInWords } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -127,7 +127,7 @@ describe("approving", () => {
     const refused = await decide(projectManager, "approval", [id]);
     expect(refused.statusCode).toBe(409);
     expect(errorOf(refused)).toBe(
-      `The draft of TBD-${String(hireNumber)} on ${await nameOfFeature(featureId)} starts before ${month(3)}, the month they're expected. Reject the draft so it can be changed.`,
+      `The draft of TBD-${String(hireNumber)} on ${await nameOfFeature(featureId)} starts before ${monthInWords(month(3))}, the month they're expected. Reject the draft so it can be changed.`,
     );
   });
 

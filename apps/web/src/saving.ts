@@ -52,6 +52,8 @@ export interface Change<Data> {
   // Shows the server's refusal of a value under its field, in place of a notification, saying
   // whether it could: false when the field isn't shown.
   onRefused?: ((refusal: Refusal) => boolean) | undefined;
+  // The field a change is made in, which a refusal naming no field of its own is about.
+  about?: string;
 }
 
 // Fields that are typed in and keep their own undo, the note editor among them.
@@ -136,10 +138,10 @@ export function useSaving<Data>({
       queryClient.setQueryData(queryKey, next(before));
       return { before };
     },
-    onError: (error, { failure, onFailed, onRefused }, context) => {
+    onError: (error, { failure, onFailed, onRefused, about }, context) => {
       queryClient.setQueryData(queryKey, (context as { before: Data }).before);
       onFailed?.();
-      const refusal = refusalOf(error);
+      const refusal = refusalOf(error, about);
       if (refusal !== undefined && onRefused?.(refusal) === true) return;
       notifyFailure(
         error instanceof ApiError && error.status === notFoundStatus

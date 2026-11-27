@@ -63,7 +63,7 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
 ## Planned Hires
 
 - **Who is drawn:** Every hire not yet filled, for every reader, and each filled one whose person hasn't started, for readers who don't see Personal details. On Feature teams, a filled hire stays on its teams until its person starts, for every reader of feature teams, as [Feature Teams](#feature-teams) sets out.
-- **Card:** A placeholder with a grey dashed edge, after the people under its manager, named as its People row is, opening its details as [A planned hire's card](#cards) sets out.
+- **Card:** A placeholder with a grey dashed edge, after the people under its manager, named as its People row is, opening its details as [A planned hire's card](#cards) sets out. One with no name of its own goes by its position and ID, in grey italics, so it has no line for its position, unless a draft changes it. Where the name doesn't fit, the position is cut short, never the ID.
 - **Status:** A grey Planned, expected box with its month, never the day, except for a filled hire on Feature teams, as [Feature Teams](#feature-teams) sets out.
 - **A hire whose manager hasn't started:** Drawn at the top until the manager starts, since the chart draws today.
 - **A planned manager:** Heads their planned hires, a team that can be shown alone, but isn't in Teams until filled.
@@ -80,13 +80,19 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
 - **Feature teams menu:** Replaces Teams, ending with New feature team.
 - **Team panel:** Opens beside the chart, with Name, Colour, Feature lead, Members and, for a team with any, Planned hires. Membership changes are drafts from the date shown.
   - Feature lead's and Members' pickers describe each person as People's Manager picker does, as [A choice with a description](../../standards/ui-conventions/entering-and-saving.md#choices) sets out.
+  - Feature lead's and Members' pickers, here and in New feature team, offer the planned hires the chart draws after people, each described by when it's expected, after its position, such as Software Engineer, expected Mar 2027, or, where its name is made from its position, by when alone, such as Expected Mar 2027 or No target date. A hire joins from the date shown, as a person does, and one chosen as lead joins the team in the same draft.
+  - A hire the server would refuse on the date shown is turned off in both pickers, greyed, with why in place of its description, as [Controls turned off](../../standards/ui-conventions/entering-and-saving.md#refusals) sets out: Can't join before May 2027 for one not yet expected, and Drafted to be removed. The arrow keys still reach it, so a screen reader hears why, but it can't be picked. A hire already on the team stays free to be taken off.
+  - Drafted to be removed comes from the hire's own removal draft, which only readers who see the hiring plan are sent, and only on today's chart, where hire drafts are read. On another date, or to another reader, such a hire is offered and refused, its refusal naming no draft: This planned hire can't join or lead a team.
+  - A filled hire whose person hasn't started is still offered to a role that doesn't see Personal details, since the chart draws it. The server refuses it as This planned hire can't join or lead a team, never naming the fill; a role that sees the fill is told to choose the person who filled it.
+  - The server's refusal of a change to Feature lead or Members opens that row's picker again on what was chosen, outlined in red, a single choice in red in its box with the list finding it, and the reason under the row and at the head of the list, which covers the row's line; nothing is saved, as [A value refused](../../standards/ui-conventions/entering-and-saving.md#refusals) sets out. Esc puts the row back.
+  - A planned hire a draft adds, or makes the lead, gives the day it joins or starts to lead, as a person does, where that is not the date shown.
   - Members lists people alone, by name. Planned hires, a row under it, lists the team's planned hires, each on two lines, with no Planned box, since the row's label says it; the card keeps its box.
     - **First line:** its name, or its position and ID in grey italics when it has no name of its own, then its key, such as #HIRE-12. Names and keys are plain text.
     - **Second line, small and dimmed:** Expected and its month, such as Expected Oct 2026; No target date; or, once filled, Filled by and its person, then starts and their start date, such as Filled by Fictional joiner, starts Feb 1, 2027.
     - **Order:** filled hires first, then by expected month, with no target date last.
     - **Filled:** who fills a hire, and the day they start, is named only to readers who see Personal details, since it reveals a reporting line to come; one with no start date reads Filled by and the person alone. Any other reader sees the hire as not yet filled, with its Expected month, as its card shows it.
     - **Feature lead:** a hire leading the team takes the same two lines there, and is also listed under Planned hires, as a person leading it is under Members.
-    - **Changing:** Planned hires has no pencil of its own.
+    - **Changing:** Members' pencil adds and takes off people and planned hires alike, from one picker; Planned hires has no pencil of its own. A hire a draft adds or takes off shows under Planned hires with the draft's dot, struck through when taken off.
     - Like a person, a hire shows no day it joined.
   - On any date but today, Name and Colour can't change and the team can't be removed, since they take no date.
   - A lead is chosen from anyone who hasn't left, never a planned hire; someone not yet a member joins in the same draft.

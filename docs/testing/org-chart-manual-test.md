@@ -75,8 +75,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Platform team' is under 'Engineering Manager'.
     - It ends with "Hide 8 reports".
     - Two cards with dashed edges are beside it at the top:
-      - "TBD-" and a number, with 'Engineering Manager' under it
-      - 'REQ-2047', with 'Software Engineer' under it
+      - "Engineering Manager, TBD-" and a number, in grey italics
+      - "Software Engineer, REQ-2047", in grey italics
   - **Notes:**
 
 - [ ] `39D8` Read the cards under it.
@@ -103,7 +103,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `D2FA` On the card for 'Lorenza Thiel', select **Show 8 reports**.
   - **Expected:**
     - Eight cards appear under 'Lorenza Thiel', each joined to her by a line:
-      - seven in a column under her card's left edge, from 'Candice Swift' to 'Valéry Caron', then 'REQ-2042', with 'SDET' under it and a dashed edge
+      - seven in a column under her card's left edge, from 'Candice Swift' to 'Valéry Caron', then "SDET, REQ-2042", in grey italics, with a dashed edge
       - 'Atmananda Ganaka' to the right of them
     - The button now reads "Hide 8 reports".
   - **Notes:**
@@ -394,11 +394,11 @@ Proved by automated tests in `apps/server/src/org-chart.test.ts`.
 
 **Preconditions:** As ORG-02.
 
-- [ ] `A6AC` Read the card at the top of the chart that reads "TBD-" and a number, with 'Engineering Manager' under it.
+- [ ] `A6AC` Read the card at the top of the chart that reads "Engineering Manager, TBD-" and a number.
   - **Expected:**
     - The card has a grey dashed edge.
     - The card has no shadow.
-    - "TBD-" and its number are grey and in italics.
+    - "Engineering Manager, TBD-" and its number are grey and in italics, with no position under them.
     - Under that, a grey box reads "Planned, no target date".
     - It ends with "Hide 2 reports".
   - **Notes:**
@@ -407,7 +407,7 @@ Proved by automated tests in `apps/server/src/org-chart.test.ts`.
   - **Expected:**
     - The cards are:
       - 'Platform engineer', with 'Software Engineer' under the name
-      - "TBD-" and a number, in grey italics, with 'SDET' under it
+      - "SDET, TBD-" and a number, in grey italics
     - Each has a dashed edge.
     - Each is joined to the planned Engineering Manager's card by a line.
     - 'Platform engineer' reads "Planned, expected" and the month six months after the month Restore the Seed Data was run, such as "May 2027" for a run in November 2026.

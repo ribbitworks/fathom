@@ -16,6 +16,7 @@ import {
   mayDateChange,
   mayDateLineChange,
   monthNumber,
+  monthInWords,
   monthOf,
   typedDay,
   typedInPlace,
@@ -25,6 +26,15 @@ import {
 describe("monthOf", () => {
   it("is the year and month of a day", () => {
     expect(monthOf("2027-02-11")).toBe("2027-02");
+  });
+});
+
+describe("monthInWords", () => {
+  it("names a month as the screens show it, whatever the time zone", () => {
+    expect([monthInWords("2027-05"), monthInWords("2026-12")]).toEqual([
+      "May 2027",
+      "Dec 2026",
+    ]);
   });
 });
 

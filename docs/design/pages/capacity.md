@@ -28,7 +28,7 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 
 - **Shared table:** grouped one level deep, since each row is made for its group.
 - **Rows:** one per person and planned hire, frozen on the left, in one list at first; Group by offers None, Manager and Feature team, and Allocated to on Allocations.
-  - Planned hires are read only, named by their position and ID in grey when they have no name, and their months before the one they're expected in are shaded.
+  - Planned hires are named by their position and ID in grey when they have no name, and their months before the one they're expected in are shaded. Allocations is read only for everyone.
   - Planned hires sit under their manager by Manager. By Feature team, a hire sits under each team it is on in the months shown, as a person does, and its cells on Feature teams name its teams from the month it joins. Allocations also puts it under No feature team for the months it's on none, as it does a person.
   - A group's heading counts each kind it holds, as People's count does, such as 2 people, 1 planned hire.
   - A role that doesn't see People has no planned hires' rows.
@@ -55,6 +55,8 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 - **Grouping by manager:** needs Confidential data too, since later months' managers are future reorganizations. Without it, Group by offers only Feature team and None.
 - **Editing:** those who edit feature teams, from the current month on; those who change Personal details, earlier months too.
   - A change drafts the teams from that month's first day, or today in the current month.
+  - A planned hire's cells change as a person's do, from the month it's expected.
+  - Shaded months are read only, a person's outside their employment and a planned hire's before the month it's expected, since the server refuses a team change there. In light mode they are hatched, since Mantine's grey can't be told from white. Pointed at or given focus, such a month says why in its tip: Not employed this month, or Can't join before May 2027.
   - A change the team's draft can't hold, such as a second dated change to the same person, is refused.
 - **No row menu:** drafts are decided on the team.
 
@@ -73,7 +75,7 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 - **A month's cell:** each feature or activity, after its feature team's colour square, with its percentage at the right. An activity's tooltip names its project or release, such as General (Crane Control), since activities of different projects and releases can share a name.
   - **A renamed feature or activity:** named as the Draft view shows its rename, and marked as a table marks a changed name: beside live, the rename's dot, a red ring once rejected; with drafts applied, a rejected rename taken back; live only, the live name, with Live's dot while the rename waits. Semibold beside live, as a changed cell is. A Live row names it as it is live. A rename alone gives a person's row no tint or Live row, since a row's draft is the person's allocations. The filter's choices follow the same names.
   - From the current month on, a month off a whole month has a last line, in red and bold, over a faint rule: Over or Under, with how far off at the right, such as +25% or −90%, and the month's total in its tooltip, such as Total 125%. A month with nothing allocated shows Not allocated alone instead.
-  - A whole month, and every past month, has no last line.
+  - A whole month, and every past month, has no last line. The totals still count each row that could be allocated in a past month, a planned hire from the month it was expected included, since the plan allowed allocating it then, so a past cell with nothing allocated is blank and counts as 0 of 1, as a person's does.
   - These are a status, not a [warning](../../standards/ui-conventions/drafts-and-values.md#values).
 - **Over:** more than 100%, counting every feature and activity but Possible ones. Done and Cancelled ones count, since allocations are time spent, so future allocations to a cancelled feature or activity show Over until cleared.
 - **Under:** less than 100% in a month the person or planned hire can be allocated in.

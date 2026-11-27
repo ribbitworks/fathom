@@ -39,6 +39,7 @@ import {
   chartViewSearch,
   chartDays,
   detailsOpened,
+  hiresRemoved,
   leadOf,
   findFieldId,
   type OrgTree,
@@ -435,6 +436,7 @@ export function OrgChartPage({
                         team={creating ? undefined : openedTeam}
                         day={day}
                         people={query.data.people}
+                        removing={hiresRemoved(query.data)}
                         edits={
                           readOnly
                             ? noFeatureTeamEdits

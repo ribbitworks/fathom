@@ -28,6 +28,8 @@ export interface Option {
   description?: string | undefined;
   // Its colour, such as a team's, drawn as a square before its name.
   colour?: string | null | undefined;
+  // Why it can't be picked now, shown in place of its description; it is offered turned off.
+  turnedOff?: string | undefined;
 }
 
 const descriptionOpacity = 0.75;
@@ -59,7 +61,7 @@ export function OptionWords({
   option,
   name,
 }: {
-  option: Pick<Option, "label" | "description" | "colour">;
+  option: Pick<Option, "label" | "description" | "colour" | "turnedOff">;
   // The option's label as drawn, where it carries marks, such as a draft's dot.
   name?: ReactNode;
 }) {
@@ -68,14 +70,20 @@ export function OptionWords({
       {name ?? option.label}
     </ColouredName>
   );
-  return option.description === undefined ? (
+  const description = option.turnedOff ?? option.description;
+  return description === undefined ? (
     <span>{label}</span>
   ) : (
     <div>
       <span>{label}</span>
-      {/* The option's own colour, faded, so it reads on a highlighted option's fill too. */}
-      <Text size="xs" c="inherit" opacity={descriptionOpacity}>
-        {option.description}
+      {/* The option's own colour, faded, so it reads on a highlighted option's fill too; a reason
+          it's turned off, already dimmed, at full strength. */}
+      <Text
+        size="xs"
+        c="inherit"
+        opacity={option.turnedOff === undefined ? descriptionOpacity : 1}
+      >
+        {description}
       </Text>
     </div>
   );
@@ -139,6 +147,7 @@ export function ChoicePicker({
   typed,
   invalid = false,
   describedBy,
+  problem,
   adding,
   onDone,
   onCancel,
@@ -148,6 +157,8 @@ export function ChoicePicker({
   // Whether the value was refused, and what names why, when it is shown.
   invalid?: boolean;
   describedBy?: string | undefined;
+  // Why the value was refused, at the head of the open list, which covers the line under the field.
+  problem?: string | undefined;
   options: Option[];
   // The word for no choice, such as None, for a value that takes one choice and need not have one.
   none?: string | undefined;
@@ -161,7 +172,13 @@ export function ChoicePicker({
   onCancel: () => void;
 }) {
   const store = useCombobox({ opened: true });
-  const [search, setSearch] = useState(typed);
+  // A refused choice of one, opened again, stays in the box as chosen, in red, finding it in the list.
+  const refusedLabel =
+    invalid && !multiple
+      ? options.find((option) => option.value === initial[0])?.label
+      : undefined;
+  const [search, setSearch] = useState(typed || (refusedLabel ?? ""));
+  const shownRefused = refusedLabel !== undefined && search === refusedLabel;
   useTypedBeforeFocus(typed, search, setSearch);
   const [picked, setPicked] = useState(initial);
   // Every word typed, found anywhere in a choice's name or description, as a search finds rows.
@@ -201,7 +218,13 @@ export function ChoicePicker({
           .map((option) => option.value)
           .filter((other) => other === value || picked.includes(other));
 
+  const turnedOff = (value: string) =>
+    options.some(
+      (option) => option.value === value && option.turnedOff !== undefined,
+    );
+
   const pick = (value: string) => {
+    if (turnedOff(value)) return;
     if (value === addingValue) {
       // What was picked so far is kept, as leaving the cell keeps it, before the form opens. Only a
       // picker that may add offers New.
@@ -243,7 +266,7 @@ export function ChoicePicker({
       // Tab picks a choice, never New, which opens a form.
       const value = search.trim() === "" ? undefined : highlighted();
       let values = picked;
-      if (value !== undefined && value !== addingValue) {
+      if (value !== undefined && value !== addingValue && !turnedOff(value)) {
         values = multiple ? toggled(value) : [value];
       }
       onDone(values, event.shiftKey ? "previous" : "next");
@@ -277,6 +300,7 @@ export function ChoicePicker({
             classes.recordEditor,
             classes.pickerEditor,
             invalid ? classes.recordEditorInvalid : "",
+            shownRefused ? comboboxClasses.refused : "",
           ].join(" ")}
           aria-label={label}
           aria-invalid={invalid || undefined}
@@ -295,6 +319,13 @@ export function ChoicePicker({
         />
       </Combobox.Target>
       <Combobox.Dropdown>
+        {problem !== undefined && (
+          <Combobox.Header>
+            <Text size="sm" c="red" aria-hidden>
+              {problem}
+            </Text>
+          </Combobox.Header>
+        )}
         <Combobox.Options className={classes.choiceOptions}>
           {shown
             .filter(({ value }) => value !== addingValue)
@@ -303,10 +334,16 @@ export function ChoicePicker({
                 key={option.value}
                 value={option.value}
                 className={
-                  option.value === noneValue ? comboboxClasses.none : undefined
+                  option.value === noneValue
+                    ? comboboxClasses.none
+                    : turnedOff(option.value)
+                      ? comboboxClasses.turnedOff
+                      : undefined
                 }
                 active={chosen(option.value)}
                 aria-selected={chosen(option.value)}
+                // Not disabled, which the arrow keys skip, so a screen reader reaches it and hears why.
+                aria-disabled={turnedOff(option.value) || undefined}
               >
                 <Ticked ticked={chosen(option.value)}>
                   <OptionWords option={option} />

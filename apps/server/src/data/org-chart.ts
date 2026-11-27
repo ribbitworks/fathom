@@ -613,6 +613,13 @@ function draftBeside(
   draft: Draft | undefined,
   rules: BesideRules,
 ): OrgChartDraft | undefined {
+  if (draft?.action === "deleted" && before.kind === "planned-hire") {
+    return {
+      removed: true,
+      state: draft.state,
+      unpublished: draft.unpublished === true,
+    };
+  }
   if (draft?.action !== "changed") return undefined;
   const changes = changesBeside(before, shown, draft.fields, rules);
   if (Object.keys(changes).length === 0) return undefined;

@@ -53,6 +53,7 @@ export function hireRows(
       links: {},
       outside: new Set(months.filter((month) => month < card.planned.expected)),
       plannedHire: true,
+      expected: card.planned.expected,
     };
   });
 }

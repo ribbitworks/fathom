@@ -16,7 +16,7 @@ Verifies feature teams on the **Org chart** page:
 - How each team is drawn under its lead, and a team's panel.
 - What a reader who may not change teams sees: no change buttons and no **New feature team**.
 - Proposing a lead, adding a team and removing one, as drafts, with their marks on the chart and in the panel.
-- Planned hires on a team, as members and as its lead.
+- Planned hires on a team, as members and as its lead, added from a team's panel, and the refusals of them.
 - Changing teams from another date.
 - Approving a team's draft on the Drafts page.
 - Using a team's panel from the keyboard.
@@ -492,10 +492,116 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
 - [ ] `0C0A` Close the team panel, and find the card that names 'Field tools'.
   - **Expected:**
     - The card has a grey dashed edge.
-    - It reads "TBD-" and the number, in grey italics, then 'Engineering Manager'.
+    - It reads "Engineering Manager, TBD-" and the number, in grey italics, with no position under it.
     - Under them, in order: a grey box reading "Planned, no target date"; a small square in the team's colour and 'Field tools'; then "Hide" and a number of members.
     - Nothing on the card overlaps the cards under it.
     - The cards under it include the people and 'Data engineer'.
   - **Notes:**
 
 **Afterwards:** Select **Today**.
+
+### FT-15: Planned Hires Are Added to a Team as Members and Its Lead
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from FT-14.
+
+**Preconditions:** Run Restore the Seed Data. Signed in with this account. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
+
+- [ ] `5E27` Select the Feature teams button, then 'Identity'.
+  - **Expected:** The team panel opens, titled 'Identity'.
+  - **Notes:**
+
+- [ ] `C0F4` Select the change button in the **Members** row, and type `SDET`.
+  - **Expected:**
+    - The list shows people first, then planned hires.
+    - "SDET, TBD-" and a number is listed after the people, with "No target date" in grey under it.
+    - 'SDET, REQ-2042' is greyed out, with "Can't join before" and a month in grey under it.
+  - **Notes:**
+
+- [ ] `91B8` Select "SDET, TBD-" and its number, and press Enter.
+  - **Expected:**
+    - The list closes.
+    - **Members** lists "SDET, TBD-" and its number last, in grey italics, after a hollow dot, followed by "#HIRE-" and a number, then a grey box reading "Planned, no target date".
+    - The **Publish** button reads "Publish 1 change".
+  - **Notes:**
+
+- [ ] `2D6E` Select the change button in the **Feature lead** row, type `TBD-`, and choose "SDET, TBD-" and its number.
+  - **Expected:**
+    - **Feature lead** reads "SDET, TBD-" and its number, in grey italics, after a hollow dot, followed by "#HIRE-" and a number, then a grey box reading "Planned, no target date".
+    - Under it, a line after a green dot reads 'Susan Corwin'.
+  - **Notes:**
+
+- [ ] `E83A` Find the card that names 'Identity' on the chart.
+  - **Expected:**
+    - The card has a grey dashed edge, and reads "SDET, TBD-" and its number, in grey italics.
+    - The square in the team's colour and 'Identity' are under its grey "Planned, no target date" box.
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
+
+### FT-16: A Refused Planned Hire Stays Chosen, With the Reason
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FT-15.
+
+**Preconditions:** Signed in with this account. **Org chart** page open, with **Feature teams** chosen in the teams switch, showing today.
+
+- [ ] `7B03` Select the Feature teams button, then 'Identity'.
+  - **Expected:** The team panel opens, titled 'Identity'.
+  - **Notes:**
+
+- [ ] `B2D4` Clear the **Date** box, and type the first day of next month, as digits alone, such as `20261201` on 27 November 2026.
+  - **Expected:** The **Date** box shows the date typed, and the team panel still shows 'Identity'.
+  - **Notes:**
+
+- [ ] `C9E1` Select the change button in the **Members** row, type `SDET, TBD`, select "SDET, TBD-" and its number, and press Enter.
+  - **Expected:** **Members** lists "SDET, TBD-" and its number last, after a hollow dot.
+  - **Notes:**
+
+- [ ] `0A5D` Select **Today**.
+  - **Expected:** The **Date** box shows today's date, and **Members** no longer lists "SDET, TBD-" and its number.
+  - **Notes:**
+
+- [ ] `E5C0` Select the change button in the **Feature lead** row, type `SDET, TBD`, and choose "SDET, TBD-" and its number.
+  - **Expected:**
+    - The box above the list holds "SDET, TBD-" and its number, in red, outlined in red, with the cursor in it.
+    - The list under it shows that planned hire.
+    - Under **Feature lead**, in red: "Choose a day when the new lead is on this team".
+    - The **Publish** button still reads "Publish 1 change".
+  - **Notes:**
+
+- [ ] `6E2B` Press Esc.
+  - **Expected:**
+    - The list closes, and the red line is gone.
+    - **Feature lead** reads 'Susan Corwin'.
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
+
+### FT-17: A Planned Hire Joins From the Month It's Expected
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FT-16.
+
+**Preconditions:** Signed in with this account. **Org chart** page open, with **Feature teams** chosen in the teams switch, showing today.
+
+- [ ] `A47E` Select the Feature teams button, then 'Integrations'.
+  - **Expected:** The team panel opens, titled 'Integrations'.
+  - **Notes:**
+
+- [ ] `5F1A` Select the change button in the **Members** row, and type `Platform engineer`. Write down the month in grey under it.
+  - **Expected:** 'Platform engineer' is greyed out, with "Can't join before" and a month in grey under it.
+  - **Notes:**
+
+- [ ] `8C3D` Press Esc.
+  - **Expected:** The list closes, and **Members** is as it was.
+  - **Notes:**
+
+- [ ] `3C81` Clear the **Date** box, and type the first day of the month written down at `5F1A`, as digits alone, such as `20270501` for May 2027.
+  - **Expected:** The **Date** box shows the date typed, and the team panel still shows 'Integrations'.
+  - **Notes:**
+
+- [ ] `0F6A` Select the change button in the **Members** row, type `Platform engineer`, select it, and press Enter.
+  - **Expected:**
+    - No red line shows under **Members**.
+    - **Members** lists 'Platform engineer' last, in grey, after a hollow dot, followed by "#HIRE-" and a number, then, in grey, "from" and the date typed.
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes, then select **Today**.

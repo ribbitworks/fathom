@@ -137,14 +137,17 @@ export interface Refusal {
 }
 
 // The server's refusal of one value given, which belongs under its field, as any refused value
-// does; undefined for every other failure, which a notification names.
-export const refusalOf = (error: Error): Refusal | undefined =>
-  error instanceof ApiError &&
-  refusedValues.has(error.status) &&
-  error.serverMessage !== undefined &&
-  error.field !== undefined
-    ? { reason: error.serverMessage, field: error.field }
+// does; undefined for every other failure, which a notification names. A change made in one field
+// gives it, for a refusal the server names no field for.
+export function refusalOf(error: Error, about?: string): Refusal | undefined {
+  if (!(error instanceof ApiError)) return undefined;
+  const field = error.field ?? about;
+  return refusedValues.has(error.status) &&
+    error.serverMessage !== undefined &&
+    field !== undefined
+    ? { reason: error.serverMessage, field }
     : undefined;
+}
 
 export const notAllowedMessage =
   "Not allowed for this account. Its roles may have changed.";

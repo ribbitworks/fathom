@@ -3,7 +3,16 @@
 // Integration tests for drafting planned hires on feature teams: adding, taking off and making them
 // lead through drafts and approval, the days they may join from, and which roles may do it.
 
-import { type ChangeHistory, startingRoles } from "@fathom/shared";
+import { plannedHires } from "@fathom/db";
+import {
+  type ChangeHistory,
+  defaultClasses,
+  seesEmployment,
+  seesHiringPlan,
+  startingRoles,
+  withImplied,
+} from "@fathom/shared";
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { errorOf, ok, type User } from "./test-app.ts";
 import {
@@ -118,7 +127,7 @@ describe("drafting a planned hire on a team", () => {
 
     expect(response.statusCode).toBe(400);
     expect(errorOf(response)).toBe(
-      "This planned hire is expected in 2026-09. Choose a day from then on.",
+      "This planned hire is expected in Sep 2026. Choose a day from then on.",
     );
   });
 
@@ -309,7 +318,7 @@ describe("a planned hire on a team, refused", () => {
 
     expect(response.statusCode).toBe(400);
     expect(errorOf(response)).toBe(
-      "This planned hire is expected in 2026-09. Choose a month from then on.",
+      "This planned hire is expected in Sep 2026. Choose a month from then on.",
     );
   });
 
@@ -331,7 +340,7 @@ describe("a planned hire on a team, refused", () => {
     // Then the approval is refused, naming the month, not the target date
     expect(response.statusCode).toBe(400);
     expect(errorOf(response)).toMatch(
-      /^Fictional Moved Hire's day in the draft of .+ is now before 2026-09, the month Fictional Moved Hire is expected; reject the draft so it can be changed$/,
+      /^Fictional Moved Hire's day in the draft of .+ is now before Sep 2026, the month Fictional Moved Hire is expected; reject the draft so it can be changed$/,
     );
   });
 
@@ -389,7 +398,7 @@ describe("a planned hire on a team, refused", () => {
 
     expect(response.statusCode).toBe(400);
     expect(errorOf(response)).toBe(
-      "A planned hire drafted to be removed can't join or lead a team",
+      "This planned hire is drafted to be removed, so it can't join or lead a team.",
     );
   });
 
@@ -441,6 +450,78 @@ describe("who may add a planned hire to a team", () => {
       );
 
       expect(response.statusCode).toBe(changingTeams.has(role) ? 201 : 403);
+    },
+  );
+});
+
+describe("refusing a planned hire that can't join to each starting role", () => {
+  const changingTeams = [
+    "feature-lead",
+    "engineering-manager",
+    "engineering-director",
+    "workforce-administrator",
+  ] as const;
+
+  it.each(changingTeams.map((role) => [role]))(
+    "names the fill to the %s only where the role sees it",
+    async (role) => {
+      // Given a planned hire filled by someone
+      const hire = await plannedHire();
+      await test.connection
+        .update(plannedHires)
+        .set({ filledBy: await person() })
+        .where(eq(plannedHires.id, hire));
+      const who = await test.signedIn(role);
+
+      // When the role adds it to a team
+      const response = await create(
+        { name: `Fictional Team Filled for ${role}`, members: [hire] },
+        who,
+      );
+
+      // Then only a role that sees Personal details is told it was filled
+      const seesFill = seesEmployment({
+        // The key is one of the starting roles' own.
+        // eslint-disable-next-line security/detect-object-injection
+        permissions: withImplied(startingRoles[role].permissions),
+        dataClasses: defaultClasses,
+      });
+      expect(response.statusCode).toBe(400);
+      expect(errorOf(response)).toBe(
+        seesFill
+          ? "This planned hire has been filled. Choose the person who filled it."
+          : "This planned hire can't join or lead a team.",
+      );
+    },
+  );
+
+  it.each(changingTeams.map((role) => [role]))(
+    "names a removal draft to the %s only where the role sees the hiring plan",
+    async (role) => {
+      // Given a planned hire a waiting draft removes
+      const hire = await plannedHire();
+      await ok(await send(editor, "DELETE", `/api/planned-hires/${hire}`));
+      const who = await test.signedIn(role);
+
+      // When the role adds it to a team
+      const response = await create(
+        { name: `Fictional Team Removing for ${role}`, members: [hire] },
+        who,
+      );
+
+      // Then only a role that sees the hiring plan's drafts is told of the removal
+      const seesDrafts = seesHiringPlan({
+        // The key is one of the starting roles' own.
+        // eslint-disable-next-line security/detect-object-injection
+        permissions: withImplied(startingRoles[role].permissions),
+        dataClasses: defaultClasses,
+      });
+      expect(response.statusCode).toBe(400);
+      expect(errorOf(response)).toBe(
+        seesDrafts
+          ? "This planned hire is drafted to be removed, so it can't join or lead a team."
+          : "This planned hire can't join or lead a team.",
+      );
     },
   );
 });

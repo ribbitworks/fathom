@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for reading JSON from the API: the request it makes, and the errors for a failed response
-// and for a response in an unexpected shape.
+// and for a response in an unexpected shape; and which failures are refusals of a field.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { getJson } from "./api.ts";
+import { ApiError, getJson, refusalOf } from "./api.ts";
 
 const answerSchema = z.object({ answer: z.string() });
 
@@ -56,5 +56,31 @@ describe("reading JSON from the API", () => {
   it("fails when the response is not in the expected shape", async () => {
     serverAnswers(Response.json({ answer: 42 }));
     await expect(getJson("/api/fictional", answerSchema)).rejects.toThrow();
+  });
+});
+
+describe("a refusal of a field", () => {
+  const refused = "A filled planned hire can't join or lead a team";
+
+  it("names the field the server gives, before the one the change was made in", () => {
+    expect(
+      refusalOf(new ApiError(409, refused, undefined, "name"), "members"),
+    ).toEqual({ reason: refused, field: "name" });
+  });
+
+  it("names the field the change was made in when the server gives none", () => {
+    expect(refusalOf(new ApiError(400, refused), "members")).toEqual({
+      reason: refused,
+      field: "members",
+    });
+  });
+
+  it.each([
+    ["no field at all", new ApiError(400, refused), undefined],
+    ["a failure that refuses nothing", new ApiError(500, refused), "members"],
+    ["no message of the server's", new ApiError(400), "members"],
+    ["an error not from the server", new Error(refused), "members"],
+  ])("is none for %s", (_case, error, about) => {
+    expect(refusalOf(error, about)).toBeUndefined();
   });
 });

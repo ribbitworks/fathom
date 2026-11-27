@@ -134,7 +134,7 @@ describe("the org chart", () => {
     expect(within(sasha).queryByText("Left")).toBeNull();
   });
 
-  it("draws planned hires as placeholders, one with no name by its ID with its position under it, a planned manager heading its hires, left out of the Teams panel", async () => {
+  it("draws planned hires as placeholders, one with no name by its position and ID, as People names it, a planned manager heading its hires, left out of the Teams panel", async () => {
     const planned = [
       ...people,
       person("h1", "Fictional Engineer, TBD-7", null, {
@@ -161,10 +161,20 @@ describe("the org chart", () => {
         .getAllByText(name)
         .map((shown) => shown.closest<HTMLElement>("div.react-flow__node"))
         .find((node) => node !== null) as HTMLElement;
-    await screen.findAllByText("TBD-7");
-    const placeholder = onCard("TBD-7");
+    const placeholder = await screen.findByRole("group", {
+      name: "Fictional Engineer, TBD-7",
+    });
     expect(within(placeholder).getByText(/^Planned, expected/)).toBeDefined();
-    expect(within(placeholder).getByText("Fictional Engineer")).toBeDefined();
+    // The ID stands apart from the position, so a name cut short keeps it, a space between them
+    // that a flex item's edge can't drop.
+    const id = within(placeholder).getByText("TBD-7");
+    const position = within(placeholder).getByText("Fictional Engineer,");
+    expect(position.textContent).toBe("Fictional Engineer,");
+    expect(id.textContent).toBe("\u00a0TBD-7");
+    expect(id.parentElement?.textContent.replace(/\s/gu, " ")).toBe(
+      "Fictional Engineer, TBD-7",
+    );
+    expect(within(placeholder).queryByText("Fictional Engineer")).toBeNull();
     const report = onCard("Fictional Planned Report").textContent;
     expect(report).toContain("Fictional Engineer");
     expect(report).toContain("Planned, no target date");
@@ -181,6 +191,31 @@ describe("the org chart", () => {
     await screen.findByText(
       "Only the team of Fictional Engineer, TBD-7 is shown.",
     );
+  });
+
+  it("names a placeholder by its ID alone to a reader not shown its position, with no space before it", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "feature-teams:view"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () =>
+        chartJson({
+          people: [
+            ...people,
+            person("h1", "TBD-9", null, {
+              employeeId: null,
+              position: null,
+              planned: { expected: "2027-03", shownId: "TBD-9" },
+            }),
+          ],
+        }),
+    });
+    renderApp("/org-chart");
+    const placeholder = await screen.findByRole("group", { name: "TBD-9" });
+    expect(within(placeholder).getByText("TBD-9").textContent).toBe("TBD-9");
   });
 
   it("names someone moved between managers outside a team shown alone once", async () => {

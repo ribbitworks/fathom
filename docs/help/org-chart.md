@@ -84,6 +84,12 @@ You're done when the card shows the new name with a hollow dot, or the new colou
 
 In **Feature lead** and **Members**, each person shows their position and their team, or whom they report to, so you can tell apart two people with the same name.
 
+**Feature lead** and **Members** offer people first, then planned hires, each with when it's expected, such as **Software Engineer, expected Mar 2027**. A planned hire joins a team as a person does, from the date shown. A planned hire you make the lead joins the team too.
+
+A planned hire you can't choose yet is greyed out, with why, such as **Can't join before May 2027**. To add it, show a date from that month on.
+
+If Fathom refuses a change, the list opens again with your choice, and the reason shows in red under it. Nothing is saved. Change your choice, or press Esc to put the row back.
+
 To add a feature team:
 
 1. Open the **Feature teams** button's menu, and select **New feature team**.

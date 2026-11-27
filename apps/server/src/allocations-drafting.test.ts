@@ -7,7 +7,7 @@
 import { features, people } from "@fathom/db";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import type { ChangeHistory } from "@fathom/shared";
+import { type ChangeHistory, monthInWords } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { errorOf, unique } from "./test-app.ts";
 import {
@@ -157,7 +157,7 @@ describe("allocating", () => {
     });
     expect(early.statusCode).toBe(400);
     expect(errorOf(early)).toBe(
-      `This planned hire is expected in ${month(2)}. Choose a first month from then on.`,
+      `This planned hire is expected in ${monthInWords(month(2))}. Choose a first month from then on.`,
     );
     await changed({
       plannedHireId,

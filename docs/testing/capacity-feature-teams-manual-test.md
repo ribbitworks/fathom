@@ -15,7 +15,7 @@ Verifies the **Feature teams** tab of the **Capacity** page:
 
 - How the table of feature teams by month looks, and moving through it with the strip of quarters under the buttons above it.
 - Grouping its rows, counting them in **Metrics**, and keeping it to the people on a feature team in any month.
-- Planned hires on a feature team, under it on this tab and on **Allocations**.
+- Planned hires on a feature team, under it on this tab and on **Allocations**, and changing a planned hire's months from the month it's expected.
 - How it agrees with the **Org chart** on a chosen month.
 - How drafts made on the **Org chart** show in it.
 - Changing a month's teams in it and finding the change on the **Org chart**.
@@ -37,7 +37,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
 
 ## Terms
 
@@ -448,3 +448,30 @@ Proved by automated tests in `apps/server/src/feature-teams-months.test.ts`.
   - **Notes:**
 
 **Afterwards:** Clear the search box, and select the **Feature teams** tab.
+
+### FA-22: A Planned Hire's Months Are Changed From the Month It's Expected
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-21.
+
+**Preconditions:** Run Restore the Seed Data. **Capacity** open, with the **Feature teams** tab chosen, nothing chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] `B7C1` Type `Platform engineer` in the search box.
+  - **Expected:**
+    - One row shows, 'Platform engineer'.
+    - Its cells before the month six months after the current one are shaded.
+  - **Notes:**
+
+- [ ] `62E9` Select its cell in the month before the first one not shaded, and press Enter.
+  - **Expected:**
+    - No list of teams opens, and the cell keeps its blue outline.
+    - A tip reads "Can't join before" and the month of the first cell not shaded.
+  - **Notes:**
+
+- [ ] `A0D8` Select its cell in the first month not shaded, press Enter, type `Pay`, then press Tab.
+  - **Expected:**
+    - That cell and each later one name 'Payments core', after a hollow dot.
+    - The shaded cells stay empty.
+    - The **Publish** button reads "Publish 1 change".
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes, and clear the search box.

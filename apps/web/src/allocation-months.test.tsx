@@ -311,6 +311,28 @@ describe("planned hires' allocations", () => {
     ).toEqual([]);
   });
 
+  it("reads a planned hire's past expected month as a person's past month: unmarked, and counted", () => {
+    // Given nothing allocated, and April the current month
+    const rows = rowsOf([], { chart });
+    const tester = rows.find(({ personId }) => personId === "h-tester");
+    const person = casey(rows);
+
+    // Then March, the month the hire was expected, is marked for neither, and counts each as 0 of 1
+    expect(
+      [tester, person].map((row) =>
+        row === undefined
+          ? undefined
+          : [
+              [...marksFrom(row, ["2027-03"], "2027-04", "both")],
+              capacityOf([row], "2027-03", "both"),
+            ],
+      ),
+    ).toEqual([
+      [[], { allocated: 0, available: 100 }],
+      [[], { allocated: 0, available: 100 }],
+    ]);
+  });
+
   it("gives each planned hire on the chart a row, under its manager, from the month it is expected", () => {
     const rows = rowsOf(
       [

@@ -6,8 +6,10 @@
 import {
   type ClassAccess,
   type FeatureTeamChange,
+  monthInWords,
   monthOf,
   seesEmployment,
+  seesHiringPlan,
 } from "@fathom/shared";
 import { type Recorded, tidy } from "./draft-records.ts";
 import { bySubject, inForceOn, inForceOrLater } from "./in-force.ts";
@@ -294,14 +296,23 @@ export function nameIsTaken(
 }
 
 // Why a planned hire can't join or lead a team: it is filled, so its person takes its place, or a
-// draft removes it; undefined when it can.
-export function plannedHireRefusal(hire: PlannedHire): string | undefined {
+// draft removes it; undefined when it can. A reader told neither why is told only that it can't: one
+// who doesn't see Personal details isn't shown a fill before its person starts, and one who doesn't
+// see the hiring plan isn't shown its drafts.
+export function plannedHireRefusal(
+  hire: PlannedHire,
+  sees: { fill: boolean; drafts: boolean },
+): string | undefined {
+  const cantJoin = "This planned hire can't join or lead a team.";
   if (hire.filledBy !== null) {
-    return "A filled planned hire can't join or lead a team; choose its person";
+    return sees.fill
+      ? "This planned hire has been filled. Choose the person who filled it."
+      : cantJoin;
   }
-  return hire.removing
-    ? "A planned hire drafted to be removed can't join or lead a team"
-    : undefined;
+  if (!hire.removing) return undefined;
+  return sees.drafts
+    ? "This planned hire is drafted to be removed, so it can't join or lead a team."
+    : cantJoin;
 }
 
 // What is wrong with the members and lead a team is to have: members added who are not live people
@@ -316,6 +327,7 @@ export function membersRefusal(
   everyone: Everyone,
 ): string | undefined {
   const seesPeople = seesEmployment(access);
+  const sees = { fill: seesPeople, drafts: seesHiringPlan(access) };
   for (const memberId of added) {
     const member = everyone.get(memberId);
     // Someone hidden from the actor is not there for them, as People hides them.
@@ -327,7 +339,9 @@ export function membersRefusal(
     }
     if (hasLeft(member)) return "Someone who has left can't join a team";
     const refusal =
-      member.kind === "planned-hire" ? plannedHireRefusal(member) : undefined;
+      member.kind === "planned-hire"
+        ? plannedHireRefusal(member, sees)
+        : undefined;
     if (refusal !== undefined) return refusal;
   }
   if (typeof leadId !== "string") return undefined;
@@ -335,7 +349,9 @@ export function membersRefusal(
     return "The feature lead must be one of the members";
   }
   const lead = everyone.get(leadId);
-  return lead?.kind === "planned-hire" ? plannedHireRefusal(lead) : undefined;
+  return lead?.kind === "planned-hire"
+    ? plannedHireRefusal(lead, sees)
+    : undefined;
 }
 
 // A person or planned hire joining or leaving a team from a day, or becoming its lead.
@@ -393,7 +409,7 @@ export function employmentDayRefusal(
   const member = everyone.get(day.memberId);
   if (member?.kind === "planned-hire") {
     return day.leaves !== true && day.from < member.firstDay
-      ? refusals.beforeExpected(day, monthOf(member.firstDay))
+      ? refusals.beforeExpected(day, monthInWords(monthOf(member.firstDay)))
       : undefined;
   }
   const person = { ...member };

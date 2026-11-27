@@ -26,6 +26,8 @@ export const orgChartDraftSchema = z.object({
   managerFrom: daySchema.optional(),
   position: z.string().optional(),
   teamName: z.string().nullable().optional(),
+  // Set for a planned hire's draft that removes it, to readers who see the hiring plan's drafts.
+  removed: z.literal(true).optional(),
   state: draftStateSchema,
   // Whether the draft holds the reader's own changes, not yet published.
   unpublished: z.boolean(),
@@ -51,8 +53,8 @@ export const orgChartPersonSchema = z.object({
   managerId: z.string().nullable(),
   left: z.boolean().optional(),
   // Set for a planned hire: the month it is expected, never the day, and, for one with no name of
-  // its own, whose name is made from its position and ID, that ID, which its card shows in place of
-  // the made name, with the position under it, so the card's name fits.
+  // its own, whose name is made from its position and ID, that ID, which its card keeps in view
+  // when the name is cut short.
   planned: z
     .object({
       expected: monthSchema,

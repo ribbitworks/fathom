@@ -32,6 +32,7 @@ People lists everyone, one row each, with planned hires beside them. It sits in 
 The date row sits above the table here and above the [Org chart](org-chart.md), only for a role that sees other dates.
 
 - **Parts, in order:** a Date box, a back arrow, a timeline of 24 months either side of today, a forward arrow, and Today.
+  - **The timeline's names:** It names each year's January, or the January of every few years where it's narrow, so the handle on a month shown never sits beside another month's name, such as Nov 2026 beside Feb 2027.
 - **Range:** Without Confidential data, People and Reporting teams stop at today. Feature teams reach future dates with Personal details alone.
 - **Feature teams on future dates:** Draw people as they are today.
 - **On another date:** On an earlier date, only managers can change on People and Reporting teams, for those who may change Past managers; a later date is read only there. On Feature teams, members and leads change on a later date, or on an earlier one for those who may change Feature team dates.

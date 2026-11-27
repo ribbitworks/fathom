@@ -10,6 +10,7 @@ import {
   useContext,
   useEffect,
   useEffectEvent,
+  useRef,
   useState,
 } from "react";
 import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
@@ -371,6 +372,26 @@ export function useRecordEditing<
   // Values being entered that were refused, so never saved: Add names them rather than taking them
   // as empty.
   const [refused, setRefused] = useState<readonly ValueProblem[]>([]);
+  // Whether what uses these is still shown, since the server may answer after it has gone, and the
+  // editor open as it last drew, which a late refusal leaves alone.
+  const stillShown = useRef(false);
+  const openNow = useRef(open);
+  useEffect(() => {
+    stillShown.current = true;
+    return () => {
+      stillShown.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    openNow.current = open;
+  });
+  // A value the server refused once its editor had closed, shown again in its editor in place of
+  // the record's own until the editor is left.
+  const [heldBack, setHeldBack] = useState<{
+    id: string;
+    key: string;
+    value: CellValue;
+  }>();
   // Names what is wrong with one value, or, with no message, takes back what was.
   const setProblem = (id: string, key: string, message?: string) => {
     setProblems(withProblem(id, key, message));
@@ -400,6 +421,7 @@ export function useRecordEditing<
 
   const stop = (id: string, column: Column<Rec, Change>, scope: ValueScope) => {
     setOpen(undefined);
+    setHeldBack(undefined);
     setProblem(id, column.key);
     setRefused(withProblem(id, column.key));
     focusSoon(changeId(column, scope));
@@ -419,6 +441,7 @@ export function useRecordEditing<
       if (!alwaysOpen) stop(context.id, column, scopeOf(context));
     } else if (how === "leave" && !alwaysOpen) {
       setOpen(undefined);
+      setHeldBack(undefined);
       setProblem(context.id, column.key);
     }
   };
@@ -428,6 +451,7 @@ export function useRecordEditing<
   const closeStale = ({ id, save }: RecordEditingContext<Rec, Change>) => {
     if (open !== undefined && (save === undefined || open.id !== id)) {
       setOpen(undefined);
+      setHeldBack(undefined);
       clearProblems();
     }
   };
@@ -474,7 +498,10 @@ export function useRecordEditing<
         };
       }
       if (readOnly) return undefined;
-      const value = context.values[column.key] as CellValue;
+      const value =
+        heldBack?.id === id && heldBack.key === column.key
+          ? heldBack.value
+          : (context.values[column.key] as CellValue);
       const wrong = problems.find(
         (one) => one.id === id && one.key === column.key,
       )?.message;
@@ -572,6 +599,31 @@ export function useRecordEditing<
     setProblems(found.map(({ key, message }) => ({ id, key, message })));
   };
 
+  // Opens a value's editor again on the value the server refused after it closed, outlined in red
+  // with the reason under it, as a value refused on the page is; Esc puts the value back. Says
+  // whether it could: not once the panel has gone, as when closed before the server answered, nor
+  // while another value's editor is open, whose typing it would take away.
+  const refuseSaved = (
+    context: RecordEditingContext<Rec, Change>,
+    column: Column<Rec, Change>,
+    value: CellValue,
+    reason: string,
+  ): boolean => {
+    const editing = openNow.current;
+    if (
+      !stillShown.current ||
+      (editing !== undefined &&
+        (editing.id !== context.id || editing.key !== column.key))
+    ) {
+      return false;
+    }
+    setHeldBack({ id: context.id, key: column.key, value });
+    setOpen({ id: context.id, key: column.key });
+    setProblem(context.id, column.key, reason);
+    selectSoon(editorId(column, scopeOf(context)));
+    return true;
+  };
+
   // Names what is wrong with the values being entered, with focus on the first of them shown.
   const refuseEntered = (
     id: string,
@@ -618,6 +670,7 @@ export function useRecordEditing<
     closeStale,
     editingOf,
     refuse,
+    refuseSaved,
     refuseEntered,
     withRefused,
     unfinished,
