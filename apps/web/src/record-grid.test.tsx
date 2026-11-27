@@ -9,7 +9,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { noDrafts } from "./drafts.ts";
-import { cellColumn } from "./grid-columns.tsx";
+import { fieldColumn } from "./grid-columns.tsx";
 import { useTableScroll } from "./grid-layout.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import type { Column, RecordTable } from "./record-table.ts";
@@ -432,7 +432,7 @@ describe("what a table can ask of its columns and rows", () => {
       columnsFor: () =>
         [
           ...gadgetColumns([], [], []),
-          cellColumn<Gadget, GadgetChange>("later", "text", {
+          fieldColumn<Gadget, GadgetChange>("later", "text", {
             label: "Later",
             required: false,
             choices: [],
@@ -507,7 +507,7 @@ describe("what a table can ask of its columns and rows", () => {
         columnsFor: () =>
           [
             ...gadgetColumns([], [], []),
-            cellColumn<Gadget, GadgetChange>("later", "text", {
+            fieldColumn<Gadget, GadgetChange>("later", "text", {
               label: "Later",
               required: false,
               choices: [],

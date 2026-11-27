@@ -201,12 +201,18 @@ export const valuesTier = (
 };
 
 // A column's value for one person, as the change history records it: the chosen choices, a link, a
-// note, a number, a ticked box, or a text.
+// note, a number, a ticked box, a text, or a day.
 export type FieldValue =
-  string[] | Link | string | number | true | { text: string };
+  | string[]
+  | Link
+  | string
+  | number
+  | true
+  | { text: string }
+  | { date: string };
 
 // Each record's values, by record and column, for the people, or planned hires, and columns given:
-// chosen choices in their list's order, links, notes, numbers, ticked boxes, and texts.
+// chosen choices in their list's order, links, notes, numbers, ticked boxes, texts, and days.
 export async function readValues(
   reader: Reader,
   recordIds: readonly string[],
@@ -228,6 +234,7 @@ export async function readValues(
     readNumbers,
     readFlags,
     readTexts,
+    readDates,
   ]) {
     for (const [recordId, byField] of await read(
       reader,
@@ -352,6 +359,9 @@ const readFlags = readerOf(fieldValues.flag, (): true => true);
 const readTexts = readerOf(fieldValues.text, (text) => ({
   text: String(text),
 }));
+const readDates = readerOf(fieldValues.date, (date) => ({
+  date: String(date),
+}));
 
 // The names of the added columns' values any version of a record holds.
 export const valueFieldsIn = (
@@ -381,7 +391,7 @@ export function recordedValues(
 }
 
 // The rows that hold a value as the change history records it: one for each choice, or one for a
-// link, a note, a number, a ticked box, or a text. Anything else holds nothing.
+// link, a note, a number, a ticked box, a text, or a day. Anything else holds nothing.
 export function valueRows(
   recordId: string,
   fieldId: string,

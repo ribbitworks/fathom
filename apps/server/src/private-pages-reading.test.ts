@@ -102,6 +102,7 @@ describe("reading a page", () => {
         numbers: { [number]: 1 },
         flags: {},
         texts: {},
+        days: {},
       },
       {
         id: rowIds[1],
@@ -113,6 +114,7 @@ describe("reading a page", () => {
         numbers: { [number]: 2 },
         flags: {},
         texts: {},
+        days: {},
       },
     ]);
   });

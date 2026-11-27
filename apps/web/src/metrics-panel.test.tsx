@@ -15,6 +15,7 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { formatMonth } from "./day-formats.ts";
 import { share } from "./metrics.ts";
 import { panelWidth, panelWidths } from "./side-panel.tsx";
 import { emptyView, type View } from "./table-view.ts";
@@ -113,6 +114,52 @@ describe("the Metrics panel", () => {
     );
     expect(figures("Populated")).toEqual(["1", share(1, 4)]);
     expect(figures("Empty")).toEqual(["3", share(3, 4)]);
+  });
+
+  it("breaks a date column down by month, earliest first, then No date", () => {
+    const lastReview: Field = {
+      ...level,
+      id: "f5",
+      name: "Last review",
+      type: "date",
+      listId: null,
+      visibility: "general",
+    };
+    const reviewed = ["2026-03-14", "2025-11-02", "2026-03-01"];
+    render(
+      <Table
+        people={everyone.map((one, index) => {
+          const day = reviewed.at(index);
+          return day === undefined ? one : { ...one, days: { f5: day } };
+        })}
+        fields={[lastReview]}
+        start={{ ...emptyView, breakdown: ["f5"] }}
+      />,
+    );
+    expect(
+      within(panel())
+        .getAllByRole("rowheader")
+        .map((header) => header.textContent)
+        .slice(0, 3),
+    ).toEqual([formatMonth("2025-11"), formatMonth("2026-03"), "No date"]);
+    expect(figures(formatMonth("2026-03"))).toEqual(["2", share(2, 4)]);
+    expect(figures("No date")).toEqual(["1", share(1, 4)]);
+  });
+
+  it("offers a required date column, whose months still break people down", async () => {
+    const nextReview: Field = {
+      ...level,
+      id: "f6",
+      name: "Next review",
+      type: "date",
+      listId: null,
+      visibility: "general",
+      required: true,
+    };
+    render(
+      <Table fields={[nextReview]} start={{ ...emptyView, breakdown: [] }} />,
+    );
+    expect(await optionsIn(panel(), "Break down by")).toContain("Next review");
   });
 
   it("breaks people down by a column, each choice with its count and share, and empty values", async () => {

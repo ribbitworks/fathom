@@ -343,6 +343,7 @@ export {
   columnValueMapsOf,
   type ColumnValues,
   columnValuesIn,
+  type Days,
   eachColumnValueMap,
   type Flags,
   flagsSchema,

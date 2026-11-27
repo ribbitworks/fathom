@@ -4,6 +4,7 @@
 // each type of column holding one value, as requests send them and readers receive them.
 
 import { z } from "zod";
+import { daySchema } from "./days.ts";
 import { type Link, linkValueSchema } from "./links.ts";
 import { numberValueSchema } from "./numbers.ts";
 import { textValueSchema } from "./text-values.ts";
@@ -69,6 +70,15 @@ export type Texts = Record<string, string>;
 // Texts asked for, by column, which each column checks; null or empty text removes a column's text.
 export const requestedTextsSchema = z.record(z.uuid(), textValueSchema);
 
+// Each date column's day, such as 2026-03-14, by column. A column with no day is left out. Not
+// dates, which a project already holds for its milestones' days, in the same union of plan records.
+export const daysSchema = z.record(z.string(), z.string());
+
+export type Days = Record<string, string>;
+
+// Days asked for, by column, each one that exists; null removes a column's day.
+export const requestedDaysSchema = z.record(z.uuid(), daySchema.nullable());
+
 // Choices asked for, by column: each a choice's identifier, at most once.
 export const requestedValuesSchema = z.record(
   z.uuid(),
@@ -86,6 +96,7 @@ export const columnValueMaps = [
   "numbers",
   "flags",
   "texts",
+  "days",
 ] as const;
 
 export type ColumnValueMap = (typeof columnValueMaps)[number];
@@ -104,6 +115,7 @@ interface ColumnValueOf {
   numbers: number;
   flags: true;
   texts: string;
+  days: string;
 }
 
 // One column's value in a map.
@@ -134,6 +146,7 @@ const columnValueSchemas = {
   numbers: numbersSchema,
   flags: flagsSchema,
   texts: textsSchema,
+  days: daysSchema,
 } satisfies { [Kind in ColumnValueMap]: z.ZodType<ColumnValues[Kind]> };
 
 const requestedColumnValueSchemas = {
@@ -142,6 +155,7 @@ const requestedColumnValueSchemas = {
   numbers: requestedNumbersSchema,
   flags: requestedFlagsSchema,
   texts: requestedTextsSchema,
+  days: requestedDaysSchema,
 } satisfies {
   [Kind in ColumnValueMap]: z.ZodType<RequestedColumnValues[Kind]>;
 };

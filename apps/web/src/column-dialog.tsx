@@ -30,6 +30,7 @@ import { CountedInput } from "./counted-input.tsx";
 import { nameTaken } from "./list-dialog.tsx";
 import { type NewChoice, NewListChoices } from "./new-list-choices.tsx";
 import { listsQuery, nameProblem } from "./lists.ts";
+import { wholeList } from "./theme.ts";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import { createField, updateField } from "./column-requests.ts";
 
@@ -43,6 +44,7 @@ const newListChoice = "new";
 const typeNames: Record<FieldType, string> = {
   text: "Text",
   number: "Number",
+  date: "Date",
   flag: "Checkbox",
   choice: "Choice from a list",
   link: "Web link",
@@ -254,6 +256,7 @@ export function ColumnDialog({
         {/* Drop-down lists that open on Enter, as the browser's own list would take Enter as
             adding the column. */}
         <Select
+          {...wholeList}
           label="Type"
           description={
             field === undefined ? undefined : "A column's type cannot change"
@@ -335,7 +338,7 @@ export function ColumnDialog({
         )}
         {canBeRequired(type) && (
           <Checkbox
-            label="Must be filled in"
+            label="Required"
             description={
               onPlannedHires ? "Planned hires can leave it empty" : undefined
             }

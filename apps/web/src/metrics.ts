@@ -32,8 +32,14 @@ function groupsOf(column: TableColumn<never>, value: CellValue): string[] {
   }
   if (isEmptyIn(column, value)) return [emptyGroup];
   if (column.kind === "choice") return [...new Set(value as string[])];
-  return column.kind === "month" ? [value as string] : [filledGroup];
+  const months = monthsOf(column);
+  return months === undefined ? [filledGroup] : [months.of(value)];
 }
+
+// How a column breaks down by month: as it says, or a month column's by its own months.
+const monthsOf = (column: TableColumn<never>): TableColumn<never>["months"] =>
+  column.months ??
+  (column.kind === "month" ? { of: (value) => value as string } : undefined);
 
 // The amounts of a number column added up over some rows: their total, and how many have one.
 export interface Summed {
@@ -118,7 +124,7 @@ function filledGroups(
         ...(isIdentifiedChoice(choice) ? { record: choice.record } : {}),
       }));
   }
-  if (column.kind === "month") {
+  if (monthsOf(column) !== undefined) {
     // Months written as 2027-03 sort as text in date order.
     return [...seen]
       .filter((month) => month !== emptyGroup)
@@ -141,7 +147,12 @@ export function groupsFor(
   return [
     ...filled,
     ...(held(emptyGroup)
-      ? [{ id: emptyGroup, label: column.emptyLabel ?? "Empty" }]
+      ? [
+          {
+            id: emptyGroup,
+            label: column.emptyLabel ?? column.months?.emptyLabel ?? "Empty",
+          },
+        ]
       : []),
   ];
 }

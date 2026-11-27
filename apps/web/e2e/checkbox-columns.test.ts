@@ -45,7 +45,7 @@ test("adds a checkbox column, then ticks and unticks a person's box", async ({
   await page.getByRole("option", { name: "Checkbox" }).click();
 
   // Then the dialog asks nothing about the column being filled in
-  await expect(dialog.getByLabel("Must be filled in")).toHaveCount(0);
+  await expect(dialog.getByLabel("Required", { exact: true })).toHaveCount(0);
   const saved = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&

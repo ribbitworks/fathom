@@ -8,7 +8,7 @@ import { MantineProvider } from "@mantine/core";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cellColumn } from "./grid-columns.tsx";
+import { fieldColumn } from "./grid-columns.tsx";
 import { columnWidth } from "./grid-layout.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import { type View, emptyView } from "./table-view.ts";
@@ -453,7 +453,7 @@ describe("column widths", () => {
   });
 
   describe("as they start", () => {
-    const text = cellColumn("note", "text", {
+    const text = fieldColumn("note", "text", {
       label: "Note",
       required: false,
       choices: [],

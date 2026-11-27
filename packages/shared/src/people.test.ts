@@ -259,6 +259,51 @@ describe("checkbox columns", () => {
   });
 });
 
+describe("date columns", () => {
+  it("keep a visibility of their own, and may be required", () => {
+    expect(
+      fieldRequestSchema.parse({
+        name: "Last review",
+        type: "date",
+        visibility: "personal",
+        required: true,
+      }),
+    ).toMatchObject({ type: "date", visibility: "personal", required: true });
+  });
+
+  it("refuse a list, several days, or no visibility", () => {
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "Last review",
+          type: "date",
+          listId: randomUUID(),
+          multiple: true,
+        }),
+      ),
+    ).toEqual([
+      "Choose a visibility",
+      "A date column has no list",
+      "A date column holds one date",
+    ]);
+  });
+
+  it("are asked for by column as a day that exists, with null removing one", () => {
+    const column = randomUUID();
+    expect(
+      personChangeSchema.parse({ days: { [column]: "2028-02-29" } }).days,
+    ).toEqual({ [column]: "2028-02-29" });
+    expect(personChangeSchema.parse({ days: { [column]: null } }).days).toEqual(
+      { [column]: null },
+    );
+    for (const refused of ["2026-02-30", "2026-3-14", "14/03/2026", ""]) {
+      expect(
+        personChangeSchema.safeParse({ days: { [column]: refused } }).success,
+      ).toBe(false);
+    }
+  });
+});
+
 describe("text columns", () => {
   it("keep a visibility of their own, and may be required", () => {
     expect(

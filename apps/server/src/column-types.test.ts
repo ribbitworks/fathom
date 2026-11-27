@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for what each type of column on People keeps and holds, apart from the database: the
-// settings, tier, values, and live values of choice, web link, note, number, checkbox and text
-// columns.
+// settings, tier, values, and live values of choice, web link, note, number, checkbox, text and
+// date columns.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -324,6 +324,52 @@ describe("text columns", () => {
   });
 });
 
+describe("date columns", () => {
+  const { date } = columnTypes;
+  const settings = { listId: null, multiple: false, multiline: false };
+
+  it("have a visibility of their own, as their tier", () => {
+    expect(date.settings({ visibility: "personal" })).toEqual({
+      type: "date",
+      listId: null,
+      visibility: "personal",
+      multiple: false,
+      multiline: false,
+      linkedTable: null,
+    });
+  });
+
+  it.each([
+    [{ date: "2026-03-14" }, true],
+    [{ date: "2028-02-29" }, true],
+    [{ date: "2026-02-30" }, false],
+    [{ date: "2026-3-14" }, false],
+    [{ date: "" }, false],
+    [{ date: "2026-03-14", text: "x" }, false],
+    [undefined, true],
+    [[], true],
+    ["2026-03-14", false],
+    [{ text: "2026-03-14" }, false],
+  ])("hold %j: %s", (value, fits) => {
+    expect(date.fits(settings, value, new Map())).toBe(fits);
+  });
+
+  it("count one day, never a note's or a text's, and are never counted as either", () => {
+    expect(date.count({ date: "2026-03-14" })).toBe(1);
+    expect(date.count("2026-03-14")).toBe(0);
+    expect(date.count({ text: "2026-03-14" })).toBe(0);
+    expect(columnTypes.note.count({ date: "2026-03-14" })).toBe(0);
+    expect(columnTypes.text.count({ date: "2026-03-14" })).toBe(0);
+  });
+
+  it("show their live day beside a draft, or nothing when there is none", () => {
+    const live = noLiveValues();
+    date.showLive(live, "f1", { date: "2026-03-14" });
+    date.showLive(live, "f2", []);
+    expect(live.days).toEqual({ f1: "2026-03-14" });
+  });
+});
+
 describe("the values table's rows", () => {
   it("hold each type's value in its own column, and nothing for a value of another type", () => {
     expect(
@@ -335,9 +381,10 @@ describe("the values table's rows", () => {
         type.rows(0),
         type.rows(true),
         type.rows({ text: "Desk" }),
+        type.rows({ date: "2026-03-14" }),
       ]),
     ).toEqual([
-      ["choice", [{ choiceId: "c1" }], [], [], [], [], []],
+      ["choice", [{ choiceId: "c1" }], [], [], [], [], [], []],
       [
         "link",
         [],
@@ -346,11 +393,13 @@ describe("the values table's rows", () => {
         [],
         [],
         [],
+        [],
       ],
-      ["note", [], [], [{ note: "*Kind*" }], [], [], []],
-      ["number", [], [], [], [{ number: 0 }], [], []],
-      ["flag", [], [], [], [], [{ flag: true }], []],
-      ["text", [], [], [], [], [], [{ text: "Desk" }]],
+      ["note", [], [], [{ note: "*Kind*" }], [], [], [], []],
+      ["number", [], [], [], [{ number: 0 }], [], [], []],
+      ["flag", [], [], [], [], [{ flag: true }], [], []],
+      ["text", [], [], [], [], [], [{ text: "Desk" }], []],
+      ["date", [], [], [], [], [], [], [{ date: "2026-03-14" }]],
     ]);
   });
 });
@@ -366,6 +415,7 @@ describe("live values", () => {
           ["f4", []],
           ["f5", { text: "North 4-12" }],
           ["f6", "*Kind*"],
+          ["f7", { date: "2026-03-14" }],
         ]),
       ),
     ).toEqual({
@@ -375,6 +425,7 @@ describe("live values", () => {
       flags: { f2: true },
       texts: { f5: "North 4-12" },
       notes: { f6: "*Kind*" },
+      days: { f7: "2026-03-14" },
     });
   });
 });

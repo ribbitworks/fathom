@@ -201,32 +201,53 @@ const detailText: Omit<CellKind, "change" | "inDetail"> = {
   breaksDown: "never",
 };
 
-// A text column's text is held in its record's texts, and a detail held as text as a field of the
-// record itself.
+// A kind whose added columns hold their values as text in one of a record's maps, by column, and
+// whose built-in columns hold theirs as fields of the record itself: how each is read, and saved as
+// kept, or as none.
+function heldAsText(
+  map: "texts" | "days",
+  kept: (value: CellValue) => string | null,
+  savedOwn: (value: CellValue) => unknown,
+): Pick<CellKind, "read" | "inDetail" | "ownField" | "change"> {
+  return {
+    // The map is the kind's own, and the key a column's own.
+    // eslint-disable-next-line security/detect-object-injection
+    read: (source, key) => source[map]?.[key] ?? "",
+    inDetail: (_column, value) => asText(value),
+    ownField: {
+      read: (held) => (typeof held === "string" ? held : ""),
+      save: savedOwn,
+    },
+    change: (key, value) => ({ [map]: { [key]: kept(value) } }),
+  };
+}
+
 const text: CellKind = {
   ...detailText,
-  // The key is a column's own.
-  // eslint-disable-next-line security/detect-object-injection
-  read: (source, key) => source.texts?.[key] ?? "",
-  inDetail: (_column, value) => asText(value),
-  ownField: {
-    read: (held) => (typeof held === "string" ? held : ""),
-    save: (value) => asText(value).trim(),
-  },
+  ...heldAsText(
+    "texts",
+    (value) => {
+      const kept = tidiedText(asText(value));
+      return kept === "" ? null : kept;
+    },
+    (value) => asText(value).trim(),
+  ),
   problem: (column, value) =>
     asText(value).trim().includes("\n")
       ? `${column.label}: use one line`
       : detailText.problem(column, value),
-  change: (key, value) => {
-    const kept = tidiedText(asText(value));
-    return { texts: { [key]: kept === "" ? null : kept } };
-  },
 };
 
 const twelveMonths = Array.from(
   { length: 12 },
   (_, month) => `2026-${String(month + 1).padStart(2, "0")}`,
 );
+
+// A calendar value as saved: laid out as typed, such as 2027-03, or null for none.
+const laidOutOrNone = (layOut: (typed: string) => string, value: CellValue) => {
+  const typed = layOut(asText(value));
+  return typed === "" ? null : typed;
+};
 
 // A cell of a calendar value, kept as text in the form typed, such as 2027-03, and shown in words.
 function calendarKind({
@@ -263,10 +284,7 @@ function calendarKind({
         ? typeFor(noun, column.label, sample)
         : undefined;
     },
-    change: (key, value) => {
-      const typed = layOut(asText(value));
-      return { [key]: typed === "" ? null : typed };
-    },
+    change: (key, value) => ({ [key]: laidOutOrNone(layOut, value) }),
     width: () => longest,
     measured: false,
     breaksDown,
@@ -276,7 +294,7 @@ function calendarKind({
 }
 
 // The 28th is in every month, so the longest name of a month is among these.
-const date = calendarKind({
+const day = calendarKind({
   layOut: typedDay,
   isWhole: isDay,
   inWords: formatDay,
@@ -285,6 +303,15 @@ const date = calendarKind({
   samples: twelveMonths.map((month) => `${month}-28`),
   breaksDown: "unless required",
 });
+
+const dayOrNone = (value: CellValue) => laidOutOrNone(typedDay, value);
+
+// A day is shown in words in a draft's details too, as the built-in days are.
+const date: CellKind = {
+  ...day,
+  ...heldAsText("days", dayOrNone, dayOrNone),
+  inDetail: day.inDetail,
+};
 
 const month = calendarKind({
   layOut: typedMonth,

@@ -63,6 +63,7 @@ import {
 import { projectPlanQuery } from "./projects.ts";
 import { cycleLengthProblem, cycleUnitWords, patternOn } from "./schedules.ts";
 import { sessionQuery } from "./session.ts";
+import { wholeList } from "./theme.ts";
 import { formatDay, formatDayRange } from "./day-formats.ts";
 
 export interface Saving {
@@ -727,6 +728,7 @@ export function ReleaseDialog({
         )}
         {asks("colour") && (
           <Select
+            {...wholeList}
             label="Colour"
             data-autofocus={part === "colour" || undefined}
             data={colourChoices}

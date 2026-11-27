@@ -3,7 +3,7 @@
 // Tests for the panel that adds a record of the plan: a row for each kind of column, what is checked
 // before adding, and what it sends.
 
-import { addressProblem } from "@fathom/shared";
+import { addressProblem, type FieldType } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import {
   act,
@@ -31,9 +31,10 @@ const choice = (id: string, label: string, retired = false) => ({
   retired,
 });
 
+// An added column of the type given, its values in the record's maps.
 const column = (
   key: string,
-  kind: Parameters<typeof cellColumn>[1],
+  kind: FieldType,
   more: { required?: boolean; multiple?: boolean } = {},
 ) =>
   cellColumn<CellRecord, PlanChange>(key, kind, {
@@ -41,6 +42,17 @@ const column = (
     required: more.required ?? false,
     multiple: more.multiple ?? false,
     choices: [choice("a", "Alpha"), choice("b", "Gone", true)],
+    field: {
+      id: key,
+      keyNumber: 1,
+      name: key,
+      type: kind,
+      listId: null,
+      visibility: "general",
+      multiple: more.multiple ?? false,
+      required: more.required ?? false,
+      onPlannedHires: false,
+    },
   });
 
 const table = (

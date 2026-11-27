@@ -12,6 +12,8 @@ type AnyColumn = Pick<
   "label" | "kind" | "choices" | "emptyLabel" | "choiceColour"
 >;
 
+export const noDate = "No date";
+
 // What a filter's choice of every value that isn't empty is called, matching its Empty box. A
 // checkbox's filter offers none, since a checkbox is never empty, but an address or saved view may
 // still hold one, which its pill names.
@@ -52,7 +54,7 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
       } else if (to !== undefined) {
         parts.push(`until ${formatDay(to)}`);
       }
-      if (filter.empty) parts.push("No date");
+      if (filter.empty) parts.push(noDate);
       return `${column.label}: ${parts.join(" or ")}`;
     }
     case "number": {

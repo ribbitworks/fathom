@@ -74,8 +74,8 @@ describe("columns", () => {
     ]);
     await userEvent.click(screen.getByRole("option", { name: "Sites" }));
     await userEvent.click(within(dialog).getByLabelText("Several choices"));
-    await userEvent.click(within(dialog).getByLabelText("Must be filled in"));
-    await userEvent.click(within(dialog).getByLabelText("Must be filled in"));
+    await userEvent.click(within(dialog).getByLabelText("Required"));
+    await userEvent.click(within(dialog).getByLabelText("Required"));
     expect(
       within(dialog).getByText("Planned hires can leave it empty"),
     ).toBeDefined();
@@ -188,6 +188,7 @@ describe("columns", () => {
     expect(await optionsIn(await newColumnDialog(), "Type")).toEqual([
       "Text",
       "Number",
+      "Date",
       "Checkbox",
       "Choice from a list",
       "Web link",

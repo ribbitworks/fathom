@@ -30,7 +30,7 @@ import { builtInTier } from "./values.ts";
 import { type RecordKind, readsKind } from "./record-state.ts";
 import { recordKinds } from "./records.ts";
 import type { StoredChange } from "./changes.ts";
-import { isFlag, isText } from "./column-types.ts";
+import { isDate, isFlag, isText } from "./column-types.ts";
 
 // The kinds of record that belong to another, which the history names them by, as a choice is by
 // its list.
@@ -314,7 +314,8 @@ export function unseenValueName(
 }
 
 // What a value shows: text, yes or no, or several names, with identifiers named, a note as its
-// words without their formatting, a number as written, a box as ticked or not, and a text as it is.
+// words without their formatting, a number as written, a box as ticked or not, a text as it is, and
+// a day as written, such as 2026-03-14.
 export function shown(
   row: StoredChange,
   value: unknown,
@@ -332,6 +333,7 @@ export function shown(
     return notePlainText(value);
   }
   if (fieldOfValue(row.field) !== null && isText(value)) return value.text;
+  if (fieldOfValue(row.field) !== null && isDate(value)) return value.date;
   if (fieldOfValue(row.field) !== null && typeof value === "number") {
     return String(value);
   }

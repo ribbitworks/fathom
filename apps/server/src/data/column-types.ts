@@ -4,9 +4,12 @@
 // data access layer.
 
 import {
+  type ColumnValue,
+  type ColumnValueMap,
   type ColumnValues,
   type FieldType,
   fieldTypeSchema,
+  isDay,
   isLink,
   isNumberValue,
   noColumnValues,
@@ -111,105 +114,118 @@ const isNone = (value: unknown) =>
   value === null ||
   (Array.isArray(value) && value.length === 0);
 
-const link: ColumnType = {
+// A type of column holding one value: which recorded values it holds, how one fits the column, if
+// not by being held or none, its live map and how a held value shows there, and its values table's
+// columns.
+function holdingOne<Held, Map extends ColumnValueMap>({
+  type,
+  holds,
+  fits = (_settings, value) => holds(value) || isNone(value),
+  map,
+  shown,
+  row,
+}: {
+  type: Exclude<FieldType, "choice">;
+  holds: (value: unknown) => value is Held;
+  fits?: ColumnType["fits"];
+  map: Map;
+  shown: (held: Held) => ColumnValue<Map>;
+  row: (held: Held) => ValueColumns;
+}): ColumnType {
+  return {
+    type,
+    ...withOwnVisibility(type),
+    count: (value) => (holds(value) ? 1 : 0),
+    fits,
+    showLive: (live, columnId, value) => {
+      if (holds(value)) {
+        // The map is the type's own, and the column the person's own, named by their draft.
+        // eslint-disable-next-line security/detect-object-injection
+        Object.assign(live[map], { [columnId]: shown(value) });
+      }
+    },
+    rows: (value) => (holds(value) ? [row(value)] : []),
+  };
+}
+
+const link = holdingOne({
   type: "link",
-  ...withOwnVisibility("link"),
-  count: (value) => (isLink(value) ? 1 : 0),
-  fits: (_settings, value) => isLink(value) || isNone(value),
-  showLive: (live, columnId, value) => {
-    if (isLink(value)) {
-      // The column is the person's own, named by their draft.
-      // eslint-disable-next-line security/detect-object-injection
-      live.links[columnId] = { address: value.address, text: value.text };
-    }
-  },
-  rows: (value) =>
-    isLink(value) ? [{ linkAddress: value.address, linkText: value.text }] : [],
-};
+  holds: isLink,
+  map: "links",
+  shown: ({ address, text }) => ({ address, text }),
+  row: ({ address, text }) => ({ linkAddress: address, linkText: text }),
+});
 
 export const isNote = (value: unknown): value is string =>
   typeof value === "string" && value !== "";
 
-const note: ColumnType = {
+const note = holdingOne({
   type: "note",
-  ...withOwnVisibility("note"),
-  count: (value) => (isNote(value) ? 1 : 0),
-  fits: (_settings, value) => isNote(value) || isNone(value),
-  showLive: (live, columnId, value) => {
-    if (isNote(value)) {
-      // The column is the person's own, named by their draft.
-      // eslint-disable-next-line security/detect-object-injection
-      live.notes[columnId] = value;
-    }
-  },
-  rows: (value) => (isNote(value) ? [{ note: value }] : []),
-};
+  holds: isNote,
+  map: "notes",
+  shown: (held) => held,
+  row: (held) => ({ note: held }),
+});
 
 export const isNumber = (value: unknown): value is number =>
   typeof value === "number";
 
-const number: ColumnType = {
+const number = holdingOne({
   type: "number",
-  ...withOwnVisibility("number"),
-  count: (value) => (isNumber(value) ? 1 : 0),
+  holds: isNumber,
   fits: (_settings, value) => isNumberValue(value) || isNone(value),
-  showLive: (live, columnId, value) => {
-    if (isNumber(value)) {
-      // The column is the person's own, named by their draft.
-      // eslint-disable-next-line security/detect-object-injection
-      live.numbers[columnId] = value;
-    }
-  },
-  rows: (value) => (isNumber(value) ? [{ number: value }] : []),
-};
+  map: "numbers",
+  shown: (held) => held,
+  row: (held) => ({ number: held }),
+});
 
 // An unticked box is recorded as no value.
 export const isFlag = (value: unknown): value is true => value === true;
 
-const flag: ColumnType = {
+const flag = holdingOne({
   type: "flag",
-  ...withOwnVisibility("flag"),
-  count: (value) => (isFlag(value) ? 1 : 0),
-  fits: (_settings, value) => isFlag(value) || isNone(value),
-  showLive: (live, columnId, value) => {
-    if (isFlag(value)) {
-      // The column is the person's own, named by their draft.
-      // eslint-disable-next-line security/detect-object-injection
-      live.flags[columnId] = value;
-    }
-  },
-  rows: (value) => (isFlag(value) ? [{ flag: value }] : []),
-};
+  holds: isFlag,
+  map: "flags",
+  shown: (): true => true,
+  row: (): ValueColumns => ({ flag: true }),
+});
 
-// A text is recorded as an object, so it is never taken for a note, which is recorded as its own
-// string.
-interface TextValue {
-  text: string;
-}
+// A value recorded as an object of one key, such as { text: "North 4-12" }, so a text or a day is
+// never taken for a note, which is recorded as its own string, nor for each other.
+const recordedAs =
+  <Key extends string>(key: Key, holds: (held: string) => boolean) =>
+  (value: unknown): value is Record<Key, string> => {
+    if (typeof value !== "object" || value === null) return false;
+    const entries = Object.entries(value);
+    return (
+      entries.length === 1 &&
+      entries[0]?.[0] === key &&
+      typeof entries[0][1] === "string" &&
+      holds(entries[0][1])
+    );
+  };
 
-export const isText = (value: unknown): value is TextValue =>
-  typeof value === "object" &&
-  value !== null &&
-  Object.keys(value).length === 1 &&
-  "text" in value &&
-  typeof value.text === "string" &&
-  value.text !== "";
+export const isText = recordedAs("text", (text) => text !== "");
 
-const text: ColumnType = {
+const text = holdingOne({
   type: "text",
-  ...withOwnVisibility("text"),
-  count: (value) => (isText(value) ? 1 : 0),
+  holds: isText,
   fits: (_settings, value) =>
     isNone(value) || (isText(value) && textProblem(value.text) === undefined),
-  showLive: (live, columnId, value) => {
-    if (isText(value)) {
-      // The column is the person's own, named by their draft.
-      // eslint-disable-next-line security/detect-object-injection
-      live.texts[columnId] = value.text;
-    }
-  },
-  rows: (value) => (isText(value) ? [{ text: value.text }] : []),
-};
+  map: "texts",
+  shown: ({ text: held }) => held,
+  row: ({ text: held }) => ({ text: held }),
+});
+
+export const isDate = recordedAs("date", isDay);
+
+const date = holdingOne({
+  type: "date",
+  holds: isDate,
+  map: "days",
+  shown: ({ date: held }) => held,
+  row: ({ date: held }) => ({ date: held }),
+});
 
 export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
   choice,
@@ -218,6 +234,7 @@ export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
   number,
   flag,
   text,
+  date,
 };
 
 // The type of column that holds a recorded value, which the value says, or undefined for none.

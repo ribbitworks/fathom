@@ -82,6 +82,7 @@ import { ClearableInput } from "./clearable-input.tsx";
 import {
   FilterWords,
   describeFilter,
+  noDate,
   notEmptyLabels,
 } from "./filter-words.tsx";
 import { ColouredName } from "./colour-swatch.tsx";
@@ -1747,7 +1748,7 @@ function FilterForm({
               onChange(withPart(filter, "to", to));
             }}
           />
-          {empty("No date")}
+          {empty(noDate)}
         </Stack>
       );
     case "number":
