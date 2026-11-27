@@ -16,6 +16,7 @@ import {
 import {
   draftsChangedBy,
   inCountedOrder,
+  standingChanges,
   type DraftKind,
   draftKey,
   fromDraftKey,
@@ -52,7 +53,9 @@ const resetting = kindsWhere(({ resetsMakers }) => resetsMakers);
 
 // The change sets holding a user's unpublished changes since they last discarded them all, which
 // publishing publishes; those before are discarded, so are never published, and so is one that
-// changed a record gone, whose changes to it were withdrawn with it.
+// changed a record gone, whose changes to it were withdrawn with it. Fields given up on publishing,
+// and changes withdrawn because their record went, stay in their maker's own history, never
+// published and never counted as changing a draft; withdrawing those closes no other set.
 export function openChangeSets(userId: string): SQL {
   return and(
     eq(changeSets.private, true),
@@ -63,6 +66,81 @@ export function openChangeSets(userId: string): SQL {
   ) as SQL;
 }
 
+// A change to a draft, or a decision on it, as draftMakers reads it for a viewer.
+export interface MakerRow {
+  id: number;
+  takesBack: number | null;
+  recordType: string;
+  recordId: string;
+  field: string;
+  tier: string;
+  draft: boolean;
+  kind: string;
+  unpublished: boolean;
+  // Whether it is in one of the viewer's open change sets.
+  open: boolean;
+  madeBy: string | null;
+  madeAs: string | null;
+  makerId: string | null;
+  madeAt: Date;
+  madeAtMicros: number;
+  publishedAtMicros: number | null;
+}
+
+// Who changed each record's draft, from the rows of its history read for a viewer, as draftMakers
+// sets out, given the records the viewer's own unpublished drafts change.
+export function makersOf(
+  rows: readonly MakerRow[],
+  own: ReadonlySet<string>,
+  viewer: { userId: string; approvesOwn: boolean },
+  seen: (field: string, tier: Tier, recordId: string) => boolean,
+): Map<string, Maker> {
+  const makers = new Map<string, Maker>();
+  // Private changes are read only to pair the changes given up with them. Unpublished changes
+  // count only for the viewer's own unpublished drafts, which hold them.
+  const marked = inCountedOrder(rows, makerKinds).map((row) => ({
+    ...row,
+    counts: !row.unpublished || (row.open && own.has(row.recordId)),
+  }));
+  // The viewer's changes count whatever their tier, since they made them.
+  const mine = viewer.approvesOwn
+    ? new Set<string>()
+    : draftsChangedBy(marked, viewer.userId, makerKinds);
+  const made = standingChanges(
+    marked.map((row) => ({
+      ...row,
+      // A decision starts the draft's history again even when it names no field the reader sees.
+      counts:
+        row.counts &&
+        (makerKinds.resets.has(row.kind) ||
+          seen(row.field, storedTier(row.tier), row.recordId)),
+    })),
+    makerKinds,
+  );
+  for (const changesMade of made.values()) {
+    for (const change of changesMade.filter(({ counts }) => counts)) {
+      const maker = makers.get(change.recordId);
+      makers.set(change.recordId, {
+        madeBy: change.madeBy,
+        madeAs: change.madeAs,
+        madeAt: change.madeAt,
+        editors: [
+          ...(maker?.editors ?? []).filter(
+            (editor) => editor !== change.madeBy,
+          ),
+          change.madeBy,
+        ],
+        fieldEditors: new Map(maker?.fieldEditors).set(
+          change.field,
+          change.madeBy,
+        ),
+        needsOtherApprover: mine.has(change.recordId),
+      });
+    }
+  }
+  return makers;
+}
+
 // The marker a draft carries when the reader changed it and may not approve their own.
 export const otherApprover = (maker: Maker | undefined) =>
   maker?.needsOtherApprover === true ? { needsOtherApprover: true } : {};
@@ -70,42 +148,52 @@ export const otherApprover = (maker: Maker | undefined) =>
 // Who changed each record's draft, and when, from the changes to it the reader may see, so a hidden
 // change reveals nothing: the latest, and everyone since the record's last draft was approved or
 // discarded. Rejecting a draft, or sending it for approval again unchanged, does not change it.
-// Unpublished changes count only for the viewer's own unpublished drafts, which hold them.
+// Unpublished changes count only for the viewer's own unpublished drafts, which hold them: those
+// given, such as none for the published drafts as everyone else sees them, or else the viewer's.
 export async function draftMakers(
   reader: Pick<Database, "select">,
   recordType: DraftKind,
   ids: readonly string[],
-  seen: (field: string, tier: Tier) => boolean,
+  seen: (field: string, tier: Tier, recordId: string) => boolean,
   viewer: Actor,
+  ownRecords?: ReadonlySet<string>,
 ): Promise<Map<string, Maker>> {
   const makers = new Map<string, Maker>();
   const approvesOwn = viewer.permissions.includes("drafts:approve-own");
   for (const chunk of inChunks([...ids])) {
-    const ownRows = await reader
-      .select({ id: privateChanges.recordId })
-      .from(privateChanges)
-      .where(
-        and(
-          eq(privateChanges.recordType, recordType),
-          eq(privateChanges.userId, viewer.user.id),
-          inArray(privateChanges.recordId, chunk),
-        ),
+    const own =
+      ownRecords ??
+      new Set(
+        (
+          await reader
+            .select({ id: privateChanges.recordId })
+            .from(privateChanges)
+            .where(
+              and(
+                eq(privateChanges.recordType, recordType),
+                eq(privateChanges.userId, viewer.user.id),
+                inArray(privateChanges.recordId, chunk),
+              ),
+            )
+        ).map(({ id }) => id),
       );
-    const own = new Set(ownRows.map(({ id }) => id));
     const rows = await reader
       .select({
+        id: changes.id,
+        takesBack: changes.takesBack,
+        recordType: changes.recordType,
         recordId: changes.recordId,
         field: changes.field,
         tier: changes.tier,
         draft: changes.draft,
         kind: changeSets.kind,
         unpublished: changeSets.private,
+        open: sql<boolean>`${openChangeSets(viewer.user.id)}`,
         madeBy: users.name,
         madeAs: roles.name,
         makerId: changeSets.madeBy,
         // When others could first see it, as the order counts it.
         madeAt: whenPublished,
-        id: changes.id,
         ...timesOf,
       })
       .from(changes)
@@ -117,42 +205,19 @@ export async function draftMakers(
           eq(changes.recordType, recordType),
           inArray(changes.recordId, chunk),
           or(eq(changes.draft, true), inArray(changeSets.kind, resetting)),
-          or(eq(changeSets.private, false), openChangeSets(viewer.user.id)),
         ),
       )
       .orderBy(...madeInOrder);
-    const counted = inCountedOrder(rows, makerKinds).filter(
-      (row) => !row.unpublished || own.has(row.recordId),
-    );
-    // The viewer's changes count whatever their tier, since they made them.
-    const mine = approvesOwn
-      ? new Set<string>()
-      : draftsChangedBy(counted, viewer.user.id, makerKinds);
-    for (const row of counted) {
-      if (makerKinds.resets.has(row.kind)) {
-        makers.delete(row.recordId);
-        continue;
-      }
-      const recorded = storedTier(row.tier);
-      if (
-        makerKinds.changesNothing.has(row.kind) ||
-        !seen(row.field, recorded)
-      ) {
-        continue;
-      }
-      const maker = makers.get(row.recordId);
-      const editors = maker?.editors ?? [];
-      makers.set(row.recordId, {
-        madeBy: row.madeBy,
-        madeAs: row.madeAs,
-        madeAt: row.madeAt,
-        editors: [
-          ...editors.filter((editor) => editor !== row.madeBy),
-          row.madeBy,
-        ],
-        fieldEditors: new Map(maker?.fieldEditors).set(row.field, row.madeBy),
-        needsOtherApprover: mine.has(row.recordId),
-      });
+    for (const [recordId, maker] of makersOf(
+      rows,
+      own,
+      {
+        userId: viewer.user.id,
+        approvesOwn,
+      },
+      seen,
+    )) {
+      makers.set(recordId, maker);
     }
   }
   return makers;
@@ -219,12 +284,16 @@ export async function refuseOwnDrafts(
     for (const chunk of inChunks([...ids])) {
       const rows = await reader
         .select({
+          id: changes.id,
+          takesBack: changes.takesBack,
+          recordType: changes.recordType,
           recordId: changes.recordId,
+          field: changes.field,
           draft: changes.draft,
           kind: changeSets.kind,
           makerId: changeSets.madeBy,
-          id: changes.id,
           ...timesOf,
+          counts: sql<boolean>`NOT ${changeSets.private}`,
         })
         .from(changes)
         .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
@@ -232,14 +301,8 @@ export async function refuseOwnDrafts(
           and(
             eq(changes.recordType, recordType),
             inArray(changes.recordId, chunk),
-            eq(changeSets.private, false),
-            or(
-              and(
-                eq(changes.draft, true),
-                eq(changeSets.madeBy, actor.user.id),
-              ),
-              inArray(changeSets.kind, resetting),
-            ),
+            // Everyone's changes, so each change given up pairs with what it gives up.
+            or(eq(changes.draft, true), inArray(changeSets.kind, resetting)),
           ),
         )
         .orderBy(...madeInOrder);

@@ -47,6 +47,8 @@ export interface Change {
   newValue: unknown;
   // Whether the change is to the record's draft rather than to the live record.
   draft?: boolean;
+  // The change this one takes back, for a private change given up.
+  takesBack?: number;
 }
 
 // The change set a change was saved in, which undoing it names; null when nothing changed.
@@ -148,6 +150,7 @@ export async function recordChanges(
   kind: ChangeSetKind = "edit",
   unpublished?: boolean,
   madeAt?: SQL,
+  undoes?: string,
 ): Promise<string | null> {
   return recordChangesAs(
     transaction,
@@ -156,6 +159,7 @@ export async function recordChanges(
     kind,
     unpublished,
     madeAt,
+    undoes,
   );
 }
 
@@ -168,6 +172,15 @@ export async function recordChangesAs(
   unpublished = editingKinds.includes(kind) &&
     made.some(({ draft }) => draft === true),
   madeAt?: SQL,
+  undoes?: string,
 ): Promise<string | null> {
-  return recordChangeSet(transaction, maker, made, kind, unpublished, madeAt);
+  return recordChangeSet(
+    transaction,
+    maker,
+    made,
+    kind,
+    unpublished,
+    madeAt,
+    undoes,
+  );
 }

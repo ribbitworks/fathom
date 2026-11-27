@@ -2,12 +2,15 @@
 
 // The user's own unpublished changes to drafts: listing them, and publishing or discarding them, all
 // at once or those chosen. The data access layer checks the actor may make drafts, that the changes
-// chosen are theirs, and which of them the acting role may publish.
+// chosen are theirs, which of them the acting role may publish, and which fields someone else
+// changed meanwhile, which publishing answers with both values until the request keeps one.
 
 import {
+  publishRefusalSchema,
   unpublishedChosenSchema,
   unpublishedDoneSchema,
   unpublishedPublishedSchema,
+  unpublishedPublishSchema,
   unpublishedSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
@@ -32,12 +35,15 @@ export function unpublishedRoutes(
       "/api/unpublished/publish",
       {
         schema: {
-          ...done,
-          response: { 200: unpublishedPublishedSchema },
+          body: unpublishedPublishSchema.nullish(),
+          response: {
+            200: unpublishedPublishedSchema,
+            409: publishRefusalSchema,
+          },
         },
       },
       async (request) =>
-        unpublished.publish(request.actor, request.body?.drafts),
+        unpublished.publish(request.actor, request.body ?? undefined),
     );
 
     app.post("/api/unpublished/discard", { schema: done }, async (request) => ({

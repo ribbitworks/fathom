@@ -23,7 +23,7 @@ import { createAuth } from "./data/auth.ts";
 import { readGreeting } from "./data/greeting.ts";
 import { createDataAccess, type DataAccess } from "./data/index.ts";
 import { actorFor, rolesGranting } from "./access.ts";
-import { ConflictError, ForbiddenError } from "./errors.ts";
+import { ConflictError, ForbiddenError, RequestError } from "./errors.ts";
 import { roleSchema } from "@fathom/shared";
 
 type Pool = ReturnType<typeof createPool>;
@@ -175,6 +175,56 @@ describe("greeting", () => {
     expect([response.statusCode, response.json()]).toEqual([
       409,
       { error: "Another customer has that name", field: "name" },
+    ]);
+  });
+
+  it("answers a refusal's details beside its message, never in place of it", async () => {
+    const realData = createDataAccess(createDatabase(poolFor()));
+    const app = await appFor({
+      data: {
+        ...realData,
+        readGreeting: () =>
+          Promise.reject(
+            new RequestError(409, "Choose one", {
+              field: "name",
+              details: { choices: ["North"], error: "Other", field: "other" },
+            }),
+          ),
+      },
+    });
+    const response = await app.inject({
+      url: "/api/greeting",
+      headers: { cookie: await signedIn(app) },
+    });
+    expect(response.json()).toEqual({
+      choices: ["North"],
+      error: "Choose one",
+      field: "name",
+    });
+  });
+
+  it("answers no field or details from an error not of Fathom's own", async () => {
+    const realData = createDataAccess(createDatabase(poolFor()));
+    const app = await appFor({
+      data: {
+        ...realData,
+        readGreeting: () =>
+          Promise.reject(
+            Object.assign(new Error("Refused"), {
+              statusCode: 409,
+              field: "name",
+              details: { secret: "Fictional" },
+            }),
+          ),
+      },
+    });
+    const response = await app.inject({
+      url: "/api/greeting",
+      headers: { cookie: await signedIn(app) },
+    });
+    expect([response.statusCode, response.json()]).toEqual([
+      409,
+      { error: "Refused" },
     ]);
   });
 

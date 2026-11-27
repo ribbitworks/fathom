@@ -106,6 +106,7 @@ describe("a private change over the published draft", () => {
     action,
     fields,
     startedFrom: started,
+    since: new Date(0),
     sequence: 2,
   });
   const published: Draft = {
@@ -201,6 +202,7 @@ describe("a field cleared to nothing in a private change", () => {
         action: "changed",
         fields: {},
         startedFrom: own,
+        since: new Date(0),
         sequence: 2,
       }),
     ).toBeUndefined();

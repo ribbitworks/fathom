@@ -8,7 +8,9 @@ import { describe, expect, it } from "vitest";
 import { permissionGrid } from "./access.ts";
 import {
   approvableKinds,
+  type DraftChange,
   draftsChangedBy,
+  isDraftKind,
   approvePermissions,
   draftKinds,
   draftsAtOnce,
@@ -24,6 +26,8 @@ import {
   withUsers,
   takenAlongRefusal,
   inCountedOrder,
+  standingChanges,
+  draftKey,
 } from "./drafts.ts";
 
 const message = (result: { error?: { issues: { message: string }[] } }) =>
@@ -272,11 +276,189 @@ describe("the record a draft's key names", () => {
   });
 });
 
+describe("a kind of record as stored", () => {
+  it("is a kind of draft when Fathom keeps drafts of it", () => {
+    expect(isDraftKind("person")).toBe(true);
+    expect(isDraftKind("saved-view")).toBe(false);
+  });
+});
+
+// The server's kinds of change set that start again who changed a draft, and those that change
+// nothing of it.
+const kinds = {
+  resets: new Set(["approval", "discard"]),
+  changesNothing: new Set(["rejection", "resubmission"]),
+};
+
+describe("the changes standing on a draft, by every way change sets arise", () => {
+  // Dan adds the record; Uma changes it. A change counts for the reader once published, or while it
+  // is the reader's own, held: "own" is Uma reading her own, "other" anyone else.
+  // A change at its place among a scenario's, which a change taking it back names by that place.
+  const row = (
+    makerId: string,
+    kind: string,
+    counts: boolean,
+    field = "name",
+    recordId = "r1",
+  ) => ({
+    recordType: "person",
+    recordId,
+    field,
+    draft: kind !== "approval",
+    kind,
+    makerId,
+    counts,
+    takes: undefined as number | undefined,
+  });
+  // A change given up, taking back the scenario's change at the place given.
+  const givenUp = (takes: number, field = "name") => ({
+    ...row("uma", "given-up", false, field),
+    takes,
+  });
+  const placed = (rows: readonly ReturnType<typeof row>[]): DraftChange[] =>
+    rows.map(({ takes, ...change }, place) => ({
+      ...change,
+      id: place,
+      takesBack: takes ?? null,
+    }));
+  const added = row("dan", "edit", true);
+  const scenarios: [string, ReturnType<typeof row>[], string[]][] = [
+    ["a published change", [added, row("uma", "edit", true)], ["dan", "uma"]],
+    [
+      "a private change, own",
+      [added, row("uma", "edit", true)],
+      ["dan", "uma"],
+    ],
+    ["a private change, other", [added, row("uma", "edit", false)], ["dan"]],
+    [
+      "a private change given up, then published",
+      [added, row("uma", "edit", true), givenUp(1)],
+      ["dan"],
+    ],
+    [
+      "a private change given up, still held",
+      [added, row("uma", "edit", false), givenUp(1)],
+      ["dan"],
+    ],
+    [
+      "a whole record given up",
+      [
+        added,
+        row("uma", "edit", true, "name"),
+        row("uma", "edit", true, "site"),
+        givenUp(1, "name"),
+        givenUp(2, "site"),
+      ],
+      ["dan"],
+    ],
+    [
+      "a private removal of a live record, other",
+      [added, row("uma", "edit", false)],
+      ["dan"],
+    ],
+    [
+      "a private removal of a draft-only record, own",
+      [added, row("uma", "discard", true)],
+      [],
+    ],
+    [
+      "a private removal of a draft-only record, other",
+      [added, row("uma", "discard", false)],
+      ["dan"],
+    ],
+    [
+      "that removal given up, its set published since",
+      [added, row("uma", "discard", true), givenUp(1)],
+      ["dan"],
+    ],
+    [
+      "that removal given up, its set still held",
+      [added, row("uma", "discard", false), givenUp(1)],
+      ["dan"],
+    ],
+    [
+      "that removal discarded by choice, its sets published since",
+      [
+        added,
+        row("uma", "discard", true),
+        givenUp(1),
+        row("uma", "edit", true),
+      ],
+      ["dan", "uma"],
+    ],
+    [
+      "that removal discarded with everything, never published",
+      [added, row("uma", "discard", false)],
+      ["dan"],
+    ],
+    [
+      "a removal given up on publishing, after the same field of another record",
+      [
+        added,
+        row("uma", "discard", true, "name"),
+        row("uma", "edit", true, "name", "r2"),
+        givenUp(1),
+      ],
+      ["dan"],
+    ],
+    [
+      "a removal discarded by choice, after the same field of another record",
+      [
+        added,
+        row("uma", "discard", true, "name"),
+        row("uma", "edit", true, "name", "r2"),
+        givenUp(1),
+        row("uma", "edit", true, "name"),
+      ],
+      ["dan", "uma"],
+    ],
+    [
+      "a private removal undone, then published",
+      [
+        added,
+        row("uma", "discard", true, "name"),
+        givenUp(1),
+        row("uma", "edit", true, "name"),
+      ],
+      ["dan", "uma"],
+    ],
+    [
+      "a change withdrawn because its record went",
+      [row("uma", "edit", false), row("uma", "gone", false)],
+      [],
+    ],
+    [
+      "a change left for a role that may publish it",
+      [added, row("uma", "edit", false)],
+      ["dan"],
+    ],
+    ["an undo, held", [added, row("dan", "edit", false)], ["dan"]],
+    [
+      "an approval, then a change",
+      [added, row("ann", "approval", true), row("uma", "edit", true)],
+      ["uma"],
+    ],
+    [
+      "a rejection and resubmission, which change nothing",
+      [added, row("ann", "rejection", true), row("dan", "resubmission", true)],
+      ["dan"],
+    ],
+  ];
+
+  it.each(scenarios)("after %s", (_, rows, counted) => {
+    const standing =
+      standingChanges(placed(rows), kinds).get(draftKey("person", "r1")) ?? [];
+    expect(
+      [
+        ...new Set(
+          standing.filter(({ counts }) => counts).map(({ makerId }) => makerId),
+        ),
+      ].sort(),
+    ).toEqual(counted);
+  });
+});
+
 describe("who changed a draft, counting each change from when others could see it", () => {
-  const kinds = {
-    resets: new Set(["approval", "discard"]),
-    changesNothing: new Set(["rejection", "resubmission"]),
-  };
   // A change set's change to Kai, made at a moment, and published at one, or still private.
   const at = (
     makerId: string | null,
@@ -286,7 +468,11 @@ describe("who changed a draft, counting each change from when others could see i
     recordId = "kai",
   ) => ({
     id: madeAtMicros,
+    recordType: "person",
     recordId,
+    field: "name",
+    counts: true,
+    takesBack: null,
     kind,
     makerId,
     draft: kind !== "approval",
@@ -406,68 +592,129 @@ describe("the drafts a user changed, which need another approver", () => {
     makerId: string | null,
     kind = "change",
     draft = true,
-  ) => ({ recordId, draft, kind, makerId });
-  const kinds = {
-    resets: new Set(["approval", "discard"]),
-    changesNothing: new Set(["rejection", "resubmission"]),
-  };
+    field = "name",
+    counts = true,
+  ) => ({
+    recordType: "person",
+    recordId,
+    field,
+    draft,
+    kind,
+    makerId,
+    counts,
+    takesBack: null as number | null,
+  });
+  // A change given up, taking back the change at the place given.
+  const givenUp = (recordId: string, field: string, takes: number) => ({
+    ...change(recordId, "u1", "given-up", true, field, false),
+    takesBack: takes,
+  });
+  // The changes given, each at its place in the history.
+  const placed = (rows: readonly ReturnType<typeof change>[]) =>
+    rows.map((row, id) => ({ ...row, id }));
+  const changedBy = (rows: readonly ReturnType<typeof change>[]) =>
+    draftsChangedBy(placed(rows), "u1", kinds);
 
   it("names a record whose draft the user changed", () => {
-    expect(draftsChangedBy([change("r1", "u1")], "u1", kinds)).toEqual(
-      new Set(["r1"]),
-    );
+    expect(changedBy([change("r1", "u1")])).toEqual(new Set(["r1"]));
   });
 
   it("leaves out drafts others or Fathom itself changed", () => {
-    expect(
-      draftsChangedBy([change("r1", "u2"), change("r2", null)], "u1", kinds),
-    ).toEqual(new Set());
+    expect(changedBy([change("r1", "u2"), change("r2", null)])).toEqual(
+      new Set(),
+    );
   });
 
   it("leaves out a change the user made that drafted nothing", () => {
-    expect(
-      draftsChangedBy([change("r1", "u1", "change", false)], "u1", kinds),
-    ).toEqual(new Set());
+    expect(changedBy([change("r1", "u1", "change", false)])).toEqual(new Set());
   });
 
   it("starts again once a draft is approved or discarded", () => {
     expect(
-      draftsChangedBy(
-        [
-          change("r1", "u1"),
-          change("r1", "u2", "approval"),
-          change("r2", "u1"),
-          change("r2", "u2", "discard"),
-        ],
-        "u1",
-        kinds,
-      ),
+      changedBy([
+        change("r1", "u1"),
+        change("r1", "u2", "approval"),
+        change("r2", "u1"),
+        change("r2", "u2", "discard"),
+      ]),
     ).toEqual(new Set());
   });
 
   it("counts a change made after the last approval", () => {
     expect(
-      draftsChangedBy(
-        [change("r1", "u2", "approval"), change("r1", "u1")],
-        "u1",
-        kinds,
-      ),
+      changedBy([change("r1", "u2", "approval"), change("r1", "u1")]),
     ).toEqual(new Set(["r1"]));
+  });
+
+  it("stops counting a field the user gave up, and a record once every field is", () => {
+    expect(
+      changedBy([
+        change("r1", "u1", "change", true, "name"),
+        change("r1", "u1", "change", true, "site"),
+        givenUp("r1", "site", 1),
+        change("r2", "u1", "change", true, "site"),
+        givenUp("r2", "site", 3),
+      ]),
+    ).toEqual(new Set(["r1"]));
+  });
+
+  it("still counts a change the user published before giving up a later one to the field", () => {
+    expect(
+      changedBy([
+        change("r1", "u1", "change", true, "site"),
+        change("r1", "u2", "change", true, "site"),
+        change("r1", "u1", "change", true, "site"),
+        givenUp("r1", "site", 2),
+      ]),
+    ).toEqual(new Set(["r1"]));
+  });
+
+  it("takes back only the change a change given up names", () => {
+    // Given a published change, then a private one still held back in its change set, given up
+    expect(
+      changedBy([
+        change("r1", "u1", "change", true, "site"),
+        change("r1", "u1", "change", true, "site", false),
+        givenUp("r1", "site", 1),
+      ]),
+    ).toEqual(new Set(["r1"]));
+  });
+
+  it("takes back each of several private changes to a field with a change given up for each", () => {
+    expect(
+      changedBy([
+        change("r1", "u1", "change", true, "site"),
+        change("r1", "u1", "change", true, "site"),
+        givenUp("r1", "site", 0),
+        givenUp("r1", "site", 1),
+      ]),
+    ).toEqual(new Set());
+  });
+
+  it("neither resets nor counts on a discard that doesn't count, such as another user's private one", () => {
+    expect(
+      changedBy([
+        change("r1", "u1"),
+        change("r1", "u2", "discard", true, "name", false),
+      ]),
+    ).toEqual(new Set(["r1"]));
+  });
+
+  it("leaves out the user's changes that don't count for the reader", () => {
+    expect(
+      changedBy([change("r1", "u1", "change", true, "site", false)]),
+    ).toEqual(new Set());
   });
 
   it("neither counts nor resets on rejecting or resubmitting, which change nothing", () => {
     expect(
-      draftsChangedBy(
-        [
-          change("r1", "u1"),
-          change("r1", "u1", "rejection"),
-          change("r1", "u1", "resubmission"),
-          change("r2", "u1", "rejection"),
-          change("r2", "u1", "resubmission"),
-        ],
-        "u1",
-        kinds,
-      ),
+      changedBy([
+        change("r1", "u1"),
+        change("r1", "u1", "rejection"),
+        change("r1", "u1", "resubmission"),
+        change("r2", "u1", "rejection"),
+        change("r2", "u1", "resubmission"),
+      ]),
     ).toEqual(new Set(["r1"]));
   });
 });

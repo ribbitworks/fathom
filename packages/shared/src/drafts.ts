@@ -4,6 +4,7 @@
 // have them, and which drafts a user changed, so another approver must approve them.
 
 import { z } from "zod";
+import { changedFieldSchema } from "./changes.ts";
 import { linkShape } from "./links.ts";
 import { holdsAny, type Permission, permissionLabel } from "./access.ts";
 import { eitherOf } from "./words.ts";
@@ -185,6 +186,10 @@ export const draftKinds = [
 ] as const;
 
 export type DraftKind = (typeof draftKinds)[number];
+
+// Whether a kind of record, as stored, is one Fathom keeps drafts of.
+export const isDraftKind = (kind: string): kind is DraftKind =>
+  (draftKinds as readonly string[]).includes(kind);
 
 // The Approve permissions, one for each area whose drafts an Approver decides.
 export type ApprovePermission = Exclude<
@@ -404,6 +409,18 @@ export const unpublishedSchema = z.object({
 
 export type Unpublished = z.infer<typeof unpublishedSchema>;
 
+// A field the user changed privately that someone else changed since, or with no field a record one
+// of them removed, which the role in use no longer sees, so publishing gives it up, keeping the
+// other side, rather than ask about what the user can't see.
+export const blindFieldSchema = z.object({
+  recordType: z.enum(draftKinds),
+  recordId: z.string(),
+  subject: z.string(),
+  field: z.string().optional(),
+});
+
+export type BlindField = z.infer<typeof blindFieldSchema>;
+
 // How many records' changes publishing or discarding them took.
 export const unpublishedDoneSchema = z.object({ total: z.number().int() });
 
@@ -411,9 +428,29 @@ export const unpublishedDoneSchema = z.object({ total: z.number().int() });
 // that may.
 export const unpublishedPublishedSchema = unpublishedDoneSchema.extend({
   left: z.number().int(),
+  // The fields given up, since the role in use no longer sees them, when there are any.
+  givenUp: z.array(blindFieldSchema).optional(),
 });
 
 export type UnpublishedPublished = z.infer<typeof unpublishedPublishedSchema>;
+
+// The most a clash's token holds.
+const tokenLength = 100;
+
+// For a field of a record someone else changed since the user's private change began, which value
+// publishing keeps: the user's own, or the one now in the draft or live. With no field, for a whole
+// record one of them removed: the user's private change, or the other.
+export const resolutionSchema = z.object({
+  recordType: z.enum(draftKinds),
+  recordId: z.string().min(1),
+  field: z.string().min(1).optional(),
+  keep: z.enum(["mine", "theirs"]),
+  // The token of the clash as the user was shown it, so a side kept no longer holds once the
+  // other side has changed again.
+  token: z.string().min(1).max(tokenLength),
+});
+
+export type Resolution = z.infer<typeof resolutionSchema>;
 
 // The user's own changes to publish or discard, by the drafts they make; every change when the
 // request has no drafts at all.
@@ -427,6 +464,57 @@ export interface MakerKinds {
   resets: ReadonlySet<string>;
   changesNothing: ReadonlySet<string>;
 }
+
+// Publishing also names which value to keep for each field someone else changed meanwhile.
+export const unpublishedPublishSchema = unpublishedChosenSchema.extend({
+  resolutions: z.array(resolutionSchema).max(draftsAtOnce).optional(),
+});
+
+export type UnpublishedPublish = z.infer<typeof unpublishedPublishSchema>;
+
+// A field the user changed privately that someone else changed since, which publishing asks about.
+// Each side is the change from the value both started from, as the change history shows it; both
+// are absent for a field the history doesn't show, such as the list a choice is in. With no field,
+// the clash is on the whole record: one side removes it, the other changes it.
+export const privateConflictSchema = z.object({
+  recordType: z.enum(draftKinds),
+  recordId: z.string(),
+  // The record, as the Drafts page names it.
+  subject: z.string(),
+  // The field's key, as the draft holds it, for naming the value to keep.
+  field: z.string().optional(),
+  mine: changedFieldSchema.optional(),
+  theirs: changedFieldSchema.optional(),
+  // For a clash on the whole record, whose change removes it.
+  removedBy: z.enum(["theirs", "mine"]).optional(),
+  // Where the other change is: in the published draft, waiting or rejected, or live.
+  state: z.enum(["waiting", "rejected", "live"]),
+  // Who last changed the field, or the record, in the published draft, of the changes the role
+  // sees; null for Fathom itself, a live value, a field whose values aren't shown, or a change made
+  // before the user's removal began.
+  by: z.string().nullable(),
+  // What the user is shown of the other side, which a resolution sends back.
+  token: z.string(),
+});
+
+export type PrivateConflict = z.infer<typeof privateConflictSchema>;
+
+// Publishing refused for fields someone else changed meanwhile, until a value is kept for each, with
+// the fields it would give up.
+export const privateConflictsSchema = z.object({
+  error: z.string(),
+  conflicts: z.array(privateConflictSchema),
+  givenUp: z.array(blindFieldSchema).optional(),
+});
+
+export type PrivateConflicts = z.infer<typeof privateConflictsSchema>;
+
+// Every refusal of a publish: one asking which values to keep, or any other, with the field it is
+// about where it is about one.
+export const publishRefusalSchema = z.union([
+  privateConflictsSchema,
+  z.object({ error: z.string(), field: z.string().optional() }),
+]);
 
 // A change to a draft, or a decision on it, with when it was made and when others could first see it
 // (null while private), in microseconds, for ordering as changes count.
@@ -475,29 +563,63 @@ export function inCountedOrder<Row extends TimedChange>(
   );
 }
 
-// The records whose drafts a user changed since each was last decided, from their history in order.
-// One rule for the drafts marked on screen and the approvals refused.
-export function draftsChangedBy(
-  rows: readonly {
-    recordId: string;
-    draft: boolean;
-    kind: string;
-    makerId: string | null;
-  }[],
-  userId: string,
+// A change to a draft, or a decision on it, as the history holds it, with whether it counts for the
+// reader: published, or the reader's own held.
+export interface DraftChange {
+  // The change's place in the history, which a change taking it back names.
+  id: number;
+  recordType: string;
+  recordId: string;
+  field: string;
+  draft: boolean;
+  kind: string;
+  makerId: string | null;
+  counts: boolean;
+  // For a change taking back one of its maker's private changes, the change it takes back.
+  takesBack: number | null;
+}
+
+// The changes to each record's draft standing since the last decision on it that counts, from the
+// history in order, by the record's key. Rejecting or resubmitting a draft does not change it, so
+// neither stands nor starts again; someone's private discard doesn't start again; and a change or
+// discard given up on publishing, with the change naming it as taken back, is as if never made. One
+// walk for the drafts marked on screen, who changed them, and the approvals refused.
+export function standingChanges<Change extends DraftChange>(
+  rows: readonly Change[],
   kinds: MakerKinds,
-): Set<string> {
-  const changed = new Set<string>();
+): Map<string, Change[]> {
+  const taken = new Set(rows.map(({ takesBack }) => takesBack));
+  const standing = new Map<string, Change[]>();
   for (const row of rows) {
-    if (kinds.resets.has(row.kind)) {
-      changed.delete(row.recordId);
-    } else if (
-      row.draft &&
-      row.makerId === userId &&
-      !kinds.changesNothing.has(row.kind)
+    if (
+      row.takesBack !== null ||
+      taken.has(row.id) ||
+      kinds.changesNothing.has(row.kind)
     ) {
-      changed.add(row.recordId);
+      continue;
+    }
+    const key = draftKey(row.recordType, row.recordId);
+    if (kinds.resets.has(row.kind)) {
+      if (row.counts) standing.delete(key);
+    } else if (row.draft) {
+      const made = standing.get(key) ?? [];
+      made.push(row);
+      standing.set(key, made);
     }
   }
-  return changed;
+  return standing;
 }
+
+// The records whose drafts a user changed since each was last decided, of the changes that count,
+// by their identifiers, for rows of one kind of record.
+export const draftsChangedBy = (
+  rows: readonly DraftChange[],
+  userId: string,
+  kinds: MakerKinds,
+): Set<string> =>
+  new Set(
+    [...standingChanges(rows, kinds).values()]
+      .flat()
+      .filter(({ makerId, counts }) => makerId === userId && counts)
+      .map(({ recordId }) => recordId),
+  );

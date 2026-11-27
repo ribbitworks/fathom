@@ -3,6 +3,7 @@
 // The tables of the change history, drafts, private changes and record keys.
 
 import {
+  type AnyPgColumn,
   bigint,
   bigserial,
   boolean,
@@ -31,8 +32,9 @@ export const changeSets = fathomSchema.table(
     // What the change set did, checked by the server: "edit" for changes saved, "approval" for drafts
     // approved, "rejection" for drafts rejected, "discard" for drafts discarded, "resubmission" for
     // rejected drafts sent for approval again unchanged, "withdrawal" for a user's private
-    // changes discarded all at once, and "gone" for a user's private changes withdrawn because
-    // their record is gone.
+    // changes discarded all at once, "gone" for a user's private changes withdrawn because their
+    // record is gone, and "given-up" for fields of a user's private changes given up, on
+    // publishing, for the values someone else changed them to.
     kind: text("kind").notNull().default("edit"),
     // Null for Fathom itself, such as for data made by setup or seed scripts. Accounts are deactivated,
     // never deleted, so the user who made a change always exists.
@@ -51,6 +53,9 @@ export const changeSets = fathomSchema.table(
     // When others could first see it: its time of saving, unless it was private, then when its
     // maker published it, and null while it is private. Who changed a draft counts from then.
     publishedAt: timestamp("published_at", { withTimezone: true }),
+    // For an undo, the change set it undid, so a give-up leaves a private change set and its undo,
+    // which cancel each other, out of what it takes back.
+    undoes: uuid("undoes").references((): AnyPgColumn => changeSets.id),
   },
   (table) => [index("change_sets_made_at_index").on(table.madeAt)],
 );
@@ -75,10 +80,17 @@ export const changes = fathomSchema.table(
     newValue: jsonb("new_value"),
     // Whether the change is to a record's draft, rather than to the live record.
     draft: boolean("draft").notNull().default(false),
+    // For a change taking back one of its maker's private changes, as giving it up on publishing
+    // does, the change it takes back, so each is taken back exactly once; null otherwise.
+    takesBack: bigint("takes_back", { mode: "number" }).references(
+      (): AnyPgColumn => changes.id,
+    ),
   },
   (table) => [
     index("changes_record_index").on(table.recordType, table.recordId),
     index("changes_change_set_index").on(table.changeSetId),
+    // A change is taken back at most once.
+    uniqueIndex("changes_takes_back_index").on(table.takesBack),
     // Each record's changes to a field, which the change history filters by to find the latest name
     // and list it holds for a record, taking the latest by its change set's time.
     index("changes_record_field_index").on(
@@ -167,6 +179,9 @@ export const privateChanges = fathomSchema.table(
       .$type<Record<string, unknown>>()
       .notNull()
       .default({}),
+    // When the user began the changes a give-up may take back: when they first changed the record
+    // since they last published, discarded or reverted their changes to it.
+    since: timestamp("since", { withTimezone: true }).notNull().defaultNow(),
     // Rises with each private change made, so records the user drafts to be added keep the order
     // they were drafted in when published.
     sequence: bigint("sequence", { mode: "number" })

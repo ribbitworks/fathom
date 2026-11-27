@@ -26,6 +26,7 @@ import { madeWithColumn } from "./new-lists.ts";
 import { listedKinds, rulesOf } from "./change-set-kinds.ts";
 import { seenSets } from "./history-names.ts";
 import { madeAfter } from "./history-order.ts";
+import { givingUpDiscards } from "./private-give-ups.ts";
 import {
   type Actor,
   mostSensitive,
@@ -412,6 +413,10 @@ async function undoIn(
     )
     .limit(1);
   if (later.length > 0) throw new ConflictError(changedSince);
+  // Undoing a private removal takes its discards back the way discarding it by choice does.
+  if (rulesOf(changeSet.kind).resetsMakers) {
+    await givingUpDiscards(transaction, actor, rows, changeSetId);
+  }
   // Sending rejected drafts again changed the published drafts' state alone, so undoing it rejects
   // them again.
   if (rulesOf(changeSet.kind).undoneBy === "rejectingAgain") {
@@ -523,7 +528,15 @@ async function undoIn(
   await recordSensitiveChanges(transaction, actor.user.id, undoing);
   await recordHiringChanges(transaction, actor.user.id, undoing);
   await recordTeamDayChanges(transaction, actor.user.id, undoing);
-  return recordChanges(transaction, actor, undoing);
+  return recordChanges(
+    transaction,
+    actor,
+    undoing,
+    "edit",
+    undefined,
+    undefined,
+    changeSetId,
+  );
 }
 
 // Undoes a change set the actor made, and returns the change set that undid it.

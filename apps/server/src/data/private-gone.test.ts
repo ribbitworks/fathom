@@ -24,6 +24,7 @@ const row = (recordType: string, action: Draft["action"] = "changed"): Row => ({
   action,
   fields: {},
   startedFrom: {},
+  since: new Date(0),
   sequence: 1,
 });
 

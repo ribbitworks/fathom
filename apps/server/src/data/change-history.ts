@@ -16,6 +16,7 @@ import {
   type ChangedField,
   type ChangedRecord,
   type ClassAccess,
+  type ColumnTable,
   type ChangeEntry,
   matchesWords,
   recordSearchText,
@@ -58,6 +59,7 @@ import {
 } from "./history-names.ts";
 import {
   changesShownTo,
+  showsChange,
   notCurrentAmong,
   teamRowKey,
   teamRowShowsNoOne,
@@ -276,6 +278,60 @@ async function namedRows(
   };
 }
 
+// Each of the changes given that the actor may see, by the history's own rules, given the tables of
+// the columns they may be to, such as a value not yet saved, as the history would show it, or
+// undefined for a field the history doesn't show.
+export async function shownChanges(
+  database: HistoryReader,
+  actor: Actor,
+  rows: readonly StoredChange[],
+  tables: ReadonlyMap<string, ColumnTable>,
+): Promise<Map<StoredChange, ChangedField | undefined>> {
+  const tierNow = personTier(await columnsWithAdded(database, undefined));
+  const named = await namedRows(
+    database,
+    actor,
+    rows.filter(showsChange(actor, tables)),
+    tierNow,
+  );
+  const valueName = valueNamer(
+    named.names,
+    named.hidden,
+    named.seesPersonal,
+    actor,
+  );
+  return new Map(
+    named.visible.map(({ row }) => [
+      row,
+      changedField(row, named.names, valueName(row)),
+    ]),
+  );
+}
+
+// The changes shown, with those given up on publishing as the user's change to the draft: each
+// field once, from the user's value to the one kept, and a whole record given up left out, since
+// taking back its addition or removal didn't add or remove it.
+function shownGivenUp(
+  visible: readonly { row: StoredChange; tier: Tier }[],
+  givenUp: ReadonlySet<string>,
+): { row: StoredChange; tier: Tier }[] {
+  const keyOf = (row: StoredChange) =>
+    `${row.changeSetId} ${row.recordType} ${row.recordId} ${row.field}`;
+  const kept = visible.filter(
+    ({ row }) => givenUp.has(row.changeSetId) && row.action === "changed",
+  );
+  const last = new Map(kept.map(({ row }) => [keyOf(row), row.newValue]));
+  const shown = new Set<string>();
+  return visible.flatMap((each) => {
+    const { row } = each;
+    if (!givenUp.has(row.changeSetId)) return [each];
+    const key = keyOf(row);
+    if (row.action !== "changed" || shown.has(key)) return [];
+    shown.add(key);
+    return [{ ...each, row: { ...row, newValue: last.get(key) } }];
+  });
+}
+
 interface Batch {
   entries: { entry: ChangeEntry; sensitive: boolean }[];
   // The last change set read, to read on from, or null when there are no more.
@@ -335,8 +391,11 @@ async function readBatch(
     );
   }
   const named = await namedRows(database, actor, rows, tierNow);
+  const givenUp = new Set(
+    page.filter(({ kind }) => kind === "given-up").map(({ id }) => id),
+  );
   const bySet = new Map<string, { rows: StoredChange[]; sensitive: boolean }>();
-  for (const { row, tier } of named.visible) {
+  for (const { row, tier } of shownGivenUp(named.visible, givenUp)) {
     const held = bySet.get(row.changeSetId) ?? { rows: [], sensitive: false };
     held.rows.push(row);
     held.sensitive ||= tier !== "general";

@@ -5,6 +5,8 @@
 
 import { changes, changeSets, privateChanges, type Reader } from "@fathom/db";
 import {
+  columnTableOf,
+  columnTablePolicies,
   type DraftKind,
   draftKeysOf,
   draftingPermissions,
@@ -198,9 +200,17 @@ const readsHires = (actor: Actor): boolean =>
   holds("people:view")(actor) && seesSensitivity(actor, "hiring-plan");
 
 interface OtherKind {
-  reads: (actor: Actor) => boolean;
+  reads: (actor: Actor, versions: Versions, id: string) => boolean;
   unseen: string;
 }
+
+// A column goes with its table's records, so it is named to those who see them.
+const readsColumn = (actor: Actor, versions: Versions, id: string) =>
+  holds(
+    columnTablePolicies[
+      columnTableOf(versionOf(versions, "field", id)?.tableName)
+    ].viewNeeds,
+  )(actor);
 
 // Who reads each kind of draft kept outside the plan's records, and how a change to one is named to
 // a role that doesn't, since the change may have been made under another role.
@@ -217,7 +227,7 @@ const otherKinds: Record<Exclude<DraftKind, RecordType>, OtherKind> = {
     reads: holds("configuration:view"),
     unseen: "the new order for a list",
   },
-  field: { reads: holds("configuration:view"), unseen: "a column" },
+  field: { reads: readsColumn, unseen: "a column" },
 };
 
 const otherKindOf = new Map<string, OtherKind>(Object.entries(otherKinds));
@@ -237,7 +247,7 @@ export function subjectOf(versions: Versions, row: Row, actor: Actor): string {
     return recordSubject(versions.records, row.recordType, id, actor);
   }
   const other = otherKindOf.get(row.recordType) ?? unknownKind;
-  if (!other.reads(actor)) return other.unseen;
+  if (!other.reads(actor, versions, id)) return other.unseen;
   if (row.recordType === "person") {
     return String(versionOf(versions, "person", id)?.preferredName);
   }

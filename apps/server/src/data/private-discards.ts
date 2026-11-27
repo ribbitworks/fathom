@@ -10,6 +10,7 @@ import { draftKeys } from "./draft-makers.ts";
 import { lockDrafts } from "./drafts.ts";
 import { changeKey } from "./unpublished-uses.ts";
 import { readGoing, requireDrafting } from "./private-versions.ts";
+import { givingUpDiscards } from "./private-give-ups.ts";
 import { withdraw } from "./private-withdrawals.ts";
 
 // Discards the actor's unpublished drafts a request chooses, with those that use them, or every one
@@ -46,6 +47,7 @@ export async function discardUnpublished(
       return rows.length;
     }
     const published = await draftKeys(transaction, rows);
+    await givingUpDiscards(transaction, actor, rows);
     await withdraw(
       transaction,
       maker,

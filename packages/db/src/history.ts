@@ -21,11 +21,14 @@ export interface ChangeRecord {
   newValue: unknown;
   // Whether the change is to the record's draft rather than to the live record.
   draft?: boolean;
+  // The change this one takes back, for a private change given up.
+  takesBack?: number;
 }
 
 // What a change set did: saved changes, or approved, rejected, discarded, or resubmitted drafts: rejected
-// drafts sent for approval again unchanged; a user's private changes all discarded at once; or a
-// user's private changes withdrawn because their record is gone.
+// drafts sent for approval again unchanged; a user's private changes all discarded at once; a user's
+// private changes withdrawn because their record is gone; or fields of a user's private changes
+// given up, on publishing, for the values someone else changed them to.
 export type ChangeSetKind =
   | "edit"
   | "approval"
@@ -33,7 +36,8 @@ export type ChangeSetKind =
   | "discard"
   | "resubmission"
   | "withdrawal"
-  | "gone";
+  | "gone"
+  | "given-up";
 
 // The history field holding a person's values for a column: one field of the person per column.
 export const valueField = (fieldId: string) => `value:${fieldId}`;
@@ -62,7 +66,7 @@ export interface ChangeMaker {
 // Fathom itself, such as for seed data. With no changes, nothing is recorded, so there is never an
 // empty change set, and the result is null; otherwise it is the change set's identifier. Private
 // changes are seen only by their maker until submitted. A copy of changes saved before keeps their
-// time.
+// time, and an undo names the change set it undid.
 export async function recordChanges(
   transaction: Pick<Database, "insert">,
   maker: ChangeMaker | null,
@@ -70,6 +74,7 @@ export async function recordChanges(
   kind: ChangeSetKind = "edit",
   isPrivate = false,
   madeAt?: Date | SQL,
+  undoes?: string,
 ): Promise<string | null> {
   if (made.length === 0) return null;
   const changeSetId = randomUUID();
@@ -80,6 +85,7 @@ export async function recordChanges(
     kind,
     private: isPrivate,
     madeAt,
+    undoes,
   });
   for (const chunk of inChunks(made)) {
     await transaction.insert(changes).values(

@@ -8,11 +8,25 @@ export class RequestError extends Error {
   // The field of the request the refusal is about, where it is about one, such as a name another
   // record has, so the page can name the refusal under that field.
   readonly field: string | undefined;
+  // What the refusal answers beside its message, such as the values a page asks the user to choose
+  // between.
+  readonly details: Readonly<Record<string, unknown>> | undefined;
 
-  constructor(statusCode: number, message: string, field?: string) {
+  constructor(
+    statusCode: number,
+    message: string,
+    {
+      field,
+      details,
+    }: {
+      field?: string | undefined;
+      details?: Readonly<Record<string, unknown>>;
+    } = {},
+  ) {
     super(message);
     this.statusCode = statusCode;
     this.field = field;
+    this.details = details;
   }
 }
 
@@ -36,6 +50,6 @@ export class NotFoundError extends RequestError {
 
 export class ConflictError extends RequestError {
   constructor(message: string, field?: string) {
-    super(409, message, field);
+    super(409, message, { field });
   }
 }
