@@ -178,7 +178,7 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 
 ### In Settings
 
-- **Hours a day**, **Working days a week** and **Working days a month** set what a person-day, person-week and person-month are, in the **Effort** column on **Features**. An estimate keeps its hours, so changing these changes what it reads in the larger units.
+- **Hours a day** and **Working days a month** set what a person-day and person-month are, in the **Effort** column on **Features**. A person-week is a person-day for each working day. An estimate keeps its hours, so changing these changes what it reads in the larger units.
 - **Default focus** is the share of a person's time that goes to feature work at all, after meetings, support and the like.
 - **Default buffer** is a percentage added to a feature's effort before forecasting. The effort entered stays as it is.
 - **Ramp-up for new starters** is the share of full output a new starter delivers in each of their first months. The last row, such as **From month 3**, shows that they deliver **100%** from then on.

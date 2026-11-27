@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the planning settings: what each setting accepts, and changing some of them alone.
+// Tests for the planning settings: what each setting accepts, changing some of them alone, and the
+// conversions between units of effort they give.
 
 import { describe, expect, it } from "vitest";
 import {
+  effortConversionsOf,
   planningSettingsChangeSchema,
   planningSettingsSchema,
   startingPlanningSettings,
@@ -24,6 +26,10 @@ describe("planningSettingsSchema", () => {
     ],
     ["no ramp-up", { rampUpPercents: [] }],
     [
+      "a week of Sunday to Thursday, starting on Sunday",
+      { workingDays: [6, 0, 1, 2, 3], weekStartsOn: 6 },
+    ],
+    [
       "a year of ramp-up",
       { rampUpPercents: Array.from({ length: 12 }, () => 50) },
     ],
@@ -37,6 +43,12 @@ describe("planningSettingsSchema", () => {
   });
 
   it.each([
+    ["no working day", { workingDays: [] }, "Working day needed"],
+    [
+      "a week starting on no day of the week",
+      { weekStartsOn: 7 },
+      "Week starts on: use a day of the week",
+    ],
     [
       "part of a percent of focus",
       { focusPercent: 80.5 },
@@ -108,9 +120,28 @@ describe("changedSettings", () => {
     });
   });
 
+  it("keeps the working days in order from Monday", () => {
+    expect(
+      changedSettings(startingPlanningSettings, { workingDays: [6, 3, 0] })
+        .workingDays,
+    ).toEqual([0, 3, 6]);
+  });
+
   it("keeps every setting for no change", () => {
     expect(changedSettings(startingPlanningSettings, {})).toEqual(
       startingPlanningSettings,
     );
+  });
+});
+
+describe("effortConversionsOf", () => {
+  it("gives a person-week a day for each working day", () => {
+    expect(
+      effortConversionsOf({
+        hoursPerDay: 7.5,
+        workingDays: [0, 1, 2, 3, 4, 5],
+        daysPerMonth: 22,
+      }),
+    ).toEqual({ hoursPerDay: 7.5, daysPerWeek: 6, daysPerMonth: 22 });
   });
 });

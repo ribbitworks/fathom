@@ -14,6 +14,7 @@ import {
   monthsBetween,
   type PlanMode,
   type ReleaseStream,
+  daysBetween,
 } from "@fathom/shared";
 import { formatMonth } from "./day-formats.ts";
 import { monthQuarters, quarterPeriod, quarterSteps } from "./month-strip.ts";
@@ -21,7 +22,7 @@ import { cycleChoiceId } from "./projects.ts";
 import type { ViewPart } from "./table-controls.tsx";
 import { namedChoice } from "./view-choices.ts";
 import type { View } from "./table-view.ts";
-import { daysBetween, includesCycle, keptReleases } from "./releases.ts";
+import { includesCycle, keptReleases } from "./releases.ts";
 
 const boardLabel = "Board";
 

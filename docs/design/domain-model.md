@@ -111,11 +111,14 @@ One record for the whole of Fathom, which capacity and forecasts are worked out 
 
 - **Changes:** a change is a draft of the whole record, approved with Approve Configuration, and recorded in the change history.
 - **Estimates:** a draft changes no estimate's units until it is approved.
+- **Person-weeks:** a person-week holds a person-day for each working day.
+- **Weeks:** the rules for working days and for cutting time into weeks are in `packages/shared/src/working-week.ts`.
 
 | Setting | Starting value | Allowed |
 | --- | --- | --- |
 | Hours a day | 8 | 0.5 to 24, in whole or half hours |
-| Working days a week | 5 | 1 to 7 whole days |
+| Working days | Monday to Friday | At least one day of the week |
+| Week starts on | Monday | Any day of the week |
 | Working days a month | 20 | 1 to 31 whole days |
 | Default focus | 80% | 1% to 100% |
 | Default buffer | 0% | 0% to 100% |

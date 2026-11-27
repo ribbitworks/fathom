@@ -60,7 +60,10 @@ import type { CellValue } from "./table-view.ts";
 
 type Settings = PlanningSettingsShown & { id: string };
 type SettingColumn = Column<Settings, PlanningSettingsChange>;
-type SingleSetting = Exclude<keyof PlanningSettings, "rampUpPercents">;
+type SingleSetting = Exclude<
+  keyof PlanningSettings,
+  "rampUpPercents" | "workingDays" | "weekStartsOn"
+>;
 
 const onlyKind = "";
 const addMonthId = "add-ramp-up-month";
@@ -97,7 +100,6 @@ const single = (key: SingleSetting) =>
 
 const columns = {
   hoursPerDay: single("hoursPerDay"),
-  daysPerWeek: single("daysPerWeek"),
   daysPerMonth: single("daysPerMonth"),
   focusPercent: single("focusPercent"),
   bufferPercent: single("bufferPercent"),
@@ -122,9 +124,15 @@ const fullOutputColumn = (month: number) =>
     required: false,
   }) as const satisfies Parameters<typeof Row>[0]["column"];
 
+// The settings the rows hold, each typed as a number.
+const typedSettingsSchema = planningSettingsSchema.omit({
+  workingDays: true,
+  weekStartsOn: true,
+});
+
 // The settings as the rows hold them, each as text, and ramp-up by month.
 function valuesOf(settings: PlanningSettings): Record<string, CellValue> {
-  const { rampUpPercents, ...rest } = planningSettingsSchema.parse(settings);
+  const { rampUpPercents, ...rest } = typedSettingsSchema.parse(settings);
   return Object.fromEntries<CellValue>([
     ...Object.entries(rest).map(
       ([key, value]) => [key, String(value)] as const,
@@ -144,9 +152,8 @@ function settingsProblem(
   // Every setting is held as text, as a number cell's value is.
   const number = (key: string) => typedNumber(held.get(key) as string);
   const months = Object.keys(values).filter((key) => key.startsWith("month-"));
-  const checked = planningSettingsSchema.safeParse({
+  const checked = typedSettingsSchema.safeParse({
     hoursPerDay: number("hoursPerDay"),
-    daysPerWeek: number("daysPerWeek"),
     daysPerMonth: number("daysPerMonth"),
     focusPercent: number("focusPercent"),
     bufferPercent: number("bufferPercent"),
@@ -424,7 +431,6 @@ export function PlanningSettingsTab({
         </Group>
         <RecordSection id="planning-working-time" title="Working time">
           {settingRow("hoursPerDay")}
-          {settingRow("daysPerWeek")}
           {settingRow("daysPerMonth")}
         </RecordSection>
         <RecordSection id="planning-forecasts" title="Forecasts">

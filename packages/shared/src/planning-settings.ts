@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The planning settings for the whole of Fathom, which forecasts work from: the conversions between
-// units of effort, which double as a working month's days and a working day's hours; the default
-// share of a person's time that goes to feature work at all; the share a new starter delivers in
-// each of their first months, full from the month after the last; and the default buffer added to
-// effort before forecasting, which leaves the effort entered as it is. A change is a draft, live
-// once approved with Approve Configuration.
+// The planning settings for the whole of Fathom, which effort is converted and work forecast with:
+// their schema, starting values and names, and a change made to them.
 
 import { z } from "zod";
 import { heldBySchema, recordDraftSchema } from "./drafts.ts";
 import {
+  type EffortConversions,
   effortConversionNames,
   effortConversionsSchema,
   startingEffortConversions,
 } from "./effort.ts";
 import { outOfRange } from "./numbers.ts";
 import { changeSetIdSchema } from "./people.ts";
+import {
+  startingWorkingWeek,
+  weekStartsOnSchema,
+  workingDaysSchema,
+  workingWeekNames,
+} from "./working-week.ts";
 
 export const planningSettingLimits = {
   focusPercent: { least: 1, most: 100 },
@@ -25,7 +28,9 @@ export const planningSettingLimits = {
 } as const;
 
 export const planningSettingNames = {
-  ...effortConversionNames,
+  hoursPerDay: effortConversionNames.hoursPerDay,
+  ...workingWeekNames,
+  daysPerMonth: effortConversionNames.daysPerMonth,
   focusPercent: "Default focus",
   bufferPercent: "Default buffer",
   rampUpPercents: "Ramp-up",
@@ -50,26 +55,33 @@ const tooManyMonths = `${planningSettingNames.rampUpPercents}: use up to ${Strin
   rampUpMonths.most,
 )} months`;
 
-export const planningSettingsSchema = effortConversionsSchema.extend({
-  focusPercent: wholePercentage(
-    planningSettingNames.focusPercent,
-    focusPercent,
-  ),
-  bufferPercent: wholePercentage(
-    planningSettingNames.bufferPercent,
-    bufferPercent,
-  ),
-  rampUpPercents: z
-    .array(wholePercentage(planningSettingNames.rampUpPercents, rampUpPercent))
-    .max(rampUpMonths.most, { error: tooManyMonths }),
-});
+export const planningSettingsSchema = effortConversionsSchema
+  .pick({ hoursPerDay: true, daysPerMonth: true })
+  .extend({
+    workingDays: workingDaysSchema,
+    weekStartsOn: weekStartsOnSchema,
+    focusPercent: wholePercentage(
+      planningSettingNames.focusPercent,
+      focusPercent,
+    ),
+    bufferPercent: wholePercentage(
+      planningSettingNames.bufferPercent,
+      bufferPercent,
+    ),
+    rampUpPercents: z
+      .array(
+        wholePercentage(planningSettingNames.rampUpPercents, rampUpPercent),
+      )
+      .max(rampUpMonths.most, { error: tooManyMonths }),
+  });
 
 export type PlanningSettings = z.infer<typeof planningSettingsSchema>;
 
 // Every setting, in the order they are listed.
 export const planningSettingFields = [
   "hoursPerDay",
-  "daysPerWeek",
+  "workingDays",
+  "weekStartsOn",
   "daysPerMonth",
   "focusPercent",
   "bufferPercent",
@@ -93,13 +105,17 @@ export type PlanningSettingsChange = z.infer<
   typeof planningSettingsChangeSchema
 >;
 
-// The settings with a change made to them, those it leaves out as they were.
+// The settings with a change made to them, those it leaves out as they were. The working days are
+// kept in order, Monday first, so naming the same days in another order changes nothing.
 export const changedSettings = (
   settings: PlanningSettings,
   change: PlanningSettingsChange,
 ): PlanningSettings => ({
   hoursPerDay: change.hoursPerDay ?? settings.hoursPerDay,
-  daysPerWeek: change.daysPerWeek ?? settings.daysPerWeek,
+  workingDays: (change.workingDays ?? settings.workingDays).toSorted(
+    (first, second) => first - second,
+  ),
+  weekStartsOn: change.weekStartsOn ?? settings.weekStartsOn,
   daysPerMonth: change.daysPerMonth ?? settings.daysPerMonth,
   focusPercent: change.focusPercent ?? settings.focusPercent,
   bufferPercent: change.bufferPercent ?? settings.bufferPercent,
@@ -107,11 +123,30 @@ export const changedSettings = (
 });
 
 export const startingPlanningSettings: PlanningSettings = {
-  ...startingEffortConversions,
+  hoursPerDay: startingEffortConversions.hoursPerDay,
+  workingDays: [...startingWorkingWeek.workingDays],
+  weekStartsOn: startingWorkingWeek.weekStartsOn,
+  daysPerMonth: startingEffortConversions.daysPerMonth,
   focusPercent: 80,
   bufferPercent: 0,
   rampUpPercents: [50, 75],
 };
+
+// The conversions between units of effort the settings give: a person-week holds a day for each
+// working day.
+export const effortConversionsOf = ({
+  hoursPerDay,
+  workingDays,
+  daysPerMonth,
+}: {
+  hoursPerDay: number;
+  workingDays: readonly number[];
+  daysPerMonth: number;
+}): EffortConversions => ({
+  hoursPerDay,
+  daysPerWeek: workingDays.length,
+  daysPerMonth,
+});
 
 // The settings as the reader sees them, with their draft, waiting for approval, in place, and what
 // it changes from the live settings, and who holds them, when someone else has unpublished changes.

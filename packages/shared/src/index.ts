@@ -157,6 +157,8 @@ export {
   temporaryId,
 } from "./hires.ts";
 export {
+  daysBetween,
+  daysInWeek,
   addDays,
   addMonths,
   addToMonth,
@@ -394,6 +396,7 @@ export {
   wholeMonthHoursIn,
 } from "./forecast.ts";
 export {
+  effortConversionsOf,
   fullOutputPercent,
   percentSettingFields,
   planningSettingFields,
@@ -410,6 +413,24 @@ export {
   startingPlanningSettings,
   changedSettings,
 } from "./planning-settings.ts";
+export {
+  isWorkingDay,
+  startingWorkingWeek,
+  type Weekday,
+  weekdayNames,
+  weekdayOf,
+  weekdays,
+  weekdaySchema,
+  weekdayShortNames,
+  type WeekPiece,
+  weekStartOf,
+  weekStartsOnSchema,
+  weeksWithin,
+  workingDayNeeded,
+  workingDaysBetween,
+  workingDaysSchema,
+  workingWeekNames,
+} from "./working-week.ts";
 export {
   dayIn,
   defaultTimeZone,

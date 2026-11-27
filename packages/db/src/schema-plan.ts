@@ -377,7 +377,12 @@ export const planningSettings = fathomSchema.table(
       precision: 3,
       scale: 1,
     }).notNull(),
-    daysPerWeek: integer("days_per_week").notNull(),
+    // Days of the week, Monday being 0, starting as Monday to Friday, with weeks from Monday.
+    workingDays: integer("working_days")
+      .array()
+      .notNull()
+      .default([0, 1, 2, 3, 4]),
+    weekStartsOn: integer("week_starts_on").notNull().default(0),
     daysPerMonth: integer("days_per_month").notNull(),
     focusPercent: integer("focus_percent").notNull(),
     bufferPercent: integer("buffer_percent").notNull(),
@@ -394,8 +399,12 @@ export const planningSettings = fathomSchema.table(
       sql`${table.hoursPerDay} BETWEEN 0.5 AND 24 AND ${table.hoursPerDay} * 2 = trunc(${table.hoursPerDay} * 2)`,
     ),
     check(
-      "planning_settings_days_per_week",
-      sql`${table.daysPerWeek} BETWEEN 1 AND 7`,
+      "planning_settings_working_days",
+      sql`array_ndims(${table.workingDays}) = 1 AND array_position(${table.workingDays}, NULL) IS NULL AND cardinality(${table.workingDays}) BETWEEN 1 AND 7 AND 0 <= ALL(${table.workingDays}) AND 6 >= ALL(${table.workingDays})`,
+    ),
+    check(
+      "planning_settings_week_starts_on",
+      sql`${table.weekStartsOn} BETWEEN 0 AND 6`,
     ),
     check(
       "planning_settings_days_per_month",

@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What the Schedules and Cycles tabs say about a schedule: the pattern in force and the release that
-// ships next, how long a cycle lasts, in its pattern's unit where it fills whole ones and in days
-// where it is cut short, how long its cycles last now, where today falls among them, so its details
-// can start at the current cycle, and the drafts that change its cycles, with the one behind each
-// cycle a draft changes.
+// What the Schedules and Cycles tabs say about a schedule: its pattern, its cycles' lengths, where
+// today falls among them, and the drafts that change them.
 
 import {
   addDays,
@@ -20,10 +17,11 @@ import {
   type RecordDraft,
   type RecordRef,
   type ReleaseStream,
+  daysBetween,
+  daysInWeek,
 } from "@fathom/shared";
 import { isCurrent } from "./feature-board.ts";
 import {
-  daysBetween,
   hasShipped,
   keptReleases,
   nameCounts,
@@ -60,8 +58,6 @@ export function nextRelease(stream: ReleaseStream, day: string) {
     .at(0);
 }
 
-const daysPerWeek = 7;
-
 const unitNames: Record<CycleUnit | "days", string> = {
   days: "day",
   weeks: "week",
@@ -84,8 +80,8 @@ export function durationWords(cycle: Cycle, unit: CycleUnit): string {
   const after = addDays(cycle.endsOn, 1);
   const days = daysBetween(cycle.startsOn, after);
   if (unit === "weeks") {
-    return days % daysPerWeek === 0
-      ? lengthWords(days / daysPerWeek, "weeks")
+    return days % daysInWeek === 0
+      ? lengthWords(days / daysInWeek, "weeks")
       : lengthWords(days, "days");
   }
   for (let months = 1; addMonths(cycle.startsOn, months) <= after; months++) {
