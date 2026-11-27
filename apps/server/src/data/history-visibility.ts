@@ -18,7 +18,8 @@ import {
   type Tier,
   tierSchema,
 } from "@fathom/shared";
-import { and, asc, eq, inArray, or, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, lt, or, type SQL } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import {
   type Actor,
   mostSensitive,
@@ -32,6 +33,7 @@ import {
   type RecordType,
   type StoredChange,
 } from "./changes.ts";
+import { rejectedField } from "./draft-records.ts";
 import { featureTeamTier } from "./feature-team-sight.ts";
 import {
   hireSensitivities,
@@ -127,6 +129,58 @@ function seesRowOfKind(
   return sensitivities.every((each) => seesSensitivity(actor, each));
 }
 
+// A record's draft as a rejection found it, from the latest change to each of the record's fields
+// up to the rejection: each that is a change to its draft, other than a rejection's own reason. A
+// field changed live since, as by approving the draft or removing an unrelated column, is not the
+// draft's. A field whose latest change took a draft's value back, by a discard, still counts, since
+// that change holds the value taken back; a reason is never judged as less sensitive than its draft.
+export const draftAsRejected = (
+  latestByField: readonly StoredChange[],
+): StoredChange[] =>
+  latestByField.filter(
+    (change) => change.draft && change.field !== rejectedField,
+  );
+
+// Changes saved with the rejection count too, as undoing a discard restores a rejected draft's reason
+// before its values.
+export async function readRejected(
+  database: Database,
+  rows: readonly StoredChange[],
+): Promise<Map<number, StoredChange[]>> {
+  const rejections = rows.filter((row) => row.field === rejectedField);
+  const latest = new Map<number, StoredChange[]>(
+    rejections.map(({ id }) => [id, []]),
+  );
+  const rejection = alias(changes, "rejection");
+  for (const chunk of inChunks(rejections.map(({ id }) => id))) {
+    const found = await database
+      .selectDistinctOn([rejection.id, changes.field], {
+        rejectionId: rejection.id,
+        change: changes,
+      })
+      .from(changes)
+      .innerJoin(
+        rejection,
+        and(
+          eq(rejection.recordType, changes.recordType),
+          eq(rejection.recordId, changes.recordId),
+          or(
+            lt(changes.id, rejection.id),
+            eq(changes.changeSetId, rejection.changeSetId),
+          ),
+        ),
+      )
+      .where(inArray(rejection.id, chunk))
+      .orderBy(rejection.id, changes.field, desc(changes.id));
+    for (const { rejectionId, change } of found) {
+      latest.get(rejectionId)?.push(change);
+    }
+  }
+  return new Map(
+    [...latest].map(([id, byField]) => [id, draftAsRejected(byField)]),
+  );
+}
+
 // Leaves out the changes the actor may not see: those to kinds of record their role does not cover,
 // those kept with another user's personal saved view, and those in tiers they do not see, as sensitive as
 // they were when made or are now, whichever is more: a person's choices in a column whose list has
@@ -137,6 +191,7 @@ export async function visibleRows(
   rows: readonly StoredChange[],
   facts: Facts,
   tierNow: (field: string) => Tier,
+  rejected: ReadonlyMap<number, readonly StoredChange[]>,
 ): Promise<{ row: StoredChange; tier: Tier }[]> {
   const listTier = await listTiersNow(database, facts);
   const hireTierNow = await readHireTier(database);
@@ -193,35 +248,47 @@ export async function visibleRows(
       : await viewsNow(database, actor, held);
   const keptViewChange = await readKeptViewChanges(database, actor, viewIds);
   const seenPlan = seenPlanKinds(actor);
+  const tiersNow = (row: StoredChange): Tier[] => [
+    ...(row.recordType === "person" || row.recordType === "private-row"
+      ? valueTiers(row)
+      : []),
+    ...(row.recordType === "feature-team"
+      ? [featureTeamTier(actor.dataClasses)(row.field)]
+      : []),
+    ...(row.recordType === "planned-hire"
+      ? [
+          hireTierNow(row.field),
+          ...(fieldOfValue(row.field) === null ? [] : valueTiers(row)),
+        ]
+      : []),
+  ];
+  // What a reader needs to see a change: each tier it was recorded at or has now, since each is its
+  // own permission, not only the most sensitive. A tier the server no longer knows is treated as the
+  // most sensitive rather than trusted. A hire's own details are seen with the hiring plan, whatever
+  // tier they were recorded at.
+  const sensitivitiesOf = (
+    row: StoredChange,
+    also: readonly Tier[] = [],
+  ): Sensitivity[] => {
+    const tiers = [storedTier(row.tier), ...tiersNow(row), ...also];
+    return row.recordType === "planned-hire"
+      ? hireSensitivities(row.field, tiers)
+      : tiers;
+  };
   return rows.flatMap((row) => {
-    // A tier the server no longer knows is treated as the most sensitive rather than trusted.
-    const recorded = storedTier(row.tier);
-    // Each tier is its own permission, so the reader must see every one of them, not only the most
-    // sensitive.
-    const tiers = [
-      recorded,
-      ...(row.recordType === "person" || row.recordType === "private-row"
-        ? valueTiers(row)
-        : []),
-      ...(row.recordType === "feature-team"
-        ? [featureTeamTier(actor.dataClasses)(row.field)]
-        : []),
-      ...(row.recordType === "planned-hire"
-        ? [
-            hireTierNow(row.field),
-            ...(fieldOfValue(row.field) === null ? [] : valueTiers(row)),
-          ]
-        : []),
-      ...(row.recordType === "saved-view"
-        ? // Every view in the rows has its tier, found just above.
-          [(views.get(row.recordId) as ViewNow).tier]
-        : []),
+    // A rejection's reason needs what each change it rejected needs too.
+    const sensitivities = [
+      ...sensitivitiesOf(
+        row,
+        row.recordType === "saved-view"
+          ? // Every view in the rows has its tier, found just above.
+            [(views.get(row.recordId) as ViewNow).tier]
+          : [],
+      ),
+      ...(rejected.get(row.id) ?? []).flatMap((change) =>
+        sensitivitiesOf(change),
+      ),
     ];
-    // A hire's own details are seen with the hiring plan, whatever tier they were recorded at.
-    const sensitivities =
-      row.recordType === "planned-hire"
-        ? hireSensitivities(row.field, tiers)
-        : tiers;
     const tier = mostSensitive(
       sensitivities.map(tierOfSensitivity(actor.dataClasses)),
     );
