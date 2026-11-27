@@ -25,6 +25,7 @@ import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { madeWithColumn } from "./new-lists.ts";
 import { rulesOf } from "./change-set-kinds.ts";
 import { seenSets } from "./history-names.ts";
+import { madeAfter } from "./history-order.ts";
 import {
   type Actor,
   mostSensitive,
@@ -373,9 +374,7 @@ async function undoIn(
     .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
     .where(
       and(
-        // In the order changes count for who changed a draft, so a copy of a change set parted as a
-        // record went is judged at its original's time.
-        sql`(${changeSets.madeAt}, ${changes.id}) > ((SELECT made_at FROM fathom.change_sets WHERE id = ${changeSetId}), ${Math.max(...rows.map(({ id }) => id))})`,
+        madeAfter(changeSetId, Math.max(...rows.map(({ id }) => id))),
         seenSets(actor),
         or(
           ...records.map((record) =>
@@ -390,8 +389,8 @@ async function undoIn(
     .limit(1);
   if (later.length > 0) throw new ConflictError(changedSince);
   // Sending rejected drafts again changed the published drafts' state alone, so undoing it rejects
-  // them again; approving and rejecting, which change nothing of a draft either, can't be undone.
-  if (!rulesOf(changeSet.kind).changesDraft) {
+  // them again.
+  if (rulesOf(changeSet.kind).undoneBy === "rejectingAgain") {
     for (const record of draftRecords) {
       await setRejection(
         transaction,

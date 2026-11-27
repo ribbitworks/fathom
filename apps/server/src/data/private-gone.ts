@@ -12,15 +12,16 @@ import {
   inChunks,
   listItems,
   privateChanges,
+  type ChangeRecord,
   recordChanges,
 } from "@fathom/db";
 import { and, eq, inArray, ne, or, type SQL, sql } from "drizzle-orm";
-import { storedTier } from "../access.ts";
-import { type Change, type StoredChange, type Transaction } from "./changes.ts";
+import { type StoredChange, type Transaction } from "./changes.ts";
 import { storedKind } from "./change-set-kinds.ts";
 import { fieldExists } from "./column-state.ts";
 import { type Draft } from "./draft-records.ts";
-import { chunksByKind, madeInOrder, openChangeSets } from "./draft-makers.ts";
+import { chunksByKind, openChangeSets } from "./draft-makers.ts";
+import { madeInOrder } from "./history-order.ts";
 import { choiceExists, listExists } from "./list-state.ts";
 import { isRecordType } from "./records.ts";
 import { type RecordsState, stateOf } from "./record-state.ts";
@@ -274,17 +275,16 @@ export async function readPrivateBefore(
   return makers;
 }
 
-// A change as the history stores it, as made: a change to a draft is always of a kind Fathom
-// records.
-const asChange = (stored: StoredChange): Change => ({
-  recordType: stored.recordType as Change["recordType"],
-  recordId: stored.recordId,
-  action: stored.action,
-  field: stored.field,
-  tier: storedTier(stored.tier),
-  oldValue: stored.oldValue,
-  newValue: stored.newValue,
-  draft: stored.draft,
+// A change as the history stores it, to record again: as a copy, or undone.
+const asRecorded = (change: StoredChange): ChangeRecord => ({
+  recordType: change.recordType,
+  recordId: change.recordId,
+  action: change.action,
+  field: change.field,
+  tier: change.tier,
+  oldValue: change.oldValue,
+  newValue: change.newValue,
+  draft: change.draft,
 });
 
 // Copies, at its time and role, each of the user's open change sets that changed both a record gone
@@ -297,6 +297,20 @@ async function partOpenSets(
   gone: readonly Row[],
 ): Promise<StoredChange[]> {
   const goneKeys = new Set(gone.map(changeKey));
+  // Only the change sets that changed a record gone, none when nothing went.
+  const touching = transaction
+    .selectDistinct({ id: changes.changeSetId })
+    .from(changes)
+    .where(
+      or(
+        ...gone.map(({ recordType, recordId }) =>
+          and(
+            eq(changes.recordType, recordType),
+            eq(changes.recordId, recordId),
+          ),
+        ),
+      ),
+    );
   const rows = await transaction
     .select({
       change: changes,
@@ -305,7 +319,7 @@ async function partOpenSets(
     })
     .from(changes)
     .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
-    .where(openChangeSets(userId))
+    .where(and(openChangeSets(userId), inArray(changes.changeSetId, touching)))
     .orderBy(...madeInOrder);
   const sets = new Map<
     string,
@@ -337,16 +351,7 @@ async function partOpenSets(
       await recordChanges(
         transaction,
         { userId, roleId: set.roleId },
-        part.map((change) => ({
-          recordType: change.recordType,
-          recordId: change.recordId,
-          action: change.action,
-          field: change.field,
-          tier: change.tier,
-          oldValue: change.oldValue,
-          newValue: change.newValue,
-          draft: change.draft,
-        })),
+        part.map(asRecorded),
         storedKind(set.kind),
         true,
         sql`(SELECT made_at FROM fathom.change_sets WHERE id = ${setId})`,
@@ -364,11 +369,21 @@ export async function discardPrivateOfGone(
   classes: DataClasses,
   before: PrivateBefore,
 ): Promise<void> {
+  const withdrawing = [];
   for (const [userId, { all, versions }] of before) {
     const now = await readVersions(transaction, userId, all);
-    const gone = all.filter(
-      (row) => existsFor(versions, row) && !existsFor(now, row),
-    );
+    withdrawing.push({
+      userId,
+      versions,
+      gone: all.filter(
+        (row) => existsFor(versions, row) && !existsFor(now, row),
+      ),
+    });
+  }
+  // A maker with nothing gone has nothing to withdraw.
+  for (const { userId, versions, gone } of withdrawing.filter(
+    (maker) => maker.gone.length > 0,
+  )) {
     const roleId = lastRoleFor(
       await openDraftChanges(transaction, userId),
       gone,
@@ -387,7 +402,7 @@ export async function discardPrivateOfGone(
           otherwise: (row) =>
             ofGone
               .filter((change) => changeKey(change) === changeKey(row))
-              .map((change) => undone(asChange(change)))
+              .map((change) => undone({ ...asRecorded(change), draft: true }))
               .reverse(),
         },
       ],

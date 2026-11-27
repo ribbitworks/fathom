@@ -76,7 +76,8 @@ export const changes = fathomSchema.table(
   (table) => [
     index("changes_record_index").on(table.recordType, table.recordId),
     index("changes_change_set_index").on(table.changeSetId),
-    // The latest name and list the history holds for each record, which the change history reads.
+    // Each record's changes to a field, which the change history filters by to find the latest name
+    // and list it holds for a record, taking the latest by its change set's time.
     index("changes_record_field_index").on(
       table.recordId,
       table.field,

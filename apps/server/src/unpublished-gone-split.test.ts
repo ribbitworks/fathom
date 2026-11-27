@@ -121,6 +121,9 @@ describe("the copy of a split change set", () => {
 
     // Then it is refused, as the original would have been
     expect(response.statusCode, response.body).toBe(409);
+    expect(response.json()).toEqual({
+      error: "This has been changed since, so it can no longer be undone",
+    });
   });
 
   it("keeps its place among its maker's unpublished changes", async () => {
@@ -162,6 +165,28 @@ describe("the copy of a split change set", () => {
     expect((await personOf(alice, kai))?.draft?.editors).toContain(
       checker.name,
     );
+  });
+
+  it("leaves others naming the record by changes made after its original", async () => {
+    // Given Ben's discard of Kai and Mo, an approver's published rename of Kai after it, Mo gone, and
+    // Ben's next publish
+    const ben = await user([...editing]);
+    const checker = await user([...editing, "people:approve"]);
+    const {
+      ids: [kai = "", mo = ""],
+    } = await benDiscardsTogether(ben, 2, 1);
+    const renamed = await rename(checker, kai);
+    await publish(checker);
+    await removing(mo);
+    const [lee = ""] = await livePeople(1);
+    await rename(ben, lee);
+    await publish(ben);
+
+    // When Alice reads Ben's changes
+    const named = (await madeBy(alice, ben)).flatMap(namesOf);
+
+    // Then Kai is named by the approver's rename
+    expect(named).toContain(renamed);
   });
 
   it("leaves a later withdrawal made as the role of its maker's later change", async () => {

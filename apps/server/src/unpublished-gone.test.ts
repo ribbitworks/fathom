@@ -338,6 +338,28 @@ const goneUndoRefused =
 
 const entryIds = async (who: User) => (await history(who)).map(({ id }) => id);
 
+describe("a private change withdrawn with nothing left to take back", () => {
+  it("records no change to Personal details in the access history", async () => {
+    // Given Ben's private end date for Nia, added by Alice, which Alice then publishes too
+    const [nia = ""] = await draftPeople(alice, ["Fictional Nia"]);
+    await publish(alice);
+    await saved(bob, "PATCH", `/api/people/${nia}`, { endDate: "2031-06-30" });
+    await saved(alice, "PATCH", `/api/people/${nia}`, {
+      endDate: "2031-06-30",
+    });
+    await publish(alice);
+    const before = await personalChanges(bob, nia);
+
+    // When Alice discards the draft adding Nia, and publishes that
+    await saved(alice, "DELETE", `/api/people/${nia}/draft`);
+    await publish(alice);
+
+    // Then Bob's withdrawal records nothing in the access history
+    expect(await rowsOf(bob, nia)).toEqual([]);
+    expect(await personalChanges(bob, nia)).toBe(before);
+  });
+});
+
 describe("a maker's other private changes, after one is withdrawn as its record goes", () => {
   it("are listed newest first", async () => {
     const { ben, kaiChange, leeChange } = await benAfterMoGoes();

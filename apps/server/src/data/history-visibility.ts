@@ -5,6 +5,7 @@
 
 import {
   changes,
+  changeSets,
   type Database,
   drafts,
   fieldOfValue,
@@ -18,7 +19,7 @@ import {
   type Tier,
   tierSchema,
 } from "@fathom/shared";
-import { and, asc, eq, inArray, or, type SQL } from "drizzle-orm";
+import { and, eq, inArray, or, type SQL } from "drizzle-orm";
 import {
   type Actor,
   mostSensitive,
@@ -45,6 +46,7 @@ import {
   viewsNow,
 } from "./views.ts";
 import { type Facts, strings } from "./history-names.ts";
+import { madeInOrder } from "./history-order.ts";
 
 // Configuration is seen by those who may open the configuration pages, and people by those who may
 // see people. Saved views are seen by those who open their table's page.
@@ -270,6 +272,7 @@ export async function notCurrentAmong(
         newValue: changes.newValue,
       })
       .from(changes)
+      .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
       .where(
         and(
           eq(changes.recordType, "person"),
@@ -277,7 +280,7 @@ export async function notCurrentAmong(
           inArray(changes.recordId, chunk),
         ),
       )
-      .orderBy(asc(changes.id))) {
+      .orderBy(...madeInOrder)) {
       // Removing someone records the dates they had; any other change records the dates it set.
       dates.set(recordId, {
         ...dates.get(recordId),

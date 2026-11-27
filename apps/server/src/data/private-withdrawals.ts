@@ -4,7 +4,11 @@
 // everyone else sees, recorded as the user's own, with the access history they write. Part of the
 // data access layer.
 
-import { type ChangeMaker, type ChangeSetKind } from "@fathom/db";
+import {
+  type ChangeMaker,
+  type ChangeRecord,
+  type ChangeSetKind,
+} from "@fathom/db";
 import { type DataClasses } from "@fathom/shared";
 import { type Change, recordChangesAs, type Transaction } from "./changes.ts";
 import { columnRow, draftedField } from "./column-state.ts";
@@ -101,7 +105,7 @@ export function takingBack(
 export interface Withdrawal {
   kind: ChangeSetKind;
   rows: readonly Row[];
-  otherwise?: (row: Row) => Change[];
+  otherwise?: (row: Row) => ChangeRecord[];
 }
 
 // The action that undoes each, so a change taken back reads as what it does.
@@ -112,7 +116,11 @@ const undoing: Record<Change["action"], Change["action"]> = {
 };
 
 // A change undone, by the action and values that undo it.
-export const undone = <Made extends Change>(change: Made): Made => ({
+export const undone = <
+  Made extends ChangeRecord & { action: Change["action"] },
+>(
+  change: Made,
+): Made => ({
   ...change,
   action: undoing[change.action],
   oldValue: change.newValue,
@@ -128,17 +136,22 @@ export async function withdraw(
   withdrawals: readonly Withdrawal[],
   classes: DataClasses,
 ): Promise<void> {
-  const made = withdrawals.map(({ kind, rows, otherwise }) => ({
-    kind,
-    changes: asDraft(
-      rows.flatMap((row) => {
-        const taken = takingBack(versions, row, classes);
-        return taken.length > 0 || otherwise === undefined
-          ? taken
-          : otherwise(row);
-      }),
-    ),
-  }));
+  // A row with nothing to take back changes no value, so writes no access history.
+  const made = withdrawals.map(({ kind, rows, otherwise }) => {
+    const taken = rows.map((row) => ({
+      row,
+      changes: asDraft(takingBack(versions, row, classes)),
+    }));
+    return {
+      kind,
+      changes: taken.flatMap(({ changes }) => changes),
+      recorded: taken.flatMap(({ row, changes }) =>
+        changes.length > 0 || otherwise === undefined
+          ? changes
+          : otherwise(row),
+      ),
+    };
+  });
   await removeRows(
     transaction,
     maker.userId,
@@ -148,7 +161,7 @@ export async function withdraw(
   await recordSensitiveChanges(transaction, maker.userId, all);
   await recordHiringChanges(transaction, maker.userId, all);
   await recordTeamDayChanges(transaction, maker.userId, all);
-  for (const { kind, changes } of made) {
-    await recordChangesAs(transaction, maker, changes, kind);
+  for (const { kind, recorded } of made) {
+    await recordChangesAs(transaction, maker, recorded, kind);
   }
 }

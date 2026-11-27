@@ -63,6 +63,7 @@ import {
   visibleRows,
 } from "./history-visibility.ts";
 import type { StoredChange } from "./changes.ts";
+import { latestFirst } from "./history-order.ts";
 
 // The most recent change sets shown at once; older ones are read by naming the last one read. When
 // change sets read are hidden or, in a search, do not match, reading goes on, up to ten times as
@@ -353,8 +354,9 @@ export async function historyShowsRemoval(
   const [latest] = await database
     .select({ action: changes.action, changeSetId: changes.changeSetId })
     .from(changes)
+    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
     .where(and(eq(changes.recordId, recordId), eq(changes.draft, false)))
-    .orderBy(desc(changes.id))
+    .orderBy(...latestFirst)
     .limit(1);
   if (latest?.action !== "deleted") return false;
   const [shown] = await database

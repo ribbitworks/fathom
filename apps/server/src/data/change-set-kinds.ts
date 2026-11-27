@@ -22,6 +22,9 @@ interface KindRules {
   resetsMakers: boolean;
   // Whether it changes a draft, so its maker counts as having changed it.
   changesDraft: boolean;
+  // How undoing it, when allowed, works: by putting back what it changed, or, for drafts sent for
+  // approval again unchanged, by rejecting them again.
+  undoneBy: "puttingBack" | "rejectingAgain";
 }
 
 const decision =
@@ -36,6 +39,7 @@ export const changeSetKinds: Record<ChangeSetKind, KindRules> = {
     undoRefused: null,
     resetsMakers: false,
     changesDraft: true,
+    undoneBy: "puttingBack",
   },
   approval: {
     editing: false,
@@ -45,6 +49,7 @@ export const changeSetKinds: Record<ChangeSetKind, KindRules> = {
     undoRefused: decision,
     resetsMakers: true,
     changesDraft: false,
+    undoneBy: "puttingBack",
   },
   rejection: {
     editing: false,
@@ -54,6 +59,7 @@ export const changeSetKinds: Record<ChangeSetKind, KindRules> = {
     undoRefused: decision,
     resetsMakers: false,
     changesDraft: false,
+    undoneBy: "puttingBack",
   },
   discard: {
     editing: true,
@@ -63,6 +69,7 @@ export const changeSetKinds: Record<ChangeSetKind, KindRules> = {
     undoRefused: null,
     resetsMakers: true,
     changesDraft: true,
+    undoneBy: "puttingBack",
   },
   resubmission: {
     editing: false,
@@ -72,6 +79,7 @@ export const changeSetKinds: Record<ChangeSetKind, KindRules> = {
     undoRefused: null,
     resetsMakers: false,
     changesDraft: false,
+    undoneBy: "rejectingAgain",
   },
   withdrawal: {
     editing: true,
@@ -81,6 +89,7 @@ export const changeSetKinds: Record<ChangeSetKind, KindRules> = {
     undoRefused: null,
     resetsMakers: false,
     changesDraft: true,
+    undoneBy: "puttingBack",
   },
   gone: {
     editing: true,
@@ -91,6 +100,7 @@ export const changeSetKinds: Record<ChangeSetKind, KindRules> = {
       "Changes withdrawn because their record is gone can't be undone",
     resetsMakers: false,
     changesDraft: true,
+    undoneBy: "puttingBack",
   },
 };
 

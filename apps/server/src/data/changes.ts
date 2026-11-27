@@ -6,6 +6,7 @@
 
 import {
   type ChangeMaker,
+  type ChangeRecord,
   type ChangeSetKind,
   type changes,
   type Database,
@@ -134,7 +135,7 @@ export async function refusingDuplicates<Result>(
   }
 }
 
-const editing = kindsWhere(({ editing: changesDrafts }) => changesDrafts);
+const editingKinds = kindsWhere(({ editing }) => editing);
 
 // Records changes as one change set, in the transaction that makes them, the way the seed data
 // command does too. Changes to drafts are the maker's own, unpublished, until they publish them,
@@ -159,9 +160,9 @@ export async function recordChanges(
 export async function recordChangesAs(
   transaction: Pick<Database, "insert">,
   maker: ChangeMaker,
-  made: readonly Change[],
+  made: readonly ChangeRecord[],
   kind: ChangeSetKind,
-  unpublished = editing.includes(kind) &&
+  unpublished = editingKinds.includes(kind) &&
     made.some(({ draft }) => draft === true),
 ): Promise<string | null> {
   return recordChangeSet(transaction, maker, made, kind, unpublished);

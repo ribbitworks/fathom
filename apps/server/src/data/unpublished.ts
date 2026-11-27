@@ -17,13 +17,14 @@ import {
   type Unpublished,
   type UnpublishedPublished,
 } from "@fathom/shared";
-import { and, desc, eq, max, notExists } from "drizzle-orm";
+import { and, desc, eq, notExists, sql } from "drizzle-orm";
 import { type Actor } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import { type Change, type Transaction } from "./changes.ts";
 import { draftedField, nameTaken } from "./column-state.ts";
 import { drafted, wantsNoDraft } from "./draft-records.ts";
 import { openChangeSets } from "./draft-makers.ts";
+import { latestFirst } from "./history-order.ts";
 import { lockDrafts } from "./drafts.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
 import { typeOf } from "./column-types.ts";
@@ -77,16 +78,22 @@ export async function readUnpublished(
       const rows = await ownRows(transaction, userId);
       // By when each record was last changed, as the change history orders it, so a copy of a change
       // set parted as a record went stays where its original was.
-      const latest = await transaction
-        .select({
+      const last = transaction
+        .selectDistinctOn([changes.recordType, changes.recordId], {
           recordType: changes.recordType,
           recordId: changes.recordId,
+          madeAt: sql`${changeSets.madeAt}`.as("made_at"),
+          id: sql`${changes.id}`.as("id"),
         })
         .from(changes)
         .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
         .where(and(openChangeSets(userId), eq(changes.draft, true)))
-        .groupBy(changes.recordType, changes.recordId)
-        .orderBy(desc(max(changeSets.madeAt)), desc(max(changes.id)));
+        .orderBy(changes.recordType, changes.recordId, ...latestFirst)
+        .as("last");
+      const latest = await transaction
+        .select({ recordType: last.recordType, recordId: last.recordId })
+        .from(last)
+        .orderBy(desc(last.madeAt), desc(last.id));
       const placeOf = new Map(
         latest.map(({ recordType, recordId }, place) => [
           draftKey(recordType, recordId),

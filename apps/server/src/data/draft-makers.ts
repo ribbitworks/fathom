@@ -25,6 +25,7 @@ import { type Actor, storedTier } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
 import { kindsWhere, listedKinds, makerKinds } from "./change-set-kinds.ts";
 import { closedByGone } from "./gone-sets.ts";
+import { madeInOrder } from "./history-order.ts";
 
 export interface Maker {
   madeBy: string | null;
@@ -47,10 +48,6 @@ export const everything = () => true;
 const publishedNext = kindsWhere((rules) => rules.publishedNext);
 const endingOpen = listedKinds(({ endsOpen }) => endsOpen);
 const resetting = kindsWhere(({ resetsMakers }) => resetsMakers);
-
-// The order changes count in for who changed a draft: by their change set's time, so the copies a
-// record gone parts a change set into stay where their original was, then as saved.
-export const madeInOrder = [changeSets.madeAt, changes.id] as const;
 
 // The change sets holding a user's unpublished changes since they last discarded them all, which
 // publishing publishes; those before are discarded, so are never published, and so is one that

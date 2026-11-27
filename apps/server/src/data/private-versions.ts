@@ -48,7 +48,8 @@ import { columnsWithAdded } from "./added-columns.ts";
 import { readLiveTeams, readTeamDrafts } from "./feature-team-reads.ts";
 import { readToday } from "./settings.ts";
 import { type Transaction } from "./changes.ts";
-import { chunksByKind, madeInOrder, openChangeSets } from "./draft-makers.ts";
+import { chunksByKind, openChangeSets } from "./draft-makers.ts";
+import { madeInOrder } from "./history-order.ts";
 import { readFills } from "./fills.ts";
 import {
   changeKey,
