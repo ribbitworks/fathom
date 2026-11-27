@@ -414,7 +414,7 @@ describe("the table", () => {
 describe("the table grouped by what each is allocated to", () => {
   // Casey on Checkout at half from March, whose whole month gives 80 hours, and Checkout's
   // estimate, needing 240 hours with the buffer, by June, past the grid's last month.
-  const onCheckout = allocation({ hours: { full: 80, rampUp: {} } });
+  const onCheckout = allocation({ hours: 80 });
   const withEffort = features.map((feature) =>
     feature.id === "f-checkout"
       ? {
@@ -425,7 +425,7 @@ describe("the table grouped by what each is allocated to", () => {
         }
       : feature,
   );
-  const tableBy = (byWork: boolean) =>
+  const tableBy = (byWork: boolean, bufferPercent?: number) =>
     allocationMonthsTable({
       teamMonths,
       works: allocatedWork({
@@ -439,6 +439,7 @@ describe("the table grouped by what each is allocated to", () => {
       show: "both",
       byWork,
       offersWork: true,
+      bufferPercent,
     });
   const rows = rowsOf([onCheckout], { grouping: allocatedToGrouping });
 
@@ -449,6 +450,23 @@ describe("the table grouped by what each is allocated to", () => {
       "Allocated",
       "40 h",
     ]);
+  });
+
+  it("names the buffer Remaining includes in the heading's tip", () => {
+    const grouping = tableBy(true, 20).groupings?.find(
+      ({ key }) => key === allocatedToGrouping,
+    );
+    const [group] = grouping?.of(rows[0] as AllocationRow) ?? [];
+    render(
+      <MantineProvider theme={testTheme}>
+        <p data-testid="heading">{group?.facts}</p>
+      </MantineProvider>,
+    );
+    expect(
+      [...screen.getByTestId("heading").querySelectorAll("[data-tip]")].map(
+        (tipped) => tipped.getAttribute("data-tip"),
+      ),
+    ).toContain("Includes a 20% buffer");
   });
 
   it("heads each feature with its Effort, Remaining, and Allocated to its last month, past the grid's", () => {
@@ -506,7 +524,7 @@ describe("the table grouped by what each is allocated to", () => {
     id: "a-2",
     featureId: null,
     activityId: "a-general",
-    hours: { full: 80, rampUp: {} },
+    hours: 80,
   });
   const withActivityEffort = activities.map((activity) => ({
     ...activity,

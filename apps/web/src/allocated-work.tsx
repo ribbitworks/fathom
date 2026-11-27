@@ -13,8 +13,8 @@ import {
   type Show,
   type WorkEffort,
 } from "@fathom/shared";
-import { Text } from "@mantine/core";
-import { decimal } from "./numbers.ts";
+import { Text, VisuallyHidden } from "@mantine/core";
+import { decimal, percentage } from "./numbers.ts";
 import { tipAttribute } from "./table-tips.tsx";
 
 // The percentages an allocation gives by month as the Draft menu shows them: as drafted, but for a
@@ -27,7 +27,7 @@ function monthsShown(allocation: Allocation, show: Show) {
   return draft.action === "deleted" ? {} : draft.months;
 }
 
-// The hours a feature's or activity's allocations give it, after focus and ramp-up, each from its
+// The hours a feature's or activity's allocations give it, after focus, each from its
 // first month to the last month given, so they don't depend on how far the grid reaches.
 export const allocatedHours = (
   allocations: readonly Allocation[],
@@ -80,16 +80,24 @@ export function WorkFacts({
   work,
   allocated,
   show,
+  bufferPercent = 0,
 }: {
   work: Pick<AllocatedFeature, "effort" | "unseen" | "meaning">;
   allocated: number;
   show: Show;
+  // The planning settings' Default buffer, which the hours remaining include, named in their tip.
+  bufferPercent?: number | undefined;
 }) {
   if (work.unseen === true || work.effort === undefined) return null;
   const { estimate, needed } = effortShown(work.effort, show);
   const remaining = isForecast(work.meaning)
     ? remainingHours(needed, allocated)
     : undefined;
+  // Only a figure remaining includes the buffer; read aloud too, as only one tip shows on focus.
+  const bufferTip =
+    remaining !== undefined && bufferPercent > 0
+      ? `Includes a ${percentage(bufferPercent)} buffer`
+      : undefined;
   const allocatedFact = (
     <span
       {...{
@@ -111,16 +119,22 @@ export function WorkFacts({
   return (
     <Text component="span" fz="sm" c="dimmed">
       {" "}
-      · Effort {hours(estimate)} · {allocatedFact} · Remaining{" "}
-      {remaining === undefined ? (
-        "None"
-      ) : remaining < 0 ? (
-        <Text component="span" inherit c="red" data-over>
-          {`\u2212${hours(-remaining)}`}
-        </Text>
-      ) : (
-        hours(remaining)
-      )}
+      · Effort {hours(estimate)} · {allocatedFact} ·{" "}
+      <span {...(bufferTip === undefined ? {} : { [tipAttribute]: bufferTip })}>
+        Remaining{" "}
+        {remaining === undefined ? (
+          "None"
+        ) : remaining < 0 ? (
+          <Text component="span" inherit c="red" data-over>
+            {`\u2212${hours(-remaining)}`}
+          </Text>
+        ) : (
+          hours(remaining)
+        )}
+        {bufferTip !== undefined && (
+          <VisuallyHidden>{`, ${bufferTip.toLowerCase()}`}</VisuallyHidden>
+        )}
+      </span>
     </Text>
   );
 }

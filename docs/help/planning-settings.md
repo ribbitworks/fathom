@@ -60,21 +60,6 @@ The menu lists every change in the draft, and approving or rejecting takes them 
 
 You're done when the dot is gone and the setting shows its new value, or its old one if you rejected it.
 
-### Add or Remove a Month of Ramp-Up
-
-Ramp-up is how much of their full output a new starter delivers in each of their first months.
-
-To add a month:
-
-1. Select **Add month**. The new month starts at 100%.
-1. To change it, point at it, and select its pencil.
-
-Ramp-up holds up to 12 months. Once it's full, you can't select **Add month**.
-
-To remove a month, select the **×** at the right of its row. The months after it move up one, and a notification offers **Undo**.
-
-You're done when the months show your change, each with a yellow dot once you publish it.
-
 ### Undo a Change
 
 Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you leave the page.
@@ -88,9 +73,8 @@ You're done when the setting shows its value from before the change.
 - **Week starts on** is the first day of the organization's week.
 - **Default focus** is the share of a person's time that goes to feature work at all, after meetings, support and the like.
 - **Default buffer** is a percentage added to a feature's effort before forecasting. The effort entered stays as it is.
-- **Ramp-up for new starters** is the share of full output a new starter delivers in each of their first months. The last row, such as **From month 3**, shows that they deliver **100%** from then on.
-- Focus, buffer and ramp-up set the hours on **Capacity**'s **Allocations** grouped by **Allocated to**, and change no other figure.
-- **A yellow dot** marks a setting a draft changes, with the live value under it after a green dot. **No month 3**, or the like, marks a month the draft adds or removes. **Draft**, above **Working time**, chooses how drafts show.
+- Focus and buffer set the hours on **Capacity**'s **Allocations** grouped by **Allocated to**, and change no other figure.
+- **A yellow dot** marks a setting a draft changes, with the live value under it after a green dot. **Draft**, above **Working time**, chooses how drafts show.
 
 ## Where Changes Go
 

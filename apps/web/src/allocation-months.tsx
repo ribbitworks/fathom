@@ -23,7 +23,6 @@ import {
   summedCapacity,
   type TeamMonths,
   wholeMonth,
-  wholeMonthHoursIn,
 } from "@fathom/shared";
 import { VisuallyHidden } from "@mantine/core";
 import { queryOptions } from "@tanstack/react-query";
@@ -112,7 +111,7 @@ export interface AllocationLine {
   percentage: number;
   // The percentage as approved; null for work a draft adds.
   live: number | null;
-  // The hours a whole month of the row's time gives in the month, after focus and ramp-up.
+  // The hours a whole month of the row's time gives, after focus.
   monthHours: number;
   drafted?: DraftedPart;
   draft?: DraftLike;
@@ -296,12 +295,10 @@ export function AllocationLines({
   );
 }
 
-// What a line of an allocation's names, with the hours a whole month of its person's time gives in
-// the month.
+// What a line of an allocation's names, with the hours a whole month of its person's time gives.
 function workOf(
   works: ReadonlyMap<string, AllocatedWork>,
   allocation: Allocation,
-  month: string,
 ): Pick<
   AllocationLine,
   "workId" | "name" | "tip" | "rename" | "meaning" | "colour" | "monthHours"
@@ -318,7 +315,7 @@ function workOf(
     ...(rename === undefined ? {} : { rename }),
     meaning,
     colour,
-    monthHours: hoursIn(allocation, month),
+    monthHours: hoursOf(allocation),
   };
 }
 
@@ -342,10 +339,7 @@ export function namedIn(allocations: Allocations, show: Show): Allocations {
 }
 
 // The hours a whole month of an allocation's person's time gives, none for a reader not sent them.
-const hoursIn = (allocation: Allocation, month: string): number =>
-  allocation.hours === undefined
-    ? 0
-    : wholeMonthHoursIn(allocation.hours, month);
+const hoursOf = (allocation: Allocation): number => allocation.hours ?? 0;
 
 // The hours some lines deliver in their month, at the percentages the Draft menu shows.
 export const monthHoursOf = (
@@ -370,7 +364,7 @@ function liveLines(
     const percentage = percentageIn(allocation.months, month);
     return percentage === null
       ? []
-      : [{ ...workOf(works, allocation, month), percentage, live: percentage }];
+      : [{ ...workOf(works, allocation), percentage, live: percentage }];
   });
 }
 
@@ -394,7 +388,7 @@ function draftedLines(
     const live = percentageIn(allocation.months, month);
     const { draft } = allocation;
     const drafted = draftedPercentage(allocation, month);
-    const work = workOf(works, allocation, month);
+    const work = workOf(works, allocation);
     if (drafted === null) {
       return live === null || show === "drafts"
         ? []
@@ -651,10 +645,13 @@ export function allocationMonthsTable({
   show,
   byWork,
   offersWork,
+  bufferPercent,
 }: {
   teamMonths: TeamMonths;
   works: readonly AllocatedWork[];
   allocations: readonly Allocation[];
+  // The planning settings' Default buffer, which Remaining includes, for a reader sent it.
+  bufferPercent?: number | undefined;
   // Whether the rows are grouped by what each is allocated to, whose totals are hours.
   byWork: boolean;
   // Whether it may be, for a reader who sees the planning settings, since its hours tell them.
@@ -710,6 +707,7 @@ export function allocationMonthsTable({
                         )
                   }
                   show={show}
+                  bufferPercent={bufferPercent}
                 />
               )),
             ]

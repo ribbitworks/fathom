@@ -61,10 +61,6 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-02-a-change-d
 
 Proved by automated tests in `apps/web/src/planning-settings-page.test.tsx`.
 
-### CAP-04: Months of Ramp-Up Added and Removed
-
-Moved to [Planning Settings](planning-settings-manual-test.md#pset-07-months-of-ramp-up-added-and-removed).
-
 ### CAP-05: The Change in the Change History
 
 Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change-in-the-change-history).
@@ -88,7 +84,7 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
 - [ ] `F7F1` Select **Planning settings** at the right of the heading.
   - **Expected:**
     - The page is headed **Planning settings**.
-    - The planning settings show under **Working time**, **Forecasts** and **Ramp-up for new starters**.
+    - The planning settings show under **Working time** and **Forecasts**.
     - No row has a change button.
   - **Notes:**
 

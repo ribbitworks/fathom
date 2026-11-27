@@ -100,7 +100,6 @@ export const recordDraftSchema = z.object({
       z.boolean(),
       z.null(),
       z.array(z.string()),
-      // Shares by month, such as the planning settings' ramp-up.
       z.array(z.number()),
       linkShape,
       // Text by record, such as the reasons a proposal keeps by feature.

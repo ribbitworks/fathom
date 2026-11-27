@@ -6,70 +6,20 @@
 import { describe, expect, it } from "vitest";
 import {
   coverageByMonth,
-  deliveredHours,
   effortNeeded,
-  firstMonthEmployed,
   isForecast,
   plannedMonths,
-  rampUpPercent,
   targetCycleMonths,
   allocationHours,
   hoursAllocated,
   remainingHours,
-  wholeMonthHoursIn,
 } from "./forecast.ts";
 
 const settings = {
   hoursPerDay: 8,
   daysPerMonth: 20,
   focusPercent: 80,
-  rampUpPercents: [50, 75],
 };
-
-describe("rampUpPercent", () => {
-  it("gives each ramp-up month's share from the first month, then full output", () => {
-    expect(rampUpPercent("2027-01", "2027-01", [50, 75])).toBe(50);
-    expect(rampUpPercent("2027-02", "2027-01", [50, 75])).toBe(75);
-    expect(rampUpPercent("2027-03", "2027-01", [50, 75])).toBe(100);
-  });
-
-  it("gives full output before the first month, or with no first month known", () => {
-    expect(rampUpPercent("2026-12", "2027-01", [50, 75])).toBe(100);
-    expect(rampUpPercent("2027-01", undefined, [50, 75])).toBe(100);
-  });
-});
-
-describe("deliveredHours", () => {
-  it("gives the month's hours at the percentage allocated and the focus", () => {
-    // 8 h × 20 days = 160 h; half of it at 80% focus.
-    expect(deliveredHours({ percentage: 50, month: "2027-03", settings })).toBe(
-      64,
-    );
-  });
-
-  it("gives less in a ramp-up month", () => {
-    expect(
-      deliveredHours({
-        percentage: 100,
-        month: "2027-01",
-        firstMonth: "2027-01",
-        settings,
-      }),
-    ).toBe(64);
-  });
-
-  it("gives an exact figure where dividing as it goes would drift", () => {
-    // 160 h at 30%, 70% focus, in a 50% ramp-up month: 16.8 h, not 16.799999999999997.
-    expect(
-      deliveredHours({
-        percentage: 30,
-        month: "2027-01",
-        firstMonth: "2027-01",
-        settings: { ...settings, focusPercent: 70 },
-      }),
-    ).toBe(16.8);
-  });
-});
 
 describe("isForecast", () => {
   it("forecasts work still to be done, and none done or cancelled", () => {
@@ -94,38 +44,6 @@ describe("effortNeeded", () => {
   it("needs nothing known without an estimate", () => {
     expect(effortNeeded(null, 20)).toBeUndefined();
     expect(effortNeeded(undefined, 20)).toBeUndefined();
-  });
-});
-
-describe("firstMonthEmployed", () => {
-  it("finds the month someone starts in, after months not employed", () => {
-    expect(
-      firstMonthEmployed(new Set(["2027-01"]), [
-        "2027-01",
-        "2027-02",
-        "2027-03",
-      ]),
-    ).toBe("2027-02");
-  });
-
-  it("finds the month someone comes back in, after months away in the middle", () => {
-    expect(
-      firstMonthEmployed(new Set(["2027-02"]), [
-        "2027-01",
-        "2027-02",
-        "2027-03",
-      ]),
-    ).toBe("2027-03");
-  });
-
-  it("finds none for someone employed from the first month on", () => {
-    expect(
-      firstMonthEmployed(new Set(["2027-03"]), [
-        "2027-01",
-        "2027-02",
-        "2027-03",
-      ]),
-    ).toBeUndefined();
   });
 });
 
@@ -326,23 +244,17 @@ describe("coverageByMonth", () => {
 });
 
 describe("allocationHours", () => {
-  it("gives a whole month's hours after focus, and each ramp-up month's from the first month", () => {
-    expect(allocationHours("2027-03", settings)).toEqual({
-      full: 128,
-      rampUp: { "2027-03": 64, "2027-04": 96 },
-    });
-  });
-
-  it("gives no ramp-up without a first month", () => {
-    expect(allocationHours(undefined, settings)).toEqual({
-      full: 128,
-      rampUp: {},
-    });
+  it("gives a whole month's hours after focus", () => {
+    // 8 h × 20 days = 160 h, at 80% focus.
+    expect(allocationHours(settings)).toBe(128);
+    expect(
+      allocationHours({ hoursPerDay: 7.5, daysPerMonth: 21, focusPercent: 70 }),
+    ).toBe(110.25);
   });
 });
 
 describe("hoursAllocated", () => {
-  const hours = { full: 128, rampUp: { "2027-03": 64 } };
+  const hours = 128;
 
   it("counts every month at the percentage in force, between the months it changes in, and none after it stops", () => {
     expect(
@@ -352,14 +264,7 @@ describe("hoursAllocated", () => {
         "2027-04",
         "2027-05",
       ]),
-    ).toBe(32 + 64);
-  });
-
-  it("reads a ramp-up month's hours, then full output", () => {
-    expect([
-      wholeMonthHoursIn(hours, "2027-03"),
-      wholeMonthHoursIn(hours, "2027-04"),
-    ]).toEqual([64, 128]);
+    ).toBe(64 + 64);
   });
 });
 

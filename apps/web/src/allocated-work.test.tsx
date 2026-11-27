@@ -17,7 +17,7 @@ import {
 import { allocation, draft } from "./test-allocation-months.ts";
 import { testTheme } from "./test-support.tsx";
 
-const eighty = { full: 80, rampUp: {} };
+const eighty = 80;
 
 describe("allocatedHours", () => {
   it("adds up a feature's allocations from each one's first month to the last month, at the percentage in force in each", () => {
@@ -96,11 +96,17 @@ describe("a feature's heading facts", () => {
   const facts = (
     feature: Pick<AllocatedFeature, "effort" | "unseen" | "meaning">,
     allocated: number,
+    bufferPercent?: number,
   ) =>
     render(
       <MantineProvider theme={testTheme}>
         <p data-testid="facts">
-          <WorkFacts work={feature} allocated={allocated} show="both" />
+          <WorkFacts
+            work={feature}
+            allocated={allocated}
+            show="both"
+            bufferPercent={bufferPercent}
+          />
         </p>
       </MantineProvider>,
     ).container.querySelector("[data-testid=facts]") as HTMLElement;
@@ -123,6 +129,27 @@ describe("a feature's heading facts", () => {
     ).toBe(
       "From each allocation's first month to the work's end, or to this month if the work has no dates",
     );
+  });
+
+  it("names the buffer Remaining includes in its tip, only while there is one", () => {
+    const remainingTip = (bufferPercent: number) =>
+      [
+        ...facts(
+          { meaning: "in-progress", effort: effort(320, 352) },
+          256,
+          bufferPercent,
+        ).querySelectorAll("[data-tip]"),
+      ]
+        .map((tipped) => tipped.getAttribute("data-tip"))
+        .filter((tip) => tip?.startsWith("Includes") === true);
+    expect(remainingTip(10)).toEqual(["Includes a 10% buffer"]);
+    expect(remainingTip(0)).toEqual([]);
+  });
+
+  it("names no buffer where Remaining reads None, for done work", () => {
+    const done = facts({ meaning: "done", effort: effort(320, 352) }, 256, 10);
+    expect(done.textContent).toContain("Remaining None");
+    expect(done.textContent).not.toContain("buffer");
   });
 
   it("reads what is over the hours it needs with a minus sign, in red", () => {

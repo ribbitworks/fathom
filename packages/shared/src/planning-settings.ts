@@ -20,11 +20,9 @@ import {
   workingWeekNames,
 } from "./working-week.ts";
 
-export const planningSettingLimits = {
+const planningSettingLimits = {
   focusPercent: { least: 1, most: 100 },
   bufferPercent: { least: 0, most: 100 },
-  rampUpPercent: { least: 1, most: 100 },
-  rampUpMonths: { least: 0, most: 12 },
 } as const;
 
 export const planningSettingNames = {
@@ -33,7 +31,6 @@ export const planningSettingNames = {
   daysPerMonth: effortConversionNames.daysPerMonth,
   focusPercent: "Default focus",
   bufferPercent: "Default buffer",
-  rampUpPercents: "Ramp-up",
 } as const;
 
 const percent = "%";
@@ -48,10 +45,7 @@ const wholePercentage = (
     .min(least, { error: outOfRange(name, { least, most }, percent) })
     .max(most, { error: outOfRange(name, { least, most }, percent) });
 
-const { focusPercent, bufferPercent, rampUpPercent, rampUpMonths } =
-  planningSettingLimits;
-
-const tooManyMonths = `Use up to ${String(rampUpMonths.most)} months for ${planningSettingNames.rampUpPercents}`;
+const { focusPercent, bufferPercent } = planningSettingLimits;
 
 export const planningSettingsSchema = effortConversionsSchema
   .pick({ hoursPerDay: true, daysPerMonth: true })
@@ -66,11 +60,6 @@ export const planningSettingsSchema = effortConversionsSchema
       planningSettingNames.bufferPercent,
       bufferPercent,
     ),
-    rampUpPercents: z
-      .array(
-        wholePercentage(planningSettingNames.rampUpPercents, rampUpPercent),
-      )
-      .max(rampUpMonths.most, { error: tooManyMonths }),
   });
 
 export type PlanningSettings = z.infer<typeof planningSettingsSchema>;
@@ -83,18 +72,16 @@ export const planningSettingFields = [
   "daysPerMonth",
   "focusPercent",
   "bufferPercent",
-  "rampUpPercents",
 ] as const satisfies readonly (keyof PlanningSettings)[];
 
 // The settings held as percentages.
 export const percentSettingFields = [
   "focusPercent",
   "bufferPercent",
-  "rampUpPercents",
 ] as const satisfies readonly (keyof PlanningSettings)[];
 
-// A new starter's share of full output from the month after the last month of ramp-up.
-export const fullOutputPercent = 100;
+// A whole, as a percentage, of which focus and the buffer are shares.
+export const hundredPercent = 100;
 
 // Any of the settings, changed together; those left out stay as they are.
 export const planningSettingsChangeSchema = planningSettingsSchema.partial();
@@ -117,7 +104,6 @@ export const changedSettings = (
   daysPerMonth: change.daysPerMonth ?? settings.daysPerMonth,
   focusPercent: change.focusPercent ?? settings.focusPercent,
   bufferPercent: change.bufferPercent ?? settings.bufferPercent,
-  rampUpPercents: change.rampUpPercents ?? settings.rampUpPercents,
 });
 
 export const startingPlanningSettings: PlanningSettings = {
@@ -127,7 +113,6 @@ export const startingPlanningSettings: PlanningSettings = {
   daysPerMonth: startingEffortConversions.daysPerMonth,
   focusPercent: 80,
   bufferPercent: 0,
-  rampUpPercents: [50, 75],
 };
 
 // The conversions between units of effort the settings give: a person-week holds a day for each

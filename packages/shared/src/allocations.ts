@@ -210,12 +210,8 @@ export const workEffortSchema = z.object({
 
 export type WorkEffort = z.infer<typeof workEffortSchema>;
 
-// The hours a whole month of someone's time gives, after the planning settings' focus: at full
-// output, and in each month of their ramp-up, as the settings set it.
-export const allocationHoursSchema = z.object({
-  full: z.number(),
-  rampUp: z.record(monthSchema, z.number()),
-});
+// The hours a whole month of someone's time gives, after the planning settings' focus.
+export const allocationHoursSchema = z.number();
 
 export type AllocationHours = z.infer<typeof allocationHoursSchema>;
 
@@ -279,7 +275,7 @@ export const allocationSchema = z.object({
   activityId: z.string().nullable(),
   months: allocationMonthsSchema,
   // The hours a whole month of its person's or planned hire's time gives, sent only to a reader who
-  // sees the planning settings, since the hours tell focus and ramp-up.
+  // sees the planning settings, since the hours tell the focus.
   hours: allocationHoursSchema.optional(),
   draft: allocationDraftSchema.optional(),
   heldBy: heldBySchema,
@@ -292,6 +288,9 @@ export const allocationsSchema = z.object({
   allocations: z.array(allocationSchema),
   features: z.array(allocatedFeatureSchema),
   activities: z.array(allocatedActivitySchema),
+  // The planning settings' Default buffer, as approved, which the hours a work needs include; sent
+  // only to a reader who sees the planning settings.
+  bufferPercent: z.number().optional(),
 });
 
 export type Allocations = z.infer<typeof allocationsSchema>;

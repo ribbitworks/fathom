@@ -105,6 +105,7 @@ export function CapacityAllocations({
             show: view.show,
             byWork,
             offersWork: groupsByWork,
+            bufferPercent: sources.allocations.bufferPercent,
           }),
     [sources, byManager, currentMonth, view.show, byWork, groupsByWork],
   );

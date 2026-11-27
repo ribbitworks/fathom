@@ -122,7 +122,6 @@ One record for the whole of Fathom, which capacity and forecasts are worked out 
 | Working days a month | 20 | 1 to 31 whole days |
 | Default focus | 80% | 1% to 100% |
 | Default buffer | 0% | 0% to 100% |
-| Ramp-up | 50%, then 75% | Up to 12 months, each 1% to 100%, then full output |
 
 Percentages are whole.
 

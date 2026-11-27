@@ -360,7 +360,7 @@ export function shown(
   if (typeof value === "string" || typeof value === "boolean") return value;
   // Such as the length of a release stream's cycles.
   if (typeof value === "number") return String(value);
-  // Such as a new starter's ramp-up, month by month.
+  // Such as the working days.
   if (Array.isArray(value)) return value.map(String);
   return null;
 }

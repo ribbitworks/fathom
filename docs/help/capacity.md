@@ -58,8 +58,8 @@ On **Allocations**, grouped by **Manager**, someone who changed manager has a ro
 Grouped by **Allocated to**, each feature or activity is a heading, an activity's naming its project or release, and someone has a row under each one they're allocated to, showing it alone; those allocated to nothing come last, under **Not allocated**. The heading reads its hours:
 
 - **Effort:** its estimate.
-- **Allocated:** the hours its allocations give it, after focus and ramp-up, each from its first month to the work's end: a feature's target cycle's last month, else its **Needed by**; an activity's **Needed by**, else its project's last milestone or its release's last cycle. For work with none of these, through this month.
-- **Remaining:** Effort with the buffer the planning settings add, less Allocated. Past what it needs, it reads in red with a minus sign, such as **−6 h**. It reads **None** for done or cancelled work.
+- **Allocated:** the hours its allocations give it, after focus, each from its first month to the work's end: a feature's target cycle's last month, else its **Needed by**; an activity's **Needed by**, else its project's last milestone or its release's last cycle. For work with none of these, through this month.
+- **Remaining:** Effort with the buffer the planning settings add, less Allocated. Past what it needs, it reads in red with a minus sign, such as **−6 h**. It reads **None** for done or cancelled work. While the planning settings add a buffer, pointing at **Remaining** names it, such as "Includes a 10% buffer".
 
 Work with no estimate reads **Allocated** alone.
 

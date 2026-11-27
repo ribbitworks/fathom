@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Planning settings page, for those who see configuration: the working time effort is converted
-// with and the working week, the defaults forecasts start from, and how new starters ramp up, month
-// by month, each changed in place as a draft of the settings.
+// with, the working week and the defaults forecasts start from.
 
 import {
   type Asking,
@@ -11,27 +10,23 @@ import {
   type PlanningSettingsChange,
   type PlanningSettingsShown,
   type RecordDraft,
-  planningSettingLimits,
   planningSettingNames,
   planningSettingsId,
   planningSettingsSchema,
   type Show,
   typedNumber,
   changedSettings,
-  fullOutputPercent,
   weekdayNames,
   weekdaySchema,
   workingDaysWords,
 } from "@fathom/shared";
-import { ActionIcon, Button, Group, Loader, Stack, Text } from "@mantine/core";
+import { Group, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { DecisionModal } from "./decision-dialog.tsx";
 import { configDraftFields, draftLines } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
-import { focusSoon } from "./focus.ts";
-import { Icon } from "./icons.tsx";
 import { LoadProblem } from "./load-problem.tsx";
 import { noOthers } from "./new-plan-record-panel.tsx";
 import { percentage } from "./numbers.ts";
@@ -70,19 +65,10 @@ type DetailColumn = Parameters<typeof Row>[0]["column"];
 type SettingColumn = Column<Settings, PlanningSettingsChange>;
 type SingleSetting = Exclude<
   keyof PlanningSettings,
-  "rampUpPercents" | "workingDays" | "weekStartsOn"
+  "workingDays" | "weekStartsOn"
 >;
 
 const onlyKind = "";
-const addMonthId = "add-ramp-up-month";
-const monthsLimitId = "ramp-up-months-limit";
-const { rampUpMonths } = planningSettingLimits;
-
-const monthKey = (month: number) => `month-${String(month)}`;
-const monthName = (month: number) => `Month ${String(month)}`;
-const removeMonthId = (month: number) =>
-  `remove-ramp-up-month-${String(month)}`;
-
 // A setting's row, which saves the number given as the change it makes.
 function settingColumn(
   key: string,
@@ -143,42 +129,18 @@ const workingDaysColumn = {
 const daysWords = ({ workingDays, weekStartsOn }: PlanningSettings) =>
   workingDaysWords(workingDays, weekStartsOn);
 
-// A month of ramp-up's row, which saves the whole ramp-up with that month changed.
-const monthColumn = (rampUp: readonly number[], month: number) =>
-  settingColumn(monthKey(month), monthName(month), (value) => ({
-    rampUpPercents: rampUp.map((share, index) =>
-      index === month - 1 ? value : share,
-    ),
-  }));
-
-// The month a new starter reaches full output, shown as a row of its own that can't be changed.
-const fullOutputColumn = (month: number) =>
-  ({
-    key: "full-output",
-    label: `From month ${String(month)}`,
-    kind: "text",
-    multiple: false,
-    choices: [],
-    required: false,
-  }) as const satisfies Parameters<typeof Row>[0]["column"];
-
 // The settings the rows hold, each typed as a number.
 const typedSettingsSchema = planningSettingsSchema.omit({
   workingDays: true,
   weekStartsOn: true,
 });
 
-// The settings as the rows hold them, each as text, ramp-up by month, and the day a week starts on
-// as a choice.
+// The settings as the rows hold them, each as text, and the day a week starts on as a choice.
 function valuesOf(settings: PlanningSettings): Record<string, CellValue> {
-  const { rampUpPercents, ...rest } = typedSettingsSchema.parse(settings);
   return Object.fromEntries<CellValue>([
     ["weekStartsOn", [String(settings.weekStartsOn)]],
-    ...Object.entries(rest).map(
+    ...Object.entries(typedSettingsSchema.parse(settings)).map(
       ([key, value]) => [key, String(value)] as const,
-    ),
-    ...rampUpPercents.map(
-      (share, index) => [monthKey(index + 1), String(share)] as const,
     ),
   ]);
 }
@@ -191,26 +153,16 @@ function settingsProblem(
   const held = new Map(Object.entries(values));
   // Every setting is held as text, as a number cell's value is.
   const number = (key: string) => typedNumber(held.get(key) as string);
-  const months = Object.keys(values).filter((key) => key.startsWith("month-"));
   const checked = typedSettingsSchema.safeParse({
     hoursPerDay: number("hoursPerDay"),
     daysPerMonth: number("daysPerMonth"),
     focusPercent: number("focusPercent"),
     bufferPercent: number("bufferPercent"),
-    rampUpPercents: months.map((_key, index) => number(monthKey(index + 1))),
   });
   const [issue] = checked.error?.issues ?? [];
-  if (issue === undefined) return undefined;
-  // A month of ramp-up is named by its own row's label.
-  const [field, index] = issue.path;
-  const message =
-    field === "rampUpPercents" && typeof index === "number"
-      ? issue.message.replace(
-          planningSettingNames.rampUpPercents,
-          monthName(index + 1),
-        )
-      : issue.message;
-  return { message, column: changed };
+  return issue === undefined
+    ? undefined
+    : { message: issue.message, column: changed };
 }
 
 function Percentage({ value }: { value: number }) {
@@ -249,7 +201,7 @@ export function PlanningSettingsPage({
   const settings = useQuery(planningSettingsQuery);
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
-  const { save, undoable, done } = useSaving<PlanningSettingsShown>({
+  const { save, undoable } = useSaving<PlanningSettingsShown>({
     queryKey: planningSettingsQuery.queryKey,
     removed: "Fathom could not find the planning settings. Reload the page.",
     blocked: deciding,
@@ -282,7 +234,6 @@ export function PlanningSettingsPage({
   const original: Settings = { ...settings.data, id: planningSettingsId };
   const { draft, heldBy } = original;
   const current = shownSettings(original, show);
-  const rampUp = current.rampUpPercents;
   const live = liveSettings(original);
   // The draft, where it changes a setting.
   const draftOf = (key: keyof PlanningSettings) =>
@@ -383,18 +334,14 @@ export function PlanningSettingsPage({
   // A setting's row, marked where the draft changes it, with its live value beside it.
   const row = (
     column: SettingColumn,
-    value: number | undefined,
-    liveValue: number | undefined,
+    value: number,
+    liveValue: number,
     {
       asPercent = false,
       drafted,
-      action,
-      canChange = true,
     }: {
       asPercent?: boolean;
       drafted?: RecordDraft | undefined;
-      action?: ReactNode;
-      canChange?: boolean;
     } = {},
   ) => {
     const menu = draftMenu(drafted);
@@ -402,28 +349,19 @@ export function PlanningSettingsPage({
       <Row
         key={column.key}
         column={column}
-        value={value === undefined ? "" : String(value)}
+        value={String(value)}
         changed={
           drafted
             ? {
                 draft: drafted,
-                live: liveValue === undefined ? "" : String(liveValue),
+                live: String(liveValue),
               }
             : undefined
         }
-        editing={canChange ? editing(column) : undefined}
-        action={
-          menu || action ? (
-            <>
-              {menu}
-              {action}
-            </>
-          ) : undefined
-        }
+        editing={editing(column)}
+        action={menu || undefined}
       >
-        {asPercent && value !== undefined ? (
-          <Percentage value={value} />
-        ) : undefined}
+        {asPercent ? <Percentage value={value} /> : undefined}
       </Row>
     );
   };
@@ -450,46 +388,6 @@ export function PlanningSettingsPage({
       asPercent,
       drafted: draftOf(key),
     });
-  // Beside live, a month the draft removes still shows, emptied, with its live share under it.
-  const monthsShown =
-    show === "both"
-      ? Math.max(rampUp.length, live.rampUpPercents.length)
-      : rampUp.length;
-  const months = Array.from({ length: monthsShown }, (_none, index) => ({
-    month: index + 1,
-    share: rampUp.at(index),
-    liveShare: live.rampUpPercents.at(index),
-  }));
-  const lastMonth = rampUp.length;
-  const full = rampUp.length >= rampUpMonths.most;
-
-  // Focus goes to the new month, drawn by the time it is saved, and back to Add month once undone.
-  const addMonth = () => {
-    saveChange(
-      { rampUpPercents: [...rampUp, fullOutputPercent] },
-      (changeSetId, before) => {
-        focusSoon(changeId({ key: monthKey(lastMonth + 1) }));
-        undoable(changeSetId, before, addMonthId);
-      },
-    );
-  };
-  // Takes a month out of view, so says so, offering Undo. Focus goes to the × now in its place, or
-  // the one before it, or to Add month once none is left.
-  const removeMonth = (month: number) => {
-    saveChange(
-      { rampUpPercents: rampUp.filter((_share, index) => index !== month - 1) },
-      (changeSetId, before) => {
-        const next = Math.min(month, lastMonth - 1);
-        focusSoon(next > 0 ? removeMonthId(next) : addMonthId);
-        done(
-          `Removed month ${String(month)} of ramp-up.`,
-          changeSetId,
-          before,
-          changeId({ key: monthKey(month) }),
-        );
-      },
-    );
-  };
   return (
     <DraftView show={show}>
       {heading}
@@ -542,54 +440,6 @@ export function PlanningSettingsPage({
           {settingRow("focusPercent", true)}
           {settingRow("bufferPercent", true)}
         </RecordSection>
-        <Stack gap="xs">
-          <RecordSection id="planning-ramp-up" title="Ramp-up for new starters">
-            {months.map(({ month, share, liveShare }) =>
-              row(monthColumn(rampUp, month), share, liveShare, {
-                asPercent: true,
-                drafted:
-                  share === liveShare ? undefined : draftOf("rampUpPercents"),
-                canChange: share !== undefined,
-                action: editable && share !== undefined && (
-                  <ActionIcon
-                    id={removeMonthId(month)}
-                    variant="subtle"
-                    color="gray"
-                    size="sm"
-                    aria-label={`Remove ${monthName(month).toLowerCase()}`}
-                    onClick={() => {
-                      removeMonth(month);
-                    }}
-                  >
-                    <Icon name="close" />
-                  </ActionIcon>
-                ),
-              }),
-            )}
-            <Row column={fullOutputColumn(lastMonth + 1)} value="">
-              <Percentage value={fullOutputPercent} />
-            </Row>
-          </RecordSection>
-          {editable && (
-            <Stack gap={4} align="flex-start">
-              <Button
-                id={addMonthId}
-                variant="default"
-                size="compact-sm"
-                disabled={full}
-                aria-describedby={full ? monthsLimitId : undefined}
-                onClick={addMonth}
-              >
-                Add month
-              </Button>
-              {full && (
-                <Text id={monthsLimitId} size="sm" c="dimmed">
-                  Ramp-up holds up to {String(rampUpMonths.most)} months.
-                </Text>
-              )}
-            </Stack>
-          )}
-        </Stack>
       </Stack>
       <DecisionModal
         decision={decision}
