@@ -520,14 +520,17 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
 - [ ] `91B8` Select "SDET, TBD-" and its number, and press Enter.
   - **Expected:**
     - The list closes.
-    - **Members** lists "SDET, TBD-" and its number last, in grey italics, after a hollow dot, followed by "#HIRE-" and a number, then a grey box reading "Planned, no target date".
+    - **Members** doesn't list "SDET, TBD-".
+    - A **Planned hires** row under **Members** lists "SDET, TBD-" and its number, in grey italics, after a hollow dot, followed by "#HIRE-" and a number.
+    - Under it, in small grey text, it reads "No target date".
     - The **Publish** button reads "Publish 1 change".
   - **Notes:**
 
 - [ ] `2D6E` Select the change button in the **Feature lead** row, type `TBD-`, and choose "SDET, TBD-" and its number.
   - **Expected:**
-    - **Feature lead** reads "SDET, TBD-" and its number, in grey italics, after a hollow dot, followed by "#HIRE-" and a number, then a grey box reading "Planned, no target date".
-    - Under it, a line after a green dot reads 'Susan Corwin'.
+    - **Feature lead** reads "SDET, TBD-" and its number, in grey italics, after a hollow dot, followed by "#HIRE-" and a number.
+    - Under it, in small grey text, it reads "No target date".
+    - Under that, a line after a green dot reads 'Susan Corwin'.
   - **Notes:**
 
 - [ ] `E83A` Find the card that names 'Identity' on the chart.
@@ -553,11 +556,11 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
   - **Notes:**
 
 - [ ] `C9E1` Select the change button in the **Members** row, type `SDET, TBD`, select "SDET, TBD-" and its number, and press Enter.
-  - **Expected:** **Members** lists "SDET, TBD-" and its number last, after a hollow dot.
+  - **Expected:** **Planned hires** lists "SDET, TBD-" and its number, after a hollow dot.
   - **Notes:**
 
 - [ ] `0A5D` Select **Today**.
-  - **Expected:** The **Date** box shows today's date, and **Members** no longer lists "SDET, TBD-" and its number.
+  - **Expected:** The **Date** box shows today's date, and the team panel no longer lists "SDET, TBD-" and its number.
   - **Notes:**
 
 - [ ] `E5C0` Select the change button in the **Feature lead** row, type `SDET, TBD`, and choose "SDET, TBD-" and its number.
@@ -601,7 +604,7 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
 - [ ] `0F6A` Select the change button in the **Members** row, type `Platform engineer`, select it, and press Enter.
   - **Expected:**
     - No red line shows under **Members**.
-    - **Members** lists 'Platform engineer' last, in grey, after a hollow dot, followed by "#HIRE-" and a number, then, in grey, "from" and the date typed.
+    - **Planned hires** lists 'Platform engineer', after a hollow dot, followed by "#HIRE-" and a number, then, in grey, "from" and the date typed.
   - **Notes:**
 
 **Afterwards:** Run Discard the Unpublished Changes, then select **Today**.

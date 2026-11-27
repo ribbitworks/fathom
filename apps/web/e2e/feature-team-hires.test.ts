@@ -26,7 +26,10 @@ const openTeam = async (page: Page, name: string) => {
 };
 
 // A row of the team's details, by its label.
-const row = (panel: Locator, label: "Feature lead" | "Members") =>
+const row = (
+  panel: Locator,
+  label: "Feature lead" | "Members" | "Planned hires",
+) =>
   panel
     .getByRole("term")
     .getByText(label, { exact: true })
@@ -50,8 +53,11 @@ test("adds a planned hire to a team as a member, then makes it the lead, as one 
   await choose(page, "Members", /^SDET, TBD-/u);
   await page.keyboard.press("Enter");
 
-  // Then Members lists it
-  await expect(row(panel, "Members")).toContainText(/SDET, TBD-\d+/u);
+  // Then Planned hires lists it, with its draft's dot, and Members doesn't
+  await expect(row(panel, "Planned hires")).toContainText(
+    /SDET, TBD-\d+ #HIRE-\d+, added/u,
+  );
+  await expect(row(panel, "Members")).not.toContainText(/SDET/u);
 
   // When it is made the team's lead
   await choose(page, "Feature lead", /^SDET, TBD-/u);
@@ -70,11 +76,11 @@ test("makes a planned hire not on a team its lead straight away", async ({
   // When an unnamed planned hire is chosen as its lead
   await choose(page, "Feature lead", /^Engineering Manager, TBD-/u);
 
-  // Then it leads the team and is one of its members, in one draft
+  // Then it leads the team and is one of its planned hires, in one draft
   await expect(row(panel, "Feature lead")).toContainText(
     /Engineering Manager, TBD-\d+/u,
   );
-  await expect(row(panel, "Members")).toContainText(
+  await expect(row(panel, "Planned hires")).toContainText(
     /Engineering Manager, TBD-\d+/u,
   );
   await expect(publish(page)).toHaveText("Publish 1 change");
