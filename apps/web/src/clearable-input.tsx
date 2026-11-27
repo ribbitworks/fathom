@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A text field that shows an × to empty it while it holds any text, as Fathom's text fields do.
+// A text field that shows an × to empty it while it holds any text, as Fathom's text fields do, on
+// one line or, for text of several lines, in a box that grows with it.
 
-import { Group, Input, TextInput, type TextInputProps } from "@mantine/core";
+import {
+  Group,
+  Input,
+  Textarea,
+  type TextareaProps,
+  TextInput,
+  type TextInputProps,
+} from "@mantine/core";
 import { useMergedRef } from "@mantine/hooks";
 import { type ReactNode, type Ref, useRef } from "react";
 
@@ -63,6 +71,42 @@ export function ClearableInput({
         )
       }
       {...(besideShown ? { rightSectionWidth: besideWidth + clearWidth } : {})}
+    />
+  );
+}
+
+export function ClearableTextarea({
+  value,
+  onClear,
+  clearLabel,
+  ...props
+}: Omit<TextareaProps, "value" | "rightSection" | "autosize"> & {
+  value: string;
+  onClear: () => void;
+  // What the × is called, such as "Clear the note".
+  clearLabel: string;
+}) {
+  const field = useRef<HTMLTextAreaElement>(null);
+  return (
+    <Textarea
+      {...props}
+      ref={field}
+      value={value}
+      autosize
+      rightSection={
+        value === "" ? null : (
+          <Input.ClearButton
+            aria-label={clearLabel}
+            onMouseDown={(event) => {
+              event.preventDefault();
+            }}
+            onClick={() => {
+              onClear();
+              field.current?.focus();
+            }}
+          />
+        )
+      }
     />
   );
 }

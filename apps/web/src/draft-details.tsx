@@ -149,10 +149,8 @@ export function personDraftFields(
     // A choice may come from any list, as the column's may have changed.
     const column = { choices: lists.flatMap(({ choices }) => choices) };
     const kind = cellKinds[field?.type ?? "choice"];
-    // Every type of added column describes its values in a draft's details.
-    const inDetail = kind.inDetail as NonNullable<typeof kind.inDetail>;
     const words = (from: PersonDraft["live"]) =>
-      inDetail(column, kind.read(from, key));
+      kind.inDetail(column, kind.read(from, key));
     return [
       {
         key,

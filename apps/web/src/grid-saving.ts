@@ -4,6 +4,7 @@
 // records typed or pasted into new rows.
 
 import { draftsAtOnce } from "@fathom/shared";
+import { pastedCells } from "./pasted-cells.ts";
 import type { ClipboardEvent } from "react";
 import {
   columnsOn,
@@ -118,7 +119,7 @@ export function newRecordProblems<Rec extends GridRecord, Change>(
     : [{ message: whole.message, column }, ...inColumns];
 }
 
-// The new rows pasted text makes, from the given column across: one for each line, with each cell's
+// The new rows pasted text makes, from the given column across: one for each row, with each cell's
 // text matched to the column's choices by name, or taken as a web link's address, and any problem
 // found.
 export function pastedRows(
@@ -128,13 +129,12 @@ export function pastedRows(
   firstKey: number,
   kind = "",
 ): NewRow[] {
-  return text
-    .split(/\r?\n/)
-    .filter((line) => line.trim() !== "")
-    .map((line, index) => {
+  return pastedCells(text)
+    .filter((cells) => cells.some((cell) => cell.trim() !== ""))
+    .map((cells, index) => {
       const values: Record<string, CellValue> = {};
       let problem: string | undefined;
-      for (const [offset, cell] of line.split("\t").entries()) {
+      for (const [offset, cell] of cells.entries()) {
         const column = columns[from + offset];
         const content = cell.trim();
         if (

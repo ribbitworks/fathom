@@ -73,7 +73,7 @@ export function cellColumn<Rec extends CellRecord, Change extends CellChange>(
   key: string,
   kind: Kind,
   rest: Pick<Column<Rec>, "label" | "required" | "choices" | "multiple"> &
-    Partial<Pick<Column<Rec>, "field" | "maxLength">>,
+    Partial<Pick<Column<Rec>, "field" | "maxLength" | "multiline">>,
 ): Column<Rec, Change> {
   // The kind is always one of the fixed kinds.
   // eslint-disable-next-line security/detect-object-injection
@@ -288,9 +288,9 @@ export function keptForKind<Col extends AnyColumn>(
 export function breaksDown(
   column: Pick<AnyColumn, "required" | "kind" | "breaksDown">,
 ): boolean {
-  if (column.breaksDown !== undefined) return column.breaksDown;
-  const byKind = kindOf(column).breaksDown;
-  return byKind === "unless required" ? !column.required : byKind === "always";
+  const rule = column.breaksDown ?? kindOf(column).breaksDown;
+  if (typeof rule === "boolean") return rule;
+  return rule === "unless required" ? !column.required : rule === "always";
 }
 
 export const emptyValue = (column: { kind: Kind }): CellValue =>

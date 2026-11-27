@@ -6,6 +6,7 @@
 import type { Typing } from "@fathom/shared";
 import { Checkbox, Group, NativeSelect, Text } from "@mantine/core";
 import {
+  type KeyboardEvent,
   type ReactNode,
   useContext,
   useEffect,
@@ -14,10 +15,11 @@ import {
 } from "react";
 import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
-import { ClearableInput } from "./clearable-input.tsx";
+import { ClearableInput, ClearableTextarea } from "./clearable-input.tsx";
 import { composingWord } from "./composing.ts";
 import { focusSoon, selectSoon } from "./focus.ts";
 import { NewFormEnter } from "./new-form-enter.ts";
+import { startsLine } from "./editing-keys.ts";
 import { readOnlyFor } from "./grid-columns.tsx";
 import { valueChange } from "./grid-saving.ts";
 import { noteOpenFor } from "./note-address.ts";
@@ -103,6 +105,7 @@ export function ValueField({
   problem,
   text,
   maxLength,
+  multiline = false,
   asTyped,
   onText,
   onEnter,
@@ -116,6 +119,7 @@ export function ValueField({
   problem?: string | undefined;
   text: string;
   maxLength?: number | undefined;
+  multiline?: boolean | undefined;
   asTyped?: ((typing: Typing) => Typing) | undefined;
   onText: (text: string) => void;
   onEnter: () => void;
@@ -123,35 +127,47 @@ export function ValueField({
   onCancel?: (() => void) | undefined;
   onLeave?: (() => void) | undefined;
 }) {
-  return (
-    <ClearableInput
-      id={id}
-      size="sm"
-      aria-label={label}
-      clearLabel={clearLabel}
-      placeholder={hint}
-      maxLength={maxLength}
-      onClear={() => {
-        onText("");
+  const field = {
+    id,
+    size: "sm",
+    "aria-label": label,
+    clearLabel,
+    placeholder: hint,
+    maxLength,
+    onClear: () => {
+      onText("");
+    },
+    error: problem,
+    value: text,
+    onKeyDown: (event: KeyboardEvent) => {
+      if (composingWord(event)) return;
+      if (event.key === "Escape" && onCancel !== undefined) {
+        event.preventDefault();
+        onCancel();
+      } else if (event.key === "Enter" && !startsLine(event, { multiline })) {
+        event.preventDefault();
+        onEnter();
+      }
+    },
+    onBlur: onLeave,
+  };
+  return multiline ? (
+    <ClearableTextarea
+      {...field}
+      classNames={{ input: classes.linesInput, section: classes.linesClear }}
+      minRows={2}
+      onChange={(event) => {
+        onText(event.currentTarget.value);
       }}
-      error={problem}
-      value={text}
+    />
+  ) : (
+    <ClearableInput
+      {...field}
       autoComplete="off"
       onChange={(event) => {
         const box = event.currentTarget;
         onText(asTyped === undefined ? box.value : typeIn(box, asTyped));
       }}
-      onKeyDown={(event) => {
-        if (composingWord(event)) return;
-        if (event.key === "Escape" && onCancel !== undefined) {
-          event.preventDefault();
-          onCancel();
-        } else if (event.key === "Enter") {
-          event.preventDefault();
-          onEnter();
-        }
-      }}
-      onBlur={onLeave}
     />
   );
 }
@@ -200,6 +216,7 @@ function TextEditor({
       hint={hint}
       problem={problem}
       text={text}
+      multiline={column.multiline}
       asTyped={asTyped}
       onText={setTyped}
       onEnter={() => {

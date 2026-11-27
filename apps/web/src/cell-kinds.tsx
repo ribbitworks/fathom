@@ -25,6 +25,7 @@ import {
   typedInPlace,
   typedMonth,
   typedNumber,
+  tidiedText,
   type OptionalColumnValueMap,
   type SomeRequestedColumnValues,
   type Typing,
@@ -71,8 +72,9 @@ type AnyColumn = Pick<
   // told otherwise.
   pickable?: ((choice: Choice) => boolean) | undefined;
   required: boolean;
-  // For text columns: the most characters a value may hold.
+  // For text columns: the most characters a value may hold, and whether it may hold several lines.
   maxLength?: number | undefined;
+  multiline?: boolean | undefined;
   // For number columns: the least and most a value may be.
   least?: number | undefined;
   most?: number | undefined;
@@ -130,9 +132,9 @@ export interface CellKind {
   empty: CellValue;
   read: (source: CellSource, key: string) => CellValue;
   inWords: (column: Choices, value: CellValue) => string;
-  // A value as a draft's details show it, beside the change history, when it differs from the cell:
-  // choices as their names, and a link's address whole.
-  inDetail?: (column: Choices, value: CellValue) => ChangeValue;
+  // A value as a draft's details show it, beside the change history: choices as their names, a link's
+  // address whole, a day in words.
+  inDetail: (column: Choices, value: CellValue) => ChangeValue;
   // What is wrong with a value besides its being needed, if anything.
   problem: (column: AnyColumn, value: CellValue) => string | undefined;
   // For a kind that saves apart from a record's own fields: how it reads and saves when it is held
@@ -184,9 +186,8 @@ const detail = (source: CellSource, key: string): string => {
   return typeof held === "string" ? held : "";
 };
 
-// Text and dates are held as text.
-
-const text: CellKind = {
+// Text and dates are held as text, as details of the record itself, each kind saving its own way.
+const detailText: Omit<CellKind, "change" | "inDetail"> = {
   empty: "",
   read: detail,
   inWords: (_column, value) => asText(value),
@@ -196,10 +197,31 @@ const text: CellKind = {
       ? `${column.label} is too long`
       : undefined,
   pasted: (_column, content) => ({ value: content }),
-  change: (key, value) => ({ [key]: asText(value).trim() }),
   width: (_column, longestText) => longestText,
   measured: true,
   breaksDown: "never",
+};
+
+// A text column's text is held in its record's texts, and a detail held as text as a field of the
+// record itself. Only a column of several lines keeps line breaks.
+const text: CellKind = {
+  ...detailText,
+  // The key is a column's own.
+  // eslint-disable-next-line security/detect-object-injection
+  read: (source, key) => source.texts?.[key] ?? "",
+  inDetail: (_column, value) => asText(value),
+  ownField: {
+    read: (held) => (typeof held === "string" ? held : ""),
+    save: (value) => asText(value).trim(),
+  },
+  problem: (column, value) =>
+    column.multiline !== true && asText(value).trim().includes("\n")
+      ? `${column.label}: use one line`
+      : detailText.problem(column, value),
+  change: (key, value) => {
+    const kept = tidiedText(asText(value));
+    return { texts: { [key]: kept === "" ? null : kept } };
+  },
 };
 
 const twelveMonths = Array.from(
@@ -231,7 +253,7 @@ function calendarKind({
   const shown = (_column: Choices, value: CellValue) =>
     isWhole(asText(value)) ? inWords(asText(value)) : asText(value);
   return {
-    ...text,
+    ...detailText,
     inWords: shown,
     // A draft's details show it in words too, rather than as kept.
     inDetail: shown,
@@ -300,7 +322,7 @@ const numberInWords = (column: Choices, held: number) =>
     : `${numberShown(column, held)} ${column.unit.code}`;
 
 const number: CellKind = {
-  ...text,
+  ...detailText,
   breaksDown: "unless required",
   read: (source, key) => {
     // The key is a column's own.

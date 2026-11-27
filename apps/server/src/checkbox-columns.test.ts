@@ -4,29 +4,16 @@
 // Features, the boxes people, planned hires and features have ticked, drafting and approving them,
 // how the change history shows them, and who sees them.
 
-import { accessHistory, fieldValues } from "@fathom/db";
-import type {
-  ChangeHistory,
-  Feature,
-  Field,
-  Hire,
-  Person,
-  ProjectPlan,
-} from "@fathom/shared";
-import { startingRoles } from "@fathom/shared";
-import { and, eq } from "drizzle-orm";
+import { fieldValues } from "@fathom/db";
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { rolesGranting } from "./access.ts";
+import { errorOf, startTestApp, type TestApp, unique } from "./test-app.ts";
 import {
-  errorOf,
-  generalReader,
-  ok,
-  sender,
-  startTestApp,
-  type TestApp,
-  testPosition,
-  unique,
-} from "./test-app.ts";
+  addedColumnTests,
+  type ColumnKind,
+  describeClassedColumn,
+  describeColumnValues,
+} from "./test-added-columns.ts";
 
 let test: TestApp;
 
@@ -38,55 +25,25 @@ afterAll(async () => {
   await test.close();
 });
 
-const editor = () => test.signedIn("workforce-administrator");
+const checkbox: ColumnKind = {
+  type: "flag",
+  map: "flags",
+  name: "Fictional First Aider",
+  value: true,
+  changed: null,
+  inHistory: true,
+  noneInHistory: false,
+};
 
-const send = sender(() => test);
-
-async function checkboxColumn(
-  cookie: string,
-  settings: { visibility?: string; table?: string } = {},
-): Promise<Field> {
-  const { field } = await ok<{ field: Field }>(
-    await send(cookie, "POST", `/api/${settings.table ?? "people"}/columns`, {
-      name: unique("Fictional First Aider"),
-      type: "flag",
-      visibility: settings.visibility ?? "general",
-      onPlannedHires: settings.table === undefined,
-    }),
-    201,
-  );
-  await test.approveLists();
-  return field;
-}
-
-async function addedId(cookie: string, flags: object = {}) {
-  const { ids } = await ok<{ ids: string[] }>(
-    await send(cookie, "POST", "/api/people", {
-      people: [
-        {
-          preferredName: unique("Fictional Person"),
-          employeeId: unique("F"),
-          positionId: testPosition,
-          flags,
-        },
-      ],
-    }),
-    201,
-  );
-  return String(ids[0]);
-}
-
-async function approve(body: object) {
-  const { cookie } = await test.signedIn("engineering-director");
-  await ok(await send(cookie, "POST", "/api/drafts/approval", body));
-}
-
-async function readPerson(cookie: string, id: string) {
-  const { people } = await ok<{ people: Person[] }>(
-    await send(cookie, "GET", "/api/people"),
-  );
-  return people.find((person) => person.id === id);
-}
+const {
+  send,
+  editor,
+  column: checkboxColumn,
+  addedId,
+  approve,
+  readPerson,
+  historyFields,
+} = addedColumnTests(() => test, checkbox);
 
 const flagRows = (fieldId: string) =>
   test.connection
@@ -157,24 +114,6 @@ describe("people's boxes", () => {
     expect(saved.json()).toEqual({ changeSetId: null });
   });
 
-  it("refuse a box in another type of column", async () => {
-    const { cookie } = await editor();
-    const { field } = await ok<{ field: Field }>(
-      await send(cookie, "POST", "/api/people/columns", {
-        name: unique("Fictional Notes"),
-        type: "note",
-        visibility: "general",
-      }),
-      201,
-    );
-    await test.approveLists();
-    const id = await addedId(cookie);
-    const response = await send(cookie, "PATCH", `/api/people/${id}`, {
-      flags: { [field.id]: true },
-    });
-    expect(errorOf(response)).toBe("There is no such column");
-  });
-
   it("are recorded in the change history as ticked, then unticked", async () => {
     const { cookie } = await editor();
     const field = await checkboxColumn(cookie);
@@ -186,12 +125,9 @@ describe("people's boxes", () => {
     };
     await changed({ [field.id]: true });
     await changed({ [field.id]: null });
-    const history = await ok<ChangeHistory>(
-      await send(cookie, "GET", "/api/changes"),
+    const boxes = (await historyFields(cookie)).filter(
+      ({ column }) => column === field.name,
     );
-    const boxes = history.entries
-      .flatMap((entry) => entry.records.flatMap((record) => record.fields))
-      .filter(({ column }) => column === field.name);
     expect(boxes).toContainEqual({
       field: "value",
       column: field.name,
@@ -205,256 +141,7 @@ describe("people's boxes", () => {
       newValue: false,
     });
   });
-
-  it("come back ticked when unticking is undone", async () => {
-    const { cookie } = await editor();
-    const { id: fieldId } = await checkboxColumn(cookie);
-    const id = await addedId(cookie, { [fieldId]: true });
-    await approve({ people: [id] });
-    const { changeSetId } = await ok<{ changeSetId: string }>(
-      await send(cookie, "PATCH", `/api/people/${id}`, {
-        flags: { [fieldId]: null },
-      }),
-    );
-    await ok(await send(cookie, "POST", `/api/undo/${changeSetId}`));
-    const person = await readPerson(cookie, id);
-    expect(person?.flags).toEqual({ [fieldId]: true });
-    expect(person?.draft).toBeUndefined();
-  });
-
-  it("are recorded as unticked when their column is deleted", async () => {
-    const { cookie } = await editor();
-    const field = await checkboxColumn(cookie);
-    const id = await addedId(cookie, { [field.id]: true });
-    await approve({ people: [id] });
-    await ok(await send(cookie, "DELETE", `/api/people/columns/${field.id}`));
-    await test.approveLists();
-    const history = await ok<ChangeHistory>(
-      await send(cookie, "GET", "/api/changes"),
-    );
-    const removed = history.entries[0]?.records.find(
-      ({ kind }) => kind === "person",
-    );
-    expect(removed?.fields).toEqual([
-      { field: "value", column: field.name, oldValue: true, newValue: false },
-    ]);
-    expect(await flagRows(field.id)).toEqual([]);
-  });
 });
 
-describe("planned hires' boxes", () => {
-  it("are kept, and shown live beside a draft", async () => {
-    const { cookie } = await editor();
-    const { id: fieldId } = await checkboxColumn(cookie);
-    const { ids } = await ok<{ ids: string[] }>(
-      await send(cookie, "POST", "/api/planned-hires", {
-        hires: [
-          {
-            positionId: testPosition,
-            targetDate: "2099-03-15",
-            flags: { [fieldId]: true },
-          },
-        ],
-      }),
-      201,
-    );
-    const id = String(ids[0]);
-    await approve({ plannedHires: [id] });
-    await send(cookie, "PATCH", `/api/planned-hires/${id}`, {
-      flags: { [fieldId]: null },
-    });
-    const { hires } = await ok<{ hires: Hire[] }>(
-      await send(cookie, "GET", "/api/planned-hires"),
-    );
-    const hire = hires.find((one) => one.id === id);
-    expect(hire?.flags).toEqual({});
-    expect(hire?.draft?.live.flags).toEqual({ [fieldId]: true });
-  });
-
-  it("are refused on a column not offered on planned hires", async () => {
-    const { cookie } = await editor();
-    const { field } = await ok<{ field: Field }>(
-      await send(cookie, "POST", "/api/people/columns", {
-        name: unique("Fictional Fire Warden"),
-        type: "flag",
-        visibility: "general",
-        onPlannedHires: false,
-      }),
-      201,
-    );
-    await test.approveLists();
-    const response = await send(cookie, "POST", "/api/planned-hires", {
-      hires: [
-        {
-          positionId: testPosition,
-          targetDate: "2099-03-15",
-          flags: { [field.id]: true },
-        },
-      ],
-    });
-    expect(errorOf(response)).toBe(
-      `${field.name} is switched off for planned hires`,
-    );
-  });
-});
-
-describe("features' boxes", () => {
-  it("are kept with the feature, and shown live beside its draft", async () => {
-    const editsFeatures = await test.signedIn([
-      ...startingRoles["workforce-administrator"].permissions,
-      "features:edit",
-    ]);
-    const { id: fieldId } = await checkboxColumn(editsFeatures.cookie, {
-      table: "features",
-    });
-    const planner = await test.signedIn("product-manager");
-    const name = unique("Fictional Feature");
-    const { plan } = await ok<{ plan: ProjectPlan }>(
-      await send(planner.cookie, "POST", "/api/features", {
-        records: [{ name, flags: { [fieldId]: true } }],
-      }),
-      201,
-    );
-    const feature = plan.features.find((one) => one.name === name) as Feature;
-    expect(feature.flags).toEqual({ [fieldId]: true });
-    expect(feature.draft?.live.flags).toEqual({});
-  });
-});
-
-describe("who sees a Confidential checkbox column", () => {
-  let field: Field;
-  let tickedId = "";
-  let untickedId = "";
-  let hireId = "";
-
-  // A person with the box ticked, one whose draft unticks it, and a planned hire with it ticked.
-  beforeAll(async () => {
-    const { cookie } = await editor();
-    field = await checkboxColumn(cookie, { visibility: "confidential" });
-    tickedId = await addedId(cookie, { [field.id]: true });
-    untickedId = await addedId(cookie, { [field.id]: true });
-    const { ids } = await ok<{ ids: string[] }>(
-      await send(cookie, "POST", "/api/planned-hires", {
-        hires: [
-          {
-            positionId: testPosition,
-            targetDate: "2099-03-15",
-            flags: { [field.id]: true },
-          },
-        ],
-      }),
-      201,
-    );
-    hireId = String(ids[0]);
-    await approve({ people: [tickedId, untickedId], plannedHires: [hireId] });
-    await send(cookie, "PATCH", `/api/people/${untickedId}`, {
-      flags: { [field.id]: null },
-    });
-    await send(cookie, "POST", "/api/unpublished/publish", {});
-  });
-
-  it.each(rolesGranting("people:view"))(
-    "a %s, a role that sees people, sees its boxes, live and in a draft, only if the role sees Confidential data",
-    async (role) => {
-      const { cookie } = await test.signedIn(role);
-      const sees = rolesGranting("confidential:view").includes(role);
-      const ticked = await readPerson(cookie, tickedId);
-      const unticked = await readPerson(cookie, untickedId);
-      expect(field.id in (ticked?.flags ?? {})).toBe(sees);
-      expect(field.id in (unticked?.draft?.live.flags ?? {})).toBe(sees);
-    },
-  );
-
-  it("leaves a planned hire's box out of the placeholder a role without the class sees", async () => {
-    const { cookie: planner } = await test.signedIn(generalReader);
-    const { hires } = await ok<{ hires: Hire[] }>(
-      await send(planner, "GET", "/api/planned-hires"),
-    );
-    expect(hires.find(({ id }) => id === hireId)?.flags).toEqual({});
-    const { cookie } = await editor();
-    const shown = await ok<{ hires: Hire[] }>(
-      await send(cookie, "GET", "/api/planned-hires"),
-    );
-    expect(shown.hires.find(({ id }) => id === hireId)?.flags).toEqual({
-      [field.id]: true,
-    });
-  });
-
-  it.each(rolesGranting("plan:view"))(
-    "a %s, a role that sees the change history, sees changes to its boxes only if the role sees Confidential data",
-    async (role) => {
-      const { cookie } = await test.signedIn(role);
-      const history = await ok<ChangeHistory>(
-        await send(cookie, "GET", "/api/changes"),
-      );
-      const columns = history.entries.flatMap((entry) =>
-        entry.records.flatMap((record) =>
-          record.fields.map(({ column }) => column),
-        ),
-      );
-      expect(columns.includes(field.name)).toBe(
-        rolesGranting("confidential:view").includes(role),
-      );
-    },
-  );
-
-  it("records a Confidential reader's view of its changes in the access history", async () => {
-    const reader = await test.signedIn([
-      "plan:view",
-      "people:view",
-      "confidential:view",
-    ]);
-    await ok(await send(reader.cookie, "GET", "/api/changes"));
-    const viewed = await test.connection
-      .select({ action: accessHistory.action })
-      .from(accessHistory)
-      .where(eq(accessHistory.actorId, reader.id));
-    expect(viewed.map(({ action }) => action)).toContain("personal-viewed");
-  });
-
-  it("is named as Confidential when exported", async () => {
-    const reader = await test.signedIn(["people:view", "confidential:view"]);
-    await ok(
-      await send(reader.cookie, "POST", "/api/exports", {
-        table: "people",
-        columns: ["preferredName", field.id],
-      }),
-    );
-    const [entry] = await test.connection
-      .select({ details: accessHistory.details })
-      .from(accessHistory)
-      .where(
-        and(
-          eq(accessHistory.actorId, reader.id),
-          eq(accessHistory.action, "data-exported"),
-        ),
-      );
-    expect(entry?.details).toEqual({
-      exported: "People",
-      confidentialColumns: [field.name],
-    });
-  });
-
-  it("refuses a box from someone who may change people but not Confidential data", async () => {
-    const who = await test.signedIn(["people:edit", "people:view"]);
-    const response = await send(
-      who.cookie,
-      "PATCH",
-      `/api/people/${tickedId}`,
-      {
-        flags: { [field.id]: null },
-      },
-    );
-    expect(response.statusCode).toBe(403);
-  });
-
-  it("refuses a box from someone signed out", async () => {
-    const response = await test.app.inject({
-      method: "PATCH",
-      url: `/api/people/${tickedId}`,
-      headers: { origin: "https://fathom.example.test" },
-      payload: { flags: { [field.id]: null } },
-    });
-    expect(response.statusCode).toBe(401);
-  });
-});
+describeColumnValues(() => test, checkbox);
+describeClassedColumn(() => test, checkbox, "confidential");

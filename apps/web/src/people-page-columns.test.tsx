@@ -180,6 +180,18 @@ describe("columns", () => {
     );
   });
 
+  it("lists the types Fathom offers, in order", async () => {
+    await openPeople();
+    expect(await optionsIn(await newColumnDialog(), "Type")).toEqual([
+      "Text",
+      "Number",
+      "Checkbox",
+      "Choice from a list",
+      "Web link",
+      "Note",
+    ]);
+  });
+
   it("opens the Type list on Enter, rather than adding the column", async () => {
     await openPeople();
     const dialog = await newColumnDialog();

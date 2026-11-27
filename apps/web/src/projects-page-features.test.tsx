@@ -551,6 +551,7 @@ describe("the Features page", () => {
         notes: {},
         numbers: {},
         flags: {},
+        texts: {},
         target: null,
       },
     ]);
@@ -594,6 +595,7 @@ describe("the Features page", () => {
             notes: {},
             numbers: {},
             flags: {},
+            texts: {},
             target: null,
           },
         ],

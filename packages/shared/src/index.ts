@@ -359,6 +359,7 @@ export {
   requestedNumbersSchema,
   type SomeColumnValues,
   type SomeRequestedColumnValues,
+  type Texts,
 } from "./column-values.ts";
 export { allOf, eitherOf } from "./words.ts";
 export {
@@ -398,6 +399,13 @@ export {
   numberSample,
   typeFor,
 } from "./refusal-words.ts";
+export {
+  textLimit,
+  textLimits,
+  textProblem,
+  textValueSchema,
+  tidiedText,
+} from "./text-values.ts";
 export {
   defaultEffortUnit,
   type EffortConversions,

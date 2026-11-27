@@ -10,6 +10,7 @@ import {
   isLink,
   isNumberValue,
   noColumnValues,
+  textProblem,
   type Tier,
 } from "@fathom/shared";
 import type { fieldValues } from "@fathom/db";
@@ -21,8 +22,9 @@ export interface TypeSettings {
   listId: string | null;
   visibility: Tier | null;
   multiple: boolean;
-  // Settings of types not offered yet, which every type offered leaves unset.
-  multiline: false;
+  // False for every type but text.
+  multiline: boolean;
+  // A setting of a type not offered yet, which every type offered leaves unset.
   linkedTable: null;
 }
 
@@ -49,7 +51,7 @@ export interface ColumnType {
   // Whether a recorded value fits the column, other than whether one is required, given the list
   // each choice belongs to.
   fits: (
-    settings: Pick<TypeSettings, "listId" | "multiple">,
+    settings: Pick<TypeSettings, "listId" | "multiple" | "multiline">,
     value: unknown,
     listOf: ReadonlyMap<string, string>,
   ) => boolean;
@@ -180,12 +182,50 @@ const flag: ColumnType = {
   rows: (value) => (isFlag(value) ? [{ flag: value }] : []),
 };
 
+// A text is recorded as an object, so it is never taken for a note, which is recorded as its own
+// string.
+interface TextValue {
+  text: string;
+}
+
+export const isText = (value: unknown): value is TextValue =>
+  typeof value === "object" &&
+  value !== null &&
+  Object.keys(value).length === 1 &&
+  "text" in value &&
+  typeof value.text === "string" &&
+  value.text !== "";
+
+const textVisibility = withOwnVisibility("text");
+
+const text: ColumnType = {
+  type: "text",
+  ...textVisibility,
+  settings: (field) => ({
+    ...textVisibility.settings(field),
+    multiline: field.multiline === true,
+  }),
+  count: (value) => (isText(value) ? 1 : 0),
+  fits: ({ multiline }, value) =>
+    isNone(value) ||
+    (isText(value) && textProblem(value.text, multiline) === undefined),
+  showLive: (live, columnId, value) => {
+    if (isText(value)) {
+      // The column is the person's own, named by their draft.
+      // eslint-disable-next-line security/detect-object-injection
+      live.texts[columnId] = value.text;
+    }
+  },
+  rows: (value) => (isText(value) ? [{ text: value.text }] : []),
+};
+
 export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
   choice,
   link,
   note,
   number,
   flag,
+  text,
 };
 
 // The type of column that holds a recorded value, which the value says, or undefined for none.

@@ -42,15 +42,6 @@
   background: currentColor;
 }
 
-.visuallyHidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 /* An optional field's label. */
 .optional {
   color: var(--mantine-color-dimmed);
@@ -195,6 +186,8 @@
   background: var(--mantine-color-body);
   color: inherit;
   font: inherit;
+  /* What is typed is regular, even in a drafted cell, whose value is semibold. */
+  font-weight: 400;
   line-height: 20px;
   resize: none;
   field-sizing: content;
@@ -346,8 +339,8 @@ select.cellInput {
    to scroll, slim, in the page's greys, so a wide view is seen to have more, even where the system
    hides scroll bars until used. Chrome, Edge and Safari keep a scroll bar shown once it is styled
    this way; Firefox takes the standard properties instead, which in Chrome would turn the styling
-   below off. Each contains the visually hidden text of what it scrolls, such as a cell's or a card's
-   words for screen readers, which would otherwise reach past it and stretch the page. */
+   below off. Each holds what it scrolls, the words only screen readers hear included, which the theme
+   pins to their own item, as visually-hidden.module.css sets out. */
 .scrollBars {
   position: relative;
 }
@@ -617,6 +610,10 @@ th[data-centred] .headerMarks:empty {
   white-space: nowrap;
   vertical-align: top;
   outline: none;
+  /* Holds the words only screen readers hear, which the theme pins to their own item, so they sit
+     at the cell rather than at the top of a long table. A frozen cell is sticky instead, which holds
+     them too. */
+  position: relative;
 
   /* As tall as the editor, so a value sits in the middle of its row, where its editor opens. */
   line-height: var(--fathom-cell-editor-height);
@@ -1121,7 +1118,11 @@ th.liveColumn {
   background: var(--mantine-color-body);
   color: inherit;
   font: inherit;
+  /* What is typed is regular, even in a drafted cell, whose value is semibold. */
+  font-weight: 400;
   line-height: 20px;
+  /* A value of several lines keeps to the cell's one line, scrolling within it. */
+  resize: none;
 }
 
 .recordEditor:focus {

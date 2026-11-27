@@ -123,9 +123,9 @@ export async function seenColumns(
 }
 
 const columnOut = (column: ColumnInfo): PrivateColumn => {
-  const { type, listId, visibility, multiple } = typeOf(column).settings({
-    ...column,
-  });
+  const { type, listId, visibility, multiple, multiline } = typeOf(
+    column,
+  ).settings({ ...column });
   return {
     id: column.id,
     name: column.name,
@@ -133,6 +133,7 @@ const columnOut = (column: ColumnInfo): PrivateColumn => {
     listId,
     visibility,
     multiple,
+    ...(multiline ? { multiline } : {}),
   };
 };
 

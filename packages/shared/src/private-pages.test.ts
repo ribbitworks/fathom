@@ -106,6 +106,15 @@ describe("privatePageRequestSchema", () => {
     ).toEqual(["Add a column to name each row"]);
   });
 
+  it("takes a text column first, to name each row", () => {
+    expect(
+      privatePageRequestSchema.safeParse({
+        name: "Reading list",
+        columns: [{ name: "Title", type: "text", visibility: "general" }],
+      }).success,
+    ).toBe(true);
+  });
+
   it("refuses a first column of a type that cannot name a row", () => {
     expect(
       messages(

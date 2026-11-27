@@ -49,6 +49,7 @@ import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   DraftedItem,
   DraftedValue,
+  EmptiedValue,
   MarkedItem,
   MarkRow,
   useBesideLive,
@@ -78,12 +79,19 @@ type DetailColumn = Pick<
   | "required"
   | "emptyLabel"
   | "choiceColour"
+  | "multiline"
 >;
 
-// A value as it was before a draft changed it, for its draft's tip; none for a note or a link,
-// whose words a tip cannot hold.
+// A value as it was before a draft changed it, for its draft's tip; none for a note, a link or text
+// of several lines, whose words a tip cannot hold.
 function liveWords(column: DetailColumn, value: unknown): Was | undefined {
-  if (column.kind === "note" || column.kind === "link") return undefined;
+  if (
+    column.kind === "note" ||
+    column.kind === "link" ||
+    column.multiline === true
+  ) {
+    return undefined;
+  }
   const kind = cellKinds[column.kind];
   return wasWords(
     kind.inWords(column, value as Parameters<typeof kind.inWords>[1]),
@@ -113,9 +121,7 @@ function Value({
 }) {
   const kind = cellKinds[column.kind];
   const none = drafted ? (
-    <Text c="dimmed" fs="italic">
-      {emptiedWords(column.label, column.emptyLabel)}
-    </Text>
+    <EmptiedValue name={column.label} emptyLabel={column.emptyLabel} />
   ) : (
     <Text c="dimmed">{column.emptyLabel ?? "None"}</Text>
   );
@@ -144,7 +150,7 @@ function Value({
     ) : (
       <Stack gap={2}>
         {coloured.map(({ id, name, colour }) => (
-          <Text key={id}>
+          <Text key={id} inherit>
             <ColouredName colour={colour}>{name}</ColouredName>
           </Text>
         ))}
@@ -155,7 +161,16 @@ function Value({
     column,
     value as Parameters<typeof kind.inWords>[1],
   );
-  return words === "" ? none : <Text>{words}</Text>;
+  if (words === "") return none;
+  return (
+    // Inherits the row's weight, so a value a draft changes is semibold, as in its table's cell.
+    <Text
+      inherit
+      className={column.multiline === true ? classes.lines : undefined}
+    >
+      {words}
+    </Text>
+  );
 }
 
 // A value with a unit in words, the unit spelled out, as a panel has room to, such as 1 person-week,

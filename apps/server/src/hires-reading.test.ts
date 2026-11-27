@@ -68,6 +68,7 @@ const placeholderKeys = [
   "requisition",
   "stateId",
   "temporaryId",
+  "texts",
   "values",
 ];
 

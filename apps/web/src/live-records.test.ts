@@ -4,12 +4,8 @@
 
 import { describe, expect, it } from "vitest";
 import { countedRecords, liveFields } from "./live-records.ts";
-import {
-  gadget,
-  gadgetColumns,
-  liveGadgets,
-  waiting,
-} from "./test-support.tsx";
+import { waiting } from "./test-support.tsx";
+import { gadget, gadgetColumns, liveGadgets } from "./test-gadgets.tsx";
 
 describe("the records as they are live", () => {
   it("leave out those only drafted to be added, and put back each detail and column a draft changes", () => {

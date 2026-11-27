@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of what every page shares through the theme: its drop-down lists, Selects, dialogs and
-// menus.
+// Tests of what every page shares through the theme: its drop-down lists, Selects, dialogs, menus
+// and words only screen readers hear.
 
 import {
   Combobox,
@@ -11,6 +11,7 @@ import {
   Popover,
   Select,
   useCombobox,
+  VisuallyHidden,
 } from "@mantine/core";
 import { render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -18,6 +19,7 @@ import { describe, expect, it } from "vitest";
 import comboboxClasses from "./combobox.module.css";
 import overlayClasses from "./overlay.module.css";
 import { testTheme } from "./test-support.tsx";
+import visuallyHiddenClasses from "./visually-hidden.module.css";
 
 function OpenList() {
   const store = useCombobox({ opened: true });
@@ -216,5 +218,18 @@ describe("menus, popovers and drop-down lists", () => {
       marked(screen.getByText("Inside")),
       marked(screen.getByRole("option", { name: "Alpha" })),
     ]).toEqual([true, true, true]);
+  });
+});
+
+describe("words only screen readers hear", () => {
+  it("are pinned to the item holding them, so they never stretch a frame or the page", () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <VisuallyHidden>, draft</VisuallyHidden>
+      </MantineProvider>,
+    );
+    expect(screen.getByText(", draft").classList).toContain(
+      visuallyHiddenClasses.root,
+    );
   });
 });

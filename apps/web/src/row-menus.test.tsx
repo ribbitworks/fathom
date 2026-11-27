@@ -16,18 +16,15 @@ import { describe, expect, it, vi } from "vitest";
 import { RecordGrid } from "./record-grid.tsx";
 import type { RecordActions, RecordTable } from "./record-table.ts";
 import { type View, emptyView } from "./table-view.ts";
+import { noop, rowActions, testTheme, waiting } from "./test-support.tsx";
 import {
   type Gadget,
   type GadgetChange,
   actions,
   gadget,
   gadgetTable,
-  noop,
   renderGadgets,
-  rowActions,
-  testTheme,
-  waiting,
-} from "./test-support.tsx";
+} from "./test-gadgets.tsx";
 
 describe("the row's controls", () => {
   const withDetails = (showDetails: (one: Gadget) => void) => ({

@@ -63,8 +63,8 @@ describe("a date in a draft's details", () => {
   it("is given in words, and as typed when it is no date", () => {
     const column = milestoneColumn("date");
     expect([
-      cellKinds.date.inDetail?.(column, "2027-03-26"),
-      cellKinds.date.inDetail?.(column, "soon"),
+      cellKinds.date.inDetail(column, "2027-03-26"),
+      cellKinds.date.inDetail(column, "soon"),
     ]).toEqual(["Mar 26, 2027", "soon"]);
   });
 });

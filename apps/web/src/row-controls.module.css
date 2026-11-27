@@ -42,8 +42,6 @@ td:has(> .rowControls) {
     var(--row-controls-count) * var(--fathom-small-button-size) +
       var(--row-controls-count) * 2px + 4px
   );
-
-  position: relative;
 }
 
 td:has(> .rowControls > :nth-child(1)) {

@@ -7,6 +7,7 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { RecordActions } from "./record-table.ts";
 import { formatDay } from "./day-formats.ts";
+import { recordCell } from "./test-support.tsx";
 import {
   type Gadget,
   type GadgetChange,
@@ -15,10 +16,9 @@ import {
   gadgetTable,
   nameThen,
   nextColumn,
-  recordCell,
   renderGadgets,
   site,
-} from "./test-support.tsx";
+} from "./test-gadgets.tsx";
 
 describe("Tab across a new row", () => {
   const typeNameAndTab = async () => {

@@ -1,0 +1,11 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* Where words only screen readers hear sit: at the top left of the item that holds them. */
+
+/* Rather than after the text they follow, so a value cut short in a cell, or far down a panel that
+   scrolls, never widens or lengthens the frame or the page. A table's cell and a details panel's
+   value hold their own, so a screen reader's cursor stays at the item it reads. */
+.root {
+  top: 0;
+  left: 0;
+}

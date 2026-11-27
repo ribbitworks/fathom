@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for what each type of column on People keeps and holds, apart from the database: the
-// settings, tier, values, and live values of choice, web link, note, number, and checkbox columns.
+// settings, tier, values, and live values of choice, web link, note, number, checkbox and text
+// columns.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -70,7 +71,11 @@ describe("choice columns", () => {
 
   it("hold several choices when they take several", () => {
     expect(
-      choice.fits({ listId: "l1", multiple: true }, ["c1", "c2"], listOf),
+      choice.fits(
+        { listId: "l1", multiple: true, multiline: false },
+        ["c1", "c2"],
+        listOf,
+      ),
     ).toBe(true);
   });
 
@@ -199,7 +204,7 @@ describe("note columns", () => {
 
 describe("number columns", () => {
   const number = columnTypes.number;
-  const settings = { listId: null, multiple: false };
+  const settings = { listId: null, multiple: false, multiline: false };
 
   it("have a visibility of their own, as their tier", () => {
     expect(number.settings({ visibility: "personal" })).toEqual({
@@ -241,7 +246,7 @@ describe("number columns", () => {
 
 describe("checkbox columns", () => {
   const { flag } = columnTypes;
-  const settings = { listId: null, multiple: false };
+  const settings = { listId: null, multiple: false, multiline: false };
 
   it("have a visibility of their own, as their tier", () => {
     expect(flag.settings({ visibility: "personal" })).toEqual({
@@ -280,6 +285,56 @@ describe("checkbox columns", () => {
   });
 });
 
+describe("text columns", () => {
+  const { text } = columnTypes;
+  const oneLine = text.settings({ visibility: "general" });
+  const severalLines = text.settings({
+    visibility: "general",
+    multiline: true,
+  });
+
+  it("have a visibility of their own, and one line unless set to several", () => {
+    expect(oneLine).toEqual({
+      type: "text",
+      listId: null,
+      visibility: "general",
+      multiple: false,
+      multiline: false,
+      linkedTable: null,
+    });
+    expect(severalLines.multiline).toBe(true);
+  });
+
+  it.each([
+    [{ text: "North 4-12" }, true, true],
+    [{ text: "North\nwing" }, false, true],
+    [{ text: "x".repeat(200) }, true, true],
+    [{ text: "x".repeat(201) }, false, true],
+    [{ text: "x".repeat(2001) }, false, false],
+    [{ text: "" }, false, false],
+    [undefined, true, true],
+    [[], true, true],
+    ["North 4-12", false, false],
+    [link, false, false],
+  ])("hold %j: on one line %s, on several %s", (value, onOne, onSeveral) => {
+    expect(text.fits(oneLine, value, new Map())).toBe(onOne);
+    expect(text.fits(severalLines, value, new Map())).toBe(onSeveral);
+  });
+
+  it("count one text, and never a note", () => {
+    expect(text.count({ text: "North 4-12" })).toBe(1);
+    expect(text.count("North 4-12")).toBe(0);
+    expect(columnTypes.note.count({ text: "North 4-12" })).toBe(0);
+  });
+
+  it("show their live text beside a draft, or nothing when there is none", () => {
+    const live = noLiveValues();
+    text.showLive(live, "f1", { text: "North 4-12" });
+    text.showLive(live, "f2", []);
+    expect(live.texts).toEqual({ f1: "North 4-12" });
+  });
+});
+
 describe("the values table's rows", () => {
   it("hold each type's value in its own column, and nothing for a value of another type", () => {
     expect(
@@ -290,9 +345,10 @@ describe("the values table's rows", () => {
         type.rows("*Kind*"),
         type.rows(0),
         type.rows(true),
+        type.rows({ text: "Desk" }),
       ]),
     ).toEqual([
-      ["choice", [{ choiceId: "c1" }], [], [], [], []],
+      ["choice", [{ choiceId: "c1" }], [], [], [], [], []],
       [
         "link",
         [],
@@ -300,10 +356,12 @@ describe("the values table's rows", () => {
         [],
         [],
         [],
+        [],
       ],
-      ["note", [], [], [{ note: "*Kind*" }], [], []],
-      ["number", [], [], [], [{ number: 0 }], []],
-      ["flag", [], [], [], [], [{ flag: true }]],
+      ["note", [], [], [{ note: "*Kind*" }], [], [], []],
+      ["number", [], [], [], [{ number: 0 }], [], []],
+      ["flag", [], [], [], [], [{ flag: true }], []],
+      ["text", [], [], [], [], [], [{ text: "Desk" }]],
     ]);
   });
 });
@@ -317,6 +375,8 @@ describe("live values", () => {
           ["f2", true],
           ["f3", 0],
           ["f4", []],
+          ["f5", { text: "North 4-12" }],
+          ["f6", "*Kind*"],
         ]),
       ),
     ).toEqual({
@@ -324,6 +384,8 @@ describe("live values", () => {
       values: { f1: ["c1"] },
       numbers: { f3: 0 },
       flags: { f2: true },
+      texts: { f5: "North 4-12" },
+      notes: { f6: "*Kind*" },
     });
   });
 });

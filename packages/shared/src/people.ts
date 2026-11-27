@@ -44,14 +44,15 @@ export const personLengths = {
 // A date without a time, such as 2026-10-31.
 const day = daySchema;
 
-// A column chooses from a list, or holds a web link, a note, a number, or a checkbox ("flag"). A
-// column's type never changes.
+// A column chooses from a list, or holds a web link, a note, a number, a checkbox ("flag"), or text.
+// A column's type never changes.
 export const fieldTypeSchema = z.enum([
   "choice",
   "link",
   "note",
   "number",
   "flag",
+  "text",
 ]);
 
 export type FieldType = z.infer<typeof fieldTypeSchema>;
@@ -95,6 +96,8 @@ export const fieldSchema = z.object({
   onPlannedHires: z.boolean().default(true),
   // The table it is on, whose Approvers decide its drafts; one read without it is on People.
   table: columnTableSchema.optional(),
+  // Set for a text column holding several lines; never changes once the column is added.
+  multiline: z.literal(true).optional(),
   draft: fieldDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -296,6 +299,7 @@ const heldAlone = {
   note: { kind: "note", value: "note", requirable: true },
   number: { kind: "number", value: "number", requirable: true },
   flag: { kind: "checkbox", value: "box", requirable: false },
+  text: { kind: "text", value: "text", requirable: true },
 };
 
 // Whether a column of the type can be one that must be filled in.
@@ -393,6 +397,7 @@ export const fieldRequestSchema = z
     multiple: z.boolean().default(false),
     required: z.boolean().default(false),
     onPlannedHires: z.boolean().default(true),
+    multiline: z.boolean().optional(),
   })
   .superRefine((request, context) => {
     const issue = (message: string) => {
@@ -415,6 +420,9 @@ export const fieldRequestSchema = z
       if (request.required && !canBeRequired(request.type)) {
         issue(`A ${kind} column can't be required`);
       }
+    }
+    if (request.multiline === true && request.type !== "text") {
+      issue("Only a text column holds several lines");
     }
   })
   .transform((request) =>

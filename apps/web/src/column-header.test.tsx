@@ -10,6 +10,7 @@ import { describe, expect, it, vi } from "vitest";
 import { droppedAfter } from "./column-header.tsx";
 import { RecordGrid } from "./record-grid.tsx";
 import { type View, emptyView } from "./table-view.ts";
+import { noop, testTheme } from "./test-support.tsx";
 import {
   actions,
   colour,
@@ -17,10 +18,8 @@ import {
   gadget,
   gadgetColumns,
   gadgetTable,
-  noop,
   renderGadgets,
-  testTheme,
-} from "./test-support.tsx";
+} from "./test-gadgets.tsx";
 
 describe("where a dragged column goes", () => {
   const keys = ["a", "b", "c"];

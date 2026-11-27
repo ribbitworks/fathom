@@ -330,7 +330,7 @@ describe("a Number column", () => {
   it("is kept as text in a cell, and as a number when it is a record's own field", () => {
     const column = { label: "Score" } as never;
     expect(cellKinds.number.inWords(column, "soon")).toBe("soon");
-    expect(cellKinds.number.inDetail?.(column, "1234.5")).toBe("1234.5");
+    expect(cellKinds.number.inDetail(column, "1234.5")).toBe("1234.5");
     expect(cellKinds.number.pasted(column, " 7 ")).toEqual({ value: "7" });
     const held = cellKinds.number.ownField;
     expect(held?.read(0)).toBe("0");

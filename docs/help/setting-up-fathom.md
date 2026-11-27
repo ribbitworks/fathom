@@ -30,7 +30,7 @@ See [Lists](lists.md) for more.
 
 ## Add Columns to People
 
-**People** starts with the columns Fathom needs, such as **Position**, **Manager** and **Team**. Add a column for each list you made. You can also add a column that holds a number, a tick box, a web link or a note.
+**People** starts with the columns Fathom needs, such as **Position**, **Manager** and **Team**. Add a column for each list you made. You can also add a column that holds text, a number, a tick box, a web link or a note.
 
 1. Select the **People** page, then **New column**.
 1. Type the column's name, and choose its type. If the column uses one of your lists, choose **Choice from a list**, then the list.

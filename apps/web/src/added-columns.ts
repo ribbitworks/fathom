@@ -16,6 +16,7 @@ import {
   requestedColumnValueMapsOf,
   type SomeColumnValues,
   type SomeRequestedColumnValues,
+  textLimit,
 } from "@fathom/shared";
 import type { CellChange, CellSource } from "./cell-kinds.tsx";
 import { cellColumn } from "./grid-columns.tsx";
@@ -54,15 +55,36 @@ export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
       multiple: field.multiple,
     }),
     dataClass: columnClass(field, list),
-    ...(field.type === "number"
-      ? {
-          sum: {
-            amount: (record: Rec) => record.numbers?.[field.id] ?? null,
-          },
-        }
-      : {}),
+    ...ownSettings<Rec>(field),
   };
 };
+
+// The settings a column takes from its field's type, beyond those of its cells' kind: a number
+// column adds up its numbers, and a text column holds its own limit and lines, and breaks rows down
+// where it may be empty, which the built-in text columns sharing its kind don't.
+function ownSettings<Rec extends CellRecord>(
+  field: Field,
+): Partial<Column<Rec, never>> {
+  switch (field.type) {
+    case "number":
+      return {
+        sum: { amount: (record: Rec) => record.numbers?.[field.id] ?? null },
+      };
+    case "text": {
+      const multiline = field.multiline === true;
+      return {
+        maxLength: textLimit(multiline),
+        multiline,
+        breaksDown: "unless required",
+      };
+    }
+    case "choice":
+    case "link":
+    case "note":
+    case "flag":
+      return {};
+  }
+}
 
 // A record's values in added columns with a change applied, as the table shows them before it is
 // saved.

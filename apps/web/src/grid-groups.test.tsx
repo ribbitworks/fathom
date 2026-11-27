@@ -12,20 +12,22 @@ import type { RecordActions, RecordTable } from "./record-table.ts";
 import { emptyView } from "./table-view.ts";
 import type { RowGroup } from "./row-groups.ts";
 import {
-  type Gadget,
-  type GadgetChange,
-  actions,
   choiceUnder,
   choicesUnder,
-  gadget,
-  gadgetTable,
   noop,
   recordCell,
-  renderGadgets,
   testTheme,
   tipOn,
   waiting,
 } from "./test-support.tsx";
+import {
+  type Gadget,
+  type GadgetChange,
+  actions,
+  gadget,
+  gadgetTable,
+  renderGadgets,
+} from "./test-gadgets.tsx";
 
 describe("a record under several groups", () => {
   // Each letter of a gadget's code is a group it's in.

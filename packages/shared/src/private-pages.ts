@@ -25,7 +25,7 @@ export const mostColumnsAtOnce = 50;
 export const makesPrivatePages: Permission = "private-pages:make";
 
 // The types a page's first column may be, since its value names each row.
-export const rowNamingTypes: readonly FieldType[] = ["number"];
+export const rowNamingTypes: readonly FieldType[] = ["number", "text"];
 
 // Whether a reader may read a page: its maker, while their role may make private pages. Nobody
 // else may, an Administrator included.
@@ -48,6 +48,7 @@ export const privateColumnSchema = z.object({
   listId: z.string().nullable(),
   visibility: tierSchema.nullable(),
   multiple: z.boolean(),
+  multiline: z.literal(true).optional(),
 });
 
 export type PrivateColumn = z.infer<typeof privateColumnSchema>;

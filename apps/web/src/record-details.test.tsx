@@ -11,13 +11,8 @@ import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { describe, expect, it, vi } from "vitest";
 import { ColumnRows, RecordSection, Row } from "./record-details.tsx";
-import {
-  type Gadget,
-  gadget,
-  gadgetTable,
-  testTheme,
-  waiting,
-} from "./test-support.tsx";
+import { testTheme, waiting } from "./test-support.tsx";
+import { type Gadget, gadget, gadgetTable } from "./test-gadgets.tsx";
 
 const column = {
   key: "code",
