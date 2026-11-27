@@ -4,7 +4,7 @@
 // headings and the totals.
 
 import { Table, type TableTdProps, Text, VisuallyHidden } from "@mantine/core";
-import { useSyncExternalStore } from "react";
+import { type ReactNode, useSyncExternalStore } from "react";
 import { ColouredName } from "./colour-swatch.tsx";
 import { focusFoundSoon } from "./focus.ts";
 import {
@@ -504,117 +504,126 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                 }
               }}
             >
-              {columnIndex === 0 &&
-                ticks !== undefined &&
-                record !== undefined && (
-                  <RowTick
-                    label={ticks.label(record)}
-                    tip={ticks.tip?.(record, shownIds)}
-                    checked={ticks.ticked.has(record.id)}
-                    disabled={!ticks.tickable(record, shownIds)}
-                    onChange={(on) => {
-                      ticks.onTick([record.id], on);
-                    }}
-                  />
-                )}
-              <NamedWithOthers
-                others={
-                  column.key === table.nameColumn && !editingHere
-                    ? (row.others ?? [])
-                    : []
-                }
-                after={namedMark}
+              <FirstValue
+                first={columnIndex === 0}
+                clipped={rowProblem !== undefined}
               >
-                <DraftedItem
-                  facts={facts}
-                  slot={columnIndex === 0 && !editingHere}
-                  draft={
-                    columnIndex === 0 && !editingHere
-                      ? recordDraft(marked)
-                      : undefined
+                {columnIndex === 0 &&
+                  ticks !== undefined &&
+                  record !== undefined && (
+                    <RowTick
+                      label={ticks.label(record)}
+                      tip={ticks.tip?.(record, shownIds)}
+                      checked={ticks.ticked.has(record.id)}
+                      disabled={!ticks.tickable(record, shownIds)}
+                      onChange={(on) => {
+                        ticks.onTick([record.id], on);
+                      }}
+                    />
+                  )}
+                <NamedWithOthers
+                  others={
+                    column.key === table.nameColumn && !editingHere
+                      ? (row.others ?? [])
+                      : []
                   }
-                  heldBy={
-                    columnIndex === 0 && !editingHere
-                      ? row.record?.heldBy
-                      : undefined
-                  }
-                  unpublished={
-                    newRowMarked &&
-                    newRowWords(
-                      columnsOn(allColumns, rowKind(row))
-                        .filter(
-                          (other) =>
-                            other.required &&
-                            isEmpty(newValue(row.newRow, other)),
-                        )
-                        .map(({ label }) => label),
-                      row.newRow.soFar?.message,
-                    )
-                  }
+                  after={namedMark}
                 >
                   <DraftedItem
-                    dataClass={recordClass}
+                    facts={facts}
+                    slot={columnIndex === 0 && !editingHere}
                     draft={
-                      editingHere
-                        ? undefined
-                        : (renamed?.draft ?? wholeCellDraft(cellMarked, column))
+                      columnIndex === 0 && !editingHere
+                        ? recordDraft(marked)
+                        : undefined
                     }
-                    by={
-                      editingHere
-                        ? undefined
-                        : (renamed?.by ?? changedBy(cellDraft, column))
+                    heldBy={
+                      columnIndex === 0 && !editingHere
+                        ? row.record?.heldBy
+                        : undefined
                     }
-                    was={
-                      renamed === undefined
-                        ? !editingHere &&
-                          cellDraft !== undefined &&
-                          wholeCellDraft(cellDraft, column) !== undefined
-                          ? wasWords(
-                              shown(liveColumn(column), column.live(cellDraft)),
-                            )
-                          : undefined
-                        : renamedWas(column, value, renamings)
+                    unpublished={
+                      newRowMarked &&
+                      newRowWords(
+                        columnsOn(allColumns, rowKind(row))
+                          .filter(
+                            (other) =>
+                              other.required &&
+                              isEmpty(newValue(row.newRow, other)),
+                          )
+                          .map(({ label }) => label),
+                        row.newRow.soFar?.message,
+                      )
                     }
                   >
-                    <MarkedItem
-                      tone={warning === undefined ? undefined : "warning"}
-                      words={warning?.words}
-                      spoken={warning?.spoken}
-                      empty={standIn === undefined && isEmpty(value)}
+                    <DraftedItem
+                      dataClass={recordClass}
+                      draft={
+                        editingHere
+                          ? undefined
+                          : (renamed?.draft ??
+                            wholeCellDraft(cellMarked, column))
+                      }
+                      by={
+                        editingHere
+                          ? undefined
+                          : (renamed?.by ?? changedBy(cellDraft, column))
+                      }
+                      was={
+                        renamed === undefined
+                          ? !editingHere &&
+                            cellDraft !== undefined &&
+                            wholeCellDraft(cellDraft, column) !== undefined
+                            ? wasWords(
+                                shown(
+                                  liveColumn(column),
+                                  column.live(cellDraft),
+                                ),
+                              )
+                            : undefined
+                          : renamedWas(column, value, renamings)
+                      }
                     >
-                      {editingHere
-                        ? editor(
-                            cell,
-                            onRow(column, row.record, rowKind(row)),
-                            valueAt(row, column),
-                          )
-                        : has &&
-                          (standIn === undefined ? (
-                            <ColouredName
-                              colour={
-                                row.record === undefined || isEmpty(value)
-                                  ? null
-                                  : colourOf(column, row.record)
-                              }
-                            >
-                              {row.record && column.content
-                                ? column.content(row.record)
-                                : cellContent(column, value)}
-                            </ColouredName>
-                          ) : (
-                            <Text
-                              component="span"
-                              inherit
-                              c="dimmed"
-                              fs="italic"
-                            >
-                              {standIn}
-                            </Text>
-                          ))}
-                    </MarkedItem>
+                      <MarkedItem
+                        tone={warning === undefined ? undefined : "warning"}
+                        words={warning?.words}
+                        spoken={warning?.spoken}
+                        empty={standIn === undefined && isEmpty(value)}
+                      >
+                        {editingHere
+                          ? editor(
+                              cell,
+                              onRow(column, row.record, rowKind(row)),
+                              valueAt(row, column),
+                            )
+                          : has &&
+                            (standIn === undefined ? (
+                              <ColouredName
+                                colour={
+                                  row.record === undefined || isEmpty(value)
+                                    ? null
+                                    : colourOf(column, row.record)
+                                }
+                              >
+                                {row.record && column.content
+                                  ? column.content(row.record)
+                                  : cellContent(column, value)}
+                              </ColouredName>
+                            ) : (
+                              <Text
+                                component="span"
+                                inherit
+                                c="dimmed"
+                                fs="italic"
+                              >
+                                {standIn}
+                              </Text>
+                            ))}
+                      </MarkedItem>
+                    </DraftedItem>
                   </DraftedItem>
-                </DraftedItem>
-              </NamedWithOthers>
+                </NamedWithOthers>
+              </FirstValue>
               {column.key === table.nameColumn &&
                 !editingHere &&
                 nameCellControls(row)}
@@ -757,4 +766,24 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     totalRow,
     bodyRows,
   };
+}
+
+// A row's first value, cut short in its cell as every value is while a refusal under it runs on past
+// the cell. It is always wrapped, so its editor isn't drawn afresh when a refusal comes or goes.
+function FirstValue({
+  first,
+  clipped,
+  children,
+}: {
+  first: boolean;
+  clipped: boolean;
+  children: ReactNode;
+}) {
+  return first ? (
+    <span className={clipped ? classes.recordClippedValue : undefined}>
+      {children}
+    </span>
+  ) : (
+    children
+  );
 }
