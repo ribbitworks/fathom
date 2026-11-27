@@ -5,9 +5,14 @@
 
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { Gadget } from "./test-support.tsx";
 import { emptyView } from "./table-view.ts";
-import { colours, gadget, renderGadgets, waiting } from "./test-support.tsx";
+import {
+  colours,
+  type Gadget,
+  gadget,
+  renderGadgets,
+} from "./test-gadgets.tsx";
+import { waiting } from "./test-support.tsx";
 
 // Colours, whose Teal a waiting draft by Fictional Editor renames Sea teal, and Coral.
 const renamedColours = {
