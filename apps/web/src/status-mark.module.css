@@ -176,3 +176,8 @@
 .fromDay {
   margin-left: var(--fathom-mark-gap);
 }
+
+/* A character of no width, so an empty value's place holds a line of text for its dot to sit on. */
+.emptySide::before {
+  content: "\200b";
+}

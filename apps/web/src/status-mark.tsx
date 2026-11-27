@@ -506,6 +506,12 @@ export function EmptyLive() {
   return <VisuallyHidden>, empty</VisuallyHidden>;
 }
 
+// The place of a value a dot alone shows, a line's height though empty, so the dot sits on the line
+// as it does before a value.
+export function EmptySide() {
+  return <span className={marks.emptySide} aria-hidden />;
+}
+
 // A row's slot for its record's marks, as wide as a draft's dot and its gap.
 function MarkSlot({ children }: { children?: ReactNode }) {
   return <span className={marks.slot}>{children}</span>;
@@ -623,7 +629,7 @@ export function LiveLine({
     <MarkRow className={[marks.liveLine, className].join(" ")}>
       <MarkedItem tone="live">
         <Text component="span" size="xs" c="dimmed" truncate>
-          {children}
+          {empty ? <EmptySide /> : children}
         </Text>
       </MarkedItem>
       {empty && <EmptyLive />}
@@ -681,7 +687,7 @@ export function DraftedValue({
       emptied={emptied}
       dataClass={dataClass}
     >
-      {children}
+      {emptied === true && changed !== undefined ? <EmptySide /> : children}
     </DraftedItem>
   );
 }
@@ -703,7 +709,9 @@ export function LiveValue({
   const changed = changedValue(draft, ...fields) !== undefined;
   return (
     <>
-      <MarkedItem tone={changed ? "live" : undefined}>{children}</MarkedItem>
+      <MarkedItem tone={changed ? "live" : undefined}>
+        {emptied === true && changed ? <EmptySide /> : children}
+      </MarkedItem>
       {emptied === true && changed && <EmptyLive />}
     </>
   );
