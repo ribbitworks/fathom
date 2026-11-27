@@ -74,6 +74,8 @@ type AnyColumn = Pick<
   // Why a choice offered can't be picked now, shown in place of its description, or undefined when
   // it can.
   choiceTurnedOff?: ((choice: Choice) => string | undefined) | undefined;
+  // Whether a choice's name is one Fathom fills in, drawn in grey italics.
+  choiceFilledIn?: ((choice: Choice) => boolean) | undefined;
   required: boolean;
   // For text columns: the most characters a value may hold.
   maxLength?: number | undefined;
@@ -404,6 +406,7 @@ const choicesFor = (column: AnyColumn, value: readonly string[]) =>
       ...(value.includes(option.id)
         ? {}
         : { turnedOff: column.choiceTurnedOff?.(option) }),
+      ...(column.choiceFilledIn?.(option) === true ? { filledIn: true } : {}),
       ...(column.choiceColour === undefined
         ? {}
         : { colour: column.choiceColour(option.id) }),

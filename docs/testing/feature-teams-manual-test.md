@@ -513,7 +513,7 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
 - [ ] `C0F4` Select the change button in the **Members** row, and type `SDET`.
   - **Expected:**
     - The list shows people first, then planned hires.
-    - "SDET, TBD-" and a number is listed after the people, with "No target date" in grey under it.
+    - "SDET, TBD-" and a number is listed after the people, in grey italics, with "No target date" in grey under it.
     - 'SDET, REQ-2042' is greyed out, with "Can't join before" and a month in grey under it.
   - **Notes:**
 

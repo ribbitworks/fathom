@@ -178,12 +178,26 @@ function hireTurnedOff(
   };
 }
 
-// The rows the team's values are shown and changed in.
+// Whether a choice is a planned hire named by its position and ID, as its card names it.
+function hireMadeName(
+  people: readonly OrgChartPerson[],
+): (choice: Choice) => boolean {
+  const made = new Set(
+    people.flatMap(({ id, planned }) =>
+      planned?.shownId === undefined ? [] : [id],
+    ),
+  );
+  return ({ id }) => made.has(id);
+}
+
+// The rows the team's values are shown and changed in, offering everyone on the chart.
 function teamColumns(
+  people: readonly OrgChartPerson[],
   choices: Choice[],
   canRename: boolean,
   turnedOff: (choice: Choice) => string | undefined,
 ): Record<"name" | "leadId" | "members", Column<FeatureTeam, TeamChange>> {
+  const filledIn = hireMadeName(people);
   return {
     name: fieldColumn("name", "text", {
       label: "Name",
@@ -202,6 +216,7 @@ function teamColumns(
         emptyLabel: "None",
       }),
       choiceTurnedOff: turnedOff,
+      choiceFilledIn: filledIn,
     },
     members: {
       ...fieldColumn<FeatureTeam, TeamChange>("members", "choice", {
@@ -213,6 +228,7 @@ function teamColumns(
       }),
       change: (value) => ({ members: value as string[] }),
       choiceTurnedOff: turnedOff,
+      choiceFilledIn: filledIn,
     },
   };
 }
@@ -421,6 +437,7 @@ function NewFeatureTeamPanel({
     useRecordEditing<FeatureTeam, TeamChange>();
   const choices = useMemo(() => teamChoices(people), [people]);
   const columns = teamColumns(
+    people,
     choices,
     true,
     hireTurnedOff(people, removing, day ?? today()),
@@ -557,6 +574,7 @@ function TeamDetails({
     publishes: false,
   });
   const columns = teamColumns(
+    people,
     choices,
     edits.undated,
     hireTurnedOff(people, removing, day ?? today()),

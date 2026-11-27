@@ -172,6 +172,22 @@ describe("planned hires in a feature team's pickers", () => {
     ]);
   });
 
+  it.each(["Members", "Feature lead"] as const)(
+    "names a planned hire in %s's picker by its position and ID in grey italics, as everywhere else",
+    async (label) => {
+      openPanel({ day: "2027-06-01" });
+      await userEvent.click(changeButton(label) as HTMLElement);
+      const made = screen.getByRole("option", { name: /^Fictional Tester/ });
+      const named = screen.getByRole("option", { name: /^Ellis Fictional/ });
+      expect(
+        within(made).getByText("Fictional Tester, TBD-7").getAttribute("style"),
+      ).toContain("italic");
+      expect(
+        within(named).getByText("Ellis Fictional").getAttribute("style") ?? "",
+      ).not.toContain("italic");
+    },
+  );
+
   it("finds a planned hire by the month it's expected", async () => {
     openPanel({ day: "2027-06-01" });
     await userEvent.click(changeButton("Members") as HTMLElement);

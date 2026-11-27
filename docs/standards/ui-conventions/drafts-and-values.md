@@ -112,7 +112,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** `Row` in `apps/web/src/record-details.tsx`, with the column's `emptyLabel`.
   - **Example:** Voice Notes' Target cycle reads Later in its details.
 - **Values Fathom fills in:** An empty cell Fathom fills in from other values shows that text in grey italics, and editing it starts empty.
-  - **Drawn by:** `FilledIn` in `apps/web/src/status-mark.tsx`, which the table's rows in `apps/web/src/grid-row.tsx`, the org chart's cards, a feature team's panel and an emptied value's words use.
+  - **Drawn by:** `FilledIn` in `apps/web/src/status-mark.tsx`, which the table's rows in `apps/web/src/grid-row.tsx`, the org chart's cards, a feature team's panel, a picker's choices given a column's `choiceFilledIn`, and an emptied value's words use.
   - **Example:** A seeded planned hire with no name, named by its position and ID on People.
 - **Warnings on a value:** A warning about a value is a red box after it, in words, such as Left, read aloud with why.
   - **No value before it:** A warning with no value before it, in an empty cell or on a line of its own, is its words in red in the value's place, with no box, read aloud the same way. Examples are No feature team in a Feature team cell and Not staffed on a card.
