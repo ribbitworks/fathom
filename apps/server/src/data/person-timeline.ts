@@ -13,6 +13,7 @@ import {
   type TimelineField,
   type TimelineRecord,
   timelineFieldSchema,
+  inForceOn,
 } from "@fathom/shared";
 import {
   changes,
@@ -30,7 +31,6 @@ import { alias } from "drizzle-orm/pg-core";
 import type { Actor } from "../access.ts";
 import { NotFoundError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
-import { inForceOn } from "./in-force.ts";
 import { readKeyNumbers } from "./record-keys.ts";
 import { readTimeZone } from "./settings.ts";
 

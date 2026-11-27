@@ -400,6 +400,27 @@ describe("a person's timeline", () => {
     expect(document.getElementById("person-timeline")).toBeNull();
   });
 
+  it("isn't there for a person only drafted to be added, who has no timeline yet", async () => {
+    const added = person("8", "Fictional Newcomer", {
+      draft: {
+        action: "created",
+        changed: [],
+        live: { values: {}, links: {} },
+        state: "waiting",
+        madeBy: "Fictional Editor",
+        madeAt: null,
+      },
+    });
+    editAnswers({
+      "GET /api/feature-teams": () => Response.json({ teams: [] }),
+      "GET /api/people": peopleAnswer([robin, sasha, uma, added]),
+    });
+    renderApp("/people?open=E8");
+    await panel("Fictional Newcomer");
+
+    expect(document.getElementById("person-timeline")).toBeNull();
+  });
+
   it("isn't there for a role that doesn't see start and end dates", async () => {
     open({
       "GET /api/session": session(["people:view", "plan:view"]),

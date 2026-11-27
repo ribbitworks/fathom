@@ -118,6 +118,7 @@ Fathom doesn't move a planned hire's allocations to the person. An allocation is
 1. In the planned hire's **Name** cell, select **Fill**.
 1. Choose **New person** to add someone new, or **Existing person** to move someone who's already here.
 1. Fill in the form, which opens in the hire's details beside the table.
+1. If the hire is on a feature team, check **Feature teams** and **Leads**. They list the teams the person joins and leads, as if the fill were approved today, with the day for any that start later.
 1. Select **Fill** under the form.
 1. Select **Publish**, and ask your approver to approve it.
 

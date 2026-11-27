@@ -12,6 +12,7 @@ import {
   type OrgChartDraft,
   type OrgChartPerson,
   type PaletteColour,
+  inForceOn,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { NotFoundError } from "../errors.ts";
@@ -27,7 +28,6 @@ import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
 import { showsFillsAbovePersonal } from "./feature-team-sight.ts";
 import { expectedMonth, undatedMark, hireIdOf } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
-import { inForceOn } from "./in-force.ts";
 import { currentOn, notStarted } from "./people-reads.ts";
 import { personalDetailFields } from "./person-fields.ts";
 import {

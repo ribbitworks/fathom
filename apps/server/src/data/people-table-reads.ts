@@ -33,6 +33,7 @@ import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { type LiveValues, noLiveValues, typeOf } from "./column-types.ts";
 import { readToday } from "./settings.ts";
+import { readTeamsCarried } from "./feature-team-fills.ts";
 import { readTeamsOfMembers } from "./feature-team-reads.ts";
 import { hireRow, readHiresIn } from "./hire-reads.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
@@ -368,14 +369,29 @@ async function readPeopleIn(
   const teamOf = new Map(
     shown.map(({ id, teamName }) => [id, teamName ?? null]),
   );
-  // Feature teams are General, and sent to those who see feature teams, as their page is.
+  // Feature teams are General, and sent to those who see feature teams, as their page is, with
+  // what filling each planned hire carries on today, when hires are filled.
   const featureTeamsOf = seesBuiltInColumn(actor.permissions, "featureTeams")
     ? await readTeamsOfMembers(database, day)
     : undefined;
-  const withFeatureTeams = (row: Person): Person =>
-    featureTeamsOf === undefined
-      ? row
-      : { ...row, featureTeams: featureTeamsOf.get(row.id) ?? [] };
+  const carriedOf =
+    featureTeamsOf !== undefined && day === today
+      ? await readTeamsCarried(
+          database,
+          hiring.hires.map(({ id }) => id),
+          today,
+          seesField(access, "featureTeamDates"),
+        )
+      : new Map<string, Person["teamsCarried"]>();
+  const withFeatureTeams = (row: Person): Person => {
+    if (featureTeamsOf === undefined) return row;
+    const carried = carriedOf.get(row.id);
+    return {
+      ...row,
+      featureTeams: featureTeamsOf.get(row.id) ?? [],
+      ...(carried === undefined ? {} : { teamsCarried: carried }),
+    };
+  };
   const beyondSight = withDrafts
     ? await fillsBeyondSight(database, actor, today)
     : new Set<string>();

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What a draft changes, field by field, and who changed each field, in words: shown at the top of
-// the menu of each record with a draft, on the People table and the Lists page, so whoever approves
-// or discards a draft sees what it holds, since several people's changes to one record make one
-// draft.
+// What a draft changes, field by field, and who changed each field, in words, as the menu of a
+// record with a draft and the Drafts page show it, so whoever decides a draft sees what it holds,
+// since several people's changes to one record make one draft.
 
 import {
   builtInColumnNames,
@@ -25,12 +24,20 @@ import { DraftDot } from "./status-mark.tsx";
 import { useTurnedOff } from "./turned-off.tsx";
 import { type DraftLike, draftWords } from "./draft-marks.ts";
 import { type DetailKey } from "./people-rows.ts";
+import { newPersonId, teamsTakenOn } from "./hire-fill.ts";
+import { today } from "./today.ts";
 
 export interface DraftField {
   // The field's key, as the draft names it: a detail's name or a column's identifier.
   key: string;
   field: ChangedField;
+  // Its own words, for a line that isn't a field's change, such as what a fill's person joins.
+  phrase?: Phrase;
 }
+
+// A draft's field in words, its own where it has them, as the Drafts page shows it.
+export const fieldPhrase = ({ field, phrase }: DraftField): Phrase =>
+  phrase ?? describeField(field);
 
 // A person's reporting fields as a draft words them, live and drafted: managers by name, found
 // among the people given, so a manager not among them is said to be someone not shown, never none,
@@ -61,6 +68,45 @@ function reportingValues(
   }
 }
 
+// The feature teams a fill has its person join and lead once approved, by name, judged from the
+// person filling it where the people given hold them, as the fill form shows them, and credited as
+// the fill is.
+function takenOnFields(
+  hire: Person,
+  people: readonly Person[] | undefined,
+): DraftField[] {
+  const filler = people?.find(({ id }) => id === hire.filler);
+  const { joins, leads } = teamsTakenOn(
+    hire,
+    {
+      id: filler?.id ?? newPersonId,
+      startDate: filler?.startDate ?? null,
+      teams: filler?.featureTeams ?? [],
+    },
+    today(),
+  );
+  // The filler's name is marked as a value, as the fill's own line marks it.
+  const who: Phrase[number] =
+    filler === undefined ? "Person" : { value: filler.preferredName };
+  return (
+    [
+      ["joins", joins],
+      ["leads", leads],
+    ] as const
+  ).flatMap(([verb, teams]): DraftField[] => {
+    const names = teams.map(({ team }) => team.name);
+    return teams.length === 0
+      ? []
+      : [
+          {
+            key: "filledBy",
+            field: { field: verb, oldValue: null, newValue: names },
+            phrase: [who, ` ${verb} `, { value: names.join(", ") }],
+          },
+        ];
+  });
+}
+
 // What a person's draft changes, field by field, as the change history words it: each built-in
 // detail and column, from its live value to the draft's. A draft adding someone does not repeat
 // their name.
@@ -73,7 +119,8 @@ export function personDraftFields(
   people?: readonly Person[],
 ): DraftField[] {
   return draft.changed.flatMap((key): DraftField[] => {
-    // Only a planned hire's draft fills it, naming the person only to those who see them.
+    // Only a planned hire's draft fills it, naming the person only to those who see them, then the
+    // feature teams the person joins and leads, to those who see feature teams.
     if (key === "filledBy") {
       return [
         {
@@ -86,6 +133,7 @@ export function personDraftFields(
               null,
           },
         },
+        ...takenOnFields(person, people),
       ];
     }
     const reporting = reportingValues(key, person, draft.live, people);
@@ -216,8 +264,8 @@ export function draftLines(
   if (changed.length === 0) {
     return [[{ strong: "Changed" }, ` by ${makerOf(draft)}`]];
   }
-  return changed.map(({ key, field }) => [
-    ...(describers.get(key) ?? describeField)(field),
+  return changed.map(({ key, field, phrase }) => [
+    ...(phrase ?? (describers.get(key) ?? describeField)(field)),
     `, by ${changerOf(draft, key)}`,
   ]);
 }

@@ -20,6 +20,9 @@ import {
   knownColour,
   type PersonFeatureTeam,
   type Tier,
+  bySubject,
+  inForceOn,
+  onTeamTodayOrLater,
 } from "@fathom/shared";
 import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { type Actor, requirePermission, requireView } from "../access.ts";
@@ -35,7 +38,6 @@ import {
   memberChanges,
   type MemberDay,
   membersOf,
-  onTeamTodayOrLater,
 } from "./feature-team-rules.ts";
 import {
   draftAsSeen,
@@ -57,7 +59,6 @@ import {
 } from "./feature-team-sight.ts";
 import { recordType as hireRecordType } from "./hire-fields.ts";
 import { hiresOf } from "./hire-reads.ts";
-import { bySubject, inForceOn } from "./in-force.ts";
 import { notStarted } from "./people-reads.ts";
 import { type KeyNumbers, keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { readToday } from "./settings.ts";
@@ -210,6 +211,17 @@ export async function readLiveTeams(
   };
 }
 
+// A team as People names it, by name, with its colour.
+export const namedTeam = (
+  id: string,
+  name: unknown,
+  colour: string | null | undefined,
+): PersonFeatureTeam => ({
+  id,
+  name: String(name),
+  colour: knownColour(colour),
+});
+
 // The live teams each person and planned hire is on as of a day, by name, each with its colour, by
 // person or planned hire.
 export async function readTeamsOfMembers(
@@ -222,7 +234,7 @@ export async function readTeamsOfMembers(
     for (const memberId of membersOf(team)) {
       teamsOf.set(memberId, [
         ...(teamsOf.get(memberId) ?? []),
-        { id, name: String(team.name), colour: knownColour(colours.get(id)) },
+        namedTeam(id, team.name, colours.get(id)),
       ]);
     }
   }
@@ -242,15 +254,20 @@ export async function readLeadsOfTeamsLedBy(
   reader: Reader,
   ids: readonly string[],
 ): Promise<{ teamId: string; leadId: string | null; fromDate: string }[]> {
-  const led = await reader
-    .select({ teamId: featureTeamLeads.teamId })
-    .from(featureTeamLeads)
-    .where(
-      or(
-        inArray(featureTeamLeads.leadId, [...ids]),
-        inArray(featureTeamLeads.leadPlannedHireId, [...ids]),
-      ),
+  const led = [];
+  for (const chunk of inChunks([...ids])) {
+    led.push(
+      ...(await reader
+        .select({ teamId: featureTeamLeads.teamId })
+        .from(featureTeamLeads)
+        .where(
+          or(
+            inArray(featureTeamLeads.leadId, chunk),
+            inArray(featureTeamLeads.leadPlannedHireId, chunk),
+          ),
+        )),
     );
+  }
   const records = [];
   for (const chunk of inChunks([...new Set(led.map(({ teamId }) => teamId))])) {
     records.push(

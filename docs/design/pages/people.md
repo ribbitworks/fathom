@@ -81,6 +81,10 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
   - Every column added to People has cells on planned hires, and a hire may leave any of them empty, even a required one.
   - A new person's form also asks for each required added column the hire left empty.
   - The manager starts as the hire's and can be changed. A new person's start date starts as the hire's target date. Someone already in Fathom moves from today, or from their start date if they haven't started.
+  - **Feature teams and Leads:** for readers who see feature teams, read-only rows after the fields name the teams the person joins and leads, one to a line, each in its colour, then, for a team they start on after the day shown, from and its first day, dimmed, as the server carries them if approved today (`teamsTakenOn` in `apps/web/src/hire-fill.ts`, on `carriedByFill` in `packages/shared/src/fill-carries.ts`). They follow the start date entered, or the chosen person's start date and the teams they're on today; a team the person is already on isn't joined. Neither shows when empty.
+    - **Its data:** People rows of planned hires carry `teamsCarried` on today: each team the hire is on today or later, by name, with the hire's records on it and as its lead from today. For readers who don't see Feature team dates' class, a team's lead records stop at the first held by a person or taking over from one, so no day says when a person started or stopped leading; the form then shows no lead from there on.
+    - **A team's draft:** the server refuses a fill while a team's draft names the hire or changes one of its teams; the refusal shows in a notification, and the form keeps what was entered.
+  - **On the Drafts page:** a fill's draft adds a line for the teams the person joins and one for those they lead, named by the person filling it, or Person for a reader who doesn't see them, such as Avery Fictional joins Field tools and Avery Fictional leads Field tools, judged from that person as the form judges them.
   - What a fill does is in the [Domain Model](../domain-model.md#planned-hires).
 
 ### Adding a Person or Planned Hire

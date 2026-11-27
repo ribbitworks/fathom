@@ -1,39 +1,47 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Filling a planned hire on feature teams: refusing a fill while a draft of the hire's teams, or one
-// naming it, waits, and, on approval, carrying the hire's teams and leads to its person. Part of the
-// data access layer.
+// naming it, waits, carrying its teams and leads to its person on approval, and what a hire's People
+// row says filling it carries. Part of the data access layer.
 
 import {
   featureTeamLeads,
   featureTeamMemberships,
+  featureTeams,
   inChunks,
   type Reader,
 } from "@fathom/db";
-import { and, eq, gte, sql } from "drizzle-orm";
+import {
+  byName,
+  bySubject,
+  type Carried,
+  carriedByFill,
+  type HireOnTeam,
+  type HireTeam,
+  inForceOrLater,
+  onTeamTodayOrLater,
+} from "@fathom/shared";
+import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import type { Recorded } from "./draft-records.ts";
 import {
+  namedTeam,
   readLeadsOfTeamsLedBy,
   readLiveTeams,
   teamDraftsOf,
   teamsOfHires,
 } from "./feature-team-reads.ts";
 import {
-  carriedOnFill,
-  type CarriedOnFill,
-  type HireOnTeam,
   joinsAfterEnd,
-  leadsWhileOn,
   membersOf,
   teamDraftsBlockingFill,
 } from "./feature-team-rules.ts";
 import { teamChanges } from "./feature-teams.ts";
 
 export const inTeamDraftRefusal =
-  "A feature team's draft names this planned hire, or changes a team it's on or leads; approve or discard the draft before filling the hire";
+  "A draft of one of this planned hire's feature teams, or one naming it, is waiting. Approve or discard it before filling the hire.";
 
 // The hire's records on teams, as a member, and the records of the teams it leads, each the hire's
 // or another lead's.
@@ -49,14 +57,124 @@ async function readHireRows(
     })
     .from(featureTeamMemberships)
     .where(eq(featureTeamMemberships.plannedHireId, hireId));
-  const leads = (await readLeadsOfTeamsLedBy(reader, [hireId])).map(
-    ({ teamId, leadId, fromDate }) => ({
-      teamId,
-      member: leadId === hireId,
-      fromDate,
-    }),
+  const leads = asHireLeads(
+    await readLeadsOfTeamsLedBy(reader, [hireId]),
+    hireId,
   );
   return { memberships, leads };
+}
+
+// A team's lead record, naming a person, a planned hire, or no lead.
+interface LeadRecord {
+  teamId: string;
+  leadId: string | null;
+  fromDate: string;
+}
+
+// A team's lead records as the hire's: leading while they name it, and no longer from a record of
+// another lead or of none.
+const asHireLeads = (
+  records: readonly LeadRecord[],
+  hireId: string,
+): HireOnTeam[] =>
+  records.map(({ teamId, leadId, fromDate }) => ({
+    teamId,
+    member: leadId === hireId,
+    fromDate,
+  }));
+
+// The feature teams each planned hire given is on today or later, by name, with its records on each
+// and as its lead from today, by hire, which filling it carries. A day a lead passes to or from a
+// person is that person's day, so for a reader who doesn't see the days people join teams, a team's
+// lead records stop at the first that names a person or takes over from one.
+export async function readTeamsCarried(
+  reader: Reader,
+  hireIds: readonly string[],
+  today: string,
+  seesPeoplesDays: boolean,
+): Promise<Map<string, HireTeam[]>> {
+  if (hireIds.length === 0) return new Map();
+  const memberships = [];
+  for (const chunk of inChunks([...hireIds])) {
+    memberships.push(
+      ...(await reader
+        .select({
+          hireId: featureTeamMemberships.plannedHireId,
+          teamId: featureTeamMemberships.teamId,
+          member: featureTeamMemberships.member,
+          fromDate: featureTeamMemberships.fromDate,
+        })
+        .from(featureTeamMemberships)
+        .where(inArray(featureTeamMemberships.plannedHireId, chunk))),
+    );
+  }
+  const hires = new Set(hireIds);
+  const leadRecords = bySubject(
+    await readLeadsOfTeamsLedBy(reader, hireIds),
+    ({ teamId }) => teamId,
+  );
+  const fromToday = <Row extends { fromDate: string }>(records: Row[]) =>
+    records.filter((record) => inForceOrLater(record, records, today));
+  const onTeams = [...bySubject(memberships, ({ hireId }) => String(hireId))]
+    .map(([hireId, ofHire]) => ({
+      hireId,
+      teams: [...bySubject(ofHire, ({ teamId }) => teamId)].filter(
+        ([, records]) => onTeamTodayOrLater(records, today),
+      ),
+    }))
+    .filter(({ teams }) => teams.length > 0);
+  const named = new Map<string, HireTeam["team"]>();
+  for (const chunk of inChunks([
+    ...new Set(onTeams.flatMap(({ teams }) => teams.map(([id]) => id))),
+  ])) {
+    for (const { id, name, colour } of await reader
+      .select({
+        id: featureTeams.id,
+        name: featureTeams.name,
+        colour: featureTeams.colour,
+      })
+      .from(featureTeams)
+      .where(inArray(featureTeams.id, chunk))) {
+      named.set(id, namedTeam(id, name, colour));
+    }
+  }
+  const isPerson = (leadId: string | null | undefined) =>
+    typeof leadId === "string" && !hires.has(leadId);
+  const withoutPeoplesDays = (records: LeadRecord[]) => {
+    const kept = fromToday(records);
+    const first = kept.findIndex(
+      (record) =>
+        isPerson(record.leadId) ||
+        isPerson(records[records.indexOf(record) - 1]?.leadId),
+    );
+    return first === -1 ? kept : kept.slice(0, first);
+  };
+  const asRecords = (records: readonly HireOnTeam[]) =>
+    records.map(({ member, fromDate }) => ({ member, fromDate }));
+  return new Map(
+    onTeams.map(({ hireId, teams }) => [
+      hireId,
+      teams
+        .map(([teamId, records]): HireTeam => {
+          const teamLeads = leadRecords.get(teamId) ?? [];
+          const leads = asHireLeads(
+            seesPeoplesDays
+              ? fromToday(teamLeads)
+              : withoutPeoplesDays(teamLeads),
+            hireId,
+          );
+          const firstLed = leads.findIndex(({ member }) => member);
+          return {
+            // A membership's team is live, since removing a team removes its memberships.
+            team: named.get(teamId) as HireTeam["team"],
+            memberships: asRecords(fromToday(records)),
+            // Another lead's days before the hire first leads carry nothing.
+            leads: firstLed === -1 ? [] : asRecords(leads.slice(firstLed)),
+          };
+        })
+        .sort((one, other) => byName(one.team, other.team)),
+    ]),
+  );
 }
 
 // The team drafts, published or not, a fill of the hire waits on, as teamDraftsBlockingFill sets
@@ -88,14 +206,6 @@ export const carriesTeams = async (
   hireId: string,
   today: string,
 ): Promise<boolean> => (await teamsOfHires(reader, [hireId], today)).size > 0;
-
-// What a fill carries to its person: their membership records, the hire's that end, and the lead
-// records written for them.
-interface Carried {
-  memberships: CarriedOnFill;
-  leadsEnded: CarriedOnFill["ended"];
-  leads: { teamId: string; fromDate: string; leadId: string | null }[];
-}
 
 // The changes recording what a fill carries, one for each team whose membership it carries or
 // ends, as a team's draft records the same change: the person joining as the hire leaves, from the
@@ -162,19 +272,11 @@ async function readCarried(
     })
     .from(featureTeamMemberships)
     .where(eq(featureTeamMemberships.personId, filler.id));
-  const memberships = carriedOnFill(
-    rows.memberships,
-    filler.id,
-    filler.startDate,
+  return carriedByFill(
+    rows,
+    { id: filler.id, startDate: filler.startDate, teams: own },
     today,
-    own,
   );
-  const leads = carriedOnFill(rows.leads, filler.id, filler.startDate, today);
-  return {
-    memberships,
-    leadsEnded: leads.ended,
-    leads: leadsWhileOn(leads, memberships, own, filler.id),
-  };
 }
 
 // Refuses a fill that would put its person on one of the hire's teams, or leading one, after their

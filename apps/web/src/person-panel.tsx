@@ -520,13 +520,15 @@ export function PersonPanel({
               {added.map(rowOf)}
             </RecordSection>
           )}
-          {timeline !== undefined && !isHire(person) && (
-            <TimelinePreview
-              personId={person.id}
-              shownOn={shownOn}
-              {...timeline}
-            />
-          )}
+          {timeline !== undefined &&
+            !isHire(person) &&
+            ownDraft?.action !== "created" && (
+              <TimelinePreview
+                personId={person.id}
+                shownOn={shownOn}
+                {...timeline}
+              />
+            )}
         </>
       )}
     </ChoiceRenamings>,

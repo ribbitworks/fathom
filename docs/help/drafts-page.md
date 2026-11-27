@@ -15,7 +15,7 @@ The **Drafts** page, under **History** in the left-hand menu, lists the drafts i
   - **Record** names what it changes.
   - **Change** says whether the draft adds, changes, removes or reorders it.
   - **State** reads **Waiting**, **Rejected** or **Not published**.
-  - **What changes** shows each value, such as a new site.
+  - **What changes** shows each value, such as a new site. Filling a planned hire also says which feature teams the person joins and leads once it's approved, naming the person and each team.
   - **Type** and **Area** say what kind of record it is, and where in Fathom it lives.
   - **Made by** names who made the draft. The **Not published** tab leaves it out, since those are all yours.
   - **Drafted** is the day the draft was made.

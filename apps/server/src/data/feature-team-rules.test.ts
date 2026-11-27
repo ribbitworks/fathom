@@ -17,7 +17,6 @@ import {
   hasLeft,
   nextTeamDraft,
   notYetStarted,
-  onTeamTodayOrLater,
   plannedHireDaysRefusal,
 } from "./feature-team-rules.ts";
 import { plannedHire, someone } from "./test-feature-team-people.ts";
@@ -706,31 +705,6 @@ describe("a planned hire's days in a team's draft", () => {
     );
 
     expect(made.after.hireLeadFrom).toEqual({ [otherHire]: "2026-08-01" });
-  });
-});
-
-describe("whether a planned hire is on a team today or later", () => {
-  const joins = (fromDate: string) => ({ member: true, fromDate });
-  const leaves = (fromDate: string) => ({ member: false, fromDate });
-
-  it.each([
-    ["it joined before today", [joins("2026-01-01")]],
-    ["it joins later", [joins("2099-01-01")]],
-    ["it leaves later", [joins("2026-01-01"), leaves("2099-01-01")]],
-    [
-      "it left and joins again later, whatever order its records come in",
-      [joins("2099-01-01"), leaves("2026-02-01"), joins("2026-01-01")],
-    ],
-  ])("is when %s", (_, records) => {
-    expect(onTeamTodayOrLater(records, today)).toBe(true);
-  });
-
-  it.each([
-    ["it left today", [joins("2026-01-01"), leaves(today)]],
-    ["it left before today", [joins("2026-01-01"), leaves("2026-02-01")]],
-    ["it has no records", []],
-  ])("isn't when %s", (_, records) => {
-    expect(onTeamTodayOrLater(records, today)).toBe(false);
   });
 });
 

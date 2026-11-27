@@ -4,7 +4,14 @@
 // fill one, and what the form holds. The server checks each again, along with those People cannot
 // tell, such as a person who has not started the hire they filled before.
 
-import { type HireFill, type List, type Person } from "@fathom/shared";
+import {
+  carriedByFill,
+  type HireFill,
+  joinedAndLed,
+  type List,
+  type Person,
+  type PersonFeatureTeam,
+} from "@fathom/shared";
 import { isHire, stateMeaning } from "./people-rows.ts";
 import { heldBack } from "./grid-drafts.ts";
 import type { CellValue } from "./table-view.ts";
@@ -85,3 +92,60 @@ export const managerChange = (
   managerId: string | undefined,
 ): { managerId?: string | null } =>
   managerId === hire.manager?.id ? {} : { managerId: managerId ?? null };
+
+// The id a fill's person goes by until they're added, or when the reader doesn't see them.
+export const newPersonId = "new-person";
+
+// A feature team a fill puts its person on, or has them lead, from a day.
+export interface TeamTakenOn {
+  team: PersonFeatureTeam;
+  from: string;
+}
+
+// Whom a fill would make of the hire: someone already in Fathom, or a new person, and when they
+// start, if a day is known, and the feature teams they're on today.
+export interface FillingPerson {
+  id: string;
+  startDate: string | null;
+  teams: readonly PersonFeatureTeam[];
+}
+
+// The feature teams a planned hire's person joins and leads once the fill is approved, each from
+// its first day, as the server carries them, judged as if approved today. A team the person is on
+// today keeps them as they are, so they don't join it.
+export function teamsTakenOn(
+  hire: Pick<Person, "teamsCarried">,
+  person: FillingPerson,
+  day: string,
+): { joins: TeamTakenOn[]; leads: TeamTakenOn[] } {
+  const teams = hire.teamsCarried ?? [];
+  const { joins, leads } = joinedAndLed(
+    carriedByFill(
+      {
+        memberships: teams.flatMap(({ team, memberships }) =>
+          memberships.map((record) => ({ teamId: team.id, ...record })),
+        ),
+        leads: teams.flatMap(({ team, leads: led }) =>
+          led.map((record) => ({ teamId: team.id, ...record })),
+        ),
+      },
+      {
+        id: person.id,
+        startDate: person.startDate,
+        teams: person.teams.map(({ id }) => ({
+          teamId: id,
+          member: true,
+          fromDate: day,
+        })),
+      },
+      day,
+    ),
+    person.id,
+  );
+  const taken = (days: ReadonlyMap<string, string>) =>
+    teams.flatMap(({ team }): TeamTakenOn[] => {
+      const from = days.get(team.id);
+      return from === undefined ? [] : [{ team, from }];
+    });
+  return { joins: taken(joins), leads: taken(leads) };
+}

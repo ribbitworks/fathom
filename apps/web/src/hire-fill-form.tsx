@@ -13,16 +13,23 @@ import {
   typedDay,
   defaultLineFrom,
   allOf,
+  isDay,
 } from "@fathom/shared";
 import { Button, Group, SegmentedControl, Stack, Text } from "@mantine/core";
 import { NewFormEnter, useAfterUpdate } from "./new-form-enter.ts";
 import { cellKinds } from "./cell-kinds.tsx";
+import { ColouredName } from "./colour-swatch.tsx";
+import { formatDay } from "./day-formats.ts";
 import { notShown } from "./draft-details.tsx";
 import { choice } from "./lists.ts";
 import {
   fillCandidates,
+  type FillingPerson,
   type HireFilling,
   managerChange,
+  newPersonId,
+  type TeamTakenOn,
+  teamsTakenOn,
   underPlannedManager,
   wouldMove,
 } from "./hire-fill.ts";
@@ -38,6 +45,7 @@ import type { NoteOpening } from "./note-editing.tsx";
 import { type EditingContext, usePersonEditing } from "./person-editing.tsx";
 import classes from "./record-details.module.css";
 import { RecordLink, Row } from "./record-details.tsx";
+import { FromDay } from "./status-mark.tsx";
 import { useFocusOnOpen } from "./record-editing.tsx";
 import { cellColumn, columnsOn, fieldColumn, onRow } from "./grid-columns.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
@@ -47,12 +55,45 @@ import { newRecordRequest, recordProblem } from "./people-requests.ts";
 
 export const fillButtonId = "hire-fill";
 
-const reportsColumn = fieldColumn<Person, RowChange>("fillReports", "text", {
-  label: "Direct reports",
-  required: false,
-  multiple: false,
-  choices: [],
-});
+const readOnlyColumn = (key: string, label: string) =>
+  fieldColumn<Person, RowChange>(key, "text", {
+    label,
+    required: false,
+    multiple: false,
+    choices: [],
+  });
+
+const reportsColumn = readOnlyColumn("fillReports", "Direct reports");
+const joinsColumn = readOnlyColumn("fillJoins", "Feature teams");
+const leadsColumn = readOnlyColumn("fillLeads", "Leads");
+
+// The feature teams the hire's person joins or leads, one to a line, each in its colour, from its
+// day. Left out when there are none.
+function TakenOnRow({
+  column,
+  teams,
+  day,
+}: {
+  column: Column;
+  teams: readonly TeamTakenOn[];
+  // The day shown, on which a team carried needs no day said.
+  day: string;
+}) {
+  return (
+    teams.length > 0 && (
+      <Row column={column} value={allOf(teams.map(({ team }) => team.name))}>
+        <ul className={classes.reports}>
+          {teams.map(({ team, from }) => (
+            <li key={team.id}>
+              <ColouredName colour={team.colour}>{team.name}</ColouredName>
+              {from !== day && <FromDay day={formatDay(from)} />}
+            </li>
+          ))}
+        </ul>
+      </Row>
+    )
+  );
+}
 
 const personKey = "fillPerson";
 const fromKey = "fillFrom";
@@ -278,6 +319,23 @@ export function HireFillForm({
         managerId: chosen(managerId),
         [fromKey]: from,
       };
+  // A start date only those who see it can enter.
+  const typedStart =
+    isNew && startColumn !== undefined
+      ? typedDay(values.startDate as string)
+      : "";
+  const taking: FillingPerson = isNew
+    ? {
+        id: newPersonId,
+        startDate: isDay(typedStart) ? typedStart : null,
+        teams: [],
+      }
+    : {
+        id: chosenPerson?.id ?? newPersonId,
+        startDate: chosenPerson?.startDate ?? null,
+        teams: chosenPerson?.featureTeams ?? [],
+      };
+  const takenOn = teamsTakenOn(hire, taking, day);
   const context: EditingContext = {
     id: formId,
     kind: personKind,
@@ -386,6 +444,8 @@ export function HireFillForm({
             {reports.length > 0 && (
               <Row column={reportsColumn} value={allOf(reports)} />
             )}
+            <TakenOnRow column={joinsColumn} teams={takenOn.joins} day={day} />
+            <TakenOnRow column={leadsColumn} teams={takenOn.leads} day={day} />
           </dl>
           <Group justify="flex-end" gap="xs">
             <Button variant="default" onClick={onCancel} disabled={saving}>

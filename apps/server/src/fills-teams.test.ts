@@ -51,7 +51,7 @@ afterAll(closeFeatureTeamTests);
 const start = "2026-09-01";
 
 const inDraftRefusal =
-  "A feature team's draft names this planned hire, or changes a team it's on or leads; approve or discard the draft before filling the hire";
+  "A draft of one of this planned hire's feature teams, or one naming it, is waiting. Approve or discard it before filling the hire.";
 
 const endRefusal = async (id: string) => {
   const name = await nameOf(id);

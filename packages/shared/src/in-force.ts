@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Records in force from a date until the next one for the same subject starts, such as a person's
-// reporting lines. Part of the data access layer. Feature team memberships follow the same pattern.
+// reporting lines or feature team memberships, read the same way by the server and the browser.
 
 export interface Dated {
   fromDate: string;
