@@ -297,7 +297,7 @@ describe("the side panel", () => {
     await screen.findByRole("heading", { name: /Fictional Project/ });
     const row = within(sidePanel()).getByText("First milestone").closest("div");
     expect(row?.textContent).toContain("Mar 15, 2030");
-    expect(row?.textContent).toContain("empty, live");
+    expect(row?.textContent).toContain(", live, empty");
     expect(row?.textContent).not.toContain("No first milestone");
   });
 
@@ -592,6 +592,6 @@ describe("the page around its tables", () => {
     await screen.findByRole("heading", { name: /Fictional Proposal/ });
     expect(
       within(sidePanel()).getByText("NEW-1").closest("dd")?.textContent,
-    ).toContain("filled inempty, live");
+    ).toContain("filled in, live, empty");
   });
 });

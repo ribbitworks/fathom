@@ -155,7 +155,7 @@ export function PeoplePage({
   const [opened] = useState(today);
   const countOn = useCallback(
     (rows: readonly Person[]) =>
-      `${peopleAndHires(isHire).counted(rows)} on ${formatDay(day ?? opened)}`,
+      `${peopleAndHires(isHire)(rows)} on ${formatDay(day ?? opened)}`,
     [day, opened],
   );
   const query = useQuery(peopleQueryOn(day));

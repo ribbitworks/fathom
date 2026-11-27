@@ -339,8 +339,7 @@ describe("a row's values", () => {
       </LiveValue>,
     );
     expect(screen.queryByText(/No description/u)).toBeNull();
-    expect(screen.getByText("empty")).toBeDefined();
-    expect(screen.getByText(", live")).toBeDefined();
+    expect(document.body.textContent).toMatch(/, live, empty$/u);
   });
 
   it("puts a record's own mark first in its row, and Live's in its Live row", () => {

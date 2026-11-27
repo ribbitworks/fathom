@@ -132,7 +132,7 @@ const amountShown = (column: TableColumn<never>, amount: number) =>
 export function MetricsPanel<Row>({
   one,
   noun,
-  kinds,
+  countKinds,
   rows,
   live,
   drafted,
@@ -151,7 +151,7 @@ export function MetricsPanel<Row>({
   noun: string;
   // For rows of several kinds, how many of each a count holds, such as "150 people and 6 planned
   // hires".
-  kinds?: { counted: (rows: readonly Row[]) => string } | undefined;
+  countKinds?: ((rows: readonly Row[]) => string) | undefined;
   // The columns rows may be broken down by.
   offered: readonly TableColumn<Row>[];
   breakdown: readonly string[];
@@ -190,10 +190,10 @@ export function MetricsPanel<Row>({
   };
   const shownLive = besideLive ? liveCounts : undefined;
   const rowsLabel = (counted: readonly Row[]) =>
-    kinds?.counted(counted) ??
+    countKinds?.(counted) ??
     `${count(counted.length)} ${counted.length === 1 ? one : noun}`;
   const capitalNoun =
-    kinds === undefined
+    countKinds === undefined
       ? noun.charAt(0).toUpperCase() + noun.slice(1)
       : "Count";
 

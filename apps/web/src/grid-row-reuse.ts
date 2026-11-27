@@ -4,9 +4,15 @@
 // that row alone, not every row of a long table.
 
 import { type ReactNode, useLayoutEffect, useRef } from "react";
+import type { useGridState } from "./grid-selection.ts";
 
-// What starting an edit changes, which every row but the one edited ignores.
-const editStartKeys = new Set(["editingAt", "openedWith"]);
+type GridState = ReturnType<typeof useGridState>;
+
+// What starting an edit changes in the table's state, which every row but the one edited ignores.
+const editStartKeys: ReadonlySet<string> = new Set<keyof GridState>([
+  "editingAt",
+  "openedWith",
+]);
 
 interface DrawnRow {
   rowIndex: number;
@@ -19,12 +25,12 @@ interface Drawn {
   rows: Map<string, DrawnRow>;
 }
 
-// What the rows are drawn from that isn't a function, by name: the table's props, unchanged while the
-// table redraws for its own state alone, and that state, less the edit's own.
-function inputsOf(props: object, state: object): Map<string, unknown> {
+// What the rows are drawn from that isn't a function, by name: what the table was given and keeps,
+// each unchanged while the table redraws for an edit's start alone, and its state, less the edit's.
+function inputsOf(sources: object, state: object): Map<string, unknown> {
   const entries: [string, unknown][] = [
-    ...Object.entries(props).map(([key, value]): [string, unknown] => [
-      `props.${key}`,
+    ...Object.entries(sources).map(([key, value]): [string, unknown] => [
+      `sources.${key}`,
       value,
     ]),
     ...Object.entries(state).filter(([key]) => !editStartKeys.has(key)),
@@ -39,6 +45,9 @@ const sameInputs = (
   before.size === now.size &&
   [...now].every(([key, value]) => Object.is(before.get(key), value));
 
+// A reused row keeps the event handlers it was drawn with, which knew no edit had started. Each acts
+// only on its row's focused cell, and starting an edit elsewhere takes focus away first; a new row's
+// paste, which also asks whether an edit is open, is why new rows are always drawn again.
 export function useRowReuse(state: object) {
   // Set when an edit starts, for the drawing that follows it, and cleared once that is on screen.
   const editStarting = useRef(false);
@@ -49,18 +58,15 @@ export function useRowReuse(state: object) {
   return {
     rowReuse: {
       editStarting,
-      // Draws the rows, reusing a row drawn last time where an edit only started, so each row is drawn
-      // from the same props and state, and the row, in the same place, holds neither the cell edited
-      // now nor the one edited before. React leaves a row it is given again
-      // unchanged as it was.
       draw: <Row>(
-        props: object,
+        sources: object,
         rows: readonly Row[],
         keyOf: (row: Row) => string,
+        reusable: (row: Row) => boolean,
         editingRow: number | undefined,
         drawRow: (row: Row, rowIndex: number) => ReactNode[],
       ): ReactNode[][] => {
-        const inputs = inputsOf(props, state);
+        const inputs = inputsOf(sources, state);
         const last = drawn.current;
         const reusing =
           editStarting.current &&
@@ -72,6 +78,7 @@ export function useRowReuse(state: object) {
           const before = reusing ? last.rows.get(key) : undefined;
           const reused =
             before !== undefined &&
+            reusable(row) &&
             before.rowIndex === rowIndex &&
             rowIndex !== editingRow &&
             rowIndex !== last?.editingRow;

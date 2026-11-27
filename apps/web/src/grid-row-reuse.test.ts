@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { useRowReuse } from "./grid-row-reuse.ts";
 
 const rows = ["a", "b", "c"];
+const always = () => true;
 
 // Draws each row as a new element, counting how many were drawn.
 function drawing() {
@@ -38,13 +39,21 @@ describe("reusing the drawn rows", () => {
       props,
       rows,
       String,
+      always,
       undefined,
       first.draw,
     );
     // When an edit starts in the second row, with nothing else changed
     result.current.editStarting.current = true;
     const second = drawing();
-    const after = result.current.draw(props, rows, String, 1, second.draw);
+    const after = result.current.draw(
+      props,
+      rows,
+      String,
+      always,
+      1,
+      second.draw,
+    );
     // Then only that row is drawn again, and the others are the rows drawn before
     expect(second.drawn).toEqual(["b"]);
     expect(after[0]).toBe(before[0]);
@@ -52,20 +61,40 @@ describe("reusing the drawn rows", () => {
     // And when an edit starts in the third, the second is drawn again too
     result.current.editStarting.current = true;
     const third = drawing();
-    result.current.draw(props, rows, String, 2, third.draw);
+    result.current.draw(props, rows, String, always, 2, third.draw);
     expect(third.drawn).toEqual(["b", "c"]);
+  });
+
+  it("always draws again a row it may not reuse, such as a new row", () => {
+    // Given rows drawn once
+    const { result } = rowsDrawn();
+    const props = { records: rows };
+    result.current.draw(props, rows, String, always, undefined, drawing().draw);
+    // When an edit starts in the first row, the third one not to be reused
+    result.current.editStarting.current = true;
+    const again = drawing();
+    result.current.draw(
+      props,
+      rows,
+      String,
+      (row) => row !== "c",
+      0,
+      again.draw,
+    );
+    // Then the third is drawn again with the first
+    expect(again.drawn).toEqual(["a", "c"]);
   });
 
   it.each([
     ["no edit starts", true, true],
-    ["the props change", false, true],
+    ["what the table was given or keeps changes", false, true],
     ["the table's state changes", true, false],
   ])("draws every row again when %s", (change, sameProps, sameState) => {
     // Given rows drawn once
     const state = { problem: undefined };
     const { result, rerender } = rowsDrawn(state);
     const props = { records: rows };
-    result.current.draw(props, rows, String, undefined, drawing().draw);
+    result.current.draw(props, rows, String, always, undefined, drawing().draw);
     // When the rows are drawn again with that change
     if (!sameState) rerender({ given: { problem: "Name needed" } });
     result.current.editStarting.current = change !== "no edit starts";
@@ -74,6 +103,7 @@ describe("reusing the drawn rows", () => {
       sameProps ? props : { records: [...rows] },
       rows,
       String,
+      always,
       undefined,
       again.draw,
     );

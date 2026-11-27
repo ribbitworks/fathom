@@ -507,7 +507,7 @@ describe("a feature team's draft in its panel", () => {
       }),
     });
     expect(rowText("Feature lead")).toBe(
-      "Avery Fictional, Draft: filled inempty, live",
+      "Avery Fictional, Draft: filled in, live, empty",
     );
   });
 

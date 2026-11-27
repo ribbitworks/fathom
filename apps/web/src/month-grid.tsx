@@ -162,7 +162,7 @@ function countedAsPeople<Rec extends MonthRow>(
 ): RecordTable<Rec, CellChange, CellChange> {
   return {
     ...table,
-    counted: peopleAndHires((row: Rec) => row.plannedHire === true),
+    countKinds: peopleAndHires((row: Rec) => row.plannedHire === true),
   };
 }
 

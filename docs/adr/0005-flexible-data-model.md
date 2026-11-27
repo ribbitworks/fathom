@@ -3,7 +3,7 @@
 - **ADR:** 0005
 - **Status:** Accepted
 - **Date:** 2026-10-30
-- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields; 2026-11-08, to add Number fields; 2026-11-19, to say data classes, as Fathom does, rather than tiers; 2026-11-25, to add the value columns for Checkbox, Text, Date and Link to another table, and Checkbox fields; 2026-11-26, to add Text fields; 2026-11-27, to add Date fields, and to name the required setting Required
+- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields; 2026-11-08, to add Number fields; 2026-11-19, to say data classes, as Fathom does, rather than tiers; 2026-11-25, to add the value columns for Checkbox, Text, Date and Link to another table, and Checkbox fields; 2026-11-26, to add Text fields; 2026-11-27, to add Date fields, to name the required setting Required, and to keep Text fields to one line
 
 ## Context
 

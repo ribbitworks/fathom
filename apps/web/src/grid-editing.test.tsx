@@ -259,6 +259,51 @@ describe("a refused value", () => {
   });
 });
 
+// A table of two gadgets, counting each time the second's name is read to be drawn.
+function watchingTheSecondRow() {
+  const otherRowReads = vi.fn();
+  const base = gadgetTable();
+  const table = {
+    ...base,
+    columnsFor: (...given: Parameters<typeof base.columnsFor>) =>
+      base.columnsFor(...given).map((column) =>
+        column.key === "name"
+          ? {
+              ...column,
+              value: (record: Gadget) => {
+                if (record.id === "g2") otherRowReads();
+                return column.value(record);
+              },
+            }
+          : column,
+      ),
+  };
+  renderGadgets({ gadgets: [gadget("g1"), gadget("g2")], fields: [], table });
+  act(() => {
+    document.getElementById("cell-g1-name")?.focus();
+  });
+  otherRowReads.mockClear();
+  return otherRowReads;
+}
+
+describe("starting an edit", () => {
+  it.each([
+    ["Enter", "{Enter}"],
+    ["a key typed", "x"],
+  ])(
+    "draws only the row of the cell whose edit %s starts",
+    async (_how, keys) => {
+      // Given a table of two gadgets, with the first's name selected
+      const otherRowReads = watchingTheSecondRow();
+      // When the edit of the first gadget's name starts
+      await userEvent.keyboard(keys);
+      // Then its editor opens, and the second gadget's row isn't drawn again
+      expect(screen.getByRole("textbox", { name: "Name" })).toBeDefined();
+      expect(otherRowReads).not.toHaveBeenCalled();
+    },
+  );
+});
+
 describe("typing in a cell", () => {
   it("draws only the cell being typed in, not the table's other rows", async () => {
     // Given a table of two gadgets, watching when the second's name is read to be drawn
