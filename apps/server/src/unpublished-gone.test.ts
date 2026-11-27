@@ -7,8 +7,6 @@
 import {
   accessHistory,
   allocations,
-  changes,
-  changeSets,
   features,
   privateChanges,
 } from "@fathom/db";
@@ -17,7 +15,12 @@ import { and, count, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { randomUUID } from "node:crypto";
 import { readToday } from "./data/settings.ts";
-import { builtInChoice, generalReader, unique } from "./test-app.ts";
+import {
+  builtInChoice,
+  generalReader,
+  testPosition,
+  unique,
+} from "./test-app.ts";
 import {
   test,
   alice,
@@ -31,6 +34,7 @@ import {
   publish,
   discard,
   history,
+  undo,
   decide,
   draftPeople,
   livePeople,
@@ -54,35 +58,11 @@ const rowsOf = (who: User, recordId: string) =>
       ),
     );
 
-// The maker's withdrawals' changes to the records given, each with its change set.
-const withdrawn = async (who: User, recordIds: readonly string[]) =>
-  (
-    await test.connection
-      .select({
-        changeSetId: changeSets.id,
-        private: changeSets.private,
-        roleId: changeSets.madeAsRoleId,
-        recordType: changes.recordType,
-        recordId: changes.recordId,
-        action: changes.action,
-        field: changes.field,
-        draft: changes.draft,
-      })
-      .from(changeSets)
-      .innerJoin(changes, eq(changes.changeSetId, changeSets.id))
-      .where(
-        and(eq(changeSets.madeBy, who.id), eq(changeSets.kind, "withdrawal")),
-      )
-      .orderBy(changes.id)
-  ).filter(({ recordId }) => recordIds.includes(recordId));
-
-const roleOf = async (changeSetId: string) =>
-  (
-    await test.connection
-      .select({ roleId: changeSets.madeAsRoleId })
-      .from(changeSets)
-      .where(eq(changeSets.id, changeSetId))
-  )[0]?.roleId;
+// The maker's latest withdrawal as records went, which their history shows as drafts discarded.
+const withdrawal = async (who: User) =>
+  (await history(who)).find(
+    ({ kind, madeBy }) => kind === "discard" && madeBy === who.name,
+  );
 
 const personalChanges = async (who: User, subjectId: string) =>
   (
@@ -134,21 +114,20 @@ describe("everyone's private changes to a record an approval removes", () => {
     expect(
       new Set((await unpublished(bob)).map(({ subject }) => subject)),
     ).toEqual(new Set([changedName, untouchedName, ownName]));
-    const changesWithdrawn = await withdrawn(bob, [removed]);
+    const withdrawn = await withdrawal(bob);
     expect(
-      new Set(
-        changesWithdrawn.map(({ action, field, draft }) =>
-          [action, field, draft].join(" "),
-        ),
-      ),
-    ).toEqual(new Set(["changed preferredName true", "changed endDate true"]));
-    const [first] = changesWithdrawn;
-    expect(first).toMatchObject({ private: true, roleId: await roleOf(edit) });
+      withdrawn?.records.map(({ action, draft, fields }) => ({
+        action,
+        draft,
+        fields: fields.map(({ field }) => field).sort(),
+      })),
+    ).toEqual([
+      { action: "changed", draft: true, fields: ["endDate", "preferredName"] },
+    ]);
+    const made = (await history(bob)).find(({ id }) => id === edit);
+    expect(withdrawn?.madeAs).toBe(made?.madeAs);
     expect(await personalChanges(bob, removed)).toBe(
       Number(personalBefore) + 1,
-    );
-    expect((await history(bob)).map(({ id }) => id)).toContain(
-      first?.changeSetId,
     );
     expect(await discard(bob)).toBe(3);
   });
@@ -166,9 +145,7 @@ describe("everyone's private changes to a record an approval removes", () => {
     );
 
     // When the others read the change history
-    const [{ changeSetId } = { changeSetId: "" }] = await withdrawn(bob, [
-      removed,
-    ]);
+    const changeSetId = (await withdrawal(bob))?.id;
 
     // Then neither sees his withdrawal
     for (const other of [alice, approver]) {
@@ -229,18 +206,8 @@ describe("everyone's private changes to a record an approval removes", () => {
     expect(response.statusCode, response.body).toBe(200);
     expect(await unpublished(bob)).toEqual([]);
     expect(
-      new Set(
-        (await withdrawn(bob, [list.id, kept.id, leaving.id])).map(
-          ({ recordType, recordId }) => `${recordType} ${recordId}`,
-        ),
-      ),
-    ).toEqual(
-      new Set([
-        `list-item ${kept.id}`,
-        `choice-order ${list.id}`,
-        `list-item ${leaving.id}`,
-      ]),
-    );
+      (await withdrawal(bob))?.records.map(({ kind }) => kind).sort(),
+    ).toEqual(["choice-order", "list-item", "list-item"]);
     expect(await discard(alice)).toBe(1);
   });
   it("are discarded for an allocation of a person removed", async () => {
@@ -280,9 +247,7 @@ describe("everyone's private changes to a record an approval removes", () => {
     expect(response.statusCode, response.body).toBe(200);
     expect(await rowsOf(planner, allocationId)).toEqual([]);
     expect(
-      (await withdrawn(planner, [allocationId])).map(
-        ({ recordType }) => recordType,
-      ),
+      (await withdrawal(planner))?.records.map(({ kind }) => kind),
     ).toContain("allocation");
   });
 });
@@ -304,11 +269,11 @@ describe("everyone's private changes to a record whose added draft goes", () => 
     expect(await rowsOf(bob, added)).toEqual([]);
     expect(await unpublished(bob)).toEqual([]);
     expect(
-      (await withdrawn(bob, [added])).map(({ action, field }) => ({
+      (await withdrawal(bob))?.records.map(({ action, fields }) => ({
         action,
-        field,
+        fields: fields.map(({ field }) => field),
       })),
-    ).toEqual([{ action: "changed", field: "preferredName" }]);
+    ).toEqual([{ action: "changed", fields: ["preferredName"] }]);
   });
 
   it("leave none of the publisher's own changes to the choices and order of a list whose added draft they discard", async () => {
@@ -344,5 +309,179 @@ describe("everyone's private changes to a record whose added draft goes", () => 
 
     // Then none of her changes is left
     expect(await unpublished(alice)).toEqual([]);
+  });
+});
+
+// Ben's private changes to Kai, then Mo, whose removal is approved, then Lee, with the names he
+// gave them.
+async function benAfterMoGoes() {
+  const ben = await user(["people:edit", "people:approve"]);
+  const [kai = "", mo = "", lee = ""] = await livePeople(3);
+  const renaming = async (id: string) => {
+    const name = unique("Fictional Named");
+    const changeSetId = await changeSetOf(ben, "PATCH", `/api/people/${id}`, {
+      preferredName: name,
+    });
+    return { name, changeSetId };
+  };
+  const kaiChange = await renaming(kai);
+  const moChange = await renaming(mo);
+  await saved(alice, "DELETE", `/api/people/${mo}`);
+  await publish(alice);
+  expect((await decide("approval", { people: [mo] })).statusCode).toBe(200);
+  const leeChange = await renaming(lee);
+  return { ben, kai, kaiChange, moChange, leeChange };
+}
+
+const goneUndoRefused =
+  "Changes withdrawn because their record is gone can't be undone";
+
+const entryIds = async (who: User) => (await history(who)).map(({ id }) => id);
+
+describe("a maker's other private changes, after one is withdrawn as its record goes", () => {
+  it("are listed newest first", async () => {
+    const { ben, kaiChange, leeChange } = await benAfterMoGoes();
+
+    expect((await unpublished(ben)).map(({ subject }) => subject)).toEqual([
+      leeChange.name,
+      kaiChange.name,
+    ]);
+  });
+
+  it("are held for a role that may publish them", async () => {
+    const { ben } = await benAfterMoGoes();
+
+    await test.holdOnly(ben.id, ["configuration:edit"]);
+    const published = await test.request(
+      ben.cookie,
+      "POST",
+      "/api/unpublished/publish",
+    );
+
+    expect(published.json()).toEqual({ total: 0, left: 2 });
+  });
+
+  it("count once published, so their maker may not approve them alone", async () => {
+    const { ben, kai } = await benAfterMoGoes();
+
+    expect(await publish(ben)).toBe(2);
+    const approving = await test.request(
+      ben.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { people: [kai] },
+    );
+
+    expect(approving.statusCode, approving.body).toBe(403);
+  });
+
+  it("are published without the change withdrawn, which only its maker sees, with its withdrawal", async () => {
+    // Given Ben's change to Mo withdrawn as Mo's removal is approved
+    const { ben, kaiChange, moChange } = await benAfterMoGoes();
+    const goneSet = String((await withdrawal(ben))?.id);
+
+    // When Ben publishes his other changes
+    expect(await publish(ben)).toBe(2);
+
+    // Then others see his change to Kai and nothing of Mo's, and Ben sees all three
+    for (const other of [alice, approver]) {
+      const seen = await entryIds(other);
+      expect(seen).toContain(kaiChange.changeSetId);
+      expect(seen).not.toContain(moChange.changeSetId);
+      expect(seen).not.toContain(goneSet);
+    }
+    expect(await entryIds(ben)).toEqual(
+      expect.arrayContaining([
+        kaiChange.changeSetId,
+        moChange.changeSetId,
+        goneSet,
+      ]),
+    );
+  });
+
+  it("saved with a change withdrawn, are published alone, while its maker sees that change and its withdrawal", async () => {
+    // Given Ben's private undo of his published addition of Kai and Mo, and Alice's discard of Mo's
+    // draft, published
+    const ben = await user(["people:edit", "people:view", "personal:view"]);
+    const kaiName = unique("Fictional Kai");
+    const moName = unique("Fictional Mo");
+    const added = await saved<{ ids: string[]; changeSetId: string }>(
+      ben,
+      "POST",
+      "/api/people",
+      {
+        people: [kaiName, moName].map((preferredName) => ({
+          preferredName,
+          employeeId: unique("E"),
+          positionId: testPosition,
+        })),
+      },
+    );
+    const [, mo = ""] = added.ids;
+    await publish(ben);
+    const undone = await undo(ben, added.changeSetId);
+    expect(undone.statusCode, undone.body).toBe(200);
+    await saved(alice, "DELETE", `/api/people/${mo}/draft`);
+    await publish(alice);
+    expect(await unpublished(ben)).toHaveLength(1);
+
+    // When Ben publishes the rest of his undo
+    expect(await publish(ben)).toBe(1);
+
+    // Then others see his undo for Kai alone, and Ben sees his undo for Mo too, and its withdrawal
+    const namesSeenBy = async (who: User) =>
+      (await history(who))
+        .filter(({ madeBy }) => madeBy === ben.name)
+        .map(({ kind, records }) => [
+          kind,
+          records.map(({ name }) => name).sort(),
+        ]);
+    for (const other of [alice, approver]) {
+      expect(await namesSeenBy(other)).toEqual([
+        ["edit", [kaiName]],
+        ["edit", [kaiName, moName].sort()],
+      ]);
+    }
+    const seenByBen = await namesSeenBy(ben);
+    expect(seenByBen).toHaveLength(4);
+    expect(seenByBen).toEqual(
+      expect.arrayContaining([
+        ["discard", [moName]],
+        ["edit", [kaiName]],
+        ["edit", [moName]],
+        ["edit", [kaiName, moName].sort()],
+      ]),
+    );
+  });
+});
+
+describe("a withdrawal of private changes as their record goes", () => {
+  it("can't be undone when an approval removed the record", async () => {
+    const { ben } = await benAfterMoGoes();
+    const changeSetId = String((await withdrawal(ben))?.id);
+
+    const response = await undo(ben, changeSetId);
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: goneUndoRefused });
+  });
+
+  it("can't be undone when a published discard removed the record", async () => {
+    // Given Bob's private change to a person whose added draft Alice discards and publishes
+    const [added = ""] = await draftPeople(alice, ["Fictional Arrival"]);
+    await publish(alice);
+    await saved(bob, "PATCH", `/api/people/${added}`, {
+      preferredName: unique("Fictional Renamed Arrival"),
+    });
+    await saved(alice, "DELETE", `/api/people/${added}/draft`);
+    await publish(alice);
+    const changeSetId = String((await withdrawal(bob))?.id);
+
+    // When Bob undoes his withdrawal
+    const response = await undo(bob, changeSetId);
+
+    // Then it is refused
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({ error: goneUndoRefused });
   });
 });

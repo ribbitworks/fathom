@@ -16,6 +16,7 @@ import {
 import type { RecordType as PlanRecordType, Tier } from "@fathom/shared";
 import type { Actor } from "../access.ts";
 import { ConflictError } from "../errors.ts";
+import { kindsWhere } from "./change-set-kinds.ts";
 
 export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
@@ -133,9 +134,7 @@ export async function refusingDuplicates<Result>(
   }
 }
 
-// The kinds of change set that change drafts as their maker intends them, so are unpublished until
-// published; approving, rejecting, and resubmitting decide or send published drafts.
-const editing: readonly ChangeSetKind[] = ["edit", "discard", "withdrawal"];
+const editing = kindsWhere(({ editing: changesDrafts }) => changesDrafts);
 
 // Records changes as one change set, in the transaction that makes them, the way the seed data
 // command does too. Changes to drafts are the maker's own, unpublished, until they publish them,

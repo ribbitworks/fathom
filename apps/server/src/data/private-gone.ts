@@ -6,16 +6,21 @@
 import { type DataClasses, draftKey } from "@fathom/shared";
 import {
   allocations,
+  changes,
+  changeSets,
   drafts,
   inChunks,
   listItems,
   privateChanges,
+  recordChanges,
 } from "@fathom/db";
 import { and, eq, inArray, ne, or, type SQL, sql } from "drizzle-orm";
-import { type Transaction } from "./changes.ts";
+import { storedTier } from "../access.ts";
+import { type Change, type StoredChange, type Transaction } from "./changes.ts";
+import { storedKind } from "./change-set-kinds.ts";
 import { fieldExists } from "./column-state.ts";
 import { type Draft } from "./draft-records.ts";
-import { chunksByKind } from "./draft-makers.ts";
+import { chunksByKind, madeInOrder, openChangeSets } from "./draft-makers.ts";
 import { choiceExists, listExists } from "./list-state.ts";
 import { isRecordType } from "./records.ts";
 import { type RecordsState, stateOf } from "./record-state.ts";
@@ -28,7 +33,7 @@ import {
   type Row,
   type Versions,
 } from "./private-versions.ts";
-import { withdraw } from "./private-withdrawals.ts";
+import { undone, withdraw } from "./private-withdrawals.ts";
 
 export interface RecordRef {
   recordType: string;
@@ -269,6 +274,88 @@ export async function readPrivateBefore(
   return makers;
 }
 
+// A change as the history stores it, as made: a change to a draft is always of a kind Fathom
+// records.
+const asChange = (stored: StoredChange): Change => ({
+  recordType: stored.recordType as Change["recordType"],
+  recordId: stored.recordId,
+  action: stored.action,
+  field: stored.field,
+  tier: storedTier(stored.tier),
+  oldValue: stored.oldValue,
+  newValue: stored.newValue,
+  draft: stored.draft,
+});
+
+// Copies, at its time and role, each of the user's open change sets that changed both a record gone
+// and another: its changes to records gone, which the withdrawal closes, and the rest, published as
+// they would have been. The history can't be changed to part the change set, which, open when the
+// withdrawal is made, is then never published nor shown, so nobody else sees what went.
+async function partOpenSets(
+  transaction: Transaction,
+  userId: string,
+  gone: readonly Row[],
+): Promise<StoredChange[]> {
+  const goneKeys = new Set(gone.map(changeKey));
+  const rows = await transaction
+    .select({
+      change: changes,
+      kind: changeSets.kind,
+      roleId: changeSets.madeAsRoleId,
+    })
+    .from(changes)
+    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+    .where(openChangeSets(userId))
+    .orderBy(...madeInOrder);
+  const sets = new Map<
+    string,
+    {
+      set: (typeof rows)[number];
+      withdrawn: StoredChange[];
+      kept: StoredChange[];
+    }
+  >();
+  const ofGone: StoredChange[] = [];
+  for (const row of rows) {
+    const held = sets.get(row.change.changeSetId) ?? {
+      set: row,
+      withdrawn: [],
+      kept: [],
+    };
+    const key = changeKey(row.change);
+    if (goneKeys.has(key)) {
+      held.withdrawn.push(row.change);
+      ofGone.push(row.change);
+    } else {
+      held.kept.push(row.change);
+    }
+    sets.set(row.change.changeSetId, held);
+  }
+  for (const [setId, { set, withdrawn, kept }] of sets) {
+    if (withdrawn.length === 0 || kept.length === 0) continue;
+    for (const part of [withdrawn, kept]) {
+      await recordChanges(
+        transaction,
+        { userId, roleId: set.roleId },
+        part.map((change) => ({
+          recordType: change.recordType,
+          recordId: change.recordId,
+          action: change.action,
+          field: change.field,
+          tier: change.tier,
+          oldValue: change.oldValue,
+          newValue: change.newValue,
+          draft: change.draft,
+        })),
+        storedKind(set.kind),
+        true,
+        sql`(SELECT made_at FROM fathom.change_sets WHERE id = ${setId})`,
+      );
+    }
+  }
+  return ofGone;
+}
+
 // Discards each maker's private changes, read before, to records there before and gone now, as
 // their own withdrawal, seen only by them, as the role they last changed one of those records as.
 // A maker is read only for a change to a record going, and withdrawing nothing writes nothing.
@@ -286,11 +373,24 @@ export async function discardPrivateOfGone(
       await openDraftChanges(transaction, userId),
       gone,
     );
+    const ofGone = await partOpenSets(transaction, userId, gone);
+    // A record whose withdrawal has no field to take back, such as an order now the same as
+    // everyone's, takes back each of the maker's changes to it instead, so it is still named.
     await withdraw(
       transaction,
       { userId, roleId },
       withoutRemovals(versions, gone),
-      [{ kind: "withdrawal", rows: gone }],
+      [
+        {
+          kind: "gone",
+          rows: gone,
+          otherwise: (row) =>
+            ofGone
+              .filter((change) => changeKey(change) === changeKey(row))
+              .map((change) => undone(asChange(change)))
+              .reverse(),
+        },
+      ],
       classes,
     );
   }

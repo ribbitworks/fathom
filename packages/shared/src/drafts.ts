@@ -421,9 +421,15 @@ export const unpublishedChosenSchema = z.object({
   drafts: draftsRequestSchema.optional(),
 });
 
-// The records whose drafts a user changed since each was last approved or discarded, from their
-// history in order: rejecting or resubmitting a draft does not change it, so neither counts nor
-// resets. One rule for the drafts marked on screen and the approvals refused.
+// The kinds of change set that start again who changed a draft, such as approving it, and those
+// that neither change it nor start again, such as rejecting it, as the server's rules name them.
+export interface MakerKinds {
+  resets: ReadonlySet<string>;
+  changesNothing: ReadonlySet<string>;
+}
+
+// The records whose drafts a user changed since each was last decided, from their history in order.
+// One rule for the drafts marked on screen and the approvals refused.
 export function draftsChangedBy(
   rows: readonly {
     recordId: string;
@@ -432,16 +438,16 @@ export function draftsChangedBy(
     makerId: string | null;
   }[],
   userId: string,
+  kinds: MakerKinds,
 ): Set<string> {
   const changed = new Set<string>();
   for (const row of rows) {
-    if (row.kind === "approval" || row.kind === "discard") {
+    if (kinds.resets.has(row.kind)) {
       changed.delete(row.recordId);
     } else if (
       row.draft &&
       row.makerId === userId &&
-      row.kind !== "rejection" &&
-      row.kind !== "resubmission"
+      !kinds.changesNothing.has(row.kind)
     ) {
       changed.add(row.recordId);
     }

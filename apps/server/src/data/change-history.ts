@@ -17,7 +17,6 @@ import {
   type ChangedRecord,
   type ClassAccess,
   type ChangeEntry,
-  changeKindSchema,
   matchesWords,
   recordSearchText,
   searchWords,
@@ -38,6 +37,7 @@ import {
 } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { rejectedField } from "./draft-records.ts";
+import { rulesOf } from "./change-set-kinds.ts";
 import { hiddenPeople } from "./people-reads.ts";
 import { readToday } from "./settings.ts";
 import { personTier } from "./person-fields.ts";
@@ -307,11 +307,7 @@ async function readBatch(
             {
               entry: {
                 id: set.id,
-                // Unpublished changes all discarded at once are shown as drafts discarded, and a
-                // kind the server no longer knows as saved changes.
-                kind: changeKindSchema
-                  .catch("edit")
-                  .parse(set.kind === "withdrawal" ? "discard" : set.kind),
+                kind: rulesOf(set.kind).shownAs,
                 madeAt: set.madeAt.toISOString(),
                 madeBy: set.madeBy,
                 madeAs: set.madeAs,

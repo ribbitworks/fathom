@@ -24,9 +24,20 @@ import {
   type ClassAccess,
   temporaryId,
 } from "@fathom/shared";
-import { and, asc, desc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  not,
+  notInArray,
+  or,
+  sql,
+} from "drizzle-orm";
 import { type Actor, seesSensitivity } from "../access.ts";
 import { builtInTier } from "./values.ts";
+import { replacedAsGone } from "./gone-sets.ts";
 import { type RecordKind, readsKind } from "./record-state.ts";
 import { recordKinds } from "./records.ts";
 import type { StoredChange } from "./changes.ts";
@@ -122,9 +133,13 @@ export interface Facts {
   visibilities: Map<string, unknown>;
 }
 
-// The change sets the actor may see: all but those holding other users' unpublished changes.
+// The change sets the actor may see: all but those holding other users' unpublished changes, and
+// those replaced by their copies as a record went.
 export const seenSets = (actor: Actor) =>
-  or(eq(changeSets.private, false), eq(changeSets.madeBy, actor.user.id));
+  or(
+    eq(changeSets.private, false),
+    and(eq(changeSets.madeBy, actor.user.id), not(replacedAsGone)),
+  );
 
 // What the history the actor may see last recorded about each record: its name, its list, and a
 // list's visibility.

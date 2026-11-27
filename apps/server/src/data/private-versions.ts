@@ -48,7 +48,7 @@ import { columnsWithAdded } from "./added-columns.ts";
 import { readLiveTeams, readTeamDrafts } from "./feature-team-reads.ts";
 import { readToday } from "./settings.ts";
 import { type Transaction } from "./changes.ts";
-import { chunksByKind, openChangeSets } from "./draft-makers.ts";
+import { chunksByKind, madeInOrder, openChangeSets } from "./draft-makers.ts";
 import { readFills } from "./fills.ts";
 import {
   changeKey,
@@ -308,7 +308,7 @@ export const openDraftChanges = (reader: Reader, userId: string) =>
     .from(changes)
     .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
     .where(and(openChangeSets(userId), eq(changes.draft, true)))
-    .orderBy(asc(changes.id));
+    .orderBy(...madeInOrder);
 
 export type OpenDraftChange = Awaited<
   ReturnType<typeof openDraftChanges>

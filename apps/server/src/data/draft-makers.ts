@@ -20,9 +20,11 @@ import {
   fromDraftKey,
   type Tier,
 } from "@fathom/shared";
-import { and, eq, inArray, or, type SQL, sql } from "drizzle-orm";
+import { and, eq, inArray, not, or, type SQL, sql } from "drizzle-orm";
 import { type Actor, storedTier } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
+import { kindsWhere, listedKinds, makerKinds } from "./change-set-kinds.ts";
+import { closedByGone } from "./gone-sets.ts";
 
 export interface Maker {
   madeBy: string | null;
@@ -42,13 +44,24 @@ export interface Maker {
 // General.
 export const everything = () => true;
 
+const publishedNext = kindsWhere((rules) => rules.publishedNext);
+const endingOpen = listedKinds(({ endsOpen }) => endsOpen);
+const resetting = kindsWhere(({ resetsMakers }) => resetsMakers);
+
+// The order changes count in for who changed a draft: by their change set's time, so the copies a
+// record gone parts a change set into stay where their original was, then as saved.
+export const madeInOrder = [changeSets.madeAt, changes.id] as const;
+
 // The change sets holding a user's unpublished changes since they last discarded them all, which
-// publishing publishes; those before are discarded, so are never published.
+// publishing publishes; those before are discarded, so are never published, and so is one that
+// changed a record gone, whose changes to it were withdrawn with it.
 export function openChangeSets(userId: string): SQL {
   return and(
     eq(changeSets.private, true),
     eq(changeSets.madeBy, userId),
-    sql`${changeSets.madeAt} > coalesce((SELECT max(withdrawn.made_at) FROM fathom.change_sets AS withdrawn WHERE withdrawn.made_by = ${userId} AND withdrawn.kind = 'withdrawal'), '-infinity')`,
+    inArray(changeSets.kind, publishedNext),
+    sql`${changeSets.madeAt} > coalesce((SELECT max(withdrawn.made_at) FROM fathom.change_sets AS withdrawn WHERE withdrawn.made_by = ${userId} AND withdrawn.kind IN (${endingOpen})), '-infinity')`,
+    not(closedByGone),
   ) as SQL;
 }
 
@@ -102,30 +115,26 @@ export async function draftMakers(
         and(
           eq(changes.recordType, recordType),
           inArray(changes.recordId, chunk),
-          or(
-            eq(changes.draft, true),
-            inArray(changeSets.kind, ["approval", "discard"]),
-          ),
+          or(eq(changes.draft, true), inArray(changeSets.kind, resetting)),
           or(eq(changeSets.private, false), openChangeSets(viewer.user.id)),
         ),
       )
-      .orderBy(changes.id);
+      .orderBy(...madeInOrder);
     const counted = rows.filter(
       (row) => !row.unpublished || own.has(row.recordId),
     );
     // The viewer's changes count whatever their tier, since they made them.
     const mine = approvesOwn
       ? new Set<string>()
-      : draftsChangedBy(counted, viewer.user.id);
+      : draftsChangedBy(counted, viewer.user.id, makerKinds);
     for (const row of counted) {
-      if (row.kind === "approval" || row.kind === "discard") {
+      if (makerKinds.resets.has(row.kind)) {
         makers.delete(row.recordId);
         continue;
       }
       const recorded = storedTier(row.tier);
       if (
-        row.kind === "rejection" ||
-        row.kind === "resubmission" ||
+        makerKinds.changesNothing.has(row.kind) ||
         !seen(row.field, recorded)
       ) {
         continue;
@@ -226,12 +235,12 @@ export async function refuseOwnDrafts(
                 eq(changes.draft, true),
                 eq(changeSets.madeBy, actor.user.id),
               ),
-              inArray(changeSets.kind, ["approval", "discard"]),
+              inArray(changeSets.kind, resetting),
             ),
           ),
         )
-        .orderBy(changes.id);
-      if (draftsChangedBy(rows, actor.user.id).size > 0) {
+        .orderBy(...madeInOrder);
+      if (draftsChangedBy(rows, actor.user.id, makerKinds).size > 0) {
         throw new ForbiddenError(
           "Drafts changed by the approver need another approver",
         );

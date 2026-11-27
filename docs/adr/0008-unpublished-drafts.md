@@ -3,7 +3,7 @@
 - **ADR:** 0008
 - **Status:** Accepted
 - **Date:** 2026-11-03
-- **Revised:** 2026-11-17, to publish or discard chosen changes, and to mark a change set published once none of its changes is held; 2026-11-20, to publish only the changes the role in use may make; 2026-11-25, to keep them as private changes, by record and user in each user's set, each standing over the published draft with its maker's own fields; 2026-11-26, so changes no longer hold their record, and count in no other user's checks; 2026-11-26, to discard everyone's changes to a record that goes away
+- **Revised:** 2026-11-17, to publish or discard chosen changes, and to mark a change set published once none of its changes is held; 2026-11-20, to publish only the changes the role in use may make; 2026-11-25, to keep them as private changes, by record and user in each user's set, each standing over the published draft with its maker's own fields; 2026-11-26, so changes no longer hold their record, and count in no other user's checks; 2026-11-26, to discard everyone's changes to a record that goes away, shown to their maker alone
 
 ## Context
 
@@ -21,7 +21,7 @@ A user's changes are seen only by that user until they publish them:
 - **A table of private changes:** A user's unpublished changes are kept in a second table, shaped as the table of drafts, keyed by the record and the user whose changes they are, in that user's set. Several users may each have one for the same record.
   - **Whole drafts:** Each row holds the whole draft the user intends, as a draft row does, not the difference from the published draft.
   - **Own fields:** Each row records, for each field its maker changed, the value it started from. Read and published, it puts those fields over whatever the published draft holds then, so a change made by another meanwhile to other fields stays; a row naming no field of its own, such as a record its maker adds, or changing the action, such as a removal, keeps the whole draft.
-  - **A record that goes away:** when an approval removes a record, with a list's choices and order, or publishing a discard or an undo removes the published draft that added it, everyone's rows changing it are discarded. Each is recorded in its maker's history as a withdrawal of the fields they changed, with its access history, which only they see.
+  - **A record that goes away:** when an approval removes a record, with a list's choices and order, or publishing a discard or an undo removes the published draft that added it, everyone's rows changing it are discarded. Each is recorded in its maker's history as a withdrawal of the fields they changed, with its access history, which only they see, as a change set of its own kind that is never published and leaves the maker's other private changes as they were. A row whose fields are by then no different from everyone else's, such as an order now the same, is recorded as taking back each of its maker's changes to it, so every record withdrawn is named.
 - **Nothing held:** An unpublished draft holds nothing. Anyone may change, approve, reject, discard or resubmit the record meanwhile, and the user's own changes update their unpublished draft, starting from the published draft when there is one.
 - **Read per user:** Reading a table puts each user's own unpublished drafts over the published drafts, and never reads anyone else's, nor says who has them. A record that exists only as someone else's unpublished draft is not shown at all.
 - **Publishing moves the rows:** Publishing writes each of the user's unpublished drafts, its own fields over the published draft for the same record, waiting for approval, and removes them, all in one transaction.
@@ -39,7 +39,10 @@ A user's changes are seen only by that user until they publish them:
 - **Private change sets:** Each change set records whether it was saved as unpublished changes.
   - **In the change history:** The change history shows such change sets only to their maker until publishing marks them published.
   - **Marked published:** A change set is marked published once its maker has no unpublished draft left of any record it changed, so a change set saved with changes to several records is published once all of them are.
-  - **Undo:** Undo works on them as on any change set, putting back the unpublished draft.
+  - **Changes to a record gone:** A change withdrawn because its record went is never published, so nobody but its maker ever sees it, nor its withdrawal.
+    - **Their own change sets:** A change set still private that changed a record gone is never published.
+    - **Saved with others:** The history can only be added to, so a change set that also changed records that stay is replaced, at its own time and role, by two copies: one of its changes to the records gone, never published, and one of the rest, published as the change set would have been. The change set itself is then shown to nobody, and its maker's history reads as their change, then its withdrawal. The copies keep its time, and whatever orders changes, such as undo's check for changes since, the unpublished list and who changed a draft, orders them by their change set's time, then as saved, so the copies stand where it stood.
+  - **Undo:** Undo works on them as on any change set, putting back the unpublished draft. A withdrawal because a record went can't be undone, since there is no record to put the changes back on.
 - **Checks see only the user's own:** Another user's unpublished drafts count in no check.
   - **Taken values:** a name, Employee ID or requisition in someone else's unpublished draft isn't taken.
   - **In use:** a choice, column, list, manager, team lead or state used only in someone else's unpublished draft isn't in use.

@@ -17,7 +17,7 @@ import {
   type Unpublished,
   type UnpublishedPublished,
 } from "@fathom/shared";
-import { and, eq, max, notExists } from "drizzle-orm";
+import { and, desc, eq, max, notExists } from "drizzle-orm";
 import { type Actor } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import { type Change, type Transaction } from "./changes.ts";
@@ -75,27 +75,29 @@ export async function readUnpublished(
     async (transaction) => {
       const userId = actor.user.id;
       const rows = await ownRows(transaction, userId);
+      // By when each record was last changed, as the change history orders it, so a copy of a change
+      // set parted as a record went stays where its original was.
       const latest = await transaction
         .select({
           recordType: changes.recordType,
           recordId: changes.recordId,
-          last: max(changes.id),
         })
         .from(changes)
         .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
         .where(and(openChangeSets(userId), eq(changes.draft, true)))
-        .groupBy(changes.recordType, changes.recordId);
-      const lastOf = new Map(
-        latest.map(({ recordType, recordId, last }) => [
+        .groupBy(changes.recordType, changes.recordId)
+        .orderBy(desc(max(changeSets.madeAt)), desc(max(changes.id)));
+      const placeOf = new Map(
+        latest.map(({ recordType, recordId }, place) => [
           draftKey(recordType, recordId),
-          Number(last),
+          place,
         ]),
       );
       const versions = await readVersions(transaction, userId, rows);
       // Every unpublished draft is saved with the changes that make it.
-      const last = (row: Row) => lastOf.get(changeKey(row)) as number;
+      const place = (row: Row) => placeOf.get(changeKey(row)) as number;
       const newest = [...rows].sort(
-        (first, second) => last(second) - last(first),
+        (first, second) => place(first) - place(second),
       );
       const linked = linksAmong(
         await ownDrafts(transaction, userId, versions, "publish"),

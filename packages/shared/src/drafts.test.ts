@@ -278,22 +278,26 @@ describe("the drafts a user changed, which need another approver", () => {
     kind = "change",
     draft = true,
   ) => ({ recordId, draft, kind, makerId });
+  const kinds = {
+    resets: new Set(["approval", "discard"]),
+    changesNothing: new Set(["rejection", "resubmission"]),
+  };
 
   it("names a record whose draft the user changed", () => {
-    expect(draftsChangedBy([change("r1", "u1")], "u1")).toEqual(
+    expect(draftsChangedBy([change("r1", "u1")], "u1", kinds)).toEqual(
       new Set(["r1"]),
     );
   });
 
   it("leaves out drafts others or Fathom itself changed", () => {
     expect(
-      draftsChangedBy([change("r1", "u2"), change("r2", null)], "u1"),
+      draftsChangedBy([change("r1", "u2"), change("r2", null)], "u1", kinds),
     ).toEqual(new Set());
   });
 
   it("leaves out a change the user made that drafted nothing", () => {
     expect(
-      draftsChangedBy([change("r1", "u1", "change", false)], "u1"),
+      draftsChangedBy([change("r1", "u1", "change", false)], "u1", kinds),
     ).toEqual(new Set());
   });
 
@@ -307,6 +311,7 @@ describe("the drafts a user changed, which need another approver", () => {
           change("r2", "u2", "discard"),
         ],
         "u1",
+        kinds,
       ),
     ).toEqual(new Set());
   });
@@ -316,6 +321,7 @@ describe("the drafts a user changed, which need another approver", () => {
       draftsChangedBy(
         [change("r1", "u2", "approval"), change("r1", "u1")],
         "u1",
+        kinds,
       ),
     ).toEqual(new Set(["r1"]));
   });
@@ -331,6 +337,7 @@ describe("the drafts a user changed, which need another approver", () => {
           change("r2", "u1", "resubmission"),
         ],
         "u1",
+        kinds,
       ),
     ).toEqual(new Set(["r1"]));
   });

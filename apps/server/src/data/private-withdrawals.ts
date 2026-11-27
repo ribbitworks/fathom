@@ -96,11 +96,28 @@ export function takingBack(
   );
 }
 
-// Some of a user's private changes, taken back as one change set of a kind.
+// Some of a user's private changes, taken back as one change set of a kind, with what takes back a
+// row whose draft is now no different from everyone else's, when it isn't nothing.
 export interface Withdrawal {
   kind: ChangeSetKind;
   rows: readonly Row[];
+  otherwise?: (row: Row) => Change[];
 }
+
+// The action that undoes each, so a change taken back reads as what it does.
+const undoing: Record<Change["action"], Change["action"]> = {
+  created: "deleted",
+  changed: "changed",
+  deleted: "created",
+};
+
+// A change undone, by the action and values that undo it.
+export const undone = <Made extends Change>(change: Made): Made => ({
+  ...change,
+  action: undoing[change.action],
+  oldValue: change.newValue,
+  newValue: change.oldValue,
+});
 
 // Takes back a user's private changes, from the versions given, removing them and recording each
 // withdrawal as a change set of theirs, with the access history taking them back writes.
@@ -111,9 +128,16 @@ export async function withdraw(
   withdrawals: readonly Withdrawal[],
   classes: DataClasses,
 ): Promise<void> {
-  const made = withdrawals.map(({ kind, rows }) => ({
+  const made = withdrawals.map(({ kind, rows, otherwise }) => ({
     kind,
-    changes: asDraft(rows.flatMap((row) => takingBack(versions, row, classes))),
+    changes: asDraft(
+      rows.flatMap((row) => {
+        const taken = takingBack(versions, row, classes);
+        return taken.length > 0 || otherwise === undefined
+          ? taken
+          : otherwise(row);
+      }),
+    ),
   }));
   await removeRows(
     transaction,

@@ -30,8 +30,9 @@ export const changeSets = fathomSchema.table(
     id: uuid("id").primaryKey().defaultRandom(),
     // What the change set did, checked by the server: "edit" for changes saved, "approval" for drafts
     // approved, "rejection" for drafts rejected, "discard" for drafts discarded, "resubmission" for
-    // rejected drafts sent for approval again unchanged, and "withdrawal" for a user's private
-    // changes discarded all at once.
+    // rejected drafts sent for approval again unchanged, "withdrawal" for a user's private
+    // changes discarded all at once, and "gone" for a user's private changes withdrawn because
+    // their record is gone.
     kind: text("kind").notNull().default("edit"),
     // Null for Fathom itself, such as for data made by setup or seed scripts. Accounts are deactivated,
     // never deleted, so the user who made a change always exists.
@@ -62,7 +63,7 @@ export const changes = fathomSchema.table(
     recordType: text("record_type").notNull(),
     recordId: text("record_id").notNull(),
     // "created", "changed", or "deleted", checked by the server.
-    action: text("action").notNull(),
+    action: text("action").$type<"created" | "changed" | "deleted">().notNull(),
     field: text("field").notNull(),
     // The sensitivity tier of the field, so each user sees only changes to data they may see.
     tier: text("tier").notNull(),
