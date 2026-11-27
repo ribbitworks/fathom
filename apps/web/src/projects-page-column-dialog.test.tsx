@@ -70,7 +70,6 @@ describe("the column dialog on Features", () => {
           },
           multiple: false,
           required: false,
-          onPlannedHires: false,
         },
       ]);
     });

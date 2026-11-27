@@ -64,7 +64,6 @@ export async function columnsWithAdded(
         name: String(field.name),
         ...settings,
         required: false,
-        onPlannedHires: field.onPlannedHires === true,
         tier: mostSensitive([
           type.tier(settings, (listId) => listTier(lists, listId)),
           type.tier(settings, (listId) => listTier(published, listId)),

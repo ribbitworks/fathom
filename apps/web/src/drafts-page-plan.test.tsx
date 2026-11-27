@@ -166,7 +166,6 @@ describe("the Drafts page", () => {
                 visibility: "general",
                 multiple: false,
                 required: false,
-                onPlannedHires: false,
                 table: "features",
                 draft: {
                   action: "changed",
@@ -225,7 +224,6 @@ describe("the Drafts page", () => {
                 visibility: "general",
                 multiple: false,
                 required: false,
-                onPlannedHires: false,
                 table: "activities",
                 draft: {
                   action: "created",

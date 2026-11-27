@@ -176,7 +176,6 @@ Proved by automated tests in `apps/server/src/feature-column-values.test.ts` and
   - **Expected:**
     - The **New column** dialog opens, and **Type** reads **Text**.
     - It has the fields **Name**, **Type** and **Required**.
-    - There is no **Offered on planned hires**.
   - **Notes:**
 
 - [ ] `E03F` Type `Fictional Score` in **Name**.

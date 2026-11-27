@@ -205,7 +205,6 @@ describe("the live columns", () => {
     visibility: null,
     multiple: false,
     required: true,
-    onPlannedHires: true,
   };
   const draft = {
     state: "waiting" as const,

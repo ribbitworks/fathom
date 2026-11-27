@@ -87,8 +87,8 @@ const addColumn = (
   const names = Object.keys(settings);
   return firstId(
     client,
-    `INSERT INTO fields (table_name, name, visibility, on_planned_hires${names.map((name) => `, ${name}`).join("")}) VALUES ($1, $2, 'general', $3${names.map((_, index) => `, $${String(index + 4)}`).join("")}) RETURNING id`,
-    [on, `Fictional ${word}`, on === "people", ...Object.values(settings)],
+    `INSERT INTO fields (table_name, name, visibility${names.map((name) => `, ${name}`).join("")}) VALUES ($1, $2, 'general'${names.map((_, index) => `, $${String(index + 3)}`).join("")}) RETURNING id`,
+    [on, `Fictional ${word}`, ...Object.values(settings)],
   );
 };
 
@@ -118,7 +118,6 @@ describe("a column's settings", () => {
     ["a checkbox", { type: "flag" }],
     ["a date", { type: "date" }],
     ["text on one line", { type: "text" }],
-    ["text on several lines", { type: "text", multiline: true }],
     [
       "links to several features",
       { type: "record", linked_table: "features", multiple: true },
@@ -136,11 +135,6 @@ describe("a column's settings", () => {
   it.each<[string, Record<string, unknown>]>([
     ["a checkbox with several values", { type: "flag", multiple: true }],
     ["text with several values", { type: "text", multiple: true }],
-    ["several lines on another type", { type: "note", multiline: true }],
-    [
-      "several lines on a link",
-      { type: "record", linked_table: "people", multiline: true },
-    ],
     ["a link naming no table", { type: "record" }],
     ["a link to another table", { type: "record", linked_table: "teams" }],
     ["a table on another type", { type: "text", linked_table: "people" }],

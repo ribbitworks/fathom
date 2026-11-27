@@ -49,7 +49,6 @@ import {
   hireIdOf,
   type HireRow,
   nameOfHire,
-  offeredOn,
   readHireTier,
   recordedHire,
   recordType,
@@ -172,7 +171,7 @@ export async function readHiresIn(
   const seesPositions = seesSensitivity(actor, tierOf("positionId"));
   const seesStates = seesSensitivity(actor, tierOf("stateId"));
   // The columns whose values the reader sees on hires.
-  const shownColumns = offeredOn(columns).filter((column) =>
+  const shownColumns = columns.filter((column) =>
     seesSensitivity(actor, column.tier),
   );
   const shownValue = new Set(shownColumns.map(({ id }) => id));

@@ -41,7 +41,6 @@ async function numberColumn(
     type: "number",
     visibility: settings.visibility ?? "general",
     required: settings.required ?? false,
-    onPlannedHires: true,
   });
   expect(response.statusCode, response.body).toBe(201);
   await test.approveLists();
@@ -279,7 +278,7 @@ describe("people's numbers", () => {
 });
 
 describe("planned hires' numbers", () => {
-  it("are kept when added and changed, and refused on a column not offered", async () => {
+  it("are kept when added and changed", async () => {
     const { cookie } = await editor();
     const { id: fieldId } = await numberColumn(cookie);
     const added = await send(cookie, "POST", "/api/planned-hires", {
@@ -301,18 +300,6 @@ describe("planned hires' numbers", () => {
       .json<{ hires: { id: string; numbers: Record<string, number> }[] }>()
       .hires.find((one) => one.id === id);
     expect(hire?.numbers).toEqual({ [fieldId]: 4 });
-
-    const peopleOnly = await send(cookie, "POST", "/api/people/columns", {
-      name: unique("Fictional Score"),
-      type: "number",
-      visibility: "general",
-      onPlannedHires: false,
-    });
-    await test.approveLists();
-    const refused = await send(cookie, "PATCH", `/api/planned-hires/${id}`, {
-      numbers: { [peopleOnly.json<{ field: Field }>().field.id]: 1 },
-    });
-    expect(refused.statusCode).toBe(400);
   });
 
   it("show their live number beside a draft", async () => {

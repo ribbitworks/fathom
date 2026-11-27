@@ -94,8 +94,7 @@ export const hireSchema = z.object({
   undated: z.literal(true).optional(),
   targetDate: day.nullable().optional(),
   stateId: z.string().optional(),
-  // Its values in the added columns offered on planned hires, each at its column's visibility, as a
-  // person's are.
+  // Its values in People's added columns, each at its column's visibility, as a person's are.
   values: valuesSchema.default({}),
   ...givenColumnValues,
   // Who the hire's draft fills it with, for those who see the hiring plan: the person, for those

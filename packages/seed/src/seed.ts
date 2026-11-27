@@ -255,7 +255,6 @@ export async function seed(
         ...column,
         tableName: "people",
         required: false,
-        onPlannedHires: true,
       };
       const field = await transaction
         .insert(fields)

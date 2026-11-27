@@ -24,7 +24,6 @@ import {
   approve,
   approved,
   person,
-  hireRequest,
   draftHire,
   liveHire,
   hiresSeen,
@@ -41,37 +40,19 @@ afterAll(closeHireTests);
 describe("values in People's columns", () => {
   const link = (address: string) => ({ address, text: "" });
 
-  // A web link column, approved so it is live, offered on planned hires unless told otherwise.
+  // A web link column, approved so it is live.
   async function linkColumn(
-    settings: { visibility?: string; onPlannedHires?: boolean } = {},
+    settings: { visibility?: string } = {},
   ): Promise<Field> {
     const response = await send(editor, "POST", "/api/people/columns", {
       name: unique("Fictional Profile"),
       type: "link",
       visibility: settings.visibility ?? "general",
-      onPlannedHires: settings.onPlannedHires ?? true,
     });
     expect(response.statusCode, response.body).toBe(201);
     await test.approveLists();
     return response.json<{ field: Field }>().field;
   }
-
-  const switchOff = (column: Field) =>
-    send(editor, "PUT", `/api/people/columns/${column.id}`, {
-      name: column.name,
-      type: column.type,
-      visibility: column.visibility,
-      onPlannedHires: false,
-    });
-
-  it("offers every new column on planned hires unless switched off", async () => {
-    const response = await send(editor, "POST", "/api/people/columns", {
-      name: unique("Fictional Profile"),
-      type: "link",
-      visibility: "general",
-    });
-    expect(response.json<{ field: Field }>().field.onPlannedHires).toBe(true);
-  });
 
   it("shows those who see the hiring plan but not Personal data the whole plan and its history, without values in Personal columns", async () => {
     const manager = await test.signedIn(generalApprover);
@@ -173,63 +154,6 @@ describe("values in People's columns", () => {
     expect(row?.draft?.live.links[column.id]?.address).toBe(
       "https://example.test/before",
     );
-  });
-
-  it("refuses values in a column switched off for planned hires", async () => {
-    const column = await linkColumn({ onPlannedHires: false });
-    const response = await send(
-      editor,
-      "POST",
-      "/api/planned-hires",
-      hireRequest({ links: { [column.id]: link("https://example.test/") } }),
-    );
-    expect(response.statusCode).toBe(400);
-    expect(errorOf(response)).toBe(
-      `${column.name} is switched off for planned hires`,
-    );
-  });
-
-  it("refuses switching a column off while a live hire has a value in it, until it is cleared", async () => {
-    const column = await linkColumn();
-    const id = await liveHire({
-      links: { [column.id]: link("https://example.test/") },
-    });
-    const refused = await switchOff(column);
-    expect(refused.statusCode).toBe(409);
-    expect(errorOf(refused)).toBe(
-      `1 planned hire has values in ${column.name}, so it cannot be switched off for planned hires yet. Clear them first.`,
-    );
-    await changed(id, { links: { [column.id]: null } });
-    await approved({ plannedHires: [id] });
-    const cleared = await switchOff(column);
-    expect(cleared.statusCode, cleared.body).toBe(200);
-  });
-
-  it("lets a column be switched off while only filled hires, which have left People, have values in it", async () => {
-    const column = await linkColumn();
-    const id = await liveHire({
-      links: { [column.id]: link("https://example.test/") },
-    });
-    // Filling a hire is not built yet, so the hire is filled behind Fathom's back.
-    await test.connection
-      .update(plannedHires)
-      .set({ filledBy: await person() })
-      .where(eq(plannedHires.id, id));
-    const response = await switchOff(column);
-    expect(response.statusCode, response.body).toBe(200);
-  });
-
-  it("refuses switching a column off while a hire's draft gives a value in it", async () => {
-    const column = await linkColumn();
-    const { id } = await draftHire({
-      links: { [column.id]: link("https://example.test/") },
-    });
-    const refused = await switchOff(column);
-    expect(refused.statusCode).toBe(409);
-    expect(errorOf(refused)).toBe(
-      `Drafts give planned hires values in ${column.name}, so it cannot be switched off for planned hires yet`,
-    );
-    await ok(await send(editor, "DELETE", `/api/planned-hires/${id}/draft`));
   });
 
   it("puts a hire's values back when undoing its draft", async () => {
@@ -354,15 +278,15 @@ describe("values in People's columns", () => {
     expect(seen).toContain("https://example.test/history");
   });
 
-  it("refuses approving a hire's draft whose values no longer fit the columns offered", async () => {
+  it("refuses approving a hire's draft whose values no longer fit the columns", async () => {
     const column = await linkColumn();
     const { id } = await draftHire({
       links: { [column.id]: link("https://example.test/") },
     });
-    // Drafting refuses switching the column off, so only a change behind Fathom's back gets here.
+    // A column's type cannot change, so only a change behind Fathom's back gets here.
     await test.connection
       .update(fields)
-      .set({ onPlannedHires: false })
+      .set({ type: "note" })
       .where(eq(fields.id, column.id));
     const response = await approve({ plannedHires: [id] });
     expect(response.statusCode).toBe(409);

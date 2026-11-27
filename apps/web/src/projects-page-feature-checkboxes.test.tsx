@@ -42,7 +42,6 @@ it("sends no new list for a column changed to a checkbox after one was begun", a
               visibility: "general",
               multiple: false,
               required: false,
-              onPlannedHires: false,
             },
             changeSetId,
           },
@@ -87,7 +86,6 @@ it("sends no new list for a column changed to a checkbox after one was begun", a
         visibility: "general",
         multiple: false,
         required: false,
-        onPlannedHires: false,
       },
     ]);
   });
@@ -103,7 +101,6 @@ it("ticks a checkbox column's box with a click", async () => {
     visibility: "general" as const,
     multiple: false,
     required: false,
-    onPlannedHires: false,
   };
   const start = featurePlan({
     features: [later],

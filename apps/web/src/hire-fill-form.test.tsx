@@ -33,7 +33,6 @@ const grade = {
   visibility: "general",
   multiple: false,
   required: true,
-  onPlannedHires: true,
 };
 
 type Fetch = ReturnType<typeof answers>;
@@ -118,7 +117,6 @@ describe("filling a planned hire with a new person", () => {
           visibility: "general",
           multiple: false,
           required: true,
-          onPlannedHires: false,
         },
       ],
     });
@@ -166,7 +164,6 @@ describe("filling a planned hire with a new person", () => {
           visibility: "general",
           multiple: false,
           required: true,
-          onPlannedHires: false,
         },
       ],
     });
@@ -225,7 +222,6 @@ describe("filling a planned hire with a new person", () => {
           visibility: "general",
           multiple: false,
           required: true,
-          onPlannedHires: false,
         },
       ],
     });

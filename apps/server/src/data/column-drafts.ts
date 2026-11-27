@@ -99,7 +99,6 @@ const requested = (request: FieldRequest, tableName: unknown): Recorded => ({
   visibility: request.visibility ?? null,
   multiple: request.multiple,
   required: request.required,
-  onPlannedHires: policyOf(tableName).onPlannedHires && request.onPlannedHires,
 });
 
 const sameType = "A column's type cannot change";
@@ -366,7 +365,6 @@ async function classifyAddedField(
       visibility: to,
       multiple: row.multiple,
       required: row.required,
-      onPlannedHires: row.onPlannedHires,
     },
     columnTableOf(row.tableName),
   );

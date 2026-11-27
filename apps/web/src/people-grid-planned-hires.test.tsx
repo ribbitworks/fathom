@@ -85,48 +85,14 @@ describe("planned hires beside people", () => {
     expect(expected.choices.map(({ id }) => id)).toEqual(["2027-03"]);
   });
 
-  it("offers a hire the added columns switched on for planned hires, never required of it", () => {
+  it("offers a hire every added column, never required of it", () => {
     const required = { ...site, required: true };
-    const off = { ...site, id: "f2", name: "Office", onPlannedHires: false };
-    const [offered, notOffered] = ["f1", "f2"].map(
-      (key) =>
-        columnsFor([required, off], [positions], [], true, rows).find(
-          (column) => column.key === key,
-        ) as Column,
-    );
-    expect(offered?.offeredOn?.("planned-hire") ?? true).toBe(true);
-    expect(offered?.requiredOn?.("planned-hire")).toBe(false);
-    expect(offered?.requiredOn?.("person")).toBe(true);
-    expect(notOffered?.offeredOn?.("planned-hire")).toBe(false);
-    expect(notOffered?.offeredOn?.("person")).toBe(true);
-  });
-
-  it("offers a hire a column by its live setting while a draft switches it", () => {
-    const draft = {
-      action: "changed" as const,
-      changed: ["onPlannedHires"],
-      state: "waiting" as const,
-      madeBy: null,
-      madeAt: null,
-    };
-    const switchingOn = {
-      ...site,
-      draft: { ...draft, live: { onPlannedHires: false } },
-    };
-    const added = {
-      ...site,
-      id: "f2",
-      name: "Office",
-      draft: { ...draft, action: "created" as const, changed: [], live: {} },
-    };
-    const [live, drafted] = ["f1", "f2"].map(
-      (key) =>
-        columnsFor([switchingOn, added], [positions], [], true, rows).find(
-          (column) => column.key === key,
-        ) as Column,
-    );
-    expect(live?.offeredOn?.("planned-hire")).toBe(false);
-    expect(drafted?.offeredOn?.("planned-hire") ?? true).toBe(true);
+    const offered = columnsFor([required], [positions], [], true, rows).find(
+      (column) => column.key === "f1",
+    ) as Column;
+    expect(offered.offeredOn?.("planned-hire") ?? true).toBe(true);
+    expect(offered.requiredOn?.("planned-hire")).toBe(false);
+    expect(offered.requiredOn?.("person")).toBe(true);
   });
 
   it("offers a person states of the meaning they show, a new person Hired or Left, and a hire only Proposed or Open", () => {

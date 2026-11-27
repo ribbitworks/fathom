@@ -26,11 +26,10 @@ export interface TypeSettings {
   visibility: Tier | null;
   multiple: boolean;
   // Settings of types not offered yet, which every type offered leaves unset.
-  multiline: false;
   linkedTable: null;
 }
 
-const laterSettingsUnset = { multiline: false, linkedTable: null } as const;
+const laterSettingsUnset = { linkedTable: null } as const;
 
 // A record's values as a draft shows them live: choices, and each map's values, by column.
 export interface LiveValues extends ColumnValues {

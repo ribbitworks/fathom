@@ -56,7 +56,6 @@ describe("a required date column", () => {
         type: "date",
         visibility: "general",
         required: true,
-        onPlannedHires: false,
       }),
       201,
     );

@@ -75,16 +75,6 @@ describe("columns", () => {
     await userEvent.click(screen.getByRole("option", { name: "Sites" }));
     await userEvent.click(within(dialog).getByLabelText("Several choices"));
     await userEvent.click(within(dialog).getByLabelText("Required"));
-    await userEvent.click(within(dialog).getByLabelText("Required"));
-    expect(
-      within(dialog).getByText("Planned hires can leave it empty"),
-    ).toBeDefined();
-    const onHires = within(dialog).getByLabelText("Offered on planned hires");
-    expect((onHires as HTMLInputElement).checked).toBe(true);
-    await userEvent.click(onHires);
-    expect(within(dialog).queryByText("Planned hires can leave it empty")).toBe(
-      null,
-    );
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
     );
@@ -94,8 +84,7 @@ describe("columns", () => {
         type: "choice",
         listId: "l1",
         multiple: true,
-        required: false,
-        onPlannedHires: false,
+        required: true,
       },
     ]);
     await settle();
@@ -305,7 +294,6 @@ describe("columns", () => {
         listId: "l2",
         multiple: true,
         required: false,
-        onPlannedHires: true,
       },
     ]);
     // The simulated server still answers with the old name once the change has saved.

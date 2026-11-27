@@ -272,7 +272,7 @@ describe("planned hires", () => {
         [list.rows[0]?.id],
       );
       const field = await client.query<{ id: string }>(
-        "INSERT INTO fields (table_name, name, list_id, on_planned_hires) VALUES ('people', 'Fictional Hire Level', $1, true) RETURNING id",
+        "INSERT INTO fields (table_name, name, list_id) VALUES ('people', 'Fictional Hire Level', $1) RETURNING id",
         [list.rows[0]?.id],
       );
       const fieldId = field.rows[0]?.id;
@@ -289,14 +289,9 @@ describe("planned hires", () => {
       await value(null, hire);
       await value(person, null);
       expect(await errorCodeOf(value(null, hire))).toBe(uniqueViolation);
-      const linkField = await client.query<{
-        id: string;
-        on_planned_hires: boolean;
-      }>(
-        "INSERT INTO fields (table_name, name, type, visibility) VALUES ('people', 'Fictional Hire Page', 'link', 'general') RETURNING id, on_planned_hires",
+      const linkField = await client.query<{ id: string }>(
+        "INSERT INTO fields (table_name, name, type, visibility) VALUES ('people', 'Fictional Hire Page', 'link', 'general') RETURNING id",
       );
-      // Offered on planned hires only once chosen.
-      expect(linkField.rows[0]?.on_planned_hires).toBe(false);
       const link = (address: string) =>
         client.query(
           "INSERT INTO field_values (field_id, planned_hire_id, link_address, link_text) VALUES ($1, $2, $3, '')",
@@ -340,18 +335,6 @@ describe("planned hires", () => {
         [[fieldId, linkField.rows[0]?.id, noteField.rows[0]?.id]],
       );
       expect(left.rows).toEqual([{ person_id: person }]);
-    });
-  });
-
-  it("offers only People's columns on planned hires", async () => {
-    await withClient(database.app, async (client) => {
-      expect(
-        await errorCodeOf(
-          client.query(
-            "INSERT INTO fields (table_name, name, type, visibility, on_planned_hires) VALUES ('projects', 'Fictional Project Page', 'link', 'general', true)",
-          ),
-        ),
-      ).toBe(checkViolation);
     });
   });
 });

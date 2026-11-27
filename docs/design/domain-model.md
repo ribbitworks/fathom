@@ -210,9 +210,8 @@ Percentages are whole.
   - **Target date:** the day the new hire starts work. Its first month that can be allocated, its Expected month, is the month of its target date, or of its person's start date once filled; a hire with no target date is expected from the current month.
   - **Manager:** a person or a planned hire flagged as a manager, a planned manager, whose team it joins, never both and never itself, and its managers never loop.
   - **A planned manager:** its flag cannot be cleared, nor the hire removed, while a planned hire not yet filled, live or in a draft, reports to it. A planned team has no name until its planned manager is filled.
-  - **Columns:** it has values for the columns it shares with people. Every column added to People is offered on planned hires unless switched off for them, as a draft of the column. People's End column is not offered.
+  - **Columns:** it has values for the columns it shares with people. Every column added to People is offered on planned hires too, with no setting to switch it off. People's End column is not offered.
   - **Optional values:** every value is optional on a hire, even where People requires it.
-  - **Switching a column off:** a column cannot be switched off for planned hires while any hire not yet filled, live or in a draft, has a value in it; those values are cleared first.
   - **Removing:** a hire is cancelled by removing it, which removes its allocations in the same draft and takes it off its feature teams, as [Feature team membership](#feature-teams) sets out. The change history keeps it.
   - **Filling:** links the hire to the person who fills it, a new person or one already in Fathom, as one draft, approved or rejected whole. Once filled, it leaves People.
     - **Which hires:** only a hire in a state meaning Open, with no rejected draft, can be filled. A person may fill several over time, but not a second while the hire they filled before has not started.
@@ -279,7 +278,7 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
   - **Choice from a list:** names its list, takes its class from the list's, and says whether it takes one choice or several.
   - **Other types:** a Text, Number, Date, Checkbox, Web link or Note field has a class of its own.
   - **Checkbox:** is never required, since an unticked box is a value, No.
-  - **On People:** a field also says whether planned hires have it too, as [Planned Hires](#planned-hires) sets out.
+  - **On People:** planned hires have every field too, as [Planned Hires](#planned-hires) sets out.
   - **Changing:** its type is fixed once it is added. It can be made required only once every record has a value, and single-choice only once none has several. Its list cannot change while it has values.
 - **Column order:** A table's own order of its columns, built-in and custom alike, which every view starts from. A view may hold an order of its own.
 - **Saved view:** A table's view saved under a name, with the table it belongs to, one of a fixed set, the user who saved it, and whether it is personal to them or shared.

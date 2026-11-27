@@ -107,9 +107,6 @@ export function ColumnDialog({
     !policy.generalOnly &&
     permissions.includes("data:classify") &&
     (field === undefined || field.draft?.action === "created");
-  const [onPlannedHires, setOnPlannedHires] = useState(
-    field?.onPlannedHires ?? policy.onPlannedHires,
-  );
   const [tried, setTried] = useState(false);
   const queryClient = useQueryClient();
   const shown = JSON.stringify({
@@ -119,7 +116,6 @@ export function ColumnDialog({
     listId,
     multiple,
     required,
-    onPlannedHires,
     listName,
     choices,
     typingChoice,
@@ -223,7 +219,6 @@ export function ColumnDialog({
                 visibility,
                 multiple: false,
                 required: canBeRequired(type) && required,
-                onPlannedHires,
               }
             : {
                 name: name.trim(),
@@ -234,7 +229,6 @@ export function ColumnDialog({
                   : { listId: listId as string }),
                 multiple,
                 required,
-                onPlannedHires,
               },
           {
             onError: () => {
@@ -339,21 +333,9 @@ export function ColumnDialog({
         {canBeRequired(type) && (
           <Checkbox
             label="Required"
-            description={
-              onPlannedHires ? "Planned hires can leave it empty" : undefined
-            }
             checked={required}
             onChange={(event) => {
               setRequired(event.currentTarget.checked);
-            }}
-          />
-        )}
-        {policy.onPlannedHires && (
-          <Checkbox
-            label="Offered on planned hires"
-            checked={onPlannedHires}
-            onChange={(event) => {
-              setOnPlannedHires(event.currentTarget.checked);
             }}
           />
         )}

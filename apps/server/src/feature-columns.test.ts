@@ -199,14 +199,6 @@ describe("the columns on Features", () => {
     expect(response.statusCode).toBe(400);
   });
 
-  it("is never offered on planned hires", async () => {
-    const { listId } = await addList();
-    const { field } = (await addColumn({ listId, onPlannedHires: true })).json<{
-      field: Field;
-    }>();
-    expect(field.onPlannedHires).toBe(false);
-  });
-
   it("changes a column's settings", async () => {
     const { field } = await liveColumn();
     const name = unique("Fictional Renamed");
