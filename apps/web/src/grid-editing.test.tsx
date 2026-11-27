@@ -400,4 +400,118 @@ describe("typing fast into a cell", () => {
     });
     expect(onTick).not.toHaveBeenCalled();
   });
+
+  const typeFastInto = (
+    cellId: string,
+    typed: string,
+    ...finishing: readonly string[]
+  ) => {
+    const cell = document.getElementById(cellId) as HTMLElement;
+    act(() => {
+      cell.focus();
+    });
+    for (const key of typed) fireEvent.keyDown(cell, { key });
+    for (const key of finishing) fireEvent.keyDown(cell, { key });
+  };
+
+  it.each([
+    ["Enter", "cell-g2-name"],
+    ["Tab", "cell-g1-code"],
+  ])(
+    "saves what is typed when %s follows before the editor has focus, going on as it asks",
+    async (finishing, next) => {
+      // Given two gadgets
+      const update = vi.fn();
+      renderGadgets({
+        gadgets: [gadget("g1"), gadget("g2")],
+        fields: [],
+        given: actions({ update }),
+      });
+      // When a name and the finishing key are typed before the editor has focus
+      typeFastInto("cell-g1-name", "Gizmo", finishing);
+      // Then the name is saved, and focus goes on as the key asks
+      expect(update).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "g1" }),
+        { name: "Gizmo" },
+      );
+      await waitFor(() => {
+        expect(document.activeElement?.id).toBe(next);
+      });
+    },
+  );
+
+  it("goes on to edit a new row's next cell when Tab follows before the editor has focus", async () => {
+    // Given an empty new row
+    renderGadgets({
+      gadgets: [],
+      fields: [],
+      table: nameThen(nextColumn("text")),
+    });
+    // When a name and Tab are typed before the name's editor has focus
+    typeFastInto("cell-new-0-name", "Widget", "Tab");
+    // Then the next cell's editor opens, and the row keeps the name
+    await waitFor(() => {
+      expect(document.activeElement?.id).toBe("cell-new-0-next-editor");
+    });
+    expect(document.getElementById("cell-new-0-name")?.textContent).toContain(
+      "Widget",
+    );
+  });
+
+  it("names a refused value when Enter follows before the editor has focus", () => {
+    // Given a code another gadget has
+    const update = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1"), gadget("g2")],
+      fields: [],
+      table: gadgetTable((values, others, changed) =>
+        changed === "code" && others().some(({ code }) => code === values.code)
+          ? { message: "Another gadget has that code" }
+          : undefined,
+      ),
+      given: actions({ update }),
+    });
+    // When that code and Enter are typed before the editor has focus
+    typeFastInto("cell-g1-code", "G2", "Enter");
+    // Then the refusal is named, and nothing is saved
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Another gadget has that code",
+    );
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("saves nothing typed as a choice's search when Enter or Tab follows before its editor has focus", () => {
+    // Given a gadget with a choice column
+    const update = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      fields: [],
+      table: nameThen(nextColumn("choice")),
+      given: actions({ update }),
+    });
+    // When a search, Enter and Tab are typed before the choice's editor has focus
+    typeFastInto("cell-g1-next", "Wid", "Enter", "Tab");
+    // Then the search is not saved as the choice
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("closes the editor, saving nothing, when Escape follows before the editor has focus", async () => {
+    // Given a gadget
+    const update = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      fields: [],
+      given: actions({ update }),
+    });
+    // When part of a name and Escape are typed before the editor has focus
+    typeFastInto("cell-g1-name", "Giz", "Escape");
+    // Then the editor closes, and the name is as it was
+    await waitFor(() => {
+      expect(document.getElementById("cell-g1-name-editor")).toBeNull();
+    });
+    expect(document.getElementById("cell-g1-name")?.textContent).toContain(
+      "Gadget g1",
+    );
+    expect(update).not.toHaveBeenCalled();
+  });
 });
