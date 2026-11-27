@@ -7,7 +7,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { columnProblems, columnRequests } from "./new-page-dialog.tsx";
-import { followUps, pageAnswers } from "./test-private-pages.ts";
+import { followUps, nameField, pageAnswers } from "./test-private-pages.ts";
 import {
   bodyOf,
   positions,
@@ -125,6 +125,10 @@ describe("New page", () => {
     expect(
       await screen.findByRole("grid", { name: "Follow-ups" }),
     ).toBeDefined();
+    // With focus in its empty row, for its first row to be typed
+    await waitFor(() => {
+      expect(document.activeElement?.id).toBe(`cell-new-0-${nameField}`);
+    });
   });
 
   it("refuses a choice column with no list, naming it under the list", async () => {
