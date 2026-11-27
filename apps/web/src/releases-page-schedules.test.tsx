@@ -618,7 +618,7 @@ describe("the Schedules table", () => {
     ]);
   });
 
-  it("says a schedule had no cycle length in its Live row while a draft adds its first cycles", async () => {
+  it("shows a schedule's empty cycle length in its Live row as Live's dot alone while a draft adds its first cycles", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/release-streams": streamsAnswer([
@@ -633,7 +633,8 @@ describe("the Schedules table", () => {
     await detailsOf("Fictional Majors");
     const liveRow = cellOf("Fictional Majors", 0).closest("tr")
       ?.nextElementSibling as HTMLElement;
-    expect(liveRow.textContent).toContain("No cycle length");
+    expect(liveRow.textContent).not.toContain("No cycle length");
+    expect(liveRow.textContent).toContain("Fictional Majors");
   });
 
   it("finds streams by any word in them", async () => {

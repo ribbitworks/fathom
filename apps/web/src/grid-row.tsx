@@ -14,6 +14,7 @@ import {
   isEmpty,
   kindOf,
   liveContent,
+  neverEmpty,
   offered,
   onRow,
   readOnlyFor,
@@ -584,6 +585,12 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                               )
                             : undefined
                           : renamedWas(column, value, renamings)
+                      }
+                      emptied={
+                        warning === undefined &&
+                        standIn === undefined &&
+                        !neverEmpty(column) &&
+                        isEmpty(value)
                       }
                     >
                       <MarkedItem

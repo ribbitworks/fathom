@@ -12,10 +12,11 @@ import { ListFacts } from "./list-facts.tsx";
 import { liveLists, withRetiring } from "./lists.ts";
 import { RecordKey } from "./record-key.tsx";
 import { RightReasonLine, useTurnedOff, WithReason } from "./turned-off.tsx";
-import { changedValue, emptiedWords, recordMark } from "./draft-marks.ts";
+import { changedValue, recordMark } from "./draft-marks.ts";
 import {
   DraftedItem,
   DraftedValue,
+  EmptyLive,
   LiveLine,
   MarkRow,
 } from "./status-mark.tsx";
@@ -154,7 +155,7 @@ export function ListSubtitle({
               draft={original.draft}
               fields={["description"]}
               named="Description"
-              emptied={list.description === "" ? "Description" : undefined}
+              emptied={list.description === ""}
             >
               {list.description}
             </DraftedValue>
@@ -162,9 +163,7 @@ export function ListSubtitle({
           {showLive &&
             changedValue(list.draft, "description") !== undefined && (
               <LiveLine>
-                {liveDescription === ""
-                  ? emptiedWords("Description")
-                  : liveDescription}
+                {liveDescription === "" ? <EmptyLive /> : liveDescription}
               </LiveLine>
             )}
         </>

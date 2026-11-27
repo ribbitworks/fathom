@@ -64,8 +64,6 @@ export function LiveChoiceRow({
           fields={["description"]}
           emptied={
             (choice.draft?.live.description ?? choice.description) === ""
-              ? "Description"
-              : undefined
           }
         >
           {choice.draft?.live.description ?? choice.description}

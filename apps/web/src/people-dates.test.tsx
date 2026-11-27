@@ -147,6 +147,75 @@ describe("a date column", () => {
     );
   });
 
+  it("shows a day a draft empties as its dot alone, in its cell and in the details", async () => {
+    // Given a person whose draft empties their day
+    const live = "2027-03-03";
+    await openPeopleWith(
+      peopleHolding(
+        [
+          {
+            ...blake,
+            draft: {
+              action: "changed",
+              changed: ["f1"],
+              live: { values: {}, links: {}, days: { f1: live } },
+              state: "waiting",
+              madeBy: "Fictional Editor",
+              madeAt: "2026-11-06T09:00:00.000Z",
+            },
+          },
+        ],
+        [lastReview],
+      ),
+      {},
+      "/people?open=p2",
+    );
+    const emptied = `Draft, emptied, was “${formatDay(live)}”`;
+    // Then the cell shows no words for none, and its dot says the day was emptied
+    expect(dayOf("p2").textContent).not.toMatch(/No last review/iu);
+    expect(dayOf("p2").textContent).toContain(emptied);
+    // And the details show the dot alone, over a Live line read as empty
+    const details = await screen.findByRole("region", {
+      name: "Blake Fictional",
+    });
+    const row = detailRow("Last review", details);
+    expect(row.textContent).not.toMatch(/No last review|None/iu);
+    expect(row.textContent).toContain(emptied);
+    expect(row.textContent).toContain(formatDay(live));
+  });
+
+  it("shows the empty side of a day a draft fills as Live's dot alone, read as empty", async () => {
+    // Given a person whose draft fills their empty day
+    await openPeopleWith(
+      peopleHolding(
+        [
+          {
+            ...avery,
+            draft: {
+              action: "changed",
+              changed: ["f1"],
+              live: { values: {}, links: {}, days: {} },
+              state: "waiting",
+              madeBy: "Fictional Editor",
+              madeAt: "2026-11-06T09:00:00.000Z",
+            },
+          },
+        ],
+        [lastReview],
+      ),
+      {},
+      "/people?open=p1",
+    );
+    // Then the details' Live line says nothing for none, and is read as empty
+    const details = await screen.findByRole("region", {
+      name: "Avery Fictional",
+    });
+    const row = detailRow("Last review", details);
+    expect(row.textContent).not.toMatch(/No last review|None/iu);
+    expect(row.textContent).toContain("Draft: filled in");
+    expect(row.textContent).toMatch(/empty, live$/u);
+  });
+
   it("shows None in a person's details for no day", async () => {
     await open({}, "/people?open=p2");
     const details = await screen.findByRole("region", {

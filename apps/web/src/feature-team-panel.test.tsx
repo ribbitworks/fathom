@@ -500,14 +500,14 @@ describe("a feature team's draft in its panel", () => {
     );
   });
 
-  it("names no live lead as None", () => {
+  it("reads no live lead as empty, with no words for none", () => {
     openPanel({
       shown: team({
         draft: draft({ changed: ["leadId"], live: { leadId: null } }),
       }),
     });
     expect(rowText("Feature lead")).toBe(
-      "Avery Fictional, Draft: filled inNone, live",
+      "Avery Fictional, Draft: filled inempty, live",
     );
   });
 

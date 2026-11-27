@@ -236,7 +236,7 @@ describe("the panel in the Live only and Drafts applied views", () => {
     ).toBeNull();
   });
 
-  it("words a value a waiting draft fills as its cell does under Live only", async () => {
+  it("shows a value a waiting draft fills as Live's dot alone under Live only, read as empty", async () => {
     await openPage(
       `/projects?tab=proposals&open=${proposalId}&show=live`,
       plan({
@@ -252,10 +252,12 @@ describe("the panel in the Live only and Drafts applied views", () => {
       }),
     );
     await screen.findByRole("heading", { name: /Fictional Proposal/ });
-    expect(recordCell(proposalId, "externalId")?.textContent).toContain(
+    expect(recordCell(proposalId, "externalId")?.textContent).not.toContain(
       "No proposal ID",
     );
-    expect(within(sidePanel()).getByText("No proposal ID")).toBeTruthy();
+    expect(
+      within(sidePanel()).getByText("Proposal ID").closest("div")?.textContent,
+    ).toContain("empty");
   });
 
   it("doesn't word a value a rejected draft filled as drafted while drafts are applied", async () => {

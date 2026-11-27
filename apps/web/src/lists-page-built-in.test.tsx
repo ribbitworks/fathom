@@ -455,7 +455,7 @@ describe("built-in lists and lists with meanings", () => {
     expect(meaning.selectedOptions[0]?.textContent).toBe("Choose a meaning");
   });
 
-  it("says a draft empties a list's description, with the live description under it beside live", async () => {
+  it("marks a list's description a draft empties with its dot alone, the live description under it", async () => {
     serverAnswers({
       "GET /api/session": viewer,
       "GET /api/lists": () =>
@@ -480,10 +480,10 @@ describe("built-in lists and lists with meanings", () => {
     const panel = (
       await screen.findByRole("heading", { name: "Locations", level: 2 })
     ).closest("[data-list-panel]") as HTMLElement;
-    const drafted = within(panel).getByText("No description");
-    expect(drafted.parentElement?.textContent).toContain(
-      "Draft: changed from “Offices and labs.”",
-    );
+    expect(within(panel).queryByText("No description")).toBeNull();
+    expect(
+      within(panel).getByText(", Draft, emptied, was “Offices and labs.”"),
+    ).toBeDefined();
     const live = within(panel).getByText("Offices and labs.");
     expect(live.parentElement?.textContent).toContain("live");
   });

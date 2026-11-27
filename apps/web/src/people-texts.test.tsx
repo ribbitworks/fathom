@@ -154,36 +154,6 @@ describe("a text column", () => {
     expect(drafted.closest('[class*="changedValue"]')).not.toBeNull();
   });
 
-  it("shows a text a draft empties in a person's details in the weight of a changed value", async () => {
-    await open(
-      {
-        "GET /api/people": peopleHolding(
-          [
-            {
-              ...blake,
-              draft: {
-                action: "changed",
-                changed: ["f1"],
-                live: { values: {}, links: {}, texts: { f1: "West 1-01" } },
-                state: "waiting",
-                madeBy: "Fictional Editor",
-                madeAt: "2026-11-06T09:00:00.000Z",
-              },
-            },
-          ],
-          [desk, parking],
-        ),
-      },
-      "/people?open=p2",
-    );
-    const details = await screen.findByRole("region", {
-      name: "Blake Fictional",
-    });
-    const emptied = within(detailRow("Desk", details)).getByText(/^No desk$/iu);
-    expect(emptied.hasAttribute("data-inherit")).toBe(true);
-    expect(emptied.closest('[class*="changedValue"]')).not.toBeNull();
-  });
-
   it("edits a text in a person's details, saving it on Enter", async () => {
     const fetch = await open({}, "/people?open=p2");
     await screen.findByRole("region", { name: "Blake Fictional" });

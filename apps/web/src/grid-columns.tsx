@@ -302,11 +302,11 @@ export const emptyValue = (column: { kind: Kind }): CellValue =>
   kindOf(column).empty;
 
 // Whether a column's cells and heading are centred, as its kind's are.
-export const centred = (column: AnyColumn): boolean =>
+export const centred = (column: { kind: Kind }): boolean =>
   kindOf(column).centred === true;
 
 // A kind edited in one step, such as a checkbox, is never empty: its cell draws its value either way.
-export const neverEmpty = (column: AnyColumn): boolean =>
+export const neverEmpty = (column: { kind: Kind }): boolean =>
   kindOf(column).toggled !== undefined;
 
 export function isEmpty(value: CellValue): boolean {

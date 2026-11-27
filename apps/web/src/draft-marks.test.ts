@@ -58,6 +58,15 @@ describe("a draft's words", () => {
     );
   });
 
+  it("says a value a draft empties is emptied, naming what it was", () => {
+    expect(draftTip(waiting, { was: "“Mar 3, 2027”", emptied: true })).toBe(
+      "Draft, emptied, was “Mar 3, 2027”",
+    );
+    expect(draftTip(rejected, { was: "“Harbor 2”", emptied: true })).toBe(
+      "Rejected, emptied, was “Harbor 2”: Fictional reason.",
+    );
+  });
+
   it("says a value that was empty is filled in, rather than changed from none", () => {
     expect(draftTip(waiting, { was: null, by: "Fictional Person" })).toBe(
       "Draft: filled in, by Fictional Person",

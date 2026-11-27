@@ -16,7 +16,7 @@ import {
   onRow,
   readOnlyFor,
 } from "./grid-columns.tsx";
-import { pendingId, wholeCellDraft } from "./grid-drafts.ts";
+import { pendingId } from "./grid-drafts.ts";
 import type { LayoutGrid } from "./grid-layout.ts";
 import type { Cell, NewRow, Row } from "./grid-places.ts";
 import type {
@@ -26,8 +26,6 @@ import type {
   RecordTable,
   RowProblem,
 } from "./record-table.ts";
-import { marksIn } from "./status-mark.tsx";
-import { emptiedWords } from "./draft-marks.ts";
 import type { CellValue } from "./table-view.ts";
 
 // The most rows saved together, as the server adds at once.
@@ -166,11 +164,9 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
     | "table"
     | "actions"
     | "allColumns"
-    | "known"
     | "columns"
     | "records"
     | "liveById"
-    | "draftById"
     | "defaultKind"
     | "rowKind"
     | "setAdded"
@@ -194,11 +190,9 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
     table,
     actions,
     allColumns,
-    known,
     columns,
     records,
     liveById,
-    draftById,
     defaultKind,
     rowKind,
     setAdded,
@@ -236,13 +230,7 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
     if (row.newRow || neverEmpty(column) || !isEmpty(valueAt(row, column))) {
       return undefined;
     }
-    return (
-      column.standIn?.(row.record) ??
-      // A draft emptying the value, or filling it, says so wherever the view marks that draft.
-      (marksIn(wholeCellDraft(draftById.get(row.record.id), column), known.show)
-        ? emptiedWords(column.label, column.emptyLabel)
-        : undefined)
-    );
+    return column.standIn?.(row.record);
   };
 
   // What an empty cell of a record's Live row shows in grey, worked out from the record as it is
@@ -256,12 +244,7 @@ export function gridSaving<Rec extends GridRecord, Change, Request>(
     ) {
       return undefined;
     }
-    return (
-      column.standIn?.(live) ??
-      (wholeCellDraft(record.draft, column)
-        ? emptiedWords(column.label, column.emptyLabel)
-        : undefined)
-    );
+    return column.standIn?.(live);
   };
   // Each record's values, by column.
   const valuesOf = (record: Rec): Record<string, CellValue> =>
