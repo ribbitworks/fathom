@@ -12,6 +12,7 @@ import { cellColumn } from "./grid-columns.tsx";
 import { columnWidth } from "./grid-layout.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import { type View, emptyView } from "./table-view.ts";
+import { noop, testTheme } from "./test-support.tsx";
 import {
   type Gadget,
   actions,
@@ -20,10 +21,8 @@ import {
   gadget,
   gadgetColumns,
   gadgetTable,
-  noop,
   renderGadgets,
-  testTheme,
-} from "./test-support.tsx";
+} from "./test-gadgets.tsx";
 
 // Where a frozen cell sits, by the CSS variable its style names, as the table's panel sets it.
 function placed(cell: HTMLElement | null | undefined): string {

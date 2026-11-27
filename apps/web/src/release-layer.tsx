@@ -10,7 +10,7 @@
 // tip reads, that opens its record.
 
 import type { RecordDraft, ReleaseStream } from "@fathom/shared";
-import { UnstyledButton } from "@mantine/core";
+import { UnstyledButton, VisuallyHidden } from "@mantine/core";
 import { type ReactNode, useCallback, useMemo } from "react";
 import { ColouredName, colouredNameChars } from "./colour-swatch.tsx";
 import { isCurrent } from "./feature-board.ts";
@@ -67,7 +67,7 @@ function MarkWords({
   words: string;
   onOpen: (() => void) | undefined;
 }) {
-  const hidden = <span className={classes.visuallyHidden}>{words}</span>;
+  const hidden = <VisuallyHidden>{words}</VisuallyHidden>;
   return onOpen === undefined ? (
     hidden
   ) : (

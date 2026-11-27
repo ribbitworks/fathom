@@ -10,31 +10,20 @@ import type { Field, Person } from "@fathom/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { addedColumn } from "./added-columns.ts";
 import { exportValue } from "./exports.ts";
+import { bodyOf, chooseIn, detailRow } from "./test-support.tsx";
 import {
-  bodyOf,
-  detailRow,
-  chooseIn,
-  fictionalUser,
-  optionsIn,
-  positions,
-  renderApp,
-  serverAnswers,
-} from "./test-support.tsx";
-
-const s1 = "00000000-0000-4000-8000-000000000001";
-
-const editor = () =>
-  Response.json({
-    ...fictionalUser,
-    permissions: [
-      "configuration:edit",
-      "configuration:view",
-      "people:edit",
-      "people:view",
-      "plan:view",
-      "features:view",
-    ],
-  });
+  openNewColumn,
+  openPeopleWith,
+  peopleHolding,
+  personWith,
+} from "./test-people-columns.tsx";
+import {
+  type Answers,
+  cell,
+  choose as choosing,
+  s1,
+  shownNames,
+} from "./test-people-page.tsx";
 
 const firstAider = {
   id: "f1",
@@ -46,79 +35,32 @@ const firstAider = {
   multiple: false,
   required: false,
 };
-const personWith = (id: string, name: string, flags: object) => ({
-  id,
-  keyNumber: 1,
-  preferredName: name,
-  employeeId: id,
-  positionId: "position-1",
-  values: {},
-  links: {},
-  flags,
-});
-const avery = personWith("p1", "Avery Fictional", { f1: true });
-const blake = personWith("p2", "Blake Fictional", {});
-const casey = personWith("p3", "Casey Fictional", { f1: true });
-const peopleAnswer =
-  (people: object[] = [blake, avery, casey]) =>
-  () =>
-    Response.json({
-      people,
-      fields: [firstAider],
-      order: ["preferredName", "employeeId", "f1"],
-    });
+const avery = personWith("p1", "Avery Fictional", "flags", { f1: true });
+const blake = personWith("p2", "Blake Fictional", "flags", {});
+const casey = personWith("p3", "Casey Fictional", "flags", { f1: true });
+const peopleOf = (people: object[] = [blake, avery, casey]) =>
+  peopleHolding(people, [firstAider]);
+const open = (answers: Answers = {}, at = "/people") =>
+  openPeopleWith(peopleOf(), answers, at);
+const boxOf = (row: string) => cell(row, "f1");
+const choose = (item: string) => choosing("First aider", item);
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-type Answers = Parameters<typeof serverAnswers>[0];
-
-async function openPeople(answers: Answers = {}, at = "/people") {
-  const fetch = serverAnswers({
-    "GET /api/session": editor,
-    "GET /api/people": peopleAnswer(),
-    "GET /api/lists": () => Response.json({ lists: [positions] }),
-    "PATCH /api/people/p1": () => Response.json({ changeSetId: s1 }),
-    "PATCH /api/people/p2": () => Response.json({ changeSetId: s1 }),
-    ...answers,
-  });
-  renderApp(at);
-  await screen.findByRole("grid", { name: "People" });
-  return fetch;
-}
-
-const cell = (row: string) =>
-  document.getElementById(`cell-${row}-f1`) as HTMLElement;
-
-const shownNames = () =>
-  screen
-    .getAllByRole("row")
-    .map((row) => row.textContent)
-    .filter((text) => text.includes("Fictional"))
-    .map((text) => /\w+ Fictional/.exec(text)?.[0]);
-
-async function choose(item: string) {
-  await userEvent.click(
-    screen.getByRole("button", {
-      name: (name) => name.startsWith("First aider column"),
-    }),
-  );
-  await userEvent.click(await screen.findByRole("menuitem", { name: item }));
-}
-
 describe("a checkbox column", () => {
   it("shows each box ticked or not, as Manager? does", async () => {
-    await openPeople();
-    expect(cell("p1").textContent).toBe("Yes");
-    expect(cell("p2").textContent).toBe("No");
+    await open();
+    expect(boxOf("p1").textContent).toBe("Yes");
+    expect(boxOf("p2").textContent).toBe("No");
   });
 
   it("ticks a box with a click, and unticks one with Space or Enter", async () => {
-    const fetch = await openPeople();
-    await userEvent.click(cell("p2"));
+    const fetch = await open();
+    await userEvent.click(boxOf("p2"));
     act(() => {
-      cell("p1").focus();
+      boxOf("p1").focus();
     });
     await userEvent.keyboard(" ");
     await waitFor(() => {
@@ -136,8 +78,8 @@ describe("a checkbox column", () => {
   });
 
   it("shows a drafted box's live value in the Live row", async () => {
-    await openPeople({
-      "GET /api/people": peopleAnswer([
+    await open({
+      "GET /api/people": peopleOf([
         {
           ...blake,
           flags: { f1: true },
@@ -152,15 +94,15 @@ describe("a checkbox column", () => {
         },
       ]),
     });
-    expect(cell("p2").textContent).toContain("Yes");
-    expect(cell("p2").textContent).toContain("live No");
+    expect(boxOf("p2").textContent).toContain("Yes");
+    expect(boxOf("p2").textContent).toContain("live No");
     // The Live row draws the box unticked, since a box is never empty.
-    const liveBox = cell("p2")
+    const liveBox = boxOf("p2")
       .closest("tr")
       ?.nextElementSibling?.querySelector<HTMLInputElement>(
         `td:nth-child(${String(
-          [...(cell("p2").closest("tr")?.children ?? [])].indexOf(
-            cell("p2").closest("td") as Element,
+          [...(boxOf("p2").closest("tr")?.children ?? [])].indexOf(
+            boxOf("p2").closest("td") as Element,
           ) + 1,
         )}) input[type="checkbox"]`,
       );
@@ -169,8 +111,8 @@ describe("a checkbox column", () => {
 
   it("shows a box a draft unticks as an empty box after its dot, with no words for none", async () => {
     // Given a person whose draft unticks their box
-    await openPeople({
-      "GET /api/people": peopleAnswer([
+    await open({
+      "GET /api/people": peopleOf([
         {
           ...blake,
           draft: {
@@ -185,17 +127,17 @@ describe("a checkbox column", () => {
       ]),
     });
     // Then their cell draws the box unticked, as any other box, and says nothing more
-    const box = cell("p2").querySelector<HTMLInputElement>(
+    const box = boxOf("p2").querySelector<HTMLInputElement>(
       'input[type="checkbox"]',
     );
     expect(box?.checked).toBe(false);
-    expect(cell("p2").textContent).not.toMatch(/No first aider/iu);
+    expect(boxOf("p2").textContent).not.toMatch(/No first aider/iu);
   });
 
   it("shows a box a draft unticks as ticked when only live records show", async () => {
-    await openPeople(
+    await open(
       {
-        "GET /api/people": peopleAnswer([
+        "GET /api/people": peopleOf([
           {
             ...blake,
             draft: {
@@ -211,11 +153,11 @@ describe("a checkbox column", () => {
       },
       "/people?show=live",
     );
-    expect(cell("p2").textContent).toContain("Yes");
+    expect(boxOf("p2").textContent).toContain("Yes");
   });
 
   it("sorts ticked boxes first or last", async () => {
-    await openPeople();
+    await open();
     await choose("Unchecked first");
     await waitFor(() => {
       expect(shownNames()[0]).toBe("Blake Fictional");
@@ -227,7 +169,7 @@ describe("a checkbox column", () => {
   });
 
   it("filters to ticked boxes, named Yes in its pill", async () => {
-    await openPeople();
+    await open();
     await choose("Filter…");
     const filter = await screen.findByRole("dialog", {
       name: "Filter First aider",
@@ -240,7 +182,7 @@ describe("a checkbox column", () => {
   });
 
   it("shows a person's box in their details", async () => {
-    await openPeople({}, "/people?open=p1");
+    await open({}, "/people?open=p1");
     const details = await screen.findByRole("region", {
       name: "Avery Fictional",
     });
@@ -255,7 +197,7 @@ describe("a checkbox column", () => {
   });
 
   it("adds a ticked box from Yes pasted into a new row", async () => {
-    const fetch = await openPeople({
+    const fetch = await open({
       "POST /api/people": () =>
         Response.json({ ids: ["p9"], changeSetId: s1 }, { status: 201 }),
     });
@@ -284,28 +226,9 @@ describe("a checkbox column", () => {
 });
 
 describe("the New column dialog", () => {
-  async function openDialog(answers: Answers = {}) {
-    const fetch = await openPeople(answers);
-    await userEvent.click(screen.getByRole("button", { name: "New column" }));
-    return {
-      fetch,
-      dialog: await screen.findByRole("dialog", { name: "New column" }),
-    };
-  }
-
-  it("lists the types Fathom offers, in order", async () => {
-    const { dialog } = await openDialog();
-    expect(await optionsIn(dialog, "Type")).toEqual([
-      "Number",
-      "Checkbox",
-      "Choice from a list",
-      "Web link",
-      "Note",
-    ]);
-  });
-
   it("adds a checkbox column, never asking whether it must be filled in", async () => {
-    const { fetch, dialog } = await openDialog({
+    const { fetch, dialog } = await openNewColumn({
+      "GET /api/people": peopleOf(),
       "POST /api/people/columns": () =>
         Response.json(
           { field: { ...firstAider, id: "f2", name: "Fire warden" } },

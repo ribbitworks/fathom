@@ -53,6 +53,9 @@
 .value {
   min-width: 0;
   margin: 0;
+  /* Holds the words only screen readers hear, which the theme pins to their own item, so they sit
+     at the value rather than at the top of a long panel. */
+  position: relative;
 }
 
 /* A row whose value opens its editor when clicked anywhere on it, marked while pointed at. */
@@ -142,4 +145,21 @@
 
 .pastRow {
   color: var(--mantine-color-dimmed);
+}
+
+/* Text of several lines, shown whole with its line breaks kept. */
+.lines {
+  white-space: pre-wrap;
+}
+
+/* Text of several lines keeps its value's size and spacing while edited, so its lines stay where
+   they were, with its × level with the first line rather than centred on the box. */
+.linesInput {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.linesClear {
+  bottom: auto;
+  height: var(--input-height);
 }

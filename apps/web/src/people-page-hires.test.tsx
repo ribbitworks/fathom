@@ -19,7 +19,7 @@ import {
   session,
   sites,
   roles,
-  positions,
+  peoplePagePositions,
   states,
   site,
   avery,
@@ -100,7 +100,7 @@ describe("planned hires", () => {
           ],
         }),
       "GET /api/lists": () =>
-        Response.json({ lists: [sites, roles, positions, states] }),
+        Response.json({ lists: [sites, roles, peoplePagePositions, states] }),
       "PATCH /api/planned-hires/h1": savedAs(),
       "DELETE /api/planned-hires/h1": savedAs(),
       "DELETE /api/planned-hires/h1/draft": savedAs(),
@@ -229,7 +229,7 @@ describe("planned hires", () => {
           order: ["preferredName", "employeeId", "positionId", "stateId"],
         }),
       "GET /api/lists": () =>
-        Response.json({ lists: [sites, roles, positions, states] }),
+        Response.json({ lists: [sites, roles, peoplePagePositions, states] }),
     });
     renderApp("/people");
     await screen.findByRole("grid", { name: "People" });
@@ -267,7 +267,7 @@ describe("planned hires", () => {
           order: ["preferredName", "employeeId", "positionId", "stateId"],
         }),
       "GET /api/lists": () =>
-        Response.json({ lists: [sites, roles, positions, states] }),
+        Response.json({ lists: [sites, roles, peoplePagePositions, states] }),
     });
     renderApp("/people");
     await screen.findByRole("grid", { name: "People" });

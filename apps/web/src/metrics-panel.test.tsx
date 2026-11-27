@@ -93,6 +93,28 @@ describe("the Metrics panel", () => {
     expect(figures("No")).toEqual(["3", share(3, 4)]);
   });
 
+  it("counts a text column as Populated and Empty, as a number column", () => {
+    const desk: Field = {
+      ...level,
+      id: "f4",
+      name: "Desk",
+      type: "text",
+      listId: null,
+      visibility: "general",
+    };
+    render(
+      <Table
+        people={everyone.map((one, index) =>
+          index === 0 ? { ...one, texts: { f4: "North 4-12" } } : one,
+        )}
+        fields={[desk]}
+        start={{ ...emptyView, breakdown: ["f4"] }}
+      />,
+    );
+    expect(figures("Populated")).toEqual(["1", share(1, 4)]);
+    expect(figures("Empty")).toEqual(["3", share(3, 4)]);
+  });
+
   it("breaks people down by a column, each choice with its count and share, and empty values", async () => {
     render(<Table start={{ ...emptyView, breakdown: [] }} />);
     await chooseIn(panel(), "Break down by", "Level");

@@ -15,7 +15,7 @@ import {
   hiringEditor,
   sites,
   roles,
-  positions,
+  peoplePagePositions,
   listsAnswer,
   states,
   site,
@@ -53,7 +53,7 @@ describe("adding from New", () => {
     const fetch = await openPeople({
       "GET /api/session": who,
       "GET /api/lists": () =>
-        Response.json({ lists: [sites, roles, positions, states] }),
+        Response.json({ lists: [sites, roles, peoplePagePositions, states] }),
       ...answers,
     });
     const button = screen.getByRole<HTMLButtonElement>("button", {

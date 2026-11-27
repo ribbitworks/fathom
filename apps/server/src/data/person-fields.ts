@@ -18,6 +18,8 @@ import {
   type Notes,
   type Numbers,
   type SomeRequestedColumnValues,
+  type Texts,
+  textProblem,
   type Tier,
 } from "@fathom/shared";
 import { inArray } from "drizzle-orm";
@@ -27,7 +29,7 @@ import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { fitsColumns, type Recorded, tidy } from "./draft-records.ts";
 import { choicesWithAdded, refuseHeldColumns } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
-import { isFlag, isNote, isNumber, typeOf } from "./column-types.ts";
+import { isFlag, isNote, isNumber, isText, typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { keptNote } from "./records.ts";
 import { reportingFields } from "./reporting.ts";
@@ -176,13 +178,13 @@ type Shows = (columnId: string) => boolean;
 const showsAll: Shows = () => true;
 
 // What a column of one value holds for a person or planned hire, by column, as recorded, in only
-// the columns shown.
-const valuesHolding = <Held>(
+// the columns shown. Each type's value is told apart by its shape, which no other type's shares.
+const valuesHolding = <Held, Read>(
   person: Recorded,
   holds: (value: unknown) => value is Held,
   shows: Shows,
-  copied: (held: Held) => Held = (held) => held,
-): Record<string, Held> =>
+  copied: (held: Held) => Read,
+): Record<string, Read> =>
   Object.fromEntries(
     Object.entries(person).flatMap(([field, value]) => {
       const fieldId = fieldOfValue(field);
@@ -200,20 +202,29 @@ const linksOf = (person: Recorded, shows: Shows): Links =>
   }));
 
 const notesOf = (person: Recorded, shows: Shows): Notes =>
-  valuesHolding(person, isNote, shows);
+  valuesHolding(person, isNote, shows, String);
 
 const numbersOf = (person: Recorded, shows: Shows): Numbers =>
-  valuesHolding(person, isNumber, shows);
+  valuesHolding(person, isNumber, shows, Number);
 
 const flagsOf = (person: Recorded, shows: Shows): Flags =>
-  valuesHolding(person, isFlag, shows);
+  valuesHolding(person, isFlag, shows, (): true => true);
+
+const textsOf = (person: Recorded, shows: Shows): Texts =>
+  valuesHolding(person, isText, shows, ({ text }) => text);
 
 const columnValueReaders: {
   [Kind in ColumnValueMap]: (
     person: Recorded,
     shows: Shows,
   ) => ColumnValues[Kind];
-} = { links: linksOf, notes: notesOf, numbers: numbersOf, flags: flagsOf };
+} = {
+  links: linksOf,
+  notes: notesOf,
+  numbers: numbersOf,
+  flags: flagsOf,
+  texts: textsOf,
+};
 
 // A person's or planned hire's values in each map, by column, as recorded, in only the columns
 // shown.
@@ -352,7 +363,7 @@ function checkedOfType<Asked>(
   columns: readonly ColumnInfo[],
   requested: Readonly<Record<string, Asked>> | undefined,
   type: FieldType,
-  recorded: (asked: Asked) => unknown,
+  recorded: (asked: Asked, column: ColumnInfo) => unknown,
 ): Recorded {
   return Object.fromEntries(
     Object.entries(requested ?? {}).map(
@@ -361,7 +372,7 @@ function checkedOfType<Asked>(
         if (column?.type !== type) {
           throw new BadRequestError("There is no such column");
         }
-        return [valueField(fieldId), recorded(asked)];
+        return [valueField(fieldId), recorded(asked, column)];
       },
     ),
   );
@@ -435,6 +446,21 @@ const checkedFlags = (
   requested: Readonly<Record<string, true | null>> | undefined,
 ): Recorded => checkedOfType(columns, requested, "flag", (box) => box ?? []);
 
+// The texts asked for each column, as recorded, or none, for a text removed. Each must fit its
+// column: on one line unless it holds several, and within its limit.
+const checkedTexts = (
+  columns: readonly ColumnInfo[],
+  requested: Readonly<Record<string, string | null>> | undefined,
+): Recorded =>
+  checkedOfType(columns, requested, "text", (text, column) => {
+    if (text === null) return [];
+    const problem = textProblem(text, column.multiline);
+    if (problem !== undefined) {
+      throw new BadRequestError(`${column.name}: ${problem}`);
+    }
+    return { text };
+  });
+
 const columnValueCheckers: {
   [Kind in ColumnValueMap]: (
     columns: readonly ColumnInfo[],
@@ -445,6 +471,7 @@ const columnValueCheckers: {
   notes: checkedNotes,
   numbers: checkedNumbers,
   flags: checkedFlags,
+  texts: checkedTexts,
 };
 
 // The values asked for in each map, as recorded, checked in turn.

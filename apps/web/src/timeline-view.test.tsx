@@ -375,7 +375,7 @@ describe("a view's own rows", () => {
         (square) => square.dataset.colour,
       ),
       within(timeline).queryAllByText("Fit", {
-        ignore: "[class*='visuallyHidden']",
+        ignore: ".mantine-VisuallyHidden-root",
       }).length,
     ]).toEqual([["grape"], 1]);
   });

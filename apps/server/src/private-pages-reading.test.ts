@@ -101,6 +101,7 @@ describe("reading a page", () => {
         notes: { [note]: "First" },
         numbers: { [number]: 1 },
         flags: {},
+        texts: {},
       },
       {
         id: rowIds[1],
@@ -111,6 +112,7 @@ describe("reading a page", () => {
         notes: {},
         numbers: { [number]: 2 },
         flags: {},
+        texts: {},
       },
     ]);
   });

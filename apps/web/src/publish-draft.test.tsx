@@ -14,17 +14,14 @@ import { PublishDraftProvider } from "./publish-draft.tsx";
 import { RecordGrid } from "./record-grid.tsx";
 import { emptyView } from "./table-view.ts";
 import {
-  type Gadget,
-  actions,
   bodyOf,
-  gadget,
-  gadgetTable,
   noop,
   rowActions,
   serverAnswers,
   testTheme,
   waiting,
 } from "./test-support.tsx";
+import { type Gadget, actions, gadget, gadgetTable } from "./test-gadgets.tsx";
 
 afterEach(() => {
   vi.unstubAllGlobals();

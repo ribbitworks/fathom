@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Helpers for the front-end tests: a simulated server and the changes sent to it, a fictional
-// signed-in user, fictional records, gadgets for the shared table's own tests, and Fathom's front
-// end started on a page of the test's choosing.
+// signed-in user, fictional records, and Fathom's front end started on a page of the test's
+// choosing. The gadgets for the shared table's own tests are in test-gadgets.tsx.
 
 import type {
   Choice,
-  DecidedKind,
   Feature,
   FeatureDraft,
-  Field,
   List,
   RecordDraft,
   TeamMonths,
@@ -20,36 +18,18 @@ import {
   monthsBetween,
   noColumnValues,
 } from "@fathom/shared";
-import { MantineProvider, mergeThemeOverrides } from "@mantine/core";
+import { mergeThemeOverrides } from "@mantine/core";
 import type { DraftLike } from "./draft-marks.ts";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
-import {
-  type RenderResult,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { expect, vi } from "vitest";
 import { App } from "./app.tsx";
-import { noDrafts } from "./drafts.ts";
-import { cellColumn, inOrder } from "./grid-columns.tsx";
 import { recordCellSelector } from "./grid-row.tsx";
 import { lastViewsPath } from "./last-views.ts";
-import { liveRecordsOf } from "./live-records.ts";
 import type { TableChoices } from "./projects.ts";
-import { RecordGrid } from "./record-grid.tsx";
-import type {
-  CellRecord,
-  Column,
-  GridRecord,
-  RecordActions,
-  RecordTable,
-} from "./record-table.ts";
-import type { RowTicks } from "./row-ticks.tsx";
-import { type View, emptyView } from "./table-view.ts";
+import type { GridRecord, RecordActions } from "./record-table.ts";
 import { theme } from "./theme.ts";
 
 type Answer = Response | Promise<Response>;
@@ -536,103 +516,12 @@ export async function tipOn(element: HTMLElement): Promise<string | null> {
   return tip;
 }
 
-// A made-up kind of record, gadgets, for the shared table's own tests.
-export interface Gadget extends CellRecord {
-  name: string;
-  code: string;
-}
-
-// A type, not an interface, as the server's changes are, so it holds any detail by its key.
-export type GadgetChange = {
-  name?: string;
-  code?: string;
-  values?: Record<string, string[]> | undefined;
-};
-
-export const colour: Field = {
-  id: "f1",
-  keyNumber: 1,
-  name: "Colour",
-  type: "choice" as const,
-  listId: "l1",
-  visibility: null,
-  multiple: false,
-  required: false,
-  onPlannedHires: true,
-};
-// A gadget's web link column.
-export const site: Field = {
-  id: "f2",
-  keyNumber: 1,
-  name: "Site",
-  type: "link",
-  listId: null,
-  visibility: "general",
-  multiple: false,
-  required: false,
-  onPlannedHires: true,
-};
-export const colours: List = {
-  id: "l1",
-  keyNumber: 1,
-  name: "Colours",
-  description: "",
-  visibility: "general",
-  retired: false,
-  choices: [{ id: "c1", label: "Teal", description: "", retired: false }],
-};
-
-export const gadgetColumns = (
-  fields: readonly Field[],
-  lists: readonly List[],
-  order: readonly string[],
-): Column<Gadget, GadgetChange>[] =>
-  inOrder(
-    [
-      cellColumn<Gadget, GadgetChange>("name", "text", {
-        label: "Name",
-        required: true,
-        choices: [],
-        multiple: false,
-        maxLength: 10,
-      }),
-      cellColumn<Gadget, GadgetChange>("code", "text", {
-        label: "Code",
-        required: false,
-        choices: [],
-        multiple: false,
-      }),
-      ...fields.map((field) =>
-        cellColumn<Gadget, GadgetChange>(field.id, field.type, {
-          label: field.name,
-          required: field.required,
-          field,
-          choices: lists.find(({ id }) => id === field.listId)?.choices ?? [],
-          multiple: field.multiple,
-        }),
-      ),
-    ],
-    order,
-  );
-
-export const liveGadgets = (gadgets: readonly Gadget[]) =>
-  liveRecordsOf(gadgets, ["name", "code"]);
-
 export const waiting = {
   state: "waiting" as const,
   madeBy: "Fictional Maker",
   changed: [] as string[],
   live: { values: {}, links: {} },
 };
-
-export const gadget = (id: string, more: Partial<Gadget> = {}): Gadget => ({
-  id,
-  name: `Gadget ${id}`,
-  code: id.toUpperCase(),
-  values: {},
-  links: {},
-  ...more,
-});
 
 export const noop = () => undefined;
 
@@ -667,30 +556,6 @@ export const background = {
   required: false,
 };
 
-export function gadgetTable(
-  recordProblem: RecordTable<
-    Gadget,
-    GadgetChange,
-    GadgetChange
-  >["recordProblem"] = noop,
-): RecordTable<Gadget, GadgetChange, GadgetChange> {
-  return {
-    label: "Gadgets",
-    one: "gadget",
-    noun: "gadgets",
-    newRowLabel: () => "New gadget",
-    removeLabel: () => "Remove gadget",
-    nameOf: (one) => one.name,
-    nameColumn: "name",
-    columnsFor: gadgetColumns,
-    liveRecords: liveGadgets,
-    draftFields: () => [],
-    recordProblem,
-    request: (changes) => Object.assign({}, ...changes) as GadgetChange,
-    drafts: (ids) => ({ ...noDrafts(), lists: ids }),
-  };
-}
-
 // Every action a table takes doing nothing, with those given in its place.
 export const noopActions = <Row extends GridRecord, Change, Request>(
   more: Partial<RecordActions<Row, Change, Request>> = {},
@@ -707,66 +572,52 @@ export const noopActions = <Row extends GridRecord, Change, Request>(
   ...more,
 });
 
-// The shared table's actions for gadgets, doing nothing but those given.
-export const actions = (
-  more: Partial<RecordActions<Gadget, GadgetChange, GadgetChange>> = {},
-): RecordActions<Gadget, GadgetChange, GadgetChange> => noopActions(more);
+// A waiting draft with no maker, the base of the drafts in the tests of deciding drafts.
+export const draftToDecide = {
+  state: "waiting" as const,
+  madeBy: null,
+  madeAt: null,
+};
 
-export function renderGadgets({
-  gadgets,
-  table = gadgetTable(),
-  given = actions(),
-  view = emptyView,
-  onView = noop,
-  approves = [],
-  canEditColumns = false,
-  fields = [colour],
-  order = [],
-  ticks,
-  lists = [colours],
-}: {
-  gadgets: Gadget[];
-  fields?: Field[];
-  lists?: List[];
-  table?: RecordTable<Gadget, GadgetChange, GadgetChange>;
-  given?: RecordActions<Gadget, GadgetChange, GadgetChange>;
-  view?: View;
-  onView?: (view: View) => void;
-  approves?: readonly DecidedKind[];
-  canEditColumns?: boolean;
-  order?: string[];
-  ticks?: RowTicks<Gadget>;
-}): RenderResult {
-  return render(
-    <MantineProvider theme={testTheme}>
-      <RecordGrid
-        records={gadgets}
-        table={table}
-        fields={fields}
-        order={order}
-        lists={lists}
-        canEdit
-        approves={approves}
-        canEditColumns={canEditColumns}
-        view={view}
-        onView={onView}
-        actions={given}
-        ticks={ticks}
-      />
-    </MantineProvider>,
-  );
-}
-
-export const nameThen = (next: Column<Gadget, GadgetChange>) => ({
-  ...gadgetTable(),
-  columnsFor: () => [...gadgetColumns([], [], []).slice(0, 1), next],
+export const addedChoice = (id: string): Choice => ({
+  id,
+  label: id.toUpperCase(),
+  description: "",
+  retired: false,
+  draft: { ...draftToDecide, action: "created", changed: [], live: {} },
 });
-export const nextColumn = (
-  kind: "choice" | "date" | "flag" | "link" | "text",
-) =>
-  cellColumn<Gadget, GadgetChange>("next", kind, {
-    label: "Next",
-    required: false,
-    choices: [],
-    multiple: false,
-  });
+
+export const liveChoice = (id: string): Choice => ({
+  id,
+  label: id.toUpperCase(),
+  description: "",
+  retired: false,
+});
+
+// A list drafted to be added, whose order places one choice drafted to be added before a live one,
+// and leaves another at the end, where it would go anyway.
+export const teamsList: List = {
+  id: "l1",
+  keyNumber: 1,
+  name: "Teams",
+  description: "",
+  visibility: "general",
+  retired: false,
+  choices: [addedChoice("b"), liveChoice("a"), addedChoice("c")],
+  draft: { ...draftToDecide, action: "created", changed: [], live: {} },
+  orderDraft: { ...draftToDecide, live: ["a"], uses: ["b"] },
+};
+
+// A live list whose order puts a choice drafted to be added first.
+export const sitesList: List = {
+  id: "l2",
+  keyNumber: 1,
+  name: "Sites",
+  description: "",
+  visibility: "general",
+  retired: false,
+  choices: [addedChoice("f"), liveChoice("d"), addedChoice("e")],
+  orderDraft: { ...draftToDecide, live: ["d"], uses: ["f"] },
+};
+
+export const bothLists = [teamsList, sitesList];

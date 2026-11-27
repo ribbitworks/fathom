@@ -14,6 +14,7 @@ import { useTableScroll } from "./grid-layout.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import type { Column, RecordTable } from "./record-table.ts";
 import { type View, emptyView } from "./table-view.ts";
+import { noop, rowActions, testTheme, waiting } from "./test-support.tsx";
 import {
   type Gadget,
   type GadgetChange,
@@ -21,12 +22,8 @@ import {
   gadget,
   gadgetColumns,
   gadgetTable,
-  noop,
   renderGadgets,
-  rowActions,
-  testTheme,
-  waiting,
-} from "./test-support.tsx";
+} from "./test-gadgets.tsx";
 
 describe("a table of another kind of record", () => {
   it("names the table, its rows, and what none matching are by the table's own words", () => {

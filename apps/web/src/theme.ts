@@ -18,10 +18,12 @@ import {
   SegmentedControl,
   Select,
   Table,
+  VisuallyHidden,
 } from "@mantine/core";
 import comboboxClasses from "./combobox.module.css";
 import overlayClasses from "./overlay.module.css";
 import tableClasses from "./table.module.css";
+import visuallyHiddenClasses from "./visually-hidden.module.css";
 
 const sea: MantineColorsTuple = [
   "#e5f3f8",
@@ -124,6 +126,9 @@ export const theme = createTheme({
     // white on grey, which reads as turned off.
     SegmentedControl: SegmentedControl.extend({
       defaultProps: { color: "sea" },
+    }),
+    VisuallyHidden: VisuallyHidden.extend({
+      classNames: { root: visuallyHiddenClasses.root },
     }),
     Table: Table.extend({
       classNames: { table: tableClasses.table },

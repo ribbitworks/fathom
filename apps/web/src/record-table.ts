@@ -145,8 +145,9 @@ export interface Column<
     record: Rec | undefined,
     kind: string,
   ) => boolean;
-  // For text columns: the most characters a value may hold.
+  // For text columns: the most characters a value may hold, and whether it may hold several lines.
   maxLength?: number | undefined;
+  multiline?: boolean | undefined;
   // For number columns: the least and most a value may be.
   least?: number;
   most?: number;
@@ -156,8 +157,9 @@ export interface Column<
   readOnly?: boolean;
   // The key of the column whose drafts change this one's values, when another's do.
   changesWith?: string;
-  // Set to depart from the kind's rule, such as false for a column with a choice for each record.
-  breaksDown?: boolean;
+  // Set to depart from the kind's rule, such as false for a column with a choice for each record, or
+  // "unless required" for an added text column, which the built-in ones of its kind don't share.
+  breaksDown?: boolean | "unless required";
   // What a record's cell shows in place of its value in words, such as labels in a team's colours,
   // after its colour's square where it has one, in its Live row too, given the record as it is live.
   content?: (record: Rec) => ReactNode;

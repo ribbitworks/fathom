@@ -39,6 +39,7 @@ describe("values in added columns", () => {
       notes: { c3: "Ready" },
       numbers: {},
       flags: {},
+      texts: {},
     });
   });
 

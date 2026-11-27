@@ -6,6 +6,7 @@
 import { z } from "zod";
 import { type Link, linkValueSchema } from "./links.ts";
 import { numberValueSchema } from "./numbers.ts";
+import { textValueSchema } from "./text-values.ts";
 
 // The most choices one column can hold for one person.
 const choicesLimit = 100;
@@ -60,6 +61,14 @@ export const requestedFlagsSchema = z.record(
   z.literal(true).nullable(),
 );
 
+// Each text column's text, by column. A column with no text is left out.
+export const textsSchema = z.record(z.string(), z.string());
+
+export type Texts = Record<string, string>;
+
+// Texts asked for, by column, which each column checks; null or empty text removes a column's text.
+export const requestedTextsSchema = z.record(z.uuid(), textValueSchema);
+
 // Choices asked for, by column: each a choice's identifier, at most once.
 export const requestedValuesSchema = z.record(
   z.uuid(),
@@ -71,7 +80,13 @@ export const requestedValuesSchema = z.record(
 
 // The maps of values a record keeps by column, one for each type of added column holding one value,
 // beside its choices in values.
-export const columnValueMaps = ["links", "notes", "numbers", "flags"] as const;
+export const columnValueMaps = [
+  "links",
+  "notes",
+  "numbers",
+  "flags",
+  "texts",
+] as const;
 
 export type ColumnValueMap = (typeof columnValueMaps)[number];
 
@@ -88,6 +103,7 @@ interface ColumnValueOf {
   notes: string;
   numbers: number;
   flags: true;
+  texts: string;
 }
 
 // One column's value in a map.
@@ -117,6 +133,7 @@ const columnValueSchemas = {
   notes: notesSchema,
   numbers: numbersSchema,
   flags: flagsSchema,
+  texts: textsSchema,
 } satisfies { [Kind in ColumnValueMap]: z.ZodType<ColumnValues[Kind]> };
 
 const requestedColumnValueSchemas = {
@@ -124,6 +141,7 @@ const requestedColumnValueSchemas = {
   notes: requestedNotesSchema,
   numbers: requestedNumbersSchema,
   flags: requestedFlagsSchema,
+  texts: requestedTextsSchema,
 } satisfies {
   [Kind in ColumnValueMap]: z.ZodType<RequestedColumnValues[Kind]>;
 };

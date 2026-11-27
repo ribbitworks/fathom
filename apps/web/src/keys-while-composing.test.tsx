@@ -18,16 +18,18 @@ import { ChoicePicker } from "./choice-picker.tsx";
 import { SidePanelFrame } from "./side-panel.tsx";
 import { entryName, focusRow, openPanel } from "./test-lists-page.tsx";
 import {
-  actions,
   bodyOf,
   type ComposingMark,
   composingKeys,
+  testTheme,
+} from "./test-support.tsx";
+import {
+  actions,
   gadget,
   gadgetTable,
   renderGadgets,
   site,
-  testTheme,
-} from "./test-support.tsx";
+} from "./test-gadgets.tsx";
 
 afterEach(() => {
   vi.unstubAllGlobals();

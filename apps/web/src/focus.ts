@@ -61,7 +61,12 @@ export function focusFoundSoon(find: () => HTMLElement | undefined): void {
 export function selectSoon(id: string): void {
   soon(firstOf([id]), (element) => {
     element.focus();
-    if (element instanceof HTMLInputElement) element.select();
+    if (
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement
+    ) {
+      element.select();
+    }
   });
 }
 

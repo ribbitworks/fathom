@@ -489,11 +489,17 @@ export function ClassName({ dataClass }: { dataClass: Tier }) {
   );
 }
 
-// An empty value's words, in grey italics.
-export function EmptiedValue({ name }: { name: string }) {
+// An empty value's words, in grey italics: the column's own word for empty, if it has one.
+export function EmptiedValue({
+  name,
+  emptyLabel,
+}: {
+  name: string;
+  emptyLabel?: string | undefined;
+}) {
   return (
     <Text component="span" inherit c="dimmed" fs="italic">
-      {emptiedWords(name)}
+      {emptiedWords(name, emptyLabel)}
     </Text>
   );
 }

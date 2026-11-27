@@ -12,6 +12,7 @@ import { RecordGrid } from "./record-grid.tsx";
 import type { RecordTable } from "./record-table.ts";
 import { type RowTicks, withTicks } from "./row-ticks.tsx";
 import { type View, emptyView } from "./table-view.ts";
+import { noop, recordCell, testTheme, waiting } from "./test-support.tsx";
 import {
   type Gadget,
   type GadgetChange,
@@ -20,12 +21,8 @@ import {
   gadgetTable,
   nameThen,
   nextColumn,
-  noop,
-  recordCell,
   renderGadgets,
-  testTheme,
-  waiting,
-} from "./test-support.tsx";
+} from "./test-gadgets.tsx";
 
 describe("the mark of a new row being filled in", () => {
   it("names a value its column cannot take, then what is still needed once it can", async () => {

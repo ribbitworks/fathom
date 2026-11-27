@@ -4,7 +4,6 @@
 
 import {
   type Choice,
-  type ChangeValue,
   type Customer,
   activityColumnKeys,
   featureColumnKeys,
@@ -188,7 +187,7 @@ export function draftFieldsOf<Rec extends GridRecord, Change>(
 ): DraftField[] {
   if (draft.action !== "changed") return [];
   const words = (column: Column<Rec, Change>, value: CellValue) =>
-    cellKinds[column.kind].inDetail?.(column, value) ?? (value as ChangeValue);
+    cellKinds[column.kind].inDetail(column, value);
   return columns
     .filter(({ key }) => draft.changed.includes(key))
     .map((column) => ({

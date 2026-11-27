@@ -11,17 +11,14 @@ import { RecordPanel } from "./record-details.tsx";
 import { RecordGrid } from "./record-grid.tsx";
 import type { RecordActions, RecordTable } from "./record-table.ts";
 import { emptyView } from "./table-view.ts";
+import { noop, rowActions, testTheme, waiting } from "./test-support.tsx";
 import {
   type Gadget,
   type GadgetChange,
   actions,
   gadget,
   gadgetTable,
-  noop,
-  rowActions,
-  testTheme,
-  waiting,
-} from "./test-support.tsx";
+} from "./test-gadgets.tsx";
 
 const changed = {
   ...waiting,

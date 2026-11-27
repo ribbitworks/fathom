@@ -22,6 +22,7 @@ import {
 import { effortColumn } from "./planning-columns.tsx";
 import type { GridDraft, RecordActions } from "./record-table.ts";
 import { type View, emptyView } from "./table-view.ts";
+import { recordCell, testTheme, waiting } from "./test-support.tsx";
 import {
   type Gadget,
   type GadgetChange,
@@ -30,11 +31,8 @@ import {
   gadgetTable,
   nameThen,
   nextColumn,
-  recordCell,
   renderGadgets,
-  testTheme,
-  waiting,
-} from "./test-support.tsx";
+} from "./test-gadgets.tsx";
 
 describe("the order of the columns", () => {
   it("follows the order given, putting columns it does not name at the end in their usual order", () => {

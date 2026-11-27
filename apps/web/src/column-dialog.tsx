@@ -40,6 +40,7 @@ const newListChoice = "new";
 
 // Every type must be named, which the compiler checks, and is offered in this order.
 const typeNames: Record<FieldType, string> = {
+  text: "Text",
   number: "Number",
   flag: "Checkbox",
   choice: "Choice from a list",
@@ -88,6 +89,7 @@ export function ColumnDialog({
   // The list name last sent, so a refusal of it as taken no longer applies once the name changes.
   const [sentListName, setSentListName] = useState("");
   const [multiple, setMultiple] = useState(field?.multiple ?? false);
+  const [multiline, setMultiline] = useState(field?.multiline ?? false);
   const [required, setRequired] = useState(field?.required ?? false);
   // The table is always one of the fixed tables.
   // eslint-disable-next-line security/detect-object-injection
@@ -107,6 +109,7 @@ export function ColumnDialog({
     visibility,
     listId,
     multiple,
+    multiline,
     required,
     onPlannedHires,
     listName,
@@ -213,6 +216,7 @@ export function ColumnDialog({
                 multiple: false,
                 required: canBeRequired(type) && required,
                 onPlannedHires,
+                ...(type === "text" ? { multiline } : {}),
               }
             : {
                 name: name.trim(),
@@ -259,6 +263,21 @@ export function ColumnDialog({
             setType(fieldTypeSchema.parse(value));
           }}
         />
+        {type === "text" && (
+          <Checkbox
+            label="Several lines"
+            description={
+              field === undefined
+                ? undefined
+                : "Can't change once the column is added"
+            }
+            disabled={field !== undefined}
+            checked={multiline}
+            onChange={(event) => {
+              setMultiline(event.currentTarget.checked);
+            }}
+          />
+        )}
         {type !== "choice" ? (
           classifies && (
             <ClassChoice

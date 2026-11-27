@@ -39,7 +39,7 @@ import { type EditingContext, usePersonEditing } from "./person-editing.tsx";
 import classes from "./record-details.module.css";
 import { RecordLink, Row } from "./record-details.tsx";
 import { useFocusOnOpen } from "./record-editing.tsx";
-import { cellColumn, columnsOn, onRow } from "./grid-columns.tsx";
+import { cellColumn, columnsOn, fieldColumn, onRow } from "./grid-columns.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { CellValue } from "./table-view.ts";
 import { today } from "./today.ts";
@@ -47,7 +47,7 @@ import { newRecordRequest, recordProblem } from "./people-requests.ts";
 
 export const fillButtonId = "hire-fill";
 
-const reportsColumn = cellColumn<Person, RowChange>("fillReports", "text", {
+const reportsColumn = fieldColumn<Person, RowChange>("fillReports", "text", {
   label: "Direct reports",
   required: false,
   multiple: false,

@@ -8,6 +8,7 @@ import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { RecordActions } from "./record-table.ts";
+import { rowActions } from "./test-support.tsx";
 import {
   type Gadget,
   type GadgetChange,
@@ -18,8 +19,7 @@ import {
   nameThen,
   nextColumn,
   renderGadgets,
-  rowActions,
-} from "./test-support.tsx";
+} from "./test-gadgets.tsx";
 
 describe("the empty row", () => {
   it("shows no starting value until something is typed in it, then shows and adds it", async () => {

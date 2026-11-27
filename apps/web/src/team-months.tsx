@@ -23,7 +23,7 @@ import type { ReactNode } from "react";
 import { getJson } from "./api.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import { noDrafts } from "./drafts.ts";
-import { cellColumn } from "./grid-columns.tsx";
+import { cellColumn, fieldColumn } from "./grid-columns.tsx";
 import {
   type CellRecord,
   type Column,
@@ -251,7 +251,7 @@ export function monthGridTable<
   });
   const columns = [
     {
-      ...cellColumn<Rec, CellChange>("name", "text", {
+      ...fieldColumn<Rec, CellChange>("name", "text", {
         label: "Person",
         required: true,
         choices: [],

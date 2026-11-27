@@ -78,8 +78,9 @@ export const roles = {
   visibility: "personal",
 };
 export const old = list("l3", "Old List", [], true);
-// The built-in Positions list.
-export const positions = {
+// The built-in Positions list as the People page's tests have it, with a position drafted to be
+// added.
+export const peoplePagePositions = {
   ...list("positions", "Positions", [
     choice("position-1", "Engineer"),
     choice("position-2", "Tester"),
@@ -99,7 +100,7 @@ export const positions = {
   builtIn: "positions",
 };
 export const listsAnswer = () =>
-  Response.json({ lists: [sites, roles, old, positions] });
+  Response.json({ lists: [sites, roles, old, peoplePagePositions] });
 // The built-in hiring states list, with a state of each meaning.
 export const states = {
   ...list("states", "Hiring states", [
