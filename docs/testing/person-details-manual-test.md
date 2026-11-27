@@ -386,7 +386,7 @@ Covered by [DETAILS-02](#details-02-a-drafted-value-shows-beside-the-live-one).
 - [ ] `F91F` Select the details button in the row for the planned Engineering Manager.
   - **Expected:**
     - The details panel opens, headed "Engineering Manager, TBD-" and the number written down at `51CD`.
-    - Under the heading, 'Engineering Manager', then a grey box reading **Planned, no date**.
+    - Under the heading, 'Engineering Manager', then a grey box reading **Planned, no target date**.
     - There is no **Show on org chart** link.
   - **Notes:**
 

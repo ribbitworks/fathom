@@ -81,7 +81,7 @@ describe("changing a planned hire's details", () => {
     });
   }
 
-  it("marks a planned hire with no date as Planned, no date", async () => {
+  it("marks a planned hire with no date as Planned, no target date", async () => {
     serverAnswers({
       "GET /api/session": hiringEditor,
       "GET /api/people": peopleAnswer([robin, { ...opening, undated: true }]),
@@ -92,7 +92,7 @@ describe("changing a planned hire's details", () => {
     });
     renderApp("/people?open=REQ-7");
     const details = await panel("Fictional Opening");
-    expect(within(details).getByText("Planned, no date")).toBeDefined();
+    expect(within(details).getByText("Planned, no target date")).toBeDefined();
     expect(within(details).queryByText(/^Planned, expected/)).toBeNull();
   });
 

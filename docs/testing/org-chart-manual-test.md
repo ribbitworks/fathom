@@ -399,7 +399,7 @@ Proved by automated tests in `apps/server/src/org-chart.test.ts`.
     - The card has a grey dashed edge.
     - The card has no shadow.
     - "TBD-" and its number are grey and in italics.
-    - Under that, a grey box reads "Planned, no date".
+    - Under that, a grey box reads "Planned, no target date".
     - It ends with "Hide 2 reports".
   - **Notes:**
 

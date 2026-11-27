@@ -475,13 +475,13 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
 - [ ] `A516` Read the **Feature lead** row of the team panel.
   - **Expected:**
     - It reads "Engineering Manager, TBD-" and a number, in grey italics.
-    - After it are "#HIRE-" and another number, then a grey box reading "Planned, no date".
+    - After it are "#HIRE-" and another number, then a grey box reading "Planned, no target date".
   - **Notes:**
 
 - [ ] `131A` Read the **Members** row of the team panel.
   - **Expected:**
     - It lists people by name, then 'Data engineer', then "Engineering Manager, TBD-" and the same number.
-    - Each of the last two is followed by "#HIRE-" and a number, then a grey box: "Planned, expected" and the name of last month, then "Planned, no date".
+    - Each of the last two is followed by "#HIRE-" and a number, then a grey box: "Planned, expected" and the name of last month, then "Planned, no target date".
     - "Engineering Manager, TBD-" and its number are in grey italics; 'Data engineer' is not.
   - **Notes:**
 
@@ -489,7 +489,7 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
   - **Expected:**
     - The card has a grey dashed edge.
     - It reads "TBD-" and the number, in grey italics, then 'Engineering Manager'.
-    - Under them, in order: a grey box reading "Planned, no date"; a small square in the team's colour and 'Field tools'; then "Hide" and a number of members.
+    - Under them, in order: a grey box reading "Planned, no target date"; a small square in the team's colour and 'Field tools'; then "Hide" and a number of members.
     - Nothing on the card overlaps the cards under it.
     - The cards under it include the people and 'Data engineer'.
   - **Notes:**

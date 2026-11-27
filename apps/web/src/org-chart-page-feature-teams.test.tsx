@@ -119,7 +119,7 @@ describe("feature teams on the org chart", () => {
 
     // And Quay is under the unnamed hire's card, which names the team, by its ID
     const lead = screen.getByRole("group", { name: "TBD-4" });
-    expect(lead.textContent).toContain("Planned, no date");
+    expect(lead.textContent).toContain("Planned, no target date");
     expect(
       within(lead).getByRole("button", { name: "Fictional Quay" }),
     ).toBeDefined();

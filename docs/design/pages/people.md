@@ -38,7 +38,7 @@ The date row sits above the table here and above the [Org chart](org-chart.md), 
   - Where nothing can change, it is read only: the chart has no Draft menu and shows teams or reporting lines as approved.
   - People lists those employed then, with no New person, New column or row menu.
 - **Planned hires:** Shown today and later. None show on earlier dates, since past plans are not kept.
-  - One with no target date reads Planned, no date, with Expected empty, on every date, since the date shown's month would read as one someone set.
+  - One with no target date reads Planned, no target date, with Expected empty, on every date, since the date shown's month would read as one someone set.
 - **What changes:** The date changes the rows and dated values, such as manager, team and feature teams, never the columns shown.
 - **The count:** After the bar's buttons, it names the day it counts, such as 137 people and 10 planned hires on Nov 20, 2026, as a [month grid's](capacity.md) count names its month.
 - **Back:** Choosing another date adds to the browser's Back, here and on the Org chart.
