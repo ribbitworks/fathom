@@ -483,7 +483,7 @@ Proved by automated tests in `apps/server/src/people-access.test.ts`.
   - **Notes:**
 
 - [ ] `E1FB` Choose **Number** in **Type**.
-  - **Expected:** **List** and **Several choices** are gone.
+  - **Expected:** **Type** reads **Number**.
   - **Notes:**
 
 - [ ] `FE86` Select **Add column**.

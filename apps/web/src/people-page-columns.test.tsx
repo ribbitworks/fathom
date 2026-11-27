@@ -66,6 +66,7 @@ describe("columns", () => {
     });
     const dialog = await newColumnDialog();
     await userEvent.type(within(dialog).getByLabelText("Name"), "Office");
+    await chooseIn(dialog, "Type", "Choice from a list");
     expect(await optionsIn(dialog, "List")).toEqual([
       "Sites",
       "Roles on the team (Personal)",
@@ -129,6 +130,7 @@ describe("columns", () => {
         }),
     });
     const dialog = await newColumnDialog();
+    await chooseIn(dialog, "Type", "Choice from a list");
     expect(await optionsIn(dialog, "List")).toEqual([
       "Sites",
       "Guilds (new)",
@@ -142,6 +144,7 @@ describe("columns", () => {
       "POST /api/people/columns": () => answer(),
     });
     const dialog = await newColumnDialog();
+    await chooseIn(dialog, "Type", "Choice from a list");
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
     );
@@ -192,6 +195,15 @@ describe("columns", () => {
     ]);
   });
 
+  it("starts on the first type offered, with that type's own setting", async () => {
+    await openPeople();
+    const dialog = await newColumnDialog();
+    expect(within(dialog).getByLabelText<HTMLInputElement>("Type").value).toBe(
+      "Text",
+    );
+    expect(within(dialog).getByLabelText("Several lines")).toBeDefined();
+  });
+
   it("opens the Type list on Enter, rather than adding the column", async () => {
     await openPeople();
     const dialog = await newColumnDialog();
@@ -206,12 +218,13 @@ describe("columns", () => {
         ({ textContent }) => textContent,
       ),
     ).toContain("Number");
-    expect(within(dialog).queryByText("List needed")).toBeNull();
+    expect(within(dialog).queryByText("Name needed")).toBeNull();
   });
 
   it("opens the List list on Enter, rather than adding the column", async () => {
     await openPeople();
     const dialog = await newColumnDialog();
+    await chooseIn(dialog, "Type", "Choice from a list");
     act(() => {
       within(dialog).getByLabelText("List").focus();
     });

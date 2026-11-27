@@ -69,6 +69,7 @@ it("sends no new list for a column changed to a checkbox after one was begun", a
     within(dialog).getByLabelText("Name"),
     "Fictional Checked",
   );
+  await chooseIn(dialog, "Type", "Choice from a list");
   await chooseIn(dialog, "List", "New list");
   await userEvent.type(
     within(dialog).getByLabelText("List name"),

@@ -174,8 +174,8 @@ Proved by automated tests in `apps/server/src/feature-column-values.test.ts` and
 
 - [ ] `034F` Select **New column**.
   - **Expected:**
-    - The **New column** dialog opens.
-    - It has the fields **Name**, **Type**, **List**, **Several choices** and **Must be filled in**.
+    - The **New column** dialog opens, and **Type** reads **Text**.
+    - It has the fields **Name**, **Type**, **Several lines** and **Must be filled in**.
     - There is no **Offered on planned hires**.
   - **Notes:**
 
@@ -483,7 +483,11 @@ Covered by [PROJ-17](projects-manual-test.md#proj-17-the-product-manager-adds-a-
 **Preconditions:** **Features** page open from the left-hand menu.
 
 - [ ] `0C22` Select **New column**.
-  - **Expected:** The **New column** dialog opens, and **Type** reads "Choice from a list".
+  - **Expected:** The **New column** dialog opens.
+  - **Notes:**
+
+- [ ] `5B1E` Choose **Choice from a list** under **Type**.
+  - **Expected:** **Type** reads **Choice from a list**, with **List** and **Several choices** under it.
   - **Notes:**
 
 - [ ] `D9A0` Type `Fictional Tier` in **Name**.
