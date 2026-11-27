@@ -113,9 +113,7 @@ export function ViewDialog({
           value={name}
           maximum={viewLengths.name}
           error={tried || name !== "" ? problem : undefined}
-          onChange={(event) => {
-            setName(event.currentTarget.value);
-          }}
+          onValue={setName}
         />
         {canSaveShared && (
           <Checkbox

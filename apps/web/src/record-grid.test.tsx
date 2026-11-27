@@ -165,7 +165,7 @@ describe("a table of another kind of record", () => {
       document.getElementById("cell-g1-name")?.focus();
     });
     await userEvent.keyboard("Far too long a name{Enter}");
-    expect(screen.getByRole("alert").textContent).toBe("Name too long");
+    expect(screen.getByRole("alert").textContent).toBe("Name is too long");
     await userEvent.keyboard("{Escape}");
     act(() => {
       document.getElementById("cell-g1-code")?.focus();

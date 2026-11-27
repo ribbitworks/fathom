@@ -16,6 +16,9 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
 - **Where the user is:** The top bar names the sidebar's section and page. On an address below a sidebar item, such as a Help page, the item's name links back to its page, then comes what the address shows, such as the Help page's title.
   - **Drawn by:** The sidebar's items in `apps/web/src/layout.tsx`, where an item's `detailOf` names what an address below it shows.
   - **Example:** Select Help pages, then Lists: the top bar reads Help / Help pages / Lists.
+- **One line:** The top bar stays one line at any width. Where its parts don't fit, the development label, then the account's name, are cut short with an ellipsis, each with its whole text in a tip while cut, the name's on keyboard focus too.
+  - **Drawn by:** The top bar in `apps/web/src/layout.tsx`, with its parts' room in `apps/web/src/layout.module.css`, the development label by `DevBadge` in `apps/web/src/dev-label.tsx`, and each tip by `useCutTip` in `apps/web/src/cut-tip.ts`.
+  - **Example:** As the Engineering Operations Manager, narrow the window to about 680 pixels: the label shows little more than its clone, the name ends in an ellipsis, and pointing at it shows the whole name.
 
 ## The Page Heading
 
@@ -66,6 +69,7 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **Drawn by:** `EntryList`, `EntryRow`, `EntryDetails` and `WorthChecking` in `apps/web/src/history-entries.tsx`.
   - **Example:** The seeded rejections on the Change history page.
 - **A change in words:** Wherever a change is described (a record's menu, a draft's details on the Drafts page, the change history), the field is semibold and each value sits on a light ground, like a value in code.
+  - **Punctuation and short values:** A comma or semicolon straight after a value sits against it, and a short field's name or value, such as Week starts on or Mon, Tue, Wed, Thu, Fri, is never split over two lines.
   - **In a table's cell:** In a table's cell, such as the Drafts table's What changes, it is lighter: the field in medium weight and each value on a fainter ground, so a column of changes doesn't outweigh the rows' names.
   - **Drawn by:** `PhraseText` and `PhraseList` in `apps/web/src/phrase.tsx`, with `PhraseList`'s `light` for the lighter form.
   - **Example:** The seeded draft of the Level column, Name from Level to Grade, in the Drafts table's What changes and in its details.

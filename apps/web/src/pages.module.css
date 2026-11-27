@@ -623,13 +623,23 @@ th[data-centred] .recordHeadButton {
   box-shadow: inset 0 0 0 2px var(--mantine-color-sea-filled);
 }
 
+/* A row's refusal, under its first value, in line with it after the row's tick and slot. */
 .recordProblem {
   display: block;
+  padding-inline-start: calc(
+    var(--row-tick-room, 0px) + var(--fathom-slot-width)
+  );
   color: var(--mantine-color-error);
   font-size: 12px;
   font-weight: 500;
   white-space: normal;
   line-height: var(--mantine-line-height);
+}
+
+/* Under the first value's editor, which takes the slot's place, it starts where the editor's text
+   does. */
+.recordProblemUnderEditor {
+  padding-inline-start: var(--row-tick-room, 0px);
 }
 
 /* A value a draft changes, outside a drafted row, semibold while drafts show beside live, as a
@@ -661,6 +671,14 @@ th[data-centred] .recordHeadButton {
 
 .rejectedColumn {
   --column-tint: var(--fathom-rejected-tint);
+}
+
+/* A tinted row has one tint in every cell, its own, so a drafted or live column's tint, shown in
+   rows without one, never lies over it, which in the dark scheme's see-through tints looks
+   patchy. The elements' names outweigh the dark scheme's column tints, set later. */
+tr:is(.draftRow, .recordFillingRow, .recordLiveRow)
+  > td:is(.draftColumn, .liveColumn) {
+  --column-tint: transparent;
 }
 
 .draftCell {
@@ -720,6 +738,12 @@ th[data-centred] .recordHeadButton {
   color: var(--mantine-color-text);
   font-weight: 500;
   box-decoration-break: clone;
+}
+
+/* A short field's name or value, such as a few days' names, kept whole rather than split over two
+   lines. */
+.phraseWhole {
+  white-space: nowrap;
 }
 
 /* A change in words in a table's cell, one of a column of them: the field in medium weight, and
@@ -1065,6 +1089,13 @@ th.liveColumn {
 .recordEditor:focus {
   border-color: var(--mantine-color-sea-filled);
   outline: none;
+}
+
+/* A picker shows what is chosen until something is typed, in the text's colour, since it is the
+   value, not a hint. */
+.pickerEditor::placeholder {
+  color: inherit;
+  opacity: 1;
 }
 
 /* A value refused, marked in its editor; the problem is named under the row. */

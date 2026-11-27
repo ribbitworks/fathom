@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* The app frame's own styles: the deep-water sidebar, which keeps its colours in both modes, its
-   section labels and links, its collapsed rail of icons, and the canvas behind each page. Everything
-   else comes from the Mantine theme. */
+   section labels and links, its collapsed rail of icons, the top bar's parts, and the canvas behind
+   each page. Everything else comes from the Mantine theme. */
 
 .sidebar {
   background: var(--fathom-sidebar);
@@ -110,4 +110,60 @@
 .railToggle:focus-visible {
   outline: 2px solid var(--fathom-sidebar-accent);
   outline-offset: 1px;
+}
+
+/* The top bar stays one line at any width: the place and the buttons keep their size, while the
+   development label, then the account's name, are cut short, each with its whole text in a tip.
+   The label sits in the room left over, which only grows, so it gives up that room down to its
+   least before the name gives up any. */
+.bar > * {
+  flex: none;
+}
+
+.place {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.bar > .barMiddle {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Wide enough for most branch names, and, cut short, for its clone, from the width the label shows
+   at. */
+@media (min-width: 36em) {
+  .barMiddle:has(.devLabel) {
+    min-width: 5rem;
+  }
+}
+
+.devLabel {
+  flex: 0 1 auto;
+  min-width: 5rem;
+  max-width: 360px;
+}
+
+/* The bar's gap and this make the room before the account the same as beside Publish. */
+.bar > .account {
+  margin-inline-start: 4px;
+}
+
+.bar > .account,
+.account > *,
+.accountName {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.account > * > :not(.accountName) {
+  flex: none;
+}
+
+.cutShort {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

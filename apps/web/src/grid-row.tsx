@@ -534,8 +534,6 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                       wholeCellDraft(cellDraft, column) !== undefined
                         ? wasWords(
                             shown(liveColumn(column), column.live(cellDraft)),
-                            column.label,
-                            column.emptyLabel,
                           )
                         : undefined
                     }
@@ -597,7 +595,10 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
               {columnIndex === 0 && rowProblem !== undefined && (
                 <span
                   id={`${cellId(rowIndex, 0)}-problem`}
-                  className={classes.recordProblem}
+                  className={[
+                    classes.recordProblem,
+                    editingHere ? classes.recordProblemUnderEditor : "",
+                  ].join(" ")}
                   role="alert"
                 >
                   {rowProblem}

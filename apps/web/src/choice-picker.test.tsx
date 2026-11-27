@@ -46,10 +46,20 @@ describe("picking choices", () => {
     expect(checkOf("Alpha")?.getAttribute("visibility")).toBe("hidden");
   });
 
-  it("shows no checks where one can be", () => {
+  it("checks the word for none where nothing is picked", () => {
+    // Given an optional value with nothing picked
+    renderOptional(undefined, false, []);
+
+    // Then only the word for none is ticked
+    expect(checkOf("No site")?.getAttribute("visibility")).toBe("visible");
+    expect(checkOf("Alpha")?.getAttribute("visibility")).toBe("hidden");
+  });
+
+  it("checks the choice picked where one can be, as a Select does", () => {
     renderPicker(false);
 
-    expect(checkOf("Beta")).toBeNull();
+    expect(checkOf("Beta")?.getAttribute("visibility")).toBe("visible");
+    expect(checkOf("Alpha")?.getAttribute("visibility")).toBe("hidden");
   });
 
   it.each([

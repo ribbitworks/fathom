@@ -47,7 +47,12 @@ import {
   marksIn,
   useDraftView,
 } from "./status-mark.tsx";
-import { type DraftLike, wasWords, emptiedWords } from "./draft-marks.ts";
+import {
+  type DraftLike,
+  type Was,
+  wasWords,
+  emptiedWords,
+} from "./draft-marks.ts";
 import {
   type CellValue,
   type ColumnUnit,
@@ -69,13 +74,11 @@ type DetailColumn = Pick<
 
 // A value as it was before a draft changed it, for its draft's tip; none for a note or a link,
 // whose words a tip cannot hold.
-function liveWords(column: DetailColumn, value: unknown): string | undefined {
+function liveWords(column: DetailColumn, value: unknown): Was | undefined {
   if (column.kind === "note" || column.kind === "link") return undefined;
   const kind = cellKinds[column.kind];
   return wasWords(
     kind.inWords(column, value as Parameters<typeof kind.inWords>[1]),
-    column.label,
-    column.emptyLabel,
   );
 }
 

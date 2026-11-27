@@ -36,7 +36,7 @@ test.describe("renaming a list in its row", () => {
   for (const [why, name, reason] of [
     ["an empty name", "", "Name needed"],
     ["a name another list has", "sites", "Another list has that name"],
-    ["a name too long", "x".repeat(41), "Name too long"],
+    ["a name too long", "x".repeat(41), "Name is too long"],
   ] as const) {
     test(`refuses ${why}, keeping the name open and saving nothing`, async ({
       page,

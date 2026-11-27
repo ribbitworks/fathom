@@ -86,6 +86,55 @@ describe("a phrase", () => {
     );
   });
 
+  it("draws the semicolon setting several apart against a value ending the one before", () => {
+    // Given two phrases, the first ending with a value
+    const { container } = render(
+      <PhraseList phrases={[renamed, [{ strong: "Week starts on" }]]} />,
+    );
+
+    // Then the semicolon is drawn against that value
+    const mark = container.querySelector('[class*="phraseMark"]');
+    expect(mark?.textContent).toBe(";");
+    expect(mark?.previousElementSibling?.textContent).toBe("Grade");
+  });
+
+  it("keeps a short value whole on one line, and lets a long one wrap", () => {
+    // Given a short value and a long one
+    const long = "A long description of what the feature does, ".repeat(2);
+    const { container } = render(
+      <PhraseText
+        phrase={[
+          { value: "Mon, Tue, Wed, Thu, Fri" },
+          " and ",
+          { value: long },
+        ]}
+      />,
+    );
+
+    // Then only the short one is kept whole
+    const [short, wrapping] = container.querySelectorAll("span");
+    expect(short?.className).toMatch(/phraseWhole/);
+    expect(wrapping?.className).not.toMatch(/phraseWhole/);
+  });
+
+  it("keeps a value of up to 30 characters whole, and one longer not", () => {
+    const { container } = render(
+      <PhraseText
+        phrase={[{ value: "x".repeat(30) }, " and ", { value: "y".repeat(31) }]}
+      />,
+    );
+    const [thirty, thirtyOne] = container.querySelectorAll("span");
+    expect(thirty?.className).toMatch(/phraseWhole/);
+    expect(thirtyOne?.className).not.toMatch(/phraseWhole/);
+  });
+
+  it("keeps a short field's name whole too", () => {
+    const { container } = render(
+      <PhraseText phrase={[{ strong: "Week starts on" }, " from Monday"]} />,
+    );
+    expect(container.querySelector("strong")?.className).toMatch(/phraseWhole/);
+  });
+
   it("sets several apart with semicolons", () => {
     const { container } = render(
       <PhraseList

@@ -54,6 +54,7 @@ import { ChangePasswordDialog } from "./change-password.tsx";
 import { menuChoice } from "./last-views.ts";
 import { type Item, opens, sections } from "./navigation.ts";
 import { initials } from "./names.ts";
+import { useCutTip } from "./cut-tip.ts";
 import {
   type SignedInUser,
   sessionQuery,
@@ -285,6 +286,11 @@ export function Layout({
     defaultValue: false,
   });
   const [problem, setProblem] = useState<string>();
+  const {
+    words: nameWords,
+    shown: nameTipShown,
+    target: nameTipTarget,
+  } = useCutTip();
   const [changingName, setChangingName] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const narrow = useMediaQuery("(max-width: 48em)");
@@ -376,91 +382,107 @@ export function Layout({
       padding="lg"
     >
       <AppShell.Header>
-        <Group h="100%" px="lg" justify="space-between" wrap="nowrap">
-          <Group gap="sm" wrap="nowrap">
-            <Burger
-              opened={opened}
-              onClick={toggle}
-              hiddenFrom="sm"
-              size="sm"
-              aria-label="Show sections"
-              aria-expanded={opened}
-              aria-controls={sidebarId}
-            />
-            {place && (
-              <Breadcrumbs separator="/" fz="sm" c="dimmed">
-                <span>{place.section}</span>
-                {place.detail === undefined ? (
-                  <Text span fz="sm" fw={500} c="var(--mantine-color-text)">
-                    {place.item.label}
-                  </Text>
-                ) : (
-                  <Anchor component={Link} to={place.base} fz="sm" c="dimmed">
-                    {place.item.label}
-                  </Anchor>
-                )}
-                {place.detail !== undefined && (
-                  <Text span fz="sm" fw={500} c="var(--mantine-color-text)">
-                    {place.detail}
-                  </Text>
-                )}
-              </Breadcrumbs>
-            )}
+        <Group h="100%" px="lg" gap="sm" wrap="nowrap" className={classes.bar}>
+          <Burger
+            opened={opened}
+            onClick={toggle}
+            hiddenFrom="sm"
+            size="sm"
+            aria-label="Show sections"
+            aria-expanded={opened}
+            aria-controls={sidebarId}
+          />
+          {place && (
+            <Breadcrumbs
+              separator="/"
+              fz="sm"
+              c="dimmed"
+              className={classes.place}
+            >
+              <span>{place.section}</span>
+              {place.detail === undefined ? (
+                <Text span fz="sm" fw={500} c="var(--mantine-color-text)">
+                  {place.item.label}
+                </Text>
+              ) : (
+                <Anchor component={Link} to={place.base} fz="sm" c="dimmed">
+                  {place.item.label}
+                </Anchor>
+              )}
+              {place.detail !== undefined && (
+                <Text span fz="sm" fw={500} c="var(--mantine-color-text)">
+                  {place.detail}
+                </Text>
+              )}
+            </Breadcrumbs>
+          )}
+          <div className={classes.barMiddle}>
             <DevBadge label={devLabel} />
-          </Group>
-          <Group gap="md" wrap="nowrap">
-            {makesDrafts && <UnpublishedControl />}
-            <AppMenu position="bottom-end" width="max-content">
-              <AppMenu.Target>
-                <UnstyledButton aria-label={`Account, ${user.name}`}>
+          </div>
+          {makesDrafts && <UnpublishedControl />}
+          <AppMenu position="bottom-end" width="max-content">
+            <AppMenu.Target>
+              <Tooltip label={user.name} opened={nameTipShown}>
+                <UnstyledButton
+                  aria-label={`Account, ${user.name}`}
+                  className={classes.account}
+                  {...nameTipTarget}
+                >
                   <Group gap="xs" wrap="nowrap">
-                    <Text fz="sm" visibleFrom="xs">
-                      {user.name}
+                    <Text
+                      component="div"
+                      fz="sm"
+                      visibleFrom="xs"
+                      className={classes.accountName}
+                    >
+                      <span ref={nameWords} className={classes.cutShort}>
+                        {user.name}
+                      </span>
                     </Text>
                     <Avatar size={30} color="sea" radius="xl">
                       {initials(user.name)}
                     </Avatar>
                   </Group>
                 </UnstyledButton>
-              </AppMenu.Target>
-              <AppMenu.Dropdown miw={200} maw="calc(100vw - 2rem)">
-                <Menu.Label>{user.email}</Menu.Label>
-                {roles.length > 1 ? (
-                  <MenuChoices
-                    label="Role"
-                    choices={roles.map(({ id, name }) => ({
-                      value: id,
-                      label: name,
-                    }))}
-                    chosen={role?.id}
-                    onChoose={(roleId) => void handleSwitch(roleId)}
-                  />
-                ) : (
-                  role !== null && <Menu.Label>{role.name}</Menu.Label>
-                )}
-                <Menu.Divider />
-                <Menu.Item
-                  onClick={() => {
-                    setChangingName(true);
-                  }}
-                >
-                  Change name…
-                </Menu.Item>
-                <Menu.Item
-                  onClick={() => {
-                    setChangingPassword(true);
-                  }}
-                >
-                  Change password…
-                </Menu.Item>
-                <AppearanceChoices />
-                <Menu.Divider />
-                <Menu.Item onClick={() => void handleSignOut()}>
-                  Sign out
-                </Menu.Item>
-              </AppMenu.Dropdown>
-            </AppMenu>
-          </Group>
+              </Tooltip>
+            </AppMenu.Target>
+            <AppMenu.Dropdown miw={200} maw="calc(100vw - 2rem)">
+              <Menu.Label>{user.email}</Menu.Label>
+              {roles.length > 1 ? (
+                <MenuChoices
+                  label="Role"
+                  choices={roles.map(({ id, name }) => ({
+                    value: id,
+                    label: name,
+                  }))}
+                  chosen={role?.id}
+                  onChoose={(roleId) => void handleSwitch(roleId)}
+                />
+              ) : (
+                role !== null && <Menu.Label>{role.name}</Menu.Label>
+              )}
+              <Menu.Divider />
+              <Menu.Item
+                onClick={() => {
+                  setChangingName(true);
+                }}
+              >
+                Change name…
+              </Menu.Item>
+              <Menu.Item
+                onClick={() => {
+                  setChangingPassword(true);
+                }}
+              >
+                Change password…
+              </Menu.Item>
+              <AppearanceChoices />
+              <Menu.Divider />
+              <Menu.Item onClick={() => void handleSignOut()}>
+                Sign out
+              </Menu.Item>
+            </AppMenu.Dropdown>
+          </AppMenu>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar

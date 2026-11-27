@@ -130,9 +130,7 @@ describe("a person's details", () => {
     await panel("Sasha Fictional");
     const team = row("Reporting team name");
     expect(within(team).getByText("Fictional crew")).toBeDefined();
-    expect(
-      within(team).getByText(", Draft: changed from no reporting team name"),
-    ).toBeDefined();
+    expect(within(team).getByText(", Draft: filled in")).toBeDefined();
     expect(within(team).getByText(", live")).toBeDefined();
   });
 

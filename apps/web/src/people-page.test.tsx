@@ -308,7 +308,7 @@ describe("editing people", () => {
       "{Control>}a{/Control}{Backspace}E2",
       "Someone already has that ID",
     ],
-    ["preferredName", "x".repeat(101), "Name too long"],
+    ["preferredName", "x".repeat(101), "Name is too long"],
   ])(
     "shows what is wrong with %s and keeps editing",
     async (key, keys, problem) => {

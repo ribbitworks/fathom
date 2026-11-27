@@ -18,22 +18,14 @@ import {
   type Tier,
   sameName,
 } from "@fathom/shared";
-import {
-  Button,
-  Checkbox,
-  Group,
-  Select,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
+import { Button, Checkbox, Group, Select, Stack, Text } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
 import { addingLabel } from "./choice-picker.tsx";
 import comboboxClasses from "./combobox.module.css";
-import { Count } from "./counted-input.tsx";
+import { CountedInput } from "./counted-input.tsx";
 import { nameTaken } from "./list-dialog.tsx";
 import { type NewChoice, NewListChoices } from "./new-list-choices.tsx";
 import { listsQuery, nameProblem } from "./lists.ts";
@@ -240,18 +232,13 @@ export function ColumnDialog({
       }}
     >
       <Stack gap="md">
-        <TextInput
+        <CountedInput
           label="Name"
           data-autofocus
           value={name}
+          maximum={personLengths.column}
           error={shownProblem}
-          rightSection={
-            <Count length={name.trim().length} maximum={personLengths.column} />
-          }
-          rightSectionWidth={56}
-          onChange={(event) => {
-            setName(event.currentTarget.value);
-          }}
+          onValue={setName}
         />
         {/* Drop-down lists that open on Enter, as the browser's own list would take Enter as
             adding the column. */}
@@ -316,20 +303,12 @@ export function ColumnDialog({
             />
             {makesList && (
               <>
-                <TextInput
+                <CountedInput
                   label="List name"
                   value={listName}
+                  maximum={listLengths.name}
                   error={tried || listName !== "" ? listNameProblem : undefined}
-                  rightSection={
-                    <Count
-                      length={listName.trim().length}
-                      maximum={listLengths.name}
-                    />
-                  }
-                  rightSectionWidth={56}
-                  onChange={(event) => {
-                    setListName(event.currentTarget.value);
-                  }}
+                  onValue={setListName}
                 />
                 <NewListChoices
                   choices={choices}

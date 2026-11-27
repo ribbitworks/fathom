@@ -6,6 +6,8 @@
   display: inline-flex;
   align-items: center;
   height: 100%;
+  /* Kept to the first line of a row grown taller, such as for a refusal under it. */
+  max-height: var(--fathom-cell-editor-height);
 }
 
 /* A character of no width gives a box, in a table's cell or a panel's row, a line of text centred

@@ -181,7 +181,7 @@ const text: CellKind = {
   problem: (column, value) =>
     column.maxLength !== undefined &&
     asText(value).trim().length > column.maxLength
-      ? `${column.label} too long`
+      ? `${column.label} is too long`
       : undefined,
   pasted: (_column, content) => ({ value: content }),
   change: (key, value) => ({ [key]: asText(value).trim() }),

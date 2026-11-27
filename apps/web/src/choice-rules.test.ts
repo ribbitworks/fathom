@@ -63,7 +63,7 @@ describe("a choice's name", () => {
         { label: "Ash", description: "" },
         { label: "Elm", description: long },
       ]),
-    ).toBe("Line 2: Description too long");
+    ).toBe("Line 2: Description is too long");
     expect(
       pasteProblem(sites, [{ label: "Ash", description: "" }]),
     ).toBeUndefined();

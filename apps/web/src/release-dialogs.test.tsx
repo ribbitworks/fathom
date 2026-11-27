@@ -83,7 +83,7 @@ describe("the dialog naming a release stream", () => {
   it("says a name is too long as it is typed", async () => {
     show((handlers) => <StreamDialog streams={[]} {...handlers} />);
     await userEvent.type(box("Name"), "x".repeat(41));
-    expect(screen.getByText("Too long")).toBeDefined();
+    expect(screen.getByText("Name is too long")).toBeDefined();
   });
 
   it("refuses the name of another stream, whatever its case", async () => {
@@ -257,7 +257,7 @@ describe("the dialog changing a stream's cycles", () => {
     await userEvent.clear(box("Names"));
     await userEvent.type(box("Names"), "Q".repeat(releaseLengths.naming + 1));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect([screen.getByText("Too long"), fetch.mock.calls]).toEqual([
+    expect([screen.getByText("Names are too long"), fetch.mock.calls]).toEqual([
       expect.anything(),
       [],
     ]);

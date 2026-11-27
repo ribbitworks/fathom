@@ -96,18 +96,16 @@ export interface Adding {
 export const addingLabel = (one: string, typed: string): string =>
   typed === "" ? `New ${one}` : `New ${one} “${typed}”`;
 
-// An option's words after its tick, in a picker where several can be picked. The tick is hidden, not
-// left out, on an option not picked, so every option's words start in line.
+// An option's words after its tick, ticked where it is picked, as a Select ticks its choice. The tick
+// is hidden, not left out, on an option not picked, so every option's words start in line.
 function Ticked({
-  ticks,
   ticked,
   children,
 }: {
-  ticks: boolean;
   ticked: boolean;
   children: ReactNode;
 }) {
-  return ticks ? (
+  return (
     <Group gap="xs" wrap="nowrap">
       <CheckIcon
         size={12}
@@ -117,8 +115,6 @@ function Ticked({
       />
       {children}
     </Group>
-  ) : (
-    children
   );
 }
 
@@ -271,6 +267,7 @@ export function ChoicePicker({
       withinPortal
       hideDetached={false}
       width="max-content"
+      position="bottom-start"
       middlewares={listWidths}
     >
       <Combobox.Target>
@@ -278,6 +275,7 @@ export function ChoicePicker({
           id={id}
           className={[
             classes.recordEditor,
+            classes.pickerEditor,
             invalid ? classes.recordEditorInvalid : "",
           ].join(" ")}
           aria-label={label}
@@ -310,7 +308,7 @@ export function ChoicePicker({
                 active={chosen(option.value)}
                 aria-selected={chosen(option.value)}
               >
-                <Ticked ticks={multiple} ticked={chosen(option.value)}>
+                <Ticked ticked={chosen(option.value)}>
                   <OptionWords option={option} />
                 </Ticked>
               </Combobox.Option>
@@ -323,7 +321,7 @@ export function ChoicePicker({
               value={addingValue}
               className={comboboxClasses.adding}
             >
-              <Ticked ticks={multiple} ticked={false}>
+              <Ticked ticked={false}>
                 <span className={comboboxClasses.addingWords}>
                   {addingLabel(adding.one, search.trim())}
                 </span>

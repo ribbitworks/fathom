@@ -50,7 +50,8 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Drawn by:** The theme, through `SegmentedControl.extend` in `apps/web/src/theme.ts`, so every switch follows it, `ModeSwitch` in `apps/web/src/page-header.tsx` included.
   - **Example:** The Org chart's switch.
 - **The chosen one ticked:** A group of choices in a menu ticks the chosen one, read aloud as chosen, as in the Views menu's applied view.
-  - **Drawn by:** `MenuChoices` in `apps/web/src/app-menu.tsx`.
+  - **In a picker:** A picker ticks each choice chosen in its list, as a Select does, and shows the value chosen in the text's colour until something is typed.
+  - **Drawn by:** `MenuChoices` in `apps/web/src/app-menu.tsx`, and `ChoicePicker` in `apps/web/src/choice-picker.tsx`.
   - **Example:** Hours ticked under Show in, in Effort's column menu.
 
 ## Entering Data
@@ -117,7 +118,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 ## Refusals
 
 - **A value refused:** When the page or the server refuses a value on save, its editor stays open with what was typed, outlined in red, with the reason in red under it, so nothing is lost, in tables, panels and dialogs alike. Esc leaves the value as it was.
-  - **Where the reason shows:** In a table, the reason is under the row, in its first cell. In a dialog, it is under the field it's about, or at the foot when it's about no one field. In a New form, the server's refusal of a value, such as a name another record has, is under that value's field, with focus in it, never in a notification; a refusal about no field the form shows, or a failure, is named in a notification, as [Failures](#saving-and-undo) sets out.
+  - **Where the reason shows:** In a table, the reason is under the row, in its first cell, starting where the row's first value does, with the buttons over the Name cell staying level with the name. In a dialog, it is under the field it's about, or at the foot when it's about no one field. In a New form, the server's refusal of a value, such as a name another record has, is under that value's field, with focus in it, never in a notification; a refusal about no field the form shows, or a failure, is named in a notification, as [Failures](#saving-and-undo) sets out.
   - **Focus in a dialog:** A dialog's refused Save puts focus in the first field refused, so it can be put right at once. A reason at the foot leaves focus where it was.
   - **Drawn by:** `useRecordEditing` in `apps/web/src/record-editing.tsx` for a panel, and `apps/web/src/grid-editing.tsx` for a table; a dialog's focus by `focusRefusedSoon` in `apps/web/src/focus.ts`, or by react-hook-form in the account, role, name and password dialogs, which focuses the first refused field given its `ref`. A New form's refusal from the server, which names its field, comes from `useSaving`'s `onRefused` in `apps/web/src/saving.ts`, with `refusalOf` in `apps/web/src/api.ts`, through `NewRecordPanel` in `apps/web/src/new-record-panel.tsx`.
   - **Example:** Type 203013 in a Needed by cell on Features: Needed by: use a month such as 2027-03.

@@ -24,6 +24,7 @@ import {
   draftTip,
   emptiedWords,
   liveWaitingWords,
+  type Was,
   wasWords,
 } from "./draft-marks.ts";
 
@@ -225,7 +226,7 @@ export function DraftedItem({
   // Who made the change, where it is one of several people's in one draft.
   by?: string | undefined;
   // What a value was before the draft changed it, in words, as wasWords gives them.
-  was?: string | undefined;
+  was?: Was | undefined;
   heldBy?: string | undefined;
   // The user's own unpublished changes, where no draft is given to say so, or their words, such as
   // a new row's that is not saved yet.
@@ -627,7 +628,7 @@ function wasOf(
   draft: ValueDraft,
   field: string | undefined,
   name: string | undefined,
-): string | undefined {
+): Was | undefined {
   if (draft === undefined || field === undefined || name === undefined) {
     return undefined;
   }
@@ -635,7 +636,7 @@ function wasOf(
   const before: unknown = new Map<string, unknown>(
     Object.entries(draft.live),
   ).get(field);
-  return wasWords(typeof before === "string" ? before : "", name);
+  return wasWords(typeof before === "string" ? before : "");
 }
 
 // A value in a record's row as its draft marks it, in the Draft view around it: the draft's dot
@@ -654,7 +655,7 @@ export function DraftedValue({
   draft: ValueDraft;
   // The record's fields the value shows, the first holding the value.
   fields: readonly string[];
-  // The value's name, such as Name, for its tip's words on what it was.
+  // The value's name, such as Name, given where its tip says what it was.
   named?: string | undefined;
   // The value's name, given when it is empty.
   emptied?: string | undefined;

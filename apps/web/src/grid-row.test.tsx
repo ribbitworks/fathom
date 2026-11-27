@@ -35,7 +35,7 @@ describe("the mark of a new row being filled in", () => {
     });
     await userEvent.keyboard("Far too long a name{Tab}{Escape}");
     expect(
-      screen.getByText(", New, not saved yet: Name too long"),
+      screen.getByText(", New, not saved yet: Name is too long"),
     ).toBeDefined();
     act(() => {
       document.getElementById("cell-new-0-name")?.focus();
@@ -531,7 +531,7 @@ describe("a value another record's draft changes", () => {
     expect([
       name?.textContent.includes("Rejected"),
       code?.textContent.includes("Rejected"),
-      code?.textContent.includes("Draft: changed"),
+      code?.textContent.includes("Draft: filled in"),
     ]).toEqual([true, false, true]);
   });
 

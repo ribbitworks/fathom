@@ -24,6 +24,13 @@ export const phraseText = (phrase: Phrase): string =>
 
 const leadingMark = /^[,.;:]/;
 
+// The longest field's name or value kept whole on one line, such as a few days' names, which read
+// wrongly split; a longer one, such as a description, wraps as the words around it do.
+const wholeLength = 30;
+
+const kept = (words: string, className: string | undefined) =>
+  [className, words.length > wholeLength ? "" : classes.phraseWhole].join(" ");
+
 // Whether words start with punctuation straight after a value, whose padding would otherwise set the
 // mark apart, as if after a space.
 const marksAfterValue = (
@@ -49,11 +56,11 @@ export function PhraseText({ phrase }: { phrase: Phrase }): ReactNode {
       );
     }
     return "strong" in part ? (
-      <strong key={index} className={classes.phraseStrong}>
+      <strong key={index} className={kept(part.strong, classes.phraseStrong)}>
         {part.strong}
       </strong>
     ) : (
-      <span key={index} className={classes.phraseValue}>
+      <span key={index} className={kept(part.value, classes.phraseValue)}>
         {part.onShow === undefined ? (
           part.value
         ) : (
@@ -75,11 +82,10 @@ export function PhraseList({
   // Lighter, for one of a column of them in a table.
   light?: boolean;
 }) {
-  const list = phrases.map((phrase, index) => (
-    <span key={index}>
-      {index > 0 && "; "}
-      <PhraseText phrase={phrase} />
-    </span>
-  ));
+  // One run, so a semicolon after a value is drawn against it, as any mark after a value is.
+  const run = phrases.flatMap((phrase, index) =>
+    index === 0 ? phrase : ["; ", ...phrase],
+  );
+  const list = <PhraseText phrase={run} />;
   return light ? <span className={classes.phrasesLight}>{list}</span> : list;
 }

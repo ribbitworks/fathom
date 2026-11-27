@@ -36,6 +36,23 @@ describe("columns", () => {
     return screen.findByRole("dialog", { name: "New column" });
   }
 
+  it("offers an × to empty the column's name", async () => {
+    // Given the column dialog with a name typed
+    await openPeople();
+    const dialog = await newColumnDialog();
+    const name = within(dialog).getByLabelText("Name");
+    await userEvent.type(name, "Office");
+
+    // When its × is pressed
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Clear Name" }),
+    );
+
+    // Then the name is empty, with focus in it
+    expect(name).toHaveProperty("value", "");
+    expect(document.activeElement).toBe(name);
+  });
+
   it("adds a column drawing on a list, and undoes it", async () => {
     const fetch = await openPeople({
       "POST /api/people/columns": () =>

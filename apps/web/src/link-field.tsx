@@ -197,9 +197,7 @@ export function useLinkForm({
           value={text}
           maximum={linkLengths.text}
           error={problems.text}
-          onChange={(event) => {
-            setText(event.currentTarget.value);
-          }}
+          onValue={setText}
         />
         <Group gap="xs" justify="flex-end">
           <Button variant="default" size="compact-sm" onClick={onCancel}>

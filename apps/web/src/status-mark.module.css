@@ -109,10 +109,7 @@
   display: inline-flex;
   flex: none;
   padding-left: var(--fathom-ring-room);
-  min-width: calc(
-    var(--fathom-ring-room) + 2 *
-      (var(--fathom-dot-size) + var(--fathom-mark-gap))
-  );
+  min-width: var(--fathom-slot-width);
   vertical-align: baseline;
 }
 

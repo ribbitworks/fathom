@@ -560,7 +560,7 @@ function ColumnHeader({
   const liveName = draft?.live.name;
   const was =
     draft?.changed.includes("name") === true && typeof liveName === "string"
-      ? wasWords(liveName, "Name")
+      ? wasWords(liveName)
       : undefined;
   return (
     <div

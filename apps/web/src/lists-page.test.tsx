@@ -465,12 +465,12 @@ describe("the table of lists", () => {
       ],
       [
         "Skills, Personal",
-        "What people know., Rejected, changed from no description: Not yet, draft, live empty",
+        "What people know., Rejected, filled in: Not yet, draft, live empty",
         "(1) Rust, Rejected, draft, live Go",
       ],
       [
         "Empty List",
-        "Kept empty., Rejected, changed from no description: Not yet, draft, live empty",
+        "Kept empty., Rejected, filled in: Not yet, draft, live empty",
         "(0) Spare, Draft, draft, live Spare",
       ],
     ]);
