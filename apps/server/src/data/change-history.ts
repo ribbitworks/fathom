@@ -17,7 +17,6 @@ import {
   type ChangedRecord,
   type ClassAccess,
   type ChangeEntry,
-  changeKindSchema,
   matchesWords,
   recordSearchText,
   searchWords,
@@ -38,6 +37,7 @@ import {
 } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { rejectedField } from "./draft-records.ts";
+import { rulesOf } from "./change-set-kinds.ts";
 import { hiddenPeople } from "./people-reads.ts";
 import { readToday } from "./settings.ts";
 import { personTier } from "./person-fields.ts";
@@ -63,6 +63,7 @@ import {
   visibleRows,
 } from "./history-visibility.ts";
 import type { StoredChange } from "./changes.ts";
+import { latestFirst } from "./history-order.ts";
 
 // The most recent change sets shown at once; older ones are read by naming the last one read. When
 // change sets read are hidden or, in a search, do not match, reading goes on, up to ten times as
@@ -307,11 +308,7 @@ async function readBatch(
             {
               entry: {
                 id: set.id,
-                // Unpublished changes all discarded at once are shown as drafts discarded, and a
-                // kind the server no longer knows as saved changes.
-                kind: changeKindSchema
-                  .catch("edit")
-                  .parse(set.kind === "withdrawal" ? "discard" : set.kind),
+                kind: rulesOf(set.kind).shownAs,
                 madeAt: set.madeAt.toISOString(),
                 madeBy: set.madeBy,
                 madeAs: set.madeAs,
@@ -357,8 +354,9 @@ export async function historyShowsRemoval(
   const [latest] = await database
     .select({ action: changes.action, changeSetId: changes.changeSetId })
     .from(changes)
+    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
     .where(and(eq(changes.recordId, recordId), eq(changes.draft, false)))
-    .orderBy(desc(changes.id))
+    .orderBy(...latestFirst)
     .limit(1);
   if (latest?.action !== "deleted") return false;
   const [shown] = await database

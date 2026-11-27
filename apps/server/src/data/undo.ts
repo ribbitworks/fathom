@@ -21,8 +21,11 @@ import {
   seesClass,
   type Tier,
 } from "@fathom/shared";
-import { and, asc, eq, gt, inArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { madeWithColumn } from "./new-lists.ts";
+import { rulesOf } from "./change-set-kinds.ts";
+import { seenSets } from "./history-names.ts";
+import { madeAfter } from "./history-order.ts";
 import {
   type Actor,
   mostSensitive,
@@ -206,25 +209,20 @@ async function undoIn(
   actor: Actor,
   changeSetId: string,
 ): Promise<string | null> {
-  const [changeSet] = await transaction
-    .select()
-    .from(changeSets)
-    .where(eq(changeSets.id, changeSetId));
   // Unpublished changes are seen only by their maker, so for anyone else they are not there.
-  if (
-    changeSet === undefined ||
-    (changeSet.private && changeSet.madeBy !== actor.user.id)
-  ) {
-    throw new NotFoundError();
-  }
+  const [changeSet] = await transaction
+    .select({
+      kind: changeSets.kind,
+      madeBy: changeSets.madeBy,
+    })
+    .from(changeSets)
+    .where(and(eq(changeSets.id, changeSetId), seenSets(actor)));
+  if (changeSet === undefined) throw new NotFoundError();
   if (changeSet.madeBy !== actor.user.id) {
     throw new ForbiddenError("Only the person who made a change can undo it");
   }
-  if (changeSet.kind === "approval" || changeSet.kind === "rejection") {
-    throw new ConflictError(
-      "Approving and rejecting drafts cannot be undone; change the draft or the data instead",
-    );
-  }
+  const refused = rulesOf(changeSet.kind).undoRefused;
+  if (refused !== null) throw new ConflictError(refused);
   // Undoing the same change twice at once: the second waits, then finds the first's changes since.
   await transaction.execute(
     sql`SELECT pg_advisory_xact_lock(hashtextextended(${changeSetId}, 0))`,
@@ -376,8 +374,8 @@ async function undoIn(
     .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
     .where(
       and(
-        gt(changes.id, Math.max(...rows.map(({ id }) => id))),
-        or(eq(changeSets.private, false), eq(changeSets.madeBy, actor.user.id)),
+        madeAfter(changeSetId, Math.max(...rows.map(({ id }) => id))),
+        seenSets(actor),
         or(
           ...records.map((record) =>
             and(
@@ -390,8 +388,9 @@ async function undoIn(
     )
     .limit(1);
   if (later.length > 0) throw new ConflictError(changedSince);
-  // Sending rejected drafts again changed the published drafts, so undoing it rejects them again.
-  if (changeSet.kind === "resubmission") {
+  // Sending rejected drafts again changed the published drafts' state alone, so undoing it rejects
+  // them again.
+  if (rulesOf(changeSet.kind).undoneBy === "rejectingAgain") {
     for (const record of draftRecords) {
       await setRejection(
         transaction,

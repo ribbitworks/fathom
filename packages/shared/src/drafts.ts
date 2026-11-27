@@ -279,6 +279,14 @@ export const approvableKinds = (permissions: readonly string[]): DraftKind[] =>
 // A draft's key, its kind and its record's identifier, naming it alike on the server and the page.
 export const draftKey = (kind: string, id: string): string => `${kind} ${id}`;
 
+// The kind and record a draft's key names; a record's identifier may itself hold spaces.
+export const fromDraftKey = (
+  key: string,
+): { recordType: string; recordId: string } => {
+  const space = key.indexOf(" ");
+  return { recordType: key.slice(0, space), recordId: key.slice(space + 1) };
+};
+
 // The key of each draft asked for.
 export const draftKeysOf = (asked: DraftsAsked): string[] => {
   const of = (kind: DraftKind, ids: readonly string[] = []) =>
@@ -413,9 +421,15 @@ export const unpublishedChosenSchema = z.object({
   drafts: draftsRequestSchema.optional(),
 });
 
-// The records whose drafts a user changed since each was last approved or discarded, from their
-// history in order: rejecting or resubmitting a draft does not change it, so neither counts nor
-// resets. One rule for the drafts marked on screen and the approvals refused.
+// The kinds of change set that start again who changed a draft, such as approving it, and those
+// that neither change it nor start again, such as rejecting it, as the server's rules name them.
+export interface MakerKinds {
+  resets: ReadonlySet<string>;
+  changesNothing: ReadonlySet<string>;
+}
+
+// The records whose drafts a user changed since each was last decided, from their history in order.
+// One rule for the drafts marked on screen and the approvals refused.
 export function draftsChangedBy(
   rows: readonly {
     recordId: string;
@@ -424,16 +438,16 @@ export function draftsChangedBy(
     makerId: string | null;
   }[],
   userId: string,
+  kinds: MakerKinds,
 ): Set<string> {
   const changed = new Set<string>();
   for (const row of rows) {
-    if (row.kind === "approval" || row.kind === "discard") {
+    if (kinds.resets.has(row.kind)) {
       changed.delete(row.recordId);
     } else if (
       row.draft &&
       row.makerId === userId &&
-      row.kind !== "rejection" &&
-      row.kind !== "resubmission"
+      !kinds.changesNothing.has(row.kind)
     ) {
       changed.add(row.recordId);
     }

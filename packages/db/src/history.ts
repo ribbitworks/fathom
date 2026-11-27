@@ -5,6 +5,7 @@
 // tier and its old and new values; changes saved together are one change set.
 
 import { randomUUID } from "node:crypto";
+import type { SQL } from "drizzle-orm";
 import type { Database } from "./client.ts";
 import { changes, changeSets } from "./schema.ts";
 
@@ -23,9 +24,16 @@ export interface ChangeRecord {
 }
 
 // What a change set did: saved changes, or approved, rejected, discarded, or resubmitted drafts: rejected
-// drafts sent for approval again unchanged; or a user's private changes all discarded at once.
+// drafts sent for approval again unchanged; a user's private changes all discarded at once; or a
+// user's private changes withdrawn because their record is gone.
 export type ChangeSetKind =
-  "edit" | "approval" | "rejection" | "discard" | "resubmission" | "withdrawal";
+  | "edit"
+  | "approval"
+  | "rejection"
+  | "discard"
+  | "resubmission"
+  | "withdrawal"
+  | "gone";
 
 // The history field holding a person's values for a column: one field of the person per column.
 export const valueField = (fieldId: string) => `value:${fieldId}`;
@@ -53,13 +61,15 @@ export interface ChangeMaker {
 // Records changes as one change set, in the transaction that makes them. The maker is null for
 // Fathom itself, such as for seed data. With no changes, nothing is recorded, so there is never an
 // empty change set, and the result is null; otherwise it is the change set's identifier. Private
-// changes are seen only by their maker until submitted.
+// changes are seen only by their maker until submitted. A copy of changes saved before keeps their
+// time.
 export async function recordChanges(
   transaction: Pick<Database, "insert">,
   maker: ChangeMaker | null,
   made: readonly ChangeRecord[],
   kind: ChangeSetKind = "edit",
   isPrivate = false,
+  madeAt?: Date | SQL,
 ): Promise<string | null> {
   if (made.length === 0) return null;
   const changeSetId = randomUUID();
@@ -69,6 +79,7 @@ export async function recordChanges(
     madeAsRoleId: maker?.roleId ?? null,
     kind,
     private: isPrivate,
+    madeAt,
   });
   for (const chunk of inChunks(made)) {
     await transaction.insert(changes).values(

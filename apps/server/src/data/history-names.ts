@@ -24,12 +24,14 @@ import {
   type ClassAccess,
   temporaryId,
 } from "@fathom/shared";
-import { and, asc, desc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
+import { and, eq, inArray, not, notInArray, or, sql } from "drizzle-orm";
 import { type Actor, seesSensitivity } from "../access.ts";
 import { builtInTier } from "./values.ts";
+import { replacedAsGone } from "./gone-sets.ts";
 import { type RecordKind, readsKind } from "./record-state.ts";
 import { recordKinds } from "./records.ts";
 import type { StoredChange } from "./changes.ts";
+import { latestFirst, madeInOrder } from "./history-order.ts";
 
 // The kinds of record that belong to another, which the history names them by, as a choice is by
 // its list.
@@ -122,9 +124,13 @@ export interface Facts {
   visibilities: Map<string, unknown>;
 }
 
-// The change sets the actor may see: all but those holding other users' unpublished changes.
+// The change sets the actor may see: all but those holding other users' unpublished changes, and
+// those replaced by their copies as a record went.
 export const seenSets = (actor: Actor) =>
-  or(eq(changeSets.private, false), eq(changeSets.madeBy, actor.user.id));
+  or(
+    eq(changeSets.private, false),
+    and(eq(changeSets.madeBy, actor.user.id), not(replacedAsGone)),
+  );
 
 // What the history the actor may see last recorded about each record: its name, its list, and a
 // list's visibility.
@@ -165,7 +171,7 @@ export async function readFacts(
               ),
         ),
       )
-      .orderBy(changes.recordId, changes.field, desc(changes.id));
+      .orderBy(changes.recordId, changes.field, ...latestFirst);
     // Names, labels, and lists are always recorded as text.
     for (const { recordId, field, value } of rows) {
       if ([...belonging.values()].includes(field)) {
@@ -231,7 +237,7 @@ export async function nameHires(
           seenSets(actor),
         ),
       )
-      .orderBy(asc(changes.id));
+      .orderBy(...madeInOrder);
     for (const { recordId, field, value } of rows) {
       const fields = latest.get(recordId) ?? new Map<string, unknown>();
       fields.set(field, value);

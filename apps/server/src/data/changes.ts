@@ -5,6 +5,8 @@
 // queries the database. Changes to people are recorded as changes to their drafts until approved.
 
 import {
+  type ChangeMaker,
+  type ChangeRecord,
   type ChangeSetKind,
   type changes,
   type Database,
@@ -15,6 +17,7 @@ import {
 import type { RecordType as PlanRecordType, Tier } from "@fathom/shared";
 import type { Actor } from "../access.ts";
 import { ConflictError } from "../errors.ts";
+import { kindsWhere } from "./change-set-kinds.ts";
 
 export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
@@ -132,9 +135,7 @@ export async function refusingDuplicates<Result>(
   }
 }
 
-// The kinds of change set that change drafts as their maker intends them, so are unpublished until
-// published; approving, rejecting, and resubmitting decide or send published drafts.
-const editing: readonly ChangeSetKind[] = ["edit", "discard", "withdrawal"];
+const editingKinds = kindsWhere(({ editing }) => editing);
 
 // Records changes as one change set, in the transaction that makes them, the way the seed data
 // command does too. Changes to drafts are the maker's own, unpublished, until they publish them,
@@ -144,14 +145,25 @@ export async function recordChanges(
   maker: Actor,
   made: readonly Change[],
   kind: ChangeSetKind = "edit",
-  unpublished = editing.includes(kind) &&
-    made.some(({ draft }) => draft === true),
+  unpublished?: boolean,
 ): Promise<string | null> {
-  return recordChangeSet(
+  return recordChangesAs(
     transaction,
     { userId: maker.user.id, roleId: maker.roleId },
     made,
     kind,
     unpublished,
   );
+}
+
+// Records changes as recordChanges does, for a user and role that need not be the actor's.
+export async function recordChangesAs(
+  transaction: Pick<Database, "insert">,
+  maker: ChangeMaker,
+  made: readonly ChangeRecord[],
+  kind: ChangeSetKind,
+  unpublished = editingKinds.includes(kind) &&
+    made.some(({ draft }) => draft === true),
+): Promise<string | null> {
+  return recordChangeSet(transaction, maker, made, kind, unpublished);
 }

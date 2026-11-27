@@ -151,7 +151,7 @@ export function recordsOf(rows: readonly StoredChange[]): Undone[] {
     const record = records.get(key) ?? {
       recordType: row.recordType as RecordType,
       id: row.recordId,
-      action: row.action as Change["action"],
+      action: row.action,
       draft: row.draft,
       old: new Map<string, unknown>(),
     };

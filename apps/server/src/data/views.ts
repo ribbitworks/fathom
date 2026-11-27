@@ -690,6 +690,8 @@ export async function readKeptViewChanges(
           inArray(changes.recordId, chunk),
         ),
       )
+      // Saved views are never drafted, so never copied as a record goes, and are made in the order
+      // their changes are saved, which scopeAt compares by.
       .orderBy(asc(changes.id));
     for (const { id, recordId, field, oldValue, newValue } of rows) {
       // Every view asked for has its entry, made just above.
