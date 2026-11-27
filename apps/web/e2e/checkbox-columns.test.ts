@@ -3,7 +3,7 @@
 // UI tests of a checkbox column on People: added through New column, which asks nothing about being
 // filled in, then a person's box ticked with a click and unticked with Space.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 import { send } from "./test-requests.ts";
 

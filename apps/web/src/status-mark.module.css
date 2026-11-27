@@ -117,6 +117,12 @@
   margin-left: calc(-1 * (var(--fathom-dot-size) + var(--fathom-mark-gap)));
 }
 
+/* In a centred column, such as a checkbox's, a dot hangs out before its value or heading, so each
+   stays centred in line with the rest of the column. */
+[data-centred] .dotPlace {
+  margin-left: calc(-1 * (var(--fathom-dot-size) + var(--fathom-mark-gap)));
+}
+
 /* Moved, Reordered, Retired or Restored, on a draft still waiting: a small box outlined in the
    draft's yellow, its word in a darker yellow, so it stays readable in both schemes. The box keeps
    the item's text size, so its centring measures the item's capitals, and its word is smaller
