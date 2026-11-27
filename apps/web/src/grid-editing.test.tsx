@@ -521,6 +521,26 @@ describe("typing fast into a cell", () => {
     );
   });
 
+  it("gives a new row's next cell's editor focus as Tab opens it, so a key typed at once lands there", async () => {
+    // Given a new row's name being typed in its editor
+    renderGadgets({
+      gadgets: [],
+      fields: [],
+      table: nameThen(nextColumn("text")),
+    });
+    act(() => {
+      document.getElementById("cell-new-0-name")?.focus();
+    });
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: "W" });
+    await waitFor(() => {
+      expect(document.activeElement?.id).toBe("cell-new-0-name-editor");
+    });
+    // When Tab is pressed in it
+    fireEvent.keyDown(document.activeElement as HTMLElement, { key: "Tab" });
+    // Then the next cell's editor has focus straight away, before any later key arrives
+    expect(document.activeElement?.id).toBe("cell-new-0-next-editor");
+  });
+
   it("names a refused value when Enter follows before the editor has focus", () => {
     // Given a code another gadget has
     const update = vi.fn();
