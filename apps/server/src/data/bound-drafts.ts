@@ -80,7 +80,7 @@ export function boundWith(state: RecordsState, root: RecordRef): RecordRef[] {
 
 // The records only drafted to be added that belong to one, through the links of their kinds, and
 // those that belong to them, and so on.
-export function addedBelow(state: RecordsState, root: RecordRef): RecordRef[] {
+function addedBelow(state: RecordsState, root: RecordRef): RecordRef[] {
   const found = new Map([[refKey(root), root]]);
   const queue = [root];
   for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
@@ -102,6 +102,29 @@ export function addedBelow(state: RecordsState, root: RecordRef): RecordRef[] {
         ) {
           continue;
         }
+        found.set(refKey(ref), ref);
+        queue.push(ref);
+      }
+    }
+  }
+  return [...found.values()];
+}
+
+// The records only drafted to be added that any of those given belongs to, through the links of
+// their kinds, and those those belong to, and so on: the records whose discard would take one of
+// them along.
+export function addedAbove(
+  state: RecordsState,
+  given: readonly RecordRef[],
+): RecordRef[] {
+  const found = new Map<string, RecordRef>();
+  const queue = given.filter((ref) => addedOnly(state, ref.type, ref.id));
+  for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
+    const version = versionOf(state, next.type, next.id);
+    for (const [name, type] of Object.entries(kindOf(next.type).links)) {
+      for (const id of linkedIds(version, name)) {
+        const ref = { type, id };
+        if (!addedOnly(state, type, id) || found.has(refKey(ref))) continue;
         found.set(refKey(ref), ref);
         queue.push(ref);
       }

@@ -7,19 +7,12 @@ import type { Reader } from "@fathom/db";
 import type { DraftKind, RecordRef, RecordType } from "@fathom/shared";
 import type { Actor } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
-import { addedBelow, boundWith, draftedRefs } from "./bound-drafts.ts";
+import { addedAbove, boundWith } from "./bound-drafts.ts";
 import { editsKind } from "./draft-editors.ts";
 import { changedByActor, ownDiscardRefusal } from "./draft-makers.ts";
-import {
-  addedOnly,
-  type RecordsState,
-  refKey,
-  stateOf,
-} from "./record-state.ts";
+import { type RecordsState, refKey, stateOf } from "./record-state.ts";
 
 const cyclesRefusal = "Only someone who changes cycles can discard this.";
-
-const isCycles = ({ type }: RecordRef) => type === "cycle-pattern";
 
 // The drafts bound to any of those given. Binding goes both ways, so these are the drafts whose own
 // bound drafts hold one of them.
@@ -50,15 +43,7 @@ export function planDiscardRule(
   }
   // A discard takes cycles along through a draft bound to it that is of cycles, or that is only
   // drafted to be added and has new cycles below it, as a new schedule does.
-  const taking = boundToAny(
-    state,
-    draftedRefs(state).filter(
-      (ref) =>
-        isCycles(ref) ||
-        (addedOnly(state, ref.type, ref.id) &&
-          addedBelow(state, ref).some(isCycles)),
-    ),
-  );
+  const taking = boundToAny(state, [...cycles, ...addedAbove(state, cycles)]);
   return (ref, changedByUser) =>
     taking.has(refKey(ref)) ? cyclesRefusal : own(ref, changedByUser);
 }
@@ -73,7 +58,7 @@ export async function refuseRecordDiscard(
   transaction: Reader,
   state: RecordsState,
   actor: Actor,
-  ref: { type: RecordType; id: string },
+  ref: RecordRef,
 ): Promise<void> {
   refuseWith(
     planDiscardRule(state, actor)(
@@ -85,7 +70,7 @@ export async function refuseRecordDiscard(
 
 // Refuses discarding the draft asked for, of a kind outside the plan's records, to anyone who didn't
 // change it; the drafts discarded with it go whoever made them. Every such discard, and every removal
-// of a record only drafted to be added, which discards it, is checked here.
+// of such a record only drafted to be added, which discards it, is checked here.
 export async function refuseDiscardingOthers(
   transaction: Reader,
   actor: Actor,

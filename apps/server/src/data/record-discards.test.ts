@@ -9,6 +9,7 @@ import { planDiscardRule } from "./record-discards.ts";
 import {
   draft,
   kindState,
+  otherPatternId,
   otherStream,
   pattern,
   patternId,
@@ -115,7 +116,7 @@ describe("who may discard a plan record's draft", () => {
   });
 
   it("is never a role that doesn't change cycles, for a new schedule its new cycles go with, though they made it", () => {
-    // Given a new schedule with its cycles, and a new release in another, live schedule
+    // Given a new schedule with two patterns of cycles, and a new release in another, live schedule
     const state = recordsState({
       "release-stream": kindState(
         [[otherStream, schedule()]],
@@ -123,7 +124,13 @@ describe("who may discard a plan record's draft", () => {
       ),
       "cycle-pattern": kindState(
         [],
-        [[patternId, draft("created", pattern())]],
+        [
+          [patternId, draft("created", pattern())],
+          [
+            otherPatternId,
+            draft("created", pattern({ startsOn: "2027-07-01" })),
+          ],
+        ],
       ),
       release: kindState(
         [],
@@ -148,5 +155,28 @@ describe("who may discard a plan record's draft", () => {
 
     // Then the schedule is refused them, as its cycles go with it, but the release is not
     expect(refusals).toEqual([cyclesRefusal, undefined]);
+  });
+
+  it("leaves a live schedule's own draft to whoever changed it, though new cycles belong to it", () => {
+    // Given a live schedule renamed, and new cycles drafted on it
+    const state = recordsState({
+      "release-stream": kindState(
+        [[stream, schedule()]],
+        [[stream, draft("changed", schedule({ name: "Fictional Renamed" }))]],
+      ),
+      "cycle-pattern": kindState(
+        [],
+        [[patternId, draft("created", pattern())]],
+      ),
+    });
+
+    // When a role that doesn't change cycles, who renamed it, would discard the rename
+    const refusal = planDiscardRule(state, changesReleasesOnly)(
+      { type: "release-stream", id: stream },
+      true,
+    );
+
+    // Then it is theirs to discard, as no cycles go with it
+    expect(refusal).toBeUndefined();
   });
 });
