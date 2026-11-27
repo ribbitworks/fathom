@@ -85,8 +85,8 @@ describe("the Drafts page", () => {
         }),
     });
     expect(await entries()).toEqual([
-      "Hollis Fictional, Draft | Changed | Waiting | Name from Hollis Before to Hollis Fictional (Ann Fictional); Start set to Nov 2, 2026; Site from Northmere to Harbour (Fathom) | Person | People | Ann Fictional and Ben Fictional | Oct 30, 2026 | ",
-      "Sites, Draft | Changed | Waiting | Description set to Offices | List | Configuration | Ann Fictional and Ben Fictional | Oct 30, 2026 | ",
+      "Hollis Fictional, Draft | Changed | Waiting | Name from Hollis Before to Hollis Fictional (Ann Fictional); Start filled in: Nov 2, 2026; Site from Northmere to Harbour (Fathom) | Person | People | Ann Fictional and Ben Fictional | Oct 30, 2026 | ",
+      "Sites, Draft | Changed | Waiting | Description filled in: Offices | List | Configuration | Ann Fictional and Ben Fictional | Oct 30, 2026 | ",
     ]);
   });
 

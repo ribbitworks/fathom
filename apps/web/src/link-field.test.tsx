@@ -160,13 +160,13 @@ describe("editing a link", () => {
     const { address, text } = editEmpty();
     await userEvent.click(address);
     await userEvent.click(text);
-    expect(screen.queryByText("Enter the address")).toBeNull();
+    expect(screen.queryByText("Address needed")).toBeNull();
   });
 
   it("asks for an address when only text is given, once saving is tried", async () => {
     const { onDone, text } = editEmpty();
     await userEvent.type(text, "Only text{Enter}");
-    expect(screen.getByText("Enter the address")).toBeDefined();
+    expect(screen.getByText("Address needed")).toBeDefined();
     expect(onDone).not.toHaveBeenCalled();
   });
 
@@ -174,9 +174,7 @@ describe("editing a link", () => {
     const { onDone, text } = edit();
     fireEvent.change(text, { target: { value: "x".repeat(201) } });
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(
-      screen.getByText("The text is too long; use at most 200 characters"),
-    ).toBeDefined();
+    expect(screen.getByText("Text to show is too long")).toBeDefined();
     expect(onDone).not.toHaveBeenCalled();
   });
 

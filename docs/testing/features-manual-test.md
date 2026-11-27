@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Features
@@ -262,7 +262,7 @@ Covered by [REL-23](release-cycles-manual-test.md#rel-23-a-cycles-new-length-mov
 - [ ] `5AF3` In the row 'Scheduler API', select the **Needed by** cell, type `203013`, then press Enter.
   - **Expected:**
     - The value is refused.
-    - The message reads "Needed by: use a month such as 2027-03".
+    - The message reads "Type a month for Needed by, such as 2027-03".
   - **Notes:**
 
 - [ ] `3A74` Press Esc.

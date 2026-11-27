@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Release Timelines and Links
@@ -62,7 +62,7 @@ To run the test again, start again from Restore the Seed Data.
     - **Year** is highlighted.
     - The timeline has three rows, named 'Platform', 'Patches' and 'Field Apps'.
     - The axis's top row names years, such as "2027", and its second row half years, such as "Jan to Jun 27".
-    - A red line crosses every row, about a sixth of the way across the timeline, labelled **Today** above the axis.
+    - A thin red line crosses every row, about a sixth of the way across the timeline, with no word on it.
   - **Notes:**
 
 - [ ] `1FC4` Read the releases of 'Platform'.
@@ -107,7 +107,7 @@ To run the test again, start again from Restore the Seed Data.
 - [ ] `FC03` Select **Quarter**.
   - **Expected:**
     - The axis's top row names quarters, such as "Q1 2027", and its second row months, such as "Jan".
-    - The red **Today** line crosses the timeline at today's date on the axis.
+    - The red line crosses the timeline at today's date on the axis.
   - **Notes:**
 
 - [ ] `82FE` Select **Year**.
@@ -136,7 +136,7 @@ To run the test again, start again from Restore the Seed Data.
 
 - [ ] `040D` Select **Today**.
   - **Expected:**
-    - The red **Today** line is back about a sixth of the way across the timeline.
+    - The red line is back about a sixth of the way across the timeline.
     - No quarter's box is filled blue.
   - **Notes:**
 

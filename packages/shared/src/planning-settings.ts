@@ -44,16 +44,14 @@ const wholePercentage = (
 ) =>
   z
     .number()
-    .int({ error: `${name}: use a whole percentage` })
+    .int({ error: `Use whole percentages for ${name}` })
     .min(least, { error: outOfRange(name, { least, most }, percent) })
     .max(most, { error: outOfRange(name, { least, most }, percent) });
 
 const { focusPercent, bufferPercent, rampUpPercent, rampUpMonths } =
   planningSettingLimits;
 
-const tooManyMonths = `${planningSettingNames.rampUpPercents}: use up to ${String(
-  rampUpMonths.most,
-)} months`;
+const tooManyMonths = `Use up to ${String(rampUpMonths.most)} months for ${planningSettingNames.rampUpPercents}`;
 
 export const planningSettingsSchema = effortConversionsSchema
   .pick({ hoursPerDay: true, daysPerMonth: true })

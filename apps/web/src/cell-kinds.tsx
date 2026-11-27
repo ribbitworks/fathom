@@ -18,6 +18,7 @@ import {
   noteProblem,
   isMonth,
   numberProblem,
+  numberProblemFor,
   roundedUpTo,
   typedDay,
   typedInPlace,
@@ -25,6 +26,10 @@ import {
   typedNumber,
   type Typing,
   webAddress,
+  webAddressSample,
+  daySample,
+  monthSample,
+  typeFor,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import { type Adding, ChoicePicker, type Finish } from "./choice-picker.tsx";
@@ -200,28 +205,34 @@ function calendarKind({
   layOut,
   isWhole,
   inWords,
-  example,
+  noun,
+  sample,
   samples,
   breaksDown,
 }: {
   layOut: (typed: string) => string;
   isWhole: (typed: string) => boolean;
   inWords: (value: string) => string;
-  example: string;
+  // What a refusal asks for, and an example of one typed.
+  noun: string;
+  sample: string;
   // Values among which the longest in words is found.
   samples: readonly string[];
   breaksDown: CellKind["breaksDown"];
 }): CellKind {
   const longest = Math.max(...samples.map((sample) => inWords(sample).length));
+  const shown = (_column: Choices, value: CellValue) =>
+    isWhole(asText(value)) ? inWords(asText(value)) : asText(value);
   return {
     ...text,
-    inWords: (_column, value) =>
-      isWhole(asText(value)) ? inWords(asText(value)) : asText(value),
+    inWords: shown,
+    // A draft's details show it in words too, rather than as kept.
+    inDetail: shown,
     problem: (column, value) => {
       const typed = layOut(asText(value));
       return layOutDropsDigits(layOut, asText(value)) ||
         (typed !== "" && !isWhole(typed))
-        ? `${column.label}: use ${example}`
+        ? typeFor(noun, column.label, sample)
         : undefined;
     },
     change: (key, value) => {
@@ -241,7 +252,8 @@ const date = calendarKind({
   layOut: typedDay,
   isWhole: isDay,
   inWords: formatDay,
-  example: "a date such as 2026-10-31",
+  noun: "date",
+  sample: daySample,
   samples: twelveMonths.map((month) => `${month}-28`),
   breaksDown: "unless required",
 });
@@ -250,7 +262,8 @@ const month = calendarKind({
   layOut: typedMonth,
   isWhole: isMonth,
   inWords: formatMonth,
-  example: "a month such as 2027-03",
+  noun: "month",
+  sample: monthSample,
   samples: twelveMonths,
   // By each month, as a deadline's rows are wanted.
   breaksDown: "always",
@@ -303,14 +316,14 @@ const number: CellKind = {
   },
   problem: (column, value) => {
     const problem = numberProblem(asText(value));
-    if (problem !== undefined) return `${column.label}: ${problem}`;
+    if (problem !== undefined) return numberProblemFor(problem, column.label);
     const held = typedOf(value);
     if (held === undefined) return undefined;
     if (column.least !== undefined && held < column.least) {
-      return `${column.label}: use ${decimal(column.least)} or more`;
+      return `Use ${decimal(column.least)} or more for ${column.label}`;
     }
     return column.most !== undefined && held > column.most
-      ? `${column.label}: use ${decimal(column.most)} or less`
+      ? `Use ${decimal(column.most)} or less for ${column.label}`
       : undefined;
   },
   pasted: (_column, content) => ({ value: content.trim() }),
@@ -464,7 +477,7 @@ const link: CellKind = {
   pasted: (column, content) => {
     const address = webAddress(content);
     return address === null
-      ? { problem: `${column.label}: ${content} is not a web address` }
+      ? { problem: typeFor("web address", column.label, webAddressSample) }
       : { value: { address, text: "" } };
   },
   change: (key, value) => ({ links: { [key]: linkOf(value) } }),
@@ -574,7 +587,7 @@ const flag: CellKind = {
       return { value: [flagChoice] };
     }
     if (["no", "n", "false", "", "0"].includes(word)) return { value: [] };
-    return { problem: `${column.label}: use Yes or No` };
+    return { problem: `Choose Yes or No for ${column.label}` };
   },
   change: (key, value) => ({ [key]: chosen(value).length > 0 }),
   width: () => 3,

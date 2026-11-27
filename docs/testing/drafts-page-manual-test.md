@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Drafts Page
@@ -159,7 +159,7 @@ Run the test cases in the order they are listed. Start with Start Fathom, then R
     - Under the title is a key starting `#PERSON-`, small and grey.
     - Under **Details**, **Change** reads "Changed".
     - **State** reads "Waiting".
-    - **What changes** reads **Skills** set to `Rust`.
+    - **What changes** reads **Skills** filled in: `Rust`.
     - **Type** reads "Person".
     - **Area** reads "People".
     - **Made by** reads "Engineering Operations Manager".

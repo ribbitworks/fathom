@@ -70,8 +70,23 @@ export const cycleUnitWords = (length: number, unit: CycleUnit | "days") =>
   // eslint-disable-next-line security/detect-object-injection
   `${unitNames[unit]}${length === 1 ? "" : "s"}`;
 
-const lengthWords = (length: number, unit: CycleUnit | "days") =>
+export const lengthWords = (length: number, unit: CycleUnit | "days") =>
   `${String(length)} ${cycleUnitWords(length, unit)}`;
+
+// A cycle's length refused under its field: needed when no number is typed, a whole number when it
+// has a fraction, or else its range in the cycle's unit, such as Type a number from 1 to 104 weeks.
+export function cycleLengthProblem(
+  length: number | string,
+  unit: CycleUnit,
+  longest: number,
+): string {
+  if (String(length).trim() === "" || Number.isNaN(Number(length))) {
+    return "Length needed";
+  }
+  return Number.isInteger(Number(length))
+    ? `Type a number from 1 to ${lengthWords(longest, unit)}`
+    : "Type a whole number";
+}
 
 // How long a cycle lasts, such as 3 months, in the unit of the pattern that makes it where it fills
 // a whole number of them, or else in days, as a cycle cut short by the next pattern or by the

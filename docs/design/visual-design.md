@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/ui-conventions.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: Visual Design
@@ -51,6 +51,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 - **Typeface:** IBM Plex Sans, at weights 400 for text, 500 for emphasis, and 600 for headings and names. Weight 700 is bundled for Mantine's own bold text, such as table headings.
 - **Figures:** Dates, times, and numbers that line up in columns use figures of equal width.
 - **Colours:** Defined once in the theme as CSS variables and used by name, never written into a page.
+  - **Red words:** From the theme's `--mantine-color-red-text`, a deep red in light mode and a bright one in dark, reading at WCAG's 4.5 to 1 on every panel and tint. Refusals and a refused value's outline take it through `--mantine-color-error`, and warnings such as Left take it too.
 
 ## Components
 

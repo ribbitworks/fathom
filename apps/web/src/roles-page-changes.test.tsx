@@ -104,9 +104,7 @@ describe("creating a role", () => {
       within(dialog).getByRole("button", { name: "Create role" }),
     );
     expect(await within(dialog).findByText("Name needed")).toBeDefined();
-    expect(
-      within(dialog).getByText("Use at most 500 characters."),
-    ).toBeDefined();
+    expect(within(dialog).getByText("Description is too long")).toBeDefined();
     expect(fetch).not.toHaveBeenCalledWith(
       "/api/roles",
       expect.objectContaining({ method: "POST" }),

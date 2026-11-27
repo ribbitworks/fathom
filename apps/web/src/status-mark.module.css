@@ -146,19 +146,15 @@
 
 /* A warning about an item, such as Left: the same box outlined in red, since it is a fact about the
    item, not a draft's state, which a dot shows. In an empty value's place, such as No feature team,
-   it is the words alone, since there is no value for a box to follow. Both take a red dark enough
-   to read on a draft's tinted row. */
+   it is the words alone, since there is no value for a box to follow. Both take the theme's red
+   words, which read on a draft's tinted row. */
 .warningKind {
   border-color: var(--mantine-color-red-6);
 }
 
 .warningKind,
 .warningWords {
-  color: var(--mantine-color-red-9);
-}
-
-:where([data-mantine-color-scheme="dark"]) :is(.warningKind, .warningWords) {
-  color: var(--mantine-color-red-4);
+  color: var(--mantine-color-red-text);
 }
 
 /* A fact about an item, such as Built in or a planned place still to fill: the same box outlined in

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-23"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Number Columns
@@ -98,7 +98,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - The cell stays open.
     - It is outlined in red.
-    - "Score: use a number such as 1234.5" shows in red under the row, in its first cell.
+    - "Type a number for Score, such as 1234.5" shows in red under the row, in its first cell.
   - **Notes:**
 
 - [ ] `4BE1` Press Esc.
@@ -145,7 +145,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `AE38` Type `abc` in **At most**.
   - **Expected:**
-    - "Use a number such as 1234.5" shows in red under **At most**.
+    - "Number needed, such as 1234.5" shows in red under **At most**.
     - Rows reading "1,234.5" and "0" are shown.
     - No row reading "-7" is shown.
   - **Notes:**

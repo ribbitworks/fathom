@@ -47,39 +47,43 @@ describe("planningSettingsSchema", () => {
     [
       "a week starting on no day of the week",
       { weekStartsOn: 7 },
-      "Week starts on: use a day of the week",
+      "Choose a day of the week for Week starts on",
     ],
     [
       "part of a percent of focus",
       { focusPercent: 80.5 },
-      "Default focus: use a whole percentage",
+      "Use whole percentages for Default focus",
     ],
-    ["no focus", { focusPercent: 0 }, "Default focus: use 1% to 100%"],
-    ["too much focus", { focusPercent: 101 }, "Default focus: use 1% to 100%"],
+    ["no focus", { focusPercent: 0 }, "Use 1% to 100% for Default focus"],
+    [
+      "too much focus",
+      { focusPercent: 101 },
+      "Use 1% to 100% for Default focus",
+    ],
     [
       "a buffer below nothing",
       { bufferPercent: -1 },
-      "Default buffer: use 0% to 100%",
+      "Use 0% to 100% for Default buffer",
     ],
     [
       "too large a buffer",
       { bufferPercent: 101 },
-      "Default buffer: use 0% to 100%",
+      "Use 0% to 100% for Default buffer",
     ],
     [
       "a month of no ramp-up",
       { rampUpPercents: [0, 75] },
-      "Ramp-up: use 1% to 100%",
+      "Use 1% to 100% for Ramp-up",
     ],
     [
       "a month beyond full",
       { rampUpPercents: [50, 101] },
-      "Ramp-up: use 1% to 100%",
+      "Use 1% to 100% for Ramp-up",
     ],
     [
       "ramp-up longer than a year",
       { rampUpPercents: Array.from({ length: 13 }, () => 50) },
-      "Ramp-up: use up to 12 months",
+      "Use up to 12 months for Ramp-up",
     ],
   ])("refuses %s", (_case, change, message) => {
     const result = planningSettingsSchema.safeParse({

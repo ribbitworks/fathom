@@ -31,10 +31,7 @@ export const roleRequestSchema = z.object({
   description: z
     .string()
     .overwrite((text) => text.replace(/\s+/gu, " ").trim())
-    .max(
-      roleLengths.description,
-      `Use at most ${String(roleLengths.description)} characters`,
-    )
+    .max(roleLengths.description, "Description is too long")
     .refine(isPlainText, "Use plain text, without control characters"),
   permissions: grantedSchema,
 });

@@ -97,7 +97,7 @@ You're done when the table shows the day you chose.
 A person's timeline lists the days something about them changed, or will: the planned hire they filled, their start, each new manager, the feature teams they joined, led and left, and their end. Your role needs to see start and end dates.
 
 1. Open the person's details. The **Timeline** section at the end shows the next change to come and the latest.
-1. Select **Show timeline**. The timeline opens under the details, newest first, with planned days above the red **Today** line.
+1. Select **Show timeline**. The timeline opens under the details, newest first, with planned days above the red line that marks today.
 1. To see People on one of its days, select its date. Your role needs to see other days, and later days for a date still to come.
 
 On a day someone isn't employed, such as after they've left, their details say so, then end with the **Timeline** section, as anyone's do. A timeline already open stays open.

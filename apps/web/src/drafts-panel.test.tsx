@@ -27,7 +27,7 @@ const entry = (more: Partial<Entry> = {}): Entry => ({
   who: "Fictional Editor",
   kind: "person",
   name: "Avery Fictional",
-  details: [[{ strong: "Start" }, " set to ", { value: "Nov 2, 2026" }]],
+  details: [[{ strong: "Start" }, " filled in: ", { value: "Nov 2, 2026" }]],
   reason: undefined,
   unpublished: false,
   heldBy: undefined,

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/people-page.tsx", "apps/web/src/people-actions.ts", "apps/web/src/people-grid.tsx", "apps/web/src/person-panel.tsx", "apps/web/src/date-control.tsx", "apps/server/src/data/people.ts", "apps/server/src/data/people-reads.ts", "apps/server/src/data/people-table-reads.ts", "apps/server/src/data/person-fields.ts", "packages/seed/src/**", "packages/fixtures/src/**", "apps/web/src/person-timeline.tsx", "apps/web/src/record-timeline.tsx", "apps/server/src/data/person-timeline.ts"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/org-chart-manual-test.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: People Over Time
@@ -222,7 +222,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The timeline opens under the details, with the cursor on its title.
     - The details take at most half the column, and the timeline takes the rest.
-    - A thin red line marked **Today** runs across it, with room above and below.
+    - A thin red line, with no word on it, runs across it, with room above and below.
     - The days are listed newest first, each change on its own line, such as **Manager** and a name.
   - **Notes:**
 

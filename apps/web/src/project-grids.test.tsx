@@ -45,7 +45,7 @@ describe("the milestone table's columns", () => {
 describe("a date typed into a cell", () => {
   it("is refused when laying it out would drop a digit", () => {
     expect(cellKinds.date.problem(milestoneColumn("date"), "2026-101-08")).toBe(
-      "Date: use a date such as 2026-10-31",
+      "Type a date for Date, such as 2026-10-31",
     );
   });
 
@@ -56,6 +56,16 @@ describe("a date typed into a cell", () => {
     expect(milestoneColumn("date").change("202611-08")).toEqual({
       date: "2026-11-08",
     });
+  });
+});
+
+describe("a date in a draft's details", () => {
+  it("is given in words, and as typed when it is no date", () => {
+    const column = milestoneColumn("date");
+    expect([
+      cellKinds.date.inDetail?.(column, "2027-03-26"),
+      cellKinds.date.inDetail?.(column, "soon"),
+    ]).toEqual(["Mar 26, 2027", "soon"]);
   });
 });
 
@@ -428,7 +438,7 @@ describe("a month cell", () => {
 
   it("says what to type for what is not a month", () => {
     expect(month.problem(column, "2027-13")).toBe(
-      "Needed by: use a month such as 2027-03",
+      "Type a month for Needed by, such as 2027-03",
     );
   });
 

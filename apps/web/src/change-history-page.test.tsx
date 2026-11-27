@@ -320,11 +320,11 @@ describe("the entries", () => {
     });
     renderApp("/changes");
     expect(await lines()).toEqual([
-      "Fictional Person changed Avery Fictional: Name from Avery to Avery Fictional; Site from North to North, South; End set to Jan 31, 2030; ID changed; A removed column cleared, from North",
-      "Fathom changed the list Sites: Class from General to Personal; Description cleared, from Where; Retired from No to Yes; Class set to secret",
+      "Fictional Person changed Avery Fictional: Name from Avery to Avery Fictional; Site from North to North, South; End filled in: Jan 31, 2030; ID changed; A removed column emptied, was North",
+      "Fathom changed the list Sites: Class from General to Personal; Description emptied, was Where; Retired from No to Yes; Class filled in: secret",
       "Fictional Person added the list Sites",
       "Fictional Person removed a person",
-      "Fictional Person changed the choice Approved in Hiring states: Meaning from Open to Proposed; Meaning set to filled",
+      "Fictional Person changed the choice Approved in Hiring states: Meaning from Open to Proposed; Meaning filled in: filled",
       "Fictional Person restored the choice North in Sites",
       "Fictional Person retired the choice North",
       "Fictional Person moved the choice North in Sites to the top",
@@ -373,7 +373,7 @@ describe("the entries", () => {
     });
     renderApp("/changes");
     expect((await lines())[0]).toContain(
-      "Who sees it from Private to Shared; Who sees it set to team",
+      "Who sees it from Private to Shared; Who sees it filled in: team",
     );
   });
 
@@ -576,7 +576,7 @@ describe("the entries", () => {
     renderApp("/changes?search=2030-01-31");
     const [row] = (await rows()) as [HTMLElement];
     expect(within(row).getAllByRole("listitem")[0]?.textContent).toBe(
-      "Changed Fictional Leaver: End set to Jan 31, 2030",
+      "Changed Fictional Leaver: End filled in: Jan 31, 2030",
     );
   });
 

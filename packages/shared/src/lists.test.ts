@@ -84,10 +84,10 @@ describe("weights", () => {
       ["", "abc", "0", "10000", "1.234", "2.5"].map(weightProblem),
     ).toEqual([
       "Weight needed",
-      "Weight: use a number such as 1234.5",
-      "Weight: use 0.01 to 9999.99",
-      "Weight: use 0.01 to 9999.99",
-      "Weight: use at most 2 digits after the point",
+      "Number needed, such as 1234.5",
+      "Type a number from 0.01 to 9999.99",
+      "Type a number from 0.01 to 9999.99",
+      "At most 2 digits after the point",
       undefined,
     ]);
   });

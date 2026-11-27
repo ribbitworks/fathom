@@ -240,9 +240,10 @@ describe("the dialog changing a stream's cycles", () => {
     ));
     await userEvent.click(screen.getByText("Months"));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect([screen.getByText("From 1 to two years"), fetch.mock.calls]).toEqual(
-      [expect.anything(), []],
-    );
+    expect([
+      screen.getByText("Type a number from 1 to 24 months"),
+      fetch.mock.calls,
+    ]).toEqual([expect.anything(), []]);
   });
 
   it("refuses a pattern for the names that is too long", async () => {
@@ -631,7 +632,7 @@ describe("the dialog changing one cycle's length", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Change length" }),
     );
-    expect(screen.getByText("From 1 to two years")).not.toBeNull();
+    expect(screen.getByText("Length needed")).not.toBeNull();
     expect(bodiesOf(fetch)).toEqual([]);
   });
 

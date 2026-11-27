@@ -188,6 +188,10 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     // Behind the sign-in card, tinted so the white card stands out.
     "--fathom-sign-in": "var(--mantine-color-sea-1)",
     "--mantine-color-dimmed": mantine.colors.gray[7],
+    // Red words, such as a refusal, and a refused value's outline, take Mantine's darkest red, so
+    // 12px text reads on white and on a tinted row at WCAG's 4.5 to 1.
+    "--mantine-color-red-text": "var(--mantine-color-red-9)",
+    "--mantine-color-error": "var(--mantine-color-red-text)",
     // A row, column or card with a draft, faintly in its dot's colour: yellow, or red once rejected.
     // A cell the draft changes is tinted as its row is, since its dot and semibold value mark it.
     "--fathom-draft-tint": "var(--mantine-color-yellow-0)",
@@ -219,6 +223,9 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--mantine-color-body": "#17212a",
     "--fathom-canvas": "#0f161c",
     "--fathom-sign-in": "var(--fathom-sidebar)",
+    // Mantine's own dark error red is too deep to read on the dark panel; red words' lighter shade
+    // reads well.
+    "--mantine-color-error": "var(--mantine-color-red-text)",
     // The same colours as faint washes over the dark background, so light text stays readable.
     "--fathom-draft-tint":
       "color-mix(in srgb, var(--mantine-color-yellow-5) 5%, transparent)",

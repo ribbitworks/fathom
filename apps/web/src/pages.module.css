@@ -1249,18 +1249,12 @@ th.liveColumn {
   flex: none;
 }
 
-/* A row above the axis for today's label, so it covers none of the axis's labels. */
-.timelineMarks {
-  height: 20px;
-}
-
 /* One tier of the axis, such as the years above the months. */
 .timelineTier {
   position: relative;
   height: 24px;
 }
 
-.timelineMarks + .timelineTier,
 .timelineTier + .timelineTier {
   border-top: 1px solid var(--mantine-color-default-border);
 }
@@ -1461,20 +1455,6 @@ th.liveColumn {
   pointer-events: none;
 }
 
-.timelineTodayLabel {
-  position: absolute;
-  top: 2px;
-  left: 4px;
-  padding: 0 2px;
-  background: var(--mantine-color-body);
-  color: var(--mantine-color-red-7);
-  font-size: var(--mantine-font-size-xs);
-  font-weight: 600;
-
-  /* Short enough to stay inside its row, clear of the line under it. */
-  line-height: 16px;
-}
-
 /* A record's timeline of days, its lines keeping their room above and below when two meet, as the
    items of a column do. */
 .timelineDays {
@@ -1483,8 +1463,8 @@ th.liveColumn {
 }
 
 /* Today across a record's timeline of days, as a timeline's Today is drawn down its months: the
-   same line and word, with room above and below; the day the page shows, when it has no row, the
-   same in teal with the day as its word. */
+   same line, with no word, and room above and below; the day the page shows, when it has no row,
+   the same in teal with the day as its word. */
 .timelineTodayAcross {
   position: relative;
   grid-column: 1 / -1;
@@ -1492,18 +1472,20 @@ th.liveColumn {
   border-top: 2px solid var(--fathom-today);
 }
 
-.timelineTodayAcross .timelineTodayLabel {
-  top: -9px;
-  left: 0;
-  padding: 0 4px 0 0;
-}
-
 .timelineShownAcross {
   border-top-color: var(--mantine-color-teal-6);
 }
 
-.timelineShownAcross .timelineTodayLabel {
+.timelineShownLabel {
+  position: absolute;
+  top: -9px;
+  left: 0;
+  padding: 0 4px 0 0;
+  background: var(--mantine-color-body);
   color: var(--mantine-color-teal-7);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+  line-height: 16px;
 }
 
 /* The day shown, marked as a selected row, its bar and shade reaching past its text as a hovered

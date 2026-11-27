@@ -61,7 +61,7 @@ import {
   saveRelease,
 } from "./releases.ts";
 import { projectPlanQuery } from "./projects.ts";
-import { cycleUnitWords, patternOn } from "./schedules.ts";
+import { cycleLengthProblem, cycleUnitWords, patternOn } from "./schedules.ts";
 import { sessionQuery } from "./session.ts";
 import { formatDay, formatDayRange } from "./day-formats.ts";
 
@@ -317,7 +317,11 @@ export function PatternDialog({
             max={longestCycleIn(unit)}
             w={140}
             value={length}
-            error={tried && !lengthOk ? "From 1 to two years" : undefined}
+            error={
+              tried && !lengthOk
+                ? cycleLengthProblem(length, unit, longestCycleIn(unit))
+                : undefined
+            }
             onChange={setLength}
           />
           <SegmentedControl
@@ -474,7 +478,11 @@ export function CycleLengthDialog({
             </Text>
           }
           rightSectionWidth={72}
-          error={tried && !lengthOk ? "From 1 to two years" : undefined}
+          error={
+            tried && !lengthOk
+              ? cycleLengthProblem(length, unit, longest)
+              : undefined
+          }
           onChange={setLength}
         />
         <Radio.Group label="Later cycles" value={later} onChange={setLater}>

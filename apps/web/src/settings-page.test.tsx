@@ -351,14 +351,13 @@ describe("the password settings", () => {
   it("asks for lengths in range", async () => {
     serverAnswers({ "GET /api/session": settingsEditor() });
     await open();
-    await retype("Minimum length", "");
     await retype("Length", "");
+    // Typed last, since leaving the box brings a number back into its range.
+    await retype("Minimum length", "5");
     expect(
-      within(panel()).getByText("Enter a number from 8 to 128."),
+      within(panel()).getByText("Type a number from 8 to 128"),
     ).toBeDefined();
-    expect(
-      within(panel()).getByText("Enter a number from 12 to 128."),
-    ).toBeDefined();
+    expect(within(panel()).getByText("Number needed")).toBeDefined();
     expect(save().disabled).toBe(true);
   });
 

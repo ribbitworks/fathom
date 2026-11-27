@@ -612,3 +612,14 @@ describe("the release layer's forms", () => {
     ).toBe("Fictional One ships Jun 30, 2027");
   });
 });
+
+describe("today", () => {
+  it("is marked by its line alone, named only to screen readers", () => {
+    const timeline = showTimeline();
+    const named = within(timeline).getByText(
+      (_, element) => element?.textContent === "Today, Jun 15, 2027",
+      { selector: "span" },
+    );
+    expect(named.className).toContain("visuallyHidden");
+  });
+});

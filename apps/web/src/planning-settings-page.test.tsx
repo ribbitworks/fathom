@@ -173,7 +173,7 @@ describe("changing a setting", () => {
       screen.getByRole<HTMLInputElement>("textbox", { name: "Default focus" })
         .value,
     ).toBe("0");
-    expect(screen.getByText("Default focus: use 1% to 100%")).toBeDefined();
+    expect(screen.getByText("Use 1% to 100% for Default focus")).toBeDefined();
     expect(bodyOf(fetch, "PATCH", path)).toEqual([]);
   });
 
@@ -196,7 +196,7 @@ describe("changing a setting", () => {
     settingsServer(editor);
     await openSettings();
     await change("Month 2", "120");
-    expect(screen.getByText("Month 2: use 1% to 100%")).toBeDefined();
+    expect(screen.getByText("Use 1% to 100% for Month 2")).toBeDefined();
   });
 
   it("changes one month of ramp-up, keeping the others", async () => {

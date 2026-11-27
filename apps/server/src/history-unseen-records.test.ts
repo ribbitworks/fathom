@@ -140,15 +140,15 @@ describe("records a change links to, in the history", () => {
       "proposal",
       "removalReasons",
     );
-    expect(planOnly).toContain("A feature: Fictional reason");
-    expect(planOnly).not.toContain(`${feature.name}: Fictional reason`);
+    expect(planOnly).toContain("A feature (Fictional reason)");
+    expect(planOnly).not.toContain(`${feature.name} (Fictional reason)`);
     expect(
       await valuesIn(
         ["plan:view", "features:view"],
         "proposal",
         "removalReasons",
       ),
-    ).toContain(`${feature.name}: Fictional reason`);
+    ).toContain(`${feature.name} (Fictional reason)`);
   });
 });
 

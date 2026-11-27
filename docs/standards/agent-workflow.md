@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/code-review.md", "docs/standards/testing.md", "docs/standards/documentation.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Agent Workflow
@@ -152,7 +152,8 @@ Complete these steps, in order, for every change:
    - **Visual review:** then have a separate agent review screenshots of each
      changed screen, light and dark, wide and narrow, against its mockup and
      [UI Conventions](ui-conventions.md). Fix what it finds and repeat until it
-     finds nothing.
+     finds nothing. Small marks, such as dots, rings and focus outlines, are
+     checked on a crop or a 2x capture, never on a full page shrunk to view.
    - **What the owner gets:** the list in
      [A Screen Change's Pull Request](#a-screen-changes-pull-request).
 1. **Tests:** run the project's targeted tests, for the code the change

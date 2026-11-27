@@ -191,7 +191,7 @@ describe("the rows for each kind of column", () => {
     await userEvent.type(box, "20");
     await userEvent.tab();
     await add();
-    expect(screen.getByText(/^when: use/)).toBeTruthy();
+    expect(screen.getByText(/^Type a date for when/)).toBeTruthy();
     expect(screen.queryByText("when needed")).toBeNull();
     expect(onAdd).not.toHaveBeenCalled();
   });
@@ -252,7 +252,7 @@ describe("adding", () => {
     await userEvent.tab();
     await userEvent.clear(box);
     await userEvent.type(box, "20{Enter}");
-    expect(await screen.findByText(/when: use/)).toBeTruthy();
+    expect(await screen.findByText(/Type a date for when/)).toBeTruthy();
     expect(onAdd).not.toHaveBeenCalled();
   });
 

@@ -165,39 +165,24 @@ describe("effortConversionsSchema", () => {
     [
       "hours not whole or half",
       { hoursPerDay: 7.25 },
-      "Hours a day: use whole or half hours",
+      "Use whole or half hours for Hours a day",
     ],
-    ["too few hours", { hoursPerDay: 0 }, "Hours a day: use 0.5 to 24"],
-    ["too many hours", { hoursPerDay: 24.5 }, "Hours a day: use 0.5 to 24"],
-    [
-      "part of a day in a week",
-      { daysPerWeek: 4.5 },
-      "Working days a week: use whole days",
-    ],
-    [
-      "too few days in a week",
-      { daysPerWeek: 0 },
-      "Working days a week: use 1 to 7",
-    ],
-    [
-      "too many days in a week",
-      { daysPerWeek: 8 },
-      "Working days a week: use 1 to 7",
-    ],
+    ["too few hours", { hoursPerDay: 0 }, "Use 0.5 to 24 for Hours a day"],
+    ["too many hours", { hoursPerDay: 24.5 }, "Use 0.5 to 24 for Hours a day"],
     [
       "part of a day in a month",
       { daysPerMonth: 21.5 },
-      "Working days a month: use whole days",
+      "Use whole days for Working days a month",
     ],
     [
       "too few days in a month",
       { daysPerMonth: 0 },
-      "Working days a month: use 1 to 31",
+      "Use 1 to 31 for Working days a month",
     ],
     [
       "too many days in a month",
       { daysPerMonth: 32 },
-      "Working days a month: use 1 to 31",
+      "Use 1 to 31 for Working days a month",
     ],
   ])("refuses %s", (_case, change, message) => {
     const result = effortConversionsSchema.safeParse({

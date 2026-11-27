@@ -88,9 +88,7 @@ describe("changing one's own name", () => {
     await userEvent.clear(name);
     await userEvent.type(name, "n".repeat(101));
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(
-      await within(dialog).findByText("Use at most 100 characters."),
-    ).toBeDefined();
+    expect(await within(dialog).findByText("Name is too long")).toBeDefined();
   });
 
   it("explains a refusal plainly, keeping the dialog open", async () => {

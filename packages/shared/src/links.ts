@@ -105,8 +105,9 @@ export function webAddress(address: string): string | null {
   return parsed.data;
 }
 
-export const addressProblem =
-  "Enter a web address starting with http:// or https://, such as https://example.com";
+export const webAddressSample = "https://example.com";
+
+export const addressProblem = `Type a web address starting with http:// or https://, such as ${webAddressSample}`;
 
 // The address a note keeps for a link: a web address in the form webAddress gives it back, or a
 // link to a Help page by its file name, given so or as Fathom's own address for the page, such as
@@ -155,15 +156,15 @@ export function linkProblems(
   // The address as it would be kept, which can be longer than typed once https:// is added and
   // characters outside ASCII are encoded.
   const kept = keptAddress(address, place);
-  if (address === "") problems.address = "Enter the address";
+  if (address === "") problems.address = "Address needed";
   // The place is one of those its type names.
   // eslint-disable-next-line security/detect-object-injection
   else if (kept === null) problems.address = linkPlaces[place].problem;
   else if (kept.length > linkLengths.address) {
-    problems.address = `The address is too long; use at most ${String(linkLengths.address)} characters`;
+    problems.address = "Address is too long";
   }
   if (text.length > linkLengths.text) {
-    problems.text = `The text is too long; use at most ${String(linkLengths.text)} characters`;
+    problems.text = "Text to show is too long";
   } else if (!isPlainText(text)) {
     problems.text = "Use plain text, without control characters";
   }

@@ -76,7 +76,7 @@ export function nameProblem(
   empty: string,
 ): string | undefined {
   if (error === undefined) return undefined;
-  return error.type === "too_small" ? empty : `${String(error.message)}.`;
+  return error.type === "too_small" ? empty : String(error.message);
 }
 
 export async function changeOwnName(request: OwnNameRequest): Promise<void> {

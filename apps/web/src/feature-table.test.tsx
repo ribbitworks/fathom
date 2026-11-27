@@ -258,6 +258,25 @@ describe("the Features table", () => {
   });
 });
 
+describe("a feature's Needed by in a draft", () => {
+  it("is given as a month in words, and as none when emptied", () => {
+    const fields = planDraftFields(
+      "feature",
+      feature({
+        neededBy: null,
+        draft: featureDraft({
+          changed: ["neededBy"],
+          live: { neededBy: "2027-02" },
+        }),
+      }),
+      choices(),
+    );
+    expect(fields.map(({ field }) => field)).toEqual([
+      { field: "Needed by", oldValue: "Feb 2027", newValue: "" },
+    ]);
+  });
+});
+
 describe("a feature's estimate in a draft", () => {
   it("is given in hours, as kept, whatever unit the table shows", () => {
     const fields = planDraftFields(

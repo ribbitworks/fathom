@@ -218,7 +218,9 @@ describe("managers and teams", () => {
     focus("new-0", "preferredName");
     await userEvent.paste("Fictional p8\tp8\tFictional Engineer\tmaybe");
     expect(add).toHaveBeenCalledTimes(1);
-    expect(document.body.textContent).toContain("Manager?: use Yes or No");
+    expect(document.body.textContent).toContain(
+      "Choose Yes or No for Manager?",
+    );
   });
 
   it("adds people with managers pasted by name, and their team's name, but not a team pasted", async () => {

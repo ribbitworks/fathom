@@ -37,8 +37,8 @@ describe("the Drafts page", () => {
   it("puts each draft in words, newest first, with what it changes", async () => {
     await openDrafts({}, "/drafts?tab=all");
     expect(await entries()).toEqual([
-      "Avery Fictional, Draft | Changed | Waiting | Start set to Nov 2, 2026; Site from Northmere to Harbour; A removed column changed | Person | People | Fictional Editor | Oct 31, 2026 | ",
-      "Blake Fictional, Draft: added | Added | Waiting | ID set to E-p2; Site set to Harbour | Person | People | Fictional Editor | Oct 30, 2026 | ",
+      "Avery Fictional, Draft | Changed | Waiting | Start filled in: Nov 2, 2026; Site from Northmere to Harbour; A removed column changed | Person | People | Fictional Editor | Oct 31, 2026 | ",
+      "Blake Fictional, Draft: added | Added | Waiting | ID filled in: E-p2; Site filled in: Harbour | Person | People | Fictional Editor | Oct 30, 2026 | ",
       "Casey Fictional, Draft: removed | Removed | Waiting |  | Person | People | Fathom | Oct 30, 2026 | ",
       "Drew Fictional, Rejected: Fictional reason | Changed | Rejected | Name from Drew Before to Drew Fictional | Person | People | Fictional Editor | Oct 29, 2026 | Fictional reason",
     ]);
@@ -116,7 +116,7 @@ describe("the Drafts page", () => {
     );
     const shown = await entries();
     expect(shown).toContain(
-      "Sites, Draft | Changed | Waiting | Description set to Our offices | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
+      "Sites, Draft | Changed | Waiting | Description filled in: Our offices | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
     );
     expect(shown).toContain(
       "Northmere Labs in Sites, Draft | Changed | Waiting | Name from Northmere to Northmere Labs; gone changed | Choice | Configuration | Fictional Editor | Oct 30, 2026 | ",

@@ -17,15 +17,7 @@ import {
   linkProblems,
   webAddress,
 } from "@fathom/shared";
-import {
-  Button,
-  Group,
-  Menu,
-  Popover,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
+import { Button, Group, Menu, Popover, Stack, Text } from "@mantine/core";
 import { type KeyboardEvent, type MouseEvent, useState } from "react";
 import { type Finish, useTypedBeforeFocus } from "./choice-picker.tsx";
 import { composingWord } from "./composing.ts";
@@ -154,6 +146,10 @@ export function useLinkForm({
     } else if (event.key === "Tab" && event.shiftKey && field === id) {
       event.preventDefault();
       finish("previous");
+    } else if (event.key === "Tab" && !event.shiftKey && field === id) {
+      // Straight to the text, past the address's ×, as Tab goes from field to field.
+      event.preventDefault();
+      document.getElementById(textId)?.focus();
     }
   };
 
@@ -173,18 +169,17 @@ export function useLinkForm({
         <Text fz="sm" fw={600}>
           {name}
         </Text>
-        <TextInput
+        <CountedInput
           id={id}
           label="Address"
           placeholder="example.com or http://wiki/"
           data-autofocus
           autoComplete="off"
           value={address}
+          maximum={linkLengths.address}
           // A link the table refused marks its address, and is named under the row.
           error={shownAddress ?? invalid}
-          onChange={(event) => {
-            setAddress(event.currentTarget.value);
-          }}
+          onValue={setAddress}
           onBlur={() => {
             setLeftAddress(address.trim() !== "");
           }}

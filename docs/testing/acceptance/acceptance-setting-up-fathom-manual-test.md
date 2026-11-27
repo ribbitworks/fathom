@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-team-accounts-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Acceptance, Setting Up Fathom
@@ -369,7 +369,7 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
 - [ ] `30FC` Paste.
   - **Expected:**
     - Six rows are shown under `Odile Brandt`, one for each line, none of them with a dot.
-    - Under the row of `Ada Quill`, red text reads "Manager?: use Yes or No", and her **Manager?** box is clear.
+    - Under the row of `Ada Quill`, red text reads "Choose Yes or No for Manager?", and her **Manager?** box is clear.
     - Under the row of `Dara Finch`, red text reads "No Position called Sofware Engineer", and her **Position** cell is empty.
     - `Bram Oakes` reads "Software Engineer" in **Position**, with capitals.
     - The count still reads "1 person".

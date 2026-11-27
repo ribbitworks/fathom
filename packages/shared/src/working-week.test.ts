@@ -188,7 +188,7 @@ describe("workingDaysSchema", () => {
 
   it.each([[-1], [7], [2.5]])("refuses %s, not a day of the week", (day) => {
     expect(problem(workingDaysSchema.safeParse([day]))).toEqual([
-      "Working days: use a day of the week",
+      "Choose a day of the week for Working days",
     ]);
   });
 });
@@ -202,7 +202,7 @@ describe("weekStartsOnSchema", () => {
 
   it.each([[-1], [7], [0.5]])("refuses %s, not a day of the week", (day) => {
     expect(problem(weekStartsOnSchema.safeParse(day))).toEqual([
-      "Week starts on: use a day of the week",
+      "Choose a day of the week for Week starts on",
     ]);
   });
 });

@@ -7,12 +7,12 @@
 // typed, so a box that may be left empty can tell empty from unfinished. Assistive technology hears
 // whether a day is needed.
 
-import { isDay, typedDay, typedInPlace } from "@fathom/shared";
+import { daySample, isDay, typedDay, typedInPlace } from "@fathom/shared";
 import { TextInput } from "@mantine/core";
 import { useState } from "react";
 import { typeIn } from "./type-in.ts";
 
-export const dayProblem = "Invalid YYYY-MM-DD date";
+export const dayProblem = `Date needed, such as ${daySample}`;
 export const dayNeeded = "Date needed";
 
 const dayTyped = typedInPlace(typedDay);
@@ -27,6 +27,7 @@ export function DayInput({
   size,
   placeholder,
   problem,
+  notADay = dayProblem,
   shown = false,
   onChange,
   onBlur,
@@ -43,6 +44,9 @@ export function DayInput({
   placeholder?: string;
   // What is wrong with the day beside others, if anything.
   problem?: string | undefined;
+  // What a typed day that is not one is refused with: by default as a field's own, or, for a
+  // record's column, naming the column.
+  notADay?: string;
   // Whether to say a missing or partial day is not one, as once a form is submitted.
   shown?: boolean;
   onChange: (day: string | undefined, typed: boolean) => void;
@@ -81,11 +85,7 @@ export function DayInput({
       {...(autoFocus ? { "data-autofocus": true } : {})}
       value={text}
       error={
-        wrong
-          ? dayProblem
-          : shown && required && text === ""
-            ? dayNeeded
-            : problem
+        wrong ? notADay : shown && required && text === "" ? dayNeeded : problem
       }
       onChange={(event) => {
         const next = typeIn(event.currentTarget, dayTyped);

@@ -251,7 +251,7 @@ describe("people's links", () => {
       [field.id]: { address: `example.test/${"x".repeat(1987)}`, text: "" },
     });
     expect(response.statusCode).toBe(400);
-    expect(response.body).toContain("The address is too long");
+    expect(response.body).toContain("Address is too long");
   });
 
   it("keeps a link as long as Fathom allows, recognising it once approved", async () => {

@@ -7,6 +7,7 @@ import { Checkbox } from "@mantine/core";
 import type { ReactElement } from "react";
 import { toggledFlag } from "./cell-kinds.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
+import { daySample, typeFor } from "@fathom/shared";
 import { DayInput } from "./day-input.tsx";
 import type { PlanChange } from "./plan-table.tsx";
 import type { Column, GridRecord } from "./record-table.ts";
@@ -65,6 +66,7 @@ export function MilestoneField({
           required={column.required}
           value={value === "" ? undefined : (value as string)}
           problem={problem}
+          notADay={typeFor("date", column.label, daySample)}
           shown={problem !== undefined}
           onChange={(day) => {
             onChange(day ?? "");

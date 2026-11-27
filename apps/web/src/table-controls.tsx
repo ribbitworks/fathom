@@ -22,6 +22,7 @@ import {
   byName,
   folded,
   numberProblem,
+  numberProblemWords,
   type SavedView,
   type Show,
   showSchema,
@@ -85,7 +86,7 @@ import {
 } from "./filter-words.tsx";
 import { ColouredName } from "./colour-swatch.tsx";
 import { classWords } from "./status-mark.tsx";
-import { count } from "./numbers.ts";
+import { count, decimal } from "./numbers.ts";
 
 // Changes the view, replacing the current address rather than adding to its history when asked.
 export type ChangeView = (view: View, replace?: boolean) => void;
@@ -1764,7 +1765,7 @@ function FilterForm({
             {...(filter.atLeast !== undefined &&
             filter.atMost !== undefined &&
             filter.atMost < filter.atLeast
-              ? { problem: "Lower than At least" }
+              ? { problem: `Type ${decimal(filter.atLeast)} or more` }
               : {})}
             onChange={(atMost) => {
               onChange(withPart(filter, "atMost", atMost));
@@ -1836,9 +1837,7 @@ function NumberBound({
       }}
       value={typed}
       error={
-        typedProblem === undefined
-          ? problem
-          : `${typedProblem.charAt(0).toUpperCase()}${typedProblem.slice(1)}`
+        typedProblem === undefined ? problem : numberProblemWords(typedProblem)
       }
       onChange={(event) => {
         change(event.currentTarget.value);

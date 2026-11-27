@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 import {
   isNumberValue,
   numberProblem,
+  numberProblemFor,
+  numberProblemWords,
   numberValueSchema,
   roundedUpTo,
   typedNumber,
@@ -89,19 +91,30 @@ describe("numberProblem", () => {
   it.each([
     ["nothing", "", undefined],
     ["a number", "12.5", undefined],
-    ["a word", "ten", "use a number such as 1234.5"],
-    [
-      "too many digits",
-      "1234567890123456",
-      "use at most 15 digits, 6 of them after the point",
-    ],
-    [
-      "too many decimal places",
-      "0.1234567",
-      "use at most 15 digits, 6 of them after the point",
-    ],
+    ["a word", "ten", "form"],
+    ["too many digits", "1234567890123456", "digits"],
+    ["too many decimal places", "0.1234567", "digits"],
   ])("for %s", (_, text, problem) => {
     expect(numberProblem(text)).toBe(problem);
+  });
+});
+
+describe("a number's problem in words", () => {
+  it("names no field under its own field", () => {
+    expect([numberProblemWords("form"), numberProblemWords("digits")]).toEqual([
+      "Number needed, such as 1234.5",
+      "At most 15 digits, 6 after the point",
+    ]);
+  });
+
+  it("names what it is for elsewhere", () => {
+    expect([
+      numberProblemFor("form", "Score"),
+      numberProblemFor("digits", "Score"),
+    ]).toEqual([
+      "Type a number for Score, such as 1234.5",
+      "Use at most 15 digits for Score, 6 after the point",
+    ]);
   });
 });
 

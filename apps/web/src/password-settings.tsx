@@ -101,8 +101,11 @@ const inRange = (value: Typed, { minimum, maximum }: Range) =>
   value >= minimum &&
   value <= maximum;
 
-const rangeProblem = ({ minimum, maximum }: Range) =>
-  `Enter a number from ${String(minimum)} to ${String(maximum)}.`;
+// Needed when no number is typed, or else the range alone.
+const rangeProblem = (value: Typed, { minimum, maximum }: Range) =>
+  typeof value === "number"
+    ? `Type a number from ${String(minimum)} to ${String(maximum)}`
+    : "Number needed";
 
 // A whole number of characters in its range, refused under it when outside.
 function LengthInput({
@@ -128,7 +131,7 @@ function LengthInput({
       readOnly={readOnly}
       value={value}
       onChange={onChange}
-      error={!inRange(value, range) && rangeProblem(range)}
+      error={!inRange(value, range) && rangeProblem(value, range)}
     />
   );
 }

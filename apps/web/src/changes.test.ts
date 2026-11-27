@@ -217,7 +217,7 @@ describe("how far a stream's cycles go in the change history", () => {
         "release-stream",
       ).at(0),
     ]).toEqual([
-      [{ strong: "Schedule ends" }, " set to ", { value: "Mar 31, 2027" }],
+      [{ strong: "Schedule ends" }, " filled in: ", { value: "Mar 31, 2027" }],
       { strong: "Cycles until" },
     ]);
   });
@@ -253,7 +253,107 @@ describe("a release's colour in the change history", () => {
   it("words a colour field of another kind as any other field", () => {
     expect(
       describeField({ field: "colour", oldValue: null, newValue: "teal" }),
-    ).toEqual([{ strong: "Colour" }, " set to ", { value: "teal" }]);
+    ).toEqual([{ strong: "Colour" }, " filled in: ", { value: "teal" }]);
+  });
+});
+
+describe("a value filled in or emptied in the change history", () => {
+  it("says a value that was empty was filled in, with what it holds", () => {
+    expect(
+      describeField({
+        field: "description",
+        oldValue: null,
+        newValue: "Fictional offices",
+      }),
+    ).toEqual([
+      { strong: "Description" },
+      " filled in: ",
+      { value: "Fictional offices" },
+    ]);
+  });
+
+  it("says a value emptied was emptied, with what it held", () => {
+    expect(
+      describeField({ field: "description", oldValue: "Where", newValue: "" }),
+    ).toEqual([
+      { strong: "Description" },
+      " emptied, was ",
+      { value: "Where" },
+    ]);
+  });
+});
+
+describe("a month in the change history", () => {
+  const neededBy = (oldValue: string | null, newValue: string | null) =>
+    describeField({ field: "neededBy", oldValue, newValue }, "feature");
+
+  it("shows a month changed as a short month and its year", () => {
+    expect(neededBy("2027-02", "2027-03")).toEqual([
+      { strong: "Needed by" },
+      " from ",
+      { value: "Feb 2027" },
+      " to ",
+      { value: "Mar 2027" },
+    ]);
+  });
+
+  it("shows a month filled in or cleared the same way", () => {
+    expect([neededBy(null, "2027-02"), neededBy("2027-03", null)]).toEqual([
+      [{ strong: "Needed by" }, " filled in: ", { value: "Feb 2027" }],
+      [{ strong: "Needed by" }, " emptied, was ", { value: "Mar 2027" }],
+    ]);
+  });
+
+  it("shows a feature's target cycle as the day it starts", () => {
+    expect(
+      describeField(
+        {
+          field: "targetCycle",
+          oldValue: "2027-01-01",
+          newValue: "2027-04-01",
+        },
+        "feature",
+      ),
+    ).toEqual([
+      { strong: "Target cycle" },
+      " from ",
+      { value: "Jan 1, 2027" },
+      " to ",
+      { value: "Apr 1, 2027" },
+    ]);
+  });
+
+  it("shows text that looks like a day or a month as typed", () => {
+    expect([
+      describeField(
+        { field: "name", oldValue: "2027-01", newValue: "2027-02" },
+        "release",
+      ),
+      describeField({
+        field: "description",
+        oldValue: null,
+        newValue: "2027-02-14",
+      }),
+    ]).toEqual([
+      [
+        { strong: "Name" },
+        " from ",
+        { value: "2027-01" },
+        " to ",
+        { value: "2027-02" },
+      ],
+      [{ strong: "Description" }, " filled in: ", { value: "2027-02-14" }],
+    ]);
+  });
+
+  it("shows a value in a day's or a month's field that is neither as recorded", () => {
+    expect([
+      describeField({ field: "endDate", oldValue: null, newValue: "soon" }),
+      neededBy(null, "2027-02-14"),
+    ]).toEqual([
+      [{ strong: "End" }, " filled in: ", { value: "soon" }],
+      [{ strong: "Needed by" }, " filled in: ", { value: "2027-02-14" }],
+    ]);
   });
 });
 

@@ -272,7 +272,7 @@ describe("a web link column", () => {
     await userEvent.paste("Casey Fictional\tE3\tjavascript:alert(1)\n");
     expect(
       await screen.findByText(
-        "Profile: javascript:alert(1) is not a web address",
+        "Type a web address for Profile, such as https://example.com",
       ),
     ).toBeDefined();
     expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
@@ -300,12 +300,17 @@ describe("a web link column", () => {
   });
 
   it.each([
-    ["added", undefined, page, `Profile set to Avery's page (${page.address})`],
+    [
+      "added",
+      undefined,
+      page,
+      `Profile filled in: Avery's page (${page.address})`,
+    ],
     [
       "removed",
       page,
       undefined,
-      `Profile cleared, from Avery's page (${page.address})`,
+      `Profile emptied, was Avery's page (${page.address})`,
     ],
   ])(
     "puts a link drafted to be %s in words in its person's menu",

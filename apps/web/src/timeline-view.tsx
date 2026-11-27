@@ -24,6 +24,7 @@ import {
   useState,
 } from "react";
 import classes from "./pages.module.css";
+import { formatDay } from "./day-formats.ts";
 import { Icon } from "./icons.tsx";
 import {
   type LayerRecord,
@@ -511,7 +512,6 @@ function Tracks({
       <div className={classes.timelineHead}>
         <div className={classes.timelineLabel} />
         <div className={classes.timelineTrack} style={width}>
-          <div className={classes.timelineMarks} />
           {axis.above.length > 0 && tier(axis.above)}
           {tier(axis.ticks, dayMarks)}
           {frame.today !== undefined && (
@@ -519,8 +519,8 @@ function Tracks({
               className={classes.timelineToday}
               style={{ left: px(frame.today) }}
             >
-              <span className={classes.timelineTodayLabel}>
-                Today<span className={classes.visuallyHidden}>, {today}</span>
+              <span className={classes.visuallyHidden}>
+                Today, {formatDay(today)}
               </span>
             </div>
           )}

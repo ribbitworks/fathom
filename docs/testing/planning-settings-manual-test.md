@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Planning Settings
@@ -146,7 +146,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - The field stays open.
     - It holds `0`.
     - It is outlined in red.
-    - Under it, in red, reads "Default focus: use 1% to 100%".
+    - Under it, in red, reads "Use 1% to 100% for Default focus".
   - **Notes:**
 
 - [ ] `A0AE` Press Esc.
