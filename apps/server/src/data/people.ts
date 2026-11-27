@@ -52,6 +52,7 @@ import {
   refuseUnmarkingHireManagers,
 } from "./hire-checks.ts";
 import { refuseRemovingNamed } from "./records.ts";
+import { refuseDiscardingOthers } from "./draft-makers.ts";
 import {
   changedReporting,
   checkLine,
@@ -465,7 +466,9 @@ export async function deletePerson(
     );
     // Already drafted to be removed.
     if (person === undefined) return null;
-    if (before !== undefined) {
+    if (before === undefined) {
+      await refuseDiscardingOthers(transaction, actor, "person", id);
+    } else {
       await refuseRemovingManagers(transaction, [id]);
     }
     await refuseRemovingHiresPeople(transaction, [id]);

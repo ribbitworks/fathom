@@ -25,7 +25,7 @@ import {
 } from "@fathom/shared";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import { accountDomain } from "./accounts.ts";
-import { actorOf, addedAt, rejection } from "./drafts.ts";
+import { actorOf, addedAt, discardAsMaker, rejection } from "./drafts.ts";
 import { seededFeatures } from "./features.ts";
 import {
   customerId,
@@ -497,7 +497,7 @@ function seededRecords(organization: FictionalOrganization) {
 
 // Discards the published drafts of the seed data's plan records and feature teams, and of those it
 // drafted adding, those made by hand included, since removing the seed data removes the records
-// they change, as the Engineering Director, who may change every kind, and returns how many.
+// they change, each as one who changed it, and returns how many.
 // Unpublished changes go first, as unseedUnpublished discards them.
 export async function unseedPlanDrafts(
   database: Database,
@@ -522,11 +522,14 @@ export async function unseedPlanDrafts(
   );
   if (found.length === 0) return 0;
   const data = createDataAccess(database);
-  const approver = await actorOf(database, approverEmail);
-  const asRecord = (type: (typeof planDraftTypes)[number]) => (id: string) =>
-    data.records.discardDraft(approver, type, id);
+  const asRecord =
+    (type: (typeof planDraftTypes)[number]) => (maker: Actor, id: string) =>
+      data.records.discardDraft(maker, type, id);
   // How a draft of each kind is discarded: feature teams have a store of their own.
-  const discards: Record<SeededDraftType, (id: string) => Promise<unknown>> = {
+  const discards: Record<
+    SeededDraftType,
+    (maker: Actor, id: string) => Promise<unknown>
+  > = {
     "release-stream": asRecord("release-stream"),
     release: asRecord("release"),
     project: asRecord("project"),
@@ -534,13 +537,14 @@ export async function unseedPlanDrafts(
     proposal: asRecord("proposal"),
     customer: asRecord("customer"),
     feature: asRecord("feature"),
-    "feature-team": (id) => data.featureTeams.discardDraft(approver, id),
+    "feature-team": (maker, id) => data.featureTeams.discardDraft(maker, id),
   };
   for (const { recordType, recordId } of found) {
-    // The kind is one of the union's own.
-    // eslint-disable-next-line security/detect-object-injection
-    await discards[recordType](recordId);
+    await discardAsMaker(database, recordType, recordId, (maker) =>
+      // The kind is one of the union's own.
+      // eslint-disable-next-line security/detect-object-injection
+      discards[recordType](maker, recordId),
+    );
   }
-  await data.unpublished.publish(approver);
   return found.length;
 }

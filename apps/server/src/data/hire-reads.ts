@@ -36,7 +36,7 @@ import {
   type Recorded,
   type Viewer,
 } from "./draft-records.ts";
-import { draftMakers, otherApprover } from "./draft-makers.ts";
+import { draftMakers, viewerMarks } from "./draft-makers.ts";
 import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { notStarted } from "./people-reads.ts";
@@ -369,7 +369,7 @@ export async function readHiresIn(
       madeAs: maker?.madeAs ?? null,
       madeAt: maker?.madeAt.toISOString() ?? null,
       editors: maker?.editors ?? [],
-      ...otherApprover(maker),
+      ...viewerMarks(maker),
       changedBy: Object.fromEntries(
         fields.map((field) => [
           fieldOfValue(field) ?? field,

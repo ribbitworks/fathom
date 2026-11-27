@@ -34,7 +34,7 @@ import {
   draftMakers,
   everything,
   type Maker,
-  otherApprover,
+  viewerMarks,
 } from "./draft-makers.ts";
 import {
   type Held,
@@ -335,7 +335,7 @@ function draftOut(
     madeAs: maker?.madeAs ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
-    ...otherApprover(maker),
+    ...viewerMarks(maker),
     changedBy: Object.fromEntries(
       changed.map((field) => [field, maker?.fieldEditors.get(field) ?? null]),
     ),

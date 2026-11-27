@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Who made each draft, and the refusal of an approval of drafts the approver changed. Part of the
-// data access layer.
+// Who made each draft, the refusal of an approval of drafts the approver changed, and the refusal of
+// a discard of a draft the user didn't change. Part of the data access layer.
 
 import {
   changes,
@@ -23,6 +23,8 @@ import { and, eq, inArray, or, type SQL, sql } from "drizzle-orm";
 import { type Actor, storedTier } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
 
+const discardRefusal = "Only someone who changed this draft can discard it.";
+
 export interface Maker {
   madeBy: string | null;
   // The role the last maker was acting as, null for Fathom itself.
@@ -35,6 +37,8 @@ export interface Maker {
   // Whether the viewer changed the draft since it was last approved or discarded, and their role
   // does not let them approve their own, so another approver must approve it.
   needsOtherApprover: boolean;
+  // Whether the viewer changed the draft since it was last approved or discarded, so may discard it.
+  changedByUser: boolean;
 }
 
 // For readers who see every field of a draft, such as those of lists and columns, which are
@@ -51,9 +55,64 @@ export function openChangeSets(userId: string): SQL {
   ) as SQL;
 }
 
-// The marker a draft carries when the reader changed it and may not approve their own.
-export const otherApprover = (maker: Maker | undefined) =>
-  maker?.needsOtherApprover === true ? { needsOtherApprover: true } : {};
+// The marks a draft carries for the viewer who changed it: that they may discard it, and, where they
+// may not approve their own, that another approver must.
+export const viewerMarks = (maker: Maker | undefined) => ({
+  ...(maker?.changedByUser === true ? { changedByUser: true } : {}),
+  ...(maker?.needsOtherApprover === true ? { needsOtherApprover: true } : {}),
+});
+
+// The changes to the records given, of one kind, that tell who changed each draft, in the order they
+// were made: changes to drafts and the approvals and discards that end them, published, and the
+// viewer's own unpublished changes to the records they still hold them for, which their drafts hold.
+async function draftHistory(
+  reader: Pick<Database, "select">,
+  recordType: DraftKind,
+  chunk: readonly string[],
+  viewer: Actor,
+) {
+  const ownRows = await reader
+    .select({ id: privateChanges.recordId })
+    .from(privateChanges)
+    .where(
+      and(
+        eq(privateChanges.recordType, recordType),
+        eq(privateChanges.userId, viewer.user.id),
+        inArray(privateChanges.recordId, [...chunk]),
+      ),
+    );
+  const own = new Set(ownRows.map(({ id }) => id));
+  const rows = await reader
+    .select({
+      recordId: changes.recordId,
+      field: changes.field,
+      tier: changes.tier,
+      draft: changes.draft,
+      kind: changeSets.kind,
+      unpublished: changeSets.private,
+      madeBy: users.name,
+      madeAs: roles.name,
+      makerId: changeSets.madeBy,
+      madeAt: changeSets.madeAt,
+    })
+    .from(changes)
+    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+    .leftJoin(users, eq(users.id, changeSets.madeBy))
+    .leftJoin(roles, eq(roles.id, changeSets.madeAsRoleId))
+    .where(
+      and(
+        eq(changes.recordType, recordType),
+        inArray(changes.recordId, [...chunk]),
+        or(
+          eq(changes.draft, true),
+          inArray(changeSets.kind, ["approval", "discard"]),
+        ),
+        or(eq(changeSets.private, false), openChangeSets(viewer.user.id)),
+      ),
+    )
+    .orderBy(changes.id);
+  return rows.filter((row) => !row.unpublished || own.has(row.recordId));
+}
 
 // Who changed each record's draft, and when, from the changes to it the reader may see, so a hidden
 // change reveals nothing: the latest, and everyone since the record's last draft was approved or
@@ -69,53 +128,9 @@ export async function draftMakers(
   const makers = new Map<string, Maker>();
   const approvesOwn = viewer.permissions.includes("drafts:approve-own");
   for (const chunk of inChunks([...ids])) {
-    const ownRows = await reader
-      .select({ id: privateChanges.recordId })
-      .from(privateChanges)
-      .where(
-        and(
-          eq(privateChanges.recordType, recordType),
-          eq(privateChanges.userId, viewer.user.id),
-          inArray(privateChanges.recordId, chunk),
-        ),
-      );
-    const own = new Set(ownRows.map(({ id }) => id));
-    const rows = await reader
-      .select({
-        recordId: changes.recordId,
-        field: changes.field,
-        tier: changes.tier,
-        draft: changes.draft,
-        kind: changeSets.kind,
-        unpublished: changeSets.private,
-        madeBy: users.name,
-        madeAs: roles.name,
-        makerId: changeSets.madeBy,
-        madeAt: changeSets.madeAt,
-      })
-      .from(changes)
-      .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
-      .leftJoin(users, eq(users.id, changeSets.madeBy))
-      .leftJoin(roles, eq(roles.id, changeSets.madeAsRoleId))
-      .where(
-        and(
-          eq(changes.recordType, recordType),
-          inArray(changes.recordId, chunk),
-          or(
-            eq(changes.draft, true),
-            inArray(changeSets.kind, ["approval", "discard"]),
-          ),
-          or(eq(changeSets.private, false), openChangeSets(viewer.user.id)),
-        ),
-      )
-      .orderBy(changes.id);
-    const counted = rows.filter(
-      (row) => !row.unpublished || own.has(row.recordId),
-    );
+    const counted = await draftHistory(reader, recordType, chunk, viewer);
     // The viewer's changes count whatever their tier, since they made them.
-    const mine = approvesOwn
-      ? new Set<string>()
-      : draftsChangedBy(counted, viewer.user.id);
+    const mine = draftsChangedBy(counted, viewer.user.id);
     for (const row of counted) {
       if (row.kind === "approval" || row.kind === "discard") {
         makers.delete(row.recordId);
@@ -140,7 +155,8 @@ export async function draftMakers(
           row.madeBy,
         ],
         fieldEditors: new Map(maker?.fieldEditors).set(row.field, row.madeBy),
-        needsOtherApprover: mine.has(row.recordId),
+        needsOtherApprover: !approvesOwn && mine.has(row.recordId),
+        changedByUser: mine.has(row.recordId),
       });
     }
   }
@@ -241,5 +257,20 @@ export async function refuseOwnDrafts(
         );
       }
     }
+  }
+}
+
+// Refuses discarding a draft to anyone who didn't change it since it was last approved or discarded,
+// their own unpublished changes to it counting, since others who disagree with it reject it instead.
+// A draft Fathom itself made is discarded by no one.
+export async function refuseDiscardingOthers(
+  reader: Pick<Database, "select">,
+  actor: Actor,
+  recordType: DraftKind,
+  id: string,
+): Promise<void> {
+  const history = await draftHistory(reader, recordType, [id], actor);
+  if (!draftsChangedBy(history, actor.user.id).has(id)) {
+    throw new ForbiddenError(discardRefusal);
   }
 }

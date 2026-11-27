@@ -237,17 +237,17 @@ describe("drafts of people, until published", () => {
       preferredName: name,
     });
     await publish(alice);
-    await saved(bob, "DELETE", `/api/people/${person}/draft`);
-    expect(await personOf(bob, person)).not.toHaveProperty("draft");
-    expect(await unpublished(bob)).toEqual([
+    await saved(alice, "DELETE", `/api/people/${person}/draft`);
+    expect(await personOf(alice, person)).not.toHaveProperty("draft");
+    expect(await unpublished(alice)).toEqual([
       { subject: original, discarded: true },
     ]);
-    expect(await personOf(alice, person)).toMatchObject({
-      heldBy: bob.name,
+    expect(await personOf(bob, person)).toMatchObject({
+      heldBy: alice.name,
       draft: { action: "changed" },
     });
-    expect(await publish(bob)).toBe(1);
-    expect(await personOf(alice, person)).not.toHaveProperty("draft");
+    expect(await publish(alice)).toBe(1);
+    expect(await personOf(bob, person)).not.toHaveProperty("draft");
     expect(
       await test.connection
         .select()

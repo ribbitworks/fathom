@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Drafts: changes waiting for approval, at most one for each record, the kinds of record that
-// have them, and which drafts a user changed, so another approver must approve them.
+// have them, and which drafts a user changed, so another approver must approve them, and only those
+// who changed one may discard it.
 
 import { z } from "zod";
 import { linkShape } from "./links.ts";
@@ -38,6 +39,9 @@ export const draftShape = {
   // approved or discarded and their role does not let them approve their own, or it is part of a
   // fill needing sight their role lacks.
   needsOtherApprover: z.boolean().optional(),
+  // True when the user changed the draft since it was last approved or discarded, so they may
+  // discard it; others reject it instead.
+  changedByUser: z.boolean().optional(),
 };
 
 // Who holds a record by having unpublished changes to it, by name, when it is someone other than
@@ -360,7 +364,7 @@ export const unpublishedChosenSchema = z.object({
 
 // The records whose drafts a user changed since each was last approved or discarded, from their
 // history in order: rejecting or resubmitting a draft does not change it, so neither counts nor
-// resets. One rule for the drafts marked on screen and the approvals refused.
+// resets. One rule for the drafts marked on screen, and the approvals and discards refused.
 export function draftsChangedBy(
   rows: readonly {
     recordId: string;

@@ -456,6 +456,7 @@ describe("a Note column", () => {
         state: "waiting",
         madeBy: null,
         madeAt: null,
+        changedByUser: true,
       },
     };
     await openPeople({

@@ -46,6 +46,7 @@ describe("planned hires", () => {
     reason: "Not this quarter",
     madeBy: null,
     madeAt: null,
+    changedByUser: true,
   };
   const opening = {
     id: "h1",

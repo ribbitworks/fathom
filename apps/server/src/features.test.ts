@@ -713,6 +713,12 @@ describe("a feature's customers", () => {
     const feature = await liveFeature();
     const customer = await liveCustomer();
     await put(feature.id, { name: feature.name, customerIds: [customer] });
+    // The Feature Lead changes the draft too, so may discard it but for its customers
+    await put(
+      feature.id,
+      { name: unique("Fictional Renamed"), customerIds: [customer] },
+      featureLead.cookie,
+    );
     const discard = (cookie: string) =>
       test.request(
         cookie,

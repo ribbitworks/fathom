@@ -10,7 +10,7 @@ import { createDataAccess } from "@fathom/server/data";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import type { Actor } from "@fathom/server/access";
 import { accountDomain } from "./accounts.ts";
-import { actorOf, addedAt, skilledFor } from "./drafts.ts";
+import { actorOf, addedAt, discardAsMaker, skilledFor } from "./drafts.ts";
 
 const editorEmail = `engineering.operations.manager@${accountDomain}`;
 const secondEditorEmail = `engineering.operations.manager.2@${accountDomain}`;
@@ -334,7 +334,6 @@ export async function unseedListDrafts(
   organization: FictionalOrganization,
 ): Promise<number> {
   const data = createDataAccess(database);
-  const editor = await actorOf(database, editorEmail);
   const seeded = [
     ...organization.lists,
     await positionsList(database, organization),
@@ -352,13 +351,19 @@ export async function unseedListDrafts(
     })
     .from(drafts)
     .where(inArray(drafts.recordType, ["list", "list-item", "choice-order"]));
-  let discarded = await unseedColumnDrafts(database, organization, editor);
+  let discarded = await unseedColumnDrafts(database, organization);
   for (const draft of found) {
     if (draft.recordType === "choice-order" && listIds.has(draft.recordId)) {
-      await data.lists.discardDraft(editor, {
-        kind: "order",
-        listId: draft.recordId,
-      });
+      await discardAsMaker(
+        database,
+        draft.recordType,
+        draft.recordId,
+        (maker) =>
+          data.lists.discardDraft(maker, {
+            kind: "order",
+            listId: draft.recordId,
+          }),
+      );
       discarded += 1;
     }
   }
@@ -376,11 +381,17 @@ export async function unseedListDrafts(
       draft.recordType === "list-item" &&
       (choiceIds.has(draft.recordId) || listIds.has(listId))
     ) {
-      await data.lists.discardDraft(editor, {
-        kind: "choice",
-        listId,
-        choiceId: draft.recordId,
-      });
+      await discardAsMaker(
+        database,
+        draft.recordType,
+        draft.recordId,
+        (maker) =>
+          data.lists.discardDraft(maker, {
+            kind: "choice",
+            listId,
+            choiceId: draft.recordId,
+          }),
+      );
       discarded += 1;
     }
   }
@@ -395,14 +406,19 @@ export async function unseedListDrafts(
       draft.recordType === "list" &&
       (listIds.has(draft.recordId) || seededAdding)
     ) {
-      await data.lists.discardDraft(editor, {
-        kind: "list",
-        listId: draft.recordId,
-      });
+      await discardAsMaker(
+        database,
+        draft.recordType,
+        draft.recordId,
+        (maker) =>
+          data.lists.discardDraft(maker, {
+            kind: "list",
+            listId: draft.recordId,
+          }),
+      );
       discarded += 1;
     }
   }
-  await data.unpublished.publish(editor);
   return discarded;
 }
 
@@ -411,7 +427,6 @@ export async function unseedListDrafts(
 async function unseedColumnDrafts(
   database: Database,
   organization: FictionalOrganization,
-  editor: Actor,
 ): Promise<number> {
   const data = createDataAccess(database);
   const columnIds = new Set(organization.columns.map(({ id }) => id));
@@ -433,7 +448,9 @@ async function unseedColumnDrafts(
           String(draft.fields.name),
         ));
     if (!seeded) continue;
-    await data.people.discardColumnDraft(editor, draft.recordId);
+    await discardAsMaker(database, "field", draft.recordId, (maker) =>
+      data.people.discardColumnDraft(maker, draft.recordId),
+    );
     discarded += 1;
   }
   return discarded;

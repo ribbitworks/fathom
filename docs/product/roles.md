@@ -77,6 +77,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 - **Seeing what a draft holds:** Approving never grants seeing. An Approver's role must see every detail a draft holds, so a draft with an end date needs a role that sees Personal data, and drafts of any column or list need one that sees people, since General values are people's details.
 - **Drafts that use other drafts:** A draft may use drafts of another area. Approving a draft approves the drafts it uses, so it needs Approve on every area involved. A draft other drafts use is rejected only together with them, since rejecting it alone would leave them using a change that is going back to its maker.
 - **Your own drafts:** Someone else approves a user's drafts, unless the role holds Approve own drafts. That is one permission for every area, and it applies only where the role also holds Approve.
+- **Discarding a draft:** Only a user who changed a draft since it was last approved or discarded may discard it, under any of their roles that may change it. Others who disagree with it reject it, so a draft only Fathom itself changed is never discarded. Drafts of a schedule's cycles are the exception, as [Moving with cycles](#releases) sets out.
 - **Schedules and cycle patterns:** Edited with Edit Plan or Edit Configuration, and approved with Approve Plan or Approve Configuration, so either Approver may decide them.
 
 ## Data Classes
@@ -129,7 +130,7 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 - **Releases:** Roles that edit features and releases make releases and choose which cycles each includes.
 - **Activities:** Roles that edit features and releases add, change and remove activities, whether an activity belongs to a release or a project, so the Feature Lead edits a project's activities as it edits the features the project needs.
 - **Schedules:** Roles with Edit Plan or Edit Configuration add, rename, retire, restore and end schedules, and change their cycle lengths and naming patterns.
-- **Moving with cycles:** Changing a cycle's length moves the releases and features on the cycles that move. A role that changes schedules may do this without edit rights on releases or features. Only a role that may change cycles discards those drafts.
+- **Moving with cycles:** Changing a cycle's length moves the releases and features on the cycles that move. A role that changes schedules may do this without edit rights on releases or features. Only a role that may change cycles discards those drafts, whoever changed them.
 
 ## Columns and Saved Views
 

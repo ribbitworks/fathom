@@ -266,13 +266,14 @@ export async function chooseInDraftMenu(item: string | RegExp) {
   );
 }
 
-// A draft made by a fictional editor.
+// A draft made by a fictional editor, the user among those who changed it.
 export const draftOf = (draft: object) => ({
   changed: [],
   live: { values: {} },
   state: "waiting",
   madeBy: "Fictional Editor",
   madeAt: "2026-10-30T15:00:00.000Z",
+  changedByUser: true,
   ...draft,
 });
 

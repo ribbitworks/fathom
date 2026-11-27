@@ -381,7 +381,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - A menu headed **Planning settings** opens.
     - Under the heading, a yellow dot and "Draft: changed".
     - Under that, "Hours a day from 8 to 4, by Engineering Operations Manager".
-    - Then **Approve…**, **Reject…** and **Discard draft**.
+    - Then **Approve…** and **Reject…**, with no **Discard draft**.
     - No other row has a row menu.
   - **Notes:**
 

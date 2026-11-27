@@ -27,7 +27,7 @@ import {
   draftFields,
   type Recorded,
 } from "./draft-records.ts";
-import { draftMakers, otherApprover } from "./draft-makers.ts";
+import { draftMakers, viewerMarks } from "./draft-makers.ts";
 import { fillsBeyondSight } from "./fills.ts";
 import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
 import { columnsWithAdded } from "./added-columns.ts";
@@ -354,7 +354,7 @@ async function readPeopleIn(
       madeAs: maker?.madeAs ?? null,
       madeAt: maker?.madeAt.toISOString() ?? null,
       editors: maker?.editors ?? [],
-      ...otherApprover(maker),
+      ...viewerMarks(maker),
       changedBy: Object.fromEntries(
         fields.map((field) => [
           fieldOfValue(field) ?? field,

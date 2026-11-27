@@ -70,6 +70,7 @@ import {
   requireHireEdits,
 } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
+import { refuseDiscardingOthers } from "./draft-makers.ts";
 import {
   checkManager,
   checkRequisition,
@@ -500,6 +501,9 @@ export async function deleteHire(
       id,
     );
     if (hire === undefined) return null;
+    if (before === undefined) {
+      await refuseDiscardingOthers(transaction, actor, recordType, id);
+    }
     if (typeof hire.filledBy === "string") {
       throw new ConflictError(
         "A filled hire is kept; give its person an end date instead",

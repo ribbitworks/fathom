@@ -112,10 +112,10 @@ describe("a private change's own fields", () => {
       .set({ fields: { ...published, teamName: null } })
       .where(and(eq(drafts.recordType, "person"), eq(drafts.recordId, person)));
 
-    await saved(bob, "DELETE", `/api/people/${person}/draft`);
+    await saved(alice, "DELETE", `/api/people/${person}/draft`);
 
-    expect((await personOf(bob, person))?.draft).toBeUndefined();
-    expect(await publish(bob)).toBe(1);
+    expect((await personOf(alice, person))?.draft).toBeUndefined();
+    expect(await publish(alice)).toBe(1);
     expect(await publishedOf(person)).toBeUndefined();
   });
 

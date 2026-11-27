@@ -55,6 +55,7 @@ import {
   writeDraft,
 } from "./drafts.ts";
 import { draftsUse } from "./drafted-values.ts";
+import { refuseDiscardingOthers } from "./draft-makers.ts";
 import { checkValuesFit, fieldChanges } from "./fields.ts";
 import { unseenDetails } from "./lists.ts";
 import { discardingNewList, draftNewList } from "./new-lists.ts";
@@ -478,6 +479,7 @@ export async function deleteField(
     const field = changeableField(state, id, tableName);
     const live = state.fields.get(id);
     if (live === undefined) {
+      await refuseDiscardingOthers(transaction, actor, "field", id);
       await refuseIfDraftsFill(transaction, actor.user.id, id, field);
       return discardColumn(transaction, actor, state, id, field);
     }
@@ -522,6 +524,7 @@ export async function discardColumnDraft(
   return drafting(database, maker.user.id, async (transaction, state) => {
     const { id } = target;
     const draft = draftOf(state, target);
+    await refuseDiscardingOthers(transaction, maker, "field", id);
     // A column not live is only drafted to be added, so its draft holds all its settings.
     if (!state.fields.has(id)) {
       await refuseIfDraftsFill(transaction, maker.user.id, id, draft.fields);

@@ -288,6 +288,24 @@ describe("changing one cycle's length", () => {
     ).toEqual([]);
   });
 
+  it("lets another role that changes cycles discard it, though they didn't change it", async () => {
+    // Given a change of one cycle's length a Workforce Administrator made
+    const stream = await withRelease();
+    const drafted = (
+      await changeLength(stream.id, "2027-04-01", { length: 2, later: "move" })
+    ).json<{ stream: ReleaseStream }>().stream;
+
+    // When a Product Manager, who changes cycles too, discards it
+    const response = await test.request(
+      planner.cookie,
+      "DELETE",
+      `/api/records/cycle-pattern/${String(drafted.patterns.find(({ draft }) => draft !== undefined)?.id)}/draft`,
+    );
+
+    // Then it is discarded
+    expect(response.statusCode).toBe(200);
+  });
+
   it("refuses moving a release's first cycle after its Ships on day", async () => {
     const stream = await withRelease("2027-07-15");
     const response = await changeLength(stream.id, "2027-04-01", {

@@ -10,6 +10,7 @@ import { type Actor } from "../access.ts";
 import { ConflictError, NotFoundError } from "../errors.ts";
 import { type Change, recordChanges } from "./changes.ts";
 import { setRejection } from "./drafts.ts";
+import { refuseDiscardingOthers } from "./draft-makers.ts";
 import { clearedRejection, type Draft } from "./draft-records.ts";
 import {
   refuseIfDraftsChoose,
@@ -80,6 +81,12 @@ export async function discardListDraft(
   return drafting(database, maker.user.id, async (transaction, state) => {
     draftOf(state, kind, listId, choiceId);
     refuseUnseenList(maker, state, listId);
+    await refuseDiscardingOthers(
+      transaction,
+      maker,
+      draftTypeOf(kind),
+      kind === "choice" ? (choiceId as string) : listId,
+    );
     if (kind === "list" && !state.lists.has(listId)) {
       await refuseIfUsed(transaction, listId, "discarded", maker.user.id);
       await refuseIfDraftsChoose(

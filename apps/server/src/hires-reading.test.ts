@@ -179,7 +179,8 @@ describe("the hiring plan", () => {
         changedBy: { managerId: null },
       },
     });
-    await ok(await send(editor, "DELETE", `/api/planned-hires/${id}/draft`));
+    // No one changed it, so no one may discard it.
+    await test.connection.delete(drafts).where(eq(drafts.recordId, id));
   });
 
   it("shows the user's own unpublished changes as theirs, and names them by position and ID among their unpublished changes", async () => {

@@ -586,6 +586,7 @@ describe("feature teams on the org chart", () => {
             reason: "Fictional reason",
             madeBy: "Fictional Editor",
             madeAt: "2026-10-30T15:00:00.000Z",
+            changedByUser: true,
           },
         }),
       ],

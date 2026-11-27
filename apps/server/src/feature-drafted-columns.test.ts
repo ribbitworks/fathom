@@ -369,14 +369,18 @@ describe("a feature given a value in a column drafted to be added", () => {
   });
 
   it("refuses a value in a column drafted to be added that someone else is changing, unpublished", async () => {
-    // Given a column drafted to be added that another editor is discarding, unpublished
+    // Given a column drafted to be added that another editor is renaming, unpublished
     const column = await draftedColumn();
     const other = await test.signedIn("product-manager");
     const held = await test.request(
       other.cookie,
-      "DELETE",
-      `/api/features/columns/${column.id}/draft`,
-      undefined,
+      "PUT",
+      `/api/features/columns/${column.id}`,
+      {
+        name: unique("Fictional Held Score"),
+        type: "number",
+        visibility: "general",
+      },
       { publish: false },
     );
     expect(held.statusCode, held.body).toBe(200);

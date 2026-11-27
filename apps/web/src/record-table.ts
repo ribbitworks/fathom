@@ -49,6 +49,8 @@ export interface GridDraft extends DraftLike, Credited {
   changed: string[];
   // Changed by this account, whose role does not let it approve its own drafts.
   needsOtherApprover?: boolean | undefined;
+  // Changed by this account since it was last approved or discarded, so it may discard it.
+  changedByUser?: boolean | undefined;
 }
 
 // A record the table shows: as its draft, if any, makes it, with the draft beside, and who else
@@ -269,6 +271,10 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // Whether a record can ever be removed, such as a list Fathom builds in, which can't; every
   // record can, where the table doesn't say.
   removable?: (record: Rec) => boolean;
+  // Whether the user may discard a record's draft they didn't change, as any role that changes
+  // cycles may a draft of a schedule's cycles; only those who changed it may, where the table
+  // doesn't say.
+  discardsUnchanged?: (record: Rec) => boolean;
   nameOf: (record: Rec) => string;
   // The key of the column naming each record, whose cell holds the row's controls.
   nameColumn: string;

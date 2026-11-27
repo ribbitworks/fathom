@@ -306,14 +306,24 @@ describe("what people's drafts use stays while they use it", () => {
   it("still refuses while another editor's published draft uses it", async () => {
     const { list, choices, field } = await addedColumn();
     const [alpha] = choiceIds(choices);
-    await personWith({ [field.id]: [String(alpha)] });
     const other = await test.signedIn("workforce-administrator");
+    const used = await test.request(other.cookie, "POST", "/api/people", {
+      people: [
+        {
+          preferredName: unique("Fictional Person"),
+          employeeId: unique("U"),
+          positionId: testPosition,
+          values: { [field.id]: [String(alpha)] },
+        },
+      ],
+    });
+    expect(used.statusCode, used.body).toBe(201);
     for (const url of [
       `/api/people/columns/${field.id}/draft`,
       `/api/lists/${list.id}/draft`,
     ]) {
       const refused = await test.request(
-        other.cookie,
+        editor.cookie,
         "DELETE",
         url,
         undefined,
@@ -327,10 +337,15 @@ describe("what people's drafts use stays while they use it", () => {
     const { list, choices, field } = await addedColumn();
     const [alpha] = choiceIds(choices);
     const other = await test.signedIn("workforce-administrator");
-    const discard = (url: string) =>
-      test.request(other.cookie, "DELETE", url, undefined, { publish: false });
-    await discard(`/api/lists/${list.id}/choices/${String(alpha)}/draft`);
-    await discard(`/api/people/columns/${field.id}/draft`);
+    const hold = (url: string, body: object) =>
+      test.request(other.cookie, "PUT", url, body, { publish: false });
+    await hold(`/api/lists/${list.id}/choices/${String(alpha)}`, {
+      label: "Alpha Held",
+    });
+    await hold(`/api/people/columns/${field.id}`, {
+      name: unique("Fictional Held Column"),
+      listId: list.id,
+    });
     const person = {
       preferredName: unique("Fictional Person"),
       employeeId: unique("U"),
@@ -351,9 +366,14 @@ describe("what people's drafts use stays while they use it", () => {
         visibility: "general",
       })
     ).json<{ list: List }>().list;
-    expect((await discard(`/api/lists/${second.id}/draft`)).statusCode).toBe(
-      200,
-    );
+    expect(
+      (
+        await hold(`/api/lists/${second.id}`, {
+          name: unique("Fictional Held List"),
+          visibility: "general",
+        })
+      ).statusCode,
+    ).toBe(200);
     const column = await send("POST", "/api/people/columns", {
       name: unique("Fictional Column"),
       listId: second.id,

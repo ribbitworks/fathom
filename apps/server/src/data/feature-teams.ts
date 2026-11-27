@@ -48,6 +48,7 @@ import {
   readTeamDrafts,
 } from "./feature-team-reads.ts";
 import { recordType } from "./feature-team-records.ts";
+import { refuseDiscardingOthers } from "./draft-makers.ts";
 import {
   fromDay,
   recordTeamDayChanges,
@@ -532,6 +533,9 @@ export async function deleteFeatureTeam(
       today,
     );
     if (team === undefined) return null;
+    if (before === undefined) {
+      await refuseDiscardingOthers(transaction, actor, recordType, id);
+    }
     await refuseRemovingNamed(transaction, "feature-team", [id], actor);
     const cleared = await clearedTeamRejection(
       transaction,
@@ -580,6 +584,7 @@ export async function discardFeatureTeamDraft(
     if (draft === undefined) {
       throw new NotFoundError("This feature team has no draft");
     }
+    await refuseDiscardingOthers(transaction, actor, recordType, id);
     const action = actionTo(team, before);
     const cleared = await clearedTeamRejection(
       transaction,

@@ -10,6 +10,7 @@ import {
   type Permission,
   type Role,
 } from "@fathom/shared";
+import { inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { generalApprover, testPosition } from "./test-app.ts";
@@ -412,8 +413,10 @@ describe("approving and rejecting", () => {
       error:
         "The draft of Fictional Stray no longer fits the columns; change it, then approve it",
     });
-    await saved("DELETE", `/api/people/${clash}/draft`);
-    await saved("DELETE", `/api/people/${stray}/draft`);
+    // No one changed them, so no one may discard them.
+    await test.connection
+      .delete(drafts)
+      .where(inArray(drafts.recordId, [clash, stray]));
   });
 
   it("keeps rejected drafts with their reason, until they are changed again", async () => {

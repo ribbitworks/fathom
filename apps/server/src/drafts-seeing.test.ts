@@ -195,7 +195,16 @@ describe("drafts as people see them", () => {
       madeAs: null,
       madeAt: null,
     });
-    await saved("DELETE", `/api/people/${id}/draft`);
+    const discarded = await send(
+      editor.cookie,
+      "DELETE",
+      `/api/people/${id}/draft`,
+    );
+    expect([discarded.statusCode, discarded.json()]).toEqual([
+      403,
+      { error: "Only someone who changed this draft can discard it." },
+    ]);
+    await test.connection.delete(drafts).where(eq(drafts.recordId, id));
   });
 });
 
