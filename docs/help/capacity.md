@@ -137,7 +137,7 @@ You're done when the cell shows its value from before the change.
 - **Not allocated**, in red, ends a month with nothing allocated. A month at exactly 100% has no last line.
 - **Over**, **Under** and **Not allocated** show from the current month on, and features and activities whose status means Possible don't count. Point at **Over** or **Under** to see the month's total.
 - **Planned hires** have rows of their own, under their manager and under **No feature team**. One with no name shows its position and ID in grey, such as **SDET, TBD-5**. Months before one is expected are shaded.
-- **Total, person-months**, in bold, ends each group, and **Organization, person-months** stays at the foot of the table. Grouped by **Allocated to**, an **Allocated** row ends each group, and **Allocated, all work** stays at the foot, both in hours.
+- **Total, person-months**, in bold, ends each group, and **Organization, person-months** stays at the foot of the table. Grouped by **Allocated to**, **Allocated, all work** stays at the foot instead, in hours.
 - **A total**, such as **7.5 of 9**, is the person-months allocated that month, out of those available. The share is under it.
 - Point at a total to see it in words. Totals count only the rows shown.
 - **Someone on a feature team with nothing allocated** reads **Not allocated**, and counts as **0 of 1** in the totals. Being on a team doesn't allocate anyone to its features.
