@@ -19,6 +19,8 @@ import type { MenuGrid } from "./row-menus.tsx";
 import { type CellValue, fieldLabel } from "./table-view.ts";
 import { typeIn } from "./type-in.ts";
 
+const savingKeys = new Set(["Enter", "Tab"]);
+
 export function gridEditing<Rec extends GridRecord, Change, Request>(
   grid: Pick<
     MenuGrid<Rec, Change, Request>,
@@ -220,6 +222,19 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
   const onCellKey = (event: KeyboardEvent, cell: Cell) => {
     if (event.target !== event.currentTarget) return;
     const { row, column } = at(cell);
+    const typedHere =
+      editing?.row === cell.row &&
+      editing.column === cell.column &&
+      kindOf(column).inPanel !== true;
+    // Keys typed fast reach the cell until its editor has focus. Only a kind whose typing is its
+    // value, not a search its own editor reads, can be saved from here.
+    const finishesHere =
+      event.key === "Escape" ||
+      (savingKeys.has(event.key) && kindOf(column).Editor === undefined);
+    if (typedHere && finishesHere) {
+      onEditorKey(event, cell);
+      return;
+    }
     const plain = !event.altKey && !event.metaKey && !event.ctrlKey;
     const moves: Record<string, Cell> = {
       ArrowUp: { ...cell, row: cell.row - 1 },
@@ -263,12 +278,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     const { asTyped, inPanel } = kindOf(column);
     // Keys typed fast reach the cell until its editor has focus, and follow the first. They come
     // before every other key's meaning, so a space typed then is text, not a tick or a fresh start.
-    if (
-      event.key.length === 1 &&
-      editing?.row === cell.row &&
-      editing.column === cell.column &&
-      inPanel !== true
-    ) {
+    if (event.key.length === 1 && typedHere) {
       event.preventDefault();
       const next = typed.current + event.key;
       typed.current = asTyped?.({ text: next, cursor: null }).text ?? next;
