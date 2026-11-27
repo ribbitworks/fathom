@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/design/pages/features.md", "docs/help/activities.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: Activities Page
@@ -24,8 +24,8 @@ Activities lists the work releases and projects need that isn't a feature, such 
 ## Columns
 
 - **Order:** Name, Status, Description, Notes, Release, Project, Priority, Needed by, Effort, Size, Risk, Feature team, Staffed, then added columns.
-- **Added columns:** set up in [Features](features.md)' column dialog, with New list last in a choice column's List picker.
-- **Shared with Features:** every column but Release and Project is Features' own, drawn by the same code, with the same rules, such as No team for a Planned or In progress activity with no feature team.
+- **Added columns:** Activities' own, added with its own New column in the shared column dialog, with New list last in a choice column's List picker, and approved by those who approve features.
+- **Shared with Features:** every column but Release and Project is Features' own, drawn by the same code, with the same rules, such as No feature team for a Planned or In progress activity with none.
 - **Staffed:** read only, as a feature's is: for Planned or In progress activities, Yes when any allocation gives them a month, a planned hire's included.
 - **Release and Project:** exactly one is filled.
   - **Release:** names a release with its schedule, such as Platform: Harbor 1, as a cycle is named.
@@ -36,7 +36,7 @@ Activities lists the work releases and projects need that isn't a feature, such 
 
 ## Grouping
 
-Group by offers Needed by and each column of choices: Status, Release, Project, Feature team, Priority, Size, Risk and the added choice columns, with Then by. Grouped by Release, a project's activities fall under its empty heading, and the other way round.
+Group by offers Needed by and each column of choices: Status, Release, Project, Feature team, Priority, Size, Risk, Staffed and the added choice columns, with Then by. Grouped by Release, a project's activities fall under its empty heading, and the other way round.
 
 ## Planned
 

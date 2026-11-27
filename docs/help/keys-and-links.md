@@ -19,7 +19,7 @@ On the Features Board, each card shows its key under its name. To hide the keys 
 
 A record that isn't saved yet has no key.
 
-The tables on **People**, **Features**, **Activities**, **Projects**, **Accounts**, **Drafts**, and the **Releases** and **Schedules** tabs of **Releases** have a **Key** column, hidden at first. On **Drafts**, it shows the key of the record each draft changes. A draft of the planning settings has no key. To show it:
+The tables on **People**, **Features**, **Activities**, **Projects**, **Lists**, **Accounts**, **Drafts**, and the **Releases** and **Schedules** tabs of **Releases** have a **Key** column, hidden at first. On **Drafts**, it shows the key of the record each draft changes. A draft of the planning settings has no key. To show it:
 
 1. Select **Views**.
 1. Under **Hidden**, select **Key**.

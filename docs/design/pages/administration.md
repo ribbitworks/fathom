@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: Administration Pages
@@ -75,7 +75,7 @@ The Administration pages hold accounts, roles, settings, lists, the planning set
 - **The table:** The shared table, with saved views, as [Tables](../../standards/ui-conventions/tables.md#tables) sets out: Name, Class, Description, Choices and Used by. Built-in lists come first, then the organization's own, each by name. Group by offers Kind, which gives Built in and Custom headings. Show retired is in the Views menu. Export saves it at once, since a list's name, choices and columns are configuration, General whatever the list's class.
   - **Name:** Renamed in the row, as a draft, by those who change configuration; a name another list has is refused. The description changes in Edit list…, a button that opens the Edit list dialog.
   - **Choices:** The count, then the names of the choices offered, with the mark of their drafts before them, as [A summary row](../../standards/ui-conventions/drafts-and-values.md#drafts) sets out.
-  - **Used by:** Each column that picks from the list, as its page and name, such as People: Site: a built-in list's own columns and any added to People or Features, by page, then column. Every role that opens Lists sees them all, since columns are configuration; other readers of lists aren't sent them. Only live columns count.
+  - **Used by:** Each column that picks from the list, as its page and name, such as People: Site: a built-in list's own columns and any added to People, Features or Activities, by page, then column. Every role that opens Lists sees them all, since columns are configuration; other readers of lists aren't sent them. Only live columns count.
   - **A row's menu:** Retire or Restore for a list Fathom doesn't build in, then its draft's items, then Remove list, in the order every table's menu offers them. A list only drafted to be added offers Discard draft in place of Retire and Remove list, as any new record does.
 - **Built-in lists:** A "Built in" label, a dimmed line from Fathom saying what the list is for, and no **Retire list** or **Remove list**.
 - **Lists with meanings:** In a [list with meanings](../../product/domain.md#people-terms), each choice shows its meaning, chosen from a menu.

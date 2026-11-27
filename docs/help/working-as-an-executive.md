@@ -6,7 +6,7 @@ As an Executive, you see the whole plan and everyone in it, with every person's 
 
 - **Drafts:** changes waiting for approval are drafts, marked with dots. Each table's **Draft** menu chooses whether you see them.
 - **Feature teams:** a feature team is a group that works on features together, whoever its members report to.
-- **Allocations:** an allocation is the share of someone's month planned for one feature, such as 50%.
+- **Allocations:** an allocation is the share of someone's month planned for one feature or activity, such as 50%.
 
 ## See What's Planned
 
@@ -46,9 +46,9 @@ See [Capacity](capacity.md#group-the-rows).
 
 1. On **Capacity**, select **Allocations** beside the heading.
 1. Type the person's name in the search box.
-1. Read each month's cell. Each line names a feature and the share of the month it takes, such as **50%**.
+1. Read each month's cell. Each line names a feature or an activity, and the share of the month it takes, such as **50%**.
 
-**Over**, **Under** or **Not allocated**, in red, ends a month whose allocations don't add up to 100%. See [Capacity](capacity.md#in-allocations).
+From the current month on, **Over**, **Under** or **Not allocated**, in red, ends a month whose allocations don't add up to 100%. See [Capacity](capacity.md#in-allocations).
 
 ## Find Someone
 

@@ -1,8 +1,8 @@
 # Working as a Product Manager
 
-As a Product Manager, you shape the plan: the features to build, the projects customers need, and the proposals that may become projects. You also add columns to Features, and approve other people's drafts of the plan, features and releases, and the columns on Features.
+As a Product Manager, you shape the plan: the features to build, the projects customers need, and the proposals that may become projects. You also add columns to Features, and approve other people's drafts of the plan, features, activities and releases, and the columns on Features and Activities.
 
-Your pages are **Features** and **Projects**, under **Plan** in the left-hand menu, and **Drafts**, under **History**.
+Your pages are **Features**, **Activities** and **Projects**, under **Plan** in the left-hand menu, and **Drafts**, under **History**.
 
 ## What to Know First
 
@@ -95,7 +95,7 @@ Open a project's or proposal's details. **Scope history**, at the end, lists eac
 
 ## Approve or Reject Drafts
 
-You approve or reject drafts of projects, proposals, features, releases and schedules, and of the columns on Features and Activities with the lists made with them. Drafts you changed yourself stay waiting for another approver.
+You approve or reject drafts of projects, proposals, customers, milestones, features, activities, releases and schedules, and of the columns on Features and Activities with the lists made with them. Drafts you changed yourself stay waiting for another approver.
 
 ### Approve on the Drafts Page
 
@@ -109,7 +109,7 @@ See [Drafts page](drafts-page.md#approve-drafts).
 
 ### Approve All a Table Shows
 
-On a table such as **Features**, select **Approve** in its **Draft** menu. It names the count, such as **Approve 4 drafts…**, and approves every waiting draft the table shows. See [Drafts](drafts.md#what-the-draft-menu-shows).
+On a table such as **Features**, select **Approve** in its **Draft** menu. It names the count, such as **Approve 4 drafts…**, and approves every waiting draft the table shows that you may approve. Drafts you changed yourself wait for another approver. See [Drafts](drafts.md#what-the-draft-menu-shows).
 
 ### Reject a Draft With a Reason
 

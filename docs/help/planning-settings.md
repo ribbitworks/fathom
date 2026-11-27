@@ -83,7 +83,7 @@ You're done when the setting shows its value from before the change.
 
 ## Marks and Terms
 
-- **Hours a day** and **Working days a month** set what a person-day and person-month are, in the **Effort** column on **Features**. An estimate keeps its hours, so changing these changes what it reads in the larger units.
+- **Hours a day** and **Working days a month** set what a person-day and person-month are, in the **Effort** columns on **Features** and **Activities**. An estimate keeps its hours, so changing these changes what it reads in the larger units.
 - **Working days** are the days people work, such as **Mon to Fri**. A person-week is a person-day for each of them.
 - **Week starts on** is the first day of the organization's week.
 - **Default focus** is the share of a person's time that goes to feature work at all, after meetings, support and the like.
@@ -94,4 +94,4 @@ You're done when the setting shows its value from before the change.
 
 ## Where Changes Go
 
-Until a change is approved, the **Effort** column on **Features** and the hours on **Allocations** keep using the approved settings. **Show in** names them, such as **Person-days (8 hours)**. Every change is recorded in the change history.
+Until a change is approved, the **Effort** columns on **Features** and **Activities**, and the hours on **Allocations**, keep using the approved settings. **Show in** names them, such as **Person-days (8 hours)**. Every change is recorded in the change history.

@@ -21,7 +21,7 @@ See [Drafts](drafts.md) for more.
 1. Fill in anything else you know.
 1. Select **Add**.
 
-To add one quickly, type its name in the empty row at the end of the table, and press Enter.
+To add one quickly, type its name in the empty row at the end of the table, and press Enter. To add several, paste their names into the empty row, one to a line. If Fathom refuses one row, it adds none of them.
 
 You're done when the feature shows in the table with a hollow dot.
 
@@ -202,7 +202,7 @@ See [People](people.md#export-people) for what the file holds.
 1. Open the feature's **⋯** menu.
 1. Select **Remove feature**.
 
-While a project or proposal names a feature, **Remove feature** is greyed out, with a line under it naming the first of them, such as "P-2017 Depot Operations names this feature." Take the feature off that record first.
+While a project or proposal names a feature, **Remove feature** is greyed out, with a line under it naming the first of them and counting the rest, such as "P-2017 Depot Operations names this feature." Take the feature off that record first.
 
 Once people are allocated to a feature, **Remove feature** is greyed out too, since that time was spent. Choose a status that means Cancelled instead.
 

@@ -24,7 +24,7 @@ See [Drafts](drafts.md) for more.
 1. Fill in the form.
 1. Select **Add**.
 
-To add one quickly, type in the empty row at the end of the table.
+To add one quickly, type in the empty row at the end of the table. To add several, paste them into the empty row, one to a line. If Fathom refuses one row, it adds none of them.
 
 You're done when the new row shows with a hollow dot.
 
@@ -52,6 +52,8 @@ Each customer, proposal and feature named there is a link to its own details. Mi
 A customer's details show its **Name**, **Description** and **Notes** under **Details**. Select **Show more** under a long note to read all of it in a panel of its own. Under **Commitments** are the **Projects** and **Proposals** that name the customer, and its **Features**, each a link to its own details.
 
 The record's key is under its name, small and grey. Select it to copy a link to the record, or the key itself. See [Keys and links](keys-and-links.md) for more.
+
+You're done when the record's details are open beside the table.
 
 ### Change a Record
 
@@ -105,6 +107,8 @@ You're done when the reason shows on the removal's row.
 Open its details. **Scope history**, at the end, lists each feature added or removed, newest first.
 
 Each row has the day the change was drafted, and the reason for a removal, if there is one. A change still waiting for approval has a yellow dot before it.
+
+You're done when you see the change you were looking for.
 
 ### Add a Milestone to a Project
 

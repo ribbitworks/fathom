@@ -86,7 +86,7 @@ The Product Manager doesn't see Capacity, since the role doesn't hold **View Per
 
 Everyone sees the **Help** section, whatever their role.
 
-- **Help pages:** It lists every Help page, starting with this one.
+- **Help pages:** It lists every Help page.
 - **About Fathom:** It says which version of Fathom this is. It opens in a box over the page you're on.
 
 ## Where Fathom Opens
