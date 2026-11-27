@@ -30,7 +30,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Reset the Database](manual-test-basics.md#reset-the-database) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
 
 ## Terms
 
@@ -98,6 +98,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `A8A1` Choose **Dark** in the Appearance menu.
   - **Expected:** The page turns dark.
+  - **Notes:**
+
+- [ ] `900A` Open the account menu, and select **Change password…**.
+  - **Expected:**
+    - A dialog titled "Change password" opens.
+    - Its fields, the words under them and its buttons are easy to read.
+  - **Notes:**
+
+- [ ] `C111` Select **Cancel**.
+  - **Expected:** The dialog closes.
   - **Notes:**
 
 ### DARK-02: The People Table and Its Marks
@@ -243,25 +253,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The side panel closes.
   - **Notes:**
 
-- [ ] `C831` Clear the search box, and type `Tanushree Patel-Singh`.
-  - **Expected:** Only the row of 'Tanushree Patel-Singh' shows.
-  - **Notes:**
-
-- [ ] `D71A` Scroll the table to the right until her **Onboarding** cell shows.
-  - **Expected:** Her **Onboarding** cell is in view.
-  - **Notes:**
-
-- [ ] `A853` Select her **Onboarding** cell, and press Enter.
-  - **Expected:**
-    - A panel opens with her note.
-    - "On track" is teal.
-    - The heading, checklist, link and words are easy to read against the dark panel.
-  - **Notes:**
-
-- [ ] `577E` Close the note's panel with the **×** at its top right.
-  - **Expected:** The panel closes.
-  - **Notes:**
-
 - [ ] `2D10` Clear the search box, and type `REQ-2047`.
   - **Expected:** The row's **Fill** button is easy to read.
   - **Notes:**
@@ -405,6 +396,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `55E6` On the card for 'Viktoria Holmberg', select **Show 3 reports**.
   - **Expected:**
     - The faded light green card of 'Simone Jean', with a dashed edge, is easy to tell apart from the untinted cards.
+    - The dashed line to her card is easy to see.
     - Every word on the card for '우아현' is easy to read.
   - **Notes:**
 
@@ -484,7 +476,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Dark** chosen in the Appearance menu.
 
 - [ ] `6FDC` Select the **Overview** page in the left-hand menu.
-  - **Expected:** Every word and figure on the page is easy to read.
+  - **Expected:**
+    - The greeting, and the dimmed line under it starting "Acting as", are easy to read.
+    - The headings, such as **Plan** and **People**, stand apart from the jobs under them.
+    - Every job's name, its link and its **Help** link are easy to read.
+  - **Notes:**
+
+- [ ] `07AE` Select the name of the first job under **Plan**.
+  - **Expected:**
+    - Its tasks show under it.
+    - Every task's name, link and **Help** link is easy to read.
   - **Notes:**
 
 - [ ] `EDE6` Select the **Features** page in the left-hand menu.
@@ -593,15 +594,33 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `E59B` Select **Show details** in the **⋯** menu of 'Data migration'.
-  - **Expected:** The text and marks in the side panel are easy to read.
+  - **Expected:**
+    - The text and marks in the side panel are easy to read.
+    - The link 'Crane Control' under **Project** is easy to read.
   - **Notes:**
 
-- [ ] `37DA` Select the **Projects** page in the left-hand menu.
-  - **Expected:** The **Projects** tab is chosen.
+- [ ] `3C5E` Close the side panel with the **×** at its top right.
+  - **Expected:** The side panel closes.
   - **Notes:**
 
-- [ ] `9D69` Select **Show details** in the **⋯** menu of the first project.
-  - **Expected:** The text, marks and tabs on the page and side panel are easy to read.
+- [ ] `37DA` Select the **Projects** page in the left-hand menu, then the **Projects** tab.
+  - **Expected:** The tabs **Projects**, **Proposals**, **Customers** and **Milestones** are easy to read, and the chosen **Projects** tab stands out.
+  - **Notes:**
+
+- [ ] `9D69` Select **Show details** in the **⋯** menu of 'Crane Control'.
+  - **Expected:**
+    - The text and marks in the side panel are easy to read.
+    - Under **Activities**, the names of its activities, such as 'Data migration', and **Add activity** are easy to read.
+  - **Notes:**
+
+- [ ] `7CCD` Select **Add activity** under **Activities** in the side panel.
+  - **Expected:**
+    - A **New activity** form opens under the details, with 'Crane Control' chosen in **Project**.
+    - Both panels, and every label, box and button in the form, are easy to read.
+  - **Notes:**
+
+- [ ] `84C5` Select **Cancel** in the **New activity** form.
+  - **Expected:** The form closes, and the details of 'Crane Control' stay open.
   - **Notes:**
 
 - [ ] `D78F` Close the side panel with the **×** at its top right.
@@ -672,7 +691,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Details** rows and the **Cycles** table are easy to read.
   - **Notes:**
 
-- [ ] `01BB` Select **Earlier cycles** in the **Cycles** section.
+- [ ] `01BB` Select **Earlier cycles**, followed by a count in brackets, such as **Earlier cycles (3)**, in the **Cycles** section.
   - **Expected:** The earlier cycles, in grey, are easy to read.
   - **Notes:**
 
@@ -698,10 +717,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `0D38` Select **Show retired (1)**.
   - **Expected:** 'Patches' is listed again, and the **Retired** box after its name is easy to read.
-  - **Notes:**
-
-- [ ] `5D2C` Select **Group by**, then **Status**.
-  - **Expected:** The **Current** and **Retired** headings, and the counts at their right, are easy to read.
   - **Notes:**
 
 - [ ] `043E` Select the **⋯** button at the right of the first cell of the row for 'Patches', then **Restore**.
@@ -737,9 +752,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `A5EF` Select **Views**, then **Clear view**.
-  - **Expected:**
-    - The headings are gone.
-    - 'Patches' is no longer listed.
+  - **Expected:** 'Patches' is no longer listed.
   - **Notes:**
 
 ### DARK-07: The Other Pages
@@ -811,7 +824,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `D1A7` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:**
-    - The tabs read **Feature teams**, **Allocations** and **Settings**, with **Allocations** chosen.
+    - The tabs read **Feature teams** and **Allocations**, with **Allocations** chosen.
     - The tabs, the column headings and the names are easy to read.
   - **Notes:**
 
@@ -828,6 +841,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `6D09` Scroll the table to the bottom.
   - **Expected:** The total rows, headed **Total, person-months**, and the **Organization, person-months** row at the foot are easy to read and to tell apart from the rows above them.
+  - **Notes:**
+
+- [ ] `8F6E` Choose **Allocated to** in the Group by menu.
+  - **Expected:** These are easy to read and to tell apart:
+    - each heading, with its name and its hours
+    - the **Allocated** row that ends each group
   - **Notes:**
 
 - [ ] `04E5` Select the **Planning settings** page in the left-hand menu.
@@ -933,13 +952,52 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The heading "Nothing found for #FEATURE-99999" is easy to read.
   - **Notes:**
 
+- [ ] `68BB` Select the **Accounts** page in the left-hand menu, then **New account**.
+  - **Expected:**
+    - A dialog titled "New account" opens.
+    - Its fields, its tick boxes of roles, the words under them and its buttons are easy to read.
+  - **Notes:**
+
+- [ ] `68D1` Type `Dark Mode Tester` in **Name**.
+  - **Expected:** **Name** holds `Dark Mode Tester`.
+  - **Notes:**
+
+- [ ] `33B8` Type `dark.mode@fathom.test` in **Email address**.
+  - **Expected:** **Email address** holds `dark.mode@fathom.test`.
+  - **Notes:**
+
+- [ ] `4DE8` Select **Create account**.
+  - **Expected:**
+    - A dialog titled "Password for Dark Mode Tester" opens.
+    - The line starting "This password is shown only once." is easy to read.
+    - The password's box, the eye button in it, **Copy** and **Done** are easy to see.
+  - **Notes:**
+
+- [ ] `56B4` Select **Copy**.
+  - **Expected:** The button reads **Copied**.
+  - **Notes:**
+
+- [ ] `501E` Select **Done**.
+  - **Expected:** The dialog closes, and `Dark Mode Tester` is listed.
+  - **Notes:**
+
+- [ ] `93B0` Sign out, and sign in as `dark.mode@fathom.test`, pasting the copied password.
+  - **Expected:**
+    - The **Change password** page opens, dark.
+    - Its heading, the line "Fathom generated this password. A new password is required to continue.", its fields and its buttons are easy to read.
+  - **Notes:**
+
+- [ ] `E74D` Select **Sign out**.
+  - **Expected:** The **Sign in** page is dark.
+  - **Notes:**
+
 ### DARK-08: Other Accounts' Marks and Menus
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DARK-07. Step `6A94` signs in as another account.
 
-**Preconditions:** Signed in as the Superuser, as DARK-07 ends; the first step signs in as this account. **Dark** chosen in the Appearance menu.
+**Preconditions:** Signed out on the **Sign in** page, as DARK-07 ends; the first step signs in as this account. **Dark** chosen in the Appearance menu.
 
-- [ ] `00B7` Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+- [ ] `00B7` Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
   - **Expected:** The page is dark.
   - **Notes:**
 
@@ -997,6 +1055,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The timeline closes.
   - **Notes:**
 
+- [ ] `BF58` Select the **Drafts** page in the left-hand menu, then **Not published** beside the page's title.
+  - **Expected:** The row of 'Mariana Metz' is listed, with a tick box before it.
+  - **Notes:**
+
+- [ ] `F29F` Tick the tick box of the row of 'Mariana Metz'.
+  - **Expected:**
+    - The ticked boxes, hers and those of the changes that go with it, are easy to tell from the others.
+    - The **Discard 2 changes…** button at the right of the page's heading is easy to read.
+  - **Notes:**
+
+- [ ] `194D` Select **Discard 2 changes…** at the right of the page's heading.
+  - **Expected:**
+    - A dialog titled "Discard 2 changes?" opens.
+    - Its words and buttons, the red **Discard** among them, are easy to read.
+  - **Notes:**
+
+- [ ] `CD99` Select **Cancel**.
+  - **Expected:** The dialog closes, and nothing is discarded.
+  - **Notes:**
+
 - [ ] `6A94` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
   - **Expected:** The page is dark.
   - **Notes:**
@@ -1009,4 +1087,4 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu closes.
   - **Notes:**
 
-**Afterwards:** Choose **Light** in the Appearance menu, then run Restore the Seed Data.
+**Afterwards:** Choose **Light** in the Appearance menu, then run Reset the Database, ending on the **Sign in** page without signing in.

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-reporting-lines-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Acceptance, Feature Teams
@@ -158,7 +158,7 @@ Run the test cases in order, in about 30 minutes, straight after [Reporting Line
 
 - [ ] `E7C3` Select **Today**.
   - **Expected:**
-    - The text below the date row is gone.
+    - The **Date** box shows today.
     - `Tide team` has `Ada Quill`, `Bram Oakes` and `Cleo Marsh` under its card.
     - `Harbour team`'s first card is `Dara Finch`'s, with `Emil Stone` under it.
   - **Notes:**

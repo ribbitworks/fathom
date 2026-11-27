@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-product-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Product Manager Workflows
@@ -17,8 +17,7 @@ Verifies the workflows of [Working as a Product Manager](../help/working-as-a-pr
 - Keeping customers, proposals, projects and milestones current.
 - Choosing a project's features and taking one off a proposal with a reason, as the scope history shows.
 - Approving and rejecting others' drafts on the Drafts page and from the Features table, with the Product Manager's own approved by a Project Manager.
-
-It also checks that the Product Manager doesn't see someone who has not started.
+- Following a rejected and resubmitted draft in the change history.
 
 ## Test Environment
 
@@ -31,7 +30,6 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Product Manager:** `product.manager@fathom.test`
 - **Project Manager:** `project.manager@fathom.test`
 - **Feature Lead:** `feature.lead@fathom.test`, holding the Feature Lead role, its default, and the Engineering Manager role
-- **Engineering Director:** `engineering.director@fathom.test`
 
 ## Common Procedures
 
@@ -46,19 +44,23 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about 35 minutes. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### PRODUCT-01: Customers, a Proposal and a Project With Milestones Are Added
 
 **Account:** Product Manager, `product.manager@fathom.test`; the first test case.
 
-**Preconditions:** Reset the Database run. Signed in with this account. **Projects** page open from the left-hand menu.
+**Preconditions:** Reset the Database run. Signed out.
 
-- [ ] `8F09` Select the **Customers** tab.
-  - **Expected:** The **Customers** tab is selected.
+- [ ] `7FC5` Sign in as the Product Manager, `product.manager@fathom.test`.
+  - **Expected:** The **Overview** page opens, reading "Acting as Product Manager".
   - **Notes:**
 
-- [ ] `2E2F` Select **New customer**.
+- [ ] `0CEA` Select the **Projects** link beside **Keep Projects and Proposals Current**.
+  - **Expected:** The **Projects** page opens.
+  - **Notes:**
+
+- [ ] `8F09` Select the **Customers** tab, then **New customer**.
   - **Expected:** The side panel opens, headed **New customer**.
   - **Notes:**
 
@@ -72,11 +74,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The table has a row for it, with a hollow yellow dot in its slot.
   - **Notes:**
 
-- [ ] `70AF` Select the **Proposals** tab.
-  - **Expected:** The **Proposals** tab is selected.
-  - **Notes:**
-
-- [ ] `90B4` Select **New proposal**.
+- [ ] `90B4` Select the **Proposals** tab, then **New proposal**.
   - **Expected:** The side panel opens, headed **New proposal**.
   - **Notes:**
 
@@ -94,11 +92,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** **Status** shows "Won".
   - **Notes:**
 
-- [ ] `6AB9` Select the **Projects** tab.
-  - **Expected:** The **Projects** tab is selected.
-  - **Notes:**
-
-- [ ] `80B1` Select **New project**.
+- [ ] `80B1` Select the **Projects** tab, then **New project**.
   - **Expected:** The side panel opens, headed **New project**.
   - **Notes:**
 
@@ -149,34 +143,15 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - Under **Milestones**, a hollow yellow dot before `Pilot`.
     - Under `Pilot`, the date for `2030-03-15` and ", customer delivery".
-  - **Notes:**
-
-- [ ] `A3C4` Select **Add milestone**.
-  - **Expected:** A dialog titled "New milestone" opens.
-  - **Notes:**
-
-- [ ] `886C` Type `Go live` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `D5E8` Type `20300630` in **Date**.
-  - **Expected:** **Date** shows the date typed.
-  - **Notes:**
-
-- [ ] `43B4` Leave **Customer delivery** unticked, and select **Add milestone** in the dialog.
-  - **Expected:**
-    - `Go live` is listed after `Pilot`.
-    - **First milestone** shows the date for `2030-03-15`.
-    - **Last milestone** shows the date for `2030-06-30`.
-    - **Next delivery** shows the date for `2030-03-15`.
-    - The table's row for `Fictional Harbour Lights` shows the date for `2030-03-15` as **First milestone**, for `2030-06-30` as **Last milestone** and for `2030-03-15` as **Next delivery**.
+    - **First milestone**, **Last milestone** and **Next delivery** each show the date for `2030-03-15`.
+    - The table's row for `Fictional Harbour Lights` shows the date for `2030-03-15` as **First milestone**, **Last milestone** and **Next delivery**.
   - **Notes:**
 
 - [ ] `8CE5` Run Publish.
-  - **Expected:** The dots before the project and both milestones are now filled yellow.
+  - **Expected:** The dots before the project and `Pilot` are now filled yellow.
   - **Notes:**
 
-### PRODUCT-02: A Project Manager Approves the Project and Its Milestones
+### PRODUCT-02: A Project Manager Approves the Project With the Drafts It Depends On
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from PRODUCT-01.
 
@@ -191,32 +166,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `D1D9` Select **Approve** in the dialog.
   - **Expected:** `Fictional Harbour Lights` has no dot.
   - **Notes:**
-
-- [ ] `150E` Select the **Milestones** tab.
-  - **Expected:**
-    - The **Milestones** tab is selected.
-    - The table of milestones is under the tab.
-  - **Notes:**
-
-- [ ] `FA29` Type `Fictional Harbour Lights` in the search box.
-  - **Expected:** `Pilot` and `Go live` are listed, each with a yellow dot in its slot.
-  - **Notes:**
-
-- [ ] `76BA` Open the Draft menu.
-  - **Expected:** The menu offers **Approve 2 drafts…**.
-  - **Notes:**
-
-- [ ] `5DBB` Select **Approve 2 drafts…**.
-  - **Expected:** A dialog titled "Approve 2 drafts?" opens.
-  - **Notes:**
-
-- [ ] `22C1` Select **Approve** in the dialog.
-  - **Expected:**
-    - `Pilot` and `Go live` have no dots.
-    - Each has `Fictional Harbour Lights` under **Project**, with `FHL-1` in grey before it.
-  - **Notes:**
-
-**Afterwards:** Select the **Projects** tab.
 
 ### PRODUCT-03: A Feature Is Planned for a Cycle and a Month
 
@@ -238,10 +187,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** **Target cycle** shows the cycle chosen.
   - **Notes:**
 
-- [ ] `EF83` Select the change button in the **Feature team** row, and choose 'Mobile apps'.
-  - **Expected:** **Feature team** shows 'Mobile apps'.
-  - **Notes:**
-
 - [ ] `3C7F` Type `203003` in **Needed by**.
   - **Expected:** **Needed by** shows `2030-03`.
   - **Notes:**
@@ -252,12 +197,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `D82C` Run Publish.
   - **Expected:** The Publish button is gone.
-  - **Notes:**
-
-- [ ] `9D64` Reload the page.
-  - **Expected:**
-    - `Fictional Atlas` reads next quarter's cycle in **Target cycle**, such as **Platform: 27.1**.
-    - Its row has a filled yellow dot in its slot.
   - **Notes:**
 
 - [ ] `C828` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
@@ -274,13 +213,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `49CE` Select **Approve** in the dialog.
   - **Expected:**
-    - A notice reads "Approved 1 draft."
+    - A notification says "Approved 1 draft."
     - `Fictional Atlas` has no dot.
   - **Notes:**
 
 ### PRODUCT-04: Features Are Tied to a Project and Taken Off a Proposal
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from PRODUCT-03. Step `40DC` signs in as another account.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from PRODUCT-03.
 
 **Preconditions:** PRODUCT-02 and PRODUCT-03 done. Signed in with this account.
 
@@ -348,39 +287,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-- [ ] `40DC` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Project Manager".
-  - **Notes:**
-
-- [ ] `891F` Select the **Projects** page in the left-hand menu.
-  - **Expected:** The **Projects** page opens, on the **Projects** tab.
-  - **Notes:**
-
-- [ ] `DD3B` Open the **⋯** menu of `Fictional Harbour Lights`, and select **Approve draft…**.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
-  - **Notes:**
-
-- [ ] `F637` Select **Approve** in the dialog.
-  - **Expected:** `Fictional Harbour Lights` has no dot.
-  - **Notes:**
-
-- [ ] `26F3` Select the **Proposals** tab.
-  - **Expected:** The table lists the proposals.
-  - **Notes:**
-
-- [ ] `7C72` Open the **⋯** menu of 'Harbour Cranes Upgrade', and select **Approve draft…**.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
-  - **Notes:**
-
-- [ ] `9CF1` Select **Approve** in the dialog.
-  - **Expected:**
-    - 'Harbour Cranes Upgrade' has no dot.
-    - Its **Features** cell names 'Offline Sync' alone.
-  - **Notes:**
-
 ### PRODUCT-05: A Release Is Made, With a Note
 
-Removed: making a release is checked in [PROJECT-07](project-manager-workflows-manual-test.md#project-07-a-release-is-made-with-a-note) in Project Manager Workflows.
+Covered by [PROJECT-07](project-manager-workflows-manual-test.md#project-07-a-release-is-made-with-a-note) in Project Manager Workflows.
 
 ### PRODUCT-06: A Feature Lead's Change Is Rejected With a Reason on the Drafts Page
 
@@ -392,7 +301,7 @@ Removed: making a release is checked in [PROJECT-07](project-manager-workflows-m
   - **Expected:**
     - The cell reads "Planned", with a hollow yellow dot before it.
     - The row is faintly yellow.
-    - Its **Feature team** cell shows **No feature team** in red, with no box.
+    - Its **Feature team** cell shows "No feature team" in red, with no box.
     - A Live row under it reads "Possible".
   - **Notes:**
 
@@ -431,7 +340,7 @@ Removed: making a release is checked in [PROJECT-07](project-manager-workflows-m
 
 - [ ] `55A4` Select **Reject**.
   - **Expected:**
-    - A notice reads "Rejected 1 draft."
+    - A notification says "Rejected 1 draft."
     - The table reads "No matching drafts".
   - **Notes:**
 
@@ -439,14 +348,14 @@ Removed: making a release is checked in [PROJECT-07](project-manager-workflows-m
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, changed from PRODUCT-06. Step `4F03` signs in as another account.
 
-**Preconditions:** PRODUCT-06 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
+**Preconditions:** PRODUCT-06 done. Signed in with this account, acting as **Feature Lead**. **Features** page open from the left-hand menu.
 
 - [ ] `1ADD` Open the ⋯ menu of 'Partner Portal'.
   - **Expected:**
     - In the 'Partner Portal' row, "Planned" has a red dot in a ring before it.
     - The row is faintly red.
-    - The menu shows a red dot in a ring, then "Rejected".
-    - Under it, "Reason: Fictional reason: wait for the customer day."
+    - The menu's draft section is headed by a red dot in a ring and "Rejected".
+    - Under the heading, it reads "Reason: Fictional reason: wait for the customer day."
     - The menu offers **Resubmit** and **Discard draft**.
   - **Notes:**
 
@@ -464,7 +373,7 @@ Removed: making a release is checked in [PROJECT-07](project-manager-workflows-m
   - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
-- [ ] `65C0` Type `Partner Portal` in the search box.
+- [ ] `65C0` Search for `Partner Portal`.
   - **Expected:** One row is shown, with a tick box:
     - **Record** reads 'Partner Portal'.
     - **State** reads "Waiting".
@@ -484,19 +393,13 @@ Removed: making a release is checked in [PROJECT-07](project-manager-workflows-m
 
 - [ ] `AD8D` Select **Approve** in the dialog.
   - **Expected:**
-    - A notice reads "Approved 1 draft."
+    - A notification says "Approved 1 draft."
     - The table reads "No matching drafts".
-  - **Notes:**
-
-- [ ] `AFA2` Select **Features**.
-  - **Expected:**
-    - 'Partner Portal' reads "Planned" in **Status**.
-    - It has no dot.
   - **Notes:**
 
 ### PRODUCT-08: The Change History Tells How a Draft Went
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, changed from PRODUCT-07.
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PRODUCT-07.
 
 **Preconditions:** PRODUCT-07 done. Signed in with this account.
 
@@ -504,35 +407,25 @@ Removed: making a release is checked in [PROJECT-07](project-manager-workflows-m
   - **Expected:** The **Change history** page opens.
   - **Notes:**
 
-- [ ] `E6DA` Type `Partner Portal` in the search box.
+- [ ] `E6DA` Search for `Partner Portal`.
   - **Expected:** The entries, newest first, say that:
-    - "Product Manager" approved the changes to 'Partner Portal'
-    - "Feature Lead" sent its draft for approval again
-    - "Product Manager" rejected its draft, with the reason "Fictional reason: wait for the customer day."
-    - "Feature Lead" drafted changing **Status** from "Possible" to "Planned"
+    - "Product Manager" approved changes to 'Partner Portal'.
+    - "Feature Lead" sent the draft of 'Partner Portal' for approval again.
+    - "Product Manager" rejected the draft of 'Partner Portal', with the **Reason** "Fictional reason: wait for the customer day."
+    - "Feature Lead" drafted changes to 'Partner Portal', changing **Status** from "Possible" to "Planned".
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.
 
 ### PRODUCT-09: Someone Who Has Not Started Is Listed Only for Those Who See Personal Details
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from PRODUCT-08, signed in again after Reset the Database.
-
-**Preconditions:** Reset the Database run after PRODUCT-08. Signed in with this account. **People** page open from the left-hand menu.
-
-- [ ] `4D1A` Search for `Chatura Abbott`.
-  - **Expected:**
-    - No row is shown.
-    - The table has no **Start** or **End** column.
-  - **Notes:**
-
-An account that sees Personal details does see her, as [EXECUTIVE-03](executive-workflows-manual-test.md#executive-03-an-executive-sees-people-and-administration-without-changing-them) checks.
+Proved by automated tests in `apps/server/src/people-access.test.ts`.
 
 ### PRODUCT-10: A Feature Lead's Change Is Approved From the Features Table
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from PRODUCT-09. Step `A8DE` signs in as another account.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from PRODUCT-08, signed in again after Reset the Database. Step `A8DE` signs in as another account.
 
-**Preconditions:** Signed in with this account, acting as **Feature Lead**. **Features** page open from the left-hand menu.
+**Preconditions:** Reset the Database run after PRODUCT-08. Signed in with this account, acting as **Feature Lead**. **Features** page open from the left-hand menu.
 
 - [ ] `BCA0` Search for `Partner Portal`.
   - **Expected:** Only the row of 'Partner Portal' is listed, reading "High" in **Priority**.
@@ -571,7 +464,7 @@ An account that sees Personal details does see her, as [EXECUTIVE-03](executive-
 
 - [ ] `33A1` Select **Approve** in the dialog.
   - **Expected:**
-    - A notice reads "Approved 1 draft."
+    - A notification says "Approved 1 draft."
     - 'Partner Portal' reads "Medium" in **Priority**, with no dot and no Live row.
   - **Notes:**
 

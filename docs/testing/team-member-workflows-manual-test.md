@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-team-member.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Team Member Workflows
@@ -13,10 +13,10 @@ last_updated: "2026-11-25"
 
 Verifies the workflows of [Working as a Team Member](../help/working-as-a-team-member.md) on the seed data, without changing any record:
 
+- The role the Overview says the Team Member is acting as, and its link to the org chart.
 - Finding a person on the org chart, and opening their details there and on People.
 - Seeing what each cycle and release holds on Features, and when each release ships on the Releases timeline.
 - Looking at a project's details and its milestones.
-- Keeping a personal view's frozen columns, widths and column order.
 
 ## Test Environment
 
@@ -32,20 +32,28 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the lock, the Group by menu, the details button, the side panel, the finder, the teams switch and the card.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, the Overview and its jobs, marks, the lock, the Group by menu, the details button, the side panel, the finder, the teams switch and the card.
 
 ## Test Cases
 
-Run the test cases in order, in about 20 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about 20 minutes. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### MEMBER-01: A Team Member Finds Someone on the Org Chart
 
 **Account:** Team Member, `team.member@fathom.test`; the first test case.
 
-**Preconditions:** Reset the Database run. Signed in with this account.
+**Preconditions:** Reset the Database run. Signed out.
 
-- [ ] `E5D8` Select the **Org chart** page in the left-hand menu.
-  - **Expected:** The chart shows each person's name, position, and the team they lead.
+- [ ] `11C1` Sign in as the Team Member, `team.member@fathom.test`.
+  - **Expected:**
+    - The **Overview** page opens.
+    - It reads "Acting as Team Member".
+  - **Notes:**
+
+- [ ] `E5D8` Select the **Org chart** link beside **Find Someone**.
+  - **Expected:**
+    - The **Org chart** page opens.
+    - The chart shows each person's name, position, and the team they lead.
   - **Notes:**
 
 - [ ] `62C8` Select the name on the card for 'Lorenza Thiel'.
@@ -195,71 +203,4 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 
 ### MEMBER-04: A Personal View Keeps Frozen Columns, Widths and Column Order
 
-**Account:** Team Member, `team.member@fathom.test`, the same as MEMBER-03.
-
-**Preconditions:** **People** page open from the left-hand menu, with no view applied.
-
-- [ ] `FAFD` Open the **ID** column menu, and select **Freeze up to this column**.
-  - **Expected:** The menu closes.
-  - **Notes:**
-
-- [ ] `AF91` Scroll the table sideways to the right.
-  - **Expected:**
-    - **Name** and **ID** stay in place.
-    - A thin grey line and a soft shadow are at the right of **ID**.
-    - The other columns pass under them.
-  - **Notes:**
-
-- [ ] `D989` Scroll back to the left.
-  - **Expected:** The table is back at its left end.
-  - **Notes:**
-
-- [ ] `22D8` Drag the right edge of the **Name** column's name to the right by about the width of the column.
-  - **Expected:**
-    - A short blue line shows on the edge.
-    - **Name** widens with the pointer.
-  - **Notes:**
-
-- [ ] `BC20` Select **Position** in the header, then **Move right**.
-  - **Expected:**
-    - **Position** moves one place to the right.
-    - No dot shows before its name.
-    - No Publish button is in the top bar.
-  - **Notes:**
-
-- [ ] `7C12` Open the Views menu, and select **Save view…**.
-  - **Expected:**
-    - A dialog titled "Save view" shows **Name**.
-    - Under **Includes**, it shows **Frozen** up to **ID**, **Column order** **Moved**, and **Widths** **Name**.
-    - It offers no choice about sharing.
-  - **Notes:**
-
-- [ ] `3B23` Type `Fictional layout` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `B685` Select **Save view**.
-  - **Expected:**
-    - The dialog closes.
-    - The Views button reads `Fictional layout`.
-  - **Notes:**
-
-- [ ] `C305` Open the Views menu, and select **Clear view**.
-  - **Expected:**
-    - Only **Name** stays in place when the table scrolls sideways.
-    - **Position** is in its original place.
-    - **Name** is at its original width.
-  - **Notes:**
-
-- [ ] `C860` Open the Views menu, and select `Fictional layout` under **My views**.
-  - **Expected:**
-    - **Name** and **ID** are frozen.
-    - **Name** is about twice its original width.
-    - **Position** is one place to the right of its original place.
-  - **Notes:**
-
-- [ ] `89C7` Open the Views menu, and select **Delete view**.
-  - **Expected:**
-    - A notice reads "Deleted the Fictional layout view."
-    - The notice offers **Undo**.
-  - **Notes:**
+Proved by automated tests in `apps/web/src/people-page-saved-views.test.tsx`.

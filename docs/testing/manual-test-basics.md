@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test Basics
@@ -166,7 +166,7 @@ This deletes the installation's containers, its database, its secrets and its fo
 ### Discard the Unpublished Changes
 
 1. Select the **⋯** button beside the Publish button, then **Discard all…**.
-2. In the dialog titled **Discard** followed by the number of changes, select **Discard**.
+2. In the dialog titled "Discard" followed by the number of changes and a question mark, such as "Discard 4 changes?", select **Discard**.
 3. Confirm that a notification says "Discarded" followed by the number of changes, and that the Publish button is gone.
 
 ## Terms
@@ -174,7 +174,13 @@ This deletes the installation's containers, its database, its secrets and its fo
 - **Page and left-hand menu:** Fathom's pages are listed in the left-hand menu, the dark sidebar down the left of the window, in sections such as **Plan** and **People**. "Select the **Features** page" means selecting **Features** there.
   - Collapsed menu: when the menu is collapsed to a narrow rail of icons, point at an icon to see its page's name, or select the button at the top of the rail, **Expand sidebar**, to show the names again.
   - Last view: opening a page from the menu shows it as that account last left it, with the tab, search, filters, sorting and grouping it had.
-- **Top bar and account menu:** the bar across the top of the window. The account menu opens from the account's name and initials at its right, and holds **Appearance**, with **System**, **Light** and **Dark**, and **Sign out**.
+- **Top bar and account menu:** the bar across the top of the window. The account menu opens from the account's name and initials at its right.
+  - Its top: the account's email address, then its role's name, or the Role menu for an account with more than one role.
+  - Its items: **Change name…**, **Change password…**, **Appearance**, with **System**, **Light** and **Dark**, and **Sign out**.
+- **Overview:** the first page in the left-hand menu, which Fathom opens on after signing in. Under a greeting, a line says which role the account is acting as, such as "Acting as Product Manager", and the role's jobs follow under headings such as **Plan** and **People**.
+  - **Job:** a name on the Overview under an area's heading, such as **Find Someone** under **People**, with a link to the page where it's done and a **Help** link beside it.
+  - A job's tasks: selecting a job's name shows its tasks under it, and selecting it again hides them.
+  - A job's links: the link beside a job or task opens the page where it is done, and its **Help** link opens its section of the role's Help page.
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance** in the account menu.
 - **Role menu:** the choices under **Role** in the account menu, one for each role the account holds, shown only for an account with more than one role.
 - **Publish button:** the button in the top bar that reads **Publish** followed by the number of changes waiting, such as **Publish 4 changes**.

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Feature Lead Workflows
@@ -46,13 +46,27 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### LEAD-01: A Feature Lead Proposes a Lead and a Member
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser; the first test case. Step `76A1` signs in as another account in the second browser.
 
-**Preconditions:** Reset the Database run. Signed in with this account, acting as **Feature Lead**. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
+**Preconditions:** Reset the Database run. Signed out.
+
+- [ ] `18D7` Sign in as the Feature Lead, `feature.lead@fathom.test`.
+  - **Expected:** The **Overview** page opens, reading "Acting as Feature Lead".
+  - **Notes:**
+
+- [ ] `E4B7` Select **Staff the Feature Teams**.
+  - **Expected:** Its tasks show under it, among them **Change a Team's Lead or Members**.
+  - **Notes:**
+
+- [ ] `13E2` Select the **Org chart › Feature teams** link beside **Change a Team's Lead or Members**.
+  - **Expected:**
+    - The **Org chart** page opens.
+    - **Feature teams** is chosen in the teams switch.
+  - **Notes:**
 
 - [ ] `DAF2` Select the Feature teams button, then 'Platform reliability'.
   - **Expected:**
@@ -67,7 +81,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `F276` In the second browser, run Discard the Unpublished Changes.
   - **Expected:**
-    - A notice says "Discarded" followed by the number of changes.
+    - A notification says "Discarded" followed by the number of changes.
     - The **Publish** button is gone.
   - **Notes:**
 
@@ -141,7 +155,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `DC0A` Select **Approve** in the dialog.
   - **Expected:**
     - The dialog closes.
-    - A notice begins "Approved".
+    - A notification says "Approved 1 draft."
   - **Notes:**
 
 - [ ] `B3E6` Select the **Org chart** page in the left-hand menu.
@@ -228,7 +242,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `384C` Select **Approve** in the dialog.
   - **Expected:**
-    - A notice reads "Approved 1 draft."
+    - A notification says "Approved 1 draft."
     - 'Data Retention Controls' has no dot.
     - It reads "In progress" in **Status**, "40 h" in **Effort**, 'Platform reliability' in **Feature team** and `Fictional retention note` in **Notes**.
   - **Notes:**
@@ -385,4 +399,4 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### LEAD-08: A Feature Lead Keeps Views of One Schedule and the Board
 
-Removed: a view on Features and its board is checked in [VIEW-13](saved-views-manual-test.md#view-13-a-view-on-features-is-shared-by-its-table-and-board) in Saved Views, and the board in [LEAD-04](#lead-04-what-each-release-and-cycle-holds-in-the-table-and-on-the-board).
+Covered by [VIEW-13](saved-views-manual-test.md#view-13-a-view-on-features-is-shared-by-its-table-and-board) in Saved Views and [LEAD-04](#lead-04-what-each-release-and-cycle-holds-in-the-table-and-on-the-board).

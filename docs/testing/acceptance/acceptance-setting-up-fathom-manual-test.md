@@ -64,12 +64,6 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
     - The top bar's right end shows `Ines Harrow`.
   - **Notes:**
 
-- [ ] `4BE3` Select the **People** page in the left-hand menu.
-  - **Expected:**
-    - The table has its column names and only the empty row.
-    - The count above the table reads "0 people on" and today's date, such as "0 people on Nov 20, 2026".
-  - **Notes:**
-
 ### SETUP-02: The Positions Are Pasted In
 
 **Account:** Workforce Administrator, `ines.harrow@fathom.test`, the same as SETUP-01.
@@ -143,7 +137,9 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
 **Preconditions:** SETUP-03 done.
 
 - [ ] `5DBC` Select the **People** page in the left-hand menu.
-  - **Expected:** The **People** page opens, with only the empty row.
+  - **Expected:**
+    - The table has its column names and only the empty row.
+    - The count above the table reads "0 people on" and today's date, such as "0 people on Nov 20, 2026".
   - **Notes:**
 
 - [ ] `A7E9` Select **New column**.
@@ -321,11 +317,9 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
   - **Notes:**
 
 - [ ] `641B` Select **New person** at the top right of the page.
-  - **Expected:** The details panel opens, headed **New person**.
-  - **Notes:**
-
-- [ ] `FD98` Select the change button beside **State**, and choose **Hired**.
-  - **Expected:** **State** reads "Hired".
+  - **Expected:**
+    - The details panel opens, headed **New person**.
+    - **State** reads "Hired".
   - **Notes:**
 
 - [ ] `CFE2` Type `Odile Brandt` in **Name**.
