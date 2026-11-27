@@ -44,7 +44,7 @@ test.afterEach(async ({ page }) => {
   }
 });
 
-test("fills a column drafted to be added, and leaves approving it to a role that approves both", async ({
+test("fills a column drafted to be added, whose approval goes with the feature's", async ({
   page,
   browser,
 }) => {
@@ -80,8 +80,8 @@ test("fills a column drafted to be added, and leaves approving it to a role that
   await page.reload();
   await expect(cell).toContainText("7");
 
-  // Then the Product Manager, who approves features but not configuration, is told another approver
-  // must approve the new column with the feature, and approves nothing
+  // Then the Product Manager, who approves features and their columns, is asked to approve the new
+  // column with the feature, and approves nothing once that is cancelled
   const approverContext = await browser.newContext({
     storageState: signedInAs("productManager"),
   });
@@ -93,11 +93,11 @@ test("fills a column drafted to be added, and leaves approving it to a role that
     .last()
     .click();
   await approver.getByRole("menuitem", { name: /^Approve/u }).click();
-  const dialog = approver.getByRole("dialog", {
-    name: "Another approver needed",
-  });
-  await expect(dialog).toContainText(name);
-  await dialog.getByRole("button", { name: "Close", exact: true }).click();
+  const dialog = approver.getByRole("dialog", { name: "Approve 2 drafts?" });
+  await expect(dialog).toContainText(`the feature ${featureName}`);
+  await expect(dialog).toContainText(`the column ${name}`);
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(dialog).toBeHidden();
   const after = (await send(approver, "GET", "/api/projects")).body as {
     features: { id: string; draft?: unknown }[];
   };

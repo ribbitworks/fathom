@@ -167,7 +167,7 @@ describe("a feature given a value in a column drafted to be added", () => {
     expect(await isLive(fields, column.id)).toBe(false);
   });
 
-  it("is approved with the column by an approver who approves both features and configuration", async () => {
+  it("is approved with the column, holding the feature's value", async () => {
     // Given a feature scored in a column drafted to be added
     const { column, feature } = await scoredDrafts();
 
