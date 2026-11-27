@@ -137,23 +137,23 @@ To use it on **People**, add a column that picks from it. See [Lists](lists.md#m
 
 ### Set Hours and Working Days
 
-1. On **Capacity**, select **Settings**.
+1. Open **Planning settings**, under **Administration**.
 1. Select the value of **Hours a day** or **Working days a month**.
 1. Type the new value, and press Enter.
 1. Select **Publish**.
 
-Once it's approved, estimates on **Features** read differently in person-days, weeks and months. See [Capacity](capacity.md#change-a-setting).
+Once it's approved, estimates on **Features** read differently in person-days, weeks and months. To choose which days are working days, select the value of **Working days**, and tick them. See [Planning settings](planning-settings.md#change-a-setting).
 
 ### Set Ramp-Up for New Starters
 
 Ramp-up is how much of their full output a new starter delivers in each of their first months.
 
-1. On **Capacity**, in **Settings**, select **Add month** under **Ramp-up for new starters**.
+1. On **Planning settings**, select **Add month** under **Ramp-up for new starters**.
 1. Point at the new month, and select its pencil.
 1. Type its share, such as `50`.
 1. Select **Publish**.
 
-To remove a month, select the **×** at the right of its row. See [Capacity](capacity.md#add-or-remove-a-month-of-ramp-up).
+To remove a month, select the **×** at the right of its row. See [Planning settings](planning-settings.md#add-or-remove-a-month-of-ramp-up).
 
 ### Add a Schedule and Its Cycles
 

@@ -1,0 +1,40 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The day boxes' layout and colours. */
+
+.days {
+  display: flex;
+  flex-wrap: nowrap;
+  width: fit-content;
+  gap: 4px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 3px;
+  margin-left: -4px;
+  border: 1px solid transparent;
+  border-radius: var(--mantine-radius-sm);
+}
+
+.days[data-refused] {
+  border-color: var(--mantine-color-error);
+}
+
+/* One width for every box, so ticking a day, whose word turns semibold, moves none of the others. */
+.day {
+  flex: none;
+  width: 44px;
+  padding-inline: 0;
+  font-weight: 400;
+}
+
+.day[aria-pressed="true"] {
+  border: 1px solid var(--mantine-primary-color-filled);
+  font-weight: 600;
+}
+
+/* Mantine's light tint is darker than an unticked box's grey in dark mode, so a ticked day takes a
+   deeper accent that reads lighter than the page and the unticked days. */
+:where([data-mantine-color-scheme="dark"]) .day[aria-pressed="true"] {
+  background-color: var(--mantine-color-sea-8);
+  color: var(--mantine-color-sea-0);
+}

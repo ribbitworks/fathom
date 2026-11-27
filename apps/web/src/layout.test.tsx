@@ -60,7 +60,7 @@ describe("the pages a role opens", () => {
 });
 
 describe("the sidebar", () => {
-  it("shows Capacity to those who see configuration", async () => {
+  it("shows Planning settings, not Capacity, to those who see configuration alone", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
@@ -72,9 +72,10 @@ describe("the sidebar", () => {
     await screen.findByText(overviewGreeting);
     expect(
       within(sidebar())
-        .getByRole("link", { name: "Capacity" })
+        .getByRole("link", { name: "Planning settings" })
         .getAttribute("href"),
-    ).toBe("/capacity");
+    ).toBe("/planning-settings");
+    expect(within(sidebar()).queryByText("Capacity")).toBeNull();
   });
 
   it("leaves Capacity out for those who see allocations but not configuration", async () => {
@@ -176,7 +177,7 @@ describe("the sidebar", () => {
 });
 
 describe("the sidebar's sections", () => {
-  it("puts Lists under Administration, after Settings", async () => {
+  it("puts Lists then Planning settings under Administration, after Settings", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
@@ -197,7 +198,7 @@ describe("the sidebar's sections", () => {
       within(administration)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["Accounts", "Roles", "Settings", "Lists"]);
+    ).toEqual(["Accounts", "Roles", "Settings", "Lists", "Planning settings"]);
   });
 });
 

@@ -121,7 +121,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `3DFA` Read the summary.
   - **Expected:**
-    - **Sees:** **Projects**, **Features**, **Activities**, **Releases**, **People**, **People on other dates**, **People on future dates**, **Org chart**, **Org chart on other dates**, **Org chart on future dates**, **Capacity**, **Feature teams**, **Feature teams grouped by manager**, **Allocations grouped by manager**, **Allocations**, **Lists**, **Drafts** and **Change history**.
+    - **Sees:** **Projects**, **Features**, **Activities**, **Releases**, **People**, **People on other dates**, **People on future dates**, **Org chart**, **Org chart on other dates**, **Org chart on future dates**, **Capacity**, **Feature teams**, **Feature teams grouped by manager**, **Allocations grouped by manager**, **Allocations**, **Lists**, **Planning settings**, **Drafts** and **Change history**.
     - **Doesn't see:** **Accounts**, **Roles**, **Settings**, **Data classes** and **Access history**.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
     - **Cannot** includes "Cannot change allocations.", "Cannot change feature teams or which team a feature has.", "Cannot reclassify data." and "Cannot approve their own drafted changes."
@@ -331,7 +331,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `E6AE` Tick **View** on the **Configuration** row.
-  - **Expected:** Under **Sees**, **Lists** is in bold teal.
+  - **Expected:** Under **Sees**, **Lists** and **Planning settings** are in bold teal.
   - **Notes:**
 
 - [ ] `1C6D` Select **Save**.

@@ -41,11 +41,7 @@ export const opensWith = (needs: PageNeeds, access: ClassAccess) =>
       (view === undefined || seesView(view, access)),
   );
 
-export const capacityModeNames = [
-  "feature-teams",
-  "allocations",
-  "settings",
-] as const;
+export const capacityModeNames = ["feature-teams", "allocations"] as const;
 
 export type CapacityMode = (typeof capacityModeNames)[number];
 
@@ -64,7 +60,6 @@ export const capacityModeNeeds: Record<CapacityMode, PageNeed> = {
     with: allocationsOthers,
     view: "allocations",
   },
-  settings: { permission: "configuration:view" },
 };
 
 // The pages that need a permission; every other page, such as Help, is open to everyone signed in.
@@ -80,6 +75,7 @@ export const pageNeeds = {
   // The page opens for a role that sees any of its modes.
   capacity: Object.values(capacityModeNeeds),
   lists: "configuration:view",
+  "planning-settings": "configuration:view",
   accounts: "administration:view",
   roles: "administration:view",
   settings: "administration:view",

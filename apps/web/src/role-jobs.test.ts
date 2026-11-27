@@ -302,6 +302,12 @@ describe("a job's place and Help", () => {
       jobOf(["plan:view", "plan:edit"], "Move Work When Dates Change")?.where
         .item.label,
     ).toBe("Projects");
+    expect(
+      jobOf(
+        ["configuration:view", "configuration:edit"],
+        "Set the Working Time and Cycles",
+      )?.where.item.label,
+    ).toBe("Planning settings");
   });
 
   it("is the acting role's own Help page where it has the heading, otherwise the first that does", () => {
@@ -320,7 +326,6 @@ describe("a part's link", () => {
     ["Drafts", "To decide", "/drafts", { tab: "decide" }],
     ["Capacity", "Feature teams", "/capacity", { mode: "feature-teams" }],
     ["Capacity", "Allocations", "/capacity", { mode: "allocations" }],
-    ["Capacity", "Settings", "/capacity", { mode: "settings" }],
     ["Org chart", "Feature teams", "/org-chart", { teams: "feature" }],
     ["Releases", "Schedules", "/releases/{-$streamId}", { tab: "schedules" }],
     ["People", "Metrics", "/people", { breakdown: [] }],
@@ -330,5 +335,14 @@ describe("a part's link", () => {
       part,
     });
     expect(where?.link).toMatchObject({ to, search });
+  });
+
+  it("leaves out a part the role doesn't open, though it opens the page", () => {
+    expect(
+      overviewPlace(access(["plan:view"]))({
+        page: "Drafts",
+        part: "To decide",
+      }),
+    ).toBeUndefined();
   });
 });

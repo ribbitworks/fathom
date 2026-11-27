@@ -80,7 +80,7 @@ An estimate is how much work the feature needs, in a unit such as person-days.
 1. Type a number in the feature's **Effort**, in the unit the column shows.
 1. To show another unit, open the **Effort** column's menu, and choose one under **Show in**.
 
-Each unit says what it stands for, such as **Person-days (8 hours)**. The hours come from the planning settings on [Capacity](capacity.md#in-settings).
+Each unit says what it stands for, such as **Person-days (8 hours)**. The hours come from the [Planning settings](planning-settings.md#marks-and-terms).
 
 You're done when **Effort** shows your estimate, with a hollow dot.
 

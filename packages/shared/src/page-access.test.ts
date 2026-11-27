@@ -4,7 +4,7 @@
 // role needs with one of them to open it.
 
 import { describe, expect, it } from "vitest";
-import type { Permission } from "./access.ts";
+import { type Permission, withImplied } from "./access.ts";
 import { type ClassAccess, defaultClasses } from "./data-classes.ts";
 import {
   capacityModeNeeds,
@@ -84,8 +84,31 @@ describe("the pages a role opens", () => {
   );
 
   it("opens a page through any one of its permissions", () => {
-    expect(opensWith(pageNeeds.capacity, access(["configuration:view"]))).toBe(
+    expect(opensWith(pageNeeds.drafts, access(["configuration:view"]))).toBe(
       true,
+    );
+  });
+});
+
+describe("the planning settings", () => {
+  it.each([
+    ["View Configuration", ["configuration:view"]],
+    ["Edit Configuration", withImplied(["configuration:edit"])],
+  ] as const)("open with %s", (_name, permissions) => {
+    expect(opensWith(pageNeeds["planning-settings"], access(permissions))).toBe(
+      true,
+    );
+  });
+
+  it("don't open without seeing configuration", () => {
+    expect(
+      opensWith(pageNeeds["planning-settings"], access(seesAllocations)),
+    ).toBe(false);
+  });
+
+  it("no longer open Capacity for a role that sees only configuration", () => {
+    expect(opensWith(pageNeeds.capacity, access(["configuration:view"]))).toBe(
+      false,
     );
   });
 });

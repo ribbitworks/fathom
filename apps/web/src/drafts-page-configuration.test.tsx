@@ -509,8 +509,8 @@ describe("the Drafts page", () => {
         }),
       ]);
     });
-    expect(await showOn("Planning settings", "Capacity")).toBe(
-      "/capacity?mode=settings",
+    expect(await showOn("Planning settings", "Planning settings")).toBe(
+      "/planning-settings",
     );
   });
 

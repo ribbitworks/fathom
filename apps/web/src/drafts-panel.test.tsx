@@ -179,7 +179,7 @@ describe("a draft's details", () => {
   });
 
   it("shows no key for a draft of the planning settings", () => {
-    show({ one: entry({ place: "capacity-settings" }) });
+    show({ one: entry({ place: "planning-settings" }) });
     expect(
       screen.queryByRole("button", { name: /copy link or key/u }),
     ).toBeNull();

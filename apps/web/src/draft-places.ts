@@ -3,7 +3,6 @@
 // Where a draft's record is shown, and its key.
 
 import {
-  capacityModeNeeds,
   type LinkedRecord,
   type PageNeeds,
   pageNeeds,
@@ -13,17 +12,17 @@ import {
 } from "@fathom/shared";
 import type { LinkOptions } from "@tanstack/react-router";
 
-export type DraftPlace = LinkedRecord | "capacity-settings";
+export type DraftPlace = LinkedRecord | "planning-settings";
 
 // The key of a draft's record, or none for the planning settings, which have no key.
 export const placeKey = (place: DraftPlace): RecordKeyOf | undefined =>
-  place === "capacity-settings"
+  place === "planning-settings"
     ? undefined
     : { kind: place.kind, keyNumber: place.keyNumber };
 
 // What each page a record opens on is called in a link to it, as People's Show on org chart calls
 // the Org chart.
-const pageNames: Record<RecordPage | "capacity", string> = {
+const pageNames: Record<RecordPage | "planning-settings", string> = {
   people: "People",
   lists: "Lists",
   releases: "Releases",
@@ -31,7 +30,7 @@ const pageNames: Record<RecordPage | "capacity", string> = {
   activities: "Activities",
   projects: "Projects",
   "org-chart": "org chart",
-  capacity: "Capacity",
+  "planning-settings": "Planning settings",
   accounts: "Accounts",
   roles: "Roles",
 };
@@ -43,13 +42,13 @@ export interface ShownPlace {
 }
 
 const settingsPlace: ShownPlace = {
-  pageName: pageNames.capacity,
-  needs: [capacityModeNeeds.settings],
-  address: { to: "/capacity", search: { mode: "settings" } },
+  pageName: pageNames["planning-settings"],
+  needs: pageNeeds["planning-settings"],
+  address: { to: "/planning-settings" },
 };
 
 export function shownPlace(place: DraftPlace): ShownPlace {
-  if (place === "capacity-settings") return settingsPlace;
+  if (place === "planning-settings") return settingsPlace;
   const page = recordPage(place);
   return {
     // The page is always one of the fixed pages.

@@ -1,19 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Capacity page's Allocations tab and the page's tabs.
+// Tests for the Capacity page's Allocations tab, Feature assignments' old addresses and Capacity's
+// saved views.
 
-import {
-  type Allocations,
-  monthsBetween,
-  type OrgChart,
-  startingPlanningSettings,
-} from "@fathom/shared";
+import { type Allocations, monthsBetween } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  address,
+  allocations,
+  chart,
+  grid,
+  openAllocations,
+  seesAllocations,
+  session,
+} from "./test-capacity.tsx";
+import {
   fictionalTeamMonths,
-  fictionalUser,
   gridNow,
   recordCell,
   monthsUrl,
@@ -23,110 +27,8 @@ import {
 import { anyMonthKey } from "./team-months.tsx";
 import { unseenFeatureChoice } from "./allocation-months.tsx";
 
-const allocations: Allocations = {
-  allocations: [
-    {
-      id: "a-1",
-      personId: "p-casey",
-      plannedHireId: null,
-      featureId: "f-checkout",
-      activityId: null,
-      months: { "2027-03": 50, "2027-05": null },
-    },
-    {
-      id: "a-2",
-      personId: null,
-      plannedHireId: "h-tester",
-      featureId: "f-checkout",
-      activityId: null,
-      months: { "2027-04": 100 },
-    },
-  ],
-  features: [
-    {
-      id: "f-checkout",
-      name: "Checkout",
-      meaning: "in-progress",
-      colour: null,
-    },
-  ],
-  activities: [],
-};
-
-const chart: OrgChart = {
-  people: [
-    {
-      id: "p-blair",
-      keyNumber: 1,
-      preferredName: "Blair Fictional",
-      employeeId: null,
-      position: null,
-      teamName: null,
-      teamColour: null,
-      managerId: null,
-    },
-    {
-      id: "h-tester",
-      keyNumber: 1,
-      preferredName: "Payments tester",
-      employeeId: null,
-      position: null,
-      teamName: null,
-      teamColour: null,
-      managerId: "p-blair",
-      planned: { expected: "2027-04" },
-    },
-  ],
-  drafted: [],
-};
-
-// What Allocations reads: allocations, the feature teams' months and the org chart's planned hires, with
-// the Personal details they need.
-const seesAllocations = [
-  "allocations:view",
-  "feature-teams:view",
-  "people:view",
-  "personal:view",
-];
-
-const session = (permissions: readonly string[]) => () =>
-  Response.json({ ...fictionalUser, permissions });
-
-// Capacity on the tab the search names, or Allocations.
-function openAllocations(
-  search = "",
-  {
-    permissions = [
-      ...seesAllocations,
-      "confidential:view",
-      "configuration:view",
-    ],
-    allocationsAnswer = () => Response.json(allocations),
-  }: {
-    permissions?: readonly string[];
-    allocationsAnswer?: () => Response;
-  } = {},
-) {
-  serverAnswers({
-    "GET /api/session": session(permissions),
-    [monthsUrl]: () => Response.json(fictionalTeamMonths),
-    "GET /api/allocations": allocationsAnswer,
-    "GET /api/org-chart": () => Response.json(chart),
-    "GET /api/planning-settings": () => Response.json(startingPlanningSettings),
-  });
-  const tabbed = search.includes("mode=")
-    ? search
-    : `${search === "" ? "?" : `${search}&`}mode=allocations`;
-  return renderApp(`/capacity${tabbed}`);
-}
-
-const grid = () => screen.findByRole("grid", { name: "Allocations by month" });
-
 const rowOf = (name: string) =>
   screen.getByText(name).closest("tr") as HTMLElement;
-
-const address = (history: ReturnType<typeof renderApp>) =>
-  decodeURIComponent(history.location.search);
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -419,8 +321,6 @@ describe("a feature's rename on Capacity's Allocations", () => {
   });
 });
 
-const tab = (name: string) => screen.getByRole("tab", { name });
-
 describe("Allocations kept to those over or under", () => {
   // Avery is over in April, on Checkout and Billing, and not allocated in March and from May; Casey
   // is under in March; Blair, and the planned hire from April, have a whole month throughout.
@@ -657,100 +557,6 @@ describe("Allocations kept to what someone is allocated to", () => {
   });
 });
 
-describe("the tabs of the Capacity page", () => {
-  it("opens on Feature teams for a role that sees every tab", async () => {
-    const history = openAllocations("?mode=feature-teams");
-    await screen.findByRole("grid", { name: "Feature teams by month" });
-
-    expect(
-      ["Feature teams", "Allocations", "Settings"].map((name) =>
-        tab(name).getAttribute("aria-selected"),
-      ),
-    ).toEqual(["true", "false", "false"]);
-    expect(address(history)).toBe("?mode=feature-teams");
-  });
-
-  it("switches to Settings and back, kept in the address", async () => {
-    const history = openAllocations();
-    await grid();
-
-    await userEvent.click(tab("Settings"));
-    await screen.findByText("Hours a day", { selector: "dt" });
-    expect(address(history)).toBe("?mode=settings");
-
-    await userEvent.click(tab("Allocations"));
-    await grid();
-    expect(address(history)).toBe("?mode=allocations");
-  });
-
-  it("keeps the tab as the view changes", async () => {
-    const history = openAllocations();
-    await grid();
-
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Search people" }),
-      "Casey",
-    );
-
-    await waitFor(() => {
-      expect(address(history)).toBe("?search=Casey&mode=allocations");
-    });
-  });
-
-  it("opens Allocations for People, its name before", async () => {
-    const history = openAllocations("?mode=people");
-    await grid();
-
-    expect(tab("Allocations").getAttribute("aria-selected")).toBe("true");
-    expect(address(history)).toBe("?mode=allocations");
-  });
-
-  it("keeps the tab shown in the address, not one the role doesn't see", async () => {
-    const history = openAllocations("?mode=settings", {
-      permissions: seesAllocations,
-    });
-    await screen.findByRole("grid", { name: "Feature teams by month" });
-
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Search people" }),
-      "Casey",
-    );
-
-    await waitFor(() => {
-      expect(address(history)).toBe("?search=Casey&mode=feature-teams");
-    });
-  });
-
-  it("shows Settings alone, with no tabs, to a role that sees only configuration", async () => {
-    openAllocations("", {
-      permissions: ["configuration:view", "people:view"],
-    });
-
-    await screen.findByText("Hours a day", { selector: "dt" });
-    expect(screen.queryByRole("tablist")).toBeNull();
-    expect(screen.queryByRole("grid")).toBeNull();
-  });
-
-  it("offers Allocations only with the feature teams and people its grid reads", async () => {
-    openAllocations("", {
-      permissions: ["allocations:view", "personal:view", "configuration:view"],
-    });
-
-    await screen.findByText("Hours a day", { selector: "dt" });
-    expect(screen.queryByRole("tablist")).toBeNull();
-  });
-
-  it("is not there for a role that sees no tab", async () => {
-    openAllocations("", {
-      permissions: ["allocations:view", "feature-teams:view", "people:view"],
-    });
-
-    expect(
-      await screen.findByText("There is no page at this address."),
-    ).toBeDefined();
-  });
-});
-
 describe("Feature assignments' old addresses", () => {
   const answered = () => {
     serverAnswers({
@@ -856,11 +662,4 @@ describe("Capacity's saved views", () => {
       ).toBe(offered);
     },
   );
-
-  it("offers no Views menu on Settings, though Allocations' view has changed", async () => {
-    openAllocations("?mode=settings&search=Casey");
-
-    await screen.findByText("Hours a day", { selector: "dt" });
-    expect(screen.queryByRole("button", { name: /^Views/u })).toBeNull();
-  });
 });

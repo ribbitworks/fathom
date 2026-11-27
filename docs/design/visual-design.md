@@ -17,12 +17,12 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 
 - **[People](pages/people.md):** the People table's date row, a person's details, and grouping.
 - **[Org chart](pages/org-chart.md):** the chart of reporting and feature teams, its cards, and its team panels.
-- **[Capacity](pages/capacity.md):** who is on which feature team and allocated to what, month by month, and the planning settings.
+- **[Capacity](pages/capacity.md):** who is on which feature team and allocated to what, month by month.
 - **[Projects](pages/projects.md):** the tabs for projects, proposals, customers, and milestones, and their details.
 - **[Features](pages/features.md):** the features table and the Features Board.
 - **[Activities](pages/activities.md):** the activities table, built as Features' is.
 - **[Releases](pages/releases.md):** releases, cycles, and schedules, on a timeline over a table.
-- **[Administration](pages/administration.md):** Accounts, Roles, Settings, Lists, and Data classes.
+- **[Administration](pages/administration.md):** Accounts, Roles, Settings, Lists, Planning settings, and Data classes.
 - **[History pages](pages/history.md):** Change history and Access history.
 - **[Sign-in and problem pages](pages/sign-in.md):** signing in, the first password change, and the problem pages.
 

@@ -423,12 +423,14 @@ export {
   weekdaySchema,
   weekdayShortNames,
   type WeekPiece,
+  weekOrder,
   weekStartOf,
   weekStartsOnSchema,
   weeksWithin,
   workingDayNeeded,
   workingDaysBetween,
   workingDaysSchema,
+  workingDaysWords,
   workingWeekNames,
 } from "./working-week.ts";
 export {

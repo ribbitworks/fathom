@@ -47,6 +47,7 @@ describe("what a role allows", () => {
       "Roles",
       "Settings",
       "Lists",
+      "Planning settings",
       "Data classes",
       "Drafts",
       "Change history",
@@ -116,6 +117,7 @@ describe("what a role allows", () => {
       "Roles",
       "Settings",
       "Lists",
+      "Planning settings",
       "Data classes",
       "Access history",
     ]);

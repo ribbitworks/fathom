@@ -288,10 +288,10 @@ describe("the summary of what a role allows", () => {
       "No longer: Org chart",
       "No longer: Org chart on other dates",
       // Releases, Drafts and the change history stay, since configuration opens them too, and
-      // Capacity and Lists open with it.
+      // Lists and Planning settings open with it.
       "New: Releases",
-      "New: Capacity",
       "New: Lists",
+      "New: Planning settings",
       "Drafts",
       "Change history",
     ]);

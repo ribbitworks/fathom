@@ -64,7 +64,7 @@ export const firstTables: Record<ViewPage, ViewTable> = {
   drafts: "drafts",
 };
 
-// The modes a page shows its table in. Capacity's Settings has no table, so it is not kept.
+// The modes a page shows its table in.
 export const lastViewModes: Partial<Record<ViewPage, z.ZodType<string>>> = {
   features: planModeSchema,
 };

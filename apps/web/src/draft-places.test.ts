@@ -2,12 +2,7 @@
 
 // Tests where a draft's Show on link leads, what it names the page, and what opening it needs.
 
-import {
-  capacityModeNeeds,
-  type LinkedRecord,
-  type PageNeeds,
-  pageNeeds,
-} from "@fathom/shared";
+import { type LinkedRecord, type PageNeeds, pageNeeds } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { shownPlace } from "./draft-places.ts";
 
@@ -45,11 +40,11 @@ describe("where a draft's record is shown", () => {
     });
   });
 
-  it("links the planning settings to Capacity's Settings", () => {
-    expect(shownPlace("capacity-settings")).toEqual({
-      pageName: "Capacity",
-      needs: [capacityModeNeeds.settings],
-      address: { to: "/capacity", search: { mode: "settings" } },
+  it("links the planning settings to their own page", () => {
+    expect(shownPlace("planning-settings")).toEqual({
+      pageName: "Planning settings",
+      needs: pageNeeds["planning-settings"],
+      address: { to: "/planning-settings" },
     });
   });
 });

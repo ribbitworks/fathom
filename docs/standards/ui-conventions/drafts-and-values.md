@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Drafts, Values and Access
@@ -147,7 +147,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **A view or grouping:** One the role can't see is left out with nothing said, as a column is.
   - **Following the classes:** What a page needs follows its data's classes, so moving a detail's class opens or closes pages with no code change. The Roles page keeps its lines saying what each view needs.
   - **Drawn by:** Each page's needs in `pageNeeds`, and Capacity's tabs' in `capacityModeNeeds`, with `opensWith` and `reaches`, in `packages/shared/src/page-access.ts`. The sidebar's items in `apps/web/src/layout.tsx`, the routes in `apps/web/src/router.tsx`, `apps/web/src/signed-in-route.tsx` and `apps/web/src/plan-routes.tsx`, and `capacityModes` in `apps/web/src/capacity.ts` all read it. The Roles page's lines come from `viewsOfRole` in `packages/shared/src/data-classes.ts`.
-  - **Example:** The Team Member, whose menu has no Capacity, and the Product Manager, who sees Capacity's Settings alone.
+  - **Example:** The Team Member, whose menu has no Capacity, and the Product Manager, whose menu has Planning settings but no Capacity.
 - **Columns a role can't see:** A column a role can't see isn't shown, and nothing says it's missing.
   - **Drawn by:** A column's `dataClass` in `apps/web/src/table-view.ts`, read by `useGridModel` in `apps/web/src/grid-model.tsx`.
   - **Example:** The Feature Lead's People has no Start or End.

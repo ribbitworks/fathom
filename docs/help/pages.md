@@ -41,14 +41,13 @@ This page lists every page of Fathom. It says what each is for, where it is, and
 - [Org chart](org-chart.md): It draws reporting teams and feature teams as cards, today or, with **View Personal details**, on past dates. Future dates in **Reporting teams** also need **View Confidential data**.
   - **Shown with:** **View People**
   - **Starting roles that see it:** Every role but Administrator
-- [Capacity](capacity.md): It shows who is on which feature team and what each person works on, month by month, and the planning settings.
+- [Capacity](capacity.md): It shows who is on which feature team and what each person works on, month by month.
   - **Shown with:** One tab is enough to show the page. Each tab needs these permissions:
     - Its **Feature teams** tab needs **View Feature teams** and **View Personal details**.
     - Its **Allocations** tab needs **View Allocations**, **View Feature teams**, **View People** and **View Personal details**.
-    - Its **Settings** tab needs **View Configuration**.
-  - **Starting roles that see it:** Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive
+  - **Starting roles that see it:** Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive
 
-The Product Manager sees Capacity's **Settings** tab only, since the role doesn't hold **View Personal details**.
+The Product Manager doesn't see Capacity, since the role doesn't hold **View Personal details**.
 
 ## Administration
 
@@ -62,6 +61,9 @@ The Product Manager sees Capacity's **Settings** tab only, since the role doesn'
   - **Shown with:** **View Administration**
   - **Starting roles that see it:** Engineering Director, Executive, Administrator
 - [Lists](lists.md): It holds the lists of choices that columns offer.
+  - **Shown with:** **View Configuration**
+  - **Starting roles that see it:** Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive
+- [Planning settings](planning-settings.md): It holds the working time, the working week, and the figures forecasts start from.
   - **Shown with:** **View Configuration**
   - **Starting roles that see it:** Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive
 - [Data classes](data-classes.md): It shows the class of each detail, column and list.

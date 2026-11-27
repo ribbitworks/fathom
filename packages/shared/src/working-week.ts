@@ -73,6 +73,45 @@ export const startingWorkingWeek = {
   weekStartsOn: weekdays.monday,
 } as const satisfies { workingDays: Weekday[]; weekStartsOn: Weekday };
 
+// The days of a week starting on the day given, in order.
+export const weekOrder = (startsOn: Weekday): Weekday[] =>
+  Array.from(
+    { length: daysInWeek },
+    (_none, index) => ((startsOn + index) % daysInWeek) as Weekday,
+  );
+
+// A run of this many working days in a row is named by its first and last.
+const shortestNamedRun = 3;
+
+// The working days in words, in the week's order, such as Mon to Fri, or Mon to Wed, Fri.
+export function workingDaysWords(
+  workingDays: readonly Weekday[],
+  startsOn: Weekday,
+): string {
+  const runs: Weekday[][] = [];
+  let run: Weekday[] = [];
+  for (const day of weekOrder(startsOn)) {
+    if (workingDays.includes(day)) {
+      run.push(day);
+    } else {
+      runs.push(run);
+      run = [];
+    }
+  }
+  runs.push(run);
+  return runs
+    .filter((days) => days.length > 0)
+    .map((days) => {
+      // Each day is one of the week's seven.
+      // eslint-disable-next-line security/detect-object-injection
+      const names = days.map((day) => weekdayShortNames[day]);
+      return names.length < shortestNamedRun
+        ? names.join(", ")
+        : [names.at(0), names.at(-1)].join(" to ");
+    })
+    .join(", ");
+}
+
 // JavaScript counts the days of the week from Sunday.
 // The settings' day for each of the calendar's, Sunday first.
 const byCalendarDay = [

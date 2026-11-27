@@ -409,11 +409,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account.
 
-- [ ] `17DE` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The page is headed **Capacity**, with **Feature teams** chosen in its tabs.
-  - **Notes:**
-
-- [ ] `D402` Select the **Settings** tab.
+- [ ] `D402` Select the **Planning settings** page in the left-hand menu.
   - **Expected:** Under **Working time**, **Hours a day** reads "8".
   - **Notes:**
 
@@ -435,11 +431,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The top bar's right end reads "Project Manager".
   - **Notes:**
 
-- [ ] `6AC7` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The page is headed **Capacity**, with the tabs **Feature teams**, **Allocations** and **Settings**.
-  - **Notes:**
-
-- [ ] `BE47` Select the **Settings** tab.
+- [ ] `BE47` Select the **Planning settings** page in the left-hand menu.
   - **Expected:** **Hours a day** reads "4" after a yellow dot.
   - **Notes:**
 
