@@ -553,16 +553,20 @@ export function FromDay({
   day: string;
   hidden?: boolean;
 }) {
+  // A space, not a margin, sets it apart, so where the day wraps it starts at the line's edge.
   return (
-    <Text
-      span
-      c="dimmed"
-      size="sm"
-      className={marks.fromDay}
-      aria-hidden={hidden ? "true" : undefined}
-    >
-      from {day}
-    </Text>
+    <>
+      <span className={marks.dayGap}> </span>
+      <Text
+        span
+        c="dimmed"
+        size="sm"
+        className={marks.fromDay}
+        aria-hidden={hidden ? "true" : undefined}
+      >
+        from {day}
+      </Text>
+    </>
   );
 }
 

@@ -191,11 +191,15 @@
 /* The "from" and day after an item, kept on one line so the day never parts from its "from", as
    "starts" never parts from the day a planned hire's person starts. */
 .fromDay {
-  margin-left: var(--fathom-mark-gap);
   white-space: nowrap;
 }
 
 /* A character of no width, so an empty value's place holds a line of text for its dot to sit on. */
 .emptySide::before {
   content: "\200b";
+}
+
+/* The space before the day, widened to the marks' gap; a space a line ends on takes no room. */
+.dayGap {
+  word-spacing: calc(var(--fathom-mark-gap) - 0.25em);
 }
