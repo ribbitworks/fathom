@@ -28,9 +28,15 @@ const headingsOn = (role: Role) => {
   return { jobs, tasks };
 };
 
+// Each page read once, since reading one parses its whole Markdown.
+const headingsByRole = new Map(roles.map((role) => [role, headingsOn(role)]));
+
+const pageHeadings = (role: Role) =>
+  headingsByRole.get(role) ?? { jobs: [], tasks: [] };
+
 const holding = (title: string, depth: "jobs" | "tasks") =>
   roles.filter((role) => {
-    const { jobs, tasks } = headingsOn(role);
+    const { jobs, tasks } = pageHeadings(role);
     return (depth === "jobs" ? jobs : tasks).includes(title);
   });
 
@@ -42,7 +48,7 @@ describe("the Overview's tags", () => {
   it.each(roles)(
     "tag every job and task heading on the %s's Help page",
     (role) => {
-      const { jobs, tasks } = headingsOn(role);
+      const { jobs, tasks } = pageHeadings(role);
       const jobTitles = overviewJobs.map(({ title }) => title);
       const taskTitles = allTasks.map(({ task }) => task.title);
       expect(jobs.filter((title) => !jobTitles.includes(title))).toEqual([]);
