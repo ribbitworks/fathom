@@ -23,6 +23,7 @@ import {
 } from "./grid-columns.tsx";
 import {
   changedIn,
+  choiceRenamings,
   draftColumn,
   headingOnly,
   heldBack,
@@ -270,6 +271,8 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
       record.cellDrafts === undefined ? [] : [[record.id, record.cellDrafts]],
     ),
   );
+  // The drafts renaming choices, whatever the view, each marking the values holding its choice.
+  const renamings = choiceRenamings(lists);
   const canEdit = mayEdit && !liveOnly;
   const canEditDrafts = mayEditDrafts !== false && !liveOnly;
   const editsDraftOf = (record: Rec) =>
@@ -480,6 +483,7 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     liveById,
     draftById,
     cellDraftsById,
+    renamings,
     canEdit,
     approves,
     decidedBy,

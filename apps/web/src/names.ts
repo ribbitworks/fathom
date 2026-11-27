@@ -3,6 +3,8 @@
 // A person's initials, for their avatar: the first letters of their first two names, a person's
 // name with the role they acted as, and the roles an account holds.
 
+import { sameName } from "@fathom/shared";
+
 // Each name's first character is taken whole, as the reader sees it, so no character is ever split,
 // whatever its script.
 const characters = new Intl.Segmenter(undefined, { granularity: "grapheme" });
@@ -21,9 +23,10 @@ export function initials(name: string): string {
     .join("");
 }
 
-// A person's name with the role they acted as, when it is known.
+// A person's name with the role they acted as, when it is known and the name isn't the role's own,
+// as an account named after its role's is.
 export function nameAs(name: string, role: string | null | undefined): string {
-  return role ? `${name} as ${role}` : name;
+  return role && !sameName(name, role) ? `${name} as ${role}` : name;
 }
 
 // Everyone who changed a draft, first to last, Fathom itself among them by name, since several

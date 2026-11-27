@@ -14,8 +14,8 @@ import { type DraftSelection, decidable } from "./drafts.ts";
 import type { Phrase } from "./phrase.tsx";
 import type { AnyColumn, GridDraft, GridRecord } from "./record-table.ts";
 import { besideLive } from "./status-mark.tsx";
-import { changedValue } from "./draft-marks.ts";
-import type { TableColumn, View } from "./table-view.ts";
+import { type DraftLike, changedValue, partsMark } from "./draft-marks.ts";
+import type { CellValue, TableColumn, View } from "./table-view.ts";
 
 // A record added but not saved yet is shown at once under an identifier of the table's own, until
 // the server gives its own; until then it cannot be changed. The table goes on naming its row by it,
@@ -180,4 +180,58 @@ export function cellDraftOf<Draft>(
       ? undefined
       : cellDrafts?.get(column.changesWith))
   );
+}
+
+// The state a row's tint shows: of its own draft and the drafts of other records marking its
+// values, waiting while any waits, and rejected only once every one was, as a record's parts' mark
+// is.
+export const rowState = (
+  draft: DraftLike | undefined,
+  cellDrafts: ReadonlyMap<string, DraftLike> | undefined,
+) => partsMark([draft, ...(cellDrafts?.values() ?? [])])?.state;
+
+// A choice's draft renaming it, as it marks a value holding the choice: its mark, and who renamed it.
+export interface Renaming {
+  draft: DraftLike;
+  by: string | undefined;
+}
+
+// The drafts renaming choices, by the choice's identifier, from every list with its drafts.
+export function choiceRenamings(
+  lists: readonly List[],
+): ReadonlyMap<string, Renaming> {
+  return new Map(
+    lists.flatMap(({ choices }) =>
+      choices.flatMap(({ id, draft }) => {
+        const mark = changedValue(draft, "label");
+        if (draft === undefined || mark === undefined) return [];
+        const by = new Map(Object.entries(draft.changedBy ?? {})).get("label");
+        return [[id, { draft: mark, by: by === null ? "Fathom" : by }]];
+      }),
+    ),
+  );
+}
+
+const chosenIds = (value: CellValue): readonly string[] => {
+  if (typeof value === "string") return [value];
+  return Array.isArray(value) ? value : [];
+};
+
+// The renaming that marks a value: of a choice it holds, where no draft, of its record or another,
+// changes the value itself and its cell doesn't mark its own parts; of several, one waiting.
+export function renamedValue(
+  renamings: ReadonlyMap<string, Renaming>,
+  column: {
+    key: string;
+    changesWith?: string | undefined;
+    marksParts?: boolean | undefined;
+  },
+  value: CellValue,
+  marked: GridDraft | undefined,
+): Renaming | undefined {
+  if (column.marksParts === true || cellDraft(marked, column) !== undefined) {
+    return undefined;
+  }
+  const found = chosenIds(value).flatMap((id) => renamings.get(id) ?? []);
+  return found.find(({ draft }) => draft.state === "waiting") ?? found[0];
 }

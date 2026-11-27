@@ -722,9 +722,11 @@ export function renderGadgets({
   fields = [colour],
   order = [],
   ticks,
+  lists = [colours],
 }: {
   gadgets: Gadget[];
   fields?: Field[];
+  lists?: List[];
   table?: RecordTable<Gadget, GadgetChange, GadgetChange>;
   given?: RecordActions<Gadget, GadgetChange, GadgetChange>;
   view?: View;
@@ -741,7 +743,7 @@ export function renderGadgets({
         table={table}
         fields={fields}
         order={order}
-        lists={[colours]}
+        lists={lists}
         canEdit
         approves={approves}
         canEditColumns={canEditColumns}

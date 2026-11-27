@@ -120,7 +120,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - **Record** reads `Fictional site survey of P-2017 Depot Operations`.
     - **Change** reads "Added".
     - **Type** reads "Milestone".
-    - **Made by** reads "Project Manager as Project Manager".
+    - **Made by** reads "Project Manager".
   - **Notes:**
 
 - [ ] `6F30` Tick that row's tick box.

@@ -24,6 +24,8 @@ import {
   changedIn,
   draftChanges,
   isPending,
+  renamedValue,
+  rowState,
   wholeCellDraft,
 } from "./grid-drafts.ts";
 import { NamedWithOthers } from "./grid-groups.tsx";
@@ -127,6 +129,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     | "liveById"
     | "draftById"
     | "cellDraftsById"
+    | "renamings"
     | "liveBeside"
     | "besides"
     | "liveCell"
@@ -179,6 +182,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     liveById,
     draftById,
     cellDraftsById,
+    renamings,
     liveBeside,
     besides,
     liveCell,
@@ -305,13 +309,30 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     } else if (draft && marksRows) {
       rowClass = [
         besideLive(view.show) ? classes.draftRow : "",
-        besideLive(view.show) && draft.state === "rejected"
+        besideLive(view.show) &&
+        rowState(draft, record?.cellDrafts) === "rejected"
           ? classes.rejectedRow
           : "",
         draft.action === "deleted" ? classes.recordRemovedRow : "",
       ].join(" ");
     }
     const isSelected = record !== undefined && record.id === selected;
+    // The draft a value is marked by, whatever the view: another record's that changes it, or else
+    // the row's own.
+    const cellMarkedIn = (column: Column<Rec, Change>) =>
+      (record === undefined
+        ? undefined
+        : cellDraftOf(cellDraftsById.get(record.id), column)) ?? marked;
+    // A draft renaming a choice the value holds, where no other draft changes the value.
+    const renamedIn = (column: Column<Rec, Change>) =>
+      record === undefined
+        ? undefined
+        : renamedValue(
+            renamings,
+            column,
+            column.value(record),
+            cellMarkedIn(column),
+          );
     const runEnded = runEnds.get(key);
     return [
       ...(headings.get(key) ?? []).map((heading) => (
@@ -365,10 +386,8 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
             (draft === undefined
               ? undefined
               : cellDraftOf(record?.cellDrafts, column)) ?? draft;
-          const cellMarked =
-            (record === undefined
-              ? undefined
-              : cellDraftOf(cellDraftsById.get(record.id), column)) ?? marked;
+          const cellMarked = cellMarkedIn(column);
+          const renamed = editingHere ? undefined : renamedIn(column);
           // A new row being filled in is marked in its first cell's slot until added.
           const newRowMarked =
             columnIndex === 0 &&
@@ -429,6 +448,12 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                   ? cellDraft?.state === "rejected"
                     ? classes.rejectedCell
                     : classes.draftCell
+                  : "",
+                renamed !== undefined &&
+                !changes &&
+                besideLive(view.show) &&
+                marksRows
+                  ? classes.changedValue
                   : "",
                 // While edited, the editor is marked instead.
                 problemIn(cell) === undefined || editingHere
@@ -525,9 +550,13 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                     draft={
                       editingHere
                         ? undefined
-                        : wholeCellDraft(cellMarked, column)
+                        : (wholeCellDraft(cellMarked, column) ?? renamed?.draft)
                     }
-                    by={editingHere ? undefined : changedBy(cellDraft, column)}
+                    by={
+                      editingHere
+                        ? undefined
+                        : (changedBy(cellDraft, column) ?? renamed?.by)
+                    }
                     was={
                       !editingHere &&
                       cellDraft !== undefined &&
@@ -535,7 +564,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                         ? wasWords(
                             shown(liveColumn(column), column.live(cellDraft)),
                           )
-                        : undefined
+                        : renamed && wasWords(shown(liveColumn(column), value))
                     }
                   >
                     <MarkedItem
@@ -660,7 +689,8 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                   >
                     <MarkedItem
                       tone={
-                        wholeCellDraft(draft, column) === undefined
+                        wholeCellDraft(draft, column) === undefined &&
+                        renamedIn(column) === undefined
                           ? undefined
                           : "live"
                       }

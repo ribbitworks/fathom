@@ -198,7 +198,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A row's **Record** reads `Fictional Reports`.
     - Its **Change** reads "Added".
     - Its **Type** reads "Feature".
-    - Its **Made by** reads "Product Manager as Product Manager".
+    - Its **Made by** reads "Product Manager".
   - **Notes:**
 
 ### FEAT-07: Those Who Only See the Plan Cannot Change Features

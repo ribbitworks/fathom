@@ -412,7 +412,7 @@ Removed: making a release is checked in [PROJECT-07](project-manager-workflows-m
   - **Expected:** One row is shown, with a tick box:
     - **Record** reads 'Partner Portal'.
     - **State** reads "Waiting".
-    - **Made by** reads "Feature Lead as Feature Lead".
+    - **Made by** reads "Feature Lead".
   - **Notes:**
 
 - [ ] `2A64` Tick that row's tick box.
@@ -469,7 +469,7 @@ Removed: making a release is checked in [PROJECT-07](project-manager-workflows-m
     - **Record** reads 'Partner Portal'.
     - **State** reads "Waiting".
     - **Type** reads "Feature".
-    - **Made by** reads "Feature Lead as Feature Lead".
+    - **Made by** reads "Feature Lead".
   - **Notes:**
 
 - [ ] `DDD3` Tick that row's tick box.

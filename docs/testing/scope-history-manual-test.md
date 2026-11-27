@@ -352,7 +352,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `A22D` Select the **Change history** page in the left-hand menu.
   - **Expected:**
-    - The newest entry reads "Engineering Director as Engineering Director approved changes to the proposal Harbour Cranes Upgrade".
+    - The newest entry reads "Engineering Director approved changes to the proposal Harbour Cranes Upgrade".
     - After a colon, its details read, dimmed, in this order:
       - "Features from Audit Export, Offline Sync to Audit Export"
       - "Reasons for removing features set to Offline Sync: Customer delayed the upgrade"
