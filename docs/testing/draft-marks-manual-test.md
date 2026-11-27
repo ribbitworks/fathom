@@ -50,7 +50,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `78FC` Point at the yellow dot in the row of 'Vianney Rousseau'.
-  - **Expected:** A tip shows words saying what the draft does.
+  - **Expected:** A tip reads "Draft: added".
   - **Notes:**
 
 - [ ] `B859` Type `Salvador Quiñones Méndez` in the search box.

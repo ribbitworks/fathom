@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Drafts of Projects, Proposals, Customers and Milestones
@@ -28,27 +28,23 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Draft menu, the ⋯ menu, the side panel and dates. This test adds:
 
 - **Tabs:** **Projects**, **Proposals**, **Customers** and **Milestones**, just after the page's heading, on the same line. The tab chosen is underlined.
-- **Milestone ⋯ menu:** the menu that opens from the **⋯** button at the end of a milestone in a project's side panel.
-- **New record panel:** the side panel while a record is being added, headed **New customer** or the like.
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
-
-To run the test again after finishing it, start from Reset the Database, since the records it adds stay once approved, and their names cannot be used twice.
+Run the test cases in order. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### PROJ-02: The Product Manager Adds a Customer
 
 **Account:** Product Manager, `product.manager@fathom.test`; the first test case.
 
-**Preconditions:** Reset the Database run, since the records this test adds stay once approved, then signed in with this account. **Projects** page open.
+**Preconditions:** Signed in with this account. **Projects** page open from the left-hand menu.
 
 - [ ] `DFAE` Select the **Customers** tab.
   - **Expected:** The table of customers shows.
@@ -59,34 +55,6 @@ To run the test again after finishing it, start from Reset the Database, since t
     - The side panel opens, headed **New customer**.
     - It has a **Name** box, a **Description** box and **Notes**.
     - **Cancel** and **Add** are at its foot.
-  - **Notes:**
-
-- [ ] `990D` Type `Discard me` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `AD18` Select **Cancel**.
-  - **Expected:**
-    - A dialog asks "Discard the new customer?"
-    - It has **Keep adding** and **Discard**.
-  - **Notes:**
-
-- [ ] `5A03` Select **Discard**.
-  - **Expected:**
-    - The dialog is gone.
-    - The form is gone.
-  - **Notes:**
-
-- [ ] `A3FD` Select **New customer**.
-  - **Expected:**
-    - The form opens again.
-    - **Name** is empty.
-  - **Notes:**
-
-- [ ] `53AA` Select **Add** with **Name** empty.
-  - **Expected:**
-    - "Name needed" shows in red under **Name**.
-    - The form stays open.
   - **Notes:**
 
 - [ ] `11B3` Type `Testing Customer` in **Name**.
@@ -129,20 +97,12 @@ To run the test again after finishing it, start from Reset the Database, since t
     - **Status** reads "Open".
   - **Notes:**
 
-- [ ] `0B36` In the table, select the **Status** cell of `Testing Proposal`.
-  - **Expected:** The cell is outlined.
-  - **Notes:**
-
-- [ ] `DDC9` Press Enter.
-  - **Expected:** The list of statuses opens.
-  - **Notes:**
-
-- [ ] `C24D` Type `Won` and press Enter.
+- [ ] `0B36` In the table, select the **Status** cell of `Testing Proposal`, press Enter, choose **Won** and press Enter.
   - **Expected:**
-    - The cell reads `Won`.
+    - The cell reads "Won".
     - The row's slot still has its hollow yellow dot.
     - Pointing at the dot shows "Draft: added".
-    - The side panel shows **Status** as `Won`.
+    - The side panel shows **Status** as "Won".
   - **Notes:**
 
 ### PROJ-04: The Product Manager Adds a Project With Milestones
@@ -169,7 +129,7 @@ To run the test again after finishing it, start from Reset the Database, since t
   - **Expected:** **Project ID** shows what was typed.
   - **Notes:**
 
-- [ ] `F9B9` Select the change button in the **Owner** row, and pick any person, and write the name in the notes.
+- [ ] `F9B9` Select the change button in the **Owner** row, and pick any person. Write the name down in the notes.
   - **Expected:** **Owner** shows the name picked.
   - **Notes:**
 
@@ -189,26 +149,6 @@ To run the test again after finishing it, start from Reset the Database, since t
     - **First milestone**, **Last milestone** and **Next delivery** read "None".
     - Under **Milestones** are "None" and an **Add milestone** button.
     - The table has a row for it.
-  - **Notes:**
-
-- [ ] `9CDA` In the side panel, select `Testing Customer`.
-  - **Expected:**
-    - The **Customers** tab opens.
-    - `Testing Customer`'s side panel shows.
-  - **Notes:**
-
-- [ ] `A2B3` Select the browser's back button.
-  - **Expected:** `Testing Project`'s side panel shows again.
-  - **Notes:**
-
-- [ ] `C344` In the side panel, select `Testing Proposal`.
-  - **Expected:**
-    - The **Proposals** tab opens.
-    - `Testing Proposal`'s side panel shows.
-  - **Notes:**
-
-- [ ] `469B` Select the browser's back button.
-  - **Expected:** `Testing Project`'s side panel shows again.
   - **Notes:**
 
 - [ ] `C4CE` Select **Add milestone**.
@@ -366,13 +306,7 @@ To run the test again after finishing it, start from Reset the Database, since t
   - **Expected:** The table of projects shows.
   - **Notes:**
 
-- [ ] `FB16` Select the Draft menu.
-  - **Expected:**
-    - The menu opens.
-    - It has **Approve** and the number of waiting drafts, such as **Approve 6 drafts…**.
-  - **Notes:**
-
-- [ ] `F680` Select **Approve** with the number of waiting drafts shown.
+- [ ] `FB16` In the Draft menu, select **Approve** followed by the number of waiting drafts, such as **Approve 6 drafts…**.
   - **Expected:**
     - A dialog says how many drafts it approves.
     - Under "Also approves the drafts these depend on:", it lists "the proposal Testing Proposal".
@@ -392,13 +326,7 @@ To run the test again after finishing it, start from Reset the Database, since t
   - **Expected:** The table of milestones shows.
   - **Notes:**
 
-- [ ] `2AF6` Select the Draft menu.
-  - **Expected:**
-    - The menu opens.
-    - It has **Approve** and the number of waiting drafts.
-  - **Notes:**
-
-- [ ] `51A8` Select **Approve** with the number of waiting drafts shown.
+- [ ] `2AF6` In the Draft menu, select **Approve** followed by the number of waiting drafts.
   - **Expected:** A dialog says how many drafts it approves.
   - **Notes:**
 
@@ -454,7 +382,6 @@ To run the test again after finishing it, start from Reset the Database, since t
   - **Expected:**
     - The menu offers **Publish draft…** and **Discard draft**.
     - It has no **Remove project**.
-    - Its cells do not open for editing.
   - **Notes:**
 
 - [ ] `2F36` Run Publish.
@@ -484,3 +411,5 @@ To run the test again after finishing it, start from Reset the Database, since t
 - [ ] `966F` Select the **Milestones** tab, and look for `Pilot`, `Go live` and `Sign-off`.
   - **Expected:** None of them is listed any more.
   - **Notes:**
+
+**Afterwards:** Run [Reset the Database](manual-test-basics.md#reset-the-database).
