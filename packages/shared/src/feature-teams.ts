@@ -50,6 +50,23 @@ export const featureTeamDraftSchema = z.object({
 
 export type FeatureTeamDraft = z.infer<typeof featureTeamDraftSchema>;
 
+// A planned hire on a team, as its details show it: its key; the ID its name is made from, with its
+// position, when it has no name of its own; the month it's expected, which comes from no date when
+// it has no target date; and, once filled, the person who fills it and the day they start, to
+// readers who see them. A reader who doesn't see that person sees the hire as not yet filled, as its
+// placeholder shows it.
+export const teamHireSchema = z.object({
+  keyNumber: keyNumberSchema,
+  shownId: z.string().optional(),
+  expected: monthSchema,
+  undated: z.literal(true).optional(),
+  filledBy: z
+    .object({ name: z.string(), starts: daySchema.optional() })
+    .optional(),
+});
+
+export type TeamHire = z.infer<typeof teamHireSchema>;
+
 // A feature team as the reader sees it, as its draft, if any, makes it, with the draft beside.
 export const featureTeamSchema = z.object({
   id: z.string(),
@@ -61,10 +78,10 @@ export const featureTeamSchema = z.object({
   // Its members the reader sees, people and planned hires, by identifier.
   members: z.array(z.string()),
   // The name of each person and planned hire on the team, drafted or live, whom the reader sees, by
-  // identifier: a planned hire's placeholder name.
+  // identifier: a planned hire's placeholder name, as People names it.
   names: z.record(z.string(), z.string()),
-  // Which of those it names are planned hires, drafted or live.
-  hires: z.array(z.string()).optional(),
+  // Each of those it names that is a planned hire, drafted or live, by identifier.
+  hires: z.record(z.string(), teamHireSchema).optional(),
   // The day each planned hire on the team, as approved, joined it, and the day a planned hire
   // leading it started to, for every reader, since a planned hire's days are General.
   hiresFrom: z.record(z.string(), daySchema).optional(),

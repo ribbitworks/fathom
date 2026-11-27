@@ -4,16 +4,18 @@
 // under its lead or its own card while it has none, with members a draft adds marked and those it
 // removes drawn where they were, as each choice of the Draft menu shows them.
 
-import type { FeatureTeam, OrgChartPerson } from "@fathom/shared";
+import type { FeatureTeam, OrgChartPerson, TeamHire } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   featureTeamPeople,
   liveTeam,
   memberCardId,
   membersChanged,
+  plannedHireOrder,
   someoneUnseen,
   takesEffect,
   teamCardId,
+  teamHireWords,
   teamPersonNamer,
   teamPersonOf,
 } from "./feature-teams.ts";
@@ -531,19 +533,16 @@ describe("naming someone on a team", () => {
       members: ["lead", "h1", "starter"],
       names: {
         lead: "Quinn Fictional",
-        h1: "TBD-1",
+        h1: "Fictional Tester, TBD-1",
         starter: "Drew Fictional",
       },
     }),
     everyone,
   );
 
-  it("names a planned hire on the chart by its placeholder name there", () => {
-    expect(named("h1")).toBe("Fictional Tester, TBD-1");
-  });
-
-  it("names a person by the team's names, then by the chart", () => {
-    expect([named("starter"), named("m2")]).toEqual([
+  it("names someone by the team's names, as People names them, then by the chart", () => {
+    expect([named("h1"), named("starter"), named("m2")]).toEqual([
+      "Fictional Tester, TBD-1",
       "Drew Fictional",
       "Blake Fictional",
     ]);
@@ -557,9 +556,9 @@ describe("naming someone on a team", () => {
 describe("finding someone on a team", () => {
   const personOf = teamPersonOf(
     team({
-      members: ["m1", "h1", "off", "drafted"],
-      names: { off: "REQ-7701", drafted: "REQ-7702" },
-      hires: ["drafted", "h1", "off"],
+      members: ["m1", "h1"],
+      names: { h1: "Fictional Tester, TBD-1" },
+      hires: { h1: { keyNumber: 4, shownId: "TBD-1", expected: "2027-02" } },
     }),
     everyone,
   );
@@ -568,28 +567,60 @@ describe("finding someone on a team", () => {
     expect(personOf("m1")).toEqual({ name: "Avery Fictional" });
   });
 
-  it("gives a planned hire on the chart its made name, key and when it's planned, as its card does", () => {
+  it("gives a planned hire what the team says of it, whether or not the chart draws it", () => {
     expect(personOf("h1")).toEqual({
       name: "Fictional Tester, TBD-1",
-      hire: {
-        madeName: true,
-        keyNumber: 1,
-        planned: { expected: "2027-02", shownId: "TBD-1" },
+      hire: { keyNumber: 4, shownId: "TBD-1", expected: "2027-02" },
+    });
+  });
+});
+
+describe("when a planned hire on a team starts", () => {
+  it.each([
+    ["the month it's expected", { expected: "2027-03" }, "Expected Mar 2027"],
+    [
+      "that it has no target date",
+      { expected: "2027-03", undated: true as const },
+      "No target date",
+    ],
+    [
+      "who fills it and the day they start",
+      {
+        expected: "2027-02",
+        filledBy: { name: "Fictional Joiner", starts: "2027-02-01" },
       },
-    });
+      "Filled by Fictional Joiner, starts Feb 1, 2027",
+    ],
+    [
+      "who fills it alone, without the day they start",
+      { expected: "2027-02", filledBy: { name: "Fictional Joiner" } },
+      "Filled by Fictional Joiner",
+    ],
+  ])("says %s", (_, hire, words) => {
+    expect(teamHireWords({ keyNumber: 1, ...hire })).toBe(words);
   });
 
-  it("knows a planned hire the chart doesn't draw as one, as the team says", () => {
-    expect(personOf("off")).toEqual({
-      name: "REQ-7701",
-      hire: { madeName: false },
+  it("orders planned hires filled first, then by the month expected, with no target date last, then by name", () => {
+    const listed = (name: string, hire: Omit<TeamHire, "keyNumber">) => ({
+      name,
+      hire: { keyNumber: 1, ...hire },
     });
-  });
-
-  it("knows a planned hire a draft adds, which the chart doesn't draw and has no day, as one", () => {
-    expect(personOf("drafted")).toEqual({
-      name: "REQ-7702",
-      hire: { madeName: false },
-    });
+    const hires = [
+      listed("Fictional Undated", { expected: "2027-01", undated: true }),
+      listed("Fictional Later", { expected: "2027-09" }),
+      listed("Fictional Beta", { expected: "2027-03" }),
+      listed("Fictional Alpha", { expected: "2027-03" }),
+      listed("Fictional Filled", {
+        expected: "2027-12",
+        filledBy: { name: "Fictional Joiner" },
+      }),
+    ];
+    expect(hires.sort(plannedHireOrder).map(({ name }) => name)).toEqual([
+      "Fictional Filled",
+      "Fictional Alpha",
+      "Fictional Beta",
+      "Fictional Later",
+      "Fictional Undated",
+    ]);
   });
 });

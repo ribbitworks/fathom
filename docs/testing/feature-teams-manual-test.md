@@ -462,8 +462,10 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
 - [ ] `ABCE` Select the Feature teams button, then 'Field tools'.
   - **Expected:**
     - The team panel opens, titled 'Field tools'.
-    - **Members** lists people by name, then 'Data engineer' last.
-    - 'Data engineer' is followed by "#HIRE-" and a number, then a grey box reading "Planned, expected" and the name of last month, such as "Planned, expected Oct 2026".
+    - **Members** lists people by name, and not 'Data engineer'.
+    - Under **Members**, a **Planned hires** row reads 'Data engineer', then "#HIRE-" and a number.
+    - Under them, in small grey text, it reads "Expected" and the name of last month, such as "Expected Oct 2026".
+    - No grey box reads "Planned".
   - **Notes:**
 
 - [ ] `B55C` Clear the **Date** box, and type the first day of the month three months after the current one, as digits alone, such as `20270201` on a seed restored on 26 November 2026.
@@ -474,15 +476,17 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
 
 - [ ] `A516` Read the **Feature lead** row of the team panel.
   - **Expected:**
-    - It reads "Engineering Manager, TBD-" and a number, in grey italics.
-    - After it are "#HIRE-" and another number, then a grey box reading "Planned, no target date".
+    - It reads "Engineering Manager, TBD-" and a number, in grey italics, then "#HIRE-" and another number.
+    - Under them, in small grey text, it reads "No target date".
   - **Notes:**
 
-- [ ] `131A` Read the **Members** row of the team panel.
+- [ ] `131A` Read the **Members** and **Planned hires** rows of the team panel.
   - **Expected:**
-    - It lists people by name, then 'Data engineer', then "Engineering Manager, TBD-" and the same number.
-    - Each of the last two is followed by "#HIRE-" and a number, then a grey box: "Planned, expected" and the name of last month, then "Planned, no target date".
+    - **Members** lists people by name alone.
+    - **Planned hires** lists 'Data engineer' first, then "Engineering Manager, TBD-" and the same number.
+    - Each is followed by "#HIRE-" and a number, with a small grey line under it: "Expected" and the name of last month, then "No target date".
     - "Engineering Manager, TBD-" and its number are in grey italics; 'Data engineer' is not.
+    - No grey box reads "Planned".
   - **Notes:**
 
 - [ ] `0C0A` Close the team panel, and find the card that names 'Field tools'.

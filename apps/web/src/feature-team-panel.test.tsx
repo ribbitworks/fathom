@@ -5,7 +5,13 @@
 import type { FeatureTeam, OrgChartPerson, Show } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -15,8 +21,7 @@ import {
   noFeatureTeamEdits,
 } from "./feature-team-panel.tsx";
 import { DraftView } from "./status-mark.tsx";
-import marks from "./status-mark.module.css";
-import { formatDay, plannedWords } from "./day-formats.ts";
+import { formatDay, formatMonth } from "./day-formats.ts";
 import { detailRow, detailValue, testTheme } from "./test-support.tsx";
 
 const person = (
@@ -66,6 +71,25 @@ const team = (fields: Partial<FeatureTeam> = {}): FeatureTeam => ({
   names: {},
   ...fields,
 });
+
+// The planned hires the team read gives, as it names them.
+const hireNames = {
+  hire: "Ellis Fictional",
+  tbd: "Fictional Tester, TBD-7",
+  filled: "Fictional Data Engineer",
+  later: "Fictional Analyst",
+};
+
+const teamHires: FeatureTeam["hires"] = {
+  hire: { keyNumber: 9, expected: "2027-06" },
+  tbd: { keyNumber: 12, shownId: "TBD-7", expected: "2027-04", undated: true },
+  filled: {
+    keyNumber: 5,
+    expected: "2027-02",
+    filledBy: { name: "Fictional Joiner", starts: "2027-02-01" },
+  },
+  later: { keyNumber: 3, expected: "2027-09" },
+};
 
 const draft = (fields: Partial<NonNullable<FeatureTeam["draft"]>> = {}) => ({
   action: "changed" as const,
@@ -144,6 +168,12 @@ const rowText = (label: string) => detailValue(label);
 // The members listed, each with what screen readers hear of a draft's change to them.
 const memberLines = () =>
   within(detailRow("Members"))
+    .getAllByRole("listitem")
+    .map(({ textContent }) => textContent.trim());
+
+// The planned hires listed, each its two lines.
+const hireLines = () =>
+  within(detailRow("Planned hires"))
     .getAllByRole("listitem")
     .map(({ textContent }) => textContent.trim());
 
@@ -266,69 +296,82 @@ describe("a feature team's panel", () => {
     ]);
   });
 
-  it("lists planned hires after people, each with its key and its Planned box, as its card names it, with no day it joined", () => {
+  it("lists people under Members and planned hires under Planned hires, filled first, then by the month expected, with no target date last", () => {
     openPanel({
       shown: team({
-        members: ["tbd", "m2", "hire", "m1"],
-        names: { tbd: "TBD-7", hire: "Ellis Fictional" },
-        hiresFrom: { tbd: "2027-04-01", hire: "2027-03-01" },
+        members: ["tbd", "m2", "later", "hire", "filled", "m1"],
+        names: hireNames,
+        hires: teamHires,
       }),
     });
-    expect(memberLines()).toEqual([
-      "Avery Fictional",
-      "Blake Fictional",
-      `Ellis Fictional #HIRE-1${plannedWords({ expected: "2027-06" })}`,
-      `Fictional Tester, TBD-7 #HIRE-1${plannedWords({ expected: "2027-04", undated: true })}`,
+    expect(memberLines()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    expect(hireLines()).toEqual([
+      `Fictional Data Engineer #HIRE-5Filled by Fictional Joiner, starts ${formatDay("2027-02-01")}`,
+      `Ellis Fictional #HIRE-9Expected ${formatMonth("2027-06")}`,
+      `Fictional Analyst #HIRE-3Expected ${formatMonth("2027-09")}`,
+      "Fictional Tester, TBD-7 #HIRE-12No target date",
     ]);
-    const members = within(detailRow("Members"));
-    expect(members.getByText("Ellis Fictional").style.color).toBe("");
   });
 
-  it("keeps a planned hire's Planned box apart from its key, as after any item", () => {
-    openPanel({ shown: team({ members: ["m1", "hire"] }) });
-    const box = within(detailRow("Members")).getByText(
-      plannedWords({ expected: "2027-06" }).trim(),
-    );
-    expect(box.closest(`.${marks.alone as string}`)).toBeNull();
+  it("marks no planned hire with a Planned box, which its row's label says", () => {
+    openPanel({
+      shown: team({
+        members: ["m1", "hire"],
+        names: hireNames,
+        hires: teamHires,
+      }),
+    });
+    expect(rowText("Planned hires")).not.toMatch(/Planned/);
   });
 
-  it("names a placeholder made from a hire's position and ID in grey italics", () => {
-    openPanel({ shown: team({ members: ["m1", "tbd", "hire"] }) });
-    const members = within(detailRow("Members"));
+  it("names a planned hire with no name of its own by its position and ID in grey italics", () => {
+    openPanel({
+      shown: team({
+        members: ["m1", "tbd", "hire"],
+        names: hireNames,
+        hires: teamHires,
+      }),
+    });
+    const hires = within(detailRow("Planned hires"));
     expect(
-      members.getByText("Fictional Tester, TBD-7").getAttribute("style"),
+      hires.getByText("Fictional Tester, TBD-7").getAttribute("style"),
     ).toContain("italic");
     expect(
-      members
-        .getByText("Ellis Fictional", { exact: false })
-        .getAttribute("style") ?? "",
+      hires.getByText("Ellis Fictional").getAttribute("style") ?? "",
     ).not.toContain("italic");
   });
 
-  it("names a planned hire leading the team the same way, with no day it started to lead", () => {
+  it("names a planned hire leading the team on the same two lines, listing it under Planned hires too", () => {
     openPanel({
       shown: team({
         leadId: "tbd",
         members: ["tbd", "m1"],
-        hiresFrom: { tbd: "2027-01-01" },
-        hireLeadFrom: "2027-02-01",
+        names: hireNames,
+        hires: teamHires,
       }),
     });
     expect(rowText("Feature lead")).toBe(
-      `Fictional Tester, TBD-7 #HIRE-1${plannedWords({ expected: "2027-04", undated: true })}`,
+      "Fictional Tester, TBD-7 #HIRE-12No target date",
     );
+    expect(hireLines()).toEqual([
+      "Fictional Tester, TBD-7 #HIRE-12No target date",
+    ]);
   });
 
-  it("names a planned hire the chart doesn't draw by the team's name for it alone", () => {
+  it("has no Planned hires row without planned hires, and never a pencil of its own", () => {
+    openPanel();
+    expect(screen.queryByText("Planned hires")).toBeNull();
+    cleanup();
     openPanel({
       shown: team({
-        members: ["m1", "gone-hire"],
-        names: { "gone-hire": "REQ-7701" },
-        hires: ["gone-hire"],
-        hiresFrom: { "gone-hire": "2027-01-04" },
+        members: ["m1", "hire"],
+        names: hireNames,
+        hires: teamHires,
       }),
     });
-    expect(memberLines()).toEqual(["Avery Fictional", "REQ-7701"]);
+    expect(screen.getByText("Planned hires")).toBeDefined();
+    expect(changeButton("Planned hires")).toBeNull();
+    expect(changeButton("Members")).not.toBeNull();
   });
 
   it("gives a planned hire a draft takes off the day of the draft alone", () => {
@@ -336,7 +379,8 @@ describe("a feature team's panel", () => {
       day: "2027-05-01",
       shown: team({
         members: ["m1", "m2"],
-        hires: ["hire"],
+        names: hireNames,
+        hires: teamHires,
         hiresFrom: { hire: "2027-03-01" },
         draft: draft({
           changed: ["members"],
@@ -345,22 +389,23 @@ describe("a feature team's panel", () => {
         }),
       }),
     });
-    const line = memberLines().at(-1);
-    expect(line).toContain(`from ${formatDay("2027-06-01")}`);
+    const [line] = hireLines();
+    expect(line).toContain(`from ${formatDay("2027-06-01")}, removed`);
     expect(line).not.toContain(formatDay("2027-03-01"));
   });
 
-  it("marks a planned hire a draft adds, named as it is listed", () => {
+  it("marks a planned hire a draft adds under Planned hires", () => {
     openPanel({
       shown: team({
         members: ["m1", "m2", "hire"],
+        names: hireNames,
+        hires: teamHires,
         draft: draft({ changed: ["members"], live: { members: ["m1", "m2"] } }),
       }),
     });
-    expect(memberLines()).toEqual([
-      "Avery Fictional",
-      "Blake Fictional",
-      `Ellis Fictional #HIRE-1${plannedWords({ expected: "2027-06" })}, added`,
+    expect(memberLines()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    expect(hireLines()).toEqual([
+      `Ellis Fictional #HIRE-9, addedExpected ${formatMonth("2027-06")}`,
     ]);
   });
 

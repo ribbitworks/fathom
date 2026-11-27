@@ -11,6 +11,8 @@ import {
   draftShownTo,
   featureTeamTier,
   hireLeadDaySeen,
+  hireOnTeamSeen,
+  type HireRead,
   type LeadRecord,
   leadRunOf,
   namesSeen,
@@ -523,5 +525,73 @@ describe("the day a planned hire leading a team started to", () => {
 
   it("is none for a team with no run", () => {
     expect(hireLeadDaySeen(undefined, true)).toBeUndefined();
+  });
+});
+
+describe("a planned hire as a team's details name it", () => {
+  const open: HireRead = {
+    name: "Fictional Data Engineer",
+    shownId: "REQ-FICTIONAL-9",
+    position: "Fictional Engineer",
+    positionTier: "general",
+    keyNumber: 9,
+    expected: "2027-03",
+    undated: false,
+    filledBy: null,
+  };
+  const seenBy = (access: typeof workforceAdministrator) =>
+    teamSight(access, everyone, { day: today, today });
+
+  it("names one with a name of its own by it, with its key and the month it's expected", () => {
+    expect(hireOnTeamSeen(open, seenBy(teamMember))).toEqual({
+      name: "Fictional Data Engineer",
+      hire: { keyNumber: 9, expected: "2027-03" },
+    });
+  });
+
+  it("names one with no name of its own by its position and ID, giving the ID", () => {
+    expect(hireOnTeamSeen({ ...open, name: null }, seenBy(teamMember))).toEqual(
+      {
+        name: "Fictional Engineer, REQ-FICTIONAL-9",
+        hire: { keyNumber: 9, shownId: "REQ-FICTIONAL-9", expected: "2027-03" },
+      },
+    );
+  });
+
+  it("names one by its ID alone to a reader who doesn't see its position", () => {
+    expect(
+      hireOnTeamSeen(
+        { ...open, name: null, positionTier: "confidential" },
+        seenBy(teamMember),
+      ).name,
+    ).toBe("REQ-FICTIONAL-9");
+  });
+
+  it("says when its month comes from no target date", () => {
+    expect(
+      hireOnTeamSeen({ ...open, undated: true }, seenBy(teamMember)).hire,
+    ).toEqual({ keyNumber: 9, expected: "2027-03", undated: true });
+  });
+
+  it("names who fills it, and the day they start, to a reader who sees both", () => {
+    expect(
+      hireOnTeamSeen(
+        { ...open, filledBy: starter },
+        seenBy(workforceAdministrator),
+      ).hire.filledBy,
+    ).toEqual({ name: "Fictional Starter", starts: "2099-01-01" });
+  });
+
+  it("names who fills it without the day they start to a reader who sees them but not start dates", () => {
+    expect(
+      hireOnTeamSeen({ ...open, filledBy: member }, seenBy(teamMember)).hire
+        .filledBy,
+    ).toEqual({ name: "Fictional Member" });
+  });
+
+  it("shows it not yet filled to a reader who doesn't see who fills it, as its placeholder is", () => {
+    expect(
+      hireOnTeamSeen({ ...open, filledBy: starter }, seenBy(teamMember)).hire,
+    ).toEqual({ keyNumber: 9, expected: "2027-03" });
   });
 });
