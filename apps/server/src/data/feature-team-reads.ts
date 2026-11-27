@@ -40,10 +40,15 @@ import {
   draftAsSeen,
   draftedOn,
   draftShownTo,
+  hireLeadDaySeen,
+  type LeadRecord,
+  type LeadRun,
+  leadRunOf,
   namesSeen,
   peopleAsTodayOn,
   peopleNamed,
   seesTeamField,
+  type TeamSight,
   teamSight,
   withoutLeavers,
 } from "./feature-team-sight.ts";
@@ -71,23 +76,9 @@ interface LiveTeams {
   since: Map<string, TeamDays>;
 }
 
-// The day a run of lead records naming the same lead began, from records earliest first, ending
-// with the one in force, so a repeated record keeps the day the lead first took over.
-function firstOfRun<Row extends { leadId: string | null; fromDate: string }>(
-  records: readonly Row[],
-  inForce: Row,
-): string {
-  let first = inForce;
-  for (const record of records.slice(0, records.indexOf(inForce)).reverse()) {
-    if (record.leadId !== inForce.leadId) break;
-    first = record;
-  }
-  return first.fromDate;
-}
-
 interface TeamDays {
   members: Map<string, string>;
-  lead?: string;
+  lead?: LeadRun;
 }
 
 // The live teams given, or every team, with their members and lead as of a day, leaving out those
@@ -108,17 +99,14 @@ export async function readLiveTeams(
     member: boolean;
     fromDate: string;
   }[] = [];
-  const leadRecords: {
-    teamId: string;
-    leadId: string | null;
-    fromDate: string;
-  }[] = [];
+  const leadRecords: (LeadRecord & { teamId: string })[] = [];
   const read = async (chunk?: readonly string[]) => {
     leadRecords.push(
       ...(await reader
         .select({
           teamId: featureTeamLeads.teamId,
           leadId: leadColumn,
+          personId: featureTeamLeads.leadId,
           fromDate: featureTeamLeads.fromDate,
         })
         .from(featureTeamLeads)
@@ -194,7 +182,7 @@ export async function readLiveTeams(
     const leadRecordsOn = leads.get(row.id) ?? [];
     const leading = inForceOn(leadRecordsOn, day);
     const leadId = leading?.leadId ?? null;
-    const ledSince = leading && firstOfRun(leadRecordsOn, leading);
+    const ledSince = leading && leadRunOf(leadRecordsOn, leading);
     since.set(row.id, {
       members: joined.get(row.id) ?? new Map<string, string>(),
       ...(ledSince === undefined ? {} : { lead: ledSince }),
@@ -512,12 +500,13 @@ function hiresNamed(
 }
 
 // The days the planned hires on a team, as approved, joined it, and the day one leading it started
-// to, which every reader sees, since a planned hire's days are General.
+// to, which every reader sees, since a planned hire's days are General; but the day it took over
+// from a person, the day the person stopped leading, only a reader who sees Feature team dates.
 function hireDaysOn(
   team: Recorded,
   live: Recorded | undefined,
   since: TeamDays | undefined,
-  everyone: Everyone,
+  { everyone, seesDays }: Pick<TeamSight, "everyone" | "seesDays">,
 ): Pick<FeatureTeam, "hiresFrom" | "hireLeadFrom"> {
   const hires = membersOf(team).flatMap((id): [string, string][] => {
     const day = since?.members.get(id);
@@ -526,7 +515,7 @@ function hireDaysOn(
   const lead = typeof team.leadId === "string" ? team.leadId : undefined;
   const leadDay =
     lead !== undefined && lead === live?.leadId && isPlannedHire(everyone, lead)
-      ? since?.lead
+      ? hireLeadDaySeen(since?.lead, seesDays)
       : undefined;
   return {
     ...(hires.length === 0 ? {} : { hiresFrom: Object.fromEntries(hires) }),
@@ -633,7 +622,7 @@ export async function readFeatureTeams(
               members,
               names,
               ...hiresNamed(names, everyone),
-              ...hireDaysOn(team, before, live.since.get(id), everyone),
+              ...hireDaysOn(team, before, live.since.get(id), sight),
               ...(disbanded.has(id)
                 ? { disbandedFrom: disbanded.get(id) }
                 : {}),

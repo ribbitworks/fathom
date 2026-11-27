@@ -11,7 +11,9 @@ import {
   type Person,
   type Role,
   roleSchema,
+  startingRoles,
   type TeamMonths,
+  withImplied,
 } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { errorOf, ok } from "./test-app.ts";
@@ -32,6 +34,7 @@ import {
   hireMemberships,
   hireOnTeam,
   hireLeading,
+  personLeading,
   leads,
   sorted,
   today,
@@ -107,6 +110,22 @@ describe("a planned hire on a team", () => {
       [leading]: "2026-04-05",
     });
     expect(team?.hireLeadFrom).toBe("2026-04-06");
+  });
+
+  it("gives the day a planned hire took over the lead from a person only to readers of Feature team dates, since the person stopped leading that day", async () => {
+    // Given a person leading a team until a planned hire took over
+    const hire = await plannedHire();
+    const lead = await person();
+    const id = await liveTeam({ members: [lead] });
+    await hireOnTeam(id, hire, { fromDate: "2026-03-01" });
+    await personLeading(id, lead, "2026-03-01");
+    await hireLeading(id, hire, "2026-04-01");
+
+    // Then a reader of the class gets the day, and one without it the lead alone
+    expect((await teamSeen(id, editor))?.hireLeadFrom).toBe("2026-04-01");
+    const unseen = await teamSeen(id, planner);
+    expect(unseen?.leadId).toBe(hire);
+    expect(unseen?.hireLeadFrom).toBeUndefined();
   });
 
   it("gives no day for a person leading a team", async () => {
@@ -222,13 +241,30 @@ describe("who sees a planned hire on a team", () => {
     "workforce-administrator",
     "executive",
   ]);
+  // Feature team dates are Personal by default.
+  const seesTeamDates = new Set<Role>(
+    roles.filter((role) =>
+      // The role is always one of the starting roles.
+      // eslint-disable-next-line security/detect-object-injection
+      withImplied(startingRoles[role].permissions).includes("personal:view"),
+    ),
+  );
   let hire: string;
   let team: string;
+  // A team a person led until another hire took over.
+  let takenOver: string;
+  let takingOver: string;
 
   beforeAll(async () => {
     hire = await plannedHire({ name: "Fictional Seen Hire" });
     team = await liveTeam();
     await hireOnTeam(team, hire);
+    takingOver = await plannedHire();
+    const lead = await person();
+    takenOver = await liveTeam({ members: [lead] });
+    await hireOnTeam(takenOver, takingOver, { fromDate: "2026-03-01" });
+    await personLeading(takenOver, lead, "2026-03-01");
+    await hireLeading(takenOver, takingOver, "2026-04-01");
   });
 
   it.each(roles.map((role) => [role]))(
@@ -248,6 +284,26 @@ describe("who sees a planned hire on a team", () => {
       expect(seen?.names).toEqual({ [hire]: "Fictional Seen Hire" });
       expect(seen?.hiresFrom).toEqual({ [hire]: today });
       expect(seen?.hires).toEqual([hire]);
+    },
+  );
+
+  it.each(roles.map((role) => [role]))(
+    "gives the %s the day it took over the lead from a person only with Feature team dates",
+    async (role) => {
+      const who = await test.signedIn(role);
+      const response = await send(who, "GET", "/api/feature-teams");
+
+      if (!seesTeams.has(role)) {
+        expect(response.statusCode).toBe(403);
+        return;
+      }
+      const seen = (await ok<{ teams: FeatureTeam[] }>(response)).teams.find(
+        ({ id }) => id === takenOver,
+      );
+      expect(seen?.leadId).toBe(takingOver);
+      expect(seen?.hireLeadFrom).toBe(
+        seesTeamDates.has(role) ? "2026-04-01" : undefined,
+      );
     },
   );
 

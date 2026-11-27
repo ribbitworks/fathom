@@ -296,3 +296,47 @@ export function draftAsSeen(
     },
   };
 }
+
+// A team's lead record: whom it names, a person or a planned hire, or null for no lead, and that
+// lead again when a person.
+export interface LeadRecord {
+  leadId: string | null;
+  personId: string | null;
+  fromDate: string;
+}
+
+// When the lead in force took over: the day its run of records naming it began, so a repeated
+// record keeps the first day, and whether it took over from a person.
+export interface LeadRun {
+  from: string;
+  afterPerson: boolean;
+}
+
+// The lead's run, from a team's lead records, earliest first, ending with the one in force.
+export function leadRunOf(
+  records: readonly LeadRecord[],
+  inForce: LeadRecord,
+): LeadRun {
+  let first = inForce;
+  let previous: LeadRecord | undefined;
+  for (const record of records.slice(0, records.indexOf(inForce)).reverse()) {
+    if (record.leadId !== inForce.leadId) {
+      previous = record;
+      break;
+    }
+    first = record;
+  }
+  return {
+    from: first.fromDate,
+    afterPerson: (previous?.personId ?? null) !== null,
+  };
+}
+
+// The day a planned hire leading a team started to, as a reader sees it: General, as a planned
+// hire's days are, unless it took over from a person, when it is also the day the person stopped
+// leading, a Feature team date.
+export const hireLeadDaySeen = (
+  run: LeadRun | undefined,
+  seesDays: boolean,
+): string | undefined =>
+  run !== undefined && (seesDays || !run.afterPerson) ? run.from : undefined;
