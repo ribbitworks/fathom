@@ -92,7 +92,7 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
   selected,
   closeSelected,
 }: RecordGridProps<Rec, Change, Request>) {
-  return {
+  const passed = {
     everyone,
     table,
     draftedFields,
@@ -127,6 +127,9 @@ export function gridProps<Rec extends GridRecord, Change, Request>({
     selected,
     closeSelected,
   };
+  // The props as given, kept whole too, so the rows can tell when the table redraws for its own
+  // state alone.
+  return { ...passed, passed };
 }
 
 export type GridProps<Rec extends GridRecord, Change, Request> = ReturnType<
