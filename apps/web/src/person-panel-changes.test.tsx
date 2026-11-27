@@ -529,6 +529,12 @@ describe("a person's choice a draft renames, in their details", () => {
                 madeAt: null,
               },
             },
+            {
+              id: "position-2",
+              label: "Fictional Architect",
+              description: "",
+              retired: false,
+            },
           ],
         },
       ],
@@ -545,4 +551,43 @@ describe("a person's choice a draft renames, in their details", () => {
       "Fictional Developer, Draft: changed from “Fictional Engineer”",
     );
   });
+
+  it.each([
+    [
+      "with the drafts applied",
+      "drafts",
+      "Fictional Developer, Draft: changed",
+    ],
+    ["live only", "live", "Fictional Engineer, Live. A change is waiting"],
+  ])(
+    "keeps its mark %s, where the person's own draft of it was rejected",
+    async (_, view, marked) => {
+      // Given Robin, whose rejected draft moved them from Fictional Engineer to Fictional Architect
+      answers(
+        [
+          {
+            ...(robin as Record<string, unknown>),
+            positionId: "position-2",
+            draft: {
+              action: "changed",
+              changed: ["positionId"],
+              live: { positionId: "position-1", values: {}, links: {} },
+              state: "rejected",
+              reason: "Fictional reason",
+              madeBy: null,
+              madeAt: null,
+            },
+          },
+          sasha,
+          uma,
+        ],
+        renamedPositions,
+      );
+      // When their details open in a view leaving the rejected draft out
+      renderApp(`/people?open=E1&show=${view}`);
+      await panel("Robin Fictional");
+      // Then the renamed position they hold live keeps the rename's mark
+      expect(row("Position").textContent).toContain(marked);
+    },
+  );
 });

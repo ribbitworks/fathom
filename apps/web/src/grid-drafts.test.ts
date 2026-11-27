@@ -3,19 +3,20 @@
 // Tests for the waiting drafts a shared table offers to decide, the draft marking a cell, a row's
 // state, and the drafts renaming choices a value holds.
 
-import type { Choice, Field, List } from "@fathom/shared";
+import type { Choice, Field, List, Show } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { type DraftSelection, decidable, noDrafts } from "./drafts.ts";
 import {
   cellDraftOf,
   choiceRenamings,
   draftColumn,
-  liveChoices,
   renamedValue,
+  renamedWas,
   rowState,
   waitingDrafts,
 } from "./grid-drafts.ts";
-import type { GridRecord } from "./record-table.ts";
+import type { GridDraft, GridRecord } from "./record-table.ts";
+import type { CellValue } from "./table-view.ts";
 
 const waiting = { state: "waiting" as const, madeBy: null };
 const record = (id: string, more: Partial<GridRecord> = {}): GridRecord => ({
@@ -230,39 +231,97 @@ describe("the drafts renaming choices", () => {
       "c2",
       { draft: { state: "waiting" as const }, by: undefined, live: "Sea" },
     ],
+    [
+      "c4",
+      {
+        draft: { state: "waiting" as const },
+        by: "Fictional Planner",
+        live: "Rust",
+      },
+    ],
   ]);
-  const column = { key: "f1" };
+  const choiceOf = (id: string, label: string) => ({
+    id,
+    label,
+    description: "",
+    retired: false,
+  });
+  const column = {
+    key: "f1",
+    choices: [
+      choiceOf("c1", "Sea teal"),
+      choiceOf("c2", "Ocean"),
+      choiceOf("c3", "Coral"),
+      choiceOf("c4", "Ember"),
+    ],
+  };
+  const named = (value: CellValue, marked?: GridDraft, shown: Show = "both") =>
+    renamedValue(renamings, column, value, marked, shown);
 
   it("mark a value holding one choice, or several, by a waiting one first", () => {
     expect([
-      renamedValue(renamings, column, "c1", undefined)?.by,
-      renamedValue(renamings, column, ["c1", "c2"], undefined)?.draft.state,
-      renamedValue(renamings, column, ["c3"], undefined),
-      renamedValue(renamings, column, null, undefined),
+      named("c1")?.by,
+      named(["c1", "c2"])?.draft.state,
+      named(["c3"]),
+      named(null),
     ]).toEqual(["Fictional Editor", "waiting", undefined, undefined]);
   });
 
-  it("give the choices they rename their live names, keeping the rest", () => {
+  it("credit every one who renamed a choice the value holds", () => {
+    expect(named(["c1", "c2", "c4"])?.by).toBe(
+      "Fictional Editor, Fictional Planner",
+    );
+  });
+
+  it("mark nothing in a column with no choices", () => {
     expect(
-      liveChoices(
-        [
-          { id: "c1", label: "Sea teal", description: "", retired: false },
-          { id: "c3", label: "Coral", description: "", retired: false },
-        ],
+      renamedValue(
         renamings,
-      ).map(({ label }) => label),
-    ).toEqual(["Teal", "Coral"]);
+        { key: "f1", choices: [] },
+        "c1",
+        undefined,
+        "both",
+      ),
+    ).toBeUndefined();
+  });
+
+  it("say what a value was with each renamed choice under its live name", () => {
+    expect(
+      renamedWas({ ...column, kind: "choice" }, ["c1", "c3"], renamings),
+    ).toBe("“Teal, Coral”");
   });
 
   it("leave a value its record's draft changes, or a cell marking its own parts, to those", () => {
+    const changing = (state: "waiting" | "rejected"): GridDraft => ({
+      ...waiting,
+      state,
+      action: "changed",
+      changed: ["f1"],
+    });
     expect([
-      renamedValue(renamings, column, "c1", {
-        ...waiting,
-        action: "changed",
-        changed: ["f1"],
-      }),
-      renamedValue(renamings, { ...column, marksParts: true }, "c1", undefined),
-    ]).toEqual([undefined, undefined]);
+      named("c1", changing("waiting")),
+      named("c1", changing("rejected")),
+      renamedValue(
+        renamings,
+        { ...column, marksParts: true },
+        "c1",
+        undefined,
+        "both",
+      ),
+    ]).toEqual([undefined, undefined, undefined]);
+  });
+
+  it("mark a value whose record's rejected draft the view leaves out", () => {
+    const rejected: GridDraft = {
+      ...waiting,
+      state: "rejected",
+      action: "changed",
+      changed: ["f1"],
+    };
+    expect([
+      named("c4", rejected, "drafts")?.by,
+      named("c4", rejected, "live")?.by,
+    ]).toEqual(["Fictional Planner", "Fictional Planner"]);
   });
 });
 

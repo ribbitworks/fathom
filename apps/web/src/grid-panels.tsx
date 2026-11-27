@@ -18,6 +18,7 @@ import {
   withoutRemovals,
 } from "./live-records.ts";
 import { MetricsPanel } from "./metrics-panel.tsx";
+import { ChoiceRenamings } from "./record-details.tsx";
 import { chosenSum, sumAtFirst } from "./table-view.ts";
 import { metricsButtonId, metricsPanelId } from "./metrics.ts";
 import type { Column, GridRecord } from "./record-table.ts";
@@ -37,6 +38,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     | "saved"
     | "withDrafts"
     | "panels"
+    | "renamings"
     | "viewChoices"
     | "count"
     | "countNarrowed"
@@ -86,6 +88,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     saved,
     withDrafts,
     panels,
+    renamings,
     viewChoices,
     count,
     countNarrowed,
@@ -239,8 +242,12 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
       },
     ];
   })();
+  // The page's panels show its records' details, whose values mark renamed choices as the cells do.
   const sidePanels: SidePanel[] = [
-    ...panels,
+    ...panels.map((panel) => ({
+      ...panel,
+      node: <ChoiceRenamings value={renamings}>{panel.node}</ChoiceRenamings>,
+    })),
     ...cellPanel,
     ...(metrics === false
       ? []

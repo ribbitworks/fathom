@@ -25,6 +25,7 @@ import {
   draftChanges,
   isPending,
   renamedValue,
+  renamedWas,
   rowState,
   wholeCellDraft,
 } from "./grid-drafts.ts";
@@ -323,7 +324,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
       (record === undefined
         ? undefined
         : cellDraftOf(cellDraftsById.get(record.id), column)) ?? marked;
-    // A draft renaming a choice the value holds, where no other draft changes the value.
+    // A draft renaming a choice the value holds, where no draft the view marks changes the value.
     const renamedIn = (column: Column<Rec, Change>) =>
       record === undefined
         ? undefined
@@ -332,6 +333,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
             column,
             column.value(record),
             cellMarkedIn(column),
+            view.show,
           );
     const runEnded = runEnds.get(key);
     return [
@@ -449,11 +451,16 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                     ? classes.rejectedCell
                     : classes.draftCell
                   : "",
+                // In a tinted row, as a value another draft changes; else only semibold.
                 renamed !== undefined &&
                 !changes &&
                 besideLive(view.show) &&
                 marksRows
-                  ? classes.changedValue
+                  ? draft === undefined
+                    ? classes.changedValue
+                    : renamed.draft.state === "rejected"
+                      ? classes.rejectedCell
+                      : classes.draftCell
                   : "",
                 // While edited, the editor is marked instead.
                 problemIn(cell) === undefined || editingHere
@@ -550,21 +557,23 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                     draft={
                       editingHere
                         ? undefined
-                        : (wholeCellDraft(cellMarked, column) ?? renamed?.draft)
+                        : (renamed?.draft ?? wholeCellDraft(cellMarked, column))
                     }
                     by={
                       editingHere
                         ? undefined
-                        : (changedBy(cellDraft, column) ?? renamed?.by)
+                        : (renamed?.by ?? changedBy(cellDraft, column))
                     }
                     was={
-                      !editingHere &&
-                      cellDraft !== undefined &&
-                      wholeCellDraft(cellDraft, column) !== undefined
-                        ? wasWords(
-                            shown(liveColumn(column), column.live(cellDraft)),
-                          )
-                        : renamed && wasWords(shown(liveColumn(column), value))
+                      renamed === undefined
+                        ? !editingHere &&
+                          cellDraft !== undefined &&
+                          wholeCellDraft(cellDraft, column) !== undefined
+                          ? wasWords(
+                              shown(liveColumn(column), column.live(cellDraft)),
+                            )
+                          : undefined
+                        : renamedWas(column, value, renamings)
                     }
                   >
                     <MarkedItem

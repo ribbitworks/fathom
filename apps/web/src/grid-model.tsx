@@ -272,7 +272,7 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     ),
   );
   // The drafts renaming choices, whatever the view, each marking the values holding its choice.
-  const renamings = choiceRenamings(lists);
+  const renamings = useMemo(() => choiceRenamings(lists), [lists]);
   const canEdit = mayEdit && !liveOnly;
   const canEditDrafts = mayEditDrafts !== false && !liveOnly;
   const editsDraftOf = (record: Rec) =>

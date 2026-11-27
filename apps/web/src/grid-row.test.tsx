@@ -16,7 +16,6 @@ import {
   type Gadget,
   type GadgetChange,
   actions,
-  colours,
   gadget,
   gadgetTable,
   nameThen,
@@ -590,69 +589,6 @@ describe("a row whose values have drafts of other records", () => {
       row?.className.includes("draftRow"),
       row?.className.includes("rejectedRow"),
     ]).toEqual([true, false]);
-  });
-});
-
-describe("a value holding a choice a draft renames", () => {
-  // Colours, whose Teal a waiting draft renames Sea teal.
-  const renamedColours = {
-    ...colours,
-    choices: [
-      {
-        id: "c1",
-        label: "Sea teal",
-        description: "",
-        retired: false,
-        draft: {
-          ...waiting,
-          madeAt: null,
-          action: "changed" as const,
-          changed: ["label"],
-          live: { label: "Teal" },
-        },
-      },
-    ],
-  };
-  const teal = gadget("g1", { values: { f1: ["c1"] } });
-  const colourCell = () => screen.getAllByRole("gridcell")[2] as HTMLElement;
-
-  it("has the rename's dot, naming the choice as it is live, in a row with no draft", () => {
-    renderGadgets({ gadgets: [teal], lists: [renamedColours] });
-
-    expect(colourCell().textContent).toContain(
-      "Sea teal, Draft: changed from “Teal”",
-    );
-  });
-
-  it("has Live's green dot, its tip naming the change waiting, under Live only", () => {
-    renderGadgets({
-      gadgets: [teal],
-      lists: [renamedColours],
-      view: { ...emptyView, show: "live" },
-    });
-
-    expect(colourCell().textContent).toContain(
-      "Teal, Live. A change is waiting for approval.",
-    );
-  });
-
-  it("keeps the mark of its record's own draft where that changes the value", () => {
-    renderGadgets({
-      gadgets: [
-        gadget("g1", {
-          values: { f1: ["c1"] },
-          draft: {
-            ...waiting,
-            action: "changed",
-            changed: ["f1"],
-            live: { values: {}, links: {} },
-          },
-        }),
-      ],
-      lists: [renamedColours],
-    });
-
-    expect(colourCell().textContent).toContain("Draft: filled in");
   });
 });
 

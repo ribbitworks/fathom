@@ -324,6 +324,7 @@ function DetailRow({
           ? undefined
           : { live: column.live(draft as never), draft }
       }
+      marked={ownDraft}
       // Closed, the buttons under the list stand in for the pencil.
       editing={listed ? undefined : editing}
       showOn={column.showOn?.(record as never)}

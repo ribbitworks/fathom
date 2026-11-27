@@ -34,13 +34,14 @@ import { roundedUpTo } from "@fathom/shared";
 import { isEmpty, shownInView } from "./grid-columns.tsx";
 import {
   cellDraftOf,
-  liveChoices,
   type Renaming,
   renamedValue,
+  renamedWas,
 } from "./grid-drafts.ts";
 import {
   type Column,
   colourOf,
+  type GridDraft,
   type GridRecord,
   type ShowOn,
 } from "./record-table.ts";
@@ -365,6 +366,7 @@ export function Row({
   children,
   action,
   showOn,
+  marked,
 }: {
   column: DetailColumn;
   value: CellValue;
@@ -390,16 +392,20 @@ export function Row({
   action?: ReactNode;
   // The page the row's name opens, showing the records the row lists, filtered to the record.
   showOn?: ShowOn | undefined;
+  // The draft marking the value whatever the view, of its record or another record, which a draft
+  // renaming a choice it holds gives way to where the view marks it.
+  marked?: GridDraft | undefined;
 }) {
   const renamings = useContext(ChoiceRenamings);
-  // A value no draft changes is marked by a draft renaming a choice it holds, as its cell is.
-  const renamed =
-    changed?.draft === undefined
-      ? renamedValue(renamings, column, value, undefined)
-      : undefined;
-  const draft = changed?.draft ?? renamed?.draft;
+  const show = useDraftView();
+  // A value no draft the view marks changes is marked by a draft renaming a choice it holds, by the
+  // same rule as its cell.
+  const renamed = marksIn(changed?.draft, show)
+    ? undefined
+    : renamedValue(renamings, column, value, marked, show);
+  const draft = renamed?.draft ?? changed?.draft;
   // A value reads as drafted wherever the view marks its draft, as its cell does.
-  const drafted = marksIn(draft, useDraftView());
+  const drafted = marksIn(draft, show);
   const besideLive = useBesideLive();
   const liveUnder =
     besideLive && changed?.live !== undefined
@@ -460,16 +466,11 @@ export function Row({
                 from={changed?.from}
                 by={renamed?.by}
                 was={
-                  changed?.live === undefined
-                    ? renamed &&
-                      liveWords(
-                        {
-                          ...column,
-                          choices: liveChoices(column.choices, renamings),
-                        },
-                        value,
-                      )
-                    : liveWords(column, changed.live)
+                  renamed === undefined
+                    ? changed?.live === undefined
+                      ? undefined
+                      : liveWords(column, changed.live)
+                    : renamedWas(column, value, renamings)
                 }
               >
                 {checkbox ? (
@@ -599,6 +600,7 @@ export function ColumnRows<Rec extends GridRecord, Change>({
                   }
                 : undefined
             }
+            marked={cellDraftOf(shown.cellDrafts, column) ?? draft}
             action={
               change === undefined ? (
                 actionOf(column)
