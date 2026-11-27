@@ -202,7 +202,7 @@ describe("columns", () => {
     expect(within(dialog).getByLabelText<HTMLInputElement>("Type").value).toBe(
       "Text",
     );
-    expect(within(dialog).getByLabelText("Must be filled in")).toBeDefined();
+    expect(within(dialog).getByLabelText("Required")).toBeDefined();
   });
 
   it("opens the Type list on Enter, rather than adding the column", async () => {
