@@ -3,13 +3,11 @@
 // Tests for a feature team's panel on its own, with what it asks to save recorded.
 
 import type { FeatureTeam } from "@fathom/shared";
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { noFeatureTeamEdits } from "./feature-team-panel.tsx";
-import { formatDay, plannedWords } from "./day-formats.ts";
-import marks from "./status-mark.module.css";
-import { detailRow } from "./test-support.tsx";
+import { formatDay } from "./day-formats.ts";
 import {
   changeButton,
   draft,

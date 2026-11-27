@@ -244,7 +244,11 @@ describe("planned hires in a feature team's pickers", () => {
   it("leaves a planned hire already on the team free to be taken off, whatever the day", async () => {
     const { asked } = openPanel({
       day: "2027-05-01",
-      shown: team({ members: ["m1", "m2", "hire"], names: hireNames, hires: teamHires }),
+      shown: team({
+        members: ["m1", "m2", "hire"],
+        names: hireNames,
+        hires: teamHires,
+      }),
     });
     await pick("Members", /^Ellis Fictional/);
     await userEvent.keyboard("{Enter}");

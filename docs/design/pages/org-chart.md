@@ -92,10 +92,10 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
     - **Order:** filled hires first, then by expected month, with no target date last.
     - **Filled:** who fills a hire, and the day they start, is named only to readers who see Personal details, since it reveals a reporting line to come; one with no start date reads Filled by and the person alone. Any other reader sees the hire as not yet filled, with its Expected month, as its card shows it.
     - **Feature lead:** a hire leading the team takes the same two lines there, and is also listed under Planned hires, as a person leading it is under Members.
-    - **Changing:** Members' pencil adds and takes off people and planned hires alike, from one picker; Planned hires has no pencil of its own. A hire a draft adds or takes off shows under Planned hires with the draft's dot, struck through when taken off.
+    - **Changing:** Members' pencil adds and takes off people and planned hires alike, from one picker; Planned hires has no pencil of its own. A hire a draft adds or takes off shows under Planned hires with the draft's dot, struck through when taken off. New feature team lists a hire chosen under Planned hires too.
     - Like a person, a hire shows no day it joined.
   - On any date but today, Name and Colour can't change and the team can't be removed, since they take no date.
-  - A lead is chosen from anyone who hasn't left, never a planned hire; someone not yet a member joins in the same draft.
+  - A lead is chosen from anyone who hasn't left, a planned hire included; someone not yet a member joins in the same draft.
   - Readers without Personal details plan by month, from its first day, and aren't told when that day falls outside someone's employment. The Approver is told.
 - **Who sees what:** Those who only see feature teams can't change anything. Those who see the chart but not people see teams as approved.
 
