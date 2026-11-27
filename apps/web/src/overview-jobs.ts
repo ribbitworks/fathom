@@ -461,14 +461,14 @@ export const overviewJobs: readonly JobTag[] = [
     ],
   },
   {
-    title: "Change the Settings",
+    title: "Change the Application Settings",
     area: "Administration",
     needs: ["administration:edit"],
-    place: on("Settings"),
+    place: on("Application settings"),
     help: ["administrator"],
     tasks: [
-      { title: "Change the Time Zone", place: on("Settings") },
-      { title: "Set the Rules for Passwords", place: on("Settings") },
+      { title: "Change the Time Zone", place: on("Application settings") },
+      { title: "Set the Rules for Passwords", place: on("Application settings") },
     ],
   },
   {
@@ -514,7 +514,7 @@ export const overviewJobs: readonly JobTag[] = [
     tasks: [
       { title: "Find a Change", place: on("Change history") },
       {
-        title: "Look at Accounts, Roles and Settings",
+        title: "Look at Accounts, Roles and Application Settings",
         needs: ["administration:view"],
         place: on("Accounts"),
       },

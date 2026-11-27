@@ -55,7 +55,7 @@ Run the test cases in order, in about 25 minutes. Start with Start Fathom, then 
     - The **Overview** page is open.
     - The **Plan** section shows **Overview**, **Projects**, **Features**, **Activities** and **Releases**.
     - The **People** section shows **People**, **Org chart** and **Capacity**.
-    - The **Administration** section shows **Accounts**, **Roles**, **Settings**, **Lists** and **Planning settings**.
+    - The **Administration** section shows **Accounts**, **Roles**, **Application settings**, **Lists** and **Planning settings**.
     - The **History** section shows **Drafts**, **Change history** and **Access history**.
     - The menu shows the **Help** section.
   - **Notes:**
@@ -208,7 +208,7 @@ Run the test cases in order, in about 25 minutes. Start with Start Fathom, then 
   - **Expected:** The dialog closes.
   - **Notes:**
 
-- [ ] `F170` Select the **Settings** page in the left-hand menu.
+- [ ] `F170` Select the **Application settings** page in the left-hand menu.
   - **Expected:**
     - **Time zone** reads **America/Vancouver**.
     - **Password requirements** and **Generated passwords** are shown.

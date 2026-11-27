@@ -318,7 +318,7 @@ Proved by automated tests in `apps/server/src/accounts-administering.test.ts` an
   - **Expected:** The dialog closes, and nothing is saved.
   - **Notes:**
 
-- [ ] `2CB8` Select the **Settings** page in the left-hand menu.
+- [ ] `2CB8` Select the **Application settings** page in the left-hand menu.
   - **Expected:**
     - Under **Time zone**, a second panel has two parts, **Password requirements** and **Generated passwords**
     - **Password requirements** shows **Minimum length** at "12"

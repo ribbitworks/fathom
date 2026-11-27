@@ -20,7 +20,7 @@ Verifies the Roles page:
 - Restoring a starting role's template, and resetting the boxes.
 - Copying and creating roles, and giving an account a role made later.
 
-It also verifies the Settings page, where the Administrator changes Fathom's time zone. The refusals and the access history's wording are proved by automated tests; ROLE-06 checks one entry on screen.
+It also verifies the Application settings page, where the Administrator changes Fathom's time zone. The refusals and the access history's wording are proved by automated tests; ROLE-06 checks one entry on screen.
 
 ## Test Environment
 
@@ -61,7 +61,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `CCFB` Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`.
-  - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Settings**.
+  - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Application settings**.
   - **Notes:**
 
 ### ROLE-02: The Roles Page Lists Every Role
@@ -121,7 +121,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `3DFA` Read the summary.
   - **Expected:**
     - **Sees:** **Projects**, **Features**, **Activities**, **Releases**, **People**, **People on other dates**, **People on future dates**, **Org chart**, **Org chart on other dates**, **Org chart on future dates**, **Capacity**, **Feature teams**, **Feature teams grouped by manager**, **Allocations grouped by manager**, **Allocations**, **Lists**, **Planning settings**, **Drafts** and **Change history**.
-    - **Doesn't see:** **Accounts**, **Roles**, **Settings**, **Data classes** and **Access history**.
+    - **Doesn't see:** **Accounts**, **Roles**, **Application settings**, **Data classes** and **Access history**.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
     - **Cannot** includes "Cannot change allocations.", "Cannot change feature teams or which team a feature has.", "Cannot reclassify data." and "Cannot approve their own drafted changes."
     - **Cannot** also includes "Cannot change Confidential data.", with the class mark before **Confidential**.
@@ -175,14 +175,14 @@ Proved by automated tests in `apps/web/src/roles-page-permissions.test.tsx`.
 **Preconditions:** Signed in with this account. **Roles** page open, with the **Edit Project Manager** dialog still open, unsaved, as ROLE-05 left it.
 
 - [ ] `2662` Tick **View** on the **Administration** row.
-  - **Expected:** Under **Sees**, **Accounts**, **Roles**, **Settings** and **Access history** are in bold teal.
+  - **Expected:** Under **Sees**, **Accounts**, **Roles**, **Application settings** and **Access history** are in bold teal.
   - **Notes:**
 
 - [ ] `60DE` Select **Save**.
   - **Expected:**
     - The dialog, still titled **Edit Project Manager**, says "This change affects 2 accounts."
     - It lists **Project Manager** and **Superuser**, each with its email address.
-    - Under **Gains** for each: a line for each of the **Accounts**, **Roles**, **Settings** and **Access history** pages, and a sentence about seeing accounts, roles, settings and the access history.
+    - Under **Gains** for each: a line for each of the **Accounts**, **Roles**, **Application settings** and **Access history** pages, and a sentence about seeing accounts, roles, settings and the access history.
     - **Cancel** and **Save changes** are on the right, and there is no **Back** button.
   - **Notes:**
 
@@ -194,7 +194,7 @@ Proved by automated tests in `apps/web/src/roles-page-permissions.test.tsx`.
   - **Notes:**
 
 - [ ] `F3A0` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Settings** in the **Administration** section, and **Access history** in the **History** section.
+  - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Application settings** in the **Administration** section, and **Access history** in the **History** section.
   - **Notes:**
 
 - [ ] `78CA` Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`.
@@ -363,7 +363,7 @@ Proved by automated tests in `apps/server/src/roles.test.ts` and `apps/web/src/r
 
 **Preconditions:** Signed in with this account.
 
-- [ ] `4CE5` Select the **Settings** page in the left-hand menu.
+- [ ] `4CE5` Select the **Application settings** page in the left-hand menu.
   - **Expected:**
     - **Time zone** is set to **America/Vancouver**.
     - Under it, the day and time there, such as "It is Thursday, November 5, 2026 at 6:06 AM there.", matching a clock in Vancouver.

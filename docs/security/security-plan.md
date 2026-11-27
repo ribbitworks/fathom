@@ -59,14 +59,14 @@ flowchart LR
 
 ### Spoofing
 
-- **Signing in as someone else:** Passwords must meet the rules set in Settings, and are hashed with scrypt, Better Auth's default. Each client address may try to sign in 5 times a minute, and every refused sign-in gets the same answer. Accepted: there is no lockout for an account, and failed sign-ins aren't recorded.
+- **Signing in as someone else:** Passwords must meet the rules set in Application settings, and are hashed with scrypt, Better Auth's default. Each client address may try to sign in 5 times a minute, and every refused sign-in gets the same answer. Accepted: there is no lockout for an account, and failed sign-ins aren't recorded.
 - **Stolen or forged sessions:** Session cookies are Secure, HttpOnly and SameSite, and requests are checked against cross-site forgery.
   - **Session life:** each sign-in gets a new session, and a session ends after 30 minutes without use. A password change, an administrator's reset or a deactivation ends the account's other sessions.
   - **Accepted:** a session in use has no absolute end.
-- **Guessable passwords:** Every password a person sets is refused if it is common or easy to guess, whatever Settings say; this is not a setting.
+- **Guessable passwords:** Every password a person sets is refused if it is common or easy to guess, whatever Application settings say; this is not a setting.
   - **How it is checked:** zxcvbn-ts checks it against common passwords, words, names, keyboard patterns, and the person's own name and email address, and one scoring below 3, on its scale of 0 to 4, is refused.
   - **Generated passwords:** passwords Fathom generates aren't checked, since they're random; one from the default recipe scores at least 3.
-- **First passwords and resets:** Whoever creates an account, or resets another's password, never chooses it: Fathom generates one from the recipe in Settings and shows it once, so nobody knows another's working password. Until its user changes it, the server refuses every request but that change and signing out, and the new password must differ from the generated one.
+- **First passwords and resets:** Whoever creates an account, or resets another's password, never chooses it: Fathom generates one from the recipe in Application settings and shows it once, so nobody knows another's working password. Until its user changes it, the server refuses every request but that change and signing out, and the new password must differ from the generated one.
 - **Resetting a password:** There is no self-service reset; only administrators reset passwords, and each reset is recorded in the access history.
 - **Posing as the proxy:** The application accepts connections, and the user addresses they name, only from the proxy.
 - **Taking a colleague's name:** A user renaming themselves can't take a name another account has, ignoring letter case, and some invisible characters are refused. The access history shows each account's email address beside its name.

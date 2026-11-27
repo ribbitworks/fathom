@@ -11,7 +11,7 @@ last_updated: "2026-11-27"
 
 The Administration pages hold accounts, roles, settings, lists, the planning settings and data classes. They sit in the sidebar's Administration section in that order, each shown only to a role allowed to open it.
 
-[Accounts help](../../help/accounts.md), [Roles help](../../help/roles.md), [Settings help](../../help/settings.md), [Lists help](../../help/lists.md), [Planning settings help](../../help/planning-settings.md) and [Data classes help](../../help/data-classes.md) describe them for the people who use them. [Visual Design](../visual-design.md) covers what every page shares.
+[Accounts help](../../help/accounts.md), [Roles help](../../help/roles.md), [Application settings help](../../help/settings.md), [Lists help](../../help/lists.md), [Planning settings help](../../help/planning-settings.md) and [Data classes help](../../help/data-classes.md) describe them for the people who use them. [Visual Design](../visual-design.md) covers what every page shares.
 
 ## Accounts
 
@@ -45,7 +45,7 @@ The Administration pages hold accounts, roles, settings, lists, the planning set
 - **Saving:** A change to a role held by accounts first lists what each account gains and loses; Cancel there returns to the grid. Starting roles also get **Restore template**.
 - **Description:** Never emptied when what the role grants changes.
 
-## Settings
+## Application Settings
 
 - **Panels:** One panel per setting, each with its own **Save**, turned off until something differs. Those who can't change settings get read-only fields and no **Save**.
 - **Changes:** Take effect at once, with no draft, and are recorded in the access history.

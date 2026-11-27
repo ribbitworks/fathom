@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Settings page: Fathom's time zone and its password settings.
+// The Application settings page: Fathom's time zone and its password settings.
 
 import {
   knowsTimeZone,
@@ -91,7 +91,7 @@ export function SettingsPage({
   });
   return (
     <Stack gap="md" maw={settingsPageWidth}>
-      <PageHeader title="Settings" />
+      <PageHeader title="Application settings" />
       <Paper withBorder p="md" component="section" aria-label="Time zone">
         <form
           noValidate

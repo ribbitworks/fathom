@@ -120,7 +120,7 @@ export const sections: { label: string; items: Item[] }[] = [
         page: "roles",
       },
       {
-        label: "Settings",
+        label: "Application settings",
         icon: "settings",
         to: "/settings",
         page: "settings",
