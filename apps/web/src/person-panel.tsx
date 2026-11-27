@@ -10,6 +10,7 @@ import {
   type ReactNode,
   useEffect,
   useEffectEvent,
+  useMemo,
 } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { listsQuery } from "./lists.ts";
@@ -160,6 +161,10 @@ export function PersonPanel({
 }) {
   const query = useQuery(peopleQueryOn(shownOn));
   const lists = useQuery(listsQuery);
+  const renamings = useMemo(
+    () => choiceRenamings(lists.data ?? []),
+    [lists.data],
+  );
   const teamColourOf = useTeamColours();
   const { closeStale, editingOf } = usePersonEditing(notes);
   const people = query.data?.people ?? [];
@@ -410,6 +415,7 @@ export function PersonPanel({
             ? editing(column)
             : undefined
         }
+        marked={ownDraft}
       >
         {special}
       </Row>
@@ -421,7 +427,7 @@ export function PersonPanel({
   return frame(
     nameOf(person),
     // Read here too, since the Org chart shows these details beside no table.
-    <ChoiceRenamings value={choiceRenamings(lists.data)}>
+    <ChoiceRenamings value={renamings}>
       <div>
         <Group gap={0} align="baseline">
           <MarkedItem

@@ -67,7 +67,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
   - **Changes under another role:** A change made under another of the user's roles is published only if the role in use may make that kind of change. The rest stay unpublished, with the changes that go with them, for a role that may.
   - **Discarding:** Discarding takes back any of the user's own changes, whichever role made them, so nothing they made stays held.
 - **Choosing the role:** Signing in acts as the role last chosen on that browser, or else the default. A user switches role from their account's menu without signing in again.
-- **Naming the role:** Changes, drafts and approvals record the role they were made as, shown beside the name, such as "Feature Lead as Engineering Manager".
+- **Naming the role:** Changes, drafts and approvals record the role they were made as, shown beside the name, such as "Feature Lead as Engineering Manager". An account named after the role it acted as shows the name once, such as "Feature Lead".
 - **Your own account:** Every user, whatever their role, changes their own name and password from their account's menu. Their email address and roles stay with whoever manages accounts, since the email address signs them in.
 
 ## Approving

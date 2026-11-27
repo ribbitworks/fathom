@@ -8,14 +8,21 @@ import {
   type Field,
   type FieldDraft,
   type List,
+  type Show,
   draftFilterKey,
 } from "@fathom/shared";
 import { configDraftFields, draftLines } from "./draft-details.tsx";
 import { type DraftSelection, decidable } from "./drafts.ts";
 import type { Phrase } from "./phrase.tsx";
 import type { AnyColumn, GridDraft, GridRecord } from "./record-table.ts";
-import { besideLive } from "./status-mark.tsx";
-import { type DraftLike, changedValue, partsMark } from "./draft-marks.ts";
+import { besideLive, marksIn } from "./status-mark.tsx";
+import { type CellKind, cellKinds } from "./cell-kinds.tsx";
+import {
+  type DraftLike,
+  changedValue,
+  partsMark,
+  wasWords,
+} from "./draft-marks.ts";
 import type { CellValue, TableColumn, View } from "./table-view.ts";
 
 // A record added but not saved yet is shown at once under an identifier of the table's own, until
@@ -211,13 +218,12 @@ export function choiceRenamings(
       choices.flatMap(({ id, draft }) => {
         const mark = changedValue(draft, "label");
         if (draft === undefined || mark === undefined) return [];
-        const by = new Map(Object.entries(draft.changedBy ?? {})).get("label");
         return [
           [
             id,
             {
               draft: mark,
-              by: by === null ? "Fathom" : by,
+              by: changedBy(draft, { key: "label" }),
               live: draft.live.label,
             },
           ],
@@ -232,31 +238,53 @@ const chosenIds = (value: CellValue): readonly string[] => {
   return Array.isArray(value) ? value : [];
 };
 
-// The renaming that marks a value: of a choice it holds, where no draft, of its record or another,
-// changes the value itself and its cell doesn't mark its own parts; of several, one waiting.
+// The renaming that marks a value: of a choice it holds, in a column of choices, where its cell
+// doesn't mark its own parts and no draft the view marks, of its record or another, changes the
+// value itself. Of several, one waiting marks it, credited to everyone who renamed them.
 export function renamedValue(
   renamings: ReadonlyMap<string, Renaming>,
   column: {
     key: string;
     changesWith?: string | undefined;
     marksParts?: boolean | undefined;
+    choices: readonly Choice[];
   },
   value: CellValue,
   marked: GridDraft | undefined,
+  show: Show,
 ): Renaming | undefined {
-  if (column.marksParts === true || cellDraft(marked, column) !== undefined) {
+  if (
+    column.choices.length === 0 ||
+    column.marksParts === true ||
+    marksIn(cellDraft(marked, column), show)
+  ) {
     return undefined;
   }
   const found = chosenIds(value).flatMap((id) => renamings.get(id) ?? []);
-  return found.find(({ draft }) => draft.state === "waiting") ?? found[0];
+  const [first] = found;
+  if (first === undefined) return undefined;
+  const by = [...new Set(found.flatMap((one) => one.by ?? []))];
+  return {
+    ...(found.find(({ draft }) => draft.state === "waiting") ?? first),
+    by: by.length === 0 ? undefined : by.join(", "),
+  };
 }
 
-// Choices with their live names, where a draft renames them, for what a value was before.
-export const liveChoices = (
-  choices: readonly Choice[],
+// What a value holding renamed choices was, for its rename's tip: each choice under its live name.
+export const renamedWas = (
+  column: Parameters<CellKind["inWords"]>[0] & Pick<AnyColumn, "kind">,
+  value: CellValue,
   renamings: ReadonlyMap<string, Renaming>,
-): Choice[] =>
-  choices.map((choice) => ({
-    ...choice,
-    label: renamings.get(choice.id)?.live ?? choice.label,
-  }));
+) =>
+  wasWords(
+    cellKinds[column.kind].inWords(
+      {
+        ...column,
+        choices: column.choices.map((choice) => ({
+          ...choice,
+          label: renamings.get(choice.id)?.live ?? choice.label,
+        })),
+      },
+      value,
+    ),
+  );

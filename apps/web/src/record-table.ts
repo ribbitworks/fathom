@@ -59,8 +59,9 @@ export interface GridRecord {
   id: string;
   draft?: GridDraft | undefined;
   heldBy?: string | undefined;
-  // The drafts of other records that change a value the row shows, by its column's key, each
-  // marking its own cell in place of the row's draft.
+  // The drafts other than the row's own that change a value the row shows, such as another
+  // record's or the record's parts', by its column's key, each marking its own cell in place of the
+  // row's draft.
   cellDrafts?: ReadonlyMap<string, NonNullable<this["draft"]>> | undefined;
 }
 
