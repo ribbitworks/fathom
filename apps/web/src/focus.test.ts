@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for moving focus once the page has drawn: waiting a few frames for a control drawn later,
-// and selecting a field's text only where it has text to select.
+// selecting a field's text only where it has text to select, and holding what is typed meanwhile.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { focusRefusedSoon, focusSoon, selectSoon } from "./focus.ts";
+import { focusRefusedSoon, focusSoon, holdKeys, selectSoon } from "./focus.ts";
 
 afterEach(() => {
   document.body.replaceChildren();
@@ -122,5 +122,64 @@ describe("focusing the field a save refused", () => {
     vi.runAllTimers();
 
     expect(document.activeElement).toBe(button);
+  });
+});
+
+describe("focusing a control on a page being opened, holding what is typed", () => {
+  const press = (key: string, options: KeyboardEventInit = {}) =>
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { key, bubbles: true, ...options }),
+    );
+  const frames = (count: number) =>
+    vi.advanceTimersByTimeAsync(count * framesTime);
+
+  it("gives the control the characters typed before it was drawn, and lets other keys go", async () => {
+    vi.useFakeTimers({ toFake: ["requestAnimationFrame", "performance"] });
+    const held = holdKeys();
+    press("A");
+    press("s");
+    press("Shift");
+    press("k", { metaKey: true });
+    held.giveTo("first-row");
+    await frames(3);
+
+    const row = document.createElement("div");
+    row.id = "first-row";
+    row.tabIndex = 0;
+    const given: string[] = [];
+    row.addEventListener("keydown", (event) => {
+      given.push(event.key);
+    });
+    document.body.append(row);
+    // A key typed while the held ones are being given comes after them
+    press("k");
+    await frames(5);
+
+    expect(document.activeElement).toBe(row);
+    expect(given).toEqual(["A", "s", "k"]);
+  });
+
+  it("stops holding keys once the page takes too long to draw", async () => {
+    vi.useFakeTimers({ toFake: ["requestAnimationFrame", "performance"] });
+    holdKeys().giveTo("never-drawn");
+    await vi.advanceTimersByTimeAsync(4000);
+    const pressed = new KeyboardEvent("keydown", {
+      key: "A",
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(pressed);
+    expect(pressed.defaultPrevented).toBe(false);
+  });
+
+  it("lets keys go once stopped, such as when the page can't be made", () => {
+    holdKeys().stop();
+    const pressed = new KeyboardEvent("keydown", {
+      key: "A",
+      bubbles: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(pressed);
+    expect(pressed.defaultPrevented).toBe(false);
   });
 });

@@ -24,7 +24,12 @@ import {
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { type KeyboardEvent, useEffect, useId, useState } from "react";
+import {
+  type KeyboardEvent as ReactKeyboardEvent,
+  useEffect,
+  useId,
+  useState,
+} from "react";
 import { ApiError, describeProblem } from "./api.ts";
 import { typesOffered } from "./column-dialog.tsx";
 import { Count } from "./counted-input.tsx";
@@ -33,7 +38,7 @@ import {
   newRecordQuestion,
   useDiscardQuestion,
 } from "./discard-question.tsx";
-import { focusSoon } from "./focus.ts";
+import { focusSoon, holdKeys } from "./focus.ts";
 import { Icon } from "./icons.tsx";
 import { nameTaken } from "./list-dialog.tsx";
 import { listsQuery, liveLists, nameProblem } from "./lists.ts";
@@ -130,6 +135,8 @@ export function NewPageDialog({
     <>
       <Modal
         opened={opened}
+        // One width for both steps, room for each column's type and list.
+        size="lg"
         // Focus goes to the new page's first row once made, rather than back to New page.
         returnFocus={false}
         title="New page"
@@ -185,13 +192,17 @@ function NewPageSteps({
   const navigate = useNavigate();
   const making = useMutation({
     mutationFn: makePrivatePage,
+    // What is typed from Add page on is held for the new page's first row.
     onMutate: () => {
       onBusy(true);
+      return holdKeys();
     },
     onSettled: () => {
       onBusy(false);
     },
-    onSuccess: async ({ page }) => {
+    onSuccess: async ({ page }, _request, held) => {
+      // The new page's empty row, ready for its first row to be typed, takes what was typed.
+      held.giveTo(`cell-new-0-${String(page.firstFieldId)}`);
       await queryClient.invalidateQueries({
         queryKey: privatePagesQuery.queryKey,
       });
@@ -199,10 +210,9 @@ function NewPageSteps({
       queryClient.setQueryData(privatePageQuery(page.id).queryKey, page);
       onMade();
       await navigate({ to: "/mine/$pageId", params: { pageId: page.id } });
-      // The new page's empty row, ready for its first row to be typed.
-      focusSoon(`cell-new-0-${String(page.firstFieldId)}`);
     },
-    onError: (error) => {
+    onError: (error, _request, held) => {
+      held?.stop();
       if (refusedAsTaken(error)) {
         setStep("name");
         focusSoon(`${ids}-name`);
@@ -256,7 +266,7 @@ function NewPageSteps({
   };
   const nameFieldOf = (index: number) => `${ids}-column-${String(index)}`;
   // Enter in a column's name goes on to the next row's, as in a table.
-  const nextRowOnEnter = (index: number) => (event: KeyboardEvent) => {
+  const nextRowOnEnter = (index: number) => (event: ReactKeyboardEvent) => {
     if (event.key !== "Enter" || index >= columns.length) return;
     event.preventDefault();
     focusSoon(nameFieldOf(index + 1));

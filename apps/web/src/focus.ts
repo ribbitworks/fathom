@@ -77,3 +77,66 @@ export function focusRefusedSoon(form: HTMLElement): void {
     () => form.querySelector<HTMLElement>('[aria-invalid="true"]') ?? undefined,
   );
 }
+
+// How long a page may take to draw before focusing a control on it stops waiting for it.
+const pageDrawnWithin = 3000;
+
+const typesText = (event: KeyboardEvent) =>
+  event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey;
+
+// Holds the characters typed from now on, for a control on a page being opened, so typing straight
+// on, such as a new page's first row, isn't lost while the page is saved and drawn. Given the
+// control's identifier, it focuses the control once drawn and gives it the characters held; stopped,
+// it lets them go. Unlike focusSoon, its wait doesn't give way to keys pressed, since those keys are
+// its point.
+export function holdKeys() {
+  const held: string[] = [];
+  // Set while a held key is given, so it isn't held again.
+  let giving = false;
+  const hold = (event: KeyboardEvent) => {
+    if (giving || !typesText(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    held.push(event.key);
+  };
+  const listen = { capture: true } as const;
+  document.addEventListener("keydown", hold, listen);
+  const stop = () => {
+    document.removeEventListener("keydown", hold, listen);
+  };
+  // One a frame, as keys typed fast reach a cell, each after the cell has taken the one before; keys
+  // typed meanwhile are held behind them, keeping their order, until none is left.
+  const giveEach = (control: HTMLElement) => {
+    const key = held.shift();
+    if (key === undefined) {
+      stop();
+      return;
+    }
+    giving = true;
+    control.dispatchEvent(
+      new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }),
+    );
+    giving = false;
+    requestAnimationFrame(() => {
+      giveEach(control);
+    });
+  };
+  const giveTo = (id: string) => {
+    const startedAt = performance.now();
+    const attempt = () => {
+      const control = document.getElementById(id);
+      if (control === null && performance.now() - startedAt < pageDrawnWithin) {
+        requestAnimationFrame(attempt);
+        return;
+      }
+      if (control === null) {
+        stop();
+        return;
+      }
+      control.focus();
+      giveEach(control);
+    };
+    requestAnimationFrame(attempt);
+  };
+  return { giveTo, stop };
+}
