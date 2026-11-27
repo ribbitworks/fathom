@@ -15,6 +15,7 @@ import type {
   Tier,
   DraftsAsked,
   DraftsRequest,
+  UnpublishedPublish,
   UnpublishedPublished,
   ExportRequest,
   ExportRecorded,
@@ -228,7 +229,10 @@ export interface DraftAccess {
 // left for another role.
 export interface UnpublishedAccess {
   read(actor: Actor): Promise<Unpublished>;
-  publish(actor: Actor, chosen?: DraftsRequest): Promise<UnpublishedPublished>;
+  publish(
+    actor: Actor,
+    chosen?: UnpublishedPublish,
+  ): Promise<UnpublishedPublished>;
   discard(actor: Actor, chosen?: DraftsRequest): Promise<number>;
 }
 

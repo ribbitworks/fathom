@@ -6,7 +6,6 @@
 import {
   changes,
   changeSets,
-  type Database,
   drafts,
   fieldOfValue,
   inChunks,
@@ -14,12 +13,17 @@ import {
   people,
 } from "@fathom/db";
 import {
+  type ColumnTable,
+  columnTableOf,
+  columnTablePolicies,
+  columnTables,
+  type Permission,
   recordTypeSchema,
   seesClass,
   type Tier,
   tierSchema,
 } from "@fathom/shared";
-import { and, eq, inArray, or, type SQL } from "drizzle-orm";
+import { and, eq, inArray, or, type SQL, sql } from "drizzle-orm";
 import {
   type Actor,
   mostSensitive,
@@ -45,17 +49,24 @@ import {
   type ViewNow,
   viewsNow,
 } from "./views.ts";
-import { type Facts, seenSets, strings } from "./history-names.ts";
+import {
+  type Facts,
+  type HistoryReader,
+  seenSets,
+  strings,
+} from "./history-names.ts";
 import { madeInOrder } from "./history-order.ts";
 
 // Configuration is seen by those who may open the configuration pages, and people by those who may
-// see people. Saved views are seen by those who open their table's page.
+// see people. A table's columns go with its records, and saved views are seen by those who open
+// their table's page.
 const configurationKinds: readonly RecordType[] = [
   "list",
   "list-item",
   "choice-order",
-  "field",
 ];
+const columnKinds: readonly RecordType[] = ["field"];
+const judgedByClass = new Set<string>([...configurationKinds, ...columnKinds]);
 const peopleKinds: readonly RecordType[] = ["person"];
 
 // The hiring plan, by those who see people and the hiring plan.
@@ -73,7 +84,7 @@ const seenPlanKinds = (actor: Actor): RecordType[] =>
 // Each list's visibility now: as it is, or, for a list deleted since, as it was last recorded. A
 // tier the server no longer knows is treated as the most sensitive rather than trusted.
 async function listTiersNow(
-  database: Database,
+  database: HistoryReader,
   facts: Facts,
 ): Promise<(listId: string | undefined) => Tier> {
   const ids = [...new Set(facts.lists.values())];
@@ -109,6 +120,10 @@ function seesRowOfKind(
       seesClass(actor.permissions, tier)
     );
   }
+  // Configuration and columns are General data, seen without people.
+  if (judgedByClass.has(row.recordType)) {
+    return seesClass(actor.permissions, tier);
+  }
   if (planKinds.includes(row.recordType as RecordType)) {
     return (
       seenPlan.includes(row.recordType as RecordType) && tier === "general"
@@ -122,7 +137,7 @@ function seesRowOfKind(
 // they were when made or are now, whichever is more: a person's choices in a column whose list has
 // since become more sensitive, or a saved view on such a column.
 export async function visibleRows(
-  database: Database,
+  database: HistoryReader,
   actor: Actor,
   rows: readonly StoredChange[],
   facts: Facts,
@@ -230,7 +245,7 @@ export async function visibleRows(
 // by the last dates recorded for them that the actor may see, such as for someone removed, never
 // another user's private change. Planned hires are never among them.
 export async function notCurrentAmong(
-  database: Database,
+  database: HistoryReader,
   actor: Actor,
   ids: readonly string[],
   today: string,
@@ -322,60 +337,137 @@ export function teamRowShowsNoOne(
   return seenOf(row.oldValue) === seenOf(row.newValue);
 }
 
+// The changes of some kinds an area the actor sees shows: those at a tier the actor sees, or to one
+// of some fields whatever their tier, and, for columns, those of the tables given.
+interface ShownChanges {
+  kinds: readonly string[];
+  tiers: readonly Tier[];
+  fields?: readonly string[];
+  tables?: readonly ColumnTable[];
+}
+
+// The tables whose columns' changes the actor sees: those whose records they see.
+const seenColumnTables = (actor: Actor): ColumnTable[] =>
+  columnTables.filter((table) =>
+    // The table is always one of the fixed tables.
+    // eslint-disable-next-line security/detect-object-injection
+    actor.permissions.includes(columnTablePolicies[table].viewNeeds),
+  );
+
+// The changes each area the actor sees shows. Configuration and columns are General data whether
+// or not the role sees people, so each area shows the classes the role sees.
+function shownAreas(actor: Actor): ShownChanges[] {
+  const has = (permission: Permission) =>
+    actor.permissions.includes(permission);
+  const tiers = tierSchema.options.filter((tier) =>
+    seesClass(actor.permissions, tier),
+  );
+  const plan = seenPlanKinds(actor);
+  const tables = seenColumnTables(actor);
+  const areas: (ShownChanges | false)[] = [
+    has("configuration:view") && { kinds: configurationKinds, tiers },
+    tables.length > 0 && { kinds: columnKinds, tiers, tables },
+    has("people:view") && { kinds: peopleKinds, tiers },
+    // A hire's own details are recorded as Confidential, but seen with the hiring plan.
+    has("people:view") &&
+      seesSensitivity(actor, "hiring-plan") && {
+        kinds: hiringKinds,
+        tiers,
+        fields: hiringPlanFields,
+      },
+    has("feature-teams:view") && { kinds: ["feature-team"], tiers },
+    plan.length > 0 && { kinds: plan, tiers: ["general"] },
+    // Which table's views, and the classes they use now, are checked change by change.
+    opensAnyViews(actor) && { kinds: ["saved-view"], tiers },
+  ];
+  return areas.filter((area) => area !== false);
+}
+
+const columnKind: RecordType = "field";
+const tableField = "tableName";
+
+// The table of the column a change is to, as its history last recorded it, or People for one
+// recorded before columns had tables, as columnTableOf has it. One expression for the history's
+// filter and for readColumnTables.
+function columnTableOfChange(): SQL {
+  const recorded = (column: { name: string }) =>
+    sql`recorded.${sql.identifier(column.name)}`;
+  return sql`coalesce((
+    SELECT ${recorded(changes.newValue)} #>> '{}'
+    FROM ${changes} AS recorded
+    WHERE ${recorded(changes.recordType)} = ${columnKind}
+      AND ${recorded(changes.recordId)} = ${changes.recordId}
+      AND ${recorded(changes.field)} = ${tableField}
+      AND ${recorded(changes.newValue)} IS NOT NULL
+    ORDER BY ${recorded(changes.id)} DESC
+    LIMIT 1
+  ), ${columnTableOf(undefined)})`;
+}
+
 // Which changes the actor may see: those of the kinds and classes each area they see shows, or none.
 export function changesShownTo(actor: Actor): SQL | undefined {
-  const kinds = [
-    ...(actor.permissions.includes("configuration:view")
-      ? configurationKinds
-      : []),
-    ...(actor.permissions.includes("people:view") ? peopleKinds : []),
-  ];
-  const teams = actor.permissions.includes("feature-teams:view");
-  const hiring =
-    actor.permissions.includes("people:view") &&
-    seesSensitivity(actor, "hiring-plan");
-  const plan = seenPlanKinds(actor);
-  const tiers = tierSchema.options.filter((tier) =>
-    seesSensitivity(actor, tier),
-  );
-  const views = opensAnyViews(actor);
   return or(
-    kinds.length === 0
-      ? undefined
-      : and(
-          inArray(changes.recordType, [...kinds]),
-          inArray(changes.tier, tiers),
-        ),
-    // A hire's own details are recorded as Confidential, but seen with the hiring plan.
-    hiring
-      ? and(
-          inArray(changes.recordType, [...hiringKinds]),
-          or(
-            inArray(changes.tier, tiers),
-            inArray(changes.field, [...hiringPlanFields]),
-          ),
-        )
-      : undefined,
-    teams
-      ? and(
-          eq(changes.recordType, "feature-team"),
-          or(eq(changes.tier, "general"), inArray(changes.tier, tiers)),
-        )
-      : undefined,
-    plan.length > 0
-      ? and(inArray(changes.recordType, plan), eq(changes.tier, "general"))
-      : undefined,
-    // Which table's views, and the classes they use now, are checked change by change.
-    views
-      ? and(
-          eq(changes.recordType, "saved-view"),
-          inArray(
-            changes.tier,
-            tierSchema.options.filter((tier) =>
-              seesClass(actor.permissions, tier),
+    ...shownAreas(actor).map(({ kinds, tiers, fields, tables }) =>
+      and(
+        inArray(changes.recordType, [...kinds]),
+        fields === undefined
+          ? inArray(changes.tier, [...tiers])
+          : or(
+              inArray(changes.tier, [...tiers]),
+              inArray(changes.field, [...fields]),
             ),
-          ),
-        )
-      : undefined,
+        tables === undefined
+          ? undefined
+          : inArray(columnTableOfChange(), [...tables]),
+      ),
+    ),
   );
+}
+
+// The table of each column given, as its history last recorded it, for showsChange.
+export async function readColumnTables(
+  reader: HistoryReader,
+  ids: readonly string[],
+): Promise<Map<string, ColumnTable>> {
+  const found = new Map<string, ColumnTable>();
+  for (const chunk of inChunks([...new Set(ids)])) {
+    const rows = await reader
+      .selectDistinctOn([changes.recordId], {
+        recordId: changes.recordId,
+        table: sql<string>`${columnTableOfChange()}`,
+      })
+      .from(changes)
+      .where(
+        and(
+          eq(changes.recordType, columnKind),
+          inArray(changes.recordId, chunk),
+        ),
+      );
+    for (const { recordId, table } of rows) {
+      found.set(recordId, columnTableOf(table));
+    }
+  }
+  return found;
+}
+
+// The same rule as changesShownTo, for a change not read from the history, such as a value not yet
+// saved, given the tables of the columns it may be to.
+export function showsChange(
+  actor: Actor,
+  tablesOf: ReadonlyMap<string, ColumnTable>,
+): (
+  change: Pick<StoredChange, "recordType" | "recordId" | "field" | "tier">,
+) => boolean {
+  const areas = shownAreas(actor);
+  return ({ recordType, recordId, field, tier }) =>
+    areas.some(
+      (area) =>
+        area.kinds.includes(recordType) &&
+        (area.tiers.includes(storedTier(tier)) ||
+          (area.fields ?? []).includes(field)) &&
+        (area.tables === undefined ||
+          area.tables.includes(
+            tablesOf.get(recordId) ?? columnTableOf(undefined),
+          )),
+    );
 }

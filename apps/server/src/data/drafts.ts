@@ -243,6 +243,11 @@ function editorSet(transaction: Transaction, editor: string): Promise<string> {
   return set;
 }
 
+// When a private change begins: once the drafts lock is held, not when the transaction began, so a
+// discard by choice committed while this request waited for the lock comes before it. No test can
+// make two requests wait on each other in turn.
+const sinceNow = sql`clock_timestamp()`;
+
 // Keeps the draft the editor intends for a record as their unpublished draft: none at all when it
 // is the published draft, and one that wants no draft when the
 // editor wants none but there is a published one. It keeps, for each field the editor changes,
@@ -287,7 +292,14 @@ async function keepUnpublished(
   const setId = await editorSet(transaction, editor);
   await transaction
     .insert(privateChanges)
-    .values({ recordType, recordId: id, userId: editor, setId, ...values })
+    .values({
+      recordType,
+      recordId: id,
+      userId: editor,
+      setId,
+      since: sinceNow,
+      ...values,
+    })
     .onConflictDoUpdate({
       target: [
         privateChanges.recordType,
@@ -389,6 +401,7 @@ export async function addDrafts(
         recordId: id,
         userId: editor,
         setId,
+        since: sinceNow,
         action: "created",
         fields,
       })),

@@ -15,6 +15,7 @@ import type { Database } from "@fathom/db";
 import type { AuthConfig, TlsConfig } from "./config.ts";
 import { createAuth } from "./data/auth.ts";
 import { savedAtSameMoment } from "./data/changes.ts";
+import { RequestError } from "./errors.ts";
 import type { DataAccess } from "./data/index.ts";
 import { loggerOptions, type LogStream } from "./logging.ts";
 import type { Actor } from "./access.ts";
@@ -154,8 +155,11 @@ export async function buildApp(options: AppOptions) {
         .status(internalServerError)
         .send({ error: "Internal Server Error" });
     }
-    const { field } = error as { field?: string };
+    // Only a refusal of Fathom's own says which field it is about, or answers more.
+    const { field, details } =
+      error instanceof RequestError ? error : { field: undefined, details: {} };
     return reply.status(statusCode).send({
+      ...details,
       error: error.message,
       ...(field === undefined ? {} : { field }),
     });

@@ -16,6 +16,7 @@ import {
   type ChangedField,
   type ChangedRecord,
   type ClassAccess,
+  type ColumnTable,
   type ChangeEntry,
   matchesWords,
   recordSearchText,
@@ -44,6 +45,7 @@ import { personTier } from "./person-fields.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import {
   belonging,
+  type HistoryReader,
   nameByParts,
   nameHires,
   namesMembers,
@@ -57,6 +59,7 @@ import {
 } from "./history-names.ts";
 import {
   changesShownTo,
+  showsChange,
   notCurrentAmong,
   teamRowKey,
   teamRowShowsNoOne,
@@ -108,20 +111,16 @@ const valuesNamed = (row: StoredChange) =>
     (value): value is string => typeof value === "string",
   );
 
-// The records a change set changed, in the order first changed, each with the fields it changed.
-function recordsOf(
-  rows: readonly StoredChange[],
+// How a change's values name the records they hold. People the reader does not see are named
+// nowhere, such as a hire's manager. Who fills a hire is named only to readers who see Personal
+// details, since it tells of their reporting line to come.
+function valueNamer(
   names: Map<string, string>,
-  listOf: Map<string, string>,
   hidden: ReadonlySet<string>,
   seesPersonal: boolean,
   access: ClassAccess,
-): ChangedRecord[] {
-  const name = (id: string) => names.get(id);
-  // People the reader does not see are named nowhere, such as a hire's manager. Who fills a hire is
-  // named only to readers who see Personal details, since it tells of their reporting line to
-  // come.
-  const valueName = (row: StoredChange) => {
+) {
+  return (row: StoredChange) => {
     const unseen = unseenValueName(row, access);
     return (id: string) =>
       hidden.has(id) ||
@@ -129,8 +128,43 @@ function recordsOf(
         row.recordType === "planned-hire" &&
         row.field === "filledBy")
         ? undefined
-        : (unseen ?? name(id));
+        : (unseen ?? names.get(id));
   };
+}
+
+// What a change changed, as the history shows it; none for an added or deleted record, which is
+// named alone, or a field the history doesn't show.
+function changedField(
+  row: StoredChange,
+  names: Map<string, string>,
+  valueName: (id: string) => string | undefined,
+): ChangedField | undefined {
+  if (
+    row.action !== "changed" ||
+    unshownFields.has(row.field) ||
+    (row.field === rejectedField && row.newValue === null) ||
+    belonging.get(row.recordType) === row.field
+  ) {
+    return undefined;
+  }
+  const columnId = fieldOfValue(row.field);
+  const column = columnId === null ? undefined : names.get(columnId);
+  return {
+    field: columnId === null ? row.field : "value",
+    ...(column === undefined ? {} : { column }),
+    oldValue: shown(row, row.oldValue, valueName),
+    newValue: shown(row, row.newValue, valueName),
+  };
+}
+
+// The records a change set changed, in the order first changed, each with the fields it changed.
+function recordsOf(
+  rows: readonly StoredChange[],
+  { names, lists: listOf, hidden, seesPersonal }: Named,
+  access: ClassAccess,
+): ChangedRecord[] {
+  const name = (id: string) => names.get(id);
+  const valueName = valueNamer(names, hidden, seesPersonal, access);
   const records = new Map<string, ChangedRecord>();
   for (const row of rows) {
     const key = `${row.recordType} ${row.recordId} ${String(row.draft)}`;
@@ -147,86 +181,28 @@ function recordsOf(
       fields: [],
     };
     records.set(key, record);
-    // Only a change says what changed; an added or deleted record is named alone.
-    if (
-      row.action !== "changed" ||
-      unshownFields.has(row.field) ||
-      (row.field === rejectedField && row.newValue === null) ||
-      belonging.get(row.recordType) === row.field
-    ) {
-      continue;
-    }
-    const columnId = fieldOfValue(row.field);
-    const column = columnId === null ? undefined : name(columnId);
-    const field: ChangedField = {
-      field: columnId === null ? row.field : "value",
-      ...(column === undefined ? {} : { column }),
-      oldValue: shown(row, row.oldValue, valueName(row)),
-      newValue: shown(row, row.newValue, valueName(row)),
-    };
-    record.fields.push(field);
+    const field = changedField(row, names, valueName(row));
+    if (field !== undefined) record.fields.push(field);
   }
   return [...records.values()];
 }
 
-interface Batch {
-  entries: { entry: ChangeEntry; sensitive: boolean }[];
-  // The last change set read, to read on from, or null when there are no more.
-  next: string | null;
+// The changes the actor may see of those given, each with its tier, and the names their records
+// and values are shown by.
+interface Named {
+  visible: { row: StoredChange; tier: Tier }[];
+  names: Map<string, string>;
+  lists: Map<string, string>;
+  hidden: Set<string>;
+  seesPersonal: boolean;
 }
 
-// Up to a number of change sets saved before the one named, or the latest, holding a change the
-// actor may see.
-async function readBatch(
-  database: Database,
+async function namedRows(
+  database: HistoryReader,
   actor: Actor,
-  mayShow: SQL | undefined,
-  before: string | undefined,
-  limit: number,
+  rows: readonly StoredChange[],
   tierNow: (field: string) => Tier,
-): Promise<Batch> {
-  const sets = await database
-    .select({
-      id: changeSets.id,
-      kind: changeSets.kind,
-      madeAt: changeSets.madeAt,
-      madeBy: users.name,
-      madeAs: roles.name,
-    })
-    .from(changeSets)
-    .leftJoin(users, eq(users.id, changeSets.madeBy))
-    .leftJoin(roles, eq(roles.id, changeSets.madeAsRoleId))
-    .where(
-      and(
-        seenSets(actor),
-        exists(
-          database
-            .select({ one: sql`1` })
-            .from(changes)
-            .where(and(eq(changes.changeSetId, changeSets.id), mayShow)),
-        ),
-        before === undefined
-          ? undefined
-          : // The inner query's columns name its own change set, the one asked for.
-            sql`(${changeSets.madeAt}, ${changeSets.id}) < (${database
-              .select({ madeAt: changeSets.madeAt, id: changeSets.id })
-              .from(changeSets)
-              .where(eq(changeSets.id, before))})`,
-      ),
-    )
-    .orderBy(desc(changeSets.madeAt), desc(changeSets.id))
-    .limit(limit + 1);
-  const page = sets.slice(0, limit);
-  const rows: StoredChange[] = [];
-  for (const chunk of inChunks(page.map(({ id }) => id))) {
-    rows.push(
-      ...(await database
-        .select()
-        .from(changes)
-        .where(and(inArray(changes.changeSetId, chunk), mayShow))
-        .orderBy(asc(changes.id))),
-    );
-  }
+): Promise<Named> {
   const facts = await readFacts(database, actor, [
     ...rows.map((row) => row.recordId),
     ...rows.flatMap((row) => referencedIds(row)),
@@ -293,8 +269,133 @@ async function readBatch(
       !teamRowShowsNoOne(row, hidden) &&
       !(row.field === rejectedField && nothingSeen.has(teamRowKey(row))),
   );
+  return {
+    visible,
+    names: facts.names,
+    lists: facts.lists,
+    hidden,
+    seesPersonal,
+  };
+}
+
+// Each of the changes given that the actor may see, by the history's own rules, given the tables of
+// the columns they may be to, such as a value not yet saved, as the history would show it, or
+// undefined for a field the history doesn't show.
+export async function shownChanges(
+  database: HistoryReader,
+  actor: Actor,
+  rows: readonly StoredChange[],
+  tables: ReadonlyMap<string, ColumnTable>,
+): Promise<Map<StoredChange, ChangedField | undefined>> {
+  const tierNow = personTier(await columnsWithAdded(database, undefined));
+  const named = await namedRows(
+    database,
+    actor,
+    rows.filter(showsChange(actor, tables)),
+    tierNow,
+  );
+  const valueName = valueNamer(
+    named.names,
+    named.hidden,
+    named.seesPersonal,
+    actor,
+  );
+  return new Map(
+    named.visible.map(({ row }) => [
+      row,
+      changedField(row, named.names, valueName(row)),
+    ]),
+  );
+}
+
+// The changes shown, with those given up on publishing as the user's change to the draft: each
+// field once, from the user's value to the one kept, and a whole record given up left out, since
+// taking back its addition or removal didn't add or remove it.
+function shownGivenUp(
+  visible: readonly { row: StoredChange; tier: Tier }[],
+  givenUp: ReadonlySet<string>,
+): { row: StoredChange; tier: Tier }[] {
+  const keyOf = (row: StoredChange) =>
+    `${row.changeSetId} ${row.recordType} ${row.recordId} ${row.field}`;
+  const kept = visible.filter(
+    ({ row }) => givenUp.has(row.changeSetId) && row.action === "changed",
+  );
+  const last = new Map(kept.map(({ row }) => [keyOf(row), row.newValue]));
+  const shown = new Set<string>();
+  return visible.flatMap((each) => {
+    const { row } = each;
+    if (!givenUp.has(row.changeSetId)) return [each];
+    const key = keyOf(row);
+    if (row.action !== "changed" || shown.has(key)) return [];
+    shown.add(key);
+    return [{ ...each, row: { ...row, newValue: last.get(key) } }];
+  });
+}
+
+interface Batch {
+  entries: { entry: ChangeEntry; sensitive: boolean }[];
+  // The last change set read, to read on from, or null when there are no more.
+  next: string | null;
+}
+
+// Up to a number of change sets saved before the one named, or the latest, holding a change the
+// actor may see.
+async function readBatch(
+  database: Database,
+  actor: Actor,
+  mayShow: SQL | undefined,
+  before: string | undefined,
+  limit: number,
+  tierNow: (field: string) => Tier,
+): Promise<Batch> {
+  const sets = await database
+    .select({
+      id: changeSets.id,
+      kind: changeSets.kind,
+      madeAt: changeSets.madeAt,
+      madeBy: users.name,
+      madeAs: roles.name,
+    })
+    .from(changeSets)
+    .leftJoin(users, eq(users.id, changeSets.madeBy))
+    .leftJoin(roles, eq(roles.id, changeSets.madeAsRoleId))
+    .where(
+      and(
+        seenSets(actor),
+        exists(
+          database
+            .select({ one: sql`1` })
+            .from(changes)
+            .where(and(eq(changes.changeSetId, changeSets.id), mayShow)),
+        ),
+        before === undefined
+          ? undefined
+          : // The inner query's columns name its own change set, the one asked for.
+            sql`(${changeSets.madeAt}, ${changeSets.id}) < (${database
+              .select({ madeAt: changeSets.madeAt, id: changeSets.id })
+              .from(changeSets)
+              .where(eq(changeSets.id, before))})`,
+      ),
+    )
+    .orderBy(desc(changeSets.madeAt), desc(changeSets.id))
+    .limit(limit + 1);
+  const page = sets.slice(0, limit);
+  const rows: StoredChange[] = [];
+  for (const chunk of inChunks(page.map(({ id }) => id))) {
+    rows.push(
+      ...(await database
+        .select()
+        .from(changes)
+        .where(and(inArray(changes.changeSetId, chunk), mayShow))
+        .orderBy(asc(changes.id))),
+    );
+  }
+  const named = await namedRows(database, actor, rows, tierNow);
+  const givenUp = new Set(
+    page.filter(({ kind }) => kind === "given-up").map(({ id }) => id),
+  );
   const bySet = new Map<string, { rows: StoredChange[]; sensitive: boolean }>();
-  for (const { row, tier } of visible) {
+  for (const { row, tier } of shownGivenUp(named.visible, givenUp)) {
     const held = bySet.get(row.changeSetId) ?? { rows: [], sensitive: false };
     held.rows.push(row);
     held.sensitive ||= tier !== "general";
@@ -313,14 +414,7 @@ async function readBatch(
                 madeAt: set.madeAt.toISOString(),
                 madeBy: set.madeBy,
                 madeAs: set.madeAs,
-                records: recordsOf(
-                  held.rows,
-                  facts.names,
-                  facts.lists,
-                  hidden,
-                  seesPersonal,
-                  actor,
-                ),
+                records: recordsOf(held.rows, named, actor),
               },
               sensitive: held.sensitive,
             },

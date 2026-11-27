@@ -13,8 +13,8 @@ import {
 } from "@fathom/db";
 import {
   draftKey,
-  type DraftsRequest,
   type Unpublished,
+  type UnpublishedPublish,
   type UnpublishedPublished,
 } from "@fathom/shared";
 import { and, desc, eq, notExists, sql } from "drizzle-orm";
@@ -60,6 +60,7 @@ import {
   versionOf,
   type Versions,
 } from "./private-versions.ts";
+import { withValuesKept } from "./private-conflict-answers.ts";
 import {
   discardPrivateOfGone,
   publishedDraftsOf,
@@ -259,27 +260,40 @@ async function publishableBy(
 
 // Publishes the actor's unpublished drafts a request chooses, with those they use, or every one when
 // it chooses none, all together or none, of those the actor's role may publish, and returns how many
-// records' changes it published and how many it left for another role.
+// records' changes it published and how many it left for another role. A field someone else changed
+// since the actor's change began is published only once the request says which value to keep.
 export async function publishUnpublished(
   database: Database,
   actor: Actor,
-  chosen?: DraftsRequest,
+  chosen?: UnpublishedPublish,
 ): Promise<UnpublishedPublished> {
   requireDrafting(actor);
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const userId = actor.user.id;
-    const going = await readGoing(transaction, userId, chosen, "publish");
-    const { versions } = going;
+    const going = await readGoing(
+      transaction,
+      userId,
+      chosen?.drafts,
+      "publish",
+    );
     const { rows, left } = await publishableBy(
       transaction,
       actor,
-      versions,
+      going.versions,
       going.rows,
     );
     if (rows.length === 0) return { total: 0, left };
+    const kept = await withValuesKept(
+      transaction,
+      actor,
+      going.versions,
+      rows,
+      chosen?.resolutions ?? [],
+    );
+    const { versions } = kept;
     const taken = await takenPeople(transaction, userId, versions);
-    const misfit = rows.find((row) => !fits(versions, row, taken));
+    const misfit = kept.rows.find((row) => !fits(versions, row, taken));
     if (misfit !== undefined) {
       throw new ConflictError(
         `The change to ${subjectOf(versions, misfit, actor)} no longer fits the data; change or discard it, then publish again`,
@@ -290,11 +304,11 @@ export async function publishUnpublished(
       await publishedDraftsOf(
         transaction,
         "created",
-        rows.filter(wantsNoDraft),
+        kept.rows.filter(wantsNoDraft),
       ),
       userId,
     );
-    for (const row of rows) {
+    for (const row of kept.rows) {
       const record = and(
         eq(drafts.recordType, row.recordType),
         eq(drafts.recordId, row.recordId),
@@ -331,6 +345,10 @@ export async function publishUnpublished(
     await removeEmptyOrders(transaction, undefined);
     // Publishing the discard of a draft that added a record leaves it gone.
     await discardPrivateOfGone(transaction, actor.dataClasses, privateBefore);
-    return { total: rows.length, left };
+    return {
+      total: kept.rows.length,
+      left,
+      ...(kept.givenUp.length > 0 ? { givenUp: kept.givenUp } : {}),
+    };
   });
 }

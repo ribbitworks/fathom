@@ -102,6 +102,17 @@ export const changeSetKinds: Record<ChangeSetKind, KindRules> = {
     changesDraft: true,
     undoneBy: "puttingBack",
   },
+  "given-up": {
+    editing: true,
+    shownAs: "edit",
+    publishedNext: false,
+    endsOpen: false,
+    undoRefused:
+      "Keeping another value on publishing can't be undone; change the draft instead",
+    resetsMakers: false,
+    changesDraft: true,
+    undoneBy: "puttingBack",
+  },
 };
 
 const known = (kind: string): kind is ChangeSetKind =>

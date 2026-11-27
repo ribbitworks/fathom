@@ -127,6 +127,35 @@ export const undone = <
   newValue: change.oldValue,
 });
 
+// The changes giving up some fields of a user's private change for the values everyone else sees.
+export const givingUp = (
+  versions: Versions,
+  row: Row,
+  fields: ReadonlySet<string>,
+  classes: DataClasses,
+): Change[] =>
+  takingBack(versions, row, classes).filter(({ field }) => fields.has(field));
+
+// Records changes taking back a user's private changes as change sets of theirs, each of a kind,
+// with the access history the changes write; what is recorded besides them changes no value.
+export async function recordTakingBack(
+  transaction: Transaction,
+  maker: ChangeMaker,
+  made: readonly {
+    kind: ChangeSetKind;
+    changes: Change[];
+    recorded?: readonly ChangeRecord[];
+  }[],
+): Promise<void> {
+  const all = made.flatMap(({ changes }) => changes);
+  await recordSensitiveChanges(transaction, maker.userId, all);
+  await recordHiringChanges(transaction, maker.userId, all);
+  await recordTeamDayChanges(transaction, maker.userId, all);
+  for (const { kind, changes, recorded = changes } of made) {
+    await recordChangesAs(transaction, maker, recorded, kind);
+  }
+}
+
 // Takes back a user's private changes, from the versions given, removing them and recording each
 // withdrawal as a change set of theirs, with the access history taking them back writes.
 export async function withdraw(
@@ -145,7 +174,7 @@ export async function withdraw(
     return {
       kind,
       changes: taken.flatMap(({ changes }) => changes),
-      recorded: taken.flatMap(({ row, changes }) =>
+      recorded: taken.flatMap(({ row, changes }): readonly ChangeRecord[] =>
         changes.length > 0 || otherwise === undefined
           ? changes
           : otherwise(row),
@@ -157,11 +186,5 @@ export async function withdraw(
     maker.userId,
     withdrawals.flatMap(({ rows }) => rows),
   );
-  const all = made.flatMap(({ changes }) => changes);
-  await recordSensitiveChanges(transaction, maker.userId, all);
-  await recordHiringChanges(transaction, maker.userId, all);
-  await recordTeamDayChanges(transaction, maker.userId, all);
-  for (const { kind, recorded } of made) {
-    await recordChangesAs(transaction, maker, recorded, kind);
-  }
+  await recordTakingBack(transaction, maker, made);
 }

@@ -11,6 +11,7 @@ import {
   type Field,
   type List,
   type Person,
+  type PrivateConflicts,
   type Unpublished,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
@@ -120,6 +121,23 @@ export const publish = async (who: User, drafts?: object) =>
       drafts === undefined ? undefined : { drafts },
     )
   ).total;
+// Publishes after being asked which side to keep, keeping one side of every clash asked about, as
+// the user was shown it.
+export async function keepingSide(who: User, keep: "mine" | "theirs") {
+  const asked = await send(who, "POST", "/api/unpublished/publish");
+  expect(asked.statusCode, asked.body).toBe(409);
+  return send(who, "POST", "/api/unpublished/publish", {
+    resolutions: asked
+      .json<PrivateConflicts>()
+      .conflicts.map(({ recordType, recordId, field, token }) => ({
+        recordType,
+        recordId,
+        ...(field === undefined ? {} : { field }),
+        keep,
+        token,
+      })),
+  });
+}
 export const discard = async (who: User, drafts?: object) =>
   (
     await saved<{ total: number }>(

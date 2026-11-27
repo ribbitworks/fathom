@@ -33,6 +33,9 @@ import { recordKinds } from "./records.ts";
 import type { StoredChange } from "./changes.ts";
 import { latestFirst, madeInOrder } from "./history-order.ts";
 
+// A database or transaction, read for naming what the history refers to.
+export type HistoryReader = Pick<Database, "select" | "selectDistinctOn">;
+
 // The kinds of record that belong to another, which the history names them by, as a choice is by
 // its list.
 export const belonging = new Map<string, string>([
@@ -135,7 +138,7 @@ export const seenSets = (actor: Actor) =>
 // What the history the actor may see last recorded about each record: its name, its list, and a
 // list's visibility.
 export async function readFacts(
-  database: Database,
+  database: HistoryReader,
   actor: Actor,
   ids: readonly string[],
   facts: Facts = {
@@ -213,7 +216,7 @@ const hireNameFields = ["name", "positionId", "requisition", "temporaryNumber"];
 // alone to those who cannot see the Positions list's tier. Removing a hire records no values, so
 // the name it had stays.
 export async function nameHires(
-  database: Database,
+  database: HistoryReader,
   actor: Actor,
   ids: readonly string[],
   facts: Facts,
@@ -374,7 +377,7 @@ export function shown(
 // The records named in the parts of each record changed among the rows whose kind is named by
 // them, by field, from the change that added it, since later changes record only what changed.
 export async function partsOf(
-  database: Database,
+  database: HistoryReader,
   rows: readonly StoredChange[],
 ): Promise<Map<string, Record<string, string>>> {
   const parts = new Map<string, Record<string, string>>();
@@ -418,7 +421,7 @@ export async function partsOf(
 // the history names it: a person or feature by its latest name, and a planned hire as nameHires
 // does.
 export async function nameByParts(
-  database: Database,
+  database: HistoryReader,
   actor: Actor,
   rows: readonly StoredChange[],
   parts: ReadonlyMap<string, Record<string, string>>,
