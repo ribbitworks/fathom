@@ -15,7 +15,8 @@ import {
   noFeatureTeamEdits,
 } from "./feature-team-panel.tsx";
 import { DraftView } from "./status-mark.tsx";
-import { formatDay } from "./day-formats.ts";
+import marks from "./status-mark.module.css";
+import { formatDay, plannedWords } from "./day-formats.ts";
 import { detailRow, detailValue, testTheme } from "./test-support.tsx";
 
 const person = (
@@ -265,7 +266,7 @@ describe("a feature team's panel", () => {
     ]);
   });
 
-  it("lists planned hires after people, dimmed, each with its key and the day it joined", () => {
+  it("lists planned hires after people, each with its key and its Planned box, as its card names it, with no day it joined", () => {
     openPanel({
       shown: team({
         members: ["tbd", "m2", "hire", "m1"],
@@ -276,12 +277,19 @@ describe("a feature team's panel", () => {
     expect(memberLines()).toEqual([
       "Avery Fictional",
       "Blake Fictional",
-      `Ellis Fictional #HIRE-1 from ${formatDay("2027-03-01")}`,
-      `Fictional Tester, TBD-7 #HIRE-1 from ${formatDay("2027-04-01")}`,
+      `Ellis Fictional #HIRE-1${plannedWords({ expected: "2027-06" })}`,
+      `Fictional Tester, TBD-7 #HIRE-1${plannedWords({ expected: "2027-04", undated: true })}`,
     ]);
     const members = within(detailRow("Members"));
-    expect(members.getByText("Ellis Fictional").style.color).not.toBe("");
-    expect(members.getByText("Avery Fictional").tagName).toBe("LI");
+    expect(members.getByText("Ellis Fictional").style.color).toBe("");
+  });
+
+  it("keeps a planned hire's Planned box apart from its key, as after any item", () => {
+    openPanel({ shown: team({ members: ["m1", "hire"] }) });
+    const box = within(detailRow("Members")).getByText(
+      plannedWords({ expected: "2027-06" }).trim(),
+    );
+    expect(box.closest(`.${marks.alone as string}`)).toBeNull();
   });
 
   it("names a placeholder made from a hire's position and ID in grey italics", () => {
@@ -297,7 +305,7 @@ describe("a feature team's panel", () => {
     ).not.toContain("italic");
   });
 
-  it("names a planned hire leading the team the same way, with the day it started to lead", () => {
+  it("names a planned hire leading the team the same way, with no day it started to lead", () => {
     openPanel({
       shown: team({
         leadId: "tbd",
@@ -307,22 +315,11 @@ describe("a feature team's panel", () => {
       }),
     });
     expect(rowText("Feature lead")).toBe(
-      `Fictional Tester, TBD-7 #HIRE-1 from ${formatDay("2027-02-01")}`,
+      `Fictional Tester, TBD-7 #HIRE-1${plannedWords({ expected: "2027-04", undated: true })}`,
     );
   });
 
-  it("gives no day for a planned hire leading the team when the team gives none", () => {
-    openPanel({
-      shown: team({
-        leadId: "tbd",
-        members: ["tbd", "m1"],
-        hiresFrom: { tbd: "2027-01-01" },
-      }),
-    });
-    expect(rowText("Feature lead")).toBe("Fictional Tester, TBD-7 #HIRE-1");
-  });
-
-  it("names a planned hire the chart doesn't draw by the team's name for it, dimmed, with its day", () => {
+  it("names a planned hire the chart doesn't draw by the team's name for it alone", () => {
     openPanel({
       shown: team({
         members: ["m1", "gone-hire"],
@@ -331,10 +328,7 @@ describe("a feature team's panel", () => {
         hiresFrom: { "gone-hire": "2027-01-04" },
       }),
     });
-    expect(memberLines()).toEqual([
-      "Avery Fictional",
-      `REQ-7701 from ${formatDay("2027-01-04")}`,
-    ]);
+    expect(memberLines()).toEqual(["Avery Fictional", "REQ-7701"]);
   });
 
   it("gives a planned hire a draft takes off the day of the draft alone", () => {
@@ -366,7 +360,7 @@ describe("a feature team's panel", () => {
     expect(memberLines()).toEqual([
       "Avery Fictional",
       "Blake Fictional",
-      "Ellis Fictional #HIRE-1, added",
+      `Ellis Fictional #HIRE-1${plannedWords({ expected: "2027-06" })}, added`,
     ]);
   });
 

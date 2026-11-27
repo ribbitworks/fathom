@@ -16,7 +16,7 @@ import {
 import { Button, Group, Text } from "@mantine/core";
 import { type ReactNode, useMemo, useState } from "react";
 import { colourWords } from "./colours.ts";
-import { formatDay } from "./day-formats.ts";
+import { plannedWords } from "./day-formats.ts";
 import {
   featureTeamsQuery,
   liveTeam,
@@ -45,7 +45,7 @@ import {
   type DraftedPart,
   DraftedPartItem,
   FilledIn,
-  FromDay,
+  MarkedItem,
 } from "./status-mark.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { today } from "./today.ts";
@@ -169,39 +169,25 @@ const colourColumn = {
   required: false,
 } as const satisfies Parameters<typeof Row>[0]["column"];
 
-// Someone on a team as the panel names them: a person by name; a planned hire dimmed, in grey
-// italics where its name is made from its position and ID, then its key and the day it joined.
-function MemberName({
-  person,
-  from,
-}: {
-  person: TeamPerson;
-  // The day to give in place of the day the hire joined, such as the day it started to lead, or
-  // null for none.
-  from?: string | null;
-}) {
+// Someone on a team as the panel names them: a person by name; a planned hire as its card names it,
+// in grey italics where its name is made from its position and ID, then its key and its Planned box.
+function MemberName({ person }: { person: TeamPerson }) {
   const { name, hire } = person;
   if (hire === undefined) return name;
-  const joined = from === undefined ? hire.from : (from ?? undefined);
-  return (
+  const named = (
     <>
-      {hire.madeName ? (
-        <FilledIn>{name}</FilledIn>
-      ) : (
-        <Text component="span" inherit c="dimmed">
-          {name}
-        </Text>
-      )}
+      {hire.madeName ? <FilledIn>{name}</FilledIn> : name}
       {hire.keyNumber !== undefined && (
         <KeyAfter record={{ kind: "hire", keyNumber: hire.keyNumber }} />
       )}
-      {joined !== undefined && (
-        <>
-          {" "}
-          <FromDay day={formatDay(joined)} />
-        </>
-      )}
     </>
+  );
+  return hire.planned === undefined ? (
+    named
+  ) : (
+    <MarkedItem tone="planned" words={plannedWords(hire.planned)}>
+      {named}
+    </MarkedItem>
   );
 }
 
@@ -448,7 +434,7 @@ function TeamDetails({
     if (drafted === undefined) return undefined;
     return (
       <DraftedPartItem draft={by} part={drafted} from={from(by, personId)}>
-        <MemberName person={personOf(personId)} from={null} />
+        <MemberName person={personOf(personId)} />
       </DraftedPartItem>
     );
   };
@@ -533,10 +519,7 @@ function TeamDetails({
             >
               {shown.leadId === null ? undefined : (
                 <Text>
-                  <MemberName
-                    person={personOf(shown.leadId)}
-                    from={team.hireLeadFrom ?? null}
-                  />
+                  <MemberName person={personOf(shown.leadId)} />
                 </Text>
               )}
             </Row>

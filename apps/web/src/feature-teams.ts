@@ -98,10 +98,14 @@ export async function setFeatureTeamColour(
 export const someoneUnseen = "Someone this role can't see";
 
 // Someone on a team as it names them, and, for a planned hire, whether its name is made from its
-// position and ID, its key where the org chart has its card, and the day it joined the team.
+// position and ID, and its key and when it's planned where the org chart has its card.
 export interface TeamPerson {
   name: string;
-  hire?: { madeName: boolean; keyNumber?: number; from?: string };
+  hire?: {
+    madeName: boolean;
+    keyNumber?: number;
+    planned?: NonNullable<OrgChartPerson["planned"]>;
+  };
 }
 
 // Finds someone on a team: a planned hire on the org chart by its placeholder name there, its
@@ -115,10 +119,8 @@ export function teamPersonOf(
   const names = new Map(Object.entries(team.names));
   const cards = new Map(people.map((person) => [person.id, person]));
   const hires = new Set(team.hires ?? []);
-  const joined = new Map(Object.entries(team.hiresFrom ?? {}));
   return (personId) => {
     const card = cards.get(personId);
-    const from = joined.get(personId);
     const name =
       card?.planned === undefined
         ? (names.get(personId) ?? card?.preferredName ?? someoneUnseen)
@@ -129,7 +131,7 @@ export function teamPersonOf(
       hire: {
         madeName: card?.planned?.shownId !== undefined,
         ...(card === undefined ? {} : { keyNumber: card.keyNumber }),
-        ...(from === undefined ? {} : { from }),
+        ...(card?.planned === undefined ? {} : { planned: card.planned }),
       },
     };
   };

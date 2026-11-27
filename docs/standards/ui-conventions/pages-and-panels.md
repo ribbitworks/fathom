@@ -48,8 +48,6 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **Drawn by:** `RecordKey` and `CopyLinkItem` in `apps/web/src/record-key.tsx`, with a panel's key in `RecordPanel`'s `subtitle` in `apps/web/src/record-details.tsx`, and a table's `keyOf` in `apps/web/src/record-table.ts` for its row menus, Key column and search by key.
   - **On the Drafts page:** A draft's row and details carry its record's key. Each draft named under Approved with it, Waiting on it and Linked to comes after its record's key, small and dimmed, as a project's ID comes before its name. A draft of the planning settings has none.
     - **Drawn by:** The table's `keyOf` from `placeKey` in `apps/web/src/draft-places.ts`, and `KeyedName` in `apps/web/src/record-key.tsx`.
-  - **After a name:** In a feature team's details, a planned hire on the team or leading it is named first, then its key, small and dimmed, as the approved design for planned hires on teams draws it, then the day it joined.
-    - **Drawn by:** `KeyAfter` in `apps/web/src/record-key.tsx`, with the day from `FromDay` in `apps/web/src/status-mark.tsx`, in `apps/web/src/feature-team-panel.tsx`.
   - **Example:** The key under Offline Sync's title in its details beside Features.
 - **Following a link:** A record named in a details panel links to its details, on its own page or tab, and the browser's back button goes back.
   - **Another page:** A link to a record on another page, such as Show in People on the Org chart, opens that page with the record's details open, not just a search for it. A project or proposal named in a feature's details on Features opens on Projects the same way, and Back returns to Features as it was.

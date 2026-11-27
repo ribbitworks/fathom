@@ -463,7 +463,7 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
   - **Expected:**
     - The team panel opens, titled 'Field tools'.
     - **Members** lists people by name, then 'Data engineer' last.
-    - 'Data engineer' is grey, followed by "#HIRE-" and a number, then, in grey, "from" and the first day of last month, such as "from Oct 1, 2026".
+    - 'Data engineer' is followed by "#HIRE-" and a number, then a grey box reading "Planned, expected" and the name of last month, such as "Planned, expected Oct 2026".
   - **Notes:**
 
 - [ ] `B55C` Clear the **Date** box, and type the first day of the month three months after the current one, as digits alone, such as `20270201` on a seed restored on 26 November 2026.
@@ -475,14 +475,14 @@ Covered by [FT-13](#ft-13-people-grouped-by-feature-teams).
 - [ ] `A516` Read the **Feature lead** row of the team panel.
   - **Expected:**
     - It reads "Engineering Manager, TBD-" and a number, in grey italics.
-    - After it are "#HIRE-" and another number, then, in grey, "from" and the date typed.
+    - After it are "#HIRE-" and another number, then a grey box reading "Planned, no date".
   - **Notes:**
 
 - [ ] `131A` Read the **Members** row of the team panel.
   - **Expected:**
     - It lists people by name, then 'Data engineer', then "Engineering Manager, TBD-" and the same number.
-    - Each of the last two is grey, followed by "#HIRE-" and a number, then, in grey, "from" and the day it joined: the first day of last month, then the date typed.
-    - "Engineering Manager, TBD-" and its number are in grey italics.
+    - Each of the last two is followed by "#HIRE-" and a number, then a grey box: "Planned, expected" and the name of last month, then "Planned, no date".
+    - "Engineering Manager, TBD-" and its number are in grey italics; 'Data engineer' is not.
   - **Notes:**
 
 - [ ] `0C0A` Close the team panel, and find the card that names 'Field tools'.
