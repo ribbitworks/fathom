@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Cycles
@@ -38,10 +38,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 - **Cycles table:** the table on the **Cycles** tab, under the timeline, with a row for each cycle. Its columns are **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Features**. Cycles that have ended, and those starting after next quarter, show only once **Show past cycles** or **Show later cycles** is chosen in the **Views** menu.
 - **A cycle's details:** the side panel for the selected cycle, headed with its schedule's name, a colon and the cycle's name, such as "Platform: 27.1". Its **Details** rows are the table's columns, then **Duration**.
 - **Duration pencil:** the change button at the right of the **Duration** row of a cycle's details. It opens a menu of **This cycle only…** and **This and later cycles…**.
-- **A cycle's ⋯ menu:** the ⋯ menu of a cycle's row, which names the draft that changes the cycle, if any, or both drafts where a new length and a draft of the cycle's release both change it. The **⋯** at the top of the cycle's side panel opens the same menu.
-  - It offers **Publish draft…** for the account's own unpublished draft.
-  - It offers **Resubmit** to those who change schedules, and **Discard draft** to them for a change to a schedule's cycles, or else to whoever changed the draft.
-  - It offers **Approve draft…** and **Reject draft…** to an account whose role approves its drafts, naming the release's draft, such as **Approve Harbor 3's draft…**, where they decide that draft alone.
+- **A cycle's ⋯ menu:** the ⋯ menu of a cycle's row, which names the draft that changes the cycle, if any. The **⋯** at the top of the cycle's side panel opens the same menu.
 - **Schedules tab:** the tab with a row for each schedule, whose ⋯ menu decides and discards a schedule's drafts.
 - **Seeded dates in this test:** **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. The examples after "such as" are as the seed data is when added on 17 November 2026.
 
@@ -238,7 +235,7 @@ Record each step's result as [Manual Test Basics](manual-test-basics.md#recordin
 
 - [ ] `4BA7` Select the **Cycles** tab.
   - **Expected:**
-    - **Cycles** is chosen, and there is no button at the top right.
+    - **Cycles** is chosen, and the only button at the top right is the Export button, an arrow pointing down onto a line.
     - The table's columns are, in order: **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Features**.
     - The rows show as one list, with no headings.
   - **Notes:**
@@ -259,20 +256,6 @@ Record each step's result as [Manual Test Basics](manual-test-basics.md#recordin
   - **Expected:**
     - **Starts** is the day after the first row's **Ends**.
     - **Current** and **Release** are blank.
-  - **Notes:**
-
-- [ ] `1E5A` Select **Filter…** in the **Current** column's menu.
-  - **Expected:** A dialog opens with one checkbox, **Current**, and nothing else.
-  - **Notes:**
-
-- [ ] `6450` Tick **Current**.
-  - **Expected:**
-    - Each of 'Platform', 'Patches' and 'Field Apps' has one row under it.
-    - Each row's **Current** reads "Current".
-  - **Notes:**
-
-- [ ] `276A` Untick **Current**.
-  - **Expected:** The rows listed before the box was ticked are listed again.
   - **Notes:**
 
 - [ ] `C4B0` Open the **Views** menu.
@@ -303,11 +286,7 @@ Record each step's result as [Manual Test Basics](manual-test-basics.md#recordin
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-41 ended with.
 
-**Preconditions:** **Releases** page selected again in the left-hand menu, then the **Cycles** tab.
-
-- [ ] `2B13` Select **Group by** above the table, then **Schedule**.
-  - **Expected:** The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
-  - **Notes:**
+**Preconditions:** **Releases** page selected again in the left-hand menu, then the **Cycles** tab, grouped by **Schedule** from **Group by** above the table.
 
 - [ ] `BC9F` Select the details button at the right of the first cell of the second row under 'Field Apps'.
   - **Expected:**

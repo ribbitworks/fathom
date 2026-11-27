@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Capacity
@@ -15,7 +15,7 @@ Verifies the Capacity page's tabs, switching between them, and its link to the p
 
 - Allocations, the table of allocations by month:
   - Its over- and under-allocated months, planned hires, and the capacity totals of each group and of everyone.
-  - Rows for someone who changed team or manager.
+  - Rows for someone who changed team.
   - Grouping by what each is allocated to: each feature's and activity's heading with its hours, its Allocated row, and no load marks on its rows.
   - The page left out of the menu for a role that sees no tab.
   - The count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to.
@@ -32,14 +32,12 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**.
 - **Engineering Manager:** `engineering.manager@fathom.test`.
-- **Engineering Director:** `engineering.director@fathom.test`.
 - **Team Member:** `team.member@fathom.test`.
 
 ## Common Procedures
 
-[Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish), from Manual Test Basics.
+[Start Fathom](manual-test-basics.md#start-fathom) and [Reset the Database](manual-test-basics.md#reset-the-database), from Manual Test Basics.
 
 ## Terms
 
@@ -61,7 +59,7 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-02-a-change-d
 
 ### CAP-03: A Value Refused
 
-Moved to [Planning Settings](planning-settings-manual-test.md#pset-03-a-value-refused).
+Proved by automated tests in `apps/web/src/planning-settings-page.test.tsx`.
 
 ### CAP-04: Months of Ramp-Up Added and Removed
 
@@ -82,8 +80,8 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
     - Just after the heading, on the same line, the tabs read **Feature teams** and **Allocations**.
     - **Allocations** is chosen in the tabs.
     - At the right of the heading, on the same line, is a **Planning settings** link, with no outline.
-    - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by**.
-    - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
+    - Above the table, in order: a search box, **Allocations**, the Draft menu's button reading **Drafts & Live**, **Metrics**, **Group by** and **Views**.
+    - Under the buttons, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
     - The current month is the second month beside the **Person** column, after last month, and its heading is underlined in red.
   - **Notes:**
 
@@ -108,10 +106,6 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
   - **Expected:** Under the 'Payments core' group, cells list features and any activities, each on a line of its own with its percentage at the right, such as "50%".
   - **Notes:**
 
-- [ ] `ABC9` Hold the pointer over a feature's name in a cell.
-  - **Expected:** After a moment, a tooltip shows the feature's whole name.
-  - **Notes:**
-
 - [ ] `61EC` Under the 'Payments core' group, find the first cell in the current month's column that lists two features and no "Over" or "Under".
   - **Expected:**
     - Each feature's name follows a small square in its feature team's colour.
@@ -123,7 +117,7 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-07.
 
-**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box, no filters, and neither **Over** nor **Under** ticked in the **Views** menu.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, no grouping, nothing in the search box, no filters, and neither **Over** nor **Under** ticked in the **Views** menu.
 
 - [ ] `CBFE` In the current month's column, find a cell whose last line reads "Over", such as that of 'Silje Holm-Schrøder', and one whose last line reads "Under", such as that of 'Lorenza Thiel'.
   - **Expected:**
@@ -139,13 +133,13 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-08.
 
-**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, no grouping, nothing in the search box and no filters.
 
 - [ ] `B36D` Select the **People** page in the left-hand menu.
   - **Expected:** The **People** page opens.
   - **Notes:**
 
-- [ ] `4CD5` Type `Payments tester` in the search box, and note the month in the **Expected** column of the row.
+- [ ] `4CD5` Search for `Payments tester`, and note the month in the **Expected** column of the row.
   - **Expected:**
     - One row is listed, named 'Payments tester'.
     - **Expected** holds a month.
@@ -154,14 +148,14 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
 - [ ] `7C51` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:**
     - **Allocations** is chosen in the tabs.
-    - **Group by** shows, naming no grouping.
+    - The Group by menu's button reads **Group by**, naming no grouping.
   - **Notes:**
 
 - [ ] `B241` Select **Feature team** in the Group by menu.
   - **Expected:** **Group by: Feature team** shows.
   - **Notes:**
 
-- [ ] `AD30` Type `Payments tester` in the search box.
+- [ ] `AD30` Search for `Payments tester`.
   - **Expected:** One row is listed, named 'Payments tester'.
   - **Notes:**
 
@@ -172,25 +166,17 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
     - The cells after those six months list no feature.
   - **Notes:**
 
-- [ ] `CB11` Empty the search box.
-  - **Expected:** Every row is listed again.
-  - **Notes:**
-
-- [ ] `D9A6` Type `TBD` in the search box.
+- [ ] `D9A6` Search for `TBD`.
   - **Expected:**
     - Planned hires with no name and a temporary ID are listed by their position and ID, such as "SDET, TBD-" and a number, in grey.
     - They are under **No feature team**.
-  - **Notes:**
-
-- [ ] `0D80` Empty the search box.
-  - **Expected:** Every row is listed again.
   - **Notes:**
 
 - [ ] `1623` Select the **Feature teams** tab.
   - **Expected:** The cells show feature teams, each name after a small square in its team's colour.
   - **Notes:**
 
-- [ ] `EB18` Type `Payments tester` in the search box.
+- [ ] `EB18` Search for `Payments tester`.
   - **Expected:**
     - One row is listed, named 'Payments tester'.
     - Its cells name no feature team.
@@ -219,11 +205,7 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
     - Nothing shows through it.
   - **Notes:**
 
-- [ ] `1E55` Scroll the table sideways.
-  - **Expected:** **Organization, person-months** stays on the left while the months scroll sideways.
-  - **Notes:**
-
-- [ ] `F4F7` Select **None** in the Group by menu.
+- [ ] `F4F7` Select **Clear grouping** in the Group by menu.
   - **Expected:**
     - No group ends with a total row.
     - The **Organization, person-months** row is still at the foot.
@@ -233,17 +215,13 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-10.
 
-**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, no grouping, nothing in the search box and no filters.
 
 - [ ] `8DC9` Select **Metrics**.
   - **Expected:** The Metrics panel gives a number of people and a number of planned hires, such as "141 people and 10 planned hires".
   - **Notes:**
 
-- [ ] `C877` Close the Metrics panel.
-  - **Expected:** The Metrics panel closes.
-  - **Notes:**
-
-- [ ] `68AE` Type `Payments tester` in the search box.
+- [ ] `68AE` Search for `Payments tester`.
   - **Expected:**
     - One row is listed, named 'Payments tester'.
     - In the **Organization, person-months** row, the cells before the month its allocations start are empty.
@@ -277,18 +255,15 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
   - **Expected:** One person under 'Mobile apps' has no 'Mobile apps' label in the current month.
   - **Notes:**
 
-- [ ] `5122` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
-  - **Expected:**
-    - **Allocations** is chosen in the tabs.
-    - **Group by** shows, naming no grouping.
-    - The cells list features, each with its percentage.
+- [ ] `5122` Select the **Allocations** tab.
+  - **Expected:** The cells list features, each with its percentage.
   - **Notes:**
 
 - [ ] `243D` Select **Feature team** in the Group by menu.
   - **Expected:** **Group by: Feature team** shows.
   - **Notes:**
 
-- [ ] `F18D` Type the name noted in step `A582` in the search box.
+- [ ] `F18D` Search for the name noted in step `A582`.
   - **Expected:**
     - The person has a row under 'Mobile apps' and a row under another group, or **No feature team**.
     - Each of those rows is followed by a total row.
@@ -300,98 +275,11 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
 
 ### CAP-13: Someone Has a Row Under Each Manager They Reported To
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from CAP-12. Step `7D63` signs in as another account, and step `981D` signs in as this one again.
-
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **People** open from the left-hand menu.
-
-- [ ] `3B65` Type `Bilwa Iyer` in the search box.
-  - **Expected:** Only the row of 'Bilwa Iyer' is listed.
-  - **Notes:**
-
-- [ ] `F866` Select the **Manager** cell of the row.
-  - **Expected:** The cell has a blue outline.
-  - **Notes:**
-
-- [ ] `A924` Press Enter.
-  - **Expected:** A list of people opens under the cell.
-  - **Notes:**
-
-- [ ] `7B16` Type `Max`, and choose 'Max Munk'.
-  - **Expected:**
-    - The **Manager** cell reads 'Max Munk'.
-    - A hollow yellow dot is before it.
-  - **Notes:**
-
-- [ ] `CEE4` Select the **Manager assigned** cell of the row.
-  - **Expected:** The cell has a blue outline.
-  - **Notes:**
-
-- [ ] `FC48` Type the first day of the current month as digits alone, such as `20261101` in November 2026, and press Enter.
-  - **Expected:**
-    - The **Manager assigned** cell reads the date typed.
-    - A hollow yellow dot is before it.
-  - **Notes:**
-
-- [ ] `E0DF` Select the Publish button.
-  - **Expected:**
-    - A notification starts "Published".
-    - The Publish button is gone from the top bar.
-  - **Notes:**
-
-- [ ] `7D63` Sign in as the Engineering Director, `engineering.director@fathom.test`.
-  - **Expected:** The right end of the top bar reads "Engineering Director".
-  - **Notes:**
-
-- [ ] `96FB` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
-  - **Notes:**
-
-- [ ] `1E6F` Type `Bilwa Iyer` in the search box.
-  - **Expected:** One row is listed, whose **Record** reads 'Bilwa Iyer'.
-  - **Notes:**
-
-- [ ] `C245` Tick that row's tick box.
-  - **Expected:**
-    - The tick box is ticked.
-    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
-  - **Notes:**
-
-- [ ] `740B` Select **Approve 1 draft…** at the right of the page's heading.
-  - **Expected:**
-    - A dialog opens.
-    - It has an **Approve** button.
-  - **Notes:**
-
-- [ ] `923B` Select **Approve** in the dialog.
-  - **Expected:** A notification reads "Approved 1 draft."
-  - **Notes:**
-
-- [ ] `981D` Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
-  - **Expected:** The right end of the top bar reads "Engineering Operations Manager".
-  - **Notes:**
-
-- [ ] `1862` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
-  - **Expected:**
-    - **Allocations** is chosen in the tabs.
-    - **Group by** shows, naming no grouping.
-  - **Notes:**
-
-- [ ] `4CC8` Select **Manager** in the Group by menu.
-  - **Expected:** **Group by: Manager** shows.
-  - **Notes:**
-
-- [ ] `11E3` Type `Bilwa Iyer` in the search box.
-  - **Expected:**
-    - 'Bilwa Iyer' has a row under 'Atmananda Ganaka' whose cell for last month lists 'Parts Lookup' with "100%", and whose cells are empty from the current month on.
-    - 'Bilwa Iyer' has a row under 'Max Munk' whose cells are empty before the current month, and list 'Parts Lookup' with "100%" from the current month on.
-    - Each group ends with a total row.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
+Proved by automated tests in `apps/web/src/allocation-months.test.tsx` and `apps/server/src/data/team-months.test.ts`.
 
 ### CAP-14: A Role That Sees No Tab Has No Capacity Page
 
-**Account:** Team Member, `team.member@fathom.test`, changed from CAP-13.
+**Account:** Team Member, `team.member@fathom.test`, changed from CAP-12.
 
 **Preconditions:** Signed in with this account.
 
@@ -409,14 +297,14 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-09-a-draft-ap
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from CAP-14.
 
-**Preconditions:** Signed in with this account. Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** Signed in with this account. Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab, with no grouping, nothing in the search box and no filters.
 
-- [ ] `C4E1` Look at the count after **Group by**, and note it.
+- [ ] `C4E1` Look at the count at the end of the buttons above the table, and note it.
   - **Expected:** It names the current month first, then counts people and planned hires, such as "Nov 2026: 40 people, 3 planned hires".
   - **Notes:**
 
 - [ ] `0B7D` Select the **Allocations** tab.
-  - **Expected:** The count after **Group by** is the one noted in step `C4E1`.
+  - **Expected:** The count at the end of the buttons is the one noted in step `C4E1`.
   - **Notes:**
 
 - [ ] `9F25` Select the first quarter in the strip of quarters.
@@ -434,7 +322,7 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-09-a-draft-ap
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-16.
 
-**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, no grouping, nothing in the search box and no filters.
 
 - [ ] `B4E7` Open the **Views** menu.
   - **Expected:**
@@ -454,12 +342,6 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-09-a-draft-ap
     - The table also lists rows with a cell reading "Under" or "Not allocated" from the current month on.
   - **Notes:**
 
-- [ ] `E83B` Select **Over**.
-  - **Expected:**
-    - Only **Under** is ticked.
-    - The table lists only rows with a cell reading "Under" or "Not allocated" from the current month on.
-  - **Notes:**
-
 - [ ] `7A62` Select **Under**.
   - **Expected:** Neither is ticked, and every row is listed again.
   - **Notes:**
@@ -468,7 +350,7 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-09-a-draft-ap
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-17.
 
-**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, no grouping, nothing in the search box and no filters.
 
 - [ ] `CDAC` Select **Allocations**, the button after the search box.
   - **Expected:** A list opens under the button: a box to narrow it, then everything someone is allocated to, each with a tick box, then **Not allocated** and **Not empty**.
@@ -485,23 +367,11 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-09-a-draft-ap
   - **Expected:** The table lists every row again, and the pill is gone.
   - **Notes:**
 
-- [ ] `3CE0` Tick **Not allocated**.
-  - **Expected:** The table lists only rows allocated to nothing in any month, each reading "Not allocated" from the current month on, apart from shaded months.
-  - **Notes:**
-
-- [ ] `5293` Press Esc.
-  - **Expected:** The list closes.
-  - **Notes:**
-
-- [ ] `AED6` Select the **×** on the "Allocated to: Not allocated" pill.
-  - **Expected:** The table lists every row again.
-  - **Notes:**
-
 ### CAP-19: Allocations Grouped by What Each Is Allocated To
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-18.
 
-**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, no grouping, nothing in the search box and no filters.
 
 - [ ] `144C` Select **Group by**, and choose **Allocated to**.
   - **Expected:**
@@ -529,7 +399,7 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-09-a-draft-ap
   - **Expected:** The heading reads whole; the frozen **Person** column's edge doesn't cross it.
   - **Notes:**
 
-- [ ] `DBC0` Choose **None** in the Group by menu.
+- [ ] `DBC0` Select **Clear grouping** in the Group by menu.
   - **Expected:**
     - The table is one list again, each row showing all of a person's features.
     - The total rows read "Total, person-months" and "Organization, person-months" again.

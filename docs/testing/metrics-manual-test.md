@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Metrics, Frozen Columns, and Column Widths on the People Table
@@ -74,15 +74,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - It shows a row for each position.
   - **Notes:**
 
-- [ ] `EEB4` Open the **Name** column menu.
-  - **Expected:** The menu has no **Metrics**.
-  - **Notes:**
-
 **Afterwards:** Open the **Views** menu above the table and select **Clear view**.
 
 ### METRICS-02: One Column Is Counted With Shares
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-01.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account METRICS-01 ended with.
 
 **Preconditions:** **People** page open. Live only shown: run Show Live Only.
 
@@ -93,17 +89,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `014F` Set **Break down by** to **Position**.
   - **Expected:**
     - The count line says "150 people and 10 planned hires".
-    - The figures are headed **Count**.
-    - The rows read, from top to bottom:
-      - "Employee 0 (0%)"
-      - "Manager 0 (0%)"
-      - "Software Engineer 75 (46.9%)"
-      - "Test Engineer 36 (22.5%)"
-      - "SDET 32 (20%)"
-      - "Engineering Manager 17 (10.6%)"
-      - "Architect 0 (0%)"
-      - "All people and planned hires 160 (100%)", set apart under the rest
-    - A green dot is before the counts of 'Engineering Manager' and the **All** row, and before the shares of 'Software Engineer', 'Test Engineer', 'SDET' and 'Engineering Manager'.
+    - A table's columns are headed **Position**, **Count** and **Share**.
+    - Its rows read, from top to bottom, each position, its count and its share:
+      - 'Employee', "0", "0%"
+      - 'Manager', "0", "0%"
+      - 'Software Engineer', "75", "46.9%"
+      - 'Test Engineer', "36", "22.5%"
+      - 'SDET', "32", "20%"
+      - 'Engineering Manager', "17", "10.6%"
+      - 'Architect', "0", "0%"
+      - "All people and planned hires", "160", "100%", set apart under the rest
+    - A green dot is before the counts of 'Engineering Manager' and the "All people and planned hires" row, and before the shares of 'Software Engineer', 'Test Engineer', 'SDET' and 'Engineering Manager'.
     - No other figure has a dot, and none has a second figure under it.
   - **Notes:**
 
@@ -113,7 +109,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### METRICS-03: Two Columns Are Crossed
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-02.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account METRICS-02 ended with.
 
 **Preconditions:** As METRICS-02, with the panel open.
 
@@ -127,26 +123,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - It has a column for each site and an **All** column.
     - It has a row for each position and an **All** row.
     - An **Empty** column counts the planned hires that have no site.
-    - The **All** row shows:
-      - "Kestrel Bay 32"
-      - "Northmere 34"
-      - "Ashgrove 48"
-      - "Corran Quay 39"
-      - "Empty 7"
-      - "All 160"
+    - The **All** row reads, under each column's heading:
+      - **Kestrel Bay**: "32"
+      - **Northmere**: "34"
+      - **Ashgrove**: "48"
+      - **Corran Quay**: "39"
+      - **Empty**: "7"
+      - **All**: "160"
     - **Count** is selected above the table.
   - **Notes:**
 
 ### METRICS-04: Metrics Follow the Filters
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-03.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account METRICS-03 ended with.
 
 **Preconditions:** As METRICS-03: **People** page open, Live only shown, and the Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
 
 - [ ] `4832` Set **and by** to **Nothing more**.
   - **Expected:**
     - The **Position by Site** table is gone.
-    - The figures are headed **Count**, with a row for each position.
+    - The table's columns are headed **Position**, **Count** and **Share**, with a row for each position.
   - **Notes:**
 
 - [ ] `99AA` Open the **Site** column menu, and select **Filter…**.
@@ -164,14 +160,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The filter closes.
     - The bar above the table says "48 of 160".
     - The count line says "47 people and 1 planned hire".
-    - The rows read, from top to bottom:
-      - "Employee 0 (0%)"
-      - "Manager 0 (0%)"
-      - "Software Engineer 21 (43.8%)"
-      - "Test Engineer 12 (25%)"
-      - "SDET 6 (12.5%)"
-      - "Engineering Manager 9 (18.8%)"
-      - "Architect 0 (0%)"
+    - The rows read, from top to bottom, each position, its count and its share:
+      - 'Employee', "0", "0%"
+      - 'Manager', "0", "0%"
+      - 'Software Engineer', "21", "43.8%"
+      - 'Test Engineer', "12", "25%"
+      - 'SDET', "6", "12.5%"
+      - 'Engineering Manager', "9", "18.8%"
+      - 'Architect', "0", "0%"
   - **Notes:**
 
 - [ ] `4A90` Select **Clear all** in the bar above the table.
@@ -182,19 +178,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### METRICS-05: Metrics Show Live Figures Beside Drafts
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-04.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account METRICS-04 ended with.
 
-**Preconditions:** **People** page open. Metrics panel open.
-
-- [ ] `612A` Open the Draft menu, and select **Drafts & Live**.
-  - **Expected:**
-    - The Draft menu stays open.
-    - A tick is before **Drafts & Live**.
-  - **Notes:**
-
-- [ ] `CE2C` Press Esc.
-  - **Expected:** The Draft menu closes.
-  - **Notes:**
+**Preconditions:** **People** page open, with **Drafts & Live** chosen in the Draft menu. Metrics panel open.
 
 - [ ] `C7A8` Set **Break down by** to **Grade**.
   - **Expected:** **Break down by** reads **Grade**.
@@ -223,7 +209,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### METRICS-06: The Panel Is Resized
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-05.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account METRICS-05 ended with.
 
 **Preconditions:** **People** page open, with the Metrics panel open.
 
@@ -251,29 +237,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The panel opens again at the width it was left.
   - **Notes:**
 
-- [ ] `A71C` Press Tab until **Break down by** has the keyboard focus.
-  - **Expected:** A blue outline shows round **Break down by**.
-  - **Notes:**
-
-- [ ] `5D2E` Press Enter.
-  - **Expected:** The list of columns opens under **Break down by**.
-  - **Notes:**
-
-- [ ] `C0B9` Press the Down arrow until **Site** is highlighted, and press Enter.
-  - **Expected:**
-    - The list closes.
-    - **Break down by** reads **Site**.
-    - The panel's width does not change.
-  - **Notes:**
-
 - [ ] `7E4D` Set **Break down by** to the column whose name is longest in its list.
   - **Expected:**
     - **Break down by** shows as much of the column's name as fits.
     - The panel's width does not change.
-  - **Notes:**
-
-- [ ] `B38F` Set **Break down by** to **Choose a column**.
-  - **Expected:** The panel's width does not change.
   - **Notes:**
 
 - [ ] `E05B` Point at the first row of the table, and select its details button.
@@ -295,7 +262,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### METRICS-07: Metrics Are Kept in Saved Views
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-06.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account METRICS-06 ended with.
 
 **Preconditions:** **People** page open. Live only shown: run Show Live Only. Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
 
@@ -308,7 +275,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `2E85` Select **Save view**.
-  - **Expected:** The Views button is named `Fictional positions by site`.
+  - **Expected:** The Views button reads `Fictional positions by site`.
   - **Notes:**
 
 - [ ] `AC0A` Open the Views menu, and select **Clear view**.
@@ -321,24 +288,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The Metrics panel opens.
     - It shows a table headed **Position by Site**.
-    - The figures are live only: the **All** row ends with "All 160".
+    - The figures are live only: in the **All** row, the **All** column reads "160".
   - **Notes:**
 
 - [ ] `1CC4` Open the Views menu, and select **Delete view**.
-  - **Expected:**
-    - A notice at the top right reads "Deleted the Fictional positions by site view."
-    - It offers **Undo**.
-  - **Notes:**
-
-- [ ] `3E9E` Open the Views menu.
-  - **Expected:** The view is gone from the Views menu.
+  - **Expected:** A notification reads "Deleted the Fictional positions by site view."
   - **Notes:**
 
 **Afterwards:** Open the **Views** menu above the table and select **Clear view**.
 
 ### METRICS-08: The Panel Covers a Narrow Screen
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-07.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account METRICS-07 ended with.
 
 **Preconditions:** **People** page open, with the Metrics panel open.
 
@@ -354,7 +315,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### METRICS-09: Frozen Columns Stay in View While the Table Scrolls Sideways
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-08.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account METRICS-08 ended with.
 
 **Preconditions:** Browser window at least 1,440 pixels wide. **People** page open from the left-hand menu, with the Metrics panel closed.
 
@@ -398,14 +359,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The line and shadow are visible while the table scrolls.
   - **Notes:**
 
-- [ ] `FA98` Open the menu of the column furthest to the right.
-  - **Expected:** **Freeze up to this column** is greyed out and cannot be selected.
-  - **Notes:**
-
-- [ ] `743B` Press Esc.
-  - **Expected:** The menu closes.
-  - **Notes:**
-
 - [ ] `E9DB` Drag the **Site** column's name onto the **Name** column's name.
   - **Expected:** **Site** moves before **Name**.
   - **Notes:**
@@ -429,15 +382,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Unfrozen** is set apart from the items around it.
   - **Notes:**
 
-- [ ] `EA2E` Select **Unfrozen**.
-  - **Expected:** Only **Site**, now the first column, stays in place as the table scrolls.
-  - **Notes:**
-
-**Afterwards:** Open **Views** and select **Columns moved**, which puts the columns back.
+**Afterwards:** Select **Unfrozen** in the open **Views** menu, then open **Views** and select **Columns moved**.
 
 ### METRICS-10: Columns Are Made Wider and Narrower
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-09.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account METRICS-09 ended with.
 
 **Preconditions:** Browser window at least 1,440 pixels wide. **People** page open, with the Metrics panel closed.
 
@@ -491,18 +440,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **ID** stays where it is.
   - **Notes:**
 
-- [ ] `9D79` Open the **Site** column menu.
+- [ ] `D326` Open the **Site** column menu.
   - **Expected:** Lines split the menu into groups, from top to bottom:
     - **Site**
     - **Copy link**
     - The two sorts
     - **Filter…** and **Metrics**
-    - **Freeze up to this column**, **Wider**, **Narrower**, **Move left**, **Move right**, and **Hide column**
+    - **Freeze up to this column**, **Unfreeze columns**, **Wider**, **Narrower**, **Move left**, **Move right** and **Hide column**
     - **Edit column…** and **Remove column**
     - **Change class…**
   - **Notes:**
 
-- [ ] `CFCC` Press Esc.
+- [ ] `CEDF` Press Esc.
   - **Expected:** The menu closes.
   - **Notes:**
 

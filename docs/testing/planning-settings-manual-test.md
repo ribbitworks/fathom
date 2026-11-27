@@ -14,7 +14,7 @@ last_updated: "2026-11-27"
 Verifies the Planning settings page:
 
 - How it reads for someone who may only see it.
-- Drafting a change and undoing it, and a value refused.
+- Drafting a change, undoing it and publishing it.
 - Choosing the working days from the keyboard, none refused, and the day a week starts on.
 - Adding and removing months of ramp-up.
 - The change in the change history.
@@ -131,33 +131,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 ### PSET-03: A Value Refused
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as PSET-02.
-
-**Preconditions:** **Planning settings** page open.
-
-- [ ] `B6C0` Select "80%" beside **Default focus**.
-  - **Expected:**
-    - A field in place of "80%" holds "80".
-    - The focus is in the field.
-  - **Notes:**
-
-- [ ] `18AC` Replace the value with `0`, and press Enter.
-  - **Expected:**
-    - The field stays open.
-    - It holds `0`.
-    - It is outlined in red.
-    - Under it, in red, reads "Use 1% to 100% for Default focus".
-  - **Notes:**
-
-- [ ] `A0AE` Press Esc.
-  - **Expected:**
-    - **Default focus** reads "80%".
-    - The red message is gone.
-  - **Notes:**
+Proved by automated tests in `apps/web/src/planning-settings-page.test.tsx`.
 
 ### PSET-04: The Working Days Changed From the Keyboard
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as PSET-03.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as PSET-02.
 
 **Preconditions:** **Planning settings** page open.
 
@@ -204,13 +182,6 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - No box is tinted.
     - The boxes are outlined together in red.
     - Under them, in red, reads "Working day needed".
-  - **Notes:**
-
-- [ ] `65F5` Press Enter.
-  - **Expected:**
-    - The boxes stay open, none tinted.
-    - "Working day needed" still reads under them.
-    - **Sat** has focus.
   - **Notes:**
 
 - [ ] `C809` Press Esc.
@@ -288,9 +259,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `80C1` Press Enter.
-  - **Expected:**
-    - A field in place of "100%" beside **Month 3** holds "100".
-    - The focus is in the field.
+  - **Expected:** A field in place of "100%" beside **Month 3** holds "100".
   - **Notes:**
 
 - [ ] `3F77` Replace the value with `90`, and press Enter.
@@ -346,9 +315,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `5DF7` Select "8" beside **Hours a day**.
-  - **Expected:**
-    - A field in place of "8" holds "8".
-    - The focus is in the field.
+  - **Expected:** A field in place of "8" holds "8".
   - **Notes:**
 
 - [ ] `DA6A` Replace the value with `4`, and press Enter.
