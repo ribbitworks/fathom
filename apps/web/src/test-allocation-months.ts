@@ -15,7 +15,7 @@ import type {
 import {
   allocationMonthRecords,
   type AllocationRow,
-} from "./allocation-months.tsx";
+} from "./allocation-rows.ts";
 
 export const months = ["2027-02", "2027-03", "2027-04"];
 export const search = { id: "t-search", name: "Search", colour: null };

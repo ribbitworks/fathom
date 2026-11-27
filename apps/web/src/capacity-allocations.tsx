@@ -8,14 +8,16 @@ import { type LoadMark, monthOf } from "@fathom/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  allocatedWork,
-  allocationMonthRecords,
   allocationMonthsTable,
   allocationsQuery,
-  type AllocationRow,
-  namedIn,
   marksFrom,
 } from "./allocation-months.tsx";
+import {
+  allocatedWork,
+  allocationMonthRecords,
+  type AllocationRow,
+  namedIn,
+} from "./allocation-rows.ts";
 import { allocatedToGrouping } from "./allocation-groups.ts";
 import { MonthGrid, type MonthGridProps } from "./month-grid.tsx";
 import { useSavedViews } from "./saved-views.tsx";

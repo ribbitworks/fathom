@@ -8,15 +8,17 @@ import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
-  allocatedWork,
   AllocationLines,
-  allocationMonthRecords,
   allocationMonthsTable,
-  type AllocationRow,
   monthHoursOf,
+} from "./allocation-months.tsx";
+import {
+  allocatedWork,
+  allocationMonthRecords,
+  type AllocationRow,
   unseenActivityChoice,
   unseenFeatureChoice,
-} from "./allocation-months.tsx";
+} from "./allocation-rows.ts";
 
 import { allocatedToGrouping } from "./allocation-groups.ts";
 import { anyMonthKey, featureTeamGrouping } from "./team-months.tsx";
