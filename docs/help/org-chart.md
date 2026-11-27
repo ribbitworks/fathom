@@ -88,7 +88,7 @@ To add a feature team:
 
 To remove a feature team, select **Remove feature team** at the foot of its panel.
 
-The foot of the panel also has **Discard draft** while the team has a draft you can change, and **Resubmit** once a draft is rejected.
+The foot of the panel also has **Discard draft** while the team has a draft you changed, and **Resubmit** once a draft is rejected.
 
 You're done when the change shows in the team's panel. A change of colour applies straight away; any other change is a draft until it's approved.
 

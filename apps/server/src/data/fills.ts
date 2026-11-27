@@ -39,12 +39,19 @@ import {
   type Recorded,
   type Viewer,
 } from "./draft-records.ts";
-import { lockDrafts, readHeld, readPersonDrafts } from "./drafts.ts";
+import {
+  lockDrafts,
+  readDrafts,
+  readHeld,
+  readPersonDrafts,
+} from "./drafts.ts";
+import { refuseDiscardingOthers } from "./draft-makers.ts";
 import { recordHiringChanges } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import {
   checkFillManager,
   editsHires,
+  requireHiringEdit,
   requirePersonManager,
   hireDraftsNaming,
 } from "./hire-checks.ts";
@@ -531,6 +538,26 @@ const discardIn = (transaction: Transaction, actor: Actor, asked: Asked) =>
     ? discardPersonDraftIn(transaction, actor, asked.id)
     : discardHireDraftIn(transaction, actor, asked.id);
 
+// Refuses discarding the draft asked for to anyone who didn't change it, once their role may change
+// its kind at all; one with no draft is left for discarding it to refuse as such.
+async function refuseDiscardingAsked(
+  transaction: Transaction,
+  actor: Actor,
+  asked: Asked,
+): Promise<void> {
+  if (asked.kind === "person") requirePermission(actor, "people:edit");
+  else requireHiringEdit(actor);
+  const found = await readDrafts(
+    transaction,
+    asked.kind,
+    [asked.id],
+    actor.user.id,
+  );
+  if (found.has(asked.id)) {
+    await refuseDiscardingOthers(transaction, actor, asked.kind, asked.id);
+  }
+}
+
 // Discards the draft asked for, and takes its fill, if any, out of the drafts of the fill's other
 // records, keeping their other changes: the hire's filler and manager, its person's position, manager, Manager? and line,
 // and the hires moved to them, put back as they are live. A person only drafted to be added by the
@@ -541,9 +568,12 @@ async function discardWithFill(
   asked: Asked,
 ): Promise<Change[]> {
   const fill = await fillOf(transaction, actor, asked);
+  if (fill !== undefined) {
+    requireFillRights(actor);
+    await refuseHeldFill(transaction, actor, fill);
+  }
+  await refuseDiscardingAsked(transaction, actor, asked);
   if (fill === undefined) return discardIn(transaction, actor, asked);
-  requireFillRights(actor);
-  await refuseHeldFill(transaction, actor, fill);
   const others = (kind: Asked["kind"], ids: readonly string[]) =>
     ids.filter((id) => !(asked.kind === kind && asked.id === id));
   const made = await discardIn(transaction, actor, asked);

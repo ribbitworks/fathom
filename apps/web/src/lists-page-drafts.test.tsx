@@ -694,11 +694,14 @@ describe("unpublished and held changes on the Lists page", () => {
     await open([
       {
         ...locations,
-        draft: draftOf({ unpublished: true }),
-        orderDraft: orderOf({ unpublished: true }),
+        draft: draftOf({ unpublished: true, changedByUser: true }),
+        orderDraft: orderOf({ unpublished: true, changedByUser: true }),
         choices: locations.choices.map((one) =>
           one.id === "c2"
-            ? { ...one, draft: draftOf({ unpublished: true }) }
+            ? {
+                ...one,
+                draft: draftOf({ unpublished: true, changedByUser: true }),
+              }
             : one,
         ),
       },

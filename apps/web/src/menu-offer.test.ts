@@ -20,6 +20,7 @@ const facts = (more: Partial<RecordMenuFacts> = {}): RecordMenuFacts => ({
   changes: false,
   removable: true,
   editsOwnDraft: false,
+  discardsUnchanged: false,
   decides: false,
   publishes: true,
   ...more,
@@ -61,7 +62,11 @@ describe("a record's menu offer", () => {
       recordMenuOffer(
         facts({
           changes: true,
-          ownDraft: { state: "waiting", unpublished: true },
+          ownDraft: {
+            state: "waiting",
+            unpublished: true,
+            changedByUser: true,
+          },
           shownAction: "changed",
         }),
       ),
@@ -86,7 +91,7 @@ describe("a record's menu offer", () => {
       recordMenuOffer(
         facts({
           changes: true,
-          ownDraft: { state: "waiting" },
+          ownDraft: { state: "waiting", changedByUser: true },
           shownAction: "changed",
         }),
       ),
@@ -98,11 +103,36 @@ describe("a record's menu offer", () => {
       recordMenuOffer(
         facts({
           changes: true,
-          ownDraft: { state: "rejected" },
+          ownDraft: { state: "rejected", changedByUser: true },
           shownAction: "changed",
         }),
       ),
     ).toEqual({ ...nothing, resubmit: true, discard: true, remove: true });
+  });
+
+  it("offers no discarding of a draft the user didn't change, since others reject it", () => {
+    expect(
+      recordMenuOffer(
+        facts({
+          changes: true,
+          ownDraft: { state: "rejected" },
+          shownAction: "changed",
+        }),
+      ),
+    ).toEqual({ ...nothing, resubmit: true, remove: true });
+  });
+
+  it("offers discarding a draft the user didn't change where the table lets any who change it discard it", () => {
+    expect(
+      recordMenuOffer(
+        facts({
+          editsOwnDraft: true,
+          discardsUnchanged: true,
+          ownDraft: { state: "waiting" },
+          shownAction: "changed",
+        }),
+      ),
+    ).toEqual({ ...nothing, discard: true });
   });
 
   it.each(["created", "deleted"] as const)(
@@ -120,7 +150,7 @@ describe("a record's menu offer", () => {
     const offer = recordMenuOffer(
       facts({
         editsOwnDraft: true,
-        ownDraft: { state: "waiting", unpublished: true },
+        ownDraft: { state: "waiting", unpublished: true, changedByUser: true },
         shownAction: "changed",
       }),
     );
@@ -159,6 +189,7 @@ describe("a draft's offer", () => {
     rejected: false,
     unpublished: false,
     editsDraft: false,
+    changedByUser: false,
     decides: false,
     publishes: true,
   };
@@ -182,23 +213,44 @@ describe("a draft's offer", () => {
       offering(),
     ],
     [
-      "discarding a waiting draft to those who edit it",
-      { hasDraft: true, editsDraft: true },
+      "discarding a waiting draft to those who edit it and changed it",
+      { hasDraft: true, editsDraft: true, changedByUser: true },
       offering("discard"),
     ],
     [
-      "resubmitting and discarding a rejected draft to those who edit it",
-      { hasDraft: true, rejected: true, editsDraft: true },
+      "nothing to those who edit a waiting draft they didn't change",
+      { hasDraft: true, editsDraft: true },
+      offering(),
+    ],
+    [
+      "resubmitting and discarding a rejected draft to those who edit it and changed it",
+      { hasDraft: true, rejected: true, editsDraft: true, changedByUser: true },
       offering("resubmit", "discard"),
     ],
     [
+      "resubmitting alone a rejected draft to those who edit it but didn't change it",
+      { hasDraft: true, rejected: true, editsDraft: true },
+      offering("resubmit"),
+    ],
+    [
       "publishing and discarding the user's unpublished draft",
-      { hasDraft: true, unpublished: true, editsDraft: true },
+      {
+        hasDraft: true,
+        unpublished: true,
+        editsDraft: true,
+        changedByUser: true,
+      },
       offering("publish", "discard"),
     ],
     [
       "no publishing where changes can't be published from there",
-      { hasDraft: true, unpublished: true, editsDraft: true, publishes: false },
+      {
+        hasDraft: true,
+        unpublished: true,
+        editsDraft: true,
+        changedByUser: true,
+        publishes: false,
+      },
       offering("discard"),
     ],
     [

@@ -232,6 +232,7 @@ export function ListDraftMenu({
             canApprove={canApprove && decidable(list)}
             othersApprove={draft.needsOtherApprover === true}
             rejected={draft.state === "rejected"}
+            changed={draft.changedByUser === true}
             onApprove={() => {
               actions.decide("approve", on);
             }}
@@ -265,6 +266,7 @@ export function ListDraftMenu({
             }
             othersApprove={orderDraft.needsOtherApprover === true}
             rejected={orderDraft.state === "rejected"}
+            changed={orderDraft.changedByUser === true}
             waits={orderWaits}
             discard="Discard new order"
             onApprove={() => {
@@ -301,11 +303,14 @@ export const draftItemsOffer = ({
   canEdit,
   canApprove,
   rejected,
+  changed,
   publishable,
 }: {
   canEdit: boolean;
   canApprove: boolean;
   rejected: boolean;
+  // Whether the user changed it since it was last approved or discarded, so may discard it.
+  changed: boolean;
   // Whether it is the user's own unpublished draft, which can be published from the menu.
   publishable: boolean;
 }) =>
@@ -314,6 +319,7 @@ export const draftItemsOffer = ({
     rejected,
     unpublished: publishable,
     editsDraft: canEdit,
+    changedByUser: changed,
     decides: canApprove && !rejected,
     publishes: true,
   });
@@ -325,6 +331,7 @@ export function DraftItems({
   canEdit,
   canApprove,
   rejected,
+  changed,
   waits = false,
   othersApprove = false,
   discard = "Discard draft",
@@ -337,6 +344,8 @@ export function DraftItems({
   canEdit: boolean;
   canApprove: boolean;
   rejected: boolean;
+  // Changed by this account since it was last approved or discarded, so it may discard it.
+  changed: boolean;
   waits?: boolean;
   // Changed by this account, whose role does not let it approve its own drafts.
   othersApprove?: boolean;
@@ -352,6 +361,7 @@ export function DraftItems({
     canEdit,
     canApprove,
     rejected,
+    changed,
     publishable: onPublish !== undefined,
   });
   return (

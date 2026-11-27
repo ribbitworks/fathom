@@ -155,7 +155,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
   - **Publishing:** As [Publishing](../standards/ui-conventions/entering-and-saving.md#publishing) sets out, with Publish in the top bar beside the user's account.
     - **Someone else's changes:** A record someone else is changing is read only, and its menu says Being changed by, with who, and that it can be changed once they publish or discard their changes. Approvers cannot decide it.
     - **The user's own draft:** Approvers cannot decide the user's own unpublished draft either, whose menu says only they see it until they publish it.
-  - **Actions:** Those who may edit discard a draft, or resubmit a rejected one; a new order is discarded with Discard new order. Approvers approve or reject a waiting draft from its menu, when their role approves drafts of its area.
+  - **Actions:** Those who may edit resubmit a rejected draft, and discard one they changed; a new order is discarded with Discard new order. Approvers approve or reject a waiting draft from its menu, when their role approves drafts of its area.
     - **Rejected drafts:** A rejected draft offers Approvers nothing to decide until it is resubmitted, and a draft that depends on a rejected draft has Approve disabled, with "Waits on a rejected draft" under it.
     - **The account's own changes:** A draft this account changed, when its role does not let it approve its own, has Approve disabled, with "Needs another approver" under it, the same phrase as on the Drafts page; Reject stays.
   - **Deciding several:** The Draft menu offers Approve N drafts… and Reject N drafts… for the waiting drafts shown.

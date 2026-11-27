@@ -20,7 +20,7 @@ import type { FictionalHire, FictionalOrganization } from "@fathom/fixtures";
 import { createDataAccess } from "@fathom/server/data";
 import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { accountDomain } from "./accounts.ts";
-import { actorOf, rejection } from "./drafts.ts";
+import { actorOf, discardAsMaker, rejection } from "./drafts.ts";
 import {
   filledIn,
   recorded as recordedFields,
@@ -249,7 +249,7 @@ export async function seedHireDrafts(
 }
 
 // Discards the drafts of planned hires that removing the seed data would leave naming what it
-// removes, as the persona who edits people, and returns how many.
+// removes, each as one who changed it, and returns how many.
 export async function unseedHireDrafts(
   database: Database,
   organization: FictionalOrganization,
@@ -257,13 +257,13 @@ export async function unseedHireDrafts(
   const ids = await hireDraftIds(database, organization);
   if (ids.length === 0) return 0;
   const data = createDataAccess(database);
-  const editor = await actorOf(database, editorEmail);
   for (const id of ids) {
     // Discarding one draft of a fill can discard the fill's other hires' drafts with it, which only
     // publishing takes off the drafts read here.
     if ((await hireDraftIds(database, organization)).includes(id)) {
-      await data.hires.discardDraft(editor, id);
-      await data.unpublished.publish(editor);
+      await discardAsMaker(database, "planned-hire", id, (maker) =>
+        data.hires.discardDraft(maker, id),
+      );
     }
   }
   return ids.length;

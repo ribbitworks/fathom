@@ -11,6 +11,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
 import {
+  errorOf,
   ok,
   otherTestPosition,
   testPosition,
@@ -315,10 +316,20 @@ describe("who may change the hiring plan", () => {
           requisition: null,
         }),
         await send(who, "DELETE", `/api/planned-hires/${live}`),
-        await send(who, "DELETE", `/api/planned-hires/${id}/draft`),
         await send(who, "DELETE", `/api/planned-hires/${id}/draft/rejection`),
       ].map(({ statusCode }) => statusCode === 403);
       expect(statuses).toEqual(statuses.map(() => !may));
+      // Discarding another's draft is refused either way, for the role first.
+      const discarded = await send(
+        who,
+        "DELETE",
+        `/api/planned-hires/${id}/draft`,
+      );
+      expect([
+        discarded.statusCode,
+        errorOf(discarded) ===
+          "Only someone who changed this draft can discard it.",
+      ]).toEqual([403, may]);
     },
   );
 

@@ -622,6 +622,7 @@ export function cycleTable({
     draftFields: (row, draft) =>
       draftFieldsOf(describedColumns(row), row, draft),
     draftSubject: ({ subject }) => subject,
+    discardsUnchanged: (row) => row.draft?.ref.type === "cycle-pattern",
     decidable: (row) => decidedBy(row).length > 0,
     menuDecides: (row) => {
       const decided = decidedBy(row);

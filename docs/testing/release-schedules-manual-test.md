@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Schedules
@@ -41,7 +41,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From a
 - **A schedule's ⋯ menu:** the ⋯ menu of a schedule's row. The **⋯** at the top of the schedule's side panel opens the same menu. The row's menu offers:
   - **Retire** or **Restore** to those who change schedules.
   - **Publish draft…** for the account's own unpublished draft.
-  - **Discard draft** and **Resubmit** for the schedule's own draft.
+  - **Resubmit** for the schedule's own draft, and **Discard draft** for one the account changed.
   - **Approve draft…** and **Reject draft…** to an account whose role approves its drafts.
 - **Seeded dates in this test:** the cycle today is in, such as '26.4', is Platform's current cycle. The examples after "such as" are as the seed data is when added on 17 November 2026.
 

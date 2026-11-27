@@ -7,7 +7,12 @@ import { cyclePatterns } from "@fathom/db";
 import { type ReleaseStream, type Unpublished } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { type Method, missingRecord as missing } from "./test-app.ts";
+import {
+  type Method,
+  missingRecord as missing,
+  ok,
+  unique,
+} from "./test-app.ts";
 import {
   test,
   configurer,
@@ -226,9 +231,15 @@ describe("unpublished changes to the plan's records", () => {
   });
 
   it("name a record only drafted to be added by its published draft once the user discards it", async () => {
-    const stream = await draftStream();
+    const name = unique("Fictional Stream");
+    const { stream } = await ok<{ stream: ReleaseStream }>(
+      await test.request(maker.cookie, "POST", "/api/release-streams", {
+        name,
+      }),
+      201,
+    );
     await quietly("DELETE", `/api/records/release-stream/${stream.id}/draft`);
-    expect(await subjects()).toEqual([`the schedule ${stream.name}`]);
+    expect(await subjects()).toEqual([`the schedule ${name}`]);
   });
 
   it("are taken back, all at once, recording what that changes", async () => {

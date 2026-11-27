@@ -50,6 +50,7 @@ import {
   valueRows,
 } from "./values.ts";
 import { editsKind } from "./draft-editors.ts";
+import { refuseDiscardingOthers } from "./draft-makers.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import {
   gone,
@@ -127,7 +128,8 @@ export function cyclesDiscardRefusal(
 // Discards the editor's draft of a record, so the record is as it is live, or, for one only drafted
 // to be added, gone, with the drafts bound to it and the drafts of the records only drafted to be
 // added that belong to any of them. Refused while other drafts, published or not, use any of them,
-// and, to an editor who may not change cycles, when it would discard a draft of a stream's cycles.
+// and to an editor who didn't change the draft, unless it would discard a draft of a stream's
+// cycles, which any editor who may change cycles discards, and no other.
 export async function discardRecordDraft(
   database: Database,
   maker: Actor,
@@ -149,6 +151,9 @@ export async function discardRecordDraft(
     ];
     const refusal = cyclesDiscardRefusal(discarded, maker);
     if (refusal !== undefined) throw new ForbiddenError(refusal);
+    if (!discarded.some(({ type: kind }) => kind === "cycle-pattern")) {
+      await refuseDiscardingOthers(transaction, maker, type, id);
+    }
     for (const ref of discarded.filter(
       ({ type: kind }) => kind === "feature",
     )) {

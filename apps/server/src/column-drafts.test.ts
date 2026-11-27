@@ -368,7 +368,11 @@ describe("drafting columns", () => {
     await unseen("DELETE", `${choiceUrl}/draft/rejection`);
 
     // Leave no rejected draft for later tests to meet
-    await send("DELETE", `${choiceUrl}/draft`);
+    await test.holdOnly(maker.id, [...generalOnly, "personal:view"]);
+    expect(
+      (await test.request(maker.cookie, "DELETE", `${choiceUrl}/draft`))
+        .statusCode,
+    ).toBe(200);
   });
 
   it("lets only someone who sees a list's visibility give it or change it", async () => {

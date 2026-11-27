@@ -332,6 +332,7 @@ describe("a team's draft as a reader sees it", () => {
       editors: ["Fictional Maker", "Fictional Editor"],
       fieldEditors: new Map([["name", "Fictional Editor"]]),
       needsOtherApprover: true,
+      changedByUser: true,
     };
 
     // When a reader sees it
@@ -349,6 +350,7 @@ describe("a team's draft as a reader sees it", () => {
       madeAt: "2026-06-01T09:00:00.000Z",
       editors: ["Fictional Maker", "Fictional Editor"],
       needsOtherApprover: true,
+      changedByUser: true,
       changedBy: { name: "Fictional Editor", leadId: null },
     });
   });

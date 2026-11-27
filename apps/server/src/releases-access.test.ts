@@ -465,7 +465,12 @@ describe("who may discard and resend drafts of schedules and their cycles", () =
     return record;
   };
 
-  it.each(cases(scheduleEditors))(
+  // Another's draft of a schedule is discarded only by one who changed it, while one of its cycles is
+  // discarded by any role that changes cycles.
+  const othersMay = ({ kind, handling }: { kind: string; handling: string }) =>
+    kind !== "schedule" || handling !== "discard";
+
+  it.each(cases(scheduleEditors).filter(othersMay))(
     "lets $role $handling another's draft of a $kind",
     async ({ draft, tail, rejected, after, role }) => {
       const record = await prepare(draft, rejected);
@@ -484,8 +489,11 @@ describe("who may discard and resend drafts of schedules and their cycles", () =
     },
   );
 
-  it.each(cases(others(scheduleEditors)))(
-    "refuses $role to $handling a draft of a $kind",
+  it.each([
+    ...cases(others(scheduleEditors)),
+    ...cases(scheduleEditors).filter((one) => !othersMay(one)),
+  ])(
+    "refuses $role to $handling another's draft of a $kind",
     async ({ draft, tail, rejected, kept, role }) => {
       const record = await prepare(draft, rejected);
       const { cookie } = await test.signedIn(role);

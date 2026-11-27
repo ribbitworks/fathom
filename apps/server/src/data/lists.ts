@@ -75,6 +75,7 @@ import {
   refuseSensitivePlanningList,
   refuseWeightMisfit,
 } from "./list-rules.ts";
+import { refuseDiscardingOthers } from "./draft-makers.ts";
 import {
   addedChoices,
   choiceChanges,
@@ -502,6 +503,7 @@ export async function deleteList(
     const list = changeableList(maker, state, id);
     const live = state.lists.get(id);
     if (live === undefined) {
+      await refuseDiscardingOthers(transaction, maker, "list", id);
       await refuseIfUsed(transaction, id, "discarded", maker.user.id);
       await refuseIfDraftsChoose(
         transaction,
@@ -709,6 +711,7 @@ export async function deleteChoice(
     const live = state.choices.get(id)?.record;
     refuseLastKept(state, listId, id, undefined);
     if (live === undefined) {
+      await refuseDiscardingOthers(transaction, maker, "list-item", id);
       await refuseIfDraftsChoose(transaction, maker.user.id, [id]);
       const made = discardingChoice(state, id);
       await removeDiscarded(transaction, maker.user.id, made);

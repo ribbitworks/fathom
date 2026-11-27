@@ -52,7 +52,7 @@ describe("discarding and resubmitting a team's draft", () => {
   it("puts a changed team back as it is live", async () => {
     const name = unique("Fictional Feature Team");
     const id = await liveTeam({ name });
-    await changed(id, { name: unique("Fictional Renamed Team") });
+    await changed(id, { name: unique("Fictional Renamed Team") }, proposer);
 
     await ok(await discard(id, proposer));
 

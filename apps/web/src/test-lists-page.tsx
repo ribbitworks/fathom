@@ -101,7 +101,7 @@ export const regions = {
   choices: [choice("c6", "North"), choice("c7", "South", { retired: true })],
 };
 
-// A draft removing a list or choice, as the server sends it.
+// A draft removing a list or choice, as the server sends it, which the user changed.
 export const removal = {
   action: "deleted",
   changed: [],
@@ -109,6 +109,7 @@ export const removal = {
   state: "waiting",
   madeBy: "Fictional Editor",
   madeAt: "2026-11-01T10:00:00.000Z",
+  changedByUser: true,
 };
 
 export const listsAnswer = () =>
@@ -227,6 +228,7 @@ export const waiting = {
   state: "waiting",
   madeBy: "Fictional Editor",
   madeAt: "2026-11-01T10:00:00.000Z",
+  changedByUser: true,
 };
 // A list drafted to be added, with a choice drafted into it; a live list with a renamed, rejected
 // choice and a draft of its order.

@@ -26,7 +26,18 @@ import type { FictionalOrganization, FictionalPerson } from "@fathom/fixtures";
 import { addMonths, draftingPermissions, lastDayOfMonth } from "@fathom/shared";
 import type { Actor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
-import { and, eq, gt, inArray, isNull, max, ne, or, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  gt,
+  inArray,
+  isNull,
+  max,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 import { accountDomain, personaAccounts, personaActor } from "./accounts.ts";
 
 const editorEmail = `engineering.operations.manager@${accountDomain}`;
@@ -50,6 +61,38 @@ export async function actorOf(
     throw new Error(`The account ${email} is missing; seed the accounts first`);
   }
   return personaActor(user, persona.role);
+}
+
+// Discards a draft as the account that last changed it, acting with every permission, since only
+// those who changed a draft may discard it, and publishes that. A draft no account changed is left,
+// as no one may discard it.
+export async function discardAsMaker(
+  database: Database,
+  recordType: string,
+  recordId: string,
+  discard: (maker: Actor) => Promise<unknown>,
+): Promise<void> {
+  const last = await database
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(changes)
+    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+    .innerJoin(users, eq(users.id, changeSets.madeBy))
+    .where(
+      and(
+        eq(changes.recordType, recordType),
+        eq(changes.recordId, recordId),
+        eq(changes.draft, true),
+        eq(changeSets.kind, "edit"),
+        eq(changeSets.private, false),
+      ),
+    )
+    .orderBy(desc(changes.id))
+    .limit(1);
+  for (const account of last) {
+    const maker = personaActor(account, "superuser");
+    await discard(maker);
+    await createDataAccess(database).unpublished.publish(maker);
+  }
 }
 
 // A choice in a column's list other than the one a person has.
@@ -106,13 +149,14 @@ async function draftedIds(
   return rows.map(({ id }) => id);
 }
 
-// Discards drafts, as the persona who edits people, and publishes that.
+// Discards drafts, each as one who changed it, and publishes that.
 async function discard(database: Database, ids: readonly string[]) {
-  if (ids.length === 0) return;
   const data = createDataAccess(database);
-  const editor = await actorOf(database, editorEmail);
-  for (const id of ids) await data.people.discardDraft(editor, id);
-  await data.unpublished.publish(editor);
+  for (const id of ids) {
+    await discardAsMaker(database, "person", id, (maker) =>
+      data.people.discardDraft(maker, id),
+    );
+  }
 }
 
 // The last change that added a record as live, by its id, or null when none has: what the seed
@@ -472,7 +516,7 @@ export async function unseedUnpublished(
 }
 
 // Discards the drafts of the seed data's people, those made by hand included, since removing the
-// seed data removes the people they change, as the persona who edits people, and returns how many.
+// seed data removes the people they change, each as one who changed it, and returns how many.
 export async function unseedDrafts(
   database: Database,
   organization: FictionalOrganization,

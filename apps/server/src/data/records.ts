@@ -21,7 +21,7 @@ import {
   draftMakers,
   everything,
   type Maker,
-  otherApprover,
+  viewerMarks,
 } from "./draft-makers.ts";
 import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import { activityKind } from "./activity-kinds.ts";
@@ -317,7 +317,7 @@ export function recordDraftOut(
     madeAs: maker?.madeAs ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
-    ...otherApprover(maker),
+    ...viewerMarks(maker),
     changedBy: Object.fromEntries(
       changed.map((name) => [
         name,
