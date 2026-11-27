@@ -107,7 +107,7 @@ A feature needs none of these links: one with no project or proposal is an idea 
 
 ### Planning Settings
 
-One record for the whole of Fathom, which capacity and forecasts are worked out with. How they are shown and changed is in [Capacity § Settings](pages/capacity.md#settings).
+One record for the whole of Fathom, which capacity and forecasts are worked out with. How they are shown and changed is in [Administration § Planning Settings](pages/administration.md#planning-settings).
 
 - **Changes:** a change is a draft of the whole record, approved with Approve Configuration, and recorded in the change history.
 - **Estimates:** a draft changes no estimate's units until it is approved.

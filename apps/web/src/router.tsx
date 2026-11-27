@@ -49,6 +49,7 @@ import { Home } from "./home.tsx";
 import { ListsPage } from "./lists-page.tsx";
 import { listKindSchema } from "./lists.ts";
 import { OrgChartPage } from "./org-chart-page.tsx";
+import { PlanningSettingsPage } from "./planning-settings-page.tsx";
 import {
   chartAddressOf,
   chartChoiceKeys,
@@ -74,6 +75,7 @@ import {
   editsFeatureTeams,
   fathomIdLength,
   linkedColumnSearch,
+  opening,
   openOnLastView,
   reaching,
   rootRoute,
@@ -363,6 +365,31 @@ const listsRoute = createRoute({
   },
 });
 
+// The Planning settings page's address: what the Draft menu shows.
+const planningSettingsRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/planning-settings",
+  validateSearch: z.object({ show: showSchema.optional().catch(undefined) }),
+  beforeLoad: opening("planning-settings"),
+  component: function PlanningSettings() {
+    const { permissions } = signedIn.useRouteContext();
+    const navigate = planningSettingsRoute.useNavigate();
+    return (
+      <PlanningSettingsPage
+        canEdit={permissions.includes("configuration:edit")}
+        approves={approvableKinds(permissions)}
+        show={planningSettingsRoute.useSearch().show ?? "both"}
+        onShow={(show) => {
+          void navigate({
+            search: { show: show === "both" ? undefined : show },
+            replace: true,
+          });
+        }}
+      />
+    );
+  },
+});
+
 // People's address: its view, and the person whose details are shown beside it, by Employee ID.
 const peopleSearch = viewSearchSchema.extend({
   column: linkedColumnSearch,
@@ -581,6 +608,7 @@ const routeTree = rootRoute.addChildren([
     historyRoute,
     changesRoute,
     listsRoute,
+    planningSettingsRoute,
     releasesRoute,
     projectsRoute,
     featuresRoute,

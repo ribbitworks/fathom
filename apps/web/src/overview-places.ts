@@ -55,13 +55,6 @@ const parts = new Map<
     },
   ],
   [
-    "Capacity|Settings",
-    {
-      link: linkOptions({ to: "/capacity", search: { mode: "settings" } }),
-      opens: opensMode("settings"),
-    },
-  ],
-  [
     "Org chart|Feature teams",
     {
       link: linkOptions({ to: "/org-chart", search: { teams: "feature" } }),

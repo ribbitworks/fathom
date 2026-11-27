@@ -303,7 +303,7 @@ describe("the drafts rows name", () => {
 
 describe("the keys of the drafts' records", () => {
   const person = entry("p1", { place: { kind: "person", keyNumber: 12 } });
-  const settings = entry("s1", { place: "capacity-settings" });
+  const settings = entry("s1", { place: "planning-settings" });
   const rows = draftRows([person, settings], reading);
   const { keyOf } = draftsTable({ rows, decidable: () => true });
 

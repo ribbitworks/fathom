@@ -9,9 +9,9 @@ last_updated: "2026-11-26"
 
 # Fathom: Administration Pages
 
-The Administration pages hold accounts, roles, settings, lists and data classes. They sit in the sidebar's Administration section in that order, each shown only to a role allowed to open it.
+The Administration pages hold accounts, roles, settings, lists, the planning settings and data classes. They sit in the sidebar's Administration section in that order, each shown only to a role allowed to open it.
 
-[Accounts help](../../help/accounts.md), [Roles help](../../help/roles.md), [Settings help](../../help/settings.md), [Lists help](../../help/lists.md) and [Data classes help](../../help/data-classes.md) describe them for the people who use them. [Visual Design](../visual-design.md) covers what every page shares.
+[Accounts help](../../help/accounts.md), [Roles help](../../help/roles.md), [Settings help](../../help/settings.md), [Lists help](../../help/lists.md), [Planning settings help](../../help/planning-settings.md) and [Data classes help](../../help/data-classes.md) describe them for the people who use them. [Visual Design](../visual-design.md) covers what every page shares.
 
 ## Accounts
 
@@ -83,9 +83,27 @@ The Administration pages hold accounts, roles, settings, lists and data classes.
 - **Feature sizes:** Each choice ends with its weight, typed as a Number column's value is.
 - **A list of a class the role can't see:** For a role that changes or decides lists, the panel is read only, with one dimmed line under the choices saying why, such as This role can't see Personal data, so it can't change this list. The Draft menu's approving and rejecting every draft waiting leave its drafts out.
 
+## Planning Settings
+
+- **Place:** After Lists, at `/planning-settings`, for a role with View Configuration; Edit Configuration changes it. A role with View Configuration alone sees it read only, with no pencils, ×, or Add month.
+- **Layout:** The heading, with no tabs, then the Draft menu and the sections Working time, Forecasts and Ramp-up for new starters, laid out as a details panel's rows.
+- **Working time:** Hours a day, Working days, Week starts on and Working days a month. Hours a day and Working days a month stay typed: a month's working days vary, and capacity needs one whole number.
+- **Working days:** At rest, the days in the week's order, three or more in a row joined with to, such as Mon to Fri, or Mon to Wed, Fri.
+  - **Changing them:** The pencil opens a box for each day, the week's first first, each tinted while ticked. The boxes stay on one line, scrolling sideways with the slim scroll bar where the row is too narrow.
+  - **Keys:** The boxes are one Tab stop. Arrow keys move between them, Space ticks one, Enter or leaving them saves, as a draft, and Esc puts them back.
+  - **None ticked:** The boxes are outlined in red, with Working day needed in red under them, and nothing is saved until a day is ticked. Leaving them so puts the days back, as a table's cell does. The server refuses the same.
+- **Week starts on:** A choice of the seven days, saved when chosen. It orders the boxes and the words at rest, not which days are ticked.
+- **Ramp-up:** A row per month, up to 12, then a fixed From month N row at 100%.
+- **Drafts:** The settings are one draft, approved whole with Approve Configuration, so each changed row's menu lists every change, and offers Publish draft… for the user's own unpublished draft.
+  - **The days in the menu:** Each side lists its days in its own week's order, such as Mon, Tue, Wed, Thu, Fri to Sun, Mon, Tue, Wed, Thu.
+  - Approval is needed since a change alters every estimate's units. Effort uses the settings as approved, so a draft changes no estimate until then.
+  - **The Draft menu:** The address keeps its choice, as `show`.
+- **Forecasts and Ramp-up:** Focus, buffer and ramp-up set the hours on Capacity's Allocations grouped by Allocated to; demand forecasting will use them too.
+- **From Capacity:** Capacity's link at the right of its heading opens the page, and its old Settings tab's address redirects here, as [Capacity](capacity.md#tabs-and-access) sets out.
+
 ## Data Classes
 
-- **Place:** After Lists, for a role that may Classify data.
+- **Place:** After Planning settings, for a role that may Classify data.
 - **Sections:** Built-in details, Columns and Lists, the last two only for a role that reads them.
 - **Tables:** Each has the item, its class as [A class's mark](../../standards/ui-conventions/drafts-and-values.md#access) sets out, and **About**. The three tables share column widths so they line up.
 - **About:** Plain sentences, such as "These People columns use it: Site."

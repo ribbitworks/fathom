@@ -27,6 +27,7 @@ import {
   capacityModes,
   capacityTabChoices,
   capacityTables,
+  settingsMode,
   shownCapacityMode,
 } from "./capacity.ts";
 import { removedCycleMark } from "./cycle-table.tsx";
@@ -204,7 +205,10 @@ export const releasesRoute = createRoute({
 
 // The Capacity page's address: its tab, and its grid's view.
 const capacitySearch = viewSearchSchema.extend({
-  mode: capacityModeSchema.optional().catch(undefined),
+  mode: z
+    .union([capacityModeSchema, z.literal(settingsMode)])
+    .optional()
+    .catch(undefined),
   over: shownChoiceSchema.optional().catch(undefined),
   under: shownChoiceSchema.optional().catch(undefined),
 });
@@ -214,9 +218,12 @@ export const capacityRoute = createRoute({
   path: "/capacity",
   validateSearch: capacitySearch,
   beforeLoad: (match) => {
+    if (match.search.mode === settingsMode) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
+      throw redirect({ to: "/planning-settings", replace: true });
+    }
     opening("capacity")(match);
     const mode = shownCapacityMode(match.search.mode, match.context.access);
-    if (mode === "settings") return;
     // An address naming a tab, such as an old Feature assignments link, shows that tab, with its last
     // view only where it was on that tab.
     const last = match.context.queryClient.getQueryData(
@@ -260,12 +267,9 @@ export const capacityRoute = createRoute({
         seesHires={opensWith(pageNeeds["org-chart"], access)}
         editsTeams={editsFeatureTeams(permissions)}
         changesDates={editsField(access, "featureTeamDates")}
-        canShareViews={
-          mode !== "settings" &&
-          // The tab is always one of the grid tabs here.
-          // eslint-disable-next-line security/detect-object-injection
-          sharesViews(capacityTables[mode], permissions)
-        }
+        // The tab is always one of the fixed tabs.
+        // eslint-disable-next-line security/detect-object-injection
+        canShareViews={sharesViews(capacityTables[mode], permissions)}
         {...viewProps(
           search,
           (next, replace) => {
@@ -275,8 +279,7 @@ export const capacityRoute = createRoute({
           // eslint-disable-next-line security/detect-object-injection
           capacityTabChoices[mode],
         )}
-        canEditSettings={permissions.includes("configuration:edit")}
-        approves={approvableKinds(permissions)}
+        opensSettings={opensWith(pageNeeds["planning-settings"], access)}
       />
     );
   },

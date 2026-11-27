@@ -9,18 +9,18 @@ last_updated: "2026-11-26"
 
 # Fathom: Capacity Page
 
-Capacity shows who is on which feature team and who is allocated to what, month by month, and holds the planning settings, which don't justify a page of their own. It sits in the sidebar's People section, after Org chart.
+Capacity shows who is on which feature team and who is allocated to what, month by month. It sits in the sidebar's People section, after Org chart.
 
 [Capacity help](../../help/capacity.md) describes it for the people who use it. [Visual Design](../visual-design.md) covers what every page shares.
 
 ## Tabs and Access
 
-- **Tabs:** Feature teams, Allocations and Settings, kept in the address, in the page's heading. A role sees the tabs it may; a role that sees one sees it alone, with no tabs, and a role that sees none has no page.
+- **Tabs:** Feature teams and Allocations, kept in the address, in the page's heading. A role sees the tabs it may; a role that sees one sees it alone, with no tabs, and a role that sees none has no page.
 - **Feature teams:** needs View Feature teams and Personal details, since it shows the months people join and leave teams.
 - **Allocations:** needs View Allocations, plus View Feature teams, View People and Personal details.
-- **Settings:** needs View Configuration.
-- **The last view:** the page opens on the tab and view it last showed, as [The last view](../../standards/ui-conventions/tables.md#tables) sets out. Each grid tab has its own saved views; Settings keeps none, so the page opens on the last grid tab.
-- **Old addresses:** the Feature assignments page's old address opens the Feature teams tab, with the same view, and its old Allocations mode opens Allocations, as does Capacity's old People mode.
+- **Planning settings:** a plain link at the right of the heading opens [Planning settings](administration.md#planning-settings), for a role that opens it. A tab shows something in place, so the link isn't among the tabs.
+- **The last view:** the page opens on the tab and view it last showed, as [The last view](../../standards/ui-conventions/tables.md#tables) sets out. Each tab has its own saved views.
+- **Old addresses:** the Feature assignments page's old address opens the Feature teams tab, with the same view, and its old Allocations mode opens Allocations, as does Capacity's old People mode. The old Settings tab's address, `/capacity?mode=settings`, redirects to Planning settings.
 
 ## The Grid Tabs
 
@@ -87,18 +87,10 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
   - The Organization row counts each person once; a person on two feature teams counts in both.
   - Drafts count only under Drafts applied.
 
-## Settings
-
-- **Sections:** Working time, Forecasts and Ramp-up for new starters, laid out as a details panel.
-- **Ramp-up:** a row per month, up to 12, then a fixed From month N row at 100%.
-- **Drafts:** the settings are one draft, approved whole with Approve Configuration, so each changed row's menu lists every change.
-  - Approval is needed since a change alters every estimate's units. Effort uses the settings as approved, so a draft changes no estimate until then.
-- **Forecasts and Ramp-up:** focus, buffer and ramp-up set the hours on Allocations grouped by Allocated to; demand forecasting will use them too.
-
 ## Planned
 
 - **Choosing a month by its heading:** clicking a month's heading moves the grid to it.
-- **More tabs:** Work and Demand, between Allocations and Settings.
+- **More tabs:** Work and Demand, after Allocations.
 - **Work:** the [Plan](../../product/domain.md#planning-terms) on the [shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines): when each piece of work happens, whether it is staffed, and whether it makes its date.
   - The organization's capacity row, on all staffed work, comes first, then the groups.
   - Group by offers Feature team, the first, Project, Priority, Status, Risk and Release.

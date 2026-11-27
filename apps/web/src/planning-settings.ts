@@ -12,6 +12,9 @@ import {
   planningSettingsShownSchema,
   type RecordDraft,
   savedPlanningSettingsSchema,
+  type Weekday,
+  weekdaySchema,
+  weekOrder,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { getJson, sendJsonFor } from "./api.ts";
@@ -44,22 +47,37 @@ export const planningSettingsNode = (settings: PlanningSettingsShown) =>
   );
 
 // Settings' values as the change history keeps them, each number as text, so a draft's details
-// word them as the history does.
-const settingWords = (values: object): Readonly<Record<string, ChangeValue>> =>
+// word them as the history does, but with the working days in the order of the week they start.
+const settingWords = (
+  values: object,
+  startsOn: Weekday,
+): Readonly<Record<string, ChangeValue>> =>
   Object.fromEntries(
     Object.entries(values).flatMap(([key, value]): [string, ChangeValue][] => {
       if (typeof value === "number") return [[key, String(value)]];
-      if (Array.isArray(value)) return [[key, value.map(String)]];
-      return [];
+      if (!Array.isArray(value)) return [];
+      const inOrder =
+        key === "workingDays"
+          ? weekOrder(startsOn).filter((day) => value.includes(day))
+          : value;
+      return [[key, inOrder.map(String)]];
     }),
   );
 
-// A draft of the settings and the settings it makes, worded as the change history words them.
+// A draft of the settings and the settings it makes, worded as the change history words them, each
+// side's days in its own week's order.
 export const settingsDraftWords = (
   draft: RecordDraft,
   settings: PlanningSettingsShown,
-) =>
-  [
-    { ...draft, live: settingWords(draft.live) },
-    settingWords(settings),
+) => {
+  const liveStart = weekdaySchema.safeParse(
+    new Map(Object.entries(draft.live)).get("weekStartsOn"),
+  ).data;
+  return [
+    {
+      ...draft,
+      live: settingWords(draft.live, liveStart ?? settings.weekStartsOn),
+    },
+    settingWords(settings, settings.weekStartsOn),
   ] as const;
+};

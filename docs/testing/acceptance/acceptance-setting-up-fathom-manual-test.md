@@ -223,9 +223,11 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
 
 **Preconditions:** SETUP-05 done.
 
-- [ ] `6FE1` Select the **Capacity** page in the left-hand menu, then the **Settings** tab.
+- [ ] `6FE1` Select the **Planning settings** page in the left-hand menu.
   - **Expected:** Under **Working time**, the rows read, from the top:
     - **Hours a day**: "8"
+    - **Working days**: "Mon to Fri"
+    - **Week starts on**: "Monday"
     - **Working days a month**: "20"
   - **Notes:**
 

@@ -11,14 +11,8 @@ last_updated: "2026-11-26"
 
 ## Scope
 
-Verifies the Capacity page's tabs, and switching between them:
+Verifies the Capacity page's tabs, switching between them, and its link to the planning settings, which have their own [Planning Settings](planning-settings-manual-test.md) test:
 
-- Settings, which holds the planning settings:
-  - How it reads for someone who may only see it.
-  - Drafting a change and undoing it, and a value refused.
-  - Adding and removing months of ramp-up.
-  - The change in the change history.
-  - Approving a draft and seeing the Effort column on Features follow it once approved.
 - Allocations, the table of allocations by month:
   - Its over- and under-allocated months, planned hires, and the capacity totals of each group and of everyone.
   - Rows for someone who changed team or manager.
@@ -38,7 +32,6 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Executive:** `executive@fathom.test`.
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**.
 - **Engineering Manager:** `engineering.manager@fathom.test`.
 - **Engineering Director:** `engineering.director@fathom.test`.
@@ -46,16 +39,12 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-[Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish), from Manual Test Basics. The planning settings are not part of the seed data, so Restore the Seed Data leaves them as they are.
+[Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish), from Manual Test Basics.
 
 ## Terms
 
 As [Manual Test Basics](manual-test-basics.md#terms) sets out, such as a page's tabs, and:
 
-- **Change button:** as [Manual Test Basics](manual-test-basics.md#terms) sets out, here at the right of a setting's row.
-- **× button:** the small × after the change button of a month of ramp-up, which removes that month.
-- **Draft button:** the button above **Working time** on **Settings**, which opens a menu choosing how drafts show.
-- **Row menu:** the ⋯ button at the right of a setting's row that a draft changes, which opens a menu of the whole draft of the settings and what can be done with it.
 - **Total row:** in **Allocations**, a row in bold at the end of each group, headed **Total, person-months** in the **Person** column, and one at the foot of the table, headed **Organization, person-months**.
 
 ## Test Cases
@@ -64,196 +53,49 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 ### CAP-01: The Settings Read Only
 
-**Account:** Executive, `executive@fathom.test`; the first test case.
-
-**Preconditions:** Signed in with this account.
-
-- [ ] `E86E` Select the **Capacity** page in the left-hand menu.
-  - **Expected:**
-    - The page is headed **Capacity**.
-    - Just after the heading, on the same line, the tabs read **Feature teams**, **Allocations** and **Settings**, with **Feature teams** chosen.
-    - A table of people by month is under the heading.
-  - **Notes:**
-
-- [ ] `662D` Select the **Settings** tab.
-  - **Expected:**
-    - There is no table.
-    - Under **Working time**, the rows read, from the top:
-      - **Hours a day**: "8"
-      - **Working days a month**: "20"
-    - Under **Forecasts**, the rows read:
-      - **Default focus**: "80%"
-      - **Default buffer**: "0%"
-    - Under **Ramp-up for new starters**, the rows read:
-      - **Month 1**: "50%"
-      - **Month 2**: "75%"
-      - **From month 3**: "100%"
-    - No row has a change button.
-    - Above **Working time** is a **Draft** button.
-    - There are no buttons under the rows.
-  - **Notes:**
+Moved to [Planning Settings](planning-settings-manual-test.md#pset-01-the-settings-read-only).
 
 ### CAP-02: A Change Drafted, Undone and Published
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from CAP-01.
-
-**Preconditions:** Signed in with this account.
-
-- [ ] `DCBC` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The page is headed **Capacity**, with the tabs **Feature teams**, **Allocations** and **Settings**.
-  - **Notes:**
-
-- [ ] `F224` Select the **Settings** tab.
-  - **Expected:**
-    - Every row but **From month 3** has a change button at its right.
-    - The rows **Month 1** and **Month 2** each have an × button after their change button.
-    - Under the ramp-up rows is one outlined button, **Add month**.
-  - **Notes:**
-
-- [ ] `93FD` Press Tab until the change button of **Hours a day** has focus.
-  - **Expected:** A focus ring shows around the change button of **Hours a day**.
-  - **Notes:**
-
-- [ ] `E7A7` Press Enter.
-  - **Expected:**
-    - A field in place of "8" holds "8".
-    - The focus is in the field.
-  - **Notes:**
-
-- [ ] `08BD` Replace the value with `4`, and press Enter.
-  - **Expected:**
-    - **Hours a day** reads "4" after a hollow yellow dot.
-    - Under it, "8" follows a green dot.
-    - The change button of **Hours a day** has focus.
-    - No notification shows.
-    - The Publish button reads **Publish 1 change**.
-  - **Notes:**
-
-- [ ] `B912` Press Cmd+Z on a Mac, or Ctrl+Z elsewhere.
-  - **Expected:**
-    - **Hours a day** reads "8", with no mark and nothing under it.
-    - The change button of **Hours a day** has focus.
-  - **Notes:**
-
-- [ ] `91E5` Press Enter.
-  - **Expected:**
-    - A field in place of "8" holds "8".
-    - The focus is in the field.
-  - **Notes:**
-
-- [ ] `318F` Replace the value with `4`, and press Enter.
-  - **Expected:** **Hours a day** reads "4" after a hollow yellow dot.
-  - **Notes:**
-
-- [ ] `E18C` Run Publish.
-  - **Expected:** The mark before "4" beside **Hours a day** is filled yellow.
-  - **Notes:**
+Moved to [Planning Settings](planning-settings-manual-test.md#pset-02-a-change-drafted-undone-and-published).
 
 ### CAP-03: A Value Refused
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as CAP-02.
-
-**Preconditions:** **Capacity** page open, with the **Settings** tab chosen.
-
-- [ ] `B6C0` Select "80%" beside **Default focus**.
-  - **Expected:**
-    - A field in place of "80%" holds "80".
-    - The focus is in the field.
-  - **Notes:**
-
-- [ ] `18AC` Replace the value with `0`, and press Enter.
-  - **Expected:**
-    - The field stays open.
-    - It holds `0`.
-    - It is outlined in red.
-    - Under it, in red, reads "Default focus: use 1% to 100%".
-  - **Notes:**
-
-- [ ] `A0AE` Press Esc.
-  - **Expected:**
-    - **Default focus** reads "80%".
-    - The red message is gone.
-  - **Notes:**
+Moved to [Planning Settings](planning-settings-manual-test.md#pset-03-a-value-refused).
 
 ### CAP-04: Months of Ramp-Up Added and Removed
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as CAP-03.
-
-**Preconditions:** **Capacity** page open, with the **Settings** tab chosen.
-
-- [ ] `5B9D` Select **Add month**.
-  - **Expected:**
-    - Under **Ramp-up for new starters**, the rows read, from the top:
-      - **Month 1**: "50%"
-      - **Month 2**: "75%"
-      - **Month 3**: "100%" after a hollow yellow dot, with "No month 3" under it after a green dot
-      - **From month 4**: "100%"
-    - The change button of **Month 3** has focus.
-    - **Month 3** has an × button after its change button.
-  - **Notes:**
-
-- [ ] `80C1` Press Enter.
-  - **Expected:**
-    - A field in place of "100%" beside **Month 3** holds "100".
-    - The focus is in the field.
-  - **Notes:**
-
-- [ ] `3F77` Replace the value with `90`, and press Enter.
-  - **Expected:** **Month 3** reads "90%" after a hollow yellow dot.
-  - **Notes:**
-
-- [ ] `2E12` Select the × button of **Month 3**.
-  - **Expected:**
-    - Under **Ramp-up for new starters**, the rows read, from the top:
-      - **Month 1**: "50%"
-      - **Month 2**: "75%"
-      - **From month 3**: "100%"
-    - The × button of **Month 2** has focus.
-    - A notification at the top right reads "Removed month 3 of ramp-up."
-    - It offers **Undo**.
-  - **Notes:**
-
-- [ ] `A79C` Select **Undo** in the notification.
-  - **Expected:**
-    - Under **Ramp-up for new starters**, the rows read, from the top:
-      - **Month 1**: "50%"
-      - **Month 2**: "75%"
-      - **Month 3**: "90%" after a hollow yellow dot
-      - **From month 4**: "100%"
-  - **Notes:**
+Moved to [Planning Settings](planning-settings-manual-test.md#pset-07-months-of-ramp-up-added-and-removed).
 
 ### CAP-05: The Change in the Change History
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as CAP-04.
-
-**Preconditions:** None beyond CAP-04.
-
-- [ ] `D295` Select the **Change history** page in the left-hand menu.
-  - **Expected:**
-    - The newest entry reads "Engineering Operations Manager drafted changes to the planning settings".
-    - Its details read "Ramp-up from 50%, 75% to 50%, 75%, 90%".
-  - **Notes:**
-
-**Afterwards:** Run Reset the Database, to leave the planning settings as Fathom starts them.
+Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change-in-the-change-history).
 
 ### CAP-06: Each Tab for a Role That Sees Them All
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from CAP-05.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`; the first test case.
 
-**Preconditions:** Reset the Database has been run, as CAP-05 ends. Signed in with this account.
+**Preconditions:** Signed in with this account.
 
 - [ ] `D8F5` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:**
+    - Just after the heading, on the same line, the tabs read **Feature teams** and **Allocations**.
     - **Allocations** is chosen in the tabs.
+    - At the right of the heading, on the same line, is a **Planning settings** link, with no outline.
     - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by**.
     - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
     - The current month is the second month beside the **Person** column, after last month, and its heading is underlined in red.
   - **Notes:**
 
-- [ ] `F7F1` Select the **Settings** tab.
+- [ ] `F7F1` Select **Planning settings** at the right of the heading.
   - **Expected:**
+    - The page is headed **Planning settings**.
     - The planning settings show under **Working time**, **Forecasts** and **Ramp-up for new starters**.
     - No row has a change button.
+  - **Notes:**
+
+- [ ] `6E10` Press the browser's Back button.
+  - **Expected:** The page is headed **Capacity**, with **Allocations** chosen in the tabs.
   - **Notes:**
 
 ### CAP-07: Allocations Shows Each Feature With Its Percentage
@@ -561,92 +403,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 ### CAP-15: A Draft Approved, Then Followed on Features
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from CAP-14. Step `2C26` signs in as another account.
-
-**Preconditions:** Signed in with this account. Reset the Database has been run, as CAP-05 ends. **Features** page open.
-
-- [ ] `02DD` Open the column menu of **Effort**, and select **Person-days (8 hours)** under **Show in**.
-  - **Expected:** 'Audit Export' reads "39.5 PD".
-  - **Notes:**
-
-- [ ] `E60D` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The page is headed **Capacity**, with the tabs **Feature teams**, **Allocations** and **Settings**.
-  - **Notes:**
-
-- [ ] `887A` Select the **Settings** tab.
-  - **Expected:** **Hours a day** reads "8".
-  - **Notes:**
-
-- [ ] `5DF7` Select "8" beside **Hours a day**.
-  - **Expected:**
-    - A field in place of "8" holds "8".
-    - The focus is in the field.
-  - **Notes:**
-
-- [ ] `DA6A` Replace the value with `4`, and press Enter.
-  - **Expected:** **Hours a day** reads "4" after a hollow yellow dot.
-  - **Notes:**
-
-- [ ] `6AB7` Run Publish.
-  - **Expected:** The mark before "4" beside **Hours a day** is filled yellow.
-  - **Notes:**
-
-- [ ] `6D1E` Select the **Features** page in the left-hand menu, then open the column menu of **Effort**.
-  - **Expected:**
-    - Under **Show in**, **Person-days (8 hours)** is ticked.
-    - **Person-weeks (8h / PD, 5 days / PW)** is under it.
-    - 'Audit Export' still reads "39.5 PD".
-  - **Notes:**
-
-- [ ] `2C26` Sign in as the Engineering Director, `engineering.director@fathom.test`.
-  - **Expected:** The right end of the top bar reads "Engineering Director".
-  - **Notes:**
-
-- [ ] `C7B3` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The page is headed **Capacity**, with the tabs **Feature teams**, **Allocations** and **Settings**.
-  - **Notes:**
-
-- [ ] `B2C3` Select the **Settings** tab.
-  - **Expected:**
-    - **Hours a day** reads "4" after a yellow dot.
-    - Under it, "8" follows a green dot.
-  - **Notes:**
-
-- [ ] `7CF7` Select the row menu of **Hours a day**.
-  - **Expected:**
-    - A menu headed **Planning settings** opens.
-    - Under the heading, a yellow dot and "Draft: changed".
-    - Under that, "Hours a day from 8 to 4, by Engineering Operations Manager".
-    - Then **Approve…**, **Reject…** and **Discard draft**.
-    - No other row has a row menu.
-  - **Notes:**
-
-- [ ] `8FB0` Select **Approve…**.
-  - **Expected:**
-    - A dialog headed "Approve 1 draft?" opens.
-    - It has an **Approve** button.
-  - **Notes:**
-
-- [ ] `77B6` Select **Approve**.
-  - **Expected:**
-    - The dialog closes.
-    - A notification says "Approved 1 draft."
-    - **Hours a day** reads "4", with no mark and nothing under it.
-  - **Notes:**
-
-- [ ] `3F90` Select the **Features** page in the left-hand menu, then open the column menu of **Effort**.
-  - **Expected:**
-    - Under **Show in**, **Person-days (4 hours)** is ticked.
-    - 'Audit Export' reads "79 PD".
-  - **Notes:**
-
-**Afterwards:** Run Reset the Database, to leave the planning settings as Fathom starts them.
+Moved to [Planning Settings](planning-settings-manual-test.md#pset-09-a-draft-approved-then-followed-on-features).
 
 ### CAP-16: Both Grids Count the Same People, in the Month Gone To
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from CAP-15.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from CAP-14.
 
-**Preconditions:** Reset the Database has been run, as CAP-15 ends. Signed in with this account. Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** Signed in with this account. Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `C4E1` Look at the count after **Group by**, and note it.
   - **Expected:** It names the current month first, then counts people and planned hires, such as "Nov 2026: 40 people, 3 planned hires".

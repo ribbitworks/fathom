@@ -20,11 +20,15 @@ export const capacityModeSchema = z.preprocess(
   z.enum(capacityModeNames),
 );
 
-// Each grid tab's table, whose views it keeps; Settings keeps none.
+// The tab the planning settings had before they moved to a page of their own, which an address from
+// before then still names.
+export const settingsMode = "settings";
+
+// Each tab's table, whose views it keeps.
 export const capacityTables = {
   "feature-teams": "feature-assignments",
   allocations: "capacity",
-} as const satisfies Partial<Record<CapacityMode, ViewTable>>;
+} as const satisfies Record<CapacityMode, ViewTable>;
 
 export type CapacityGridMode = keyof typeof capacityTables;
 
@@ -35,7 +39,6 @@ export const capacityTabChoices: Record<
 > = {
   "feature-teams": [],
   allocations: allocationsViewChoices.keyof().options,
-  settings: [],
 };
 
 // The grid tab each table is shown on; none for another page's table.
@@ -58,12 +61,14 @@ export const capacityModes = (access: ClassAccess) =>
     opensWith([capacityModeNeeds[mode]], access),
   );
 
-// The mode shown: the one asked for, where the role sees it, or else the first it sees, Settings
-// for a role that sees no mode, which the page's route keeps out.
+// The mode shown: the one asked for, where the role sees it, or else the first it sees; for a role
+// that sees none, which the page's route keeps out, the first of all.
 export function shownCapacityMode(
-  asked: CapacityMode | undefined,
+  asked: CapacityMode | typeof settingsMode | undefined,
   access: ClassAccess,
 ): CapacityMode {
   const modes = capacityModes(access);
-  return modes.find((mode) => mode === asked) ?? modes[0] ?? "settings";
+  return (
+    modes.find((mode) => mode === asked) ?? modes[0] ?? capacityModeNames[0]
+  );
 }

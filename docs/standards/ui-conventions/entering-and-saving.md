@@ -84,7 +84,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **A notification with Undo:** Shown at the top right, closing after a few seconds or at a newer change, for a change that takes something out of view, such as discarding the draft of a record only drafted to be added, deleting a saved view, or a team label that a draft removes while Drafts applied is shown.
     - **Sharing:** Sharing a view, or stopping sharing it, shows one too, since nothing changes in view and it affects others.
   - **Settings:** They change Fathom for everyone, so they keep a Save button. A saved change shows in place with no notification, and Cmd+Z or Ctrl+Z undoes it. Leaving with a change unsaved asks first.
-  - **Saved from a pencil:** The planning settings on Capacity each save at once from their pencil, as a draft, as a details panel's values do. An account's name and email address do too, with no notification, and Cmd+Z or Ctrl+Z undoes them.
+  - **Saved from a pencil:** The planning settings each save at once from their pencil, as a draft, as a details panel's values do. An account's name and email address do too, with no notification, and Cmd+Z or Ctrl+Z undoes them.
   - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, and `notifyUndoable` in `apps/web/src/notices.tsx`.
   - **Example:** On People, save a view, then delete it.
 - **Asking first:** Of changes to data, only these ask first, since they can't be undone: approving drafts, rejecting them, Discard all…, discarding chosen changes on the Drafts page (such as Discard 2 changes…), publishing a draft from its menu when other changes go with it, and deleting a saved view its maker can no longer use.

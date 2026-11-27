@@ -31,7 +31,7 @@ describe("the tabs a role sees", () => {
   it("gives every tab, in order, to a role that sees them all", () => {
     expect(
       capacityModes(access([...seesAllocations, "configuration:view"])),
-    ).toEqual(["feature-teams", "allocations", "settings"]);
+    ).toEqual(["feature-teams", "allocations"]);
   });
 
   it("gives Feature teams to a role that sees feature teams and Personal details", () => {
@@ -51,8 +51,8 @@ describe("the tabs a role sees", () => {
     ).toEqual(["feature-teams"]);
   });
 
-  it("gives Settings alone to a role that sees configuration alone", () => {
-    expect(capacityModes(access(["configuration:view"]))).toEqual(["settings"]);
+  it("gives no tab to a role that sees configuration alone", () => {
+    expect(capacityModes(access(["configuration:view"]))).toEqual([]);
   });
 });
 
@@ -67,13 +67,13 @@ describe("the tab shown", () => {
     expect(shownCapacityMode(undefined, access(seesAllocations))).toBe(
       "feature-teams",
     );
-    expect(
-      shownCapacityMode("allocations", access(["configuration:view"])),
-    ).toBe("settings");
+    expect(shownCapacityMode("allocations", access(seesFeatureTeams))).toBe(
+      "feature-teams",
+    );
   });
 
-  it("is Settings for a role that sees no tab", () => {
-    expect(shownCapacityMode(undefined, access([]))).toBe("settings");
+  it("is the first of all for a role that sees no tab", () => {
+    expect(shownCapacityMode(undefined, access([]))).toBe("feature-teams");
   });
 });
 

@@ -35,7 +35,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 
 - [People](people.md): everyone and the planned hires, as a table.
 - [Org chart](org-chart.md): reporting teams and feature teams as cards, today or on another date.
-- [Capacity](capacity.md): who is on which feature team and what each person works on, month by month, and the planning settings capacity and forecasts are worked out with.
+- [Capacity](capacity.md): who is on which feature team and what each person works on, month by month.
 
 ## Administration
 
@@ -43,6 +43,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 - [Roles](roles.md): what each role lets its holders see and do, and changing it.
 - [Settings](settings.md): the time zone and the rules for passwords.
 - [Lists](lists.md): the lists of choices that columns offer.
+- [Planning settings](planning-settings.md): the working time and week, and the figures capacity and forecasts are worked out with.
 - [Data classes](data-classes.md): the class of each detail, column and list, and changing it.
 
 ## History

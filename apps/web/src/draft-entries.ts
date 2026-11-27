@@ -427,7 +427,7 @@ function settingsEntries(settings: PlanningSettingsShown): Entry[] {
       planningSettingsName,
       configFields(...settingsDraftWords(draft, settings), "planning-settings"),
       { records: [planningSettingsRef] },
-      "capacity-settings",
+      "planning-settings",
       settings.heldBy,
     ),
   ];

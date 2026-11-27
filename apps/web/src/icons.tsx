@@ -87,6 +87,12 @@ const paths = {
       <circle cx="6" cy="11.5" r="1.5" />
     </>
   ),
+  planningSettings: (
+    <>
+      <rect x="2.5" y="3.5" width="11" height="10" rx="1.5" />
+      <path d="M2.5 6.5h11M5.5 2v3M10.5 2v3M5 9.5h1M7.5 9.5h1M10 9.5h1" />
+    </>
+  ),
   history: (
     <>
       <circle cx="8" cy="8" r="6" />

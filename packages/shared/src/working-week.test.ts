@@ -9,10 +9,12 @@ import {
   weekStartOf,
   weekdayOf,
   weekdays,
+  weekOrder,
   weeksWithin,
   weekStartsOnSchema,
   workingDaysBetween,
   workingDaysSchema,
+  workingDaysWords,
 } from "./working-week.ts";
 
 const { monday, wednesday, friday, saturday, sunday } = weekdays;
@@ -202,5 +204,25 @@ describe("weekStartsOnSchema", () => {
     expect(problem(weekStartsOnSchema.safeParse(day))).toEqual([
       "Week starts on: use a day of the week",
     ]);
+  });
+});
+
+describe("weekOrder", () => {
+  it("starts the week on the day given and wraps round", () => {
+    expect(weekOrder(sunday)).toEqual([6, 0, 1, 2, 3, 4, 5]);
+  });
+});
+
+describe("workingDaysWords", () => {
+  it.each([
+    ["Mon to Fri", mondayToFriday, monday],
+    ["Sun to Thu", sundayToThursday, sunday],
+    ["Mon to Thu, Sun", sundayToThursday, monday],
+    ["Mon to Wed, Fri", [0, 1, 2, 4], monday],
+    ["Sat, Sun", [5, 6], monday],
+    ["Wed", [wednesday], monday],
+    ["Mon to Sun", [0, 1, 2, 3, 4, 5, 6], monday],
+  ] as const)("reads %s", (words, days, startsOn) => {
+    expect(workingDaysWords(days, startsOn)).toBe(words);
   });
 });

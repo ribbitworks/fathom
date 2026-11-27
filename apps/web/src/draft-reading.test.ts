@@ -158,7 +158,7 @@ describe("the drafts named in another's details", () => {
     expect(
       namedDrafts(
         { ...noDrafts(), lists: ["l1"] },
-        [{ ...list, place: "capacity-settings" }],
+        [{ ...list, place: "planning-settings" }],
         namesOf,
       )[0]?.key,
     ).toBeUndefined();

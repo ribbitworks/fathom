@@ -329,18 +329,18 @@ export const overviewJobs: readonly JobTag[] = [
     title: "Set the Working Time and Cycles",
     area: "Capacity",
     needs: [["configuration:edit", "plan:edit"]],
-    place: on("Capacity", "Settings"),
+    place: on("Planning settings"),
     help: ["workforce-administrator"],
     tasks: [
       {
         title: "Set Hours and Working Days",
         needs: ["configuration:edit"],
-        place: on("Capacity", "Settings"),
+        place: on("Planning settings"),
       },
       {
         title: "Set Ramp-Up for New Starters",
         needs: ["configuration:edit"],
-        place: on("Capacity", "Settings"),
+        place: on("Planning settings"),
       },
       {
         title: "Add a Schedule and Its Cycles",

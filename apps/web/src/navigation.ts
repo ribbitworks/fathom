@@ -25,6 +25,7 @@ export type Page =
   | "/org-chart"
   | "/releases/{-$streamId}"
   | "/capacity"
+  | "/planning-settings"
   | "/projects"
   | "/features"
   | "/activities"
@@ -130,6 +131,12 @@ export const sections: { label: string; items: Item[] }[] = [
         to: "/lists/{-$listId}",
         page: "lists",
         nested: true,
+      },
+      {
+        label: "Planning settings",
+        icon: "planningSettings",
+        to: "/planning-settings",
+        page: "planning-settings",
       },
       {
         label: "Data classes",

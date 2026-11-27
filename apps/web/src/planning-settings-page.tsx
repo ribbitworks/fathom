@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Capacity page's Settings tab, for those who see configuration: the working time effort is
-// converted with, the defaults forecasts start from, and how new starters ramp up, month by month,
-// each changed in place as a draft of the settings.
+// The Planning settings page, for those who see configuration: the working time effort is converted
+// with and the working week, the defaults forecasts start from, and how new starters ramp up, month
+// by month, each changed in place as a draft of the settings.
 
 import {
   type Asking,
@@ -19,8 +19,11 @@ import {
   typedNumber,
   changedSettings,
   fullOutputPercent,
+  weekdayNames,
+  weekdaySchema,
+  workingDaysWords,
 } from "@fathom/shared";
-import { ActionIcon, Button, Group, Stack, Text } from "@mantine/core";
+import { ActionIcon, Button, Group, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { DecisionModal } from "./decision-dialog.tsx";
@@ -32,6 +35,8 @@ import { Icon } from "./icons.tsx";
 import { LoadProblem } from "./load-problem.tsx";
 import { noOthers } from "./new-plan-record-panel.tsx";
 import { percentage } from "./numbers.ts";
+import { PageHeader } from "./page-header.tsx";
+import { usePublishDraft } from "./publish-draft.tsx";
 import {
   changePlanningSettings,
   planningSettingsNode,
@@ -44,21 +49,24 @@ import { RecordSection, Row } from "./record-details.tsx";
 import { RecordMenu, type RecordMenuActions } from "./record-menu.tsx";
 import {
   changeId,
+  type Editing,
   type RecordEditingContext,
   useRecordEditing,
 } from "./record-editing.tsx";
 import { fieldColumn } from "./grid-columns.tsx";
 import { withLiveFields } from "./live-records.ts";
 import type { Column } from "./record-table.ts";
-import classes from "./planning-settings-tab.module.css";
+import classes from "./planning-settings-page.module.css";
 import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
 import { useSaving } from "./saving.ts";
 import { settingsPageWidth } from "./settings-page.tsx";
 import { DraftedItem, DraftView } from "./status-mark.tsx";
 import { DraftMenu } from "./table-controls.tsx";
 import type { CellValue } from "./table-view.ts";
+import { useWorkingDaysEditing } from "./working-days-field.tsx";
 
 type Settings = PlanningSettingsShown & { id: string };
+type DetailColumn = Parameters<typeof Row>[0]["column"];
 type SettingColumn = Column<Settings, PlanningSettingsChange>;
 type SingleSetting = Exclude<
   keyof PlanningSettings,
@@ -105,6 +113,36 @@ const columns = {
   bufferPercent: single("bufferPercent"),
 } as const;
 
+const weekStartsOnColumn: SettingColumn = {
+  ...fieldColumn<Settings, PlanningSettingsChange>("weekStartsOn", "choice", {
+    label: planningSettingNames.weekStartsOn,
+    required: true,
+    choices: weekdayNames.map((name, day) => ({
+      id: String(day),
+      label: name,
+      description: "",
+      retired: false,
+    })),
+    multiple: false,
+  }),
+  // The one day chosen, from the days offered.
+  change: (value) => ({
+    weekStartsOn: weekdaySchema.parse(Number((value as string[]).at(0))),
+  }),
+};
+
+const workingDaysColumn = {
+  key: "workingDays",
+  label: planningSettingNames.workingDays,
+  kind: "text",
+  multiple: false,
+  choices: [],
+  required: true,
+} as const satisfies DetailColumn;
+
+const daysWords = ({ workingDays, weekStartsOn }: PlanningSettings) =>
+  workingDaysWords(workingDays, weekStartsOn);
+
 // A month of ramp-up's row, which saves the whole ramp-up with that month changed.
 const monthColumn = (rampUp: readonly number[], month: number) =>
   settingColumn(monthKey(month), monthName(month), (value) => ({
@@ -130,10 +168,12 @@ const typedSettingsSchema = planningSettingsSchema.omit({
   weekStartsOn: true,
 });
 
-// The settings as the rows hold them, each as text, and ramp-up by month.
+// The settings as the rows hold them, each as text, ramp-up by month, and the day a week starts on
+// as a choice.
 function valuesOf(settings: PlanningSettings): Record<string, CellValue> {
   const { rampUpPercents, ...rest } = typedSettingsSchema.parse(settings);
   return Object.fromEntries<CellValue>([
+    ["weekStartsOn", [String(settings.weekStartsOn)]],
     ...Object.entries(rest).map(
       ([key, value]) => [key, String(value)] as const,
     ),
@@ -194,7 +234,7 @@ function shownSettings(settings: Settings, show: Show): Settings {
   return takenBack ? liveSettings(settings) : settings;
 }
 
-export function PlanningSettingsTab({
+export function PlanningSettingsPage({
   canEdit,
   approves,
   show,
@@ -215,17 +255,30 @@ export function PlanningSettingsTab({
     blocked: deciding,
   });
   const { editingOf } = useRecordEditing<Settings, PlanningSettingsChange>();
+  const workingDaysEditing = useWorkingDaysEditing(workingDaysColumn);
+  const publishDraft = usePublishDraft();
+  const heading = <PageHeader title="Planning settings" />;
   if (settings.isError) {
     return (
-      <LoadProblem
-        what="the planning settings"
-        onRetry={() => {
-          void settings.refetch();
-        }}
-      />
+      <Stack gap="md">
+        {heading}
+        <LoadProblem
+          what="the planning settings"
+          onRetry={() => {
+            void settings.refetch();
+          }}
+        />
+      </Stack>
     );
   }
-  if (settings.data === undefined) return null;
+  if (settings.data === undefined) {
+    return (
+      <Stack gap="md">
+        {heading}
+        <Loader role="status" aria-label="Loading" />
+      </Stack>
+    );
+  }
   const original: Settings = { ...settings.data, id: planningSettingsId };
   const { draft, heldBy } = original;
   const current = shownSettings(original, show);
@@ -269,6 +322,11 @@ export function PlanningSettingsTab({
   const actions: RecordMenuActions = {
     approves,
     nodes: [node],
+    publish:
+      publishDraft &&
+      ((asked) => {
+        publishDraft({ ...noDrafts(), records: [asked] });
+      }),
     decide: (asking: Asking) => {
       setDecision(
         decisionFor(asking, { ...noDrafts(), records: [ref] }, approves, [], {
@@ -369,6 +427,22 @@ export function PlanningSettingsTab({
       </Row>
     );
   };
+  // A row of the working week, its value in words or a choice.
+  const weekRow = (
+    column: DetailColumn,
+    value: CellValue,
+    liveValue: CellValue,
+    drafted: RecordDraft | undefined,
+    rowEditing: Editing | undefined,
+  ) => (
+    <Row
+      column={column}
+      value={value}
+      changed={drafted && { draft: drafted, live: liveValue }}
+      editing={rowEditing}
+      action={draftMenu(drafted)}
+    />
+  );
   const settingRow = (key: SingleSetting, asPercent = false) =>
     // The key is one of the typed settings.
     // eslint-disable-next-line security/detect-object-injection
@@ -418,7 +492,13 @@ export function PlanningSettingsTab({
   };
   return (
     <DraftView show={show}>
-      <Stack gap="lg" maw={settingsPageWidth} className={classes.settings}>
+      {heading}
+      <Stack
+        gap="lg"
+        mt="md"
+        maw={settingsPageWidth}
+        className={classes.settings}
+      >
         <Group gap="sm">
           <DraftMenu show={show} onShow={onShow} />
           {heldBy !== undefined && (
@@ -431,6 +511,31 @@ export function PlanningSettingsTab({
         </Group>
         <RecordSection id="planning-working-time" title="Working time">
           {settingRow("hoursPerDay")}
+          {weekRow(
+            workingDaysColumn,
+            daysWords(current),
+            daysWords(live),
+            draftOf("workingDays"),
+            workingDaysEditing.editingOf({
+              days: current.workingDays,
+              startsOn: current.weekStartsOn,
+              save:
+                context.save &&
+                ((days) => {
+                  saveChange(
+                    { workingDays: days },
+                    undoableAt(changeId(workingDaysColumn)),
+                  );
+                }),
+            }),
+          )}
+          {weekRow(
+            weekStartsOnColumn,
+            [String(current.weekStartsOn)],
+            [String(live.weekStartsOn)],
+            draftOf("weekStartsOn"),
+            editing(weekStartsOnColumn),
+          )}
           {settingRow("daysPerMonth")}
         </RecordSection>
         <RecordSection id="planning-forecasts" title="Forecasts">

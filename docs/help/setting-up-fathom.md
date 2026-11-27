@@ -66,12 +66,12 @@ Fathom only lets you choose a manager once their **Manager?** tick is approved. 
 Plans in Fathom are built on releases and on who's available to do the work.
 
 1. On **Releases**, a schedule is a repeating set of cycles, such as one product line's quarters, and its releases ship the work planned in them. On its **Schedules** tab, add a schedule for each product line, and set up its cycles as you add it.
-1. On **Capacity**, choose **Settings**.
-1. Set the **Working time**, so Fathom can work out how much work people can deliver.
+1. Open **Planning settings**, under **Administration**.
+1. Set the **Working time**, including which days are **Working days**, so Fathom can work out how much work people can deliver.
 1. On the **Org chart**, choose **Feature teams** in the switch beside the heading. A feature team is a group that works on features together, whoever its members report to.
 1. Select the **Feature teams** button above the chart, then **New feature team**, and add each team with its lead and its members.
 
-See [Releases](releases.md), [Capacity](capacity.md) and [Org chart](org-chart.md) for more on each.
+See [Releases](releases.md), [Planning settings](planning-settings.md) and [Org chart](org-chart.md) for more on each.
 
 ## Get the Changes Approved
 

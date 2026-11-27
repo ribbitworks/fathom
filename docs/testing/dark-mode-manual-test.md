@@ -830,10 +830,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The total rows, headed **Total, person-months**, and the **Organization, person-months** row at the foot are easy to read and to tell apart from the rows above them.
   - **Notes:**
 
-- [ ] `04E5` Select the **Settings** tab.
+- [ ] `04E5` Select the **Planning settings** page in the left-hand menu.
   - **Expected:**
     - The headings and values are easy to read.
     - The labels are dimmed beside their values.
+  - **Notes:**
+
+- [ ] `9D3A` Select "Mon to Fri" beside **Working days**.
+  - **Expected:** The day boxes, the tinted ones' blue and every day's name are easy to read.
+  - **Notes:**
+
+- [ ] `1C6B` Press Esc.
+  - **Expected:** **Working days** reads "Mon to Fri".
   - **Notes:**
 
 - [ ] `E58F` Select "8" beside **Hours a day**.
