@@ -200,7 +200,7 @@ Percentages are whole.
     - **With a person:** a change that also dates a person, as when a hire takes over from a person as the lead, judged by the live lead and the new one, is a person's change: every day it gives is held with people's, in Feature team dates' class, and needs Personal details to choose.
     - **Which hires:** a filled hire, or one drafted to be removed, can't join or lead a team.
     - **Removing:** removing a hire is refused, when drafted and again when approved, while it leads a team, today, later or in a draft, or a team's draft names it as a member. Approving its removal takes it off its teams, recording the change, and clears it as a past lead.
-    - **Filling:** until filling carries a hire's teams to its person ([issue #395](https://github.com/ribbitworks/fathom/issues/395)), a hire on a team today or later, or leading one today or later, live or in a team's draft, can't be filled. Once it is taken off its teams, it can be.
+    - **Filling:** filling a hire carries its teams and any lead to its person, as [Planned Hires](#planned-hires) sets out.
   - **Leaving:** once someone's end date has passed, they are off every feature team from the next day. They no longer count as a member, a team they led has no lead, and their past membership is kept.
 
 ### Planned Hires
@@ -221,7 +221,12 @@ Percentages are whole.
     - **Someone already in Fathom:** changes only their position, to the hire's, and their manager, from the day given. Given no manager, they keep their own, and one already reporting to the manager chosen keeps their line.
     - **The manager chosen:** becomes the hire's too when the fill is approved.
     - **Managers:** a hire whose manager is still a planned hire needs a person chosen as manager. Filling a planned manager moves the planned hires that report to it to the person who fills it, in the same draft, and flags that person as a manager.
-    - **Approving:** a fill that changes a person names who fills the hire, so it needs an Approver who sees Personal details. Approving, rejecting or resending any part of a fill does so for all of it.
+    - **Feature teams:** approving a fill gives the person the hire's feature teams and leads, as one change to each team. Nothing changes on the teams until then, and rejecting or discarding the fill leaves them as they were.
+      - **The day:** each of the hire's membership and lead records in force on the day of approval or later becomes the person's, from the latest of its own day, the person's start date and the day of approval, so no earlier day changes. The hire's own records end from that day. A team the hire leaves before then carries nothing.
+      - **Already on the team:** a person on one of the hire's teams on the day of approval or later keeps their own records there, and the hire's end.
+      - **The lead:** a lead the hire holds passes to the person only for the days they are on the team, by the records carried or by their own. The team has no lead before they join it or after they leave it, so a lead is always a member.
+      - **Refused:** a fill is refused, when drafted and again when approved, while a team's draft names the hire or is of a team the hire is on or leads on that day or later, published or not. Approving such a team draft together with the fill approves the team draft first. A fill is also refused when it would put the person on a team, or leading one, after their end date; at drafting, only for a drafter who sees end dates, so the refusal never tells anyone else when the person leaves.
+    - **Approving:** a fill that changes a person names who fills the hire, so it needs an Approver who sees Personal details. A fill carrying feature teams gives the person days on them, which can reveal their start date, so it needs an Approver who sees feature teams, Personal details and Feature team dates' class. Approving, rejecting or resending any part of a fill does so for all of it.
     - **Discarding:** discarding one record's part of a fill takes the fill out of its other drafts, keeping their other changes. Discarding on the Drafts page discards the whole fill.
   - **While a fill waits:** what it sets is held, so a hire with a fill waiting cannot be named as another hire's manager, and a hire it moves cannot be removed. Approving refuses a fill whose person has left by then.
 - **Hiring state:** A choice in the built-in list of hiring states, a list with meanings, each meaning Proposed, Open, Hired, or Left. There is no state for someone who has not yet started.

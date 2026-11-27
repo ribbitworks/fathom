@@ -59,6 +59,13 @@ const dated = (team: Recorded): boolean =>
 export const draftShownTo = (access: ClassAccess, draft: Draft): boolean =>
   seesField(access, "featureTeamDates") || !dated(draft.fields);
 
+// Whether a role sees what a fill carries to its person: their days on the hire's feature teams,
+// which are feature team dates and can be their start date.
+export const seesCarried = (access: ClassAccess): boolean =>
+  access.permissions.includes("feature-teams:view") &&
+  seesEmployment(access) &&
+  seesField(access, "featureTeamDates");
+
 // A role that does not see future reorganizations is shown people as they are today on a future
 // day, as the org chart draws them, so their employment is judged today.
 export const peopleAsTodayOn = (

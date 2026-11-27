@@ -20,7 +20,7 @@ import {
   knownColour,
   type PersonFeatureTeam,
 } from "@fathom/shared";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { type Actor, requirePermission, requireView } from "../access.ts";
 import { type Draft, drafted, type Recorded } from "./draft-records.ts";
 import { draftMakers } from "./draft-makers.ts";
@@ -32,6 +32,7 @@ import {
   memberChanges,
   type MemberDay,
   membersOf,
+  onTeamTodayOrLater,
 } from "./feature-team-rules.ts";
 import {
   draftAsSeen,
@@ -202,6 +203,77 @@ export const readTeamDrafts = (
   ids?: readonly string[],
   viewer?: string,
 ) => readDrafts(reader, recordType, ids, viewer);
+
+// Every lead record of the teams any of the people or planned hires given has led or will lead,
+// theirs and other leads'.
+export async function readLeadsOfTeamsLedBy(
+  reader: Reader,
+  ids: readonly string[],
+): Promise<{ teamId: string; leadId: string | null; fromDate: string }[]> {
+  const led = await reader
+    .select({ teamId: featureTeamLeads.teamId })
+    .from(featureTeamLeads)
+    .where(
+      or(
+        inArray(featureTeamLeads.leadId, [...ids]),
+        inArray(featureTeamLeads.leadPlannedHireId, [...ids]),
+      ),
+    );
+  const records = [];
+  for (const chunk of inChunks([...new Set(led.map(({ teamId }) => teamId))])) {
+    records.push(
+      ...(await reader
+        .select({
+          teamId: featureTeamLeads.teamId,
+          leadId: leadColumn,
+          fromDate: featureTeamLeads.fromDate,
+        })
+        .from(featureTeamLeads)
+        .where(inArray(featureTeamLeads.teamId, chunk))),
+    );
+  }
+  return records;
+}
+
+// Every team's draft, published or not, with its team.
+export async function teamDraftsOf(reader: Reader) {
+  return [
+    ...(await readTeamDrafts(reader)),
+    ...[...(await readHeld(reader, recordType, undefined))].map(
+      ([teamId, { draft }]): [string, Draft] => [teamId, draft],
+    ),
+  ].map(([teamId, { fields }]) => ({ teamId, fields }));
+}
+
+// The teams the planned hires given are on today or will be, each with those of them on it.
+export async function teamsOfHires(
+  reader: Reader,
+  ids: readonly string[],
+  today: string,
+): Promise<Map<string, string[]>> {
+  const records = [];
+  for (const chunk of inChunks([...ids])) {
+    records.push(
+      ...(await reader
+        .select({
+          teamId: featureTeamMemberships.teamId,
+          hireId: featureTeamMemberships.plannedHireId,
+          member: featureTeamMemberships.member,
+          fromDate: featureTeamMemberships.fromDate,
+        })
+        .from(featureTeamMemberships)
+        .where(inArray(featureTeamMemberships.plannedHireId, chunk))),
+    );
+  }
+  const teams = new Map<string, string[]>();
+  for (const [teamId, ofTeam] of bySubject(records, ({ teamId }) => teamId)) {
+    const on = [...bySubject(ofTeam, ({ hireId }) => String(hireId))]
+      .filter(([, ofHire]) => onTeamTodayOrLater(ofHire, today))
+      .map(([hireId]) => hireId);
+    if (on.length > 0) teams.set(teamId, on);
+  }
+  return teams;
+}
 
 // A record approving a team's draft would make: a person or planned hire joining or leaving the team
 // from the day the draft gives them, or from today.

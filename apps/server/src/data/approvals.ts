@@ -66,7 +66,7 @@ import {
   refuseUsedAcross,
   withUsedAcross,
 } from "./draft-uses.ts";
-import { withFills } from "./fills.ts";
+import { teamsBeforeFills, withFills } from "./fills.ts";
 import {
   approveTeamsIn,
   checkTeamsAsked,
@@ -417,7 +417,7 @@ export async function approveDrafts(
         today,
         "approve",
       );
-      const chosen = await withFills(transaction, actor, requested);
+      const chosen = await withFills(transaction, actor, requested, today);
       const asked = await withUsedAcross(transaction, chosen);
       await refuseTakenAlongBeyondRole(
         transaction,
@@ -445,6 +445,11 @@ export async function approveDrafts(
           ...(await approvePeopleIn(transaction, actor, asked.people, today)),
         );
       }
+      // A fill waits on drafts of its hire's teams, so those approved with it are approved first.
+      const beforeFills = await teamsBeforeFills(transaction, asked, today);
+      made.push(
+        ...(await approveTeamsIn(transaction, actor, beforeFills, today)),
+      );
       made.push(
         ...(await approveHiresIn(
           transaction,
@@ -457,7 +462,7 @@ export async function approveDrafts(
         ...(await approveTeamsIn(
           transaction,
           actor,
-          asked.featureTeams,
+          asked.featureTeams.filter((id) => !beforeFills.includes(id)),
           today,
         )),
       );
@@ -508,7 +513,7 @@ export async function rejectDrafts(
   return database.transaction(async (transaction) => {
     await deciding(transaction, actor, requested, "reject");
     // A fill is rejected whole, so every area its drafts belong to must be one the actor approves.
-    const asked = await withFills(transaction, actor, requested);
+    const asked = await withFills(transaction, actor, requested, today);
     refuseBeyondRole(
       actor,
       (await readDecided(transaction, draftKeysOf(asked))).values(),

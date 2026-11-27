@@ -5,8 +5,11 @@
 
 import { refuseFillingAllocated, removeAllocationsOf } from "./allocations.ts";
 import {
+  carryTeamsOnFill,
+  refuseFillingInTeamDrafts,
+} from "./feature-team-fills.ts";
+import {
   onTeamsRefusals,
-  refuseFillingOnTeams,
   refuseRemovingOnTeams,
   teamChangesRemoving,
 } from "./feature-team-removals.ts";
@@ -18,7 +21,7 @@ import {
   people,
   plannedHires,
 } from "@fathom/db";
-import { and, eq, inArray, lt } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { type Actor, seesSensitivity } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import { columnsWithAdded } from "./added-columns.ts";
@@ -153,19 +156,32 @@ export async function approveHiresIn(
       continue;
     }
     // Whoever fills it may have been given an end date that has passed since the fill was drafted,
-    // and the hire allocations since, which filling can't move yet.
+    // and the hire allocations since, which filling can't move yet. Its teams and leads go to them.
     if (unfilled(before ?? {}) && typeof hire.filledBy === "string") {
       await refuseFillingAllocated(transaction, id);
-      await refuseFillingOnTeams(transaction, id);
-      const [left] = await transaction
-        .select({ name: people.preferredName })
+      await refuseFillingInTeamDrafts(transaction, id, today);
+      const [filler] = await transaction
+        .select({
+          id: people.id,
+          name: people.preferredName,
+          startDate: people.startDate,
+          endDate: people.endDate,
+        })
         .from(people)
-        .where(and(eq(people.id, hire.filledBy), lt(people.endDate, today)));
-      if (left !== undefined) {
+        .where(eq(people.id, hire.filledBy));
+      if (filler === undefined) {
         throw new ConflictError(
-          `${left.name} has left, so can't fill a planned hire`,
+          "The person filling this planned hire is no longer in Fathom; discard the fill",
         );
       }
+      if (typeof filler.endDate === "string" && filler.endDate < today) {
+        throw new ConflictError(
+          `${filler.name} has left, so can't fill a planned hire`,
+        );
+      }
+      made.push(
+        ...(await carryTeamsOnFill(transaction, actor, id, filler, today)),
+      );
     }
     // The state may have come to mean Hired or Left since the draft was made.
     if (unfilled(hire)) {

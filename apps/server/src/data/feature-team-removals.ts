@@ -1,29 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The guards feature teams keep on removing their people and planned hires, on filling a planned hire
-// until filling carries its teams, and on features naming a team, and the team changes removing a
-// planned hire makes. Part of the data access layer.
+// The guards feature teams keep on removing their people and planned hires, and on features naming a
+// team, and the team changes removing a planned hire makes. Part of the data access layer.
 
-import {
-  featureTeamLeads,
-  featureTeamMemberships,
-  featureTeams,
-  inChunks,
-  type Reader,
-} from "@fathom/db";
-import { inArray, or } from "drizzle-orm";
+import { featureTeams, inChunks, type Reader } from "@fathom/db";
+import { inArray } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import type { Recorded } from "./draft-records.ts";
 import { readHeld } from "./drafts.ts";
 import {
-  leadColumn,
+  readLeadsOfTeamsLedBy,
   readLiveTeams,
   readTeamDrafts,
+  teamDraftsOf,
+  teamsOfHires,
 } from "./feature-team-reads.ts";
 import { recordType } from "./feature-team-records.ts";
-import { membersOf, onTeamTodayOrLater } from "./feature-team-rules.ts";
+import { membersOf } from "./feature-team-rules.ts";
 import { bySubject, inForceOrLater } from "./in-force.ts";
 import { readToday } from "./settings.ts";
 import { teamChanges } from "./feature-teams.ts";
@@ -67,28 +62,7 @@ async function leadTodayOrLater(
   ids: readonly string[],
   today: string,
 ): Promise<boolean> {
-  const led = await reader
-    .select({ teamId: featureTeamLeads.teamId })
-    .from(featureTeamLeads)
-    .where(
-      or(
-        inArray(featureTeamLeads.leadId, [...ids]),
-        inArray(featureTeamLeads.leadPlannedHireId, [...ids]),
-      ),
-    );
-  const records = [];
-  for (const chunk of inChunks([...new Set(led.map(({ teamId }) => teamId))])) {
-    records.push(
-      ...(await reader
-        .select({
-          teamId: featureTeamLeads.teamId,
-          leadId: leadColumn,
-          fromDate: featureTeamLeads.fromDate,
-        })
-        .from(featureTeamLeads)
-        .where(inArray(featureTeamLeads.teamId, chunk))),
-    );
-  }
+  const records = await readLeadsOfTeamsLedBy(reader, ids);
   return [...bySubject(records, ({ teamId }) => teamId).values()].some((team) =>
     team.some(
       (record) =>
@@ -101,12 +75,7 @@ async function leadTodayOrLater(
 
 // The fields of every team's draft, published or not.
 async function draftedTeams(reader: Reader) {
-  return [
-    ...(await readTeamDrafts(reader)).values(),
-    ...[...(await readHeld(reader, recordType, undefined)).values()].map(
-      ({ draft }) => draft,
-    ),
-  ].map(({ fields }) => fields);
+  return (await teamDraftsOf(reader)).map(({ fields }) => fields);
 }
 
 // Why removing someone on a team is refused: a person, or a planned hire.
@@ -146,57 +115,6 @@ export async function refuseRemovingOnTeams(
     ) {
       throw new ConflictError(refusals.drafted);
     }
-  }
-}
-
-// The teams the planned hires given are on today or will be, each with those of them on it.
-async function teamsOfHires(
-  reader: Reader,
-  ids: readonly string[],
-  today: string,
-): Promise<Map<string, string[]>> {
-  const records = [];
-  for (const chunk of inChunks([...ids])) {
-    records.push(
-      ...(await reader
-        .select({
-          teamId: featureTeamMemberships.teamId,
-          hireId: featureTeamMemberships.plannedHireId,
-          member: featureTeamMemberships.member,
-          fromDate: featureTeamMemberships.fromDate,
-        })
-        .from(featureTeamMemberships)
-        .where(inArray(featureTeamMemberships.plannedHireId, chunk))),
-    );
-  }
-  const teams = new Map<string, string[]>();
-  for (const [teamId, ofTeam] of bySubject(records, ({ teamId }) => teamId)) {
-    const on = [...bySubject(ofTeam, ({ hireId }) => String(hireId))]
-      .filter(([, ofHire]) => onTeamTodayOrLater(ofHire, today))
-      .map(([hireId]) => hireId);
-    if (on.length > 0) teams.set(teamId, on);
-  }
-  return teams;
-}
-
-// Refuses filling a planned hire that is on a feature team today or will be, or leads one today or
-// later, live or in a team's draft, which filling it can't carry to its person yet.
-export async function refuseFillingOnTeams(
-  reader: Reader,
-  hireId: string,
-): Promise<void> {
-  const today = await readToday(reader);
-  const drafted = (await draftedTeams(reader)).some(
-    (fields) => fields.leadId === hireId || membersOf(fields).includes(hireId),
-  );
-  if (
-    drafted ||
-    (await teamsOfHires(reader, [hireId], today)).size > 0 ||
-    (await leadTodayOrLater(reader, [hireId], today))
-  ) {
-    throw new ConflictError(
-      "This planned hire is on a feature team now or later, or in a team's draft. Take it off its teams before filling it.",
-    );
   }
 }
 

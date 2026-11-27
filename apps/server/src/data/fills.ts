@@ -4,13 +4,13 @@
 // that report to it. Part of the data access layer.
 
 import { refuseFillingAllocated } from "./allocations.ts";
-import { refuseFillingOnTeams } from "./feature-team-removals.ts";
 import { type Database, plannedHires, type Reader } from "@fathom/db";
 import {
   decides,
   type DraftsRequest,
   type HireFill,
   seesEmployment,
+  seesField,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import {
@@ -20,6 +20,13 @@ import {
 } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import { columnsWithAdded } from "./added-columns.ts";
+import {
+  carriesTeams,
+  refuseJoiningAfterEnd,
+  teamDraftsBeforeFill,
+  refuseFillingInTeamDrafts,
+  requireSeesCarried,
+} from "./feature-team-fills.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
 import {
   drafted,
@@ -60,6 +67,7 @@ import {
   valuesOf,
 } from "./person-fields.ts";
 import { notStarted, currentOn, readLive } from "./people-reads.ts";
+import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
 // The drafts of one fill: the hire filled, its person when the fill drafts them, with the fields it
@@ -147,11 +155,12 @@ const inFill = (
 
 // The drafts asked for, with every published draft of the fills any of them belong to. A fill's
 // person, with a start date or a reporting line in their draft, is decided only by those who see
-// Personal data.
+// Personal data, and a fill carrying the hire's feature teams only by those who see their days.
 export async function withFills(
   reader: Reader,
   actor: Actor,
   asked: DraftsRequest,
+  today: string,
 ): Promise<DraftsRequest> {
   const people = new Set(asked.people);
   const hires = new Set(asked.plannedHires);
@@ -171,10 +180,29 @@ export async function withFills(
         "This draft is part of filling a planned hire, which this role can't decide",
       );
     }
+    if (await carriesTeams(reader, fill.hireId, today)) {
+      requireSeesCarried(actor);
+    }
     for (const id of fill.people) people.add(id);
     for (const id of fill.plannedHires) hires.add(id);
   }
   return { ...asked, people: [...people], plannedHires: [...hires] };
+}
+
+// The team drafts asked for that a fill asked for waits on, which are approved before it.
+export async function teamsBeforeFills(
+  reader: Reader,
+  asked: DraftsRequest,
+  today: string,
+): Promise<string[]> {
+  const waitedOn = new Set<string>();
+  for (const { hireId } of await readFills(reader)) {
+    if (!asked.plannedHires.includes(hireId)) continue;
+    for (const id of await teamDraftsBeforeFill(reader, hireId, today)) {
+      waitedOn.add(id);
+    }
+  }
+  return asked.featureTeams.filter((id) => waitedOn.has(id));
 }
 
 // Whether any hire's draft, published or not, by anyone, fills it with the person given.
@@ -252,7 +280,7 @@ export async function fillHire(
     await lockDrafts(transaction);
     const { before, hire } = await fillableHire(transaction, actor, hireId);
     await refuseFillingAllocated(transaction, hireId);
-    await refuseFillingOnTeams(transaction, hireId);
+    await refuseFillingInTeamDrafts(transaction, hireId, today);
     // Someone already in Fathom given no manager keeps the one they have; a new person needs one.
     const keepsOwn = fill.managerId === null && fill.by === "existing person";
     if (
@@ -297,6 +325,21 @@ export async function fillHire(
     } else {
       personId = fill.personId;
       const person = await fillingPerson(transaction, actor, personId, today);
+      // The refusal would tell when the person leaves, so a drafter who doesn't see end dates leaves
+      // it to the Approver, who must.
+      if (seesField(actor, "endDate")) {
+        await refuseJoiningAfterEnd(
+          transaction,
+          hireId,
+          {
+            id: personId,
+            name: String(person.preferredName),
+            startDate: text(person.startDate),
+            endDate: text(person.endDate),
+          },
+          today,
+        );
+      }
       // A transfer already reporting to the hire's manager keeps the line they have.
       const moves = managerId !== null && person.managerId !== managerId;
       made.push(

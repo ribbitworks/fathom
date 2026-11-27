@@ -110,13 +110,15 @@ When you hire someone for a planned job, you fill the planned hire with them. **
 
 Fathom doesn't move a planned hire's allocations to the person. An allocation is the time planned for someone on a feature or activity. So if the hire has any, remove them first.
 
+Fathom does move the hire's feature teams once the fill is approved. The person joins the teams the hire is on, and leads the ones it leads, from the latest of their start date, the day the fill is approved and the hire's own day. A team the hire leaves before then isn't moved. If they're already on one of those teams, they stay on it as they are. They lead a team only while they're on it, so a team they join later has no lead until then. You can't fill the hire while a draft of one of its feature teams, or one that names it, is waiting, so approve or discard that draft first.
+
 1. In the planned hire's **Name** cell, select **Fill**.
 1. Choose **New person** to add someone new, or **Existing person** to move someone who's already here.
 1. Fill in the form, which opens in the hire's details beside the table.
 1. Select **Fill** under the form.
 1. Select **Publish**, and ask your approver to approve it.
 
-You're done once the fill is approved. The person then takes the hire's place.
+You're done once the fill is approved. The person then takes the hire's place, on its feature teams too.
 
 ### Add a Column
 
