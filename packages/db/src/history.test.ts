@@ -61,6 +61,18 @@ describe("change history", () => {
     });
   });
 
+  it("publishes a change set when saved, unless it holds private changes", async () => {
+    await withClient(database.app, async (client) => {
+      const added = await client.query<{ shown: boolean; held: boolean }>(
+        "INSERT INTO change_sets (private, published_at) VALUES (false, now() - interval '1 day'), (true, now()) RETURNING published_at = made_at AS shown, published_at IS NULL AS held",
+      );
+      expect(added.rows).toEqual([
+        { shown: true, held: false },
+        { shown: null, held: true },
+      ]);
+    });
+  });
+
   it("lets a change set holding private changes be published, and nothing else", async () => {
     await withClient(database.app, async (client) => {
       const added = await client.query<{ id: string }>(
@@ -75,14 +87,45 @@ describe("change history", () => {
           ),
         ),
       ).toBe(insufficientPrivilege);
-      await client.query(`UPDATE change_sets SET private = false ${where}`);
-      const read = await client.query(
-        `SELECT private FROM change_sets ${where}`,
+      expect(
+        await errorCodeOf(
+          client.query(`UPDATE change_sets SET private = false ${where}`),
+        ),
+      ).toBe(raisedException);
+      await client.query(
+        `UPDATE change_sets SET private = false, published_at = clock_timestamp() ${where}`,
       );
-      expect(read.rows).toEqual([{ private: false }]);
+      const read = await client.query(
+        `SELECT private, published_at > made_at AS later FROM change_sets ${where}`,
+      );
+      expect(read.rows).toEqual([{ private: false, later: true }]);
       expect(
         await errorCodeOf(
           client.query(`UPDATE change_sets SET private = true ${where}`),
+        ),
+      ).toBe(raisedException);
+      expect(
+        await errorCodeOf(
+          client.query(
+            `UPDATE change_sets SET published_at = clock_timestamp() ${where}`,
+          ),
+        ),
+      ).toBe(raisedException);
+      const held = await client.query<{ id: string }>(
+        "INSERT INTO change_sets (private) VALUES (true) RETURNING id",
+      );
+      expect(
+        await errorCodeOf(
+          client.query(
+            `UPDATE change_sets SET published_at = clock_timestamp() WHERE id = '${held.rows[0]?.id ?? ""}'`,
+          ),
+        ),
+      ).toBe(raisedException);
+      expect(
+        await errorCodeOf(
+          client.query(
+            `UPDATE change_sets SET private = false, published_at = made_at - interval '1 day' WHERE id = '${held.rows[0]?.id ?? ""}'`,
+          ),
         ),
       ).toBe(raisedException);
     });

@@ -117,6 +117,55 @@ describe("a fill's draft", () => {
     expect(kept?.draft?.changed).toEqual(["preferredName"]);
   });
 
+  it("leaves its discarder's other change to the fill's record counting, published with the discard", async () => {
+    // Given Dan, who may not approve his own, renaming a transfer moved under a hire's manager by
+    // filling it, then discarding the hire's draft, which takes the fill out of the transfer's
+    // draft
+    const dan = await test.signedIn([
+      "people:view",
+      "people:edit",
+      "people:approve",
+      "personal:view",
+      "personal:edit",
+      "confidential:view",
+      "confidential:edit",
+      "hiring-plan:view",
+      "hiring-plan:edit",
+      "hiring-plan:approve",
+    ]);
+    const transfer = await person({
+      isManager: false,
+      managerId: await person(),
+    });
+    const id = await hire({ managerId: await person() });
+    await filled(id, existing(transfer));
+    const each = { publish: false };
+    await ok(
+      await send(
+        dan,
+        "PATCH",
+        `/api/people/${transfer}`,
+        { preferredName: unique("Fictional Renamed") },
+        each,
+      ),
+    );
+    await ok(
+      await send(dan, "DELETE", `/api/planned-hires/${id}/draft`, {}, each),
+    );
+    await ok(await send(dan, "POST", "/api/unpublished/publish"));
+
+    // When Dan approves the transfer's draft alone
+    const approving = await send(dan, "POST", "/api/drafts/approval", {
+      people: [transfer],
+    });
+
+    // Then he is refused, his rename still standing
+    expect(approving.statusCode, approving.body).toBe(403);
+    expect(errorOf(approving)).toBe(
+      "Drafts changed by the approver need another approver",
+    );
+  });
+
   it("discards the whole draft of the record asked for, and a person the fill adds", async () => {
     const id = await hire({ managerId: await person() });
     const body = newPerson();

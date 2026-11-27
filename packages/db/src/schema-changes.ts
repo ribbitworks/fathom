@@ -46,8 +46,11 @@ export const changeSets = fathomSchema.table(
       .notNull()
       .default(sql`clock_timestamp()`),
     // Whether the change set holds private changes, which only its maker sees. Publishing them
-    // clears it, the one change the change history allows.
+    // clears it and sets publishedAt, once, the one change the change history allows.
     private: boolean("private").notNull().default(false),
+    // When others could first see it: its time of saving, unless it was private, then when its
+    // maker published it, and null while it is private. Who changed a draft counts from then.
+    publishedAt: timestamp("published_at", { withTimezone: true }),
   },
   (table) => [index("change_sets_made_at_index").on(table.madeAt)],
 );

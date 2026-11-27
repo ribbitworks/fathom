@@ -23,6 +23,7 @@ import {
   withNeeded,
   withUsers,
   takenAlongRefusal,
+  inCountedOrder,
 } from "./drafts.ts";
 
 const message = (result: { error?: { issues: { message: string }[] } }) =>
@@ -268,6 +269,134 @@ describe("the record a draft's key names", () => {
       recordType: "choice-order",
       recordId: "list 1",
     });
+  });
+});
+
+describe("who changed a draft, counting each change from when others could see it", () => {
+  const kinds = {
+    resets: new Set(["approval", "discard"]),
+    changesNothing: new Set(["rejection", "resubmission"]),
+  };
+  // A change set's change to Kai, made at a moment, and published at one, or still private.
+  const at = (
+    makerId: string | null,
+    kind: string,
+    madeAtMicros: number,
+    publishedAtMicros: number | null,
+    recordId = "kai",
+  ) => ({
+    id: madeAtMicros,
+    recordId,
+    kind,
+    makerId,
+    draft: kind !== "approval",
+    madeAtMicros,
+    publishedAtMicros,
+  });
+  // Everyone who changed Kai's draft, of those who might have.
+  const changedBy = (rows: ReturnType<typeof at>[]) =>
+    ["ana", "ann", "dan", "uma"].filter((userId) =>
+      draftsChangedBy(inCountedOrder(rows, kinds), userId, kinds).has("kai"),
+    );
+  const cases: [string, ReturnType<typeof at>[], string[]][] = [
+    [
+      "a change saved privately before an approval of another's change, published after it",
+      [
+        at("ana", "edit", 1, 1),
+        at("dan", "edit", 2, 4),
+        at("ann", "approval", 3, 3),
+      ],
+      ["dan"],
+    ],
+    [
+      "a change saved privately before another's change and its approval, published after both",
+      [
+        at("dan", "edit", 1, 4),
+        at("ana", "edit", 2, 2),
+        at("ann", "approval", 3, 3),
+      ],
+      ["dan"],
+    ],
+    [
+      "another's private discard published before an earlier-saved change is",
+      [
+        at("dan", "edit", 1, 5),
+        at("uma", "edit", 2, 4),
+        at("uma", "discard", 3, 4),
+      ],
+      ["dan"],
+    ],
+    [
+      "a maker's own change, covered by their own discard published with it",
+      [
+        at("dan", "edit", 1, 3),
+        at("dan", "discard", 2, 3),
+        at("ana", "edit", 4, 4),
+      ],
+      ["ana"],
+    ],
+    [
+      "another's change, published before a maker's stale private discard is",
+      [
+        at("dan", "edit", 1, 4),
+        at("dan", "discard", 2, 4),
+        at("ana", "edit", 3, 3),
+      ],
+      ["ana"],
+    ],
+    [
+      "a change, not covered by its maker's discard of another record",
+      [
+        at("dan", "edit", 1, 3),
+        at("dan", "discard", 2, 3, "lee"),
+        at("ann", "approval", 0, 0),
+      ],
+      ["dan"],
+    ],
+    [
+      "a fill taken out of the record, recorded as the discarder's edit beside the discard",
+      [at("dan", "edit", 1, 1), at("dan", "edit", 2, 2)],
+      ["dan"],
+    ],
+    [
+      "a change approved since it was published",
+      [at("dan", "edit", 1, 2), at("ann", "approval", 3, 3)],
+      [],
+    ],
+  ];
+
+  it.each(cases)("after %s", (_, rows, changed) => {
+    expect(changedBy(rows)).toEqual(changed);
+  });
+
+  it("never covers a change Fathom itself made with a decision of its own", () => {
+    const rows = [
+      at(null, "edit", 1, 5),
+      at(null, "discard", 2, 5),
+      at("ann", "approval", 3, 3),
+    ];
+    expect(inCountedOrder(rows, kinds).map(({ id }) => id)).toEqual([2, 3, 1]);
+  });
+
+  it("leaves a published change where it was published, uncovered by its maker's later discard still private", () => {
+    const rows = [
+      at("dan", "discard", 5, null),
+      at("ann", "approval", 3, 3),
+      at("dan", "edit", 2, 4),
+    ];
+    expect(inCountedOrder(rows, kinds).map(({ id }) => id)).toEqual([3, 2, 5]);
+  });
+
+  it("counts the reader's own changes still private last, then as made", () => {
+    const rows = [
+      at("dan", "edit", 1, null),
+      at("ann", "approval", 3, 3),
+      at("ana", "edit", 2, 2),
+      { ...at("ana", "edit", 2, 2), id: 0 },
+    ];
+    expect(inCountedOrder(rows, kinds).map(({ id }) => id)).toEqual([
+      0, 2, 3, 1,
+    ]);
   });
 });
 

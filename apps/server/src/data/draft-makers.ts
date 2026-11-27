@@ -15,6 +15,7 @@ import {
 } from "@fathom/db";
 import {
   draftsChangedBy,
+  inCountedOrder,
   type DraftKind,
   draftKey,
   fromDraftKey,
@@ -25,7 +26,7 @@ import { type Actor, storedTier } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
 import { kindsWhere, listedKinds, makerKinds } from "./change-set-kinds.ts";
 import { closedByGone } from "./gone-sets.ts";
-import { madeInOrder } from "./history-order.ts";
+import { madeInOrder, timesOf, whenPublished } from "./history-order.ts";
 
 export interface Maker {
   madeBy: string | null;
@@ -102,7 +103,10 @@ export async function draftMakers(
         madeBy: users.name,
         madeAs: roles.name,
         makerId: changeSets.madeBy,
-        madeAt: changeSets.madeAt,
+        // When others could first see it, as the order counts it.
+        madeAt: whenPublished,
+        id: changes.id,
+        ...timesOf,
       })
       .from(changes)
       .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
@@ -117,7 +121,7 @@ export async function draftMakers(
         ),
       )
       .orderBy(...madeInOrder);
-    const counted = rows.filter(
+    const counted = inCountedOrder(rows, makerKinds).filter(
       (row) => !row.unpublished || own.has(row.recordId),
     );
     // The viewer's changes count whatever their tier, since they made them.
@@ -219,6 +223,8 @@ export async function refuseOwnDrafts(
           draft: changes.draft,
           kind: changeSets.kind,
           makerId: changeSets.madeBy,
+          id: changes.id,
+          ...timesOf,
         })
         .from(changes)
         .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
@@ -237,7 +243,13 @@ export async function refuseOwnDrafts(
           ),
         )
         .orderBy(...madeInOrder);
-      if (draftsChangedBy(rows, actor.user.id, makerKinds).size > 0) {
+      if (
+        draftsChangedBy(
+          inCountedOrder(rows, makerKinds),
+          actor.user.id,
+          makerKinds,
+        ).size > 0
+      ) {
         throw new ForbiddenError(
           "Drafts changed by the approver need another approver",
         );

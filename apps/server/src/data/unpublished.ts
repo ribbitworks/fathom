@@ -324,7 +324,7 @@ export async function publishUnpublished(
     await removeRows(transaction, userId, rows);
     await transaction
       .update(changeSets)
-      .set({ private: false })
+      .set({ private: false, publishedAt: sql`(SELECT clock_timestamp())` })
       .where(
         and(openChangeSets(userId), noneStillUnpublished(transaction, userId)),
       );

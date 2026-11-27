@@ -23,7 +23,7 @@ import {
 } from "@fathom/shared";
 import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { madeWithColumn } from "./new-lists.ts";
-import { rulesOf } from "./change-set-kinds.ts";
+import { listedKinds, rulesOf } from "./change-set-kinds.ts";
 import { seenSets } from "./history-names.ts";
 import { madeAfter } from "./history-order.ts";
 import {
@@ -204,6 +204,23 @@ async function lockRecords(
     .for("update");
 }
 
+// The edits recorded beside a discard, by its maker at its time, none for another kind of set.
+const besideDiscard = (reader: Transaction, changeSetId: string) =>
+  reader
+    .select({ id: changeSets.id })
+    .from(changeSets)
+    .where(
+      sql`EXISTS (
+        SELECT 1 FROM fathom.change_sets AS discarded
+        WHERE discarded.id = ${changeSetId}
+          AND discarded.kind IN (${listedKinds(({ resetsMakers }) => resetsMakers)})
+          AND ${changeSets.madeBy} = discarded.made_by
+          AND ${changeSets.madeAt} = discarded.made_at
+          AND ${changeSets.id} <> discarded.id
+          AND ${changeSets.kind} IN (${listedKinds(({ resetsMakers, publishedNext }) => !resetsMakers && publishedNext)})
+      )`,
+    );
+
 async function undoIn(
   transaction: Transaction,
   actor: Actor,
@@ -227,10 +244,17 @@ async function undoIn(
   await transaction.execute(
     sql`SELECT pg_advisory_xact_lock(hashtextextended(${changeSetId}, 0))`,
   );
+  // A discard is undone with the edit recorded beside it at its time, such as a fill taken out of
+  // its other records.
   const rows = await transaction
     .select()
     .from(changes)
-    .where(eq(changes.changeSetId, changeSetId))
+    .where(
+      or(
+        eq(changes.changeSetId, changeSetId),
+        inArray(changes.changeSetId, besideDiscard(transaction, changeSetId)),
+      ),
+    )
     .orderBy(asc(changes.id));
   const records = recordsOf(rows);
   if (records.some(isClassMove)) {

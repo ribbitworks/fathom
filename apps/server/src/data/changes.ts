@@ -15,6 +15,7 @@ import {
   recordChanges as recordChangeSet,
 } from "@fathom/db";
 import type { RecordType as PlanRecordType, Tier } from "@fathom/shared";
+import type { SQL } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import { kindsWhere } from "./change-set-kinds.ts";
@@ -146,6 +147,7 @@ export async function recordChanges(
   made: readonly Change[],
   kind: ChangeSetKind = "edit",
   unpublished?: boolean,
+  madeAt?: SQL,
 ): Promise<string | null> {
   return recordChangesAs(
     transaction,
@@ -153,6 +155,7 @@ export async function recordChanges(
     made,
     kind,
     unpublished,
+    madeAt,
   );
 }
 
@@ -164,6 +167,7 @@ export async function recordChangesAs(
   kind: ChangeSetKind,
   unpublished = editingKinds.includes(kind) &&
     made.some(({ draft }) => draft === true),
+  madeAt?: SQL,
 ): Promise<string | null> {
-  return recordChangeSet(transaction, maker, made, kind, unpublished);
+  return recordChangeSet(transaction, maker, made, kind, unpublished, madeAt);
 }

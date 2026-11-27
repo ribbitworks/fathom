@@ -11,7 +11,7 @@ import {
   type HireFill,
   seesEmployment,
 } from "@fathom/shared";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   type Actor,
   requirePermission,
@@ -463,7 +463,28 @@ async function inOneChange(
     );
     await recordSensitiveChanges(transaction, actor.user.id, made);
     await recordHiringChanges(transaction, actor.user.id, made);
-    return recordChanges(transaction, actor, made, how);
+    if (how === "resubmission") {
+      return recordChanges(transaction, actor, made, how);
+    }
+    // Taking the fill out of its other records changes their drafts but decides none of them, so
+    // it is recorded apart, as an edit, at the discard's time, which undoing the discard finds.
+    const asksFor = (change: Change) =>
+      change.recordType === asked.kind && change.recordId === asked.id;
+    const discarded = await recordChanges(
+      transaction,
+      actor,
+      made.filter(asksFor),
+      how,
+    );
+    await recordChanges(
+      transaction,
+      actor,
+      made.filter((change) => !asksFor(change)),
+      "edit",
+      undefined,
+      sql`coalesce((SELECT made_at FROM fathom.change_sets WHERE id = ${discarded}), clock_timestamp())`,
+    );
+    return discarded;
   });
 }
 
