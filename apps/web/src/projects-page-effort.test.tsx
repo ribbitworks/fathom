@@ -79,7 +79,7 @@ describe("the Features page", () => {
       expect(
         within(metrics).getByRole("columnheader", { name: "Effort (PM)" }),
       ).toBeTruthy();
-      const all = within(metrics).getByRole("rowheader", { name: /^All / });
+      const all = within(metrics).getByRole("rowheader", { name: "All" });
       expect(
         within(all.closest("tr") as HTMLElement)
           .getAllByRole("cell")

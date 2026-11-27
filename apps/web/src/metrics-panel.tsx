@@ -149,10 +149,9 @@ export function MetricsPanel<Row>({
   // What the rows are, one and several, such as "person" and "people".
   one: string;
   noun: string;
-  // For rows of several kinds, what they are called together, such as "people and planned hires",
-  // and how many of each a count holds, such as "150 people and 6 planned hires".
-  kinds?:
-    { noun: string; counted: (rows: readonly Row[]) => string } | undefined;
+  // For rows of several kinds, how many of each a count holds, such as "150 people and 6 planned
+  // hires".
+  kinds?: { counted: (rows: readonly Row[]) => string } | undefined;
   // The columns rows may be broken down by.
   offered: readonly TableColumn<Row>[];
   breakdown: readonly string[];
@@ -264,7 +263,7 @@ export function MetricsPanel<Row>({
       />
     );
   };
-  const allLabel = `All ${kinds?.noun ?? noun}`;
+  const allLabel = "All";
   const measures: readonly (Measure | "average" | "none")[] =
     added === undefined
       ? ["count", "share"]

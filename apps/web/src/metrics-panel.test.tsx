@@ -207,7 +207,7 @@ describe("the Metrics panel", () => {
       expect(figures("P4")).toEqual(["2", share(2, 4), "16", "8", ""]);
       expect(figures("P3")).toEqual(["1", share(1, 4), "", "", "1"]);
       expect(figures("Empty")).toEqual(["1", share(1, 4), "2", "2", ""]);
-      const all = within(panel()).getByRole("rowheader", { name: /^All / });
+      const all = within(panel()).getByRole("rowheader", { name: "All" });
       expect(
         within(all.closest("tr") as HTMLElement)
           .getAllByRole("cell")
