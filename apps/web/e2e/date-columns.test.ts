@@ -5,9 +5,15 @@
 // as digits, a day that doesn't exist refused under the row with the editor kept open, and a day
 // that does saved and shown as the app's other days are.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
-import { send } from "./test-requests.ts";
+import { changesSent, send } from "./test-requests.ts";
+
+// The page's own key event, which the UI tests' types, made for Node, don't name.
+declare const KeyboardEvent: new (
+  type: string,
+  init: { key: string; bubbles: boolean; cancelable: boolean },
+) => unknown;
 
 test.use({ storageState: signedInAs("engineeringOperationsManager") });
 
@@ -102,6 +108,63 @@ test("adds a date column, refuses a day that doesn't exist, then keeps a person'
     }),
   );
   await expect(cell).toContainText(shown);
+});
+
+test("refuses a day that doesn't exist typed fast with Enter in a date column's cell", async ({
+  page,
+}) => {
+  // Given a date column on People, and a person's cell in it
+  await page.goto("/people");
+  await expect(page.getByRole("grid", { name: "People" })).toBeVisible();
+  const name = `Fictional Next Review ${String(Date.now())}`;
+  const added = await send(page, "POST", "/api/people/columns", {
+    name,
+    type: "date",
+    visibility: "general",
+  });
+  expect(added.ok, JSON.stringify(added.body)).toBe(true);
+  const { field } = added.body as { field: { id: string } };
+  made.fieldId = field.id;
+  await page.reload();
+  await page
+    .getByRole("textbox", { name: "Search people" })
+    .fill("Samuel Richter");
+  const cell = page
+    .getByRole("row", { name: /^Samuel Richter / })
+    .locator(`[id^="cell-"][id$="-${field.id}"]`);
+  await cell.click();
+  const changes = changesSent(page);
+
+  // When a day that doesn't exist and Enter reach the cell as fast as the keyboard sends them
+  // React draws each key's change in a microtask, while the editor takes focus only after a timer.
+  await cell.evaluate(
+    async (
+      target: { dispatchEvent: (event: unknown) => boolean },
+      keys: string[],
+    ) => {
+      for (const key of keys) {
+        target.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+        await new Promise<void>((drawn) => {
+          queueMicrotask(drawn);
+        });
+      }
+    },
+    [..."2026-02-30", "Enter"],
+  );
+
+  // Then the day is refused under the row, its editor kept open with what was typed
+  await expect(
+    page.getByText(`${name}: use a date such as 2026‑10‑31`),
+  ).toBeVisible();
+  await expect(page.getByRole("textbox", { name })).toHaveValue("2026-02-30");
+  expect(changes).toEqual([]);
+  await page.keyboard.press("Escape");
 });
 
 test("holds the Type list to a short window, scrolling inside it", async ({
