@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Feature teams, through the server's API, and the chart they make: each team under its feature
-// lead, or under a card naming the team while it has none, with its members below, so someone on
-// two teams is drawn under each. Each card carries the team's draft, which the Draft view marks: a
-// member a draft adds, and, beside live, one it removes drawn where they were after Live's green
-// dot, as people moved on the org chart are; or, live only, the team as it is live, with a member a
-// draft would take off marked.
+// Feature teams, through the server's API, and the cards the org chart draws for them, with their
+// drafts.
 
 import {
   type FeatureTeam,
@@ -101,17 +97,50 @@ export async function setFeatureTeamColour(
 // Names someone a team holds whom the reader cannot be shown.
 export const someoneUnseen = "Someone this role can't see";
 
-// Names someone on a team: by the team's own names, which include those who have not started, then
-// by the org chart.
+// Someone on a team as it names them, and, for a planned hire, whether its name is made from its
+// position and ID, its key where the org chart has its card, and the day it joined the team.
+export interface TeamPerson {
+  name: string;
+  hire?: { madeName: boolean; keyNumber?: number; from?: string };
+}
+
+// Finds someone on a team: a planned hire on the org chart by its placeholder name there, its
+// position and ID when it has no name, as People names it; anyone else by the team's own names, which
+// include those who have not started, then by the org chart. The team says which are planned hires,
+// so one the chart doesn't draw, as on an earlier day, is still known as one.
+export function teamPersonOf(
+  team: FeatureTeam,
+  people: readonly OrgChartPerson[],
+): (personId: string) => TeamPerson {
+  const names = new Map(Object.entries(team.names));
+  const cards = new Map(people.map((person) => [person.id, person]));
+  const hires = new Set(team.hires ?? []);
+  const joined = new Map(Object.entries(team.hiresFrom ?? {}));
+  return (personId) => {
+    const card = cards.get(personId);
+    const from = joined.get(personId);
+    const name =
+      card?.planned === undefined
+        ? (names.get(personId) ?? card?.preferredName ?? someoneUnseen)
+        : card.preferredName;
+    if (card?.planned === undefined && !hires.has(personId)) return { name };
+    return {
+      name,
+      hire: {
+        madeName: card?.planned?.shownId !== undefined,
+        ...(card === undefined ? {} : { keyNumber: card.keyNumber }),
+        ...(from === undefined ? {} : { from }),
+      },
+    };
+  };
+}
+
 export function teamPersonNamer(
   team: FeatureTeam,
   people: readonly OrgChartPerson[],
 ): (personId: string) => string {
-  const names = new Map(Object.entries(team.names));
-  return (personId) =>
-    names.get(personId) ??
-    people.find(({ id }) => id === personId)?.preferredName ??
-    someoneUnseen;
+  const personOf = teamPersonOf(team, people);
+  return (personId) => personOf(personId).name;
 }
 
 // Who a choice of a team's members adds and takes off, given its members now and those the picker

@@ -317,15 +317,7 @@ export function DraftedItem({
       {facts}
       {kind !== undefined && <KindBox hidden>{kind}</KindBox>}
       {from !== undefined && shown !== undefined && (
-        <Text
-          span
-          c="dimmed"
-          size="sm"
-          className={marks.fromDay}
-          aria-hidden="true"
-        >
-          from {from}
-        </Text>
+        <FromDay day={from} hidden />
       )}
       {part !== undefined && shown !== undefined && (
         <DraftedWords drafted={part} />
@@ -530,6 +522,44 @@ export function EmptyLive() {
 // as it does before a value.
 export function EmptySide() {
   return <span className={marks.emptySide} aria-hidden />;
+}
+
+// Text Fathom fills in, such as a planned hire's name made from its position and ID, in grey
+// italics.
+export function FilledIn({
+  className,
+  children,
+}: {
+  className?: string | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <Text component="span" inherit c="dimmed" fs="italic" className={className}>
+      {children}
+    </Text>
+  );
+}
+
+// The day something takes effect, or took effect, in grey after it, such as from Dec 1, 2026;
+// hidden from screen readers where a tip already says it.
+export function FromDay({
+  day,
+  hidden = false,
+}: {
+  day: string;
+  hidden?: boolean;
+}) {
+  return (
+    <Text
+      span
+      c="dimmed"
+      size="sm"
+      className={marks.fromDay}
+      aria-hidden={hidden ? "true" : undefined}
+    >
+      from {day}
+    </Text>
+  );
 }
 
 // A row's slot for its record's marks, as wide as a draft's dot and its gap.

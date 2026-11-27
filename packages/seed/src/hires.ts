@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The fictional organization's planned hires and the drafts its personas make of them, and
-// removing them. A development-only package, never in the runtime image.
+// The fictional organization's planned hires, the feature teams some are on, and the drafts its
+// personas make of them, and removing them. A development-only package, never in the runtime image.
 
 import {
+  type ChangeRecord,
   type Database,
   drafts,
+  featureTeamLeads,
+  featureTeamMemberships,
+  featureTeams,
   fieldOfValue,
   fieldValues,
   listItems,
@@ -161,9 +165,99 @@ export async function seedHires(
       made.push(...recorded(row, values, "created", tierOf));
     }
     // Made by Fathom itself.
-    await recordChanges(transaction, null, made);
+    await recordChanges(transaction, null, [
+      ...made,
+      ...(await addHiresToTeams(transaction, organization)),
+    ]);
     return true;
   });
+}
+
+// Puts the planned hires on the feature teams the organization gives them, those still there, and
+// returns the changes that record it: each team's members, with the hires joining from their days,
+// General as a planned hire's days are, and any hire made its lead.
+async function addHiresToTeams(
+  transaction: Pick<Database, "select" | "insert">,
+  organization: FictionalOrganization,
+): Promise<ChangeRecord[]> {
+  const teams = organization.featureTeams.filter(
+    ({ hires = [] }) => hires.length > 0,
+  );
+  const present = new Set(
+    (
+      await transaction
+        .select({ id: featureTeams.id })
+        .from(featureTeams)
+        .where(
+          inArray(
+            featureTeams.id,
+            teams.map(({ id }) => id),
+          ),
+        )
+    ).map(({ id }) => id),
+  );
+  const made: ChangeRecord[] = [];
+  for (const { id, leadId, memberships, hires = [] } of teams) {
+    if (!present.has(id)) continue;
+    await transaction.insert(featureTeamMemberships).values(
+      hires.map(({ plannedHireId, fromDate }) => ({
+        teamId: id,
+        plannedHireId,
+        member: true,
+        fromDate,
+      })),
+    );
+    const lead = hires.find(({ leads }) => leads);
+    if (lead !== undefined) {
+      await transaction.insert(featureTeamLeads).values({
+        teamId: id,
+        leadPlannedHireId: lead.plannedHireId,
+        fromDate: lead.fromDate,
+      });
+    }
+    const latest = new Map(
+      [...memberships]
+        .filter(({ fromDate }) => fromDate <= organization.referenceDate)
+        .sort((a, b) => a.fromDate.localeCompare(b.fromDate))
+        .map(({ personId, member }) => [personId, member]),
+    );
+    const members = [...latest]
+      .filter(([, member]) => member)
+      .map(([personId]) => personId)
+      .sort();
+    const changed = (field: string, oldValue: unknown, newValue: unknown) => ({
+      recordType: "feature-team",
+      recordId: id,
+      action: "changed" as const,
+      field,
+      tier: "general",
+      oldValue,
+      newValue,
+    });
+    made.push(
+      changed(
+        "members",
+        members,
+        [...members, ...hires.map(({ plannedHireId }) => plannedHireId)].sort(),
+      ),
+      changed(
+        "hireFrom",
+        null,
+        Object.fromEntries(
+          hires.map(({ plannedHireId, fromDate }) => [plannedHireId, fromDate]),
+        ),
+      ),
+      ...(lead === undefined
+        ? []
+        : [
+            changed("leadId", leadId, lead.plannedHireId),
+            changed("hireLeadFrom", null, {
+              [lead.plannedHireId]: lead.fromDate,
+            }),
+          ]),
+    );
+  }
+  return made;
 }
 
 // The drafts of the seeded hires, of the hire the seed drafts adding, and of any hire drafted under

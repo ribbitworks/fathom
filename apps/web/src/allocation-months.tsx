@@ -557,28 +557,33 @@ export function allocationMonthRecords({
   const managersOf = new Map(
     teamMonths.people.map(({ id, managers }) => [id, managers]),
   );
-  const people = teamMonthRecords(teamMonths, undefined, "live").flatMap(
-    (record) => {
-      const person = record.live ?? record;
-      return groupedRows<BaseRow>(
-        {
-          id: person.id,
-          personId: person.personId,
-          name: person.name,
-          manager: person.manager,
-          values: {},
-          links: {},
-          outside: person.outside,
-        },
-        {
-          teamsIn: person.teamsIn,
-          managers: managersOf.get(person.personId),
-          months: teamMonths.months,
-          grouping,
-        },
-      );
-    },
-  );
+  const everyone = teamMonthRecords(
+    teamMonths,
+    undefined,
+    "live",
+    hireRows(chart, teamMonths.months),
+  ).flatMap((record) => {
+    const person = record.live ?? record;
+    return groupedRows<BaseRow>(
+      {
+        id: person.id,
+        personId: person.personId,
+        name: person.name,
+        manager: person.manager,
+        values: {},
+        links: {},
+        outside: person.outside,
+        ...(person.madeName === undefined ? {} : { madeName: person.madeName }),
+        ...(person.plannedHire === undefined ? {} : { plannedHire: true }),
+      },
+      {
+        teamsIn: person.teamsIn,
+        managers: managersOf.get(person.personId),
+        months: teamMonths.months,
+        grouping,
+      },
+    );
+  });
   const rows = (base: BaseRow, of: ReadonlyMap<string, Allocation[]>) => {
     const theirs = of.get(base.personId) ?? [];
     return (
@@ -589,12 +594,9 @@ export function allocationMonthRecords({
       withAllocations(row, own, works, teamMonths.months, show),
     );
   };
-  return [
-    ...people.flatMap((person) => rows(person, ofPeople)),
-    ...hireRows(chart, teamMonths.months).flatMap((hire) =>
-      rows(hire, ofHires),
-    ),
-  ];
+  return everyone.flatMap((row) =>
+    rows(row, row.plannedHire === true ? ofHires : ofPeople),
+  );
 }
 
 // Grouped by the feature or activity each row is for, by name, then those allocated to nothing.

@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the org chart's tree: who sits under whom, the managers above someone, whose reports
-// are hidden when it opens, where the people shown are placed when managers are collapsed, and the
-// people the Draft menu's choice draws, the days the chart is drawn as of, and the chart's view as
-// its address and a saved view keep it.
+// Tests for the org chart's tree, its layout, the people each Draft view draws, and its view.
 
 import type { OrgChartPerson } from "@fathom/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -332,6 +329,21 @@ describe("the people the Draft menu draws", () => {
       heightOf(
         chartPeople(chart, "both", shownDay).find(({ id }) => id === "m3"),
       ),
+    );
+  });
+
+  it("gives a planned hire's card heading a feature team a line for the team's name", () => {
+    const planned = {
+      ...person("h1", null, "Fictional Tester, TBD-1"),
+      planned: { expected: "2027-02", shownId: "TBD-1" },
+    };
+    expect(heightOf(planned)).toBe(cardHeight);
+    expect(heightOf({ ...planned, teamName: "Fictional Harbour" })).toBe(
+      heightOf({
+        ...person("m1", null),
+        teamName: "Fictional Harbour",
+        movedFrom: "Nov 1, 2026",
+      }),
     );
   });
 

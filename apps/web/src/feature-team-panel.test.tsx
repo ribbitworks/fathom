@@ -49,6 +49,9 @@ const people = [
   person("p1", "Casey Fictional", { managerId: "other-boss" }),
   person("p2", "Drew Fictional", { managerId: "nobody", position: "" }),
   person("hire", "Ellis Fictional", { planned: { expected: "2027-06" } }),
+  person("tbd", "Fictional Tester, TBD-7", {
+    planned: { expected: "2027-04", undated: true, shownId: "TBD-7" },
+  }),
   person("departed", "Gale Fictional", { left: true }),
 ] as OrgChartPerson[];
 
@@ -259,6 +262,111 @@ describe("a feature team's panel", () => {
       "Avery Fictional",
       "Blake Fictional",
       "Someone this role can't see",
+    ]);
+  });
+
+  it("lists planned hires after people, dimmed, each with its key and the day it joined", () => {
+    openPanel({
+      shown: team({
+        members: ["tbd", "m2", "hire", "m1"],
+        names: { tbd: "TBD-7", hire: "Ellis Fictional" },
+        hiresFrom: { tbd: "2027-04-01", hire: "2027-03-01" },
+      }),
+    });
+    expect(memberLines()).toEqual([
+      "Avery Fictional",
+      "Blake Fictional",
+      `Ellis Fictional #HIRE-1 from ${formatDay("2027-03-01")}`,
+      `Fictional Tester, TBD-7 #HIRE-1 from ${formatDay("2027-04-01")}`,
+    ]);
+    const members = within(detailRow("Members"));
+    expect(members.getByText("Ellis Fictional").style.color).not.toBe("");
+    expect(members.getByText("Avery Fictional").tagName).toBe("LI");
+  });
+
+  it("names a placeholder made from a hire's position and ID in grey italics", () => {
+    openPanel({ shown: team({ members: ["m1", "tbd", "hire"] }) });
+    const members = within(detailRow("Members"));
+    expect(
+      members.getByText("Fictional Tester, TBD-7").getAttribute("style"),
+    ).toContain("italic");
+    expect(
+      members
+        .getByText("Ellis Fictional", { exact: false })
+        .getAttribute("style") ?? "",
+    ).not.toContain("italic");
+  });
+
+  it("names a planned hire leading the team the same way, with the day it started to lead", () => {
+    openPanel({
+      shown: team({
+        leadId: "tbd",
+        members: ["tbd", "m1"],
+        hiresFrom: { tbd: "2027-01-01" },
+        hireLeadFrom: "2027-02-01",
+      }),
+    });
+    expect(rowText("Feature lead")).toBe(
+      `Fictional Tester, TBD-7 #HIRE-1 from ${formatDay("2027-02-01")}`,
+    );
+  });
+
+  it("gives no day for a planned hire leading the team when the team gives none", () => {
+    openPanel({
+      shown: team({
+        leadId: "tbd",
+        members: ["tbd", "m1"],
+        hiresFrom: { tbd: "2027-01-01" },
+      }),
+    });
+    expect(rowText("Feature lead")).toBe("Fictional Tester, TBD-7 #HIRE-1");
+  });
+
+  it("names a planned hire the chart doesn't draw by the team's name for it, dimmed, with its day", () => {
+    openPanel({
+      shown: team({
+        members: ["m1", "gone-hire"],
+        names: { "gone-hire": "REQ-7701" },
+        hires: ["gone-hire"],
+        hiresFrom: { "gone-hire": "2027-01-04" },
+      }),
+    });
+    expect(memberLines()).toEqual([
+      "Avery Fictional",
+      `REQ-7701 from ${formatDay("2027-01-04")}`,
+    ]);
+  });
+
+  it("gives a planned hire a draft takes off the day of the draft alone", () => {
+    openPanel({
+      day: "2027-05-01",
+      shown: team({
+        members: ["m1", "m2"],
+        hires: ["hire"],
+        hiresFrom: { hire: "2027-03-01" },
+        draft: draft({
+          changed: ["members"],
+          live: { members: ["m1", "m2", "hire"] },
+          hireDays: { hire: "2027-06-01" },
+        }),
+      }),
+    });
+    const line = memberLines().at(-1);
+    expect(line).toContain(`from ${formatDay("2027-06-01")}`);
+    expect(line).not.toContain(formatDay("2027-03-01"));
+  });
+
+  it("marks a planned hire a draft adds, named as it is listed", () => {
+    openPanel({
+      shown: team({
+        members: ["m1", "m2", "hire"],
+        draft: draft({ changed: ["members"], live: { members: ["m1", "m2"] } }),
+      }),
+    });
+    expect(memberLines()).toEqual([
+      "Avery Fictional",
+      "Blake Fictional",
+      "Ellis Fictional #HIRE-1, added",
     ]);
   });
 

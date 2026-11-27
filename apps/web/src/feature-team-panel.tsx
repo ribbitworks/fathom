@@ -16,12 +16,14 @@ import {
 import { Button, Group, Text } from "@mantine/core";
 import { type ReactNode, useMemo, useState } from "react";
 import { colourWords } from "./colours.ts";
+import { formatDay } from "./day-formats.ts";
 import {
   featureTeamsQuery,
   liveTeam,
   membersChanged,
   takesEffect,
-  teamPersonNamer,
+  type TeamPerson,
+  teamPersonOf,
 } from "./feature-teams.ts";
 import { draftOffer } from "./menu-offer.ts";
 import { noOthers } from "./new-plan-record-panel.tsx";
@@ -36,12 +38,14 @@ import {
 } from "./record-editing.tsx";
 import { fieldColumn } from "./grid-columns.tsx";
 import type { Column } from "./record-table.ts";
-import { RecordKey } from "./record-key.tsx";
+import { KeyAfter, RecordKey } from "./record-key.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   DraftedItem,
   type DraftedPart,
   DraftedPartItem,
+  FilledIn,
+  FromDay,
 } from "./status-mark.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { today } from "./today.ts";
@@ -165,23 +169,68 @@ const colourColumn = {
   required: false,
 } as const satisfies Parameters<typeof Row>[0]["column"];
 
-// A team's members by name, one to a line, each with what a draft does to them, if anything.
+// Someone on a team as the panel names them: a person by name; a planned hire dimmed, in grey
+// italics where its name is made from its position and ID, then its key and the day it joined.
+function MemberName({
+  person,
+  from,
+}: {
+  person: TeamPerson;
+  // The day to give in place of the day the hire joined, such as the day it started to lead, or
+  // null for none.
+  from?: string | null;
+}) {
+  const { name, hire } = person;
+  if (hire === undefined) return name;
+  const joined = from === undefined ? hire.from : (from ?? undefined);
+  return (
+    <>
+      {hire.madeName ? (
+        <FilledIn>{name}</FilledIn>
+      ) : (
+        <Text component="span" inherit c="dimmed">
+          {name}
+        </Text>
+      )}
+      {hire.keyNumber !== undefined && (
+        <KeyAfter record={{ kind: "hire", keyNumber: hire.keyNumber }} />
+      )}
+      {joined !== undefined && (
+        <>
+          {" "}
+          <FromDay day={formatDay(joined)} />
+        </>
+      )}
+    </>
+  );
+}
+
+// A team's members, one to a line, people by name, then planned hires by name, each with what a
+// draft does to them, if anything.
 function MemberList({
   members,
-  nameOf,
+  personOf,
   markOf,
 }: {
   members: readonly string[];
-  nameOf: (personId: string) => string;
+  personOf: (personId: string) => TeamPerson;
   markOf?: ((personId: string) => ReactNode) | undefined;
 }) {
+  const sorted = members
+    .map((personId) => ({ personId, person: personOf(personId) }))
+    .sort(
+      (a, b) =>
+        Number(a.person.hire !== undefined) -
+          Number(b.person.hire !== undefined) ||
+        byName.compare(a.person.name, b.person.name),
+    );
   return (
     <ul className={classes.reports}>
-      {[...members]
-        .sort((a, b) => byName.compare(nameOf(a), nameOf(b)))
-        .map((personId) => (
-          <li key={personId}>{markOf?.(personId) ?? nameOf(personId)}</li>
-        ))}
+      {sorted.map(({ personId, person }) => (
+        <li key={personId}>
+          {markOf?.(personId) ?? <MemberName person={person} />}
+        </li>
+      ))}
     </ul>
   );
 }
@@ -246,7 +295,9 @@ function NewFeatureTeamPanel({
   const members = entered.members as string[];
   // Members are chosen from the choices, so each has a name there.
   const labels = new Map(choices.map(({ id, label }) => [id, label]));
-  const nameOf = (personId: string) => String(labels.get(personId));
+  const personOf = (personId: string): TeamPerson => ({
+    name: String(labels.get(personId)),
+  });
   return (
     <NewRecordPanel<FeatureTeam, TeamChange, FeatureTeamRequest>
       panelId={featureTeamPanelId}
@@ -295,7 +346,7 @@ function NewFeatureTeamPanel({
           editing={editing(columns.members)}
         >
           {members.length === 0 ? undefined : (
-            <MemberList members={members} nameOf={nameOf} />
+            <MemberList members={members} personOf={personOf} />
           )}
         </Row>
       </RecordSection>
@@ -328,7 +379,7 @@ function TeamDetails({
     () => new Set(choices.map(({ id }) => id)),
     [choices],
   );
-  const nameOf = teamPersonNamer(team, people);
+  const personOf = useMemo(() => teamPersonOf(team, people), [team, people]);
   const shown = show === "live" ? (liveTeam(team) ?? team) : team;
   const live = liveTeam(team);
   const draft = show === "live" ? undefined : team.draft;
@@ -397,7 +448,7 @@ function TeamDetails({
     if (drafted === undefined) return undefined;
     return (
       <DraftedPartItem draft={by} part={drafted} from={from(by, personId)}>
-        {nameOf(personId)}
+        <MemberName person={personOf(personId)} from={null} />
       </DraftedPartItem>
     );
   };
@@ -481,7 +532,12 @@ function TeamDetails({
               editing={editing(columns.leadId)}
             >
               {shown.leadId === null ? undefined : (
-                <Text>{nameOf(shown.leadId)}</Text>
+                <Text>
+                  <MemberName
+                    person={personOf(shown.leadId)}
+                    from={team.hireLeadFrom ?? null}
+                  />
+                </Text>
               )}
             </Row>
             <Row
@@ -495,7 +551,7 @@ function TeamDetails({
               {members.length === 0 ? undefined : (
                 <MemberList
                   members={members}
-                  nameOf={nameOf}
+                  personOf={personOf}
                   markOf={
                     draft === undefined
                       ? undefined

@@ -2,7 +2,7 @@
 
 // A fictional organization's feature teams, first formed and then grown over two years.
 
-import { addDays } from "@fathom/shared";
+import { addDays, addMonths, monthOf } from "@fathom/shared";
 import { fictionalId } from "./fictional-id.ts";
 import {
   featureTeamMembers,
@@ -222,4 +222,43 @@ export function growFeatureTeams(
   featureTeams.push(
     ...grown.filter(({ memberships }) => memberships.length > 0),
   );
+}
+
+// The team two planned hires join: the late open hire from the first day of the month it was
+// expected, and the planned manager, which has no target date, joining and leading it from the first
+// day of the month this many months ahead, so the chart shows a hire heading a team then.
+const hiresTeam = "Field tools";
+const lateHire = "REQ-2053";
+const hireLeadsInMonths = 3;
+
+const firstOfMonth = (day: string) => `${monthOf(day)}-01`;
+
+// Puts two planned hires on a grown team, which no draft the seed data makes changes, so filling one
+// of them carries the team; an organization too small for the team, or the hires, puts none.
+export function hiresOnTeams(
+  hires: readonly FictionalHire[],
+  featureTeams: readonly FictionalFeatureTeam[],
+  referenceDate: string,
+): void {
+  const team = featureTeams.find(({ name }) => name === hiresTeam);
+  const late = hires.find(({ requisition }) => requisition === lateHire);
+  const planned = hires.find(
+    ({ isManager, managerId, filledBy }) =>
+      isManager && managerId === null && filledBy === null,
+  );
+  if (team === undefined || late === undefined || planned === undefined) {
+    return;
+  }
+  team.hires = [
+    {
+      plannedHireId: late.id,
+      fromDate: firstOfMonth(String(late.targetDate)),
+      leads: false,
+    },
+    {
+      plannedHireId: planned.id,
+      fromDate: firstOfMonth(addMonths(referenceDate, hireLeadsInMonths)),
+      leads: true,
+    },
+  ];
 }

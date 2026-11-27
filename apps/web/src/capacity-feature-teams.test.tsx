@@ -488,7 +488,7 @@ describe("planned hires on Feature teams", () => {
     drafted: [],
   };
 
-  it("gives each planned hire a row with no teams, read only, shaded before it is expected", async () => {
+  it("gives a planned hire on no team a row with no teams, read only, shaded before it is expected", async () => {
     // Given a role that sees planned hires, and one expected in May 2027
     answer({
       "GET /api/session": session(["feature-teams:view", "feature-teams:edit"]),
@@ -509,6 +509,45 @@ describe("planned hires on Feature teams", () => {
       cell("2027-05").hasAttribute("data-shaded"),
       cell("2027-05").textContent,
     ]).toEqual(["true", true, false, ""]);
+  });
+
+  it("gives a planned hire on a team its team in each month from the one it joins, under the team grouped by feature team", async () => {
+    // Given the hire on Mobile apps from May 2027
+    answer({
+      "GET /api/session": reader,
+      [monthsUrl]: () =>
+        Response.json({
+          ...months,
+          hires: [{ id: "h-tester", teams: { "2027-05": [mobile.id] } }],
+        } satisfies TeamMonths),
+      "GET /api/org-chart": () => Response.json(chart),
+    });
+
+    // When Feature teams opens, grouped by feature team
+    renderApp(featureTeamsAt("?grouping=feature-team"));
+    await screen.findByText("Payments tester");
+
+    // Then May names the team and April doesn't, and the hire's one row is under the team
+    const cells = (month: string) => [
+      ...document.querySelectorAll(`[id^="cell-"][id$="h-tester-${month}"]`),
+    ];
+    expect(
+      cells("2027-04").map(({ textContent }) => textContent),
+    ).not.toContain("Mobile apps");
+    const [may, ...others] = cells("2027-05");
+    expect([
+      may?.id.startsWith(`cell-${mobile.id} `),
+      may?.textContent,
+    ]).toEqual([true, "Mobile apps"]);
+    expect(others).toEqual([]);
+    expect(
+      screen.getByRole("rowheader", { name: /^Mobile apps/ }).textContent,
+    ).toBe("Mobile apps1 person, 1 planned hire");
+    expect(
+      within(screen.getByRole("rowheader", { name: /^Mobile apps/ }))
+        .getByText("1 person, 1 planned hire")
+        .closest(".mantine-VisuallyHidden-root"),
+    ).toBeNull();
   });
 
   it("names a planned hire with no name by its position and ID", async () => {

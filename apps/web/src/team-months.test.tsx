@@ -310,6 +310,104 @@ describe("a person's months as drafts change them", () => {
   });
 });
 
+describe("a planned hire's months", () => {
+  const field = {
+    id: "t-field",
+    name: "Field tools",
+    colour: "grape" as const,
+  };
+  const hireRow = (id: string, name: string) => ({
+    id,
+    personId: id,
+    name,
+    manager: null,
+    values: {},
+    links: {},
+    outside: new Set(["2027-03"]),
+    plannedHire: true as const,
+  });
+  const data: TeamMonths = {
+    months: ["2027-03", "2027-04"],
+    teams: [field],
+    people: [
+      {
+        id: "p-casey",
+        preferredName: "Casey Fictional",
+        manager: null,
+        teams: {},
+      },
+    ],
+    hires: [
+      { id: "h-joining", teams: { "2027-04": [field.id] } },
+      {
+        id: "h-drafted",
+        teams: {},
+        drafted: { teams: { "2027-04": [field.id] }, by: [field.id] },
+      },
+    ],
+    drafts: [{ teamId: field.id, action: "changed", state: "waiting" }],
+  };
+  const hires = [
+    hireRow("h-joining", "Fictional joiner"),
+    hireRow("h-drafted", "Fictional drafted"),
+    hireRow("h-none", "Fictional on no team"),
+  ];
+
+  it("gives each hire, after the people, the teams the data gives it, or none", () => {
+    const records = teamMonthRecords(data, undefined, "both", hires);
+
+    expect(records.map(({ id }) => id)).toEqual([
+      "p-casey",
+      "h-joining",
+      "h-drafted",
+      "h-none",
+    ]);
+    expect(records[1]?.teamsIn.get("2027-04")).toEqual([field]);
+    expect(records[1]).toMatchObject({
+      plannedHire: true,
+      outside: new Set(["2027-03"]),
+    });
+    expect(records[3]?.teamsIn.size).toBe(0);
+  });
+
+  it("marks the teams a draft adds to a hire's months", () => {
+    const [, , drafted] = teamMonthRecords(data, undefined, "both", hires);
+
+    expect(drafted?.teamsIn.get("2027-04")).toEqual([
+      { ...field, drafted: "added", draftedBy: { state: "waiting" } },
+    ]);
+    expect(drafted?.draft?.changed).toEqual(["2027-04"]);
+  });
+
+  it("lists a hire under its team when grouped by feature team, and one on none under none", () => {
+    const groups = teamMonthRecords(
+      data,
+      featureTeamGrouping,
+      "live",
+      hires,
+    ).map(({ id, group }) => [id, group?.id]);
+
+    expect(groups).toEqual([
+      ["p-casey", undefined],
+      [`${field.id} h-joining`, field.id],
+      ["h-drafted", undefined],
+      ["h-none", undefined],
+    ]);
+  });
+
+  it("gives hires no teams when the data names none", () => {
+    const { months, teams, people, drafts } = data;
+    const [, joining] = teamMonthRecords(
+      { months, teams, people, drafts },
+      undefined,
+      "both",
+      hires,
+    );
+
+    expect(joining?.teamsIn.size).toBe(0);
+  });
+});
+
 describe("the months that can be changed", () => {
   const data: TeamMonths = {
     months: ["2027-02", "2027-03", "2027-04"],

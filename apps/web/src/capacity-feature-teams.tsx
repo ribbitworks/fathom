@@ -13,7 +13,6 @@ import { useSavedViews } from "./saved-views.tsx";
 import { activeGrouping } from "./table-view.ts";
 import {
   gridMonthsAround,
-  type PersonMonths,
   teamMonthRecords,
   teamMonthsQuery,
   teamMonthsTable,
@@ -32,7 +31,7 @@ export function CapacityFeatureTeams({
   onApply,
   canShareViews,
 }: MonthGridProps & {
-  // Whether the reader sees planned hires, each a row with no teams.
+  // Whether the reader sees planned hires, each a row of its own.
   seesHires: boolean;
   editsTeams: boolean;
   // Whether the reader may change Personal details, and so months before the current one.
@@ -71,12 +70,12 @@ export function CapacityFeatureTeams({
     () =>
       !loaded
         ? []
-        : [
-            ...teamMonthRecords(data, grouping, view.show),
-            ...(chart === undefined ? [] : hireRows(chart, data.months)).map(
-              (hire): PersonMonths => ({ ...hire, teamsIn: new Map() }),
-            ),
-          ],
+        : teamMonthRecords(
+            data,
+            grouping,
+            view.show,
+            chart === undefined ? [] : hireRows(chart, data.months),
+          ),
     [loaded, data, chart, grouping, view.show],
   );
   return (

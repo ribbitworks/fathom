@@ -72,6 +72,8 @@ export interface FictionalFeatureTeam {
   memberships: { personId: string; member: boolean; fromDate: string }[];
   // Who led it before its lead, until the day its lead took over.
   formerLead?: { personId: string; until: string };
+  // Planned hires on it, each from a day, one of them leading it from that day.
+  hires?: { plannedHireId: string; fromDate: string; leads: boolean }[];
 }
 
 // A planned hire: named, if it has a name, and known by its requisition, or by a temporary ID the
@@ -107,7 +109,7 @@ export interface FictionalOrganization {
   // Feature teams drawn from current people across managers' teams: some coloured, one with no
   // lead, someone on two teams, someone who has left a team, so its history holds a past member,
   // and over half of those working on them, joined over two years, with moves between teams, a
-  // lead change and a join to come.
+  // lead change and a join to come, and two planned hires on one, one of them to lead it.
   featureTeams: FictionalFeatureTeam[];
   // People made like the rest but not added, for drafts that add them.
   newcomers: FictionalPerson[];

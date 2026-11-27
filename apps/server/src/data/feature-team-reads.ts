@@ -27,6 +27,8 @@ import { draftMakers } from "./draft-makers.ts";
 import { type Held, heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import {
   datesOf,
+  type Everyone,
+  isPlannedHire,
   leftBy,
   type Member,
   memberChanges,
@@ -65,6 +67,27 @@ interface LiveTeams {
   // Each team as recorded: its name, lead, and members on the day asked for.
   teams: Map<string, Recorded>;
   colours: Map<string, string | null>;
+  // By team, the day each member on it then joined it, and the day its lead then started to lead it.
+  since: Map<string, TeamDays>;
+}
+
+// The day a run of lead records naming the same lead began, from records earliest first, ending
+// with the one in force, so a repeated record keeps the day the lead first took over.
+function firstOfRun<Row extends { leadId: string | null; fromDate: string }>(
+  records: readonly Row[],
+  inForce: Row,
+): string {
+  let first = inForce;
+  for (const record of records.slice(0, records.indexOf(inForce)).reverse()) {
+    if (record.leadId !== inForce.leadId) break;
+    first = record;
+  }
+  return first.fromDate;
+}
+
+interface TeamDays {
+  members: Map<string, string>;
+  lead?: string;
 }
 
 // The live teams given, or every team, with their members and lead as of a day, leaving out those
@@ -83,6 +106,7 @@ export async function readLiveTeams(
     teamId: string;
     memberId: string;
     member: boolean;
+    fromDate: string;
   }[] = [];
   const leadRecords: {
     teamId: string;
@@ -123,6 +147,7 @@ export async function readLiveTeams(
           teamId: featureTeamMemberships.teamId,
           memberId: memberColumn,
           member: featureTeamMemberships.member,
+          fromDate: featureTeamMemberships.fromDate,
         })
         .from(featureTeamMemberships)
         .where(
@@ -138,12 +163,18 @@ export async function readLiveTeams(
   };
   if (ids === undefined) await read();
   else for (const chunk of inChunks([...ids])) await read(chunk);
-  // Each member's latest record for a team, as of the day, says whether they are on it.
+  // Each member's latest record for a team, as of the day, says whether they are on it, and the
+  // record that put them back on it after a leave, the day they joined.
   const latest = new Map<string, Map<string, boolean>>();
-  for (const { teamId, memberId, member } of memberships) {
+  const joined = new Map<string, Map<string, string>>();
+  for (const { teamId, memberId, member, fromDate } of memberships) {
     const team = latest.get(teamId) ?? new Map<string, boolean>();
+    const days = joined.get(teamId) ?? new Map<string, string>();
+    if (!member) days.delete(memberId);
+    else if (team.get(memberId) !== true) days.set(memberId, fromDate);
     team.set(memberId, member);
     latest.set(teamId, team);
+    joined.set(teamId, days);
   }
   const leads = bySubject(leadRecords, ({ teamId }) => teamId);
   const everyone = await readMembers(
@@ -155,11 +186,19 @@ export async function readLiveTeams(
     employmentDay,
   );
   const teams = new Map<string, Recorded>();
+  const since = new Map<string, TeamDays>();
   for (const row of rows) {
     const onTeam = [...(latest.get(row.id) ?? new Map<string, boolean>())]
       .filter(([, member]) => member)
       .map(([memberId]) => memberId);
-    const leadId = inForceOn(leads.get(row.id) ?? [], day)?.leadId ?? null;
+    const leadRecordsOn = leads.get(row.id) ?? [];
+    const leading = inForceOn(leadRecordsOn, day);
+    const leadId = leading?.leadId ?? null;
+    const ledSince = leading && firstOfRun(leadRecordsOn, leading);
+    since.set(row.id, {
+      members: joined.get(row.id) ?? new Map<string, string>(),
+      ...(ledSince === undefined ? {} : { lead: ledSince }),
+    });
     teams.set(
       row.id,
       withoutLeavers(
@@ -175,6 +214,7 @@ export async function readLiveTeams(
   return {
     teams,
     colours: new Map(rows.map(({ id, colour }) => [id, colour])),
+    since,
   };
 }
 
@@ -460,6 +500,40 @@ async function readDisbandedMonths(
   return disbanded;
 }
 
+// Which of those a team names are planned hires, General as their names on the team are.
+function hiresNamed(
+  names: Record<string, string>,
+  everyone: Everyone,
+): Pick<FeatureTeam, "hires"> {
+  const hires = Object.keys(names)
+    .filter((id) => isPlannedHire(everyone, id))
+    .sort();
+  return hires.length === 0 ? {} : { hires };
+}
+
+// The days the planned hires on a team, as approved, joined it, and the day one leading it started
+// to, which every reader sees, since a planned hire's days are General.
+function hireDaysOn(
+  team: Recorded,
+  live: Recorded | undefined,
+  since: TeamDays | undefined,
+  everyone: Everyone,
+): Pick<FeatureTeam, "hiresFrom" | "hireLeadFrom"> {
+  const hires = membersOf(team).flatMap((id): [string, string][] => {
+    const day = since?.members.get(id);
+    return isPlannedHire(everyone, id) && day !== undefined ? [[id, day]] : [];
+  });
+  const lead = typeof team.leadId === "string" ? team.leadId : undefined;
+  const leadDay =
+    lead !== undefined && lead === live?.leadId && isPlannedHire(everyone, lead)
+      ? since?.lead
+      : undefined;
+  return {
+    ...(hires.length === 0 ? {} : { hiresFrom: Object.fromEntries(hires) }),
+    ...(leadDay === undefined ? {} : { hireLeadFrom: leadDay }),
+  };
+}
+
 // Every feature team on a day, today unless another is given, as the reader's drafts make it, with
 // its draft beside, for those who see feature teams. Planned hires on a team are shown to all of
 // them, by their placeholder names, as allocations name them. Members and a lead who have not
@@ -539,6 +613,7 @@ export async function readFeatureTeams(
           // A draft changing a team that is not live, as when seed data is removed, makes none.
           if (team === undefined) return [];
           const members = membersOf(team).filter(shown);
+          const names = namesSeen(sight, team, before);
           const withDraft = draftAsSeen(
             sight,
             { before, teamToday, after, team },
@@ -556,7 +631,9 @@ export async function readFeatureTeams(
               leadId: shown(team.leadId) ? team.leadId : null,
               colour: knownColour(live.colours.get(id)),
               members,
-              names: namesSeen(sight, team, before),
+              names,
+              ...hiresNamed(names, everyone),
+              ...hireDaysOn(team, before, live.since.get(id), everyone),
               ...(disbanded.has(id)
                 ? { disbandedFrom: disbanded.get(id) }
                 : {}),

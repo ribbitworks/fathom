@@ -35,6 +35,7 @@ import {
 import classes from "./org-chart.module.css";
 import {
   DraftedItem,
+  FilledIn,
   leftWarning,
   LiveLine,
   MarkedItem,
@@ -122,13 +123,8 @@ function TeamRow({
                 name={person.teamName}
               />
             ) : (
-              <Text
-                size="xs"
-                c="dimmed"
-                fs={person.teamName === null ? "italic" : undefined}
-                truncate
-              >
-                {person.teamName ?? "No name"}
+              <Text size="xs" c="dimmed" truncate>
+                {person.teamName ?? <FilledIn>No name</FilledIn>}
               </Text>
             )}
           </ColouredName>
@@ -298,14 +294,11 @@ function PersonCard({ data }: NodeProps<CardNode>) {
                 spoken={leftWarning.spoken}
               >
                 {!linked ? (
-                  <span
-                    className={[
-                      classes.label,
-                      madeName ? classes.madeName : "",
-                    ].join(" ")}
-                  >
-                    {cardName}
-                  </span>
+                  madeName ? (
+                    <FilledIn className={classes.label}>{cardName}</FilledIn>
+                  ) : (
+                    <span className={classes.label}>{cardName}</span>
+                  )
                 ) : (
                   <Link
                     id={cardLinkId(person.id)}

@@ -8,7 +8,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { unsavedKeyNumber } from "./drafts.ts";
 import { MantineProvider, Menu } from "@mantine/core";
-import { CopyLinkItem, KeyedName, RecordKey } from "./record-key.tsx";
+import { CopyLinkItem, KeyAfter, KeyedName, RecordKey } from "./record-key.tsx";
 import { testTheme } from "./test-support.tsx";
 
 afterEach(() => {
@@ -140,5 +140,29 @@ describe("Copy link in a menu", () => {
       screen.getByRole("menuitem", { name: "Show details" }),
     ).toBeDefined();
     expect(screen.queryByRole("menuitem", { name: "Copy link" })).toBeNull();
+  });
+});
+
+describe("a key after a name", () => {
+  const showAfter = (keyNumber: number) =>
+    render(
+      <MantineProvider theme={testTheme}>
+        <p>
+          Fictional Hire
+          <KeyAfter record={{ kind: "hire", keyNumber }} />
+        </p>
+      </MantineProvider>,
+    );
+
+  it("follows the name", () => {
+    showAfter(12);
+    expect(screen.getByRole("paragraph").textContent).toBe(
+      "Fictional Hire #HIRE-12",
+    );
+  });
+
+  it("is left out for a record not yet saved", () => {
+    showAfter(unsavedKeyNumber);
+    expect(screen.getByRole("paragraph").textContent).toBe("Fictional Hire");
   });
 });

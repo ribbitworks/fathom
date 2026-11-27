@@ -247,6 +247,8 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **A draft's menu items and deciding drafts:** `DraftItems` in `list-drafts.tsx`, `DecisionModal` in `decision-dialog.tsx`, opened by `useDecisionDialog` there, and `OtherApproverNote` in `draft-details.tsx`.
 - **Draft and status marks:** `DraftedItem`, `DraftedValue`, `RowMarks`, `MarkedItem`, `FactBox` and `LiveLine` in `status-mark.tsx`, under the page's `DraftView`, as [Drafts](../standards/ui-conventions/drafts-and-values.md#drafts) sets out.
 - **A group of the sidebar's pages:** `SidebarGroup` in `sidebar-group.tsx`, the pages under a section's heading, with `RailTip` there naming each in the collapsed rail, used by the sections in `navigation.ts` and by Mine in `mine-section.tsx`.
+- **Text Fathom fills in, and a day after an item:** `FilledIn` and `FromDay` in `status-mark.tsx`, the grey italics of a made name, and the grey "from" and a day, kept on one line.
+- **A record's key after its name:** `KeyAfter` in `record-key.tsx`.
 - **A page's title row:** `PageHeader` in `page-header.tsx`, with the Export icon from `PageExportMenu` in `page-export.tsx`, and the tabs beside it from `HeadingTabs` and `HeadingTabPanel` there.
 - **Exporting a table:** `useTableExport` in `table-export.tsx`, offering the export to the Export icon through `useOfferedExport` in `page-export.tsx`, the question in `export-question.tsx`, and the file, its name and saving it in `exports.ts`.
 - **A dialog's buttons:** `DialogActions` in `dialog-actions.tsx`.

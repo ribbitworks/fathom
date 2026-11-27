@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the fictional organization: the same records every time, identifiers that are valid and
-// unique, names from several countries and scripts, people whose details are consistent and drawn
-// from the lists their columns name, Confidential bands and ratings, feature teams grown over two
-// years with moves, a lead change and a join to come, and the newest starters' onboarding notes.
+// Tests for the fictional organization: its people, lists, feature teams and planned hires, the
+// same every time.
 
 import { en_IN } from "@faker-js/faker";
-import { addDays } from "@fathom/shared";
+import { addDays, addMonths } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   fictionalId,
@@ -233,6 +231,40 @@ describe("a fictional organization", () => {
           .map(({ fromDate }) => [name, fromDate]),
       );
       expect(ahead).toEqual([["Integrations", addDays(referenceDate, 30)]]);
+    });
+
+    it("put the late hire on a team from its month, and the planned manager on it, leading, later", () => {
+      const onTeams = organization.featureTeams.flatMap(
+        ({ name, hires = [] }) => hires.map((hire) => ({ name, ...hire })),
+      );
+      const late = organization.hires.find(
+        ({ requisition }) => requisition === "REQ-2053",
+      );
+      const planned = organization.hires.find(
+        ({ isManager, managerId }) => isManager && managerId === null,
+      );
+
+      expect(onTeams).toEqual([
+        {
+          name: "Field tools",
+          plannedHireId: late?.id,
+          fromDate: `${String(late?.targetDate).slice(0, 7)}-01`,
+          leads: false,
+        },
+        {
+          name: "Field tools",
+          plannedHireId: planned?.id,
+          fromDate: `${addMonths(referenceDate, 3).slice(0, 7)}-01`,
+          leads: true,
+        },
+      ]);
+      expect(String(late?.targetDate) < referenceDate).toBe(true);
+    });
+
+    it("put no hire on a team in an organization too small for it", () => {
+      const small = fictionalOrganization({ size: 20 });
+
+      expect(small.featureTeams.flatMap(({ hires = [] }) => hires)).toEqual([]);
     });
   });
 

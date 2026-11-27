@@ -130,16 +130,24 @@ export function addedNames(requests: readonly RowRequest[]): string {
     : "the people and planned hires";
 }
 
+// How many of each kind some counts hold, such as "150 people" and "6 planned hires".
+const eachKind = (counts: Counts): string[] =>
+  named(counts, counts).map(
+    (kind) => `${count(kind.of(counts))} ${kind.noun(kind.of(counts))}`,
+  );
+
 // How many people and planned hires some rows are, for Metrics and the count above a table, such as
 // "150 people and 6 planned hires".
 export const peopleAndHires =
   <Row>(isPlanned: (row: Row) => boolean) =>
-  (rows: readonly Row[]): string => {
-    const counts = kindsOf(rows, isPlanned);
-    return named(counts, counts)
-      .map((kind) => `${count(kind.of(counts))} ${kind.noun(kind.of(counts))}`)
-      .join(" and ");
-  };
+  (rows: readonly Row[]): string =>
+    eachKind(kindsOf(rows, isPlanned)).join(" and ");
+
+// The same under a group's heading, such as "2 people, 1 planned hire", as a month's count names them.
+export const peopleAndHiresInGroup =
+  <Row>(isPlanned: (row: Row) => boolean) =>
+  (rows: readonly Row[]): string =>
+    eachKind(kindsOf(rows, isPlanned)).join(", ");
 
 interface Counts {
   people: number;

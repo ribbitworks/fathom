@@ -43,7 +43,12 @@ import {
   type RowTotals,
 } from "./record-table.ts";
 import { RowTick } from "./row-ticks.tsx";
-import { DraftedItem, MarkedItem, besideLive } from "./status-mark.tsx";
+import {
+  besideLive,
+  DraftedItem,
+  FilledIn,
+  MarkedItem,
+} from "./status-mark.tsx";
 import { wasWords } from "./draft-marks.ts";
 import {
   FirstValue,
@@ -334,10 +339,16 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                 {heading.label}
               </ColouredName>
               <Text component="span" fz="sm" c="dimmed" ml="xs">
-                {heading.records.length}
-                <VisuallyHidden>
-                  {` ${heading.records.length === 1 ? table.one : table.noun}`}
-                </VisuallyHidden>
+                {table.countInGroup === undefined ? (
+                  <>
+                    {heading.records.length}
+                    <VisuallyHidden>
+                      {` ${heading.records.length === 1 ? table.one : table.noun}`}
+                    </VisuallyHidden>
+                  </>
+                ) : (
+                  table.countInGroup(heading.records)
+                )}
               </Text>
               {heading.facts}
             </span>
@@ -617,14 +628,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                                   : cellContent(column, value)}
                               </ColouredName>
                             ) : (
-                              <Text
-                                component="span"
-                                inherit
-                                c="dimmed"
-                                fs="italic"
-                              >
-                                {standIn}
-                              </Text>
+                              <FilledIn>{standIn}</FilledIn>
                             ))}
                       </MarkedItem>
                     </DraftedItem>
@@ -751,9 +755,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                               liveContent(liveColumn(column), liveShown)}
                           </ColouredName>
                         ) : (
-                          <Text component="span" inherit c="dimmed" fs="italic">
-                            {standIn}
-                          </Text>
+                          <FilledIn>{standIn}</FilledIn>
                         )}
                       </MarkedItem>
                     </MarkedItem>

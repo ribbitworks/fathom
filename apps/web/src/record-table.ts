@@ -270,6 +270,8 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   emptyRowAlone?: boolean;
   // For a table of several kinds of record, how many of each some records are, which Metrics counts.
   countKinds?: (records: readonly Rec[]) => string;
+  // And how a group's heading counts them, such as "2 people, 1 planned hire".
+  countInGroup?: (records: readonly Rec[]) => string;
   // The kinds of record the table holds, the first of which a new row adds unless asked for
   // another, and each record's kind; a table of one kind leaves them out.
   kinds?: readonly string[];

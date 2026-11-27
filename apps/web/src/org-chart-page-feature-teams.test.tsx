@@ -18,6 +18,9 @@ import {
   lighthouse,
   quay,
   openTeamPanel,
+  chartJson,
+  people,
+  person,
 } from "./test-org-chart-page.tsx";
 
 setUpEachTest();
@@ -76,6 +79,51 @@ describe("feature teams on the org chart", () => {
     expect(
       screen.queryByRole("button", { name: /^Show only the team of/ }),
     ).toBeNull();
+  });
+
+  it("draws a planned hire on a team after its people, and one leading a team at its head", async () => {
+    // Given a named hire on Lighthouse, and an unnamed one leading Quay
+    const hires = [
+      person("h1", "Fictional tester", "p1", {
+        employeeId: null,
+        planned: { expected: "2027-05" },
+      }),
+      person("h2", "Fictional Engineer, TBD-4", null, {
+        employeeId: null,
+        planned: { expected: "2027-03", undated: true, shownId: "TBD-4" },
+      }),
+    ];
+    await openFeatureTeams({
+      answers: {
+        "GET /api/org-chart": () =>
+          chartJson({ people: [...people, ...hires] }),
+      },
+      shown: [
+        { ...teams[0], members: ["h1", "p2", "p4"] },
+        { ...teams[1], leadId: "h2", members: ["h2", "p4"] },
+      ],
+    });
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+
+    // Then the tester is under Sasha, after Uma, marked Planned
+    const hire = screen.getByRole("group", { name: "Fictional tester" });
+    expect(hire.textContent).toContain("Planned, expected May 2027");
+    expect(
+      screen.getByRole("button", { name: "Hide 2 members of Sasha Fictional" }),
+    ).toBeDefined();
+    const [uma] = screen.getAllByRole("link", { name: "Uma Fictional" });
+    expect(
+      (uma?.compareDocumentPosition(hire) ?? 0) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    // And Quay is under the unnamed hire's card, which names the team, by its ID
+    const lead = screen.getByRole("group", { name: "TBD-4" });
+    expect(lead.textContent).toContain("Planned, no date");
+    expect(
+      within(lead).getByRole("button", { name: "Fictional Quay" }),
+    ).toBeDefined();
+    expect(screen.queryByText("No feature lead")).toBeNull();
   });
 
   it("says so, and draws nothing, when there are no feature teams", async () => {

@@ -166,6 +166,7 @@ Moved to [Planning Settings](planning-settings-manual-test.md#pset-08-the-change
   - **Expected:**
     - Planned hires with no name and a temporary ID are listed by their position and ID, such as "SDET, TBD-" and a number, in grey.
     - They are under **No feature team**.
+    - "Engineering Manager, TBD-" and a number is also under **Field tools**, with cells from the month three months after the current one on.
   - **Notes:**
 
 - [ ] `1623` Select the **Feature teams** tab.

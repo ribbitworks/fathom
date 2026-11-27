@@ -4,7 +4,8 @@
    button, until reached. */
 
 .key,
-.shown {
+.shown,
+.after {
   font-family: var(--mantine-font-family-monospace);
   font-size: var(--mantine-font-size-sm);
   color: var(--mantine-color-dimmed);

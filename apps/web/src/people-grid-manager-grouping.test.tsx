@@ -124,6 +124,63 @@ describe("managers and teams", () => {
     expect(screen.getByRole("status").textContent).toBe("2 people");
   });
 
+  it("groups a planned hire under the feature team it is on, not under none, counting it as one", () => {
+    const mobile = { id: "t2", name: "Mobile apps", colour: null };
+    render(
+      grid({
+        people: [
+          person("p1", { featureTeams: [] }),
+          person("h1", {
+            kind: "planned-hire",
+            preferredName: "Fictional tester",
+            employeeId: "REQ-1",
+            expected: "2027-03",
+            featureTeams: [mobile],
+          }),
+        ],
+        lists: [positions],
+        view: { ...emptyView, grouping: "featureTeams" },
+      }),
+    );
+    expect(
+      screen.getAllByRole("rowheader").map(({ textContent }) => textContent),
+    ).toEqual(["Mobile apps1 planned hire", "No feature team1 person"]);
+    const [hire] = screen.getAllByRole("row", { name: /Fictional tester/ });
+    expect(hire?.previousElementSibling?.textContent).toBe(
+      "Mobile apps1 planned hire",
+    );
+  });
+
+  it("counts each kind under a heading holding people and planned hires", () => {
+    const mobile = { id: "t2", name: "Mobile apps", colour: null };
+    const hire = (id: string) =>
+      person(id, {
+        kind: "planned-hire",
+        employeeId: `REQ-${id}`,
+        expected: "2027-03",
+        featureTeams: [mobile],
+      });
+    render(
+      grid({
+        people: [
+          person("p1", { featureTeams: [mobile] }),
+          person("p2", { featureTeams: [mobile] }),
+          hire("h1"),
+        ],
+        lists: [positions],
+        view: { ...emptyView, grouping: "featureTeams" },
+      }),
+    );
+    expect(
+      screen.getAllByRole("rowheader").map(({ textContent }) => textContent),
+    ).toEqual(["Mobile apps2 people, 1 planned hire"]);
+    expect(
+      screen
+        .getByText("2 people, 1 planned hire")
+        .closest(".mantine-VisuallyHidden-root"),
+    ).toBeNull();
+  });
+
   it("groups people by an added column's choice, in its list's order, then those with none", () => {
     render(
       grid({

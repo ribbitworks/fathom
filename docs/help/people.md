@@ -231,9 +231,9 @@ People starts as one list. You can put the rows under headings instead, such as 
 1. Select **Group by**, after **Metrics**.
 1. Choose **Manager**, **Feature teams**, **Position**, **State**, or a column such as **Site**.
 
-Grouped by manager, each heading names the manager, then their team's name if the team has one. People with no manager come last, under **No manager**. Each heading says how many people it holds.
+Grouped by manager, each heading names the manager, then their team's name if the team has one. People with no manager come last, under **No manager**. Each heading says how many people and planned hires it holds.
 
-Grouped by feature teams, someone on two teams shows under each, with a dimmed **+1** after their name. Point at it to see the other team. People on no team, and planned hires, come last, under **No feature team**.
+Grouped by feature teams, someone on two teams shows under each, with a dimmed **+1** after their name. Point at it to see the other team. A planned hire on a team shows under it too. Anyone on no team comes last, under **No feature team**. Each heading says how many people and planned hires it holds, such as **2 people, 1 planned hire**.
 
 To group each heading's rows again, such as each manager's people by site, select **Group by** again, and choose a column under **Then by**. The button then names both, such as **Group by: Manager, then Site**.
 
