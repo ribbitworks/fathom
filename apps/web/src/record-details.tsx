@@ -7,8 +7,10 @@
 import type { Link as WebLink } from "@fathom/shared";
 import { ActionIcon, Anchor, Group, Menu, Stack, Text } from "@mantine/core";
 import {
+  createContext,
   type MouseEvent,
   type ReactNode,
+  useContext,
   useEffect,
   useEffectEvent,
 } from "react";
@@ -30,7 +32,12 @@ import classes from "./record-details.module.css";
 import pages from "./pages.module.css";
 import { roundedUpTo } from "@fathom/shared";
 import { isEmpty, shownInView } from "./grid-columns.tsx";
-import { cellDraftOf } from "./grid-drafts.ts";
+import {
+  cellDraftOf,
+  liveChoices,
+  type Renaming,
+  renamedValue,
+} from "./grid-drafts.ts";
 import {
   type Column,
   colourOf,
@@ -81,6 +88,13 @@ function liveWords(column: DetailColumn, value: unknown): Was | undefined {
     kind.inWords(column, value as Parameters<typeof kind.inWords>[1]),
   );
 }
+
+// The drafts renaming choices, by choice, whatever the view, which mark the values in a record's
+// details holding them, as they mark a table's cells; given by the table beside the details, or by
+// a panel that reads the lists itself.
+export const ChoiceRenamings = createContext<ReadonlyMap<string, Renaming>>(
+  new Map(),
+);
 
 // A value, or, when empty, None or the column's own word for it, dimmed; where a draft empties the
 // value, or fills it, the words for none in grey italics, as a table's cell shows them.
@@ -377,7 +391,13 @@ export function Row({
   // The page the row's name opens, showing the records the row lists, filtered to the record.
   showOn?: ShowOn | undefined;
 }) {
-  const draft = changed?.draft;
+  const renamings = useContext(ChoiceRenamings);
+  // A value no draft changes is marked by a draft renaming a choice it holds, as its cell is.
+  const renamed =
+    changed?.draft === undefined
+      ? renamedValue(renamings, column, value, undefined)
+      : undefined;
+  const draft = changed?.draft ?? renamed?.draft;
   // A value reads as drafted wherever the view marks its draft, as its cell does.
   const drafted = marksIn(draft, useDraftView());
   const besideLive = useBesideLive();
@@ -438,9 +458,17 @@ export function Row({
               <DraftedItem
                 draft={draft}
                 from={changed?.from}
+                by={renamed?.by}
                 was={
                   changed?.live === undefined
-                    ? undefined
+                    ? renamed &&
+                      liveWords(
+                        {
+                          ...column,
+                          choices: liveChoices(column.choices, renamings),
+                        },
+                        value,
+                      )
                     : liveWords(column, changed.live)
                 }
               >

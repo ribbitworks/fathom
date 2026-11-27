@@ -18,6 +18,7 @@ import { useGridPanels } from "./grid-panels.tsx";
 import { useTableNoteAddress } from "./grid-note-address.ts";
 import { gridRows } from "./grid-row.tsx";
 import { PanelMenusContext } from "./panel-menu.tsx";
+import { ChoiceRenamings } from "./record-details.tsx";
 import { usePublishDraft } from "./publish-draft.tsx";
 import { gridSaving } from "./grid-saving.ts";
 import { gridSelection, useGridState } from "./grid-selection.ts";
@@ -65,6 +66,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
     view,
     liveById,
     draftById,
+    renamings,
     liveBeside,
     renamedFrom,
     besides,
@@ -91,20 +93,22 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
     return (
       <DraftView show={known.show}>
         <PanelMenusContext value={panelMenuItems}>
-          <WithSidePanel
-            panels={sidePanels}
-            storageKey="fathom-table-panel-width"
-          >
-            {bar}
-            {body({
-              records: shownRecords,
-              panelOpen: sidePanels.length > 0,
-              groupOf,
-              groupsReversed: view.groupsReversed === true,
-              draftOf: (record) => draftById.get(record.id),
-              liveOf: (record) => liveById.get(record.id),
-            })}
-          </WithSidePanel>
+          <ChoiceRenamings value={renamings}>
+            <WithSidePanel
+              panels={sidePanels}
+              storageKey="fathom-table-panel-width"
+            >
+              {bar}
+              {body({
+                records: shownRecords,
+                panelOpen: sidePanels.length > 0,
+                groupOf,
+                groupsReversed: view.groupsReversed === true,
+                draftOf: (record) => draftById.get(record.id),
+                liveOf: (record) => liveById.get(record.id),
+              })}
+            </WithSidePanel>
+          </ChoiceRenamings>
         </PanelMenusContext>
         {exportQuestion}
       </DraftView>
@@ -117,156 +121,160 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
   return (
     <DraftView show={known.show}>
       <PanelMenusContext value={panelMenuItems}>
-        <WithSidePanel
-          panels={sidePanels}
-          storageKey="fathom-table-panel-width"
-        >
-          {bar}
-          <Paper
-            ref={panelRef}
-            withBorder
-            className={classes.tableScrollPanel}
-            style={frozenVariables(frozen)}
+        <ChoiceRenamings value={renamings}>
+          <WithSidePanel
+            panels={sidePanels}
+            storageKey="fathom-table-panel-width"
           >
-            <div
-              ref={scrollRef}
-              className={[classes.tableScroll, classes.scrollBars].join(" ")}
-              // Cells reached from the keyboard scroll clear of the header, with its second line when a
-              // column's draft renames it, and of the frozen columns.
-              style={{
-                scrollPaddingTop: `max(var(--fathom-table-head-height), ${String(
-                  columns.some((column) => renamedFrom(column) !== undefined)
-                    ? 2
-                    : 1,
-                )} * ${headerLineHeight} + ${headerPadding})`,
-              }}
-              onScroll={(event) => {
-                edges.set(scrollEdges(event.currentTarget));
-              }}
+            {bar}
+            <Paper
+              ref={panelRef}
+              withBorder
+              className={classes.tableScrollPanel}
+              style={frozenVariables(frozen)}
             >
-              <Table
-                role="grid"
-                aria-label={table.label}
-                className={[
-                  classes.recordTable,
-                  ticks === undefined ? "" : classes.tickingTable,
-                ].join(" ")}
-                layout="fixed"
-                withColumnBorders={columnBorders}
-                tabularNums
+              <div
+                ref={scrollRef}
+                className={[classes.tableScroll, classes.scrollBars].join(" ")}
+                // Cells reached from the keyboard scroll clear of the header, with its second line when a
+                // column's draft renames it, and of the frozen columns.
+                style={{
+                  scrollPaddingTop: `max(var(--fathom-table-head-height), ${String(
+                    columns.some((column) => renamedFrom(column) !== undefined)
+                      ? 2
+                      : 1,
+                  )} * ${headerLineHeight} + ${headerPadding})`,
+                }}
+                onScroll={(event) => {
+                  edges.set(scrollEdges(event.currentTarget));
+                }}
               >
-                <colgroup>
-                  {columns.flatMap((column, columnIndex) => {
-                    const live = liveBeside(column);
-                    return [
-                      <col
-                        key={column.key}
-                        data-column={column.key}
-                        className={
-                          columnIndex === 0
-                            ? classes.recordColFirst
-                            : classes.recordCol
-                        }
-                        style={widthStyle(
-                          columnWidth(column, longestText, table.nameColumn),
-                          widths.setWidthOf(column.key),
-                        )}
-                      />,
-                      live && (
-                        <col
-                          key={`${column.key}-live`}
-                          data-column={column.key}
-                          className={classes.recordCol}
-                          style={widthStyle(
-                            columnWidth(live, longestText),
-                            widths.setWidthOf(column.key),
-                          )}
-                        />
-                      ),
-                    ];
-                  })}
-                  {withActions && <col className={classes.recordColActions} />}
-                </colgroup>
-                <Table.Thead>
-                  <Table.Tr>
+                <Table
+                  role="grid"
+                  aria-label={table.label}
+                  className={[
+                    classes.recordTable,
+                    ticks === undefined ? "" : classes.tickingTable,
+                  ].join(" ")}
+                  layout="fixed"
+                  withColumnBorders={columnBorders}
+                  tabularNums
+                >
+                  <colgroup>
                     {columns.flatMap((column, columnIndex) => {
                       const live = liveBeside(column);
-                      const liveAt = frozenCell(columnIndex, 1);
                       return [
-                        header(column, columnIndex),
+                        <col
+                          key={column.key}
+                          data-column={column.key}
+                          className={
+                            columnIndex === 0
+                              ? classes.recordColFirst
+                              : classes.recordCol
+                          }
+                          style={widthStyle(
+                            columnWidth(column, longestText, table.nameColumn),
+                            widths.setWidthOf(column.key),
+                          )}
+                        />,
                         live && (
-                          <Table.Th
+                          <col
                             key={`${column.key}-live`}
-                            scope="col"
-                            aria-hidden="true"
-                            className={[
-                              classes.liveColumn,
-                              liveAt.className,
-                            ].join(" ")}
-                            style={liveAt.style}
-                          >
-                            <span className={classes.recordHeadButton}>
-                              <span className={classes.headerName}>
-                                <MarkedItem tone="live">
-                                  <span className={classes.headerLabel}>
-                                    {live.label}
-                                  </span>
-                                </MarkedItem>
-                              </span>
-                            </span>
-                          </Table.Th>
+                            data-column={column.key}
+                            className={classes.recordCol}
+                            style={widthStyle(
+                              columnWidth(live, longestText),
+                              widths.setWidthOf(column.key),
+                            )}
+                          />
                         ),
                       ];
                     })}
                     {withActions && (
-                      <Table.Th scope="col">
-                        <VisuallyHidden>Actions</VisuallyHidden>
-                      </Table.Th>
+                      <col className={classes.recordColActions} />
                     )}
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {shownRecords.length === 0 &&
-                    (narrowed || rows.length === 0) && (
-                      <Table.Tr>
-                        <Table.Td
-                          colSpan={
-                            columns.length +
-                            besides.length +
-                            Number(withActions)
-                          }
-                          className={classes.recordNone}
-                        >
-                          <Text component="span" fz="sm" c="dimmed">
-                            {narrowed
-                              ? `No matching ${table.noun}`
-                              : `No ${table.noun}`}
-                          </Text>
-                        </Table.Td>
-                      </Table.Tr>
-                    )}
-                  {bodyRows}
-                </Table.Tbody>
-                {table.totals !== undefined && (
-                  <Table.Tfoot className={classes.recordTotalFoot}>
-                    {totalRow(
-                      "total",
-                      table.totals,
-                      table.totals.overall,
-                      shownRecords,
-                    )}
-                  </Table.Tfoot>
-                )}
-              </Table>
-            </div>
-            <EdgeMarks
-              edges={edges}
-              frozen={frozen.frozen > 0}
-              height={measured.height}
-            />
-            {pointerMenu()}
-          </Paper>
-        </WithSidePanel>
+                  </colgroup>
+                  <Table.Thead>
+                    <Table.Tr>
+                      {columns.flatMap((column, columnIndex) => {
+                        const live = liveBeside(column);
+                        const liveAt = frozenCell(columnIndex, 1);
+                        return [
+                          header(column, columnIndex),
+                          live && (
+                            <Table.Th
+                              key={`${column.key}-live`}
+                              scope="col"
+                              aria-hidden="true"
+                              className={[
+                                classes.liveColumn,
+                                liveAt.className,
+                              ].join(" ")}
+                              style={liveAt.style}
+                            >
+                              <span className={classes.recordHeadButton}>
+                                <span className={classes.headerName}>
+                                  <MarkedItem tone="live">
+                                    <span className={classes.headerLabel}>
+                                      {live.label}
+                                    </span>
+                                  </MarkedItem>
+                                </span>
+                              </span>
+                            </Table.Th>
+                          ),
+                        ];
+                      })}
+                      {withActions && (
+                        <Table.Th scope="col">
+                          <VisuallyHidden>Actions</VisuallyHidden>
+                        </Table.Th>
+                      )}
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {shownRecords.length === 0 &&
+                      (narrowed || rows.length === 0) && (
+                        <Table.Tr>
+                          <Table.Td
+                            colSpan={
+                              columns.length +
+                              besides.length +
+                              Number(withActions)
+                            }
+                            className={classes.recordNone}
+                          >
+                            <Text component="span" fz="sm" c="dimmed">
+                              {narrowed
+                                ? `No matching ${table.noun}`
+                                : `No ${table.noun}`}
+                            </Text>
+                          </Table.Td>
+                        </Table.Tr>
+                      )}
+                    {bodyRows}
+                  </Table.Tbody>
+                  {table.totals !== undefined && (
+                    <Table.Tfoot className={classes.recordTotalFoot}>
+                      {totalRow(
+                        "total",
+                        table.totals,
+                        table.totals.overall,
+                        shownRecords,
+                      )}
+                    </Table.Tfoot>
+                  )}
+                </Table>
+              </div>
+              <EdgeMarks
+                edges={edges}
+                frozen={frozen.frozen > 0}
+                height={measured.height}
+              />
+              {pointerMenu()}
+            </Paper>
+          </WithSidePanel>
+        </ChoiceRenamings>
       </PanelMenusContext>
       {exportQuestion}
     </DraftView>

@@ -9,6 +9,8 @@ import { type DraftSelection, decidable, noDrafts } from "./drafts.ts";
 import {
   cellDraftOf,
   choiceRenamings,
+  draftColumn,
+  liveChoices,
   renamedValue,
   rowState,
   waitingDrafts,
@@ -177,7 +179,7 @@ describe("the drafts renaming choices", () => {
   const listOf = (choices: Choice[]) =>
     ({ id: "l1", choices }) as unknown as List;
 
-  it("are each choice's draft changing its name, with who changed it", () => {
+  it("are each choice's draft changing its name, with who changed it and its live name", () => {
     const renamings = choiceRenamings([
       listOf([
         renaming("c1", { changedBy: { label: "Fictional Editor" } }),
@@ -193,16 +195,41 @@ describe("the drafts renaming choices", () => {
         {
           draft: { action: "changed", state: "waiting" },
           by: "Fictional Editor",
+          live: "c1",
         },
       ],
-      ["c2", { draft: { action: "changed", state: "waiting" }, by: "Fathom" }],
-      ["c3", { draft: { action: "changed", state: "waiting" }, by: undefined }],
+      [
+        "c2",
+        {
+          draft: { action: "changed", state: "waiting" },
+          by: "Fathom",
+          live: "c2",
+        },
+      ],
+      [
+        "c3",
+        {
+          draft: { action: "changed", state: "waiting" },
+          by: undefined,
+          live: "c3",
+        },
+      ],
     ]);
   });
 
   const renamings = new Map([
-    ["c1", { draft: { state: "rejected" as const }, by: "Fictional Editor" }],
-    ["c2", { draft: { state: "waiting" as const }, by: undefined }],
+    [
+      "c1",
+      {
+        draft: { state: "rejected" as const },
+        by: "Fictional Editor",
+        live: "Teal",
+      },
+    ],
+    [
+      "c2",
+      { draft: { state: "waiting" as const }, by: undefined, live: "Sea" },
+    ],
   ]);
   const column = { key: "f1" };
 
@@ -215,6 +242,18 @@ describe("the drafts renaming choices", () => {
     ]).toEqual(["Fictional Editor", "waiting", undefined, undefined]);
   });
 
+  it("give the choices they rename their live names, keeping the rest", () => {
+    expect(
+      liveChoices(
+        [
+          { id: "c1", label: "Sea teal", description: "", retired: false },
+          { id: "c3", label: "Coral", description: "", retired: false },
+        ],
+        renamings,
+      ).map(({ label }) => label),
+    ).toEqual(["Teal", "Coral"]);
+  });
+
   it("leave a value its record's draft changes, or a cell marking its own parts, to those", () => {
     expect([
       renamedValue(renamings, column, "c1", {
@@ -224,5 +263,20 @@ describe("the drafts renaming choices", () => {
       }),
       renamedValue(renamings, { ...column, marksParts: true }, "c1", undefined),
     ]).toEqual([undefined, undefined]);
+  });
+});
+
+describe("the Draft filter's state of a record", () => {
+  it("is its row's state, waiting while a draft marking one of its values waits", () => {
+    const rejectedOwn = record("r1", {
+      draft: { ...waiting, state: "rejected", action: "changed", changed: [] },
+      cellDrafts: new Map([
+        ["code", { ...waiting, action: "changed", changed: ["code"] }],
+      ]),
+    });
+    expect([
+      draftColumn.value(rejectedOwn),
+      draftColumn.value(record("r2", { draft: undefined })),
+    ]).toEqual([["waiting"], []]);
   });
 });
