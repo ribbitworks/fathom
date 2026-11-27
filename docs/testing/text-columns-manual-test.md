@@ -4,14 +4,14 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-26"
+last_updated: "2026-11-27"
 ---
 
 # Manual Test: Text Columns
 
 ## Scope
 
-Verifies what only a person can judge of a Text column of several lines on the People table: how its text reads on one line in its cell, and whole in the person's details, where its box grows as lines are typed; and that a screen reader reading a drafted cell far down the table stays at that cell.
+Verifies what only a person can judge of a Text column on the People table: how a long text reads cut short in its cell and whole in the person's details, and that a screen reader reading a drafted cell far down the table stays at that cell.
 
 ## Test Environment
 
@@ -37,45 +37,36 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 Run the test cases in order. Start with Start Fathom, then Reset the Database. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
-### TXT-01: A Text Column of Several Lines Is Added
+### TXT-01: A Text Column Is Added
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] `5E2A` Select **New column**, type `Directions` in **Name**, choose **Text** in **Type**, tick **Several lines**, then select **Add column**.
+- [ ] `5E2A` Select **New column**, type `Directions` in **Name**, choose **Text** in **Type**, then select **Add column**.
   - **Expected:**
     - The dialog closes.
     - A **Directions** column is at the right end of the table, with a hollow yellow dot before its name.
     - Each of its cells is empty.
   - **Notes:**
 
-### TXT-02: Several Lines Read Well in the Cell and the Details
+### TXT-02: A Long Text Reads Well in the Cell and the Details
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as TXT-01.
 
 **Preconditions:** As TXT-01, with the **Directions** column added.
 
-- [ ] `B47D` Select the first row's Directions cell, type `Take the east stairs to the fourth floor`, press Shift+Enter, type `Second door on the left`, then press Enter.
+- [ ] `B47D` Select the first row's Directions cell, type `Take the east stairs to the fourth floor, then the second door on the left past the kitchen`, then press Enter.
   - **Expected:**
     - The cell shows the text on one line, cut short where the column ends, with a hollow yellow dot before it.
     - The row is no taller than the rows around it.
+    - The table doesn't scroll further right than its last column.
   - **Notes:**
 
 - [ ] `0C93` Select the details button over the first row's **Name** cell.
   - **Expected:**
     - The details open beside the table.
-    - Under **Columns**, **Directions** shows `Take the east stairs to the fourth floor` on one line and `Second door on the left` on the next.
-  - **Notes:**
-
-- [ ] `E81F` Select the pencil beside **Directions**, press Ctrl+End, or Cmd+Down arrow on a Mac, then press Shift+Enter twice.
-  - **Expected:**
-    - The box grows a line taller with each new line, showing every line without a scroll bar.
-    - The × at the box's right stays level with its first line.
-  - **Notes:**
-
-- [ ] `7A60` Press Esc.
-  - **Expected:** The box closes, and **Directions** shows the two lines as before.
+    - Under **Columns**, **Directions** shows the whole text typed in `B47D`, ending with `past the kitchen`, none of it cut short.
   - **Notes:**
 
 ### TXT-03: A Screen Reader Stays at a Drafted Cell Far Down the Table

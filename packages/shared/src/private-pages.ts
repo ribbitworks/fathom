@@ -48,7 +48,6 @@ export const privateColumnSchema = z.object({
   listId: z.string().nullable(),
   visibility: tierSchema.nullable(),
   multiple: z.boolean(),
-  multiline: z.literal(true).optional(),
 });
 
 export type PrivateColumn = z.infer<typeof privateColumnSchema>;

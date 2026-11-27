@@ -145,9 +145,8 @@ export interface Column<
     record: Rec | undefined,
     kind: string,
   ) => boolean;
-  // For text columns: the most characters a value may hold, and whether it may hold several lines.
+  // For text columns: the most characters a value may hold.
   maxLength?: number | undefined;
-  multiline?: boolean | undefined;
   // For number columns: the least and most a value may be.
   least?: number;
   most?: number;

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// UI tests of a text column of several lines on People: added through New column with Several
-// lines, then a person's text typed in its cell over two lines with Shift+Enter, shown on one line
-// there and whole in their details.
+// UI tests of a text column on People: added through New column, then a person's long text typed
+// in its cell, shown cut short on one line there and whole in their details.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./test-fixtures.ts";
 import { signedInAs } from "./test-accounts.ts";
 import { send } from "./test-requests.ts";
 
@@ -29,7 +28,11 @@ test.afterEach(async ({ page }) => {
   }
 });
 
-test("adds a text column of several lines, then keeps a person's text over two lines", async ({
+// Long enough to be cut short in its cell, and within a text column's 200 characters.
+const directions =
+  "Take the east stairs to the second floor, then follow the corridor past the kitchen to the last door on the left, beside the window.";
+
+test("adds a text column, then shows a person's long text cut short in its cell and whole in their details", async ({
   page,
 }) => {
   // Given the Engineering Operations Manager on People
@@ -37,13 +40,12 @@ test("adds a text column of several lines, then keeps a person's text over two l
   await expect(page.getByRole("grid", { name: "People" })).toBeVisible();
   const name = `Fictional Directions ${String(Date.now())}`;
 
-  // When a text column of several lines is added through New column
+  // When a text column is added through New column
   await page.getByRole("button", { name: "New column" }).click();
   const dialog = page.getByRole("dialog", { name: "New column" });
   await dialog.getByLabel("Name").fill(name);
   await dialog.getByLabel("Type").click();
   await page.getByRole("option", { name: "Text", exact: true }).click();
-  await dialog.getByLabel("Several lines").check();
   const saved = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
@@ -51,13 +53,12 @@ test("adds a text column of several lines, then keeps a person's text over two l
   );
   await dialog.getByRole("button", { name: "Add column" }).click();
   const { field } = (await (await saved).json()) as {
-    field: { id: string; multiline?: boolean };
+    field: { id: string };
   };
   made.fieldId = field.id;
-  expect(field.multiline).toBe(true);
   await expect(dialog).toHaveCount(0);
 
-  // And a person's text is typed in its cell, Shift+Enter starting its second line
+  // And a person's long text is typed in its cell
   await page
     .getByRole("textbox", { name: "Search people" })
     .fill("Samuel Richter");
@@ -68,14 +69,12 @@ test("adds a text column of several lines, then keeps a person's text over two l
     .replace(/^cell-/u, "")
     .replace(`-${field.id}`, "");
   await cell.focus();
-  await page.keyboard.type("Take the east stairs.");
-  await page.keyboard.press("Shift+Enter");
-  await page.keyboard.type("Second door on the left.");
+  await page.keyboard.type(directions);
   await page.keyboard.press("Enter");
 
-  // Then the cell shows it on one line, its row as tall as the one-line Live row under it, and the
-  // person's details show both lines
-  await expect(cell).toContainText("Take the east stairs.");
+  // Then the cell shows it on one line, its row as tall as the Live row under it, and the person's
+  // details show it whole
+  await expect(cell).toContainText(directions);
   const row = await cell.locator("xpath=ancestor::tr").boundingBox();
   const live = await cell
     .locator("xpath=ancestor::tr/following-sibling::tr[1]")
@@ -113,12 +112,7 @@ test("adds a text column of several lines, then keeps a person's text over two l
     .getByRole("button", { name: "Show details of Samuel Richter" })
     .click();
   const details = page.getByRole("region", { name: "Samuel Richter" });
-  await expect(
-    details.getByText("Take the east stairs.", { exact: false }),
-  ).toHaveJSProperty(
-    "innerText",
-    "Take the east stairs.\nSecond door on the left.",
-  );
+  await expect(details.getByText(directions, { exact: true })).toBeVisible();
   // And the page itself never scrolls, however long the details
   expect(
     await page.evaluate(

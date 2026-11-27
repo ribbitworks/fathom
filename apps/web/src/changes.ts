@@ -81,7 +81,6 @@ const fieldNames = new Map([
   ["retired", "Retired"],
   ["listId", "List"],
   ["multiple", "Several choices"],
-  ["multiline", "Several lines"],
   ["required", "Required"],
   ["onPlannedHires", "Offered on planned hires"],
   ["order", "Place"],

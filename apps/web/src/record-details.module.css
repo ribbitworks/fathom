@@ -146,20 +146,3 @@
 .pastRow {
   color: var(--mantine-color-dimmed);
 }
-
-/* Text of several lines, shown whole with its line breaks kept. */
-.lines {
-  white-space: pre-wrap;
-}
-
-/* Text of several lines keeps its value's size and spacing while edited, so its lines stay where
-   they were, with its × level with the first line rather than centred on the box. */
-.linesInput {
-  font-size: inherit;
-  line-height: inherit;
-}
-
-.linesClear {
-  bottom: auto;
-  height: var(--input-height);
-}

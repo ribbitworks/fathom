@@ -22,9 +22,8 @@ export interface TypeSettings {
   listId: string | null;
   visibility: Tier | null;
   multiple: boolean;
-  // False for every type but text.
-  multiline: boolean;
-  // A setting of a type not offered yet, which every type offered leaves unset.
+  // Settings of types not offered yet, which every type offered leaves unset.
+  multiline: false;
   linkedTable: null;
 }
 
@@ -51,7 +50,7 @@ export interface ColumnType {
   // Whether a recorded value fits the column, other than whether one is required, given the list
   // each choice belongs to.
   fits: (
-    settings: Pick<TypeSettings, "listId" | "multiple" | "multiline">,
+    settings: Pick<TypeSettings, "listId" | "multiple">,
     value: unknown,
     listOf: ReadonlyMap<string, string>,
   ) => boolean;
@@ -196,19 +195,12 @@ export const isText = (value: unknown): value is TextValue =>
   typeof value.text === "string" &&
   value.text !== "";
 
-const textVisibility = withOwnVisibility("text");
-
 const text: ColumnType = {
   type: "text",
-  ...textVisibility,
-  settings: (field) => ({
-    ...textVisibility.settings(field),
-    multiline: field.multiline === true,
-  }),
+  ...withOwnVisibility("text"),
   count: (value) => (isText(value) ? 1 : 0),
-  fits: ({ multiline }, value) =>
-    isNone(value) ||
-    (isText(value) && textProblem(value.text, multiline) === undefined),
+  fits: (_settings, value) =>
+    isNone(value) || (isText(value) && textProblem(value.text) === undefined),
   showLive: (live, columnId, value) => {
     if (isText(value)) {
       // The column is the person's own, named by their draft.

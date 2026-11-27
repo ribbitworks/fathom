@@ -9,27 +9,19 @@ import { textLimit, textProblem, textValueSchema } from "./text-values.ts";
 const rightToLeftOverride = String.fromCodePoint(0x202e);
 
 describe("a text column's value", () => {
-  it("holds up to 200 characters on one line, or 2,000 on several", () => {
-    expect(textLimit(false)).toBe(200);
-    expect(textLimit(true)).toBe(2000);
-    expect(textProblem("x".repeat(200), false)).toBeUndefined();
-    expect(textProblem("x".repeat(201), false)).toBe(
-      "use 200 characters or fewer",
-    );
-    expect(textProblem("x".repeat(2000), true)).toBeUndefined();
-    expect(textProblem("x".repeat(2001), true)).toBe(
-      "use 2,000 characters or fewer",
-    );
+  it("holds up to 200 characters", () => {
+    expect(textLimit).toBe(200);
+    expect(textProblem("x".repeat(200))).toBeUndefined();
+    expect(textProblem("x".repeat(201))).toBe("use 200 characters or fewer");
   });
 
-  it("keeps its lines only in a column of several lines", () => {
-    expect(textProblem("North\nwing", true)).toBeUndefined();
-    expect(textProblem("North\nwing", false)).toBe("use one line");
+  it("is refused on several lines", () => {
+    expect(textProblem("North\nwing")).toBe("use one line");
   });
 
-  it("refuses characters that aren't plain text, on any line", () => {
-    expect(textProblem("North\twing", true)).toBe("use plain text");
-    expect(textProblem(`North${rightToLeftOverride}wing`, false)).toBe(
+  it("refuses characters that aren't plain text", () => {
+    expect(textProblem("North\twing")).toBe("use plain text");
+    expect(textProblem(`North${rightToLeftOverride}wing`)).toBe(
       "use plain text",
     );
   });
@@ -38,9 +30,5 @@ describe("a text column's value", () => {
     expect(textValueSchema.parse("  North\r\nwing\r ")).toBe("North\nwing");
     expect(textValueSchema.parse("   ")).toBeNull();
     expect(textValueSchema.parse(null)).toBeNull();
-  });
-
-  it("is refused past the most any column holds before its column is known", () => {
-    expect(textValueSchema.safeParse("x".repeat(2001)).success).toBe(false);
   });
 });

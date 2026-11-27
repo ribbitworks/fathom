@@ -96,8 +96,6 @@ export const fieldSchema = z.object({
   onPlannedHires: z.boolean().default(true),
   // The table it is on, whose Approvers decide its drafts; one read without it is on People.
   table: columnTableSchema.optional(),
-  // Set for a text column holding several lines; never changes once the column is added.
-  multiline: z.literal(true).optional(),
   draft: fieldDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -397,7 +395,6 @@ export const fieldRequestSchema = z
     multiple: z.boolean().default(false),
     required: z.boolean().default(false),
     onPlannedHires: z.boolean().default(true),
-    multiline: z.boolean().optional(),
   })
   .superRefine((request, context) => {
     const issue = (message: string) => {
@@ -420,9 +417,6 @@ export const fieldRequestSchema = z
       if (request.required && !canBeRequired(request.type)) {
         issue(`A ${kind} column can't be required`);
       }
-    }
-    if (request.multiline === true && request.type !== "text") {
-      issue("Only a text column holds several lines");
     }
   })
   .transform((request) =>

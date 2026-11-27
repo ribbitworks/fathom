@@ -100,12 +100,9 @@ const requested = (request: FieldRequest, tableName: unknown): Recorded => ({
   multiple: request.multiple,
   required: request.required,
   onPlannedHires: policyOf(tableName).onPlannedHires && request.onPlannedHires,
-  ...(request.multiline === true ? { multiline: true } : {}),
 });
 
 const sameType = "A column's type cannot change";
-
-const sameLines = "Several lines can't change once a column is added";
 
 const listsOnLists = "A list for this table's columns is made on Lists";
 
@@ -295,10 +292,8 @@ async function changeField(
   const unseen = unseenDetails(String(field.name));
   refuseUnseenTier(actor, state, field, unseen);
   if (live !== undefined) refuseUnseenTier(actor, state, live, unseen);
-  const row = columnRow(id, field);
-  if (row.type !== request.type) throw new BadRequestError(sameType);
-  if (row.multiline !== (request.multiline === true)) {
-    throw new BadRequestError(sameLines);
+  if (columnRow(id, field).type !== request.type) {
+    throw new BadRequestError(sameType);
   }
   if (nameTaken(state, request.name, id, field.tableName)) {
     throw new ConflictError(duplicateField);
@@ -372,7 +367,6 @@ async function classifyAddedField(
       multiple: row.multiple,
       required: row.required,
       onPlannedHires: row.onPlannedHires,
-      multiline: row.multiline,
     },
     columnTableOf(row.tableName),
   );

@@ -72,9 +72,8 @@ type AnyColumn = Pick<
   // told otherwise.
   pickable?: ((choice: Choice) => boolean) | undefined;
   required: boolean;
-  // For text columns: the most characters a value may hold, and whether it may hold several lines.
+  // For text columns: the most characters a value may hold.
   maxLength?: number | undefined;
-  multiline?: boolean | undefined;
   // For number columns: the least and most a value may be.
   least?: number | undefined;
   most?: number | undefined;
@@ -203,7 +202,7 @@ const detailText: Omit<CellKind, "change" | "inDetail"> = {
 };
 
 // A text column's text is held in its record's texts, and a detail held as text as a field of the
-// record itself. Only a column of several lines keeps line breaks.
+// record itself.
 const text: CellKind = {
   ...detailText,
   // The key is a column's own.
@@ -215,7 +214,7 @@ const text: CellKind = {
     save: (value) => asText(value).trim(),
   },
   problem: (column, value) =>
-    column.multiline !== true && asText(value).trim().includes("\n")
+    asText(value).trim().includes("\n")
       ? `${column.label}: use one line`
       : detailText.problem(column, value),
   change: (key, value) => {
