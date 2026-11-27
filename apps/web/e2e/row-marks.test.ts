@@ -58,7 +58,7 @@ test("lines a row's refusal up with the name above it, the row's buttons level w
 
   // Then the refusal under the row starts where the feature's name does
   await expect(row.getByRole("alert")).toHaveText(
-    "Needed by: use a month such as 2027-03",
+    "Type a month for Needed by, such as 2027-03",
   );
   const { nameStart, refusalStart, lineCentre } = await refusedRow(
     page,
