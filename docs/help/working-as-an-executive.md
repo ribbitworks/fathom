@@ -82,13 +82,13 @@ A search or a filter changes the counts. See [People](people.md#count-people).
 
 See [Change history](change-history.md#find-a-change).
 
-### Look at Accounts, Roles and Settings
+### Look at Accounts, Roles and Application Settings
 
 These pages are under **Administration**. You see them, but you can't change them.
 
 1. On **Accounts**, see each account's **Roles** and **Status**.
 1. On **Roles**, select **View** in a role's row to see what it lets its holders see and do.
-1. On **Settings**, see the time zone and the rules for passwords.
+1. On **Application settings**, see the time zone and the rules for passwords.
 
 See [Roles](roles.md#see-what-a-role-gives).
 

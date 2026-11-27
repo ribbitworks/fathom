@@ -26,11 +26,11 @@ To see an account's details, point at its row and select the details button at t
 1. Select **Copy**, and give the password to its holder.
 1. Select **Done**.
 
-The password isn't shown again. If it's lost, reset it. How long it is, and what it's made of, follow the rules for generated passwords on the **Settings** page.
+The password isn't shown again. If it's lost, reset it. How long it is, and what it's made of, follow the rules for generated passwords on the **Application settings** page.
 
 You're done when the new account's row shows its name, roles and **Active**.
 
-See [Settings](settings.md) for more.
+See [Application settings](settings.md) for more.
 
 ## Change an Account
 

@@ -33,7 +33,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
   - Schedules: unnamed blocks, each shaded apart from the one before, and the end named.
 - **Opening a record:** Every mark opens its record, on its own kind's tab.
 - **Zoom, axis and scrolling:** as [The shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out.
-- **Today:** a red line marks today, in Fathom's time zone, as [Settings](administration.md#settings) sets out.
+- **Today:** a red line marks today, in Fathom's time zone, as [Application settings](administration.md#application-settings) sets out.
 
 ## Release Colours
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The password settings on the Settings page: the rules every chosen password must meet, and the
-// recipe for the passwords Fathom makes for new accounts and resets.
+// The password settings on the Application settings page: the rules every chosen password must
+// meet, and the recipe for the passwords Fathom makes for new accounts and resets.
 
 import {
   type CharacterKind,

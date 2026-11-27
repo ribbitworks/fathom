@@ -41,7 +41,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 
 - [Accounts](accounts.md): who can sign in, and the roles each holds.
 - [Roles](roles.md): what each role lets its holders see and do, and changing it.
-- [Settings](settings.md): the time zone and the rules for passwords.
+- [Application settings](settings.md): the time zone and the rules for passwords.
 - [Lists](lists.md): the lists of choices that columns offer.
 - [Planning settings](planning-settings.md): the working time and week, and the figures capacity and forecasts are worked out with.
 - [Data classes](data-classes.md): the class of each detail, column and list, and changing it.

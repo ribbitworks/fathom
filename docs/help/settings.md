@@ -1,6 +1,6 @@
-# Settings
+# Application settings
 
-**Settings** holds Fathom's settings, which apply to everyone: its time zone, and the rules for passwords. Each has its own panel. You find it under **Administration** in the left-hand menu.
+**Application settings** holds Fathom's settings, which apply to everyone: its time zone, and the rules for passwords. Each has its own panel. You find it under **Administration** in the left-hand menu.
 
 Only a role with **Edit** on **Administration**, such as the Administrator, changes them. The Engineering Director and the Executive see the settings without **Save**.
 

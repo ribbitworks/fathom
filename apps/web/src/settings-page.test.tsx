@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Settings page, with the server's responses simulated: who sees it, choosing Fathom's
+// Tests for the Application settings page, with the server's responses simulated: who sees it, choosing Fathom's
 // time zone with the day and time it is there, saving it for everyone, and the server's refusals.
 
 import { act, fireEvent, screen, within } from "@testing-library/react";
@@ -55,7 +55,7 @@ async function choose(timeZone: string) {
   await userEvent.click(await screen.findByRole("option", { name: timeZone }));
 }
 
-describe("who sees the Settings page", () => {
+describe("who sees the Application settings page", () => {
   it("links to it under Administration for users who may edit settings", async () => {
     serverAnswers({
       "GET /api/session": settingsEditor(),
@@ -65,11 +65,11 @@ describe("who sees the Settings page", () => {
     await userEvent.click(
       within(screen.getByRole("navigation", { name: "Sections" })).getByRole(
         "link",
-        { name: "Settings" },
+        { name: "Application settings" },
       ),
     );
     expect(
-      await screen.findByRole("heading", { name: "Settings" }),
+      await screen.findByRole("heading", { name: "Application settings" }),
     ).toBeDefined();
     expect(history.location.pathname).toBe("/settings");
   });
@@ -91,7 +91,7 @@ describe("who sees the Settings page", () => {
     expect(
       within(screen.getByRole("navigation", { name: "Sections" })).getByRole(
         "link",
-        { name: "Settings" },
+        { name: "Application settings" },
       ),
     ).toBeDefined();
     expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
@@ -124,7 +124,7 @@ describe("who sees the Settings page", () => {
     expect(
       await screen.findByText("There is no page at this address."),
     ).toBeDefined();
-    expect(screen.queryByRole("link", { name: "Settings" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Application settings" })).toBeNull();
   });
 });
 

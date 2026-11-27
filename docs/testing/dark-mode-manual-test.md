@@ -912,7 +912,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Every word is easy to read.
   - **Notes:**
 
-- [ ] `7A65` Select the **Settings** page in the left-hand menu.
+- [ ] `7A65` Select the **Application settings** page in the left-hand menu.
   - **Expected:** Every heading, label and value is easy to read.
   - **Notes:**
 

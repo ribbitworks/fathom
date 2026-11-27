@@ -127,7 +127,7 @@ describe("the sidebar", () => {
     ).toBeNull();
   });
 
-  it("shows Accounts, Roles and Settings under Administration to those who see it", async () => {
+  it("shows Accounts, Roles and Application settings under Administration to those who see it", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
@@ -152,7 +152,7 @@ describe("the sidebar", () => {
           link.getAttribute("aria-current"),
         ]),
     ).toEqual([["/roles", "page"]]);
-    for (const name of ["Accounts", "Settings"]) {
+    for (const name of ["Accounts", "Application settings"]) {
       expect(within(sidebar()).getByRole("link", { name })).toBeDefined();
     }
   });
@@ -177,7 +177,7 @@ describe("the sidebar", () => {
 });
 
 describe("the sidebar's sections", () => {
-  it("puts Lists then Planning settings under Administration, after Settings", async () => {
+  it("puts Lists then Planning settings under Administration, after Application settings", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
@@ -198,7 +198,13 @@ describe("the sidebar's sections", () => {
       within(administration)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(["Accounts", "Roles", "Settings", "Lists", "Planning settings"]);
+    ).toEqual([
+      "Accounts",
+      "Roles",
+      "Application settings",
+      "Lists",
+      "Planning settings",
+    ]);
   });
 });
 

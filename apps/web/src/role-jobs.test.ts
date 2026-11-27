@@ -174,7 +174,7 @@ const startingJobs: Readonly<Record<Role, readonly string[]>> = {
     "Set Up the Roles",
     "Look After Accounts",
     "Review Who Holds Each Role",
-    "Change the Settings",
+    "Change the Application Settings",
     "Check the Access History",
   ],
 };

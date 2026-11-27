@@ -74,12 +74,12 @@ Run the test cases in order, in about 30 minutes, straight after [Installing Fat
 
 - [ ] `8DEE` Look at the left-hand menu.
   - **Expected:**
-    - The **Administration** section shows **Accounts**, **Roles** and **Settings**.
+    - The **Administration** section shows **Accounts**, **Roles** and **Application settings**.
     - The **History** section shows **Access history**.
     - The **Plan** section shows **Overview** alone, and the menu shows no page of people.
   - **Notes:**
 
-- [ ] `A95D` Select the **Settings** page in the left-hand menu.
+- [ ] `A95D` Select the **Application settings** page in the left-hand menu.
   - **Expected:**
     - **Time zone** reads "America/Vancouver".
     - Under it, "It is" and the time there.
@@ -97,7 +97,7 @@ Run the test cases in order, in about 30 minutes, straight after [Installing Fat
 
 **Account:** Administrator, `install.administrator@fathom.test`, the same as TEAM-01.
 
-**Preconditions:** TEAM-01 done. **Settings** page open.
+**Preconditions:** TEAM-01 done. **Application settings** page open.
 
 - [ ] `C4F3` Read **Password requirements**.
   - **Expected:**

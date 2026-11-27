@@ -55,7 +55,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `6BF5` Look at the left-hand menu.
   - **Expected:**
-    - The **Administration** section shows **Accounts**, **Roles** and **Settings**.
+    - The **Administration** section shows **Accounts**, **Roles** and **Application settings**.
     - The **History** section shows **Access history**.
     - The menu shows the **Help** section.
     - The **Plan** section shows **Overview** alone, and the menu shows no page of people.
@@ -197,7 +197,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - It has the headings **Sees**, **Doesn't see**, **Can** and **Cannot**.
     - **Sees** includes **Lists**.
-    - **Doesn't see** includes **Accounts**, **Roles**, **Settings** and **Access history**.
+    - **Doesn't see** includes **Accounts**, **Roles**, **Application settings** and **Access history**.
   - **Notes:**
 
 - [ ] `DAB8` Tick **View** on the **Administration** row.
@@ -208,7 +208,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The dialog says "This change affects 1 account."
     - It lists `Fictional Newcomer`, with its email address.
-    - Under **Gains**: a line for each of the **Accounts**, **Roles**, **Settings** and **Access history** pages.
+    - Under **Gains**: a line for each of the **Accounts**, **Roles**, **Application settings** and **Access history** pages.
     - **Cancel** and **Save changes** are on the right.
   - **Notes:**
 
@@ -322,7 +322,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** None beyond ADMIN-06.
 
-- [ ] `773F` Select the **Settings** page in the left-hand menu.
+- [ ] `773F` Select the **Application settings** page in the left-hand menu.
   - **Expected:**
     - **Time zone** shows **America/Vancouver**, with the day and time in Vancouver under it, such as "It is Thursday, November 5, 2026 at 6:06 AM there."
     - **Password requirements** shows **Minimum length** at "12".

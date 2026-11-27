@@ -57,7 +57,7 @@ The Product Manager doesn't see Capacity, since the role doesn't hold **View Per
 - [Roles](roles.md): It shows what each role lets its holders see and do.
   - **Shown with:** **View Administration**
   - **Starting roles that see it:** Engineering Director, Executive, Administrator
-- [Settings](settings.md): It holds the time zone and the rules for passwords.
+- [Application settings](settings.md): It holds the time zone and the rules for passwords.
   - **Shown with:** **View Administration**
   - **Starting roles that see it:** Engineering Director, Executive, Administrator
 - [Lists](lists.md): It holds the lists of choices that columns offer.

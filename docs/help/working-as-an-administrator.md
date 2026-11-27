@@ -137,24 +137,24 @@ The search looks through the latest 200 entries. See [Access history](access-his
 
 See [Access history](access-history.md#check-the-marked-entries).
 
-## Change the Settings
+## Change the Application Settings
 
 ### Change the Time Zone
 
-1. Select the **Settings** page.
+1. Select the **Application settings** page.
 1. In **Time zone**, type part of the time zone's name, such as `Vancouver`.
 1. Choose the time zone.
 1. Check the day and time shown under it.
 1. Select **Save**.
 
-See [Settings](settings.md#change-the-time-zone).
+See [Application settings](settings.md#change-the-time-zone).
 
 ### Set the Rules for Passwords
 
-1. On **Settings**, under **Password requirements**, set the **Minimum length** and tick what each password **Must have**.
+1. On **Application settings**, under **Password requirements**, set the **Minimum length** and tick what each password **Must have**.
 1. Under **Generated passwords**, set the **Length** and tick what they **Use**.
 1. Select **Save**.
 
-A tighter rule applies the next time each person changes their password. See [Settings](settings.md#set-the-rules-for-passwords).
+A tighter rule applies the next time each person changes their password. See [Application settings](settings.md#set-the-rules-for-passwords).
 
 You're done when everyone who needs Fathom can sign in with only the roles they need, and you've checked each entry marked **Worth checking**.

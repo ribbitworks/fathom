@@ -5,7 +5,7 @@
 ## What to Know First
 
 - **Private details** are data in the **Personal** or **Confidential** class, which only some roles see. See [Data classes](data-classes.md).
-- **Times** show in your own browser's time zone. Fathom's own time zone, which an Administrator sets on **Settings**, decides only what counts as one day for the once-a-day entries below.
+- **Times** show in your own browser's time zone. Fathom's own time zone, which an Administrator sets on **Application settings**, decides only what counts as one day for the once-a-day entries below.
 
 ## Main Tasks
 
