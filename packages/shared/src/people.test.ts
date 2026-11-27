@@ -260,29 +260,15 @@ describe("checkbox columns", () => {
 });
 
 describe("text columns", () => {
-  it("keep a visibility of their own, and may hold several lines and be required", () => {
+  it("keep a visibility of their own, and may be required", () => {
     expect(
       fieldRequestSchema.parse({
         name: "Desk",
         type: "text",
         visibility: "general",
-        multiline: true,
         required: true,
       }),
-    ).toMatchObject({ type: "text", multiline: true, required: true });
-  });
-
-  it("are the one type that holds several lines", () => {
-    expect(
-      messages(
-        fieldRequestSchema.safeParse({
-          name: "Headcount",
-          type: "number",
-          visibility: "general",
-          multiline: true,
-        }),
-      ),
-    ).toEqual(["Only a text column holds several lines"]);
+    ).toMatchObject({ type: "text", visibility: "general", required: true });
   });
 
   it("are asked for by column, with null removing one", () => {

@@ -56,12 +56,7 @@ import {
   marksIn,
   useDraftView,
 } from "./status-mark.tsx";
-import {
-  type DraftLike,
-  type Was,
-  wasWords,
-  emptiedWords,
-} from "./draft-marks.ts";
+import { type DraftLike, type Was, wasWords } from "./draft-marks.ts";
 import {
   type CellValue,
   type ColumnUnit,
@@ -79,19 +74,12 @@ type DetailColumn = Pick<
   | "required"
   | "emptyLabel"
   | "choiceColour"
-  | "multiline"
 >;
 
-// A value as it was before a draft changed it, for its draft's tip; none for a note, a link or text
-// of several lines, whose words a tip cannot hold.
+// A value as it was before a draft changed it, for its draft's tip; none for a note or a link,
+// whose words a tip cannot hold.
 function liveWords(column: DetailColumn, value: unknown): Was | undefined {
-  if (
-    column.kind === "note" ||
-    column.kind === "link" ||
-    column.multiline === true
-  ) {
-    return undefined;
-  }
+  if (column.kind === "note" || column.kind === "link") return undefined;
   const kind = cellKinds[column.kind];
   return wasWords(
     kind.inWords(column, value as Parameters<typeof kind.inWords>[1]),
@@ -164,12 +152,7 @@ function Value({
   if (words === "") return none;
   return (
     // Inherits the row's weight, so a value a draft changes is semibold, as in its table's cell.
-    <Text
-      inherit
-      className={column.multiline === true ? classes.lines : undefined}
-    >
-      {words}
-    </Text>
+    <Text inherit>{words}</Text>
   );
 }
 

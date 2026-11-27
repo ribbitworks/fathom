@@ -401,7 +401,6 @@ export {
 } from "./refusal-words.ts";
 export {
   textLimit,
-  textLimits,
   textProblem,
   textValueSchema,
   tidiedText,

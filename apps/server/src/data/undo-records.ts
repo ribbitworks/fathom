@@ -104,7 +104,6 @@ const columnsOf: Record<
     multiple: flag,
     required: flag,
     onPlannedHires: flag,
-    multiline: flag,
   },
   person: {
     preferredName: text,

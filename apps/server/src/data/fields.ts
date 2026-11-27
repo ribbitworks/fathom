@@ -54,28 +54,14 @@ export const fieldFields = [
   "multiple",
   "required",
   "onPlannedHires",
-  "multiline",
 ] as const;
-
-// A column as the change history records it: Several lines only where it is set, so other columns
-// record nothing for it.
-export const recordedColumn = (row: FieldRow | undefined) =>
-  row && { ...row, multiline: row.multiline || undefined };
 
 export const fieldChanges = (
   id: string,
   action: Change["action"],
   before: FieldRow | undefined,
   after: FieldRow | undefined,
-) =>
-  changesBetween(
-    "field",
-    id,
-    action,
-    recordedColumn(before),
-    recordedColumn(after),
-    fieldFields,
-  );
+) => changesBetween("field", id, action, before, after, fieldFields);
 
 // Every column on people, locked.
 export async function lockFields(

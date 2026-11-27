@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for text columns on the People page, with the server's responses simulated: a text shown in
-// its cell, typed and pasted, a column of several lines shown whole and edited in its details,
-// sorting, filtering and exporting by it, and adding the column with Several lines.
+// its cell, typed and pasted, shown and edited in a person's details, refused on several lines,
+// sorting, filtering and exporting by it, and adding the column.
 
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -36,16 +36,16 @@ const desk = {
   multiple: false,
   required: false,
 };
-const directions = { ...desk, id: "f2", name: "Directions", multiline: true };
+const parking = { ...desk, id: "f2", name: "Parking" };
 const avery = personWith("p1", "Avery Fictional", "texts", {
   f1: "North 4-12",
-  f2: "Take the east stairs.\nSecond door on the left.",
+  f2: "Bay 12",
 });
 const blake = personWith("p2", "Blake Fictional", "texts", {});
 const casey = personWith("p3", "Casey Fictional", "texts", {
   f1: "South 2-07",
 });
-const peopleOf = () => peopleHolding([blake, avery, casey], [desk, directions]);
+const peopleOf = () => peopleHolding([blake, avery, casey], [desk, parking]);
 const open = (answers: Answers = {}, at = "/people") =>
   openPeopleWith(peopleOf(), answers, at);
 const textOf = (row: string, column = "f1") => cell(row, column);
@@ -56,11 +56,10 @@ afterEach(() => {
 });
 
 describe("a text column", () => {
-  it("shows each text in its cell, a text of several lines on one line", async () => {
+  it("shows each text in its cell", async () => {
     await open();
     expect(textOf("p1").textContent).toBe("North 4-12");
     expect(textOf("p2").textContent).toBe("");
-    expect(textOf("p1", "f2").textContent).toContain("Take the east stairs.");
   });
 
   it("saves a text typed in its cell, trimmed, and empties it with Delete", async () => {
@@ -91,21 +90,8 @@ describe("a text column", () => {
     await userEvent.keyboard("{Enter}");
     await userEvent.paste("x".repeat(201));
     await userEvent.keyboard("{Enter}");
-    expect(await screen.findByText("Desk too long")).toBeDefined();
+    expect(await screen.findByText("Desk is too long")).toBeDefined();
     expect(bodyOf(fetch, "PATCH", "/api/people/p2")).toEqual([]);
-  });
-
-  it("keeps a new line typed with Shift+Enter in a column of several lines", async () => {
-    const fetch = await open();
-    act(() => {
-      textOf("p2", "f2").focus();
-    });
-    await userEvent.keyboard("Lift{Shift>}{Enter}{/Shift}Room 4{Enter}");
-    await waitFor(() => {
-      expect(bodyOf(fetch, "PATCH", "/api/people/p2")).toEqual([
-        { texts: { f2: "Lift\nRoom 4" } },
-      ]);
-    });
   });
 
   it("sorts A to Z, or Z to A", async () => {
@@ -137,19 +123,6 @@ describe("a text column", () => {
     expect(screen.getByText("Desk: contains “north”")).toBeDefined();
   });
 
-  it("shows a text of several lines whole in a person's details, its lines kept", async () => {
-    await open({}, "/people?open=p1");
-    const details = await screen.findByRole("region", {
-      name: "Avery Fictional",
-    });
-    const shown = within(detailRow("Directions", details)).getByText(
-      /Take the east stairs/,
-    );
-    expect(shown.textContent).toBe(
-      "Take the east stairs.\nSecond door on the left.",
-    );
-  });
-
   it("shows a drafted text in a person's details in the weight of a changed value", async () => {
     await open(
       {
@@ -167,7 +140,7 @@ describe("a text column", () => {
               },
             },
           ],
-          [desk, directions],
+          [desk, parking],
         ),
       },
       "/people?open=p1",
@@ -198,7 +171,7 @@ describe("a text column", () => {
               },
             },
           ],
-          [desk, directions],
+          [desk, parking],
         ),
       },
       "/people?open=p2",
@@ -211,55 +184,44 @@ describe("a text column", () => {
     expect(emptied.closest('[class*="changedValue"]')).not.toBeNull();
   });
 
-  it("edits a text of several lines in its details in a box that keeps new lines", async () => {
+  it("edits a text in a person's details, saving it on Enter", async () => {
     const fetch = await open({}, "/people?open=p2");
     await screen.findByRole("region", { name: "Blake Fictional" });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Change Directions" }),
-    );
-    const box = await screen.findByRole("textbox", { name: "Directions" });
-    expect(box.tagName).toBe("TEXTAREA");
-    await userEvent.type(box, "Lift{Shift>}{Enter}{/Shift}Room 4{Enter}");
+    await userEvent.click(screen.getByRole("button", { name: "Change Desk" }));
+    const box = await screen.findByRole("textbox", { name: "Desk" });
+    await userEvent.type(box, "West 1-01{Enter}");
     await waitFor(() => {
       expect(bodyOf(fetch, "PATCH", "/api/people/p2")).toEqual([
-        { texts: { f2: "Lift\nRoom 4" } },
+        { texts: { f1: "West 1-01" } },
       ]);
     });
   });
 
-  it("refuses text of several lines in a column of one line, and keeps it in one of several", () => {
-    const oneLine = addedColumn<Person, never>(desk as Field, []);
-    const severalLines = addedColumn<Person, never>(directions as Field, []);
-    expect(cellKinds.text.problem(oneLine, "North\nwing")).toBe(
+  it("refuses text of several lines", () => {
+    const column = addedColumn<Person, never>(desk as Field, []);
+    expect(cellKinds.text.problem(column, "North\nwing")).toBe(
       "Desk: use one line",
     );
-    expect(cellKinds.text.problem(severalLines, "North\nwing")).toBeUndefined();
   });
 
-  it("empties a text of several lines in its details with the ×, keeping focus in the box", async () => {
+  it("empties a text in its details with the ×, keeping focus in the box", async () => {
     const fetch = await open({}, "/people?open=p1");
     await screen.findByRole("region", { name: "Avery Fictional" });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Change Directions" }),
-    );
-    const box = await screen.findByRole("textbox", { name: "Directions" });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Clear Directions" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Change Desk" }));
+    const box = await screen.findByRole("textbox", { name: "Desk" });
+    await userEvent.click(screen.getByRole("button", { name: "Clear Desk" }));
     expect(document.activeElement).toBe(box);
     await userEvent.keyboard("{Enter}");
     await waitFor(() => {
       expect(bodyOf(fetch, "PATCH", "/api/people/p1")).toEqual([
-        { texts: { f2: null } },
+        { texts: { f1: null } },
       ]);
     });
   });
 
-  it("is exported as written, its lines kept", () => {
-    const column = addedColumn<Person, never>(directions as Field, []);
-    expect(exportValue(column, avery as Person)).toBe(
-      "Take the east stairs.\nSecond door on the left.",
-    );
+  it("is exported as written", () => {
+    const column = addedColumn<Person, never>(desk as Field, []);
+    expect(exportValue(column, avery as Person)).toBe("North 4-12");
   });
 
   it("adds a text pasted into a new row as typed", async () => {
@@ -274,7 +236,7 @@ describe("a text column", () => {
       name.focus();
     });
     await userEvent.paste(
-      "Drew Fictional\tE9\tEast 1-01\tUse the lift\tFictional Engineer\n",
+      "Drew Fictional\tE9\tEast 1-01\tBay 7\tFictional Engineer\n",
     );
     expect(bodyOf(fetch, "POST", "/api/people")).toEqual([
       {
@@ -285,39 +247,7 @@ describe("a text column", () => {
             positionId: "position-1",
             values: {},
             links: {},
-            texts: { f1: "East 1-01", f2: "Use the lift" },
-          },
-        ],
-      },
-    ]);
-  });
-});
-
-describe("pasting texts of several lines", () => {
-  it("keeps a quoted cell's lines in one cell, as spreadsheets and Fathom's export write it", async () => {
-    const fetch = await open({
-      "POST /api/people": () =>
-        Response.json({ ids: ["p9"], changeSetId: s1 }, { status: 201 }),
-    });
-    const name = document.querySelector(
-      '[id^="cell-new-"][id$="-preferredName"]',
-    ) as HTMLElement;
-    act(() => {
-      name.focus();
-    });
-    await userEvent.paste(
-      'Drew Fictional\tE9\tEast 1-01\t"Use the lift\nThen ""Room 4"""\tFictional Engineer\n',
-    );
-    expect(bodyOf(fetch, "POST", "/api/people")).toEqual([
-      {
-        people: [
-          {
-            preferredName: "Drew Fictional",
-            employeeId: "E9",
-            positionId: "position-1",
-            values: {},
-            links: {},
-            texts: { f1: "East 1-01", f2: 'Use the lift\nThen "Room 4"' },
+            texts: { f1: "East 1-01", f2: "Bay 7" },
           },
         ],
       },
@@ -326,20 +256,17 @@ describe("pasting texts of several lines", () => {
 });
 
 describe("the New column dialog", () => {
-  it("adds a text column of several lines that must be filled in, offering Several lines only for text", async () => {
+  it("adds a text column that must be filled in", async () => {
     const { fetch, dialog } = await openNewColumn({
       "GET /api/people": peopleOf(),
       "POST /api/people/columns": () =>
         Response.json(
-          { field: { ...directions, id: "f3", name: "Parking" } },
+          { field: { ...desk, id: "f3", name: "Entrance" } },
           { status: 201 },
         ),
     });
-    await userEvent.type(within(dialog).getByLabelText("Name"), "Parking");
-    await chooseIn(dialog, "Type", "Number");
-    expect(within(dialog).queryByLabelText("Several lines")).toBeNull();
+    await userEvent.type(within(dialog).getByLabelText("Name"), "Entrance");
     await chooseIn(dialog, "Type", "Text");
-    await userEvent.click(within(dialog).getByLabelText("Several lines"));
     await userEvent.click(within(dialog).getByLabelText("Must be filled in"));
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
@@ -347,35 +274,14 @@ describe("the New column dialog", () => {
     await waitFor(() => {
       expect(bodyOf(fetch, "POST", "/api/people/columns")).toEqual([
         {
-          name: "Parking",
+          name: "Entrance",
           type: "text",
           visibility: "general",
           multiple: false,
           required: true,
           onPlannedHires: true,
-          multiline: true,
         },
       ]);
     });
-  });
-
-  it("keeps Several lines as it is once the column is added", async () => {
-    await open();
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: (name) => name.startsWith("Directions column"),
-      }),
-    );
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Edit column…" }),
-    );
-    const dialog = await screen.findByRole("dialog", { name: "Edit column" });
-    const lines =
-      within(dialog).getByLabelText<HTMLInputElement>("Several lines");
-    expect(lines.checked).toBe(true);
-    expect(lines.disabled).toBe(true);
-    expect(dialog.textContent).toContain(
-      "Can't change once the column is added",
-    );
   });
 });

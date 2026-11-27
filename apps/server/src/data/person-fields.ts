@@ -447,14 +447,14 @@ const checkedFlags = (
 ): Recorded => checkedOfType(columns, requested, "flag", (box) => box ?? []);
 
 // The texts asked for each column, as recorded, or none, for a text removed. Each must fit its
-// column: on one line unless it holds several, and within its limit.
+// column: on one line, and within its limit.
 const checkedTexts = (
   columns: readonly ColumnInfo[],
   requested: Readonly<Record<string, string | null>> | undefined,
 ): Recorded =>
   checkedOfType(columns, requested, "text", (text, column) => {
     if (text === null) return [];
-    const problem = textProblem(text, column.multiline);
+    const problem = textProblem(text);
     if (problem !== undefined) {
       throw new BadRequestError(`${column.name}: ${problem}`);
     }

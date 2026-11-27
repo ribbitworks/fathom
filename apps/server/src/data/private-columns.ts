@@ -28,7 +28,7 @@ import {
 } from "./changes.ts";
 import { readPageColumnOrder, writePageColumnOrder } from "./column-order.ts";
 import { columnRow, duplicateField, noField } from "./column-state.ts";
-import { checkLiveLists, checkValuesFit, recordedColumn } from "./fields.ts";
+import { checkLiveLists, checkValuesFit } from "./fields.ts";
 import { changingPage } from "./private-page-changes.ts";
 import {
   type PageRow,
@@ -58,7 +58,6 @@ const columnFields = [
   "visibility",
   "multiple",
   "required",
-  "multiline",
 ] as const;
 
 const columnChanges = (
@@ -72,8 +71,8 @@ const columnChanges = (
     "private-column",
     id,
     action,
-    recordedColumn(before),
-    recordedColumn(after),
+    before,
+    after,
     columnFields,
     () => tier,
   );
@@ -93,7 +92,6 @@ const requestedRow = (
     visibility: request.visibility ?? null,
     multiple: request.multiple,
     required,
-    multiline: request.multiline,
   }),
   pageId,
 });

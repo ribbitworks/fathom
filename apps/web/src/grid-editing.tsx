@@ -8,7 +8,6 @@ import type { Typing } from "@fathom/shared";
 import { startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { composingWord } from "./composing.ts";
-import { startsLine } from "./editing-keys.ts";
 import { focusSoon } from "./focus.ts";
 import { focusRecordCell } from "./grid-row.tsx";
 import { emptyValue, kindOf, readOnlyFor } from "./grid-columns.tsx";
@@ -211,7 +210,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       event.preventDefault();
       setProblem(undefined);
       stopEdit(cell);
-    } else if (event.key === "Enter" && !startsLine(event, at(cell).column)) {
+    } else if (event.key === "Enter") {
       event.preventDefault();
       finish(cell, typed.current, "enter");
     } else if (event.key === "Tab") {
@@ -431,7 +430,6 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
         aria-describedby={describedBy}
         starting={typed.current}
         asTyped={asTyped}
-        multiline={column.multiline === true}
         onTyped={(next) => {
           typed.current = next;
         }}
@@ -469,54 +467,28 @@ export type EditingGrid<Rec extends GridRecord, Change, Request> = MenuGrid<
   ReturnType<typeof gridEditing<Rec, Change, Request>>;
 
 // A cell's text editor, which keeps what is typed itself and reports each change, so typing draws
-// only the editor rather than the whole table. A value of several lines is edited in a box of one
-// line that keeps its line breaks.
+// only the editor rather than the whole table.
 function TypedInput({
   starting,
   asTyped,
-  multiline,
   onTyped,
   ...input
-}: Pick<
-  ComponentProps<"input">,
-  "id" | "className" | "aria-label" | "aria-invalid" | "aria-describedby"
-> & {
+}: Omit<ComponentProps<"input">, "value" | "onChange"> & {
   starting: string;
   asTyped: ((typing: Typing) => Typing) | undefined;
-  multiline: boolean;
   onTyped: (typed: string) => void;
-  onKeyDown: (event: KeyboardEvent) => void;
-  onBlur: () => void;
 }) {
   const [value, setValue] = useState(starting);
-  const typedNow = (next: string) => {
-    setValue(next);
-    onTyped(next);
-  };
-  return multiline ? (
-    <textarea
-      {...input}
-      // Its scroll bar is the slim one every scrolling frame has.
-      className={[input.className, classes.scrollBars].join(" ")}
-      rows={1}
-      value={value}
-      // Typing goes on from the end of what is there, as in a field of one line.
-      onFocus={(event) => {
-        const end = event.currentTarget.value.length;
-        event.currentTarget.setSelectionRange(end, end);
-      }}
-      onChange={(event) => {
-        typedNow(event.currentTarget.value);
-      }}
-    />
-  ) : (
+  return (
     <input
       {...input}
       value={value}
       autoComplete="off"
       onChange={(event) => {
         const box = event.currentTarget;
-        typedNow(asTyped === undefined ? box.value : typeIn(box, asTyped));
+        const next = asTyped === undefined ? box.value : typeIn(box, asTyped);
+        setValue(next);
+        onTyped(next);
       }}
     />
   );

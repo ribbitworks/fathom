@@ -48,7 +48,6 @@ export interface ColumnKind {
 export interface ColumnSettings {
   visibility?: string;
   table?: string;
-  multiline?: boolean;
   onPlannedHires?: boolean;
 }
 
@@ -241,9 +240,6 @@ export function addedColumnTests(test: () => TestApp, kind: ColumnKind) {
         type: kind.type,
         visibility: settings.visibility ?? "general",
         onPlannedHires: settings.onPlannedHires ?? settings.table === undefined,
-        ...(settings.multiline === undefined
-          ? {}
-          : { multiline: settings.multiline }),
       }),
       201,
     );

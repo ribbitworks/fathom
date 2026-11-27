@@ -279,7 +279,6 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
   - **Choice from a list:** names its list, takes its class from the list's, and says whether it takes one choice or several.
   - **Other types:** a Text, Number, Checkbox, Web link or Note field has a class of its own.
   - **Checkbox:** is never required, since an unticked box is a value, No.
-  - **Text:** says whether it takes one line or several, fixed once it is added.
   - **On People:** a field also says whether planned hires have it too, as [Planned Hires](#planned-hires) sets out.
   - **Changing:** its type is fixed once it is added. It can be made required only once every record has a value, and single-choice only once none has several. Its list cannot change while it has values.
 - **Column order:** A table's own order of its columns, built-in and custom alike, which every view starts from. A view may hold an order of its own.
@@ -298,7 +297,7 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
 
 | Type | Holds | Limits |
 | --- | --- | --- |
-| Text | Plain text, with no formatting, never empty | One line, up to 200 characters, or several lines, up to 2,000 |
+| Text | Plain text, with no formatting, never empty | One line, up to 200 characters |
 | Choice from a list | One choice, or several | Choices of its list only |
 | Web link | An address, and optionally text shown in its place | Address up to 2,000 characters, text up to 200 |
 | Note | Rich text, as GitHub-flavoured Markdown | Up to 10,000 characters |
@@ -308,7 +307,7 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
 - **Not built yet:** Date and Link to another table. The database already holds their values and settings, such as the table a Link field links to, as [ADR 0005](../adr/0005-flexible-data-model.md#what-is-built) records.
 - **Web link:** only http and https addresses, on the internet or a local network, by name or IP address. An address typed without a scheme is taken as https only when its host has a dot. What else is refused, and why, is in the [Security Plan](../security/security-plan.md#tampering).
 - **Note:** what a note may hold, including the one HTML tag it may hold for text colour, is in [Visual Design](visual-design.md#components) under Notes.
-- **Plain text:** built-in text, such as names and a feature's description, and a Text field's value hold no control characters or marks that change which way text runs, other than a Text field's line breaks where it takes several lines.
+- **Plain text:** built-in text, such as names and a feature's description, and a Text field's value hold no control characters or marks that change which way text runs.
 
 ### Lists
 

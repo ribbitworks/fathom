@@ -73,7 +73,7 @@ export function cellColumn<Rec extends CellRecord, Change extends CellChange>(
   key: string,
   kind: Kind,
   rest: Pick<Column<Rec>, "label" | "required" | "choices" | "multiple"> &
-    Partial<Pick<Column<Rec>, "field" | "maxLength" | "multiline">>,
+    Partial<Pick<Column<Rec>, "field" | "maxLength">>,
 ): Column<Rec, Change> {
   // The kind is always one of the fixed kinds.
   // eslint-disable-next-line security/detect-object-injection

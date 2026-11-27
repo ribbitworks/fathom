@@ -71,11 +71,7 @@ describe("choice columns", () => {
 
   it("hold several choices when they take several", () => {
     expect(
-      choice.fits(
-        { listId: "l1", multiple: true, multiline: false },
-        ["c1", "c2"],
-        listOf,
-      ),
+      choice.fits({ listId: "l1", multiple: true }, ["c1", "c2"], listOf),
     ).toBe(true);
   });
 
@@ -204,7 +200,7 @@ describe("note columns", () => {
 
 describe("number columns", () => {
   const number = columnTypes.number;
-  const settings = { listId: null, multiple: false, multiline: false };
+  const settings = { listId: null, multiple: false };
 
   it("have a visibility of their own, as their tier", () => {
     expect(number.settings({ visibility: "personal" })).toEqual({
@@ -246,7 +242,7 @@ describe("number columns", () => {
 
 describe("checkbox columns", () => {
   const { flag } = columnTypes;
-  const settings = { listId: null, multiple: false, multiline: false };
+  const settings = { listId: null, multiple: false };
 
   it("have a visibility of their own, as their tier", () => {
     expect(flag.settings({ visibility: "personal" })).toEqual({
@@ -287,14 +283,10 @@ describe("checkbox columns", () => {
 
 describe("text columns", () => {
   const { text } = columnTypes;
-  const oneLine = text.settings({ visibility: "general" });
-  const severalLines = text.settings({
-    visibility: "general",
-    multiline: true,
-  });
+  const settings = text.settings({ visibility: "general" });
 
-  it("have a visibility of their own, and one line unless set to several", () => {
-    expect(oneLine).toEqual({
+  it("have a visibility of their own", () => {
+    expect(settings).toEqual({
       type: "text",
       listId: null,
       visibility: "general",
@@ -302,23 +294,20 @@ describe("text columns", () => {
       multiline: false,
       linkedTable: null,
     });
-    expect(severalLines.multiline).toBe(true);
   });
 
   it.each([
-    [{ text: "North 4-12" }, true, true],
-    [{ text: "North\nwing" }, false, true],
-    [{ text: "x".repeat(200) }, true, true],
-    [{ text: "x".repeat(201) }, false, true],
-    [{ text: "x".repeat(2001) }, false, false],
-    [{ text: "" }, false, false],
-    [undefined, true, true],
-    [[], true, true],
-    ["North 4-12", false, false],
-    [link, false, false],
-  ])("hold %j: on one line %s, on several %s", (value, onOne, onSeveral) => {
-    expect(text.fits(oneLine, value, new Map())).toBe(onOne);
-    expect(text.fits(severalLines, value, new Map())).toBe(onSeveral);
+    [{ text: "North 4-12" }, true],
+    [{ text: "North\nwing" }, false],
+    [{ text: "x".repeat(200) }, true],
+    [{ text: "x".repeat(201) }, false],
+    [{ text: "" }, false],
+    [undefined, true],
+    [[], true],
+    ["North 4-12", false],
+    [link, false],
+  ])("hold %j: %s", (value, fits) => {
+    expect(text.fits(settings, value, new Map())).toBe(fits);
   });
 
   it("count one text, and never a note", () => {

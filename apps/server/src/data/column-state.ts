@@ -92,7 +92,6 @@ export const fieldRecord = (row: FieldRow): Recorded => ({
   multiple: row.multiple,
   required: row.required,
   onPlannedHires: row.onPlannedHires,
-  ...(row.multiline ? { multiline: true } : {}),
 });
 
 // Every table's added columns, live and in drafts, and the live order of the People table's columns,
@@ -267,8 +266,7 @@ export const toFieldOut = (
   keyNumber: number,
   field: Recorded,
 ): Field => {
-  const { type, listId, visibility, multiple, multiline } =
-    typeOf(field).settings(field);
+  const { type, listId, visibility, multiple } = typeOf(field).settings(field);
   return {
     id,
     keyNumber,
@@ -280,7 +278,6 @@ export const toFieldOut = (
     required: field.required === true,
     onPlannedHires: field.onPlannedHires === true,
     table: columnTableOf(field.tableName),
-    ...(multiline ? { multiline } : {}),
   };
 };
 

@@ -1121,8 +1121,6 @@ th.liveColumn {
   /* What is typed is regular, even in a drafted cell, whose value is semibold. */
   font-weight: 400;
   line-height: 20px;
-  /* A value of several lines keeps to the cell's one line, scrolling within it. */
-  resize: none;
 }
 
 .recordEditor:focus {
