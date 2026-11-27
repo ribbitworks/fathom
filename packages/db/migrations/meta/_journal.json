@@ -498,6 +498,13 @@
       "when": 1795703076266,
       "tag": "0070_private_pages",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1795744454163,
+      "tag": "0071_working_week",
+      "breakpoints": true
     }
   ]
 }

@@ -26,6 +26,10 @@ import {
   tierSchema,
   type ViewScope,
   viewScopeSchema,
+  type Weekday,
+  weekdayNames,
+  weekdaySchema,
+  weekdayShortNames,
 } from "@fathom/shared";
 import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
 import { getJson } from "./api.ts";
@@ -169,6 +173,12 @@ function valueText(field: string, value: ChangeValue): string | null {
   return valueWords.get(field)?.(value) ?? value;
 }
 
+const weekdayWords =
+  (names: Readonly<Record<Weekday, string>>) => (value: string) => {
+    const day = weekdaySchema.safeParse(Number(value));
+    return day.success ? names[day.data] : undefined;
+  };
+
 // How the fields whose values need words of their own put them, or nothing for a value they do not
 // know, which shows as recorded.
 const valueWords = new Map<string, (value: string) => string | undefined>([
@@ -194,6 +204,8 @@ const valueWords = new Map<string, (value: string) => string | undefined>([
     },
   ],
   ["weight", (value) => decimal(Number(value))],
+  ["workingDays", weekdayWords(weekdayShortNames)],
+  ["weekStartsOn", weekdayWords(weekdayNames)],
   [
     "estimateHours",
     (value) => unitAmountWords(value, Number(value), effortColumnUnits[0]),

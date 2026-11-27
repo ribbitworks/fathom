@@ -3,7 +3,7 @@
 // Undoing a change set's changes to drafts of people, lists, columns and the planning settings.
 // Part of the data access layer.
 
-import type { Tier } from "@fathom/shared";
+import { planningSettingFields, type Tier } from "@fathom/shared";
 import { type Actor, seesSensitivity, storedTier } from "../access.ts";
 import { choicesWithAdded } from "./added-columns.ts";
 import { ConflictError, ForbiddenError } from "../errors.ts";
@@ -449,8 +449,11 @@ export async function undoColumnDrafts(
   }
 }
 
+const settingFields = new Set<string>(planningSettingFields);
+
 // Puts back the draft of the planning settings a change set changed, with the settings it changed as
-// they were. The settings are only ever changed, and each value was checked when drafted.
+// they were. The settings are only ever changed, and each value was checked when drafted. The
+// history may name settings no longer kept, which are left out.
 export async function undoSettingsDrafts(
   transaction: Transaction,
   editor: string,
@@ -461,7 +464,11 @@ export async function undoSettingsDrafts(
     const live = stateOf(state, "planning-settings").live.get(record.id);
     const wanted = {
       ...(versionOf(state, "planning-settings", record.id) as Recorded),
-      ...Object.fromEntries(withoutRejection(record.old)),
+      ...Object.fromEntries(
+        [...withoutRejection(record.old)].filter(([field]) =>
+          settingFields.has(field),
+        ),
+      ),
     };
     await writeDraft(
       transaction,

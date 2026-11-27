@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Capacity page's Settings mode, with the server's responses simulated: the settings
-// read only and changed in place, a value refused, undoing a change, months of ramp-up added and
-// removed, the settings that cannot be loaded, and a draft of them marked, shown by the Draft view,
-// held by someone else, and decided or discarded from a changed row's menu.
+// Tests for the Capacity page's Settings mode: the settings read only and changed in place,
+// refusals, undo, ramp-up months, a failed load, and a draft of the settings.
 
 import {
   type PlanningSettings,
   type PlanningSettingsChange,
   changedSettings,
+  effortConversionsOf,
+  startingEffortConversions,
   startingPlanningSettings,
 } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
@@ -58,7 +58,8 @@ function settingsServer(
       held = before;
       return Response.json({ changeSetId: null });
     },
-    "GET /api/effort-conversions": () => Response.json(held),
+    "GET /api/effort-conversions": () =>
+      Response.json(effortConversionsOf(held)),
   });
   return fetch;
 }
@@ -92,7 +93,6 @@ describe("the settings read only", () => {
     expect(
       [
         "Hours a day",
-        "Working days a week",
         "Working days a month",
         "Default focus",
         "Default buffer",
@@ -100,7 +100,7 @@ describe("the settings read only", () => {
         "Month 2",
         "From month 3",
       ].map((label) => detailValue(label)),
-    ).toEqual(["8", "5", "20", "80%", "0%", "50%", "75%", "100%"]);
+    ).toEqual(["8", "20", "80%", "0%", "50%", "75%", "100%"]);
     expect(screen.queryByRole("button", { name: /^Change / })).toBeNull();
     expect(screen.queryByRole("button", { name: "Add month" })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Remove / })).toBeNull();
@@ -317,7 +317,8 @@ describe("a draft of the settings", () => {
       "POST /api/drafts/approval": () => Response.json({ changeSetId }),
       [`DELETE ${draftPath}`]: () => Response.json({ changeSetId }),
       [`DELETE ${draftPath}/rejection`]: () => Response.json({ changeSetId }),
-      "GET /api/effort-conversions": () => Response.json(settings),
+      "GET /api/effort-conversions": () =>
+        Response.json(startingEffortConversions),
     });
   }
 
@@ -334,12 +335,12 @@ describe("a draft of the settings", () => {
     draftServer(editor);
     await openSettings();
     expect(
-      ["Hours a day", "Working days a week", "Month 1", "Month 2"].map(
+      ["Hours a day", "Working days a month", "Month 1", "Month 2"].map(
         (label) => detailValue(label),
       ),
     ).toEqual([
       "7.5, Draft: changed from “8”8, live",
-      "5",
+      "20",
       "50%",
       "No month 2, Draft: changed from “75”75, live",
     ]);

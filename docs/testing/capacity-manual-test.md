@@ -80,7 +80,6 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - There is no table.
     - Under **Working time**, the rows read, from the top:
       - **Hours a day**: "8"
-      - **Working days a week**: "5"
       - **Working days a month**: "20"
     - Under **Forecasts**, the rows read:
       - **Default focus**: "80%"

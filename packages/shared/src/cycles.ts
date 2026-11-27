@@ -57,6 +57,8 @@ export const longestCycleIn = (unit: unknown): number =>
 // The most cycles one stream makes, so a pattern of one week from long ago cannot make too many.
 const mostCycles = 5000;
 
+export const daysInWeek = 7;
+
 // A day, such as 2026-11-25, at its start in UTC.
 export const parseDay = (day: string): Date => new Date(`${day}T00:00:00Z`);
 
@@ -242,12 +244,12 @@ export interface LengthChange {
 // The day after a span of a pattern's unit from a day.
 const after = (startsOn: string, length: number, unit: CycleUnit): string =>
   unit === "weeks"
-    ? addDays(startsOn, 7 * length)
+    ? addDays(startsOn, daysInWeek * length)
     : addMonths(startsOn, length);
 
 const dayMs = 24 * 60 * 60 * 1000;
 
-const daysFrom = (first: string, second: string): number =>
+export const daysBetween = (first: string, second: string): number =>
   Math.round((parseDay(second).getTime() - parseDay(first).getTime()) / dayMs);
 
 // Months differ in length by up to three days, so a cycle counted in months lands within this many
@@ -361,7 +363,7 @@ export function patternsForLength(
   ];
   // Each later pattern starts where the cycle it started on now starts, counted in cycles, since
   // cycles in months move by whole months rather than by days.
-  const shift = Math.max(0, daysFrom(nextStart, newNextStart));
+  const shift = Math.max(0, daysBetween(nextStart, newNextStart));
   for (const later of sorted.filter(({ startsOn }) => startsOn > nextStart)) {
     const index = cyclesOf(sorted, later.startsOn).length - 1;
     const { startsOn } = cyclesOf(

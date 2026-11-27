@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-team-accounts-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-26"
 ---
 
 # Manual Test: Acceptance, Setting Up Fathom
@@ -226,7 +226,6 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
 - [ ] `6FE1` Select the **Capacity** page in the left-hand menu, then the **Settings** tab.
   - **Expected:** Under **Working time**, the rows read, from the top:
     - **Hours a day**: "8"
-    - **Working days a week**: "5"
     - **Working days a month**: "20"
   - **Notes:**
 

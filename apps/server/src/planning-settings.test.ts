@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the planning settings through the API, against a migrated PostgreSQL server: those who
-// see configuration read them with their draft in place, and everyone who sees the plan the
-// conversions between units of effort alone, as they are live; those who change configuration
-// draft some of them, leaving the rest, live once approved with Approve Configuration; each change
-// is recorded in the change history for those who see configuration, and its maker can undo it.
+// Tests for the planning settings and effort conversions through the API: reading, drafting,
+// deciding and undoing a change, its history, and who may do each.
 
 import {
   type ChangeEntry,
@@ -242,6 +239,7 @@ describe("drafting a change to the settings", () => {
       { rampUpPercents: Array.from({ length: 13 }, () => 50) },
     ],
     ["text for a number", { daysPerMonth: "20" }],
+    ["no working day", { workingDays: [] }],
     ["an empty month of ramp-up", { rampUpPercents: [50, null] }],
   ])("refuses %s, changing nothing", async (_case, wrong) => {
     const response = await change(editor.cookie, wrong);
@@ -283,6 +281,27 @@ describe("deciding a draft of the settings", () => {
       });
     },
   );
+
+  it("makes a person-week a day for each working day once approved", async () => {
+    // Given a draft of six working days, named out of order, from Sunday
+    await change(editor.cookie, {
+      workingDays: [6, 0, 1, 2, 3, 4],
+      weekStartsOn: 6,
+    });
+
+    // When it is approved
+    await approve(approver.cookie);
+
+    // Then the days are kept Monday first, and a person-week holds six of them
+    expect(await read(editor.cookie)).toMatchObject({
+      workingDays: [0, 1, 2, 3, 4, 6],
+      weekStartsOn: 6,
+    });
+    expect(await conversions(editor.cookie)).toEqual({
+      ...startingConversions,
+      daysPerWeek: 6,
+    });
+  });
 
   it("refuses a role that approves other areas but not configuration", async () => {
     await change(editor.cookie, changed);
@@ -431,6 +450,28 @@ describe("undoing a change to the settings", () => {
     expect(await read(editor.cookie)).toEqual(startingPlanningSettings);
   });
 
+  it("puts back no field the settings no longer keep", async () => {
+    // Given a change that the history also records against a field no longer kept
+    const { changeSetId } = await saved(editor.cookie, changed);
+    await test.connection.insert(changes).values({
+      changeSetId: String(changeSetId),
+      recordType: "planning-settings",
+      recordId: planningSettingsId,
+      action: "changed",
+      field: "retiredSetting",
+      tier: "general",
+      oldValue: 5,
+      newValue: 6,
+      draft: true,
+    });
+
+    // When it is undone
+    expect((await undo(editor.cookie, changeSetId)).statusCode).toBe(200);
+
+    // Then no draft is left
+    expect(await read(editor.cookie)).toEqual(startingPlanningSettings);
+  });
+
   it("is refused once a setting it changed has changed again", async () => {
     const { changeSetId } = await saved(editor.cookie, changed);
     await change(editor.cookie, { hoursPerDay: 6 });
@@ -467,7 +508,7 @@ describe("undoing a change to the settings", () => {
       recordId: planningSettingsId,
       action: "changed",
       field: "hoursPerDay",
-      tier: "internal",
+      tier: "general",
       oldValue: "8",
       newValue: "7.5",
     });

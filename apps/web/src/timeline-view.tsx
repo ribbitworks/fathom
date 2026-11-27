@@ -4,7 +4,7 @@
 // quarters, as UI Conventions' The shared timeline sets out. It only shows; changes are made
 // elsewhere.
 
-import type { ReleaseStream } from "@fathom/shared";
+import { daysBetween, type ReleaseStream } from "@fathom/shared";
 import {
   ActionIcon,
   Group,
@@ -30,7 +30,6 @@ import {
   type ReleaseLayerForm,
   useReleaseLayer,
 } from "./release-layer.tsx";
-import { daysBetween } from "./releases.ts";
 import {
   type AxisScale,
   axisScale,

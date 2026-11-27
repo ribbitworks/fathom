@@ -10,10 +10,12 @@ import {
   monthOf,
   type ReleaseStream,
   parseDay,
+  daysBetween,
+  weekdays,
+  weeksWithin,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import {
-  daysBetween,
   lastCycleEnd,
   placingFields,
   releaseCycles,
@@ -231,9 +233,6 @@ const monthNumber = (day: string) => Number(day.slice(5, 7));
 
 const nextDay = (day: string) => addDays(day, 1);
 
-const nextMonday = (day: string) =>
-  addDays(day, (8 - parseDay(day).getUTCDay()) % 7 || 7);
-
 // The first month of the period of some months, counted from January, that a day falls in.
 const periodStart = (months: number, day: string) =>
   `${day.slice(0, 4)}-${String(
@@ -299,7 +298,7 @@ export const timelineQuarters = (
 
 // The timeline's axis at a scale: the periods the view is cut into, under the larger periods they
 // fall in, such as the quarters Q1 27 and Q2 27 under "Jan to Jun 2027". A period cut short by
-// the timeline's start is still named, except a week, named by its Monday.
+// the timeline's start is still named, except a week, named by the day it starts on.
 export function timelineAxis(
   frame: TimelineFrame,
   scale: AxisScale,
@@ -337,11 +336,17 @@ export function timelineAxis(
   if (scale === "weeks") {
     return {
       above: months(true),
-      ticks: cut(nextMonday, (day) =>
-        parseDay(day).getUTCDay() === 1
-          ? `${monthWords(day)} ${dayNumber(day)}`
-          : "",
-      ).map((tick) => ({ ...tick, short: dayNumber(tick.day) })),
+      ticks: weeksWithin(
+        frame.from,
+        addDays(frame.from, frame.days),
+        weekdays.monday,
+      ).map(({ from: day, weekStart, days }) => ({
+        day,
+        label: day === weekStart ? `${monthWords(day)} ${dayNumber(day)}` : "",
+        short: dayNumber(day),
+        at: daysBetween(frame.from, day),
+        days,
+      })),
     };
   }
   return {

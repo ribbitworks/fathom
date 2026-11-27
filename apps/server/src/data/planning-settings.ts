@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The planning settings for the whole of Fathom, seen by those who see configuration with their
-// draft in place, and drafted by those who change configuration, each change live only once
-// approved with Approve Configuration. The conversions between units of effort among them are seen
-// with the plan as they are live, so estimates follow a draft's conversions only once it is
-// approved. Estimates keep their hours when a conversion changes. Part of the data access layer,
-// the only server code that queries the database.
+// The planning settings for the whole of Fathom, and the conversions between units of effort they
+// give: read, and drafted. Part of the data access layer.
 
 import {
   type Database,
@@ -19,6 +15,7 @@ import {
   type PlanningSettingsChange,
   type PlanningSettingsShown,
   changedSettings,
+  effortConversionsOf,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import {
@@ -116,9 +113,7 @@ export async function readEffortConversions(
 ): Promise<EffortConversions> {
   // Estimates on features and projects alike are read in these units.
   requireAnyPermission(actor, ["plan:view", "features:view"]);
-  const { hoursPerDay, daysPerWeek, daysPerMonth } =
-    await settingsRow(database);
-  return { hoursPerDay, daysPerWeek, daysPerMonth };
+  return effortConversionsOf(await settingsRow(database));
 }
 
 // Drafts the settings given, leaving the others as the editor's draft has them, so two people

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for how the change history words a new order of a list's choices, one choice moved, drafted
-// or approved, how it names the plan's records, such as release streams and proposals, and their
-// fields, how it words a release's colour, the words for a feature team's changes, and the class of
-// a list or column added.
+// Tests for how the change history words changes: records' names and fields, choices' order, and
+// classes.
 
 import type { ChangedRecord } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
@@ -333,6 +331,38 @@ describe("the planning settings in the change history", () => {
         { value: "50%" },
       ],
     ]);
+  });
+
+  it("names the working days and the day a week starts on", () => {
+    expect([
+      describeField({
+        field: "workingDays",
+        oldValue: ["0", "1", "2", "3", "4"],
+        newValue: ["0", "1", "2", "3", "6"],
+      }),
+      describeField({ field: "weekStartsOn", oldValue: "0", newValue: "6" }),
+    ]).toEqual([
+      [
+        { strong: "Working days" },
+        " from ",
+        { value: "Mon, Tue, Wed, Thu, Fri" },
+        " to ",
+        { value: "Mon, Tue, Wed, Thu, Sun" },
+      ],
+      [
+        { strong: "Week starts on" },
+        " from ",
+        { value: "Monday" },
+        " to ",
+        { value: "Sunday" },
+      ],
+    ]);
+  });
+
+  it("shows a day it does not know as recorded", () => {
+    expect(
+      describeField({ field: "weekStartsOn", oldValue: "0", newValue: "9" }),
+    ).toContainEqual({ value: "9" });
   });
 });
 

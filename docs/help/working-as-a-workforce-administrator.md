@@ -138,7 +138,7 @@ To use it on **People**, add a column that picks from it. See [Lists](lists.md#m
 ### Set Hours and Working Days
 
 1. On **Capacity**, select **Settings**.
-1. Select the value of **Hours a day**, **Working days a week** or **Working days a month**.
+1. Select the value of **Hours a day** or **Working days a month**.
 1. Type the new value, and press Enter.
 1. Select **Publish**.
 

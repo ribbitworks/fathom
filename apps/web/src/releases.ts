@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Release streams, their cycle patterns, and their releases through the server's API: reading them,
-// with their cycles and drafts, every change to them, each a draft, and discarding the drafts of
-// the plan's records or sending rejected ones for approval again; with each record as decisions on
-// its draft name it.
+// Release streams, their cycle patterns and their releases through the server's API, with their
+// cycles and drafts.
 
 import { withSchedule } from "@fathom/shared";
 import {
@@ -27,6 +25,7 @@ import {
   releaseStreamsSchema,
   savedSchema,
   type Show,
+  daysBetween,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import type { CSSProperties } from "react";
@@ -403,11 +402,6 @@ export const hasShipped = (
   release: { lastCycle: string; shipsOn: string | null },
   day: string,
 ): boolean => (releaseDate(stream, release) ?? day) < day;
-
-const dayMs = 24 * 60 * 60 * 1000;
-
-export const daysBetween = (from: string, to: string): number =>
-  Math.round((Date.parse(to) - Date.parse(from)) / dayMs);
 
 // How far a release's own day is from the end of its last cycle, in words, such as "31 days after
 // 26.4 ends", or undefined when it ships when that cycle ends.
