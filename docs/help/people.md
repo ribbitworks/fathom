@@ -36,7 +36,7 @@ You can also paste rows in from a spreadsheet:
 1. Select the **Name** cell of the empty row at the end of the table.
 1. Paste.
 
-If a value fits more than one choice, such as the name of two managers, Fathom can't tell which you mean. It keeps that row unsaved, with the reason under it. Choose the value in the row's cell instead.
+You can paste up to 1,000 rows at once. If a value fits more than one choice, such as the name of two managers, Fathom can't tell which you mean. It saves none of the rows, and shows the reason under that one. Choose the value in the row's cell instead, then press Enter.
 
 You're done when the new rows show in the table, each with a hollow dot until you publish it.
 
@@ -106,7 +106,12 @@ You're done when the timeline shows the person's days.
 
 ### Fill a Planned Hire
 
-When you hire someone for a planned job, you fill the planned hire with them. **Fill** shows once the hire's **State** is approved, such as **Approved to hire**, and the hire has no rejected draft. It doesn't show while the hire has a draft that adds it, removes it or changes its manager, or while someone else is changing it. It shows only on today's **People**, not on another date or under **Live only**.
+When you hire someone for a planned job, you fill the planned hire with them. **Fill** shows only:
+
+- Once the hire's **State** is approved, such as **Approved to hire**.
+- While the hire has no rejected draft, and no draft that adds it, removes it or changes its manager.
+- While nobody else is changing it.
+- On today's **People**, not on another date or under **Live only**.
 
 Fathom doesn't move a planned hire's allocations to the person. An allocation is the time planned for someone on a feature or activity. So if the hire has any, remove them first.
 

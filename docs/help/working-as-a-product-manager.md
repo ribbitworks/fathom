@@ -1,6 +1,6 @@
 # Working as a Product Manager
 
-As a Product Manager, you shape the plan: the features to build, the projects customers need, and the proposals that may become projects. You also add columns to Features, and approve other people's drafts of the plan, features, activities and releases, and the columns on Features and Activities.
+As a Product Manager, you shape the plan: the features to build, the projects customers need, and the proposals that may become projects. You also add columns to Features and Activities, and approve other people's drafts of the plan, features, activities and releases, and the columns on Features and Activities.
 
 Your pages are **Features**, **Activities** and **Projects**, under **Plan** in the left-hand menu, and **Drafts**, under **History**.
 
