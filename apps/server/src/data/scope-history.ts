@@ -13,7 +13,11 @@ import {
 } from "@fathom/shared";
 import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { strings } from "./history-names.ts";
-import { latestFirst, madeInOrder } from "./history-order.ts";
+import {
+  latestFirst,
+  publishedInOrder,
+  whenPublished,
+} from "./history-order.ts";
 
 const reasonIn = (value: unknown, id: string): string | null =>
   new Map(Object.entries(removalReasonsIn(value))).get(id) ?? null;
@@ -43,13 +47,13 @@ export async function readScopeHistory(
       ),
     )
     .orderBy(...latestFirst);
-  // The changes to the record's drafts of its features, published, oldest first, so each approved
-  // change is dated when it was drafted.
+  // The changes to the record's drafts of its features, published, in the order they were, so each
+  // approved change is dated when it was drafted for others to see.
   const drafted = await database
     .select({
       oldValue: changes.oldValue,
       newValue: changes.newValue,
-      madeAt: changeSets.madeAt,
+      madeAt: whenPublished,
     })
     .from(changes)
     .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
@@ -62,7 +66,7 @@ export async function readScopeHistory(
         eq(changes.field, "featureIds"),
       ),
     )
-    .orderBy(...madeInOrder);
+    .orderBy(...publishedInOrder);
   // When a feature's addition or removal approved at the time given was last drafted, or that time
   // for a change saved without a draft, such as the seed's.
   const draftedAt = (featureId: string, added: boolean, approved: Date) =>

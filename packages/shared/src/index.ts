@@ -246,6 +246,8 @@ export {
   takenAlongRefusal,
   type Asking,
   draftsChangedBy,
+  inCountedOrder,
+  type TimedChange,
   type MakerKinds,
   type DraftKind,
   draftKinds,

@@ -319,7 +319,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 
 ## Change and History Entities
 
-- **Change set:** Changes saved together, with who made them, the role they acted as, and when.
+- **Change set:** Changes saved together, with who made them, the role they acted as, when, and when others could first see them: when saved, or, for private changes, when published.
   - **Kinds:** saved changes, approved, rejected or discarded drafts, rejected drafts sent again unchanged, a user's unpublished changes discarded all at once, and a user's unpublished changes withdrawn because their record is gone.
   - **Private:** it is marked while it holds private changes, which only its maker sees; publishing clears the mark. Changes withdrawn because their record is gone, and their withdrawal, stay private, seen only by their maker: a change set still private that changed the record is never published, and one that also changed records that stay is replaced by a copy of each part.
 - **Change:** One field of one record changed in a change set, with its class, its old and new values, and whether it changed the record's draft or the live record.

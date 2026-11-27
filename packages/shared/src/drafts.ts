@@ -428,6 +428,53 @@ export interface MakerKinds {
   changesNothing: ReadonlySet<string>;
 }
 
+// A change to a draft, or a decision on it, with when it was made and when others could first see it
+// (null while private), in microseconds, for ordering as changes count.
+export interface TimedChange {
+  id: number;
+  recordId: string;
+  kind: string;
+  makerId: string | null;
+  madeAtMicros: number;
+  publishedAtMicros: number | null;
+}
+
+// The changes in the order they count in for who changed a draft. A change counts from when others
+// could see it, so one saved privately before a decision and published after it counts after it,
+// and the reader's own still private last. A decision counts from when it was made, so a private
+// discard published later starts again only what was published before it, and with it its maker's
+// own changes to the record made before it, published with it or still private. Then as made.
+export function inCountedOrder<Row extends TimedChange>(
+  rows: readonly Row[],
+  kinds: MakerKinds,
+): Row[] {
+  const decidedBy = (row: TimedChange) =>
+    JSON.stringify([row.makerId, row.recordId, row.publishedAtMicros]);
+  // The latest decision of each maker on each record, by when it was published. Fathom's own changes,
+  // with no maker, are never covered by a decision.
+  const lastDecision = new Map<string, number>();
+  for (const row of rows.filter(
+    ({ kind, makerId }) => kinds.resets.has(kind) && makerId !== null,
+  )) {
+    const key = decidedBy(row);
+    lastDecision.set(
+      key,
+      Math.max(lastDecision.get(key) ?? 0, row.madeAtMicros),
+    );
+  }
+  const counted = (row: TimedChange) =>
+    kinds.resets.has(row.kind) ||
+    (lastDecision.get(decidedBy(row)) ?? 0) > row.madeAtMicros
+      ? row.madeAtMicros
+      : (row.publishedAtMicros ?? Infinity);
+  return [...rows].sort(
+    (first, second) =>
+      counted(first) - counted(second) ||
+      first.madeAtMicros - second.madeAtMicros ||
+      first.id - second.id,
+  );
+}
+
 // The records whose drafts a user changed since each was last decided, from their history in order.
 // One rule for the drafts marked on screen and the approvals refused.
 export function draftsChangedBy(
