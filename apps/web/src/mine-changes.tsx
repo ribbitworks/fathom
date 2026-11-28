@@ -5,7 +5,8 @@
 
 import type { ListedPrivatePage } from "@fathom/shared";
 import { useNavigate } from "@tanstack/react-router";
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { createContext, type ReactNode, useContext } from "react";
+import { useDialogState } from "./dialog-actions.tsx";
 import { focusFoundSoon } from "./focus.ts";
 import {
   landingAfter,
@@ -29,27 +30,30 @@ interface MineChanges {
   remove: (page: Page, kept: () => void) => void;
 }
 
-const MineChangesContext = createContext<MineChanges | undefined>(undefined);
+// Every page is drawn inside the provider, which the layout gives, so nothing is done without it.
+const nothing = () => undefined;
+const MineChangesContext = createContext<MineChanges>({
+  rename: nothing,
+  remove: nothing,
+});
 
 export const useMineChanges = () => useContext(MineChangesContext);
 
 // The page landed on takes focus by its heading, so the next Tab starts from its top.
 const focusHeading = () => {
-  focusFoundSoon(() => {
-    const heading = document.querySelector<HTMLElement>("main h1");
-    heading?.setAttribute("tabindex", "-1");
-    return heading ?? undefined;
-  });
+  focusFoundSoon(
+    () => document.querySelector<HTMLElement>("main h1") ?? undefined,
+  );
 };
 
 export function MineChangesProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const question = useRemovalQuestion();
-  const [renaming, setRenaming] = useState<{ page: Page; kept: () => void }>();
+  const renaming = useDialogState<{ page: Page; kept: () => void }>();
   const changes = useSaving<ListedPrivatePage[]>({
     queryKey: privatePagesQuery.queryKey,
     removed: "This page was removed. Mine has been refreshed.",
-    blocked: question.asking || renaming !== undefined,
+    blocked: question.asking || renaming.opened,
   });
   const open = (pageId: string | undefined) => {
     void (
@@ -68,6 +72,7 @@ export function MineChangesProvider({ children }: { children: ReactNode }) {
           next: (pages) => pages.filter(({ id }) => id !== page.id),
           save: async () => (await removePrivatePage(page.id)).changeSetId,
           failure: `Fathom could not remove ${page.name}.`,
+          onFailed: kept,
           onSaved: (changeSetId, before) => {
             open(landingAfter(before, page.id));
             changes.done(
@@ -90,7 +95,7 @@ export function MineChangesProvider({ children }: { children: ReactNode }) {
     <MineChangesContext.Provider
       value={{
         rename: (page, kept) => {
-          setRenaming({ page, kept });
+          renaming.open({ page, kept });
         },
         remove,
       }}
@@ -98,14 +103,15 @@ export function MineChangesProvider({ children }: { children: ReactNode }) {
       {children}
       {question.dialog}
       <RenamePageDialog
-        page={renaming?.page}
+        page={renaming.dialog?.page}
+        opened={renaming.opened}
         onClose={() => {
-          renaming?.kept();
-          setRenaming(undefined);
+          renaming.close();
+          renaming.dialog?.kept();
         }}
         onRenamed={(renamed, changeSetId) => {
-          renaming?.kept();
-          setRenaming(undefined);
+          renaming.close();
+          renaming.dialog?.kept();
           changes.shown(
             (pages) =>
               pages.map((one) =>

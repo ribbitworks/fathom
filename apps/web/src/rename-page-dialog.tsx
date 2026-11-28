@@ -14,30 +14,14 @@ import { isConflict } from "./api.ts";
 import { CountedInput } from "./counted-input.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
 import { focusRefusedSoon } from "./focus.ts";
-import { takenNameProblem } from "./list-dialog.tsx";
 import {
+  pageNameProblem,
   privatePageQuery,
   privatePagesQuery,
   renamePrivatePage,
 } from "./private-pages.ts";
 
 type Page = Pick<ListedPrivatePage, "id" | "name">;
-
-// The name's problem, if any: needed, too long, or another of the maker's pages has it already,
-// or the server said so of the name last sent.
-export const pageNameProblem = (
-  name: string,
-  pages: readonly Page[],
-  renaming: string | undefined,
-  refusedAsTaken: boolean,
-) =>
-  takenNameProblem(
-    "page",
-    name,
-    privatePageLengths.name,
-    refusedAsTaken ||
-      pages.some((page) => page.id !== renaming && sameName(page.name, name)),
-  );
 
 function RenameForm({
   page,
@@ -82,6 +66,11 @@ function RenameForm({
           focusRefusedSoon(form);
           return;
         }
+        // The same name changes nothing, so nothing is sent.
+        if (name.trim() === page.name) {
+          onCancel();
+          return;
+        }
         setSent(name);
         renaming.mutate(name.trim(), {
           onError: () => {
@@ -96,7 +85,7 @@ function RenameForm({
           data-autofocus
           value={name}
           maximum={privatePageLengths.name}
-          error={tried || name !== page.name ? problem : undefined}
+          error={tried || name !== "" ? problem : undefined}
           onValue={setName}
         />
         <DialogActions
@@ -116,21 +105,20 @@ function RenameForm({
 
 export function RenamePageDialog({
   page,
+  opened,
   onClose,
   onRenamed,
 }: {
-  // The page being renamed, while the dialog is open.
+  // The page being renamed, kept while the dialog closes.
   page: Page | undefined;
+  opened: boolean;
   onClose: () => void;
   onRenamed: (page: Page, changeSetId: string | null) => void;
 }) {
-  // The page stays set while the dialog closes, so its name doesn't vanish mid-animation.
-  const [shown, setShown] = useState(page);
   const [busy, setBusy] = useState(false);
-  if (page !== undefined && page !== shown) setShown(page);
   return (
     <Modal
-      opened={page !== undefined}
+      opened={opened}
       onClose={onClose}
       closeOnEscape={!busy}
       closeOnClickOutside={!busy}
@@ -138,10 +126,10 @@ export function RenamePageDialog({
       returnFocus={false}
       title="Rename page"
     >
-      {shown && (
+      {page && (
         <RenameForm
-          key={shown.id}
-          page={shown}
+          key={page.id}
+          page={page}
           onCancel={onClose}
           onRenamed={onRenamed}
           onBusy={setBusy}

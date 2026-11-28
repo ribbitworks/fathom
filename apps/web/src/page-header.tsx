@@ -36,6 +36,9 @@ export function PageHeader({
           <Title
             order={1}
             fz={22}
+            // So a page landed on, such as after removing the one open, can put focus on its
+            // heading, with no stop for Tab.
+            tabIndex={-1}
             ref={words}
             className={classes.pageTitle}
             {...target}

@@ -18,7 +18,8 @@ Verifies how a person's own pages under **Mine** look and work:
 - Typing rows in a page's table like a spreadsheet, undoing a change, and removing a row with **Undo**.
 - That another account doesn't see **Mine**.
 - That a row's link, copied from its menu, opens its page for its maker.
-- Removing a column, and renaming and removing a page from its **⋯**, each asking first and offering **Undo** after.
+- Removing a column, asking first and offering **Undo** after.
+- Renaming and removing a page from its **⋯**, removing asking first and offering **Undo** after.
 
 ## Test Environment
 
@@ -244,11 +245,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The **Follow-ups** page opens, with its three rows.
   - **Notes:**
 
-### PRIV-08: Removing a Column or a Page Asks First, Then Offers Undo
+### PRIV-08: Removing a Column Asks First, Then Offers Undo
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main window, as PRIV-07 ends.
 
-**Preconditions:** The **Follow-ups** page open in the main window, as PRIV-07 leaves it, and no other page under **Mine**.
+**Preconditions:** The **Follow-ups** page open in the main window, as PRIV-07 leaves it.
 
 - [ ] `C5DF` Select the **Due** heading.
   - **Expected:** The menu ends with **Remove column…**, in red.
@@ -266,7 +267,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Due** heading has focus.
   - **Notes:**
 
-- [ ] `1B00` Select the **Due** heading, then **Remove column…**, then **Remove**.
+- [ ] `7A35` Press Enter, then select **Remove column…**.
+  - **Expected:** The dialog asks "Remove the Due column?" again.
+  - **Notes:**
+
+- [ ] `1B00` Select **Remove**.
   - **Expected:**
     - **Due** is gone from the table.
     - A notification reads "Removed the Due column.", with **Undo**.
@@ -280,7 +285,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu offers no **Remove column…**.
   - **Notes:**
 
-- [ ] `6F37` Press Esc, and select the **⋯** at the right of the page's heading, after the Export icon.
+### PRIV-09: A Page Is Renamed and Removed from Its ⋯
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the main window, as PRIV-08 ends.
+
+**Preconditions:** The **Follow-ups** page open in the main window, as PRIV-08 leaves it, and no other page under **Mine**.
+
+- [ ] `6F37` Select the **⋯** at the right of the page's heading, after the Export icon.
   - **Expected:**
     - A menu opens with **Rename page…**, **Copy link** and **Copy key**, a line, then **Remove page…** in red.
     - The heading is still one line.
@@ -290,11 +301,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** A notification reads "Key copied."
   - **Notes:**
 
-- [ ] `E741` Select the **⋯** again, then **Rename page…**, clear the name, and select **Rename**.
-  - **Expected:** "Name needed" shows in red under **Name**.
+- [ ] `C62E` Paste into the **Search** box above the table.
+  - **Expected:** The box reads the page's key: "#PAGE-", then four letters and digits.
   - **Notes:**
 
-- [ ] `ACC9` Type `Open questions`, and press Enter.
+- [ ] `4EB1` Clear the **Search** box, then select the **⋯** and **Rename page…**.
+  - **Expected:**
+    - A dialog titled **Rename page** opens.
+    - Its **Name** box reads "Follow-ups" and has focus.
+  - **Notes:**
+
+- [ ] `ACC9` Type `Open questions` in place of the name, and press Enter.
   - **Expected:**
     - The dialog closes, and the **⋯** has focus.
     - The heading, the top bar and **Mine** in the left-hand menu read "Open questions".

@@ -83,7 +83,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 
 ## Saving and Undo
 
-- **Saved at once:** Changes save at once, without asking.
+- **Saved at once:** Changes save at once, without asking, but for those [Asking first](#saving-and-undo) lists.
   - **Undo:** Cmd+Z or Ctrl+Z undoes the latest change. In a field with something typed in it, the note editor included, the keys undo only the typing, and in a dialog over the page, such as New page, they undo nothing behind it. Undo covers every kind of record, the plan's included, checked by the same rules as approving, and undoes everything saved with the change at once, all or none.
   - **No notification in place:** A change seen in place shows none.
   - **A notification with Undo:** Shown at the top right, closing after a few seconds or at a newer change, for a change that takes something out of view, such as discarding the draft of a record only drafted to be added, deleting a saved view, or a team label that a draft removes while Drafts applied is shown.
@@ -92,7 +92,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Saved from a pencil:** The planning settings each save at once from their pencil, as a draft, as a details panel's values do. An account's name and email address do too, with no notification, and Cmd+Z or Ctrl+Z undoes them.
   - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, and `notifyUndoable` in `apps/web/src/notices.tsx`.
   - **Example:** On People, save a view, then delete it.
-- **Asking first:** Of changes to data, only these ask first, since they can't be undone: approving drafts, rejecting them, Discard all…, discarding chosen changes on the Drafts page (such as Discard 2 changes…), publishing a draft from its menu when other changes go with it, and deleting a saved view its maker can no longer use.
+- **Asking first:** Of changes to data, only these ask first: those that can't be undone, which are approving drafts, rejecting them, Discard all…, discarding chosen changes on the Drafts page (such as Discard 2 changes…), publishing a draft from its menu when other changes go with it, and deleting a saved view its maker can no longer use; and, on a table without drafts, a removal that takes many values away, as follows.
   - **A removal on a table without drafts:** On a private page, where nothing waits as a draft, a removal that takes many values away asks first, then still offers Undo: Remove page… and Remove column… ask, such as Remove the Follow-ups page?, with Cancel and Remove in red, and Cancel focused. A notification then says so, such as Removed the Follow-ups page., with Undo, and Cmd+Z or Ctrl+Z undoes it too. A row is removed at once, with Undo. On shared tables a removal is a draft, and approving it asks.
   - **Leaving the question:** Cancel, Esc and the × put focus back where the question came from, such as the column's heading or the page's ⋯.
   - **Drawn by:** `useRemovalQuestion` in `apps/web/src/removal-question.tsx`, on `DialogActions` in `apps/web/src/dialog-actions.tsx`, which also asks before deleting an unusable saved view.

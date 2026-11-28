@@ -180,7 +180,8 @@ test("asks before removing the page from its ⋯, landing elsewhere, then Undo o
 
   // When Remove is taken, the page is gone, and a notification offers Undo
   await question.getByRole("button", { name: "Remove" }).click();
-  await expect(page).not.toHaveURL(new RegExp(made.pageId ?? "", "u"));
+  const removedId = made.pageId ?? "";
+  await expect.poll(() => page.url()).not.toContain(removedId);
   const notice = page.getByRole("status").filter({
     hasText: `Removed the ${name} page.`,
   });
@@ -188,4 +189,29 @@ test("asks before removing the page from its ⋯, landing elsewhere, then Undo o
   // Then Undo opens it again
   await notice.getByRole("button", { name: "Undo" }).click();
   await expect(page.getByRole("grid", { name })).toBeVisible();
+});
+
+test("refuses an emptied name in Rename page, with focus there, and Esc puts focus back on the ⋯", async ({
+  page,
+}) => {
+  // Given Rename page… from the page's ⋯
+  const name = await openTwoColumnPage(page);
+  const menu = page.getByRole("button", { name: `Actions for ${name}` });
+  await menu.click();
+  await page.getByRole("menuitem", { name: "Rename page…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Rename page" });
+  const field = dialog.getByRole("textbox", { name: "Name" });
+  await expect(field).toBeFocused();
+
+  // When the name is emptied and Rename is chosen, it's refused under Name, with focus there
+  await field.fill("");
+  await page.keyboard.press("Enter");
+  await expect(dialog.getByText("Name needed")).toBeVisible();
+  await expect(field).toBeFocused();
+
+  // Then Esc closes it, with focus back on the ⋯, and the page keeps its name
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(menu).toBeFocused();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(name);
 });
