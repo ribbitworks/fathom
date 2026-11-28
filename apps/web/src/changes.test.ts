@@ -167,6 +167,17 @@ describe("the plan's fields in the change history", () => {
     });
   });
 
+  it("names the table a link column links to, and any other as recorded", () => {
+    expect(describeValue("linkedTable", "features")).toEqual([
+      { strong: "Table" },
+      " ",
+      { value: "Features" },
+    ]);
+    expect(describeValue("linkedTable", "lists")?.at(-1)).toEqual({
+      value: "lists",
+    });
+  });
+
   it("names a field by its kind's column where kinds differ", () => {
     const named = (kind: string) =>
       describeField({ field: "note", oldValue: null, newValue: "x" }, kind).at(
