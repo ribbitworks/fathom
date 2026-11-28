@@ -68,6 +68,7 @@ export function privateTable({
     label: page.name,
     one: "row",
     noun: "rows",
+    emptyRowAlone: true,
     newRowLabel: () => "New row",
     removeLabel: () => "Remove row",
     nameOf,

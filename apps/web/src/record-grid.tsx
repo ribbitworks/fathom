@@ -229,16 +229,17 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {shownRecords.length === 0 && (
-                    <EmptyTableRow
-                      span={
-                        columns.length + besides.length + Number(withActions)
-                      }
-                      table={table}
-                      leavesOut={leavesOut}
-                      below={noneBelow}
-                    />
-                  )}
+                  {shownRecords.length === 0 &&
+                    !(table.emptyRowAlone === true && !leavesOut) && (
+                      <EmptyTableRow
+                        span={
+                          columns.length + besides.length + Number(withActions)
+                        }
+                        table={table}
+                        leavesOut={leavesOut}
+                        below={noneBelow}
+                      />
+                    )}
                   {bodyRows}
                 </Table.Tbody>
                 {table.totals !== undefined && (
