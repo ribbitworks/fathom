@@ -92,14 +92,15 @@ test("cuts a long page name short in the top bar before the account's, keeping i
   await page.evaluate("document.fonts.ready");
   const bar = page.getByRole("banner");
   const shown = bar.getByText(name);
-  const cut = (text: Locator) =>
-    text.evaluate((element) => element.scrollWidth > element.clientWidth);
+  // Whether a part's words are wider than its box, so cut short, or fit inside it.
+  const overflows = (element: { scrollWidth: number; clientWidth: number }) =>
+    element.scrollWidth > element.clientWidth;
+  const cut = (text: Locator) => text.evaluate(overflows);
 
   // Then the bar is one line, and the page's name is cut short, not the account's
   await expect.poll(() => cut(shown)).toBe(true);
   expect(await cut(bar.getByText("Feature Lead", { exact: true }))).toBe(false);
-  const fits = () =>
-    bar.evaluate((header) => header.scrollWidth <= header.clientWidth);
+  const fits = async () => !(await bar.evaluate(overflows));
   expect(await fits()).toBe(true);
 
   // And pointing at it shows its whole name in a tip
