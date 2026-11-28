@@ -7,7 +7,10 @@ import { Group, SegmentedControl, Tabs, Title, Tooltip } from "@mantine/core";
 import type { ReactNode } from "react";
 import { useCutTip } from "./cut-tip.ts";
 import { PageExportMenu } from "./page-export.tsx";
+import headerClasses from "./page-header.module.css";
 import classes from "./pages.module.css";
+
+export const pageHeadingId = "page-heading";
 
 export function PageHeader({
   title,
@@ -21,7 +24,7 @@ export function PageHeader({
   beside?: ReactNode;
   action?: ReactNode;
 }) {
-  // A long title is cut short, so the heading stays one line, with the whole title in a tip.
+  // The heading stays one line however long the title, so the whole title goes in a tip.
   const { words, shown, target } = useCutTip();
   return (
     <Group
@@ -38,9 +41,10 @@ export function PageHeader({
             fz={22}
             // So a page landed on, such as after removing the one open, can put focus on its
             // heading, with no stop for Tab.
+            id={pageHeadingId}
             tabIndex={-1}
             ref={words}
-            className={classes.pageTitle}
+            className={headerClasses.title}
             {...target}
           >
             {mark}

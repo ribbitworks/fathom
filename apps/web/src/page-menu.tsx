@@ -5,7 +5,7 @@
 
 import type { PrivatePage } from "@fathom/shared";
 import { Menu } from "@mantine/core";
-import { focusFoundSoon } from "./focus.ts";
+import { focusSoon } from "./focus.ts";
 import { useMineChanges } from "./mine-changes.tsx";
 import { PanelMoreMenu } from "./panel-menu.tsx";
 import { CopyItems } from "./record-key.tsx";
@@ -19,39 +19,32 @@ export function PageMenu({
   page: Pick<PrivatePage, "id" | "name" | "key">;
 }) {
   const changes = useMineChanges();
-  // The menu's item is gone once a dialog opens over it, so focus goes back to the ⋯, found by
-  // where it is, since renaming the page changes its name.
+  // The menu's item is gone once a dialog opens over it, so focus goes back to the ⋯.
   const back = () => {
-    focusFoundSoon(
-      () =>
-        document.querySelector<HTMLElement>(`#${pageMenuId} button`) ??
-        undefined,
-    );
+    focusSoon(pageMenuId);
   };
   return (
-    <span id={pageMenuId}>
-      <PanelMoreMenu label={actionsFor(page.name)}>
-        <Menu.Item
-          onClick={() => {
-            changes.rename(page, back);
-          }}
-        >
-          Rename page…
-        </Menu.Item>
-        {/* A page made before keys were has none to copy. */}
-        {page.key !== null && (
-          <CopyItems record={{ kind: "page", code: page.key }} />
-        )}
-        <Menu.Divider />
-        <Menu.Item
-          color="red"
-          onClick={() => {
-            changes.remove(page, back);
-          }}
-        >
-          Remove page…
-        </Menu.Item>
-      </PanelMoreMenu>
-    </span>
+    <PanelMoreMenu label={actionsFor(page.name)} id={pageMenuId}>
+      <Menu.Item
+        onClick={() => {
+          changes.rename(page, back);
+        }}
+      >
+        Rename page…
+      </Menu.Item>
+      {/* A page made before keys were has none to copy. */}
+      {page.key !== null && (
+        <CopyItems record={{ kind: "page", code: page.key }} />
+      )}
+      <Menu.Divider />
+      <Menu.Item
+        color="red"
+        onClick={() => {
+          changes.remove(page, back);
+        }}
+      >
+        Remove page…
+      </Menu.Item>
+    </PanelMoreMenu>
   );
 }

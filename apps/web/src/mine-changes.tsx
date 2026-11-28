@@ -4,10 +4,12 @@
 // the page that's open leaves it, and its Undo opens it again.
 
 import type { ListedPrivatePage } from "@fathom/shared";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { createContext, type ReactNode, useContext } from "react";
 import { useDialogState } from "./dialog-actions.tsx";
-import { focusFoundSoon } from "./focus.ts";
+import { focusSoon } from "./focus.ts";
+import { pageHeadingId } from "./page-header.tsx";
 import {
   landingAfter,
   privatePagesQuery,
@@ -41,14 +43,13 @@ export const useMineChanges = () => useContext(MineChangesContext);
 
 // The page landed on takes focus by its heading, so the next Tab starts from its top.
 const focusHeading = () => {
-  focusFoundSoon(
-    () => document.querySelector<HTMLElement>("main h1") ?? undefined,
-  );
+  focusSoon(pageHeadingId);
 };
 
 export function MineChangesProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const question = useRemovalQuestion();
+  const listed = useQuery(privatePagesQuery).data;
   const renaming = useDialogState<{ page: Page; kept: () => void }>();
   const changes = useSaving<ListedPrivatePage[]>({
     queryKey: privatePagesQuery.queryKey,
@@ -112,6 +113,8 @@ export function MineChangesProvider({ children }: { children: ReactNode }) {
         onRenamed={(renamed, changeSetId) => {
           renaming.close();
           renaming.dialog?.kept();
+          // With Mine's list unread, there is no name in it to change, nor to undo.
+          if (listed === undefined) return;
           changes.shown(
             (pages) =>
               pages.map((one) =>

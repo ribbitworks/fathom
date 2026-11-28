@@ -19,21 +19,10 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { describeProblem, isConflict } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
-import { createList, nameProblem, updateList } from "./lists.ts";
+import { createList, takenNameProblem, updateList } from "./lists.ts";
 import { CountedInput } from "./counted-input.tsx";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import classes from "./pages.module.css";
-
-// What a name says when another of its kind, such as a view, already has it.
-export const nameTaken = (kind: string) => `Another ${kind} has that name`;
-
-// A name's problem, if any, saying so when another of its kind already has it.
-export const takenNameProblem = (
-  kind: string,
-  name: string,
-  maximum: number,
-  taken: boolean,
-) => nameProblem(name, maximum, taken, nameTaken(kind));
 
 export function ListDialog({
   list,

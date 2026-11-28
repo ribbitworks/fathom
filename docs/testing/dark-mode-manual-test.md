@@ -1101,4 +1101,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The violet ring before its heading, and before **Dark notes** under **Mine** in the left-hand menu, is easy to see.
   - **Notes:**
 
+- [ ] `B98D` Select the **⋯** at the right of the page's heading.
+  - **Expected:** A dark menu opens, its items and the red **Remove page…** easy to read.
+  - **Notes:**
+
+- [ ] `F6C3` Select **Remove page…**.
+  - **Expected:** A dark dialog asks "Remove the Dark notes page?", its words, **Cancel** and the red **Remove** easy to read.
+  - **Notes:**
+
+- [ ] `8AE1` Select **Cancel**.
+  - **Expected:** The dialog closes, and the page is still open.
+  - **Notes:**
+
 **Afterwards:** Choose **Light** in the Appearance menu, then run Reset the Database, ending on the **Sign in** page without signing in.

@@ -40,8 +40,7 @@ import {
 } from "./discard-question.tsx";
 import { focusSoon, holdKeys } from "./focus.ts";
 import { Icon } from "./icons.tsx";
-import { nameTaken } from "./list-dialog.tsx";
-import { listsQuery, liveLists, nameProblem } from "./lists.ts";
+import { listsQuery, liveLists, nameProblem, nameTaken } from "./lists.ts";
 import {
   makePrivatePage,
   pageNameProblem,
