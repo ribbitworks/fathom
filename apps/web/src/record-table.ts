@@ -258,6 +258,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // What the table says while it has no records, where not "No" and its noun with "yet", such as
   // "No drafts" for drafts, which come and go.
   none?: string;
+  // Whether the empty row alone shows while the table has no records, with no line saying so, as
+  // on a private page, typed in like a spreadsheet. A search finding nothing still says so.
+  emptyRowAlone?: boolean;
   // For a table of several kinds of record, how many of each some records are, which Metrics counts.
   countKinds?: (records: readonly Rec[]) => string;
   // The kinds of record the table holds, the first of which a new row adds unless asked for

@@ -415,6 +415,27 @@ describe("a page under Mine", () => {
     expect(screen.getByText("Ask about bulk edits")).toBeDefined();
   });
 
+  it("shows its empty row alone while it has no rows, with no line saying so", async () => {
+    serverAnswers(pageAnswers(followUps([])));
+    renderApp(`/mine/${pageId}`);
+    const grid = await screen.findByRole("grid", { name: "Follow-ups" });
+    expect(within(grid).queryByText("No rows yet")).toBeNull();
+    expect(within(grid).getByRole("row", { name: "New row" })).toBeDefined();
+  });
+
+  it("says so when its search finds nothing", async () => {
+    serverAnswers(
+      pageAnswers(followUps([row("r1", "Check offline conflicts")])),
+    );
+    renderApp(`/mine/${pageId}`);
+    await screen.findByRole("grid", { name: "Follow-ups" });
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search rows" }),
+      "nothing like it",
+    );
+    expect(await screen.findByText("No matching rows")).toBeDefined();
+  });
+
   it("says so when its lists can't be read, and reads them again on Try again", async () => {
     let failing = true;
     serverAnswers({
