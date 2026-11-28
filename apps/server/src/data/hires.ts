@@ -305,11 +305,11 @@ export async function updateHire(
   });
 }
 
-// The hire asked to be filled, as the actor's draft makes it, with it as it is live: one not drafted
-// to be removed or already filled, with no rejected draft, whose changes a fill would otherwise send
 const notApproved =
   "This planned hire's headcount isn't approved yet; move it to an approved state before filling it";
 
+// The hire asked to be filled, as the actor's draft makes it, with it as it is live: one not drafted
+// to be removed or already filled, with no rejected draft, whose changes a fill would otherwise send
 // for approval again, and in a state meaning Open.
 export async function fillableHire(
   transaction: Transaction,

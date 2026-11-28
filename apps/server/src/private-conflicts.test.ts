@@ -398,12 +398,14 @@ describe("publishing over a removal", () => {
         .where(eq(listItems.id, testPosition));
     await retire(true);
 
-    // When Ben keeps his change over the removal
-    const response = await keepingSide(bob, "mine");
-
-    // Then it publishes, since Kai keeps the position he already has
-    await retire(false);
-    expect(response.statusCode, response.body).toBe(200);
+    // When Ben keeps his change over the removal, then it publishes, since Kai keeps the position he
+    // already has
+    try {
+      const response = await keepingSide(bob, "mine");
+      expect(response.statusCode, response.body).toBe(200);
+    } finally {
+      await retire(false);
+    }
   });
 
   // Ben privately removes Kai, then Ana's Site for Kai is published and approved.

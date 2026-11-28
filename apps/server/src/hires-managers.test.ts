@@ -435,7 +435,9 @@ describe("a planned manager", () => {
     const response = await send(one, "POST", "/api/unpublished/publish");
 
     expect(response.statusCode, response.body).toBe(409);
-    expect(errorOf(response)).toMatch(/^The planned hire .+: .+/);
+    expect(errorOf(response)).toMatch(
+      /^The planned hire .+: Someone already has that ID$/,
+    );
     await send(one, "POST", "/api/unpublished/discard");
   });
 
