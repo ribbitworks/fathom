@@ -52,6 +52,7 @@ import {
   noMakers,
   readRecordsState,
   recordDraftOut,
+  recordDraftStanding,
   recordHeldBy,
 } from "./records.ts";
 import {
@@ -357,7 +358,7 @@ export async function readAllocations(
       );
       return {
         allocations: records.map(({ id, record }) => {
-          const draft = recordDraftOut(allocationKind, state, makers, id);
+          const draft = stateOf(state, allocationKind.type).drafts.get(id);
           return {
             id,
             personId: text(record.personId),
@@ -374,23 +375,7 @@ export async function readAllocations(
                   draft: {
                     action: draft.action,
                     months: monthsOf(versionOf(state, type, id)),
-                    state: draft.state,
-                    ...(draft.reason === undefined
-                      ? {}
-                      : { reason: draft.reason }),
-                    madeBy: draft.madeBy,
-                    madeAs: draft.madeAs,
-                    madeAt: draft.madeAt,
-                    editors: draft.editors,
-                    ...(draft.unpublished === true
-                      ? { unpublished: true }
-                      : {}),
-                    ...(draft.discardable === true
-                      ? { discardable: true }
-                      : {}),
-                    ...(draft.needsOtherApprover === true
-                      ? { needsOtherApprover: true }
-                      : {}),
+                    ...recordDraftStanding(allocationKind, makers, id, draft),
                   },
                 }),
             ...recordHeldBy(state, type, id),
