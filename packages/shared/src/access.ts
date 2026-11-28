@@ -244,7 +244,7 @@ export const permissionDescriptions: Record<
     ],
   },
   "private-pages:make": {
-    allows: "Makes pages under Mine, each a table nobody else sees.",
+    allows: "Makes tables only they see.",
     without: "Cannot make private pages, and doesn't see the ones they made.",
   },
 };

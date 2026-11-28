@@ -59,12 +59,7 @@ interface TypedColumn {
   listId: string | null;
 }
 
-const steps = [
-  { value: "name", label: "Name" },
-  { value: "columns", label: "Columns" },
-] as const;
-
-type Step = (typeof steps)[number]["value"];
+type Step = "name" | "columns";
 
 const firstColumnName = "Name";
 
@@ -305,25 +300,6 @@ function NewPageSteps({
       }}
     >
       <Stack gap="md">
-        <Text fz="sm" c="dimmed">
-          {steps.map(({ value, label }, index) => (
-            <Text
-              key={value}
-              span
-              inherit
-              {...(value === step
-                ? {
-                    fw: 600,
-                    c: "var(--mantine-color-text)",
-                    "aria-current": "step",
-                  }
-                : {})}
-            >
-              {index > 0 && " · "}
-              {`${String(index + 1)} ${label}`}
-            </Text>
-          ))}
-        </Text>
         {step === "name" ? (
           <TextInput
             id={`${ids}-name`}

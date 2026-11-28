@@ -36,7 +36,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 - **Top bar:** It names where the user is, as [The Top Bar](../standards/ui-conventions/pages-and-panels.md#the-top-bar) sets out, and holds the account menu.
   - **Account menu:** The email address, then the role acted as, then Change name…, Change password…, Appearance (System, Light, Dark), and Sign out.
   - **Several roles:** A Role group ticks the role acted as. Choosing another switches at once, without signing in again; a page the new role doesn't allow gives way to the first one it does.
-  - **Mine:** First, for a role that makes private pages: the user's own pages, each after the private ring, then New page, as [Mine](pages/mine.md#the-sidebar) sets out.
+  - **Mine:** After People, for a role that makes private pages: the user's own pages, each after the private ring, then New page, as [Mine](pages/mine.md#the-sidebar) sets out.
 - **Collapsed sidebar:** A rail of icons, each naming its page on hover or focus. A private page shows its first character after its ring in place of an icon. Each item keeps its height, and a section's heading becomes a thin line of the same height, so nothing moves. The choice is remembered.
 - **Narrow screens:** The sidebar opens from a menu button, and closes when the user moves to another page.
 - **Pages:** Each starts with its heading, as [The Page Heading](../standards/ui-conventions/pages-and-panels.md#the-page-heading) sets out. The main action is at the right, after the Export icon where the table exports, as [Exporting](../standards/ui-conventions/tables.md#exporting) sets out. Content sits in bordered panels on a canvas a shade darker than them.

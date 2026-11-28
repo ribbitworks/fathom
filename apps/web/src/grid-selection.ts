@@ -3,7 +3,7 @@
 // The cell of the shared table selected and the cell being edited, and what else the table keeps
 // while it is used.
 
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { ScreenPoint } from "./app-menu.tsx";
 import { focusSoon } from "./focus.ts";
 import type { ShownGrid } from "./grid-groups.tsx";
@@ -22,6 +22,11 @@ import type { CellValue } from "./table-view.ts";
 
 export function useGridState<Rec extends GridRecord, Change>() {
   const [newRows, setNewRows] = useState<NewRow[]>([{ key: 0, values: {} }]);
+  // The new rows as last drawn, for work done once focus has settled after a change to them.
+  const latestNewRows = useRef(newRows);
+  useLayoutEffect(() => {
+    latestNewRows.current = newRows;
+  }, [newRows]);
   const [nextKey, setNextKey] = useState(1);
   // The selected cell and the cell being edited, by row and column key rather than position, so they
   // stay with their record when a save puts the rows in a new order.
@@ -56,6 +61,7 @@ export function useGridState<Rec extends GridRecord, Change>() {
   const [filtering, setFiltering] = useState<string>();
   return {
     newRows,
+    latestNewRows,
     setNewRows,
     nextKey,
     setNextKey,

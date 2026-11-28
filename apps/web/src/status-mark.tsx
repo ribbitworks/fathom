@@ -231,6 +231,7 @@ export function DraftedItem({
   emptied,
   heldBy,
   unpublished = false,
+  privately = false,
   part,
   slot = false,
   dataClass,
@@ -250,6 +251,9 @@ export function DraftedItem({
   // The user's own unpublished changes, where no draft is given to say so, or their words, such as
   // a new row's that is not saved yet.
   unpublished?: boolean | string | undefined;
+  // Whether those unpublished changes are on a page only its maker sees, which has no drafts, so
+  // their hollow dot is in the private violet rather than the drafts' yellow.
+  privately?: boolean | undefined;
   part?: DraftedPart | undefined;
   slot?: boolean | undefined;
   // The class of the item's values, marked between its draft's dots and the item.
@@ -283,7 +287,10 @@ export function DraftedItem({
         <Dot tone="live" tip={liveWaitingWords(draft)} />
       )}
       {ownUnpublished !== undefined && (
-        <Dot tone="unpublished" tip={ownUnpublished} />
+        <Dot
+          tone={privately ? "private" : "unpublished"}
+          tip={ownUnpublished}
+        />
       )}
       {heldBy !== undefined && <HeldDot heldBy={heldBy} />}
     </>

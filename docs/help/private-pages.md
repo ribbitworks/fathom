@@ -1,6 +1,6 @@
 # Private pages
 
-A private page is a table of your own, under **Mine** at the top of the left-hand menu. You type in it as you would in a spreadsheet. Nobody else sees it, an Administrator included.
+A private page is a table of your own, under **Mine** in the left-hand menu. You type in it as you would in a spreadsheet. Nobody else sees it, an Administrator included.
 
 ## What to Know First
 
@@ -30,6 +30,8 @@ You're done when the page opens, and shows last under **Mine**.
 
 1. Open the page from **Mine**.
 1. Type the first column's value in the empty row at the end of the table, and press Enter.
+
+   The row is also saved when you Tab out of its last cell, or select anywhere outside it. Until it's saved, a violet ring before it says it's new.
 1. Select a cell you want to change, start typing or press Enter, and press Enter again to keep it.
 
 Tab moves to the next cell, and the arrow keys move around the table. Space ticks a **Checkbox** cell. You can paste rows from a spreadsheet too.

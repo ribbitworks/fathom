@@ -54,6 +54,7 @@ import { ChangePasswordDialog } from "./change-password.tsx";
 import { menuChoice } from "./last-views.ts";
 import { type Item, opens, sections } from "./navigation.ts";
 import {
+  mineLabel,
   MineSection,
   opensUnderMine,
   showsMine,
@@ -187,14 +188,21 @@ function AboutItem({ item, rail }: { item: Item; rail: boolean }) {
   );
 }
 
+const mineBefore = "Administration";
+
 function Sidebar({ access, rail }: { access: ClassAccess; rail: boolean }) {
   return (
     <Stack gap={22}>
-      {showsMine(access.permissions) && <MineSection rail={rail} />}
       {sections.map((section) => {
         const items = section.items.filter((item) => opens(item, access));
-        if (items.length === 0) return null;
-        return (
+        // Mine comes after Plan and People, before Administration, whether or not that shows.
+        const mine = section.label === mineBefore &&
+          showsMine(access.permissions) && (
+            <MineSection key={mineLabel} rail={rail} />
+          );
+        if (items.length === 0) return mine;
+        return [
+          mine,
           <SidebarGroup key={section.label} label={section.label} rail={rail}>
             {items.map((item) =>
               item.box === "about" ? (
@@ -217,8 +225,8 @@ function Sidebar({ access, rail }: { access: ClassAccess; rail: boolean }) {
                 </RailTip>
               ),
             )}
-          </SidebarGroup>
-        );
+          </SidebarGroup>,
+        ];
       })}
     </Stack>
   );

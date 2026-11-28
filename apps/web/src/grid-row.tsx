@@ -3,8 +3,8 @@
 // The shared table's rows: each record's, with its Live row under it, the new rows, the group
 // headings and the totals.
 
-import { Table, type TableTdProps, Text, VisuallyHidden } from "@mantine/core";
-import { type ReactNode, useSyncExternalStore } from "react";
+import { Table, Text, VisuallyHidden } from "@mantine/core";
+import type { FocusEvent } from "react";
 import { ColouredName } from "./colour-swatch.tsx";
 import { focusFoundSoon } from "./focus.ts";
 import {
@@ -45,17 +45,19 @@ import {
 import { RowTick } from "./row-ticks.tsx";
 import { DraftedItem, MarkedItem, besideLive } from "./status-mark.tsx";
 import { wasWords } from "./draft-marks.ts";
+import {
+  FirstValue,
+  newRowWords,
+  NewRowWrong,
+  SelectableCell,
+  unlessWarned,
+} from "./grid-cell-parts.tsx";
 
 const recordCellAttribute = "data-record-cell";
 const recordCellOf = (id: string, columnKey: string) => `${id} ${columnKey}`;
 
 // Every cell of a record in a column, one in each of its rows.
 
-// An empty value's stand-in, unless a warning in its place says the same, so the words show once.
-const unlessWarned = (
-  standIn: string | undefined,
-  warning: { words: string } | undefined,
-) => (standIn === warning?.words ? undefined : standIn);
 export const recordCellSelector = (id: string, columnKey: string) =>
   `[${recordCellAttribute}="${CSS.escape(recordCellOf(id, columnKey))}"]`;
 
@@ -77,44 +79,6 @@ export function focusRecordCell(id: string, columnKey: string): void {
       ) ?? cells[0]
     );
   });
-}
-
-// A record's cell, reached by Tab while it is the one selected.
-function SelectableCell({
-  activeAt,
-  isSelectedAt,
-  ...cell
-}: TableTdProps & {
-  activeAt: PlaceStore;
-  isSelectedAt: (place: Place | undefined) => boolean;
-}) {
-  const selected = useSyncExternalStore(activeAt.subscribe, () =>
-    isSelectedAt(activeAt.get()),
-  );
-  return <Table.Td {...cell} tabIndex={selected ? 0 : -1} />;
-}
-
-// What the mark of a new row being filled in says, until its record is added: that it is new, and
-// what is wrong with it so far, or otherwise the required columns still empty.
-function newRowWords(missing: readonly string[], wrong: string | undefined) {
-  const status = "New, not saved yet";
-  const detail =
-    wrong ?? (missing.length > 0 ? `${missing.join(", ")} needed` : undefined);
-  return detail === undefined ? status : `${status}: ${detail}`;
-}
-
-// What is wrong with a new row so far, in red after its value, announced as it is found, since it
-// is a problem to fix rather than a mark's words.
-function NewRowWrong({ wrong, id }: { wrong: string | undefined; id: string }) {
-  return (
-    <span aria-live="polite">
-      {wrong !== undefined && (
-        <span id={id} className={classes.newMarkWrong}>
-          {wrong}
-        </span>
-      )}
-    </span>
-  );
 }
 
 export function gridRows<Rec extends GridRecord, Change, Request>(
@@ -160,6 +124,8 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     | "standInAt"
     | "liveStandIn"
     | "emptyNewRow"
+    | "submitNewRows"
+    | "latestNewRows"
     | "onPaste"
     | "hasRowMenu"
     | "rowMenuItems"
@@ -219,6 +185,8 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     standInAt,
     liveStandIn,
     emptyNewRow,
+    submitNewRows,
+    latestNewRows,
     onPaste,
     hasRowMenu,
     rowMenuItems,
@@ -389,6 +357,19 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
         onContextMenu={(event) => {
           onRowContextMenu(event, row);
         }}
+        // Where records have no drafts, a new row filled in is added once focus leaves it, by Tab past
+        // its end, another row or anything else on the page, as every value there saves at once. It
+        // waits for the cell being left to put its value in the row first.
+        {...(!withDrafts && row.newRow
+          ? {
+              onBlur: (event: FocusEvent<HTMLTableRowElement>) => {
+                if (event.currentTarget.contains(event.relatedTarget)) return;
+                setTimeout(() => {
+                  submitNewRows(latestNewRows.current);
+                }, 0);
+              },
+            }
+          : {})}
       >
         {columns.flatMap((column, columnIndex) => {
           const cell = { row: rowIndex, column: columnIndex };
@@ -558,6 +539,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                         ? row.record?.heldBy
                         : undefined
                     }
+                    privately={!withDrafts}
                     unpublished={
                       newRowMarked &&
                       newRowWords(
@@ -800,24 +782,4 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     totalRow,
     bodyRows,
   };
-}
-
-// A row's first value, cut short in its cell as every value is while a refusal under it runs on past
-// the cell. It is always wrapped, so its editor isn't drawn afresh when a refusal comes or goes.
-function FirstValue({
-  first,
-  clipped,
-  children,
-}: {
-  first: boolean;
-  clipped: boolean;
-  children: ReactNode;
-}) {
-  return first ? (
-    <span className={clipped ? classes.recordClippedValue : undefined}>
-      {children}
-    </span>
-  ) : (
-    children
-  );
 }

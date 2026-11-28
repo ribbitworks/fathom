@@ -73,6 +73,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Example:** People, Features, and each table on Projects.
 - **The empty row:** Empty rows at the end take new records, their cells blank until something is typed in one, so they aren't taken for records.
   - **While it's filled in:** A row being filled in is tinted as the draft it will be, with a hollow dot in its slot. The dot's tip and spoken words say New, not saved yet, and what is wrong so far or which required columns are still empty; what is wrong also shows in red after the first value.
+  - **On a table without drafts:** No tint, and the dot is in the private violet. The row is added on Enter, on Tab from its last column, or when focus leaves the row, since there is no draft to keep it in.
   - **Clear row:** The row's menu, also opened with Shift+F10, offers Clear row, which takes the row and what it holds away.
   - **Drawn by:** `gridSaving` in `apps/web/src/grid-saving.ts`, with its mark in `apps/web/src/grid-row.tsx` and Clear row in `apps/web/src/row-menus.tsx`.
   - **Example:** Type a name in the empty row at the end of Features.
