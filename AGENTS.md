@@ -143,7 +143,7 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history; see
 - **UI tests:** `pnpm test:ui`
 - **Markdown lint:** `pnpm lint:md`
 - **Shell lint:** `pnpm lint:shell`
-- **Read-only diagnostics allowed in Restrictive mode:** `pnpm lint`, `pnpm format:check`, `pnpm lint:md`, `pnpm lint:shell`
+- **Read-only diagnostics allowed in Restrictive mode:** `pnpm lint`, `pnpm format:check`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:duplicates`
 
 ## Branching
 

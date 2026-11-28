@@ -4,7 +4,7 @@ category: "Guide"
 audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/workflows/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Checks and CI
@@ -235,7 +235,7 @@ Before a push, it runs only the jobs the change needs. Then, unless the change i
 ```mermaid
 flowchart TD
     Start["pnpm check or pnpm check:push"] --> Jobs{"--before-push?"}
-    Jobs -- Yes --> BeforePush["pnpm test:changed --without-types, and the linters: pnpm lint --no-cache, pnpm format:check, pnpm typecheck, pnpm lint:md and pnpm lint:shell"]
+    Jobs -- Yes --> BeforePush["pnpm test:changed --without-types, and the linters: pnpm lint --no-cache, pnpm format:check, pnpm typecheck, pnpm lint:md, pnpm lint:shell and pnpm lint:duplicates"]
     Jobs -- No --> FullCheck["pnpm test:packages, pnpm security, pnpm test:scripts, the same linters, pnpm lint:licences and pnpm lint:renovate"]
     BeforePush --> Skip{"Are the arguments known, and does each --skip name a job, leaving at least one?"}
     FullCheck --> Skip
@@ -285,6 +285,7 @@ flowchart TD
 - **Renovate settings:** passes at once unless `renovate.json` changed, as [Checks and Tests](development-setup.md#checks-and-tests) sets out.
 - **A container runtime:** Package tests, Security report, Licences and Renovate settings each fail, naming it, when no container runtime is running.
 - **Licences:** checks that every file states its copyright and licence, with the REUSE tool. The script tests check each header's layout.
+- **Duplicates:** fails when the change copies a block of code, as [Checks and Tests](development-setup.md#checks-and-tests) sets out. Older copies, and edits inside them, don't fail it, so their number can only go down.
 
 ### The Changed Tests
 

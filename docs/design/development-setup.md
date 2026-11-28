@@ -4,7 +4,7 @@ category: "Guide"
 audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/**"]
 dependencies: ["docs/design/architecture.md", "docs/standards/testing.md", "docs/design/checks-and-ci.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: Development Setup
@@ -235,9 +235,12 @@ The copy gets new names, and so a new, empty database.
 | `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, the application and database can't reach the internet, and the application image holds none of the tests or the files only they use |
 | `pnpm test:ui` | The UI tests in a real browser, against this copy's development server, which must be running, after reseeding its fictional data, as [ADR 0013](../adr/0013-ui-tests.md) sets out |
 | `pnpm typecheck` | Type checking across the workspace |
-| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences`, `pnpm lint:renovate` | Each linter on its own. `pnpm lint:renovate` validates `renovate.json` with Renovate's own validator, only when it has changed since `origin/main` |
+| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences`, `pnpm lint:renovate`, `pnpm lint:duplicates` | Each linter on its own. `pnpm lint:renovate` validates `renovate.json` with Renovate's own validator, only when it has changed since `origin/main` |
 | `pnpm format` | Format the source files |
 
+- **`pnpm lint:duplicates`** runs jscpd as `.jscpd.json` sets it up, over the code in `apps/`, `deploy/`, `packages/` and `scripts/`, but not the fictional data in `packages/fixtures/`. It finds each block of 100 tokens or more repeated between two files, or within one, both in the working copy and where the branch left `origin/main`.
+  - **Fails:** where two files repeat more of each other than they did there, naming each copy's two places. A new file counts, committed or not.
+  - **Passes:** over older copies, an edit inside one, and a renamed file that holds one, so the number of copies can only go down.
 - **`pnpm check --skip`** and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it.
 - **`pnpm check` without a connection to the internet** stops before starting, naming `--offline`, which leaves out the Renovate settings and the scans that need the internet, once `pnpm offline:prepare` has run, as [Working Offline](#working-offline) describes.
 - **`pnpm test:ui`'s first run** downloads Chromium, so it needs the internet; `pnpm offline:prepare` doesn't fetch it.

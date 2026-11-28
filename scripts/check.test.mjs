@@ -27,6 +27,7 @@ const jobs = [
   "Types",
   "Markdown",
   "Shell scripts",
+  "Duplicates",
   "Licences",
   "Renovate settings",
 ];
@@ -37,6 +38,7 @@ const beforePush = [
   "Types",
   "Markdown",
   "Shell scripts",
+  "Duplicates",
 ];
 const folders = [];
 
@@ -337,6 +339,7 @@ describe("scripts/check.sh", () => {
           "Formatting",
           "Types",
           "Markdown",
+          "Duplicates",
         ].flatMap((job) => ["--skip", job]),
       ],
       { environment: { CHANGED: "apps/web/src/app.tsx" } },
@@ -438,7 +441,7 @@ describe("scripts/check.sh", () => {
     const result = run(["--before-push"]);
     assert.equal(result.status, 0, result.stderr);
     assert.ok(
-      result.stdout.includes("Running 6 jobs side by side"),
+      result.stdout.includes("Running 7 jobs side by side"),
       result.stdout,
     );
     for (const job of beforePush)

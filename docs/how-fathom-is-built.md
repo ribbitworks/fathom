@@ -69,7 +69,7 @@ flowchart TD
    - Every other change runs them.
 1. **Merge:** Nothing is merged until the full check, the container tests included, passes on the code `main` will hold, which the merge queue and a rule on `main` enforce, and never without the maintainer's word.
 
-Duplicated code isn't allowed: a new component, helper or rule first looks for one that already does the job, and the review searches for one too. Only the maintainer can approve an exception.
+Duplicated code isn't allowed: a new component, helper or rule first looks for one that already does the job, and the review searches for one too. The full check fails a change that copies a block of code. Only the maintainer can approve an exception.
 
 Besides the full check and the container tests, GitHub runs:
 

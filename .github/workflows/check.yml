@@ -56,8 +56,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      # With full history, so the secrets scan sees every commit and the image scans can compare
-      # with the default branch.
+      # With full history, so the secrets scan sees every commit, and the image scans and the
+      # duplicate-code check can compare with the default branch.
       - name: Check out with full history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
