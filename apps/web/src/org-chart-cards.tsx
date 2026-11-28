@@ -63,7 +63,8 @@ interface CardData extends Record<string, unknown> {
   // Whether the reader may change the name and colour of the team the person leads.
   editsTeams: boolean;
   onToggle: (id: string) => void;
-  // Shows the person's details beside the chart; absent for someone People does not show the reader.
+  // Shows the person's details beside the chart, or a planned hire's, or those of the person filling
+  // it; absent for a card People shows the reader nothing for.
   onOpen: (() => void) | undefined;
 }
 
@@ -248,9 +249,7 @@ function PersonCard({ data }: NodeProps<CardNode>) {
   const shownId = planned?.shownId;
   const madeName = shownId !== undefined;
   const cardName = shownId ?? person.preferredName;
-  const linked =
-    (person.employeeId !== null || person.teamCard === true) &&
-    onOpen !== undefined;
+  const shownName = madeName ? <FilledIn>{cardName}</FilledIn> : cardName;
   return (
     <CardMenu
       name={cardName}
@@ -271,7 +270,7 @@ function PersonCard({ data }: NodeProps<CardNode>) {
             onMenuKey(event);
           }}
           // A card whose name isn't a link takes focus itself, so its menu opens from the keyboard.
-          {...(linked
+          {...(onOpen !== undefined
             ? {}
             : { tabIndex: 0, role: "group", "aria-label": cardName })}
           className={classes.card}
@@ -294,12 +293,8 @@ function PersonCard({ data }: NodeProps<CardNode>) {
                 words={leftWarning.words}
                 spoken={leftWarning.spoken}
               >
-                {!linked ? (
-                  madeName ? (
-                    <FilledIn className={classes.label}>{cardName}</FilledIn>
-                  ) : (
-                    <span className={classes.label}>{cardName}</span>
-                  )
+                {onOpen === undefined ? (
+                  <span className={classes.label}>{shownName}</span>
                 ) : (
                   <Link
                     id={cardLinkId(person.id)}
@@ -317,7 +312,7 @@ function PersonCard({ data }: NodeProps<CardNode>) {
                       onOpen();
                     }}
                   >
-                    {person.preferredName}
+                    {shownName}
                   </Link>
                 )}
               </MarkedItem>

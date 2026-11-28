@@ -10,6 +10,7 @@ import {
   type OrgChartDraft,
   type OrgChartPerson,
   orgChartSchema,
+  type Person,
   type PaletteColour,
   type Show,
   allOf,
@@ -21,7 +22,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { dayQuery, sendJson } from "./api.ts";
-import { personKeyOf } from "./people-rows.ts";
+import { isHire, personKeyOf } from "./people-rows.ts";
 import type { ViewSearch } from "./table-view.ts";
 import { formatDay } from "./day-formats.ts";
 import { shownDay, today } from "./today.ts";
@@ -99,9 +100,16 @@ export interface ChartPerson extends OrgChartPerson {
   featureTeam?: string;
   featureTeamId?: string;
   teamCard?: true;
+  // On the feature team chart, the record's own id, since a card's id names its team too.
+  ownId?: string;
   // On the feature team chart, for a planned hire its team names someone filling: who, and the day
   // they start, as the team's details say, in place of when it's expected.
-  filled?: FillerWords;
+  filled?: Filler;
+}
+
+// Someone filling a planned hire, as its card names them, with their identifier.
+export interface Filler extends FillerWords {
+  personId: string;
 }
 
 // Who fills a planned hire, and the words for the day they start where given, apart, so a card can
@@ -462,6 +470,40 @@ export const chartKeyOf = (person: ChartPerson): RecordKeyOf =>
     hire: person.planned !== undefined,
     team: person.teamCard === true,
   });
+
+// How the address names a card's person, for the team shown alone and the person found: by Employee
+// ID, or, for a planned hire, by Fathom's own ID. Null for a Live copy, which the person themselves
+// stands for.
+export function chartAddressOfCard(person: ChartPerson): string | null {
+  if (person.liveCopyOf !== undefined) return null;
+  return person.planned === undefined
+    ? person.employeeId
+    : (person.ownId ?? person.id);
+}
+
+// The People ID of the details each card opens, by the card's id. A hire is found by its key, since
+// its card on a feature team has an id of its own.
+export function detailsOpened(
+  cards: Iterable<ChartPerson>,
+  rows: readonly Person[] | undefined,
+): Map<string, string> {
+  const hireRows = new Map(
+    (rows ?? []).filter(isHire).map((row) => [row.keyNumber, row.employeeId]),
+  );
+  const byId = new Map((rows ?? []).map((row) => [row.id, row.employeeId]));
+  const opened = new Map<string, string>();
+  for (const card of cards) {
+    if (card.liveCopyOf !== undefined) continue;
+    const details =
+      card.planned === undefined
+        ? (card.employeeId ?? undefined)
+        : card.filled === undefined
+          ? hireRows.get(card.keyNumber)
+          : byId.get(card.filled.personId);
+    if (details !== undefined) opened.set(card.id, details);
+  }
+  return opened;
+}
 
 // What the finder says when nobody on the chart has the name typed. While one team is shown alone,
 // it names those outside the team who have it, so nobody takes them for missing.

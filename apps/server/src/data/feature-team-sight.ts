@@ -365,10 +365,11 @@ export function hireOnTeamSeen(
   { keyNumber, positionTier }: { keyNumber: number; positionTier: Tier },
   { everyone, seesPeople, seesTier, shown }: FillerSight,
 ): { name: string; hire: TeamHire } {
-  const filler =
+  const fillerId =
     seesPeople && hire.filledBy !== null && shown(hire.filledBy)
-      ? everyone.get(hire.filledBy)
+      ? hire.filledBy
       : undefined;
+  const filler = fillerId === undefined ? undefined : everyone.get(fillerId);
   const starts = filler?.kind === "person" ? text(filler.startDate) : null;
   return {
     name: hireCalled(
@@ -381,10 +382,11 @@ export function hireOnTeamSeen(
       ...(hire.name === null ? { shownId: hire.shownId } : {}),
       expected: monthOf(hire.firstDay),
       ...(hire.dated ? {} : { undated: true as const }),
-      ...(filler === undefined
+      ...(fillerId === undefined || filler === undefined
         ? {}
         : {
             filledBy: {
+              id: fillerId,
               name: filler.preferredName,
               ...(starts === null ? {} : { starts }),
             },

@@ -413,6 +413,19 @@ Proved by automated tests in `apps/server/src/org-chart.test.ts`.
     - 'Platform engineer' reads "Planned, expected" and the month six months after the month Restore the Seed Data was run, such as "May 2027" for a run in November 2026.
   - **Notes:**
 
+- [ ] `5D2B` Point at "TBD-" and its number on the card with 'SDET' under it, and select it.
+  - **Expected:**
+    - While pointed at, the name stays grey and in italics, and is underlined.
+    - A details panel opens beside the chart, titled "SDET, TBD-" and the card's number.
+    - The card stays in view, with a sea-blue ring.
+  - **Notes:**
+
+- [ ] `9E71` Press Esc.
+  - **Expected:**
+    - The details panel closes.
+    - "TBD-" and its number on that card have the keyboard focus outline.
+  - **Notes:**
+
 - [ ] `47AC` On the planned Engineering Manager's card, select the small org chart button at the top right.
   - **Expected:**
     - That card is at the top of the chart.

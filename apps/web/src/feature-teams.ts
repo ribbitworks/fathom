@@ -278,7 +278,13 @@ export function featureTeamPeople(
       const hire = hires.get(person.id);
       return hire?.filledBy === undefined
         ? person
-        : { ...person, filled: fillerWords(hire.filledBy) };
+        : {
+            ...person,
+            filled: {
+              ...fillerWords(hire.filledBy),
+              personId: hire.filledBy.id,
+            },
+          };
     };
     const found = shown.leadId === null ? undefined : byId.get(shown.leadId);
     const lead = found === undefined ? undefined : onTeam(found);
@@ -304,6 +310,7 @@ export function featureTeamPeople(
         : {
             ...lead,
             id: rootId,
+            ownId: lead.id,
             teamName: shown.name,
             teamColour: team.colour,
             managerId: null,
@@ -342,6 +349,7 @@ export function featureTeamPeople(
         {
           ...onTeam(person),
           id: memberCardId(team.id, personId),
+          ownId: personId,
           teamName: null,
           teamColour: null,
           managerId: rootId,

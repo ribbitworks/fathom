@@ -40,6 +40,8 @@ The Org chart draws the organization as cards, by reporting teams or by feature 
 - **A manager who has left:** A red Left box, only for readers who see Personal details. Others see the card unmarked, opening nothing, since People doesn't list them.
 - **A person found:** Centred with a sea-blue ring, with hidden managers above opened.
 - **Clicking a person:** Opens [Person details](people.md#person-details), keeping the card centred until the reader moves the chart.
+  - **A planned hire's card:** Opens the hire's details, the panel its People row opens, on both charts. It opens from its name, Enter on its name, or anywhere else on the card, the same ways a person's card does.
+  - **A filled hire's card:** On a feature team, it opens the details of the person who filled it, for readers shown who that is. A filled planned hire's link does the same, as [A record's link](../../standards/ui-conventions/tables.md#the-address) sets out. Any other reader sees the hire as not yet filled, so its card opens the hire's details.
 
 ## Teams
 
@@ -61,7 +63,7 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
 ## Planned Hires
 
 - **Who is drawn:** Every hire not yet filled, for every reader, and each filled one whose person hasn't started, for readers who don't see Personal details. On Feature teams, a filled hire stays on its teams until its person starts, for every reader of feature teams, as [Feature Teams](#feature-teams) sets out.
-- **Card:** A placeholder with a grey dashed edge, after the people under its manager, named as its People row is, opening nothing.
+- **Card:** A placeholder with a grey dashed edge, after the people under its manager, named as its People row is, opening its details as [A planned hire's card](#cards) sets out.
 - **Status:** A grey Planned, expected box with its month, never the day, except for a filled hire on Feature teams, as [Feature Teams](#feature-teams) sets out.
 - **A hire whose manager hasn't started:** Drawn at the top until the manager starts, since the chart draws today.
 - **A planned manager:** Heads their planned hires, a team that can be shown alone, but isn't in Teams until filled.

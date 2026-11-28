@@ -146,7 +146,11 @@ describe("feature teams on the org chart", () => {
             h1: {
               keyNumber: 5,
               expected: "2027-05",
-              filledBy: { name: "Fictional Joiner", starts: "2027-05-03" },
+              filledBy: {
+                id: "p9",
+                name: "Fictional Joiner",
+                starts: "2027-05-03",
+              },
             },
           },
         },

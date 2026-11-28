@@ -86,7 +86,7 @@ const teamHires: FeatureTeam["hires"] = {
   filled: {
     keyNumber: 5,
     expected: "2027-02",
-    filledBy: { name: "Fictional Joiner", starts: "2027-02-01" },
+    filledBy: { id: "joiner", name: "Fictional Joiner", starts: "2027-02-01" },
   },
   later: { keyNumber: 3, expected: "2027-09" },
 };

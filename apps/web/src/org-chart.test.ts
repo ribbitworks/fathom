@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the org chart's tree, its layout, the people each Draft view draws, and its view.
+// Tests for the org chart's tree, its layout, the people each Draft view draws, its view, and the
+// details each card opens.
 
-import type { OrgChartPerson } from "@fathom/shared";
+import type { OrgChartPerson, Person } from "@fathom/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  type ChartPerson,
   cardHeight,
   cardWidth,
   chartAddressOf,
+  chartAddressOfCard,
   chartDays,
+  detailsOpened,
   chartViewSearch,
   chartPeople,
   heightOf,
@@ -352,7 +356,11 @@ describe("the people the Draft menu draws", () => {
     expect(
       heightOf({
         ...planned,
-        filled: { name: "Fictional Joiner", starts: "starts Feb 1, 2027" },
+        filled: {
+          name: "Fictional Joiner",
+          starts: "starts Feb 1, 2027",
+          personId: "joiner",
+        },
       }),
     ).toBe(heightOf({ ...planned, teamName: "Fictional Harbour" }));
   });
@@ -528,5 +536,117 @@ describe("the levels the chart opens on", () => {
   it("are left out of the view and the address, as the chart starts with them", () => {
     expect(chartViewSearch({ levels: 2 }).levels).toBeUndefined();
     expect(chartAddressOf({ levels: "2" }).levels).toBeUndefined();
+  });
+});
+
+describe("how the address names a card", () => {
+  const hire = {
+    ...person("t1 h1", null),
+    employeeId: null,
+    planned: { expected: "2027-03" },
+  };
+
+  it("names a person by their Employee ID", () => {
+    expect(chartAddressOfCard(person("p1", null))).toBe("E-p1");
+  });
+
+  it("names a planned hire by its own ID, not its card's on a feature team", () => {
+    expect(chartAddressOfCard(hire)).toBe("t1 h1");
+    expect(chartAddressOfCard({ ...hire, ownId: "h1" })).toBe("h1");
+  });
+
+  it("names no one for a Live copy", () => {
+    expect(
+      chartAddressOfCard({ ...person("p1 live", null), liveCopyOf: "p1" }),
+    ).toBeNull();
+  });
+});
+
+describe("the details each card opens", () => {
+  const row = (
+    id: string,
+    employeeId: string,
+    details: Partial<Person> = {},
+  ): Person => ({
+    id,
+    keyNumber: 1,
+    preferredName: id,
+    employeeId,
+    values: {},
+    links: {},
+    ...details,
+  });
+  const planned = { expected: "2027-03" };
+  const opening = {
+    ...person("h1", "head", "Fictional Opening"),
+    employeeId: null,
+    keyNumber: 7,
+    planned,
+  };
+  const rows = [
+    row("head", "E-head"),
+    row("joiner", "E-joiner"),
+    row("h1", "REQ-7", { kind: "planned-hire", keyNumber: 7 }),
+    row("h2", "REQ-8", { kind: "planned-hire", keyNumber: 8 }),
+  ];
+  const opened = (card: OrgChartPerson & Partial<ChartPerson>) =>
+    detailsOpened([card], rows).get(card.id);
+
+  it("opens a person's own, by their Employee ID", () => {
+    expect(opened(person("head", null))).toBe("E-head");
+  });
+
+  it("opens nothing for someone with no Employee ID, such as a manager who has left, to a reader not shown them", () => {
+    expect(opened({ ...person("gone", null), employeeId: null })).toBe(
+      undefined,
+    );
+  });
+
+  it("opens nothing for a Live copy, or a team's own card", () => {
+    expect(
+      opened({ ...person("copy", null), employeeId: null, liveCopyOf: "head" }),
+    ).toBeUndefined();
+    expect(
+      opened({ ...opening, id: "h1 live", liveCopyOf: "h1" }),
+    ).toBeUndefined();
+    expect(
+      opened({ ...person("t1 team", null), employeeId: null, teamCard: true }),
+    ).toBeUndefined();
+  });
+
+  it("opens a planned hire's own, by the ID People shows it by, found by its key, as on a feature team's card", () => {
+    expect(opened(opening)).toBe("REQ-7");
+    expect(opened({ ...opening, id: "t1 h1" })).toBe("REQ-7");
+  });
+
+  it("opens nothing for a planned hire People doesn't list, or while People is loading", () => {
+    expect(opened({ ...opening, keyNumber: 9 })).toBeUndefined();
+    expect(detailsOpened([opening], undefined).size).toBe(0);
+  });
+
+  it("finds a planned hire by its key among hires alone, not a person with the same key number", () => {
+    expect(opened({ ...opening, keyNumber: 1 })).toBeUndefined();
+  });
+
+  it("opens the person filling a hire, where the reader is shown them", () => {
+    expect(
+      opened({
+        ...opening,
+        filled: {
+          name: "joiner",
+          starts: "starts Mar 1, 2027",
+          personId: "joiner",
+        },
+      }),
+    ).toBe("E-joiner");
+  });
+
+  it("opens nothing for a filled hire whose person People doesn't list", () => {
+    expect(
+      opened({
+        ...opening,
+        filled: { name: "Fictional Unlisted", personId: "unlisted" },
+      }),
+    ).toBeUndefined();
   });
 });
