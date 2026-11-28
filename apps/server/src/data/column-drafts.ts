@@ -493,8 +493,8 @@ export async function refuseIfDraftsFill(
   }
 }
 
-// Refuses removing a live column, as the actor's drafts make it and as it is live, while drafts, as they see them,
-// change its values, or where the actor may not remove its values.
+// Refuses removing a live column, as the actor's drafts make it and as it is live, while drafts, as
+// they see them, change its values, or where the actor may not remove its values.
 export async function checkColumnRemoval(
   transaction: Transaction,
   actor: Actor,

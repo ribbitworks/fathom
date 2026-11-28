@@ -35,7 +35,6 @@ import {
 import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
 import { readToday } from "./settings.ts";
-import {} from "./hire-checks.ts";
 import {
   changedReporting,
   checkLine,

@@ -17,6 +17,7 @@ import {
 } from "./hire-checks.ts";
 import {
   checkComplete,
+  changedChoices,
   checkedValues,
   checkState,
   type ChoiceRow,
@@ -34,7 +35,7 @@ import {
   refuseTakenTeamNames,
   refuseUnmarkingManagers,
 } from "./reporting.ts";
-import { type TableColumns, valueField } from "./values.ts";
+import { type TableColumns } from "./values.ts";
 
 const duplicateEmployeeId = "Someone already has that ID";
 
@@ -100,14 +101,7 @@ export async function checkPersonChange(
       person?.positionId,
     );
   }
-  const values = valuesOf(after);
-  const asked = Object.fromEntries(
-    columns
-      .filter(({ id: column }) => changed(valueField(column)))
-      .flatMap(({ id: column, type }) =>
-        type === "choice" ? [[column, values.get(column) ?? []]] : [],
-      ),
-  );
+  const asked = changedChoices(columns, after, person);
   checkedValues(
     columns,
     known ?? (await choicesAskedFor(transaction, editor, [{ values: asked }])),

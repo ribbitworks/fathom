@@ -10,7 +10,12 @@ import { refuseAllocatedActivity } from "./activities.ts";
 import { checkColumnDraft } from "./column-checks.ts";
 import { checkAllocationDraft } from "./allocations.ts";
 import { type Transaction } from "./changes.ts";
-import { drafted, type Recorded, wantsNoDraft } from "./draft-records.ts";
+import {
+  type Draft,
+  drafted,
+  type Recorded,
+  wantsNoDraft,
+} from "./draft-records.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { checkPersonChange, checkPersonRemoval } from "./person-checks.ts";
 import {
@@ -38,7 +43,7 @@ import {
 } from "./private-versions.ts";
 import { checkOwnerDraft, checkProposalDraft } from "./projects.ts";
 import { recordMisfit } from "./record-drafting.ts";
-import { versionOf } from "./record-state.ts";
+import { stateOf, versionOf } from "./record-state.ts";
 import { readToday } from "./settings.ts";
 import { type ColumnInfo, type TableColumns } from "./values.ts";
 import { isRecordType, recordKinds, refuseRemovingNamed } from "./records.ts";
@@ -161,30 +166,49 @@ async function checkRecord(
     checking,
     id,
     after: versionOf(mine, type, id),
-    before: versionOf(theirs, type, id),
+    // Where someone else's published draft removes the record, a change kept over that removal
+    // changes the live record.
+    before: versionOf(theirs, type, id) ?? stateOf(theirs, type).live.get(id),
   });
 }
 
-// A person as the user's draft makes them, or their removal, against them as everyone else has
-// them. Taking a draft back asks nothing of a person.
+// A record kept outside the plan's records as it is live, as the user's draft makes it, and as it
+// was before the change: as everyone else has it, or as it is live where someone else's published
+// draft removes it, since a change kept over that removal changes the live record. Nothing before
+// it is a record only the user adds.
+function versionsOf(
+  store: {
+    live: ReadonlyMap<string, Recorded>;
+    mine: ReadonlyMap<string, Draft>;
+    theirs: ReadonlyMap<string, Draft>;
+  },
+  id: string,
+) {
+  const live = store.live.get(id);
+  return {
+    live,
+    after: drafted(live, store.mine.get(id)),
+    before: drafted(live, store.theirs.get(id)) ?? live,
+  };
+}
+
+// A person as the user's draft makes them, or their removal, against them as they were before.
+// Taking a draft back asks nothing of a person.
 async function checkPerson(checking: Checking, row: Row): Promise<void> {
   if (wantsNoDraft(row)) return;
   const { transaction, actor, versions } = checking;
-  const { live: lives, mine, theirs } = versions.people;
   const id = row.recordId;
-  const live = lives.get(id);
-  const after = drafted(live, mine.get(id));
-  const person = drafted(live, theirs.get(id));
+  const { live, after, before } = versionsOf(versions.people, id);
   const columns = await checking.peopleColumns();
   if (after === undefined) {
-    // A removal is of someone others still have, since one removed since takes the change with it.
+    // A removal is of someone live, since removing someone only drafted takes the draft back.
     await checkPersonRemoval(
       transaction,
       actor,
       columns,
       id,
       live,
-      person as Recorded,
+      before as Recorded,
     );
     return;
   }
@@ -194,25 +218,23 @@ async function checkPerson(checking: Checking, row: Row): Promise<void> {
     columns,
     id,
     live,
-    person,
+    person: before,
     after,
     today: await checking.today(),
   });
 }
 
-// A planned hire as the user's draft makes it, or its removal, against it as everyone else has it,
-// and a fill of it. Taking a draft back asks nothing of a hire.
+// A planned hire as the user's draft makes it, or its removal, against it as it was before, and a
+// fill of it. Taking a draft back asks nothing of a hire.
 async function checkHire(checking: Checking, row: Row): Promise<void> {
   if (wantsNoDraft(row)) return;
   const { transaction, actor, versions } = checking;
-  const { live: lives, mine, theirs, tierOf } = versions.hires;
+  const { tierOf } = versions.hires;
   const id = row.recordId;
-  const live = lives.get(id);
-  const after = drafted(live, mine.get(id));
-  const hire = drafted(live, theirs.get(id));
+  const { live, after, before } = versionsOf(versions.hires, id);
   if (after === undefined) {
-    // A removal is of a hire others still have, since one removed since takes the change with it.
-    await checkHireRemoval(transaction, actor, tierOf, id, hire as Recorded);
+    // A removal is of a hire live, since removing one only drafted takes the draft back.
+    await checkHireRemoval(transaction, actor, tierOf, id, before as Recorded);
     return;
   }
   await checkHireChange({
@@ -222,41 +244,35 @@ async function checkHire(checking: Checking, row: Row): Promise<void> {
     tierOf,
     id,
     live,
-    hire,
+    hire: before,
     after,
   });
-  if (typeof after.filledBy === "string" && after.filledBy !== hire?.filledBy) {
-    // Whether the hire is still in a state meaning Open is checked when it is filled and approved,
-    // since a fill's own change of state can't be told here from one made before it. A fill is of
-    // a hire others still have, since a hire removed since takes the change with it.
-    refuseUnfillable(live, hire as Recorded);
+  if (
+    typeof after.filledBy === "string" &&
+    after.filledBy !== before?.filledBy
+  ) {
+    // Whether the hire's state still means Open is checked when it is filled and approved, since a
+    // fill's own change of state can't be told here from one made before it. A hire only drafted
+    // to be added is refused before its version is read.
+    refuseUnfillable(live, before as Recorded);
   }
 }
 
-// A feature team as the user's draft makes it, or its removal, against it as everyone else has it.
+// A feature team as the user's draft makes it, or its removal, against it as it was before.
 // Taking a draft back asks nothing of a team.
 async function checkTeam(checking: Checking, row: Row): Promise<void> {
   if (wantsNoDraft(row)) return;
   const { transaction, actor, versions } = checking;
-  const { live: lives, mine, theirs } = versions.teams;
   const id = row.recordId;
-  const live = lives.get(id);
-  const after = drafted(live, mine.get(id));
+  const { live, after, before } = versionsOf(versions.teams, id);
   if (after === undefined) {
     await refuseRemovingNamed(transaction, "feature-team", [id], actor);
     return;
   }
-  await checkTeamDraft(
-    transaction,
-    actor,
-    id,
-    { live, team: drafted(live, theirs.get(id)) },
-    after,
-    {
-      today: await checking.today(),
-      dayRefusals: draftingRefusals,
-    },
-  );
+  await checkTeamDraft(transaction, actor, id, { live, team: before }, after, {
+    today: await checking.today(),
+    dayRefusals: draftingRefusals,
+  });
 }
 
 // A change to a list, a choice or an order, checked with the lists as the user's drafts make them

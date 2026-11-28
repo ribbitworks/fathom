@@ -42,7 +42,8 @@ export async function checkColumnDraft(
     await checkColumnRemoval(transaction, actor, mine, id, removed, removed);
     return;
   }
-  const before = draftedField(theirs, id);
+  // Where someone else's published draft removes the column, a change kept over it changes it live.
+  const before = draftedField(theirs, id) ?? live;
   if (before !== undefined) refuseUnseenColumn(actor, mine, id, before);
   await checkColumnSettings(
     transaction,

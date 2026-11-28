@@ -15,7 +15,7 @@ import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Transaction } from "./changes.ts";
 import { typeOf } from "./column-types.ts";
-import { type Recorded, same, tidy } from "./draft-records.ts";
+import { type Recorded, tidy } from "./draft-records.ts";
 import { checkTeamForFeature } from "./feature-team-removals.ts";
 import {
   checkedLinks,
@@ -23,6 +23,7 @@ import {
   checkedNumbers,
   checkedValues,
   type ChoiceRow,
+  changedChoices,
   choicesAskedFor,
   valuesOf,
 } from "./person-fields.ts";
@@ -140,17 +141,8 @@ export async function checkPlanningDraft(
       await checkBuiltInChoice(transaction, list, chosen, before?.[field]);
     }
   }
-  const values = valuesOf(after);
-  const asked = Object.fromEntries(
-    columns
-      .filter(
-        ({ id, type }) =>
-          type === "choice" &&
-          !same(after[valueField(id)], before?.[valueField(id)]),
-      )
-      .map(({ id }) => [id, values.get(id) ?? []]),
-  );
   /* eslint-enable security/detect-object-injection */
+  const asked = changedChoices(columns, after, before);
   checkedValues(
     columns,
     known ?? (await choicesAskedFor(transaction, editor, [{ values: asked }])),

@@ -29,12 +29,13 @@ import {
 } from "./hire-fields.ts";
 import {
   type ChoiceRow,
+  changedChoices,
   checkedValues,
   choicesAskedFor,
   valuesOf,
 } from "./person-fields.ts";
 import { reassignReports, text } from "./reporting.ts";
-import { fieldOfValue, type TableColumns, valueField } from "./values.ts";
+import { fieldOfValue, type TableColumns } from "./values.ts";
 
 // A planned hire as a change makes it, from how it was before, if anyone had it.
 export interface HireChecked {
@@ -73,14 +74,7 @@ export async function checkHireChange(checked: HireChecked): Promise<Change[]> {
     ),
   });
   const offered = offeredOn(columns);
-  // A value emptied asks nothing, so only the values now held are checked.
-  const asked = Object.fromEntries(
-    [...valuesOf(after)].filter(
-      ([column]) =>
-        offered.some(({ id, type }) => id === column && type === "choice") &&
-        changed(valueField(column)),
-    ),
-  );
+  const asked = changedChoices(offered, after, hire);
   checkedValues(
     offered,
     known ?? (await choicesAskedFor(transaction, editor, [{ values: asked }])),
@@ -88,9 +82,12 @@ export async function checkHireChange(checked: HireChecked): Promise<Change[]> {
     hire === undefined ? undefined : valuesOf(hire),
   );
   // A fill gives the hire its person's manager, who must be a person who manages, and moves the
-  // hires reporting to it to its person, whose own checks cover them.
+  // hires reporting to it to its person, whose own checks cover them: either way the manager is the
+  // fill's, not one chosen.
   const filling = typeof after.filledBy === "string" && changed("filledBy");
-  const moved = await movedByFill(transaction, actor, live, after);
+  const moved =
+    !filling && (await movedByFill(transaction, actor, live, after));
+  const fillsManager = filling || moved;
   const managerId = text(after.managerId);
   if (changed("managerId") && !moved) {
     await (filling && managerId !== null
@@ -118,7 +115,7 @@ export async function checkHireChange(checked: HireChecked): Promise<Change[]> {
   if (typeof after.requisition === "string" && changed("requisition")) {
     await checkRequisition(transaction, after.requisition, id, editor);
   }
-  if (!filling && !moved && newlyManaged(hire, after)) {
+  if (!fillsManager && newlyManaged(hire, after)) {
     await refuseUnmarked(
       transaction,
       String(after.managerId),
@@ -127,7 +124,7 @@ export async function checkHireChange(checked: HireChecked): Promise<Change[]> {
     );
   }
   // A hire added has nobody reporting to it yet, so can't close a loop.
-  if (hire !== undefined && !filling && !moved && changed("managerId")) {
+  if (hire !== undefined && !fillsManager && changed("managerId")) {
     await refuseHireLoop(transaction, editor, id, after.managerId);
   }
   if (
@@ -175,7 +172,7 @@ export async function checkHireRemoval(
   return made;
 }
 
-export const filledAlready = "This planned hire is already filled";
+const filledAlready = "This planned hire is already filled";
 
 // Refuses filling a planned hire, as it is live and as the change starts from: one only drafted to
 // be added, already filled, or whose draft changes its manager.

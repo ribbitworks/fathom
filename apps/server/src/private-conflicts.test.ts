@@ -5,11 +5,11 @@
 // both sides, until the user keeps theirs or the other, while fields only they changed go through
 // without asking.
 
-import { changes, changeSets, drafts, valueField } from "@fathom/db";
+import { changes, changeSets, drafts, listItems, valueField } from "@fathom/db";
 import { type PrivateConflicts } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { unique } from "./test-app.ts";
+import { testPosition, unique } from "./test-app.ts";
 import {
   alice,
   approver,
@@ -382,6 +382,28 @@ describe("publishing over a removal", () => {
     const response = await keepingSide(bob, "theirs");
     expect(response.statusCode, response.body).toBe(200);
     expect(await draftOf(person)).toBe("deleted");
+  });
+
+  it("checks a change kept over a removal against the live record, keeping a position since retired", async () => {
+    // Given Ben's private Site for Kai, Ana's published removal of Kai, and Kai's position retired
+    // since, which no route does without approvals, so the test changes storage
+    const [person = ""] = await livePeople(1);
+    await setSite(bob, person, north.id);
+    await saved(alice, "DELETE", `/api/people/${person}`);
+    await publish(alice);
+    const retire = (retired: boolean) =>
+      test.connection
+        .update(listItems)
+        .set({ retired })
+        .where(eq(listItems.id, testPosition));
+    await retire(true);
+
+    // When Ben keeps his change over the removal
+    const response = await keepingSide(bob, "mine");
+
+    // Then it publishes, since Kai keeps the position he already has
+    await retire(false);
+    expect(response.statusCode, response.body).toBe(200);
   });
 
   // Ben privately removes Kai, then Ana's Site for Kai is published and approved.

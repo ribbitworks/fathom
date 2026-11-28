@@ -133,10 +133,10 @@ export async function refuseDaysOutOfOrder(
   refuseWith(daysRefusal(days, records, everyone, refusals));
 }
 
-// Refuses a feature team as a change makes it, from the team before it and as it is live: a name another team has,
-// members who can't join, days that would never take effect or fall outside someone's employment,
-// and a new lead who isn't on the team on the day, or whose day comes before the team's latest
-// change of lead.
+// Refuses a feature team as a change makes it, from the team before it and as it is live: a name
+// another team has, members who can't join, days that would never take effect or fall outside
+// someone's employment, and a new lead who isn't on the team on the day, or whose day comes before
+// the team's latest change of lead.
 export async function checkTeamDraft(
   transaction: Transaction,
   actor: Actor,
@@ -184,8 +184,11 @@ export async function checkTeamDraft(
     dayRefusals,
   );
   /* eslint-enable security/detect-object-injection */
-  // A lead changes only where the change gives another than the draft had, and the team had live.
-  if (leadId === text(team?.leadId) || leadId === text(live?.leadId)) return;
+  // A lead the team has live is no change; one the draft already had is checked again only where
+  // the change gives it another day.
+  const leadKept =
+    leadId === text(team?.leadId) && same(after.leadFrom, team?.leadFrom);
+  if (leadKept || leadId === text(live?.leadId)) return;
   const [leadDay] = Object.values(leadDatesOf(after));
   if (leadDay !== undefined) {
     await refuseLeadDayOutOfOrder(transaction, id, leadDay);

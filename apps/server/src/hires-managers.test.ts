@@ -394,6 +394,51 @@ describe("a planned manager", () => {
     );
   });
 
+  it("publishes a private removal over someone else's removal published since", async () => {
+    // Given one user's private removal of a hire, and another's removal of it, published first
+    const hire = await liveHire();
+    const one = await test.signedIn("workforce-administrator");
+    const other = await test.signedIn("workforce-administrator");
+    const path = `/api/planned-hires/${hire}`;
+    await ok(await send(one, "DELETE", path, undefined, { publish: false }));
+    await ok(await send(other, "DELETE", path));
+
+    const response = await send(one, "POST", "/api/unpublished/publish");
+
+    expect(response.statusCode, response.body).toBe(200);
+  });
+
+  it("is refused on publishing a requisition someone else's change has taken since", async () => {
+    // Given one user's private requisition for a hire, and another's same requisition for another
+    // hire, published first
+    const [mine, theirs] = [await liveHire(), await liveHire()];
+    const requisition = unique("REQ");
+    const one = await test.signedIn("workforce-administrator");
+    const other = await test.signedIn("workforce-administrator");
+    await ok(
+      await send(
+        one,
+        "PATCH",
+        `/api/planned-hires/${mine}`,
+        { requisition },
+        {
+          publish: false,
+        },
+      ),
+    );
+    await ok(
+      await send(other, "PATCH", `/api/planned-hires/${theirs}`, {
+        requisition,
+      }),
+    );
+
+    const response = await send(one, "POST", "/api/unpublished/publish");
+
+    expect(response.statusCode, response.body).toBe(409);
+    expect(errorOf(response)).toMatch(/^The planned hire .+: .+/);
+    await send(one, "POST", "/api/unpublished/discard");
+  });
+
   it("stays marked while a planned hire reports to it, or is drafted to", async () => {
     const manager = await liveHire({ isManager: true });
     await liveHire({ managerId: manager });

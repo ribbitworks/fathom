@@ -225,9 +225,6 @@ async function lockDraftedHire(
   return { before, draft, hire: drafted(before, draft) };
 }
 
-const notApproved =
-  "This planned hire's headcount isn't approved yet; move it to an approved state before filling it";
-
 // Drafts a change to some of a hire's details, or a move to another state, in any order.
 export async function updateHire(
   database: Database,
@@ -310,6 +307,9 @@ export async function updateHire(
 
 // The hire asked to be filled, as the actor's draft makes it, with it as it is live: one not drafted
 // to be removed or already filled, with no rejected draft, whose changes a fill would otherwise send
+const notApproved =
+  "This planned hire's headcount isn't approved yet; move it to an approved state before filling it";
+
 // for approval again, and in a state meaning Open.
 export async function fillableHire(
   transaction: Transaction,
@@ -447,10 +447,11 @@ export async function deleteHire(
       id,
     );
     if (hire === undefined) return null;
-    if (typeof hire.filledBy !== "string") {
-      if (await movedByFill(transaction, actor, before, hire)) {
-        throw new ConflictError(partOfFill);
-      }
+    if (
+      typeof hire.filledBy !== "string" &&
+      (await movedByFill(transaction, actor, before, hire))
+    ) {
+      throw new ConflictError(partOfFill);
     }
     const tierOf = await readHireTier(transaction);
     const made = [
