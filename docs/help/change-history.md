@@ -1,6 +1,6 @@
 # Change history
 
-**Change history**, under **History** in the left-hand menu, lists every change saved to the plan, people and configuration, newest first. Each entry says who made the change and what changed, with the old and new values. You see only the changes to data you can see.
+**Change history**, under **History** in the left-hand menu, lists every change saved to the plan, people and configuration, and to your own private pages, newest first. Each entry says who made the change and what changed, with the old and new values. You see only the changes to data you can see.
 
 ## Main Tasks
 
