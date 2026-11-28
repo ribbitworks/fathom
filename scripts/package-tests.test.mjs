@@ -32,6 +32,7 @@ function options(passes = true) {
   return {
     slots: {
       ...checkRuns,
+      atOnce: 1,
       folder,
       retryMilliseconds: 5,
       report: (message) => reports.push(message),

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of scripts/check-turn.mjs: a check waits its turn, one at a time, saying so and how long it
+// Tests of scripts/check-turn.mjs: a check waits its turn, saying so and how long it
 // waited, goes ahead within a check that holds the turn, and ends with its command, passing on a
 // request to stop.
 
@@ -80,6 +80,7 @@ describe("running a check", () => {
       );
       const slots = {
         ...checkRuns,
+        atOnce: 1,
         folder,
         retryMilliseconds: 5,
         report: (message) => reports.push(message),
@@ -109,7 +110,7 @@ describe("running a check", () => {
 
     // When a check is asked for from within a check that holds it
     const ran = await inCheckTurn(() => "passed", {
-      slots: { ...checkRuns, folder },
+      slots: { ...checkRuns, atOnce: 1, folder },
       environment: { FATHOM_CHECK_SLOT: "1" },
     });
 

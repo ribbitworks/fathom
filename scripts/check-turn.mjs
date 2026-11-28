@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Runs a check, such as 'pnpm check' or 'pnpm test:changed', in its turn on this computer, one copy
-// of the repository at a time, with every core. It ends as the command does.
+// Runs a check, such as 'pnpm check' or 'pnpm test:changed', in its turn on this computer, two copies
+// of the repository at a time. It ends as the command does.
 // Usage: node scripts/check-turn.mjs <command> [arguments], such as bash scripts/check.sh
 
 import { pathToFileURL } from "node:url";
@@ -12,10 +12,10 @@ import {
 } from "../packages/test-utils/src/slots.ts";
 import { runCommand } from "./run-command.mjs";
 
-// A check's linters, type checks, scans and tests together use every core, so two checking at once
-// each take more than twice as long as one alone.
+// Two checks at once each took about as long as one alone, while more at once would slow each until
+// tests time out.
 export const checkRuns = machineSlots("checks", {
-  atOnce: 1,
+  atOnce: 2,
   retryMilliseconds: millisecondsPerSecond,
   reportAfterMilliseconds: 0,
   waitingTo: "run a check",

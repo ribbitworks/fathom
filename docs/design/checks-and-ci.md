@@ -4,7 +4,7 @@ category: "Guide"
 audience: "Contributors"
 applies_to: ["package.json", "scripts/**", ".github/workflows/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Checks and CI
@@ -142,16 +142,16 @@ A branch checked offline still needs the Check workflow's full check to pass on 
 
 A check runs many linters, type checks, scans and tests side by side, and can use every core of the computer. Several copies of the repository on one computer, each running a check, would slow each other until tests time out.
 
-So checks take turns, one at a time with every core, and stop a step that hangs. Two side by side each took more than twice as long as one alone, so two in turn finish sooner. A check of documentation alone before a push is quick, so it takes no turn.
+So checks take turns, two at a time, and stop a step that hangs. A check of documentation alone before a push is quick, so it takes no turn.
 
 A turn is held as a slot file, and a check waiting for one leaves a ticket, so copies take their turns in the order they asked.
 
 ```mermaid
 flowchart TD
-    Ticket["check-turn.mjs leaves a ticket in the checks' slot folder"] --> Free{"Is the turn free for this ticket, in the order the copies asked?"}
-    Free -- No --> Wait["Waiting to run a check, naming the turn's holder; it looks again each second"]
+    Ticket["check-turn.mjs leaves a ticket in the checks' slot folder"] --> Free{"Is one of the two turns free for this ticket, in the order the copies asked?"}
+    Free -- No --> Wait["Waiting to run a check, naming the turns' holders; it looks again each second"]
     Wait --> Free
-    Free -- Yes --> Run["Runs the jobs side by side, with every core"]
+    Free -- Yes --> Run["Runs the jobs side by side"]
     Run --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
     Limit -- No --> Stopped["The job's process group is stopped, its output shown, and it counts as Stopped"]
     Limit -- Yes --> Results["Each job's output, then a table of each one's result and seconds"]
@@ -160,13 +160,13 @@ flowchart TD
 
 This chart is part of [The Local Check](#the-local-check), which also draws the checks a run makes before its turn.
 
-- **Taking turns:** `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before running their jobs, once their arguments and the connection are checked. `pnpm test:ui` takes one too, once the development server answers, since the browser, the server and the database it loads slow a check beside it. One copy holds the turn at a time. `pnpm test` takes one for its package tests only, after the script tests.
-- **Waiting:** copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the process and folder that holds the turn, and how many copies asked first.
+- **Taking turns:** `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before running their jobs, once their arguments and the connection are checked. `pnpm test:ui` takes one too, once the development server answers, since the browser, the server and the database it loads slow a check beside it. Two copies may hold a turn at a time. `pnpm test` takes one for its package tests only, after the script tests.
+- **Waiting:** copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the processes and folders that hold the turns, and how many copies asked first.
 - **A check started by a check,** such as `pnpm test:changed` within `pnpm check:push`, uses the turn its check holds.
-- **Cores:** the copy holding the turn has every core, as a check on GitHub does.
+- **Cores:** each copy holding a turn sizes its workers for every core, as a check on GitHub does, and shares them with the other copy holding one.
 - **Workers:** each package's tests use a share of the cores, leaving two free for the development servers. Four packages have long-running tests: the web app, the server, the database and the seed data. The cores are shared among those of the four a run tests, so on 18 cores the web app's tests alone get 16 workers, and each of the four gets 4 when all run. A package that starts test databases gets at most 12, the most measured. `VITEST_MAX_WORKERS` sets the number instead.
 - **Side by side:** `pnpm test:changed` runs the script tests and the type check beside the package tests, and leaves them two more cores, so the web app's tests alone get 14 workers there.
-- **Measured:** the web app's tests took 106 seconds with 4 workers and 47 with 16. The server's took 224 seconds with 4 and 142 with 12, using about 2.5 cores at 4. The script tests took 29 seconds on about 1.3 cores, and the type check 5 on 1.7. Two copies running the server's and the web app's tests side by side slowed each by about a third, so turns stay one at a time.
+- **Measured:** the web app's tests took 106 seconds with 4 workers and 47 with 16. The server's took 224 seconds with 4 and 142 with 12, using about 2.5 cores at 4. The script tests took 29 seconds on about 1.3 cores, and the type check 5 on 1.7. Two copies running the server's and the web app's tests side by side slowed each by about a third. With two turns, `pnpm test:changed` took 489 seconds beside the UI tests and other copies' checks, against 483 alone, with no failures from load in three pairs of runs, so two copies hold turns at once.
 - **Test databases:** no more than 8 test database servers start at once on one computer.
 - **Time limit:** a check stops a job still running after 15 minutes, shows its output up to then, and fails it as Stopped, so a hung job never holds a turn for long. `FATHOM_CHECK_JOB_SECONDS` sets another limit.
   - `pnpm test:changed`, `pnpm test:packages` and `pnpm test`, run alone or within a check, stop each pnpm step they run past the same limit, naming the step, and fail.
@@ -268,10 +268,10 @@ flowchart TD
     AnyLeft -- Yes --> Holds{"Started by a check that already holds a turn, or documentation alone before a push?"}
     Holds -- Yes --> Run
     Holds -- No --> Ticket["check-turn.mjs leaves a ticket in the checks' slot folder, then runs check.sh again in its turn"]
-    Ticket --> Free{"Is the turn free for this ticket, in the order the copies asked?"}
-    Free -- No --> Wait["Waiting to run a check, naming the turn's holder; it looks again each second"]
+    Ticket --> Free{"Is one of the two turns free for this ticket, in the order the copies asked?"}
+    Free -- No --> Wait["Waiting to run a check, naming the turns' holders; it looks again each second"]
     Wait --> Free
-    Free -- Yes --> Run["Runs the jobs side by side, with every core"]
+    Free -- Yes --> Run["Runs the jobs side by side"]
     Run --> Limit{"Did each job end within FATHOM_CHECK_JOB_SECONDS, 900 seconds unless set?"}
     Limit -- No --> Stopped["The job's process group is stopped, its output shown, and it counts as Stopped"]
     Limit -- Yes --> Results["Each job's output, then a table of each one's result and seconds"]
