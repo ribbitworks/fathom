@@ -17,7 +17,7 @@ import { inArray } from "drizzle-orm";
 import { type Actor, seesSensitivity } from "../access.ts";
 import { BadRequestError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
-import { fitsColumns, type Recorded } from "./draft-records.ts";
+import { fitsColumns, type Recorded, same } from "./draft-records.ts";
 import { choicesWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
 import { isNote, isNumber } from "./column-types.ts";
@@ -258,7 +258,7 @@ export async function recordSensitiveChanges(
   );
 }
 
-type ChoiceRow = Awaited<ReturnType<typeof inListOrder>>[number];
+export type ChoiceRow = Awaited<ReturnType<typeof inListOrder>>[number];
 
 // Every choice asked for in the requests, live or drafted to be added as the editor sees it, in
 // list order, read at once. The drafts lock keeps them from being deleted, or their drafts
@@ -426,4 +426,20 @@ export function checkComplete(
   ) {
     throw new BadRequestError("The end date cannot be before the start date");
   }
+}
+
+// The choices a record holds, as a change makes it, in the choice columns given whose value differs
+// from the record before it, by column, as checkedValues asks them. A value emptied asks nothing.
+export function changedChoices(
+  columns: readonly ColumnInfo[],
+  after: Recorded,
+  before: Recorded | undefined,
+): Record<string, string[]> {
+  return Object.fromEntries(
+    [...valuesOf(after)].filter(
+      ([column]) =>
+        columns.some(({ id, type }) => id === column && type === "choice") &&
+        !same(after[valueField(column)], before?.[valueField(column)]),
+    ),
+  );
 }

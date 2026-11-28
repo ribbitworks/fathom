@@ -10,8 +10,19 @@ import { refuseAllocatedActivity } from "./activities.ts";
 import { checkColumnDraft } from "./column-checks.ts";
 import { checkAllocationDraft } from "./allocations.ts";
 import { type Transaction } from "./changes.ts";
-import { drafted, type Recorded, wantsNoDraft } from "./draft-records.ts";
-import { takenEmployeeIds } from "./drafted-values.ts";
+import {
+  type Draft,
+  drafted,
+  type Recorded,
+  wantsNoDraft,
+} from "./draft-records.ts";
+import { columnsWithAdded } from "./added-columns.ts";
+import { checkPersonChange, checkPersonRemoval } from "./person-checks.ts";
+import {
+  checkHireChange,
+  checkHireRemoval,
+  refuseUnfillable,
+} from "./hire-draft-checks.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import {
   checkChoiceDraft,
@@ -25,7 +36,6 @@ import {
   type PlanningTable,
 } from "./planning-records.ts";
 import {
-  idsOf,
   readsChange,
   type Row,
   subjectOf,
@@ -33,17 +43,19 @@ import {
 } from "./private-versions.ts";
 import { checkOwnerDraft, checkProposalDraft } from "./projects.ts";
 import { recordMisfit } from "./record-drafting.ts";
-import { versionOf } from "./record-state.ts";
+import { stateOf, versionOf } from "./record-state.ts";
 import { readToday } from "./settings.ts";
-import { type ColumnInfo } from "./values.ts";
-import { isRecordType, recordKinds } from "./records.ts";
+import { type ColumnInfo, type TableColumns } from "./values.ts";
+import { isRecordType, recordKinds, refuseRemovingNamed } from "./records.ts";
+import { checkTeamDraft } from "./feature-team-checks.ts";
+import { draftingRefusals } from "./feature-team-rules.ts";
 
 interface Checking {
   transaction: Transaction;
   actor: Actor;
   versions: Versions;
-  // The people whose Employee ID, as the user's drafts make them, someone else has.
-  taken: Set<string>;
+  // The People table's columns, which planned hires share, as the user sees them, read once.
+  peopleColumns: () => Promise<TableColumns>;
   // Today, read once, when a check first needs it.
   today: () => Promise<string>;
   // The columns added to a planning table, as the user sees them, read once for each table.
@@ -95,11 +107,23 @@ const recordChecks: Record<RecordType, RecordCheck> = {
     await planningCheck("features")(draft);
   },
   customer: noCheck,
-  proposal: whenKept(({ checking: { transaction, actor }, after, before }) =>
-    checkProposalDraft(transaction, actor, after, before),
+  proposal: whenKept(async ({ checking, after, before }) =>
+    checkProposalDraft(
+      checking.transaction,
+      checking.actor,
+      after,
+      before,
+      await checking.today(),
+    ),
   ),
-  project: whenKept(({ checking: { transaction, actor }, after, before }) =>
-    checkOwnerDraft(transaction, actor, after, before),
+  project: whenKept(async ({ checking, after, before }) =>
+    checkOwnerDraft(
+      checking.transaction,
+      checking.actor,
+      after,
+      before,
+      await checking.today(),
+    ),
   ),
   milestone: noCheck,
   activity: (draft) => {
@@ -142,20 +166,114 @@ async function checkRecord(
     checking,
     id,
     after: versionOf(mine, type, id),
-    before: versionOf(theirs, type, id),
+    // Where someone else's published draft removes the record, a change kept over that removal
+    // changes the live record.
+    before: versionOf(theirs, type, id) ?? stateOf(theirs, type).live.get(id),
   });
 }
 
-// Whether a change of a kind with no rules of its own on publishing yet still fits the data as it is
-// now: an Employee ID no one else has.
-const fits = ({ taken }: Checking, row: Row): boolean =>
-  wantsNoDraft(row) || row.recordType !== "person" || !taken.has(row.recordId);
+// A record kept outside the plan's records as it is live, as the user's draft makes it, and as it
+// was before the change: as everyone else has it, or as it is live where someone else's published
+// draft removes it, since a change kept over that removal changes the live record. Nothing before
+// it is a record only the user adds.
+function versionsOf(
+  store: {
+    live: ReadonlyMap<string, Recorded>;
+    mine: ReadonlyMap<string, Draft>;
+    theirs: ReadonlyMap<string, Draft>;
+  },
+  id: string,
+) {
+  const live = store.live.get(id);
+  return {
+    live,
+    after: drafted(live, store.mine.get(id)),
+    before: drafted(live, store.theirs.get(id)) ?? live,
+  };
+}
 
-// The refusal of a change whose kind still has no rules of its own on publishing.
-class NoLongerFits extends Error {}
+// A person as the user's draft makes them, or their removal, against them as they were before.
+// Taking a draft back asks nothing of a person.
+async function checkPerson(checking: Checking, row: Row): Promise<void> {
+  if (wantsNoDraft(row)) return;
+  const { transaction, actor, versions } = checking;
+  const id = row.recordId;
+  const { live, after, before } = versionsOf(versions.people, id);
+  const columns = await checking.peopleColumns();
+  if (after === undefined) {
+    // A removal is of someone live, since removing someone only drafted takes the draft back.
+    await checkPersonRemoval(
+      transaction,
+      actor,
+      columns,
+      id,
+      live,
+      before as Recorded,
+    );
+    return;
+  }
+  await checkPersonChange({
+    transaction,
+    actor,
+    columns,
+    id,
+    live,
+    person: before,
+    after,
+    today: await checking.today(),
+  });
+}
 
-const fitting = (checking: Checking, row: Row): Promise<void> =>
-  fits(checking, row) ? Promise.resolve() : Promise.reject(new NoLongerFits());
+// A planned hire as the user's draft makes it, or its removal, against it as it was before, and a
+// fill of it. Taking a draft back asks nothing of a hire.
+async function checkHire(checking: Checking, row: Row): Promise<void> {
+  if (wantsNoDraft(row)) return;
+  const { transaction, actor, versions } = checking;
+  const { tierOf } = versions.hires;
+  const id = row.recordId;
+  const { live, after, before } = versionsOf(versions.hires, id);
+  if (after === undefined) {
+    // A removal is of a hire live, since removing one only drafted takes the draft back.
+    await checkHireRemoval(transaction, actor, tierOf, id, before as Recorded);
+    return;
+  }
+  await checkHireChange({
+    transaction,
+    actor,
+    columns: await checking.peopleColumns(),
+    tierOf,
+    id,
+    live,
+    hire: before,
+    after,
+  });
+  if (
+    typeof after.filledBy === "string" &&
+    after.filledBy !== before?.filledBy
+  ) {
+    // Whether the hire's state still means Open is checked when it is filled and approved, since a
+    // fill's own change of state can't be told here from one made before it. A hire only drafted
+    // to be added is refused before its version is read.
+    refuseUnfillable(live, before as Recorded);
+  }
+}
+
+// A feature team as the user's draft makes it, or its removal, against it as it was before.
+// Taking a draft back asks nothing of a team.
+async function checkTeam(checking: Checking, row: Row): Promise<void> {
+  if (wantsNoDraft(row)) return;
+  const { transaction, actor, versions } = checking;
+  const id = row.recordId;
+  const { live, after, before } = versionsOf(versions.teams, id);
+  if (after === undefined) {
+    await refuseRemovingNamed(transaction, "feature-team", [id], actor);
+    return;
+  }
+  await checkTeamDraft(transaction, actor, id, { live, team: before }, after, {
+    today: await checking.today(),
+    dayRefusals: draftingRefusals,
+  });
+}
 
 // A change to a list, a choice or an order, checked with the lists as the user's drafts make them
 // and as everyone else has them.
@@ -188,9 +306,9 @@ const otherChecks: Record<
       row.recordId,
       row,
     ),
-  person: fitting,
-  "planned-hire": fitting,
-  "feature-team": fitting,
+  person: checkPerson,
+  "planned-hire": checkHire,
+  "feature-team": checkTeam,
 };
 
 const otherCheckOf = new Map<
@@ -209,27 +327,6 @@ const kindOrder = [
 // A kind Fathom no longer has comes first, which is no matter, since nothing checks it.
 const placeOf = (row: Row) => kindOrder.indexOf(row.recordType);
 
-// The people whose Employee ID, as the user's drafts make them, someone else has.
-async function takenPeople(
-  transaction: Transaction,
-  userId: string,
-  versions: Versions,
-): Promise<Set<string>> {
-  const taken = new Set<string>();
-  for (const id of idsOf(versions.rows, "person")) {
-    const person = drafted(
-      versions.people.live.get(id),
-      versions.people.mine.get(id),
-    );
-    if (person === undefined) continue;
-    const ids = [String(person.employeeId)];
-    if ((await takenEmployeeIds(transaction, ids, [id], userId)).length > 0) {
-      taken.add(id);
-    }
-  }
-  return taken;
-}
-
 // Refuses publishing the changes given while any breaks a rule a fresh change of its kind goes
 // through, as the data is now and as the user's role sees it, naming the first that does and why.
 // A role that doesn't read a change's kind is told only that it no longer fits, since the reason
@@ -242,11 +339,15 @@ export async function refuseMisfits(
 ): Promise<void> {
   const columns = new Map<PlanningTable, Promise<readonly ColumnInfo[]>>();
   let today: Promise<string> | undefined;
+  let people: Promise<TableColumns> | undefined;
   const checking: Checking = {
     transaction,
     actor,
     versions,
-    taken: await takenPeople(transaction, actor.user.id, versions),
+    peopleColumns: () => {
+      people ??= columnsWithAdded(transaction, actor.user.id, true);
+      return people;
+    },
     today: () => {
       today ??= readToday(transaction);
       return today;
@@ -272,11 +373,9 @@ export async function refuseMisfits(
     try {
       await check(row);
     } catch (error) {
-      if (!(error instanceof RequestError || error instanceof NoLongerFits)) {
-        throw error;
-      }
+      if (!(error instanceof RequestError)) throw error;
       const subject = subjectOf(versions, row, actor);
-      if (error instanceof RequestError && readsChange(versions, row, actor)) {
+      if (readsChange(versions, row, actor)) {
         const named = capitalized(subject);
         // A reason that names the record already says what it is to.
         throw new ConflictError(

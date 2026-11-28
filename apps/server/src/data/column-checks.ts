@@ -10,6 +10,7 @@ import {
   checkColumnRemoval,
   checkColumnSettings,
   refuseIfDraftsFill,
+  refuseUnseenColumn,
 } from "./column-drafts.ts";
 import { type ColumnsState, draftedField } from "./column-state.ts";
 import { type Recorded, wantsNoDraft } from "./draft-records.ts";
@@ -41,12 +42,15 @@ export async function checkColumnDraft(
     await checkColumnRemoval(transaction, actor, mine, id, removed, removed);
     return;
   }
+  // Where someone else's published draft removes the column, a change kept over it changes it live.
+  const before = draftedField(theirs, id) ?? live;
+  if (before !== undefined) refuseUnseenColumn(actor, mine, id, before);
   await checkColumnSettings(
     transaction,
     actor,
     mine,
     id,
-    draftedField(theirs, id),
+    before,
     after,
     conflict,
   );

@@ -15,13 +15,15 @@ import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Transaction } from "./changes.ts";
 import { typeOf } from "./column-types.ts";
-import { type Recorded, same, tidy } from "./draft-records.ts";
+import { type Recorded, tidy } from "./draft-records.ts";
 import { checkTeamForFeature } from "./feature-team-removals.ts";
 import {
   checkedLinks,
   checkedNotes,
   checkedNumbers,
   checkedValues,
+  type ChoiceRow,
+  changedChoices,
   choicesAskedFor,
   valuesOf,
 } from "./person-fields.ts";
@@ -66,14 +68,12 @@ export async function startingStatus(
 
 // A record's values in the columns added to its table, live or drafted to be added as the editor sees
 // them: those a request names replace those it has, each checked against its column.
-async function addedValues(
-  transaction: Transaction,
-  editor: string,
+function addedValues(
   columns: readonly ColumnInfo[],
+  known: readonly ChoiceRow[],
   request: PlanningRequest,
   current: Recorded | undefined,
-): Promise<Recorded> {
-  const known = await choicesAskedFor(transaction, editor, [request]);
+): Recorded {
   const had = current === undefined ? undefined : valuesOf(current);
   const chosen = checkedValues(columns, known, request.values, had);
   const kept = Object.fromEntries(
@@ -129,6 +129,8 @@ export async function checkPlanningDraft(
   columns: readonly ColumnInfo[],
   after: Recorded,
   before: Recorded | undefined,
+  // The choices the change asks for, where the caller has read them already.
+  known?: readonly ChoiceRow[],
 ): Promise<void> {
   await checkTeamForFeature(transaction, text(after.featureTeamId), editor);
   // The fields are the record's own, named here or by its columns.
@@ -139,20 +141,11 @@ export async function checkPlanningDraft(
       await checkBuiltInChoice(transaction, list, chosen, before?.[field]);
     }
   }
-  const values = valuesOf(after);
-  const asked = Object.fromEntries(
-    columns
-      .filter(
-        ({ id, type }) =>
-          type === "choice" &&
-          !same(after[valueField(id)], before?.[valueField(id)]),
-      )
-      .map(({ id }) => [id, values.get(id) ?? []]),
-  );
   /* eslint-enable security/detect-object-injection */
+  const asked = changedChoices(columns, after, before);
   checkedValues(
     columns,
-    await choicesAskedFor(transaction, editor, [{ values: asked }]),
+    known ?? (await choicesAskedFor(transaction, editor, [{ values: asked }])),
     asked,
     before === undefined ? undefined : valuesOf(before),
   );
@@ -169,13 +162,8 @@ export async function planningRecord(
   current?: Recorded,
 ): Promise<Recorded> {
   const columns = await planningColumns(transaction, editor, table);
-  const added = await addedValues(
-    transaction,
-    editor,
-    columns,
-    request,
-    current,
-  );
+  const known = await choicesAskedFor(transaction, editor, [request]);
+  const added = addedValues(columns, known, request, current);
   const record: Recorded = {
     ...added,
     name: request.name,
@@ -195,6 +183,13 @@ export async function planningRecord(
     description: request.description,
     note: keptNote(request.note),
   };
-  await checkPlanningDraft(transaction, editor, columns, record, current);
+  await checkPlanningDraft(
+    transaction,
+    editor,
+    columns,
+    record,
+    current,
+    known,
+  );
   return record;
 }

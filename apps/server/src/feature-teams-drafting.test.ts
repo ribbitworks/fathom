@@ -325,6 +325,25 @@ describe("changing a feature team", () => {
     }
   });
 
+  it("is refused moving a drafted change of lead to on or before the last one", async () => {
+    // Given a lead changed from 2099-03-01, and a drafted change of lead from a later day
+    const first = await person();
+    const second = await person();
+    const id = await liveTeam({ leadId: first, members: [second] });
+    await changed(id, { leadId: second, from: "2099-03-01" });
+    await approved(id);
+    await changed(id, { leadId: null, from: "2099-04-01" });
+
+    // When the same change is moved to an earlier day
+    const response = await change(id, { leadId: null, from: "2099-02-01" });
+
+    // Then it is refused as a new change of lead would be
+    expect(response.statusCode).toBe(400);
+    expect(errorOf(response)).toBe(
+      "This team's lead last changed on 2099-03-01. Choose a later date.",
+    );
+  });
+
   it("sends its maker the day of a change not yet published", async () => {
     const member = await person();
     const id = await liveTeam();

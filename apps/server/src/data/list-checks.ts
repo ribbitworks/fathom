@@ -71,7 +71,8 @@ export async function checkListDraft(draft: ListDraft): Promise<void> {
     actor,
     mine,
     id,
-    draftedList(theirs, id),
+    // A change kept over someone else's published removal changes the live list.
+    draftedList(theirs, id) ?? theirs.lists.get(id),
     after,
   );
 }
@@ -103,7 +104,7 @@ export async function checkChoiceDraft(draft: ListDraft): Promise<void> {
     actor.user.id,
     mine,
     id,
-    draftedChoice(theirs, id),
+    draftedChoice(theirs, id) ?? theirs.choices.get(id)?.record,
     after,
   );
 }

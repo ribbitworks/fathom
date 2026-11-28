@@ -270,8 +270,22 @@ export async function updateField(
   );
 }
 
+// Refuses changing a column, as it was before and as it is live, whose details the actor doesn't
+// see.
+export function refuseUnseenColumn(
+  actor: Actor,
+  state: ColumnsState,
+  id: string,
+  before: Recorded,
+): void {
+  const unseen = unseenDetails(String(before.name));
+  for (const seen of new Set([before, state.fields.get(id)])) {
+    if (seen !== undefined) refuseUnseenTier(actor, state, seen, unseen);
+  }
+}
+
 // Refuses a column's settings as a change makes them, from the column before it, if it was there:
-// a column whose details the actor doesn't see, a name another column on its table has, values in
+// a name another column on its table has, values in
 // drafts its settings no longer fit, a list it newly draws on that can't be drawn on, or a class
 // the actor doesn't see, or that Features can't hold.
 export async function checkColumnSettings(
@@ -284,10 +298,6 @@ export async function checkColumnSettings(
   refusal: (message: string) => Error,
 ): Promise<void> {
   const previous = state.fields.get(id) ?? before;
-  const unseen = unseenDetails(String((before ?? after).name));
-  for (const seen of new Set([before, state.fields.get(id)])) {
-    if (seen !== undefined) refuseUnseenTier(actor, state, seen, unseen);
-  }
   const listBefore =
     previous === undefined ? null : columnRow(id, previous).listId;
   if (nameTaken(state, String(after.name), id, after.tableName)) {
@@ -316,6 +326,7 @@ async function changeField(
 ): Promise<Saved<Field>> {
   const field = changeableField(state, id, tableName);
   const live = state.fields.get(id);
+  refuseUnseenColumn(actor, state, id, field);
   if (columnRow(id, field).type !== request.type) {
     throw new BadRequestError(sameType);
   }
@@ -482,8 +493,8 @@ export async function refuseIfDraftsFill(
   }
 }
 
-// Refuses removing a live column, as the actor's drafts make it and as it is live, while drafts, as they see them,
-// change its values, or where the actor may not remove its values.
+// Refuses removing a live column, as the actor's drafts make it and as it is live, while drafts, as
+// they see them, change its values, or where the actor may not remove its values.
 export async function checkColumnRemoval(
   transaction: Transaction,
   actor: Actor,

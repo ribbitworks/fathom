@@ -5,7 +5,12 @@
 // still fits the data.
 
 import { drafts, fields, listItems, lists, people } from "@fathom/db";
-import { type Choice, type Field, type List } from "@fathom/shared";
+import {
+  type Choice,
+  type Field,
+  type List,
+  startingRoles,
+} from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -375,8 +380,11 @@ describe("publishing as the role in use", () => {
       given,
     );
 
-    // And once acting as a role that also edits configuration, they are published
-    await test.holdOnly(maker.id, ["people:edit", "configuration:edit"]);
+    // And once acting as a role that may make them all, they are published
+    await test.holdOnly(
+      maker.id,
+      startingRoles["workforce-administrator"].permissions,
+    );
     expect(await published(maker)).toEqual({ total: 4, left: 0 });
   });
 
@@ -461,10 +469,8 @@ describe("publishing and discarding", () => {
     ]);
   });
 
-  it("refuses publishing a change that no longer fits the data, publishing none of them", async () => {
+  it("refuses publishing a change that no longer fits the data, with the reason, publishing none of them", async () => {
     const { list: lone } = await liveList([]);
-    const noLongerFits = (subject: string) =>
-      `The change to ${subject} no longer fits the data; change or discard it, then publish again`;
     const clash = async (setUp: () => Promise<void>, error: string) => {
       await setUp();
       await refused(bob, "POST", "/api/unpublished/publish", undefined, error);
@@ -486,7 +492,7 @@ describe("publishing and discarding", () => {
         employeeId,
         positionId: testPosition,
       });
-    }, noLongerFits("Fictional Clash"));
+    }, "Fictional Clash: Someone already has that ID");
 
     const listName = unique("Fictional Clash List");
     await clash(async () => {

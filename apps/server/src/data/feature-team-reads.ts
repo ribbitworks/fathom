@@ -426,3 +426,19 @@ export async function readFeatureTeams(
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
 }
+
+// Every team's name, live or in a draft as the editor, when given, sees the drafts, with its team.
+export async function readTeamNames(
+  transaction: Reader,
+  editor: string | undefined,
+): Promise<[string, string][]> {
+  const live = await transaction
+    .select({ id: featureTeams.id, name: featureTeams.name })
+    .from(featureTeams);
+  return [
+    ...live.map(({ id, name }): [string, string] => [id, name]),
+    ...[...(await readTeamDrafts(transaction, undefined, editor))].map(
+      ([id, draft]): [string, unknown] => [id, draft.fields.name],
+    ),
+  ].filter((named): named is [string, string] => typeof named[1] === "string");
+}

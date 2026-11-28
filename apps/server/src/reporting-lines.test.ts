@@ -4,7 +4,7 @@
 // and approving it into a line kept with the person's past lines; the rules a line must follow; and
 // who sees managers, their dates, and changes to them.
 
-import { accessHistory, people, reportingLines } from "@fathom/db";
+import { accessHistory, drafts, people, reportingLines } from "@fathom/db";
 import type { ChangeHistory } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -214,7 +214,9 @@ describe("a reporting line", () => {
     expect((await change(second, { managerId: first })).statusCode).toBe(400);
   });
 
-  it("refuses approving drafts that together make a loop, drafted unseen by each other", async () => {
+  it("refuses publishing a change that closes a loop with a draft published since", async () => {
+    // Given a private change of First's manager to Second, and Second's manager changed to First and
+    // published since by someone else
     const first = await person();
     const second = await person();
     const other = await test.signedIn("workforce-administrator");
@@ -229,11 +231,41 @@ describe("a reporting line", () => {
     expect(
       (await change(second, { managerId: first }, other.cookie)).statusCode,
     ).toBe(200);
-    await test.request(cookie, "POST", "/api/unpublished/publish");
+
+    const refused = await test.request(
+      cookie,
+      "POST",
+      "/api/unpublished/publish",
+    );
+
+    expect(refused.statusCode, refused.body).toBe(409);
+    expect(refused.json<{ error: string }>().error).toMatch(
+      /: That manager reports to this person, directly or through others$/,
+    );
+    await test.request(cookie, "POST", "/api/unpublished/discard");
+  });
+
+  it("refuses approving drafts that together make a loop", async () => {
+    // Given Second's manager changed to First, and a waiting draft of First's manager as Second,
+    // which no route can publish any more, so the test writes it directly
+    const first = await person();
+    const second = await person();
+    const other = await test.signedIn("workforce-administrator");
+    expect(
+      (await change(second, { managerId: first }, other.cookie)).statusCode,
+    ).toBe(200);
+    await test.connection.insert(drafts).values({
+      recordType: "person",
+      recordId: first,
+      action: "changed",
+      fields: { managerId: second, managerFrom: today },
+      state: "waiting",
+    });
     // A third person can still be drafted under either, without the loop between them stopping the
     // check.
     const third = await person();
     expect((await change(third, { managerId: first })).statusCode).toBe(200);
+
     expect((await approve([first, second])).statusCode).toBe(409);
     expect(await linesOf(first)).toEqual([]);
   });

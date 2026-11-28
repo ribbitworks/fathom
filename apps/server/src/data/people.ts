@@ -4,11 +4,7 @@
 // the data access layer.
 
 import { type Database } from "@fathom/db";
-import {
-  type PersonChange,
-  type PersonRequest,
-  seesField,
-} from "@fathom/shared";
+import { type PersonChange, type PersonRequest } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
 import {
   type Actor,
@@ -36,29 +32,15 @@ import {
   requireRejected,
   tidy,
 } from "./draft-records.ts";
-import { takenEmployeeIds } from "./drafted-values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
 import { readToday } from "./settings.ts";
-import { refuseRemovingPeopleOnTeams } from "./feature-team-removals.ts";
-import {
-  hireDraftsNaming,
-  partOfFill,
-  refuseRemovingHiresPeople,
-  refuseUnmarkingHireManagers,
-} from "./hire-checks.ts";
-import { refuseRemovingNamed } from "./records.ts";
 import {
   changedReporting,
   checkLine,
   defaultFrom,
-  readLines,
   readManagers,
-  refuseLoop,
-  refuseRemovingManagers,
-  refuseReportsOutside,
   refuseTakenTeamNames,
-  refuseUnmarkingManagers,
 } from "./reporting.ts";
 import { type ColumnInfo, valueField } from "./values.ts";
 import {
@@ -79,36 +61,17 @@ import {
   checkComplete,
   type PersonRow,
 } from "./person-fields.ts";
+import { hireDraftsNaming, partOfFill } from "./hire-checks.ts";
 import { readLive } from "./people-reads.ts";
+import {
+  checkPersonChange,
+  checkPersonRemoval,
+  refuseTakenIds,
+  requireEdits,
+} from "./person-checks.ts";
 
-const duplicateEmployeeId = "Someone already has that ID";
 const toBeRemoved =
   "This person's draft removes them; discard the draft to change them";
-
-// Refuses changes to tiers the actor may not change.
-function requireEdits(actor: Actor, made: readonly Change[]): void {
-  for (const tier of new Set(made.map((change) => change.tier))) {
-    requireSensitivityEdit(actor, tier);
-  }
-}
-
-// Refuses Employee IDs that someone else has, live or in a draft, or that two of the people asked
-// for share.
-async function refuseTakenIds(
-  transaction: Transaction,
-  employeeIds: readonly string[],
-  except: readonly string[],
-  editor: string,
-): Promise<void> {
-  const lowered = employeeIds.map((id) => id.toLowerCase());
-  if (
-    new Set(lowered).size !== lowered.length ||
-    (await takenEmployeeIds(transaction, employeeIds, except, editor)).length >
-      0
-  ) {
-    throw new ConflictError(duplicateEmployeeId, "employeeId");
-  }
-}
 
 // Drafts adding people, all saved together, and returns them with the change set they were saved
 // in.
@@ -306,20 +269,12 @@ export async function draftPersonChange(
   ) {
     throw new ConflictError(partOfFill);
   }
-  if (change.positionId !== undefined) {
-    await checkBuiltInChoice(
-      transaction,
-      "positions",
-      change.positionId,
-      person.positionId,
-    );
-  }
-  const current = valuesOf(person);
+  const known = await choicesAskedFor(transaction, actor.user.id, [change]);
   const changedValues = checkedValues(
     columns,
-    await choicesAskedFor(transaction, actor.user.id, [change]),
+    known,
     change.values ?? {},
-    current,
+    valuesOf(person),
   );
   const details = Object.fromEntries(
     detailFields.flatMap((field) =>
@@ -346,70 +301,18 @@ export async function draftPersonChange(
     }),
     before,
   );
-  checkComplete(columns, after);
-  if (change.stateId !== undefined) {
-    // Those who see no dates are offered states from the live end date, so their choice is
-    // checked against it, and a draft's end date is never revealed by a refusal; a state that
-    // stops fitting once the draft is approved shows the first of the meaning instead.
-    const dates = seesField(actor, "endDate") ? after : (before ?? after);
-    await checkState(
-      transaction,
-      { ...after, endDate: dates.endDate },
-      today,
-      person.stateId,
-    );
-  }
-  const made = personChanges(columns, id, "changed", person, after);
-  requireEdits(actor, made);
+  const made = await checkPersonChange({
+    transaction,
+    actor,
+    columns,
+    id,
+    live: before,
+    person,
+    after,
+    today,
+    known,
+  });
   if (made.length === 0) return [];
-  const lines =
-    before === undefined ? [] : (await readLines(transaction, [id])).get(id);
-  await checkLine(transaction, id, after, lines ?? [], today, actor.user.id);
-  if (
-    typeof after.managerFrom === "string" &&
-    (after.managerId !== person.managerId ||
-      after.managerFrom !== person.managerFrom)
-  ) {
-    await refuseLoop(
-      transaction,
-      actor.user.id,
-      id,
-      typeof after.managerId === "string" ? after.managerId : null,
-      after.managerFrom,
-      today,
-    );
-  }
-  if (
-    before !== undefined &&
-    (after.startDate !== person.startDate || after.endDate !== person.endDate)
-  ) {
-    await refuseReportsOutside(transaction, [{ id, person: after }], today, {
-      editor: actor.user.id,
-    });
-  }
-  if (person.isManager === true && after.isManager === false) {
-    await refuseUnmarkingManagers(transaction, [id], today, {
-      drafted: true,
-      editor: actor.user.id,
-    });
-    await refuseUnmarkingHireManagers(transaction, [id], {
-      drafted: true,
-      editor: actor.user.id,
-    });
-  }
-  if (
-    typeof after.teamName === "string" &&
-    after.teamName !== person.teamName
-  ) {
-    await refuseTakenTeamNames(
-      transaction,
-      [{ id, name: after.teamName }],
-      actor.user.id,
-    );
-  }
-  if (change.employeeId !== undefined) {
-    await refuseTakenIds(transaction, [change.employeeId], [id], actor.user.id);
-  }
   const all = [
     ...asDraft(made),
     ...clearedRejection(id, personTier(columns), before, draft),
@@ -478,17 +381,19 @@ export async function deletePerson(
     );
     // Already drafted to be removed.
     if (person === undefined) return null;
-    if (before !== undefined) {
-      await refuseRemovingManagers(transaction, [id], actor.user.id);
-    }
-    await refuseRemovingHiresPeople(transaction, [id], actor.user.id);
-    await refuseRemovingNamed(transaction, "person", [id], actor);
-    await refuseRemovingPeopleOnTeams(transaction, [id], actor.user.id);
     const made = [
-      ...asDraft(personChanges(columns, id, "deleted", person, undefined)),
+      ...asDraft(
+        await checkPersonRemoval(
+          transaction,
+          actor,
+          columns,
+          id,
+          before,
+          person,
+        ),
+      ),
       ...clearedRejection(id, personTier(columns), before, draft),
     ];
-    requireEdits(actor, made);
     await writePersonDraft(transaction, actor.user.id, id, before, undefined);
     await recordSensitiveChanges(transaction, actor.user.id, made);
     return recordChanges(

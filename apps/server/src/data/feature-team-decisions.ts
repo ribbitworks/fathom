@@ -47,11 +47,11 @@ import {
   withoutLeavers,
 } from "./feature-team-sight.ts";
 import { text } from "./reporting.ts";
+import { teamChanges } from "./feature-teams.ts";
 import {
   refuseDaysOutOfOrder,
   refuseOutsideEmployment,
-  teamChanges,
-} from "./feature-teams.ts";
+} from "./feature-team-checks.ts";
 
 // An Approver has no day to choose, so is told which day no longer fits, and what to do about it.
 function refusalsWhenApproving(
