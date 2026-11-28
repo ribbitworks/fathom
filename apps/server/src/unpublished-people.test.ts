@@ -383,3 +383,26 @@ describe("another user's unpublished changes", () => {
     expect(await discard(bob)).toBe(2);
   });
 });
+
+describe("adding several people at once", () => {
+  it("refuses two given one team name, saving neither", async () => {
+    const teamName = unique("Fictional Shared Team");
+    const names = [unique("Fictional One"), unique("Fictional Two")];
+    const response = await send(alice, "POST", "/api/people", {
+      people: names.map((preferredName) => ({
+        preferredName,
+        employeeId: unique("E"),
+        positionId: testPosition,
+        isManager: true,
+        teamName,
+      })),
+    });
+
+    expect(response.statusCode, response.body).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      "Another team has that name",
+    );
+    const subjects = (await unpublished(alice)).map(({ subject }) => subject);
+    expect(subjects.filter((subject) => names.includes(subject))).toEqual([]);
+  });
+});

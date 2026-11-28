@@ -28,6 +28,7 @@ import {
 import { refuseRemovingNamed } from "./records.ts";
 import {
   checkLine,
+  type Manager,
   readLines,
   refuseLoop,
   refuseRemovingManagers,
@@ -48,7 +49,7 @@ export function requireEdits(actor: Actor, made: readonly Change[]): void {
 
 // Refuses Employee IDs that someone else has, live or in a draft, or that two of the people asked
 // for share.
-async function refuseTakenIds(
+export async function refuseTakenIds(
   transaction: Transaction,
   employeeIds: readonly string[],
   except: readonly string[],
@@ -77,6 +78,9 @@ export interface PersonChecked {
   today: string;
   // The choices the change asks for, where the caller has read them already.
   known?: readonly ChoiceRow[];
+  // For several people added at once: the managers they name, read once, with their positions,
+  // Employee IDs and team names checked by the caller for them all.
+  batch?: { managers: ReadonlyMap<string, Manager> };
 }
 
 // Refuses a person as a change makes them, and returns the changes it makes, none when it changes
@@ -87,13 +91,23 @@ export interface PersonChecked {
 export async function checkPersonChange(
   checked: PersonChecked,
 ): Promise<Change[]> {
-  const { transaction, actor, columns, id, live, person, after, today, known } =
-    checked;
+  const {
+    transaction,
+    actor,
+    columns,
+    id,
+    live,
+    person,
+    after,
+    today,
+    known,
+    batch,
+  } = checked;
   const editor = actor.user.id;
   // The fields are the person's own, named here or by their columns.
   // eslint-disable-next-line security/detect-object-injection
   const changed = (field: string) => !same(after[field], person?.[field]);
-  if (changed("positionId")) {
+  if (batch === undefined && changed("positionId")) {
     await checkBuiltInChoice(
       transaction,
       "positions",
@@ -132,7 +146,15 @@ export async function checkPersonChange(
   if (made.length === 0) return [];
   const lines =
     live === undefined ? [] : (await readLines(transaction, [id])).get(id);
-  await checkLine(transaction, id, after, lines ?? [], today, editor);
+  await checkLine(
+    transaction,
+    id,
+    after,
+    lines ?? [],
+    today,
+    editor,
+    batch?.managers,
+  );
   // Someone added has nobody reporting to them yet, so can't close a loop.
   if (
     person !== undefined &&
@@ -163,6 +185,7 @@ export async function checkPersonChange(
       editor,
     });
   }
+  if (batch !== undefined) return made;
   if (typeof after.teamName === "string" && changed("teamName")) {
     await refuseTakenTeamNames(
       transaction,

@@ -237,10 +237,13 @@ export function recordClash(row: Row, seen: Seen): RecordClash | undefined {
   const takesBack = wantsNoDraft(row);
   if (takesBack && Object.keys(row.startedFrom).length === 0) return undefined;
   // A removal published before the change began is one its maker changed over, not one since.
-  const removedSince =
+  const removedBefore =
+    seen.removedAt !== undefined && seen.removedAt < row.since;
+  if (
+    row.action === "changed" &&
     published?.action === "deleted" &&
-    !(seen.removedAt !== undefined && seen.removedAt < row.since);
-  if (row.action === "changed" && removedSince) {
+    !removedBefore
+  ) {
     const state = published.state;
     return { removedBy: "theirs", state, fields: [] };
   }

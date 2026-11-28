@@ -53,10 +53,13 @@ import {
   type PersonRow,
 } from "./person-fields.ts";
 import { hireDraftsNaming, partOfFill } from "./hire-checks.ts";
+import { checkBuiltInChoice } from "./built-in-lists.ts";
+import { readManagers, refuseTakenTeamNames } from "./reporting.ts";
 import { readLive } from "./people-reads.ts";
 import {
   checkPersonChange,
   checkPersonRemoval,
+  refuseTakenIds,
   requireEdits,
 } from "./person-checks.ts";
 
@@ -142,9 +145,31 @@ export async function draftNewPeople(
       }),
     });
   }
-  // Each is checked once all are drafted, so an Employee ID or team name two of them share is
-  // refused as one someone else has.
-  await addPersonDrafts(transaction, actor.user.id, added);
+  // Their positions, Employee IDs and team names are checked together, and their managers read once,
+  // so many added at once cost few reads; each person's other rules are a change's.
+  for (const positionId of new Set(requests.map((one) => one.positionId))) {
+    await checkBuiltInChoice(transaction, "positions", positionId);
+  }
+  await refuseTakenIds(
+    transaction,
+    requests.map(({ employeeId }) => employeeId),
+    [],
+    actor.user.id,
+  );
+  await refuseTakenTeamNames(
+    transaction,
+    added.flatMap(({ id, fields }) =>
+      typeof fields.teamName === "string"
+        ? [{ id, name: fields.teamName }]
+        : [],
+    ),
+    actor.user.id,
+  );
+  const managers = await readManagers(
+    transaction,
+    requests.map(({ managerId }) => managerId ?? null),
+    actor.user.id,
+  );
   const made: Change[] = [];
   for (const { id, fields } of added) {
     made.push(
@@ -158,9 +183,11 @@ export async function draftNewPeople(
         after: fields,
         today,
         known,
+        batch: { managers },
       })),
     );
   }
+  await addPersonDrafts(transaction, actor.user.id, added);
   return { ids: added.map(({ id }) => id), made: asDraft(made) };
 }
 

@@ -360,6 +360,12 @@ describe("a change over a published removal", () => {
     ).toMatchObject({ removedBy: "theirs" });
   });
 
+  it("clashes where the removal was published in the same instant the change began", () => {
+    expect(
+      recordClash(row, { live, published: removal, removedAt: row.since }),
+    ).toMatchObject({ removedBy: "theirs" });
+  });
+
   it("asks nothing where the change was made over a removal already published", () => {
     expect(
       recordClash(row, {
