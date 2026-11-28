@@ -107,6 +107,17 @@ export async function chart(
 
 export const drafted = (as = cookie) => chart(as, "drafted");
 
+// The planned hires the chart draws only on feature teams, filled by someone the reader sees in
+// their place who hasn't started, by hire.
+export async function filledOnTeams(
+  as = cookie,
+): Promise<Map<string, OrgChartPerson>> {
+  const response = await test.request(as, "GET", "/api/org-chart");
+  expect(response.statusCode, response.body).toBe(200);
+  const { filled = [] } = response.json<{ filled?: OrgChartPerson[] }>();
+  return new Map(filled.map((one) => [one.id, one]));
+}
+
 export async function chartOn(
   day: string,
   as = cookie,

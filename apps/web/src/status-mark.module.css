@@ -167,12 +167,29 @@
   color: var(--mantine-color-dimmed);
 }
 
+/* A box whose words may run past its line, such as who fills a planned hire on a card: it wraps
+   them, growing a line at a time, for its words to cut short or keep whole as they need. */
+.wraps {
+  align-self: flex-start;
+  height: auto;
+  min-width: 0;
+  max-width: 100%;
+  padding-block: 1px;
+  white-space: normal;
+}
+
+.wraps .kindWords {
+  min-width: 0;
+  line-height: 1.3;
+}
+
 /* A box with no item before it, such as a line saying a place is planned. */
 .alone {
   margin-left: 0;
 }
 
-/* The "from" and day after an item, kept on one line so the day never parts from its "from". */
+/* The "from" and day after an item, kept on one line so the day never parts from its "from", as
+   "starts" never parts from the day a planned hire's person starts. */
 .fromDay {
   margin-left: var(--fathom-mark-gap);
   white-space: nowrap;

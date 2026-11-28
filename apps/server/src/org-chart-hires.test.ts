@@ -3,15 +3,8 @@
 // Integration tests for planned hires on the org chart, against a migrated PostgreSQL server: hires
 // as placeholders and their drafts, then a team's colour.
 
-import {
-  accessHistory,
-  listItems,
-  lists,
-  plannedHires,
-  teams,
-} from "@fathom/db";
+import { accessHistory, listItems, lists, teams } from "@fathom/db";
 import { and, eq } from "drizzle-orm";
-import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   generalApprover,
@@ -158,42 +151,6 @@ describe("planned hires on the chart", () => {
     await changeHire(placed, { managerId: starting });
     expect((await chart()).get(placed)?.draft?.managerId).toBeNull();
     expect((await drafted()).get(placed)?.managerId).toBeNull();
-  });
-
-  it("shows a filled hire whose person has not started only to those who do not see them", async () => {
-    const starter = await person({ startDate: "2026-08-03", isManager: false });
-    const started = await person({ isManager: false });
-    const [waiting, done] = [randomUUID(), randomUUID()];
-    const states = await test.connection
-      .select({ id: listItems.id })
-      .from(listItems)
-      .where(eq(listItems.meaning, "open"))
-      .limit(1);
-    const stateId = String(states[0]?.id);
-    await test.connection.insert(plannedHires).values([
-      {
-        id: waiting,
-        temporaryNumber: 900_101,
-        positionId: testPosition,
-        stateId,
-        filledBy: starter,
-      },
-      {
-        id: done,
-        temporaryNumber: 900_102,
-        positionId: testPosition,
-        stateId,
-        filledBy: started,
-      },
-    ]);
-    const viewer = await test.signedIn(["people:view", "feature-teams:view"]);
-    const shown = await chart(viewer.cookie);
-    expect(shown.get(waiting)?.planned).toEqual({
-      expected: "2026-08",
-      shownId: "TBD-900101",
-    });
-    expect(shown.has(done)).toBe(false);
-    expect((await chart()).has(waiting)).toBe(false);
   });
 
   it("keeps a new person a fill drafts off the chart as drafts make it until they start, for readers who do not see them", async () => {

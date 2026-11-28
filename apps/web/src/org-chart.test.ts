@@ -273,6 +273,18 @@ describe("the people the Draft menu draws", () => {
     drafted: [person("head", null, "Quinn"), person("new", "head", "Ellis")],
   };
 
+  it.each(["both", "drafts", "live"] as const)(
+    "leaves out the filled hires drawn on feature teams alone, with %s",
+    (show) => {
+      const filled = [person("filled-hire", "head", "Fictional Tester")];
+      expect(
+        chartPeople({ ...chart, filled }, show, shownDay).some(
+          ({ id }) => id === "filled-hire",
+        ),
+      ).toBe(false);
+    },
+  );
+
   it("draws a moved person under their new manager, with a Live copy under their current one", () => {
     const tree = treeOf(chartPeople(chart, "both", shownDay));
     expect(tree.reports.get("m2")).toEqual(["r1"]);
@@ -330,6 +342,19 @@ describe("the people the Draft menu draws", () => {
         chartPeople(chart, "both", shownDay).find(({ id }) => id === "m3"),
       ),
     );
+  });
+
+  it("gives a filled hire's card a line for the second line of its words on who fills it", () => {
+    const planned = {
+      ...person("h1", null, "Fictional Tester, TBD-1"),
+      planned: { expected: "2027-02", shownId: "TBD-1" },
+    };
+    expect(
+      heightOf({
+        ...planned,
+        filled: { name: "Fictional Joiner", starts: "starts Feb 1, 2027" },
+      }),
+    ).toBe(heightOf({ ...planned, teamName: "Fictional Harbour" }));
   });
 
   it("gives a planned hire's card heading a feature team a line for the team's name", () => {

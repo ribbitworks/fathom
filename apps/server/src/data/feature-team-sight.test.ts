@@ -25,6 +25,7 @@ import {
   peopleNamed,
   seenBy,
   seesTeamField,
+  showsFillsAbovePersonal,
   teamSight,
   withoutLeavers,
 } from "./feature-team-sight.ts";
@@ -667,5 +668,26 @@ describe("whether naming who fills a hire is recorded as a view of Personal deta
     ],
   ])("%s", (_, access, teams, recorded) => {
     expect(namesFillerAbovePersonal(access, teams)).toBe(recorded);
+  });
+});
+
+describe("whether showing hires filled by people yet to start is recorded as a view of Personal details", () => {
+  const fill = { keyNumber: 1, expected: "2027-03" };
+  const generalStarts = {
+    ...workforceAdministrator,
+    dataClasses: { ...defaultClasses, startDate: "general" as const },
+  };
+
+  it.each([
+    [
+      "is recorded while start dates are above General",
+      workforceAdministrator,
+      [fill],
+      true,
+    ],
+    ["isn't while start dates are General", generalStarts, [fill], false],
+    ["isn't when none is shown", workforceAdministrator, [], false],
+  ])("%s", (_, access, fills, recorded) => {
+    expect(showsFillsAbovePersonal(access, fills)).toBe(recorded);
   });
 });

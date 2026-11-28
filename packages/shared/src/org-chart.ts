@@ -75,6 +75,11 @@ export const orgChartSchema = z.object({
   // changed, each as People shows them to the reader. Someone a draft adds carries the draft's state,
   // since they are on no other chart.
   drafted: z.array(orgChartPersonSchema),
+  // Planned hires filled by someone not yet started, for readers who see that person in the hire's
+  // place, so on neither chart: drawn on their feature teams alone, which they stay on until the
+  // person starts. Sent only when there is one, to readers of feature teams. Who fills each comes with
+  // the teams, judged by their own sight of people, so a card may still read as not yet filled.
+  filled: z.array(orgChartPersonSchema).optional(),
 });
 
 export type OrgChart = z.infer<typeof orgChartSchema>;

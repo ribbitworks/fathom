@@ -23,7 +23,11 @@ import {
   noFeatureTeamEdits,
 } from "./feature-team-panel.tsx";
 import { FeatureTeamsList } from "./feature-teams-list.tsx";
-import { featureTeamPeople, featureTeamsQueryOn } from "./feature-teams.ts";
+import {
+  featureTeamPeople,
+  featureTeamsQueryOn,
+  teamCardPeople,
+} from "./feature-teams.ts";
 import { Chart } from "./org-chart-canvas.tsx";
 import { cardLinkId } from "./org-chart-cards.tsx";
 import { DateControl } from "./date-control.tsx";
@@ -179,7 +183,11 @@ export function OrgChartPage({
     return teamsQuery.data === undefined
       ? undefined
       : treeOf(
-          featureTeamPeople(teamsQuery.data.teams, query.data.people, show),
+          featureTeamPeople(
+            teamsQuery.data.teams,
+            teamCardPeople(query.data),
+            show,
+          ),
         );
   }, [query.data, show, featureView, teamsQuery.data, day]);
   const lead =

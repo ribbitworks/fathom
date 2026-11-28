@@ -12,6 +12,7 @@ import {
   type FeatureTeamRequest,
   featureTeamsSchema,
   type MemberTeamsChange,
+  type OrgChart,
   type OrgChartPerson,
   type PaletteColour,
   savedSchema,
@@ -21,7 +22,12 @@ import {
 import { z } from "zod";
 import { dayQuery, sendDeleteFor, sendJson, sendJsonFor } from "./api.ts";
 import { expectedWords, formatDay } from "./day-formats.ts";
-import { type ChartPerson, dayUnlessShown, liveCopyId } from "./org-chart.ts";
+import {
+  type ChartPerson,
+  dayUnlessShown,
+  type FillerWords,
+  liveCopyId,
+} from "./org-chart.ts";
 import { today } from "./today.ts";
 import { besideLive } from "./status-mark.tsx";
 
@@ -126,14 +132,26 @@ export function teamPersonOf(
   };
 }
 
+export const filledByWords = "Filled by";
+
+export const fillerWords = ({
+  name,
+  starts,
+}: NonNullable<TeamHire["filledBy"]>): FillerWords => ({
+  name,
+  ...(starts === undefined ? {} : { starts: `starts ${formatDay(starts)}` }),
+});
+
 // When a planned hire on a team starts: by whom it's filled, from the day they start where given;
 // otherwise the month it's expected, or that it has no target date.
 export function teamHireWords(hire: TeamHire): string {
   const { filledBy } = hire;
   if (filledBy === undefined) return capitalized(expectedWords(hire));
-  return filledBy.starts === undefined
-    ? `Filled by ${filledBy.name}`
-    : `Filled by ${filledBy.name}, starts ${formatDay(filledBy.starts)}`;
+  const { name, starts } = fillerWords(filledBy);
+  return [
+    `${filledByWords} ${name}`,
+    ...(starts === undefined ? [] : [starts]),
+  ].join(", ");
 }
 
 type HireStart = "filled" | "expected" | "undated";
@@ -223,6 +241,16 @@ export const memberCardId = (teamId: string, personId: string) =>
 // The id of a team's own card while it has no lead.
 export const teamCardId = (teamId: string) => `${teamId} team`;
 
+// The cards feature teams are drawn from: the chart's people, and the filled hires it draws on their
+// teams alone.
+export const teamCardPeople = ({
+  people,
+  filled = [],
+}: Pick<OrgChart, "people" | "filled">): OrgChartPerson[] => [
+  ...people,
+  ...filled,
+];
+
 // The chart's people as feature teams: each team's lead, or a card naming it while it has none,
 // with its members under it, from the people the org chart draws. A team's colour reaches its lead's
 // card, which names it as a manager's team is named. With drafts beside live, members a draft adds
@@ -244,7 +272,16 @@ export function featureTeamPeople(
       draft === undefined
         ? undefined
         : { state: draft.state, unpublished: draft.unpublished === true };
-    const lead = shown.leadId === null ? undefined : byId.get(shown.leadId);
+    const hires = new Map(Object.entries(team.hires ?? {}));
+    // A planned hire's card says who fills it, as its team's details do, where the team names them.
+    const onTeam = (person: OrgChartPerson): ChartPerson => {
+      const hire = hires.get(person.id);
+      return hire?.filledBy === undefined
+        ? person
+        : { ...person, filled: fillerWords(hire.filledBy) };
+    };
+    const found = shown.leadId === null ? undefined : byId.get(shown.leadId);
+    const lead = found === undefined ? undefined : onTeam(found);
     const rootId =
       lead === undefined ? teamCardId(team.id) : memberCardId(team.id, lead.id);
     const card: ChartPerson =
@@ -303,7 +340,7 @@ export function featureTeamPeople(
       if (person === undefined || personId === lead?.id) return [];
       return [
         {
-          ...person,
+          ...onTeam(person),
           id: memberCardId(team.id, personId),
           teamName: null,
           teamColour: null,
@@ -335,7 +372,7 @@ export function featureTeamPeople(
             }
             return [
               {
-                ...person,
+                ...onTeam(person),
                 id: liveCopyId(memberCardId(team.id, personId)),
                 employeeId: null,
                 teamName: null,

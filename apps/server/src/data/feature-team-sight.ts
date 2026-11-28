@@ -10,6 +10,7 @@ import {
   type FeatureTeamDraft,
   hireCalled,
   monthOf,
+  type OrgChartPerson,
   seesClass,
   seesEmployment,
   seesField,
@@ -392,13 +393,25 @@ export function hireOnTeamSeen(
   };
 }
 
-// Whether a reader is told who fills a hire on a team while start dates are above General, a view
-// of Personal details the access history records.
+// Whether a reader is shown hires filled by people yet to start, which tells them something of
+// their start dates, while start dates are above General: a view of Personal details the access
+// history records, whichever page shows them.
+export const showsFillsAbovePersonal = (
+  access: ClassAccess,
+  fills: readonly (TeamHire | OrgChartPerson)[],
+): boolean => access.dataClasses.startDate !== "general" && fills.length > 0;
+
+// Whether a reader is told who fills a hire on a team, a view of Personal details as any fill shown
+// is.
 export const namesFillerAbovePersonal = (
   access: ClassAccess,
   teams: readonly FeatureTeam[],
 ): boolean =>
-  access.dataClasses.startDate !== "general" &&
-  teams.some(({ hires }) =>
-    Object.values(hires ?? {}).some(({ filledBy }) => filledBy !== undefined),
+  showsFillsAbovePersonal(
+    access,
+    teams.flatMap(({ hires }) =>
+      Object.values(hires ?? {}).filter(
+        ({ filledBy }) => filledBy !== undefined,
+      ),
+    ),
   );
