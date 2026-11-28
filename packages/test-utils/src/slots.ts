@@ -237,7 +237,9 @@ async function takeSlot(options: SlotOptions, token: string): Promise<string> {
       const line = waitingLine(options.folder);
       const free = slotsOf(options).filter(isFree).length;
       if (mayTakeTurn(line, ticket, free)) {
-        for (const slot of slotsOf(options)) {
+        // Highest first, leaving the first slot to copies on older code that use only that one, so
+        // one of them first in line isn't kept waiting behind a later run that took it.
+        for (const slot of slotsOf(options).reverse()) {
           if (tryTake(slot, token)) return slot;
         }
       }
