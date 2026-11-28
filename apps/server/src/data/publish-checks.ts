@@ -14,13 +14,13 @@ import { draftedField, nameTaken } from "./column-state.ts";
 import { drafted, type Recorded, wantsNoDraft } from "./draft-records.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
-import { choiceLabelTaken, keptOffered, listNameTaken } from "./list-rules.ts";
 import {
-  draftedChoice,
-  draftedList,
-  listExists,
-  listOfChoice,
-} from "./list-state.ts";
+  checkChoiceDraft,
+  checkListDraft,
+  checkOrderDraft,
+  type ListDraft,
+} from "./list-checks.ts";
+import { draftedList, listExists } from "./list-state.ts";
 import { checkPlanningDraft } from "./planning-records.ts";
 import {
   idsOf,
@@ -128,42 +128,14 @@ async function checkRecord(
   );
 }
 
-// Whether the record as the user's draft makes it still fits the data as it is now: a name or
-// Employee ID no one else has, a list to belong to or draw on, live or drafted to be added, and,
-// for a choice in a built-in list, a choice still offered for everything the list keeps.
+// Whether a change of a kind with no rules of its own on publishing yet still fits the data as it is
+// now: a name or Employee ID no one else has, and a list to draw on, live or drafted to be added.
 function fits({ versions, taken }: Checking, row: Row): boolean {
-  const { lists, columns } = versions.mine;
-  const id = row.recordId;
-  // Discarding a choice's draft can leave its list with nothing offered for something it keeps.
-  if (row.recordType === "list-item") {
-    const choiceList =
-      listOfChoice(lists, id) ?? listOfChoice(versions.theirs.lists, id);
-    if (choiceList !== undefined && !keptOffered(lists, choiceList)) {
-      return false;
-    }
-  }
   if (wantsNoDraft(row)) return true;
-  if (row.recordType === "choice-order") {
-    return draftedList(lists, id) !== undefined;
-  }
+  const id = row.recordId;
   if (row.recordType === "person") return !taken.has(id);
-  if (row.recordType === "planned-hire" || row.recordType === "feature-team") {
-    return true;
-  }
-  if (row.recordType === "list") {
-    const list = draftedList(lists, id);
-    return list === undefined || !listNameTaken(lists, String(list.name), id);
-  }
-  if (row.recordType === "list-item") {
-    const choice = draftedChoice(lists, id);
-    if (choice === undefined) return true;
-    const listId = String(choice.listId);
-    return (
-      listExists(lists, listId) &&
-      draftedList(lists, listId) !== undefined &&
-      !choiceLabelTaken(lists, listId, String(choice.label), id)
-    );
-  }
+  if (row.recordType !== "field") return true;
+  const { columns } = versions.mine;
   const field = draftedField(columns, id);
   if (field === undefined) return true;
   if (nameTaken(columns, String(field.name), id, field.tableName)) return false;
@@ -181,14 +153,28 @@ class NoLongerFits extends Error {}
 const fitting = (checking: Checking, row: Row): Promise<void> =>
   fits(checking, row) ? Promise.resolve() : Promise.reject(new NoLongerFits());
 
+// A change to a list, a choice or an order, checked with the lists as the user's drafts make them
+// and as everyone else has them.
+const listCheck =
+  (check: (draft: ListDraft) => Promise<void>) =>
+  ({ transaction, actor, versions }: Checking, row: Row) =>
+    check({
+      transaction,
+      editor: actor.user.id,
+      mine: versions.mine.lists,
+      theirs: versions.theirs.lists,
+      id: row.recordId,
+      row,
+    });
+
 // Each kind of change kept outside the plan's records, by how it is checked.
 const otherChecks: Record<
   Exclude<DraftKind, RecordType>,
   (checking: Checking, row: Row) => Promise<void>
 > = {
-  list: fitting,
-  "list-item": fitting,
-  "choice-order": fitting,
+  list: listCheck(checkListDraft),
+  "list-item": listCheck(checkChoiceDraft),
+  "choice-order": listCheck(checkOrderDraft),
   field: fitting,
   person: fitting,
   "planned-hire": fitting,

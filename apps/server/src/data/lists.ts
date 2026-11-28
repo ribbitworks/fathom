@@ -95,7 +95,9 @@ import {
 
 export const noList = "There is no such list";
 export const noChoice = "There is no such choice";
-const duplicateChoice = "This list already has a choice with that name";
+export const duplicateChoice = "This list already has a choice with that name";
+export const choicesDrafted =
+  "This list's choices have drafts; approve or discard them before deleting the list";
 const listToBeRemoved =
   "This list's draft removes it; discard the draft to change it";
 const choiceToBeRemoved =
@@ -506,9 +508,7 @@ export async function deleteList(
     }
     await refuseIfUsed(transaction, id, "deleted", maker.user.id);
     if (choicesHaveDrafts(state, id)) {
-      throw new ConflictError(
-        "This list's choices have drafts; approve or discard them before deleting the list",
-      );
+      throw new ConflictError(choicesDrafted);
     }
     return saveDraft(
       transaction,

@@ -306,12 +306,6 @@ const othersOffer = (
     (other) => other !== id && offers(draftedChoice(state, other), kept),
   );
 
-// Whether a list offers a choice for everything it keeps, as the state's drafts make it.
-export const keptOffered = (state: ListsState, listId: string) =>
-  keptIn(state, listId).every((kept) =>
-    othersOffer(state, listId, undefined, kept),
-  );
-
 // What a built-in list lacks, in words, once it has no choice for what it keeps.
 const needs = (name: string, kept: Kept) =>
   kept === "any"
@@ -331,6 +325,18 @@ export function refuseLastKept(
   for (const kept of keptIn(state, listId)) {
     if (!offers(before, kept) || offers(after, kept)) continue;
     if (!othersOffer(state, listId, id, kept)) {
+      throw new ConflictError(
+        needs(String(draftedList(state, listId)?.name), kept),
+      );
+    }
+  }
+}
+
+// Refuses a built-in list that offers no choice for something it keeps, as the state's drafts make
+// it.
+export function refuseUnoffered(state: ListsState, listId: string): void {
+  for (const kept of keptIn(state, listId)) {
+    if (!othersOffer(state, listId, undefined, kept)) {
       throw new ConflictError(
         needs(String(draftedList(state, listId)?.name), kept),
       );

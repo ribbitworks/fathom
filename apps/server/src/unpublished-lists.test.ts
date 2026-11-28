@@ -322,3 +322,25 @@ describe("a list a column only drafted draws on", () => {
     await discard(alice);
   });
 });
+
+describe("publishing a list's removal", () => {
+  it("is refused once someone else's choice drafts for it are published, naming the list", async () => {
+    // Given Bob's private removal of a live list, and Alice's new choice for it published since
+    const { list } = await liveList(["Fictional Kept"]);
+    await saved(bob, "DELETE", `/api/lists/${list.id}`);
+    await saved(alice, "POST", `/api/lists/${list.id}/choices`, {
+      choices: [{ label: "Fictional Added" }],
+    });
+    await publish(alice);
+
+    await refused(
+      bob,
+      "POST",
+      "/api/unpublished/publish",
+      undefined,
+      `The list ${list.name}: This list's choices have drafts; approve or discard them before deleting the list`,
+    );
+    await discard(alice);
+    await discard(bob);
+  });
+});
