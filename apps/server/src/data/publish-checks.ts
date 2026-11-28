@@ -13,6 +13,11 @@ import { type Transaction } from "./changes.ts";
 import { drafted, type Recorded, wantsNoDraft } from "./draft-records.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { checkPersonChange, checkPersonRemoval } from "./person-checks.ts";
+import {
+  checkHireChange,
+  checkHireRemoval,
+  refuseUnfillable,
+} from "./hire-draft-checks.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import {
   checkChoiceDraft,
@@ -42,7 +47,7 @@ interface Checking {
   transaction: Transaction;
   actor: Actor;
   versions: Versions;
-  // The People table's columns, as the user sees them, read once.
+  // The People table's columns, which planned hires share, as the user sees them, read once.
   peopleColumns: () => Promise<TableColumns>;
   // Today, read once, when a check first needs it.
   today: () => Promise<string>;
@@ -193,6 +198,39 @@ async function checkPerson(checking: Checking, row: Row): Promise<void> {
   });
 }
 
+// A planned hire as the user's draft makes it, or its removal, against it as everyone else has it,
+// and a fill of it. Taking a draft back asks nothing of a hire.
+async function checkHire(checking: Checking, row: Row): Promise<void> {
+  if (wantsNoDraft(row)) return;
+  const { transaction, actor, versions } = checking;
+  const { live: lives, mine, theirs, tierOf } = versions.hires;
+  const id = row.recordId;
+  const live = lives.get(id);
+  const after = drafted(live, mine.get(id));
+  const hire = drafted(live, theirs.get(id));
+  if (after === undefined) {
+    // A removal is of a hire others still have, since one removed since takes the change with it.
+    await checkHireRemoval(transaction, actor, tierOf, id, hire as Recorded);
+    return;
+  }
+  await checkHireChange({
+    transaction,
+    actor,
+    columns: await checking.peopleColumns(),
+    tierOf,
+    id,
+    live,
+    hire,
+    after,
+  });
+  if (typeof after.filledBy === "string" && after.filledBy !== hire?.filledBy) {
+    // Whether the hire is still in a state meaning Open is checked when it is filled and approved,
+    // since a fill's own change of state can't be told here from one made before it. A fill is of
+    // a hire others still have, since a hire removed since takes the change with it.
+    refuseUnfillable(live, hire as Recorded);
+  }
+}
+
 // A kind whose rules on publishing are still to come.
 const unchecked = () => Promise.resolve();
 
@@ -228,7 +266,7 @@ const otherChecks: Record<
       row,
     ),
   person: checkPerson,
-  "planned-hire": unchecked,
+  "planned-hire": checkHire,
   "feature-team": unchecked,
 };
 

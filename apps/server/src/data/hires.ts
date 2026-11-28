@@ -46,7 +46,7 @@ import {
   choicesAskedFor,
   valuesOf,
 } from "./person-fields.ts";
-import { reassignReports, text } from "./reporting.ts";
+import { text } from "./reporting.ts";
 import {
   hireChanges,
   hireSensitivities,
@@ -60,15 +60,18 @@ import {
 } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import {
+  checkHireChange,
+  checkHireRemoval,
+  refuseUnfillable,
+} from "./hire-draft-checks.ts";
+import {
   checkManager,
   checkRequisition,
-  hiresReportTo,
   movedByFill,
   newlyManaged,
   partOfFill,
   refuseChangingFill,
   refuseHired,
-  refuseHireLoop,
   refuseUnmarked,
   requireHiringEdit,
   unfilled,
@@ -222,6 +225,9 @@ async function lockDraftedHire(
   return { before, draft, hire: drafted(before, draft) };
 }
 
+const notApproved =
+  "This planned hire's headcount isn't approved yet; move it to an approved state before filling it";
+
 // Drafts a change to some of a hire's details, or a move to another state, in any order.
 export async function updateHire(
   database: Database,
@@ -242,41 +248,13 @@ export async function updateHire(
     const columns = await columnsWithAdded(transaction, actor.user.id, true);
     refuseNotOffered(columns, change);
     const offered = offeredOn(columns);
+    const known = await choicesAskedFor(transaction, actor.user.id, [change]);
     const changedValues = checkedValues(
       offered,
-      await choicesAskedFor(transaction, actor.user.id, [change]),
+      known,
       change.values ?? {},
       valuesOf(hire),
     );
-    if (change.managerId !== undefined) {
-      await checkManager(transaction, change.managerId, actor.user.id);
-    }
-    if (change.positionId !== undefined) {
-      await checkBuiltInChoice(
-        transaction,
-        "positions",
-        change.positionId,
-        hire.positionId,
-      );
-    }
-    if (change.stateId !== undefined) {
-      refuseHired(
-        await checkBuiltInChoice(
-          transaction,
-          "hiring-states",
-          change.stateId,
-          hire.stateId,
-        ),
-      );
-    }
-    if (typeof change.requisition === "string") {
-      await checkRequisition(
-        transaction,
-        change.requisition,
-        id,
-        actor.user.id,
-      );
-    }
     const unmarked = Object.fromEntries(
       Object.entries(hire).filter(([field]) => field !== "isManager"),
     );
@@ -308,29 +286,17 @@ export async function updateHire(
       ...checkedNumbers(offered, change.numbers ?? {}),
     });
     const tierOf = await readHireTier(transaction, columns);
-    if (newlyManaged(hire, after)) {
-      await refuseUnmarked(
-        transaction,
-        String(after.managerId),
-        (message) => new BadRequestError(message),
-        { seesPositions: seesSensitivity(actor, tierOf("positionId")) },
-      );
-    }
-    if (change.managerId !== undefined) {
-      await refuseHireLoop(transaction, actor.user.id, id, after.managerId);
-    }
-    if (
-      hire.isManager === true &&
-      after.isManager !== true &&
-      (await hiresReportTo(transaction, [id], {
-        drafted: true,
-        editor: actor.user.id,
-      }))
-    ) {
-      throw new ConflictError(reassignReports);
-    }
-    const made = hireChanges(id, "changed", hire, after, tierOf);
-    requireHireEdits(actor, made);
+    const made = await checkHireChange({
+      transaction,
+      actor,
+      columns,
+      tierOf,
+      id,
+      live: before,
+      hire,
+      after,
+      known,
+    });
     if (made.length === 0) return null;
     const all = [
       ...asDraft(made),
@@ -341,10 +307,6 @@ export async function updateHire(
     return recordChanges(transaction, actor, all);
   });
 }
-
-const filledAlready = "This planned hire is already filled";
-const notApproved =
-  "This planned hire's headcount isn't approved yet; move it to an approved state before filling it";
 
 // The hire asked to be filled, as the actor's draft makes it, with it as it is live: one not drafted
 // to be removed or already filled, with no rejected draft, whose changes a fill would otherwise send
@@ -361,22 +323,12 @@ export async function fillableHire(
       "This planned hire's draft removes it; discard the draft to fill it",
     );
   }
-  if (before === undefined) {
-    throw new ConflictError(
-      "This planned hire is only drafted to be added; approve it before filling it",
-    );
-  }
-  if (!unfilled(hire)) throw new ConflictError(filledAlready);
   if (draft?.state === "rejected") {
     throw new ConflictError(
       "This planned hire has a rejected draft; discard it or send it for approval again before filling it",
     );
   }
-  if (hire.managerId !== before.managerId) {
-    throw new ConflictError(
-      "This planned hire's draft changes its manager; approve or discard that draft before filling it",
-    );
-  }
+  refuseUnfillable(before, hire);
   const [state] = await transaction
     .select({ meaning: listItems.meaning })
     .from(listItems)
@@ -495,28 +447,16 @@ export async function deleteHire(
       id,
     );
     if (hire === undefined) return null;
-    if (typeof hire.filledBy === "string") {
-      throw new ConflictError(
-        "A filled hire is kept; give its person an end date instead",
-      );
-    }
-    if (await movedByFill(transaction, actor, before, hire)) {
-      throw new ConflictError(partOfFill);
-    }
-    if (
-      await hiresReportTo(transaction, [id], {
-        drafted: true,
-        editor: actor.user.id,
-      })
-    ) {
-      throw new ConflictError(reassignReports);
+    if (typeof hire.filledBy !== "string") {
+      if (await movedByFill(transaction, actor, before, hire)) {
+        throw new ConflictError(partOfFill);
+      }
     }
     const tierOf = await readHireTier(transaction);
     const made = [
-      ...asDraft(hireChanges(id, "deleted", hire, undefined, tierOf)),
+      ...asDraft(await checkHireRemoval(transaction, actor, tierOf, id, hire)),
       ...clearedRejection(id, rejectionTier(tierOf), before, draft, recordType),
     ];
-    requireHireEdits(actor, made);
     await writeDraft(
       transaction,
       actor.user.id,

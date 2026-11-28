@@ -333,7 +333,9 @@ describe("a planned manager", () => {
     expect(errorOf(await change(top, { managerId: below }))).toBe(loop);
   });
 
-  it("is refused on approval when drafts made apart would make a loop", async () => {
+  it("is refused on publishing a change that closes a loop with a draft published since", async () => {
+    // Given one user's private change of First's manager to Second, and another's of Second's to
+    // First, published first
     const first = await liveHire({ isManager: true });
     const second = await liveHire({ isManager: true });
     const one = await test.signedIn("workforce-administrator");
@@ -352,9 +354,40 @@ describe("a planned manager", () => {
         unpublished,
       ),
     );
-    await ok(await send(one, "POST", "/api/unpublished/publish"));
     await ok(await send(other, "POST", "/api/unpublished/publish"));
+
+    const response = await send(one, "POST", "/api/unpublished/publish");
+
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toMatch(
+      /: That manager reports to this planned hire, directly or through others$/,
+    );
+    await send(one, "POST", "/api/unpublished/discard");
+  });
+
+  it("is refused on approval when drafts would make a loop", async () => {
+    // Given Second's manager changed to First, and a waiting draft of First's manager as Second,
+    // which no route can publish any more, so the test writes it directly
+    const first = await liveHire({ isManager: true });
+    const second = await liveHire({ isManager: true });
+    await ok(
+      await send(
+        await test.signedIn("workforce-administrator"),
+        "PATCH",
+        `/api/planned-hires/${second}`,
+        { managerId: first },
+      ),
+    );
+    await test.connection.insert(drafts).values({
+      recordType: "planned-hire",
+      recordId: first,
+      action: "changed",
+      fields: { managerId: second },
+      state: "waiting",
+    });
+
     const response = await approve({ plannedHires: [first, second] });
+
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toMatch(
       /^Fictional Engineer, TBD-\d+ would end up reporting to itself$/,
