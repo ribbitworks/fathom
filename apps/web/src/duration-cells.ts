@@ -96,12 +96,26 @@ export const shownLength = (
   return amountText(durationIn(length, shown), shown, places);
 };
 
-// A filter's bound, kept in calendar days, as an amount of the column's unit to the places it is
-// shown to, such as 13 wk for 91.3125 days.
+// What floating point leaves of a whole amount, far below any part of a unit typed.
+const wholeWithin = 1e-9;
+
+// The units a bound is named in when not a whole amount of the unit shown, largest first.
+const boundUnits: readonly DurationUnit[] = ["mo", "wk", "wd", "d"];
+
+// A filter's bound, kept in calendar days, as it was typed: in the unit shown, where it is a whole
+// amount of it, as a bare number always is, or else in the unit it is a whole amount of, such as
+// 3 mo for 91.3125 days, so the bound is never hidden by rounding; a whole amount of none, as only
+// an address might hold, is shown in the unit shown to the column's decimal places.
 export const shownBound = (
   column: LengthColumn & Pick<TableColumn<never>, "places">,
   days: number,
 ): string => {
   const unit = lengthUnit(column);
-  return amountText(days / unitDays(unit), unit, column.places ?? 0);
+  const amountIn = (one: DurationUnit) => days / unitDays(one);
+  const whole = [unit, ...boundUnits].find(
+    (one) => Math.abs(amountIn(one) - Math.round(amountIn(one))) < wholeWithin,
+  );
+  return whole === undefined
+    ? amountText(amountIn(unit), unit, column.places ?? 0)
+    : amountText(Math.round(amountIn(whole)), whole, 0);
 };

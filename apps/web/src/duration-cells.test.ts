@@ -39,10 +39,13 @@ describe("a length's size and amount", () => {
 });
 
 describe("a filter's bound", () => {
-  it("is named in the unit shown, whole for a column naming no places, counting back with a minus sign", () => {
-    expect(shownBound(inWeeks, 91.3125)).toBe("13 wk");
-    expect(shownBound({ ...inWeeks, places: 2 }, 91.3125)).toBe("13.04 wk");
+  it("is named as typed: in the unit shown where whole in it, or else the unit it is whole in, counting back with a minus sign", () => {
+    expect(shownBound(inWeeks, 91)).toBe("13 wk");
+    expect(shownBound(inWeeks, 91.3125)).toBe("3 mo");
+    expect(shownBound(inWeeks, 4.2)).toBe("3 wd");
     expect(shownBound(asTyped, -30.4375)).toBe("−1 mo");
+    expect(shownBound({ ...inWeeks, places: 2 }, 0.5)).toBe("0.07 wk");
+    expect(shownBound(inWeeks, 0.5)).toBe("0 wk");
   });
 });
 

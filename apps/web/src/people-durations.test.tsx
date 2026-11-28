@@ -234,7 +234,7 @@ describe("a Duration column", () => {
     expect(within(filter).getByText("Type 28 d or more")).toBeDefined();
   });
 
-  it("keeps a bound exactly, naming it in the unit shown to its decimal places", async () => {
+  it("keeps a bound exactly, naming it as typed", async () => {
     await open();
     await choose("Weeks");
     await choose("Filter…");
@@ -246,7 +246,7 @@ describe("a Duration column", () => {
       "1 mo",
     );
     expect(
-      await screen.findByText("Notice given: at least 4.3 wk"),
+      await screen.findByText("Notice given: at least 1 mo"),
     ).toBeDefined();
   });
 
