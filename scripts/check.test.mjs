@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
+import { writeCheckTurn } from "./test-check-turn.mjs";
 
 const scripts = fileURLToPath(new URL(".", import.meta.url));
 const jobs = [
@@ -48,23 +49,7 @@ function copy({ prepared }) {
   mkdirSync(join(root, "scripts"));
   for (const name of ["lib.sh", "check.sh", "run-command.mjs"])
     copyFileSync(join(scripts, name), join(root, "scripts", name));
-  writeFileSync(
-    join(root, "scripts", "check-turn.mjs"),
-    [
-      'import { spawnSync } from "node:child_process";',
-      "const [command, ...args] = process.argv.slice(2);",
-      'if (process.env.TURN_RUNS !== "1") {',
-      "  console.log(`turn: ${JSON.stringify([command, ...args])}`);",
-      "  process.exit(0);",
-      "}",
-      "const { status } = spawnSync(command, args, {",
-      '  stdio: "inherit",',
-      '  env: { ...process.env, FATHOM_CHECK_SLOT: "1" },',
-      "});",
-      "process.exit(status ?? 1);",
-      "",
-    ].join("\n"),
-  );
+  writeCheckTurn(join(root, "scripts"));
   writeFileSync(
     join(root, "scripts", "changed-paths.mjs"),
     [

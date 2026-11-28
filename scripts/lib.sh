@@ -10,6 +10,11 @@ fail() {
   exit 1
 }
 
+# Whether this run already holds a check's turn, as one started by check-turn.mjs does.
+in_turn() {
+  [ "${FATHOM_CHECK_SLOT:-}" = "1" ]
+}
+
 require_git_repository() {
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail "Run this inside the Fathom git repository"
 }
