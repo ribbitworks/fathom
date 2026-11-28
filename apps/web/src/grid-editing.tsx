@@ -57,6 +57,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     | "submitNewRows"
     | "hasRowMenu"
     | "rowReuse"
+    | "withDrafts"
   >,
 ) {
   const {
@@ -91,6 +92,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     kindKept,
     followingKind,
     submitNewRows,
+    withDrafts,
     hasRowMenu,
     rowReuse,
   } = grid;
@@ -172,7 +174,12 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
     }
     const { row, column } = at(cell);
     const key = column.key;
-    if (how === "enter" && row.newRow) {
+    // Where records have no drafts, Tab past a new row's last cell adds it, as Enter does, since
+    // every value there saves at once.
+    const addsRow =
+      how === "enter" ||
+      (how === "next" && !withDrafts && cell.column === columns.length - 1);
+    if (addsRow && row.newRow) {
       setEditing(undefined);
       submitNewRows(
         newRows.map((newRow) =>

@@ -35,7 +35,7 @@ const savedPage = (page: ReturnType<typeof followUps>) => () =>
   Response.json({ page, changeSetId: "40000000-0000-4000-8000-000000000001" });
 
 describe("Mine in the sidebar", () => {
-  it("lists the maker's pages first, each after the private ring, then New page", async () => {
+  it("lists the maker's pages before Administration, each after the private ring, then New page", async () => {
     // Given a role that may make private pages
     serverAnswers({
       ...pageAnswers(followUps([])),
@@ -51,11 +51,16 @@ describe("Mine in the sidebar", () => {
     });
     renderApp("/help");
 
-    // Then Mine comes first, holding its pages in order and New page
+    // Then Mine comes before Administration, which this role doesn't see, holding its pages in order and New page
     const sidebar = await findSidebar();
-    const [first] = within(sidebar).getAllByRole("group");
-    expect(within(first as HTMLElement).getByText("Mine")).toBeDefined();
-    const mine = within(first as HTMLElement);
+    const groups = within(sidebar).getAllByRole("group");
+    expect(groups.map((group) => group.firstChild?.textContent)).toEqual([
+      "Plan",
+      "Mine",
+      "History",
+      "Help",
+    ]);
+    const mine = within(groups[1] as HTMLElement);
     await waitFor(() => {
       expect(mine.getAllByRole("link").map((link) => link.textContent)).toEqual(
         ["Follow-ups", "Customer asks"],
@@ -220,7 +225,7 @@ describe("a page under Mine", () => {
     });
   });
 
-  it("tints no row being typed in, as it will be no draft", async () => {
+  it("tints no row being typed in, marking it with the private hollow dot", async () => {
     serverAnswers(pageAnswers(followUps([])));
     renderApp(`/mine/${pageId}`);
     await screen.findByRole("grid", { name: "Follow-ups" });
@@ -230,6 +235,54 @@ describe("a page under Mine", () => {
     await userEvent.keyboard("Ask about bulk edits{Tab}");
     const newRow = screen.getByRole("row", { name: "New row" });
     expect(newRow.className).not.toContain("recordFillingRow");
+    expect(within(newRow).getByText(/New, not saved yet/u)).toBeDefined();
+    expect(newRow.querySelector("[class*=privateMark]")).not.toBeNull();
+  });
+
+  const addedRow = {
+    values: {},
+    links: {},
+    texts: { [nameField]: "Ask about bulk edits" },
+    days: { [dueField]: null },
+  };
+
+  it("adds a row on Tab from its last column", async () => {
+    const fetch = serverAnswers({
+      ...pageAnswers(followUps([])),
+      [`POST ${pagePath}/rows`]: savedPage(
+        followUps([row("r2", "Ask about bulk edits")]),
+      ),
+    });
+    renderApp(`/mine/${pageId}`);
+    await screen.findByRole("grid", { name: "Follow-ups" });
+    act(() => {
+      document.getElementById(`cell-new-0-${nameField}`)?.focus();
+    });
+    await userEvent.keyboard("Ask about bulk edits{Tab}");
+    expect(changesSent(fetch)).toEqual([]);
+    await userEvent.keyboard("{Tab}");
+    await waitFor(() => {
+      expect(changesSent(fetch)).toEqual([[`${pagePath}/rows`, addedRow]]);
+    });
+  });
+
+  it("adds a row typed in when the empty row is left", async () => {
+    const fetch = serverAnswers({
+      ...pageAnswers(followUps([])),
+      [`POST ${pagePath}/rows`]: savedPage(
+        followUps([row("r2", "Ask about bulk edits")]),
+      ),
+    });
+    renderApp(`/mine/${pageId}`);
+    await screen.findByRole("grid", { name: "Follow-ups" });
+    act(() => {
+      document.getElementById(`cell-new-0-${nameField}`)?.focus();
+    });
+    await userEvent.keyboard("Ask about bulk edits{Tab}");
+    await userEvent.click(screen.getByRole("textbox", { name: "Search rows" }));
+    await waitFor(() => {
+      expect(changesSent(fetch)).toEqual([[`${pagePath}/rows`, addedRow]]);
+    });
   });
 
   it("adds pasted rows one after another, and Undo takes back the last alone", async () => {

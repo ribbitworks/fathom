@@ -371,7 +371,7 @@ describe("what a change to an account's permissions does", () => {
     const plan: Permission[] = ["plan:view"];
     const making: Permission[] = ["plan:view", "private-pages:make"];
     expect(difference(plan, making, defaultClasses)).toEqual({
-      gains: ["Makes pages under Mine, each a table nobody else sees."],
+      gains: ["Makes tables only they see."],
       losses: [],
     });
     expect(difference(making, plan, defaultClasses)).toEqual({

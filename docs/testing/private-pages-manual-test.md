@@ -56,7 +56,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `07FD` Sign in as the Feature Lead, `feature.lead@fathom.test`.
   - **Expected:**
-    - The left-hand menu starts with a section headed **Mine**, above **Plan**.
+    - The left-hand menu has a section headed **Mine**, after **People** and before **Administration**.
     - Under **Mine**, the only item is **New page**, after a **+**.
   - **Notes:**
 
@@ -69,7 +69,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `0A68` Under **Mine**, select **New page**.
   - **Expected:**
     - A dialog titled **New page** opens.
-    - Under the title, "1 Name · 2 Columns", with **1 Name** in bold.
     - The **Name** box has focus.
   - **Notes:**
 
@@ -81,7 +80,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `181B` Type `Follow-ups` and press Enter.
   - **Expected:**
-    - **2 Columns** is now in bold.
     - A table with the headings **Name**, **Type** and **List**.
     - Its first row reads `Name` and **Text**, with no **×** at its end.
     - Under it, an empty row with **Text**, whose name box has focus.
@@ -110,9 +108,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `2CDF` Choose **Text**, then select **Back**.
-  - **Expected:**
-    - **1 Name** is in bold.
-    - The **Name** box reads `Follow-ups`.
+  - **Expected:** The **Name** box reads `Follow-ups`.
   - **Notes:**
 
 - [ ] `3226` Select **Next**.
@@ -149,6 +145,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** A second row reads 'Ask about bulk edits', under the first.
   - **Notes:**
 
+- [ ] `4A1E` Type `Review the export`, and press Tab.
+  - **Expected:**
+    - The **Due** cell of the row being typed in is selected.
+    - A violet ring shows before 'Review the export', with no tint on the row.
+  - **Notes:**
+
+- [ ] `4B57` Point at the violet ring before 'Review the export'.
+  - **Expected:** A tip reads "New, not saved yet".
+  - **Notes:**
+
+- [ ] `4C93` Select the **Search** box above the table.
+  - **Expected:**
+    - A third row reads 'Review the export', with no ring.
+    - A new empty row shows under it.
+  - **Notes:**
+
 - [ ] `4D2C` Select the **Due** cell of 'Check offline conflicts', type `2026-12-04`, and press Enter.
   - **Expected:** The cell reads "Dec 4, 2026".
   - **Notes:**
@@ -163,8 +175,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `683F` Reload the page.
   - **Expected:**
-    - 'Check offline conflicts' with "Dec 4, 2026" and **Done** unticked, then 'Ask about bulk edits', in that order.
-    - The count above the table reads "2 rows".
+    - 'Check offline conflicts' with "Dec 4, 2026" and **Done** unticked, then 'Ask about bulk edits', then 'Review the export', in that order.
+    - The count above the table reads "3 rows".
   - **Notes:**
 
 ### PRIV-04: A Row Is Removed at Once, with Undo
@@ -228,5 +240,5 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `B32A` In the main window, paste the link into the address bar, and press Enter.
-  - **Expected:** The **Follow-ups** page opens, with both its rows.
+  - **Expected:** The **Follow-ups** page opens, with its three rows.
   - **Notes:**
