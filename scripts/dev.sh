@@ -32,13 +32,16 @@ branch="$(git branch --show-current 2>/dev/null)" || branch=""
 info "Starting Fathom at https://localhost:$port"
 # Both processes get these settings: the server listens on FATHOM_PORT, and Vite serves the page on
 # FATHOM_DEV_PORT with the same certificate, forwarding to the server. NODE_EXTRA_CA_CERTS lets
-# Vite check the server's certificate.
+# Vite check the server's certificate. Every tab and UI test reaches the server from one address
+# through Vite, so the server allows more requests and sign-ins than production does.
 FATHOM_DEV_PORT="$port" \
   FATHOM_DEV_CLONE="$FATHOM_CLONE" \
   FATHOM_DEV_BRANCH="$branch" \
   FATHOM_HOST=127.0.0.1 \
   FATHOM_PORT="$FATHOM_DEV_API_PORT" \
   FATHOM_PUBLIC_URL="https://localhost:$port" \
+  FATHOM_DEV_REQUESTS_PER_MINUTE=3000 \
+  FATHOM_DEV_SIGN_INS_PER_MINUTE=100 \
   FATHOM_AUTH_SECRET_FILE="$PWD/.dev/secrets/fathom_auth_secret" \
   FATHOM_TLS_CERT_FILE="$PWD/.dev/certs/localhost.pem" \
   FATHOM_TLS_KEY_FILE="$PWD/.dev/certs/localhost-key.pem" \

@@ -96,6 +96,7 @@ Fathom then opens at `https://localhost:8443` in a Windows browser, since WSL2 p
   - PostgreSQL runs in a container. The server and front end run on the machine and reload when their code changes.
   - The front end's development server passes API requests to the server, so the browser sees one HTTPS address.
   - That development server doesn't send the server's security headers, so a test checks that the built front end needs no inline scripts, which those headers block.
+  - Every browser tab and UI test reaches the server from one address through Vite, so the server allows more requests and sign-ins a minute than in production, as the [Security Plan](../security/security-plan.md#denial-of-service) sets out.
 - **Production-like mode,** with `pnpm stack:up`:
   - The containers in the [Architecture](architecture.md) run with Docker Compose, over HTTPS, with the same network isolation as production.
   - It runs at `https://localhost:9443`, or the port for the copy's clone number, so development mode can run beside it.
@@ -233,7 +234,7 @@ The copy gets new names, and so a new, empty database.
 | `pnpm test:scripts` | The script tests alone |
 | `pnpm test:packages` | Every package's tests; with `--filter` and a package, such as `--filter @fathom/web`, only those packages, as pnpm chooses them |
 | `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, the application and database can't reach the internet, and the application image holds none of the tests or the files only they use |
-| `pnpm test:ui` | The UI tests in a real browser, against this copy's development server, which must be running, after reseeding its fictional data, as [ADR 0013](../adr/0013-ui-tests.md) sets out |
+| `pnpm test:ui` | The UI tests in a real browser, against this copy's development server, which must be running, after reseeding its fictional data, as [ADR 0013](../adr/0013-ui-tests.md) sets out. |
 | `pnpm typecheck` | Type checking across the workspace |
 | `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences`, `pnpm lint:renovate`, `pnpm lint:duplicates` | Each linter on its own. `pnpm lint:renovate` validates `renovate.json` with Renovate's own validator, only when it has changed since `origin/main` |
 | `pnpm format` | Format the source files |

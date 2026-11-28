@@ -14,7 +14,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { loadServerConfig } from "./config.ts";
+import { loadServerConfig, productionLimits } from "./config.ts";
 
 describe("server configuration", () => {
   let folder: string;
@@ -64,6 +64,7 @@ describe("server configuration", () => {
       proxyHost: undefined,
       tls: { cert: "fictional certificate", key: "fictional key" },
       webRoot: undefined,
+      limits: { requestsPerMinute: 300, signInsPerMinute: 5 },
       database: {
         host: "localhost",
         port: 5432,
@@ -145,14 +146,81 @@ describe("server configuration", () => {
     ).toThrow(/ENOENT/);
   });
 
-  it("matches the example configuration, which lists every setting and no others", () => {
+  it("keeps production's limits of 300 requests and 5 sign-ins a minute", () => {
+    expect(productionLimits).toEqual({
+      requestsPerMinute: 300,
+      signInsPerMinute: 5,
+    });
+  });
+
+  it("raises the limits in development mode when asked to", () => {
+    expect(
+      loadServerConfig(
+        environment({
+          FATHOM_DEV_REQUESTS_PER_MINUTE: "3000",
+          FATHOM_DEV_SIGN_INS_PER_MINUTE: "100",
+        }),
+      ).limits,
+    ).toEqual({ requestsPerMinute: 3000, signInsPerMinute: 100 });
+    expect(
+      loadServerConfig(environment({ FATHOM_DEV_SIGN_INS_PER_MINUTE: "100" }))
+        .limits,
+    ).toEqual({ requestsPerMinute: 300, signInsPerMinute: 100 });
+  });
+
+  it("refuses to start with raised limits anywhere but development mode", () => {
+    const webRoot = join(folder, "web");
+    mkdirSync(webRoot);
+    writeFileSync(join(webRoot, "index.html"), "<!doctype html>");
+    for (const production of [
+      { FATHOM_WEB_ROOT: webRoot },
+      { FATHOM_PROXY_HOST: "proxy" },
+      { NODE_ENV: "production" },
+    ]) {
+      expect(() =>
+        loadServerConfig(
+          environment({
+            ...production,
+            FATHOM_DEV_REQUESTS_PER_MINUTE: "3000",
+          }),
+        ),
+      ).toThrow(
+        /^Invalid server configuration: only development mode may set FATHOM_DEV_REQUESTS_PER_MINUTE$/,
+      );
+      expect(() =>
+        loadServerConfig(
+          environment({
+            ...production,
+            FATHOM_DEV_REQUESTS_PER_MINUTE: "3000",
+            FATHOM_DEV_SIGN_INS_PER_MINUTE: "100",
+          }),
+        ),
+      ).toThrow(
+        /^Invalid server configuration: only development mode may set FATHOM_DEV_REQUESTS_PER_MINUTE, FATHOM_DEV_SIGN_INS_PER_MINUTE$/,
+      );
+    }
+  });
+
+  it("rejects limits that aren't a whole number above zero", () => {
+    for (const limit of ["0", "-5", "2.5", "lots", ""]) {
+      expect(() =>
+        loadServerConfig(
+          environment({ FATHOM_DEV_SIGN_INS_PER_MINUTE: limit }),
+        ),
+      ).toThrow(
+        /^Invalid server configuration: FATHOM_DEV_SIGN_INS_PER_MINUTE$/,
+      );
+    }
+  });
+
+  it("matches the example configuration, which lists every setting outside development mode and no others", () => {
     const read = (path: string) =>
       readFileSync(new URL(path, import.meta.url), "utf8");
     const names = (text: string, pattern: RegExp) =>
       new Set([...text.matchAll(pattern)].map((match) => match[1]));
     const readByCode = names(
       read("./config.ts") + read("../../../packages/db/src/config.ts"),
-      /\b(FATHOM_[A-Z_]+): z\./g,
+      /\b(FATHOM_(?!DEV_)[A-Z_]+): z\./g,
     );
     const listed = names(
       read("../../../deploy/fathom.env.example"),

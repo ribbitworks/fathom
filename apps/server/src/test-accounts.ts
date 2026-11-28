@@ -22,6 +22,7 @@ import {
 import { eq } from "drizzle-orm";
 import { findStartingRole } from "./data/roles.ts";
 import { type App, buildApp } from "./app.ts";
+import { productionLimits } from "./config.ts";
 import { createAccount } from "./data/accounts.ts";
 import { type Auth, createAuth } from "./data/auth.ts";
 import { createDataAccess } from "./data/index.ts";
@@ -52,7 +53,7 @@ export async function startAccountTests(): Promise<void> {
     tls: certificate,
     logStream: { write: () => undefined },
     // Many sign-ins from one address; sign-in limits are tested elsewhere.
-    requestsPerMinute: 10_000,
+    limits: { ...productionLimits, requestsPerMinute: 10_000 },
   });
 }
 

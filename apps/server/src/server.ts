@@ -78,6 +78,7 @@ export async function startServer(
       tls: config.tls,
       webRoot: config.webRoot,
       logStream,
+      limits: config.limits,
     });
     let url: string;
     if (config.proxyHost !== undefined) {

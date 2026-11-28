@@ -17,6 +17,7 @@ import { hostname, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type App, buildApp } from "./app.ts";
+import { productionLimits } from "./config.ts";
 import { createAccount } from "./data/accounts.ts";
 import { findStartingRole } from "./data/roles.ts";
 import { createAuth } from "./data/auth.ts";
@@ -47,6 +48,7 @@ async function appFor(
     password?: string;
     data?: DataAccess;
     requestsPerMinute?: number;
+    signInsPerMinute?: number;
     webRoot?: string;
   } = {},
   logLines: string[] = [],
@@ -60,9 +62,12 @@ async function appFor(
     auth: { publicUrl, secret },
     tls: certificate,
     logStream: { write: (line) => logLines.push(line) },
-    ...(options.requestsPerMinute
-      ? { requestsPerMinute: options.requestsPerMinute }
-      : {}),
+    limits: {
+      requestsPerMinute:
+        options.requestsPerMinute ?? productionLimits.requestsPerMinute,
+      signInsPerMinute:
+        options.signInsPerMinute ?? productionLimits.signInsPerMinute,
+    },
     webRoot: options.webRoot,
   });
   apps.push(app);
@@ -477,6 +482,22 @@ describe("rate limiting", () => {
     await badRequest();
     await badRequest();
     expect((await badRequest()).statusCode).toBe(429);
+  });
+
+  it("limits each client's sign-ins to the number given", async () => {
+    const app = await appFor({ signInsPerMinute: 7 });
+    const attempt = () =>
+      app.inject({
+        method: "POST",
+        url: "/api/auth/sign-in/email",
+        remoteAddress: "192.0.2.250",
+        headers: { origin: publicUrl },
+        payload: { email: "nobody@example.test", password: "not the password" },
+      });
+    for (let tried = 1; tried <= 7; tried += 1) {
+      expect((await attempt()).statusCode).toBe(401);
+    }
+    expect((await attempt()).statusCode).toBe(429);
   });
 });
 
