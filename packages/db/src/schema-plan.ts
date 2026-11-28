@@ -229,6 +229,22 @@ export const milestones = fathomSchema.table(
   ],
 );
 
+// Made afresh for each table, since a column belongs to one.
+const workChoices = () => ({
+  statusId: uuid("status_id")
+    .notNull()
+    .references(() => listItems.id, { onDelete: "restrict" }),
+  priorityId: uuid("priority_id").references(() => listItems.id, {
+    onDelete: "restrict",
+  }),
+  sizeId: uuid("size_id").references(() => listItems.id, {
+    onDelete: "restrict",
+  }),
+  riskId: uuid("risk_id").references(() => listItems.id, {
+    onDelete: "restrict",
+  }),
+});
+
 // Features: the planned work on the roadmap. A feature's name is unique, ignoring letter case. A
 // target cycle is known by its stream and start date, as cycles are worked out rather than stored;
 // a feature with none is in Later. Its status is a choice of the built-in list of statuses,
@@ -241,18 +257,7 @@ export const features = fathomSchema.table(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
-    statusId: uuid("status_id")
-      .notNull()
-      .references(() => listItems.id, { onDelete: "restrict" }),
-    priorityId: uuid("priority_id").references(() => listItems.id, {
-      onDelete: "restrict",
-    }),
-    sizeId: uuid("size_id").references(() => listItems.id, {
-      onDelete: "restrict",
-    }),
-    riskId: uuid("risk_id").references(() => listItems.id, {
-      onDelete: "restrict",
-    }),
+    ...workChoices(),
     neededBy: text("needed_by"),
     customerIds: uuid("customer_ids")
       .array()
@@ -313,18 +318,7 @@ export const activities = fathomSchema.table(
       onDelete: "restrict",
     }),
     name: text("name").notNull(),
-    statusId: uuid("status_id")
-      .notNull()
-      .references(() => listItems.id, { onDelete: "restrict" }),
-    priorityId: uuid("priority_id").references(() => listItems.id, {
-      onDelete: "restrict",
-    }),
-    sizeId: uuid("size_id").references(() => listItems.id, {
-      onDelete: "restrict",
-    }),
-    riskId: uuid("risk_id").references(() => listItems.id, {
-      onDelete: "restrict",
-    }),
+    ...workChoices(),
     neededBy: text("needed_by"),
     estimateHours: numeric("estimate_hours", {
       mode: "number",

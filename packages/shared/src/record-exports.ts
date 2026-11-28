@@ -224,6 +224,7 @@ export {
   savedViewRequestSchema,
   savedViewSchema,
   type ViewDefinition,
+  type ViewSettings,
   draftFilterKey,
   viewColumnKeys,
   viewGroupings,

@@ -27,7 +27,7 @@ import {
   draftFields,
   type Recorded,
 } from "./draft-records.ts";
-import { draftMakers, ownMarks } from "./draft-makers.ts";
+import { draftMakers, draftStanding, fieldEditorsOf } from "./draft-makers.ts";
 import { fillsBeyondSight } from "./fills.ts";
 import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
 import { columnsWithAdded } from "./added-columns.ts";
@@ -335,31 +335,20 @@ async function readPeopleIn(
       }
     }
     const maker = makers.get(id);
-    const reason =
-      draft.state === "rejected" &&
-      draft.reason !== null &&
-      held.every((field) => seesSensitivity(actor, tierOf(field)))
-        ? { reason: draft.reason }
-        : {};
     const unseen = approvesPeople && !held.every(seesDraftField);
     return {
       action: draft.action,
       changed: fields.map((field) => fieldOfValue(field) ?? field),
       live: liveValues,
       ...(unseen ? { holdsUnseen: true as const } : {}),
-      state: draft.state,
-      ...reason,
-      ...(draft.unpublished === true ? { unpublished: true } : {}),
-      madeBy: maker?.madeBy ?? null,
-      madeAs: maker?.madeAs ?? null,
-      madeAt: maker?.madeAt.toISOString() ?? null,
-      editors: maker?.editors ?? [],
-      ...ownMarks(maker),
-      changedBy: Object.fromEntries(
-        fields.map((field) => [
-          fieldOfValue(field) ?? field,
-          maker?.fieldEditors.get(field) ?? null,
-        ]),
+      ...draftStanding(draft, maker, {
+        reasonShown: () =>
+          held.every((field) => seesSensitivity(actor, tierOf(field))),
+      }),
+      changedBy: fieldEditorsOf(
+        maker,
+        fields,
+        (field) => fieldOfValue(field) ?? field,
       ),
     };
   }

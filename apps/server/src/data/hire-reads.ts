@@ -37,7 +37,7 @@ import {
   type Recorded,
   type Viewer,
 } from "./draft-records.ts";
-import { draftMakers, ownMarks } from "./draft-makers.ts";
+import { draftMakers, draftStanding, fieldEditorsOf } from "./draft-makers.ts";
 import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { notStarted } from "./people-reads.ts";
@@ -357,24 +357,14 @@ export async function readHiresIn(
       action: draft.action,
       changed: fields.map((field) => fieldOfValue(field) ?? field),
       live: liveValues,
-      state: draft.state,
-      // The reason covers the whole draft, so it is shown only to those who see all of it.
-      ...(draft.state === "rejected" &&
-      draft.reason !== null &&
-      drafted.every(seen)
-        ? { reason: draft.reason }
-        : {}),
-      ...(draft.unpublished === true ? { unpublished: true } : {}),
-      madeBy: maker?.madeBy ?? null,
-      madeAs: maker?.madeAs ?? null,
-      madeAt: maker?.madeAt.toISOString() ?? null,
-      editors: maker?.editors ?? [],
-      ...ownMarks(maker),
-      changedBy: Object.fromEntries(
-        fields.map((field) => [
-          fieldOfValue(field) ?? field,
-          maker?.fieldEditors.get(field) ?? null,
-        ]),
+      ...draftStanding(draft, maker, {
+        // The reason covers the whole draft, so it is shown only to those who see all of it.
+        reasonShown: () => drafted.every(seen),
+      }),
+      changedBy: fieldEditorsOf(
+        maker,
+        fields,
+        (field) => fieldOfValue(field) ?? field,
       ),
     };
     return { draft: seenDraft };

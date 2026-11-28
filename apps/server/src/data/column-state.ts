@@ -32,9 +32,10 @@ import {
 } from "./draft-records.ts";
 import {
   draftMakers,
+  draftStanding,
   everything,
+  fieldEditorsOf,
   type Maker,
-  ownMarks,
 } from "./draft-makers.ts";
 import {
   type Held,
@@ -45,7 +46,6 @@ import {
 } from "./drafts.ts";
 import { typeOf } from "./column-types.ts";
 import { fieldFields } from "./fields.ts";
-import { unpublishedMark } from "./list-reads.ts";
 import {
   draftedList,
   listExists,
@@ -323,19 +323,8 @@ function draftOut(
             // eslint-disable-next-line security/detect-object-injection
             changed.map((field) => [field, live[field]]),
           ),
-    state: draft.state,
-    ...(draft.state === "rejected" && draft.reason !== null
-      ? { reason: draft.reason }
-      : {}),
-    ...unpublishedMark(draft),
-    madeBy: maker?.madeBy ?? null,
-    madeAs: maker?.madeAs ?? null,
-    madeAt: maker?.madeAt.toISOString() ?? null,
-    editors: maker?.editors ?? [],
-    ...ownMarks(maker),
-    changedBy: Object.fromEntries(
-      changed.map((field) => [field, maker?.fieldEditors.get(field) ?? null]),
-    ),
+    ...draftStanding(draft, maker),
+    changedBy: fieldEditorsOf(maker, changed),
   };
 }
 

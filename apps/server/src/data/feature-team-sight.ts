@@ -21,7 +21,7 @@ import {
   type Recorded,
   tidy,
 } from "./draft-records.ts";
-import { type Maker, ownMarks } from "./draft-makers.ts";
+import { draftStanding, fieldEditorsOf, type Maker } from "./draft-makers.ts";
 import {
   datesOf,
   daysIn,
@@ -282,23 +282,17 @@ export function draftAsSeen(
         ? {}
         : { hireDays: Object.fromEntries(hireDays) }),
       ...(hireLeadDay === undefined ? {} : { hireLeadDay }),
-      state: draft.state,
-      ...(draft.state === "rejected" &&
-      draft.reason !== null &&
-      fields.every(seen) &&
-      (seesPeople ||
-        !draftHoldsNotStarted(teamToday, drafted(teamToday, draft), everyone))
-        ? { reason: draft.reason }
-        : {}),
-      ...(draft.unpublished === true ? { unpublished: true } : {}),
-      madeBy: maker?.madeBy ?? null,
-      madeAs: maker?.madeAs ?? null,
-      madeAt: maker?.madeAt.toISOString() ?? null,
-      editors: maker?.editors ?? [],
-      ...ownMarks(maker),
-      changedBy: Object.fromEntries(
-        changed.map((field) => [field, maker?.fieldEditors.get(field) ?? null]),
-      ),
+      ...draftStanding(draft, maker, {
+        reasonShown: () =>
+          fields.every(seen) &&
+          (seesPeople ||
+            !draftHoldsNotStarted(
+              teamToday,
+              drafted(teamToday, draft),
+              everyone,
+            )),
+      }),
+      changedBy: fieldEditorsOf(maker, changed),
     },
   };
 }

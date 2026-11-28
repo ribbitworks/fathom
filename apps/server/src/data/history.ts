@@ -15,11 +15,10 @@ import {
   type AccessAction,
   type HistoryDetails,
   type HistoryEntry,
-  passwordSettingsSchema,
+  historyDetailsSchema,
 } from "@fathom/shared";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { z } from "zod";
 
 // The most recent entries the History page shows.
 const shownEntries = 200;
@@ -86,27 +85,7 @@ export async function recordPersonalView(
 // Details as stored, read leniently: entries can never be changed, so details another version of
 // Fathom stored in another shape are left out rather than making the whole history unreadable. Roles
 // are named as they were then, so a role renamed since still reads.
-const storedDetailsSchema = z
-  .object({
-    role: z.string().optional(),
-    previousRole: z.string().optional(),
-    roles: z.array(z.string()).optional(),
-    previousRoles: z.array(z.string()).optional(),
-    previousName: z.string().optional(),
-    granted: z.array(z.string()).optional(),
-    withdrawn: z.array(z.string()).optional(),
-    timeZone: z.string().optional(),
-    previousTimeZone: z.string().optional(),
-    passwords: passwordSettingsSchema.optional(),
-    previousPasswords: passwordSettingsSchema.optional(),
-    moved: z.string().optional(),
-    dataClass: z.string().optional(),
-    previousDataClass: z.string().optional(),
-    exported: z.string().optional(),
-    personalColumns: z.array(z.string()).optional(),
-    confidentialColumns: z.array(z.string()).optional(),
-  })
-  .catch({});
+const storedDetailsSchema = historyDetailsSchema.catch({});
 
 const knownDetails = (details: unknown): HistoryDetails =>
   storedDetailsSchema.parse(details);
