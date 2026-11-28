@@ -206,6 +206,17 @@ export const offered = (choice: Choice) =>
   !choice.retired && choice.draft?.action !== "deleted";
 
 // What is wrong with a name, if anything.
+// What a name says when another of its kind, such as a view, already has it.
+export const nameTaken = (kind: string) => `Another ${kind} has that name`;
+
+// A name's problem, if any, saying so when another of its kind already has it.
+export const takenNameProblem = (
+  kind: string,
+  name: string,
+  maximum: number,
+  taken: boolean,
+) => nameProblem(name, maximum, taken, nameTaken(kind));
+
 export function nameProblem(
   name: string,
   maximum: number,

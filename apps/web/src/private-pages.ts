@@ -17,7 +17,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import type { CellChange } from "./cell-kinds.tsx";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
-import { takenNameProblem } from "./list-dialog.tsx";
+import { takenNameProblem } from "./lists.ts";
 
 const pagesPath = "/api/private-pages";
 const pagePath = (pageId: string) =>

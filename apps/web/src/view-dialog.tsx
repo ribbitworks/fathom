@@ -18,7 +18,7 @@ import { Fragment, useState } from "react";
 import { describeProblem, isConflict } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
 import { CountedInput } from "./counted-input.tsx";
-import { takenNameProblem } from "./list-dialog.tsx";
+import { takenNameProblem } from "./lists.ts";
 
 const includesId = "view-dialog-includes";
 

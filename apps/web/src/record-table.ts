@@ -88,7 +88,7 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
   // The record a draft is of, where the table's drafts name only those that can be decided, so
   // the user's own unpublished draft is published by it.
   draftRef?: ((record: Rec, draft: DraftOf<Rec>) => RecordRef) | undefined;
-  // Edits an added column, where the table's columns can be edited.
+  // Absent where a table's columns can't be edited yet, as a private page's.
   editColumn?: ((field: Field) => void) | undefined;
   // Removes an added column, for a role that may: as a draft, or, on a table without drafts, once
   // asked, calling back once it's removed or kept.

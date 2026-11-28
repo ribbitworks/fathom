@@ -19,7 +19,7 @@ Verifies how a person's own pages under **Mine** look and work:
 - That another account doesn't see **Mine**.
 - That a row's link, copied from its menu, opens its page for its maker.
 - Removing a column, asking first and offering **Undo** after.
-- Renaming and removing a page from its **⋯**, removing asking first and offering **Undo** after.
+- Renaming a page from its **⋯**, and removing it, asking first and offering **Undo** after.
 
 ## Test Environment
 
@@ -267,7 +267,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Due** heading has focus.
   - **Notes:**
 
-- [ ] `7A35` Press Enter, then select **Remove column…**.
+- [ ] `7A35` Press Enter.
+  - **Expected:** The **Due** heading's menu opens.
+  - **Notes:**
+
+- [ ] `D642` Select **Remove column…**.
   - **Expected:** The dialog asks "Remove the Due column?" again.
   - **Notes:**
 
@@ -285,7 +289,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu offers no **Remove column…**.
   - **Notes:**
 
-### PRIV-09: A Page Is Renamed and Removed from Its ⋯
+### PRIV-09: A Page Is Renamed from Its ⋯
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main window, as PRIV-08 ends.
 
@@ -321,13 +325,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The heading, the top bar and **Mine** read "Follow-ups" again.
   - **Notes:**
 
+### PRIV-10: Removing a Page Asks First, Then Offers Undo
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the main window, as PRIV-09 ends.
+
+**Preconditions:** The **Follow-ups** page open in the main window, as PRIV-09 leaves it, and no other page under **Mine**.
+
 - [ ] `92F7` Select the **⋯**, then **Remove page…**.
   - **Expected:** A dialog asks "Remove the Follow-ups page?", with **Cancel** and **Remove** in red.
   - **Notes:**
 
 - [ ] `1E51` Select **Remove**.
   - **Expected:**
-    - The **Overview** opens.
+    - The **Overview** opens, with focus on its heading.
     - **Mine** lists only **New page**.
     - A notification reads "Removed the Follow-ups page.", with **Undo**.
   - **Notes:**

@@ -1,0 +1,9 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* A page's title is cut short with an ellipsis rather than taking a second line. */
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

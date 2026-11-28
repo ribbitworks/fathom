@@ -16,20 +16,20 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
 - **Where the user is:** The top bar names the sidebar's section and page. On an address below a sidebar item, such as a Help page, the item's name links back to its page, then comes what the address shows, such as the Help page's title.
   - **Drawn by:** The sidebar's items in `apps/web/src/layout.tsx`, where an item's `detailOf` names what an address below it shows, and, on a page under Mine, `useMinePlace` in `apps/web/src/mine-section.tsx`, naming Mine and the page.
   - **Example:** Select Help pages, then Lists: the top bar reads Help / Help pages / Lists. On a private page named Follow-ups, it reads Mine / Follow-ups.
-- **One line:** The top bar stays one line at any width. Where its parts don't fit, the development label, then a private page's name, then the account's name, are cut short with an ellipsis, each with its whole text in a tip while cut, the account's name's on keyboard focus too. A private page's name has its tip on pointing only, as its heading's has.
+- **One line:** The top bar stays one line at any width. Where its parts don't fit, the development label, then a private page's name, then the account's name, are cut short with an ellipsis, each with its whole text in a tip while cut, the account's name's on keyboard focus too. A private page's name has its tip on pointing only.
   - **Drawn by:** The top bar in `apps/web/src/layout.tsx`, with its parts' room in `apps/web/src/layout.module.css`, the development label by `DevBadge` in `apps/web/src/dev-label.tsx`, and each tip by `useCutTip` in `apps/web/src/cut-tip.ts`.
   - **Example:** As the Engineering Operations Manager, narrow the window to about 680 pixels: the label shows little more than its clone, the name ends in an ellipsis, and pointing at it shows the whole name.
 
 ## The Page Heading
 
 - **The row under the heading stays put:** Every page's heading is one line: the title; where the page shows its records more than one way, the switch between them, centred on the title's line; and the page's actions at the right. A page's tabs, such as Projects', also sit there, after the title.
-  - **A long title:** It is cut short with an ellipsis, with its whole text in a tip on pointing, so the heading stays one line. The heading's title can take focus but has no stop for Tab, so a page landed on, such as after removing the open one, can put focus there.
+  - **A long title:** It is cut short with an ellipsis, with its whole text in a tip on pointing, or when focus lands on it from the keyboard. The heading's title can take focus but has no stop for Tab, so a page landed on, such as after removing the open one, can put focus there.
   - **No added rows:** Nothing adds a row between the heading and the search row, so the search row never shifts between pages.
   - **Height and gap:** On every page the heading is a button's height, and the gap under it is the theme's medium spacing.
   - **Drawn by:** `PageHeader` in `apps/web/src/page-header.tsx`. Its `beside` holds the switch, `ModeSwitch`, or the tabs, `HeadingTabs` with each tab's content in `HeadingTabPanel`, all in that file.
     - **The theme's height:** The heading's height is the theme's `--fathom-heading-height` in `apps/web/src/theme.ts`. Each page puts the gap after it.
   - **Example:** Table and Board beside the Features heading.
-- **A page's ⋯:** A page with actions of its own, such as a private page's Rename page… and Remove page…, has a ⋯ after the Export icon at the heading's right, read as Actions for and the page's name, drawn as a side panel's ⋯ is. The heading stays one line.
+- **A page's ⋯:** A page with actions of its own, such as a private page's Rename page… and Remove page…, has a ⋯ after the Export icon at the heading's right, read as Actions for and the page's name, drawn as a side panel's ⋯ is.
   - **Removing the open page:** It opens the next page in the sidebar's section, or the one before if it was last, or the Overview if none is left, with focus on that page's heading. Undo puts the page back in its place and opens it again.
   - **Drawn by:** `PageMenu` in `apps/web/src/page-menu.tsx`, on `PanelMoreMenu` in `apps/web/src/panel-menu.tsx`, given to `PageHeader`'s `action`, with renaming and removing in `apps/web/src/mine-changes.tsx`.
   - **Example:** On a private page, select the ⋯ at the right of its heading.

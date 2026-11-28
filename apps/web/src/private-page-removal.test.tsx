@@ -355,6 +355,25 @@ describe("Rename page…", () => {
     expect(await within(dialog).findByRole("alert")).toBeDefined();
   });
 
+  it("renames the page while Mine's list can't be read, checking against none", async () => {
+    const { fetch, name } = await openRename({
+      "GET /api/private-pages": () =>
+        Response.json({ error: "Unavailable" }, { status: 500 }),
+      [`PATCH ${pagePath}`]: () =>
+        Response.json({
+          page: { ...followUps([]), name: "Customer asks" },
+          changeSetId,
+        }),
+    });
+    await userEvent.clear(name);
+    await userEvent.type(name, "Customer asks{Enter}");
+    await waitFor(() => {
+      expect(changesSent(fetch)).toEqual([
+        [pagePath, { name: "Customer asks" }],
+      ]);
+    });
+  });
+
   it("sends nothing for the same name, and Cancel puts focus back on the ⋯", async () => {
     // Given the page's own name, kept
     const { fetch, dialog } = await openRename();

@@ -14,7 +14,6 @@ export interface RemovalQuestion {
   action: string;
 }
 
-// What is removed, by its kind, such as a page or a column, and its name.
 interface Removed {
   kind: string;
   name: string;

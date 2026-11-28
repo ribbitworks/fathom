@@ -22,7 +22,6 @@ import {
   noDrafts,
 } from "./drafts.ts";
 import { fieldColumn, withLiveCopies, wordsColumn } from "./grid-columns.tsx";
-import { nameTaken } from "./list-dialog.tsx";
 import { approvableIn, draftsWaitingIn } from "./list-changes.ts";
 import { listMark } from "./list-drafts.tsx";
 import {
@@ -35,6 +34,7 @@ import {
   listKindName,
   liveLists,
   nameProblem,
+  nameTaken,
   withRetiring,
 } from "./lists.ts";
 import { draftFieldsOf } from "./plan-table.tsx";

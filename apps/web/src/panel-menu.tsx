@@ -12,14 +12,22 @@ const panelMenuWidth = 260;
 // A ⋯ in a side panel and its menu, below the button's end.
 export function PanelMoreMenu({
   label,
+  id,
   children,
 }: {
   // What the button is read aloud as, such as Actions for the record.
   label: string;
+  // The menu's, which its button takes, for focus to go back to it once a dialog it opened closes.
+  id?: string;
   children: ReactNode;
 }) {
   return (
-    <AppMenu position="bottom-end" width={panelMenuWidth} hideDetached={false}>
+    <AppMenu
+      position="bottom-end"
+      width={panelMenuWidth}
+      hideDetached={false}
+      {...(id === undefined ? {} : { id })}
+    >
       <AppMenu.Target>
         <MoreButton label={label} />
       </AppMenu.Target>

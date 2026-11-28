@@ -182,6 +182,7 @@ test("asks before removing the page from its ⋯, landing elsewhere, then Undo o
   await question.getByRole("button", { name: "Remove" }).click();
   const removedId = made.pageId ?? "";
   await expect.poll(() => page.url()).not.toContain(removedId);
+  await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
   const notice = page.getByRole("status").filter({
     hasText: `Removed the ${name} page.`,
   });
