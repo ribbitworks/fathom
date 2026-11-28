@@ -3,6 +3,7 @@
 // A person's own pages under Mine, each a table of free rows private to its maker, as readers
 // receive them and requests change them.
 
+import { durationUnitSchema } from "./durations.ts";
 import { z } from "zod";
 import { type Permission, tierSchema } from "./access.ts";
 import {
@@ -48,6 +49,8 @@ export const privateColumnSchema = z.object({
   listId: z.string().nullable(),
   visibility: tierSchema.nullable(),
   multiple: z.boolean(),
+  // A Duration column's unit; none for every other type.
+  unit: durationUnitSchema.nullish(),
 });
 
 export type PrivateColumn = z.infer<typeof privateColumnSchema>;

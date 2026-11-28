@@ -4,15 +4,18 @@
 
 import { formatDay, formatDayRange } from "./day-formats.ts";
 import { ColouredNames } from "./colour-swatch.tsx";
+import { lengthUnit } from "./duration-cells.ts";
 import { decimal } from "./numbers.ts";
 import type { Filter, Kind, TableColumn } from "./table-view.ts";
 
 type AnyColumn = Pick<
   TableColumn<never>,
-  "label" | "kind" | "choices" | "emptyLabel" | "choiceColour"
+  "label" | "kind" | "choices" | "emptyLabel" | "choiceColour" | "lengths"
 >;
 
 export const noDate = "No date";
+
+export const noDuration = "No duration";
 
 // What a filter's choice of every value that isn't empty is called, matching its Empty box. A
 // checkbox's filter offers none, since a checkbox is never empty, but an address or saved view may
@@ -26,6 +29,7 @@ export const notEmptyLabels: Record<Kind, string> = {
   flag: "Not empty",
   date: "Any date",
   number: "Any number",
+  duration: "Any duration",
 };
 
 // A filter in words, such as "Site: Harbour, Northmere".
@@ -57,16 +61,21 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
       if (filter.empty) parts.push(noDate);
       return `${column.label}: ${parts.join(" or ")}`;
     }
-    case "number": {
+    case "number":
+    case "duration": {
+      // A length's bounds name the unit they are in, such as at least 2 wk.
+      const unit = column.kind === "duration" ? ` ${lengthUnit(column)}` : "";
       const { atLeast, atMost } = filter;
       if (atLeast !== undefined && atMost !== undefined) {
-        parts.push(`${decimal(atLeast)} to ${decimal(atMost)}`);
+        parts.push(`${decimal(atLeast)} to ${decimal(atMost)}${unit}`);
       } else if (atLeast !== undefined) {
-        parts.push(`at least ${decimal(atLeast)}`);
+        parts.push(`at least ${decimal(atLeast)}${unit}`);
       } else if (atMost !== undefined) {
-        parts.push(`at most ${decimal(atMost)}`);
+        parts.push(`at most ${decimal(atMost)}${unit}`);
       }
-      if (filter.empty) parts.push("No number");
+      if (filter.empty) {
+        parts.push(column.kind === "duration" ? noDuration : "No number");
+      }
       return `${column.label}: ${parts.join(" or ")}`;
     }
     case "text":

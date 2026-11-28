@@ -34,6 +34,9 @@ import {
   daySample,
   monthSample,
   typeFor,
+  durationRefusalWords,
+  durationText,
+  parseDuration,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import { type Adding, ChoicePicker, type Finish } from "./choice-picker.tsx";
@@ -46,6 +49,7 @@ import {
   notePreview,
 } from "./note-editor.tsx";
 import { choice as choiceOf, offered } from "./lists.ts";
+import { lengthUnit } from "./duration-cells.ts";
 import { decimal, decimalUpTo } from "./numbers.ts";
 import {
   type CellValue,
@@ -66,6 +70,7 @@ type AnyColumn = Pick<
   | "emptyLabel"
   | "choicesInWords"
   | "choiceColour"
+  | "lengths"
 > & {
   choices: readonly Choice[];
   // Whether a choice may be put in a cell, apart from being offered in its list: any may, unless
@@ -147,8 +152,13 @@ export interface CellKind {
     column: AnyColumn,
     content: string,
   ) => { value: CellValue } | { problem: string };
-  // The change that saves a record's value.
-  change: (key: string, value: CellValue) => CellChange;
+  // The change that saves a record's value, given, for a kind whose typing depends on it, such as a
+  // length's bare number, the column.
+  change: (
+    key: string,
+    value: CellValue,
+    column?: Pick<AnyColumn, "lengths">,
+  ) => CellChange;
   // How many characters the column's cells fit, given the longest text it held when the page
   // opened.
   width: (column: AnyColumn, longestText: number) => number;
@@ -383,6 +393,32 @@ const number: CellKind = {
   },
   pasted: (_column, content) => ({ value: content.trim() }),
   change: (key, value) => ({ numbers: { [key]: typedOf(value) ?? null } }),
+};
+
+// A length as typed, such as 2 wk, read and saved in a record's durations; a bare number takes the
+// unit the column shows, or else its own.
+const duration: CellKind = {
+  ...detailText,
+  read: (source, key) => {
+    // The key is a column's own.
+    // eslint-disable-next-line security/detect-object-injection
+    const held = source.durations?.[key];
+    return held === undefined ? "" : durationText(held);
+  },
+  inDetail: (_column, value) => asText(value),
+  problem: (column, value) => {
+    const read = parseDuration(asText(value), lengthUnit(column));
+    return "refused" in read
+      ? durationRefusalWords(read.refused, column.label)
+      : undefined;
+  },
+  pasted: (_column, content) => ({ value: content.trim() }),
+  change: (key, value, column = {}) => {
+    const read = parseDuration(asText(value), lengthUnit(column));
+    return {
+      durations: { [key]: "duration" in read ? read.duration : null },
+    };
+  },
 };
 
 // Whether a cell may be given a choice: one offered in its list that the column lets be picked.
@@ -671,6 +707,7 @@ export const cellKinds: Readonly<Record<Kind, CellKind>> = {
   date,
   month,
   number,
+  duration,
   choice,
   link,
   note,

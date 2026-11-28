@@ -83,6 +83,7 @@ import {
   FilterWords,
   describeFilter,
   noDate,
+  noDuration,
   notEmptyLabels,
 } from "./filter-words.tsx";
 import { ColouredName } from "./colour-swatch.tsx";
@@ -118,6 +119,7 @@ const sortNames: Record<Kind, [string, string]> = {
   date: ["Oldest first", "Newest first"],
   month: ["Earliest first", "Latest first"],
   number: ["Lowest first", "Highest first"],
+  duration: ["Lowest first", "Highest first"],
   choice: ["List order", "Reverse list order"],
   link: ["Sort A to Z", "Sort Z to A"],
   note: ["Sort A to Z", "Sort Z to A"],
@@ -1752,6 +1754,7 @@ function FilterForm({
         </Stack>
       );
     case "number":
+    case "duration":
       return (
         <Stack gap="xs">
           <NumberBound
@@ -1774,7 +1777,7 @@ function FilterForm({
               onChange(withPart(filter, "atMost", atMost));
             }}
           />
-          {empty("No number")}
+          {empty(column.kind === "duration" ? noDuration : "No number")}
         </Stack>
       );
     case "text":

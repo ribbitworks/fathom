@@ -63,6 +63,9 @@ type Step = "name" | "columns";
 
 const firstColumnName = "Name";
 
+// A Duration column needs a unit, which a page's columns don't offer yet.
+const pageTypes = typesOffered.filter(({ value }) => value !== "duration");
+
 const namingTypes = typesOffered.filter(({ value }) =>
   rowNamingTypes.includes(value),
 );
@@ -355,7 +358,7 @@ function NewPageSteps({
                       <Select
                         {...wholeList}
                         aria-label="Type"
-                        data={index === 0 ? namingTypes : typesOffered}
+                        data={index === 0 ? namingTypes : pageTypes}
                         value={column.type}
                         allowDeselect={false}
                         onChange={(value) => {

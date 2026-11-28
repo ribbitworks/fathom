@@ -12,19 +12,28 @@ import {
   columnValueMapsOf,
   type Field,
   type List,
+  type DurationUnit,
+  durationUnitSchema,
   monthOf,
+  unitDays,
   optionalColumnValueMaps,
   requestedColumnValueMapsOf,
   type SomeColumnValues,
   type SomeRequestedColumnValues,
   textLimit,
 } from "@fathom/shared";
-import type { CellChange, CellSource } from "./cell-kinds.tsx";
+import { type CellChange, type CellSource, cellKinds } from "./cell-kinds.tsx";
+import {
+  durationUnitsShown,
+  lengthDays,
+  shownLength,
+} from "./duration-cells.ts";
 import { noDate } from "./filter-words.tsx";
 import { cellColumn } from "./grid-columns.tsx";
 import type { CellRecord, Column } from "./record-table.ts";
 import { asText } from "./table-rows.ts";
-import type { CellValue } from "./table-view.ts";
+import type { CellValue, ColumnUnit } from "./table-view.ts";
+import { decimalTo } from "./numbers.ts";
 
 // The added columns a table shows, in the order and as the Draft menu's choice makes them.
 export interface AddedColumns {
@@ -50,7 +59,7 @@ export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
   lists: readonly List[],
 ): Column<Rec, Change> => {
   const list = lists.find(({ id }) => id === field.listId);
-  return {
+  const column: Column<Rec, Change> = {
     ...cellColumn<Rec, Change>(field.id, field.type, {
       label: field.name,
       required: field.required,
@@ -61,7 +70,68 @@ export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
     dataClass: columnClass(field, list),
     ...ownSettings<Rec>(field),
   };
+  return field.unit === null || field.unit === undefined
+    ? column
+    : lengthColumn(column, field.unit);
 };
+
+// The units a Duration column is shown in, as typed first, each with its code and words.
+const asTyped: ColumnUnit = {
+  key: "typed",
+  label: "As typed",
+  code: "",
+  name: "",
+  one: "",
+};
+
+const unitsShown: ColumnUnit[] = durationUnitsShown.map(
+  ({ unit, label, name, one }) => ({ key: unit, label, code: unit, name, one }),
+);
+
+const lengthPlaces = [0, 1, 2];
+const lengthPlacesAtFirst = 1;
+
+// A Duration column, shown as typed or in the unit the view names, in which a bare number is typed;
+// its cells are compared, filtered and added up in that unit, or its own while shown as typed.
+function lengthColumn<Rec extends CellRecord, Change extends CellChange>(
+  column: Column<Rec, Change>,
+  own: DurationUnit,
+): Column<Rec, Change> {
+  const shownIn = (unit: ColumnUnit, places: number): Column<Rec, Change> => {
+    const shown = durationUnitSchema.safeParse(unit.key).data;
+    const lengths = { own, shown };
+    const sumUnit = shown ?? own;
+    return {
+      ...column,
+      lengths,
+      ...(shown === undefined
+        ? {}
+        : {
+            unit,
+            content: (record: Rec) =>
+              shownLength({ lengths }, column.value(record), places),
+          }),
+      sum: {
+        amount: (record) => {
+          const value = column.value(record);
+          return asText(value) === "" ? null : lengthDays(value);
+        },
+        shown: (days) =>
+          `${decimalTo(days / unitDays(sumUnit), places)} ${sumUnit}`,
+      },
+      change: (value) =>
+        cellKinds.duration.change(column.key, value, { lengths }) as Change,
+    };
+  };
+  return {
+    ...shownIn(asTyped, lengthPlacesAtFirst),
+    units: {
+      offered: [asTyped, ...unitsShown],
+      places: { offered: lengthPlaces, starting: lengthPlacesAtFirst },
+      shownIn,
+    },
+  };
+}
 
 // The settings a column takes from its field's type beyond its cells' kind's, which the built-in
 // columns sharing the kind don't take.
@@ -87,6 +157,7 @@ function ownSettings<Rec extends CellRecord>(
     case "link":
     case "note":
     case "flag":
+    case "duration":
       return {};
   }
 }

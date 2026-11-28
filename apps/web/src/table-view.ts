@@ -4,6 +4,7 @@
 
 import {
   columnWidths,
+  type DurationUnit,
   type Filter,
   type Link,
   type Show,
@@ -22,8 +23,19 @@ import { frozenByDefault } from "./frozen-columns.ts";
 // checkbox, its one choice when checked and nothing when not.
 export type CellValue = string | string[] | Link | null;
 
+// Text and dates are kept as strings, which a kind of those reads its values as.
+export const asText = (value: CellValue) => value as string;
+
 export type Kind =
-  "text" | "date" | "month" | "number" | "choice" | "link" | "note" | "flag";
+  | "text"
+  | "date"
+  | "month"
+  | "number"
+  | "duration"
+  | "choice"
+  | "link"
+  | "note"
+  | "flag";
 
 export interface ColumnChoice {
   id: string;
@@ -79,6 +91,9 @@ export interface TableColumn<Row> {
   // decimal places shown, each number rounded up to them, as estimates are.
   unit?: ColumnUnit | undefined;
   places?: number | undefined;
+  // For Duration columns: the unit a bare number takes, and the one lengths are shown, compared and
+  // added up in, the column's own while shown as typed.
+  lengths?: { own: DurationUnit; shown: DurationUnit | undefined } | undefined;
   // For number columns whose amounts add up, such as Effort: a row's amount, in what totals are kept
   // in, and, where that isn't what the cells show, a total or an average as they would show it; and
   // whether Metrics adds it up until a view chooses another or none, as Features does Effort.

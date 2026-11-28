@@ -54,6 +54,7 @@ afterAll(closeHireTests);
 // Positions and Hiring states start General, so every reader of placeholders sees both.
 const placeholderKeys = [
   "days",
+  "durations",
   "expected",
   "flags",
   "id",

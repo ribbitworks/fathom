@@ -88,6 +88,7 @@ describe("reading a page", () => {
         listId: null,
         visibility: "general",
         multiple: false,
+        unit: null,
       },
       expect.objectContaining({ id: number, name: "Number" }),
     ]);
@@ -103,6 +104,7 @@ describe("reading a page", () => {
         flags: {},
         texts: {},
         days: {},
+        durations: {},
       },
       {
         id: rowIds[1],
@@ -115,6 +117,7 @@ describe("reading a page", () => {
         flags: {},
         texts: {},
         days: {},
+        durations: {},
       },
     ]);
   });

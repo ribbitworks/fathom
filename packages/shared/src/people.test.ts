@@ -70,6 +70,36 @@ describe("fieldRequestSchema", () => {
     });
   });
 
+  it("asks a Duration column for its unit, and refuses one on any other type", () => {
+    expect(
+      fieldRequestSchema.parse({
+        name: "Notice given",
+        type: "duration",
+        visibility: "general",
+        unit: "wd",
+      }),
+    ).toMatchObject({ type: "duration", unit: "wd" });
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "Notice given",
+          type: "duration",
+          visibility: "general",
+        }),
+      ),
+    ).toEqual(["Choose a unit"]);
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "Headcount",
+          type: "number",
+          visibility: "general",
+          unit: "wk",
+        }),
+      ),
+    ).toEqual(["Only a Duration column has a unit"]);
+  });
+
   it("asks a choice column for a list, or a new one, not both", () => {
     expect(messages(fieldRequestSchema.safeParse({ name: "Site" }))).toEqual([
       "Choose a list",

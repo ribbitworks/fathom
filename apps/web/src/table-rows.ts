@@ -15,9 +15,11 @@ import {
   sameRecordKey,
 } from "@fathom/shared";
 import { useState } from "react";
+import { lengthDays, lengthIn } from "./duration-cells.ts";
 import { decimal } from "./numbers.ts";
 import { formatDay, formatMonth } from "./day-formats.ts";
 import {
+  asText,
   type CellValue,
   isActive,
   type Kind,
@@ -33,7 +35,7 @@ const collator = new Intl.Collator(undefined, {
 
 // Each kind's values are of one type: text and dates are strings, choices are lists, and links are
 // links or null.
-export const asText = (value: CellValue) => value as string;
+export { asText };
 const asChoices = (value: CellValue) => value as string[];
 const asLink = (value: CellValue) => value as Link | null;
 
@@ -44,14 +46,18 @@ interface Rules {
   // How two values that are not empty sort, ascending.
   compare: (column: TableColumn<never>, a: CellValue, b: CellValue) => number;
   // Whether a value that is not empty matches what the filter sets, other than `empty`.
-  matches: (value: CellValue, filter: Filter) => boolean;
+  matches: (
+    column: TableColumn<never>,
+    value: CellValue,
+    filter: Filter,
+  ) => boolean;
 }
 
 const textRules: Rules = {
   isEmpty: (value) => asText(value).trim() === "",
   words: (_column, value) => asText(value),
   compare: (_column, a, b) => collator.compare(asText(a), asText(b)),
-  matches: (value, filter) => {
+  matches: (_column, value, filter) => {
     const contains = folded((filter.contains ?? "").trim());
     return contains !== "" && folded(asText(value)).includes(contains);
   },
@@ -63,8 +69,8 @@ const noteRules: Rules = {
   words: (_column, value) => notePlainText(asText(value)),
   compare: (_column, a, b) =>
     collator.compare(notePlainText(asText(a)), notePlainText(asText(b))),
-  matches: (value, filter) =>
-    textRules.matches(notePlainText(asText(value)), filter),
+  matches: (column, value, filter) =>
+    textRules.matches(column, notePlainText(asText(value)), filter),
 };
 
 // A calendar value is searched by its digits and its name, and sorts as it is kept.
@@ -81,13 +87,17 @@ const calendarRules = (
 
 const monthRules: Rules = {
   ...calendarRules(formatMonth),
-  matches: (value, filter) =>
-    textRules.matches(calendarWords(formatMonth, asText(value)), filter),
+  matches: (column, value, filter) =>
+    textRules.matches(
+      column,
+      calendarWords(formatMonth, asText(value)),
+      filter,
+    ),
 };
 
 const dateRules: Rules = {
   ...calendarRules(formatDay),
-  matches: (value, { from, to }) =>
+  matches: (_column, value, { from, to }) =>
     (from !== undefined || to !== undefined) &&
     (from === undefined || asText(value) >= from) &&
     (to === undefined || asText(value) <= to),
@@ -101,7 +111,7 @@ const numberRules: Rules = {
       ? ""
       : `${asText(value)} ${decimal(Number(asText(value)))}`,
   compare: (_column, a, b) => Number(asText(a)) - Number(asText(b)),
-  matches: (value, { atLeast, atMost }) =>
+  matches: (_column, value, { atLeast, atMost }) =>
     (atLeast !== undefined || atMost !== undefined) &&
     (atLeast === undefined || Number(asText(value)) >= atLeast) &&
     (atMost === undefined || Number(asText(value)) <= atMost),
@@ -130,7 +140,7 @@ const choiceRules: Rules = {
       ? first.length - second.length
       : Number(first.at(at)) - Number(second.at(at));
   },
-  matches: (value, filter) =>
+  matches: (_column, value, filter) =>
     asChoices(value).some((id) => (filter.any ?? []).includes(id)),
 };
 
@@ -146,7 +156,7 @@ const linkRules: Rules = {
       linkLabel(asLink(a) as Link),
       linkLabel(asLink(b) as Link),
     ),
-  matches: (value, filter) => {
+  matches: (_column, value, filter) => {
     const contains = folded((filter.contains ?? "").trim());
     const link = asLink(value) as Link;
     return (
@@ -166,10 +176,25 @@ const flagRules: Rules = {
   words: (column, value) =>
     checked(value) ? choiceRules.words(column, value) : "",
   compare: (_column, a, b) => Number(checked(b)) - Number(checked(a)),
-  matches: (value, filter) =>
+  matches: (_column, value, filter) =>
     checked(value)
       ? asChoices(value).some((id) => (filter.any ?? []).includes(id))
       : filter.empty === true,
+};
+
+// A length is searched as typed, sorts by its size, and is filtered by its amount in the unit shown.
+const durationRules: Rules = {
+  isEmpty: (value) => asText(value) === "",
+  words: (_column, value) => asText(value),
+  compare: (_column, a, b) => lengthDays(a) - lengthDays(b),
+  matches: (column, value, { atLeast, atMost }) => {
+    const amount = lengthIn(column, value);
+    return (
+      (atLeast !== undefined || atMost !== undefined) &&
+      (atLeast === undefined || amount >= atLeast) &&
+      (atMost === undefined || amount <= atMost)
+    );
+  },
 };
 
 const rules: Record<Kind, Rules> = {
@@ -177,6 +202,7 @@ const rules: Record<Kind, Rules> = {
   date: dateRules,
   month: monthRules,
   number: numberRules,
+  duration: durationRules,
   choice: choiceRules,
   link: linkRules,
   note: noteRules,
@@ -197,7 +223,7 @@ function matchesFilter(
 ): boolean {
   const kind = rulesFor(column);
   if (kind.isEmpty(value)) return filter.empty === true;
-  return filter.notEmpty === true || kind.matches(value, filter);
+  return filter.notEmpty === true || kind.matches(column, value, filter);
 }
 
 // The rows the view shows, in its order: those matching every filter and every word searched for,

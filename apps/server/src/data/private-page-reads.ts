@@ -123,7 +123,7 @@ export async function seenColumns(
 }
 
 const columnOut = (column: ColumnInfo): PrivateColumn => {
-  const { type, listId, visibility, multiple } = typeOf(column).settings({
+  const { type, listId, visibility, multiple, unit } = typeOf(column).settings({
     ...column,
   });
   return {
@@ -133,6 +133,7 @@ const columnOut = (column: ColumnInfo): PrivateColumn => {
     listId,
     visibility,
     multiple,
+    unit,
   };
 };
 

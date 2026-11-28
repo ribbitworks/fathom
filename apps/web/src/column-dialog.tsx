@@ -9,6 +9,8 @@ import {
   columnTablePolicies,
   type Field,
   type FieldRequest,
+  type DurationUnit,
+  durationUnitSchema,
   type FieldType,
   fieldTypeSchema,
   duplicateList,
@@ -27,6 +29,7 @@ import { focusRefusedSoon } from "./focus.ts";
 import { addingLabel } from "./choice-picker.tsx";
 import comboboxClasses from "./combobox.module.css";
 import { CountedInput } from "./counted-input.tsx";
+import { unitsOffered } from "./duration-cells.ts";
 import { type NewChoice, NewListChoices } from "./new-list-choices.tsx";
 import { listsQuery, nameProblem, nameTaken } from "./lists.ts";
 import { wholeList } from "./theme.ts";
@@ -44,6 +47,7 @@ const typeNames: Record<FieldType, string> = {
   text: "Text",
   number: "Number",
   date: "Date",
+  duration: "Duration",
   flag: "Checkbox",
   choice: "Choice from a list",
   link: "Web link",
@@ -101,6 +105,8 @@ export function ColumnDialog({
   const [sentListName, setSentListName] = useState("");
   const [multiple, setMultiple] = useState(field?.multiple ?? false);
   const [required, setRequired] = useState(field?.required ?? false);
+  // The unit a Duration column's bare number takes; weeks to start, as plans are mostly in weeks.
+  const [unit, setUnit] = useState<DurationUnit>(field?.unit ?? "wk");
   // The table is always one of the fixed tables.
   // eslint-disable-next-line security/detect-object-injection
   const policy = columnTablePolicies[table];
@@ -117,6 +123,7 @@ export function ColumnDialog({
     listId,
     multiple,
     required,
+    unit,
     listName,
     choices,
     typingChoice,
@@ -220,6 +227,7 @@ export function ColumnDialog({
                 visibility,
                 multiple: false,
                 required: canBeRequired(type) && required,
+                ...(type === "duration" ? { unit } : {}),
               }
             : {
                 name: name.trim(),
@@ -263,6 +271,17 @@ export function ColumnDialog({
             setType(fieldTypeSchema.parse(value));
           }}
         />
+        {type === "duration" && (
+          <Select
+            {...wholeList}
+            label="Unit"
+            data={unitsOffered}
+            value={unit}
+            onChange={(value) => {
+              setUnit(durationUnitSchema.parse(value));
+            }}
+          />
+        )}
         {type !== "choice" ? (
           classifies && (
             <ClassChoice

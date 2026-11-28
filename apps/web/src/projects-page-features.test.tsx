@@ -553,6 +553,7 @@ describe("the Features page", () => {
         flags: {},
         texts: {},
         days: {},
+        durations: {},
         target: null,
       },
     ]);
@@ -598,6 +599,7 @@ describe("the Features page", () => {
             flags: {},
             texts: {},
             days: {},
+            durations: {},
             target: null,
           },
         ],

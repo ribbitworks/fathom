@@ -41,6 +41,7 @@ describe("values in added columns", () => {
       flags: {},
       texts: {},
       days: {},
+      durations: {},
     });
   });
 

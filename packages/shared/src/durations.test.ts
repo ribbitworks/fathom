@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
+// Tests for a Duration column's lengths: a day moved by one, the length between two days, one unit
+// shown in another, and a length as typed, read, refused and written.
+
 import { describe, expect, it } from "vitest";
 import {
   type Duration,
   durationIn,
+  durationRefusalWords,
+  durationText,
   parseDuration,
   plusDuration,
   spanBetween,
@@ -97,11 +102,7 @@ describe("durationIn", () => {
     ["calendar days from weeks", of(-1, "wk"), "d", -7],
     ["the same unit", of(3, "mo"), "mo", 3],
   ] as const)("%s", (_case, duration, unit, amount) => {
-    expect(durationIn(duration, unit, monToFri)).toBeCloseTo(amount, 10);
-  });
-
-  it("sizes a working day by the working week", () => {
-    expect(durationIn(of(6, "wd"), "wk", [0, 1, 2, 3, 4, 5])).toBe(1);
+    expect(durationIn(duration, unit)).toBeCloseTo(amount, 10);
   });
 });
 
@@ -135,5 +136,32 @@ describe("parseDuration", () => {
     ["soon", "unit"],
   ])("refuses %s", (text, refused) => {
     expect(parseDuration(text, "wk")).toEqual({ refused });
+  });
+});
+
+describe("durationText", () => {
+  it.each([
+    [of(2, "wk"), "2 wk"],
+    [of(-1, "mo"), "−1 mo"],
+    [of(0, "d"), "0 d"],
+  ])("writes a length as typed", (duration, text) => {
+    expect(durationText(duration)).toBe(text);
+  });
+
+  it("reads back what it writes", () => {
+    expect(parseDuration(durationText(of(-5, "wd")), "wk")).toEqual({
+      duration: of(-5, "wd"),
+    });
+  });
+});
+
+describe("durationRefusalWords", () => {
+  it.each([
+    ["amount", "Type an amount for Kick-off after, such as 2 wk"],
+    ["oneUnit", "Type one unit for Kick-off after, such as 3 mo"],
+    ["whole", "Type a whole number for Kick-off after, such as 2 wk"],
+    ["unit", "Type d, wd, wk or mo for Kick-off after, such as 2 wk"],
+  ] as const)("names the column for %s", (refusal, words) => {
+    expect(durationRefusalWords(refusal, "Kick-off after")).toBe(words);
   });
 });

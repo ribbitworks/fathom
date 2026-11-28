@@ -33,6 +33,11 @@ export function decimalUpTo(value: number, places: number): string {
   return decimalsTo(places).format(roundedUpTo(value, places));
 }
 
+// A number to a number of decimal places, rounded to the nearest, as the reader's language writes it.
+export function decimalTo(value: number, places: number): string {
+  return decimalsTo(places).format(value);
+}
+
 // A formatter for each number of decimal places, made once, since a table formats many numbers.
 const formatters = new Map<number, Intl.NumberFormat>();
 function decimalsTo(places: number): Intl.NumberFormat {

@@ -23,6 +23,7 @@ import {
   typedNumber,
 } from "@fathom/shared";
 import { sendJsonFor } from "./api.ts";
+import { lengthIn } from "./duration-cells.ts";
 import { cellKinds, labels, startingText } from "./cell-kinds.tsx";
 import type { GridRecord } from "./record-table.ts";
 import type { SavedViews } from "./table-controls.tsx";
@@ -57,6 +58,7 @@ export type ExportColumn<Row> = Pick<
   | "standIn"
   | "unit"
   | "places"
+  | "lengths"
   | "dataClass"
   | "multiple"
 > & { choices: readonly Choice[] };
@@ -94,6 +96,11 @@ const exportedByKind: Readonly<
   link: (_column, value) => exportedLink(value),
   note: (_column, value) => notePlainText(asText(value)),
   flag: (column, value) => cellKinds.flag.inWords(column, value),
+  // As typed, such as 2 wk, or, in the unit the view shows, the amount to the places it shows.
+  duration: (column, value) =>
+    column.lengths?.shown === undefined || asText(value) === ""
+      ? asText(value)
+      : String(Number(lengthIn(column, value).toFixed(column.places ?? 0))),
 };
 
 // A column's heading, naming the unit its amounts are in, such as Effort (PD).

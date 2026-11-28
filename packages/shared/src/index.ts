@@ -599,6 +599,7 @@ export {
 export {
   type Duration,
   type DurationRefusal,
+  durationRefusalWords,
   type DurationUnit,
   durationIn,
   durationLimit,

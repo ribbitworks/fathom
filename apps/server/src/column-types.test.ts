@@ -45,6 +45,7 @@ describe("choice columns", () => {
       listId: "l1",
       visibility: null,
       multiple: false,
+      unit: null,
       linkedTable: null,
     });
   });
@@ -103,6 +104,7 @@ describe("web link columns", () => {
       listId: null,
       visibility: "confidential",
       multiple: false,
+      unit: null,
       linkedTable: null,
     });
   });
@@ -155,6 +157,7 @@ describe("note columns", () => {
       listId: null,
       visibility: "personal",
       multiple: false,
+      unit: null,
       linkedTable: null,
     });
   });
@@ -205,6 +208,7 @@ describe("number columns", () => {
       listId: null,
       visibility: "personal",
       multiple: false,
+      unit: null,
       linkedTable: null,
     });
   });
@@ -246,6 +250,7 @@ describe("checkbox columns", () => {
       listId: null,
       visibility: "personal",
       multiple: false,
+      unit: null,
       linkedTable: null,
     });
   });
@@ -286,6 +291,7 @@ describe("text columns", () => {
       listId: null,
       visibility: "general",
       multiple: false,
+      unit: null,
       linkedTable: null,
     });
   });
@@ -328,6 +334,7 @@ describe("date columns", () => {
       listId: null,
       visibility: "personal",
       multiple: false,
+      unit: null,
       linkedTable: null,
     });
   });
@@ -363,6 +370,34 @@ describe("date columns", () => {
   });
 });
 
+describe("Duration columns", () => {
+  const { duration } = columnTypes;
+
+  it("keep the unit a bare number takes, a visibility of their own, and no list", () => {
+    expect(
+      duration.settings({ unit: "wd", visibility: "personal", listId: "l1" }),
+    ).toEqual({
+      type: "duration",
+      listId: null,
+      visibility: "personal",
+      multiple: false,
+      unit: "wd",
+      linkedTable: null,
+    });
+  });
+
+  it("keep no unit for one recorded without a known unit", () => {
+    expect(duration.settings({ unit: "sprints" }).unit).toBeNull();
+  });
+
+  it("hold one whole length in a known unit, and nothing else", () => {
+    expect(duration.count({ amount: 2, unit: "wk" })).toBe(1);
+    expect(duration.count({ amount: 1.5, unit: "mo" })).toBe(0);
+    expect(duration.count({ amount: 2, unit: "wk", text: "2 wk" })).toBe(0);
+    expect(duration.count({ date: "2026-03-14" })).toBe(0);
+  });
+});
+
 describe("the values table's rows", () => {
   it("hold each type's value in its own column, and nothing for a value of another type", () => {
     expect(
@@ -375,9 +410,10 @@ describe("the values table's rows", () => {
         type.rows(true),
         type.rows({ text: "Desk" }),
         type.rows({ date: "2026-03-14" }),
+        type.rows({ amount: 2, unit: "wk" }),
       ]),
     ).toEqual([
-      ["choice", [{ choiceId: "c1" }], [], [], [], [], [], []],
+      ["choice", [{ choiceId: "c1" }], [], [], [], [], [], [], []],
       [
         "link",
         [],
@@ -387,12 +423,24 @@ describe("the values table's rows", () => {
         [],
         [],
         [],
+        [],
       ],
-      ["note", [], [], [{ note: "*Kind*" }], [], [], [], []],
-      ["number", [], [], [], [{ number: 0 }], [], [], []],
-      ["flag", [], [], [], [], [{ flag: true }], [], []],
-      ["text", [], [], [], [], [], [{ text: "Desk" }], []],
-      ["date", [], [], [], [], [], [], [{ date: "2026-03-14" }]],
+      ["note", [], [], [{ note: "*Kind*" }], [], [], [], [], []],
+      ["number", [], [], [], [{ number: 0 }], [], [], [], []],
+      ["flag", [], [], [], [], [{ flag: true }], [], [], []],
+      ["text", [], [], [], [], [], [{ text: "Desk" }], [], []],
+      ["date", [], [], [], [], [], [], [{ date: "2026-03-14" }], []],
+      [
+        "duration",
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [{ durationAmount: 2, durationUnit: "wk" }],
+      ],
     ]);
   });
 });
@@ -409,6 +457,7 @@ describe("live values", () => {
           ["f5", { text: "North 4-12" }],
           ["f6", "*Kind*"],
           ["f7", { date: "2026-03-14" }],
+          ["f8", { amount: -1, unit: "mo" }],
         ]),
       ),
     ).toEqual({
@@ -419,6 +468,7 @@ describe("live values", () => {
       texts: { f5: "North 4-12" },
       notes: { f6: "*Kind*" },
       days: { f7: "2026-03-14" },
+      durations: { f8: { amount: -1, unit: "mo" } },
     });
   });
 });

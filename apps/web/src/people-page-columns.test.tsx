@@ -178,6 +178,7 @@ describe("columns", () => {
       "Text",
       "Number",
       "Date",
+      "Duration",
       "Checkbox",
       "Choice from a list",
       "Web link",

@@ -96,8 +96,8 @@ export const fieldSchema = z.object({
   visibility: tierSchema.nullable().default(null),
   multiple: z.boolean(),
   required: z.boolean(),
-  // The unit a Duration column's bare number takes; null for every other type.
-  unit: durationUnitSchema.nullable().default(null),
+  // The unit a Duration column's bare number takes; none for every other type.
+  unit: durationUnitSchema.nullish(),
   // The table it is on, whose Approvers decide its drafts; one read without it is on People.
   table: columnTableSchema.optional(),
   draft: fieldDraftSchema.optional(),

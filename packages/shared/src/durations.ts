@@ -31,17 +31,17 @@ export type Duration = z.infer<typeof durationSchema>;
 const daysInYear = 365.25;
 const monthsInYear = 12;
 
-// Each unit's size in calendar days, for showing one unit in another, comparing and adding up; a
-// working day's is the week's days shared among its working days, so 7/5 for Mon to Fri.
-export function unitDays(
-  unit: DurationUnit,
-  workingDays: readonly Weekday[],
-): number {
+// The working days in a week, by which a working day's size is set.
+const workingDaysInWeek = 5;
+
+// Each unit's size in calendar days, for showing one unit in another, comparing and adding up, the
+// same for every record: a working day is 7/5 of a day.
+export function unitDays(unit: DurationUnit): number {
   switch (unit) {
     case "d":
       return 1;
     case "wd":
-      return daysInWeek / workingDays.length;
+      return daysInWeek / workingDaysInWeek;
     case "wk":
       return daysInWeek;
     case "mo":
@@ -52,11 +52,8 @@ export function unitDays(
 export const durationIn = (
   { amount, unit }: Duration,
   shown: DurationUnit,
-  workingDays: readonly Weekday[],
 ): number =>
-  unit === shown
-    ? amount
-    : (amount * unitDays(unit, workingDays)) / unitDays(shown, workingDays);
+  unit === shown ? amount : (amount * unitDays(unit)) / unitDays(shown);
 
 // A length as typed, by its unit's code, with a minus sign where it counts back, such as −1 wk.
 export const durationText = ({ amount, unit }: Duration): string =>
@@ -129,7 +126,7 @@ export function spanBetween(
 ): number | "reversed" {
   if (end < start) return "reversed";
   if (unit === "wd") return workingDaysBetween(start, end, workingDays);
-  return (daysBetween(start, end) + 1) / unitDays(unit, workingDays);
+  return (daysBetween(start, end) + 1) / unitDays(unit);
 }
 
 // What a typed unit is called, by its code, its short names and its whole names.
@@ -156,6 +153,23 @@ const unitWords = new Map<string, DurationUnit>([
 export type DurationRefusal = "amount" | "oneUnit" | "whole" | "unit";
 
 // A day typed in any form: digits joined by a dash or a slash, or a month's name and then a day.
+// Why a length typed in a column is refused, naming the column.
+export function durationRefusalWords(
+  refusal: DurationRefusal,
+  label: string,
+): string {
+  switch (refusal) {
+    case "amount":
+      return `Type an amount for ${label}, such as 2 wk`;
+    case "oneUnit":
+      return `Type one unit for ${label}, such as 3 mo`;
+    case "whole":
+      return `Type a whole number for ${label}, such as 2 wk`;
+    case "unit":
+      return `Type d, wd, wk or mo for ${label}, such as 2 wk`;
+  }
+}
+
 const looksLikeDay = [/\d[-/]\d/u, /^[a-z]{3,9}\.? \d/u];
 
 // A sign, a number, whole or not, and words naming a unit, if any.
