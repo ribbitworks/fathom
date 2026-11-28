@@ -12,7 +12,12 @@ import {
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
 import type { Database } from "@fathom/db";
-import type { AuthConfig, TlsConfig } from "./config.ts";
+import {
+  type AuthConfig,
+  productionLimits,
+  type RequestLimits,
+  type TlsConfig,
+} from "./config.ts";
 import { createAuth } from "./data/auth.ts";
 import { savedAtSameMoment } from "./data/changes.ts";
 import type { DataAccess } from "./data/index.ts";
@@ -52,7 +57,6 @@ const forbidden = 403;
 const notFound = 404;
 const conflict = 409;
 const internalServerError = 500;
-const defaultRequestsPerMinute = 300;
 // Fathom's proxy passes connections through without reading requests, so the server itself must end
 // requests that never finish.
 const requestTimeoutMilliseconds = 30_000;
@@ -79,7 +83,7 @@ export interface AppOptions {
   logStream: LogStream;
   // The folder holding the built front end; without it, only the API is served.
   webRoot?: string | undefined;
-  requestsPerMinute?: number;
+  limits?: RequestLimits;
 }
 
 function createFastify(options: AppOptions) {
@@ -106,6 +110,7 @@ function createFastify(options: AppOptions) {
 
 export async function buildApp(options: AppOptions) {
   const app = createFastify(options);
+  const limits = options.limits ?? productionLimits;
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
@@ -123,7 +128,7 @@ export async function buildApp(options: AppOptions) {
   // and requests whose body cannot be read.
   await app.register(rateLimit, {
     global: false,
-    max: options.requestsPerMinute ?? defaultRequestsPerMinute,
+    max: limits.requestsPerMinute,
     timeWindow: "1 minute",
   });
   app.addHook("onRequest", app.rateLimit());
@@ -173,8 +178,11 @@ export async function buildApp(options: AppOptions) {
   app.decorateRequest("sessionId", "");
 
   // Better Auth reports only warnings and errors, each logged with its own level alongside.
-  const auth = createAuth(options.database, options.auth, (level, message) => {
-    app.log.warn({ authLevel: level }, message);
+  const auth = createAuth(options.database, options.auth, {
+    log: (level, message) => {
+      app.log.warn({ authLevel: level }, message);
+    },
+    signInsPerMinute: limits.signInsPerMinute,
   });
   // Every API request needs a signed-in user, apart from signing in and asking who is signed in.
   // Checked before the request is read, so a signed-out client learns nothing from validation. A

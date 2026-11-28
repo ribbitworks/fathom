@@ -2,8 +2,8 @@
 
 // Loads and validates the server's settings from environment variables: the address it listens on,
 // the address users reach Fathom at, whether connections come through Fathom's proxy, its HTTPS
-// certificate and private key, the secret that signs sessions, the built front end it serves, and
-// the database connection.
+// certificate and private key, the secret that signs sessions, the built front end it serves, the
+// limits on each client's requests and sign-ins, and the database connection.
 
 import { type DatabaseConfig, loadDatabaseConfig } from "@fathom/db";
 import { existsSync, readFileSync } from "node:fs";
@@ -29,6 +29,28 @@ const environmentSchema = z.object({
   FATHOM_WEB_ROOT: z.string().refine(isAbsolute).optional(),
 });
 
+// Every browser tab and UI test reaches the development server from one address, through Vite, so
+// development mode may raise the limits. Production must never pick them up, so a server that serves
+// the built front end, sits behind the proxy, or runs with NODE_ENV=production, as the application
+// image sets it, refuses to start with them.
+const developmentLimitsSchema = z.object({
+  FATHOM_DEV_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().optional(),
+  FATHOM_DEV_SIGN_INS_PER_MINUTE: z.coerce.number().int().positive().optional(),
+});
+
+const modeSchema = z.object({ NODE_ENV: z.string().optional() });
+
+// How many requests, and how many sign-in attempts, each client address may make a minute.
+export interface RequestLimits {
+  requestsPerMinute: number;
+  signInsPerMinute: number;
+}
+
+export const productionLimits: RequestLimits = {
+  requestsPerMinute: 300,
+  signInsPerMinute: 5,
+};
+
 export interface TlsConfig {
   cert: string;
   key: string;
@@ -52,6 +74,7 @@ export interface ServerConfig {
   tls: TlsConfig;
   // Unset in development mode.
   webRoot: string | undefined;
+  limits: RequestLimits;
   database: DatabaseConfig;
 }
 
@@ -68,6 +91,34 @@ function parseSettings<Schema extends z.ZodType>(
     throw new Error(`Invalid server configuration: ${fields}`);
   }
   return result.data;
+}
+
+function loadLimits(
+  environment: NodeJS.ProcessEnv,
+  settings: z.infer<typeof environmentSchema>,
+): RequestLimits {
+  const raised = parseSettings(developmentLimitsSchema, environment);
+  const { NODE_ENV: mode } = parseSettings(modeSchema, environment);
+  const named = Object.entries(raised)
+    .filter(([, limit]) => limit !== undefined)
+    .map(([name]) => name);
+  const developmentMode =
+    settings.FATHOM_WEB_ROOT === undefined &&
+    settings.FATHOM_PROXY_HOST === undefined &&
+    mode !== "production";
+  if (named.length > 0 && !developmentMode) {
+    throw new Error(
+      `Invalid server configuration: only development mode may set ${named.join(", ")}`,
+    );
+  }
+  return {
+    requestsPerMinute:
+      raised.FATHOM_DEV_REQUESTS_PER_MINUTE ??
+      productionLimits.requestsPerMinute,
+    signInsPerMinute:
+      raised.FATHOM_DEV_SIGN_INS_PER_MINUTE ??
+      productionLimits.signInsPerMinute,
+  };
 }
 
 // The settings sign-in needs, which the account commands read too.
@@ -113,6 +164,7 @@ export function loadServerConfig(
       key: readFileSync(settings.FATHOM_TLS_KEY_FILE, "utf8"),
     },
     webRoot,
+    limits: loadLimits(environment, settings),
     database: loadDatabaseConfig(environment),
   };
 }

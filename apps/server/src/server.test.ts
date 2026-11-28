@@ -23,7 +23,7 @@ import { connect as tlsConnect } from "node:tls";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import type { ServerConfig } from "./config.ts";
+import { productionLimits, type ServerConfig } from "./config.ts";
 import {
   closeOnSignals,
   type RunningServer,
@@ -50,6 +50,7 @@ function configFor(port = 0): ServerConfig {
     proxyHost: undefined,
     tls: certificate,
     webRoot: undefined,
+    limits: productionLimits,
     database: database.app,
   };
 }
@@ -105,6 +106,22 @@ describe("server", () => {
       );
       expect(response.statusCode).toBe(401);
       expect(JSON.parse(response.body)).toEqual({ error: "Unauthorized" });
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("limits each client's requests as its settings say", async () => {
+    const server = await startServer(
+      { ...configFor(), limits: { ...productionLimits, requestsPerMinute: 2 } },
+      silent,
+    );
+    try {
+      const session = () =>
+        httpsGet(`${server.url}/api/session`, certificate.cert);
+      await session();
+      await session();
+      expect((await session()).statusCode).toBe(429);
     } finally {
       await server.close();
     }

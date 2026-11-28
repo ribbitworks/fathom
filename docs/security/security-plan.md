@@ -1,6 +1,6 @@
 # Fathom: Security Plan
 
-**Last updated:** 2026-11-26
+**Last updated:** 2026-11-27
 
 How Fathom guards against threats as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it, as [Securing Your Environment](../operations/securing-your-environment.md) sets out. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
 
@@ -59,7 +59,7 @@ flowchart LR
 
 ### Spoofing
 
-- **Signing in as someone else:** Passwords must meet the rules set in Application settings, and are hashed with scrypt, Better Auth's default. Each client address may try to sign in 5 times a minute, and every refused sign-in gets the same answer. Accepted: there is no lockout for an account, and failed sign-ins aren't recorded.
+- **Signing in as someone else:** Passwords must meet the rules set in Application settings, and are hashed with scrypt, Better Auth's default. Each client address may try to sign in 5 times a minute, apart from in [development mode](#denial-of-service), and every refused sign-in gets the same answer. Accepted: there is no lockout for an account, and failed sign-ins aren't recorded.
 - **Stolen or forged sessions:** Session cookies are Secure, HttpOnly and SameSite, and requests are checked against cross-site forgery.
   - **Session life:** each sign-in gets a new session, and a session ends after 30 minutes without use. A password change, an administrator's reset or a deactivation ends the account's other sessions.
   - **Accepted:** a session in use has no absolute end.
@@ -167,7 +167,9 @@ flowchart LR
 
 ### Denial of Service
 
-- **Too many requests:** The proxy limits connections in total, and the server limits each client's requests and how long a request may take.
+- **Too many requests:** The proxy limits connections in total. The server allows each client address 300 requests a minute, and limits how long a request may take.
+  - **Development mode:** `pnpm dev` raises the limits to 3,000 requests and 100 sign-ins a minute, since every browser tab and UI test reaches the development server from one address, through Vite. These higher limits are for development and the UI tests only.
+  - **Kept from production:** The server refuses to start with them when it serves the built front end, sits behind the proxy, or runs with `NODE_ENV` set to `production`, as the application image sets it, so a production server can't pick them up. A test proves each.
 - **Resource exhaustion:** Every container has memory and process limits. Accepted: there are no processor limits.
 - **Locking out administrators:** At least one active account can always administer accounts.
 

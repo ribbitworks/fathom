@@ -36,6 +36,7 @@ import { randomUUID } from "node:crypto";
 import { expect } from "vitest";
 import { actorFor } from "./access.ts";
 import { type App, buildApp } from "./app.ts";
+import { productionLimits } from "./config.ts";
 import { createAccount } from "./data/accounts.ts";
 import { type Auth, createAuth } from "./data/auth.ts";
 import { createDataAccess } from "./data/index.ts";
@@ -289,7 +290,7 @@ export async function startTestApp({
     tls: certificate,
     logStream: { write: () => undefined },
     // Many sign-ins from one address; sign-in limits are tested elsewhere.
-    requestsPerMinute: 10_000,
+    limits: { ...productionLimits, requestsPerMinute: 10_000 },
   });
   let accountCount = 0;
   let approverId: string | undefined;

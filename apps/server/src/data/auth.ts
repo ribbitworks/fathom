@@ -20,7 +20,7 @@ import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { and, eq, exists } from "drizzle-orm";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import type { AuthConfig } from "../config.ts";
+import { type AuthConfig, productionLimits } from "../config.ts";
 import { recordEvent } from "./history.ts";
 
 // The header the server sets to each request's client address, which Better Auth uses to limit
@@ -40,11 +40,19 @@ function cookiePrefix(publicUrl: string): string | undefined {
   return port === "" ? undefined : `fathom-${port}`;
 }
 
+export interface AuthOptions {
+  // Commands that report their own errors leave it out.
+  log?: AuthLog;
+  signInsPerMinute?: number;
+}
+
 export function createAuth(
   database: Database,
   config: AuthConfig,
-  // Commands that report their own errors leave it out.
-  log?: AuthLog,
+  {
+    log,
+    signInsPerMinute = productionLimits.signInsPerMinute,
+  }: AuthOptions = {},
 ) {
   return betterAuth({
     appName: "Fathom",
@@ -82,7 +90,9 @@ export function createAuth(
       storage: "database",
       window: minute,
       max: 100,
-      customRules: { "/sign-in/email": { window: minute, max: 5 } },
+      customRules: {
+        "/sign-in/email": { window: minute, max: signInsPerMinute },
+      },
     },
     advanced: {
       // Every sign-in record, accounts among them, is identified by a UUID, as every other record is,
