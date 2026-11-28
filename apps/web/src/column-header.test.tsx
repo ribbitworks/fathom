@@ -216,7 +216,7 @@ describe("hiding columns", () => {
       }),
     );
 
-    expect(removeColumn).toHaveBeenCalledWith(colour);
+    expect(removeColumn).toHaveBeenCalledWith(colour, expect.anything());
   });
 
   it("groups an added column's menu: its link, sorting, filtering and Metrics, laying out, then changing it", async () => {
