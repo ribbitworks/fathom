@@ -277,6 +277,11 @@ export function Layout({
   const narrow = useMediaQuery("(max-width: 48em)");
   const place = placeAt(pathname);
   const minePlace = useMinePlace(pathname, permissions);
+  const {
+    words: pageWords,
+    shown: pageTipShown,
+    target: pageTipTarget,
+  } = useCutTip();
 
   const rail = collapsed && !narrow;
 
@@ -379,12 +384,22 @@ export function Layout({
               separator="/"
               fz="sm"
               c="dimmed"
-              className={classes.place}
+              className={[classes.place, classes.minePlace].join(" ")}
             >
               <span>{minePlace.section}</span>
-              <Text span fz="sm" fw={500} c="var(--mantine-color-text)">
-                {minePlace.label}
-              </Text>
+              <Tooltip label={minePlace.label} opened={pageTipShown}>
+                <Text
+                  span
+                  fz="sm"
+                  fw={500}
+                  c="var(--mantine-color-text)"
+                  ref={pageWords}
+                  className={classes.cutShort}
+                  {...pageTipTarget}
+                >
+                  {minePlace.label}
+                </Text>
+              </Tooltip>
             </Breadcrumbs>
           )}
           {place && (
