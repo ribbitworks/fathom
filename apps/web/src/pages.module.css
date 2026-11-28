@@ -1768,3 +1768,11 @@ th.liveColumn {
   color: var(--mantine-color-dimmed);
   font-size: var(--mantine-font-size-sm);
 }
+
+/* A page's title is cut short with an ellipsis rather than taking a second line. */
+.pageTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

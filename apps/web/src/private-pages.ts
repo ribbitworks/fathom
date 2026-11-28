@@ -8,6 +8,7 @@ import {
   privatePageRequestSchema,
   privatePageSchema,
   savedPrivatePageSchema,
+  savedSchema,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
@@ -58,3 +59,25 @@ export const changePrivateRow = (
 
 export const removePrivateRow = (pageId: string, rowId: string) =>
   sendDeleteFor(rowPath(pageId, rowId), savedPrivatePageSchema);
+
+export const removePrivateColumn = (pageId: string, columnId: string) =>
+  sendDeleteFor(
+    `${pagePath(pageId)}/columns/${encodeURIComponent(columnId)}`,
+    savedPrivatePageSchema,
+  );
+
+export const renamePrivatePage = (pageId: string, name: string) =>
+  sendJsonFor("PATCH", pagePath(pageId), { name }, savedPrivatePageSchema);
+
+export const removePrivatePage = (pageId: string) =>
+  sendDeleteFor(pagePath(pageId), savedSchema);
+
+// Where removing a page leaves its maker: the page after it under Mine, or else the one before, or
+// none, for the Overview, once Mine is empty.
+export function landingAfter(
+  pages: readonly { id: string }[],
+  removed: string,
+): string | undefined {
+  const at = pages.findIndex(({ id }) => id === removed);
+  return (pages[at + 1] ?? (at > 0 ? pages[at - 1] : undefined))?.id;
+}

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What a private page's table does to its rows.
+// What a private page's table does to its rows and columns.
 
 import { allOf, type PrivatePage, privateRowSchema } from "@fathom/shared";
 import { withCellChange } from "./added-columns.ts";
@@ -8,10 +8,16 @@ import type { CellChange } from "./cell-kinds.tsx";
 import {
   addPrivateRow,
   changePrivateRow,
+  removePrivateColumn,
   removePrivateRow,
 } from "./private-pages.ts";
 import type { PrivateRecord } from "./private-table.ts";
 import { noRecordActions, type RecordActions } from "./record-table.ts";
+import {
+  type RemovalQuestion,
+  removalQuestion,
+  removedWords,
+} from "./removal-question.tsx";
 import type { RecordSaving } from "./saving.ts";
 
 const noValues = { values: {}, links: {} };
@@ -36,10 +42,12 @@ export function privateRowActions({
   pageId,
   changes: { save, undoable, done },
   nameOf,
+  ask,
 }: {
   pageId: string;
   changes: RecordSaving<PrivatePage>;
   nameOf: (row: PrivateRecord) => string;
+  ask: (question: RemovalQuestion, go: () => void, kept?: () => void) => void;
 }): RecordActions<PrivateRecord, CellChange, CellChange> {
   return {
     ...noRecordActions<PrivateRecord, CellChange, CellChange>(),
@@ -108,6 +116,31 @@ export function privateRowActions({
           done(`Removed ${nameOf(row)}.`, changeSetId, before);
         },
       });
+    },
+    // A column takes every row's value in it away, so it is removed only once asked, then says
+    // so, with Undo.
+    removeColumnAsks: true,
+    removeColumn: (field, { removed, kept }) => {
+      const column = { kind: "column", name: field.name };
+      ask(
+        removalQuestion(column),
+        () => {
+          save({
+            next: (page) => ({
+              ...page,
+              columns: page.columns.filter(({ id }) => id !== field.id),
+            }),
+            save: async () =>
+              (await removePrivateColumn(pageId, field.id)).changeSetId,
+            failure: `Fathom could not remove ${field.name}.`,
+            onSaved: (changeSetId, before) => {
+              done(removedWords(column), changeSetId, before);
+            },
+          });
+          removed();
+        },
+        kept,
+      );
     },
   };
 }

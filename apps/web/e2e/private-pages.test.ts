@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // UI tests of New page under Mine: its refusals, with focus where they are, and a page made and
-// typed in, its rows saved at once.
+// typed in, its rows saved at once. Also removing a page's column and the page itself: each asks
+// first, from the keyboard, with focus where it should be, then offers Undo.
 
-import type { Locator } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";
 import { expect, test } from "./test-fixtures.ts";
 import { send } from "./test-requests.ts";
@@ -114,4 +115,77 @@ test("cuts a long page name short in the top bar before the account's, keeping i
   await expect.poll(fits).toBe(true);
   await bar.getByRole("button", { name: /^Account, / }).click();
   await expect(page.getByRole("menu")).toBeVisible();
+});
+
+// A page of the Feature Lead's own with a second column, opened, made through the API.
+async function openTwoColumnPage(page: Page) {
+  await page.goto("/help");
+  const name = `Fictional follow-ups ${Date.now().toString(36)}`;
+  const answer = await send(page, "POST", "/api/private-pages", {
+    name,
+    columns: [
+      { name: "Name", type: "text", visibility: "general" },
+      { name: "Notes", type: "text", visibility: "general" },
+    ],
+  });
+  const { id } = (answer.body as { page: { id: string } }).page;
+  made.pageId = id;
+  await page.goto(`/mine/${id}`);
+  await expect(page.getByRole("grid", { name })).toBeVisible();
+  return name;
+}
+
+test("asks before removing a column, Esc keeping it, then Remove and Cmd+Z", async ({
+  page,
+}) => {
+  // Given the Notes column's Remove column…
+  await openTwoColumnPage(page);
+  const heading = page.getByRole("button", { name: /^Notes column/u });
+  const ask = async () => {
+    await heading.click();
+    await page.getByRole("menuitem", { name: "Remove column…" }).click();
+    return page.getByRole("dialog", { name: "Remove the Notes column?" });
+  };
+
+  // When it asks, Cancel has focus, and Esc keeps the column, focus back on its heading
+  const question = await ask();
+  await expect(question.getByRole("button", { name: "Cancel" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(question).toBeHidden();
+  await expect(heading).toBeFocused();
+
+  // Then Tab then Enter takes Remove, and the column goes, a notification saying so
+  await ask();
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Enter");
+  await expect(heading).toBeHidden();
+  await expect(page.getByText("Removed the Notes column.")).toBeVisible();
+
+  // And Cmd+Z or Ctrl+Z brings it back
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(heading).toBeVisible();
+});
+
+test("asks before removing the page from its ⋯, landing elsewhere, then Undo opens it again", async ({
+  page,
+}) => {
+  // Given the page's ⋯, then Remove page…
+  const name = await openTwoColumnPage(page);
+  await page.getByRole("button", { name: `Actions for ${name}` }).click();
+  await page.getByRole("menuitem", { name: "Remove page…" }).click();
+  const question = page.getByRole("dialog", {
+    name: `Remove the ${name} page?`,
+  });
+  await expect(question.getByRole("button", { name: "Cancel" })).toBeFocused();
+
+  // When Remove is taken, the page is gone, and a notification offers Undo
+  await question.getByRole("button", { name: "Remove" }).click();
+  await expect(page).not.toHaveURL(new RegExp(made.pageId ?? "", "u"));
+  const notice = page.getByRole("status").filter({
+    hasText: `Removed the ${name} page.`,
+  });
+
+  // Then Undo opens it again
+  await notice.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByRole("grid", { name })).toBeVisible();
 });

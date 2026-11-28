@@ -88,9 +88,15 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
   // The record a draft is of, where the table's drafts name only those that can be decided, so
   // the user's own unpublished draft is published by it.
   draftRef?: ((record: Rec, draft: DraftOf<Rec>) => RecordRef) | undefined;
-  editColumn: (field: Field) => void;
-  // Removes an added column as a draft, for a role that may.
-  removeColumn?: ((field: Field) => void) | undefined;
+  // Edits an added column, where the table's columns can be edited.
+  editColumn?: ((field: Field) => void) | undefined;
+  // Removes an added column, for a role that may: as a draft, or, on a table without drafts, once
+  // asked, calling back once it's removed or kept.
+  removeColumn?:
+    | ((field: Field, after: { removed: () => void; kept: () => void }) => void)
+    | undefined;
+  // Whether removing a column asks first, as it does on a table without drafts.
+  removeColumnAsks?: boolean | undefined;
   // Moves an approved column to another class, for a role with Classify data on a table whose
   // columns may be in any class.
   moveColumnClass?: ((field: Field, from: Tier) => void) | undefined;
@@ -528,7 +534,6 @@ export const noRecordActions = <Rec extends GridRecord, Change, Request>(
   remove: nothing,
   discard: nothing,
   resubmit: nothing,
-  editColumn: nothing,
   discardColumn: nothing,
   resubmitColumn: nothing,
 });
