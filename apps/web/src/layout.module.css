@@ -113,7 +113,8 @@
 }
 
 /* The top bar stays one line at any width: the place and the buttons keep their size, while the
-   development label, then the account's name, are cut short, each with its whole text in a tip.
+   development label, then a private page's name, then the account's name, are cut short, each with
+   its whole text in a tip.
    The label sits in the room left over, which only grows, so it gives up that room down to its
    least before the name gives up any. */
 .bar > * {
@@ -125,10 +126,10 @@
   white-space: nowrap;
 }
 
-/* A page under Mine is named as its maker typed it, at any length, so its name is cut short first,
-   keeping the account's menu in reach. */
+/* A page under Mine is named as its maker typed it, at any length, so, once the label is down to
+   its least, its name is cut short before the account's, keeping the account's menu in reach. */
 .bar > .minePlace {
-  flex: 0 1 auto;
+  flex: 0 1000 auto;
   min-width: 0;
 }
 

@@ -259,7 +259,8 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // "No drafts" for drafts, which come and go.
   none?: string;
   // Whether the empty row alone shows while the table has no records, with no line saying so, as
-  // on a private page, typed in like a spreadsheet. A search finding nothing still says so.
+  // on a private page, typed in like a spreadsheet. A search finding nothing still says so. Only for
+  // a table whose viewers can always add to it, since it has no empty row otherwise.
   emptyRowAlone?: boolean;
   // For a table of several kinds of record, how many of each some records are, which Metrics counts.
   countKinds?: (records: readonly Rec[]) => string;

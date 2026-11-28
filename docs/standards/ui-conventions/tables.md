@@ -19,7 +19,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Example:** On Features, narrow the window until the table scrolls sideways.
 - **An empty table:** A table with no rows to show keeps its heading, the bar above it with its count, such as 0 releases, and its column headings.
   - **The line:** Across the table, dimmed, above the empty row where there is one, it reads No and the table's noun, then yet, with no period, such as No releases yet. Drafts, which come and go, read No drafts.
-  - **A private page:** Typed in like a spreadsheet, it shows its empty row alone, with no line, so it reads as a blank sheet. A search finding nothing still says No matching rows. Drawn by `emptyRowAlone` in `apps/web/src/record-table.ts`, set by `apps/web/src/private-table.ts`.
+  - **A private page:** Typed in like a spreadsheet, it shows its empty row alone, with no line, so it reads as a blank sheet. A search finding nothing still says No matching rows. Drawn by `RecordGrid` in `apps/web/src/record-grid.tsx`, given `emptyRowAlone` by `apps/web/src/private-table.ts`.
   - **None matching:** While the view leaves records out, by a search, a filter or a choice such as Show shipped, it reads No matching and the noun, such as No matching releases.
   - **Under it:** A table may put a link under No releases yet to where the first record is made, such as Make a schedule first on Releases.
   - **In view:** The line stays centred in the part of the table in view, however far a wide table is scrolled sideways.

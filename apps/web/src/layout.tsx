@@ -395,7 +395,8 @@ export function Layout({
                   c="var(--mantine-color-text)"
                   ref={pageWords}
                   className={classes.cutShort}
-                  {...pageTipTarget}
+                  onMouseEnter={pageTipTarget.onMouseEnter}
+                  onMouseLeave={pageTipTarget.onMouseLeave}
                 >
                   {minePlace.label}
                 </Text>

@@ -18,7 +18,7 @@ Mine holds a person's own pages, each a table of free rows typed in like a sprea
 - **Mine:** after People and before Administration, or where they would be for a role that sees neither, listing the maker's pages in their order, then New page. Its pages are read from the server, so it is the one section not in `sections` in `apps/web/src/navigation.ts`; `MineSection` in `apps/web/src/mine-section.tsx` draws it with `SidebarGroup` in `apps/web/src/sidebar-group.tsx`, as every section is drawn.
 - **Each page:** its name after the private ring, as [The private ring](../../standards/ui-conventions/drafts-and-values.md#access) sets out, cut short with an ellipsis where long. In the collapsed rail, its first character after the ring, with its name in the rail's tip, as other items show their icons.
 - **New page:** last, with a + icon, opening the New page dialog. It has no "…", as every button starting with New.
-- **The top bar:** Mine / the page's name.
+- **The top bar:** Mine / the page's name, cut short where long, with its whole name in a tip, so the account's menu stays in reach.
 
 ## New Page
 
