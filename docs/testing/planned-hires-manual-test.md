@@ -510,6 +510,15 @@ Covered by the UI test `apps/web/e2e/fill-hire-teams.test.ts`.
     - Under it, in small grey text: "Filled by Fictional joiner, starts" and the date written down at `623D`.
   - **Notes:**
 
+- [ ] `9E71` Type `Data engineer` in the finder, and select the one planned hire it offers.
+  - **Expected:**
+    - The chart centres on a card with a grey dashed edge, under the card that names 'Field tools'.
+    - It reads 'Data engineer', then 'Software Engineer'.
+    - Under them, a grey box reads "Filled by Fictional joiner, starts" and the date written down at `623D`.
+    - Where the box takes two lines, "starts" and the date are together on the second.
+    - Nothing on the card overlaps the card under it.
+  - **Notes:**
+
 - [ ] `3C70` Clear the **Date** box, and type the date written down at `623D`, as digits alone.
   - **Expected:**
     - **Members** lists `Fictional joiner`.
