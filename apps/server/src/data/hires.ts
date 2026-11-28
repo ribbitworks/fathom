@@ -16,14 +16,9 @@ import {
   requireSensitivityEdit,
   seesSensitivity,
 } from "../access.ts";
-import {
-  BadRequestError,
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-} from "../errors.ts";
+import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import { columnsWithAdded } from "./added-columns.ts";
-import { checkBuiltInChoice, firstChoiceMeaning } from "./built-in-lists.ts";
+import { firstChoiceMeaning } from "./built-in-lists.ts";
 import { valueField, recordedValues } from "./values.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
 import { addDrafts, lockDrafts, reopened, writeDraft } from "./drafts.ts";
@@ -65,14 +60,9 @@ import {
   refuseUnfillable,
 } from "./hire-draft-checks.ts";
 import {
-  checkManager,
-  checkRequisition,
   movedByFill,
-  newlyManaged,
   partOfFill,
   refuseChangingFill,
-  refuseHired,
-  refuseUnmarked,
   requireHiringEdit,
   unfilled,
 } from "./hire-checks.ts";
@@ -140,23 +130,7 @@ export async function createHires(
     const ids: string[] = [];
     const made: Change[] = [];
     for (const request of requests) {
-      await checkManager(transaction, request.managerId, actor.user.id);
-      await checkBuiltInChoice(transaction, "positions", request.positionId);
-      const seesPositions = seesSensitivity(actor, tierOf("positionId"));
-      const stateId =
-        request.stateId ??
-        (await firstChoiceMeaning(transaction, "hiring-states", "proposed"));
-      refuseHired(
-        await checkBuiltInChoice(transaction, "hiring-states", stateId),
-      );
       const id = randomUUID();
-      // Each hire is drafted before the next is checked, so two asked for cannot share an ID.
-      await checkRequisition(
-        transaction,
-        request.requisition,
-        id,
-        actor.user.id,
-      );
       // Notes left empty are left out.
       const after: Recorded = tidy({
         name: request.name,
@@ -167,7 +141,9 @@ export async function createHires(
             : null,
         positionId: request.positionId,
         targetDate: request.targetDate,
-        stateId,
+        stateId:
+          request.stateId ??
+          (await firstChoiceMeaning(transaction, "hiring-states", "proposed")),
         managerId: request.managerId,
         // Left out unless marked, as a new person's mark is.
         ...(request.isManager ? { isManager: true } : {}),
@@ -179,23 +155,28 @@ export async function createHires(
         ...checkedNotes(offered, request.notes ?? {}),
         ...checkedNumbers(offered, request.numbers ?? {}),
       });
-      if (newlyManaged(undefined, after)) {
-        await refuseUnmarked(
-          transaction,
-          String(after.managerId),
-          (message) => new BadRequestError(message),
-          { seesPositions },
-        );
-      }
+      // Each hire is drafted before it is checked, and before the next, so two asked for can't
+      // share an ID.
       await addDrafts(transaction, actor.user.id, recordType, [
         { id, fields: after },
       ]);
       ids.push(id);
       made.push(
-        ...asDraft(hireChanges(id, "created", undefined, after, tierOf)),
+        ...asDraft(
+          await checkHireChange({
+            transaction,
+            actor,
+            columns,
+            tierOf,
+            id,
+            live: undefined,
+            hire: undefined,
+            after,
+            known,
+          }),
+        ),
       );
     }
-    requireHireEdits(actor, made);
     await recordHiringChanges(transaction, actor.user.id, made);
     return {
       ids,

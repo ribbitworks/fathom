@@ -7,7 +7,7 @@ import { changes, changeSets, inChunks, type Reader, users } from "@fathom/db";
 import { and, eq, gt, inArray, max } from "drizzle-orm";
 import { wantsNoDraft } from "./draft-records.ts";
 import { openChangeSets } from "./draft-makers.ts";
-import { madeInOrder } from "./history-order.ts";
+import { madeInOrder, whenPublished } from "./history-order.ts";
 import { type LiveSince } from "./private-conflicts.ts";
 import { changeKey } from "./unpublished-uses.ts";
 
@@ -123,4 +123,40 @@ export async function readLiveSince(
     }
   }
   return found;
+}
+
+// When each record the user's private changes change was last removed by a published draft, by
+// key: the time others could first see that removal.
+export async function readRemovedAt(
+  reader: Reader,
+  rows: readonly Removing[],
+): Promise<Map<string, Date>> {
+  const removedAt = new Map<string, Date>();
+  const changing = rows.filter(({ action }) => action === "changed");
+  const kinds = [...new Set(changing.map(({ recordType }) => recordType))];
+  const ids = changing.map(({ recordId }) => recordId);
+  for (const chunk of inChunks([...new Set(ids)])) {
+    const removals = await reader
+      .select({
+        recordType: changes.recordType,
+        recordId: changes.recordId,
+        at: max(whenPublished).mapWith(changeSets.madeAt),
+      })
+      .from(changes)
+      .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+      .where(
+        and(
+          eq(changes.draft, true),
+          eq(changes.action, "deleted"),
+          eq(changeSets.private, false),
+          inArray(changes.recordType, kinds),
+          inArray(changes.recordId, chunk),
+        ),
+      )
+      .groupBy(changes.recordType, changes.recordId);
+    for (const { at, ...record } of removals) {
+      removedAt.set(changeKey(record), at);
+    }
+  }
+  return removedAt;
 }

@@ -38,6 +38,8 @@ export interface Seen {
   live: Recorded | undefined;
   published: Draft | undefined;
   liveSince?: LiveSince;
+  // When the published draft's removal of the record was published, where it removes it.
+  removedAt?: Date;
 }
 
 // A field of a private change whose value now is no longer the one it started from.
@@ -107,9 +109,14 @@ function seenOfAnyKind(versions: Versions, row: Row): Seen {
 // A record a private change changes, as everyone else sees it, with what was made live since a
 // removal began; nothing for a kind Fathom no longer has.
 export function seenByOthers(versions: Versions, row: Row): Seen {
-  const seen = seenOfAnyKind(versions, row);
-  const liveSince = versions.liveSince.get(changeKey(row));
-  return liveSince === undefined ? seen : { ...seen, liveSince };
+  const key = changeKey(row);
+  const liveSince = versions.liveSince.get(key);
+  const removedAt = versions.removedAt.get(key);
+  return {
+    ...seenOfAnyKind(versions, row),
+    ...(liveSince === undefined ? {} : { liveSince }),
+    ...(removedAt === undefined ? {} : { removedAt }),
+  };
 }
 
 // A field's value in a draft's fields over a record: the draft's where it names the field,
@@ -229,7 +236,14 @@ export function recordClash(row: Row, seen: Seen): RecordClash | undefined {
   const { live, published, liveSince } = seen;
   const takesBack = wantsNoDraft(row);
   if (takesBack && Object.keys(row.startedFrom).length === 0) return undefined;
-  if (row.action === "changed" && published?.action === "deleted") {
+  // A removal published before the change began is one its maker changed over, not one since.
+  const removedBefore =
+    seen.removedAt !== undefined && seen.removedAt < row.since;
+  if (
+    row.action === "changed" &&
+    published?.action === "deleted" &&
+    !removedBefore
+  ) {
     const state = published.state;
     return { removedBy: "theirs", state, fields: [] };
   }

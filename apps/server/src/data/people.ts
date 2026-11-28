@@ -33,22 +33,14 @@ import {
   tidy,
 } from "./draft-records.ts";
 import { columnsWithAdded } from "./added-columns.ts";
-import { checkBuiltInChoice } from "./built-in-lists.ts";
 import { readToday } from "./settings.ts";
-import {
-  changedReporting,
-  checkLine,
-  defaultFrom,
-  readManagers,
-  refuseTakenTeamNames,
-} from "./reporting.ts";
+import { changedReporting, defaultFrom } from "./reporting.ts";
 import { type ColumnInfo, valueField } from "./values.ts";
 import {
   noPerson,
   detailFields,
   personTier,
   recorded,
-  checkState,
   withMark,
   valuesOf,
   personChanges,
@@ -58,10 +50,11 @@ import {
   checkedLinks,
   checkedNotes,
   checkedNumbers,
-  checkComplete,
   type PersonRow,
 } from "./person-fields.ts";
 import { hireDraftsNaming, partOfFill } from "./hire-checks.ts";
+import { checkBuiltInChoice } from "./built-in-lists.ts";
+import { readManagers, refuseTakenTeamNames } from "./reporting.ts";
 import { readLive } from "./people-reads.ts";
 import {
   checkPersonChange,
@@ -115,10 +108,6 @@ export async function draftNewPeople(
     );
   }
   const known = await choicesAskedFor(transaction, actor.user.id, requests);
-  for (const positionId of new Set(requests.map((one) => one.positionId))) {
-    await checkBuiltInChoice(transaction, "positions", positionId);
-  }
-  const made: Change[] = [];
   const added: { id: string; fields: Recorded }[] = [];
   for (const request of requests) {
     const id = randomUUID();
@@ -137,42 +126,29 @@ export async function draftNewPeople(
       stateId: request.stateId ?? null,
     };
     // Notes left empty are left out.
-    const after = tidy({
-      ...recorded(row, values),
-      ...links,
-      ...notes,
-      ...numbers,
-      ...(request.managerId == null
-        ? {}
-        : {
-            managerId: request.managerId,
-            managerFrom:
-              request.managerFrom ??
-              defaultFrom({ startDate: row.startDate }, today),
-          }),
-      ...(request.teamName == null ? {} : { teamName: request.teamName }),
-    });
-    checkComplete(columns, after);
-    await checkState(transaction, after, today, undefined);
-    made.push(...personChanges(columns, id, "created", undefined, after));
-    added.push({ id, fields: after });
-  }
-  requireEdits(actor, made);
-  const managers = await readManagers(
-    transaction,
-    requests.map(({ managerId }) => managerId ?? null),
-    actor.user.id,
-  );
-  for (const { id, fields } of added) {
-    await checkLine(
-      transaction,
+    added.push({
       id,
-      fields,
-      [],
-      today,
-      actor.user.id,
-      managers,
-    );
+      fields: tidy({
+        ...recorded(row, values),
+        ...links,
+        ...notes,
+        ...numbers,
+        ...(request.managerId == null
+          ? {}
+          : {
+              managerId: request.managerId,
+              managerFrom:
+                request.managerFrom ??
+                defaultFrom({ startDate: row.startDate }, today),
+            }),
+        ...(request.teamName == null ? {} : { teamName: request.teamName }),
+      }),
+    });
+  }
+  // Their positions, Employee IDs and team names are checked together, and their managers read once,
+  // so many added at once cost few reads; each person's other rules are a change's.
+  for (const positionId of new Set(requests.map((one) => one.positionId))) {
+    await checkBuiltInChoice(transaction, "positions", positionId);
   }
   await refuseTakenIds(
     transaction,
@@ -189,6 +165,28 @@ export async function draftNewPeople(
     ),
     actor.user.id,
   );
+  const managers = await readManagers(
+    transaction,
+    requests.map(({ managerId }) => managerId ?? null),
+    actor.user.id,
+  );
+  const made: Change[] = [];
+  for (const { id, fields } of added) {
+    made.push(
+      ...(await checkPersonChange({
+        transaction,
+        actor,
+        columns,
+        id,
+        live: undefined,
+        person: undefined,
+        after: fields,
+        today,
+        known,
+        batch: { managers },
+      })),
+    );
+  }
   await addPersonDrafts(transaction, actor.user.id, added);
   return { ids: added.map(({ id }) => id), made: asDraft(made) };
 }
