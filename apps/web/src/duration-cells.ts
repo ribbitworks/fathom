@@ -39,6 +39,20 @@ export const durationUnitsShown: readonly {
   { unit: "mo", label: "Months", name: "months", one: "month" },
 ];
 
+// A unit's name in words, for amounts of it, such as weeks.
+export function unitName(unit: DurationUnit): string {
+  switch (unit) {
+    case "d":
+      return "calendar days";
+    case "wd":
+      return "working days";
+    case "wk":
+      return "weeks";
+    case "mo":
+      return "months";
+  }
+}
+
 export const unitsOffered = durationUnitsShown.map(({ unit, label }) => ({
   value: unit,
   label,

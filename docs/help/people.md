@@ -186,6 +186,8 @@ A **Duration** column holds a length for each person, such as their notice perio
 
 A date, two units, or part of a unit, such as `1.5 mo`, is refused under the row; type `6 wk` instead.
 
+To filter by a length, type it in **At least** or **At most** as you would in a cell, such as `3 mo`; a number alone is taken in the unit the box names.
+
 To see every length in one unit, open the column's menu and choose a unit under **Show in**. **As typed** shows each as it was typed. Sorting, filters and **Metrics** compare lengths by size, with a week of 7 days, a month of 30.4 days and a working day of 7/5 of a day.
 
 You're done when the cell shows the length, with a hollow dot until you publish it.

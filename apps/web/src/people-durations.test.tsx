@@ -190,7 +190,9 @@ describe("a Duration column", () => {
       name: "Filter Notice given",
     });
     await userEvent.type(
-      within(filter).getByRole("textbox", { name: "At least" }),
+      within(filter).getByRole("textbox", {
+        name: "At least in calendar days",
+      }),
       "20",
     );
     await waitFor(() => {
@@ -204,6 +206,53 @@ describe("a Duration column", () => {
     ).toBeDefined();
   });
 
+  it("filters by a length typed with its unit, refusing what a cell would in the bound's words", async () => {
+    await open();
+    await choose("Filter…");
+    const filter = await screen.findByRole("dialog", {
+      name: "Filter Notice given",
+    });
+    const least = within(filter).getByRole("textbox", {
+      name: "At least in calendar days",
+    });
+    await userEvent.type(least, "1.5 mo");
+    expect(
+      within(filter).getByText(
+        "Type a whole number for At least, such as 2 wk",
+      ),
+    ).toBeDefined();
+    await userEvent.clear(least);
+    await userEvent.type(least, "4 wk");
+    await waitFor(() => {
+      expect(shownNames()).toEqual(["Casey Fictional"]);
+    });
+    expect(screen.getByText("Notice given: at least 28 d")).toBeDefined();
+    const most = within(filter).getByRole("textbox", {
+      name: "At most in calendar days",
+    });
+    await userEvent.type(most, "1 wk");
+    expect(within(filter).getByText("Type 28 d or more")).toBeDefined();
+  });
+
+  it("reopens a bound set before as its amount, unrefused, and clears it", async () => {
+    await open({}, '/people?filters={"f1":{"atLeast":4.5}}');
+    await choose("Filter…");
+    const filter = await screen.findByRole("dialog", {
+      name: "Filter Notice given",
+    });
+    const least = within(filter).getByRole("textbox", {
+      name: "At least in calendar days",
+    });
+    expect(least).toHaveProperty("value", "4.5 d");
+    expect(within(filter).queryByText(/^Type /u)).toBeNull();
+    await userEvent.click(
+      within(filter).getByRole("button", { name: "Clear At least" }),
+    );
+    await waitFor(() => {
+      expect(shownNames()).toHaveLength(4);
+    });
+  });
+
   it("filters by an upper bound alone, counting back below nothing", async () => {
     await open();
     await choose("Filter…");
@@ -211,7 +260,7 @@ describe("a Duration column", () => {
       name: "Filter Notice given",
     });
     await userEvent.type(
-      within(filter).getByRole("textbox", { name: "At most" }),
+      within(filter).getByRole("textbox", { name: "At most in calendar days" }),
       "-1",
     );
     await waitFor(() => {

@@ -79,6 +79,8 @@ import { AppMenu, MenuChoices, MenuToggle, Tick } from "./app-menu.tsx";
 import type { ColumnUnits } from "./record-table.ts";
 import classes from "./pages.module.css";
 import { ClearableInput } from "./clearable-input.tsx";
+import { lengthUnit } from "./duration-cells.ts";
+import { LengthBound } from "./length-bound.tsx";
 import {
   FilterWords,
   describeFilter,
@@ -108,6 +110,7 @@ type AnyColumn = Pick<
   | "filterable"
   | "unit"
   | "places"
+  | "lengths"
   | "dataClass"
   | "hiddenAtFirst"
   | "choiceColour"
@@ -1753,8 +1756,37 @@ function FilterForm({
           {empty(noDate)}
         </Stack>
       );
-    case "number":
     case "duration":
+      return (
+        <Stack gap="xs">
+          <LengthBound
+            column={column}
+            label="At least"
+            initial={filter.atLeast}
+            autoFocus
+            onChange={(atLeast) => {
+              onChange(withPart(filter, "atLeast", atLeast));
+            }}
+          />
+          <LengthBound
+            column={column}
+            label="At most"
+            initial={filter.atMost}
+            problem={
+              filter.atLeast !== undefined &&
+              filter.atMost !== undefined &&
+              filter.atMost < filter.atLeast
+                ? `Type ${decimal(filter.atLeast)} ${lengthUnit(column)} or more`
+                : undefined
+            }
+            onChange={(atMost) => {
+              onChange(withPart(filter, "atMost", atMost));
+            }}
+          />
+          {empty(noDuration)}
+        </Stack>
+      );
+    case "number":
       return (
         <Stack gap="xs">
           <NumberBound
@@ -1777,7 +1809,7 @@ function FilterForm({
               onChange(withPart(filter, "atMost", atMost));
             }}
           />
-          {empty(column.kind === "duration" ? noDuration : "No number")}
+          {empty("No number")}
         </Stack>
       );
     case "text":

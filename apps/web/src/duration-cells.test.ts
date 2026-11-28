@@ -10,6 +10,7 @@ import {
   lengthIn,
   lengthUnit,
   shownLength,
+  unitName,
 } from "./duration-cells.ts";
 import { exportValue } from "./exports.ts";
 
@@ -33,6 +34,17 @@ describe("a length's size and amount", () => {
     expect(shownLength(asTyped, "2 wk", 1)).toBe("2 wk");
     expect(shownLength(inWeeks, "", 1)).toBe("");
     expect(shownLength(inWeeks, "10 d", 1)).toBe("1.4 wk");
+  });
+});
+
+describe("a unit's name", () => {
+  it.each([
+    ["d", "calendar days"],
+    ["wd", "working days"],
+    ["wk", "weeks"],
+    ["mo", "months"],
+  ] as const)("names %s as %s", (unit, name) => {
+    expect(unitName(unit)).toBe(name);
   });
 });
 
