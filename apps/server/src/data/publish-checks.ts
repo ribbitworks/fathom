@@ -41,7 +41,9 @@ import { recordMisfit } from "./record-drafting.ts";
 import { versionOf } from "./record-state.ts";
 import { readToday } from "./settings.ts";
 import { type ColumnInfo, type TableColumns } from "./values.ts";
-import { isRecordType, recordKinds } from "./records.ts";
+import { isRecordType, recordKinds, refuseRemovingNamed } from "./records.ts";
+import { checkTeamDraft } from "./feature-team-checks.ts";
+import { draftingRefusals } from "./feature-team-rules.ts";
 
 interface Checking {
   transaction: Transaction;
@@ -231,8 +233,31 @@ async function checkHire(checking: Checking, row: Row): Promise<void> {
   }
 }
 
-// A kind whose rules on publishing are still to come.
-const unchecked = () => Promise.resolve();
+// A feature team as the user's draft makes it, or its removal, against it as everyone else has it.
+// Taking a draft back asks nothing of a team.
+async function checkTeam(checking: Checking, row: Row): Promise<void> {
+  if (wantsNoDraft(row)) return;
+  const { transaction, actor, versions } = checking;
+  const { live: lives, mine, theirs } = versions.teams;
+  const id = row.recordId;
+  const live = lives.get(id);
+  const after = drafted(live, mine.get(id));
+  if (after === undefined) {
+    await refuseRemovingNamed(transaction, "feature-team", [id], actor);
+    return;
+  }
+  await checkTeamDraft(
+    transaction,
+    actor,
+    id,
+    { live, team: drafted(live, theirs.get(id)) },
+    after,
+    {
+      today: await checking.today(),
+      dayRefusals: draftingRefusals,
+    },
+  );
+}
 
 // A change to a list, a choice or an order, checked with the lists as the user's drafts make them
 // and as everyone else has them.
@@ -267,7 +292,7 @@ const otherChecks: Record<
     ),
   person: checkPerson,
   "planned-hire": checkHire,
-  "feature-team": unchecked,
+  "feature-team": checkTeam,
 };
 
 const otherCheckOf = new Map<
