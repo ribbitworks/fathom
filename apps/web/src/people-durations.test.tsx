@@ -234,6 +234,42 @@ describe("a Duration column", () => {
     expect(within(filter).getByText("Type 28 d or more")).toBeDefined();
   });
 
+  it("keeps a bound that is a fraction of the unit shown to the places a filter keeps", async () => {
+    await open();
+    await choose("Weeks");
+    await choose("Filter…");
+    const filter = await screen.findByRole("dialog", {
+      name: "Filter Notice given",
+    });
+    await userEvent.type(
+      within(filter).getByRole("textbox", { name: "At least in weeks" }),
+      "1 mo",
+    );
+    expect(
+      await screen.findByText("Notice given: at least 4.348214 wk"),
+    ).toBeDefined();
+  });
+
+  it("refuses an At least past At most, applying nothing of it", async () => {
+    await open();
+    await choose("Filter…");
+    const filter = await screen.findByRole("dialog", {
+      name: "Filter Notice given",
+    });
+    await userEvent.type(
+      within(filter).getByRole("textbox", { name: "At most in calendar days" }),
+      "1 wk",
+    );
+    await userEvent.type(
+      within(filter).getByRole("textbox", {
+        name: "At least in calendar days",
+      }),
+      "2 wk",
+    );
+    expect(within(filter).getByText("Type 7 d or less")).toBeDefined();
+    expect(screen.getByText("Notice given: at most 7 d")).toBeDefined();
+  });
+
   it("reopens a bound set before as its amount, unrefused, and clears it", async () => {
     await open({}, '/people?filters={"f1":{"atLeast":4.5}}');
     await choose("Filter…");

@@ -7,6 +7,7 @@
 import {
   durationIn,
   durationRefusalWords,
+  numberDigits,
   parseDuration,
 } from "@fathom/shared";
 import { useState } from "react";
@@ -19,14 +20,15 @@ export function LengthBound({
   column,
   label,
   initial,
-  problem,
+  within,
   autoFocus = false,
   onChange,
 }: {
   column: Pick<TableColumn<never>, "lengths">;
   label: string;
   initial: number | undefined;
-  problem?: string | undefined;
+  // The other bound, which this one may not pass: at least for At most, at most for At least.
+  within: { least?: number | undefined; most?: number | undefined };
   autoFocus?: boolean;
   onChange: (value: number | undefined) => void;
 }) {
@@ -34,11 +36,26 @@ export function LengthBound({
   // A bound set earlier, perhaps from another unit, opens as its amount, which is never refused.
   const opened = initial === undefined ? "" : `${decimal(initial)} ${unit}`;
   const [typed, setTyped] = useState(opened);
-  const read = parseDuration(typed, unit);
-  const typedProblem =
-    typed !== opened && "refused" in read
-      ? durationRefusalWords(read.refused, label)
-      : undefined;
+  // A length typed as a cell takes it, as an amount of the unit, rounded to the places a filter
+  // keeps; what a cell would refuse, or what passes the other bound, says why and applies nothing.
+  const amountOf = (text: string) => {
+    const read = parseDuration(text, unit);
+    if ("refused" in read) {
+      return { problem: durationRefusalWords(read.refused, label) };
+    }
+    if (!("duration" in read)) return { amount: undefined };
+    const amount = Number(
+      durationIn(read.duration, unit).toFixed(numberDigits.afterPoint),
+    );
+    if (within.least !== undefined && amount < within.least) {
+      return { problem: `Type ${decimal(within.least)} ${unit} or more` };
+    }
+    if (within.most !== undefined && amount > within.most) {
+      return { problem: `Type ${decimal(within.most)} ${unit} or less` };
+    }
+    return { amount };
+  };
+  const typedProblem = typed === opened ? undefined : amountOf(typed).problem;
   return (
     <ClearableInput
       label={`${label} in ${unitName(unit)}`}
@@ -51,14 +68,11 @@ export function LengthBound({
         onChange(undefined);
       }}
       value={typed}
-      error={typedProblem ?? problem}
+      error={typedProblem}
       onChange={(event) => {
         const next = event.currentTarget.value;
         setTyped(next);
-        const length = parseDuration(next, unit);
-        onChange(
-          "duration" in length ? durationIn(length.duration, unit) : undefined,
-        );
+        onChange(amountOf(next).amount);
       }}
     />
   );

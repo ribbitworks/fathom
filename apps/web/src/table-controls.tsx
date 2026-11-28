@@ -79,7 +79,6 @@ import { AppMenu, MenuChoices, MenuToggle, Tick } from "./app-menu.tsx";
 import type { ColumnUnits } from "./record-table.ts";
 import classes from "./pages.module.css";
 import { ClearableInput } from "./clearable-input.tsx";
-import { lengthUnit } from "./duration-cells.ts";
 import { LengthBound } from "./length-bound.tsx";
 import {
   FilterWords,
@@ -1763,6 +1762,7 @@ function FilterForm({
             column={column}
             label="At least"
             initial={filter.atLeast}
+            within={{ most: filter.atMost }}
             autoFocus
             onChange={(atLeast) => {
               onChange(withPart(filter, "atLeast", atLeast));
@@ -1772,13 +1772,7 @@ function FilterForm({
             column={column}
             label="At most"
             initial={filter.atMost}
-            problem={
-              filter.atLeast !== undefined &&
-              filter.atMost !== undefined &&
-              filter.atMost < filter.atLeast
-                ? `Type ${decimal(filter.atLeast)} ${lengthUnit(column)} or more`
-                : undefined
-            }
+            within={{ least: filter.atLeast }}
             onChange={(atMost) => {
               onChange(withPart(filter, "atMost", atMost));
             }}
