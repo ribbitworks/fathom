@@ -22,6 +22,7 @@ import {
 import { Button, Checkbox, Group, Select, Stack, Text } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import type { DrawnField } from "./added-columns.ts";
 import { ApiError, describeProblem } from "./api.ts";
 import { focusRefusedSoon } from "./focus.ts";
 import { addingLabel } from "./choice-picker.tsx";
@@ -38,9 +39,9 @@ const conflict = 409;
 // The List picker's choice that drafts a new list with the column, which no list's ID can be.
 const newListChoice = "new";
 
-// Every type must be named, which the compiler checks, and is offered in this order; a new column
-// starts on the first.
-const typeNames: Record<FieldType, string> = {
+// Every type the tables draw must be named, which the compiler checks, and is offered in this order;
+// a new column starts on the first.
+const typeNames: Record<DrawnField["type"], string> = {
   text: "Text",
   number: "Number",
   date: "Date",

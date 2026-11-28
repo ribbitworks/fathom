@@ -4,7 +4,7 @@ category: "Domain"
 audience: "Contributors"
 applies_to: ["packages/shared/src/**", "packages/db/**", "apps/server/src/**"]
 dependencies: ["docs/product/domain.md", "docs/product/roles.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Fathom: Domain Model
@@ -274,9 +274,10 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
 ### Tables and Columns
 
 - **Field definition:** A custom field on a built-in or custom table, with a name, [field type](#field-types), class, and whether it must be filled in or be unique. A Person or Link field also names the table it links to.
-  - **Built:** columns are built on People, planned hires, Features and Activities, with the field types below. Unique columns, Person and Link fields are not built yet.
+  - **Built:** columns are built on People, planned hires, Features and Activities, with the field types below. Unique columns and Person fields are not built yet, and no screen offers Link fields yet.
   - **Choice from a list:** names its list, takes its class from the list's, and says whether it takes one choice or several.
-  - **Other types:** a Text, Number, Date, Checkbox, Web link or Note field has a class of its own.
+  - **Other types:** a Text, Number, Date, Checkbox, Web link, Note or Link field has a class of its own.
+  - **Link to another table:** names the table it links to, which never changes, and whether it takes one record or several. People's columns link to People, and Features' and Activities' to Features.
   - **Checkbox:** is never required, since an unticked box is a value, No.
   - **On People:** planned hires have every field too, as [Planned Hires](#planned-hires) sets out.
   - **Changing:** its type is fixed once it is added. It can be made required only once every record has a value, and single-choice only once none has several. Its list cannot change while it has values.
@@ -303,8 +304,9 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
 | Number | A whole or decimal number, positive or negative | Up to 15 digits, at most 6 after the point; 0 is a value |
 | Date | A day, with no time | A day that exists, such as 2026-03-14 |
 | Checkbox | Yes or No | Yes is kept; No is no value |
+| Link to another table | One record of People or Features, or several | Records that exist; its table never changes |
 
-- **Not built yet:** Link to another table. The database already holds its values and settings, such as the table a Link field links to, as [ADR 0005](../adr/0005-flexible-data-model.md#what-is-built) records.
+- **Not built yet:** no screen offers Link to another table, though the server keeps and checks its values, and private pages don't offer it yet. The database holds links to more tables, as [ADR 0005](../adr/0005-flexible-data-model.md#what-is-built) records.
 - **Web link:** only http and https addresses, on the internet or a local network, by name or IP address. An address typed without a scheme is taken as https only when its host has a dot. What else is refused, and why, is in the [Security Plan](../security/security-plan.md#tampering).
 - **Note:** what a note may hold, including the one HTML tag it may hold for text colour, is in [Visual Design](visual-design.md#components) under Notes.
 - **Plain text:** built-in text, such as names and a feature's description, and a Text field's value hold no control characters or marks that change which way text runs.

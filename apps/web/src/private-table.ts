@@ -11,7 +11,7 @@ import type {
   PrivateRow,
   RecordKeyOf,
 } from "@fathom/shared";
-import { addedColumn, cellRequest } from "./added-columns.ts";
+import { addedColumn, cellRequest, drawnFields } from "./added-columns.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import { unsavedKeyNumber } from "./drafts.ts";
@@ -52,7 +52,7 @@ export function privateTable({
   page: Pick<PrivatePage, "name" | "columns" | "firstFieldId">;
   lists: readonly List[];
 }): PrivateTable {
-  const columns = privateFields(page).map((field) =>
+  const columns = drawnFields(privateFields(page)).map((field) =>
     addedColumn<PrivateRecord, CellChange>(field, lists),
   );
   const [first] = columns;

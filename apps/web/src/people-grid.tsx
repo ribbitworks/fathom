@@ -18,7 +18,7 @@ import {
   defaultClasses,
   personLengths,
 } from "@fathom/shared";
-import { addedColumn } from "./added-columns.ts";
+import { addedColumn, drawnFields } from "./added-columns.ts";
 import { personDraftFields } from "./draft-details.tsx";
 import { leftWarning } from "./status-mark.tsx";
 import { canFill } from "./hire-fill.ts";
@@ -419,7 +419,7 @@ export function columnsFor(
         ...builtIn("teamName", "text", false, personLengths.teamName),
       }),
       // A column's type is the kind of its cells. Nothing is required of a planned hire.
-      ...fields.map((field): Column => ({
+      ...drawnFields(fields).map((field): Column => ({
         ...addedColumn<Person, RowChange>(field, lists),
         requiredOn: (kind: string) => field.required && peopleOnly(kind),
       })),

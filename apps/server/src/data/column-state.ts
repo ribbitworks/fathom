@@ -16,6 +16,8 @@ import {
   featureColumnKeys,
   type Field,
   type FieldDraft,
+  linkedTableSchema,
+  linksFrom,
   type Tier,
 } from "@fathom/shared";
 import { and, asc, eq, inArray, min } from "drizzle-orm";
@@ -89,6 +91,7 @@ export const fieldRecord = (row: FieldRow): Recorded => ({
   type: row.type,
   listId: row.listId,
   visibility: row.visibility,
+  linkedTable: row.linkedTable,
   multiple: row.multiple,
   required: row.required,
 });
@@ -264,7 +267,8 @@ export const toFieldOut = (
   keyNumber: number,
   field: Recorded,
 ): Field => {
-  const { type, listId, visibility, multiple } = typeOf(field).settings(field);
+  const { type, listId, visibility, linkedTable, multiple } =
+    typeOf(field).settings(field);
   return {
     id,
     keyNumber,
@@ -272,6 +276,7 @@ export const toFieldOut = (
     type,
     listId,
     visibility,
+    linkedTable,
     multiple,
     required: field.required === true,
     table: columnTableOf(field.tableName),
@@ -280,6 +285,17 @@ export const toFieldOut = (
 
 // Refuses a column on Features or Activities whose values are not General, since everyone who sees
 // the plan is sent them.
+// Refuses a link column linking to a table some readers of its own table can't read.
+export function refuseUnseenLinkedTable(field: Recorded) {
+  const table = linkedTableSchema.safeParse(field.linkedTable);
+  const { name } = policyOf(field.tableName);
+  if (table.success && !linksFrom(columnTableOf(field.tableName), table.data)) {
+    throw new BadRequestError(
+      `${name} columns can't link to ${columnTablePolicies[table.data].name} yet`,
+    );
+  }
+}
+
 export function refuseSensitivePlanningColumn(
   state: ColumnsState,
   field: Recorded,

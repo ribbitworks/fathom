@@ -44,8 +44,8 @@ export const personLengths = {
 // A date without a time, such as 2026-10-31.
 const day = daySchema;
 
-// A column chooses from a list, or holds a web link, a note, a number, a checkbox ("flag"), text, or
-// a day ("date"). A column's type never changes.
+// A column chooses from a list, or holds a web link, a note, a number, a checkbox ("flag"), text, a
+// day ("date"), or links to another table's records ("record"). A column's type never changes.
 export const fieldTypeSchema = z.enum([
   "choice",
   "link",
@@ -54,9 +54,15 @@ export const fieldTypeSchema = z.enum([
   "flag",
   "text",
   "date",
+  "record",
 ]);
 
 export type FieldType = z.infer<typeof fieldTypeSchema>;
+
+// The tables a Link to another table column may link to. Its table never changes.
+export const linkedTableSchema = z.enum(["people", "features"]);
+
+export type LinkedTable = z.infer<typeof linkedTableSchema>;
 
 // A column's draft: whether it adds, changes, or removes the column, the settings it changes, and
 // their live values, which a draft that adds the column has none of.
@@ -68,6 +74,7 @@ export const fieldDraftSchema = z.object({
       name: z.string(),
       listId: z.string().nullable(),
       visibility: tierSchema.nullable(),
+      linkedTable: linkedTableSchema.nullable(),
       multiple: z.boolean(),
       required: z.boolean(),
     })
@@ -91,6 +98,8 @@ export const fieldSchema = z.object({
   listId: z.string().nullable(),
   // Null for a choice column, whose list's visibility is its own.
   visibility: tierSchema.nullable().default(null),
+  // The table a Link to another table column links to; null for every other type.
+  linkedTable: linkedTableSchema.nullable().optional(),
   multiple: z.boolean(),
   required: z.boolean(),
   // The table it is on, whose Approvers decide its drafts; one read without it is on People.
@@ -319,6 +328,7 @@ const heldAlone = {
   flag: { kind: "checkbox", value: "box", requirable: false },
   text: { kind: "text", value: "text", requirable: true },
   date: { kind: "date", value: "date", requirable: true },
+  record: { kind: "link", value: "record", requirable: true },
 };
 
 // Whether a column of the type can be one that must be filled in.
@@ -371,6 +381,19 @@ export const columnTablePolicies: Readonly<
   },
 };
 
+// What reading each table a column may link to needs.
+const linkedTableViewNeeds: Readonly<Record<LinkedTable, Permission>> = {
+  people: "people:view",
+  features: "features:view",
+};
+
+// Whether a table's columns may link to another table: only one that every role reading the table
+// can read too, so a link never names a record a reader may not see.
+export const linksFrom = (table: ColumnTable, linked: LinkedTable): boolean =>
+  // The tables are always among the fixed tables.
+  // eslint-disable-next-line security/detect-object-injection
+  columnTablePolicies[table].viewNeeds === linkedTableViewNeeds[linked];
+
 // Whether permissions let a role add, change and remove a table's columns.
 export const editsColumnsOf = (
   permissions: readonly string[],
@@ -400,8 +423,9 @@ export const newListSchema = z.object({
 
 export type NewList = z.infer<typeof newListSchema>;
 
-// A choice column names its list, or a new one, and takes its visibility from it; a web link, note,
-// number, or checkbox column names its visibility, no list, and takes one value.
+// A choice column names its list, or a new one, and takes its visibility from it; every other column
+// names its visibility and no list, and takes one value, but for a link column, which names the
+// table it links to, and may take several records.
 export const fieldRequestSchema = z
   .object({
     name: z.string().trim().min(1).max(personLengths.column),
@@ -409,6 +433,7 @@ export const fieldRequestSchema = z
     listId: z.uuid().optional(),
     newList: newListSchema.optional(),
     visibility: tierSchema.optional(),
+    linkedTable: linkedTableSchema.optional(),
     multiple: z.boolean().default(false),
     required: z.boolean().default(false),
   })
@@ -416,6 +441,9 @@ export const fieldRequestSchema = z
     const issue = (message: string) => {
       context.addIssue({ code: "custom", message });
     };
+    if (request.type !== "record" && request.linkedTable !== undefined) {
+      issue("Only a link column links to a table");
+    }
     if (request.type === "choice") {
       if (request.listId === undefined && request.newList === undefined) {
         issue("Choose a list");
@@ -429,7 +457,12 @@ export const fieldRequestSchema = z
       if (request.listId !== undefined || request.newList !== undefined) {
         issue(`A ${kind} column has no list`);
       }
-      if (request.multiple) issue(`A ${kind} column holds one ${value}`);
+      if (request.type === "record" && request.linkedTable === undefined) {
+        issue("Choose a table");
+      }
+      if (request.multiple && request.type !== "record") {
+        issue(`A ${kind} column holds one ${value}`);
+      }
       if (request.required && !canBeRequired(request.type)) {
         issue(`A ${kind} column can't be required`);
       }

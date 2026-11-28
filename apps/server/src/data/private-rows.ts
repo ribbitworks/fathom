@@ -127,7 +127,7 @@ async function askedValues(
     transaction,
     Object.values(request.values ?? {}).flat(),
   );
-  return askedColumnValues(columns, known, request, current);
+  return askedColumnValues(transaction, columns, known, request, current);
 }
 
 // Refuses a new row to a maker whose role can't see the first column, which every row needs a

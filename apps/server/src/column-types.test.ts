@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for what each type of column on People keeps and holds, apart from the database: the
-// settings, tier, values, and live values of choice, web link, note, number, checkbox, text and
-// date columns.
+// settings, tier, values, and live values of choice, web link, note, number, checkbox, text, date
+// and link columns.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -70,7 +70,11 @@ describe("choice columns", () => {
 
   it("hold several choices when they take several", () => {
     expect(
-      choice.fits({ listId: "l1", multiple: true }, ["c1", "c2"], listOf),
+      choice.fits(
+        { listId: "l1", multiple: true, linkedTable: null },
+        ["c1", "c2"],
+        listOf,
+      ),
     ).toBe(true);
   });
 
@@ -197,7 +201,7 @@ describe("note columns", () => {
 
 describe("number columns", () => {
   const number = columnTypes.number;
-  const settings = { listId: null, multiple: false };
+  const settings = { listId: null, multiple: false, linkedTable: null };
 
   it("have a visibility of their own, as their tier", () => {
     expect(number.settings({ visibility: "personal" })).toEqual({
@@ -238,7 +242,7 @@ describe("number columns", () => {
 
 describe("checkbox columns", () => {
   const { flag } = columnTypes;
-  const settings = { listId: null, multiple: false };
+  const settings = { listId: null, multiple: false, linkedTable: null };
 
   it("have a visibility of their own, as their tier", () => {
     expect(flag.settings({ visibility: "personal" })).toEqual({
@@ -320,7 +324,7 @@ describe("text columns", () => {
 
 describe("date columns", () => {
   const { date } = columnTypes;
-  const settings = { listId: null, multiple: false };
+  const settings = { listId: null, multiple: false, linkedTable: null };
 
   it("have a visibility of their own, as their tier", () => {
     expect(date.settings({ visibility: "personal" })).toEqual({
@@ -363,6 +367,71 @@ describe("date columns", () => {
   });
 });
 
+describe("link columns", () => {
+  const { record } = columnTypes;
+  const one = { listId: null, multiple: false, linkedTable: "people" };
+  const several = { ...one, multiple: true };
+
+  it("keep their table, a visibility of their own, and whether they take several records", () => {
+    expect(
+      record.settings({
+        visibility: "personal",
+        linkedTable: "features",
+        multiple: true,
+      }),
+    ).toEqual({
+      type: "record",
+      listId: null,
+      visibility: "personal",
+      multiple: true,
+      linkedTable: "features",
+    });
+  });
+
+  it("are refused a table Fathom doesn't link to", () => {
+    expect(() =>
+      record.settings({ visibility: "general", linkedTable: "lists" }),
+    ).toThrow();
+  });
+
+  it.each([
+    [one, { people: ["p1"] }, true],
+    [one, { people: ["p1", "p2"] }, false],
+    [several, { people: ["p1", "p2"] }, true],
+    [one, { features: ["f1"] }, false],
+    [one, { people: [] }, false],
+    [one, { people: ["p1"], features: ["f1"] }, false],
+    [one, ["p1"], false],
+    [one, undefined, true],
+    [one, [], true],
+  ])("with %j, hold %j: %s", (settings, value, fits) => {
+    expect(record.fits(settings, value, new Map())).toBe(fits);
+  });
+
+  it("count each record linked, never choices, and are never counted as choices", () => {
+    expect(record.count({ people: ["p1", "p2"] })).toBe(2);
+    expect(record.count(["p1"])).toBe(0);
+    expect(columnTypes.choice.count({ people: ["p1"] })).toBe(0);
+  });
+
+  it("show their live records beside a draft, or nothing when there are none", () => {
+    const live = noLiveValues();
+    record.showLive(live, "f1", { features: ["a1", "a2"] });
+    record.showLive(live, "f2", []);
+    expect(live.linked).toEqual({ f1: ["a1", "a2"] });
+  });
+
+  it("hold each record in the values table's column for its table", () => {
+    expect(record.rows({ people: ["p1", "p2"] })).toEqual([
+      { linkedPersonId: "p1" },
+      { linkedPersonId: "p2" },
+    ]);
+    expect(record.rows({ features: ["a1"] })).toEqual([
+      { linkedFeatureId: "a1" },
+    ]);
+  });
+});
+
 describe("the values table's rows", () => {
   it("hold each type's value in its own column, and nothing for a value of another type", () => {
     expect(
@@ -375,9 +444,10 @@ describe("the values table's rows", () => {
         type.rows(true),
         type.rows({ text: "Desk" }),
         type.rows({ date: "2026-03-14" }),
+        type.rows({ people: ["p1"] }),
       ]),
     ).toEqual([
-      ["choice", [{ choiceId: "c1" }], [], [], [], [], [], []],
+      ["choice", [{ choiceId: "c1" }], [], [], [], [], [], [], []],
       [
         "link",
         [],
@@ -387,12 +457,14 @@ describe("the values table's rows", () => {
         [],
         [],
         [],
+        [],
       ],
-      ["note", [], [], [{ note: "*Kind*" }], [], [], [], []],
-      ["number", [], [], [], [{ number: 0 }], [], [], []],
-      ["flag", [], [], [], [], [{ flag: true }], [], []],
-      ["text", [], [], [], [], [], [{ text: "Desk" }], []],
-      ["date", [], [], [], [], [], [], [{ date: "2026-03-14" }]],
+      ["note", [], [], [{ note: "*Kind*" }], [], [], [], [], []],
+      ["number", [], [], [], [{ number: 0 }], [], [], [], []],
+      ["flag", [], [], [], [], [{ flag: true }], [], [], []],
+      ["text", [], [], [], [], [], [{ text: "Desk" }], [], []],
+      ["date", [], [], [], [], [], [], [{ date: "2026-03-14" }], []],
+      ["record", [], [], [], [], [], [], [], [{ linkedPersonId: "p1" }]],
     ]);
   });
 });
@@ -409,6 +481,7 @@ describe("live values", () => {
           ["f5", { text: "North 4-12" }],
           ["f6", "*Kind*"],
           ["f7", { date: "2026-03-14" }],
+          ["f8", { people: ["p1"] }],
         ]),
       ),
     ).toEqual({
@@ -419,6 +492,7 @@ describe("live values", () => {
       texts: { f5: "North 4-12" },
       notes: { f6: "*Kind*" },
       days: { f7: "2026-03-14" },
+      linked: { f8: ["p1"] },
     });
   });
 });

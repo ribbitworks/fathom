@@ -56,6 +56,7 @@ import {
   withUsedRecords,
 } from "./bound-drafts.ts";
 import { refuseRecordDiscard } from "./record-discards.ts";
+import { refuseLinkedRemovals } from "./linked-records.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import {
   gone,
@@ -305,6 +306,11 @@ export async function approveRecordDrafts(
     approver,
   );
   if (problem !== undefined) throw new ConflictError(problem);
+  await refuseLinkedRemovals(
+    transaction,
+    "features",
+    removed.filter(({ kind }) => kind.type === "feature").map(({ id }) => id),
+  );
   for (const { kind, id } of removed.reverse()) {
     made.push(
       ...kindChanges(

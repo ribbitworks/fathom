@@ -49,6 +49,10 @@ export interface ColumnKind {
   noneInHistory: unknown;
   // The values table's column holding the type's values, and the value as it holds it.
   stored: { column: HeldColumn; value: unknown };
+  // Settings a column of the type is added with beyond its name, type and visibility.
+  settings?: object;
+  // Whether its columns, so set, may be added to the plan's tables too.
+  onPlan?: boolean;
 }
 
 // The values table's columns that hold one value for each record and column.
@@ -60,6 +64,8 @@ const heldColumns = {
   flag: fieldValues.flag,
   text: fieldValues.text,
   date: fieldValues.date,
+  linkedPersonId: fieldValues.linkedPersonId,
+  linkedFeatureId: fieldValues.linkedFeatureId,
 };
 
 type HeldColumn = keyof typeof heldColumns;
@@ -92,11 +98,12 @@ export function describeColumnValues(test: () => TestApp, kind: ColumnKind) {
       .connection.select(heldColumns)
       .from(fieldValues)
       .where(eq(fieldValues.fieldId, fieldId));
-  // A row holding the type's value, as stored, in its own column, and nothing in any other.
-  const heldRow = {
+  // A row holding the type's value, as stored, in its own column, and nothing in any other, read as
+  // each test runs, since a value may name records the tests make.
+  const heldRow = () => ({
     ...Object.fromEntries(Object.keys(heldColumns).map((key) => [key, null])),
     [kind.stored.column]: kind.stored.value,
-  };
+  });
   const editsPlan = () =>
     test().signedIn([
       ...startingRoles["workforce-administrator"].permissions,
@@ -116,7 +123,7 @@ export function describeColumnValues(test: () => TestApp, kind: ColumnKind) {
         new Map(Object.entries(person?.[map] ?? {})).has(fieldId);
       expect(columnValueMaps.filter(inMap)).toEqual([kind.map]);
       expect(valuesOf(person)).toEqual({ [fieldId]: kind.value });
-      expect(await heldRows(fieldId)).toEqual([heldRow]);
+      expect(await heldRows(fieldId)).toEqual([heldRow()]);
     });
 
     it("are changed by a draft, showing the live value beside, and leave no row once emptied", async () => {
@@ -239,24 +246,31 @@ export function describeColumnValues(test: () => TestApp, kind: ColumnKind) {
       expect(valuesOf(hire?.draft?.live)).toEqual({ [fieldId]: kind.value });
     });
 
-    it("are kept with a feature, and shown live beside its draft", async () => {
-      const { id: fieldId } = await column((await editsPlan()).cookie, {
-        table: "features",
-      });
-      const planner = await test().signedIn("product-manager");
-      const name = unique("Fictional Feature");
-      const { plan } = await ok<{ plan: ProjectPlan }>(
-        await send(planner.cookie, "POST", "/api/features", {
-          records: [{ name, ...valued({ [fieldId]: kind.value }) }],
-        }),
-        201,
-      );
-      const feature = plan.features.find((one) => one.name === name) as Feature;
-      expect(valuesOf(feature)).toEqual({ [fieldId]: kind.value });
-      expect(valuesOf(feature.draft?.live)).toEqual({});
-    });
+    const onPlan = kind.onPlan ?? true;
 
-    it("are kept with an activity", async () => {
+    it.runIf(onPlan)(
+      "are kept with a feature, and shown live beside its draft",
+      async () => {
+        const { id: fieldId } = await column((await editsPlan()).cookie, {
+          table: "features",
+        });
+        const planner = await test().signedIn("product-manager");
+        const name = unique("Fictional Feature");
+        const { plan } = await ok<{ plan: ProjectPlan }>(
+          await send(planner.cookie, "POST", "/api/features", {
+            records: [{ name, ...valued({ [fieldId]: kind.value }) }],
+          }),
+          201,
+        );
+        const feature = plan.features.find(
+          (one) => one.name === name,
+        ) as Feature;
+        expect(valuesOf(feature)).toEqual({ [fieldId]: kind.value });
+        expect(valuesOf(feature.draft?.live)).toEqual({});
+      },
+    );
+
+    it.runIf(onPlan)("are kept with an activity", async () => {
       const { id: fieldId } = await column((await editsPlan()).cookie, {
         table: "activities",
       });
@@ -365,6 +379,7 @@ export function addedColumnTests(test: () => TestApp, kind: ColumnKind) {
         name: unique(kind.name),
         type: kind.type,
         visibility: settings.visibility ?? "general",
+        ...kind.settings,
       }),
       201,
     );

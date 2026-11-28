@@ -51,6 +51,7 @@ export const fieldFields = [
   "type",
   "listId",
   "visibility",
+  "linkedTable",
   "multiple",
   "required",
 ] as const;
@@ -149,6 +150,8 @@ export async function checkValuesFit(
     listId?: string | null | undefined;
   },
 ): Promise<void> {
+  const severalValues =
+    field.type === "record" ? "several records" : "several choices";
   // A private page's column is never drafted, nor are its rows.
   const inDrafts =
     field.pageId === null
@@ -169,7 +172,7 @@ export async function checkValuesFit(
   }
   if (!request.multiple && inDrafts.some(({ held }) => (held ?? 0) > 1)) {
     throw new ConflictError(
-      `Drafts have several choices for ${field.name}, so it cannot take only one yet`,
+      `Drafts have ${severalValues} for ${field.name}, so it cannot take only one yet`,
     );
   }
   if (listChanges && inDrafts.some(({ held }) => (held ?? 0) > 0)) {
@@ -228,7 +231,7 @@ export async function checkValuesFit(
     const people = several.filter(({ personId }) => personId !== null).length;
     if (people > 0) {
       throw new ConflictError(
-        `${peopleHave(people)} several choices for ${field.name}, so it cannot take only one yet`,
+        `${peopleHave(people)} ${severalValues} for ${field.name}, so it cannot take only one yet`,
       );
     }
     for (const owner of planningOwners) {
@@ -237,7 +240,7 @@ export async function checkValuesFit(
         throw new ConflictError(
           // The owner is always one of the fixed kinds.
           // eslint-disable-next-line security/detect-object-injection
-          `${recordsOf[planningTableOf[owner]].have(holding.length)} several choices for ${field.name}, so it cannot take only one yet`,
+          `${recordsOf[planningTableOf[owner]].have(holding.length)} ${severalValues} for ${field.name}, so it cannot take only one yet`,
         );
       }
     }
@@ -246,12 +249,12 @@ export async function checkValuesFit(
     ).length;
     if (rows > 0) {
       throw new ConflictError(
-        `${rowsHave(rows)} several choices for ${field.name}, so it cannot take only one yet`,
+        `${rowsHave(rows)} ${severalValues} for ${field.name}, so it cannot take only one yet`,
       );
     }
     if (several.length > 0) {
       throw new ConflictError(
-        `${hiresHave(several.length)} several choices for ${field.name}, so it cannot take only one yet`,
+        `${hiresHave(several.length)} ${severalValues} for ${field.name}, so it cannot take only one yet`,
       );
     }
   }

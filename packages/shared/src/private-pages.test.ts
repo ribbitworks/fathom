@@ -61,6 +61,19 @@ describe("privateColumnRequestSchema", () => {
       ),
     ).toEqual(["Choose a list from Lists"]);
   });
+
+  it("refuses a column linking to another table", () => {
+    expect(
+      messages(
+        privateColumnRequestSchema.safeParse({
+          name: "Mentor",
+          type: "record",
+          visibility: "general",
+          linkedTable: "people",
+        }),
+      ),
+    ).toEqual(["A page can't link to a table"]);
+  });
 });
 
 describe("privatePageRequestSchema", () => {

@@ -6,9 +6,9 @@
 
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import type { Field, Person } from "@fathom/shared";
+import type { Person } from "@fathom/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { addedColumn } from "./added-columns.ts";
+import { addedColumn, type DrawnField } from "./added-columns.ts";
 import { exportValue } from "./exports.ts";
 import { bodyOf, chooseIn, detailRow } from "./test-support.tsx";
 import {
@@ -190,7 +190,7 @@ describe("a checkbox column", () => {
   });
 
   it("is exported as Yes or No", () => {
-    const column = addedColumn<Person, never>(firstAider as Field, []);
+    const column = addedColumn<Person, never>(firstAider as DrawnField, []);
     expect(
       [avery, blake].map((person) => exportValue(column, person as Person)),
     ).toEqual(["Yes", "No"]);

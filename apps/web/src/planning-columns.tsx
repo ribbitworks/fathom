@@ -29,6 +29,7 @@ import { choice } from "./lists.ts";
 import { decimalUpTo } from "./numbers.ts";
 import {
   addedColumn,
+  drawnFields,
   type AddedColumns,
   cellRequest,
 } from "./added-columns.ts";
@@ -265,7 +266,9 @@ export function inGroupsThenAdded<Rec extends Planned>(
   return [
     ...inGroupOrder(builtIn, groups),
     ...inOrder(
-      fields.map((added) => addedColumn<Rec, CellChange>(added, lists)),
+      drawnFields(fields).map((added) =>
+        addedColumn<Rec, CellChange>(added, lists),
+      ),
       order,
     ),
   ];

@@ -161,7 +161,11 @@ export async function draftNewPeople(
   for (const request of requests) {
     const id = randomUUID();
     const values = checkedValues(columns, known, request.values, undefined);
-    const columnValues = checkedColumnValues(columns, request);
+    const columnValues = await checkedColumnValues(
+      transaction,
+      columns,
+      request,
+    );
     const row: PersonRow = {
       id,
       preferredName: request.preferredName,
@@ -326,7 +330,7 @@ export async function draftPersonChange(
           choiceIds,
         ]),
       ),
-      ...checkedColumnValues(columns, change),
+      ...(await checkedColumnValues(transaction, columns, change)),
       ...changedReporting(person, change, today),
     }),
     before,
