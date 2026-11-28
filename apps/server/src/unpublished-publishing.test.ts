@@ -544,31 +544,25 @@ describe("publishing and discarding", () => {
     }, "The new order for a removed list: There is no such list");
 
     const columnName = unique("Fictional Clash Column");
-    await clash(
-      async () => {
-        await saved(bob, "POST", "/api/people/columns", {
-          name: columnName,
-          listId: siteList.id,
-        });
-        await test.connection.insert(fields).values({
-          tableName: "people",
-          name: columnName,
-          listId: siteList.id,
-        });
-      },
-      noLongerFits(`the column ${columnName}`),
-    );
+    await clash(async () => {
+      await saved(bob, "POST", "/api/people/columns", {
+        name: columnName,
+        listId: siteList.id,
+      });
+      await test.connection.insert(fields).values({
+        tableName: "people",
+        name: columnName,
+        listId: siteList.id,
+      });
+    }, `The column ${columnName}: There is already a column with that name`);
 
     const loneColumn = unique("Fictional Lone Column");
-    await clash(
-      async () => {
-        await saved(bob, "POST", "/api/people/columns", {
-          name: loneColumn,
-          listId: lone.id,
-        });
-        await test.connection.delete(lists).where(eq(lists.id, lone.id));
-      },
-      noLongerFits(`the column ${loneColumn}`),
-    );
+    await clash(async () => {
+      await saved(bob, "POST", "/api/people/columns", {
+        name: loneColumn,
+        listId: lone.id,
+      });
+      await test.connection.delete(lists).where(eq(lists.id, lone.id));
+    }, `The column ${loneColumn}: There is no such list`);
   });
 });

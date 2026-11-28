@@ -7,10 +7,9 @@ import { capitalized, type DraftKind, type RecordType } from "@fathom/shared";
 import { type Actor } from "../access.ts";
 import { ConflictError, RequestError } from "../errors.ts";
 import { refuseAllocatedActivity } from "./activities.ts";
+import { checkColumnDraft } from "./column-checks.ts";
 import { checkAllocationDraft } from "./allocations.ts";
 import { type Transaction } from "./changes.ts";
-import { typeOf } from "./column-types.ts";
-import { draftedField, nameTaken } from "./column-state.ts";
 import { drafted, type Recorded, wantsNoDraft } from "./draft-records.ts";
 import { takenEmployeeIds } from "./drafted-values.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
@@ -20,7 +19,6 @@ import {
   checkOrderDraft,
   type ListDraft,
 } from "./list-checks.ts";
-import { draftedList, listExists } from "./list-state.ts";
 import { checkPlanningDraft } from "./planning-records.ts";
 import {
   idsOf,
@@ -129,23 +127,9 @@ async function checkRecord(
 }
 
 // Whether a change of a kind with no rules of its own on publishing yet still fits the data as it is
-// now: a name or Employee ID no one else has, and a list to draw on, live or drafted to be added.
-function fits({ versions, taken }: Checking, row: Row): boolean {
-  if (wantsNoDraft(row)) return true;
-  const id = row.recordId;
-  if (row.recordType === "person") return !taken.has(id);
-  if (row.recordType !== "field") return true;
-  const { columns } = versions.mine;
-  const field = draftedField(columns, id);
-  if (field === undefined) return true;
-  if (nameTaken(columns, String(field.name), id, field.tableName)) return false;
-  const { listId } = typeOf(field).settings(field);
-  return (
-    listId === null ||
-    (listExists(columns.lists, listId) &&
-      draftedList(columns.lists, listId) !== undefined)
-  );
-}
+// now: an Employee ID no one else has.
+const fits = ({ taken }: Checking, row: Row): boolean =>
+  wantsNoDraft(row) || row.recordType !== "person" || !taken.has(row.recordId);
 
 // The refusal of a change whose kind still has no rules of its own on publishing.
 class NoLongerFits extends Error {}
@@ -175,7 +159,15 @@ const otherChecks: Record<
   list: listCheck(checkListDraft),
   "list-item": listCheck(checkChoiceDraft),
   "choice-order": listCheck(checkOrderDraft),
-  field: fitting,
+  field: ({ transaction, actor, versions }, row) =>
+    checkColumnDraft(
+      transaction,
+      actor.user.id,
+      versions.mine.columns,
+      versions.theirs.columns,
+      row.recordId,
+      row,
+    ),
   person: fitting,
   "planned-hire": fitting,
   "feature-team": fitting,

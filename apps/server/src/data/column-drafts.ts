@@ -439,7 +439,7 @@ function discardingField(state: ColumnsState, id: string): Change[] {
 
 // Refuses discarding a column drafted to be added while people's drafts, as the editor sees them,
 // give anyone a value in it.
-async function refuseIfDraftsFill(
+export async function refuseIfDraftsFill(
   transaction: Transaction,
   editor: string,
   id: string,
@@ -448,6 +448,20 @@ async function refuseIfDraftsFill(
   if (await draftsUse(transaction, { column: id }, editor)) {
     throw new ConflictError(
       `The ${String(field.name)} column can't be discarded while other drafts depend on it. Discard those drafts, or change them so they no longer use it, then try again.`,
+    );
+  }
+}
+
+// Refuses removing a live column while drafts, as the editor sees them, change its values.
+export async function refuseIfDraftsChange(
+  transaction: Transaction,
+  editor: string,
+  id: string,
+  field: Recorded,
+): Promise<void> {
+  if (await draftsUse(transaction, { column: id }, editor)) {
+    throw new ConflictError(
+      `Drafts change ${String(field.name)}; approve or discard them before deleting the column`,
     );
   }
 }
@@ -468,11 +482,7 @@ export async function deleteField(
       await refuseIfDraftsFill(transaction, actor.user.id, id, field);
       return discardColumn(transaction, actor, state, id, field);
     }
-    if (await draftsUse(transaction, { column: id }, actor.user.id)) {
-      throw new ConflictError(
-        `Drafts change ${String(field.name)}; approve or discard them before deleting the column`,
-      );
-    }
+    await refuseIfDraftsChange(transaction, actor.user.id, id, field);
     const tier = mostSensitive([
       columnTier(state, field),
       columnTier(state, live),
