@@ -124,7 +124,9 @@ describe("who sees the Application settings page", () => {
     expect(
       await screen.findByText("There is no page at this address."),
     ).toBeDefined();
-    expect(screen.queryByRole("link", { name: "Application settings" })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: "Application settings" }),
+    ).toBeNull();
   });
 });
 

@@ -463,7 +463,10 @@ export const overviewJobs: readonly JobTag[] = [
     help: ["administrator"],
     tasks: [
       { title: "Change the Time Zone", place: on("Application settings") },
-      { title: "Set the Rules for Passwords", place: on("Application settings") },
+      {
+        title: "Set the Rules for Passwords",
+        place: on("Application settings"),
+      },
     ],
   },
   {
