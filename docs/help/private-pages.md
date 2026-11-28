@@ -58,14 +58,23 @@ The column and its values are removed. A notification says so, with **Undo** to 
 
 You're done when the column is gone from the table.
 
-### Rename or Remove a Page
+### Rename a Page
 
 1. Select the **⋯** at the right of the page's heading.
-1. Select **Rename page…**, type its new name, and select **Rename**. Or select **Remove page…**, then **Remove**.
+1. Select **Rename page…**, type its new name, and select **Rename**.
 
-A removed page goes with its rows, and the next page under **Mine** opens. A notification says so, with **Undo** to bring the page back. **Copy link** and **Copy key** in the same menu copy the page's link and key.
+**Copy link** and **Copy key** in the same menu copy the page's link and key.
 
-You're done when the page shows its new name, or is gone from **Mine**.
+You're done when the page shows its new name.
+
+### Remove a Page
+
+1. Select the **⋯** at the right of the page's heading.
+1. Select **Remove page…**, then **Remove**.
+
+The page goes with its rows, and the next page under **Mine** opens. A notification says so, with **Undo** to bring the page back.
+
+You're done when the page is gone from **Mine**.
 
 ### Find, Group and Export Rows
 

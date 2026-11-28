@@ -4,6 +4,7 @@
 
 import { allOf, type PrivatePage, privateRowSchema } from "@fathom/shared";
 import { withCellChange } from "./added-columns.ts";
+import { columnRemoval } from "./column-editing.tsx";
 import type { CellChange } from "./cell-kinds.tsx";
 import {
   addPrivateRow,
@@ -13,11 +14,7 @@ import {
 } from "./private-pages.ts";
 import type { PrivateRecord } from "./private-table.ts";
 import { noRecordActions, type RecordActions } from "./record-table.ts";
-import {
-  type RemovalQuestion,
-  removalQuestion,
-  removedWords,
-} from "./removal-question.tsx";
+import { type RemovalQuestion, removalQuestion } from "./removal-question.tsx";
 import type { RecordSaving } from "./saving.ts";
 
 const noValues = { values: {}, links: {} };
@@ -49,6 +46,14 @@ export function privateRowActions({
   nameOf: (row: PrivateRecord) => string;
   ask: (question: RemovalQuestion, go: () => void, kept?: () => void) => void;
 }): RecordActions<PrivateRecord, CellChange, CellChange> {
+  const removeColumn = columnRemoval<PrivatePage>(
+    async (field) => (await removePrivateColumn(pageId, field.id)).changeSetId,
+    { save, done },
+    (page, field) => ({
+      ...page,
+      columns: page.columns.filter(({ id }) => id !== field.id),
+    }),
+  );
   return {
     ...noRecordActions<PrivateRecord, CellChange, CellChange>(),
     // Rows are added one after another, each in its order, so the page reads as typed. Several,
@@ -121,22 +126,10 @@ export function privateRowActions({
     // so, with Undo.
     removeColumnAsks: true,
     removeColumn: (field, { removed, kept }) => {
-      const column = { kind: "column", name: field.name };
       ask(
-        removalQuestion(column),
+        removalQuestion({ kind: "column", name: field.name }),
         () => {
-          save({
-            next: (page) => ({
-              ...page,
-              columns: page.columns.filter(({ id }) => id !== field.id),
-            }),
-            save: async () =>
-              (await removePrivateColumn(pageId, field.id)).changeSetId,
-            failure: `Fathom could not remove ${field.name}.`,
-            onSaved: (changeSetId, before) => {
-              done(removedWords(column), changeSetId, before);
-            },
-          });
+          removeColumn(field);
           removed();
         },
         kept,

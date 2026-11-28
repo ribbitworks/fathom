@@ -45,6 +45,16 @@ export function CopyLinkItem({ record }: { record: RecordKeyOf | undefined }) {
   return <Menu.Item onClick={() => void copyLink(record)}>Copy link</Menu.Item>;
 }
 
+// Copy link and Copy key, for the menu of the key under a title or of a page with a key.
+export function CopyItems({ record }: { record: RecordKeyOf }) {
+  return (
+    <>
+      <Menu.Item onClick={() => void copyLink(record)}>Copy link</Menu.Item>
+      <Menu.Item onClick={() => void copyKey(record)}>Copy key</Menu.Item>
+    </>
+  );
+}
+
 export function RecordKey({ record }: { record: RecordKeyOf }) {
   if (!isSaved(record)) return null;
   const shown = shownRecordKey(record);
@@ -59,8 +69,7 @@ export function RecordKey({ record }: { record: RecordKeyOf }) {
         </UnstyledButton>
       </AppMenu.Target>
       <AppMenu.Dropdown>
-        <Menu.Item onClick={() => void copyLink(record)}>Copy link</Menu.Item>
-        <Menu.Item onClick={() => void copyKey(record)}>Copy key</Menu.Item>
+        <CopyItems record={record} />
       </AppMenu.Dropdown>
     </AppMenu>
   );

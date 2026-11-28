@@ -5,6 +5,7 @@
 // sending again a column's draft. The modal cannot be closed while a change is being saved. Moving
 // a column to another class takes effect at once, never as a draft.
 
+import { removedWords } from "./removal-question.tsx";
 import type {
   ColumnTable,
   FeatureColumns,
@@ -80,26 +81,43 @@ type WithColumns<Data> = (
   change: (columns: TableColumns) => Partial<TableColumns>,
 ) => Data;
 
-// Removing a column is a draft that may be undone.
-export function columnRemover<Data>(
-  table: ColumnTable,
+// Removes a column by the server's call given, showing the data without it at once, then saying
+// so, with Undo.
+export function columnRemoval<Data>(
+  remove: (field: Field) => Promise<string | null>,
   { save, done }: Pick<ColumnSaving<Data>, "save" | "done">,
-  withColumns: WithColumns<Data>,
+  without: (data: Data, field: Field) => Data,
 ) {
   return (field: Field) => {
     save({
-      next: (data) =>
-        withColumns(data, ({ fields: shown }) => ({
-          fields: shown.filter((other) => other.id !== field.id),
-        })),
-      save: () => deleteField(field.id, table),
+      next: (data) => without(data, field),
+      save: () => remove(field),
       failure: `Fathom could not remove ${field.name}.`,
       onSaved: (changeSetId, before) => {
-        done(`Removed the ${field.name} column.`, changeSetId, before);
+        done(
+          removedWords({ kind: "column", name: field.name }),
+          changeSetId,
+          before,
+        );
       },
     });
   };
 }
+
+// Removing a column is a draft that may be undone.
+export const columnRemover = <Data,>(
+  table: ColumnTable,
+  saving: Pick<ColumnSaving<Data>, "save" | "done">,
+  withColumns: WithColumns<Data>,
+) =>
+  columnRemoval(
+    (field) => deleteField(field.id, table),
+    saving,
+    (data, field) =>
+      withColumns(data, ({ fields: shown }) => ({
+        fields: shown.filter((other) => other.id !== field.id),
+      })),
+  );
 
 export function ColumnModal<Data>({
   state,

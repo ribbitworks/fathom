@@ -2,6 +2,7 @@
 
 // Tests for a column's header in the shared table, with a made-up kind of record, gadgets.
 
+import type { Field } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { useState } from "react";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
@@ -216,7 +217,14 @@ describe("hiding columns", () => {
       }),
     );
 
-    expect(removeColumn).toHaveBeenCalledWith(colour, expect.anything());
+    const [[removed, after]] = removeColumn.mock.calls as [
+      [Field, { removed: unknown; kept: unknown }],
+    ];
+    expect(removed).toEqual(colour);
+    expect([typeof after.removed, typeof after.kept]).toEqual([
+      "function",
+      "function",
+    ]);
   });
 
   it("groups an added column's menu: its link, sorting, filtering and Metrics, laying out, then changing it", async () => {

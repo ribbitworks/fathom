@@ -39,7 +39,9 @@ const openPage = async (answers: Record<string, () => Response> = {}) => {
 
 const columnMenu = async (name: string) => {
   await userEvent.click(
-    screen.getByRole("button", { name: new RegExp(`^${name} column`, "u") }),
+    screen.getByRole("button", {
+      name: (label) => label.startsWith(`${name} column`),
+    }),
   );
 };
 
@@ -310,5 +312,96 @@ describe("a page's ⋯", () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe("/");
     });
+  });
+});
+
+describe("Rename page…", () => {
+  const openRename = async (answers: Record<string, () => Response> = {}) => {
+    const fetch = await openPage(answers);
+    await pageMenu();
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Rename page…" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Rename page" });
+    return {
+      fetch,
+      dialog,
+      name: within(dialog).getByRole("textbox", { name: "Name" }),
+    };
+  };
+
+  it("names a name the server finds taken under it, with focus there", async () => {
+    const { dialog, name } = await openRename({
+      [`PATCH ${pagePath}`]: () =>
+        Response.json({ error: "Another page has that name" }, { status: 409 }),
+    });
+    await userEvent.clear(name);
+    await userEvent.type(name, "Ideas{Enter}");
+    expect(
+      await within(dialog).findByText("Another page has that name"),
+    ).toBeDefined();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(name);
+    });
+  });
+
+  it("says so when the page can't be renamed, keeping the dialog open", async () => {
+    const { dialog, name } = await openRename({
+      [`PATCH ${pagePath}`]: () =>
+        Response.json({ error: "Unavailable" }, { status: 500 }),
+    });
+    await userEvent.clear(name);
+    await userEvent.type(name, "Ideas{Enter}");
+    expect(await within(dialog).findByRole("alert")).toBeDefined();
+  });
+
+  it("sends nothing for the same name, and Cancel puts focus back on the ⋯", async () => {
+    // Given the page's own name, kept
+    const { fetch, dialog } = await openRename();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Rename" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Rename page" })).toBeNull();
+    });
+    expect(changesSent(fetch)).toEqual([]);
+
+    // When opened again and cancelled, focus goes back to the ⋯
+    await pageMenu();
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Rename page…" }),
+    );
+    await userEvent.click(
+      within(
+        await screen.findByRole("dialog", { name: "Rename page" }),
+      ).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(document.activeElement?.getAttribute("aria-label")).toBe(
+        "Actions for Follow-ups",
+      );
+    });
+  });
+});
+
+describe("Remove page… failing", () => {
+  it("keeps the page open, saying so, with focus back on the ⋯", async () => {
+    await openPage({
+      [`DELETE ${pagePath}`]: () =>
+        Response.json({ error: "Unavailable" }, { status: 500 }),
+    });
+    await pageMenu();
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Remove page…" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Remove" }),
+    );
+    await waitFor(() => {
+      expect(document.activeElement?.getAttribute("aria-label")).toBe(
+        "Actions for Follow-ups",
+      );
+    });
+    expect(screen.getByRole("grid", { name: "Follow-ups" })).toBeDefined();
   });
 });

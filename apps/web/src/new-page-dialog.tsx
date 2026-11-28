@@ -44,10 +44,10 @@ import { nameTaken } from "./list-dialog.tsx";
 import { listsQuery, liveLists, nameProblem } from "./lists.ts";
 import {
   makePrivatePage,
+  pageNameProblem,
   privatePageQuery,
   privatePagesQuery,
 } from "./private-pages.ts";
-import { pageNameProblem } from "./rename-page-dialog.tsx";
 import { wholeList } from "./theme.ts";
 
 const conflict = 409;

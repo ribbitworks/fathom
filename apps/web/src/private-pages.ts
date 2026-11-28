@@ -3,17 +3,21 @@
 // The signed-in person's own pages under Mine, as read and changed through the API.
 
 import {
+  type ListedPrivatePage,
   listedPrivatePageSchema,
   type PrivatePage,
+  privatePageLengths,
   privatePageRequestSchema,
   privatePageSchema,
   savedPrivatePageSchema,
+  sameName,
   savedSchema,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import type { CellChange } from "./cell-kinds.tsx";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
+import { takenNameProblem } from "./list-dialog.tsx";
 
 const pagesPath = "/api/private-pages";
 const pagePath = (pageId: string) =>
@@ -79,5 +83,22 @@ export function landingAfter(
   removed: string,
 ): string | undefined {
   const at = pages.findIndex(({ id }) => id === removed);
+  if (at < 0) return undefined;
   return (pages[at + 1] ?? (at > 0 ? pages[at - 1] : undefined))?.id;
 }
+
+// The name's problem, if any: needed, too long, or another of the maker's pages has it already,
+// or the server said so of the name last sent.
+export const pageNameProblem = (
+  name: string,
+  pages: readonly Pick<ListedPrivatePage, "id" | "name">[],
+  renaming: string | undefined,
+  refusedAsTaken: boolean,
+) =>
+  takenNameProblem(
+    "page",
+    name,
+    privatePageLengths.name,
+    refusedAsTaken ||
+      pages.some((page) => page.id !== renaming && sameName(page.name, name)),
+  );

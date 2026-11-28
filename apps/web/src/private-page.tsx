@@ -24,7 +24,7 @@ import type { ChangeView } from "./table-controls.tsx";
 
 // The table, its columns as fields, and their order, from the page's columns and the lists.
 const tableOf = (
-  page: Pick<PrivatePage, "name" | "columns" | "firstFieldId">,
+  page: Pick<PrivatePage, "name" | "key" | "columns" | "firstFieldId">,
   lists: readonly List[],
 ) => ({
   table: privateTable({ page, lists }),
@@ -32,6 +32,7 @@ const tableOf = (
   order: page.columns.map(({ id }) => id),
   lists: [...lists],
   name: page.name,
+  key: page.key,
 });
 
 export function PrivatePageScreen({
@@ -83,15 +84,13 @@ export function PrivatePageScreen({
       <Loader role="status" aria-label="Loading" />
     );
   }
-  const { table, fields, order, lists: shownLists, name } = shown;
+  const { table, fields, order, lists: shownLists, name, key } = shown;
   return (
     <Stack gap="md" className={classes.tablePage}>
       <PageHeader
         title={name}
         mark={<PrivateRing spoken />}
-        action={
-          <PageMenu page={{ id: pageId, name, key: head.data?.key ?? null }} />
-        }
+        action={<PageMenu page={{ id: pageId, name, key }} />}
       />
       <TableTips>
         <RecordGrid
