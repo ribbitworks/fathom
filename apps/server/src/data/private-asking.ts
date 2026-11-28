@@ -10,7 +10,12 @@ import {
   type PrivateConflict,
 } from "@fathom/shared";
 import { type Maker } from "./draft-makers.ts";
-import { fieldOf, type Unresolved } from "./private-conflicts.ts";
+import {
+  fieldOf,
+  type LiveChange,
+  type LiveSince,
+  type Unresolved,
+} from "./private-conflicts.ts";
 
 // How the role sees one side of a field: as the history shows it, in a field the history doesn't
 // show, or not at all, where it doesn't see the record's kind or the field's class.
@@ -22,14 +27,24 @@ export const sideSeen = <Side>(
   side: Side,
 ): SideSeen => (shown.has(side) ? (shown.get(side) ?? "unshown") : "unseen");
 
+// Who made the latest change made live since a removal began that the role is shown, by the
+// history's rules.
+export const liveMaker = (
+  liveSince: LiveSince | undefined,
+  shows: (change: LiveChange) => boolean,
+): string | null => liveSince?.changes.filter(shows).at(-1)?.madeBy ?? null;
+
 // Who made the other side of a clash: who last changed the field, or, for a record, who last
-// changed it, though for the user's own removal only someone whose change came after it began.
+// changed it, though for the user's own removal only someone whose change came after it began,
+// and, where the record's change is live, who made it live.
 export function otherMaker(
   each: Unresolved,
   maker: Maker | undefined,
   began: Date | null | undefined,
+  live: string | null,
 ): string | null | undefined {
   if ("conflict" in each) return maker?.fieldEditors.get(each.conflict.field);
+  if (each.clash.state === "live") return live;
   const later =
     each.clash.removedBy === "theirs" ||
     (maker !== undefined && began instanceof Date && maker.madeAt > began);

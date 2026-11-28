@@ -3,6 +3,7 @@
 // The check on publishing private changes: the fields someone else changed since a user's private
 // change began, or the whole record one of them removed. Part of the data access layer.
 
+import { fieldOfValue } from "@fathom/db";
 import { type DraftKind, isDraftKind, type RecordType } from "@fathom/shared";
 import {
   type Draft,
@@ -15,11 +16,28 @@ import { liveOrder } from "./list-state.ts";
 import { isRecordType } from "./records.ts";
 import { stateOf } from "./record-state.ts";
 import { type Row, type Versions } from "./private-versions.ts";
+import { changeKey } from "./unpublished-uses.ts";
 
-// A record as everyone but the user sees it: live, and its published draft.
+// A change approved or otherwise made live, as the history recorded it, with who made it.
+export interface LiveChange {
+  field: string;
+  tier: string;
+  madeBy: string | null;
+}
+
+// What others made live of a record since the user's removal of it, or their taking back its
+// addition, began: whether it was added, and its changes, oldest first.
+export interface LiveSince {
+  added: boolean;
+  changes: LiveChange[];
+}
+
+// A record as everyone but the user sees it: live, and its published draft, with, for a removal or
+// a take-back, what was made live since it began.
 export interface Seen {
   live: Recorded | undefined;
   published: Draft | undefined;
+  liveSince?: LiveSince;
 }
 
 // A field of a private change whose value now is no longer the one it started from.
@@ -73,9 +91,7 @@ const seenKindOf = new Map<string, (versions: Versions, id: string) => Seen>(
   Object.entries(seenOfKind),
 );
 
-// A record a private change changes, as everyone else sees it; nothing for a kind Fathom no longer
-// has.
-export function seenByOthers(versions: Versions, row: Row): Seen {
+function seenOfAnyKind(versions: Versions, row: Row): Seen {
   if (isRecordType(row.recordType)) {
     const kind = stateOf(versions.records.theirs, row.recordType);
     return {
@@ -86,6 +102,14 @@ export function seenByOthers(versions: Versions, row: Row): Seen {
   return (
     seenKindOf.get(row.recordType)?.(versions, row.recordId) ?? nothingSeen
   );
+}
+
+// A record a private change changes, as everyone else sees it, with what was made live since a
+// removal began; nothing for a kind Fathom no longer has.
+export function seenByOthers(versions: Versions, row: Row): Seen {
+  const seen = seenOfAnyKind(versions, row);
+  const liveSince = versions.liveSince.get(changeKey(row));
+  return liveSince === undefined ? seen : { ...seen, liveSince };
 }
 
 // A field's value in a draft's fields over a record: the draft's where it names the field,
@@ -161,6 +185,29 @@ export function givenUp(
   };
 }
 
+// A private change to a record only drafted to be added, as it publishes once the addition is
+// approved: its own fields as a change to the live record, or, where it took the addition back, the
+// live record's removal. Any other change is as it was. A field emptied holds nothing, as a
+// person's cleared column does.
+export function overApproved(row: Row, seen: Seen): Row {
+  if (seen.live === undefined) return row;
+  const own = Object.keys(row.startedFrom);
+  if (row.action === "created" && own.length > 0) {
+    const fields = Object.fromEntries(
+      own.map((field) => [
+        field,
+        // The field is one of the change's own, named just above.
+        // eslint-disable-next-line security/detect-object-injection
+        row.fields[field] ?? (fieldOfValue(field) === null ? null : []),
+      ]),
+    );
+    return { ...row, action: "changed", fields };
+  }
+  return wantsNoDraft(row) && seen.liveSince?.added === true
+    ? { ...row, action: "deleted", fields: {} }
+    : row;
+}
+
 // A clash on a whole record: a private change to a record someone else's published change removes,
 // or a private removal of a record someone else changed since, by whom the record is removed.
 export interface RecordClash {
@@ -173,12 +220,13 @@ export interface RecordClash {
 
 // Whether a private change clashes with someone else's on the whole record: a change over a
 // removal published since, or a removal of a record whose values, in the published draft or live,
-// are no longer those it started from. Taking a published draft back is a change too: over a
-// removal published since, or a removal where it takes back a record's addition. Only a take-back
-// naming no field of its own, such as undoing a removal, means whatever the published draft holds.
-// A removal of a record others no longer have asks nothing.
+// are no longer those it started from, or that has a field made live since that it never started
+// from. Taking a published draft back is a change too: over a removal published since, or a
+// removal where it takes back a record's addition. Only a take-back naming no field of its own,
+// such as undoing a removal, means whatever the published draft holds. A removal of a record
+// others no longer have asks nothing.
 export function recordClash(row: Row, seen: Seen): RecordClash | undefined {
-  const { live, published } = seen;
+  const { live, published, liveSince } = seen;
   const takesBack = wantsNoDraft(row);
   if (takesBack && Object.keys(row.startedFrom).length === 0) return undefined;
   if (row.action === "changed" && published?.action === "deleted") {
@@ -193,13 +241,20 @@ export function recordClash(row: Row, seen: Seen): RecordClash | undefined {
     ...Object.keys(row.startedFrom),
     ...Object.keys(published?.fields ?? {}),
   ]);
-  const changedSince = [...fields].filter(
-    (field) =>
-      !alike(
-        valueIn(published?.fields, live, field),
-        valueIn(row.startedFrom, live, field),
-      ),
-  );
+  const changedSince = [
+    ...[...fields].filter(
+      (field) =>
+        !alike(
+          valueIn(published?.fields, live, field),
+          valueIn(row.startedFrom, live, field),
+        ),
+    ),
+    ...new Set(
+      (liveSince?.changes ?? [])
+        .map(({ field }) => field)
+        .filter((field) => !fields.has(field)),
+    ),
+  ];
   const state = published?.state ?? "live";
   return changedSince.length > 0
     ? { removedBy: "mine", state, fields: changedSince }

@@ -61,6 +61,7 @@ import {
   type Versions,
 } from "./private-versions.ts";
 import { withValuesKept } from "./private-conflict-answers.ts";
+import { overApproved, seenByOthers } from "./private-conflicts.ts";
 import {
   discardPrivateOfGone,
   publishedDraftsOf,
@@ -219,6 +220,33 @@ const noneStillUnpublished = (reader: Reader, userId: string) =>
       ),
   );
 
+// Rewrites the user's private changes to records whose addition was approved since they began, as
+// they now publish, so the check and the drafts written meet them as they are, and says whether it
+// rewrote any.
+async function rebasedOverApproved(
+  transaction: Transaction,
+  userId: string,
+  versions: Versions,
+): Promise<boolean> {
+  let rebased = false;
+  for (const row of versions.rows) {
+    const now = overApproved(row, seenByOthers(versions, row));
+    if (now === row) continue;
+    rebased = true;
+    await transaction
+      .update(privateChanges)
+      .set({ action: now.action, fields: now.fields })
+      .where(
+        and(
+          eq(privateChanges.userId, userId),
+          eq(privateChanges.recordType, row.recordType),
+          eq(privateChanges.recordId, row.recordId),
+        ),
+      );
+  }
+  return rebased;
+}
+
 // Those of the changes going that the actor's role may publish, with every change each needs, and
 // how many are left for a role that may. A change made as the role in use is its own, with whatever
 // moved with it, such as the releases a cycle's new length moves; one made under another of the
@@ -271,12 +299,12 @@ export async function publishUnpublished(
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const userId = actor.user.id;
-    const going = await readGoing(
-      transaction,
-      userId,
-      chosen?.drafts,
-      "publish",
-    );
+    const readChosen = () =>
+      readGoing(transaction, userId, chosen?.drafts, "publish");
+    let going = await readChosen();
+    if (await rebasedOverApproved(transaction, userId, going.versions)) {
+      going = await readChosen();
+    }
     const { rows, left } = await publishableBy(
       transaction,
       actor,

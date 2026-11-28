@@ -60,6 +60,8 @@ import {
   usesAmong,
 } from "./unpublished-uses.ts";
 import type { TableColumns } from "./values.ts";
+import { type LiveSince } from "./private-conflicts.ts";
+import { readLiveSince } from "./private-removals.ts";
 
 export type Row = typeof privateChanges.$inferSelect;
 
@@ -108,6 +110,8 @@ export interface Versions {
     theirs: Map<string, Draft>;
   };
   records: RecordVersions;
+  // What others made live of each record the user removes or takes back, since each began, by key.
+  liveSince: Map<string, LiveSince>;
 }
 
 export async function readVersions(
@@ -149,6 +153,7 @@ export async function readVersions(
       theirs: await readTeamDrafts(reader, teamIds),
     },
     records: await readRecordVersions(reader, userId),
+    liveSince: await readLiveSince(reader, userId, rows),
   };
 }
 

@@ -12,17 +12,18 @@ import {
   type Resolution,
 } from "@fathom/shared";
 import { changes, changeSets } from "@fathom/db";
-import { and, asc, eq, inArray, max } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { type Actor } from "../access.ts";
 import { RequestError } from "../errors.ts";
 import { type StoredChange, type Transaction } from "./changes.ts";
 import { shownChanges } from "./change-history.ts";
-import { draftMakers, type Maker, openChangeSets } from "./draft-makers.ts";
+import { draftMakers, type Maker } from "./draft-makers.ts";
 import { readColumnTables, showsChange } from "./history-visibility.ts";
 import {
   askedAbout,
   blindField,
   isBlind,
+  liveMaker,
   otherMaker,
   type SideSeen,
   sideSeen,
@@ -36,6 +37,7 @@ import {
 } from "./private-conflicts.ts";
 import { type AsShown, resolved } from "./private-resolutions.ts";
 import { giveUp } from "./private-give-ups.ts";
+import { beganAt } from "./private-removals.ts";
 import {
   ownRows,
   readVersions,
@@ -159,40 +161,6 @@ async function publishedMakers(
   return found;
 }
 
-// When the user's removal of each record given began: the latest of their changes still private
-// that removed it, which their removal holds.
-async function beganAt(
-  transaction: Transaction,
-  userId: string,
-  clashes: readonly Unresolved[],
-): Promise<Map<string, Date | null>> {
-  const rows = await transaction
-    .select({
-      recordType: changes.recordType,
-      recordId: changes.recordId,
-      began: max(changeSets.madeAt),
-    })
-    .from(changes)
-    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
-    .where(
-      and(
-        openChangeSets(userId),
-        eq(changes.action, "deleted"),
-        inArray(
-          changes.recordId,
-          clashes.map(({ row }) => row.recordId),
-        ),
-      ),
-    )
-    .groupBy(changes.recordType, changes.recordId);
-  return new Map(
-    rows.map(({ recordType, recordId, began }) => [
-      recordKey(recordType, recordId),
-      began,
-    ]),
-  );
-}
-
 // A side of a clash, or a field of a private change, by a key that names it.
 const sideKey = (each: Unresolved, side: string) =>
   JSON.stringify([clashKey(each), side]);
@@ -311,15 +279,27 @@ export async function withValuesKept(
   if (going.unresolved.length > 0) {
     const { unresolved } = going;
     const makers = await publishedMakers(transaction, unresolved, actor, shows);
-    const began = await beganAt(transaction, actor.user.id, unresolved);
+    const began = await beganAt(
+      transaction,
+      actor.user.id,
+      unresolved.map(({ row }) => row.recordId),
+    );
     throw new PrivateConflictsError(
       unresolved.map((each) => {
-        const key = recordKey(each.kind, each.row.recordId);
+        const { kind, row } = each;
+        const live = liveMaker(seenOf(row).liveSince, (change) =>
+          shows({ recordType: kind, recordId: row.recordId, ...change }),
+        );
         return askedAbout(
           each,
-          subjectOf(versions, each.row, actor),
+          subjectOf(versions, row, actor),
           sides(each),
-          otherMaker(each, makers.get(key), began.get(key)),
+          otherMaker(
+            each,
+            makers.get(recordKey(kind, row.recordId)),
+            began.get(changeKey(row)),
+            live,
+          ),
           asShown.token(each),
         );
       }),

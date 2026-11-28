@@ -12,9 +12,11 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { unique } from "./test-app.ts";
 import {
   alice,
+  approver,
   bob,
   changeSetOf,
   closeUnpublishedTests,
+  decide,
   discard,
   draftPeople,
   history,
@@ -380,6 +382,50 @@ describe("publishing over a removal", () => {
     const response = await keepingSide(bob, "theirs");
     expect(response.statusCode, response.body).toBe(200);
     expect(await draftOf(person)).toBe("deleted");
+  });
+
+  // Ben privately removes Kai, then Ana's Site for Kai is published and approved.
+  async function removedThenChangedLive(): Promise<string> {
+    const [person = ""] = await livePeople(1);
+    await saved(bob, "DELETE", `/api/people/${person}`);
+    await setSite(alice, person, south.id);
+    await publish(alice);
+    expect((await decide("approval", { people: [person] })).statusCode).toBe(
+      200,
+    );
+    return person;
+  }
+
+  it("is refused for the user's removal of a record changed live since, naming who approved it", async () => {
+    const person = await removedThenChangedLive();
+
+    const [conflict] = (await publishing(bob)).json<PrivateConflicts>()
+      .conflicts;
+
+    expect(conflict).toMatchObject({
+      recordId: person,
+      removedBy: "mine",
+      state: "live",
+      by: approver.name,
+    });
+  });
+
+  it("removes a record changed live since where the user keeps their removal", async () => {
+    const person = await removedThenChangedLive();
+
+    const response = await keepingSide(bob, "mine");
+
+    expect(response.statusCode, response.body).toBe(200);
+    expect(await draftOf(person)).toBe("deleted");
+  });
+
+  it("leaves no draft of a record changed live since where the user keeps it", async () => {
+    const person = await removedThenChangedLive();
+
+    const response = await keepingSide(bob, "theirs");
+
+    expect(response.statusCode, response.body).toBe(200);
+    expect(await draftOf(person)).toBeUndefined();
   });
 });
 

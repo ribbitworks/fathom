@@ -4,11 +4,13 @@
 // change began, which whole records clash, the fields given up, and how each kind of record is
 // seen by everyone else.
 
+import { draftKey } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { type Draft } from "./draft-records.ts";
 import {
   fieldConflicts,
   givenUp,
+  overApproved,
   recordClash,
   type Seen,
   seenByOthers,
@@ -311,9 +313,113 @@ describe("a clash on a whole record", () => {
       recordClash(row, { live, published: published({ site: porto }) }),
     ).toBeUndefined();
   });
+
+  const liveSince = (...fields: string[]) => ({
+    added: false,
+    changes: fields.map((field) => ({ field, tier: "general", madeBy: "Dee" })),
+  });
+
+  it("is a private removal of a record with a field made live since that it never started from", () => {
+    const row = privateChange({}, {}, "deleted");
+
+    expect(
+      recordClash(row, {
+        live,
+        published: undefined,
+        liveSince: liveSince("site", "site"),
+      }),
+    ).toEqual({ removedBy: "mine", state: "live", fields: ["site"] });
+  });
+
+  it("judges a field it started from by its value, whatever was made live since", () => {
+    const row = privateChange({}, { site: leeds }, "deleted");
+
+    expect(
+      recordClash(row, {
+        live,
+        published: undefined,
+        liveSince: liveSince("site"),
+      }),
+    ).toBeUndefined();
+  });
+});
+
+describe("a private change to a record whose addition was approved since", () => {
+  const added = { added: true, changes: [] };
+
+  it("becomes a change of its own fields to the live record", () => {
+    const row = privateChange(
+      { preferredName: "Kai Lindqvist", site: lisbon },
+      { site: leeds },
+      "created",
+    );
+
+    expect(overApproved(row, { live, published: undefined })).toEqual({
+      ...row,
+      action: "changed",
+      fields: { site: lisbon },
+    });
+  });
+
+  it("empties a field of its own it left out, as nothing or no choices", () => {
+    const row = privateChange(
+      { preferredName: "Kai Lindqvist" },
+      { team: "team-a", "value:site": [leeds] },
+      "created",
+    );
+
+    expect(overApproved(row, { live, published: undefined }).fields).toEqual({
+      team: null,
+      "value:site": [],
+    });
+  });
+
+  it("becomes the live record's removal where it took the addition back", () => {
+    const row = privateChange({}, { site: leeds });
+
+    expect(
+      overApproved(row, { live, published: undefined, liveSince: added }),
+    ).toEqual({ ...row, action: "deleted", fields: {} });
+  });
+
+  it.each([
+    [
+      "a record still only drafted",
+      privateChange({}, { site: leeds }, "created"),
+      undefined,
+      added,
+    ],
+    [
+      "an addition of its maker's own",
+      privateChange({ site: lisbon }, {}, "created"),
+      live,
+      undefined,
+    ],
+    [
+      "a take-back of a change, approved since",
+      privateChange({}, { site: leeds }),
+      live,
+      { added: false, changes: [] },
+    ],
+    [
+      "a change to a live record",
+      privateChange({ site: lisbon }, { site: leeds }),
+      live,
+      undefined,
+    ],
+  ])("is as it was for %s", (_, row, record, since) => {
+    expect(
+      overApproved(row, {
+        live: record,
+        published: undefined,
+        ...(since === undefined ? {} : { liveSince: since }),
+      }),
+    ).toBe(row);
+  });
 });
 
 describe("a record as everyone else sees it", () => {
+  const madeLive = { added: true, changes: [] };
   const draft = published({ name: "Fictional" });
   const record = { name: "Fictional Live" };
   const lists = {
@@ -353,6 +459,7 @@ describe("a record as everyone else sees it", () => {
         },
       },
     },
+    liveSince: new Map([[draftKey("person", "removed"), madeLive]]),
   } as unknown as Versions;
   const seenOf = (recordType: string, recordId: string) =>
     seenByOthers(versions, { ...privateChange({}, {}), recordType, recordId });
@@ -379,6 +486,14 @@ describe("a record as everyone else sees it", () => {
     expect(seenOf("choice-order", "list")).toEqual({
       live: { order: ["choice"] },
       published: draft,
+    });
+  });
+
+  it("comes with what was made live since a removal of it began", () => {
+    expect(seenOf("person", "removed")).toEqual({
+      live: undefined,
+      published: undefined,
+      liveSince: madeLive,
     });
   });
 
