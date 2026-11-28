@@ -73,3 +73,43 @@ test("refuses a missing name and a column named twice, then makes the page and s
   await page.reload();
   await expect(grid.getByText("Fictional title")).toBeVisible();
 });
+
+test("cuts a long page name short in the top bar before the account's, keeping its menu in reach", async ({
+  page,
+}) => {
+  // Given a page with a long name, at 680 pixels, where the name doesn't fit
+  await page.setViewportSize({ width: 680, height: 800 });
+  await page.goto("/help");
+  const name = `Fictional follow-ups for the spring round ${Date.now().toString(36)}`;
+  const answer = await send(page, "POST", "/api/private-pages", {
+    name,
+    columns: [{ name: "Name", type: "text", visibility: "general" }],
+  });
+  made.pageId = (answer.body as { page: { id: string } }).page.id;
+  await page.goto(`/mine/${made.pageId}`);
+  await expect(page.getByRole("grid", { name })).toBeVisible();
+  await page.evaluate("document.fonts.ready");
+  const bar = page.getByRole("banner");
+  const shown = bar.getByText(name);
+  const cut = (text: Locator) =>
+    text.evaluate((element) => element.scrollWidth > element.clientWidth);
+
+  // Then the bar is one line, and the page's name is cut short, not the account's
+  await expect.poll(() => cut(shown)).toBe(true);
+  expect(await cut(bar.getByText("Feature Lead", { exact: true }))).toBe(false);
+  const fits = () =>
+    bar.evaluate((header) => header.scrollWidth <= header.clientWidth);
+  expect(await fits()).toBe(true);
+
+  // And pointing at it shows its whole name in a tip
+  await shown.hover();
+  await expect(
+    page.getByRole("tooltip").filter({ hasText: name }),
+  ).toBeVisible();
+
+  // And at 390 pixels the bar still fits, and the account's menu opens
+  await page.setViewportSize({ width: 390, height: 800 });
+  await expect.poll(fits).toBe(true);
+  await bar.getByRole("button", { name: /^Account, / }).click();
+  await expect(page.getByRole("menu")).toBeVisible();
+});
