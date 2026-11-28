@@ -33,7 +33,6 @@ export const privateField = (
   ...column,
   keyNumber: unsavedKeyNumber,
   required: column.id === firstFieldId,
-  onPlannedHires: false,
 });
 
 export const privateFields = (
