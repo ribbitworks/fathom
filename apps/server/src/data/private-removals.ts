@@ -154,9 +154,8 @@ export async function readRemovedAt(
         ),
       )
       .groupBy(changes.recordType, changes.recordId);
-    // Each record grouped holds at least one removal, so has a time.
     for (const { at, ...record } of removals) {
-      removedAt.set(changeKey(record), at as Date);
+      removedAt.set(changeKey(record), at);
     }
   }
   return removedAt;
