@@ -318,12 +318,27 @@ select.cellInput {
   padding-block: 0;
 }
 
-/* Never so short that the table hides its rows; the page scrolls first. */
+/* Never so short that the table hides its rows, keeping its header and a row, such as the empty
+   row of a table with none yet; the page scrolls first. A row is its editor's height, the room
+   above and below it and its line; the panel adds its border. */
 .tableScrollPanel {
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 7rem;
+  min-height: calc(
+    var(--fathom-table-head-height) + var(--fathom-cell-editor-height) + 2 *
+      4px + 1px + 2px
+  );
+}
+
+/* The last row's outer cells are rounded as the panel's corners are, so a focused cell's ring there
+   follows the corner rather than being cut off by it. */
+.tableScroll tbody tr:last-child > td:first-child {
+  border-end-start-radius: var(--paper-radius);
+}
+
+.tableScroll tbody tr:last-child > td:last-child {
+  border-end-end-radius: var(--paper-radius);
 }
 
 /* A cell moved to is never left under the header row. */
