@@ -34,7 +34,8 @@ export const orgChartDraftSchema = z.object({
 export type OrgChartDraft = z.infer<typeof orgChartDraftSchema>;
 
 // A card on the chart: a person, or a planned hire's placeholder, named as its People row is, under
-// its manager, a person or a planned manager. A placeholder opens nothing and leads no named team.
+// its manager, a person or a planned manager. A placeholder leads no named team, and has no Employee
+// ID, since People finds a hire by its key.
 export const orgChartPersonSchema = z.object({
   id: z.string(),
   keyNumber: keyNumberSchema,

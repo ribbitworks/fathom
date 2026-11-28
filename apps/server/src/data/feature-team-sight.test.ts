@@ -585,14 +585,14 @@ describe("a planned hire as a team's details name it", () => {
     ).toEqual({ keyNumber: 9, expected: "2027-03", undated: true });
   });
 
-  it("names who fills it, and the day they start, to a reader who sees Personal details", () => {
+  it("names who fills it, by name and identifier, and the day they start, to a reader who sees Personal details", () => {
     expect(
       hireOnTeamSeen(
         { ...open, filledBy: starter },
         naming,
         seenBy(workforceAdministrator),
       ).hire.filledBy,
-    ).toEqual({ name: "Fictional Starter", starts: "2099-01-01" });
+    ).toEqual({ id: starter, name: "Fictional Starter", starts: "2099-01-01" });
   });
 
   it("names who fills it alone when they have no start date", () => {
@@ -602,7 +602,7 @@ describe("a planned hire as a team's details name it", () => {
         naming,
         seenBy(workforceAdministrator),
       ).hire.filledBy,
-    ).toEqual({ name: "Fictional Undated" });
+    ).toEqual({ id: undatedStarter, name: "Fictional Undated" });
   });
 
   it.each([
@@ -634,7 +634,7 @@ describe("whether naming who fills a hire is recorded as a view of Personal deta
         hire: {
           keyNumber: 1,
           expected: "2027-03",
-          filledBy: { name: "Fictional Starter" },
+          filledBy: { id: "starter", name: "Fictional Starter" },
         },
       },
     },

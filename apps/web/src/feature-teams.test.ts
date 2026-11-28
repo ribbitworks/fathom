@@ -242,10 +242,14 @@ describe("feature teams on the chart", () => {
   });
 
   describe("with a filled hire", () => {
-    const filledBy = { name: "Fictional Joiner", starts: "2026-08-03" };
+    const filledBy = {
+      id: "joiner",
+      name: "Fictional Joiner",
+      starts: "2026-08-03",
+    };
     const hires = { h1: { keyNumber: 4, expected: "2026-08", filledBy } };
 
-    it("says on its card who fills it and the day they start, as its team's details do", () => {
+    it("says on its card who fills it and the day they start, as its team's details do, and who that is, for opening their details", () => {
       const [, , drawn] = featureTeamPeople(
         [team({ members: ["lead", "m1", "h1"], hires })],
         everyone,
@@ -253,8 +257,13 @@ describe("feature teams on the chart", () => {
       );
       expect(drawn).toMatchObject({
         id: memberCardId("t1", "h1"),
+        ownId: "h1",
         managerId: memberCardId("t1", "lead"),
-        filled: { name: "Fictional Joiner", starts: "starts Aug 3, 2026" },
+        filled: {
+          name: "Fictional Joiner",
+          starts: "starts Aug 3, 2026",
+          personId: "joiner",
+        },
       });
     });
 
@@ -266,6 +275,7 @@ describe("feature teams on the chart", () => {
       );
       expect(lead).toMatchObject({
         id: memberCardId("t1", "h1"),
+        ownId: "h1",
         filled: { name: "Fictional Joiner", starts: "starts Aug 3, 2026" },
       });
     });
@@ -643,13 +653,20 @@ describe("when a planned hire on a team starts", () => {
       "who fills it and the day they start",
       {
         expected: "2027-02",
-        filledBy: { name: "Fictional Joiner", starts: "2027-02-01" },
+        filledBy: {
+          id: "joiner",
+          name: "Fictional Joiner",
+          starts: "2027-02-01",
+        },
       },
       "Filled by Fictional Joiner, starts Feb 1, 2027",
     ],
     [
       "who fills it alone, without the day they start",
-      { expected: "2027-02", filledBy: { name: "Fictional Joiner" } },
+      {
+        expected: "2027-02",
+        filledBy: { id: "joiner", name: "Fictional Joiner" },
+      },
       "Filled by Fictional Joiner",
     ],
   ])("says %s", (_, hire, words) => {
@@ -668,7 +685,7 @@ describe("when a planned hire on a team starts", () => {
       listed("Fictional Alpha", { expected: "2027-03" }),
       listed("Fictional Filled", {
         expected: "2027-12",
-        filledBy: { name: "Fictional Joiner" },
+        filledBy: { id: "joiner", name: "Fictional Joiner" },
       }),
     ];
     expect(hires.sort(plannedHireOrder).map(({ name }) => name)).toEqual([

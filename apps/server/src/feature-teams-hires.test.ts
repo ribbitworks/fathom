@@ -260,6 +260,7 @@ describe("who sees a planned hire on a team", () => {
   // A team with a hire filled by someone who starts later.
   let filledTeam: string;
   let filled: string;
+  let joiner: string;
 
   beforeAll(async () => {
     hire = await plannedHire({ name: "Fictional Seen Hire" });
@@ -274,7 +275,7 @@ describe("who sees a planned hire on a team", () => {
     filled = await plannedHire();
     filledTeam = await liveTeam();
     await hireOnTeam(filledTeam, filled);
-    const joiner = await person({
+    joiner = await person({
       preferredName: "Fictional Joiner",
       startDate: "2026-09-01",
     });
@@ -341,7 +342,7 @@ describe("who sees a planned hire on a team", () => {
       expect(hire?.expected).toBe("2026-09");
       expect(hire?.filledBy).toEqual(
         seesTeamDates.has(role)
-          ? { name: "Fictional Joiner", starts: "2026-09-01" }
+          ? { id: joiner, name: "Fictional Joiner", starts: "2026-09-01" }
           : undefined,
       );
     },

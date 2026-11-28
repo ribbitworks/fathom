@@ -19,6 +19,7 @@ import {
   heightOf,
   type ChartLevels,
   type ChartSearch,
+  chartAddressOfCard,
   collapsedTo,
   levelsOf,
   openLevels,
@@ -32,14 +33,6 @@ import { motionLasts } from "./side-panel.tsx";
 import { besideLive } from "./status-mark.tsx";
 import { DraftMenu } from "./table-controls.tsx";
 
-// How the address names a person, for the team shown alone and the person found: by Employee ID,
-// or, for a planned hire, by Fathom's own ID. Null for a Live copy, which the person themselves
-// stands for.
-function addressOf(person: ChartPerson): string | null {
-  if (person.liveCopyOf !== undefined) return null;
-  return person.planned === undefined ? person.employeeId : person.id;
-}
-
 // The least zoom at which a card can still be read, below which a person found is centred alone
 // rather than fitted to the screen with their Live copy, and the room left around cards fitted.
 const readableZoom = 0.6;
@@ -48,6 +41,7 @@ const fitMargin = 40;
 export function Chart({
   tree,
   everyone,
+  details,
   colours,
   alone,
   editsTeams,
@@ -69,6 +63,8 @@ export function Chart({
   teamsList?: ReactNode;
   tree: OrgTree;
   everyone: OrgTree;
+  // The People ID of the details each card opens, by the card's id.
+  details: ReadonlyMap<string, string>;
   // The colour each manager's reports are drawn in, worked out from the whole chart.
   colours: ReadonlyMap<string, PaletteColour>;
   // Whether the tree is one manager's team, shown alone.
@@ -84,7 +80,7 @@ export function Chart({
   const byAddress = useMemo(() => {
     const cards = new Map<string, ChartPerson>();
     for (const person of tree.people.values()) {
-      const address = addressOf(person);
+      const address = chartAddressOfCard(person);
       if (address !== null && !cards.has(address)) cards.set(address, person);
     }
     return cards;
@@ -171,10 +167,10 @@ export function Chart({
         // Every card placed is someone in the tree.
         const person = tree.people.get(id) as ChartPerson;
         const reports = tree.reports.get(id)?.length ?? 0;
-        const { employeeId } = person;
-        const address = addressOf(person);
+        const shown = details.get(id);
+        const address = chartAddressOfCard(person);
         // On the feature team chart, a team's own card, while it has no lead, opens the team; every
-        // other card opens its person, as on managers' teams.
+        // other card opens its details, as on managers' teams.
         const teamId = person.featureTeamId;
         const opened =
           person.teamCard === true
@@ -187,7 +183,7 @@ export function Chart({
             : {
                 ...search,
                 person: address ?? undefined,
-                open: employeeId ?? undefined,
+                open: shown,
                 featureTeam: undefined,
               };
         return {
@@ -245,7 +241,7 @@ export function Chart({
               });
             },
             onOpen:
-              person.teamCard !== true && employeeId === null
+              person.teamCard !== true && shown === undefined
                 ? undefined
                 : () => {
                     centreOnSpace(true);
@@ -257,6 +253,7 @@ export function Chart({
     [
       layout,
       tree,
+      details,
       colours,
       collapsed,
       found,
@@ -443,7 +440,8 @@ export function Chart({
             setCollapsed(new Set([...collapsed].filter((one) => one !== id)));
           }
           const person = id === null ? undefined : tree.people.get(id);
-          const address = person === undefined ? null : addressOf(person);
+          const address =
+            person === undefined ? null : chartAddressOfCard(person);
           setFoundByName(
             person !== undefined && address === null ? person.id : null,
           );

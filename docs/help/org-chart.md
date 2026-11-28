@@ -48,7 +48,7 @@ You're done when the **Views** button shows the view's name. See [Saved views](s
 
 ### See Someone's Details
 
-1. Select the person's name on their card. Their details open beside the chart. To see them on **People** instead, select **Show in People**, near the top of their details.
+1. Select the person's name on their card. Their details open beside the chart. To see them on **People** instead, select **Show in People**, near the top of their details. A planned hire's card opens the hire's details. In **Feature teams**, a filled hire's card opens the details of the person who filled it, if you can see people's personal details.
 1. To change a value, point at it. A pencil shows if you can change it. A note shows a button that opens it in its own panel instead, where you can read it, and change it if you can.
 1. Select the value, and make the change.
 

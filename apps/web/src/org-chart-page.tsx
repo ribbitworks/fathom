@@ -38,6 +38,7 @@ import {
   type ChartSearch,
   chartViewSearch,
   chartDays,
+  detailsOpened,
   leadOf,
   findFieldId,
   type OrgTree,
@@ -190,6 +191,10 @@ export function OrgChartPage({
           ),
         );
   }, [query.data, show, featureView, teamsQuery.data, day]);
+  const details = useMemo(
+    () => detailsOpened(everyone?.people.values() ?? [], people.data?.people),
+    [everyone, people.data],
+  );
   const lead =
     everyone === undefined ? undefined : leadOf(everyone, search.team);
   // The chart's view, from the address, as any page's is; what isn't part of it stays as it is.
@@ -402,16 +407,13 @@ export function OrgChartPage({
                         }
                         onClose={() => {
                           const open = (search.open as string).toLowerCase();
-                          const card = [...everyone.people.values()].find(
-                            ({ employeeId }) =>
-                              employeeId?.toLowerCase() === open,
-                          );
+                          const card = [...details].find(
+                            ([, shown]) => shown.toLowerCase() === open,
+                          )?.[0];
                           go({ ...search, open: undefined }, false);
                           // A person whose card is not drawn leaves focus on finding them.
                           focusSoon(
-                            ...(card === undefined
-                              ? []
-                              : [cardLinkId(card.id)]),
+                            ...(card === undefined ? [] : [cardLinkId(card)]),
                             findFieldId,
                           );
                         }}
@@ -459,6 +461,7 @@ export function OrgChartPage({
             <Chart
               tree={tree}
               everyone={everyone}
+              details={details}
               colours={colours}
               alone={lead !== undefined}
               editsTeams={editsTeams}

@@ -58,7 +58,7 @@ export const teamHireSchema = z.object({
   expected: monthSchema,
   undated: z.literal(true).optional(),
   filledBy: z
-    .object({ name: z.string(), starts: daySchema.optional() })
+    .object({ id: z.string(), name: z.string(), starts: daySchema.optional() })
     .optional(),
 });
 

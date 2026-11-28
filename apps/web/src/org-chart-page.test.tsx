@@ -134,7 +134,7 @@ describe("the org chart", () => {
     expect(within(sasha).queryByText("Left")).toBeNull();
   });
 
-  it("draws planned hires as placeholders, one with no name by its ID with its position under it, a planned manager heading its hires, opening nothing and left out of the Teams panel", async () => {
+  it("draws planned hires as placeholders, one with no name by its ID with its position under it, a planned manager heading its hires, left out of the Teams panel", async () => {
     const planned = [
       ...people,
       person("h1", "Fictional Engineer, TBD-7", null, {
@@ -163,7 +163,6 @@ describe("the org chart", () => {
         .find((node) => node !== null) as HTMLElement;
     await screen.findAllByText("TBD-7");
     const placeholder = onCard("TBD-7");
-    expect(within(placeholder).queryByRole("link")).toBeNull();
     expect(within(placeholder).getByText(/^Planned, expected/)).toBeDefined();
     expect(within(placeholder).getByText("Fictional Engineer")).toBeDefined();
     const report = onCard("Fictional Planned Report").textContent;
