@@ -28,6 +28,10 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **Drawn by:** `PageHeader` in `apps/web/src/page-header.tsx`. Its `beside` holds the switch, `ModeSwitch`, or the tabs, `HeadingTabs` with each tab's content in `HeadingTabPanel`, all in that file.
     - **The theme's height:** The heading's height is the theme's `--fathom-heading-height` in `apps/web/src/theme.ts`. Each page puts the gap after it.
   - **Example:** Table and Board beside the Features heading.
+- **A page's ⋯:** A page with actions of its own, such as a private page's Rename page… and Remove page…, has a ⋯ after the Export icon at the heading's right, read as Actions for and the page's name, drawn as a side panel's ⋯ is. The heading stays one line.
+  - **Removing the open page:** It opens the next page in the sidebar's section, or the one before if it was last, or the Overview if none is left, with focus on that page's heading. Undo puts the page back in its place and opens it again.
+  - **Drawn by:** `PageMenu` in `apps/web/src/page-menu.tsx`, on `PanelMoreMenu` in `apps/web/src/panel-menu.tsx`, given to `PageHeader`'s `action`, with renaming and removing in `apps/web/src/mine-changes.tsx`.
+  - **Example:** On a private page, select the ⋯ at the right of its heading.
 - **Actions on ticked rows:** While a table's rows are ticked, the actions on them join the page's actions at the right of its heading. Each names how many it acts on, such as Approve 3 drafts… or Publish 2 changes. Nothing is added between the heading and the table.
   - **Drawn by:** The page's `PageHeader` `action`, as in `apps/web/src/drafts-page.tsx`, with the ticks from `apps/web/src/row-ticks.tsx`.
   - **Example:** On the Drafts page's To decide tab, as the Engineering Director, tick any row: Reject… and Approve 1 draft… show at the right of the heading.
@@ -38,7 +42,7 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **Drawn by:** `RecordName` in `apps/web/src/plan-table.tsx`.
   - **Example:** P-2001 Crane Control.
 - **A record's key:** A record's key, such as #FEATURE-123, shows small and dimmed under its details' title and under a card's name. [Record key](../../design/domain-model.md#change-and-history-entities) sets out which records have keys.
-  - **Copying:** The key under a title is a button whose menu offers Copy link and Copy key. The menus of a row, a card, an Org chart card's right-click and an added column offer Copy link. Copying changes nothing in view, so a notification says it was done.
+  - **Copying:** The key under a title is a button whose menu offers Copy link and Copy key. The menus of a row, a card, an Org chart card's right-click and an added column offer Copy link. A page with a key, such as a private page, offers Copy link and Copy key in its ⋯ instead, and its key never shows on the page itself, even when a view shows the Key column, which is about its rows. Copying changes nothing in view, so a notification says it was done.
   - **Not yet saved:** A record not yet saved shows no key and offers neither.
   - **Drawn by:** `RecordKey` and `CopyLinkItem` in `apps/web/src/record-key.tsx`, with a panel's key in `RecordPanel`'s `subtitle` in `apps/web/src/record-details.tsx`, and a table's `keyOf` in `apps/web/src/record-table.ts` for its row menus, Key column and search by key.
   - **On the Drafts page:** A draft's row and details carry its record's key. Each draft named under Approved with it, Waiting on it and Linked to comes after its record's key, small and dimmed, as a project's ID comes before its name. A draft of the planning settings has none.

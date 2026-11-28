@@ -93,6 +93,10 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, and `notifyUndoable` in `apps/web/src/notices.tsx`.
   - **Example:** On People, save a view, then delete it.
 - **Asking first:** Of changes to data, only these ask first, since they can't be undone: approving drafts, rejecting them, Discard all…, discarding chosen changes on the Drafts page (such as Discard 2 changes…), publishing a draft from its menu when other changes go with it, and deleting a saved view its maker can no longer use.
+  - **A removal on a table without drafts:** On a private page, where nothing waits as a draft, a removal that takes many values away asks first, then still offers Undo: Remove page… and Remove column… ask, such as Remove the Follow-ups page?, with Cancel and Remove in red, and Cancel focused. A notification then says so, such as Removed the Follow-ups page., with Undo, and Cmd+Z or Ctrl+Z undoes it too. A row is removed at once, with Undo. On shared tables a removal is a draft, and approving it asks.
+  - **Leaving the question:** Cancel, Esc and the × put focus back where the question came from, such as the column's heading or the page's ⋯.
+  - **Drawn by:** `useRemovalQuestion` in `apps/web/src/removal-question.tsx`, on `DialogActions` in `apps/web/src/dialog-actions.tsx`, which also asks before deleting an unusable saved view.
+  - **Example:** On a private page, open a column's menu and select Remove column….
   - **A saved view its maker can't use:** Deleting it can't be undone because its change history holds what the maker's role can't see.
   - **Also asking:** Leaving unsaved work asks too ([Leaving Unsaved Work](#leaving-unsaved-work)), and so does exporting Personal or Confidential data ([Exporting](tables.md#exporting)).
   - **Confirming:** Each confirms what was done in a notification without Undo, such as Approved 3 drafts, since it takes drafts out of view.
