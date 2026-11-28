@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of scripts/check-turn.mjs: a check waits its turn, saying so and how long it
-// waited, goes ahead within a check that holds the turn, and ends with its command, passing on a
-// request to stop.
+// Tests of scripts/check-turn.mjs: a check waits its turn, saying so and how long it waited, goes
+// ahead within a check that holds the turn, and ends with its command, passing on a request to stop.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";

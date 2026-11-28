@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Checks that development-only code stays out of the application's runtime image, so the
-// development accounts and their shared password can never reach production: the image build is
-// sent no file from the seed data, fixtures, test helpers' source or the test database setup, and the
-// server depends on no development-only package, directly or through another workspace package.
+// development accounts and limits can never reach production: no development-only file or package
+// goes into the image, directly or through another package, and the server runs in production mode.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -65,5 +64,11 @@ describe("the runtime image", () => {
     for (const name of developmentOnly) {
       assert.ok(!needed.has(name), `The server needs ${name}`);
     }
+  });
+
+  // The server refuses the development limits in production mode.
+  it("runs the server in production mode", () => {
+    const stages = read("deploy/docker/app/Dockerfile").split(/^FROM /m);
+    assert.match(stages.at(-1) ?? "", /^ENV NODE_ENV=production$/m);
   });
 });

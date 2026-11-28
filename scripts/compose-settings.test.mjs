@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Checks the production Compose file's settings: the example lists each it reads, a server runs a
-// release's published images, and the networks keep the database apart. The running containers are
-// tested by 'pnpm test:containers'.
+// release's published images, the application runs behind the proxy with no development settings,
+// and the networks keep the database apart. 'pnpm test:containers' tests the running containers.
 
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -99,6 +99,17 @@ describe("Compose settings", () => {
       postgres: "fathom-postgres:latest",
       proxy: "fathom-proxy:latest",
     });
+  });
+
+  // The server refuses the development limits behind the proxy or serving the built front end.
+  it("runs the application behind the proxy, serving the built front end, with no development settings", () => {
+    const { environment } = services.app;
+    assert.equal(environment.FATHOM_PROXY_HOST, "proxy");
+    assert.equal(environment.FATHOM_WEB_ROOT, "/app/web");
+    assert.deepEqual(
+      Object.keys(environment).filter((name) => name.startsWith("FATHOM_DEV_")),
+      [],
+    );
   });
 
   it("publishes only the proxy's port", () => {

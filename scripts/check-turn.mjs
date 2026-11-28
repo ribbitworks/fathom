@@ -12,8 +12,8 @@ import {
 } from "../packages/test-utils/src/slots.ts";
 import { runCommand } from "./run-command.mjs";
 
-// Two checks at once each took about as long as one alone, while more at once would slow each until
-// tests time out.
+// Two checks at once each run about as fast as one alone, as Checks and CI's Sharing the Machine
+// records.
 export const checkRuns = machineSlots("checks", {
   atOnce: 2,
   retryMilliseconds: millisecondsPerSecond,
