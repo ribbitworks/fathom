@@ -6,22 +6,26 @@
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
-function output(command, args) {
-  const result = spawnSync(command, args, { encoding: "utf8" });
+// A command's standard output, failing with what it said when it can't start or doesn't succeed.
+export function output(command, args, { cwd } = {}) {
+  const result = spawnSync(command, args, { encoding: "utf8", cwd });
   if (result.status !== 0)
     throw new Error(
-      `${command} ${args.join(" ")} failed: ${String(result.stderr).trim()}`,
+      `${command} ${args.join(" ")} failed: ${String(result.error?.message ?? result.stderr).trim()}`,
     );
   return result.stdout;
+}
+
+// The commit this branch left origin/main at, or another base.
+export function mergeBase(since = "origin/main", { cwd } = {}) {
+  return output("git", ["merge-base", "HEAD", since], { cwd }).trim();
 }
 
 export function changedPaths({
   uncommitted = false,
   since = "origin/main",
 } = {}) {
-  const base = uncommitted
-    ? "HEAD"
-    : output("git", ["merge-base", "HEAD", since]).trim();
+  const base = uncommitted ? "HEAD" : mergeBase(since);
   const lines = [
     output("git", ["diff", "--name-only", "--no-renames", base]),
     output("git", ["ls-files", "--others", "--exclude-standard"]),

@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/core-principles.md", "docs/standards/testing.md", "docs/standards/documentation.md", "docs/standards/markdown-style-guidelines.md", "docs/standards/typescript.md", "docs/standards/shell.md"]
-last_updated: "2026-11-24"
+last_updated: "2026-11-27"
 ---
 
 # Code Review Standards
@@ -119,7 +119,7 @@ A change to documents, tests or configuration only marks them not applicable. Se
 
 - **Names:** descriptive, with no abbreviations (`activeBlockIndex`, not `activeIdx`; `account`, not `acct`).
 - **No magic values:** numbers and strings with meaning are named constants, except `0`, `1` and `-1` in calculations.
-- **No copy-pasted logic:** repeated code is shared; for whole components and helpers, see [Reuse across the codebase](#architecture-and-design).
+- **No copy-pasted logic:** repeated code is shared; for whole components and helpers, see [Reuse across the codebase](#architecture-and-design). `pnpm lint:duplicates`, part of `pnpm check`, fails a change that copies a block of code; the review still looks for smaller copies, and for code that does the same job in other words. A `jscpd:ignore` comment, or a looser `.jscpd.json`, is a finding unless the maintainer approved that exception.
 - **Comments:** follow [core-principles.md § Comments](core-principles.md#comments).
 - **File headers:** follow [File Headers](#file-headers). A description longer than that rule allows, or one that describes behaviour, is a finding.
 - **File size:** a code file, test files included, the change leaves past the limit in [core-principles.md § Implementation Rules](core-principles.md#implementation-rules) is a finding, fixed by splitting it as that rule sets out.

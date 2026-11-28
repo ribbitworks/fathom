@@ -18,6 +18,7 @@ linters=(
   "Types|pnpm typecheck"
   "Markdown|pnpm lint:md"
   "Shell scripts|pnpm lint:shell"
+  "Duplicates|pnpm lint:duplicates"
 )
 full_check=(
   "Package tests|pnpm test:packages"

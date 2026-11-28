@@ -17,6 +17,7 @@
   - 2026-11-23, to keep Renovate's controls in each pull request's description
   - 2026-11-24, to adopt Playwright for UI tests, as ADR 0013 sets out
   - 2026-11-26, to ship github-slugger in the browser, where the Overview links to Help pages' headings by their anchors
+  - 2026-11-27, to add jscpd, which fails a change that copies a block of code
 
 ## Context
 
@@ -58,6 +59,7 @@ What matters most in these choices:
 | Secret scanning | Gitleaks | TruffleHog | Fast, runs offline, and scans both files and git history |
 | Vulnerability, misconfiguration, and licence scanning | Trivy, with telemetry off | Grype | One tool for dependencies, container images, configuration, and licences |
 | Shell script linting | ShellCheck | | The standard linter for shell scripts |
+| Duplicate code | jscpd | PMD's copy-paste detector | Open source, reads TypeScript, TSX, JavaScript, CSS and shell, runs in about a second, and compares with a git commit, so only copies a change adds fail |
 | Copyright and licence information | The REUSE specification, checked with the REUSE tool | Per-file copyright headers only | A standard, machine-readable way to state each file's licence, checked automatically, while the copyright is stated once, matching NOTICE, rather than in every file |
 | Node.js version management | fnm | nvm, Volta | Fast, works on macOS, Linux, and Windows, and switches versions automatically from `.node-version` |
 

@@ -1,0 +1,11 @@
+{
+  "path": ["apps", "deploy", "packages", "scripts"],
+  "format": ["typescript", "tsx", "javascript", "css", "bash"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "packages/fixtures/**"
+  ],
+  "minTokens": 100
+}
