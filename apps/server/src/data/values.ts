@@ -22,6 +22,8 @@ import {
   builtInColumnTiers,
   type BuiltInTiers,
   type ColumnTable,
+  type Duration,
+  durationUnitSchema,
   type Link,
   type Tier,
 } from "@fathom/shared";
@@ -201,7 +203,7 @@ export const valuesTier = (
 };
 
 // A column's value for one person, as the change history records it: the chosen choices, a link, a
-// note, a number, a ticked box, a text, or a day.
+// note, a number, a ticked box, a text, a day, or a length.
 export type FieldValue =
   | string[]
   | Link
@@ -209,7 +211,8 @@ export type FieldValue =
   | number
   | true
   | { text: string }
-  | { date: string };
+  | { date: string }
+  | Duration;
 
 // Each record's values, by record and column, for the people, or planned hires, and columns given:
 // chosen choices in their list's order, links, notes, numbers, ticked boxes, texts, and days.
@@ -235,6 +238,7 @@ export async function readValues(
     readFlags,
     readTexts,
     readDates,
+    readDurations,
   ]) {
     for (const [recordId, byField] of await read(
       reader,
@@ -285,43 +289,14 @@ async function readChoices(
   return values;
 }
 
-// Each record's links, by record and column.
-async function readLinks(
-  reader: Reader,
-  recordIds: readonly string[],
-  fieldIds: readonly string[],
-  owner: ValueOwner,
-): Promise<Map<string, Map<string, Link>>> {
-  const links = new Map<string, Map<string, Link>>();
-  if (recordIds.length === 0 || fieldIds.length === 0) return links;
-  const rows = await reader
-    .select({
-      recordId: ownerColumn(owner),
-      fieldId: fieldValues.fieldId,
-      address: fieldValues.linkAddress,
-      text: fieldValues.linkText,
-    })
-    .from(fieldValues)
-    .where(
-      and(
-        inArray(ownerColumn(owner), [...recordIds]),
-        inArray(fieldValues.fieldId, [...fieldIds]),
-        isNotNull(fieldValues.linkAddress),
-      ),
-    );
-  for (const { fieldId, address, text, ...row } of rows) {
-    const recordId = String(row.recordId);
-    const byField = links.get(recordId) ?? new Map<string, Link>();
-    // The database sets the text with the address.
-    byField.set(fieldId, { address: String(address), text: String(text) });
-    links.set(recordId, byField);
-  }
-  return links;
-}
-
-// Reads what a column of one value holds in the values table, by record and column.
+// Reads what a column of one value holds in the values table, by record and column, from the table's
+// column that holds it, and another kept beside it, if any, such as a link's text or a length's unit.
 const readerOf =
-  <Held>(column: PgColumn, held: (value: unknown) => Held) =>
+  <Held>(
+    column: PgColumn,
+    held: (value: unknown, beside: unknown) => Held,
+    besideColumn: PgColumn = column,
+  ) =>
   async (
     reader: Reader,
     recordIds: readonly string[],
@@ -335,6 +310,7 @@ const readerOf =
         recordId: ownerColumn(owner),
         fieldId: fieldValues.fieldId,
         value: column,
+        beside: besideColumn,
       })
       .from(fieldValues)
       .where(
@@ -344,15 +320,21 @@ const readerOf =
           isNotNull(column),
         ),
       );
-    for (const { fieldId, value, ...row } of rows) {
+    for (const { fieldId, value, beside, ...row } of rows) {
       const recordId = String(row.recordId);
       const byField = found.get(recordId) ?? new Map<string, Held>();
-      byField.set(fieldId, held(value));
+      byField.set(fieldId, held(value, beside));
       found.set(recordId, byField);
     }
     return found;
   };
 
+// The database sets a link's text with its address, and a length's unit with its amount.
+const readLinks = readerOf(
+  fieldValues.linkAddress,
+  (address, text): Link => ({ address: String(address), text: String(text) }),
+  fieldValues.linkText,
+);
 const readNotes = readerOf(fieldValues.note, String);
 const readNumbers = readerOf(fieldValues.number, Number);
 const readFlags = readerOf(fieldValues.flag, (): true => true);
@@ -362,6 +344,14 @@ const readTexts = readerOf(fieldValues.text, (text) => ({
 const readDates = readerOf(fieldValues.date, (date) => ({
   date: String(date),
 }));
+const readDurations = readerOf(
+  fieldValues.durationAmount,
+  (amount, unit): Duration => ({
+    amount: Number(amount),
+    unit: durationUnitSchema.parse(unit),
+  }),
+  fieldValues.durationUnit,
+);
 
 // The names of the added columns' values any version of a record holds.
 export const valueFieldsIn = (

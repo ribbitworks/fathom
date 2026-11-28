@@ -5,6 +5,7 @@
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
+import { type Duration, durationSchema } from "./durations.ts";
 import { type Link, linkValueSchema } from "./links.ts";
 import { numberValueSchema } from "./numbers.ts";
 import { textValueSchema } from "./text-values.ts";
@@ -79,6 +80,17 @@ export type Days = Record<string, string>;
 // Days asked for, by column, each one that exists; null removes a column's day.
 export const requestedDaysSchema = z.record(z.uuid(), daySchema.nullable());
 
+// Each Duration column's length, as typed, by column. A column with no length is left out.
+export const durationsSchema = z.record(z.string(), durationSchema);
+
+export type Durations = Record<string, Duration>;
+
+// Lengths asked for, by column; null removes a column's length.
+export const requestedDurationsSchema = z.record(
+  z.uuid(),
+  durationSchema.nullable(),
+);
+
 // Choices asked for, by column: each a choice's identifier, at most once.
 export const requestedValuesSchema = z.record(
   z.uuid(),
@@ -97,6 +109,7 @@ export const columnValueMaps = [
   "flags",
   "texts",
   "days",
+  "durations",
 ] as const;
 
 export type ColumnValueMap = (typeof columnValueMaps)[number];
@@ -116,6 +129,7 @@ interface ColumnValueOf {
   flags: true;
   texts: string;
   days: string;
+  durations: Duration;
 }
 
 // One column's value in a map.
@@ -147,6 +161,7 @@ const columnValueSchemas = {
   flags: flagsSchema,
   texts: textsSchema,
   days: daysSchema,
+  durations: durationsSchema,
 } satisfies { [Kind in ColumnValueMap]: z.ZodType<ColumnValues[Kind]> };
 
 const requestedColumnValueSchemas = {
@@ -156,6 +171,7 @@ const requestedColumnValueSchemas = {
   flags: requestedFlagsSchema,
   texts: requestedTextsSchema,
   days: requestedDaysSchema,
+  durations: requestedDurationsSchema,
 } satisfies {
   [Kind in ColumnValueMap]: z.ZodType<RequestedColumnValues[Kind]>;
 };

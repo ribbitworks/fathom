@@ -99,6 +99,7 @@ const requested = (request: FieldRequest, tableName: unknown): Recorded => ({
   visibility: request.visibility ?? null,
   multiple: request.multiple,
   required: request.required,
+  unit: request.unit ?? null,
 });
 
 const sameType = "A column's type cannot change";

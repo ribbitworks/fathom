@@ -16,6 +16,7 @@ import {
   builtInColumnNames,
   capitalized,
   type ChangeValue,
+  durationText,
   hireCalled,
   isLink,
   isNoteField,
@@ -30,7 +31,7 @@ import { builtInTier } from "./values.ts";
 import { type RecordKind, readsKind } from "./record-state.ts";
 import { recordKinds } from "./records.ts";
 import type { StoredChange } from "./changes.ts";
-import { isDate, isFlag, isText } from "./column-types.ts";
+import { isDate, isDuration, isFlag, isText } from "./column-types.ts";
 
 // The kinds of record that belong to another, which the history names them by, as a choice is by
 // its list.
@@ -334,6 +335,9 @@ export function shown(
   }
   if (fieldOfValue(row.field) !== null && isText(value)) return value.text;
   if (fieldOfValue(row.field) !== null && isDate(value)) return value.date;
+  if (fieldOfValue(row.field) !== null && isDuration(value)) {
+    return durationText(value);
+  }
   if (fieldOfValue(row.field) !== null && typeof value === "number") {
     return String(value);
   }

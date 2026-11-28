@@ -3,6 +3,7 @@
 // People, their drafts, and the columns added to the People table, as requests send them and
 // readers receive them.
 
+import { durationUnitSchema } from "./durations.ts";
 import { z } from "zod";
 import { type Permission, tierSchema } from "./access.ts";
 import { daySchema, monthSchema } from "./days.ts";
@@ -44,8 +45,8 @@ export const personLengths = {
 // A date without a time, such as 2026-10-31.
 const day = daySchema;
 
-// A column chooses from a list, or holds a web link, a note, a number, a checkbox ("flag"), text, or
-// a day ("date"). A column's type never changes.
+// A column chooses from a list, or holds a web link, a note, a number, a checkbox ("flag"), text, a
+// day ("date"), or a length ("duration"). A column's type never changes.
 export const fieldTypeSchema = z.enum([
   "choice",
   "link",
@@ -54,6 +55,7 @@ export const fieldTypeSchema = z.enum([
   "flag",
   "text",
   "date",
+  "duration",
 ]);
 
 export type FieldType = z.infer<typeof fieldTypeSchema>;
@@ -70,6 +72,7 @@ export const fieldDraftSchema = z.object({
       visibility: tierSchema.nullable(),
       multiple: z.boolean(),
       required: z.boolean(),
+      unit: durationUnitSchema.nullable(),
     })
     .partial(),
   ...draftShape,
@@ -93,6 +96,8 @@ export const fieldSchema = z.object({
   visibility: tierSchema.nullable().default(null),
   multiple: z.boolean(),
   required: z.boolean(),
+  // The unit a Duration column's bare number takes; null for every other type.
+  unit: durationUnitSchema.nullable().default(null),
   // The table it is on, whose Approvers decide its drafts; one read without it is on People.
   table: columnTableSchema.optional(),
   draft: fieldDraftSchema.optional(),
@@ -298,6 +303,7 @@ const heldAlone = {
   flag: { kind: "checkbox", value: "box", requirable: false },
   text: { kind: "text", value: "text", requirable: true },
   date: { kind: "date", value: "date", requirable: true },
+  duration: { kind: "Duration", value: "length", requirable: true },
 };
 
 // Whether a column of the type can be one that must be filled in.
@@ -390,6 +396,7 @@ export const fieldRequestSchema = z
     visibility: tierSchema.optional(),
     multiple: z.boolean().default(false),
     required: z.boolean().default(false),
+    unit: durationUnitSchema.optional(),
   })
   .superRefine((request, context) => {
     const issue = (message: string) => {
@@ -412,6 +419,12 @@ export const fieldRequestSchema = z
       if (request.required && !canBeRequired(request.type)) {
         issue(`A ${kind} column can't be required`);
       }
+    }
+    if (request.type === "duration" && request.unit === undefined) {
+      issue("Choose a unit");
+    }
+    if (request.type !== "duration" && request.unit !== undefined) {
+      issue("Only a Duration column has a unit");
     }
   })
   .transform((request) =>

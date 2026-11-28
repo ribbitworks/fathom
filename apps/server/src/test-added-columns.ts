@@ -49,6 +49,8 @@ export interface ColumnKind {
   noneInHistory: unknown;
   // The values table's column holding the type's values, and the value as it holds it.
   stored: { column: HeldColumn; value: unknown };
+  // Settings its columns need beyond a name, type and class, such as a Duration column's unit.
+  settings?: Record<string, unknown>;
 }
 
 // The values table's columns that hold one value for each record and column.
@@ -60,6 +62,7 @@ const heldColumns = {
   flag: fieldValues.flag,
   text: fieldValues.text,
   date: fieldValues.date,
+  durationAmount: fieldValues.durationAmount,
 };
 
 type HeldColumn = keyof typeof heldColumns;
@@ -325,7 +328,14 @@ export function describeRowNamingColumn(test: () => TestApp, kind: ColumnKind) {
     const { page } = await ok<{ page: PrivatePage }>(
       await send(maker.cookie, "POST", "/api/private-pages", {
         name: unique("Fictional Page"),
-        columns: [{ name: "Title", type: kind.type, visibility: "general" }],
+        columns: [
+          {
+            name: "Title",
+            type: kind.type,
+            visibility: "general",
+            ...kind.settings,
+          },
+        ],
       }),
       201,
     );
@@ -365,6 +375,7 @@ export function addedColumnTests(test: () => TestApp, kind: ColumnKind) {
         name: unique(kind.name),
         type: kind.type,
         visibility: settings.visibility ?? "general",
+        ...kind.settings,
       }),
       201,
     );

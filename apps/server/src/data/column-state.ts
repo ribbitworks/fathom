@@ -264,7 +264,8 @@ export const toFieldOut = (
   keyNumber: number,
   field: Recorded,
 ): Field => {
-  const { type, listId, visibility, multiple } = typeOf(field).settings(field);
+  const { type, listId, visibility, multiple, unit } =
+    typeOf(field).settings(field);
   return {
     id,
     keyNumber,
@@ -274,6 +275,7 @@ export const toFieldOut = (
     visibility,
     multiple,
     required: field.required === true,
+    unit,
     table: columnTableOf(field.tableName),
   };
 };

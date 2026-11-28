@@ -10,6 +10,8 @@ import {
   type ColumnValues,
   columnValueMaps,
   type Days,
+  type Duration,
+  type Durations,
   eachColumnValueMap,
   isLink,
   type FieldType,
@@ -32,6 +34,7 @@ import { choicesWithAdded, refuseHeldColumns } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
 import {
   isDate,
+  isDuration,
   isFlag,
   isNote,
   isNumber,
@@ -224,6 +227,12 @@ const textsOf = (person: Recorded, shows: Shows): Texts =>
 const daysOf = (person: Recorded, shows: Shows): Days =>
   valuesHolding(person, isDate, shows, ({ date }) => date);
 
+const durationsOf = (person: Recorded, shows: Shows): Durations =>
+  valuesHolding(person, isDuration, shows, ({ amount, unit }) => ({
+    amount,
+    unit,
+  }));
+
 const columnValueReaders: {
   [Kind in ColumnValueMap]: (
     person: Recorded,
@@ -236,6 +245,7 @@ const columnValueReaders: {
   flags: flagsOf,
   texts: textsOf,
   days: daysOf,
+  durations: durationsOf,
 };
 
 // A person's or planned hire's values in each map, by column, as recorded, in only the columns
@@ -483,6 +493,16 @@ const checkedDays = (
     date === null ? [] : { date },
   );
 
+// The lengths asked for each column, as recorded, or none, for a length removed. The shared schema
+// has already checked each is a whole amount in a unit.
+const checkedDurations = (
+  columns: readonly ColumnInfo[],
+  requested: Readonly<Record<string, Duration | null>> | undefined,
+): Recorded =>
+  checkedOfType(columns, requested, "duration", (length) =>
+    length === null ? [] : { amount: length.amount, unit: length.unit },
+  );
+
 const columnValueCheckers: {
   [Kind in ColumnValueMap]: (
     columns: readonly ColumnInfo[],
@@ -495,6 +515,7 @@ const columnValueCheckers: {
   flags: checkedFlags,
   texts: checkedTexts,
   days: checkedDays,
+  durations: checkedDurations,
 };
 
 // The values asked for in each map, as recorded, checked in turn.

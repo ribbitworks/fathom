@@ -5,6 +5,10 @@
 
 import {
   type ColumnValue,
+  type Duration,
+  durationSchema,
+  type DurationUnit,
+  durationUnitSchema,
   type ColumnValueMap,
   type ColumnValues,
   type FieldType,
@@ -25,6 +29,8 @@ export interface TypeSettings {
   listId: string | null;
   visibility: Tier | null;
   multiple: boolean;
+  // The unit a Duration column's bare number takes; null for every other type.
+  unit: DurationUnit | null;
   // Settings of types not offered yet, which every type offered leaves unset.
   linkedTable: null;
 }
@@ -74,6 +80,7 @@ const choice: ColumnType = {
     listId: String(field.listId),
     visibility: null,
     multiple: field.multiple === true,
+    unit: null,
     ...laterSettingsUnset,
   }),
   tier: ({ listId }, listTier) => listTier(String(listId)),
@@ -102,6 +109,10 @@ const withOwnVisibility = (
     listId: null,
     visibility: storedTier(field.visibility),
     multiple: false,
+    unit:
+      type === "duration"
+        ? (durationUnitSchema.safeParse(field.unit).data ?? null)
+        : null,
     ...laterSettingsUnset,
   }),
   tier: ({ visibility }) => storedTier(visibility),
@@ -226,6 +237,18 @@ const date = holdingOne({
   row: ({ date: held }) => ({ date: held }),
 });
 
+// A length is recorded as its amount and unit, which no other type's value holds.
+export const isDuration = (value: unknown): value is Duration =>
+  durationSchema.strict().safeParse(value).success;
+
+const duration = holdingOne({
+  type: "duration",
+  holds: isDuration,
+  map: "durations",
+  shown: ({ amount, unit }) => ({ amount, unit }),
+  row: ({ amount, unit }) => ({ durationAmount: amount, durationUnit: unit }),
+});
+
 export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
   choice,
   link,
@@ -234,6 +257,7 @@ export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
   flag,
   text,
   date,
+  duration,
 };
 
 // The type of column that holds a recorded value, which the value says, or undefined for none.

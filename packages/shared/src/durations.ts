@@ -4,6 +4,7 @@
 // a day moved by one, and the length between two days. The start day counts as the first, so a
 // length from a day to the day it was moved to gives back the amount moved by.
 
+import { z } from "zod";
 import { addDays, daysBetween, daysInWeek } from "./cycles.ts";
 import {
   isWorkingDay,
@@ -13,12 +14,19 @@ import {
 
 export const durationUnits = ["d", "wd", "wk", "mo"] as const;
 
-export type DurationUnit = (typeof durationUnits)[number];
+export const durationUnitSchema = z.enum(durationUnits);
 
-export interface Duration {
-  amount: number;
-  unit: DurationUnit;
-}
+export type DurationUnit = z.infer<typeof durationUnitSchema>;
+
+// The longest length typed, in any unit, well past any plan, and within what the database keeps.
+export const durationLimit = 9999;
+
+export const durationSchema = z.object({
+  amount: z.number().int().min(-durationLimit).max(durationLimit),
+  unit: durationUnitSchema,
+});
+
+export type Duration = z.infer<typeof durationSchema>;
 
 const daysInYear = 365.25;
 const monthsInYear = 12;
@@ -49,6 +57,10 @@ export const durationIn = (
   unit === shown
     ? amount
     : (amount * unitDays(unit, workingDays)) / unitDays(shown, workingDays);
+
+// A length as typed, by its unit's code, with a minus sign where it counts back, such as −1 wk.
+export const durationText = ({ amount, unit }: Duration): string =>
+  `${amount < 0 ? "−" : ""}${String(Math.abs(amount))} ${unit}`;
 
 const lastDayOfMonth = (year: number, monthIndex: number): number =>
   new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();

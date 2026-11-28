@@ -343,6 +343,7 @@ export {
   type ColumnValues,
   columnValuesIn,
   type Days,
+  type Durations,
   eachColumnValueMap,
   type Flags,
   flagsSchema,
@@ -595,3 +596,18 @@ export {
   timelineRecordSchema,
   timelineSchema,
 } from "./timeline.ts";
+export {
+  type Duration,
+  type DurationRefusal,
+  type DurationUnit,
+  durationIn,
+  durationLimit,
+  durationSchema,
+  durationText,
+  durationUnitSchema,
+  durationUnits,
+  parseDuration,
+  plusDuration,
+  spanBetween,
+  unitDays,
+} from "./durations.ts";

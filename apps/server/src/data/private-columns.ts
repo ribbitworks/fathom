@@ -92,6 +92,7 @@ const requestedRow = (
     visibility: request.visibility ?? null,
     multiple: request.multiple,
     required,
+    unit: request.unit ?? null,
   }),
   pageId,
 });
