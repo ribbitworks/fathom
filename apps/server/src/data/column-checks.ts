@@ -37,7 +37,8 @@ export async function checkColumnDraft(
   const after = draftedField(mine, id);
   // A removal is of a live column, since a column removed since takes the change with it.
   if (after === undefined) {
-    await checkColumnRemoval(transaction, actor, mine, id, live as Recorded);
+    const removed = live as Recorded;
+    await checkColumnRemoval(transaction, actor, mine, id, removed, removed);
     return;
   }
   await checkColumnSettings(

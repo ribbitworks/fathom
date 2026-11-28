@@ -433,18 +433,13 @@ export async function changeAllocation(
     const id = made ?? randomUUID();
     const before = versionOf(state, type, id);
     const months = withChange(monthsOf(before), change);
-    await checkAllocationDraft(
-      transaction,
-      state,
-      {
-        personId: change.personId ?? null,
-        plannedHireId: change.plannedHireId ?? null,
-        featureId: change.featureId,
-        months,
-      },
-      before,
-      today,
-    );
+    const wanted = {
+      personId: change.personId ?? null,
+      plannedHireId: change.plannedHireId ?? null,
+      featureId: change.featureId,
+      months,
+    };
+    await checkAllocationDraft(transaction, state, wanted, before, today);
     if (made === undefined && Object.keys(months).length === 0) {
       throw new BadRequestError(nothingToStop);
     }
@@ -454,14 +449,7 @@ export async function changeAllocation(
       state,
       type,
       id,
-      Object.keys(months).length === 0
-        ? undefined
-        : {
-            personId: change.personId ?? null,
-            plannedHireId: change.plannedHireId ?? null,
-            featureId: change.featureId,
-            months,
-          },
+      Object.keys(months).length === 0 ? undefined : wanted,
     );
   });
 }

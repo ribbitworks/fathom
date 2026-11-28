@@ -482,7 +482,7 @@ export async function refuseIfDraftsFill(
   }
 }
 
-// Refuses removing a live column, as the actor's drafts make it, while drafts, as they see them,
+// Refuses removing a live column, as the actor's drafts make it and as it is live, while drafts, as they see them,
 // change its values, or where the actor may not remove its values.
 export async function checkColumnRemoval(
   transaction: Transaction,
@@ -490,6 +490,7 @@ export async function checkColumnRemoval(
   state: ColumnsState,
   id: string,
   field: Recorded,
+  live: Recorded,
 ): Promise<void> {
   if (await draftsUse(transaction, { column: id }, actor.user.id)) {
     throw new ConflictError(
@@ -498,7 +499,7 @@ export async function checkColumnRemoval(
   }
   const tier = mostSensitive([
     columnTier(state, field),
-    columnTier(state, state.fields.get(id) as Recorded),
+    columnTier(state, live),
   ]);
   if (!mayRemoveValuesOf(actor, field, tier)) {
     throw new ForbiddenError(unseenDetails(String(field.name)));
@@ -521,7 +522,7 @@ export async function deleteField(
       await refuseIfDraftsFill(transaction, actor.user.id, id, field);
       return discardColumn(transaction, actor, state, id, field);
     }
-    await checkColumnRemoval(transaction, actor, state, id, field);
+    await checkColumnRemoval(transaction, actor, state, id, field, live);
     return saveFieldDraft(transaction, actor, state, id, field, undefined);
   });
 }
