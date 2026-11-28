@@ -10,7 +10,7 @@
 - **Ships on:** the day a release ships. It's the end of its last cycle, unless another day was set.
 - **Schedule ends:** a schedule's last day, or **No end date** if it keeps going. No cycle starts after that day, and the cycle holding it ends on it.
   - Once that day has passed, the schedule shows **Ended** after its name. It stays on the page until you retire it.
-- **Tabs:** the page has three tabs beside its heading: **Releases**, where it opens, **Cycles** and **Schedules**. Each tab has its own table, with a timeline of what the table lists above it. A search, a filter or a saved view narrows both.
+- **Tabs:** the page has three tabs beside its heading: **Releases**, where it opens, **Cycles** and **Schedules**. Each tab has its own table, with a timeline of what the table lists above it, unless the tab has no records yet. A search, a filter or a saved view narrows both.
 - **Panel:** a record's details open in a panel beside the timeline and the table. To close it, select the **×** at its top right, or press Esc.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A dot before a name marks its draft.
 - **Who changes what:** if your role can change **Features and releases**, you make and change releases, and someone whose role approves features and releases approves them.

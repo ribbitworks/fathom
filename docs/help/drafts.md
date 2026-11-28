@@ -55,6 +55,7 @@ You're done when the record's hollow dot turns yellow, once published, or is gon
 - **Red words** where a value would be, such as **No feature team** or **Not staffed**, are a warning too. They're not a draft either.
 - **A date** after the name, such as **from Dec 1, 2026**, says when a change takes effect, where that's not the date shown.
 - **A green dot** marks the value or record as it is now, without the draft. It's in the light green row or line under the draft.
+- **A dot alone**, with no value after it, means the draft empties the value. Point at it to see what it was. Where the draft fills in an empty value, the green dot under it stands alone instead.
 - **A faint yellow tint**, while drafts are shown beside live, marks a row, column or card with a draft. It's faintly red once the draft is rejected, and the changed values are in bold.
 
 ## What the Draft Menu Shows

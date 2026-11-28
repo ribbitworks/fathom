@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/features.md"]
-last_updated: "2026-11-25"
+last_updated: "2026-11-27"
 ---
 
 # Fathom: Features Page
@@ -40,7 +40,7 @@ Features lists the plan's features in one table, with a board as a second way of
   - Those drafts are decided on Projects, where they are drafts of the project or proposal, or with the Draft menu's Approve; the cell has no menu of its own, as no table's cell does.
 - **Adding from a picker:** For those who change the plan, a feature's Customers, Projects and Proposals pickers offer New customer, New project and New proposal, as [Adding from a picker](../../standards/ui-conventions/entering-and-saving.md#choices) sets out.
   - A new project or proposal names the feature as it opens; a new customer is linked once added.
-- **Added columns:** General lists only, with no planned hires or other class. A drafted one can be filled straight away, and is approved with the features filled in it, as [Drafts that use drafts](../domain-model.md#drafts-and-approval) sets out.
+- **Added columns:** General lists only, with no class choice. A drafted one can be filled straight away, and is approved with the features filled in it, as [Drafts that use drafts](../domain-model.md#drafts-and-approval) sets out.
   - Remove column shows only to those who may also change features.
 - **New list:** last in a new choice column's List picker, under a line, it shows List name and Choices, the rows a list's panel has: each choice typed in the empty row that starts with +, or several pasted one to a line, a description after a tab, and Remove in a choice's ⋯, or Delete on its row, to take it out.
   - Both are needed: Name needed under List name, Choices needed under Choices; a choice typed twice says Already in this list under Choices.
