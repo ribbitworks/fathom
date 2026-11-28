@@ -11,7 +11,8 @@ import { checkColumnDraft } from "./column-checks.ts";
 import { checkAllocationDraft } from "./allocations.ts";
 import { type Transaction } from "./changes.ts";
 import { drafted, type Recorded, wantsNoDraft } from "./draft-records.ts";
-import { takenEmployeeIds } from "./drafted-values.ts";
+import { columnsWithAdded } from "./added-columns.ts";
+import { checkPersonChange, checkPersonRemoval } from "./person-checks.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import {
   checkChoiceDraft,
@@ -25,7 +26,6 @@ import {
   type PlanningTable,
 } from "./planning-records.ts";
 import {
-  idsOf,
   readsChange,
   type Row,
   subjectOf,
@@ -35,15 +35,15 @@ import { checkOwnerDraft, checkProposalDraft } from "./projects.ts";
 import { recordMisfit } from "./record-drafting.ts";
 import { versionOf } from "./record-state.ts";
 import { readToday } from "./settings.ts";
-import { type ColumnInfo } from "./values.ts";
+import { type ColumnInfo, type TableColumns } from "./values.ts";
 import { isRecordType, recordKinds } from "./records.ts";
 
 interface Checking {
   transaction: Transaction;
   actor: Actor;
   versions: Versions;
-  // The people whose Employee ID, as the user's drafts make them, someone else has.
-  taken: Set<string>;
+  // The People table's columns, as the user sees them, read once.
+  peopleColumns: () => Promise<TableColumns>;
   // Today, read once, when a check first needs it.
   today: () => Promise<string>;
   // The columns added to a planning table, as the user sees them, read once for each table.
@@ -158,16 +158,43 @@ async function checkRecord(
   });
 }
 
-// Whether a change of a kind with no rules of its own on publishing yet still fits the data as it is
-// now: an Employee ID no one else has.
-const fits = ({ taken }: Checking, row: Row): boolean =>
-  wantsNoDraft(row) || row.recordType !== "person" || !taken.has(row.recordId);
+// A person as the user's draft makes them, or their removal, against them as everyone else has
+// them. Taking a draft back asks nothing of a person.
+async function checkPerson(checking: Checking, row: Row): Promise<void> {
+  if (wantsNoDraft(row)) return;
+  const { transaction, actor, versions } = checking;
+  const { live: lives, mine, theirs } = versions.people;
+  const id = row.recordId;
+  const live = lives.get(id);
+  const after = drafted(live, mine.get(id));
+  const person = drafted(live, theirs.get(id));
+  const columns = await checking.peopleColumns();
+  if (after === undefined) {
+    // A removal is of someone others still have, since one removed since takes the change with it.
+    await checkPersonRemoval(
+      transaction,
+      actor,
+      columns,
+      id,
+      live,
+      person as Recorded,
+    );
+    return;
+  }
+  await checkPersonChange({
+    transaction,
+    actor,
+    columns,
+    id,
+    live,
+    person,
+    after,
+    today: await checking.today(),
+  });
+}
 
-// The refusal of a change whose kind still has no rules of its own on publishing.
-class NoLongerFits extends Error {}
-
-const fitting = (checking: Checking, row: Row): Promise<void> =>
-  fits(checking, row) ? Promise.resolve() : Promise.reject(new NoLongerFits());
+// A kind whose rules on publishing are still to come.
+const unchecked = () => Promise.resolve();
 
 // A change to a list, a choice or an order, checked with the lists as the user's drafts make them
 // and as everyone else has them.
@@ -200,9 +227,9 @@ const otherChecks: Record<
       row.recordId,
       row,
     ),
-  person: fitting,
-  "planned-hire": fitting,
-  "feature-team": fitting,
+  person: checkPerson,
+  "planned-hire": unchecked,
+  "feature-team": unchecked,
 };
 
 const otherCheckOf = new Map<
@@ -221,27 +248,6 @@ const kindOrder = [
 // A kind Fathom no longer has comes first, which is no matter, since nothing checks it.
 const placeOf = (row: Row) => kindOrder.indexOf(row.recordType);
 
-// The people whose Employee ID, as the user's drafts make them, someone else has.
-async function takenPeople(
-  transaction: Transaction,
-  userId: string,
-  versions: Versions,
-): Promise<Set<string>> {
-  const taken = new Set<string>();
-  for (const id of idsOf(versions.rows, "person")) {
-    const person = drafted(
-      versions.people.live.get(id),
-      versions.people.mine.get(id),
-    );
-    if (person === undefined) continue;
-    const ids = [String(person.employeeId)];
-    if ((await takenEmployeeIds(transaction, ids, [id], userId)).length > 0) {
-      taken.add(id);
-    }
-  }
-  return taken;
-}
-
 // Refuses publishing the changes given while any breaks a rule a fresh change of its kind goes
 // through, as the data is now and as the user's role sees it, naming the first that does and why.
 // A role that doesn't read a change's kind is told only that it no longer fits, since the reason
@@ -254,11 +260,15 @@ export async function refuseMisfits(
 ): Promise<void> {
   const columns = new Map<PlanningTable, Promise<readonly ColumnInfo[]>>();
   let today: Promise<string> | undefined;
+  let people: Promise<TableColumns> | undefined;
   const checking: Checking = {
     transaction,
     actor,
     versions,
-    taken: await takenPeople(transaction, actor.user.id, versions),
+    peopleColumns: () => {
+      people ??= columnsWithAdded(transaction, actor.user.id, true);
+      return people;
+    },
     today: () => {
       today ??= readToday(transaction);
       return today;
@@ -284,11 +294,9 @@ export async function refuseMisfits(
     try {
       await check(row);
     } catch (error) {
-      if (!(error instanceof RequestError || error instanceof NoLongerFits)) {
-        throw error;
-      }
+      if (!(error instanceof RequestError)) throw error;
       const subject = subjectOf(versions, row, actor);
-      if (error instanceof RequestError && readsChange(versions, row, actor)) {
+      if (readsChange(versions, row, actor)) {
         const named = capitalized(subject);
         // A reason that names the record already says what it is to.
         throw new ConflictError(
