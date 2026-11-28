@@ -4,13 +4,19 @@
 
 import { formatDay, formatDayRange } from "./day-formats.ts";
 import { ColouredNames } from "./colour-swatch.tsx";
-import { lengthUnit } from "./duration-cells.ts";
+import { shownBound } from "./duration-cells.ts";
 import { decimal } from "./numbers.ts";
 import type { Filter, Kind, TableColumn } from "./table-view.ts";
 
 type AnyColumn = Pick<
   TableColumn<never>,
-  "label" | "kind" | "choices" | "emptyLabel" | "choiceColour" | "lengths"
+  | "label"
+  | "kind"
+  | "choices"
+  | "emptyLabel"
+  | "choiceColour"
+  | "lengths"
+  | "places"
 >;
 
 export const noDate = "No date";
@@ -63,15 +69,16 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
     }
     case "number":
     case "duration": {
-      // A length's bounds name the unit they are in, such as at least 2 wk.
-      const unit = column.kind === "duration" ? ` ${lengthUnit(column)}` : "";
+      // A length's bounds are kept in days and named in the unit shown, such as at least 2 wk.
+      const shown = (bound: number) =>
+        column.kind === "duration" ? shownBound(column, bound) : decimal(bound);
       const { atLeast, atMost } = filter;
       if (atLeast !== undefined && atMost !== undefined) {
-        parts.push(`${decimal(atLeast)} to ${decimal(atMost)}${unit}`);
+        parts.push(`${shown(atLeast)} to ${shown(atMost)}`);
       } else if (atLeast !== undefined) {
-        parts.push(`at least ${decimal(atLeast)}${unit}`);
+        parts.push(`at least ${shown(atLeast)}`);
       } else if (atMost !== undefined) {
-        parts.push(`at most ${decimal(atMost)}${unit}`);
+        parts.push(`at most ${shown(atMost)}`);
       }
       if (filter.empty) {
         parts.push(column.kind === "duration" ? noDuration : "No number");

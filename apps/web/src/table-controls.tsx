@@ -79,7 +79,7 @@ import { AppMenu, MenuChoices, MenuToggle, Tick } from "./app-menu.tsx";
 import type { ColumnUnits } from "./record-table.ts";
 import classes from "./pages.module.css";
 import { ClearableInput } from "./clearable-input.tsx";
-import { LengthBound } from "./length-bound.tsx";
+import { LengthRange } from "./length-bound.tsx";
 import {
   FilterWords,
   describeFilter,
@@ -1758,23 +1758,17 @@ function FilterForm({
     case "duration":
       return (
         <Stack gap="xs">
-          <LengthBound
+          <LengthRange
             column={column}
-            label="At least"
-            initial={filter.atLeast}
-            within={{ most: filter.atMost }}
-            autoFocus
-            onChange={(atLeast) => {
-              onChange(withPart(filter, "atLeast", atLeast));
-            }}
-          />
-          <LengthBound
-            column={column}
-            label="At most"
-            initial={filter.atMost}
-            within={{ least: filter.atLeast }}
-            onChange={(atMost) => {
-              onChange(withPart(filter, "atMost", atMost));
+            bounds={{ atLeast: filter.atLeast, atMost: filter.atMost }}
+            onBounds={({ atLeast, atMost }) => {
+              onChange(
+                withPart(
+                  withPart(filter, "atLeast", atLeast),
+                  "atMost",
+                  atMost,
+                ),
+              );
             }}
           />
           {empty(noDuration)}

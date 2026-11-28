@@ -15,7 +15,7 @@ import {
   sameRecordKey,
 } from "@fathom/shared";
 import { useState } from "react";
-import { lengthDays, lengthIn } from "./duration-cells.ts";
+import { lengthDays } from "./duration-cells.ts";
 import { decimal } from "./numbers.ts";
 import { formatDay, formatMonth } from "./day-formats.ts";
 import {
@@ -182,13 +182,13 @@ const flagRules: Rules = {
       : filter.empty === true,
 };
 
-// A length is searched as typed, sorts by its size, and is filtered by its amount in the unit shown.
+// A length is searched as typed, and sorts and is filtered by its size in calendar days.
 const durationRules: Rules = {
   isEmpty: (value) => asText(value) === "",
   words: (_column, value) => asText(value),
   compare: (_column, a, b) => lengthDays(a) - lengthDays(b),
-  matches: (column, value, { atLeast, atMost }) => {
-    const amount = lengthIn(column, value);
+  matches: (_column, value, { atLeast, atMost }) => {
+    const amount = lengthDays(value);
     return (
       (atLeast !== undefined || atMost !== undefined) &&
       (atLeast === undefined || amount >= atLeast) &&

@@ -1,62 +1,78 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A bound of a Duration column's filter, such as At least: a length typed as a cell takes it, such
-// as 3 mo, or a bare number in the unit the column is shown in, which the field names, kept as an
-// amount of that unit.
+// The bounds of a Duration column's filter, At least and At most: each a length typed as a cell
+// takes it, such as 3 mo, or a bare number in the unit the column is shown in, which each field
+// names. A bound is kept in calendar days, in which every unit's size has at most four decimal
+// places, so it holds the length typed exactly, and a cell of that length falls within it.
 
-import {
-  durationIn,
-  durationRefusalWords,
-  numberDigits,
-  parseDuration,
-} from "@fathom/shared";
+import { durationRefusalWords, parseDuration, unitDays } from "@fathom/shared";
 import { useState } from "react";
 import { ClearableInput } from "./clearable-input.tsx";
-import { lengthUnit, unitName } from "./duration-cells.ts";
-import { decimal } from "./numbers.ts";
+import { lengthUnit, shownBound, unitName } from "./duration-cells.ts";
 import type { TableColumn } from "./table-view.ts";
 
-export function LengthBound({
+type Bounds = { atLeast: number | undefined; atMost: number | undefined };
+
+export function LengthRange({
   column,
-  label,
-  initial,
-  within,
-  autoFocus = false,
-  onChange,
+  bounds,
+  onBounds,
 }: {
-  column: Pick<TableColumn<never>, "lengths">;
-  label: string;
-  initial: number | undefined;
-  // The other bound, which this one may not pass: at least for At most, at most for At least.
-  within: { least?: number | undefined; most?: number | undefined };
-  autoFocus?: boolean;
-  onChange: (value: number | undefined) => void;
+  column: Pick<TableColumn<never>, "lengths" | "places">;
+  bounds: Bounds;
+  onBounds: (bounds: Bounds) => void;
 }) {
   const unit = lengthUnit(column);
-  // A bound set earlier, perhaps from another unit, opens as its amount, which is never refused.
-  const opened = initial === undefined ? "" : `${decimal(initial)} ${unit}`;
-  const [typed, setTyped] = useState(opened);
-  // A length typed as a cell takes it, as an amount of the unit, rounded to the places a filter
-  // keeps; what a cell would refuse, or what passes the other bound, says why and applies nothing.
-  const amountOf = (text: string) => {
-    const read = parseDuration(text, unit);
-    if ("refused" in read) {
-      return { problem: durationRefusalWords(read.refused, label) };
+  // A bound set earlier opens as its amount of the unit shown, which is never refused.
+  const opened = (days: number | undefined) =>
+    days === undefined ? "" : shownBound(column, days);
+  const [least, setLeast] = useState(opened(bounds.atLeast));
+  const [most, setMost] = useState(opened(bounds.atMost));
+  // A bound's days, none for an empty field, or why it is refused, in a cell's words naming it.
+  const read = (label: string, text: string) => {
+    const length = parseDuration(text, unit);
+    if ("refused" in length) {
+      return { problem: durationRefusalWords(length.refused, label) };
     }
-    if (!("duration" in read)) return { amount: undefined };
-    const amount = Number(
-      durationIn(read.duration, unit).toFixed(numberDigits.afterPoint),
-    );
-    if (within.least !== undefined && amount < within.least) {
-      return { problem: `Type ${decimal(within.least)} ${unit} or more` };
-    }
-    if (within.most !== undefined && amount > within.most) {
-      return { problem: `Type ${decimal(within.most)} ${unit} or less` };
-    }
-    return { amount };
+    return "duration" in length
+      ? { days: length.duration.amount * unitDays(length.duration.unit) }
+      : { days: undefined };
   };
-  const typedProblem = typed === opened ? undefined : amountOf(typed).problem;
-  return (
+  const range = (leastText: string, mostText: string) => {
+    const from = read("At least", leastText);
+    const to = read("At most", mostText);
+    const reversed =
+      from.days !== undefined && to.days !== undefined && to.days < from.days;
+    return { from, to, reversed };
+  };
+  // A range refused, by either bound or by At most coming before At least, applies nothing.
+  const apply = (leastText: string, mostText: string) => {
+    const { from, to, reversed } = range(leastText, mostText);
+    const refused =
+      reversed || from.problem !== undefined || to.problem !== undefined;
+    onBounds(
+      refused
+        ? { atLeast: undefined, atMost: undefined }
+        : { atLeast: from.days, atMost: to.days },
+    );
+  };
+  const shown = range(least, most);
+  const leastProblem =
+    least === opened(bounds.atLeast) ? undefined : shown.from.problem;
+  const mostProblem =
+    most === opened(bounds.atMost)
+      ? undefined
+      : (shown.to.problem ??
+        (shown.reversed && shown.from.days !== undefined
+          ? `Type ${shownBound(column, shown.from.days)} or more`
+          : undefined));
+  const field = (
+    label: string,
+    value: string,
+    problem: string | undefined,
+    change: (text: string) => void,
+    autoFocus: boolean,
+  ) => (
     <ClearableInput
       label={`${label} in ${unitName(unit)}`}
       size="sm"
@@ -64,16 +80,37 @@ export function LengthBound({
       {...(autoFocus ? { "data-autofocus": true } : {})}
       clearLabel={`Clear ${label}`}
       onClear={() => {
-        setTyped("");
-        onChange(undefined);
+        change("");
       }}
-      value={typed}
-      error={typedProblem}
+      value={value}
+      error={problem}
       onChange={(event) => {
-        const next = event.currentTarget.value;
-        setTyped(next);
-        onChange(amountOf(next).amount);
+        change(event.currentTarget.value);
       }}
     />
+  );
+  return (
+    <>
+      {field(
+        "At least",
+        least,
+        leastProblem,
+        (text) => {
+          setLeast(text);
+          apply(text, most);
+        },
+        true,
+      )}
+      {field(
+        "At most",
+        most,
+        mostProblem,
+        (text) => {
+          setMost(text);
+          apply(least, text);
+        },
+        false,
+      )}
+    </>
   );
 }

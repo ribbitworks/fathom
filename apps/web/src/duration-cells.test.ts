@@ -9,6 +9,7 @@ import {
   lengthDays,
   lengthIn,
   lengthUnit,
+  shownBound,
   shownLength,
   unitName,
 } from "./duration-cells.ts";
@@ -34,6 +35,14 @@ describe("a length's size and amount", () => {
     expect(shownLength(asTyped, "2 wk", 1)).toBe("2 wk");
     expect(shownLength(inWeeks, "", 1)).toBe("");
     expect(shownLength(inWeeks, "10 d", 1)).toBe("1.4 wk");
+  });
+});
+
+describe("a filter's bound", () => {
+  it("is named in the unit shown, whole for a column naming no places, counting back with a minus sign", () => {
+    expect(shownBound(inWeeks, 91.3125)).toBe("13 wk");
+    expect(shownBound({ ...inWeeks, places: 2 }, 91.3125)).toBe("13.04 wk");
+    expect(shownBound(asTyped, -30.4375)).toBe("−1 mo");
   });
 });
 

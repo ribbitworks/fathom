@@ -234,7 +234,7 @@ describe("a Duration column", () => {
     expect(within(filter).getByText("Type 28 d or more")).toBeDefined();
   });
 
-  it("keeps a bound that is a fraction of the unit shown to the places a filter keeps", async () => {
+  it("keeps a bound exactly, naming it in the unit shown to its decimal places", async () => {
     await open();
     await choose("Weeks");
     await choose("Filter…");
@@ -246,11 +246,11 @@ describe("a Duration column", () => {
       "1 mo",
     );
     expect(
-      await screen.findByText("Notice given: at least 4.348214 wk"),
+      await screen.findByText("Notice given: at least 4.3 wk"),
     ).toBeDefined();
   });
 
-  it("refuses an At least past At most, applying nothing of it", async () => {
+  it("applies nothing of a range whose At most comes before its At least", async () => {
     await open();
     await choose("Filter…");
     const filter = await screen.findByRole("dialog", {
@@ -260,14 +260,33 @@ describe("a Duration column", () => {
       within(filter).getByRole("textbox", { name: "At most in calendar days" }),
       "1 wk",
     );
+    expect(screen.getByText("Notice given: at most 7 d")).toBeDefined();
     await userEvent.type(
       within(filter).getByRole("textbox", {
         name: "At least in calendar days",
       }),
       "2 wk",
     );
-    expect(within(filter).getByText("Type 7 d or less")).toBeDefined();
-    expect(screen.getByText("Notice given: at most 7 d")).toBeDefined();
+    expect(within(filter).getByText("Type 14 d or more")).toBeDefined();
+    await waitFor(() => {
+      expect(screen.queryByText(/^Notice given: /u)).toBeNull();
+    });
+  });
+
+  it("includes a cell of exactly the length typed, in whatever unit is shown", async () => {
+    await open();
+    await choose("Weeks");
+    await choose("Filter…");
+    const filter = await screen.findByRole("dialog", {
+      name: "Filter Notice given",
+    });
+    await userEvent.type(
+      within(filter).getByRole("textbox", { name: "At least in weeks" }),
+      "1 mo",
+    );
+    await waitFor(() => {
+      expect(shownNames()).toEqual(["Casey Fictional"]);
+    });
   });
 
   it("reopens a bound set before as its amount, unrefused, and clears it", async () => {
@@ -302,7 +321,7 @@ describe("a Duration column", () => {
     await waitFor(() => {
       expect(shownNames()).toEqual(["Devon Fictional"]);
     });
-    expect(screen.getByText("Notice given: at most -1 d")).toBeDefined();
+    expect(screen.getByText("Notice given: at most −1 d")).toBeDefined();
   });
 
   it("is exported as typed, or as an amount of the unit shown", () => {

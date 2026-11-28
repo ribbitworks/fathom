@@ -15,6 +15,10 @@ import { asText, type CellValue, type TableColumn } from "./table-view.ts";
 
 type LengthColumn = Pick<TableColumn<never>, "lengths">;
 
+// An amount of a unit, with a true minus sign for one counting back, such as −1.4 wk.
+const amountText = (amount: number, unit: DurationUnit, places: number) =>
+  `${amount < 0 ? "−" : ""}${decimalTo(Math.abs(amount), places)} ${unit}`;
+
 // Each unit's name, as a Duration column's Unit and Show in offer them, in their order, and its
 // words for an amount of many and of one, such as 3 weeks or 1 week.
 export const durationUnitsShown: readonly {
@@ -89,6 +93,15 @@ export const shownLength = (
   const shown = column.lengths?.shown;
   const length = lengthOf(value);
   if (shown === undefined || length === undefined) return asText(value);
-  const amount = durationIn(length, shown);
-  return `${amount < 0 ? "−" : ""}${decimalTo(Math.abs(amount), places)} ${shown}`;
+  return amountText(durationIn(length, shown), shown, places);
+};
+
+// A filter's bound, kept in calendar days, as an amount of the column's unit to the places it is
+// shown to, such as 13 wk for 91.3125 days.
+export const shownBound = (
+  column: LengthColumn & Pick<TableColumn<never>, "places">,
+  days: number,
+): string => {
+  const unit = lengthUnit(column);
+  return amountText(days / unitDays(unit), unit, column.places ?? 0);
 };
