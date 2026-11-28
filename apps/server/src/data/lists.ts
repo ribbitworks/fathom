@@ -95,7 +95,9 @@ import {
 
 export const noList = "There is no such list";
 export const noChoice = "There is no such choice";
-const duplicateChoice = "This list already has a choice with that name";
+export const duplicateChoice = "This list already has a choice with that name";
+export const choicesDrafted =
+  "This list's choices have drafts; approve or discard them before deleting the list";
 const listToBeRemoved =
   "This list's draft removes it; discard the draft to change it";
 const choiceToBeRemoved =
@@ -303,24 +305,61 @@ export async function updateList(
 const listSettings =
   (actor: Actor, id: string, request: ListRequest): ListChange =>
   async (transaction, state, list) => {
-    await refuseSensitivePlanningList(
-      transaction,
-      id,
-      request.visibility,
-      actor.user.id,
-    );
-    refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
-    if (listNameTaken(state, request.name, id)) {
-      throw new ConflictError(duplicateList);
-    }
+    const after = { ...list, ...request };
+    await checkListSettings(transaction, actor, state, id, list, after);
     classifyDraft(actor, {
       live: state.lists.has(id),
       name: String(list.name),
       from: storedTier(list.visibility),
       to: request.visibility,
     });
-    return { ...list, ...request };
+    return after;
   };
+
+// Refuses a list's settings as a change makes them, against the list before it: a visibility the
+// actor doesn't see, or that a column drawing on it can't hold, a name another list has, or
+// retiring it while a column draws on it.
+export async function checkListSettings(
+  transaction: Transaction,
+  actor: Actor,
+  state: ListsState,
+  id: string,
+  before: Recorded | undefined,
+  after: Recorded,
+): Promise<void> {
+  const visibility = String(after.visibility);
+  await refuseSensitivePlanningList(transaction, id, visibility, actor.user.id);
+  refuseUnseenVisibility(actor, storedTier(visibility), unseenVisibility);
+  if (listNameTaken(state, String(after.name), id)) {
+    throw new ConflictError(duplicateList);
+  }
+  if (after.retired === true && before?.retired !== true) {
+    await refuseIfUsed(transaction, id, "retired", actor.user.id);
+  }
+}
+
+// Refuses removing a live list while a column draws on it, or its choices have drafts.
+export async function checkListRemoval(
+  transaction: Transaction,
+  editor: string,
+  state: ListsState,
+  id: string,
+): Promise<void> {
+  await refuseIfUsed(transaction, id, "deleted", editor);
+  if (choicesHaveDrafts(state, id)) throw new ConflictError(choicesDrafted);
+}
+
+// Refuses discarding a list only drafted to be added while a column draws on it, or drafts choose
+// its choices.
+export async function checkListDiscard(
+  transaction: Transaction,
+  editor: string,
+  state: ListsState,
+  id: string,
+): Promise<void> {
+  await refuseIfUsed(transaction, id, "discarded", editor);
+  await refuseIfDraftsChoose(transaction, editor, addedChoices(state, id));
+}
 
 export const listMoved = (name: unknown) => `the ${String(name)} list`;
 
@@ -383,11 +422,10 @@ export async function setListRetired(
   retired: boolean,
 ): Promise<string | null> {
   return (
-    await changeList(database, maker, id, async (transaction, _state, list) => {
-      if (retired && list.retired !== true) {
-        await refuseIfUsed(transaction, id, "retired", maker.user.id);
-      }
-      return { ...list, retired };
+    await changeList(database, maker, id, async (transaction, state, list) => {
+      const after = { ...list, retired };
+      await checkListSettings(transaction, maker, state, id, list, after);
+      return after;
     })
   ).changeSetId;
 }
@@ -494,22 +532,12 @@ export async function deleteList(
     const list = changeableList(maker, state, id);
     const live = state.lists.get(id);
     if (live === undefined) {
-      await refuseIfUsed(transaction, id, "discarded", maker.user.id);
-      await refuseIfDraftsChoose(
-        transaction,
-        maker.user.id,
-        addedChoices(state, id),
-      );
+      await checkListDiscard(transaction, maker.user.id, state, id);
       const made = discardingList(state, id);
       await removeDiscarded(transaction, maker.user.id, made);
       return recordChanges(transaction, maker, made, "discard");
     }
-    await refuseIfUsed(transaction, id, "deleted", maker.user.id);
-    if (choicesHaveDrafts(state, id)) {
-      throw new ConflictError(
-        "This list's choices have drafts; approve or discard them before deleting the list",
-      );
-    }
+    await checkListRemoval(transaction, maker.user.id, state, id);
     return saveDraft(
       transaction,
       maker,
@@ -579,6 +607,28 @@ export async function addChoices(
   });
 }
 
+// Refuses a choice's details as a change makes them, against the choice before it: a label another
+// choice in its list has, a meaning or weight that doesn't fit its list, or a meaning people's
+// records act on while drafts hold the choice.
+export async function checkChoiceSettings(
+  transaction: Transaction,
+  editor: string,
+  state: ListsState,
+  id: string,
+  before: Recorded | undefined,
+  after: Recorded,
+): Promise<void> {
+  const listId = String(after.listId);
+  if (choiceLabelTaken(state, listId, String(after.label), id)) {
+    throw new ConflictError(duplicateChoice);
+  }
+  refuseMeaningMisfit(state, listId, meaningOf(after));
+  refuseWeightMisfit(state, listId, weightOf(after));
+  if (peoplesMeaning(after.meaning) && !peoplesMeaning(before?.meaning)) {
+    await refusePeoplesMeaningWhileHeld(transaction, id, after.meaning, editor);
+  }
+}
+
 // Drafts a change to a choice's details, or to whether it is retired. A restored choice keeps its
 // place.
 async function changeChoice(
@@ -592,14 +642,14 @@ async function changeChoice(
     const choice = changeableChoice(maker, state, listId, id);
     const after = change(state, choice);
     refuseLastKept(state, listId, id, after);
-    if (peoplesMeaning(after.meaning) && !peoplesMeaning(choice.meaning)) {
-      await refusePeoplesMeaningWhileHeld(
-        transaction,
-        id,
-        after.meaning,
-        maker.user.id,
-      );
-    }
+    await checkChoiceSettings(
+      transaction,
+      maker.user.id,
+      state,
+      id,
+      choice,
+      after,
+    );
     const changeSetId = await saveDraft(
       transaction,
       maker,
@@ -624,17 +674,12 @@ export async function updateChoice(
   id: string,
   request: ChoiceRequest,
 ): Promise<Saved<Choice>> {
-  return changeChoice(database, maker, listId, id, (state, choice) => {
-    if (choiceLabelTaken(state, listId, request.label, id)) {
-      throw new ConflictError(duplicateChoice);
-    }
+  return changeChoice(database, maker, listId, id, (_state, choice) => {
     const {
       meaning = meaningOf(choice),
       weight = weightOf(choice),
       ...details
     } = request;
-    refuseMeaningMisfit(state, listId, meaning);
-    refuseWeightMisfit(state, listId, weight);
     return { ...choice, ...details, meaning, weight };
   });
 }

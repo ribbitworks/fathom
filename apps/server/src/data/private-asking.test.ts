@@ -9,6 +9,7 @@ import {
   askedAbout,
   blindField,
   isBlind,
+  liveMaker,
   otherMaker,
   sideSeen,
 } from "./private-asking.ts";
@@ -170,24 +171,52 @@ describe("who made the other side of a clash", () => {
   const after = new Date("2026-11-21T10:00:00Z");
 
   it("is who last changed the field", () => {
-    expect(otherMaker(field, maker, undefined)).toBe("Cleo");
+    expect(otherMaker(field, maker, undefined, null)).toBe("Cleo");
   });
 
   it("is who last changed a record they removed", () => {
-    expect(otherMaker(record("theirs"), maker, after)).toBe("Ana");
+    expect(otherMaker(record("theirs"), maker, after, null)).toBe("Ana");
   });
 
   it("is who changed a record the user removes, after the removal began", () => {
-    expect(otherMaker(record("mine"), maker, before)).toBe("Ana");
+    expect(otherMaker(record("mine"), maker, before, null)).toBe("Ana");
   });
 
   it("is nobody for a change made before the user's removal began", () => {
-    expect(otherMaker(record("mine"), maker, after)).toBeNull();
+    expect(otherMaker(record("mine"), maker, after, null)).toBeNull();
   });
 
   it("is nobody where the history names no one", () => {
-    expect(otherMaker(record("mine"), undefined, before)).toBeNull();
-    expect(otherMaker(record("mine"), maker, undefined)).toBeNull();
+    expect(otherMaker(record("mine"), undefined, before, null)).toBeNull();
+    expect(otherMaker(record("mine"), maker, undefined, null)).toBeNull();
+  });
+
+  it("is who made a record's change live, for a removal of a record changed live", () => {
+    const live = {
+      ...record("mine"),
+      clash: { ...record("mine").clash, state: "live" as const },
+    };
+
+    expect(otherMaker(live, maker, before, "Dee")).toBe("Dee");
+  });
+});
+
+describe("who made a record's change live since a removal began", () => {
+  const liveSince = {
+    added: false,
+    changes: [
+      { field: "site", tier: "general", madeBy: "Dee" },
+      { field: "salary", tier: "confidential", madeBy: "Eli" },
+    ],
+  };
+
+  it("is who made the latest the role is shown", () => {
+    expect(liveMaker(liveSince, ({ tier }) => tier === "general")).toBe("Dee");
+  });
+
+  it("is nobody where the role is shown none, or nothing was made live", () => {
+    expect(liveMaker(liveSince, () => false)).toBeNull();
+    expect(liveMaker(undefined, () => true)).toBeNull();
   });
 });
 

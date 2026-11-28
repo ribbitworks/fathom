@@ -372,7 +372,7 @@ function checkFeature(state: RecordsState, featureId: string): void {
 // or a planned hire that does not exist or is filled.
 async function boundsFor(
   reader: Reader,
-  change: AllocationChange,
+  change: Pick<AllocationChange, "personId" | "plannedHireId">,
   today: string,
 ): Promise<Bounds> {
   if (change.personId !== undefined) {
@@ -389,6 +389,35 @@ async function boundsFor(
   return { first: hire.expected };
 }
 
+// Refuses an allocation as a draft makes it, against the allocation before it, as a fresh change
+// to it is refused: a feature that can't be allocated, or someone put on it outside the months they
+// can be.
+export async function checkAllocationDraft(
+  reader: Reader,
+  state: RecordsState,
+  after: Recorded,
+  before: Recorded | undefined,
+  today: string,
+): Promise<void> {
+  checkFeature(state, String(after.featureId));
+  const person =
+    typeof after.personId === "string" ? after.personId : undefined;
+  const bounds = await boundsFor(
+    reader,
+    person === undefined
+      ? { plannedHireId: String(after.plannedHireId) }
+      : { personId: person },
+    today,
+  );
+  const outside = outsideOf(
+    changedSpans(monthsOf(before), monthsOf(after)),
+    bounds,
+  );
+  if (outside !== undefined) {
+    throw new BadRequestError(draftingRefusal(outside, person !== undefined));
+  }
+}
+
 // Changes one allocation as a draft, from a month, until a month or with no end. A change that
 // leaves an allocation only drafted to be added with no months takes it away, and one that leaves
 // a live allocation with none drafts its removal.
@@ -400,21 +429,19 @@ export async function changeAllocation(
   requireView(editor, "allocations");
   const today = await readToday(database);
   return drafting(database, editor.user.id, async (transaction, state) => {
-    checkFeature(state, change.featureId);
-    const bounds = await boundsFor(transaction, change, today);
-    // Someone else's unpublished changes to it, if any, refuse the change as they hold it.
     const made = allocationFor(state, change);
     const id = made ?? randomUUID();
-    const before = monthsOf(versionOf(state, type, id));
-    const months = withChange(before, change);
+    const before = versionOf(state, type, id);
+    const months = withChange(monthsOf(before), change);
+    const wanted = {
+      personId: change.personId ?? null,
+      plannedHireId: change.plannedHireId ?? null,
+      featureId: change.featureId,
+      months,
+    };
+    await checkAllocationDraft(transaction, state, wanted, before, today);
     if (made === undefined && Object.keys(months).length === 0) {
       throw new BadRequestError(nothingToStop);
-    }
-    const outside = outsideOf(changedSpans(before, months), bounds);
-    if (outside !== undefined) {
-      throw new BadRequestError(
-        draftingRefusal(outside, change.personId !== undefined),
-      );
     }
     return saveRecordDraft(
       transaction,
@@ -422,14 +449,7 @@ export async function changeAllocation(
       state,
       type,
       id,
-      Object.keys(months).length === 0
-        ? undefined
-        : {
-            personId: change.personId ?? null,
-            plannedHireId: change.plannedHireId ?? null,
-            featureId: change.featureId,
-            months,
-          },
+      Object.keys(months).length === 0 ? undefined : wanted,
     );
   });
 }

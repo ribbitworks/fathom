@@ -463,15 +463,11 @@ describe("publishing and discarding", () => {
 
   it("refuses publishing a change that no longer fits the data, publishing none of them", async () => {
     const { list: lone } = await liveList([]);
-    const clash = async (setUp: () => Promise<void>, subject: string) => {
+    const noLongerFits = (subject: string) =>
+      `The change to ${subject} no longer fits the data; change or discard it, then publish again`;
+    const clash = async (setUp: () => Promise<void>, error: string) => {
       await setUp();
-      await refused(
-        bob,
-        "POST",
-        "/api/unpublished/publish",
-        undefined,
-        `The change to ${subject} no longer fits the data; change or discard it, then publish again`,
-      );
+      await refused(bob, "POST", "/api/unpublished/publish", undefined, error);
       expect(await discard(bob)).toBeGreaterThan(0);
     };
     const employeeId = unique("E-Clash");
@@ -490,13 +486,13 @@ describe("publishing and discarding", () => {
         employeeId,
         positionId: testPosition,
       });
-    }, "Fictional Clash");
+    }, noLongerFits("Fictional Clash"));
 
     const listName = unique("Fictional Clash List");
     await clash(async () => {
       await saved(bob, "POST", "/api/lists", { name: listName });
       await test.connection.insert(lists).values({ name: listName });
-    }, `the list ${listName}`);
+    }, `The list ${listName}: There is already a list with that name`);
 
     await clash(async () => {
       await saved(bob, "POST", `/api/lists/${siteList.id}/choices`, {
@@ -505,7 +501,7 @@ describe("publishing and discarding", () => {
       await test.connection
         .insert(listItems)
         .values({ listId: siteList.id, label: "Fictional Clash" });
-    }, `the choice Fictional Clash in ${siteList.name}`);
+    }, `The choice Fictional Clash in ${siteList.name}: This list already has a choice with that name`);
 
     // A list only drafted to be added whose draft goes, taking its choices' list and order.
     const draftedList = async () => {
@@ -533,7 +529,7 @@ describe("publishing and discarding", () => {
       await test.connection
         .delete(drafts)
         .where(eq(drafts.recordId, gone.list.id));
-    }, "the choice Fictional Orphan in a removed list");
+    }, "The choice Fictional Orphan in a removed list: There is no such list");
     const goneOrder = await draftedList();
     await clash(async () => {
       await saved(
@@ -545,7 +541,7 @@ describe("publishing and discarding", () => {
       await test.connection
         .delete(drafts)
         .where(eq(drafts.recordId, goneOrder.list.id));
-    }, "the new order for a removed list");
+    }, "The new order for a removed list: There is no such list");
 
     const columnName = unique("Fictional Clash Column");
     await clash(async () => {
@@ -553,10 +549,12 @@ describe("publishing and discarding", () => {
         name: columnName,
         listId: siteList.id,
       });
-      await test.connection
-        .insert(fields)
-        .values({ tableName: "people", name: columnName, listId: siteList.id });
-    }, `the column ${columnName}`);
+      await test.connection.insert(fields).values({
+        tableName: "people",
+        name: columnName,
+        listId: siteList.id,
+      });
+    }, `The column ${columnName}: There is already a column with that name`);
 
     const loneColumn = unique("Fictional Lone Column");
     await clash(async () => {
@@ -565,6 +563,6 @@ describe("publishing and discarding", () => {
         listId: lone.id,
       });
       await test.connection.delete(lists).where(eq(lists.id, lone.id));
-    }, `the column ${loneColumn}`);
+    }, `The column ${loneColumn}: There is no such list`);
   });
 });

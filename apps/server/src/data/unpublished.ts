@@ -19,25 +19,12 @@ import {
 } from "@fathom/shared";
 import { and, desc, eq, notExists, sql } from "drizzle-orm";
 import { type Actor } from "../access.ts";
-import { ConflictError } from "../errors.ts";
 import { type Change, type Transaction } from "./changes.ts";
-import { draftedField, nameTaken } from "./column-state.ts";
-import { drafted, wantsNoDraft } from "./draft-records.ts";
+import { wantsNoDraft } from "./draft-records.ts";
 import { openChangeSets } from "./draft-makers.ts";
 import { latestFirst } from "./history-order.ts";
 import { lockDrafts } from "./drafts.ts";
-import { takenEmployeeIds } from "./drafted-values.ts";
-import { typeOf } from "./column-types.ts";
-import { choiceLabelTaken, listNameTaken, keptOffered } from "./list-rules.ts";
-import {
-  draftedChoice,
-  draftedList,
-  listExists,
-  listOfChoice,
-} from "./list-state.ts";
 import { removeEmptyOrders } from "./lists.ts";
-import { isRecordType } from "./records.ts";
-import { recordFits } from "./record-drafting.ts";
 import { editsDraft } from "./draft-editors.ts";
 import {
   changeKey,
@@ -46,7 +33,6 @@ import {
   usesAmong,
 } from "./unpublished-uses.ts";
 import {
-  idsOf,
   openDraftChanges,
   orders,
   ownDrafts,
@@ -61,6 +47,8 @@ import {
   type Versions,
 } from "./private-versions.ts";
 import { withValuesKept } from "./private-conflict-answers.ts";
+import { refuseMisfits } from "./publish-checks.ts";
+import { overApproved, seenByOthers } from "./private-conflicts.ts";
 import {
   discardPrivateOfGone,
   publishedDraftsOf,
@@ -126,79 +114,6 @@ export async function readUnpublished(
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
 }
-// Whether the record as the user's draft makes it still fits the data as it is now: a name or
-// Employee ID no one else has, a list to belong to or draw on, live or drafted to be added, and,
-// for a choice in a built-in list, a choice still offered for everything the list keeps. Every
-// change to drafts counts unpublished drafts too, so this holds unless the data was changed
-// some other way.
-function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
-  const { lists, columns } = versions.mine;
-  const id = row.recordId;
-  // Discarding a choice's draft can leave its list with nothing offered for something it keeps.
-  if (row.recordType === "list-item") {
-    const choiceList =
-      listOfChoice(lists, id) ?? listOfChoice(versions.theirs.lists, id);
-    if (choiceList !== undefined && !keptOffered(lists, choiceList)) {
-      return false;
-    }
-  }
-  if (wantsNoDraft(row)) return true;
-  if (isRecordType(row.recordType)) {
-    return recordFits(versions.records, row.recordType, id);
-  }
-  if (row.recordType === "choice-order") {
-    return draftedList(lists, id) !== undefined;
-  }
-  if (row.recordType === "person") return !taken.has(id);
-  if (row.recordType === "planned-hire" || row.recordType === "feature-team") {
-    return true;
-  }
-  if (row.recordType === "list") {
-    const list = draftedList(lists, id);
-    return list === undefined || !listNameTaken(lists, String(list.name), id);
-  }
-  if (row.recordType === "list-item") {
-    const choice = draftedChoice(lists, id);
-    if (choice === undefined) return true;
-    const listId = String(choice.listId);
-    return (
-      listExists(lists, listId) &&
-      draftedList(lists, listId) !== undefined &&
-      !choiceLabelTaken(lists, listId, String(choice.label), id)
-    );
-  }
-  const field = draftedField(columns, id);
-  if (field === undefined) return true;
-  if (nameTaken(columns, String(field.name), id, field.tableName)) return false;
-  const { listId } = typeOf(field).settings(field);
-  return (
-    listId === null ||
-    (listExists(columns.lists, listId) &&
-      draftedList(columns.lists, listId) !== undefined)
-  );
-}
-
-// The people whose Employee ID, as the user's drafts make them, someone else has.
-async function takenPeople(
-  transaction: Transaction,
-  userId: string,
-  versions: Versions,
-): Promise<Set<string>> {
-  const taken = new Set<string>();
-  for (const id of idsOf(versions.rows, "person")) {
-    const person = drafted(
-      versions.people.live.get(id),
-      versions.people.mine.get(id),
-    );
-    if (person === undefined) continue;
-    const ids = [String(person.employeeId)];
-    if ((await takenEmployeeIds(transaction, ids, [id], userId)).length > 0) {
-      taken.add(id);
-    }
-  }
-  return taken;
-}
-
 // The user's open change sets with no change to a draft they still have unpublished changes to, so
 // a change set saved with changes to several records is published once all of them are.
 const noneStillUnpublished = (reader: Reader, userId: string) =>
@@ -218,6 +133,33 @@ const noneStillUnpublished = (reader: Reader, userId: string) =>
         and(eq(changes.changeSetId, changeSets.id), eq(changes.draft, true)),
       ),
   );
+
+// Rewrites the user's private changes to records whose addition was approved since they began, as
+// they now publish, so the check and the drafts written meet them as they are, and says whether it
+// rewrote any.
+async function rebasedOverApproved(
+  transaction: Transaction,
+  userId: string,
+  versions: Versions,
+): Promise<boolean> {
+  let rebased = false;
+  for (const row of versions.rows) {
+    const now = overApproved(row, seenByOthers(versions, row));
+    if (now === row) continue;
+    rebased = true;
+    await transaction
+      .update(privateChanges)
+      .set({ action: now.action, fields: now.fields })
+      .where(
+        and(
+          eq(privateChanges.userId, userId),
+          eq(privateChanges.recordType, row.recordType),
+          eq(privateChanges.recordId, row.recordId),
+        ),
+      );
+  }
+  return rebased;
+}
 
 // Those of the changes going that the actor's role may publish, with every change each needs, and
 // how many are left for a role that may. A change made as the role in use is its own, with whatever
@@ -271,12 +213,12 @@ export async function publishUnpublished(
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const userId = actor.user.id;
-    const going = await readGoing(
-      transaction,
-      userId,
-      chosen?.drafts,
-      "publish",
-    );
+    const readChosen = () =>
+      readGoing(transaction, userId, chosen?.drafts, "publish");
+    let going = await readChosen();
+    if (await rebasedOverApproved(transaction, userId, going.versions)) {
+      going = await readChosen();
+    }
     const { rows, left } = await publishableBy(
       transaction,
       actor,
@@ -291,14 +233,7 @@ export async function publishUnpublished(
       rows,
       chosen?.resolutions ?? [],
     );
-    const { versions } = kept;
-    const taken = await takenPeople(transaction, userId, versions);
-    const misfit = kept.rows.find((row) => !fits(versions, row, taken));
-    if (misfit !== undefined) {
-      throw new ConflictError(
-        `The change to ${subjectOf(versions, misfit, actor)} no longer fits the data; change or discard it, then publish again`,
-      );
-    }
+    await refuseMisfits(transaction, actor, kept.versions, kept.rows);
     const privateBefore = await readPrivateBefore(
       transaction,
       await publishedDraftsOf(

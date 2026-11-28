@@ -5,11 +5,7 @@
 // layer.
 
 import type { Database } from "@fathom/db";
-import {
-  type ClassAccess,
-  defaultClasses,
-  type RecordType,
-} from "@fathom/shared";
+import { type ClassAccess, type RecordType } from "@fathom/shared";
 import type { Actor } from "../access.ts";
 import { ConflictError, NotFoundError, type RequestError } from "../errors.ts";
 import {
@@ -211,22 +207,17 @@ export async function saveRecordDrafts(
   return made.length === 0 ? null : recordChanges(transaction, maker, made);
 }
 
-// Whether a record as the user's draft makes it still fits the data as it is now, so it can be
-// published.
-export function recordFits(
-  { mine }: RecordVersions,
+// Why a record as the user's draft makes it breaks a rule as the data is now, in words the role
+// acting can see, or undefined when it can be published.
+export function recordMisfit(
+  mine: RecordsState,
   type: RecordType,
   id: string,
-): boolean {
+  access: ClassAccess,
+): RequestError | undefined {
   const version = versionOf(mine, type, id);
   const before = (version ?? stateOf(mine, type).live.get(id)) as Recorded;
-  // Only whether it fits is asked, so whoever would read a refusal's words doesn't matter.
-  return (
-    misfitOf(kindOf(type), mine, id, version, before, {
-      permissions: [],
-      dataClasses: defaultClasses,
-    }) === undefined
-  );
+  return misfitOf(kindOf(type), mine, id, version, before, access);
 }
 
 // The changes that take a record back from the user's draft to the published one, or the live
