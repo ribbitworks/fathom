@@ -47,6 +47,7 @@ import {
   privatePageQuery,
   privatePagesQuery,
 } from "./private-pages.ts";
+import { pageNameProblem } from "./rename-page-dialog.tsx";
 import { wholeList } from "./theme.ts";
 
 const conflict = 409;
@@ -216,14 +217,11 @@ function NewPageSteps({
   });
   const refusedAsTaken = (error: Error | null) =>
     error instanceof ApiError && error.status === conflict;
-  const taken =
-    pages.some((page) => sameName(page.name, name)) ||
-    (refusedAsTaken(making.error) && sameName(sentName, name));
-  const nameRefusal = nameProblem(
+  const nameRefusal = pageNameProblem(
     name,
-    privatePageLengths.name,
-    taken,
-    nameTaken("page"),
+    pages,
+    undefined,
+    refusedAsTaken(making.error) && sameName(sentName, name),
   );
   // The empty row at the end, where a new column is typed; typing in it adds another under it.
   const shown: TypedColumn[] = [

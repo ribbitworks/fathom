@@ -14,13 +14,14 @@ import {
   type UnusableView,
   type ViewTable,
 } from "@fathom/shared";
-import { Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { Modal } from "@mantine/core";
 import { type QueryKey, queryOptions, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 import { useLastView } from "./last-views.ts";
 import { notifySuccess } from "./notices.tsx";
+import { useRemovalQuestion } from "./removal-question.tsx";
 import { useSaving } from "./saving.ts";
 import {
   type SavedViews,
@@ -131,9 +132,8 @@ export function useSavedViews({
   const [naming, setNaming] = useState<Naming>();
   const [opened, setOpened] = useState(false);
   const [busy, setBusy] = useState(false);
-  // Like the naming dialog, the view being deleted stays set while its dialog closes.
-  const [deleting, setDeleting] = useState<UnusableView>();
-  const [deleteOpened, setDeleteOpened] = useState(false);
+  const deleteQuestion = useRemovalQuestion();
+  const deleteOpened = deleteQuestion.asking;
   const changes = useSaving<ListedView[]>({
     queryKey: query.queryKey,
     removed:
@@ -177,8 +177,16 @@ export function useSavedViews({
       });
     },
     onDeleteUnusable: (view) => {
-      setDeleting(view);
-      setDeleteOpened(true);
+      deleteQuestion.ask(
+        {
+          title: `Delete the ${view.name} view?`,
+          detail: "This can't be undone.",
+          action: "Delete",
+        },
+        () => {
+          deleteUnusable(view);
+        },
+      );
     },
     onScope: (view, scope) => {
       changes.save({
@@ -214,7 +222,6 @@ export function useSavedViews({
   };
 
   const deleteUnusable = (view: UnusableView) => {
-    setDeleteOpened(false);
     changes.save({
       next: (data) => data.filter((other) => other.id !== view.id),
       save: () => deleteView(table, view.id),
@@ -265,38 +272,7 @@ export function useSavedViews({
           />
         )}
       </Modal>
-      <Modal
-        opened={deleteOpened}
-        onClose={() => {
-          setDeleteOpened(false);
-        }}
-        title={`Delete the ${deleting?.name ?? ""} view?`}
-      >
-        {deleting && (
-          <Stack gap="md">
-            <Text fz="sm">This can't be undone.</Text>
-            <Group gap="xs" justify="flex-end">
-              <Button
-                variant="default"
-                data-autofocus
-                onClick={() => {
-                  setDeleteOpened(false);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                color="red"
-                onClick={() => {
-                  deleteUnusable(deleting);
-                }}
-              >
-                Delete
-              </Button>
-            </Group>
-          </Stack>
-        )}
-      </Modal>
+      {deleteQuestion.dialog}
     </>
   );
 

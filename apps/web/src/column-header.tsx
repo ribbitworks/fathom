@@ -200,6 +200,9 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
     const ownWaiting = field !== undefined && decidable(field);
     // Someone else's unpublished changes to the column hold it.
     const changesColumn = canEditColumns && field?.heldBy === undefined;
+    // The column naming each row stays, so it's never offered for removal.
+    const removesColumn =
+      actions.removeColumn !== undefined && column.key !== table.nameColumn;
     const deciding: DraftSelection = {
       ...noDrafts(),
       columns: ownWaiting ? [field.id] : [],
@@ -450,29 +453,44 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
                 Hide column
               </Menu.Item>
             )}
-            {changesColumn && field && field.draft?.action !== "deleted" && (
-              <>
-                <Menu.Divider />
-                <Menu.Item
-                  onClick={() => {
-                    actions.editColumn(field);
-                  }}
-                >
-                  Edit column…
-                </Menu.Item>
-                {actions.removeColumn && (
-                  <Menu.Item
-                    color="red"
-                    onClick={() => {
-                      actions.removeColumn?.(field);
-                      focusBeside(index);
-                    }}
-                  >
-                    Remove column
-                  </Menu.Item>
-                )}
-              </>
-            )}
+            {changesColumn &&
+              field &&
+              field.draft?.action !== "deleted" &&
+              (actions.editColumn !== undefined || removesColumn) && (
+                <>
+                  <Menu.Divider />
+                  {actions.editColumn && (
+                    <Menu.Item
+                      onClick={() => {
+                        actions.editColumn?.(field);
+                      }}
+                    >
+                      Edit column…
+                    </Menu.Item>
+                  )}
+                  {removesColumn && (
+                    <Menu.Item
+                      color="red"
+                      onClick={() => {
+                        const removed = () => {
+                          focusBeside(index);
+                        };
+                        actions.removeColumn?.(field, {
+                          removed,
+                          kept: () => {
+                            focusSoon(headerId(column));
+                          },
+                        });
+                        if (actions.removeColumnAsks !== true) removed();
+                      }}
+                    >
+                      {actions.removeColumnAsks === true
+                        ? "Remove column…"
+                        : "Remove column"}
+                    </Menu.Item>
+                  )}
+                </>
+              )}
             {field &&
               actions.moveColumnClass &&
               (changesColumn || field.draft?.action !== "created") &&

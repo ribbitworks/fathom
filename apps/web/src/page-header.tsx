@@ -3,8 +3,9 @@
 // The heading of a page: its title, what switches how it shows its records, the Export icon and
 // its main action.
 
-import { Group, SegmentedControl, Tabs, Title } from "@mantine/core";
+import { Group, SegmentedControl, Tabs, Title, Tooltip } from "@mantine/core";
 import type { ReactNode } from "react";
+import { useCutTip } from "./cut-tip.ts";
 import { PageExportMenu } from "./page-export.tsx";
 import classes from "./pages.module.css";
 
@@ -20,21 +21,32 @@ export function PageHeader({
   beside?: ReactNode;
   action?: ReactNode;
 }) {
+  // A long title is cut short, so the heading stays one line, with the whole title in a tip.
+  const { words, shown, target } = useCutTip();
   return (
     <Group
       justify="space-between"
       align="center"
       gap="md"
+      wrap="nowrap"
       mih="var(--fathom-heading-height)"
     >
-      <Group gap="lg" align="center">
-        <Title order={1} fz={22}>
-          {mark}
-          {title}
-        </Title>
+      <Group gap="lg" align="center" wrap="nowrap" miw={0}>
+        <Tooltip label={title} opened={shown}>
+          <Title
+            order={1}
+            fz={22}
+            ref={words}
+            className={classes.pageTitle}
+            {...target}
+          >
+            {mark}
+            {title}
+          </Title>
+        </Tooltip>
         {beside}
       </Group>
-      <Group gap="xs">
+      <Group gap="xs" wrap="nowrap">
         <PageExportMenu />
         {action}
       </Group>

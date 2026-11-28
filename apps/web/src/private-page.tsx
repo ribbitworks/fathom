@@ -9,11 +9,13 @@ import { useQuery } from "@tanstack/react-query";
 import { listsQuery, liveLists } from "./lists.ts";
 import { LoadProblem } from "./load-problem.tsx";
 import { PageHeader } from "./page-header.tsx";
+import { PageMenu } from "./page-menu.tsx";
 import classes from "./pages.module.css";
 import { privatePageQuery } from "./private-pages.ts";
 import { privateRowActions } from "./private-row-actions.ts";
 import { privateFields, privateTable } from "./private-table.ts";
 import { RecordGrid } from "./record-grid.tsx";
+import { useRemovalQuestion } from "./removal-question.tsx";
 import { useSaving } from "./saving.ts";
 import { PrivateRing } from "./status-mark.tsx";
 import { TableTips } from "./table-tips.tsx";
@@ -48,8 +50,9 @@ export function PrivatePageScreen({
   // only when they or the lists change, and a new row being typed in keeps its place.
   const head = useQuery({
     ...query,
-    select: ({ name, columns, firstFieldId }) => ({
+    select: ({ name, key, columns, firstFieldId }) => ({
       name,
+      key,
       columns,
       firstFieldId,
     }),
@@ -66,6 +69,7 @@ export function PrivatePageScreen({
     removed: "Something on this page was removed.",
     blocked: false,
   });
+  const removal = useRemovalQuestion();
   const rows = page.data?.rows;
   if (rows === undefined || shown === undefined) {
     return lists.isError ? (
@@ -82,7 +86,13 @@ export function PrivatePageScreen({
   const { table, fields, order, lists: shownLists, name } = shown;
   return (
     <Stack gap="md" className={classes.tablePage}>
-      <PageHeader title={name} mark={<PrivateRing spoken />} />
+      <PageHeader
+        title={name}
+        mark={<PrivateRing spoken />}
+        action={
+          <PageMenu page={{ id: pageId, name, key: head.data?.key ?? null }} />
+        }
+      />
       <TableTips>
         <RecordGrid
           records={rows}
@@ -91,17 +101,19 @@ export function PrivatePageScreen({
           order={order}
           lists={shownLists}
           canEdit
-          canEditColumns={false}
+          canEditColumns
           actions={privateRowActions({
             pageId,
             changes,
             nameOf: table.nameOf,
+            ask: removal.ask,
           })}
           view={view}
           onView={onView}
           withDrafts={false}
         />
       </TableTips>
+      {removal.dialog}
     </Stack>
   );
 }

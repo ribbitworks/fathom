@@ -53,6 +53,7 @@ import { ChangeNameDialog } from "./change-name.tsx";
 import { ChangePasswordDialog } from "./change-password.tsx";
 import { menuChoice } from "./last-views.ts";
 import { type Item, opens, sections } from "./navigation.ts";
+import { MineChangesProvider } from "./mine-changes.tsx";
 import {
   mineLabel,
   MineSection,
@@ -546,7 +547,9 @@ export function Layout({
         )}
         <PageExportProvider person={user.name}>
           <PublishDraftProvider publishes={makesDrafts}>
-            <Outlet />
+            <MineChangesProvider>
+              <Outlet />
+            </MineChangesProvider>
           </PublishDraftProvider>
         </PageExportProvider>
       </AppShell.Main>

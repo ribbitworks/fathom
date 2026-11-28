@@ -17,6 +17,7 @@ export function DialogActions({
   others,
   beforeCancel,
   removes = false,
+  cancelFocused = false,
   failure = "Fathom could not make this change. Try again in a moment.",
 }: {
   error: Error | null;
@@ -28,6 +29,9 @@ export function DialogActions({
   beforeCancel?: ReactNode;
   // Whether the change deletes or deactivates something, which is shown in red.
   removes?: boolean;
+  // Whether Cancel takes focus as the dialog opens, for a question whose action can't be taken
+  // back at once, so Enter alone never takes it.
+  cancelFocused?: boolean;
   // What a failure says when the server gives no reason, for a dialog that changes nothing.
   failure?: string;
 }) {
@@ -45,6 +49,7 @@ export function DialogActions({
           <Button
             variant="default"
             disabled={pending}
+            {...(cancelFocused ? { "data-autofocus": true } : {})}
             onClick={() => {
               onCancel();
             }}
