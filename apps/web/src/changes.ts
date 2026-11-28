@@ -9,12 +9,14 @@ import {
   type ChangedField,
   classNames,
   type ChangedRecord,
+  columnTablePolicies,
   type ChangeEntry,
   changeHistorySchema,
   type ChangeKind,
   type ChangeValue,
   isDay,
   isMonth,
+  linkedTableSchema,
   meaningName,
   meaningSchema,
   percentSettingFields,
@@ -80,6 +82,7 @@ const fieldNames = new Map([
   ["visibility", "Class"],
   ["retired", "Retired"],
   ["listId", "List"],
+  ["linkedTable", "Table"],
   ["multiple", "Several choices"],
   ["required", "Required"],
   ["order", "Place"],
@@ -219,6 +222,13 @@ const valueWords = new Map<string, (value: string) => string | undefined>([
     (value) => {
       const tier = tierSchema.safeParse(value);
       return tier.success ? classNames[tier.data] : undefined;
+    },
+  ],
+  [
+    "linkedTable",
+    (value) => {
+      const table = linkedTableSchema.safeParse(value);
+      return table.success ? columnTablePolicies[table.data].name : undefined;
     },
   ],
   [
