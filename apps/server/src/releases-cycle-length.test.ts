@@ -374,7 +374,7 @@ describe("changing one cycle's length", () => {
 
     expect(response.statusCode).toBe(409);
     expect(response.json<{ error: string }>().error).toBe(
-      `The change to the cycles of ${stream.name} from 2027-04-01 no longer fits the data; change or discard it, then publish again`,
+      `The cycles of ${stream.name} from 2027-04-01: Work planned on these cycles would no longer fit the schedule's cycles`,
     );
   });
 

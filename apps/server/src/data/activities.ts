@@ -3,8 +3,12 @@
 // Drafting activities added, changed and removed. Part of the data access layer; the caller checks
 // the actor may change activities.
 
-import { allocations, type Database } from "@fathom/db";
-import { activityOwnerProblem, type ActivityRequest } from "@fathom/shared";
+import { allocations, type Database, type Reader } from "@fathom/db";
+import {
+  activityOwnerProblem,
+  type ActivityRequest,
+  type ClassAccess,
+} from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
@@ -17,7 +21,7 @@ import { planningRecord } from "./planning-records.ts";
 import { changingPlan, removing } from "./projects.ts";
 import type { PlanRecords } from "./project-reads.ts";
 import { changeableRecord, saveRecordDraft } from "./record-drafting.ts";
-import { subjectFor } from "./record-state.ts";
+import { type RecordsState, subjectFor } from "./record-state.ts";
 
 // An activity as a request makes it, belonging to exactly one release or one project; moving it to
 // another clears the one it had.
@@ -80,25 +84,38 @@ export async function changeActivity(
 
 // Allocations to activities aren't yet among the plan's records, whose rules refuse removing a
 // feature with allocations, so an activity's are read here and refused in the same words.
+const hasAllocations = async (reader: Reader, id: string) =>
+  (
+    await reader
+      .select({ id: allocations.id })
+      .from(allocations)
+      .where(eq(allocations.activityId, id))
+      .limit(1)
+  ).length > 0;
+
+const allocatedError = (state: RecordsState, id: string, access: ClassAccess) =>
+  new ConflictError(
+    allocatedRefusal(subjectFor(activityKind, state, id, access), "activity"),
+  );
+
+// Refuses removing an activity with allocations.
+export async function refuseAllocatedActivity(
+  reader: Reader,
+  state: RecordsState,
+  id: string,
+  access: ClassAccess,
+): Promise<void> {
+  if (await hasAllocations(reader, id)) throw allocatedError(state, id, access);
+}
+
 export async function removeActivity(
   database: Database,
   maker: Actor,
   id: string,
 ): Promise<string | null> {
-  const [allocated] = await database
-    .select({ id: allocations.id })
-    .from(allocations)
-    .where(eq(allocations.activityId, id))
-    .limit(1);
+  const allocated = await hasAllocations(database, id);
   return removing(database, maker, "activity", id, (state) => {
     changeableRecord(state, "activity", id);
-    if (allocated !== undefined) {
-      throw new ConflictError(
-        allocatedRefusal(
-          subjectFor(activityKind, state, id, maker),
-          "activity",
-        ),
-      );
-    }
+    if (allocated) throw allocatedError(state, id, maker);
   });
 }

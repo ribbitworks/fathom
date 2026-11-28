@@ -372,7 +372,7 @@ function checkFeature(state: RecordsState, featureId: string): void {
 // or a planned hire that does not exist or is filled.
 async function boundsFor(
   reader: Reader,
-  change: AllocationChange,
+  change: Pick<AllocationChange, "personId" | "plannedHireId">,
   today: string,
 ): Promise<Bounds> {
   if (change.personId !== undefined) {
@@ -387,6 +387,34 @@ async function boundsFor(
   if (hire === undefined) throw new NotFoundError(chooseSomeone);
   if (hire.filledBy !== null) throw new ConflictError(notAllocatedYet);
   return { first: hire.expected };
+}
+
+// Refuses an allocation as a draft makes it, against the allocation before it, as a fresh change
+// to it is refused: a feature that can't be allocated, or someone put on it outside the months they
+// can be.
+export async function checkAllocationDraft(
+  reader: Reader,
+  state: RecordsState,
+  after: Recorded,
+  before: Recorded | undefined,
+): Promise<void> {
+  checkFeature(state, String(after.featureId));
+  const person =
+    typeof after.personId === "string" ? after.personId : undefined;
+  const bounds = await boundsFor(
+    reader,
+    person === undefined
+      ? { plannedHireId: String(after.plannedHireId) }
+      : { personId: person },
+    await readToday(reader),
+  );
+  const outside = outsideOf(
+    changedSpans(monthsOf(before), monthsOf(after)),
+    bounds,
+  );
+  if (outside !== undefined) {
+    throw new BadRequestError(draftingRefusal(outside, person !== undefined));
+  }
 }
 
 // Changes one allocation as a draft, from a month, until a month or with no end. A change that

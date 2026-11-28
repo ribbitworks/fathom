@@ -15,7 +15,7 @@ import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Transaction } from "./changes.ts";
 import { typeOf } from "./column-types.ts";
-import { type Recorded, tidy } from "./draft-records.ts";
+import { type Recorded, same, tidy } from "./draft-records.ts";
 import { checkTeamForFeature } from "./feature-team-removals.ts";
 import {
   checkedLinks,
@@ -26,7 +26,8 @@ import {
   valuesOf,
 } from "./person-fields.ts";
 import { keptNote } from "./records.ts";
-import { fieldOfValue, valueField } from "./values.ts";
+import { text } from "./reporting.ts";
+import { type ColumnInfo, fieldOfValue, valueField } from "./values.ts";
 
 type PlanningTable = Exclude<ColumnTable, "people">;
 
@@ -97,15 +98,67 @@ async function addedValues(
     ...checkedNotes(columns, request.notes),
     ...checkedNumbers(columns, request.numbers),
   };
+  refuseUnfilled(columns, values);
+  return tidy(values);
+}
+
+// Refuses a record with no value in a column that must be filled in.
+function refuseUnfilled(columns: readonly ColumnInfo[], record: Recorded) {
   for (const column of columns) {
     if (
       column.required &&
-      typeOf(column).count(values[valueField(column.id)]) === 0
+      typeOf(column).count(record[valueField(column.id)]) === 0
     ) {
       throw new BadRequestError(`${column.name} must be filled in`);
     }
   }
-  return tidy(values);
+}
+
+// The built-in list each planning field chooses from.
+const planningChoices = {
+  statusId: "feature-statuses",
+  priorityId: "feature-priorities",
+  sizeId: "feature-sizes",
+  riskId: "feature-risks",
+} as const satisfies Readonly<Record<string, BuiltInList>>;
+
+// Refuses a feature or an activity as a draft makes it, against the record before it, as a fresh
+// change to it is refused: a feature team that can't be chosen, a choice not offered unless the
+// record had it, or a column it must fill left empty.
+export async function checkPlanningDraft(
+  transaction: Transaction,
+  editor: string,
+  table: PlanningTable,
+  after: Recorded,
+  before: Recorded | undefined,
+): Promise<void> {
+  // The fields are the record's own, named here or by its columns.
+  /* eslint-disable security/detect-object-injection */
+  const changed = (field: string) => !same(after[field], before?.[field]);
+  if (changed("featureTeamId")) {
+    await checkTeamForFeature(transaction, text(after.featureTeamId), editor);
+  }
+  for (const [field, list] of Object.entries(planningChoices)) {
+    const chosen = after[field];
+    if (typeof chosen === "string" && changed(field)) {
+      await checkBuiltInChoice(transaction, list, chosen, before?.[field]);
+    }
+  }
+  const columns = await columnsWithAdded(transaction, editor, true, table);
+  const values = valuesOf(after);
+  const asked = Object.fromEntries(
+    columns
+      .filter(({ id, type }) => type === "choice" && changed(valueField(id)))
+      .map(({ id }) => [id, values.get(id) ?? []]),
+  );
+  /* eslint-enable security/detect-object-injection */
+  checkedValues(
+    columns,
+    await choicesAskedFor(transaction, editor, [{ values: asked }]),
+    asked,
+    before === undefined ? undefined : valuesOf(before),
+  );
+  refuseUnfilled(columns, after);
 }
 
 // A choice of a built-in list a record need not have: none, or one offered or the record already has.

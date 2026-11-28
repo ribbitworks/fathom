@@ -29,7 +29,7 @@ import {
   NotFoundError,
 } from "../errors.ts";
 import type { Saved, Transaction } from "./changes.ts";
-import { type Recorded, unseenDraft } from "./draft-records.ts";
+import { type Recorded, same, unseenDraft } from "./draft-records.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import { text } from "./reporting.ts";
@@ -135,6 +135,19 @@ async function ownerFor(
     throw new BadRequestError("Choose an owner from People");
   }
   return requested;
+}
+
+// Refuses a project or proposal as a draft makes it, against the record before it, as a fresh
+// change to it is refused: a new owner who isn't one of People as the actor sees them.
+export async function checkOwnerDraft(
+  transaction: Transaction,
+  actor: Actor,
+  after: Recorded,
+  before: Recorded | undefined,
+): Promise<void> {
+  if (!same(after.ownerId, before?.ownerId)) {
+    await ownerFor(transaction, actor, text(after.ownerId), before?.ownerId);
+  }
 }
 
 // A customer, project, proposal, or feature, as a request adds or changes it.

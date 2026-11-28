@@ -39,11 +39,13 @@ import {
 } from "./list-state.ts";
 import {
   isRecordType,
+  kindOf,
   readRecordVersions,
   type RecordVersions,
   recordSubject,
 } from "./records.ts";
 import { readLive } from "./people-reads.ts";
+import { readsKind } from "./record-state.ts";
 import { type HireTier, hireIdOf, readHireTier } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import { columnsWithAdded } from "./added-columns.ts";
@@ -240,6 +242,20 @@ const otherKindOf = new Map<string, OtherKind>(Object.entries(otherKinds));
 // A change of a kind Fathom no longer has, which no role reads, so one stored row can't keep the user
 // from seeing the rest of their changes, or discarding them.
 const unknownKind: OtherKind = { reads: () => false, unseen: "a change" };
+
+// Whether the role reads the kind of record a change is to, so may be told of it by name.
+export const readsChange = (
+  versions: Versions,
+  row: Row,
+  actor: Actor,
+): boolean =>
+  isRecordType(row.recordType)
+    ? readsKind(kindOf(row.recordType), actor)
+    : (otherKindOf.get(row.recordType) ?? unknownKind).reads(
+        actor,
+        versions,
+        row.recordId,
+      );
 
 // What a change is to, as the Drafts page names drafts, by name only to a role that reads its kind.
 export function subjectOf(versions: Versions, row: Row, actor: Actor): string {
