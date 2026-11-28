@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-/* A page's title is cut short with an ellipsis rather than taking a second line. */
+/* A page heading's own styles: its title, cut short with an ellipsis rather than taking a second
+   line. */
+
 .title {
   min-width: 0;
   overflow: hidden;
