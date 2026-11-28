@@ -3,6 +3,7 @@
 // UI tests of New page under Mine: its refusals, with focus where they are, and a page made and
 // typed in, its rows saved at once.
 
+import type { Locator } from "@playwright/test";
 import { signedInAs } from "./test-accounts.ts";
 import { expect, test } from "./test-fixtures.ts";
 import { send } from "./test-requests.ts";
