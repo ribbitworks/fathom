@@ -229,11 +229,8 @@ const daysOf = (person: Recorded, shows: Shows): Days =>
   valuesHolding(person, isDate, shows, ({ date }) => date);
 
 const linkedOf = (person: Recorded, shows: Shows): Linked =>
-  valuesHolding(
-    person,
-    isLinkedRecords,
-    shows,
-    (held) => Object.values(held).flat(),
+  valuesHolding(person, isLinkedRecords, shows, (held) =>
+    Object.values(held).flat(),
   );
 
 const columnValueReaders: {
