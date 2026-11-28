@@ -4,7 +4,7 @@
 // the data access layer; the caller checks the actor may change the kind, and a feature's customers
 // and feature team are checked here, since they take more than changing features.
 
-import { type Database, people } from "@fathom/db";
+import { type Database, people, type Reader } from "@fathom/db";
 import {
   type CustomerRequest,
   featureNamerKeys,
@@ -33,7 +33,8 @@ import { type Recorded, same, unseenDraft } from "./draft-records.ts";
 import { refuseFeatureFieldChanges } from "./feature-field-editors.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import { text } from "./reporting.ts";
-import { planningRecord, statusFor } from "./planning-records.ts";
+import { planningRecord, startingStatus } from "./planning-records.ts";
+import { checkBuiltInChoice } from "./built-in-lists.ts";
 import {
   addedOnly,
   linkedIds,
@@ -135,6 +136,32 @@ async function ownerFor(
     throw new BadRequestError("Choose an owner from People");
   }
   return requested;
+}
+
+// Refuses a proposal's status that is not offered, unless the proposal already had it.
+async function checkProposalStatus(
+  reader: Reader,
+  after: Recorded,
+  before: Recorded | undefined,
+): Promise<void> {
+  await checkBuiltInChoice(
+    reader,
+    "proposal-statuses",
+    String(after.statusId),
+    before?.statusId,
+  );
+}
+
+// Refuses a proposal as a draft makes it, against the proposal before it, as a fresh change to it
+// is refused: a status not offered, or a new owner who isn't one of People as the actor sees them.
+export async function checkProposalDraft(
+  transaction: Transaction,
+  actor: Actor,
+  after: Recorded,
+  before: Recorded | undefined,
+): Promise<void> {
+  await checkProposalStatus(transaction, after, before);
+  await checkOwnerDraft(transaction, actor, after, before);
 }
 
 // Refuses a project or proposal as a draft makes it, against the record before it, as a fresh
@@ -267,18 +294,19 @@ async function proposalRecord(
     request.ownerId,
     current?.ownerId,
   );
-  return {
+  const record: Recorded = {
     name: request.name,
     externalId: request.externalId,
     link: request.link,
     ownerId,
     customerIds: request.customerIds,
-    statusId: await statusFor(
-      transaction,
-      "proposal-statuses",
-      request.statusId,
-      current?.statusId,
-    ),
+    statusId:
+      request.statusId ??
+      (await startingStatus(
+        transaction,
+        "proposal-statuses",
+        current?.statusId,
+      )),
     featureIds: request.featureIds,
     removalReasons: removalReasonsAfter(
       reasonsOf(current),
@@ -286,6 +314,8 @@ async function proposalRecord(
       request.featureIds,
     ),
   };
+  await checkProposalStatus(transaction, record, current);
+  return record;
 }
 
 export async function addProposal(

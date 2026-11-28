@@ -267,8 +267,9 @@ export function subjectOf(versions: Versions, row: Row, actor: Actor): string {
   if (isRecordType(row.recordType)) {
     return recordSubject(versions.records, row.recordType, id, actor);
   }
-  const other = otherKindOf.get(row.recordType) ?? unknownKind;
-  if (!other.reads(actor, versions, id)) return other.unseen;
+  if (!readsChange(versions, row, actor)) {
+    return (otherKindOf.get(row.recordType) ?? unknownKind).unseen;
+  }
   if (row.recordType === "person") {
     return String(versionOf(versions, "person", id)?.preferredName);
   }

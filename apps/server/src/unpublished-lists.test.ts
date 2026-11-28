@@ -21,6 +21,7 @@ import {
   discard,
   decide,
   liveList,
+  livePeople,
   startUnpublishedTests,
   closeUnpublishedTests,
 } from "./test-unpublished.ts";
@@ -339,6 +340,64 @@ describe("publishing a list's removal", () => {
       "/api/unpublished/publish",
       undefined,
       `The list ${list.name}: This list's choices have drafts; approve or discard them before deleting the list`,
+    );
+    await discard(alice);
+    await discard(bob);
+  });
+});
+
+describe("publishing a change to a list or a column, checked again", () => {
+  it("refuses taking back a list's addition once a column draws on it", async () => {
+    // Given Alice's new list, published, Bob's private taking back of it, and Alice's column on it
+    const list = (
+      await saved<{ list: List }>(alice, "POST", "/api/lists", {
+        name: unique("Fictional Bands"),
+      })
+    ).list;
+    await publish(alice);
+    await saved(bob, "DELETE", `/api/lists/${list.id}`);
+    const column = (
+      await saved<{ field: Field }>(alice, "POST", "/api/people/columns", {
+        name: unique("Fictional Band"),
+        listId: list.id,
+      })
+    ).field;
+    await publish(alice);
+
+    await refused(
+      bob,
+      "POST",
+      "/api/unpublished/publish",
+      undefined,
+      `The list ${list.name}: This list cannot be discarded while a column draws on it: ${column.name}`,
+    );
+    await discard(bob);
+  });
+
+  it("refuses removing a column once someone else's drafts change its values", async () => {
+    // Given a live column, Bob's private removal of it, and Alice's value in it for someone since
+    const { list, choices } = await liveList(["Fictional Low"]);
+    const column = (
+      await saved<{ field: Field }>(alice, "POST", "/api/people/columns", {
+        name: unique("Fictional Level"),
+        listId: list.id,
+      })
+    ).field;
+    await publish(alice);
+    await test.approveLists();
+    await saved(bob, "DELETE", `/api/people/columns/${column.id}`);
+    const [person = ""] = await livePeople(1);
+    await saved(alice, "PATCH", `/api/people/${person}`, {
+      values: { [column.id]: [String(choices[0]?.id)] },
+    });
+    await publish(alice);
+
+    await refused(
+      bob,
+      "POST",
+      "/api/unpublished/publish",
+      undefined,
+      `The column ${column.name}: Drafts change ${column.name}; approve or discard them before deleting the column`,
     );
     await discard(alice);
     await discard(bob);

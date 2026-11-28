@@ -4,10 +4,14 @@
 // kind's own rules against the data as it is now, and refused with the reason a fresh change gets,
 // naming the record.
 
-import { featureTeams, listItems } from "@fathom/db";
+import { featureTeams, listItems, people } from "@fathom/db";
+import { startingRoles } from "@fathom/shared";
 import { eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { testPosition, unique } from "./test-app.ts";
 import {
+  approver,
   closeFeatureTests,
   featureLead,
   liveFeature,
@@ -36,8 +40,8 @@ const changedPrivately = async (id: string, body: object, who = planner) => {
   expect(response.statusCode, response.body).toBe(200);
 };
 
-// No route retires a built-in choice or removes a live feature team without approvals that would
-// end the private change, so the tests change storage.
+// No route retires a built-in choice, removes a live feature team or someone in People without
+// approvals that would end the private change, so the tests change storage.
 describe("publishing a private change to a feature", () => {
   it("is refused for a status retired since, naming the feature", async () => {
     // Given a private change of a live feature's status, whose choice is retired since
@@ -84,6 +88,73 @@ describe("publishing a private change to a feature", () => {
     expect(response.statusCode, response.body).toBe(409);
     expect(response.json<{ error: string }>().error).toBe(
       `The feature ${feature.name}: Choose a feature team that has been approved`,
+    );
+  });
+
+  it("is refused for a field the role may no longer change", async () => {
+    // Given a Feature Lead's private feature team for a feature, and the role since without the
+    // right to change feature teams
+    const lead = await test.signedIn("feature-lead");
+    const feature = await liveFeature();
+    await changedPrivately(
+      feature.id,
+      { name: feature.name, featureTeamId: await liveTeam() },
+      lead,
+    );
+    await test.holdOnly(
+      lead.id,
+      startingRoles["feature-lead"].permissions.filter(
+        (permission) => permission !== "feature-teams:edit",
+      ),
+    );
+
+    const response = await publishing(lead);
+
+    expect(response.statusCode, response.body).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      `The feature ${feature.name}: This role can't change a feature's feature team`,
+    );
+  });
+});
+
+describe("publishing a private change to a project", () => {
+  it("is refused for an owner no longer among People", async () => {
+    // Given a project with an owner given privately, who has since left People
+    const name = unique("Fictional Project");
+    const created = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/projects",
+      {
+        name,
+      },
+    );
+    expect(created.statusCode, created.body).toBe(201);
+    const project = created
+      .json<{ plan: { projects: { id: string; name: string }[] } }>()
+      .plan.projects.find((each) => each.name === name);
+    const ownerId = randomUUID();
+    await test.connection.insert(people).values({
+      id: ownerId,
+      preferredName: unique("Fictional Owner"),
+      employeeId: unique("OWN"),
+      positionId: testPosition,
+    });
+    const changed = await test.request(
+      approver.cookie,
+      "PUT",
+      `/api/projects/${String(project?.id)}`,
+      { name: project?.name, ownerId },
+      { publish: false },
+    );
+    expect(changed.statusCode, changed.body).toBe(200);
+    await test.connection.delete(people).where(eq(people.id, ownerId));
+
+    const response = await publishing(approver);
+
+    expect(response.statusCode, response.body).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      `The project ${String(project?.name)}: Choose an owner from People`,
     );
   });
 });

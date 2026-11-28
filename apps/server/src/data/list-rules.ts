@@ -323,11 +323,8 @@ export function refuseLastKept(
 ): void {
   const before = draftedChoice(state, id);
   for (const kept of keptIn(state, listId)) {
-    if (!offers(before, kept) || offers(after, kept)) continue;
-    if (!othersOffer(state, listId, id, kept)) {
-      throw new ConflictError(
-        needs(String(draftedList(state, listId)?.name), kept),
-      );
+    if (offers(before, kept) && !offers(after, kept)) {
+      refuseNeeded(state, listId, id, kept);
     }
   }
 }
@@ -336,11 +333,21 @@ export function refuseLastKept(
 // it.
 export function refuseUnoffered(state: ListsState, listId: string): void {
   for (const kept of keptIn(state, listId)) {
-    if (!othersOffer(state, listId, undefined, kept)) {
-      throw new ConflictError(
-        needs(String(draftedList(state, listId)?.name), kept),
-      );
-    }
+    refuseNeeded(state, listId, undefined, kept);
+  }
+}
+
+// Refuses a list in which no choice but the one given, if any, offers something it keeps.
+function refuseNeeded(
+  state: ListsState,
+  listId: string,
+  except: string | undefined,
+  kept: Kept,
+): void {
+  if (!othersOffer(state, listId, except, kept)) {
+    throw new ConflictError(
+      needs(String(draftedList(state, listId)?.name), kept),
+    );
   }
 }
 

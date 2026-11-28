@@ -270,6 +270,42 @@ export async function updateField(
   );
 }
 
+// Refuses a column's settings as a change makes them, from the column before it, if it was there:
+// a column whose details the actor doesn't see, a name another column on its table has, values in
+// drafts its settings no longer fit, a list it newly draws on that can't be drawn on, or a class
+// the actor doesn't see, or that Features can't hold.
+export async function checkColumnSettings(
+  transaction: Transaction,
+  actor: Actor,
+  state: ColumnsState,
+  id: string,
+  before: Recorded | undefined,
+  after: Recorded,
+  refusal: (message: string) => Error,
+): Promise<void> {
+  const previous = state.fields.get(id) ?? before;
+  const unseen = unseenDetails(String((before ?? after).name));
+  for (const seen of new Set([before, state.fields.get(id)])) {
+    if (seen !== undefined) refuseUnseenTier(actor, state, seen, unseen);
+  }
+  const listBefore =
+    previous === undefined ? null : columnRow(id, previous).listId;
+  if (nameTaken(state, String(after.name), id, after.tableName)) {
+    throw new ConflictError(duplicateField);
+  }
+  const wanted = columnRow(id, after);
+  // The live values are checked against the live column, so a change already drafted is checked
+  // again here.
+  const live = state.fields.get(id);
+  const current = columnRow(id, live ?? { ...after, required: false });
+  await checkValuesFit(transaction, current, wanted, actor.user.id);
+  if (wanted.listId !== null && wanted.listId !== listBefore) {
+    await checkList(transaction, state, wanted.listId, refusal);
+  }
+  refuseUnseenTier(actor, state, after);
+  refuseSensitiveOnFeatures(state, after);
+}
+
 async function changeField(
   transaction: Transaction,
   actor: Actor,
@@ -280,25 +316,19 @@ async function changeField(
 ): Promise<Saved<Field>> {
   const field = changeableField(state, id, tableName);
   const live = state.fields.get(id);
-  const unseen = unseenDetails(String(field.name));
-  refuseUnseenTier(actor, state, field, unseen);
-  if (live !== undefined) refuseUnseenTier(actor, state, live, unseen);
   if (columnRow(id, field).type !== request.type) {
     throw new BadRequestError(sameType);
   }
-  if (nameTaken(state, request.name, id, field.tableName)) {
-    throw new ConflictError(duplicateField);
-  }
-  // The live values are checked against the live column, so a change already drafted is checked
-  // again here.
-  const current = columnRow(id, live ?? { ...field, required: false });
-  await checkValuesFit(transaction, current, request, actor.user.id);
-  if (request.listId !== undefined && request.listId !== current.listId) {
-    await checkList(transaction, state, request.listId, badRequest);
-  }
   const after = { ...field, ...requested(request, field.tableName) };
-  refuseUnseenTier(actor, state, after);
-  refuseSensitiveOnFeatures(state, after);
+  await checkColumnSettings(
+    transaction,
+    actor,
+    state,
+    id,
+    field,
+    after,
+    badRequest,
+  );
   classifyDraft(actor, {
     live: live !== undefined,
     name: String(field.name),
@@ -452,17 +482,26 @@ export async function refuseIfDraftsFill(
   }
 }
 
-// Refuses removing a live column while drafts, as the editor sees them, change its values.
-export async function refuseIfDraftsChange(
+// Refuses removing a live column, as the actor's drafts make it, while drafts, as they see them,
+// change its values, or where the actor may not remove its values.
+export async function checkColumnRemoval(
   transaction: Transaction,
-  editor: string,
+  actor: Actor,
+  state: ColumnsState,
   id: string,
   field: Recorded,
 ): Promise<void> {
-  if (await draftsUse(transaction, { column: id }, editor)) {
+  if (await draftsUse(transaction, { column: id }, actor.user.id)) {
     throw new ConflictError(
       `Drafts change ${String(field.name)}; approve or discard them before deleting the column`,
     );
+  }
+  const tier = mostSensitive([
+    columnTier(state, field),
+    columnTier(state, state.fields.get(id) as Recorded),
+  ]);
+  if (!mayRemoveValuesOf(actor, field, tier)) {
+    throw new ForbiddenError(unseenDetails(String(field.name)));
   }
 }
 
@@ -482,14 +521,7 @@ export async function deleteField(
       await refuseIfDraftsFill(transaction, actor.user.id, id, field);
       return discardColumn(transaction, actor, state, id, field);
     }
-    await refuseIfDraftsChange(transaction, actor.user.id, id, field);
-    const tier = mostSensitive([
-      columnTier(state, field),
-      columnTier(state, live),
-    ]);
-    if (!mayRemoveValuesOf(actor, field, tier)) {
-      throw new ForbiddenError(unseenDetails(String(field.name)));
-    }
+    await checkColumnRemoval(transaction, actor, state, id, field);
     return saveFieldDraft(transaction, actor, state, id, field, undefined);
   });
 }

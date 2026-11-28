@@ -19,7 +19,11 @@ import {
   checkOrderDraft,
   type ListDraft,
 } from "./list-checks.ts";
-import { checkPlanningDraft } from "./planning-records.ts";
+import {
+  checkPlanningDraft,
+  planningColumns,
+  type PlanningTable,
+} from "./planning-records.ts";
 import {
   idsOf,
   readsChange,
@@ -27,9 +31,11 @@ import {
   subjectOf,
   type Versions,
 } from "./private-versions.ts";
-import { checkOwnerDraft } from "./projects.ts";
+import { checkOwnerDraft, checkProposalDraft } from "./projects.ts";
 import { recordMisfit } from "./record-drafting.ts";
-import { type RecordsState, versionOf } from "./record-state.ts";
+import { versionOf } from "./record-state.ts";
+import { readToday } from "./settings.ts";
+import { type ColumnInfo } from "./values.ts";
 import { isRecordType, recordKinds } from "./records.ts";
 
 interface Checking {
@@ -38,92 +44,106 @@ interface Checking {
   versions: Versions;
   // The people whose Employee ID, as the user's drafts make them, someone else has.
   taken: Set<string>;
+  // Today, read once, when a check first needs it.
+  today: () => Promise<string>;
+  // The columns added to a planning table, as the user sees them, read once for each table.
+  columnsOf: (table: PlanningTable) => Promise<readonly ColumnInfo[]>;
 }
 
-// A kind of record's own rules beyond those across records, for a record as the user's draft makes
-// it, or undefined for its removal, against the record as everyone else has it.
-type RecordCheck = (
-  transaction: Transaction,
-  actor: Actor,
-  mine: RecordsState,
-  id: string,
-  after: Recorded | undefined,
-  before: Recorded | undefined,
-) => Promise<void>;
+// A record of the plan as the user's draft makes it, or undefined for its removal, against the
+// record as everyone else has it.
+interface RecordDraft {
+  checking: Checking;
+  id: string;
+  after: Recorded | undefined;
+  before: Recorded | undefined;
+}
 
-const ownerCheck: RecordCheck = async (
-  transaction,
-  actor,
-  _,
-  __,
-  after,
-  before,
-) => {
-  if (after !== undefined) {
-    await checkOwnerDraft(transaction, actor, after, before);
-  }
-};
+// A kind of record's own rules beyond those across records.
+type RecordCheck = (draft: RecordDraft) => Promise<void>;
 
-const recordChecks = new Map<RecordType, RecordCheck>([
-  [
-    "feature",
-    async (transaction, actor, _, __, after, before) => {
-      refuseFeatureFieldChanges(actor, before, after);
-      if (after !== undefined) {
-        await checkPlanningDraft(
+const noCheck: RecordCheck = () => Promise.resolve();
+
+// A record's own rules where it is kept, not removed.
+const whenKept =
+  (
+    check: (draft: RecordDraft & { after: Recorded }) => Promise<void>,
+  ): RecordCheck =>
+  ({ after, ...draft }) =>
+    after === undefined ? Promise.resolve() : check({ ...draft, after });
+
+const planningCheck = (table: PlanningTable) =>
+  whenKept(async ({ checking, after, before }) => {
+    const { transaction, actor, columnsOf } = checking;
+    await checkPlanningDraft(
+      transaction,
+      actor.user.id,
+      await columnsOf(table),
+      after,
+      before,
+    );
+  });
+
+// Each kind of the plan's records, by its own rules; every kind must be listed, which the compiler
+// checks.
+const recordChecks: Record<RecordType, RecordCheck> = {
+  "release-stream": noCheck,
+  "cycle-pattern": noCheck,
+  release: noCheck,
+  feature: async (draft) => {
+    refuseFeatureFieldChanges(draft.checking.actor, draft.before, draft.after);
+    await planningCheck("features")(draft);
+  },
+  customer: noCheck,
+  proposal: whenKept(({ checking: { transaction, actor }, after, before }) =>
+    checkProposalDraft(transaction, actor, after, before),
+  ),
+  project: whenKept(({ checking: { transaction, actor }, after, before }) =>
+    checkOwnerDraft(transaction, actor, after, before),
+  ),
+  milestone: noCheck,
+  activity: (draft) => {
+    const { transaction, actor, versions } = draft.checking;
+    return draft.after === undefined
+      ? refuseAllocatedActivity(
           transaction,
-          actor.user.id,
-          "features",
-          after,
-          before,
-        );
-      }
-    },
-  ],
-  [
-    "activity",
-    (transaction, actor, mine, id, after, before) =>
-      after === undefined
-        ? refuseAllocatedActivity(transaction, mine, id, actor)
-        : checkPlanningDraft(
-            transaction,
-            actor.user.id,
-            "activities",
-            after,
-            before,
-          ),
-  ],
-  ["project", ownerCheck],
-  ["proposal", ownerCheck],
-  [
-    "allocation",
-    async (transaction, _, mine, __, after, before) => {
-      if (after !== undefined) {
-        await checkAllocationDraft(transaction, mine, after, before);
-      }
-    },
-  ],
-]);
+          versions.records.mine,
+          draft.id,
+          actor,
+        )
+      : planningCheck("activities")(draft);
+  },
+  allocation: whenKept(async ({ checking, after, before }) =>
+    checkAllocationDraft(
+      checking.transaction,
+      checking.versions.records.mine,
+      after,
+      before,
+      await checking.today(),
+    ),
+  ),
+  "planning-settings": noCheck,
+};
 
 // A record of the plan as the user's draft makes it: the rules across records, as the role acting
 // sees them, then its kind's own.
 async function checkRecord(
-  { transaction, actor, versions }: Checking,
-  row: Row,
+  checking: Checking,
+  row: Row & { recordType: RecordType },
 ): Promise<void> {
   if (wantsNoDraft(row)) return;
-  const type = row.recordType as RecordType;
-  const { mine, theirs } = versions.records;
-  const misfit = recordMisfit(mine, type, row.recordId, actor);
+  const { recordType: type, recordId: id } = row;
+  const { mine, theirs } = checking.versions.records;
+  const misfit = recordMisfit(mine, type, id, checking.actor);
   if (misfit !== undefined) throw misfit;
-  await recordChecks.get(type)?.(
-    transaction,
-    actor,
-    mine,
-    row.recordId,
-    versionOf(mine, type, row.recordId),
-    versionOf(theirs, type, row.recordId),
-  );
+  // The type is one of the plan's record types, narrowed above.
+  // eslint-disable-next-line security/detect-object-injection
+  await recordChecks[type]({
+    checking,
+    id,
+    after: versionOf(mine, type, id),
+    before: versionOf(theirs, type, id),
+  });
 }
 
 // Whether a change of a kind with no rules of its own on publishing yet still fits the data as it is
@@ -144,7 +164,7 @@ const listCheck =
   ({ transaction, actor, versions }: Checking, row: Row) =>
     check({
       transaction,
-      editor: actor.user.id,
+      actor,
       mine: versions.mine.lists,
       theirs: versions.theirs.lists,
       id: row.recordId,
@@ -162,7 +182,7 @@ const otherChecks: Record<
   field: ({ transaction, actor, versions }, row) =>
     checkColumnDraft(
       transaction,
-      actor.user.id,
+      actor,
       versions.mine.columns,
       versions.theirs.columns,
       row.recordId,
@@ -220,28 +240,50 @@ export async function refuseMisfits(
   versions: Versions,
   rows: readonly Row[],
 ): Promise<void> {
+  const columns = new Map<PlanningTable, Promise<readonly ColumnInfo[]>>();
+  let today: Promise<string> | undefined;
   const checking: Checking = {
     transaction,
     actor,
     versions,
     taken: await takenPeople(transaction, actor.user.id, versions),
+    today: () => {
+      today ??= readToday(transaction);
+      return today;
+    },
+    columnsOf: (table) => {
+      const read =
+        columns.get(table) ??
+        planningColumns(transaction, actor.user.id, table);
+      columns.set(table, read);
+      return read;
+    },
+  };
+  const check = (row: Row) => {
+    const kind = row.recordType;
+    return isRecordType(kind)
+      ? checkRecord(checking, { ...row, recordType: kind })
+      : otherCheckOf.get(kind)?.(checking, row);
   };
   const ordered = [...rows].sort(
     (first, second) => placeOf(first) - placeOf(second),
   );
   for (const row of ordered) {
-    const check = isRecordType(row.recordType)
-      ? checkRecord
-      : otherCheckOf.get(row.recordType);
     try {
-      await check?.(checking, row);
+      await check(row);
     } catch (error) {
       if (!(error instanceof RequestError || error instanceof NoLongerFits)) {
         throw error;
       }
       const subject = subjectOf(versions, row, actor);
       if (error instanceof RequestError && readsChange(versions, row, actor)) {
-        throw new ConflictError(`${capitalized(subject)}: ${error.message}`);
+        const named = capitalized(subject);
+        // A reason that names the record already says what it is to.
+        throw new ConflictError(
+          error.message.startsWith(named)
+            ? error.message
+            : `${named}: ${error.message}`,
+        );
       }
       throw new ConflictError(
         `The change to ${subject} no longer fits the data; change or discard it, then publish again`,

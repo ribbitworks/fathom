@@ -397,6 +397,7 @@ export async function checkAllocationDraft(
   state: RecordsState,
   after: Recorded,
   before: Recorded | undefined,
+  today: string,
 ): Promise<void> {
   checkFeature(state, String(after.featureId));
   const person =
@@ -406,7 +407,7 @@ export async function checkAllocationDraft(
     person === undefined
       ? { plannedHireId: String(after.plannedHireId) }
       : { personId: person },
-    await readToday(reader),
+    today,
   );
   const outside = outsideOf(
     changedSpans(monthsOf(before), monthsOf(after)),
@@ -428,21 +429,24 @@ export async function changeAllocation(
   requireView(editor, "allocations");
   const today = await readToday(database);
   return drafting(database, editor.user.id, async (transaction, state) => {
-    checkFeature(state, change.featureId);
-    const bounds = await boundsFor(transaction, change, today);
-    // Someone else's unpublished changes to it, if any, refuse the change as they hold it.
     const made = allocationFor(state, change);
     const id = made ?? randomUUID();
-    const before = monthsOf(versionOf(state, type, id));
-    const months = withChange(before, change);
+    const before = versionOf(state, type, id);
+    const months = withChange(monthsOf(before), change);
+    await checkAllocationDraft(
+      transaction,
+      state,
+      {
+        personId: change.personId ?? null,
+        plannedHireId: change.plannedHireId ?? null,
+        featureId: change.featureId,
+        months,
+      },
+      before,
+      today,
+    );
     if (made === undefined && Object.keys(months).length === 0) {
       throw new BadRequestError(nothingToStop);
-    }
-    const outside = outsideOf(changedSpans(before, months), bounds);
-    if (outside !== undefined) {
-      throw new BadRequestError(
-        draftingRefusal(outside, change.personId !== undefined),
-      );
     }
     return saveRecordDraft(
       transaction,

@@ -4,7 +4,7 @@
 // on publishing compares a removal with those. Part of the data access layer.
 
 import { changes, changeSets, inChunks, type Reader, users } from "@fathom/db";
-import { and, eq, inArray, max } from "drizzle-orm";
+import { and, eq, gt, inArray, max } from "drizzle-orm";
 import { wantsNoDraft } from "./draft-records.ts";
 import { openChangeSets } from "./draft-makers.ts";
 import { madeInOrder } from "./history-order.ts";
@@ -60,10 +60,22 @@ export async function readLiveSince(
   userId: string,
   rows: readonly Removing[],
 ): Promise<Map<string, LiveSince>> {
-  const ids = rows.filter(removing).map(({ recordId }) => recordId);
-  const began = await beganAt(reader, userId, ids);
+  const removals = rows.filter(removing);
+  const began = await beganAt(
+    reader,
+    userId,
+    removals.map(({ recordId }) => recordId),
+  );
+  // Only removals the history records the start of are compared, each from when it began.
+  const dated = removals.flatMap((row) => {
+    const since = began.get(changeKey(row));
+    return since instanceof Date
+      ? [{ key: changeKey(row), id: row.recordId, since }]
+      : [];
+  });
   const found = new Map<string, LiveSince>();
-  for (const chunk of inChunks([...new Set(ids)])) {
+  for (const chunk of inChunks(dated)) {
+    const earliest = new Date(Math.min(...chunk.map(({ since }) => +since)));
     const made = await reader
       .select({
         recordType: changes.recordType,
@@ -81,22 +93,28 @@ export async function readLiveSince(
         and(
           eq(changes.draft, false),
           eq(changeSets.private, false),
-          inArray(changes.recordId, chunk),
+          gt(changeSets.madeAt, earliest),
+          inArray(
+            changes.recordId,
+            chunk.map(({ id }) => id),
+          ),
         ),
       )
       .orderBy(...madeInOrder);
-    for (const change of made) {
-      const key = changeKey(change);
-      const since = began.get(key);
-      if (!(since instanceof Date) || change.madeAt <= since) continue;
-      const seen = found.get(key) ?? { added: false, changes: [] };
-      found.set(key, {
-        added: seen.added || change.action === "created",
-        changes: [
-          ...seen.changes,
-          { field: change.field, tier: change.tier, madeBy: change.madeBy },
-        ],
-      });
+    for (const { key, since } of chunk) {
+      const later = made.filter(
+        (change) => changeKey(change) === key && change.madeAt > since,
+      );
+      if (later.length > 0) {
+        found.set(key, {
+          added: later.some(({ action }) => action === "created"),
+          changes: later.map(({ field, tier, madeBy }) => ({
+            field,
+            tier,
+            madeBy,
+          })),
+        });
+      }
     }
   }
   return found;

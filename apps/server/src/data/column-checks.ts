@@ -5,26 +5,22 @@
 
 import { ConflictError } from "../errors.ts";
 import { type Transaction } from "./changes.ts";
-import { refuseIfDraftsChange, refuseIfDraftsFill } from "./column-drafts.ts";
+import { type Actor } from "../access.ts";
 import {
-  checkList,
-  columnRow,
-  type ColumnsState,
-  draftedField,
-  duplicateField,
-  nameTaken,
-  refuseSensitiveOnFeatures,
-} from "./column-state.ts";
+  checkColumnRemoval,
+  checkColumnSettings,
+  refuseIfDraftsFill,
+} from "./column-drafts.ts";
+import { type ColumnsState, draftedField } from "./column-state.ts";
 import { type Recorded, wantsNoDraft } from "./draft-records.ts";
-import { checkValuesFit } from "./fields.ts";
 
 const conflict = (message: string) => new ConflictError(message);
 
 // A column as the user's draft makes it, its removal or its taking back, with the columns as the
-// user's drafts make them and as everyone else has them.
+// user's drafts make them and as everyone else has them, checked as the actor.
 export async function checkColumnDraft(
   transaction: Transaction,
-  editor: string,
+  actor: Actor,
   mine: ColumnsState,
   theirs: ColumnsState,
   id: string,
@@ -34,26 +30,23 @@ export async function checkColumnDraft(
   if (wantsNoDraft(row)) {
     const added = draftedField(theirs, id);
     if (live === undefined && added !== undefined) {
-      await refuseIfDraftsFill(transaction, editor, id, added);
+      await refuseIfDraftsFill(transaction, actor.user.id, id, added);
     }
     return;
   }
   const after = draftedField(mine, id);
+  // A removal is of a live column, since a column removed since takes the change with it.
   if (after === undefined) {
-    // A removal is of a live column, since a column removed since takes the change with it.
-    await refuseIfDraftsChange(transaction, editor, id, live as Recorded);
+    await checkColumnRemoval(transaction, actor, mine, id, live as Recorded);
     return;
   }
-  if (nameTaken(mine, String(after.name), id, after.tableName)) {
-    throw new ConflictError(duplicateField);
-  }
-  const wanted = columnRow(id, after);
-  // The live values are checked against the live column, as a fresh change checks them.
-  const current = columnRow(id, live ?? { ...after, required: false });
-  await checkValuesFit(transaction, current, wanted, editor);
-  const liveList = live === undefined ? null : current.listId;
-  if (wanted.listId !== null && wanted.listId !== liveList) {
-    await checkList(transaction, mine, wanted.listId, conflict);
-  }
-  refuseSensitiveOnFeatures(mine, after);
+  await checkColumnSettings(
+    transaction,
+    actor,
+    mine,
+    id,
+    draftedField(theirs, id),
+    after,
+    conflict,
+  );
 }
