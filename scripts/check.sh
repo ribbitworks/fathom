@@ -284,11 +284,6 @@ work_offline() {
   info "The Check workflow runs everything on the pull request"
 }
 
-# Whether this run already holds a check's turn, as one started by check-turn.mjs does.
-in_turn() {
-  [ "${FATHOM_CHECK_SLOT:-}" = "1" ]
-}
-
 job_names() {
   local job names=""
   for job in "${jobs[@]}"; do names="${names:+$names, }${job%%|*}"; done

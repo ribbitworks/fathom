@@ -234,7 +234,7 @@ The copy gets new names, and so a new, empty database.
 | `pnpm test:scripts` | The script tests alone |
 | `pnpm test:packages` | Every package's tests; with `--filter` and a package, such as `--filter @fathom/web`, only those packages, as pnpm chooses them |
 | `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, the application and database can't reach the internet, and the application image holds none of the tests or the files only they use |
-| `pnpm test:ui` | The UI tests in a real browser, against this copy's development server, which must be running, after reseeding its fictional data, as [ADR 0013](../adr/0013-ui-tests.md) sets out. |
+| `pnpm test:ui` | The UI tests in a real browser, against this copy's development server, which must be running, after reseeding its fictional data, as [ADR 0013](../adr/0013-ui-tests.md) sets out. It waits for a check's turn first, as [Sharing the Machine](checks-and-ci.md#sharing-the-machine) sets out |
 | `pnpm typecheck` | Type checking across the workspace |
 | `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences`, `pnpm lint:renovate`, `pnpm lint:duplicates` | Each linter on its own. `pnpm lint:renovate` validates `renovate.json` with Renovate's own validator, only when it has changed since `origin/main` |
 | `pnpm format` | Format the source files |

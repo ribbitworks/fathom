@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Runs the UI tests in a real browser against this copy's development server, on fresh fictional
-# data. Usage: test-ui.sh [Playwright's arguments, such as a test file]
+# data, in a check's turn on this computer, since the browser, the server and the database they load
+# slow any check running beside them. Usage: test-ui.sh [Playwright's arguments, such as a test file]
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -14,6 +15,9 @@ main() {
   ca_file="$(mkcert -CAROOT)/rootCA.pem"
   curl --silent --max-time 10 --cacert "$ca_file" --output /dev/null "$url/" ||
     fail "Fathom isn't answering at $url; start it with 'pnpm dev', then try again"
+  if ! in_turn; then
+    exec node scripts/check-turn.mjs bash scripts/test-ui.sh "$@"
+  fi
   password_file="$PWD/$(dev_account_password_file)"
   FATHOM_DEV_SHOW_PASSWORD=false bash scripts/dev-db.sh reseed
   # Each run signs its accounts in afresh; their sessions are kept where only this account can read.

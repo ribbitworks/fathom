@@ -160,7 +160,7 @@ flowchart TD
 
 This chart is part of [The Local Check](#the-local-check), which also draws the checks a run makes before its turn.
 
-- **Taking turns:** `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before running their jobs, once their arguments and the connection are checked. One copy holds the turn at a time. `pnpm test` takes one for its package tests only, after the script tests.
+- **Taking turns:** `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before running their jobs, once their arguments and the connection are checked. `pnpm test:ui` takes one too, once the development server answers, since the browser, the server and the database it loads slow a check beside it. One copy holds the turn at a time. `pnpm test` takes one for its package tests only, after the script tests.
 - **Waiting:** copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the process and folder that holds the turn, and how many copies asked first.
 - **A check started by a check,** such as `pnpm test:changed` within `pnpm check:push`, uses the turn its check holds.
 - **Cores:** the copy holding the turn has every core, as a check on GitHub does.

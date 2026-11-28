@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of 'pnpm test:ui': it needs the development server running, then reseeds the fictional data
-// and runs the UI tests against this copy's server.
+// Tests of 'pnpm test:ui': it needs the development server running, then waits for a check's turn,
+// reseeds the fictional data and runs the UI tests against this copy's server.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -20,6 +20,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
+import { writeCheckTurn } from "./test-check-turn.mjs";
 
 const scripts = fileURLToPath(new URL(".", import.meta.url));
 const folders = [];
@@ -30,12 +31,14 @@ function run({
   args = [],
   reseedFails = false,
   testsFail = false,
+  inTurn = true,
 }) {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "fathom-test-ui-")));
   folders.push(root);
   mkdirSync(join(root, "scripts"));
   for (const name of ["lib.sh", "test-ui.sh"])
     copyFileSync(join(scripts, name), join(root, "scripts", name));
+  writeCheckTurn(join(root, "scripts"));
   const calls = join(root, "calls.log");
   writeFileSync(
     join(root, "scripts", "dev-db.sh"),
@@ -62,7 +65,11 @@ function run({
   const result = spawnSync("bash", ["scripts/test-ui.sh", ...args], {
     cwd: root,
     encoding: "utf8",
-    env: { PATH: `${tools}:${process.env.PATH ?? ""}`, HOME: process.env.HOME },
+    env: {
+      PATH: `${tools}:${process.env.PATH ?? ""}`,
+      HOME: process.env.HOME,
+      FATHOM_CHECK_SLOT: inTurn ? "1" : "",
+    },
   });
   const called = existsSync(calls) ? readFileSync(calls, "utf8") : "";
   return { ...result, root, called };
@@ -75,7 +82,7 @@ afterEach(() => {
 
 describe("scripts/test-ui.sh", () => {
   it("stops, naming pnpm dev, when the development server isn't running", () => {
-    const result = run({ serverUp: false });
+    const result = run({ serverUp: false, inTurn: false });
     assert.equal(result.status, 1);
     assert.ok(
       result.stderr.includes(
@@ -85,6 +92,21 @@ describe("scripts/test-ui.sh", () => {
     );
     assert.ok(!result.called.includes("dev-db"), result.called);
     assert.ok(!result.called.includes("pnpm"), result.called);
+    assert.ok(!result.stdout.includes("turn:"), result.stdout);
+  });
+
+  it("waits for a check's turn once the server answers, passing its arguments on", () => {
+    const result = run({
+      serverUp: true,
+      args: ["e2e/new-record.test.ts"],
+      inTurn: false,
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(
+      result.stdout,
+      `turn: ${JSON.stringify(["bash", "scripts/test-ui.sh", "e2e/new-record.test.ts"])}\n`,
+    );
+    assert.ok(!result.called.includes("dev-db"), result.called);
   });
 
   it("stops before the UI tests when the reseed fails", () => {
