@@ -59,7 +59,9 @@ test("refuses a missing name and a column named twice, then makes the page and s
 
   // And a row typed at once, in its empty row, which has focus, is saved at once, still there once
   // the page is read again
-  await expect(grid.locator("tbody td").first()).toBeFocused();
+  await expect(
+    grid.getByRole("row", { name: "New row" }).locator("td").first(),
+  ).toBeFocused();
   await page.keyboard.type("Fictional title");
   const saved = page.waitForResponse(
     (response) =>
