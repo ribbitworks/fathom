@@ -328,7 +328,11 @@ describe("hiding columns", () => {
 
   it("focuses the heading before a column removed from its menu, when it was the last", async () => {
     renderViewing(emptyView, noop, {
-      given: actions({ removeColumn: noop }),
+      given: actions({
+        removeColumn: (_field, { removed }) => {
+          removed();
+        },
+      }),
       canEditColumns: true,
     });
 

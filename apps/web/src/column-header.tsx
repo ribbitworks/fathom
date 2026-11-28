@@ -481,7 +481,6 @@ export function columnHeaders<Rec extends GridRecord, Change, Request>(
                             focusSoon(headerId(column));
                           },
                         });
-                        if (actions.removeColumnAsks !== true) removed();
                       }}
                     >
                       {actions.removeColumnAsks === true

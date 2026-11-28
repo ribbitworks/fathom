@@ -13,7 +13,7 @@ test("asks before Esc discards a new column, keeps it on Keep adding, and discar
   // Given the Product Manager's New column dialog, with a name typed
   await page.goto("/features");
   await page.getByRole("button", { name: "New column" }).click();
-  const dialog = page.getByRole("dialog", { name: "New column" });
+  const dialog = page.getByRole("dialog", { name: "New column", exact: true });
   const name = dialog.getByRole("textbox", { name: "Name", exact: true });
   await name.fill("Fictional Tier");
 

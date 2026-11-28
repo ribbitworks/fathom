@@ -18,6 +18,7 @@ export function DialogActions({
   beforeCancel,
   removes = false,
   cancelFocused = false,
+  cancel = "Cancel",
   failure = "Fathom could not make this change. Try again in a moment.",
 }: {
   error: Error | null;
@@ -32,6 +33,8 @@ export function DialogActions({
   // Whether Cancel takes focus as the dialog opens, for a question whose action can't be taken
   // back at once, so Enter alone never takes it.
   cancelFocused?: boolean;
+  // The cancel button's words, where they say what is kept, such as Keep adding.
+  cancel?: string;
   // What a failure says when the server gives no reason, for a dialog that changes nothing.
   failure?: string;
 }) {
@@ -54,7 +57,7 @@ export function DialogActions({
               onCancel();
             }}
           >
-            Cancel
+            {cancel}
           </Button>
           <Button
             type="submit"

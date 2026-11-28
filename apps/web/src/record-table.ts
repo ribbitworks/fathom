@@ -91,7 +91,7 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
   // Absent where a table's columns can't be edited yet, as a private page's.
   editColumn?: ((field: Field) => void) | undefined;
   // Removes an added column, for a role that may: as a draft, or, on a table without drafts, once
-  // asked, calling back once it's removed or kept.
+  // asked; it calls removed once the column is gone from view, or kept once it's kept.
   removeColumn?:
     | ((field: Field, after: { removed: () => void; kept: () => void }) => void)
     | undefined;
