@@ -41,8 +41,8 @@ const ownDatabaseTest = it.extend<{ own: SeedTestDatabase }>({
   },
 });
 
-// A test that seeds more than once does a few times the work of the others, so it gets as long as
-// a hook does, under the load of other checks running beside it.
+// A test that seeds twice does a few times the work of the others, so under the load of other checks
+// beside it, it gets twice as long.
 const seedingTwice = { timeout: 120_000 };
 
 describe("the seed command", () => {
@@ -441,7 +441,6 @@ describe("the seed command", () => {
 
   ownDatabaseTest(
     "says what went wrong: a wrong command, missing settings, or data in the way",
-    seedingTwice,
     async ({ own }) => {
       const { connection, command } = own;
       const problems = vi

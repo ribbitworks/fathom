@@ -160,13 +160,19 @@ flowchart TD
 
 This chart is part of [The Local Check](#the-local-check), which also draws the checks a run makes before its turn.
 
-- **Taking turns:** `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before running their jobs, once their arguments and the connection are checked. `pnpm test:ui` takes one too, once the development server answers, since the browser, the server and the database it loads slow a check beside it. Two copies may hold a turn at a time. `pnpm test` takes one for its package tests only, after the script tests.
+- **Taking turns:** two copies may hold a turn at a time.
+  - `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, each take a turn before running their jobs, once their arguments and the connection are checked.
+  - `pnpm test:ui` takes one once the development server answers, since the browser, the server and the database it loads slow a check beside it.
+  - `pnpm test` takes one for its package tests only, after the script tests.
 - **Waiting:** copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the processes and folders that hold the turns, and how many copies asked first.
 - **A check started by a check,** such as `pnpm test:changed` within `pnpm check:push`, uses the turn its check holds.
 - **Cores:** each copy holding a turn sizes its workers for every core, as a check on GitHub does, and shares them with the other copy holding one.
 - **Workers:** each package's tests use a share of the cores, leaving two free for the development servers. Four packages have long-running tests: the web app, the server, the database and the seed data. The cores are shared among those of the four a run tests, so on 18 cores the web app's tests alone get 16 workers, and each of the four gets 4 when all run. A package that starts test databases gets at most 12, the most measured. `VITEST_MAX_WORKERS` sets the number instead.
 - **Side by side:** `pnpm test:changed` runs the script tests and the type check beside the package tests, and leaves them two more cores, so the web app's tests alone get 14 workers there.
-- **Measured:** the web app's tests took 106 seconds with 4 workers and 47 with 16. The server's took 224 seconds with 4 and 142 with 12, using about 2.5 cores at 4. The script tests took 29 seconds on about 1.3 cores, and the type check 5 on 1.7. Two copies running the server's and the web app's tests side by side slowed each by about a third. With two turns, `pnpm test:changed` took 489 seconds beside the UI tests and other copies' checks, against 483 alone, with no failures from load in three pairs of runs, so two copies hold turns at once.
+- **Measured:**
+  - **Workers:** the web app's tests took 106 seconds with 4 workers and 47 with 16. The server's took 224 seconds with 4 and 142 with 12, using about 2.5 cores at 4. The script tests took 29 seconds on about 1.3 cores, and the type check 5 on 1.7.
+  - **Two at once:** the server's and the web app's tests alone, side by side, slowed each by about a third. A whole `pnpm test:changed` took 489 seconds beside the UI tests and other copies' checks, against 483 alone.
+  - **Two turns:** both mean two copies finish sooner side by side than in turn, and three pairs of runs had no failures from load, so two copies hold turns at once.
 - **Test databases:** no more than 8 test database servers start at once on one computer.
 - **Time limit:** a check stops a job still running after 15 minutes, shows its output up to then, and fails it as Stopped, so a hung job never holds a turn for long. `FATHOM_CHECK_JOB_SECONDS` sets another limit.
   - `pnpm test:changed`, `pnpm test:packages` and `pnpm test`, run alone or within a check, stop each pnpm step they run past the same limit, naming the step, and fail.
