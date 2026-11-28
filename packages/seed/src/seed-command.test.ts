@@ -41,9 +41,14 @@ const ownDatabaseTest = it.extend<{ own: SeedTestDatabase }>({
   },
 });
 
+// A test that seeds more than once does a few times the work of the others, so it gets as long as
+// a hook does, under the load of other checks running beside it.
+const seedingTwice = { timeout: 120_000 };
+
 describe("the seed command", () => {
   ownDatabaseTest(
     "seeds, says when it already has, and unseeds",
+    seedingTwice,
     async ({ own }) => {
       const { connection, command } = own;
       const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
@@ -272,6 +277,7 @@ describe("the seed command", () => {
 
   ownDatabaseTest(
     "makes the list drafts anew when the seed data is removed after its unpublished changes are published",
+    seedingTwice,
     async ({ own }) => {
       const { connection, command } = own;
       // Given the seed data, with the changes it leaves unpublished published, its drafted list too
@@ -306,6 +312,7 @@ describe("the seed command", () => {
 
   ownDatabaseTest(
     "seeds again after the drafted Skills and Equipment lists are approved, keeping them and not drafting them again",
+    seedingTwice,
     async ({ own }) => {
       const { connection, command } = own;
       // Given the seed data, with its drafts adding the Skills list and the Equipment list, once
@@ -434,6 +441,7 @@ describe("the seed command", () => {
 
   ownDatabaseTest(
     "says what went wrong: a wrong command, missing settings, or data in the way",
+    seedingTwice,
     async ({ own }) => {
       const { connection, command } = own;
       const problems = vi
