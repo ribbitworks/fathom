@@ -17,7 +17,7 @@ import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { Actor } from "../access.ts";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { draftFields, type Recorded, type Viewer } from "./draft-records.ts";
-import { type Maker, viewerMarks } from "./draft-makers.ts";
+import { draftStanding, type Maker, viewerMarks } from "./draft-makers.ts";
 import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import { activityKind } from "./activity-kinds.ts";
 import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
@@ -292,19 +292,12 @@ export function recordDraftOut(
             ]),
           ),
     uses: usesOf(kind, state, id),
-    state: draft.state,
-    ...(draft.state === "rejected" && draft.reason !== null
-      ? { reason: draft.reason }
-      : {}),
-    ...(draft.unpublished === true ? { unpublished: true } : {}),
-    madeBy: maker?.madeBy ?? null,
-    madeAs: maker?.madeAs ?? null,
-    madeAt: maker?.madeAt.toISOString() ?? null,
-    editors: maker?.editors ?? [],
-    ...viewerMarks(
-      maker,
-      makers.discardable.has(refKey({ type: kind.type, id })),
-    ),
+    ...draftStanding(draft, maker, {
+      marks: viewerMarks(
+        maker,
+        makers.discardable.has(refKey({ type: kind.type, id })),
+      ),
+    }),
     changedBy: Object.fromEntries(
       changed.map((name) => [
         name,

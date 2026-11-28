@@ -10,6 +10,7 @@ import {
   type Tier,
   type ViewChoices,
   type ViewDefinition,
+  type ViewSettings,
   inPlacesOf,
   viewDefinitionSchema,
 } from "@fathom/shared";
@@ -142,43 +143,13 @@ export interface SortLevel {
   descending: boolean;
 }
 
-export interface View {
+export interface View extends ViewSettings {
   search: string;
   // Which version of each record shows: both the draft and the live record, the draft alone, or
   // the live record alone.
   show: Show;
   filters: Record<string, Filter>;
   sort: SortLevel[];
-  // The keys of the columns the metrics break the rows down by, set while the metrics show.
-  breakdown?: string[] | undefined;
-  // The key of the number column the metrics add up, or empty for none, when not the table's own.
-  sum?: string | undefined;
-  // Which of a table's groupings the rows are under, when they aren't in one list.
-  grouping?: string | undefined;
-  // Which of the table's groupings the rows under each of the first grouping's headings are under.
-  thenBy?: string | undefined;
-  // Set when the first grouping's groups run the other way, with the group for none at the top.
-  groupsReversed?: true | undefined;
-  // How many columns, from the first, stay in view while the table scrolls sideways, when not the
-  // table's own default.
-  frozen?: number | undefined;
-  // The keys of the columns in the order the view puts them, when moved from the table's own.
-  order?: string[] | undefined;
-  // The keys of the columns the table leaves out, which keep their filters, sorts and places.
-  hidden?: string[] | undefined;
-  // The keys of the columns hidden at first that the view shows.
-  shown?: string[] | undefined;
-  // The width set for each column, in pixels, by key, for those not left to fit what they hold.
-  widths?: Record<string, number> | undefined;
-  // The unit each column that offers units is shown in, by key, for those not in their first, and
-  // the decimal places, for those not shown to as many as they start with.
-  units?: Record<string, string> | undefined;
-  places?: Record<string, number> | undefined;
-  // Set when the table's retired records show too, for a table that has them.
-  retired?: true | undefined;
-  // The page's own choices kept in the view, by the names its address gives them, such as
-  // Features' `mode`.
-  choices?: ViewChoices | undefined;
 }
 
 export const emptyView: View = {

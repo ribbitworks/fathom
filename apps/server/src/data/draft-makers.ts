@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Who made each draft, the refusal of an approval of drafts the approver changed, and the rule for
-// who may discard a draft that every kind starts from. Part of the data access layer.
+// Who made each draft and what every read of one says about it, the refusal of an approval of
+// drafts the approver changed, and the rule for who may discard a draft that every kind starts
+// from. Part of the data access layer.
 
 import {
   changes,
@@ -23,6 +24,7 @@ import {
 import { and, eq, inArray, or, type SQL, sql } from "drizzle-orm";
 import { type Actor, storedTier } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
+import type { Draft } from "./draft-records.ts";
 
 const discardRefusal = "Only someone who changed this draft can discard it.";
 
@@ -79,6 +81,47 @@ export const ownMarks = (maker: Maker | undefined) =>
     maker,
     ownDiscardRefusal(maker?.changedByUser === true) === undefined,
   );
+
+// Who last changed each field of a draft, by the name the reader knows it by, which is the field's
+// own unless keyOf names it otherwise.
+export const fieldEditorsOf = (
+  maker: Maker | undefined,
+  fields: readonly string[],
+  keyOf: (field: string) => string = (field) => field,
+): Record<string, string | null> =>
+  Object.fromEntries(
+    fields.map((field) => [
+      keyOf(field),
+      maker?.fieldEditors.get(field) ?? null,
+    ]),
+  );
+
+// What every read of a draft sends after what the draft changes, in one order for every kind. A read
+// whose reader may not see the whole draft says so with reasonShown, asked only of a rejection.
+export function draftStanding(
+  draft: Pick<Draft, "state" | "reason" | "unpublished">,
+  maker: Maker | undefined,
+  {
+    reasonShown = () => true,
+    marks = ownMarks(maker),
+  }: {
+    reasonShown?: () => boolean;
+    marks?: ReturnType<typeof viewerMarks>;
+  } = {},
+) {
+  return {
+    state: draft.state,
+    ...(draft.state === "rejected" && draft.reason !== null && reasonShown()
+      ? { reason: draft.reason }
+      : {}),
+    ...(draft.unpublished === true ? { unpublished: true as const } : {}),
+    madeBy: maker?.madeBy ?? null,
+    madeAs: maker?.madeAs ?? null,
+    madeAt: maker?.madeAt.toISOString() ?? null,
+    editors: maker?.editors ?? [],
+    ...marks,
+  };
+}
 
 // The changes to the records given, of one kind, that tell who changed each draft, in the order they
 // were made: changes to drafts and the approvals and discards that end them, published, and the

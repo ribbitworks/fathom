@@ -33,9 +33,10 @@ import {
 } from "./draft-records.ts";
 import {
   draftMakers,
+  draftStanding,
   everything,
+  fieldEditorsOf,
   type Maker,
-  ownMarks,
 } from "./draft-makers.ts";
 import { keyNumberOf } from "./record-keys.ts";
 import { tablesMadeWith } from "./lists-made-with.ts";
@@ -71,25 +72,10 @@ function draftOut<Live extends Record<string, unknown>>(
           changed.map((field) => [field, live[field]]),
         )) as Partial<Live>,
     ...(madeWith === undefined ? {} : { madeWith }),
-    state: draft.state,
-    ...(draft.state === "rejected" && draft.reason !== null
-      ? { reason: draft.reason }
-      : {}),
-    ...unpublishedMark(draft),
-    madeBy: maker?.madeBy ?? null,
-    madeAs: maker?.madeAs ?? null,
-    madeAt: maker?.madeAt.toISOString() ?? null,
-    editors: maker?.editors ?? [],
-    ...ownMarks(maker),
-    changedBy: Object.fromEntries(
-      changed.map((field) => [field, maker?.fieldEditors.get(field) ?? null]),
-    ),
+    ...draftStanding(draft, maker),
+    changedBy: fieldEditorsOf(maker, changed),
   };
 }
-
-// Marks a draft holding the viewer's own changes, not yet published.
-export const unpublishedMark = (draft: Draft) =>
-  draft.unpublished === true ? { unpublished: true } : {};
 
 const shownChoiceFields = [
   "label",
@@ -184,16 +170,7 @@ export function listsOut(
         : {
             live: liveOrder(state, id),
             uses: choicesOrderUses(state, id),
-            state: orderDraft.state,
-            ...(orderDraft.state === "rejected" && orderDraft.reason !== null
-              ? { reason: orderDraft.reason }
-              : {}),
-            ...unpublishedMark(orderDraft),
-            madeBy: makers.order.get(id)?.madeBy ?? null,
-            madeAs: makers.order.get(id)?.madeAs ?? null,
-            madeAt: makers.order.get(id)?.madeAt.toISOString() ?? null,
-            editors: makers.order.get(id)?.editors ?? [],
-            ...ownMarks(makers.order.get(id)),
+            ...draftStanding(orderDraft, makers.order.get(id)),
           };
     return [
       {
