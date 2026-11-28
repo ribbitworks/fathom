@@ -121,6 +121,8 @@ Fathom doesn't move a planned hire's allocations to the person. An allocation is
 1. Select **Fill** under the form.
 1. Select **Publish**, and ask your approver to approve it.
 
+For a new person, the form also asks for any required column you added that the hire left empty.
+
 You're done once the fill is approved. The person then takes the hire's place.
 
 ### Add a Column
@@ -129,12 +131,16 @@ You're done once the fill is approved. The person then takes the hire's place.
 1. Type the column's **Name**.
 1. Choose its **Type**: **Text**, **Number**, **Date**, **Checkbox**, **Choice from a list**, **Web link** or **Note**.
 1. If you chose **Choice from a list**, choose the list. The column takes the list's class.
+1. To let each person hold more than one of the list's choices, tick **Several choices**.
 1. For any other type, choose the column's **Class**, if your role can set classes.
+1. Tick **Required** if every person must have a value in it.
 1. Select **Add column**.
 
-You're done when the new column shows in the table, with a hollow dot until you publish it.
-
 An empty box means No, so a **Checkbox** column never asks for **Required**.
+
+Every column you add has a cell on planned hires too. A planned hire can leave any column empty, even a required one. Fathom asks for the value when you fill the hire with a new person.
+
+You're done when the new column shows in the table, with a hollow dot until you publish it.
 
 ### Tick a Box
 
@@ -208,7 +214,9 @@ To give a note opened under the details the whole height, select **Maximize**, t
 1. To count by two columns at once, choose the second under **and by**.
 1. If the table has a column of numbers, choose it under **Measure** to add it up. **Measure** shows once you've chosen a column to count by.
 
-The counts include every row the table shows, planned hires too, but not someone drafted to be removed. So a search or a filter changes them.
+The counts include every row the table shows, planned hires too, but not someone drafted to be removed. So a search or a filter changes them. The last row, **All**, counts every row.
+
+A **Text** column counts as **Populated** and **Empty**, and isn't offered once it's required, since every row is then populated. A **Date** column counts by month, earliest first, then **No date**.
 
 A dot before a count marks a draft that changes it: yellow while the draft waits, hollow for your own unpublished change, and red in a ring for a rejected draft. Under **Drafts & Live**, the live count shows under it. Under **Live only**, a green dot marks a count a waiting draft will change. See [Drafts](drafts.md#marks).
 
@@ -246,6 +254,8 @@ Exporting saves the table as a file you can open in a spreadsheet.
 1. Select the **Export** button at the right of the page's heading, before **New column** and **New person** if you have them. Its icon is an arrow pointing down to a line.
 1. Choose **CSV file** or **TSV file**.
 1. Choose where to save it, if your browser asks.
+
+**Export** is turned off while the table shows no rows.
 
 If the file would hold Personal or Confidential data, such as start dates, or planned hires if your role sees the hiring plan, Fathom asks first, and names what the file holds. Select **Export** to go ahead. That export is recorded in the access history, which roles that see administration can read.
 

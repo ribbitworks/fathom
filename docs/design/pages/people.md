@@ -77,6 +77,8 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 - **State:** Offers only hiring states, since a hire becomes a person only by being filled.
 - **Fill:** In the Name cell and under the heading, for those who may change both people and planned hires, only on today, unless the Draft menu shows live values alone. Its form offers New person and Existing person side by side, with the hire's Position read only.
   - Filling happens in this panel, not a dialog, and once filled the panel shows the person.
+  - Every column added to People has cells on planned hires, and a hire may leave any of them empty, even a required one.
+  - A new person's form also asks for each required added column the hire left empty.
   - The manager starts as the hire's and can be changed. A new person's start date starts as the hire's target date. Someone already in Fathom moves from today, or from their start date if they haven't started.
   - What a fill does is in the [Domain Model](../domain-model.md#planned-hires).
 

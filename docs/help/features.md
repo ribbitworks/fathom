@@ -110,6 +110,8 @@ You can add your own columns to Features if your role edits features and sees pe
 1. Choose its **Type**: **Text**, **Number**, **Date**, **Checkbox**, **Choice from a list**, **Web link** or **Note**. A **Text** column holds plain text, a **Date** column a day, and a **Checkbox** column a tick box, for each feature. See [People](people.md#type-text) for typing text, [People](people.md#type-a-date) for typing a day, and [People](people.md#tick-a-box) for ticking a box.
 1. If you chose **Choice from a list**, choose a list. Only lists whose class is **General** are offered, since everyone who sees features sees these columns.
 1. If the list you need isn't there, choose **New list**, last under **List**, instead. Give the list a name, then type each choice in the row that starts with **+** under **Choices**, pressing Enter after each, or paste several, one to a line. To take one out, select **Remove** in its **⋯** menu. The new list is approved with the column.
+1. To let each feature hold more than one of the list's choices, tick **Several choices**.
+1. Unless it's a **Checkbox** column, tick **Required** if every feature must have a value in it.
 1. Select **Add column**.
 
 You're done when the new column shows in the table, with a hollow dot until you publish it.
