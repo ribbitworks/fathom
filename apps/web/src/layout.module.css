@@ -4,10 +4,14 @@
    section labels and links, its collapsed rail of icons, the top bar's parts, and the canvas behind
    each page. Everything else comes from the Mantine theme. */
 
+/* A sidebar taller than the window, as one with many pages under Mine is, scrolls on its own, so
+   its last items stay in reach. */
 .sidebar {
   background: var(--fathom-sidebar);
   color: var(--fathom-sidebar-text);
   border-right: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .section {
