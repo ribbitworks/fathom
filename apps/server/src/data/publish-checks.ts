@@ -95,11 +95,23 @@ const recordChecks: Record<RecordType, RecordCheck> = {
     await planningCheck("features")(draft);
   },
   customer: noCheck,
-  proposal: whenKept(({ checking: { transaction, actor }, after, before }) =>
-    checkProposalDraft(transaction, actor, after, before),
+  proposal: whenKept(async ({ checking, after, before }) =>
+    checkProposalDraft(
+      checking.transaction,
+      checking.actor,
+      after,
+      before,
+      await checking.today(),
+    ),
   ),
-  project: whenKept(({ checking: { transaction, actor }, after, before }) =>
-    checkOwnerDraft(transaction, actor, after, before),
+  project: whenKept(async ({ checking, after, before }) =>
+    checkOwnerDraft(
+      checking.transaction,
+      checking.actor,
+      after,
+      before,
+      await checking.today(),
+    ),
   ),
   milestone: noCheck,
   activity: (draft) => {

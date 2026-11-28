@@ -101,9 +101,14 @@ export async function readLiveSince(
         ),
       )
       .orderBy(...madeInOrder);
+    const byKey = new Map<string, typeof made>();
+    for (const change of made) {
+      const key = changeKey(change);
+      byKey.set(key, [...(byKey.get(key) ?? []), change]);
+    }
     for (const { key, since } of chunk) {
-      const later = made.filter(
-        (change) => changeKey(change) === key && change.madeAt > since,
+      const later = (byKey.get(key) ?? []).filter(
+        ({ madeAt }) => madeAt > since,
       );
       if (later.length > 0) {
         found.set(key, {

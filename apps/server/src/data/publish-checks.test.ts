@@ -91,4 +91,45 @@ describe("checking private changes on publishing", () => {
       "The change to a list no longer fits the data; change or discard it, then publish again",
     );
   });
+
+  it("names a column the role no longer sees the class of, with the reason a fresh change gets", async () => {
+    // Given a People column drawing on the Confidential list, renamed privately
+    const salary = {
+      name: "Fictional Salary",
+      tableName: "people",
+      type: "choice",
+      listId: "list",
+    };
+    const columns = {
+      fields: new Map([["column", salary]]),
+      fieldDrafts: new Map([["column", published({ name: "Fictional Pay" })]]),
+      liveOrder: ["column"],
+      lists,
+    };
+    const versions = {
+      rows: [],
+      mine: { columns },
+      theirs: { columns: { ...columns, fieldDrafts: new Map() } },
+    } as unknown as Versions;
+    const actor = {
+      user: { id: "user-ben" },
+      permissions: ["people:view"],
+    } as unknown as Actor;
+    const row = {
+      ...privateChange({ name: "Fictional Pay" }, { name: salary.name }),
+      recordType: "field",
+      recordId: "column",
+    };
+
+    const refused = await refuseMisfits(
+      {} as unknown as Transaction,
+      actor,
+      versions,
+      [row],
+    ).catch((error: unknown) => error);
+
+    expect((refused as Error).message).toBe(
+      "The column Fictional Pay: Fictional Salary holds people's details this role can't see, so someone who can see them must change it",
+    );
+  });
 });

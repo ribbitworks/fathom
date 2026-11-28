@@ -258,7 +258,7 @@ export async function recordSensitiveChanges(
   );
 }
 
-type ChoiceRow = Awaited<ReturnType<typeof inListOrder>>[number];
+export type ChoiceRow = Awaited<ReturnType<typeof inListOrder>>[number];
 
 // Every choice asked for in the requests, live or drafted to be added as the editor sees it, in
 // list order, read at once. The drafts lock keeps them from being deleted, or their drafts

@@ -117,13 +117,14 @@ async function ownerFor(
   actor: Actor,
   requested: string | null,
   had: unknown,
+  today?: string,
 ): Promise<string | null> {
   const current = typeof had === "string" ? had : null;
   const hidden = await hiddenPeople(
     transaction,
     actor,
     [requested, current].filter((id): id is string => id !== null),
-    await readToday(transaction),
+    today ?? (await readToday(transaction)),
   );
   const shown = current !== null && hidden.has(current) ? null : current;
   if (requested === shown) return current;
@@ -159,9 +160,10 @@ export async function checkProposalDraft(
   actor: Actor,
   after: Recorded,
   before: Recorded | undefined,
+  today: string,
 ): Promise<void> {
   await checkProposalStatus(transaction, after, before);
-  await checkOwnerDraft(transaction, actor, after, before);
+  await checkOwnerDraft(transaction, actor, after, before, today);
 }
 
 // Refuses a project or proposal as a draft makes it, against the record before it, as a fresh
@@ -171,9 +173,16 @@ export async function checkOwnerDraft(
   actor: Actor,
   after: Recorded,
   before: Recorded | undefined,
+  today: string,
 ): Promise<void> {
   if (!same(after.ownerId, before?.ownerId)) {
-    await ownerFor(transaction, actor, text(after.ownerId), before?.ownerId);
+    await ownerFor(
+      transaction,
+      actor,
+      text(after.ownerId),
+      before?.ownerId,
+      today,
+    );
   }
 }
 

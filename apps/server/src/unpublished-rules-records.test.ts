@@ -4,9 +4,9 @@
 // kind's own rules against the data as it is now, and refused with the reason a fresh change gets,
 // naming the record.
 
-import { featureTeams, listItems, people } from "@fathom/db";
+import { featureTeams, listItems, lists, people } from "@fathom/db";
 import { startingRoles } from "@fathom/shared";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { testPosition, unique } from "./test-app.ts";
@@ -155,6 +155,59 @@ describe("publishing a private change to a project", () => {
     expect(response.statusCode, response.body).toBe(409);
     expect(response.json<{ error: string }>().error).toBe(
       `The project ${String(project?.name)}: Choose an owner from People`,
+    );
+  });
+});
+
+describe("publishing a private change to a proposal", () => {
+  it("is refused for a status retired since", async () => {
+    // Given a proposal's status changed privately to another, which is retired since
+    const name = unique("Fictional Proposal");
+    const created = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/proposals",
+      {
+        name,
+      },
+    );
+    expect(created.statusCode, created.body).toBe(201);
+    const proposal = created
+      .json<{
+        plan: { proposals: { id: string; name: string; statusId: string }[] };
+      }>()
+      .plan.proposals.find((each) => each.name === name);
+    const [other] = await test.connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(
+        and(
+          eq(lists.builtIn, "proposal-statuses"),
+          ne(listItems.id, String(proposal?.statusId)),
+        ),
+      );
+    const changed = await test.request(
+      approver.cookie,
+      "PUT",
+      `/api/proposals/${String(proposal?.id)}`,
+      { name, statusId: other?.id },
+      { publish: false },
+    );
+    expect(changed.statusCode, changed.body).toBe(200);
+    const retire = (retired: boolean) =>
+      test.connection
+        .update(listItems)
+        .set({ retired })
+        .where(eq(listItems.id, String(other?.id)));
+    await retire(true);
+
+    const response = await publishing(approver);
+
+    await retire(false);
+    expect(response.statusCode, response.body).toBe(409);
+    expect(response.json<{ error: string }>().error).toMatch(
+      /^The proposal .*: Choose a .* that is offered$/,
     );
   });
 });
