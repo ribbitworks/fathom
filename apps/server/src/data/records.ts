@@ -16,7 +16,12 @@ import { eq } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { Actor } from "../access.ts";
 import { BadRequestError, ConflictError } from "../errors.ts";
-import { draftFields, type Recorded, type Viewer } from "./draft-records.ts";
+import {
+  type Draft,
+  draftFields,
+  type Recorded,
+  type Viewer,
+} from "./draft-records.ts";
 import { draftStanding, type Maker, viewerMarks } from "./draft-makers.ts";
 import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import { activityKind } from "./activity-kinds.ts";
@@ -259,6 +264,23 @@ export type RecordDraftOut = RecordDraft & {
   changedBy: NonNullable<RecordDraft["changedBy"]>;
 };
 
+// What a plan record's draft sends after its change, with the viewer's marks by the plan's own
+// rule for who may discard it.
+export function recordDraftStanding(
+  kind: RecordKind,
+  makers: Makers,
+  id: string,
+  draft: Draft,
+) {
+  const maker = makers.byKind.get(kind.type)?.get(id);
+  return draftStanding(draft, maker, {
+    marks: viewerMarks(
+      maker,
+      makers.discardable.has(refKey({ type: kind.type, id })),
+    ),
+  });
+}
+
 export function recordDraftOut(
   kind: RecordKind,
   state: RecordsState,
@@ -292,12 +314,7 @@ export function recordDraftOut(
             ]),
           ),
     uses: usesOf(kind, state, id),
-    ...draftStanding(draft, maker, {
-      marks: viewerMarks(
-        maker,
-        makers.discardable.has(refKey({ type: kind.type, id })),
-      ),
-    }),
+    ...recordDraftStanding(kind, makers, id, draft),
     changedBy: Object.fromEntries(
       changed.map((name) => [
         name,
