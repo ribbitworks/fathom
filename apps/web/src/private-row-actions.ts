@@ -129,8 +129,7 @@ export function privateRowActions({
       ask(
         removalQuestion({ kind: "column", name: field.name }),
         () => {
-          removeColumn(field);
-          removed();
+          removeColumn(field, { removed });
         },
         kept,
       );

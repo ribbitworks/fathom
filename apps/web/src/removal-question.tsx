@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Asking before a removal that takes much away at once, such as a page with its rows, with Cancel
-// and the removal's own button in red.
+// Asking before a change that takes much away at once, such as removing a page with its rows or
+// discarding what was typed: the button keeping it, such as Cancel, and the change's own in red.
 
 import { Modal, Stack, Text } from "@mantine/core";
 import { DialogActions, useDialogState } from "./dialog-actions.tsx";
-import classes from "./discard-question.module.css";
+import classes from "./removal-question.module.css";
 
 export interface RemovalQuestion {
   title: string;
   // What else to know before choosing, such as that the removal can't be undone.
   detail?: string;
   action: string;
+  // What keeping it says, where not Cancel, such as Keep adding.
+  keep?: string;
 }
 
 interface Removed {
@@ -62,8 +64,10 @@ export function useRemovalQuestion() {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            close();
+            // Going on first, then closing, closes the question even where going on asks it again,
+            // as leaving a dialog does.
             asking.go();
+            close();
           }}
         >
           <Stack gap="md">
@@ -76,6 +80,7 @@ export function useRemovalQuestion() {
               label={asking.action}
               removes
               cancelFocused
+              {...(asking.keep === undefined ? {} : { cancel: asking.keep })}
               onCancel={keep}
             />
           </Stack>

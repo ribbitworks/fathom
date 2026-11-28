@@ -2,9 +2,8 @@
 
 // Asking whether to discard what is being written before leaving it.
 
-import { Button, Group, Modal } from "@mantine/core";
-import { type KeyboardEvent, useState } from "react";
-import classes from "./discard-question.module.css";
+import type { KeyboardEvent } from "react";
+import { useRemovalQuestion } from "./removal-question.tsx";
 
 export const newRecordQuestion = (thing: string) => ({
   title: `Discard the new ${thing}?`,
@@ -21,47 +20,16 @@ export const changesQuestion = (thing: string) => ({
 // writing, or closing the question, stays.
 
 export function useDiscardQuestion() {
-  const [asking, setAsking] = useState<{
-    title: string;
-    keep: string;
-    go: () => void;
-  }>();
+  const question = useRemovalQuestion();
   const ask = (
-    question: { title: string; keep: string } | undefined,
+    asked: { title: string; keep: string } | undefined,
     go: () => void,
   ) => {
-    if (question === undefined) go();
-    else setAsking({ ...question, go });
+    if (asked === undefined) go();
+    else question.ask({ ...asked, action: "Discard" }, go);
   };
-  const close = () => {
-    setAsking(undefined);
-  };
-  const dialog = (
-    <Modal
-      opened={asking !== undefined}
-      onClose={close}
-      title={asking?.title}
-      size="sm"
-      classNames={{ body: classes.body }}
-    >
-      <Group justify="flex-end" gap="xs">
-        <Button variant="default" onClick={close} data-autofocus>
-          {asking?.keep}
-        </Button>
-        <Button
-          color="red"
-          onClick={() => {
-            asking?.go();
-            close();
-          }}
-        >
-          Discard
-        </Button>
-      </Group>
-    </Modal>
-  );
   // Whether the question is showing, so a dialog under it leaves Esc to it.
-  return { ask, dialog, asking: asking !== undefined };
+  return { ask, dialog: question.dialog, asking: question.asking };
 }
 
 // Esc in a dialog that asks before it's left: it leaves, asking, unless something in the dialog that

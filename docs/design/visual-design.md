@@ -250,7 +250,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **A page's title row:** `PageHeader` in `page-header.tsx`, with the Export icon from `PageExportMenu` in `page-export.tsx`, and the tabs beside it from `HeadingTabs` and `HeadingTabPanel` there.
 - **Exporting a table:** `useTableExport` in `table-export.tsx`, offering the export to the Export icon through `useOfferedExport` in `page-export.tsx`, the question in `export-question.tsx`, and the file, its name and saving it in `exports.ts`.
 - **A dialog's buttons:** `DialogActions` in `dialog-actions.tsx`.
-- **Asking before a removal:** `useRemovalQuestion` in `removal-question.tsx`, with Cancel and the removal's red button, as a private page's Remove page… and Remove column… and an unusable view's delete ask.
+- **Asking before a removal or a discard:** `useRemovalQuestion` in `removal-question.tsx`, with the button that keeps, such as Cancel or Keep adding, and the change's red button, as a private page's Remove page… and Remove column…, an unusable view's delete and every discard question, through `useDiscardQuestion` in `discard-question.tsx`, ask.
 - **A page's ⋯:** `PageMenu` in `page-menu.tsx`, on the side panels' `PanelMoreMenu`, given to `PageHeader`'s `action`, with Copy link and Copy key from `CopyItems` in `record-key.tsx`, which the key under a title offers too.
 - **A column's filter:** `FilterPopover` in `table-controls.tsx`.
 - **A filter across a table, from the bar above it:** a table's `barFilters`, each drawn by `BarFilterButton` in `table-controls.tsx` with `FilterPopover`, and filtering the rows beside the draft filter through `filtersBesideColumns` in `table-view.ts`.

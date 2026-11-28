@@ -82,13 +82,13 @@ type WithColumns<Data> = (
 ) => Data;
 
 // Removes a column by the server's call given, showing the data without it at once, then saying
-// so, with Undo.
+// so, with Undo; removed is called once it's gone from view, to move focus.
 export function columnRemoval<Data>(
   remove: (field: Field) => Promise<string | null>,
   { save, done }: Pick<ColumnSaving<Data>, "save" | "done">,
   without: (data: Data, field: Field) => Data,
 ) {
-  return (field: Field) => {
+  return (field: Field, { removed }: { removed: () => void }) => {
     save({
       next: (data) => without(data, field),
       save: () => remove(field),
@@ -101,6 +101,7 @@ export function columnRemoval<Data>(
         );
       },
     });
+    removed();
   };
 }
 
@@ -192,8 +193,7 @@ export function ColumnModal<Data>({
   };
   const removeColumn = columnRemover(table, { save, done }, withColumns);
   const remove = (field: Field) => {
-    close();
-    removeColumn(field);
+    removeColumn(field, { removed: close });
   };
   const moving = dialog?.kind === "move" ? dialog : undefined;
   return (

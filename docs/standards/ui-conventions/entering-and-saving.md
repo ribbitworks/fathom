@@ -95,7 +95,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 - **Asking first:** Of changes to data, only these ask first: those that can't be undone, which are approving drafts, rejecting them, Discard all…, discarding chosen changes on the Drafts page (such as Discard 2 changes…), publishing a draft from its menu when other changes go with it, and deleting a saved view its maker can no longer use; and, on a table without drafts, a removal that takes many values away, as follows.
   - **A removal on a table without drafts:** On a private page, where nothing waits as a draft, a removal that takes many values away asks first, then still offers Undo: Remove page… and Remove column… ask, such as Remove the Follow-ups page?, with Cancel and Remove in red, and Cancel focused. A notification then says so, such as Removed the Follow-ups page., with Undo, and Cmd+Z or Ctrl+Z undoes it too. A row is removed at once, with Undo. On shared tables a removal is a draft, and approving it asks.
   - **Leaving the question:** Cancel, Esc and the × put focus back where the question came from, such as the column's heading or the page's ⋯.
-  - **Drawn by:** `useRemovalQuestion` in `apps/web/src/removal-question.tsx`, on `DialogActions` in `apps/web/src/dialog-actions.tsx`, which also asks before deleting an unusable saved view.
+  - **Drawn by:** `useRemovalQuestion` in `apps/web/src/removal-question.tsx`, on `DialogActions` in `apps/web/src/dialog-actions.tsx`, which also asks before deleting an unusable saved view, and before discarding, under `useDiscardQuestion`.
   - **Example:** On a private page, open a column's menu and select Remove column….
   - **A saved view its maker can't use:** Deleting it can't be undone because its change history holds what the maker's role can't see.
   - **Also asking:** Leaving unsaved work asks too ([Leaving Unsaved Work](#leaving-unsaved-work)), and so does exporting Personal or Confidential data ([Exporting](tables.md#exporting)).
@@ -120,7 +120,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **The question:** The question always starts with Discard and names what is lost, such as Discard the new customer? with Keep adding and Discard, Discard changes to the note? with Keep writing and Discard, Discard changes to the column? with Keep editing and Discard, or Discard the fill of TBD-3?
   - **While saving:** A form can't be left while its record is being added, and a dialog can't be closed while a change is being saved.
   - **A dialog:** Esc, the ×, Cancel and a click outside each ask, and Esc in an open drop-down list closes only the list, as the column dialog and New page do.
-  - **Drawn by:** `useDiscardQuestion`, `newRecordQuestion`, `changesQuestion` and a dialog's Esc, `escapeLeaves`, in `apps/web/src/discard-question.tsx`, and the note's question, `noteQuestion`, in `apps/web/src/note-editing.tsx`.
+  - **Drawn by:** `useDiscardQuestion`, on the removal question's dialog, `newRecordQuestion`, `changesQuestion` and a dialog's Esc, `escapeLeaves`, in `apps/web/src/discard-question.tsx`, and the note's question, `noteQuestion`, in `apps/web/src/note-editing.tsx`.
   - **Example:** On Projects' Customers tab, select New customer, type a name, then Cancel.
 
 ## Refusals
