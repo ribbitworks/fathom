@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Tables, Addresses and Search
@@ -166,7 +166,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
 - **Kept in the address:** Everything a page shows is kept in its address: the tab, the mode, the view (its search, filters, sort, groupings, metrics, frozen columns, column order, hidden columns, widths and units), the record shown in a panel, an open form, such as New or Fill, a note's panel, and the date shown.
   - **What that gives:** So reloading shows the same, a shared link shows it to others who may see it, and the browser's Back goes back through what was shown.
   - **A note's panel:** It is kept by its column and its record, whether opened from the record's details or from a table's cell, each kept apart so neither closes the other. It opens as any note does: who may write is decided as it opens, and anything typed but not saved is lost.
-  - **Not kept:** Dialogs and menus aren't kept: a link's request to open a role's dialog or a column's menu is taken out of the address once used. A chart's zoom and pan aren't kept, and neither is a selection of rows, such as drafts chosen to approve.
+  - **Not kept:** Dialogs and menus aren't kept: a link's request to open a column's menu is taken out of the address once used. A chart's zoom and pan aren't kept, and neither is a selection of rows, such as drafts chosen to approve.
   - **Opened from the menu:** A page opened from the menu, with no view in its address, opens on the tab, mode and view it last showed the account, but not on a record or a date.
   - **Back's history:** Changing the date shown adds to Back's history, as moving to another page does. So does any other choice of what to show, such as a switch or Show retired. Typing in a search replaces the current entry.
   - **Drawn by:** Each page's search parameters in `apps/web/src/router.tsx` and `apps/web/src/plan-routes.tsx`, with a table's view in `apps/web/src/table-view.ts`.

@@ -4,7 +4,7 @@ category: "Standards"
 audience: "Contributors"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Drafts, Values and Access
@@ -82,7 +82,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** `DraftView`, `DraftedItem` and `viewedDraft` in `apps/web/src/status-mark.tsx`, with `liveWaitingWords` in `apps/web/src/draft-marks.ts`; each page sets its view once.
   - **Example:** On People, choose Live only in the Draft menu: the Level column's name has a green dot.
 - **A selected row:** A selected row, such as the record whose details are open beside its table, has the hover grey with a thin accent bar at its left edge. It never has the accent's fill, since a row's fill says its draft's state.
-  - **Drawn by:** `selectedRow` in `apps/web/src/pages.module.css`, given on the shared table by `RecordGrid`'s `selected` in `apps/web/src/record-table.ts`, which every page passes the record whose details are open: People, Features, Projects' Projects, Proposals and Customers tabs, Releases' Releases, Cycles and Schedules tabs, Lists, Accounts and Drafts.
+  - **Drawn by:** `selectedRow` in `apps/web/src/pages.module.css`, given on the shared table by `RecordGrid`'s `selected` in `apps/web/src/record-table.ts`, which every page passes the record whose details are open: People, Features, Projects' Projects, Proposals and Customers tabs, Releases' Releases, Cycles and Schedules tabs, Lists, Accounts, Roles and Drafts.
   - **Example:** On People, select the details button of any row.
 - **Centring:** Every mark (dot, lock or box), and a colour's swatch beside text, is centred on the centreline of its text's capitals. A line holding them lines them up on its text's baseline, and the marks' own spacing is the only spacing. A swatch alone, such as a menu item's icon, is centred in its place instead.
   - **Drawn by:** `dotPlace`, `kind` and `swatchPlace` in `apps/web/src/status-mark.module.css`, `MarkRow` in `apps/web/src/status-mark.tsx`, and `Swatch` in `apps/web/src/colour-swatch.tsx`.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Roles page: every role with its description and how many active accounts hold it, and the
-// dialogs that show, create and change a role.
+// The Roles page: every role on the shared table, with its description and how many active accounts
+// hold it, its details beside the table, and the dialogs that show, create and change a role.
 
 import {
   accountLengths,
@@ -24,19 +24,16 @@ import {
   Button,
   Group,
   Loader,
+  Menu,
   Modal,
-  Paper,
   SimpleGrid,
   Stack,
-  Table,
-  Text,
   Textarea,
   TextInput,
-  VisuallyHidden,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { accountsQuery, nameProblem } from "./accounts.ts";
@@ -44,10 +41,25 @@ import { CountedField } from "./counted-field.tsx";
 import { Count, countRoom, countShown } from "./counted-input.tsx";
 import { DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { notifySuccess } from "./notices.tsx";
-import { count } from "./numbers.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
+import { LiveRecordGrid } from "./live-record-grid.tsx";
 import { Effects, Summary } from "./roles-consequences.tsx";
+import { recordMenu } from "./row-menus.tsx";
+import { RolePanel, rolePanelId } from "./roles-panel.tsx";
+import {
+  type RoleAction,
+  roleActions,
+  roleColumnOrder,
+  roleColumns,
+  roleHolders,
+  type RoleRow,
+  roleRows,
+  rolesTable,
+} from "./roles-table.tsx";
+import { useSavedViews } from "./saved-views.tsx";
+import { useNarrow } from "./side-panel.tsx";
+import type { View } from "./table-view.ts";
 import { PermissionGrid } from "./roles-permission-grid.tsx";
 import {
   createRole,
@@ -370,32 +382,113 @@ function dialogTitle(dialog: Dialog): string {
   return dialog.from === undefined ? "New role" : `Copy ${dialog.from.name}`;
 }
 
+// What an item of a role's menu is called, and the dialog it opens on the role.
+function roleItem(action: RoleAction): {
+  label: string;
+  dialog: (role: RoleSummary) => Dialog;
+} {
+  switch (action) {
+    case "edit":
+      return { label: "Edit…", dialog: (role) => ({ kind: "edit", role }) };
+    case "copy":
+      return { label: "Copy…", dialog: (from) => ({ kind: "create", from }) };
+    case "view":
+      return { label: "View…", dialog: (role) => ({ kind: "view", role }) };
+  }
+}
+
 export function RolesPage({
   user,
   canEdit,
   dataClasses,
-  linked,
-  onLinkedOpened,
+  view,
+  onView,
+  applied,
+  onApply,
+  canShareViews,
+  open: openId,
+  onOpen,
 }: {
   user: SignedInUser;
   canEdit: boolean;
   dataClasses: DataClasses;
-  // A role a link opens, whose dialog opens once the roles are read; a dialog isn't kept in the
-  // address, so the page then takes it out.
-  linked?: string | undefined;
-  onLinkedOpened?: () => void;
+  view: View;
+  onView: (view: View, replace?: boolean) => void;
+  // The saved view the view started from, as the address names it.
+  applied: string | undefined;
+  onApply: (view: View, id: string, replace?: boolean) => void;
+  canShareViews: boolean;
+  // The role whose details are shown beside the table, by its identifier.
+  open: string | undefined;
+  onOpen: (id: string | undefined) => void;
 }) {
   const roles = useQuery(rolesQuery);
   const { dialog, opened, open, close } = useDialogState<Dialog>();
-  const linkedOpened = useRef<string | undefined>(undefined);
-  useEffect(() => {
-    const role = roles.data?.find(({ id }) => id === linked);
-    if (role === undefined || linkedOpened.current === role.id) return;
-    linkedOpened.current = role.id;
-    open({ kind: canEdit ? "edit" : "view", role });
-    onLinkedOpened?.();
-  }, [roles.data, linked, canEdit, open, onLinkedOpened]);
   const [busy, setBusy] = useState(false);
+  const narrow = useNarrow();
+  const navigate = useNavigate();
+  const views = useSavedViews({
+    table: "roles",
+    within: rolesQuery.queryKey,
+    view,
+    applied,
+    onApply,
+    canShare: canShareViews,
+    blocked: opened,
+  });
+  const rows = roleRows(roles.data ?? []);
+  // The accounts holding a role, read once its details open.
+  const accounts = useQuery({
+    ...accountsQuery,
+    enabled: rows.some(({ id }) => id === openId),
+  });
+  const roleItems = recordMenu<RoleRow>(
+    roleActions(canEdit).map((action) => {
+      const { label, dialog: dialogFor } = roleItem(action);
+      return [
+        label,
+        (row) => {
+          open(dialogFor(row.role));
+        },
+      ];
+    }),
+  );
+  const table = rolesTable({
+    onOpen: (role) => {
+      onOpen(role.id);
+    },
+    // Set apart from the items every row offers, since these open the role's dialogs.
+    menuItems: (row) => (
+      <>
+        <Menu.Divider />
+        {roleItems(row)}
+      </>
+    ),
+  });
+  const details = (row: RoleRow, onClose: () => void) => ({
+    key: "role",
+    id: rolePanelId,
+    name: "the role's details",
+    node: (
+      <RolePanel
+        key={row.id}
+        row={row}
+        columns={roleColumns()}
+        holders={
+          accounts.isError
+            ? "failed"
+            : accounts.data === undefined
+              ? "loading"
+              : roleHolders(row.id, accounts.data)
+        }
+        narrow={narrow}
+        onShowAccount={(id) => {
+          void navigate({ to: "/accounts", search: { open: id } });
+        }}
+        onClose={onClose}
+      />
+    ),
+  });
 
   return (
     <Stack gap="md" className={classes.tablePage}>
@@ -420,73 +513,19 @@ export function RolesPage({
         </Alert>
       )}
       {roles.isSuccess && (
-        <Paper withBorder className={classes.tableScrollPanel}>
-          <div className={[classes.tableScroll, classes.scrollBars].join(" ")}>
-            <Table miw={640}>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Role</Table.Th>
-                  <Table.Th>Description</Table.Th>
-                  <Table.Th>Accounts</Table.Th>
-                  <Table.Th>
-                    <VisuallyHidden>Actions</VisuallyHidden>
-                  </Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {roles.data.map((role) => (
-                  <Table.Tr key={role.id}>
-                    <Table.Td fw={600}>{role.name}</Table.Td>
-                    <Table.Td>
-                      <Text fz="sm">{role.description}</Text>
-                    </Table.Td>
-                    <Table.Td>{count(role.accounts)}</Table.Td>
-                    <Table.Td>
-                      {canEdit ? (
-                        <Group gap="xs" wrap="nowrap" justify="flex-end">
-                          <Button
-                            variant="default"
-                            size="xs"
-                            aria-label={`Edit ${role.name}`}
-                            onClick={() => {
-                              open({ kind: "edit", role });
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="default"
-                            size="xs"
-                            aria-label={`Copy ${role.name}`}
-                            onClick={() => {
-                              open({ kind: "create", from: role });
-                            }}
-                          >
-                            Copy
-                          </Button>
-                        </Group>
-                      ) : (
-                        <Group justify="flex-end">
-                          <Button
-                            variant="default"
-                            size="xs"
-                            aria-label={`View ${role.name}`}
-                            onClick={() => {
-                              open({ kind: "view", role });
-                            }}
-                          >
-                            View
-                          </Button>
-                        </Group>
-                      )}
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </div>
-        </Paper>
+        <LiveRecordGrid
+          records={rows}
+          table={table}
+          order={roleColumnOrder}
+          view={view}
+          onView={onView}
+          saved={views.saved}
+          open={openId}
+          onOpen={onOpen}
+          details={details}
+        />
       )}
+      {views.dialogs}
       <Modal
         opened={opened}
         size="70rem"

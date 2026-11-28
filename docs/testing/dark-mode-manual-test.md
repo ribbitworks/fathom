@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Manual Test: Dark Mode
@@ -910,6 +910,24 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `F493` Select the **Roles** page in the left-hand menu.
   - **Expected:** Every word is easy to read.
+  - **Notes:**
+
+- [ ] `9C3E` Select the details button at the right of the **Role** cell of **Team Member**.
+  - **Expected:**
+    - The side panel's **Details**, **Held by** and **Grants** are easy to read.
+    - The grid's ticks, greyed ticks and empty boxes are easy to tell apart.
+  - **Notes:**
+
+- [ ] `B71A` Select the **⋯** at the top of the side panel.
+  - **Expected:** The menu and its items are easy to read.
+  - **Notes:**
+
+- [ ] `E4D0` Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] `5A2B` Close the side panel with the **×** at its top right.
+  - **Expected:** The side panel closes.
   - **Notes:**
 
 - [ ] `7A65` Select the **Application settings** page in the left-hand menu.

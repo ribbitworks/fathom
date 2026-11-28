@@ -154,7 +154,7 @@ The classes, and each built-in detail's default class, are set out in the [Domai
     - **Projects' tabs:** Edit Plan.
     - **Schedules and their cycles:** Edit Plan or Edit Configuration, as they are edited.
     - **Capacity:** Edit Allocations on its Allocations, and Edit Feature teams on its Feature teams.
-    - **Accounts:** Edit Administration.
+    - **Accounts and Roles:** Edit Administration.
     - **Lists and Drafts:** Edit Configuration.
   - **Changing a shared view:** Only a shared view's maker, or a role that may share views on that table, updates, renames or deletes it. Only the maker stops sharing it, and only while they may still share.
 

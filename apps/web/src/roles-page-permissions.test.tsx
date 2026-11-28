@@ -13,6 +13,7 @@ import {
   auditors,
   roleList,
   openDialog,
+  openFromMenu,
   box,
   summaryLines,
 } from "./test-roles-page.tsx";
@@ -41,8 +42,9 @@ describe("the grid of permissions", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     expect(box(dialog, "View People").disabled).toBe(false);
@@ -93,8 +95,9 @@ describe("the grid of permissions", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     expect(box(dialog, "Approve People").disabled).toBe(false);
@@ -122,8 +125,9 @@ describe("the grid of permissions", () => {
         }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     const hiring = box(dialog, "View Hiring plan");
@@ -195,8 +199,9 @@ describe("the summary of what a role allows", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     expect(summaryLines(dialog, "Sees")).toEqual([
@@ -227,8 +232,9 @@ describe("the summary of what a role allows", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     const line = summaryLines(dialog, "Doesn't see").indexOf(
@@ -252,8 +258,9 @@ describe("the summary of what a role allows", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     // When
@@ -319,8 +326,9 @@ describe("the summary of what a role allows", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     await userEvent.click(box(dialog, "View Plan"));

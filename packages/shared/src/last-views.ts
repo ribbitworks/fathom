@@ -22,6 +22,7 @@ export const viewPageSchema = z.enum([
   "capacity",
   "org-chart",
   "accounts",
+  "roles",
   "drafts",
 ]);
 
@@ -47,6 +48,7 @@ export const viewPageOf: Record<ViewTable, ViewPage> = {
   capacity: "capacity",
   "org-chart": "org-chart",
   accounts: "accounts",
+  roles: "roles",
   drafts: "drafts",
 };
 
@@ -61,6 +63,7 @@ export const firstTables: Record<ViewPage, ViewTable> = {
   capacity: "feature-assignments",
   "org-chart": "org-chart",
   accounts: "accounts",
+  roles: "roles",
   drafts: "drafts",
 };
 

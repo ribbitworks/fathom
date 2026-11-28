@@ -1,27 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Roles page, with the server's responses simulated: who sees it, the list of roles,
-// seeing roles without editing them, a role's description, and a link to a role.
+// Tests for the Roles page, with the server's responses simulated: who sees it, the table of roles,
+// each role's menu for those who edit roles and those who only see them, a role's details, a role's
+// description, and a link to a role.
 
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import {
-  fictionalUser,
+  detailValue,
   overviewGreeting,
+  recordCell,
   renderApp,
   serverAnswers,
   signedIn,
 } from "./test-support.tsx";
 import {
-  setUpEachTest,
-  roleEditor,
-  teamMemberRole,
+  accountList,
+  auditor,
   auditors,
-  roleList,
-  openDialog,
   box,
+  itemNames,
+  openDetails,
+  openFromMenu,
+  roleEditor,
+  roleList,
+  roleMenu,
+  roleViewer,
+  setUpEachTest,
   summaryLines,
+  teamMemberRole,
 } from "./test-roles-page.tsx";
 
 setUpEachTest();
@@ -60,31 +68,24 @@ describe("who sees the Roles page", () => {
   });
 });
 
-describe("the list of roles", () => {
-  it("shows each role's name, what it is for, and how many accounts hold it", async () => {
+describe("the table of roles", () => {
+  it("shows each role's name, what it is for, and how many accounts hold it, with its key hidden at first", async () => {
     serverAnswers({
       "GET /api/session": roleEditor,
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const row = (await screen.findByText("Fictional Auditors")).closest(
-      "tr",
-    ) as HTMLElement;
-    expect(
-      within(row)
-        .getAllByRole("cell")
-        .map((cell) => cell.textContent),
-    ).toEqual([
+    expect(await screen.findByRole("grid", { name: "Roles" })).toBeDefined();
+    const text = (key: string) => recordCell(auditors.id, key)?.textContent;
+    expect(["name", "description", "accounts"].map(text)).toEqual([
       "Fictional Auditors",
       "Checks Personal and Confidential data for audits.",
       "1",
-      "EditCopy",
     ]);
-    expect(
-      within(
-        screen.getByText("Team Member").closest("tr") as HTMLElement,
-      ).getByText("3"),
-    ).toBeDefined();
+    expect(text("key")).toBeUndefined();
+    expect(recordCell(teamMemberRole.id, "accounts")?.textContent).toBe("3");
+    expect(screen.queryByRole("button", { name: /^Group by/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Edit / })).toBeNull();
   });
 
   it("shows a description as typed, with no class marked in its words", async () => {
@@ -121,36 +122,62 @@ describe("the list of roles", () => {
   });
 });
 
-describe("seeing roles without editing them", () => {
-  const roleViewer = () =>
-    Response.json({ ...fictionalUser, permissions: ["administration:view"] });
+describe("a role's menu, for those who may edit roles", () => {
+  it("offers Edit… and Copy… after the role's details and link", async () => {
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
+    });
+    renderApp("/roles");
+    expect(itemNames(await roleMenu("Fictional Auditors"))).toEqual([
+      "Show details",
+      "Copy link",
+      "Edit…",
+      "Copy…",
+    ]);
+  });
 
-  it("offers each role only to view", async () => {
-    // Given
+  it("opens the role's dialog to edit it, or to copy it", async () => {
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
+    });
+    renderApp("/roles");
+    const editing = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
+      "Edit Fictional Auditors",
+    );
+    expect(within(editing).getByLabelText<HTMLInputElement>("Name").value).toBe(
+      "Fictional Auditors",
+    );
+    await userEvent.click(
+      within(editing).getByRole("button", { name: "Cancel" }),
+    );
+    const copying = await openFromMenu(
+      "Fictional Auditors",
+      "Copy…",
+      "Copy Fictional Auditors",
+    );
+    expect(within(copying).getByLabelText<HTMLInputElement>("Name").value).toBe(
+      "Copy of Fictional Auditors",
+    );
+  });
+});
+
+describe("a role's menu, for those who may only see roles", () => {
+  it("offers only View…, and no New role", async () => {
     serverAnswers({
       "GET /api/session": roleViewer,
       "GET /api/roles": roleList,
     });
-    // When
-    const history = renderApp("/roles");
-    // Then
-    await screen.findByText("Fictional Auditors");
-    expect(history.location.pathname).toBe("/roles");
-    expect(
-      screen
-        .getAllByRole("link", { name: "Roles" })
-        .map((link) => link.getAttribute("href")),
-    ).toContain("/roles");
+    renderApp("/roles");
+    expect(itemNames(await roleMenu("Team Member"))).toEqual([
+      "Show details",
+      "Copy link",
+      "View…",
+    ]);
     expect(screen.queryByRole("button", { name: "New role" })).toBeNull();
-    expect(
-      screen.queryByRole("button", { name: "Edit Fictional Auditors" }),
-    ).toBeNull();
-    expect(
-      screen.queryByRole("button", { name: "Copy Fictional Auditors" }),
-    ).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "View Team Member" }),
-    ).toBeDefined();
   });
 
   it("shows what a role grants read only, and closes", async () => {
@@ -161,8 +188,9 @@ describe("seeing roles without editing them", () => {
     });
     renderApp("/roles");
     // When
-    const dialog = await openDialog(
-      "View Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "View…",
       "Fictional Auditors",
     );
     // Then
@@ -187,9 +215,118 @@ describe("seeing roles without editing them", () => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
     expect(
-      fetch.mock.calls.filter(([, init]) => init?.method !== undefined),
+      fetch.mock.calls.filter(
+        ([url, init]) =>
+          init?.method !== undefined && !url.startsWith("/api/last-views"),
+      ),
     ).toEqual([]);
   });
+});
+
+describe("a role's details", () => {
+  it("show its description, the active accounts holding it, and what it grants, read only", async () => {
+    serverAnswers({
+      "GET /api/session": roleViewer,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/roles");
+    const panel = await openDetails("Fictional Auditors");
+    expect(detailValue("Description", panel)).toBe(auditors.description);
+    const heldBy = within(panel).getByRole("region", { name: "Held by" });
+    expect(await within(heldBy).findAllByRole("button")).toHaveLength(1);
+    expect(within(heldBy).getByRole("button").textContent).toBe(
+      "Fictional Auditor",
+    );
+    const grants = within(panel).getByRole("group", {
+      name: "What the role grants",
+    });
+    await userEvent.click(box(grants, "View Configuration"));
+    expect(box(grants, "View People").checked).toBe(true);
+    expect(box(grants, "View Configuration").checked).toBe(false);
+  });
+
+  it("open an account holding the role on Accounts, with its details", async () => {
+    serverAnswers({
+      "GET /api/session": roleViewer,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    const history = renderApp("/roles");
+    const panel = await openDetails("Fictional Auditors");
+    await userEvent.click(
+      await within(panel).findByRole("button", { name: "Fictional Auditor" }),
+    );
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/accounts");
+    });
+    expect(history.location.search).toContain(`open=${auditor.id}`);
+    expect(
+      await screen.findByRole("region", { name: "Fictional Auditor" }),
+    ).toBeDefined();
+  });
+
+  it("close back to the role's row, keeping the view, and stay open while the view changes", async () => {
+    serverAnswers({
+      "GET /api/session": roleViewer,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    const history = renderApp("/roles");
+    await openDetails("Fictional Auditors");
+    // When the search changes with the details open
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search roles" }),
+      "Audit",
+    );
+    // Then the details stay open
+    await waitFor(() => {
+      expect(history.location.search).toContain("search=Audit");
+    });
+    expect(history.location.search).toContain(`open=${auditors.id}`);
+    // When they close, focus is back on the role's name
+    await userEvent.click(
+      screen.getByRole("button", { name: "Close details" }),
+    );
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe("Fictional Auditors");
+    });
+    expect(history.location.search).not.toContain("open=");
+  });
+
+  it("say so when the accounts holding the role cannot be read", async () => {
+    serverAnswers({
+      "GET /api/session": roleViewer,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": () =>
+        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+    });
+    renderApp("/roles");
+    const panel = await openDetails("Fictional Auditors");
+    expect(
+      await within(panel).findByText("Fathom could not load the accounts."),
+    ).toBeDefined();
+  });
+
+  it.each([
+    ["an editor", roleEditor, ["Copy link", "Edit…", "Copy…"]],
+    ["a viewer", roleViewer, ["Copy link", "View…"]],
+  ])(
+    "offer %s the row's menu, less Show details, from their ⋯",
+    async (_reader, session, items) => {
+      serverAnswers({
+        "GET /api/session": session,
+        "GET /api/roles": roleList,
+        "GET /api/accounts": accountList,
+      });
+      renderApp("/roles");
+      const panel = await openDetails("Team Member");
+      await userEvent.click(
+        within(panel).getByRole("button", { name: "Actions for Team Member" }),
+      );
+      expect(itemNames(await screen.findByRole("menu"))).toEqual(items);
+    },
+  );
 });
 
 describe("a role's description", () => {
@@ -199,7 +336,11 @@ describe("a role's description", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const dialog = await openDialog("Edit Team Member", "Edit Team Member");
+    const dialog = await openFromMenu(
+      "Team Member",
+      "Edit…",
+      "Edit Team Member",
+    );
     await userEvent.click(box(dialog, "View Configuration"));
     expect(
       within(dialog).getByLabelText<HTMLTextAreaElement>("Description").value,
@@ -209,29 +350,22 @@ describe("a role's description", () => {
 
 describe("a link to a role", () => {
   it.each([
-    ["an editor", roleEditor, "Edit Fictional Auditors"],
-    [
-      "a viewer",
-      () =>
-        Response.json({
-          ...fictionalUser,
-          permissions: ["administration:view"],
-        }),
-      "Fictional Auditors",
-    ],
+    ["an editor", roleEditor],
+    ["a viewer", roleViewer],
   ])(
-    "opens the role's dialog for %s, then takes the role out of the address",
-    async (_reader, session, title) => {
+    "opens the role's details for %s, kept in the address",
+    async (_reader, session) => {
       serverAnswers({
         "GET /api/session": session,
         "GET /api/roles": roleList,
+        "GET /api/accounts": accountList,
       });
       const history = renderApp(`/roles?open=${auditors.id}`);
-      expect(await screen.findByRole("dialog", { name: title })).toBeDefined();
-      await waitFor(() => {
-        expect(history.location.search).toBe("");
-      });
-      expect(history.location.pathname).toBe("/roles");
+      expect(
+        await screen.findByRole("region", { name: "Fictional Auditors" }),
+      ).toBeDefined();
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(history.location.search).toBe(`?open=${auditors.id}`);
     },
   );
 });

@@ -14,7 +14,7 @@ Your pages are under **Administration** in the left-hand menu, with **Access his
 ### See What a Role Gives
 
 1. Select the **Roles** page.
-1. Select **Edit** in the role's row.
+1. Select **Edit…** in the role's **⋯** menu.
 1. Read the summary at the right of the grid: what the role **Sees**, **Doesn't see**, **Can** and **Cannot** do.
 1. Select **Cancel** to close it without changing anything.
 
@@ -22,7 +22,7 @@ See [Roles](roles.md#see-what-a-role-gives).
 
 ### Change What a Role Gives
 
-1. On **Roles**, select **Edit** in the role's row.
+1. On **Roles**, select **Edit…** in the role's **⋯** menu.
 1. Tick or untick boxes in the grid.
 1. Select **Save**.
 1. Check what each account holding the role **Gains** and **Loses**.
@@ -32,7 +32,7 @@ If no account is affected, Fathom saves it straight away. See [Roles](roles.md#c
 
 ### Make a Role From a Copy
 
-1. On **Roles**, select **Copy** in the row of the role closest to what you need.
+1. On **Roles**, select **Copy…** in the **⋯** menu of the role closest to what you need.
 1. Type the new role's **Name**.
 1. Tick or untick the boxes it needs.
 1. Select **Create role**.
@@ -43,7 +43,7 @@ Nobody holds the new role until you give it to accounts. See [Roles](roles.md#ma
 
 A starting role is one Fathom comes with, such as the Team Member.
 
-1. On **Roles**, select **Edit** in the role's row.
+1. On **Roles**, select **Edit…** in the role's **⋯** menu.
 1. Select **Restore template**. It puts back Fathom's own name, description and boxes.
 1. Select **Save**.
 1. Check what each account gains and loses, and select **Save changes**.

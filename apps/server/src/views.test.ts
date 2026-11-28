@@ -1048,9 +1048,9 @@ describe("views of every table", () => {
   it("answers that a table keeping no views is no such page", async () => {
     const { cookie } = await test.signedIn("administrator");
     for (const [method, url] of [
-      ["GET", "/api/views/roles"],
-      ["POST", "/api/views/roles"],
-      ["DELETE", `/api/views/roles/${missingRecord}`],
+      ["GET", "/api/views/settings"],
+      ["POST", "/api/views/settings"],
+      ["DELETE", `/api/views/settings/${missingRecord}`],
     ] as const) {
       const response = await test.request(cookie, method, url, {
         name: "Mine",
@@ -1593,6 +1593,10 @@ describe("every starting role on every view table", () => {
     "org-chart": { opens: everyoneButAdministrator, shares: peopleEditors },
     drafts: { opens: everyoneButAdministrator, shares: configurers },
     accounts: {
+      opens: ["engineering-director", "executive", "administrator"],
+      shares: ["administrator"],
+    },
+    roles: {
       opens: ["engineering-director", "executive", "administrator"],
       shares: ["administrator"],
     },

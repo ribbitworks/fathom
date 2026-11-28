@@ -42,7 +42,7 @@ describe("a last view as a page sends it", () => {
   });
 
   it.each([
-    ["a table no page shows", { ...sent, table: "roles" }],
+    ["a table no page shows", { ...sent, table: "settings" }],
     ["a saved view that is not an identifier", { ...sent, view: "mine" }],
     ["a mode longer than any page's", { ...sent, mode: "x".repeat(21) }],
   ])("is refused with %s", (_, request) => {
@@ -54,6 +54,6 @@ describe("the last views a reader is sent", () => {
   it("are each under a page with a Views menu", () => {
     const people = { table: "people", definition: {} };
     expect(lastViewsSchema.parse({ people })).toEqual({ people });
-    expect(lastViewsSchema.safeParse({ roles: people }).success).toBe(false);
+    expect(lastViewsSchema.safeParse({ settings: people }).success).toBe(false);
   });
 });

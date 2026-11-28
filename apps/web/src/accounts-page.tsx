@@ -56,12 +56,9 @@ import {
   accountsTable,
 } from "./accounts-table.tsx";
 import { AccountPanel, accountPanelId } from "./accounts-panel.tsx";
-import { focusRecordCell } from "./grid-row.tsx";
-import { RecordGrid } from "./record-grid.tsx";
-import { noRecordActions } from "./record-table.ts";
+import { LiveRecordGrid } from "./live-record-grid.tsx";
 import { useNarrow } from "./side-panel.tsx";
 import { useSavedViews } from "./saved-views.tsx";
-import { TableTips } from "./table-tips.tsx";
 import type { View } from "./table-view.ts";
 
 type Dialog =
@@ -638,11 +635,6 @@ export function AccountsPage({
     },
   });
   const rows = accountRows(all);
-  const shownRow = rows.find(({ id }) => id === openId);
-  const closePanel = (id: string) => {
-    focusRecordCell(id, "name");
-    onOpen(undefined);
-  };
   const actionsFor = (account: Account) => {
     const own = account.id === user.id;
     return {
@@ -667,29 +659,22 @@ export function AccountsPage({
           : undefined,
     };
   };
-  const panels =
-    shownRow === undefined
-      ? []
-      : [
-          {
-            key: "account",
-            id: accountPanelId,
-            name: "the account's details",
-            node: (
-              <AccountPanel
-                key={shownRow.id}
-                row={shownRow}
-                columns={accountColumns(all, user.id)}
-                own={shownRow.id === user.id}
-                actions={canManage ? actionsFor(shownRow.account) : undefined}
-                narrow={narrow}
-                onClose={() => {
-                  closePanel(shownRow.id);
-                }}
-              />
-            ),
-          },
-        ];
+  const details = (row: AccountRow, onClose: () => void) => ({
+    key: "account",
+    id: accountPanelId,
+    name: "the account's details",
+    node: (
+      <AccountPanel
+        key={row.id}
+        row={row}
+        columns={accountColumns(all, user.id)}
+        own={row.id === user.id}
+        actions={canManage ? actionsFor(row.account) : undefined}
+        narrow={narrow}
+        onClose={onClose}
+      />
+    ),
+  });
 
   return (
     <Stack gap="md" className={classes.tablePage}>
@@ -714,27 +699,17 @@ export function AccountsPage({
         </Alert>
       )}
       {accounts.isSuccess && (
-        <TableTips>
-          <RecordGrid
-            records={rows}
-            table={table}
-            fields={[]}
-            order={accountColumnOrder}
-            lists={[]}
-            canEdit={false}
-            canAdd={false}
-            rowActions={false}
-            canEditColumns={false}
-            actions={noRecordActions<AccountRow, never, undefined>()}
-            view={view}
-            onView={onView}
-            saved={views.saved}
-            panels={panels}
-            selected={openId}
-            closeSelected={closePanel}
-            withDrafts={false}
-          />
-        </TableTips>
+        <LiveRecordGrid
+          records={rows}
+          table={table}
+          order={accountColumnOrder}
+          view={view}
+          onView={onView}
+          saved={views.saved}
+          open={openId}
+          onOpen={onOpen}
+          details={details}
+        />
       )}
       {views.dialogs}
       <Modal

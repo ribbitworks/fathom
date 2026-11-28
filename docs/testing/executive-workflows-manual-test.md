@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Manual Test: Executive Workflows
@@ -194,11 +194,11 @@ Run the test cases in order, in about 25 minutes. Start with Start Fathom, then 
 
 - [ ] `DF6E` Select the **Roles** page in the left-hand menu.
   - **Expected:**
-    - Each role's row has a **View** button.
+    - Each role's row ends with a **⋯** button.
     - There is no **New role** button.
   - **Notes:**
 
-- [ ] `464F` Select **View** in the **Executive** row.
+- [ ] `464F` Select **View…** in the **⋯** menu of the **Executive** row.
   - **Expected:**
     - A dialog titled "Executive" opens, with the grid at its left.
     - Its only button at the bottom is **Close**.

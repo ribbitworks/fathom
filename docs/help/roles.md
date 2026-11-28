@@ -13,13 +13,15 @@ The **Roles** page lists the roles accounts can hold, and what each one lets its
 
 ## See What a Role Gives
 
-Select **View** in the role's row. If you may change roles, select **Edit** instead.
+The table shows each role's **Role**, **Description** and **Accounts**, how many active accounts hold it. To see a role's details, point at its row and select the details button at the right of its **Role**. They open in a panel beside the table: its description, the accounts holding it, each opening its details on **Accounts**, and the grid of what it grants.
+
+For the summary too, select **View…** in the role's **⋯** menu. If you may change roles, select **Edit…** instead.
 
 The dialog shows a grid of boxes on the left, and a summary of what the role sees and does on the right. Each role Fathom starts with has a Help page saying what it does most, such as [Working as a Team Member](working-as-a-team-member.md), listed under **Working in Fathom** in [Help](index.md).
 
 ## Change a Role
 
-1. Select **Edit** in the role's row.
+1. Select **Edit…** in the role's **⋯** menu.
 1. Tick or untick boxes in the grid. The summary marks what each change adds and takes away.
 1. Change the **Name** or **Description**, if you need to.
 1. Select **Save**.
@@ -28,7 +30,7 @@ If the change alters what any account may do, Fathom lists those accounts first,
 
 If no account is affected, Fathom saves the role straight away.
 
-You're done when the dialog closes, and the role's row is back in the list.
+You're done when the dialog closes, and the role's row is back in the table.
 
 ## Go Back Before Saving
 
@@ -40,7 +42,7 @@ You're done when the dialog closes, and the role's row is back in the list.
 
 The quickest way is to copy the role closest to what you need.
 
-1. Select **Copy** in that role's row, or **New role** to start with nothing ticked.
+1. Select **Copy…** in that role's **⋯** menu, or **New role** to start with nothing ticked.
 1. Type the **Name**. No other role can have the same one.
 1. Type a **Description**, if it helps.
 1. Tick the boxes the role needs.

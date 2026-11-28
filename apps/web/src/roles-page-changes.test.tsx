@@ -15,6 +15,7 @@ import {
   auditors,
   roleList,
   openDialog,
+  openFromMenu,
   box,
   summaryLines,
 } from "./test-roles-page.tsx";
@@ -125,8 +126,9 @@ describe("creating a role", () => {
         }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Copy Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Copy…",
       "Copy Fictional Auditors",
     );
     expect(within(dialog).getByLabelText<HTMLInputElement>("Name").value).toBe(
@@ -189,8 +191,9 @@ describe("changing a role", () => {
         Response.json({ role: { ...auditors, name: "Fictional Checkers" } }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     const name = within(dialog).getByLabelText("Name");
@@ -242,8 +245,9 @@ describe("changing a role", () => {
         Response.json({ role: auditors }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     await userEvent.click(box(dialog, "View People"));
@@ -309,8 +313,9 @@ describe("changing a role", () => {
       },
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     await userEvent.click(box(dialog, "View People"));
@@ -343,8 +348,9 @@ describe("changing a role", () => {
         Response.json({ error: "Another role has that name" }, { status: 409 }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     await userEvent.click(box(dialog, "View Plan"));
@@ -368,8 +374,9 @@ describe("changing a role", () => {
         Response.json({ error: "Forbidden" }, { status: 403 }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -392,8 +399,9 @@ describe("changing a role", () => {
         }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -421,7 +429,7 @@ describe("changing a role", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    await openDialog("Edit Team Member", "Edit Team Member");
+    await openFromMenu("Team Member", "Edit…", "Edit Team Member");
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
@@ -436,8 +444,9 @@ describe("restoring a starting role", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     expect(
@@ -452,8 +461,9 @@ describe("restoring a starting role", () => {
         Response.json({ roles: [{ ...auditors, key: "retired-role" }] }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
+    const dialog = await openFromMenu(
+      "Fictional Auditors",
+      "Edit…",
       "Edit Fictional Auditors",
     );
     expect(
@@ -467,7 +477,11 @@ describe("restoring a starting role", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const dialog = await openDialog("Edit Team Member", "Edit Team Member");
+    const dialog = await openFromMenu(
+      "Team Member",
+      "Edit…",
+      "Edit Team Member",
+    );
     const restore = within(dialog).getByRole<HTMLButtonElement>("button", {
       name: "Restore template",
     });
@@ -505,8 +519,9 @@ describe("restoring a starting role", () => {
         }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Watchers",
+    const dialog = await openFromMenu(
+      "Fictional Watchers",
+      "Edit…",
       "Edit Fictional Watchers",
     );
     // When
@@ -563,8 +578,9 @@ describe("the permissions that keep access managed", () => {
         Response.json({ accounts: [lastAdministrator] }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Administrators",
+    const dialog = await openFromMenu(
+      "Fictional Administrators",
+      "Edit…",
       "Edit Fictional Administrators",
     );
     const kept = box(
@@ -598,8 +614,9 @@ describe("the permissions that keep access managed", () => {
         }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Administrators",
+    const dialog = await openFromMenu(
+      "Fictional Administrators",
+      "Edit…",
       "Edit Fictional Administrators",
     );
     // Locked while the accounts load, then freed.
@@ -621,8 +638,9 @@ describe("the permissions that keep access managed", () => {
         Response.json({ error: "Internal Server Error" }, { status: 500 }),
     });
     renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Administrators",
+    const dialog = await openFromMenu(
+      "Fictional Administrators",
+      "Edit…",
       "Edit Fictional Administrators",
     );
     expect(
@@ -658,7 +676,11 @@ describe("the permissions that keep access managed", () => {
         }),
     });
     renderApp("/roles");
-    const dialog = await openDialog("Edit Team Member", "Edit Team Member");
+    const dialog = await openFromMenu(
+      "Team Member",
+      "Edit…",
+      "Edit Team Member",
+    );
     await within(dialog).findByRole("checkbox", {
       name: "Edit Administration, which some active account must keep",
     });

@@ -83,6 +83,7 @@ export const viewTableNeeds: Record<ViewTable, Needs> = {
     "features:view",
   ),
   accounts: allOf("administration:view"),
+  roles: allOf("administration:view"),
 };
 
 // The role a new account is given, which must exist, read once the server has started.

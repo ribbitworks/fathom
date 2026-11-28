@@ -52,7 +52,6 @@ If you're signed out, Fathom asks you to sign in first, then opens the record. Y
 Some records open in a particular place:
 
 - A release opens on the **Releases** tab, and a schedule on the **Schedules** tab.
-- A role's link opens its dialog on **Roles**.
 - A column's link opens the column's menu on its table.
 - A link to a row of a private page opens the page, and only for you. A private page has no details, so none open.
 

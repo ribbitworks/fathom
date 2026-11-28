@@ -156,7 +156,7 @@ describe("the last view of a page", () => {
     const response = await test.request(
       cookie,
       "PUT",
-      pathOf("roles"),
+      pathOf("settings"),
       peopleView,
     );
     expect(response.statusCode).toBe(404);

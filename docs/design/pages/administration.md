@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Fathom: Administration Pages
@@ -28,7 +28,12 @@ The Administration pages hold accounts, roles, settings, lists, the planning set
 
 ## Roles
 
-- **Rows:** The role, its description and how many active accounts hold it, ending in **Edit** and **Copy**, or **View** for those who can't edit roles.
+- **Table:** The shared table, read only: Role, Description and Accounts, how many active accounts hold the role, with Key hidden at first after Role. Names aren't bold. A description is cut to one line, whole in its tip and in the details.
+  - **The bar:** Search, Metrics and Views, with no Group by, since no column is worth grouping by. Metrics counts roles only: Accounts offers no sum, since an account holding several roles would be counted for each.
+- **Export:** As [Exporting](../../standards/ui-conventions/tables.md#exporting) sets out. Roles hold only General data, so nothing asks first.
+- **A role's menu:** Its row's ⋯ offers Show details and Copy link, then **Edit…** and **Copy…** to those who may edit roles, or **View…** to those who can't. Superuser, in the seed data alone, has the same menu as every role. No role is removed.
+- **Details:** A [side panel](../../standards/ui-conventions/pages-and-panels.md#details-panels), read only, with the role's key under its name: Details (the table's columns), Held by (the active accounts holding the role, each opening its details on Accounts) and Grants (the grid, whole, keeping its four columns on a phone). Its ⋯ holds the row's menu less Show details. A role's link opens it.
+- **View dialog:** **View…** opens the grid read only beside its summary, with **Close**.
 - **New role:** The page's main action, only for those who may edit roles, which [Edit Administration](../../product/roles.md#safeguards-for-administrators) grants.
 - **Descriptions:** Shown under the role's name wherever a role is chosen.
 - **Grid:** View, Approve and Edit columns over the areas, then General, Personal and Confidential under a Data classification heading, without Approve boxes. No lines under it explain greyed ticks.

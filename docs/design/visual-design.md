@@ -4,7 +4,7 @@ category: "Design"
 audience: "Contributors"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/ui-conventions.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Fathom: Visual Design
@@ -216,7 +216,7 @@ It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-compo
 One component does each job, in `apps/web/src/`. A new screen uses or extends the one listed rather than making another, and a review rates a second one doing the same job as HIGH, as [Reuse across the codebase](../standards/code-review.md#architecture-and-design) sets out.
 
 - **Tables of records:** `RecordGrid` in `record-grid.tsx`, given its records, columns and actions as `record-table.ts` sets out, with each kind of cell, its display and its editor, in `cellKinds` in `cell-kinds.tsx`.
-- **A table whose records never have drafts:** `liveTableParts` in `live-table.ts`, its records as they are and no drafts to decide, given to `RecordGrid` with `withDrafts={false}`, as Accounts' and a private page's tables are.
+- **A table whose records never have drafts:** `liveTableParts` in `live-table.ts`, its records as they are and no drafts to decide, given to `RecordGrid` with `withDrafts={false}`, as Accounts', Roles' and a private page's tables are. Accounts and Roles, changed only in their dialogs, draw it with `LiveRecordGrid` in `live-record-grid.tsx`, with one record's details beside it.
 - **Columns of planned work:** `planningColumns` and `inGroupsThenAdded` in `planning-columns.tsx`, the columns features and activities share, drawn by Features' and Activities' tables, `feature-table.tsx` and `activity-table.tsx`, through `plannedGrid` in `projects-page.tsx`.
 - **Search, views, and the bar above a table:** `TableSearch`, `ViewBar`, and `ViewsMenu` in `table-controls.tsx`, with a page's saved views, on a table or not, such as the Org chart's, from `useSavedViews` in `saved-views.tsx`.
 - **Side panels:** `WithSidePanel` and `SidePanelFrame` in `side-panel.tsx`, the frame holding a panel's heading, with its marks beside it, its subtitle and its actions. A record's details panel is `RecordPanel` in `record-details.tsx`, on that frame, with its ⋯ menu from `usePanelMenu` in `panel-menu.tsx`, which a draft's details, `DraftPanel` in `drafts-panel.tsx`, use too. Every ⋯ menu in a side panel, `RecordMenu`'s and a list's drafts' included, is drawn by `PanelMoreMenu` there.

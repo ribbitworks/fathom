@@ -141,15 +141,16 @@ const homeRoute = createRoute({
   component: Home,
 });
 
-// The Accounts page's address: the table's view, and the account whose details are shown beside it.
-const accountsSearch = viewSearchSchema.extend({
+// A table's view, and the record whose details are shown beside it, or a row a link opens, by its
+// identifier: the address of Accounts, Roles and a page under Mine.
+const viewAndRecordSearch = viewSearchSchema.extend({
   open: z.uuid().optional().catch(undefined),
 });
 
 const accountsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/accounts",
-  validateSearch: accountsSearch,
+  validateSearch: viewAndRecordSearch,
   beforeLoad: (match) => {
     reaching("accounts")(match);
     openOnLastView(match, shownOn("accounts", match.search));
@@ -177,14 +178,10 @@ const accountsRoute = createRoute({
 
 // A page under Mine: the table's view, and a row a link opens. A page nobody may read, its maker
 // included, is not found, as a key's link to it is.
-const privatePageSearch = viewSearchSchema.extend({
-  open: z.uuid().optional().catch(undefined),
-});
-
 const privatePageRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/mine/$pageId",
-  validateSearch: privatePageSearch,
+  validateSearch: viewAndRecordSearch,
   beforeLoad: reaching("mine"),
   loader: async ({ context, params }) => {
     const missing = notFound();
@@ -216,29 +213,30 @@ const privatePageRoute = createRoute({
   },
 });
 
-// The Roles page's address: only a role a link opens, which the page takes out once its dialog is
-// open.
-const rolesSearch = z.object({
-  open: z.uuid().optional().catch(undefined),
-});
-
 const rolesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/roles",
-  validateSearch: rolesSearch,
-  beforeLoad: reaching("roles"),
+  validateSearch: viewAndRecordSearch,
+  beforeLoad: (match) => {
+    reaching("roles")(match);
+    openOnLastView(match, shownOn("roles", match.search));
+  },
   component: function Roles() {
     const { user, permissions, access } = signedIn.useRouteContext();
-    const { open } = rolesRoute.useSearch();
     const navigate = rolesRoute.useNavigate();
+    const { open, ...search } = rolesRoute.useSearch();
     return (
       <RolesPage
         user={user}
         canEdit={permissions.includes("administration:edit")}
         dataClasses={access.dataClasses}
-        linked={open}
-        onLinkedOpened={() => {
-          void navigate({ search: {}, replace: true });
+        canShareViews={sharesViews("roles", permissions)}
+        {...viewProps(search, (next, replace) => {
+          void navigate({ search: { ...next, open }, replace });
+        })}
+        open={open}
+        onOpen={(next) => {
+          void navigate({ search: { ...search, open: next } });
         }}
       />
     );

@@ -20,6 +20,8 @@ import {
 
 type Answers = Parameters<typeof serverAnswers>[0];
 
+const roleId = "00000000-0000-4000-8000-000000000002";
+
 const session = (permissions: string[]) => () =>
   Response.json({ ...fictionalUser, permissions });
 
@@ -226,6 +228,29 @@ describe("Drafts opening on the view it last showed", () => {
     expect(
       await screen.findByRole("tab", { name: tab, selected: true }),
     ).toBeDefined();
+  });
+});
+
+describe("Roles opening on the view it last showed", () => {
+  it("opens on it, keeping a role's details the address names", async () => {
+    const { address } = openOn(
+      `/roles?open=${roleId}`,
+      "roles",
+      { table: "roles", definition: { search: "Fictional" } },
+      ["administration:view"],
+      {
+        "GET /api/roles": () => Response.json({ roles: [] }),
+      },
+    );
+
+    expect(
+      (
+        await screen.findByRole<HTMLInputElement>("textbox", {
+          name: "Search roles",
+        })
+      ).value,
+    ).toBe("Fictional");
+    expect(address().get("open")).toBe(roleId);
   });
 });
 

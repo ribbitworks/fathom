@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Manual Test: Administrator Workflows
@@ -128,7 +128,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** ADMIN-01 done. **Roles** page open from the left-hand menu.
 
-- [ ] `AFE7` Select **Copy** in the **Team Member** row.
+- [ ] `AFE7` Select **Copy…** in the **⋯** menu of the **Team Member** row.
   - **Expected:**
     - A dialog titled "Copy Team Member" opens.
     - The name reads "Copy of Team Member".
@@ -189,7 +189,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** ADMIN-02 done. **Roles** page open from the left-hand menu.
 
-- [ ] `8BF7` Select **Edit** in the `Fictional Reader` row.
+- [ ] `8BF7` Select **Edit…** in the **⋯** menu of the `Fictional Reader` row.
   - **Expected:** The role dialog opens, titled **Edit Fictional Reader**.
   - **Notes:**
 
@@ -226,7 +226,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** **Roles** page open.
 
-- [ ] `CFBF` Select **Edit** in the **Executive** row.
+- [ ] `CFBF` Select **Edit…** in the **⋯** menu of the **Executive** row.
   - **Expected:** The role dialog opens.
   - **Notes:**
 

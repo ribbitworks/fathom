@@ -4,7 +4,7 @@
 // cell, and the same menu's items for the ⋯ in the record's details panel.
 
 import { Menu } from "@mantine/core";
-import type { MouseEvent, ReactNode } from "react";
+import { Fragment, type MouseEvent, type ReactNode } from "react";
 import {
   MenuAtPoint,
   clickedPoint,
@@ -35,6 +35,36 @@ import {
 } from "./menu-offer.ts";
 import type { DraftOf, GridRecord } from "./record-table.ts";
 import { MoreButton, RowControls, actionsFor } from "./row-controls.tsx";
+
+// A table's own items in a record's menu, each by its words and what it does to the record, or
+// left out where it does nothing.
+function menuItem<Rec extends GridRecord>(
+  label: string,
+  onClick: ((record: Rec) => void) | undefined,
+  record: Rec,
+): ReactNode {
+  return (
+    onClick !== undefined && (
+      <Menu.Item
+        onClick={() => {
+          onClick(record);
+        }}
+      >
+        {label}
+      </Menu.Item>
+    )
+  );
+}
+
+export const recordMenu =
+  <Rec extends GridRecord>(
+    items: readonly [string, ((record: Rec) => void) | undefined][],
+  ) =>
+  (record: Rec): ReactNode =>
+    !isPending(record) &&
+    items.map(([label, onClick]) => (
+      <Fragment key={label}>{menuItem(label, onClick, record)}</Fragment>
+    ));
 
 const draftItemLabel = (verb: string, of: string | undefined) => {
   const draft = of === undefined ? "draft" : `${of}'s draft`;

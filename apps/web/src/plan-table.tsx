@@ -15,7 +15,7 @@ import {
   type RecordKeyOf,
   type Show,
 } from "@fathom/shared";
-import { Menu, Text } from "@mantine/core";
+import { Text } from "@mantine/core";
 import { Fragment, type ReactNode } from "react";
 import type { AddedColumns } from "./added-columns.ts";
 import { cellKinds } from "./cell-kinds.tsx";
@@ -38,7 +38,7 @@ import {
   useDraftView,
 } from "./status-mark.tsx";
 import { fieldColumn } from "./grid-columns.tsx";
-import { changedIn, isPending } from "./grid-drafts.ts";
+import { changedIn } from "./grid-drafts.ts";
 import {
   liveRecordsBy,
   withLiveFields,
@@ -300,34 +300,6 @@ export const nameColumn = <Rec extends PlanRecord>(): Column<Rec, PlanChange> =>
     required: true,
     maxLength: projectLengths.name,
   });
-
-function menuItem<Rec extends PlanRecord>(
-  label: string,
-  onClick: ((record: Rec) => void) | undefined,
-  record: Rec,
-): ReactNode {
-  return (
-    onClick !== undefined && (
-      <Menu.Item
-        onClick={() => {
-          onClick(record);
-        }}
-      >
-        {label}
-      </Menu.Item>
-    )
-  );
-}
-
-export const recordMenu =
-  <Rec extends PlanRecord>(
-    items: readonly [string, ((record: Rec) => void) | undefined][],
-  ) =>
-  (record: Rec): ReactNode =>
-    !isPending(record) &&
-    items.map(([label, onClick]) => (
-      <Fragment key={label}>{menuItem(label, onClick, record)}</Fragment>
-    ));
 
 export const idColumn = <Rec extends PlanRecord>(label: string) =>
   field<Rec>("externalId", label, "text", {

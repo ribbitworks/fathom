@@ -48,13 +48,13 @@ import {
   type PlanChange,
   planTable,
   projectColumn,
-  recordMenu,
   removeTurnedOffBy,
   savedKind,
   wordsOf,
   workedOutColumn,
 } from "./plan-table.tsx";
 import { RecordGrid } from "./record-grid.tsx";
+import { recordMenu } from "./row-menus.tsx";
 import { ShowOnItem } from "./record-details.tsx";
 import {
   type Column,

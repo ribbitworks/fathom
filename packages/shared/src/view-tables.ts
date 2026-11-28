@@ -25,6 +25,7 @@ export const viewTableSchema = z.enum([
   "capacity",
   "org-chart",
   "accounts",
+  "roles",
   "drafts",
 ]);
 
@@ -129,6 +130,7 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
     team: z.uuid().optional(),
   }),
   accounts: noChoices,
+  roles: noChoices,
   // Any tab may be named: a shared view opens on the reader's first tab when their role lacks it.
   drafts: z.strictObject({ tab: draftsTabSchema.optional() }),
 };
@@ -152,6 +154,7 @@ const viewSharers: Record<ViewTable, readonly Permission[]> = {
   capacity: recordEditors.allocation,
   "org-chart": ["people:edit"],
   accounts: ["administration:edit"],
+  roles: ["administration:edit"],
   drafts: ["configuration:edit"],
 };
 

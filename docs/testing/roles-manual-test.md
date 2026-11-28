@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Manual Test: Editing Roles
@@ -13,7 +13,7 @@ last_updated: "2026-11-27"
 
 Verifies the Roles page:
 
-- Who sees it, and the list of roles.
+- Who sees it, the table of roles, and a role's details.
 - The dialog that sets what a role grants with its summary in plain English.
 - The boxes turned off without what they need.
 - The confirmation of what a change does to the accounts holding a role.
@@ -83,7 +83,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
       - **Superuser** 1
       - **Team Member** 2
       - **Workforce Administrator** 3
-    - Each row ends with **Edit** and **Copy** buttons.
+    - Each row ends with a **⋯** button.
     - **New role** is at the top right.
   - **Notes:**
 
@@ -243,7 +243,7 @@ Proved by automated tests in `apps/web/src/roles-page.test.tsx`.
 
 **Preconditions:** **Roles** page open, signed in with this account.
 
-- [ ] `1D6D` Select **Copy** in the **Team Member** row.
+- [ ] `1D6D` Select **Copy…** in the **⋯** menu of the **Team Member** row.
   - **Expected:**
     - A dialog titled **Copy Team Member**, with the name **Copy of Team Member** and Team Member's description.
     - The same boxes are ticked as Team Member: **View** on **Plan**, **Features and releases**, **Allocations**, **People** and **Feature teams**.
@@ -394,4 +394,36 @@ Proved by automated tests in `apps/server/src/roles.test.ts` and `apps/web/src/r
 
 - [ ] `C386` Select the **Roles** page in the left-hand menu.
   - **Expected:** The **Roles** page lists the roles as [Roles](../product/roles.md#starting-roles) sets out, and the Superuser role, with no **Copy of Team Member**.
+  - **Notes:**
+
+### ROLE-15: A Role's Details
+
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-14.
+
+**Preconditions:** Signed in with this account. **Roles** page open from the left-hand menu.
+
+- [ ] `3A71` Select the details button at the right of the **Role** cell of **Engineering Director**.
+  - **Expected:**
+    - A side panel headed **Engineering Director** opens beside the table, with its key under the name.
+    - **Details** reads **Role**, **Description**, in full, and **Accounts**.
+    - **Held by** lists a link for each account holding the role, such as **Engineering Director**.
+    - **Grants** shows the grid, whole, with no box that can be changed.
+  - **Notes:**
+
+- [ ] `C28E` Select the **⋯** at the top of the side panel.
+  - **Expected:** The menu reads **Copy link**, then **Edit…** and **Copy…**.
+  - **Notes:**
+
+- [ ] `7F4D` Select **Engineering Director** under **Held by**.
+  - **Expected:** The **Accounts** page opens, with the details of the account **Engineering Director** beside the table.
+  - **Notes:**
+
+- [ ] `92B6` Select the browser's Back button.
+  - **Expected:** The **Roles** page shows again, with the details of **Engineering Director** beside the table.
+  - **Notes:**
+
+- [ ] `E05C` Narrow the window to about 390 pixels wide.
+  - **Expected:**
+    - The details cover the screen, each label over its value.
+    - The grid keeps its **Area**, **View**, **Approve** and **Edit** columns.
   - **Notes:**

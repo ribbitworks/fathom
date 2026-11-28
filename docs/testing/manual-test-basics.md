@@ -4,7 +4,7 @@ category: "How-To"
 audience: "Contributors"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-27"
+last_updated: "2026-11-28"
 ---
 
 # Manual Test Basics
@@ -156,7 +156,7 @@ This deletes the installation's containers, its database, its secrets and its fo
 ### Open a Role
 
 1. Select the **Roles** page in the left-hand menu.
-2. Select **Edit** in the role's row.
+2. Select **Edit…** in the **⋯** menu of the role's row.
 
 ### Publish
 

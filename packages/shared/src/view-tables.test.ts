@@ -204,6 +204,7 @@ describe("Sharing views", () => {
     lists: ["configuration:edit"],
     drafts: ["configuration:edit"],
     accounts: ["administration:edit"],
+    roles: ["administration:edit"],
   } as const;
   const permissions = [...new Set(Object.values(sharers).flat())];
 
