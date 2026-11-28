@@ -70,9 +70,7 @@ describe("permissionGrid", () => {
     const placed = permissionGrid.flatMap(({ actions }) =>
       Object.values(actions),
     );
-    expect([...placed].sort()).toEqual(
-      [...permissionSchema.options].sort(),
-    );
+    expect([...placed].sort()).toEqual([...permissionSchema.options].sort());
   });
 });
 
