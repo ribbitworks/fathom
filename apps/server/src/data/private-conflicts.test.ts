@@ -344,6 +344,33 @@ describe("a clash on a whole record", () => {
   });
 });
 
+describe("a change over a published removal", () => {
+  const row = {
+    ...privateChange({ site: lisbon }, { site: leeds }),
+    since: new Date("2026-11-20"),
+  };
+
+  it("clashes where the removal was published after the change began", () => {
+    expect(
+      recordClash(row, {
+        live,
+        published: removal,
+        removedAt: new Date("2026-11-21"),
+      }),
+    ).toMatchObject({ removedBy: "theirs" });
+  });
+
+  it("asks nothing where the change was made over a removal already published", () => {
+    expect(
+      recordClash(row, {
+        live,
+        published: removal,
+        removedAt: new Date("2026-11-19"),
+      }),
+    ).toBeUndefined();
+  });
+});
+
 describe("a private change to a record whose addition was approved since", () => {
   const added = { added: true, changes: [] };
 
@@ -460,6 +487,7 @@ describe("a record as everyone else sees it", () => {
       },
     },
     liveSince: new Map([[draftKey("person", "removed"), madeLive]]),
+    removedAt: new Map(),
   } as unknown as Versions;
   const seenOf = (recordType: string, recordId: string) =>
     seenByOthers(versions, { ...privateChange({}, {}), recordType, recordId });

@@ -203,8 +203,11 @@ export async function approvedPerson(
   return id;
 }
 
+const conflict = 409;
+
 // Publishes the user's unpublished changes after a change they send, as they would, so tests of
-// published drafts need not; users who make no drafts are refused, which changes nothing.
+// published drafts need not; users who make no drafts are refused, which changes nothing. A publish
+// refused for a clash or a rule fails the test at the change that led to it.
 export async function publishingAfter(
   app: App,
   headers: { cookie: string; origin: string },
@@ -212,11 +215,16 @@ export async function publishingAfter(
   url: string,
 ): Promise<void> {
   if (method === "GET" || url.startsWith("/api/unpublished")) return;
-  await app.inject({
+  const published = await app.inject({
     method: "POST",
     url: "/api/unpublished/publish",
     headers,
   });
+  if (published.statusCode === conflict) {
+    throw new Error(
+      `Publishing after ${method} ${url} was refused: ${published.body}`,
+    );
+  }
 }
 
 export async function startTestApp({

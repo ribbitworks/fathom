@@ -5,10 +5,10 @@
 // naming the record.
 
 import { featureTeams, listItems, lists, people } from "@fathom/db";
-import { startingRoles } from "@fathom/shared";
+import { type PrivateConflicts, startingRoles } from "@fathom/shared";
 import { and, eq, ne } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { testPosition, unique } from "./test-app.ts";
 import {
   approver,
@@ -28,6 +28,13 @@ afterAll(closeFeatureTests);
 
 const publishing = (who = planner) =>
   test.request(who.cookie, "POST", "/api/unpublished/publish");
+
+// Each test leaves no private change of its own for the next to meet.
+afterEach(async () => {
+  for (const who of [planner, approver, featureLead]) {
+    await test.request(who.cookie, "POST", "/api/unpublished/discard");
+  }
+});
 
 const changedPrivately = async (id: string, body: object, who = planner) => {
   const response = await test.request(
@@ -209,5 +216,56 @@ describe("publishing a private change to a proposal", () => {
     expect(response.json<{ error: string }>().error).toMatch(
       /^The proposal .*: Choose a .* that is offered$/,
     );
+  });
+});
+
+describe("publishing a change kept over someone else's removal", () => {
+  it("checks it against the record as it is live, keeping a status since retired", async () => {
+    // Given the planner's private rename of a feature, another planner's published removal of it,
+    // and the feature's status retired since
+    const feature = await liveFeature();
+    await changedPrivately(feature.id, {
+      name: unique("Fictional Renamed"),
+      statusId: feature.statusId,
+    });
+    const other = await test.signedIn("product-manager");
+    const removed = await test.request(
+      other.cookie,
+      "DELETE",
+      `/api/features/${feature.id}`,
+    );
+    expect(removed.statusCode, removed.body).toBe(200);
+    const retire = (retired: boolean) =>
+      test.connection
+        .update(listItems)
+        .set({ retired })
+        .where(eq(listItems.id, feature.statusId));
+    await retire(true);
+
+    try {
+      // When the planner keeps their change over the removal
+      const asked = await publishing();
+      expect(asked.statusCode, asked.body).toBe(409);
+      const response = await test.request(
+        planner.cookie,
+        "POST",
+        "/api/unpublished/publish",
+        {
+          resolutions: asked
+            .json<PrivateConflicts>()
+            .conflicts.map(({ recordType, recordId, token }) => ({
+              recordType,
+              recordId,
+              keep: "mine",
+              token,
+            })),
+        },
+      );
+
+      // Then it publishes, since the feature keeps the status it already has
+      expect(response.statusCode, response.body).toBe(200);
+    } finally {
+      await retire(false);
+    }
   });
 });

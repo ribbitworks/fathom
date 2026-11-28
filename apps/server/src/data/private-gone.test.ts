@@ -88,6 +88,7 @@ const versions = ({
   hires: { mine: new Map(), tierOf: () => "general", ...hires },
   teams: { mine: new Map(), ...teams },
   liveSince: new Map(),
+  removedAt: new Map(),
   records: {
     mine: recordsState({ customer: myCustomers }),
     theirs: recordsState({ customer: customers }),
