@@ -125,6 +125,17 @@
   white-space: nowrap;
 }
 
+/* A page under Mine is named as its maker typed it, at any length, so its name is cut short first,
+   keeping the account's menu in reach. */
+.bar > .minePlace {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.minePlace > :last-child {
+  min-width: 0;
+}
+
 .bar > .barMiddle {
   display: flex;
   flex: 1 1 0;
