@@ -11,6 +11,7 @@ import {
   columnValueMaps,
   columnValueMapsOf,
   type Field,
+  type FieldType,
   type List,
   monthOf,
   optionalColumnValueMaps,
@@ -43,10 +44,17 @@ export const kept = <Value>(
     ),
   );
 
+// A column the tables draw, of a type that has a kind of cell. Link to another table columns aren't
+// drawn yet, so no table shows them.
+export type DrawnField = Field & { type: Exclude<FieldType, "record"> };
+
+export const drawnFields = (fields: readonly Field[]): DrawnField[] =>
+  fields.filter((field): field is DrawnField => field.type !== "record");
+
 // A column's type is the kind of its cells, and its choices and class are those of the list it
 // draws on, unless it has a class of its own.
 export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
-  field: Field,
+  field: DrawnField,
   lists: readonly List[],
 ): Column<Rec, Change> => {
   const list = lists.find(({ id }) => id === field.listId);
@@ -66,7 +74,7 @@ export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
 // The settings a column takes from its field's type beyond its cells' kind's, which the built-in
 // columns sharing the kind don't take.
 function ownSettings<Rec extends CellRecord>(
-  field: Field,
+  field: DrawnField,
 ): Partial<Column<Rec, never>> {
   switch (field.type) {
     case "number":

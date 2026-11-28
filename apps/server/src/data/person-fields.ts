@@ -13,11 +13,13 @@ import {
   eachColumnValueMap,
   isLink,
   type FieldType,
+  linkedTableSchema,
   type Flags,
   type Link,
   type Links,
   type Notes,
   type Numbers,
+  type Linked,
   type SomeRequestedColumnValues,
   type Texts,
   textProblem,
@@ -33,12 +35,14 @@ import { checkBuiltInChoice } from "./built-in-lists.ts";
 import {
   isDate,
   isFlag,
+  isLinkedRecords,
   isNote,
   isNumber,
   isText,
   typeOf,
 } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
+import { refuseUnknownRecords } from "./linked-records.ts";
 import { keptNote } from "./records.ts";
 import { reportingFields } from "./reporting.ts";
 import {
@@ -224,6 +228,14 @@ const textsOf = (person: Recorded, shows: Shows): Texts =>
 const daysOf = (person: Recorded, shows: Shows): Days =>
   valuesHolding(person, isDate, shows, ({ date }) => date);
 
+const linkedOf = (person: Recorded, shows: Shows): Linked =>
+  valuesHolding(
+    person,
+    isLinkedRecords,
+    shows,
+    (held) => Object.values(held).flat(),
+  );
+
 const columnValueReaders: {
   [Kind in ColumnValueMap]: (
     person: Recorded,
@@ -236,6 +248,7 @@ const columnValueReaders: {
   flags: flagsOf,
   texts: textsOf,
   days: daysOf,
+  linked: linkedOf,
 };
 
 // A person's or planned hire's values in each map, by column, as recorded, in only the columns
@@ -419,14 +432,15 @@ const checkedNumbers = (
 
 // A record's values in the columns given: those a request names replace those it has, each checked
 // against its column, given the choices asked for, and every required column must then hold one.
-export function askedColumnValues(
+export async function askedColumnValues(
+  reader: Reader,
   columns: readonly ColumnInfo[],
   known: readonly ChoiceRow[],
-  request: Parameters<typeof checkedColumnValues>[1] & {
+  request: SomeRequestedColumnValues & {
     values?: Readonly<Record<string, readonly string[]>> | undefined;
   },
   current: Recorded | undefined,
-): Recorded {
+): Promise<Recorded> {
   const had = current === undefined ? undefined : valuesOf(current);
   const chosen = checkedValues(columns, known, request.values ?? {}, had);
   const kept = Object.fromEntries(
@@ -439,7 +453,7 @@ export function askedColumnValues(
     ...Object.fromEntries(
       [...chosen].map(([fieldId, ids]) => [valueField(fieldId), ids]),
     ),
-    ...checkedColumnValues(columns, request),
+    ...(await checkedColumnValues(reader, columns, request)),
   };
   for (const column of columns) {
     if (
@@ -483,6 +497,22 @@ const checkedDays = (
     date === null ? [] : { date },
   );
 
+// The records asked for each column, as recorded under the column's table, or none, for links
+// removed. A column taking one record refuses several; checkedColumnValues checks first that each
+// record exists.
+const checkedLinked = (
+  columns: readonly ColumnInfo[],
+  requested: Readonly<Record<string, readonly string[] | null>> | undefined,
+): Recorded =>
+  checkedOfType(columns, requested, "record", (ids, column) => {
+    if (ids === null || ids.length === 0) return [];
+    if (!column.multiple && ids.length > 1) {
+      throw new BadRequestError(`${column.name} takes one record`);
+    }
+    // Kept in the order they are read back in, so saving them again changes nothing.
+    return { [linkedTableSchema.parse(column.linkedTable)]: [...ids].sort() };
+  });
+
 const columnValueCheckers: {
   [Kind in ColumnValueMap]: (
     columns: readonly ColumnInfo[],
@@ -495,13 +525,16 @@ const columnValueCheckers: {
   flags: checkedFlags,
   texts: checkedTexts,
   days: checkedDays,
+  linked: checkedLinked,
 };
 
 // The values asked for in each map, as recorded, checked in turn.
-export function checkedColumnValues(
+export async function checkedColumnValues(
+  reader: Reader,
   columns: readonly ColumnInfo[],
   requested: SomeRequestedColumnValues,
-): Recorded {
+): Promise<Recorded> {
+  await refuseUnknownRecords(reader, columns, requested.linked);
   // Only a type parameter lets the compiler match each map's checker to the values asked for in it.
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
   const checkedIn = <Kind extends ColumnValueMap>(map: Kind) =>

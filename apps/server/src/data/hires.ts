@@ -173,7 +173,7 @@ export async function createHires(
         ...recordedValues(
           checkedValues(columns, known, request.values, undefined),
         ),
-        ...checkedColumnValues(columns, request),
+        ...(await checkedColumnValues(transaction, columns, request)),
       });
       if (newlyManaged(undefined, after)) {
         await refuseUnmarked(
@@ -296,7 +296,7 @@ export async function updateHire(
           choiceIds,
         ]),
       ),
-      ...checkedColumnValues(columns, change),
+      ...(await checkedColumnValues(transaction, columns, change)),
     });
     const tierOf = await readHireTier(transaction, columns);
     if (newlyManaged(hire, after)) {

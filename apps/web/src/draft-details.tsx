@@ -15,6 +15,7 @@ import {
 } from "@fathom/shared";
 import { Menu, type MenuItemProps, Text } from "@mantine/core";
 import type { ReactNode } from "react";
+import { drawnFields } from "./added-columns.ts";
 import { cellKinds } from "./cell-kinds.tsx";
 import { describeField } from "./changes.ts";
 import { nameAs } from "./names.ts";
@@ -193,7 +194,7 @@ export function personDraftFields(
         },
       ];
     }
-    const field = fields.find(({ id }) => id === key);
+    const field = drawnFields(fields).find(({ id }) => id === key);
     // A choice may come from any list, as the column's may have changed.
     const column = { choices: lists.flatMap(({ choices }) => choices) };
     const kind = cellKinds[field?.type ?? "choice"];

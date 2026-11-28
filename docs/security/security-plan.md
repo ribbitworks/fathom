@@ -1,6 +1,6 @@
 # Fathom: Security Plan
 
-**Last updated:** 2026-11-27
+**Last updated:** 2026-11-28
 
 How Fathom guards against threats as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it, as [Securing Your Environment](../operations/securing-your-environment.md) sets out. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
 
@@ -119,7 +119,7 @@ flowchart LR
 - **Data beyond a role:** One shared data access layer checks permissions and classifications for every page, export and search.
   - **A change's answer:** a change answers with the records as the role's read would show them, never more; the plan's records pass through one filter on every read and every answer, which tests check for each way a role may hold only part of the plan.
   - **A record named with another:** a record named with one it belongs to, such as an allocation by its feature or activity, or an activity by its project or release, names that one only to a role that reads its kind, and to any other only by its kind, as "a feature", "an activity" or "a project", in reads, drafts, unpublished changes, the change history and refusals. An activity is read with View Features, and its project named only with View Plan. Accepted: a feature or activity hidden so still sends its status's meaning, which Capacity's totals need, and its identifier, so the role sees which people share one it can't read; its team's colour is withheld.
-  - **Pages, views and columns:** a page, view or column is shown only to roles that see every classification it needs, and a column that needs a permission as well, such as People's Feature teams, which needs View on Feature teams, only to roles that hold it.
+  - **Pages, views and columns:** a page, view or column is shown only to roles that see every classification it needs, and a column that needs a permission as well, such as People's Feature teams, which needs View on Feature teams, only to roles that hold it. A Link to another table column links only to a table every role reading its own table can read, People's to People and the plan's to Features, so a link never names a record a reader may not see; a test proves the refusal.
 - **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks.
   - **A change's class:** a change is shown only to readers who see its data, at its class then or now, whichever is more sensitive, so its timing doesn't reveal a Personal change.
     - **A rejection's reason:** a rejection's reason is as sensitive as the changes its draft held when rejected, at their class then or now, since a reason often repeats them; a hire's own details in it need the hiring plan, as they do on their own. Every draft change to a field since the field was last changed live counts, discarded and earlier rejected drafts included, so a reason is never judged less sensitive than its draft. A reason is hidden from a reader too when any of those changes adds, removes, replaces or dates someone they don't see, not yet started or left; a team member a change keeps doesn't count, as the draft's own change shows them taken out.

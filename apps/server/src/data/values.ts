@@ -4,7 +4,12 @@
 // they are recorded in the change history. Part of the data access layer.
 
 import { storedTier } from "../access.ts";
-import { typeHolding, typeOf } from "./column-types.ts";
+import {
+  type LinkedRecords,
+  linkedValueColumns,
+  typeHolding,
+  typeOf,
+} from "./column-types.ts";
 import { readDataClasses } from "./data-classes.ts";
 import {
   type Database,
@@ -23,6 +28,7 @@ import {
   type BuiltInTiers,
   type ColumnTable,
   type Link,
+  type LinkedTable,
   type Tier,
 } from "@fathom/shared";
 import { and, asc, eq, inArray, isNotNull, type SQL } from "drizzle-orm";
@@ -201,7 +207,7 @@ export const valuesTier = (
 };
 
 // A column's value for one person, as the change history records it: the chosen choices, a link, a
-// note, a number, a ticked box, a text, or a day.
+// note, a number, a ticked box, a text, a day, or the records it links to, by their table.
 export type FieldValue =
   | string[]
   | Link
@@ -209,10 +215,11 @@ export type FieldValue =
   | number
   | true
   | { text: string }
-  | { date: string };
+  | { date: string }
+  | LinkedRecords;
 
-// Each record's values, by record and column, for the people, or planned hires, and columns given:
-// chosen choices in their list's order, links, notes, numbers, ticked boxes, texts, and days.
+// Each record's values, by record and column, for the records and columns given: chosen choices in
+// their list's order, links, notes, numbers, ticked boxes, texts, days, and linked records.
 export async function readValues(
   reader: Reader,
   recordIds: readonly string[],
@@ -235,6 +242,8 @@ export async function readValues(
     readFlags,
     readTexts,
     readDates,
+    readLinkedPeople,
+    readLinkedFeatures,
   ]) {
     for (const [recordId, byField] of await read(
       reader,
@@ -363,6 +372,51 @@ const readDates = readerOf(fieldValues.date, (date) => ({
   date: String(date),
 }));
 
+// Each record's linked records of one table, by record and column, in the order of their
+// identifiers, the order they are saved in, so a value saved again unchanged compares equal.
+const readerOfLinked =
+  (table: LinkedTable) =>
+  async (
+    reader: Reader,
+    recordIds: readonly string[],
+    fieldIds: readonly string[],
+    owner: ValueOwner,
+  ): Promise<Map<string, Map<string, LinkedRecords>>> => {
+    const found = new Map<string, Map<string, LinkedRecords>>();
+    if (recordIds.length === 0 || fieldIds.length === 0) return found;
+    // The table is one of the fixed linked tables.
+    // eslint-disable-next-line security/detect-object-injection
+    const linked = fieldValues[linkedValueColumns[table]];
+    const rows = await reader
+      .select({
+        recordId: ownerColumn(owner),
+        fieldId: fieldValues.fieldId,
+        linkedId: linked,
+      })
+      .from(fieldValues)
+      .where(
+        and(
+          inArray(ownerColumn(owner), [...recordIds]),
+          inArray(fieldValues.fieldId, [...fieldIds]),
+          isNotNull(linked),
+        ),
+      )
+      .orderBy(asc(linked));
+    for (const { fieldId, linkedId, ...row } of rows) {
+      const recordId = String(row.recordId);
+      const byField = found.get(recordId) ?? new Map<string, LinkedRecords>();
+      // The column's table is the one read here.
+      // eslint-disable-next-line security/detect-object-injection
+      const ids = byField.get(fieldId)?.[table] ?? [];
+      byField.set(fieldId, { [table]: [...ids, String(linkedId)] });
+      found.set(recordId, byField);
+    }
+    return found;
+  };
+
+const readLinkedPeople = readerOfLinked("people");
+const readLinkedFeatures = readerOfLinked("features");
+
 // The names of the added columns' values any version of a record holds.
 export const valueFieldsIn = (
   ...versions: (Record<string, unknown> | undefined)[]
@@ -390,8 +444,9 @@ export function recordedValues(
   return record;
 }
 
-// The rows that hold a value as the change history records it: one for each choice, or one for a
-// link, a note, a number, a ticked box, a text, or a day. Anything else holds nothing.
+// The rows that hold a value as the change history records it: one for each choice or linked
+// record, or one for a link, a note, a number, a ticked box, a text, or a day. Anything else holds
+// nothing.
 export function valueRows(
   recordId: string,
   fieldId: string,

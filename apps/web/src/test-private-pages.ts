@@ -26,6 +26,7 @@ export const row = (id: string, name: string, due?: string): PrivateRow => ({
   flags: {},
   texts: { [nameField]: name },
   days: due === undefined ? {} : { [dueField]: due },
+  linked: {},
 });
 
 export const followUps = (rows: PrivateRow[]): PrivatePage => ({

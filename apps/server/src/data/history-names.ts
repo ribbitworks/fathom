@@ -30,7 +30,7 @@ import { builtInTier } from "./values.ts";
 import { type RecordKind, readsKind } from "./record-state.ts";
 import { recordKinds } from "./records.ts";
 import type { StoredChange } from "./changes.ts";
-import { isDate, isFlag, isText } from "./column-types.ts";
+import { isDate, isFlag, isText, linkedRecordsOf } from "./column-types.ts";
 
 // The kinds of record that belong to another, which the history names them by, as a choice is by
 // its list.
@@ -85,6 +85,10 @@ const referencesPlan = (row: StoredChange) =>
 export const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
 
+// The identifiers a column's value names: its choices, or the records it links to.
+const namedInColumn = (value: unknown): string[] =>
+  linkedRecordsOf(value)?.ids ?? strings(value);
+
 // The identifiers a change's values refer to, which are named in its place.
 export function referencedIds(row: StoredChange): string[] {
   const values = [row.oldValue, row.newValue];
@@ -94,7 +98,10 @@ export function referencedIds(row: StoredChange): string[] {
   const inValue = values.flatMap((value) => named?.ids(value) ?? []);
   if (inValue.length > 0) return inValue;
   if (fieldOfValue(row.field) !== null) {
-    return [fieldOfValue(row.field) as string, ...values.flatMap(strings)];
+    return [
+      fieldOfValue(row.field) as string,
+      ...values.flatMap(namedInColumn),
+    ];
   }
   if (row.recordType === "choice-order" || namesMembers(row)) {
     return values.flatMap(strings);
@@ -314,8 +321,8 @@ export function unseenValueName(
 }
 
 // What a value shows: text, yes or no, or several names, with identifiers named, a note as its
-// words without their formatting, a number as written, a box as ticked or not, a text as it is, and
-// a day as written, such as 2026-03-14.
+// words without their formatting, a number as written, a box as ticked or not, a text as it is, a
+// day as written, such as 2026-03-14, and linked records by their names.
 export function shown(
   row: StoredChange,
   value: unknown,
@@ -350,7 +357,7 @@ export function shown(
     (referencesPlan(row) && Array.isArray(value)) ||
     namesMembers(row)
   ) {
-    return value === null ? null : named(strings(value));
+    return value === null ? null : named(namedInColumn(value));
   }
   if (row.field === "definition") return null;
   const words = planKindOf

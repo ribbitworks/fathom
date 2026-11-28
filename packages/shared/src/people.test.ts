@@ -9,6 +9,7 @@ import {
   columnTableOf,
   editsColumnsOf,
   fieldRequestSchema,
+  linksFrom,
   fieldTypeSchema,
   newListSchema,
   personChangeSchema,
@@ -298,6 +299,87 @@ describe("date columns", () => {
     for (const refused of ["2026-02-30", "2026-3-14", "14/03/2026", ""]) {
       expect(
         personChangeSchema.safeParse({ days: { [column]: refused } }).success,
+      ).toBe(false);
+    }
+  });
+});
+
+describe("link columns", () => {
+  it("name their table and a visibility, and may take several records and be required", () => {
+    expect(
+      fieldRequestSchema.parse({
+        name: "Mentor",
+        type: "record",
+        visibility: "personal",
+        linkedTable: "people",
+        multiple: true,
+        required: true,
+      }),
+    ).toMatchObject({
+      type: "record",
+      linkedTable: "people",
+      multiple: true,
+      required: true,
+    });
+  });
+
+  it("refuse no table, a table Fathom doesn't link to, a list, or no visibility", () => {
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "Mentor",
+          type: "record",
+          listId: randomUUID(),
+        }),
+      ),
+    ).toEqual([
+      "Choose a visibility",
+      "A link column has no list",
+      "Choose a table",
+    ]);
+    expect(
+      fieldRequestSchema.safeParse({
+        name: "Mentor",
+        type: "record",
+        visibility: "general",
+        linkedTable: "lists",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("link only to a table every reader of their own table reads", () => {
+    expect(linksFrom("people", "people")).toBe(true);
+    expect(linksFrom("people", "features")).toBe(false);
+    expect(linksFrom("features", "features")).toBe(true);
+    expect(linksFrom("features", "people")).toBe(false);
+    expect(linksFrom("activities", "features")).toBe(true);
+  });
+
+  it("are the only columns naming a table", () => {
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "Desk",
+          type: "text",
+          visibility: "general",
+          linkedTable: "people",
+        }),
+      ),
+    ).toEqual(["Only a link column links to a table"]);
+  });
+
+  it("are asked for by column as records named once each, with null removing them", () => {
+    const column = randomUUID();
+    const [one, two] = [randomUUID(), randomUUID()];
+    expect(
+      personChangeSchema.parse({ linked: { [column]: [one, two] } }).linked,
+    ).toEqual({ [column]: [one, two] });
+    expect(
+      personChangeSchema.parse({ linked: { [column]: null } }).linked,
+    ).toEqual({ [column]: null });
+    for (const refused of [[one, one], ["Ada"]]) {
+      expect(
+        personChangeSchema.safeParse({ linked: { [column]: refused } }).success,
       ).toBe(false);
     }
   });

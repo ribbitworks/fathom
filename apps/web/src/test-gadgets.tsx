@@ -6,6 +6,7 @@
 import type { DecidedKind, Field, List } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { type RenderResult, render } from "@testing-library/react";
+import { drawnFields } from "./added-columns.ts";
 import { noDrafts } from "./drafts.ts";
 import { cellColumn, fieldColumn, inOrder } from "./grid-columns.tsx";
 import { liveRecordsOf } from "./live-records.ts";
@@ -83,7 +84,7 @@ export const gadgetColumns = (
         choices: [],
         multiple: false,
       }),
-      ...fields.map((field) =>
+      ...drawnFields(fields).map((field) =>
         cellColumn<Gadget, GadgetChange>(field.id, field.type, {
           label: field.name,
           required: field.required,

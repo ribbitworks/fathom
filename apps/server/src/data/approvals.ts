@@ -47,6 +47,7 @@ import {
   rejectedIn,
 } from "./drafts.ts";
 import { refuseOwnDrafts, draftKeys } from "./draft-makers.ts";
+import { refuseLinkedRemovals } from "./linked-records.ts";
 import { readDecided, refuseBeyondRole } from "./draft-deciders.ts";
 import { currentOn, readLive } from "./people-reads.ts";
 import {
@@ -244,6 +245,7 @@ async function apply(
       chosen.push(...valueRows(id, fieldId, value, "person"));
     }
   }
+  await refuseLinkedRemovals(transaction, "people", removed);
   for (const chunk of inChunks(removed)) {
     await transaction.delete(people).where(inArray(people.id, chunk));
   }

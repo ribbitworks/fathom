@@ -3,7 +3,7 @@
 - **ADR:** 0005
 - **Status:** Accepted
 - **Date:** 2026-10-30
-- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields; 2026-11-08, to add Number fields; 2026-11-19, to say data classes, as Fathom does, rather than tiers; 2026-11-25, to add the value columns for Checkbox, Text, Date and Link to another table, and Checkbox fields; 2026-11-26, to add Text fields; 2026-11-27, to add Date fields, to name the required setting Required, and to keep Text fields to one line
+- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields; 2026-11-08, to add Number fields; 2026-11-19, to say data classes, as Fathom does, rather than tiers; 2026-11-25, to add the value columns for Checkbox, Text, Date and Link to another table, and Checkbox fields; 2026-11-26, to add Text fields; 2026-11-27, to add Date fields, to name the required setting Required, and to keep Text fields to one line; 2026-11-28, to add Link to another table fields' values and settings on the server
 
 ## Context
 
@@ -41,12 +41,12 @@ Custom fields and tables use a values table.
 
 ## What Is Built
 
-Columns on People, planned hires, features and activities can be of seven types, "Text", "Number", "Date", "Checkbox", "Choice from a list", "Web link", and "Note", as the [Domain Model](../design/domain-model.md#configuration-entities) records:
+Columns on People, planned hires, features and activities can be of eight types, "Text", "Number", "Date", "Checkbox", "Choice from a list", "Link to another table", "Web link", and "Note", as the [Domain Model](../design/domain-model.md#configuration-entities) records; no screen offers Link to another table yet:
 
 - **Storage:** field definitions, and a values table with an owner column each for people, planned hires, features and activities, and these value columns:
   - **Built types:** a link column for choices, a typed address column and text column for web links, a text column for a note's Markdown, which is never empty, a numeric column for numbers, a boolean column for a checkbox, which holds only a ticked box, since an unticked one has no row, a text column, never empty, for Text, and a date column for Date.
-  - **Types to come:** a link column each to people, planned hires, features, projects, proposals, customers, releases, feature teams and activities for Link to another table. No column uses them yet. Each table that becomes linkable later, such as private tables, adds its link column in its own migration.
-  - **Settings to come:** field definitions also hold the table a Link field links to, with its one-or-several kept as a choice field's is. No field uses it yet.
+  - **Link to another table:** a link column each to people, planned hires, features, projects, proposals, customers, releases, feature teams and activities. Link fields use those to people and features; the others wait for their tables to be offered. Each table that becomes linkable later, such as private tables, adds its link column in its own migration.
+  - **Its settings:** field definitions also hold the table a Link field links to, with its one-or-several kept as a choice field's is.
 - **Checks:**
   - **One owner:** exactly one owner column is set.
   - **One value:** each value row holds exactly one of a choice, a link, a note, a number, a ticked box, a text, a date, or one linked record.
@@ -55,9 +55,10 @@ Columns on People, planned hires, features and activities can be of seven types,
   - **Deleting:** a list or choice cannot be deleted while a column or value uses it, and a linked record cannot be deleted while a value links to it, so removing a record that others link to is refused as in use until their links are taken off, as a choice in use is. Deleting a Link column frees the records it linked.
   - **When links are checked:** each link is checked when its change is saved, not statement by statement, so records that link themselves or each other are deleted with their own values. Drizzle can't say so, so the migration adding the link columns makes their keys deferred by hand, the one hand edit to a generated migration; `packages/db/src/field-values.test.ts` fails if a later migration drops it.
   - **Settings:** a choice field names its list; every other field has a class of its own and no list. Only choice and Link fields take several values, and a Link field, and only it, names the table it links to: People, Features, Projects, Proposals, Customers, Releases, Feature teams or Activities.
-- **Classes:** a text, number, date, checkbox, web link, or note column has a class of its own, since it draws on no list.
-- **Telling values apart:** drafts and the change history keep a value as JSON, where a text and a note would both be a string. So a text is kept as an object holding its text, a date as an object holding its day, such as 2026-03-14, and a note as its Markdown, and each value is read by its shape, which no other type's shares.
-- **Links to People:** a Link field on People links to people and planned hires alike, each in its own link column. A link to a planned hire that is filled shows the person who filled it, through the link a filled hire already keeps to its person, so no value moves. A column holding both a person and the planned hire they filled would show that person twice; how it shows them is for the Link to another table column to settle.
+- **Classes:** a text, number, date, checkbox, link, web link, or note column has a class of its own, since it draws on no list.
+- **What a Link field links to:** People's columns link to People, and Features' and Activities' to Features, so a link never names a record some readers of its table can't see. Linking across those is not offered yet.
+- **Telling values apart:** drafts and the change history keep a value as JSON, where a text and a note would both be a string. So a text is kept as an object holding its text, a date as an object holding its day, such as 2026-03-14, a note as its Markdown, and a Link field's records as an object naming their table, such as `{ "people": [id] }`, where choices are an array alone. Each value is read by its shape, which no other type's shares.
+- **Links to People:** a Link field on People links to people. Linking planned hires too, each in its own link column, is still to come. A link to a planned hire that is filled shows the person who filled it, through the link a filled hire already keeps to its person, so no value moves. A column holding both a person and the planned hire they filled would show that person twice; how it shows them is for the Link to another table column to settle.
 - **Column order:** the order of a table's columns, built-in and added alike, is kept as one list of column keys for each table.
 
 The other field types, uniqueness, and custom tables come later, in the Your Own Fields and Tables stage of the [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398).

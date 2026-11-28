@@ -59,6 +59,7 @@ const placeholderKeys = [
   "id",
   "isManager",
   "keyNumber",
+  "linked",
   "links",
   "managerId",
   "managerName",

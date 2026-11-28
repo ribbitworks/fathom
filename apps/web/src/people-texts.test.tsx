@@ -6,9 +6,9 @@
 
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import type { Field, Person } from "@fathom/shared";
+import type { Person } from "@fathom/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { addedColumn } from "./added-columns.ts";
+import { addedColumn, type DrawnField } from "./added-columns.ts";
 import { cellKinds } from "./cell-kinds.tsx";
 import { exportValue } from "./exports.ts";
 import { bodyOf, chooseIn, detailRow } from "./test-support.tsx";
@@ -168,7 +168,7 @@ describe("a text column", () => {
   });
 
   it("refuses text of several lines", () => {
-    const column = addedColumn<Person, never>(desk as Field, []);
+    const column = addedColumn<Person, never>(desk as DrawnField, []);
     expect(cellKinds.text.problem(column, "North\nwing")).toBe(
       "Desk: use one line",
     );
@@ -190,7 +190,7 @@ describe("a text column", () => {
   });
 
   it("is exported as written", () => {
-    const column = addedColumn<Person, never>(desk as Field, []);
+    const column = addedColumn<Person, never>(desk as DrawnField, []);
     expect(exportValue(column, avery as Person)).toBe("North 4-12");
   });
 

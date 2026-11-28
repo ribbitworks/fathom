@@ -3,7 +3,7 @@
 // Tests for the panel that adds a record of the plan: a row for each kind of column, what is checked
 // before adding, and what it sends.
 
-import { addressProblem, type FieldType } from "@fathom/shared";
+import { addressProblem } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import {
   act,
@@ -16,6 +16,7 @@ import {
 import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
+import type { DrawnField } from "./added-columns.ts";
 import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
 import { type FormValues, newRecordId } from "./new-record-panel.tsx";
 import { useNoteEditing } from "./note-editing.tsx";
@@ -34,7 +35,7 @@ const choice = (id: string, label: string, retired = false) => ({
 // An added column of the type given, its values in the record's maps.
 const column = (
   key: string,
-  kind: FieldType,
+  kind: DrawnField["type"],
   more: { required?: boolean; multiple?: boolean } = {},
 ) =>
   cellColumn<CellRecord, PlanChange>(key, kind, {

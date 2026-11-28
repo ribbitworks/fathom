@@ -91,11 +91,11 @@ export const savedPrivatePageSchema = z.object({
 });
 
 // A column on a page, as a column on any table is asked for. A choice column draws on a list made
-// on Lists, never on a new one, and a page's columns are never offered on planned hires.
-export const privateColumnRequestSchema = fieldRequestSchema.refine(
-  ({ newList }) => newList === undefined,
-  "Choose a list from Lists",
-);
+// on Lists, never on a new one, and a page's columns are never offered on planned hires. A page's
+// columns don't link to other tables yet.
+export const privateColumnRequestSchema = fieldRequestSchema
+  .refine(({ newList }) => newList === undefined, "Choose a list from Lists")
+  .refine(({ type }) => type !== "record", "A page can't link to a table");
 
 export type PrivateColumnRequest = z.infer<typeof privateColumnRequestSchema>;
 

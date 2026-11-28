@@ -12,6 +12,7 @@ import type {
 } from "@fathom/shared";
 import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
+import type { Reader } from "@fathom/db";
 import type { Transaction } from "./changes.ts";
 import type { Recorded } from "./draft-records.ts";
 import { checkTeamsForFeatures } from "./feature-team-removals.ts";
@@ -101,7 +102,7 @@ async function optionalChoice(
 
 // What the features or activities a request makes are checked against, read once for all of them:
 // their feature teams, their table's columns, live or drafted to be added as the editor sees them,
-// and the choices they name.
+// and the choices they name, with the transaction that checks the records they link to.
 export async function planningReads(
   transaction: Transaction,
   editor: string,
@@ -112,7 +113,9 @@ export async function planningReads(
     transaction,
     requests.map(({ featureTeamId }) => featureTeamId),
   );
+  const reader: Reader = transaction;
   return {
+    reader,
     columns: await columnsWithAdded(transaction, editor, true, table),
     known: await choicesAskedFor(transaction, editor, requests),
     choices: choiceReads(transaction),
@@ -125,12 +128,12 @@ export type PlanningReads = Awaited<ReturnType<typeof planningReads>>;
 // the version shown, if any. Those a request names replace those it has, each checked against its
 // column, and every required column must then hold one.
 export async function planningRecord(
-  { columns, known, choices }: PlanningReads,
+  { reader, columns, known, choices }: PlanningReads,
   request: PlanningRequest,
   current?: Recorded,
 ): Promise<Recorded> {
   return {
-    ...askedColumnValues(columns, known, request, current),
+    ...(await askedColumnValues(reader, columns, known, request, current)),
     name: request.name,
     statusId: await choices.status(
       "feature-statuses",

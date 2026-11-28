@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The values a record holds in the columns added to its table: choices, and a map by column for
-// each type of column holding one value, as requests send them and readers receive them.
+// each other type of column, as requests send them and readers receive them.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
@@ -79,6 +79,26 @@ export type Days = Record<string, string>;
 // Days asked for, by column, each one that exists; null removes a column's day.
 export const requestedDaysSchema = z.record(z.uuid(), daySchema.nullable());
 
+// Each link column's linked records, by column, as their identifiers, in their order. A column
+// linking to none is left out.
+export const linkedSchema = z.record(z.string(), z.array(z.string()));
+
+export type Linked = Record<string, string[]>;
+
+// The most records one link column can link one record to.
+const recordsLimit = 100;
+
+// Records asked for, by column: each a record's identifier, at most once; null or none removes a
+// column's links.
+export const requestedLinkedSchema = z.record(
+  z.uuid(),
+  z
+    .array(z.uuid())
+    .max(recordsLimit)
+    .refine((ids) => new Set(ids).size === ids.length, "Each record once")
+    .nullable(),
+);
+
 // Choices asked for, by column: each a choice's identifier, at most once.
 export const requestedValuesSchema = z.record(
   z.uuid(),
@@ -88,7 +108,7 @@ export const requestedValuesSchema = z.record(
     .refine((ids) => new Set(ids).size === ids.length, "Each choice once"),
 );
 
-// The maps of values a record keeps by column, one for each type of added column holding one value,
+// The maps of values a record keeps by column, one for each type of added column other than a choice,
 // beside its choices in values.
 export const columnValueMaps = [
   "links",
@@ -97,6 +117,7 @@ export const columnValueMaps = [
   "flags",
   "texts",
   "days",
+  "linked",
 ] as const;
 
 export type ColumnValueMap = (typeof columnValueMaps)[number];
@@ -116,6 +137,7 @@ interface ColumnValueOf {
   flags: true;
   texts: string;
   days: string;
+  linked: string[];
 }
 
 // One column's value in a map.
@@ -147,6 +169,7 @@ const columnValueSchemas = {
   flags: flagsSchema,
   texts: textsSchema,
   days: daysSchema,
+  linked: linkedSchema,
 } satisfies { [Kind in ColumnValueMap]: z.ZodType<ColumnValues[Kind]> };
 
 const requestedColumnValueSchemas = {
@@ -156,6 +179,7 @@ const requestedColumnValueSchemas = {
   flags: requestedFlagsSchema,
   texts: requestedTextsSchema,
   days: requestedDaysSchema,
+  linked: requestedLinkedSchema,
 } satisfies {
   [Kind in ColumnValueMap]: z.ZodType<RequestedColumnValues[Kind]>;
 };

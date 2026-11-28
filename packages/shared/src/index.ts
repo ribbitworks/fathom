@@ -354,6 +354,7 @@ export {
   numbersSchema,
   type OptionalColumnValueMap,
   optionalColumnValueMaps,
+  type Linked,
   type RequestedColumnValues,
   requestedColumnValueMapsOf,
   requestedFlagsSchema,

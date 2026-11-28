@@ -11,6 +11,7 @@ import {
   type Field,
   type FieldRequest,
   fieldTypeSchema,
+  linkedTableSchema,
   type Tier,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
@@ -79,6 +80,7 @@ import {
   readColumnsState,
   refuseHeldIn,
   refuseSensitivePlanningColumn,
+  refuseUnseenLinkedTable,
   table,
   toBeRemoved,
   toFieldOut,
@@ -97,11 +99,14 @@ const requested = (request: FieldRequest, tableName: unknown): Recorded => ({
   type: request.type,
   listId: request.listId ?? null,
   visibility: request.visibility ?? null,
+  linkedTable: request.linkedTable ?? null,
   multiple: request.multiple,
   required: request.required,
 });
 
 const sameType = "A column's type cannot change";
+
+const sameTable = "A link column's table cannot change";
 
 const listsOnLists = "A list for this table's columns is made on Lists";
 
@@ -218,6 +223,7 @@ export async function createField(
     refuseUnseenTier(actor, state, field);
     // A new list is General, as drafted above, and isn't in the state read before it.
     if (newList === undefined) refuseSensitivePlanningColumn(state, field);
+    refuseUnseenLinkedTable(field);
     classifyDraft(actor, {
       live: false,
       name: request.name,
@@ -291,8 +297,12 @@ async function changeField(
   const unseen = unseenDetails(String(field.name));
   refuseUnseenTier(actor, state, field, unseen);
   if (live !== undefined) refuseUnseenTier(actor, state, live, unseen);
-  if (columnRow(id, field).type !== request.type) {
+  const kept = columnRow(id, field);
+  if (kept.type !== request.type) {
     throw new BadRequestError(sameType);
+  }
+  if (kept.linkedTable !== (request.linkedTable ?? null)) {
+    throw new BadRequestError(sameTable);
   }
   if (nameTaken(state, request.name, id, field.tableName)) {
     throw new ConflictError(duplicateField);
@@ -363,6 +373,9 @@ async function classifyAddedField(
       name: row.name,
       type: fieldTypeSchema.parse(row.type),
       visibility: to,
+      ...(row.linkedTable === null
+        ? {}
+        : { linkedTable: linkedTableSchema.parse(row.linkedTable) }),
       multiple: row.multiple,
       required: row.required,
     },

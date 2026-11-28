@@ -12,6 +12,8 @@ import {
   isDay,
   isLink,
   isNumberValue,
+  type LinkedTable,
+  linkedTableSchema,
   noColumnValues,
   textProblem,
   type Tier,
@@ -25,11 +27,11 @@ export interface TypeSettings {
   listId: string | null;
   visibility: Tier | null;
   multiple: boolean;
-  // Settings of types not offered yet, which every type offered leaves unset.
-  linkedTable: null;
+  // The table a link column links to; null for every other type.
+  linkedTable: LinkedTable | null;
 }
 
-const laterSettingsUnset = { linkedTable: null } as const;
+const noLinkedTable = { linkedTable: null } as const;
 
 // A record's values as a draft shows them live: choices, and each map's values, by column.
 export interface LiveValues extends ColumnValues {
@@ -52,7 +54,9 @@ export interface ColumnType {
   // Whether a recorded value fits the column, other than whether one is required, given the list
   // each choice belongs to.
   fits: (
-    settings: Pick<TypeSettings, "listId" | "multiple">,
+    settings: Pick<TypeSettings, "listId" | "multiple"> & {
+      linkedTable: string | null;
+    },
     value: unknown,
     listOf: ReadonlyMap<string, string>,
   ) => boolean;
@@ -74,7 +78,7 @@ const choice: ColumnType = {
     listId: String(field.listId),
     visibility: null,
     multiple: field.multiple === true,
-    ...laterSettingsUnset,
+    ...noLinkedTable,
   }),
   tier: ({ listId }, listTier) => listTier(String(listId)),
   count: (value) => choices(value).length,
@@ -95,14 +99,14 @@ const choice: ColumnType = {
 
 // The settings and tier of a column with a visibility of its own, rather than a list's.
 const withOwnVisibility = (
-  type: Exclude<FieldType, "choice">,
+  type: Exclude<FieldType, "choice" | "record">,
 ): Pick<ColumnType, "settings" | "tier"> => ({
   settings: (field) => ({
     type,
     listId: null,
     visibility: storedTier(field.visibility),
     multiple: false,
-    ...laterSettingsUnset,
+    ...noLinkedTable,
   }),
   tier: ({ visibility }) => storedTier(visibility),
 });
@@ -124,7 +128,7 @@ function holdingOne<Held, Map extends ColumnValueMap>({
   shown,
   row,
 }: {
-  type: Exclude<FieldType, "choice">;
+  type: Exclude<FieldType, "choice" | "record">;
   holds: (value: unknown) => value is Held;
   fits?: ColumnType["fits"];
   map: Map;
@@ -226,6 +230,71 @@ const date = holdingOne({
   row: ({ date: held }) => ({ date: held }),
 });
 
+// Linked records, recorded as an object naming their table, such as { people: [id] }, so they are
+// never taken for choices, which are recorded as an array alone.
+export const linkedRecordsOf = (
+  value: unknown,
+): { table: LinkedTable; ids: string[] } | undefined => {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return undefined;
+  const entries: [string, unknown][] = Object.entries(value);
+  const [entry] = entries;
+  if (entries.length !== 1 || entry === undefined) return undefined;
+  const [key, ids] = entry;
+  const table = linkedTableSchema.safeParse(key);
+  return table.success &&
+    Array.isArray(ids) &&
+    ids.length > 0 &&
+    ids.every((id) => typeof id === "string")
+    ? { table: table.data, ids: ids.map(String) }
+    : undefined;
+};
+
+export type LinkedRecords = Partial<Record<LinkedTable, string[]>>;
+
+export const isLinkedRecords = (value: unknown): value is LinkedRecords =>
+  linkedRecordsOf(value) !== undefined;
+
+// The values table's column that holds a link to a record of each table.
+export const linkedValueColumns = {
+  people: "linkedPersonId",
+  features: "linkedFeatureId",
+} as const satisfies Record<LinkedTable, keyof ValueColumns>;
+
+const record: ColumnType = {
+  type: "record",
+  settings: (field) => ({
+    type: "record",
+    listId: null,
+    visibility: storedTier(field.visibility),
+    multiple: field.multiple === true,
+    linkedTable: linkedTableSchema.parse(field.linkedTable),
+  }),
+  tier: ({ visibility }) => storedTier(visibility),
+  count: (value) => linkedRecordsOf(value)?.ids.length ?? 0,
+  fits: ({ linkedTable, multiple }, value) => {
+    if (isNone(value)) return true;
+    const linked = linkedRecordsOf(value);
+    return (
+      linked !== undefined &&
+      linked.table === linkedTable &&
+      (multiple || linked.ids.length === 1)
+    );
+  },
+  showLive: (live, columnId, value) => {
+    const linked = linkedRecordsOf(value);
+    if (linked !== undefined) {
+      Object.assign(live.linked, { [columnId]: linked.ids });
+    }
+  },
+  rows: (value) => {
+    const linked = linkedRecordsOf(value);
+    return linked === undefined
+      ? []
+      : linked.ids.map((id) => ({ [linkedValueColumns[linked.table]]: id }));
+  },
+};
+
 export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
   choice,
   link,
@@ -234,6 +303,7 @@ export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
   flag,
   text,
   date,
+  record,
 };
 
 // The type of column that holds a recorded value, which the value says, or undefined for none.

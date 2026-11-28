@@ -194,11 +194,11 @@ const notReplacedBy = (
 ) =>
   sql`NOT EXISTS (SELECT 1 FROM ${privateChanges} WHERE ${privateChanges.recordType} = ${recordType} AND ${privateChanges.recordId} = ${recordId} AND ${privateChanges.userId} = ${editor})`;
 
-// How many values a recorded value holds: its choices, or one link, note, number, or ticked box, or
-// undefined when none is recorded.
+// How many values a recorded value holds: its choices, its linked records, or one link, note,
+// number, or ticked box, or undefined when none is recorded.
 function valueCount(value: unknown): number | undefined {
   if (Array.isArray(value)) return value.length;
-  return typeHolding(value) === undefined ? undefined : 1;
+  return typeHolding(value)?.count(value);
 }
 
 // A column's values as drafts hold them, for checking that the column's settings fit the drafts
