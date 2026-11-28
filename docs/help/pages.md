@@ -15,13 +15,6 @@ This page lists every page of Fathom. It says what each is for, where it is, and
   - Those dates are Personal unless someone moves them to another class. If they're moved, these pages need the class the dates are in instead. See [Data classes](data-classes.md).
 - **Starting roles:** Fathom starts with nine roles, one for each kind of work. The lists below say which of them see each page. These roles can be changed, and others made, so check a role's own boxes on the Roles page.
 
-## Mine
-
-**Mine** comes after **People** in the left-hand menu. It lists the pages you made yourself, each after a violet ring, then **New page**. Nobody else sees them. See [Private pages](private-pages.md).
-
-- **Shown with:** **Make private pages**
-- **Starting roles that see it:** Product Manager, Feature Lead, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator
-
 ## Plan
 
 - [Overview](overview.md): Fathom opens on it, with your role's jobs.
@@ -55,6 +48,13 @@ This page lists every page of Fathom. It says what each is for, where it is, and
   - **Starting roles that see it:** Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive
 
 The Product Manager doesn't see Capacity, since the role doesn't hold **View Personal details**.
+
+## Mine
+
+**Mine** comes after **People** in the left-hand menu. It lists the pages you made yourself, each after a violet ring, then **New page**. Nobody else sees them. See [Private pages](private-pages.md).
+
+- **Shown with:** **Make private pages**
+- **Starting roles that see it:** Product Manager, Feature Lead, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator
 
 ## Administration
 

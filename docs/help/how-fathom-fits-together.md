@@ -137,5 +137,6 @@ Reporting lines and team membership are dated, so past and planned changes are k
 - A **role** grants what its holders may see and do.
 - A **change** that needs approval is saved as a **draft**.
 - A **draft** is approved or rejected by an **account** allowed to decide.
+- A **private page** belongs to the **account** that made it, and nobody else sees it. Its changes are saved at once, never as drafts. See [Private pages](private-pages.md).
 
 Every change is kept in the change history. See [Change history](change-history.md).
