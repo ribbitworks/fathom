@@ -157,6 +157,32 @@ describe("a Duration column", () => {
     });
   });
 
+  it("starts Show in on As typed, ticked", async () => {
+    await open();
+    await userEvent.click(
+      screen.getByRole("button", { name: /^Notice given column/u }),
+    );
+    expect(
+      await screen.findByRole("menuitem", { name: /^As typed.*chosen/u }),
+    ).toBeDefined();
+  });
+
+  it("changes a length in a person's details, typed with its unit and no menu of units", async () => {
+    const fetch = await open({}, "/people?open=p2");
+    await screen.findByRole("region", { name: "Blake Fictional" });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change Notice given" }),
+    );
+    const box = await screen.findByRole("textbox", { name: "Notice given" });
+    expect(screen.queryByRole("textbox", { name: /unit/iu })).toBeNull();
+    await userEvent.type(box, "3 mo{Enter}");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PATCH", "/api/people/p2")).toEqual([
+        { durations: { f1: { amount: 3, unit: "mo" } } },
+      ]);
+    });
+  });
+
   it("filters by an amount in the unit shown, or by No duration, named in its pill", async () => {
     await open();
     await choose("Filter…");
@@ -176,6 +202,22 @@ describe("a Duration column", () => {
     expect(
       screen.getByText("Notice given: at least 20 d or No duration"),
     ).toBeDefined();
+  });
+
+  it("filters by an upper bound alone, counting back below nothing", async () => {
+    await open();
+    await choose("Filter…");
+    const filter = await screen.findByRole("dialog", {
+      name: "Filter Notice given",
+    });
+    await userEvent.type(
+      within(filter).getByRole("textbox", { name: "At most" }),
+      "-1",
+    );
+    await waitFor(() => {
+      expect(shownNames()).toEqual(["Devon Fictional"]);
+    });
+    expect(screen.getByText("Notice given: at most -1 d")).toBeDefined();
   });
 
   it("is exported as typed, or as an amount of the unit shown", () => {

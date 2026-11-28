@@ -34,7 +34,7 @@ Custom fields and tables use a values table.
 
 | Setting the user sees | How it is enforced |
 | --- | --- |
-| Field type: Text, Number, Date, Checkbox, Choice from a list, Web link, Note, Person, or Link to another table | A typed value column; Person and Link fields use the foreign key for that table, a Web link two text columns, its address and the text shown for it, and a Note one text column holding the note's Markdown |
+| Field type: Text, Number, Date, Duration, Checkbox, Choice from a list, Web link, Note, Person, or Link to another table | A typed value column; Person and Link fields use the foreign key for that table, a Web link two text columns, its address and the text shown for it, and a Note one text column holding the note's Markdown |
 | Required | The data access layer |
 | No two records can have the same value | The partial unique indexes |
 | Identifier | Not shown; every record gets one automatically, as its primary key |

@@ -276,7 +276,8 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
 - **Field definition:** A custom field on a built-in or custom table, with a name, [field type](#field-types), class, and whether it must be filled in or be unique. A Person or Link field also names the table it links to.
   - **Built:** columns are built on People, planned hires, Features and Activities, with the field types below. Unique columns, Person and Link fields are not built yet.
   - **Choice from a list:** names its list, takes its class from the list's, and says whether it takes one choice or several.
-  - **Other types:** a Text, Number, Date, Checkbox, Web link or Note field has a class of its own.
+  - **Other types:** a Text, Number, Date, Duration, Checkbox, Web link or Note field has a class of its own.
+  - **Duration:** names the unit a bare number takes: calendar days, working days, weeks or months.
   - **Checkbox:** is never required, since an unticked box is a value, No.
   - **On People:** planned hires have every field too, as [Planned Hires](#planned-hires) sets out.
   - **Changing:** its type is fixed once it is added. It can be made required only once every record has a value, and single-choice only once none has several. Its list cannot change while it has values.
@@ -302,6 +303,7 @@ How custom fields and tables are stored is proposed in [ADR 0005](../adr/0005-fl
 | Note | Rich text, as GitHub-flavoured Markdown | Up to 10,000 characters |
 | Number | A whole or decimal number, positive or negative | Up to 15 digits, at most 6 after the point; 0 is a value |
 | Date | A day, with no time | A day that exists, such as 2026-03-14 |
+| Duration | A whole amount in one unit, kept as typed, such as 2 wk or −1 mo | Calendar days (d), working days (wd), weeks (wk) or months (mo); up to 9,999 either way |
 | Checkbox | Yes or No | Yes is kept; No is no value |
 
 - **Not built yet:** Link to another table. The database already holds its values and settings, such as the table a Link field links to, as [ADR 0005](../adr/0005-flexible-data-model.md#what-is-built) records.

@@ -452,8 +452,9 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
         }}
       />
     );
-    // A number in a unit names the unit's code beside it, as its cell does.
-    return column.unit === undefined ? (
+    // A number in a unit names the unit's code beside it, as its cell does; a length is typed with
+    // its own.
+    return column.unit === undefined || column.kind !== "number" ? (
       input
     ) : (
       <span className={classes.recordUnitEditor}>

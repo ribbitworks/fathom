@@ -108,7 +108,7 @@ export const exportHeading = ({
   label,
   unit,
 }: Pick<ExportColumn<never>, "label" | "unit">): string =>
-  unit === undefined ? label : `${label} (${unit.code})`;
+  unit === undefined || unit.code === "" ? label : `${label} (${unit.code})`;
 
 export function exportValue<Row>(column: ExportColumn<Row>, row: Row): string {
   const exported = exportedByKind[column.kind] as (

@@ -129,7 +129,8 @@ You're done once the fill is approved. The person then takes the hire's place.
 
 1. Select **New column**.
 1. Type the column's **Name**.
-1. Choose its **Type**: **Text**, **Number**, **Date**, **Checkbox**, **Choice from a list**, **Web link** or **Note**.
+1. Choose its **Type**: **Text**, **Number**, **Date**, **Duration**, **Checkbox**, **Choice from a list**, **Web link** or **Note**.
+1. If you chose **Duration**, choose its **Unit**: a number typed alone is taken in it.
 1. If you chose **Choice from a list**, choose the list. The column takes the list's class.
 1. To let each person hold more than one of the list's choices, tick **Several choices**.
 1. For any other type, choose the column's **Class**, if your role can set classes.
@@ -174,6 +175,20 @@ A **Date** column holds a day for each person, such as the day of their last rev
 You can also paste days written that way, such as 2026-03-14, one per row. A day that doesn't exist, such as 2026-02-30, is refused under the row.
 
 You're done when the cell shows the day, with a hollow dot until you publish it.
+
+### Type a Length
+
+A **Duration** column holds a length for each person, such as their notice period, in one unit: calendar days (d), working days (wd), weeks (wk) or months (mo).
+
+1. Select the person's cell in the column.
+1. Type a whole number and its unit, such as `2 wk`, `3 weeks` or `10 wd`. A number alone takes the column's unit. A minus sign counts back, such as `-1 mo`.
+1. Press Enter to save.
+
+A date, two units, or part of a unit, such as `1.5 mo`, is refused under the row; type `6 wk` instead.
+
+To see every length in one unit, open the column's menu and choose a unit under **Show in**. **As typed** shows each as it was typed. Sorting, filters and **Metrics** compare lengths by size, with a week of 7 days, a month of 30.4 days and a working day of 7/5 of a day.
+
+You're done when the cell shows the length, with a hollow dot until you publish it.
 
 ### Change or Remove a Column
 

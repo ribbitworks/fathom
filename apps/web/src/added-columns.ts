@@ -104,10 +104,10 @@ function lengthColumn<Rec extends CellRecord, Change extends CellChange>(
     return {
       ...column,
       lengths,
+      unit,
       ...(shown === undefined
         ? {}
         : {
-            unit,
             content: (record: Rec) =>
               shownLength({ lengths }, column.value(record), places),
           }),

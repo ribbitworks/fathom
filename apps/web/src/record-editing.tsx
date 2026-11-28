@@ -526,7 +526,11 @@ export function useRecordEditing<
                     alwaysOpen: context.adding === true,
                     hint: context.hint?.(column),
                     asTyped: kind.asTyped,
-                    units: column.units?.offered,
+                    // A length is typed with its unit, so only a number offers a menu of them.
+                    units:
+                      column.kind === "number"
+                        ? column.units?.offered
+                        : undefined,
                     onUnit:
                       context.onUnit &&
                       ((unit: string) => {

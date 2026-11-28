@@ -122,12 +122,13 @@ export interface TableColumn<Row> {
     { of: (value: CellValue) => string; emptyLabel?: string } | undefined;
 }
 
-// What a field editing a column's value is called: its label, and its unit's words, if any.
+// What a field editing a column's value is called: its label, and its unit's words, if any, which
+// lengths shown as typed have none of.
 export const fieldLabel = ({
   label,
   unit,
 }: Pick<TableColumn<never>, "label" | "unit">): string =>
-  unit === undefined ? label : `${label} in ${unit.name}`;
+  unit === undefined || unit.name === "" ? label : `${label} in ${unit.name}`;
 
 // A row's value in a column, or, when empty, what stands in for it.
 export function valueOrStandIn<Row>(
