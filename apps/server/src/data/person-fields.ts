@@ -113,19 +113,19 @@ export const meaningOn = (person: Recorded, today: string): "hired" | "left" =>
     ? "left"
     : "hired";
 
-// Refuses a state that is not a hiring state with the meaning the person's end date gives them.
+// Refuses a person's state that is not a hiring state with the meaning their end date gives them.
 // A state they already have stays valid when retired.
 export async function checkState(
   reader: Reader,
   person: Recorded,
+  stateId: string,
   today: string,
   had: unknown,
 ): Promise<void> {
-  if (typeof person.stateId !== "string") return;
   const meaning = await checkBuiltInChoice(
     reader,
     "hiring-states",
-    person.stateId,
+    stateId,
     had,
   );
   if (meaning === "proposed" || meaning === "open") {

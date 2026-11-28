@@ -123,7 +123,8 @@ export async function checkPersonChange(
     person === undefined ? undefined : valuesOf(person),
   );
   checkComplete(columns, after);
-  if (changed("stateId")) {
+  // A request can't take a person's state away, so only a state held is checked.
+  if (typeof after.stateId === "string" && changed("stateId")) {
     // Those who see no dates are offered states from the live end date, so their choice is
     // checked against it, and a draft's end date is never revealed by a refusal; a state that
     // stops fitting once the draft is approved shows the first of the meaning instead.
@@ -131,6 +132,7 @@ export async function checkPersonChange(
     await checkState(
       transaction,
       { ...after, endDate: dates.endDate },
+      after.stateId,
       today,
       person?.stateId,
     );
