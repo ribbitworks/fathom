@@ -48,7 +48,7 @@ export function requireEdits(actor: Actor, made: readonly Change[]): void {
 
 // Refuses Employee IDs that someone else has, live or in a draft, or that two of the people asked
 // for share.
-export async function refuseTakenIds(
+async function refuseTakenIds(
   transaction: Transaction,
   employeeIds: readonly string[],
   except: readonly string[],
