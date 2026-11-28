@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Mine, first in the sidebar: the signed-in person's own pages, each after the private ring, in
-// their order, then New page.
+// Mine, in the sidebar after People: the signed-in person's own pages, each after the private
+// ring, in their order, then New page.
 
 import {
   type ListedPrivatePage,
