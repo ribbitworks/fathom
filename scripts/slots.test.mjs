@@ -102,6 +102,29 @@ describe("running in slots", () => {
     assert.deepEqual(readdirSync(folder), []);
   });
 
+  it(
+    "leaves the first slot to a copy on older code, which uses only that one",
+    // Waiting for a slot that never frees would otherwise go on for ever.
+    { timeout: 30_000 },
+    async () => {
+      // Given a run holding one of two slots
+      const newer = heldRun();
+      const running = inSlot(newer.run, options());
+      await newer.started;
+
+      // When a copy that uses one slot asks for it
+      const older = heldRun();
+      const waiting = inSlot(older.run, options({ atOnce: 1 }));
+
+      // Then it runs at once, beside the first
+      await older.started;
+      newer.release();
+      older.release();
+      await Promise.all([running, waiting]);
+      assert.deepEqual(readdirSync(folder), []);
+    },
+  );
+
   it("frees the slot when the run fails", async () => {
     await assert.rejects(
       inSlot(() => Promise.reject(new Error("no port")), options()),
@@ -266,7 +289,7 @@ describe("running in slots", () => {
   it("names the folder it runs in, in the slot it holds", async () => {
     const holding = await inSlot(
       () => Promise.resolve(readFileSync(join(folder, "slot-0"), "utf8")),
-      options(),
+      options({ atOnce: 1 }),
     );
     assert.equal(holding.startsWith(`${String(process.pid)}:`), true);
     assert.equal(holding.endsWith(`:${process.cwd()}`), true);
