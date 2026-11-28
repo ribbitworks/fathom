@@ -32,7 +32,7 @@ import {
   wholeCellDraft,
 } from "./grid-drafts.ts";
 import { NamedWithOthers } from "./grid-groups.tsx";
-import type { Place, PlaceStore, Row } from "./grid-places.ts";
+import type { Row } from "./grid-places.ts";
 import type { PanelGrid } from "./grid-panels.tsx";
 import classes from "./pages.module.css";
 import {
