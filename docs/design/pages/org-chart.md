@@ -60,9 +60,9 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
 
 ## Planned Hires
 
-- **Who is drawn:** Every hire not yet filled, for every reader, and each filled one whose person hasn't started, for readers who don't see Personal details.
+- **Who is drawn:** Every hire not yet filled, for every reader, and each filled one whose person hasn't started, for readers who don't see Personal details. On Feature teams, a filled hire stays on its teams until its person starts, for every reader of feature teams, as [Feature Teams](#feature-teams) sets out.
 - **Card:** A placeholder with a grey dashed edge, after the people under its manager, named as its People row is, opening nothing.
-- **Status:** A grey Planned, expected box with its month, never the day.
+- **Status:** A grey Planned, expected box with its month, never the day, except for a filled hire on Feature teams, as [Feature Teams](#feature-teams) sets out.
 - **A hire whose manager hasn't started:** Drawn at the top until the manager starts, since the chart draws today.
 - **A planned manager:** Heads their planned hires, a team that can be shown alone, but isn't in Teams until filled.
 
@@ -71,6 +71,7 @@ The views follow [The three Draft views](../../standards/ui-conventions/drafts-a
 - **Where they're kept:** Here, rather than a page of their own or People, so team upkeep stays in one place.
 - **Chart:** Each team hangs under its lead's card, or a card reading No feature lead. Someone on two teams has two cards.
 - **Planned hires on a team:** A hire's placeholder card, as under its manager, after the team's people. A hire leading a team heads it, its card a line taller for the team's name, and the team is drawn after those people lead, as a planned manager's team is on Reporting teams.
+  - **Filled:** A filled hire keeps its card on its teams until its person starts, and its lead's card counts it among the members. For readers who see Personal details, its grey box reads Filled by and its person, then starts and their start date, in place of Planned, expected and its month, the same words as its line under Planned hires. The box takes at most two lines, and the card is a line taller for it: Filled by and the person on one line, a name too long for it cut short with an ellipsis before its comma, with the whole name in its tip; then starts and the day, kept whole, after it or on the second line where they don't fit. Any other reader sees the card as not yet filled, with its Planned, expected box.
   - **An earlier day:** The chart draws placeholders today and later only, since past plans aren't kept, so on an earlier day it leaves out a hire on a team, and draws a team a hire led then under a card reading No feature lead. The team's panel still lists the hire under Planned hires, as on any day.
 - **Colours:** Chosen for each feature team from the same palette, and shown only on this chart, so they never meet reporting teams' colours.
 - **Cards:** No Show only this team, and no naming or colouring of reporting teams.

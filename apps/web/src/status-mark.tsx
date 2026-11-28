@@ -426,11 +426,14 @@ function KindBox({
 export function FactBox({
   tone = "planned",
   alone = false,
+  wraps = false,
   children,
 }: {
   tone?: Exclude<OtherTone, "live">;
   // Whether it stands alone, with no item before it, such as a line saying a place is planned.
   alone?: boolean;
+  // Whether its words wrap onto more lines where they don't fit, rather than run past its line.
+  wraps?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -438,6 +441,7 @@ export function FactBox({
       className={[
         tone === "warning" ? marks.warningKind : marks.plannedKind,
         alone ? marks.alone : "",
+        wraps ? marks.wraps : "",
       ].join(" ")}
     >
       {children}

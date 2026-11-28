@@ -15,6 +15,7 @@ import {
   someoneUnseen,
   takesEffect,
   teamCardId,
+  teamCardPeople,
   teamHireWords,
   teamPersonNamer,
   teamPersonOf,
@@ -229,6 +230,45 @@ describe("feature teams on the chart", () => {
       planned: { shownId: "TBD-1" },
     });
     expect(member?.managerId).toBe(memberCardId("t1", "h1"));
+  });
+
+  it("says nothing of filling on a planned hire's card while its team names no one filling it", () => {
+    const [, , drawn] = featureTeamPeople(
+      [team({ members: ["lead", "m1", "h1"] })],
+      everyone,
+      "both",
+    );
+    expect(drawn?.filled).toBeUndefined();
+  });
+
+  describe("with a filled hire", () => {
+    const filledBy = { name: "Fictional Joiner", starts: "2026-08-03" };
+    const hires = { h1: { keyNumber: 4, expected: "2026-08", filledBy } };
+
+    it("says on its card who fills it and the day they start, as its team's details do", () => {
+      const [, , drawn] = featureTeamPeople(
+        [team({ members: ["lead", "m1", "h1"], hires })],
+        everyone,
+        "both",
+      );
+      expect(drawn).toMatchObject({
+        id: memberCardId("t1", "h1"),
+        managerId: memberCardId("t1", "lead"),
+        filled: { name: "Fictional Joiner", starts: "starts Aug 3, 2026" },
+      });
+    });
+
+    it("says so on its card when it leads the team", () => {
+      const [lead] = featureTeamPeople(
+        [team({ leadId: "h1", members: ["h1", "m1"], hires })],
+        everyone,
+        "both",
+      );
+      expect(lead).toMatchObject({
+        id: memberCardId("t1", "h1"),
+        filled: { name: "Fictional Joiner", starts: "starts Aug 3, 2026" },
+      });
+    });
   });
 
   it("leaves out a planned hire the chart doesn't draw, as on an earlier day, drawing a team it led under a card naming it", () => {
@@ -488,6 +528,22 @@ describe("feature teams on the chart", () => {
         managerId: memberCardId("t1", "lead"),
       },
     ]);
+  });
+});
+
+describe("the cards feature teams are drawn from", () => {
+  const filledHire = hire("h2", "TBD-2");
+
+  it("are the chart's people, with the filled hires it draws only on feature teams", () => {
+    expect(
+      teamCardPeople({ people: everyone, filled: [filledHire] }).map(
+        ({ id }) => id,
+      ),
+    ).toEqual(["lead", "m1", "m2", "m3", "h1", "h2"]);
+  });
+
+  it("are the chart's people alone when it sends no filled hires", () => {
+    expect(teamCardPeople({ people: everyone })).toEqual(everyone);
   });
 });
 

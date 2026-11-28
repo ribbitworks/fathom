@@ -17,6 +17,7 @@ import { Link } from "@tanstack/react-router";
 import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
 import { type CSSProperties, type MouseEvent } from "react";
 import { ColouredName } from "./colour-swatch.tsx";
+import { FillerBox } from "./filler-box.tsx";
 import { CardMenu } from "./card-menu.tsx";
 import { CopyLinkItem } from "./record-key.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
@@ -342,9 +343,12 @@ function PersonCard({ data }: NodeProps<CardNode>) {
               From {person.movedFrom}
             </Text>
           )}
-          {planned !== undefined && (
-            <MarkedItem tone="planned" words={plannedWords(planned)} />
-          )}
+          {planned !== undefined &&
+            (person.filled === undefined ? (
+              <MarkedItem tone="planned" words={plannedWords(planned)} />
+            ) : (
+              <FillerBox filled={person.filled} />
+            ))}
           <TeamRow
             person={person}
             editsTeams={editsTeams}

@@ -99,6 +99,16 @@ export interface ChartPerson extends OrgChartPerson {
   featureTeam?: string;
   featureTeamId?: string;
   teamCard?: true;
+  // On the feature team chart, for a planned hire its team names someone filling: who, and the day
+  // they start, as the team's details say, in place of when it's expected.
+  filled?: FillerWords;
+}
+
+// Who fills a planned hire, and the words for the day they start where given, apart, so a card can
+// cut the name short and keep the day whole.
+export interface FillerWords {
+  name: string;
+  starts?: string;
 }
 
 // A card with what a person's draft changes, so its marks show in the Draft view, which decides how:
@@ -201,7 +211,8 @@ export const heightOf = (person: ChartPerson | undefined): number =>
     person?.renamed?.live,
     person?.movedFrom,
   ].filter((live) => typeof live === "string").length +
-    (plannedLead(person) ? 1 : 0)) *
+    (plannedLead(person) ? 1 : 0) +
+    (person?.filled === undefined ? 0 : 1)) *
     liveLineHeight;
 
 // The position a person is listed with in the finder, which has no room for a draft's mark: the

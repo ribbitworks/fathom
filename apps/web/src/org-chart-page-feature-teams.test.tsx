@@ -126,6 +126,46 @@ describe("feature teams on the org chart", () => {
     expect(screen.queryByText("No feature lead")).toBeNull();
   });
 
+  it("draws a filled hire the chart sends for feature teams alone on its team, saying who fills it, and counts it among the members", async () => {
+    // Given a hire on Lighthouse filled by someone who hasn't started, which the reporting chart
+    // draws as its person instead
+    const filled = person("h1", "Fictional tester", "p1", {
+      employeeId: null,
+      planned: { expected: "2027-05" },
+    });
+    await openFeatureTeams({
+      answers: {
+        "GET /api/org-chart": () =>
+          Response.json({ people, drafted: people, filled: [filled] }),
+      },
+      shown: [
+        {
+          ...teams[0],
+          members: ["h1", "p2", "p4"],
+          hires: {
+            h1: {
+              keyNumber: 5,
+              expected: "2027-05",
+              filledBy: { name: "Fictional Joiner", starts: "2027-05-03" },
+            },
+          },
+        },
+        { ...teams[1] },
+      ],
+    });
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+
+    // Then its card is under Sasha, saying who fills it in place of when it's expected
+    const hire = screen.getByRole("group", { name: "Fictional tester" });
+    expect(hire.textContent).toContain(
+      "Filled by Fictional Joiner, starts May 3, 2027",
+    );
+    expect(hire.textContent).not.toContain("Planned");
+    expect(
+      screen.getByRole("button", { name: "Hide 2 members of Sasha Fictional" }),
+    ).toBeDefined();
+  });
+
   it("says so, and draws nothing, when there are no feature teams", async () => {
     await openFeatureTeams({ shown: [] });
     await userEvent.click(

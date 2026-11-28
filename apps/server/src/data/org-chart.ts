@@ -17,12 +17,14 @@ import { eq } from "drizzle-orm";
 import { NotFoundError } from "../errors.ts";
 import {
   type Actor,
+  holdsAnyPermission,
   requireView,
   seesPeopleOverTime,
   seesSensitivity,
 } from "../access.ts";
 import { type Draft, drafted, type Recorded } from "./draft-records.ts";
 import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
+import { showsFillsAbovePersonal } from "./feature-team-sight.ts";
 import { expectedMonth, undatedMark, hireIdOf } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import { inForceOn } from "./in-force.ts";
@@ -42,7 +44,8 @@ import { builtInTier, choiceLabels } from "./values.ts";
 
 export interface OrgChartRead extends OrgChart {
   // Whether the chart told anyone that a manager has left, showed them Personal details of a
-  // draft, or showed positions more sensitive than General, which the access history records.
+  // draft, a filled hire whose person hasn't started, or positions more sensitive than General,
+  // which the access history records.
   includedPersonal: boolean;
   // Whether the chart showed anyone hires' drafts, part of the hiring plan, which the access history
   // records as a view of the hiring plan.
@@ -83,9 +86,33 @@ type ChartRecord = PersonRecord | HireRecord;
 interface Reader {
   seesPersonal: boolean;
   seesPositions: boolean;
+  seesFeatureTeams: boolean;
   today: string;
   // The key numbers of people and planned hires, by identifier.
   keys: KeyNumbers;
+}
+
+// A planned hire's placeholder card, its position only for a reader who sees the Positions list.
+function hireCard(
+  id: string,
+  record: HireRecord,
+  { seesPositions, keys }: Pick<Reader, "seesPositions" | "keys">,
+): OrgChartPerson {
+  return {
+    id,
+    keyNumber: keyNumberOf(keys, id),
+    preferredName: record.preferredName,
+    employeeId: null,
+    position: seesPositions ? record.position : null,
+    teamName: null,
+    teamColour: null,
+    managerId: record.managerId,
+    planned: {
+      expected: record.expected,
+      ...(record.undated === undefined ? {} : { undated: true }),
+      ...(record.shownId === undefined ? {} : { shownId: record.shownId }),
+    },
+  };
 }
 
 // The chart the records give: everyone current today, with each manager they still report to, up
@@ -125,23 +152,7 @@ function chartOf(
       case "person":
         return personCard(id, record);
       case "planned-hire":
-        return {
-          id,
-          keyNumber: keyNumberOf(keys, id),
-          preferredName: record.preferredName,
-          employeeId: null,
-          position: seesPositions ? record.position : null,
-          teamName: null,
-          teamColour: null,
-          managerId: record.managerId,
-          planned: {
-            expected: record.expected,
-            ...(record.undated === undefined ? {} : { undated: true }),
-            ...(record.shownId === undefined
-              ? {}
-              : { shownId: record.shownId }),
-          },
-        };
+        return hireCard(id, record, { seesPositions, keys });
     }
   };
   const personCard = (id: string, record: PersonRecord): OrgChartPerson => {
@@ -289,6 +300,7 @@ export async function readOrgChart(
     seesPersonal,
     seesPositions:
       positionTier === "general" || seesSensitivity(actor, positionTier),
+    seesFeatureTeams: holdsAnyPermission(actor, ["feature-teams:view"]),
     today: shownDay,
     keys,
   };
@@ -314,22 +326,26 @@ export async function readOrgChart(
       : { managerId: on.inForce?.managerId ?? null, from: on.drafted.fromDate };
   };
   const placeholder = placeholderOf(startOf, managerShown, labelOf, reader);
-  const liveHires = hireRecords(hires, placeholder);
-  const draftedHires = hireRecords(
-    new Map(
-      [...new Set([...hires.keys(), ...hireDrafts.keys()])].flatMap(
-        (id): [string, Recorded][] => {
-          const before = hires.get(id);
-          const draft = hireDrafts.get(id);
-          const after =
-            draft === undefined || draft.state === "rejected"
-              ? before
-              : drafted(before, draft);
-          return after === undefined ? [] : [[id, after]];
-        },
+  const placedHires = placedOf(hires, placeholder);
+  const liveHires = drawnIn(placedHires, "chart");
+  const draftedHires = drawnIn(
+    placedOf(
+      new Map(
+        [...new Set([...hires.keys(), ...hireDrafts.keys()])].flatMap(
+          (id): [string, Recorded][] => {
+            const before = hires.get(id);
+            const draft = hireDrafts.get(id);
+            const after =
+              draft === undefined || draft.state === "rejected"
+                ? before
+                : drafted(before, draft);
+            return after === undefined ? [] : [[id, after]];
+          },
+        ),
       ),
+      placeholder,
     ),
-    placeholder,
+    "chart",
   );
   const draftedChart = chartOf(
     new Map<string, ChartRecord>([
@@ -378,9 +394,13 @@ export async function readOrgChart(
   const hireDraftsShown = chart.some(
     (person) => person.planned !== undefined && person.draft !== undefined,
   );
+  const filled = [...drawnIn(placedHires, "teams")].map(([id, record]) =>
+    heldOf(hireCard(id, record, reader)),
+  );
   return {
     people: chart,
     drafted: draftedChart.map((person) => heldOf(withAddedDraft(person))),
+    ...(filled.length === 0 ? {} : { filled }),
     includedPersonal:
       chart.some(
         (person) =>
@@ -389,9 +409,10 @@ export async function readOrgChart(
             person.draft?.managerId !== undefined),
       ) ||
       (positionTier !== "general" &&
-        [...chart, ...draftedChart].some(
+        [...chart, ...draftedChart, ...filled].some(
           ({ position }) => position !== null,
         )) ||
+      showsFillsAbovePersonal(actor, filled) ||
       (seesPersonal &&
         (draftedChart.some((person) => person.left === true) ||
           [...drafts.values()].some(
@@ -424,33 +445,52 @@ function managerOnChart(
       : managerId;
 }
 
-// A planned hire as the chart draws it, or none when the reader sees its person instead: its name, or
-// its position and ID, the manager the chart draws it under, and the month it is expected.
-type Placeholder = (hire: Recorded) => HireRecord | undefined;
+// Where a planned hire's card is drawn: on the chart, as a placeholder; on its feature teams alone,
+// for a reader of feature teams who sees the person filling it in its place, since the hire stays on
+// its teams until they start; or nowhere, once they have, or for a reader who sees neither.
+export type HireCardPlace = "chart" | "teams" | "none";
+
+export function hireCardPlace(
+  {
+    filledBy,
+    fillerStart,
+  }: { filledBy: string | null; fillerStart: string | null | undefined },
+  {
+    seesPersonal,
+    seesFeatureTeams,
+    today,
+  }: Pick<Reader, "seesPersonal" | "seesFeatureTeams" | "today">,
+): HireCardPlace {
+  if (filledBy === null) return "chart";
+  if (!notStarted({ startDate: fillerStart }, today)) return "none";
+  if (!seesPersonal) return "chart";
+  return seesFeatureTeams ? "teams" : "none";
+}
+
+// A planned hire as the chart draws it, and where: its name, or its position and ID, the manager the
+// chart draws it under, and the month it is expected.
+type Placeholder = (hire: Recorded) => {
+  record: HireRecord;
+  place: HireCardPlace;
+};
 
 function placeholderOf(
   startOf: ReadonlyMap<string, string | null>,
   managerShown: ManagerShown,
   labelOf: ReadonlyMap<string, string>,
-  { seesPersonal, seesPositions, today }: Reader,
+  reader: Reader,
 ): Placeholder {
+  const { seesPositions, today } = reader;
   return (hire) => {
     const filledBy = text(hire.filledBy);
     const fillerStart = filledBy === null ? null : startOf.get(filledBy);
-    // A filled hire gives way to its person once they have started, or to readers who see them.
-    if (
-      filledBy !== null &&
-      (seesPersonal || !notStarted({ startDate: fillerStart }, today))
-    ) {
-      return undefined;
-    }
     const positionId = String(hire.positionId);
     // Every hire's position is read with the chart.
     const position = labelOf.get(positionId) as string;
     const { requisition, temporaryId } = hireIdOf(hire);
     const shownId = String(requisition ?? temporaryId);
     const name = text(hire.name);
-    return {
+    const record: HireRecord = {
       kind: "planned-hire",
       preferredName: hireCalled(
         name,
@@ -470,18 +510,27 @@ function placeholderOf(
         targetDate: text(hire.targetDate),
       }),
     };
+    return { record, place: hireCardPlace({ filledBy, fillerStart }, reader) };
   };
 }
 
-function hireRecords(
+type Placed = ReadonlyMap<string, ReturnType<Placeholder>>;
+
+function placedOf(
   hires: ReadonlyMap<string, Recorded>,
   placeholder: Placeholder,
+): Placed {
+  return new Map([...hires].map(([id, hire]) => [id, placeholder(hire)]));
+}
+
+function drawnIn(
+  placed: Placed,
+  drawn: HireCardPlace,
 ): Map<string, HireRecord> {
   return new Map(
-    [...hires].flatMap(([id, hire]): [string, HireRecord][] => {
-      const record = placeholder(hire);
-      return record === undefined ? [] : [[id, record]];
-    }),
+    [...placed].flatMap(([id, { record, place }]): [string, HireRecord][] =>
+      place === drawn ? [[id, record]] : [],
+    ),
   );
 }
 

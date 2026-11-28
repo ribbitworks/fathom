@@ -53,6 +53,22 @@
   content: "";
 }
 
+/* Who fills a planned hire, on one line however long the name: a white space at a flex item's edge
+   takes no room, so the name keeps its own. Its width is capped by the box, so the name, which alone
+   may shrink, is cut short with an ellipsis before the comma. */
+.fillerLine {
+  display: inline-flex;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.fillerName {
+  min-width: 0;
+  margin-inline-start: 0.25em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* A planned hire, a place still to fill, has a dashed edge and no shadow. */
 .card[data-planned] {
   border-style: dashed;
