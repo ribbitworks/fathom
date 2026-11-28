@@ -461,6 +461,11 @@ th[data-centred] .recordHeadButton {
   width: 100%;
 }
 
+/* With no marks to show, a centred heading's name is centred alone, not with the gap before them. */
+th[data-centred] .headerMarks:empty {
+  display: none;
+}
+
 /* A column's name, with the live name under it when its draft renames it. */
 .headerNames {
   display: flex;
