@@ -55,6 +55,24 @@ The row is removed at once. A notification says so, with **Undo** to bring it ba
 
 You're done when the row is gone from the table.
 
+### Remove a Column
+
+1. Select a column's heading, other than the first.
+1. Select **Remove column…**, then **Remove**.
+
+The column and its values are removed. A notification says so, with **Undo** to bring them back, and Cmd+Z or Ctrl+Z undoes it too.
+
+You're done when the column is gone from the table.
+
+### Rename or Remove a Page
+
+1. Select the **⋯** at the right of the page's heading.
+1. Select **Rename page…**, type its new name, and select **Rename**. Or select **Remove page…**, then **Remove**.
+
+A removed page goes with its rows, and the next page under **Mine** opens. A notification says so, with **Undo** to bring the page back. **Copy link** and **Copy key** in the same menu copy the page's link and key.
+
+You're done when the page shows its new name, or is gone from **Mine**.
+
 ### Find, Group and Export Rows
 
 The bar above the table works as on every table:

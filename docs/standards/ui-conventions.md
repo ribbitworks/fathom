@@ -77,7 +77,7 @@ The rest follow from them:
 - **A menu item's or button's "…":** A menu item that opens a dialog or a confirmation ends in "…", such as Edit column…, Approve draft… or Change password….
   - **Buttons:** A button that acts on something already there and opens a dialog ends in "…" too, such as Edit list…, Change class…, Edit…, Approve… or Reject….
   - **Asking only sometimes:** One that asks first only sometimes has one too, such as Publish draft…, which asks only when other changes go with the draft.
-  - **No "…":** One that acts at once, even with Undo, or opens a side panel, has none, such as Delete view, Remove column or New feature team. The dialog's own title has none either, such as Edit column.
+  - **No "…":** One that acts at once, even with Undo, or opens a side panel, has none, such as Delete view, Remove column or New feature team. On a private page, Remove page… and Remove column… ask first, so they have one, as [Asking first](ui-conventions/entering-and-saving.md#saving-and-undo) sets out. The dialog's own title has none either, such as Edit column.
   - **"New":** A button or menu item starting with "New" never has one, whether it opens a dialog, a form or a panel, such as New list, New account, New column or New feature. "New" already says more is coming, and the buttons look alike side by side.
   - **Drawn by:** The words themselves:
     - **Menus:** the column menu in `apps/web/src/column-header.tsx`, `draftItemLabel` for a row's Approve draft… and Reject draft… in `apps/web/src/row-menus.tsx`, and the account menu in `apps/web/src/layout.tsx`.

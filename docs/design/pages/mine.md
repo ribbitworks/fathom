@@ -38,18 +38,24 @@ One dialog, titled New page, in two steps: the name, then the columns.
 ## The Page
 
 - **Address:** `/mine/<page>`, keeping the table's view as every table's address does. An address naming no page the reader may read shows There is no page at this address, as a key's link to it reads Nothing found.
-- **Heading:** the private ring, then the page's name, with the Export icon at the right. The ring's tip is read aloud before the name.
+- **Heading:** the private ring, then the page's name, with the Export icon and the page's ⋯ at the right. The ring's tip is read aloud before the name.
+- **The page's ⋯:** Actions for and the page's name, holding Rename page…, Copy link, Copy key, then Remove page… in red, as [A page's ⋯](../../standards/ui-conventions/pages-and-panels.md#the-page-heading) sets out.
+  - **Rename page…:** a dialog with the page's Name, refused as New page refuses one, and Rename. It saves at once; Cmd+Z or Ctrl+Z undoes it.
+  - **Copy link and Copy key:** the page's key, such as #PAGE-4X9T, and its link, which opens the page for its maker alone. The key never shows on the page itself, even when a view shows the Key column, which is about its rows.
+  - **Remove page…:** asks Remove the Follow-ups page?, with Cancel and Remove. It then opens the next page under Mine, or the one before, or the Overview if Mine is empty, saying Removed the Follow-ups page. with Undo, which puts the page back and opens it.
 - **The table:** the shared table without drafts, so no Draft menu, dots, tints or Live rows. Its toolbar has Search, Metrics, Group by, by each Choice from a list column, and Views, with filters and sorts in each column's menu.
   - **Saving:** each value saves at once, as the row's change; Cmd+Z or Ctrl+Z undoes the latest.
   - **New rows:** typed in the empty row, as on every table; a row needs its first column's value. With no drafts, a row typed in is added on Enter, on Tab from its last column, or when focus leaves the row, so nothing typed is lost. Until then its slot shows the hollow dot in the private violet, saying New, not saved yet.
   - **An empty page:** the table's header and its empty row alone, with no space under them. Rows pasted together are saved one after another, each as its own change, so Undo takes back the last. They are kept all or none: if one is refused, those already saved are removed again.
   - **Removing a row:** Remove row in the row's menu acts at once, with a notification saying Removed and the row's name, with Undo.
+  - **Removing a column:** Remove column… in a column's menu, for any column but the first, asks Remove the Due column?, then removes it with its values, saying so with Undo. Editing a page's columns comes later.
   - **Keys:** each row has a random key, such as #ROW-4X9T, in a Key column hidden at first; its menu offers Copy link, whose link opens the page for its maker alone.
   - **Export:** what the table shows, with no Draft or Change columns and no drafts in the file's name, as every table without drafts exports.
 
 ## Decisions
 
 - **No drafts anywhere on a page,** since its data is one person's own and reaches nobody else.
+- **Removing a page or a column asks first, and offers Undo after,** since with no drafts nothing else stands between a slip and many values gone; a row, one record, is removed at once.
 - **The ring by the page's name only,** never on each value, since everything on the page is private.
 - **A new row saved on leaving it,** since a page has no drafts to keep it in, and asking would interrupt typing.
 - **Built on `RecordGrid`** with `liveTableParts` from `apps/web/src/live-table.ts`, which Accounts shares, rather than a table of its own.

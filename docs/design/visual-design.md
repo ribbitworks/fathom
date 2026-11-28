@@ -260,7 +260,7 @@ Designs agreed but not built yet:
 
 - **A page that can't load:** every page and part of one that can't load its data showing `LoadProblem` ([issue #194](https://github.com/ribbitworks/fathom/issues/194)).
 - **[Private pages](pages/mine.md):** as the [private tables design](https://github.com/ribbitworks/fathom/issues/230) sets out, still to come:
-  - New column, editing and removing a page's columns, and the page's ⋯ with Rename page…, Copy link, Copy key and Remove page.
+  - New column, and editing a page's columns.
   - Moving pages under Mine, and saved views per page.
   - A row's details, opened from its Name cell or a link to the row.
   - Link to another table and Lookup columns, with Metrics breaking down by a lookup.

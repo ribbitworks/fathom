@@ -18,6 +18,7 @@ Verifies how a person's own pages under **Mine** look and work:
 - Typing rows in a page's table like a spreadsheet, undoing a change, and removing a row with **Undo**.
 - That another account doesn't see **Mine**.
 - That a row's link, copied from its menu, opens its page for its maker.
+- Removing a column, and renaming and removing a page from its **⋯**, each asking first and offering **Undo** after.
 
 ## Test Environment
 
@@ -48,7 +49,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
-### PRIV-01: Mine Comes First in the Left-Hand Menu
+### PRIV-01: Mine Comes After People in the Left-Hand Menu
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, the first account of this test.
 
@@ -241,4 +242,81 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `B32A` In the main window, paste the link into the address bar, and press Enter.
   - **Expected:** The **Follow-ups** page opens, with its three rows.
+  - **Notes:**
+
+### PRIV-08: Removing a Column or a Page Asks First, Then Offers Undo
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the main window, as PRIV-07 ends.
+
+**Preconditions:** The **Follow-ups** page open in the main window, as PRIV-07 leaves it, and no other page under **Mine**.
+
+- [ ] `C5DF` Select the **Due** heading.
+  - **Expected:** The menu ends with **Remove column…**, in red.
+  - **Notes:**
+
+- [ ] `E707` Select **Remove column…**.
+  - **Expected:**
+    - A dialog asks "Remove the Due column?", with **Cancel** and **Remove** in red.
+    - **Cancel** has focus.
+  - **Notes:**
+
+- [ ] `4C35` Press Esc.
+  - **Expected:**
+    - The dialog closes, and **Due** is still in the table.
+    - The **Due** heading has focus.
+  - **Notes:**
+
+- [ ] `1B00` Select the **Due** heading, then **Remove column…**, then **Remove**.
+  - **Expected:**
+    - **Due** is gone from the table.
+    - A notification reads "Removed the Due column.", with **Undo**.
+  - **Notes:**
+
+- [ ] `EE7A` Press Cmd+Z on a Mac, or Ctrl+Z elsewhere.
+  - **Expected:** **Due** is back, with "Dec 4, 2026" in the row of 'Check offline conflicts'.
+  - **Notes:**
+
+- [ ] `1A56` Select the **Name** heading.
+  - **Expected:** The menu offers no **Remove column…**.
+  - **Notes:**
+
+- [ ] `6F37` Press Esc, and select the **⋯** at the right of the page's heading, after the Export icon.
+  - **Expected:**
+    - A menu opens with **Rename page…**, **Copy link** and **Copy key**, a line, then **Remove page…** in red.
+    - The heading is still one line.
+  - **Notes:**
+
+- [ ] `7B30` Select **Copy key**.
+  - **Expected:** A notification reads "Key copied."
+  - **Notes:**
+
+- [ ] `E741` Select the **⋯** again, then **Rename page…**, clear the name, and select **Rename**.
+  - **Expected:** "Name needed" shows in red under **Name**.
+  - **Notes:**
+
+- [ ] `ACC9` Type `Open questions`, and press Enter.
+  - **Expected:**
+    - The dialog closes, and the **⋯** has focus.
+    - The heading, the top bar and **Mine** in the left-hand menu read "Open questions".
+  - **Notes:**
+
+- [ ] `DC01` Press Cmd+Z on a Mac, or Ctrl+Z elsewhere.
+  - **Expected:** The heading, the top bar and **Mine** read "Follow-ups" again.
+  - **Notes:**
+
+- [ ] `92F7` Select the **⋯**, then **Remove page…**.
+  - **Expected:** A dialog asks "Remove the Follow-ups page?", with **Cancel** and **Remove** in red.
+  - **Notes:**
+
+- [ ] `1E51` Select **Remove**.
+  - **Expected:**
+    - The **Overview** opens.
+    - **Mine** lists only **New page**.
+    - A notification reads "Removed the Follow-ups page.", with **Undo**.
+  - **Notes:**
+
+- [ ] `4C50` Select **Undo** in the notification.
+  - **Expected:**
+    - The **Follow-ups** page opens, with its three rows.
+    - **Mine** lists **Follow-ups** again.
   - **Notes:**
