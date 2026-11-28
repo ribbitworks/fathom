@@ -526,6 +526,13 @@
       "when": 1795823188390,
       "tag": "0074_every_column_on_planned_hires",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1795852817532,
+      "tag": "0075_duration_columns",
+      "breakpoints": true
     }
   ]
 }

@@ -9,6 +9,7 @@ import {
   check,
   date,
   index,
+  integer,
   jsonb,
   numeric,
   text,
@@ -62,8 +63,8 @@ export const fields = fathomSchema.table(
     }),
     name: text("name").notNull(),
     // "choice" for a column drawing on a list, "link" for a web link, "note" for a note, "number"
-    // for a number, "flag" for a checkbox, "text" for text, "date" for a day, or "record" for a
-    // link to another table's records.
+    // for a number, "flag" for a checkbox, "text" for text, "date" for a day, "duration" for a
+    // length such as 2 wk, or "record" for a link to another table's records.
     type: text("type").notNull().default("choice"),
     listId: uuid("list_id").references(() => lists.id, {
       onDelete: "restrict",
@@ -75,6 +76,8 @@ export const fields = fathomSchema.table(
     // The table a record column links to, one of linkableTables.
     linkedTable: text("linked_table"),
     required: boolean("required").notNull().default(false),
+    // The unit a Duration column's bare number takes: "d", "wd", "wk" or "mo".
+    unit: text("unit"),
   },
   (table) => [
     uniqueIndex("fields_table_name_index")
@@ -92,7 +95,12 @@ export const fields = fathomSchema.table(
     // it, names the table it links to.
     check(
       "fields_type_settings",
-      sql`((${table.linkedTable} IS NOT NULL) = (${table.type} = 'record')) AND (${table.linkedTable} IS NULL OR ${table.linkedTable} IN (${sql.raw(linkableTables.map((name) => `'${name}'`).join(", "))})) AND ((${table.type} = 'choice' AND ${table.listId} IS NOT NULL AND ${table.visibility} IS NULL) OR (${table.type} = 'record' AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL) OR (${table.type} IN ('link', 'note', 'number', 'flag', 'text', 'date') AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL AND NOT ${table.multiple}))`,
+      sql`((${table.linkedTable} IS NOT NULL) = (${table.type} = 'record')) AND (${table.linkedTable} IS NULL OR ${table.linkedTable} IN (${sql.raw(linkableTables.map((name) => `'${name}'`).join(", "))})) AND ((${table.type} = 'choice' AND ${table.listId} IS NOT NULL AND ${table.visibility} IS NULL) OR (${table.type} = 'record' AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL) OR (${table.type} IN ('link', 'note', 'number', 'flag', 'text', 'date', 'duration') AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL AND NOT ${table.multiple}))`,
+    ),
+    // A Duration column, and only it, has a unit a bare number takes.
+    check(
+      "fields_unit",
+      sql`(${table.unit} IS NOT NULL) = (${table.type} = 'duration') AND (${table.unit} IS NULL OR ${table.unit} IN ('d', 'wd', 'wk', 'mo'))`,
     ),
   ],
 );
@@ -144,6 +152,9 @@ export const fieldValues = fathomSchema.table(
     flag: boolean("flag"),
     text: text("text"),
     date: date("date"),
+    // A length, a whole amount in one unit, kept as typed, such as 2 and "wk".
+    durationAmount: integer("duration_amount"),
+    durationUnit: text("duration_unit"),
     // A record linked from the column, which can't be deleted while a value still links it, so its
     // links are never lost unrecorded. Each key is checked when the change is saved, not at once, so
     // records that link themselves or each other can be deleted with their values; drizzle can't say
@@ -202,6 +213,7 @@ export const fieldValues = fathomSchema.table(
       ["flag", table.flag],
       ["text", table.text],
       ["date", table.date],
+      ["duration", table.durationAmount],
     ] as const;
     return [
       // Each owner's values are indexed apart, so each index holds only its own owner's rows: one row
@@ -259,7 +271,7 @@ export const fieldValues = fathomSchema.table(
         sql`num_nonnulls(${sql.join(
           [table.choiceId, ...[...heldOnce, ...links].map(([, held]) => held)],
           sql`, `,
-        )}) = 1 AND (${table.linkAddress} IS NULL) = (${table.linkText} IS NULL)`,
+        )}) = 1 AND (${table.linkAddress} IS NULL) = (${table.linkText} IS NULL) AND (${table.durationAmount} IS NULL) = (${table.durationUnit} IS NULL)`,
       ),
       // The server checks each address in full; this keeps anything but a web address out whatever
       // writes the row.
@@ -270,6 +282,10 @@ export const fieldValues = fathomSchema.table(
       check("field_values_note_not_empty", sql`${table.note} <> ''`),
       check("field_values_text_not_empty", sql`${table.text} <> ''`),
       check("field_values_flag_ticked", sql`${table.flag}`),
+      check(
+        "field_values_duration_unit",
+        sql`${table.durationUnit} IS NULL OR ${table.durationUnit} IN ('d', 'wd', 'wk', 'mo')`,
+      ),
     ];
   },
 );

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of the values table's ticked boxes, texts, dates and links to other tables' records, and
+// Tests of the values table's ticked boxes, texts, dates, durations and links to other tables' records, and
 // each column type's settings, against a real PostgreSQL server.
 
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
@@ -117,6 +117,7 @@ describe("a column's settings", () => {
   it.each<[string, Record<string, unknown>]>([
     ["a checkbox", { type: "flag" }],
     ["a date", { type: "date" }],
+    ["a duration in weeks", { type: "duration", unit: "wk" }],
     ["text on one line", { type: "text" }],
     [
       "links to several features",
@@ -138,6 +139,9 @@ describe("a column's settings", () => {
     ["a link naming no table", { type: "record" }],
     ["a link to another table", { type: "record", linked_table: "teams" }],
     ["a table on another type", { type: "text", linked_table: "people" }],
+    ["a duration with no unit", { type: "duration" }],
+    ["a duration in sprints", { type: "duration", unit: "sprints" }],
+    ["a unit on another type", { type: "number", unit: "wk" }],
   ])("refuse %s", async (_, settings) => {
     await withClient(database.app, async (client) => {
       expect(await errorCodeOf(column(client, settings))).toBe(checkViolation);
@@ -181,9 +185,17 @@ describe("the values table's kinds of value", () => {
           ["flag", { flag: true }, { flag: true }],
           ["text", { text: "North 4-12" }, { text: "South 2-07" }],
           ["date", { date: "2026-03-14" }, { date: "2026-06-02" }],
+          [
+            "duration",
+            { duration_amount: 2, duration_unit: "wk" },
+            { duration_amount: -1, duration_unit: "mo" },
+          ],
         ] as const) {
           const word = `${owner.table} ${type}`;
-          const fieldId = await addColumn(client, owner, word, { type });
+          const fieldId = await addColumn(client, owner, word, {
+            type,
+            ...(type === "duration" ? { unit: "wk" } : {}),
+          });
           const ownerId = await addRecord(client, owner.table, word);
           const otherId = await addRecord(client, owner.table, `${word} 2`);
           await insertValue(client, fieldId, owner, ownerId, one);
@@ -232,6 +244,10 @@ describe("the values table's kinds of value", () => {
         { flag: true, date: "2026-03-14" },
         { text: "North 4-12", linked_feature_id: featureId },
         { linked_person_id: personId, linked_feature_id: featureId },
+        { duration_amount: 2 },
+        { duration_unit: "wk" },
+        { duration_amount: 2, duration_unit: "sprints" },
+        { duration_amount: 2, duration_unit: "wk", date: "2026-03-14" },
         {},
       ]) {
         expect(
